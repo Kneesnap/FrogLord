@@ -656,7 +656,7 @@ public class PSXTextureShader {
             throw new NullPointerException("targetImage");
 
         // This has been optimized for performance, since it has been deemed performance critical code.
-        int[] rawSourceImage = ImageWorkHorse.getPixelIntegerArray(sourceImage);
+        int[] rawSourceImage = ImageWorkHorse.getReadOnlyPixelIntegerArray(sourceImage);
         int[] rawTargetImage = ImageWorkHorse.getPixelIntegerArray(targetImage);
         int pixelCount = targetImage.getWidth() * targetImage.getHeight();
         for (int i = 0; i < pixelCount; i++)
@@ -717,7 +717,7 @@ public class PSXTextureShader {
 
         if (targetImage == null)
             targetImage = new BufferedImage(originalTexture.getWidth(), originalTexture.getHeight(), BufferedImage.TYPE_INT_ARGB);
-        int[] rawSourceImage = ImageWorkHorse.getPixelIntegerArray(originalTexture);
+        int[] rawSourceImage = ImageWorkHorse.getReadOnlyPixelIntegerArray(originalTexture);
         int[] rawTargetImage = ImageWorkHorse.getPixelIntegerArray(targetImage);
         int pixelCount = targetImage.getWidth() * targetImage.getHeight();
         for (int i = 0; i < pixelCount; i++)

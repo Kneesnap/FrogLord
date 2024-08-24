@@ -164,6 +164,24 @@ public class RwPlatformIndependentTextureDictionaryChunk extends RwStreamChunk {
             propertyList.add("Flags", Utils.toHexString(getFlags()));
             return propertyList;
         }
+
+        /**
+         * Gets the largest mip-mapped image chunk.
+         */
+        default RwImageChunk getLargestImage() {
+            RwImageChunk largestImage = null;
+            int largestArea = Integer.MIN_VALUE;
+            for (int i = 0; i < getMipMapImages().size(); i++) {
+                RwImageChunk image = getMipMapImages().get(i);
+                int tempArea = image.getImage().getWidth() * image.getImage().getHeight();
+                if (tempArea > largestArea) {
+                    largestArea = tempArea;
+                    largestImage = image;
+                }
+            }
+
+            return largestImage;
+        }
     }
 
     @Getter
@@ -188,17 +206,7 @@ public class RwPlatformIndependentTextureDictionaryChunk extends RwStreamChunk {
 
         @Override
         public GameUIController<?> makeEditorUI() {
-            RwImageChunk largestImage = null;
-            int largestArea = Integer.MIN_VALUE;
-            for (int i = 0; i < this.mipMapImages.size(); i++) {
-                RwImageChunk image = this.mipMapImages.get(i);
-                int tempArea = image.getImage().getWidth() * image.getImage().getHeight();
-                if (tempArea > largestArea) {
-                    largestArea = tempArea;
-                    largestImage = image;
-                }
-            }
-
+            RwImageChunk largestImage = getLargestImage();
             return largestImage != null ? new RwImageViewUIController(largestImage) : null;
         }
 

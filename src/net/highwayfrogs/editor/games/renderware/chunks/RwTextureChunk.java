@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
+import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk.IRwPlatformIndependentTexturePrefix;
 import net.highwayfrogs.editor.games.renderware.struct.types.RwStreamTexture;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
@@ -19,7 +20,7 @@ public class RwTextureChunk extends RwStreamChunk {
     private int texFiltAddr;
     private String name = "";
     private String mask = "";
-    private RwExtensionChunk extensionData;
+    private transient RwImageChunk image;
 
     public RwTextureChunk(RwStreamFile streamFile, int version, RwStreamChunk parentChunk) {
         super(streamFile, RwStreamChunkType.TEXTURE, version, parentChunk);
@@ -34,7 +35,7 @@ public class RwTextureChunk extends RwStreamChunk {
 
         this.name = readString(reader);
         this.mask = readString(reader);
-        this.extensionData = reader.hasMore() ? readChunk(reader, RwExtensionChunk.class) : null;
+        readOptionalExtensionData(reader);
     }
 
     @Override
@@ -42,8 +43,7 @@ public class RwTextureChunk extends RwStreamChunk {
         writeStruct(writer, new RwStreamTexture(getGameInstance(), this.texFiltAddr));
         writeChunk(writer, new RwStringChunk(getStreamFile(), getVersion(), this, this.name));
         writeChunk(writer, new RwStringChunk(getStreamFile(), getVersion(), this, this.mask));
-        if (this.extensionData != null)
-            writeChunk(writer, this.extensionData);
+        writeOptionalExtensionData(writer);
     }
 
     @Override
@@ -68,5 +68,32 @@ public class RwTextureChunk extends RwStreamChunk {
                 + (this.name != null && this.name.trim().length() > 0 ? ",name='" + this.name + "'" : "")
                 + (this.mask != null && this.mask.trim().length() > 0 ? ",mask='" + this.mask + "'" : "")
                 + ",flags=" + Utils.toHexString(this.texFiltAddr);
+    }
+
+    /**
+     * Resolves the image which this texture chunk uses.
+     */
+    public RwImageChunk getImage() {
+        if (this.image == null) {
+            if (this.name == null)
+                return null;
+
+            for (RwStreamChunk streamChunk : getStreamFile().getChunks()) {
+                if (!(streamChunk instanceof RwPlatformIndependentTextureDictionaryChunk))
+                    continue;
+
+                RwPlatformIndependentTextureDictionaryChunk pitexChunk = (RwPlatformIndependentTextureDictionaryChunk) streamChunk;
+                for (int i = 0; i < pitexChunk.getEntries().size(); i++) {
+                    IRwPlatformIndependentTexturePrefix entry = pitexChunk.getEntries().get(i);
+                    if (this.name.equalsIgnoreCase(entry.getName())) {
+                        RwImageChunk image = entry.getLargestImage();
+                        if (image != null)
+                            return this.image = image;
+                    }
+                }
+            }
+        }
+
+        return this.image;
     }
 }

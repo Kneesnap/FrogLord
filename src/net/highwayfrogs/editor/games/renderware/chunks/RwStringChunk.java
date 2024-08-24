@@ -7,7 +7,6 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
-import net.highwayfrogs.editor.games.renderware.RwVersion;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 
 /**
@@ -29,26 +28,16 @@ public class RwStringChunk extends RwStreamChunk {
 
     @Override
     protected void loadChunkData(DataReader reader, int dataLength, int version) {
-        if (RwVersion.isAtLeast(version, RwVersion.VERSION_3603)) {
-            // Seen in Frogger Ancient Shadow
-            this.value = reader.readTerminatedStringOfLength(dataLength);
-            reader.align(Constants.INTEGER_SIZE); // There's unallocated data afterward.
-        } else {
-            // Seen in Frogger Rescue + Beyond
-            this.value = reader.readString(dataLength);
-        }
+        // Seen in Frogger Ancient Shadow + Rescue + Beyond
+        this.value = reader.readTerminatedStringOfLength(dataLength);
+        reader.align(Constants.INTEGER_SIZE); // There's unallocated data after the null terminator.
     }
 
     @Override
     protected void saveChunkData(DataWriter writer) {
-        if (RwVersion.isAtLeast(version, RwVersion.VERSION_3603)) {
-            // Seen in Frogger Ancient Shadow
-            writer.writeTerminatorString(this.value);
-            writer.align(Constants.INTEGER_SIZE); // There's unallocated data afterward.
-        } else {
-            // Seen in Frogger Rescue + Beyond
-            writer.writeStringBytes(this.value);
-        }
+        // Seen in Frogger Ancient Shadow + Rescue + Beyond
+        writer.writeTerminatorString(this.value);
+        writer.align(Constants.INTEGER_SIZE); // There's unallocated data after the null terminator.
     }
 
     @Override

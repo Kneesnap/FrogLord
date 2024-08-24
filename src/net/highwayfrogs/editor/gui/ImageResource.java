@@ -31,6 +31,9 @@ public enum ImageResource {
     SWAMPY_32("icons/swampy.png"),
     QUESTION_MARK_32("icons/unknown.png"),
     ICON_MULTIMEDIA_32("icons/applications-multimedia32.png"),
+    COLOR_WHEEL_32("icons/color_wheel.png"),
+    GOURAUD_TRIANGLE_32("icons/gouraud_triangle.png"),
+    COORDINATE_SYSTEM_XY_32("icons/coordinate-system-xy.png"),
 
     // Logos
     FROGLORD_LOGO_ALTERNATE_LARGE("graphics/alternate-logo-large.png"),
@@ -109,6 +112,10 @@ public enum ImageResource {
     ZIPPED_FOLDER_15(ImageResource.ZIPPED_FOLDER_32, 15),
     QUESTION_MARK_15(ImageResource.QUESTION_MARK_32, 15),
     MUSIC_NOTE_16(ImageResource.MUSIC_NOTE_32, 16),
+    PAINTERS_PALETTE_16(PAINTERS_PALETTE_32, 16),
+    COLOR_WHEEL_16(COLOR_WHEEL_32, 16),
+    GOURAUD_TRIANGLE_16(GOURAUD_TRIANGLE_32, 16),
+    COORDINATE_SYSTEM_XY_16(COORDINATE_SYSTEM_XY_32, 16),
     GHIDRA_ICON_PAPER_WITH_TEXT_32(GHIDRA_ICON_PAPER_WITH_TEXT_16, 32);
 
     private final String resourcePath;

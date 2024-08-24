@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.gui.texture;
 
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 
 import java.awt.image.BufferedImage;
 import java.util.List;
@@ -18,22 +18,7 @@ public interface ITextureSource {
      * @return true iff there are any transparent pixels
      */
     default boolean hasAnyTransparentPixels(BufferedImage image) {
-        return hasAnyTransparentPixelsImpl(image);
-    }
-
-    /**
-     * The default implementation of hasAnyTransparentPixels() which checks the image for any transparent pixels
-     * @param image the image to test
-     */
-    default boolean hasAnyTransparentPixelsImpl(BufferedImage image) {
-        if (image == null)
-            return false;
-
-        for (int y = 0; y < image.getHeight(); y++)
-            for (int x = 0; x < image.getWidth(); x++)
-                if (Utils.getAlpha(image.getRGB(x, y)) != (byte) 0xFF)
-                    return true;
-        return false;
+        return ImageWorkHorse.hasAnyTransparentPixels(image);
     }
 
     /**

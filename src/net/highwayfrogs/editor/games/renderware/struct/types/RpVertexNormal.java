@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.renderware.struct.types;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
@@ -11,38 +10,37 @@ import net.highwayfrogs.editor.games.renderware.struct.RwStructType;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 
 /**
- * Represents a RenderWare vector. Implemented from src/plcore/batypes.h
- * Created by Kneesnap on 8/12/2024.
+ * Represents the RpVertexNormal struct in basector.h
+ * Created by Kneesnap on 8/17/2024.
  */
-@Getter @Setter
-public class RwV3d extends RwStruct {
-    private float x;
-    private float y;
-    private float z;
+@Setter
+@Getter
+public class RpVertexNormal extends RwStruct {
+    private byte x;
+    private byte y;
+    private byte z;
+    private byte padding;
 
-    public static final int SIZE_IN_BYTES = 3 * Constants.FLOAT_SIZE;
+    public static final int SIZE_IN_BYTES = 4;
 
-    public RwV3d(GameInstance instance) {
-        super(instance, RwStructType.VECTOR3);
+    public RpVertexNormal(GameInstance instance) {
+        super(instance, RwStructType.VERTEX_NORMAL);
     }
 
     @Override
     public void load(DataReader reader, int version, int byteLength) {
-        this.x = reader.readFloat();
-        this.y = reader.readFloat();
-        this.z = reader.readFloat();
+        this.x = reader.readByte();
+        this.y = reader.readByte();
+        this.z = reader.readByte();
+        this.padding = reader.readByte();
     }
 
     @Override
     public void save(DataWriter writer, int version) {
-        writer.writeFloat(this.x);
-        writer.writeFloat(this.y);
-        writer.writeFloat(this.z);
-    }
-
-    @Override
-    public String toString() {
-        return "RwV3d{x=" + this.x + ",y=" + this.y + ",z=" + this.z + "}";
+        writer.writeByte(this.x);
+        writer.writeByte(this.y);
+        writer.writeByte(this.z);
+        writer.writeByte(this.padding); // Padding.
     }
 
     @Override
@@ -52,5 +50,10 @@ public class RwV3d extends RwStruct {
         propertyList.add("Y", this.y);
         propertyList.add("Z", this.z);
         return propertyList;
+    }
+
+    @Override
+    public String toString() {
+        return "RpVertexNormal{x=" + this.x + ",y=" + this.y + ",z=" + this.z + "}";
     }
 }

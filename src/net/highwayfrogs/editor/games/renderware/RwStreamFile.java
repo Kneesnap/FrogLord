@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.renderware;
 
+import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
@@ -7,8 +8,10 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData.SharedGameData;
 import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.games.renderware.IRwStreamChunkType.RwStreamChunkTypeDisplayImportance;
 import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk.IRwPlatformIndependentTexturePrefix;
+import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
@@ -103,6 +106,55 @@ public class RwStreamFile extends SharedGameData {
                 }
             }
         }
+    }
+
+    /**
+     * Gets the best chunk icon to represent the RwStreamFile.
+     */
+    public Image getBestChunkIcon() {
+        // Look through the chunks to find the best chunk to get the icon from.
+        Image bestIcon = ImageResource.GHIDRA_ICON_MULTIMEDIA_16.getFxImage();
+        RwStreamChunkTypeDisplayImportance bestImportance = null;
+        for (int i = 0; i < this.chunks.size(); i++) {
+            RwStreamChunk streamChunk = this.chunks.get(i);
+            RwStreamChunkTypeDisplayImportance importance = streamChunk.getChunkType().getDisplayImportance();
+            if (importance == null || (bestImportance != null && bestImportance.ordinal() >= importance.ordinal()))
+                continue;
+
+            bestIcon = streamChunk.getCollectionViewIcon();
+            bestImportance = importance;
+        }
+
+        return bestIcon;
+    }
+
+    /**
+     * Returns true if the provided bytes appear to be a valid RWS stream header.
+     * @param reader the reader to test
+     */
+    public static boolean isRwStreamHeader(DataReader reader) {
+        if (reader == null || reader.getRemaining() < HEADER_SIZE_IN_BYTES)
+            return false;
+
+        reader.jumpTemp(reader.getIndex() + Constants.INTEGER_SIZE); // int typeId; // Skipped
+        int chunkReadSize = reader.readInt();
+        int version = reader.readInt();
+        reader.jumpReturn();
+        return chunkReadSize >= 0 && RwVersion.doesVersionAppearValid(version);
+    }
+
+    /**
+     * Returns true if the provided bytes appear to be a valid RWS stream header.
+     * @param rawBytes the bytes to test
+     */
+    public static boolean isRwStreamHeader(byte[] rawBytes, int index) {
+        if (rawBytes == null || rawBytes.length < HEADER_SIZE_IN_BYTES)
+            return false;
+
+        // int typeId; // Skipped
+        int chunkReadSize = Utils.readIntFromBytes(rawBytes, index + Constants.INTEGER_SIZE);
+        int version = Utils.readIntFromBytes(rawBytes, index + (2 * Constants.INTEGER_SIZE));
+        return chunkReadSize >= 0 && RwVersion.doesVersionAppearValid(version);
     }
 
     /**

@@ -65,6 +65,8 @@ public class RwStructChunk<TStruct extends RwStruct> extends RwStreamChunk {
         }
 
         this.value.load(reader, version, dataLength);
+        if (this.value.getStructType().isReadExtensionChunk())
+            readOptionalExtensionData(reader);
     }
 
     @Override
@@ -73,6 +75,8 @@ public class RwStructChunk<TStruct extends RwStruct> extends RwStreamChunk {
             throw new IllegalStateException("Cannot save struct data, the value is null!");
 
         this.value.save(writer, getVersion());
+        if (this.value.getStructType().isReadExtensionChunk())
+            writeOptionalExtensionData(writer);
     }
 
     @Override
@@ -91,5 +95,10 @@ public class RwStructChunk<TStruct extends RwStruct> extends RwStreamChunk {
     public String getCollectionViewDisplayName() {
         return super.getCollectionViewDisplayName()
                 + (this.value != null ? " [" + this.value.getStructType().getDisplayName() + "]" : "");
+    }
+
+    @Override
+    public String getLoggerInfo() {
+        return super.getLoggerInfo() + (this.value != null ? ",type=" + this.value.getStructType() : "");
     }
 }

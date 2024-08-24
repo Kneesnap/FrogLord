@@ -13,8 +13,8 @@ import net.highwayfrogs.editor.games.renderware.struct.RwStructType;
  */
 @Getter
 public class RwBBox extends RwStruct {
-    private final RwV3d maxPosition;
-    private final RwV3d minPosition;
+    private final RwV3d maxPosition; // Supremum
+    private final RwV3d minPosition; // Infimum
 
     public RwBBox(GameInstance instance) {
         super(instance, RwStructType.BOUNDING_BOX);

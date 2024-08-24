@@ -21,6 +21,7 @@ import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentText
 import net.highwayfrogs.editor.games.renderware.struct.types.RwImage;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
@@ -29,14 +30,18 @@ import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Represents the image chunk from baimage.c/RwImageStreamRead.
  * Created by Kneesnap on 6/9/2020.
  */
 @Getter
-public class RwImageChunk extends RwStreamChunk {
+public class RwImageChunk extends RwStreamChunk implements ITextureSource {
     private final IRwPlatformIndependentTexturePrefix texturePrefix;
+    private final List<Consumer<BufferedImage>> imageChangeListeners = new ArrayList<>();
     private final int mipMapLevelId;
     private BufferedImage image = DEFAULT_IMAGE;
 
@@ -292,6 +297,7 @@ public class RwImageChunk extends RwStreamChunk {
         }
 
         this.image = newImage;
+        fireChangeEvent(newImage);
     }
 
     private static int calculateStride(int width, int bitDepth) {
@@ -347,6 +353,46 @@ public class RwImageChunk extends RwStreamChunk {
             default:
                 throw new IllegalArgumentException("Unsupported bit-depth: " + bitDepth);
         }
+    }
+
+    @Override
+    public BufferedImage makeImage() {
+        return this.image;
+    }
+
+    @Override
+    public int getWidth() {
+        return this.image.getWidth();
+    }
+
+    @Override
+    public int getHeight() {
+        return this.image.getHeight();
+    }
+
+    @Override
+    public int getUpPadding() {
+        return 0;
+    }
+
+    @Override
+    public int getDownPadding() {
+        return 0;
+    }
+
+    @Override
+    public int getLeftPadding() {
+        return 0;
+    }
+
+    @Override
+    public int getRightPadding() {
+        return 0;
+    }
+
+    @Override
+    public void fireChangeEvent(BufferedImage newImage) {
+        fireChangeEvent0(newImage);
     }
 
     @SuppressWarnings("FieldCanBeLocal")

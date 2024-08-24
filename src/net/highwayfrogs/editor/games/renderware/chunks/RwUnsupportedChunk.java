@@ -48,5 +48,10 @@ public class RwUnsupportedChunk extends RwStreamChunk {
         public ImageResource getIcon() {
             return ImageResource.QUESTION_MARK_15;
         }
+
+        @Override
+        public RwStreamChunkTypeDisplayImportance getDisplayImportance() {
+            return null;
+        }
     }
 }

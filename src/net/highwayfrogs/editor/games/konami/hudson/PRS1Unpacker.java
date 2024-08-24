@@ -32,7 +32,7 @@ public class PRS1Unpacker {
 
     /**
      * Decompresses raw PRS1 data.
-     * Reverse engineered from "Frogger's Adventures: The Rescue" PC.
+     * Reverse engineered from "Frogger's Adventures: The Rescue" PC at 0x00540358.
      * This algorithm was also found in the Mario Party 4 decomp and likely exists in more games too.
      * @param reader         The reader to read data from.
      * @param compressedSize The size of the compressed data.
@@ -42,8 +42,8 @@ public class PRS1Unpacker {
         byte[] outputBuffer = new byte[uncompressedSize];
         int outPos = 0;
 
-        byte[] compressionBuffer = new byte[0x10000]; // This is fucked in the actual game. It's only 0xFEE bytes large, meaning it overwrites memory it's not supposed to overwrite. Either that or that memory is used.
-        int bufferIndex = 0xFEE;
+        byte[] compressionBuffer = new byte[4096]; // The original buffer is most likely 4096 bytes large.
+        int bufferPos = 0xFEE;
         int temp = 0;
 
         while (true) {
@@ -69,20 +69,20 @@ public class PRS1Unpacker {
                 int readOffset = reader.readUnsignedByteAsShort();
 
                 for (int i = 0; i <= (readOffset & 0x0F) + 2; i++) {
-                    byte copy = compressionBuffer[i + ((((currentByte & 0xFF) | ((readOffset & 0xF0) << 4))) & 0xFFF)];
+                    byte copy = compressionBuffer[(i + ((currentByte & 0xFF) | ((readOffset & 0xF0) << 4))) & 0xFFF];
                     if (outPos < uncompressedSize)
                         outputBuffer[outPos] = copy;
                     outPos++;
-                    compressionBuffer[bufferIndex] = copy;
-                    bufferIndex = (bufferIndex + 1) & 0xFFF;
+                    compressionBuffer[bufferPos] = copy;
+                    bufferPos = (bufferPos + 1) & 0xFFF;
                 }
             } else {
                 if (outPos < uncompressedSize)
                     outputBuffer[outPos] = currentByte;
 
                 outPos++;
-                compressionBuffer[bufferIndex] = currentByte;
-                bufferIndex = (bufferIndex + 1) & 0xFFF;
+                compressionBuffer[bufferPos] = currentByte;
+                bufferPos = (bufferPos + 1) & 0xFFF;
                 compressedSize--;
             }
         }

@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData.SharedGameData;
+import net.highwayfrogs.editor.games.renderware.chunks.RwExtensionChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwStringChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwStructChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwUnicodeStringChunk;
@@ -41,6 +42,7 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
     @Getter private final List<RwStreamChunk> childChunks = new ArrayList<>();
     @Getter protected final List<IRwStreamChunkUIEntry> childUISections = new ArrayList<>();
     @Getter private ChunkReadResult readResult;
+    private RwExtensionChunk extension;
     private transient SoftReference<Logger> logger;
 
     public RwStreamChunk(RwStreamFile streamFile, @NonNull IRwStreamChunkType chunkType, int version, RwStreamChunk parentChunk) {
@@ -52,13 +54,17 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
     }
 
     @Override
-    public final void load(DataReader reader) {
+    public void load(DataReader reader) {
         this.childChunks.clear();
         this.childUISections.clear();
 
         // chunk ID has already been read by this point, used to construct this object.
         int readSize = reader.readInt();
+        int versionDataIndex = reader.getIndex();
         this.version = reader.readInt();
+
+        if (!RwVersion.doesVersionAppearValid(this.version))
+            getLogger().warning("The version " + RwVersion.getDebugString(this.version) + " was read from " + Utils.toHexString(versionDataIndex) + ", and does not appear valid!");
 
         if (readSize > reader.getRemaining())
             throw new RuntimeException("Cannot read chunk " + Utils.getSimpleName(this) + " of size " + readSize + " when there are only " + reader.getRemaining() + " bytes left.");
@@ -271,6 +277,32 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
     }
 
     /**
+     * Reads an RwStructChunk from the reader, reading the supplied struct instance.
+     * If an unexpected chunk is loaded instead, a ClassCastException will be thrown.
+     * @param reader the reader to read the chunk data from
+     * @param structValue the struct object to read
+     * @return structValue
+     * @param <TStruct> the type of struct expected.
+     */
+    protected <TStruct extends RwStruct> TStruct readStruct(DataReader reader, TStruct structValue) {
+        return readStruct(reader, structValue, true);
+    }
+
+    /**
+     * Reads an RwStructChunk from the reader, reading the supplied struct instance.
+     * If an unexpected chunk is loaded instead, a ClassCastException will be thrown.
+     * @param reader the reader to read the chunk data from
+     * @param structValue the struct object to read
+     * @param showInUI Whether it should be shown in the UI. This is rarely false.
+     * @return structValue
+     * @param <TStruct> the type of struct expected.
+     */
+    protected <TStruct extends RwStruct> TStruct readStruct(DataReader reader, TStruct structValue, boolean showInUI) {
+        RwStructChunk<TStruct> structChunk = new RwStructChunk<>(this.streamFile, getVersion(), this, structValue);
+        return readChunk(reader, structChunk, showInUI).getValue();
+    }
+
+    /**
      * Reads an RwStringChunk from the reader, and returns the resulting string.
      * If an unexpected chunk is loaded instead, a ClassCastException will be thrown.
      * This follows the behavior of _rwStringStreamFindAndRead in rwstring.c, meaning non-string chunks will be skipped.
@@ -304,6 +336,14 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
         }
 
         throw new IllegalStateException("Did not find any string chunks before reaching end of data.");
+    }
+
+    /**
+     * Reads optional extension data from the reader
+     * @param reader the reader to read the data from
+     */
+    protected void readOptionalExtensionData(DataReader reader) {
+        this.extension = reader.hasMore() ? readChunk(reader, RwExtensionChunk.class) : null;
     }
 
     /**
@@ -350,6 +390,15 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
             throw new RuntimeException("value");
 
         writeChunk(writer, new RwStructChunk<>(this.streamFile, this.version, this, value), showInUI);
+    }
+
+    /**
+     * Writes extension data to the writer, if there is an extension data chunk
+     * @param writer the writer to write the data to
+     */
+    protected void writeOptionalExtensionData(DataWriter writer) {
+        if (this.extension != null)
+            writeChunk(writer, this.extension);
     }
 
     /**

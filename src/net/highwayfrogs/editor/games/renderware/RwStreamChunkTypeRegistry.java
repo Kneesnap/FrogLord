@@ -4,7 +4,8 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.games.renderware.chunks.*;
+import net.highwayfrogs.editor.games.renderware.chunks.RwStructChunk;
+import net.highwayfrogs.editor.games.renderware.chunks.RwUnsupportedChunk;
 import net.highwayfrogs.editor.games.renderware.struct.RwUnsupportedStruct;
 import net.highwayfrogs.editor.system.TriFunction;
 import net.highwayfrogs.editor.utils.Utils;
@@ -35,7 +36,9 @@ public class RwStreamChunkTypeRegistry implements Cloneable {
     }
 
     /**
-     * Registers a chunk type.
+     * Registers a chunk type from a chunk constructor.
+     * The chunk type is obtained from creating an instance of the chunk, and querying the type.
+     * If the chunk type is already registered, its registration will be replaced.
      * @param chunkCreator The constructor to create a chunk.
      */
     public void registerChunkType(TriFunction<RwStreamFile, Integer, RwStreamChunk, RwStreamChunk> chunkCreator) {
@@ -45,6 +48,7 @@ public class RwStreamChunkTypeRegistry implements Cloneable {
 
     /**
      * Registers a chunk type.
+     * If the chunk type is already registered, its registration will be replaced.
      * @param chunkType The chunk's type.
      * @param chunkCreator The constructor to create a chunk.
      */
@@ -142,39 +146,13 @@ public class RwStreamChunkTypeRegistry implements Cloneable {
 
     static {
         // Register chunks.
-        // TODO: Support many more chunks.
 
-        defaultRegistry.registerChunkType((gameInstance, version, parentChunk) -> new RwStructChunk<>(gameInstance, version, parentChunk, RwUnsupportedStruct.class)); // By default, treat structs as unsupported, since we can't identify them without extra info.
-        defaultRegistry.registerChunkType(RwStringChunk::new);
-        defaultRegistry.registerChunkType(RwExtensionChunk::new);
-        defaultRegistry.registerChunkType(RwTextureChunk::new);
-        defaultRegistry.registerChunkType(RwWorldChunk::new);
-        defaultRegistry.registerChunkType(RwUnicodeStringChunk::new);
-        defaultRegistry.registerChunkType(RwImageChunk::new);
-        defaultRegistry.registerChunkType(RwPlatformIndependentTextureDictionaryChunk::new);
-        defaultRegistry.registerChunkType(RwTableOfContentsChunk::new);
+        // Register chunk types registered to the built-in RenderWare engine types.
+        for (RwStreamChunkType chunkType : RwStreamChunkType.values())
+            if (chunkType.getChunkCreator() != null)
+                defaultRegistry.registerChunkType(chunkType, chunkType.getChunkCreator());
 
-        // First, Table of Contents - 0x24.
-        // Platform Independent Texture Dictionary, 0x23.
-        // Clump - 0x10 (First one with child nodes.)
-        // Struct - 0x01
-        // Frame List  - 0x0E
-        // Extension - 0x03
-        // HAnim PLG - 11E
-        // Geometry List - 0x1A
-        // Geometry - 0x0F
-        // Material List - 0x08
-        // Material - 0x07
-        // Sky Minimap Val = 0x110
-        // Texture - 0x06
-        // String - 0x02
-        // Atomic - 0x14
-        // Anim Animation - 0x1B
-
-        // Bin Mesh PLG - 0x50E
-        // Skin PLG - 0x116
-        // Morph PLG - 0x105
-        // User Data PLG - 0x11F
-        // Right to Render - 0x1F
+        // By default, treat structs as unsupported, since we can't identify them without extra info.
+        defaultRegistry.registerChunkType((gameInstance, version, parentChunk) -> new RwStructChunk<>(gameInstance, version, parentChunk, RwUnsupportedStruct.class));
     }
 }

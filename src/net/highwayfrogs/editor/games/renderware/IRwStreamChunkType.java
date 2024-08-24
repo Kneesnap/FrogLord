@@ -22,4 +22,14 @@ public interface IRwStreamChunkType {
      * Represents the icon used to represent the stream chunk.
      */
     ImageResource getIcon();
+
+    /**
+     * Gets the display importance for the particular type.
+     * Can be used in different scenarios where we'd like to select something to display, such as an icon, but have multiple files.
+     */
+    RwStreamChunkTypeDisplayImportance getDisplayImportance();
+
+    enum RwStreamChunkTypeDisplayImportance {
+        LOWEST, LOW, NORMAL, HIGH, HIGHEST
+    }
 }

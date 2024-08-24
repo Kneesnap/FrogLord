@@ -70,7 +70,12 @@ public class AtlasBuilderTextureSource implements ITextureSource {
      * @return newImage
      */
     public BufferedImage makeNewImage() {
-        this.cachedImage = new BufferedImage(this.atlas.getAtlasWidth(), this.atlas.getAtlasHeight(), BufferedImage.TYPE_INT_ARGB);
+        try {
+            this.cachedImage = new BufferedImage(this.atlas.getAtlasWidth(), this.atlas.getAtlasHeight(), BufferedImage.TYPE_INT_ARGB);
+        } catch (OutOfMemoryError ex) {
+            throw new RuntimeException("Can't create atlas image " + this.atlas.getAtlasWidth() + "x" + this.atlas.getAtlasHeight() + ", as there is not enough heap space.", ex);
+        }
+
         this.cachedFxImage = new WritableImage(this.atlas.getAtlasWidth(), this.atlas.getAtlasHeight());
 
         writeImageAsyncAndWait(false);

@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file.vlo;
 
 import javafx.scene.image.PixelFormat;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -229,7 +230,7 @@ public class ImageWorkHorse {
                 graphics.dispose();
             }
         } else {
-            int[] rawSourceImage = getPixelIntegerArray(sourceImage);
+            int[] rawSourceImage = getReadOnlyPixelIntegerArray(sourceImage);
             int[] rawTargetImage = getPixelIntegerArray(targetImage);
 
             int sourceImageWidth = sourceImage.getWidth();
@@ -287,7 +288,7 @@ public class ImageWorkHorse {
         awtImage = convertBufferedImageToFormat(awtImage, BufferedImage.TYPE_INT_ARGB);
 
         // Converting the BufferedImage to an IntBuffer.
-        int[] intArgbBuffer = getPixelIntegerArray(awtImage);
+        int[] intArgbBuffer = getReadOnlyPixelIntegerArray(awtImage);
 
         // Converting the IntBuffer to an Image.
         PixelFormat<IntBuffer> pixelFormat = PixelFormat.getIntArgbInstance();
@@ -301,7 +302,46 @@ public class ImageWorkHorse {
      * @return integerArray
      */
     public static int[] getPixelIntegerArray(BufferedImage awtImage) {
-        return awtImage != null ? ((DataBufferInt) awtImage.getRaster().getDataBuffer()).getData() : null;
+        if (awtImage == null)
+            return null;
+
+        DataBuffer buffer = awtImage.getRaster().getDataBuffer();
+        if (!(buffer instanceof DataBufferInt))
+            throw new IllegalArgumentException("The provided image is of type " + awtImage.getType() + ", and its backing buffer is " + Utils.getSimpleName(buffer) + ", not DataBufferInt.");
+
+        return ((DataBufferInt) buffer).getData();
+    }
+
+    /**
+     * Gets the integer array containing raw pixel data for the image. It is only guaranteed to be valid for reading.
+     * @param awtImage the image to edit directly
+     * @return integerArray
+     */
+    public static int[] getReadOnlyPixelIntegerArray(BufferedImage awtImage) {
+        if (awtImage == null)
+            return null;
+
+        DataBuffer buffer = awtImage.getRaster().getDataBuffer();
+
+        // If the image is BYTE_INDEXED, create the array directly.
+        if (awtImage.getType() == BufferedImage.TYPE_BYTE_INDEXED) {
+            ColorModel colorModel = awtImage.getColorModel();
+            if (!(buffer instanceof DataBufferByte))
+                throw new IllegalStateException("Expected BYTE_INDEXED image to use DataBufferByte, but had " + Utils.getSimpleName(buffer) + " instead.");
+
+            byte[] oldData = ((DataBufferByte) buffer).getData();
+            int[] newPixelArray = new int[oldData.length];
+            for (int i = 0; i < oldData.length; i++)
+                newPixelArray[i] = colorModel.getRGB(oldData[i]);
+
+            return newPixelArray;
+        }
+
+        // If it's not a DataBufferInt, convert the image to a format with one.
+        if (!(buffer instanceof DataBufferInt))
+            awtImage = convertBufferedImageToFormat(awtImage, BufferedImage.TYPE_INT_ARGB);
+
+        return getPixelIntegerArray(awtImage);
     }
 
     /**
@@ -327,5 +367,20 @@ public class ImageWorkHorse {
         }
 
         return newAwtImage;
+    }
+
+    /**
+     * Returns true iff the provided image contains even a single non-opaque pixel
+     * @param image the image to test
+     */
+    public static boolean hasAnyTransparentPixels(BufferedImage image) {
+        if (image == null)
+            return false;
+
+        for (int y = 0; y < image.getHeight(); y++)
+            for (int x = 0; x < image.getWidth(); x++)
+                if ((image.getRGB(x, y) & 0xFF000000) != 0xFF000000)
+                    return true;
+        return false;
     }
 }

@@ -8,7 +8,6 @@ import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.games.renderware.ui.RenderWareStreamEditorUIController;
 import net.highwayfrogs.editor.games.shared.basic.file.definition.IGameFileDefinition;
 import net.highwayfrogs.editor.gui.GameUIController;
-import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 
 import java.io.File;
@@ -39,7 +38,7 @@ public class RwGenericStreamFile extends RwGenericFile {
 
     @Override
     public Image getCollectionViewIcon() {
-        return ImageResource.GHIDRA_ICON_MULTIMEDIA_16.getFxImage();
+        return this.rwStreamFile.getBestChunkIcon();
     }
 
     @Override

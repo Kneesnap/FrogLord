@@ -21,6 +21,7 @@ import net.highwayfrogs.editor.utils.Utils;
 public class RwVersion {
     public static final int VERSION_3302 = 0x0C02FFFF; // Frogger Beyond
     public static final int VERSION_3403 = 0x1003FFFF; // Frogger's Adventures: The Rescue
+    public static final int VERSION_3602 = 0x1802FFFF;
     public static final int VERSION_3603 = 0x1803FFFF; // Frogger Ancient Shadow
 
     /**
@@ -110,7 +111,8 @@ public class RwVersion {
 
         // According to the 2007 archive.org backup of renderware.com, RW 3.7 was the last version of RenderWare Graphics.
         // I've never seen a minor version which isn't zero, but I'll leave some wiggle room.
-        return getVersion(version) == 3 && getMajorVersion(version) <= 7 && getMinorVersion(version) <= 4;
+        return getVersion(version) == 3 && getMajorVersion(version) <= 7 && getMinorVersion(version) <= 4
+                && (getBinaryVersion(version) == -1 || (getBinaryVersion(version) >= 0 && getBinaryVersion(version) <= 10));
     }
 
     /**
