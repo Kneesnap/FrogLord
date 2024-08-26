@@ -25,7 +25,8 @@ public enum RwStructType {
     COLOR_RGBA("RwColorRGBA", ImageResource.COLOR_WHEEL_16, false),
     TRIANGLE("RpTriangle", ImageResource.GOURAUD_TRIANGLE_16, false),
     TEXCOORDS("RwTexCoords", ImageResource.COORDINATE_SYSTEM_XY_16, false),
-    COLLISION_SECTOR("RpCollSector", ImageResource.GHIDRA_ICON_QUESTION_MARK_16, false);
+    COLLISION_SECTOR("RpCollSector", ImageResource.GHIDRA_ICON_QUESTION_MARK_16, false),
+    MATRIX("rwStreamMatrix", ImageResource.MATRIX_16, false);
 
     private final String displayName;
     private final ImageResource icon;

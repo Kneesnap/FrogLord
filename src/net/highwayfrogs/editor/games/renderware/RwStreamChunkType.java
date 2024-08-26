@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.system.TriFunction;
 
 /**
  * A registry of the stream chunk types which ship with RenderWare.
+ * Reference: <a href="https://gtamods.com/wiki/List_of_RW_section_IDs"/>
  * Created by Kneesnap on 8/11/2024.
  */
 @Getter
@@ -18,16 +19,27 @@ public enum RwStreamChunkType implements IRwStreamChunkType {
     STRUCT(0x01, "Struct", ImageResource.GHIDRA_ICON_TEXT_ALIGN_JUSTIFY_16, null), // Struct is handled separately.
     STRING(0x02, "String", ImageResource.GHIDRA_ICON_INFORMATION_16, RwStringChunk::new),
     EXTENSION(0x03, "Extension", ImageResource.GHIDRA_ICON_LOCATION_OUT_16, RwExtensionChunk::new),
-    TEXTURE(0x06, "Texture", ImageResource.PHOTO_ALBUM_15, RwTextureChunk::new, RwStreamChunkTypeDisplayImportance.LOW),
+    // 0x04 does not appear to exist, was it removed?
+    // TODO: 5 Camera
+    TEXTURE(0x06, "Texture", ImageResource.PHOTO_ALBUM_16, RwTextureChunk::new, RwStreamChunkTypeDisplayImportance.LOW),
     MATERIAL(0x07, "Material", ImageResource.PAINTERS_PALETTE_16, RwMaterialChunk::new),
     MATERIAL_LIST(0x08, "Material List", ImageResource.PAINTERS_PALETTE_16, RwMaterialListChunk::new),
     ATOMIC_SECTOR(0x09, "World Sector", ImageResource.TREASURE_MAP_16, RwAtomicSectorChunk::new),
     PLANE_SECTOR(0x0A, "Plane Sector", ImageResource.TREASURE_MAP_16, RwPlaneSectorChunk::new),
     WORLD(0x0B, "World", ImageResource.GHIDRA_ICON_INTERNET_16, RwWorldChunk::new, RwStreamChunkTypeDisplayImportance.HIGHEST),
+    // TODO: C Spline
+    MATRIX(0x0D, "Matrix", ImageResource.MATRIX_16, RwStreamMatrixChunk::new),
+    // TODO: E Frame List
+    // TODO: F Geometry
+    // *TODO: 10 Clump
+    // 0x11 does not exist, was it removed?
+    // TODO: 12 Light
     UNICODE_STRING(0x13, "Unicode String", ImageResource.GHIDRA_ICON_INFORMATION_16, RwUnicodeStringChunk::new),
-    IMAGE(0x18, "Image", ImageResource.PHOTO_ALBUM_15, RwImageChunk::new, RwStreamChunkTypeDisplayImportance.LOW),
-    PITEX_DICTIONARY(0x23, "Platform Independent Texture Dictionary", ImageResource.PHOTO_ALBUM_15, RwPlatformIndependentTextureDictionaryChunk::new, RwStreamChunkTypeDisplayImportance.LOW),
+    IMAGE(0x18, "Image", ImageResource.PHOTO_ALBUM_16, RwImageChunk::new, RwStreamChunkTypeDisplayImportance.LOW),
+    // *TODO: 1B Anim Animation
+    PITEX_DICTIONARY(0x23, "Platform Independent Texture Dictionary", ImageResource.PHOTO_ALBUM_16, RwPlatformIndependentTextureDictionaryChunk::new, RwStreamChunkTypeDisplayImportance.LOW),
     TOC(0x24, "Table of Contents", ImageResource.GHIDRA_ICON_PAPER_WITH_TEXT_16, RwTableOfContentsChunk::new);
+    // *TODO: 29, 2A, 2B
 
     private final int typeId;
     private final String displayName;
