@@ -60,7 +60,7 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
 
     @Override
     public Image getCollectionViewIcon() {
-        return ImageResource.GEOMETRIC_SHAPES_15.getFxImage();
+        return ImageResource.GEOMETRIC_SHAPES_16.getFxImage();
     }
 
     @Override

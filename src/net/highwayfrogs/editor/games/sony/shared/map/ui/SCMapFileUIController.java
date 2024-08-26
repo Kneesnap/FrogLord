@@ -17,7 +17,7 @@ public class SCMapFileUIController<TGameFile extends SCMapFile<TGameInstance>, T
     private Button viewButton;
 
     public SCMapFileUIController(TGameInstance instance) {
-        super(instance, "Map File", ImageResource.TREASURE_MAP_15.getFxImage());
+        super(instance, "Map File", ImageResource.TREASURE_MAP_16.getFxImage());
     }
 
     @Override

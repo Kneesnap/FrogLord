@@ -50,7 +50,7 @@ public class GreatQuestDummyArchiveFile extends GreatQuestArchiveFile {
 
     @Override
     public Image getCollectionViewIcon() {
-        return ImageResource.QUESTION_MARK_15.getFxImage();
+        return ImageResource.QUESTION_MARK_16.getFxImage();
     }
 
     @Override

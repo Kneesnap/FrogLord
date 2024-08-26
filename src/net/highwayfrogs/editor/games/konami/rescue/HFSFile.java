@@ -137,7 +137,7 @@ public class HFSFile extends HudsonGameFile implements IVirtualFileSystem {
 
     @Override
     public Image getCollectionViewIcon() {
-        return ImageResource.ZIPPED_FOLDER_15.getFxImage();
+        return ImageResource.ZIPPED_FOLDER_16.getFxImage();
     }
 
     @Override

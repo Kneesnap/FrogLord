@@ -28,6 +28,6 @@ public class HudsonDummyFile extends HudsonGameFile {
 
     @Override
     public Image getCollectionViewIcon() {
-        return ImageResource.QUESTION_MARK_15.getFxImage();
+        return ImageResource.QUESTION_MARK_16.getFxImage();
     }
 }

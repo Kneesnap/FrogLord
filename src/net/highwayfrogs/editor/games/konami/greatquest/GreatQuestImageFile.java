@@ -275,7 +275,7 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
 
     @Override
     public Image getCollectionViewIcon() {
-        return ImageResource.PHOTO_ALBUM_15.getFxImage();
+        return ImageResource.PHOTO_ALBUM_16.getFxImage();
     }
 
     @Override

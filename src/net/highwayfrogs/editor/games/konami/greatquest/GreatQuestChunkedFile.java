@@ -113,9 +113,9 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     @Override
     public Image getCollectionViewIcon() {
         if (getSceneManager() != null) {
-            return ImageResource.TREASURE_MAP_15.getFxImage();
+            return ImageResource.TREASURE_MAP_16.getFxImage();
         } else {
-            return ImageResource.ZIPPED_FOLDER_15.getFxImage();
+            return ImageResource.ZIPPED_FOLDER_16.getFxImage();
         }
     }
 
