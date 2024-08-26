@@ -72,4 +72,12 @@ public abstract class RwStruct extends SharedGameObject implements ICollectionVi
         propertyList.add("Struct Type", this.structType);
         return propertyList;
     }
+
+    /**
+     * This method allows struct objects to provide additional info about itself to the logger.
+     * @return loggerInfo
+     */
+    public String getLoggerInfo() {
+        return ",type=" + this.structType;
+    }
 }

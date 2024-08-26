@@ -12,7 +12,6 @@ import net.highwayfrogs.editor.games.renderware.RwVersion;
 import net.highwayfrogs.editor.games.renderware.chunks.RwImageChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwMaterialChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwTextureChunk;
-import net.highwayfrogs.editor.games.renderware.chunks.sector.IRwWorldProvider;
 import net.highwayfrogs.editor.games.renderware.mesh.world.RwWorldMesh;
 import net.highwayfrogs.editor.games.renderware.struct.RwStruct;
 import net.highwayfrogs.editor.games.renderware.struct.RwStructType;
@@ -56,6 +55,17 @@ public class RpTriangle extends RwStruct {
         }
     }
 
+    /**
+     * Loads the triangle using the RpGeometry format seen in bageomet.c
+     * @param reader the reader to read the data from
+     */
+    public void loadGeometryFormat(DataReader reader) {
+        this.vertexIndices[1] = reader.readUnsignedShortAsInt();
+        this.vertexIndices[0] = reader.readUnsignedShortAsInt();
+        this.materialIndex = reader.readUnsignedShortAsInt();
+        this.vertexIndices[2] = reader.readUnsignedShortAsInt();
+    }
+
     @Override
     public void save(DataWriter writer, int version) {
         if (!RwVersion.isAtLeast(version, RwVersion.VERSION_3602))
@@ -65,6 +75,17 @@ public class RpTriangle extends RwStruct {
             writer.writeUnsignedShort(this.vertexIndices[i]);
         if (RwVersion.isAtLeast(version, RwVersion.VERSION_3602))
             writer.writeUnsignedShort(this.materialIndex);
+    }
+
+    /**
+     * Saves the triangle using the RpGeometry format seen in bageomet.c
+     * @param writer the writer to write the data to
+     */
+    public void saveGeometryFormat(DataWriter writer) {
+        writer.writeUnsignedShort(this.vertexIndices[1]);
+        writer.writeUnsignedShort(this.vertexIndices[0]);
+        writer.writeUnsignedShort(this.materialIndex);
+        writer.writeUnsignedShort(this.vertexIndices[2]);
     }
 
     @Override
@@ -129,7 +150,7 @@ public class RpTriangle extends RwStruct {
         return new PSXShadeTextureDefinition(worldMesh.getShadedTextureManager(), polygonType, image, colors, uvs, false);
     }
 
-    public interface IRwGeometryMesh extends IGameObject, IBinarySerializable, IRwWorldProvider {
+    public interface IRwGeometryMesh extends IGameObject, IBinarySerializable {
         /**
          * Gets the mesh vertices, if vertices are present.
          */

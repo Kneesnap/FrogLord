@@ -14,7 +14,39 @@ He did not ask me to mention his courses, but I did it anyway.
 
 ```
 gouraud-triangle.png https://pikuma.com/blog/how-to-make-ps1-graphics)
+gouraud-triangle-list.png https://pikuma.com/blog/how-to-make-ps1-graphics, heavily modified)
 ```
+
+### Office Icons
+[License Source]()  
+**License:**  
+```
+Designer: Vexels
+Free with a link back to https://vexels.com
+Commercial usage: Not allowed
+```
+
+**Files:**
+```
+bulb-icon.png https://www.iconarchive.com/show/office-icons-by-vexels/bulb-icon.html
+```
+
+### Nuvola Icons - LGPL 2.1
+[License Source](https://github.com/NationalSecurityAgency/ghidra/blob/master/licenses/Modified_Nuvola_Icons_-_LGPL_2.1.txt)  
+[Ghidra SVG Folder](https://github.com/NationalSecurityAgency/ghidra/tree/master/GPL/Icons/ModifiedNuvola)  
+**License:**
+```
+These icons are modified icons from the Nuvola Icons package and are covered under the LGPL_2.1 
+license.  The svg files for these icons can be found in the GPL/icons/ModifiedNuvola folder.
+```
+
+**Files:**
+```
+nuvola\kblackbox_icon.png https://www.iconfinder.com/icons/1285/kblackbox_icon
+openFolder.png
+openSmallFolder.png
+```
+
 
 ### Crystal Clear Icon Set
 The original website is gone, but it seems the icons have been archived [here](https://www.iconarchive.com/show/crystal-clear-icons-by-everaldo.html).  

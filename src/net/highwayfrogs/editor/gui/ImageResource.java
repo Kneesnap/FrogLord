@@ -32,7 +32,9 @@ public enum ImageResource {
     QUESTION_MARK_32("icons/unknown.png"),
     ICON_MULTIMEDIA_32("icons/applications-multimedia32.png"),
     COLOR_WHEEL_32("icons/color_wheel.png"),
-    GOURAUD_TRIANGLE_32("icons/gouraud_triangle.png"),
+    GOURAUD_TRIANGLE_32("icons/gouraud-triangle.png"),
+    GOURAUD_TRIANGLE_LIST_32("icons/gouraud-triangle-list.png"),
+    GOURAUD_TRIANGLE_NO_OUTLINE_32("icons/gouraud-triangle-no-outline.png"),
     COORDINATE_SYSTEM_XY_32("icons/coordinate-system-xy.png"),
 
     // FrogLord
@@ -45,6 +47,12 @@ public enum ImageResource {
     FROGLORD_LOGO_MAIN_LARGE("graphics/logo-large.png"),
     FROGLORD_LOGO_MAIN_SQUARE_ICON("graphics/logo-small.png"),
     FROGLORD_LOGO_SQUARE_ICON("graphics/icon.png"),
+
+    // Nuvola
+    NUVOLA_BLACK_BOX_32("icons/nuvola/kblackbox_icon.png"),
+
+    // Vexels (Office Icons)
+    VEXELS_OFFICE_BULB_ICON_32("icons/vexels-office-icons/bulb-icon.png"),
 
     // Icons taken from Ghidra. See '/resources/icons/ghidra/LICENSE.MD' for licensing information.
     GHIDRA_ICON_MULTIMEDIA_16("icons/ghidra/applications-multimedia16.png"),
@@ -144,17 +152,21 @@ public enum ImageResource {
     WIN98_WINDOW_16("icons/win98se/16/window.png"),
 
     // Resized images:
-    PHOTO_ALBUM_16(ImageResource.PHOTO_ALBUM_32, 16),
-    TREASURE_MAP_16(ImageResource.TREASURE_MAP_32, 16),
-    GEOMETRIC_SHAPES_16(ImageResource.GEOMETRIC_SHAPES_32, 16),
-    ZIPPED_FOLDER_16(ImageResource.ZIPPED_FOLDER_32, 16),
-    QUESTION_MARK_16(ImageResource.QUESTION_MARK_32, 16),
-    MUSIC_NOTE_16(ImageResource.MUSIC_NOTE_32, 16),
+    SKELETON_JOINTS_16(SKELETON_JOINTS_32, 16),
+    PHOTO_ALBUM_16(PHOTO_ALBUM_32, 16),
+    TREASURE_MAP_16(TREASURE_MAP_32, 16),
+    GEOMETRIC_SHAPES_16(GEOMETRIC_SHAPES_32, 16),
+    ZIPPED_FOLDER_16(ZIPPED_FOLDER_32, 16),
+    QUESTION_MARK_16(QUESTION_MARK_32, 16),
+    MUSIC_NOTE_16(MUSIC_NOTE_32, 16),
     PAINTERS_PALETTE_16(PAINTERS_PALETTE_32, 16),
     COLOR_WHEEL_16(COLOR_WHEEL_32, 16),
     GOURAUD_TRIANGLE_16(GOURAUD_TRIANGLE_32, 16),
+    GOURAUD_TRIANGLE_LIST_16(GOURAUD_TRIANGLE_LIST_32, 16),
     COORDINATE_SYSTEM_XY_16(COORDINATE_SYSTEM_XY_32, 16),
-    GHIDRA_ICON_PAPER_WITH_TEXT_32(GHIDRA_ICON_PAPER_WITH_TEXT_16, 32);
+    GHIDRA_ICON_PAPER_WITH_TEXT_32(GHIDRA_ICON_PAPER_WITH_TEXT_16, 32),
+    NUVOLA_BLACK_BOX_16(NUVOLA_BLACK_BOX_32, 16),
+    VEXELS_OFFICE_BULB_ICON_16(VEXELS_OFFICE_BULB_ICON_32, 16);
 
     private final String resourcePath;
     private final ImageResource parentImageResource;

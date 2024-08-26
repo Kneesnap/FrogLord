@@ -83,7 +83,7 @@ public abstract class HudsonGameInstance extends BasicGameInstance {
         try {
             newGameFile.load(fileReader);
         } catch (Exception ex) {
-            Utils.handleError(getLogger(), ex, true, "Failed to load '%s'.", newGameFile.getDisplayName());
+            Utils.handleError(getLogger(), ex, true, "Failed to load '%s'. (Reader Index: %s)", newGameFile.getDisplayName(), Utils.toHexString(fileReader.getIndex()));
 
             // Setup dummy instead.
             newGameFile = new HudsonDummyFile(fileDefinition);

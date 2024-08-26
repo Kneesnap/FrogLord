@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.games.renderware;
 
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.NonNull;
@@ -21,7 +23,10 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.Proper
 import net.highwayfrogs.editor.utils.DataSizeUnit;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.ref.SoftReference;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -41,7 +46,7 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
     @Getter private byte[] rawReadData;
     @Getter private final List<RwStreamChunk> childChunks = new ArrayList<>();
     @Getter protected final List<IRwStreamChunkUIEntry> childUISections = new ArrayList<>();
-    @Getter private ChunkReadResult readResult;
+    @Getter private ChunkReadResult readResult = ChunkReadResult.READ_HAS_NOT_OCCURRED;
     private RwExtensionChunk extension;
     private transient SoftReference<Logger> logger;
 
@@ -89,7 +94,9 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
             }
         } catch (Throwable th) {
             this.readResult = ChunkReadResult.EXCEPTION;
-            Utils.handleError(getLogger(), th, false, "Failed to read RwStreamChunk data.");
+            Utils.handleError(getLogger(), th, false, "Failed to read RwStreamChunk data."
+                    + " (Parent Index: " + Utils.toHexString(reader.getIndex() + chunkReader.getIndex())
+                    + ", Local Index: " + Utils.toHexString(chunkReader.getIndex()) + ")");
         }
     }
 
@@ -114,6 +121,22 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
             writer.setIndex(dataWriteStartIndex);
             writer.writeAddressAt(chunkDataSizeAddress, 0);
         }
+    }
+
+    @Override
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        MenuItem menuItem = new MenuItem("Export Raw Chunk Data");
+        contextMenu.getItems().add(menuItem);
+        menuItem.setOnAction(event -> {
+            File outputFile = Utils.promptFileSave(getGameInstance(), "Specify the file to save the chunk data as...", "raw-chunk-data", "Raw RenderWare Stream", "rawrws");
+            if (outputFile != null) {
+                try {
+                    Files.write(outputFile.toPath(), getRawReadData());
+                } catch (IOException ex) {
+                    Utils.handleError(getLogger(), ex, true, "Failed to save file '%s'.", outputFile);
+                }
+            }
+        });
     }
 
     /**
@@ -449,9 +472,16 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
                 return ImageResource.GHIDRA_ICON_STOP_SIGN_X_16.getFxImage();
             case DID_NOT_REACH_END:
                 return ImageResource.GHIDRA_ICON_WARNING_TRIANGLE_YELLOW_16.getFxImage();
+            case READ_HAS_NOT_OCCURRED:
             case SUCCESSFUL:
             default:
-                return this.chunkType.getIcon().getFxImage();
+                ImageResource icon = this.chunkType.getIcon();
+                if (icon == null) {
+                    getLogger().warning("chunkType (" + this.chunkType + ") did not return a(n) ImageResource icon!");
+                    icon = ImageResource.GHIDRA_ICON_QUESTION_MARK_16;
+                }
+
+                return icon.getFxImage();
         }
     }
 
@@ -479,6 +509,7 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
     }
 
     public enum ChunkReadResult {
+        READ_HAS_NOT_OCCURRED, // Object initialized, but never read.
         SUCCESSFUL,
         DID_NOT_REACH_END,
         EXCEPTION

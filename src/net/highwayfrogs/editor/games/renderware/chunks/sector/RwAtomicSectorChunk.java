@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.*;
+import net.highwayfrogs.editor.games.renderware.chunks.RwGeometryChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwMaterialChunk;
 import net.highwayfrogs.editor.games.renderware.struct.RwStruct;
 import net.highwayfrogs.editor.games.renderware.struct.RwStructType;
@@ -55,7 +56,7 @@ public class RwAtomicSectorChunk extends RwSectorBase implements IRwGeometryMesh
         this.normals.clear();
         this.preLitColors.clear();
         this.texCoordSets.clear();
-        if (world.testFlagMask(RpWorldChunkInfo.FLAG_NATIVE))
+        if (world.testFlagMask(RwGeometryChunk.FLAG_NATIVE))
             return;
 
         // Read vertices.
@@ -67,7 +68,7 @@ public class RwAtomicSectorChunk extends RwSectorBase implements IRwGeometryMesh
             }
 
             // Read normals.
-            if (world.testFlagMask(RpWorldChunkInfo.FLAG_NORMALS)) {
+            if (world.testFlagMask(RwGeometryChunk.FLAG_NORMALS)) {
                 for (int i = 0; i < sectorInfo.getNumVertices(); i++) {
                     RpVertexNormal newNormal = new RpVertexNormal(getGameInstance());
                     newNormal.load(reader, version, dataLength);
@@ -76,7 +77,7 @@ public class RwAtomicSectorChunk extends RwSectorBase implements IRwGeometryMesh
             }
 
             // Read vertex pre-light colors.
-            if (world.testFlagMask(RpWorldChunkInfo.FLAG_PRELIT)) {
+            if (world.testFlagMask(RwGeometryChunk.FLAG_PRELIT)) {
                 for (int i = 0; i < sectorInfo.getNumVertices(); i++) {
                     RwColorRGBA newColor = new RwColorRGBA(getGameInstance());
                     newColor.load(reader, version);
@@ -127,7 +128,7 @@ public class RwAtomicSectorChunk extends RwSectorBase implements IRwGeometryMesh
 
     private void saveStructExtensionData(DataWriter writer, RpWorldSectorInfo sectorInfo) {
         RpWorldChunkInfo world = getWorld().getWorldInfo();
-        if (world.testFlagMask(RpWorldChunkInfo.FLAG_NATIVE))
+        if (world.testFlagMask(RwGeometryChunk.FLAG_NATIVE))
             return;
 
         // Write vertices.
@@ -135,7 +136,7 @@ public class RwAtomicSectorChunk extends RwSectorBase implements IRwGeometryMesh
             this.vertices.get(i).save(writer, getVersion());
 
         // Write normals.
-        if (world.testFlagMask(RpWorldChunkInfo.FLAG_NORMALS)) {
+        if (world.testFlagMask(RwGeometryChunk.FLAG_NORMALS)) {
             if (this.normals.size() != this.vertices.size())
                 throw new IllegalStateException("Cannot save " + this.normals.size() + " vertex normals, when there are a different number of vertices. (" + this.vertices.size() + ")");
 
@@ -144,7 +145,7 @@ public class RwAtomicSectorChunk extends RwSectorBase implements IRwGeometryMesh
         }
 
         // Write vertex pre-light colors.
-        if (world.testFlagMask(RpWorldChunkInfo.FLAG_PRELIT)) {
+        if (world.testFlagMask(RwGeometryChunk.FLAG_PRELIT)) {
             if (this.preLitColors.size() != this.vertices.size())
                 throw new IllegalStateException("Cannot save " + this.preLitColors.size() + " vertex colors, when there are a different number of vertices. (" + this.vertices.size() + ")");
 

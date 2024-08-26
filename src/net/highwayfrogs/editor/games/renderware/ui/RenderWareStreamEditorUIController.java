@@ -13,7 +13,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.GameInstance;
-import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.CollectionViewEntryTreeCell;
@@ -21,10 +20,7 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent;
 import net.highwayfrogs.editor.system.NameValuePair;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.io.File;
-import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -162,8 +158,8 @@ public class RenderWareStreamEditorUIController<TGameInstance extends GameInstan
      */
     private static class ContextMenuTreeCell extends CollectionViewEntryTreeCell<IRwStreamChunkUIEntry> {
         @Override
-        public void updateItem(IRwStreamChunkUIEntry streamChunk, boolean empty) {
-            super.updateItem(streamChunk, empty);
+        public void updateItem(IRwStreamChunkUIEntry uiEntry, boolean empty) {
+            super.updateItem(uiEntry, empty);
             if (empty) {
                 setOnContextMenuRequested(null);
                 return;
@@ -172,23 +168,7 @@ public class RenderWareStreamEditorUIController<TGameInstance extends GameInstan
             // NOTE: Make a more capable context menu system later.
             setOnContextMenuRequested(evt -> {
                 ContextMenu contextMenu = new ContextMenu();
-
-                if (streamChunk instanceof RwStreamChunk) {
-                    RwStreamChunk safeStreamChunk = (RwStreamChunk) streamChunk;
-                    MenuItem menuItem = new MenuItem("Export Raw Chunk Data");
-                    contextMenu.getItems().add(menuItem);
-                    menuItem.setOnAction(event -> {
-                        File outputFile = Utils.promptFileSave(streamChunk.getGameInstance(), "Specify the file to save the chunk data as...", "raw-chunk-data", "Raw RenderWare Stream", "rawrws");
-                        if (outputFile != null) {
-                            try {
-                                Files.write(outputFile.toPath(), safeStreamChunk.getRawReadData());
-                            } catch (IOException ex) {
-                                Utils.handleError(streamChunk.getLogger(), ex, true, "Failed to save file '%s'.", outputFile);
-                            }
-                        }
-                    });
-                }
-
+                uiEntry.setupRightClickMenuItems(contextMenu);
                 if (!contextMenu.getItems().isEmpty())
                     contextMenu.show((Node) evt.getSource(), evt.getScreenX(), evt.getScreenY());
             });

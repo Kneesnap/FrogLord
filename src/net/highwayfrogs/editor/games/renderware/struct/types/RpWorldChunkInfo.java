@@ -1,12 +1,12 @@
 package net.highwayfrogs.editor.games.renderware.struct.types;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.RwUtils;
 import net.highwayfrogs.editor.games.renderware.RwVersion;
+import net.highwayfrogs.editor.games.renderware.chunks.RwGeometryChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwMaterialChunk.RwSurfaceProperties;
 import net.highwayfrogs.editor.games.renderware.chunks.RwWorldChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.sector.RwAtomicSectorChunk;
@@ -32,20 +32,6 @@ public class RpWorldChunkInfo extends RwStruct {
     private int formatFlags; // Flags about the world. 0xggnn00gg, nn = num tex coords, gg = flags
     private final RwBBox boundingBox; // Null in early versions.
 
-    public static final int FLAG_TRISTRIP = Constants.BIT_FLAG_0; // Can be rendered as strips.
-    public static final int FLAG_POSITIONS = Constants.BIT_FLAG_1; // This mesh has positions. Is this even used?
-    public static final int FLAG_TEXTURED = Constants.BIT_FLAG_2; // This geometry has only one set of texture coordinates.
-    public static final int FLAG_PRELIT = Constants.BIT_FLAG_3; // Mesh has pre-light baked colors (on a per-vertex basis)
-    public static final int FLAG_NORMALS = Constants.BIT_FLAG_4; // Mesh has normals (on a per-vertex basis)
-    public static final int FLAG_LIGHT = Constants.BIT_FLAG_5; // Mesh should have lighting applied to it.
-    public static final int FLAG_MODULATE_MATERIAL_COLOR = Constants.BIT_FLAG_6; // Modulate material color with vertex colors (both pre-lit and lit).
-    public static final int FLAG_TEXTURED2 = Constants.BIT_FLAG_7; // Has at least 2 sets of texture coordinates.
-
-    public static final int FLAG_NATIVE = Constants.BIT_FLAG_24;
-    public static final int FLAG_NATIVE_INSTANCE = Constants.BIT_FLAG_25;
-    public static final int FLAG_SECTORS_OVERLAP = Constants.BIT_FLAG_30;
-    private static final int FLAG_VALIDATION_MASK = 0b01000011_11111111_00000000_11111111; // 0xggnn00gg, nn = num tex coords, gg = flags
-
     public RpWorldChunkInfo(GameInstance instance) {
         super(instance, RwStructType.WORLD);
         this.invWorldOrigin = new RwV3d(instance);
@@ -67,7 +53,7 @@ public class RpWorldChunkInfo extends RwStruct {
         this.numWorldSectors = reader.readInt();
         this.colSectorSize = reader.readInt();
         this.formatFlags = reader.readInt();
-        warnAboutInvalidBitFlags(this.formatFlags, FLAG_VALIDATION_MASK, "RpWorld formatFlags");
+        warnAboutInvalidBitFlags(this.formatFlags, RwGeometryChunk.FLAG_VALIDATION_MASK, "RpWorld formatFlags");
 
         if (RwVersion.isAtLeast(version, RwVersion.VERSION_3403)) // Version mentioned in comments.
             this.boundingBox.load(reader, version, byteLength - (reader.getIndex() - readStartIndex));
@@ -178,23 +164,6 @@ public class RpWorldChunkInfo extends RwStruct {
      * Gets the number of texture coordinate sets.
      */
     public int getTexCoordSetsCount() {
-        return getTexCoordSetsCount(this.formatFlags);
-    }
-
-    /**
-     * Gets the number of texture coordinates
-     * @param format the format flags to get the texCoordSets from
-     * @return texCoordSetsCount
-     */
-    public static int getTexCoordSetsCount(int format) {
-        if ((format & 0xFF0000) != 0) {
-            return (format & 0xFF0000) >> 16;
-        } else if ((format & FLAG_TEXTURED2) == FLAG_TEXTURED2) {
-            return 2;
-        } else if ((format & FLAG_TEXTURED) == FLAG_TEXTURED) {
-            return 1;
-        } else {
-            return 0;
-        }
+        return RwGeometryChunk.getTexCoordSetsCount(this.formatFlags);
     }
 }

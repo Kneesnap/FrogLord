@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.renderware.ui;
 
+import javafx.scene.control.ContextMenu;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
@@ -27,4 +28,10 @@ public interface IRwStreamChunkUIEntry extends IGameObject, IPropertyListCreator
      * Create any special UI to go along with this chunk.
      */
     GameUIController<?> makeEditorUI();
+
+    /**
+     * Sets up right-click menu items.
+     * @param contextMenu the menu to add the right-click menu items to.
+     */
+    void setupRightClickMenuItems(ContextMenu contextMenu);
 }

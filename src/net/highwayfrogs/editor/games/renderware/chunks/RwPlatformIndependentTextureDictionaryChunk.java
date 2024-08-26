@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.renderware.chunks;
 
+import javafx.scene.control.ContextMenu;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -244,6 +245,11 @@ public class RwPlatformIndependentTextureDictionaryChunk extends RwStreamChunk {
 
         @Override
         public abstract int getFlags();
+
+        @Override
+        public void setupRightClickMenuItems(ContextMenu contextMenu) {
+            // TODO: Future allow export / import.
+        }
     }
 
     @Getter

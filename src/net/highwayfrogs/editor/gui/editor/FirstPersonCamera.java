@@ -405,18 +405,18 @@ public class FirstPersonCamera extends Parent {
     public double getSpeedModifier(double defaultValue) {
         boolean isControlDown = this.inputManager.isKeyPressed(KeyCode.CONTROL);
         boolean isAltDown = this.inputManager.isKeyPressed(KeyCode.ALT);
-        return getSpeedModifier(isControlDown, isAltDown, defaultValue);
+        return getSpeedModifier(isAltDown, isControlDown, defaultValue);
     }
 
     /**
      * Utility function affording the user different levels of speed control through multipliers.
      */
-    public double getSpeedModifier(boolean isCtrlDown, boolean isAltDown, double defaultValue) {
+    public double getSpeedModifier(boolean isAltDown, boolean isCtrlDown, double defaultValue) {
         double multiplier = 1;
 
-        if (isCtrlDown) {
+        if (isAltDown) {
             multiplier = this.camSpeedDownMultiplierProperty.get();
-        } else if (isAltDown) {
+        } else if (isCtrlDown) {
             multiplier = this.camSpeedUpMultiplierProperty.get();
         }
 

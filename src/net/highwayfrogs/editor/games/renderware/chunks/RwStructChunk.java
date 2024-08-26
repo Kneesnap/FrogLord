@@ -99,6 +99,6 @@ public class RwStructChunk<TStruct extends RwStruct> extends RwStreamChunk {
 
     @Override
     public String getLoggerInfo() {
-        return super.getLoggerInfo() + (this.value != null ? ",type=" + this.value.getStructType() : "");
+        return super.getLoggerInfo() + (this.value != null ? this.value.getLoggerInfo() : "");
     }
 }
