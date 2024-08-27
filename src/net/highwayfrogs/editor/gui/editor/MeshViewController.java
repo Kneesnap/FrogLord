@@ -559,6 +559,22 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     }
 
     /**
+     * Sets up the default inverse camera.
+     */
+    protected void setupDefaultInverseCamera() {
+        setupDefaultInverseCamera(0, 0, 0, 25);
+    }
+
+    /**
+     * Sets up the default inverse camera.
+     */
+    protected void setupDefaultInverseCamera(double xPos, double yPos, double zPos, double size) {
+        getFirstPersonCamera().setInvertY(true);
+        getFirstPersonCamera().setPos(xPos, yPos + size, zPos);
+        getFirstPersonCamera().setCameraLookAt(xPos, yPos, zPos + size);
+    }
+
+    /**
      * Bind mesh scene controls to the provided MeshView.
      * @param controller the controller to bind the controls from
      * @param meshView the meshView to bind the controls to

@@ -88,6 +88,7 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
 
     @Override
     protected void setDefaultCameraPosition() {
+        setupDefaultInverseCamera();
         // TODO: Come up with default camera position.
     }
 

@@ -1,5 +1,9 @@
 package net.highwayfrogs.editor.games.renderware.chunks;
 
+import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.control.Button;
+import javafx.scene.layout.VBox;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -8,10 +12,14 @@ import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.games.renderware.RwVersion;
+import net.highwayfrogs.editor.games.renderware.mesh.clump.material.RwClumpCombinedMesh;
+import net.highwayfrogs.editor.games.renderware.mesh.clump.material.RwClumpCombinedMeshController;
 import net.highwayfrogs.editor.games.renderware.struct.RwStruct;
 import net.highwayfrogs.editor.games.renderware.struct.RwStructType;
 import net.highwayfrogs.editor.games.renderware.struct.types.RwStructInt32;
+import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.editor.MeshViewController;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -107,6 +115,11 @@ public class RwClumpChunk extends RwStreamChunk {
         return propertyList;
     }
 
+    @Override
+    public GameUIController<?> makeEditorUI() {
+        return new RwClumpUIController(this);
+    }
+
     /**
      * Represents RpClumpChunkInfo as defined in baclump.h.
      */
@@ -174,6 +187,31 @@ public class RwClumpChunk extends RwStreamChunk {
         public RwClumpCamera(RwStreamFile streamFile, int version, RwStreamChunk parentChunk, int frameIndex) {
             super(streamFile, version, parentChunk);
             this.frameIndex = frameIndex;
+        }
+    }
+
+    @SuppressWarnings("FieldCanBeLocal")
+    public static class RwClumpUIController extends GameUIController<GameInstance> {
+        private final Button viewButton;
+        private final RwClumpChunk clump;
+
+        public RwClumpUIController(RwClumpChunk clump) {
+            super(clump.getGameInstance());
+            this.clump = clump;
+            this.viewButton = new Button("View Model");
+            this.viewButton.setOnAction(evt -> MeshViewController.setupMeshViewer(getGameInstance(), new RwClumpCombinedMeshController(), new RwClumpCombinedMesh(this.clump)));
+            loadController(new VBox(3, this.viewButton));
+            // TODO: Can we include a 3D preview within this area. Would be nice if there was an extra-simple 3D viewer.
+        }
+
+        @Override
+        public VBox getRootNode() {
+            return (VBox) super.getRootNode();
+        }
+
+        @Override
+        protected void onControllerLoad(Node rootNode) {
+            getRootNode().setAlignment(Pos.CENTER);
         }
     }
 }

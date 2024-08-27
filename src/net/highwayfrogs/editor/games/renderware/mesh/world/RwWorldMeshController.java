@@ -88,7 +88,7 @@ public class RwWorldMeshController extends MeshViewController<RwWorldCombinedMes
 
     @Override
     protected void setDefaultCameraPosition() {
-        // TODO: Come up with default camera position.
+        setupDefaultInverseCamera();
     }
 
     @Override

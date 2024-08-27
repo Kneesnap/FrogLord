@@ -12,11 +12,11 @@ import net.highwayfrogs.editor.games.renderware.RwVersion;
 import net.highwayfrogs.editor.games.renderware.chunks.RwImageChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwMaterialChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwTextureChunk;
-import net.highwayfrogs.editor.games.renderware.mesh.world.RwWorldMesh;
 import net.highwayfrogs.editor.games.renderware.struct.RwStruct;
 import net.highwayfrogs.editor.games.renderware.struct.RwStructType;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.mesh.PSXShadedDynamicMesh;
 import net.highwayfrogs.editor.utils.IBinarySerializable;
 import net.highwayfrogs.editor.utils.IGameObject;
 
@@ -106,7 +106,7 @@ public class RpTriangle extends RwStruct {
      * @param worldMesh the mesh to create the shade definition for
      * @param enableGouraudShading Whether to enable gouraud shading.
      */
-    public PSXShadeTextureDefinition createPolygonShadeDefinition(RwWorldMesh worldMesh, boolean enableGouraudShading) {
+    public PSXShadeTextureDefinition createPolygonShadeDefinition(PSXShadedDynamicMesh<RpTriangle, ?> worldMesh, boolean enableGouraudShading) {
         PSXPolygonType polygonType;
         CVector[] colors;
         if (!enableGouraudShading || this.parentMesh.getPreLitColors().isEmpty()) {

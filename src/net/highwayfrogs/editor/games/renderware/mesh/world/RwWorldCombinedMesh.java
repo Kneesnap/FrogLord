@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshCollection;
 
 /**
- * Represents a map mesh for RenderWare with the .
+ * Represents a map mesh for RenderWare with the REPEAT texture map.
  * The main mesh (this) does not actually contain any mesh data itself despite having the capacity for it, because in order to accurately render texture coordinates, we needed texture repeating, which meant no texture atlas.
  * Created by Kneesnap on 8/23/2024.
  */
