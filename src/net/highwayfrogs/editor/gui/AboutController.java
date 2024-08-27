@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.gui;
 
+import com.sun.javafx.runtime.VersionInfo;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -28,9 +29,9 @@ public class AboutController extends GameUIController<GameInstance> {
     @Override
     protected void onControllerLoad(Node rootNode) {
         versionLabel.setText("FrogLord " + Constants.VERSION);
-        javaVersionLabel.setText("Java Version: " + System.getProperty("java.runtime.version"));
+        javaVersionLabel.setText("Java Version: " + System.getProperty("java.runtime.version") + ", JavaFX: " + VersionInfo.getVersion());
         javaRuntimeName.setText("Java Runtime: " + System.getProperty("java.runtime.name"));
-        memoryLabel.setText("Memory Info: " + DataSizeUnit.formatSize(Runtime.getRuntime().totalMemory()) + " Total, " + DataSizeUnit.formatSize(Runtime.getRuntime().maxMemory()) + " Max");
+        memoryLabel.setText("Memory Info: " + DataSizeUnit.formatSize(Runtime.getRuntime().totalMemory()) + ", Total: " + DataSizeUnit.formatSize(Runtime.getRuntime().maxMemory()) + " Max");
     }
 
     @Override

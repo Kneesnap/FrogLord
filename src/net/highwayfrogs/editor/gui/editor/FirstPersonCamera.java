@@ -459,9 +459,9 @@ public class FirstPersonCamera extends Parent {
     public double getSpeedModifier(boolean isAltDown, boolean isCtrlDown, double defaultValue) {
         double multiplier = 1;
 
-        if (isAltDown) {
+        if (isCtrlDown) {
             multiplier = this.camSpeedDownMultiplierProperty.get();
-        } else if (isCtrlDown) {
+        } else if (isAltDown) { // This beeps on Java 8, but the beeping is fixed in JavaFX 11+
             multiplier = this.camSpeedUpMultiplierProperty.get();
         }
 
