@@ -204,6 +204,30 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
     }
 
     /**
+     * Reads any RwStreamChunk from the reader, with this chunk as the target chunk's parent.
+     * @param reader the reader to read the chunk data from
+     * @return newChunk
+     */
+    protected RwStreamChunk readChunk(DataReader reader) {
+        return readChunk(reader, true);
+    }
+
+    /**
+     * Reads any RwStreamChunk from the reader, with this chunk as the target chunk's parent.
+     * @param reader the reader to read the chunk data from
+     * @param showInUI Whether it should be shown in the UI. This is rarely false.
+     * @return newChunk
+     */
+    protected RwStreamChunk readChunk(DataReader reader, boolean showInUI) {
+        if (this.streamFile == null)
+            throw new IllegalStateException("Cannot read a stream chunk because the current chunk's stream file is null, meaning we cannot resolve which chunk registry to use.");
+
+        RwStreamChunk newChunk = this.streamFile.getChunkTypeRegistry().readChunk(reader, this);
+        registerChildChunk(newChunk, showInUI);
+        return newChunk;
+    }
+
+    /**
      * Reads an RwStreamChunk from the reader.
      * If an unexpected chunk is loaded instead, an IllegalArgumentException will be thrown.
      * @param reader the reader to read the chunk data from
