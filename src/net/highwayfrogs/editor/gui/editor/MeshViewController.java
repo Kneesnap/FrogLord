@@ -46,7 +46,7 @@ import java.util.logging.Logger;
 @Getter
 public abstract class MeshViewController<TMesh extends DynamicMesh> implements Initializable {
     // Useful constants and settings
-    public static final double MAP_VIEW_NEAR_CLIP = 0.1;
+    public static final double MAP_VIEW_NEAR_CLIP = 1; // The closer this value is to 0.0, the worse z-fighting gets. Source: https://www.khronos.org/opengl/wiki/Depth_Buffer_Precision
     public static final double MAP_VIEW_FAR_CLIP = 2000.0;
     public static final double MAP_VIEW_FOV = 60.0;
 
