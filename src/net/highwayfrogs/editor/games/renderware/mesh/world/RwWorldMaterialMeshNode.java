@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.games.renderware.struct.types.RpTriangle;
 import net.highwayfrogs.editor.games.renderware.struct.types.RwTexCoords;
 import net.highwayfrogs.editor.games.renderware.struct.types.RwV3d;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
+import net.highwayfrogs.editor.system.math.Vector2f;
 
 import java.util.List;
 
@@ -13,6 +14,10 @@ import java.util.List;
  * Created by Kneesnap on 8/23/2024.
  */
 public class RwWorldMaterialMeshNode extends DynamicMeshAdapterNode<RwAtomicSectorChunk> {
+    private int texCoordSetIndex;
+
+    private static final Vector2f[] DEFAULT_TEXCOORDS = {Vector2f.ZERO, Vector2f.UNIT_X, Vector2f.ONE};
+
     public RwWorldMaterialMeshNode(RwWorldMaterialMesh mesh) {
         super(mesh);
     }
@@ -52,26 +57,28 @@ public class RwWorldMaterialMeshNode extends DynamicMeshAdapterNode<RwAtomicSect
 
         // Write face data.
         int vtxStartIndex = entry.getVertexStartIndex();
-        int texCoordInterval = worldSector.getTexCoordSets().size();
         List<RpTriangle> triangles = worldSector.getTriangles();
         int triangleIndex = 0;
+        List<RwTexCoords> texCoordSet = getTexCoordSet(worldSector);
         for (int i = 0; i < triangles.size(); i++) {
             RpTriangle triangle = triangles.get(i);
             if (worldSector.getMaterialListBaseIndex() + triangle.getMaterialIndex() != getMesh().getRwMaterialIndex())
                 continue;
 
-            for (int j = 0; j < texCoordInterval; j++) {
-                List<RwTexCoords> texCoordSet = worldSector.getTexCoordSets().get(j);
-                for (int k = 0; k < triangle.getVertexIndices().length; k++) {
-                    RwTexCoords texCoords = texCoordSet.get(triangle.getVertexIndices()[k]);
+            for (int j = 0; j < triangle.getVertexIndices().length; j++) {
+                if (texCoordSet != null) {
+                    RwTexCoords texCoords = texCoordSet.get(triangle.getVertexIndices()[j]);
                     entry.addTexCoordValue(texCoords.getU(), texCoords.getV());
+                } else {
+                    Vector2f texCoord = DEFAULT_TEXCOORDS[j];
+                    entry.addTexCoordValue(texCoord.getX(), texCoord.getY());
                 }
             }
 
-            int uvStartIndex = entry.getTexCoordStartIndex() + (triangleIndex++ * RpTriangle.VERTEX_COUNT * texCoordInterval);
+            int uvStartIndex = entry.getTexCoordStartIndex() + (triangleIndex++ * RpTriangle.VERTEX_COUNT);
             entry.addFace(vtxStartIndex + triangle.getVertexIndices()[0], uvStartIndex,
-                    vtxStartIndex + triangle.getVertexIndices()[1], uvStartIndex + texCoordInterval,
-                    vtxStartIndex + triangle.getVertexIndices()[2], uvStartIndex + (2 * texCoordInterval));
+                    vtxStartIndex + triangle.getVertexIndices()[1], uvStartIndex + 1,
+                    vtxStartIndex + triangle.getVertexIndices()[2], uvStartIndex + 2);
         }
 
         return entry;
@@ -85,28 +92,41 @@ public class RwWorldMaterialMeshNode extends DynamicMeshAdapterNode<RwAtomicSect
 
     @Override
     public void updateTexCoord(DynamicMeshTypedDataEntry entry, int localTexCoordIndex) {
-        /*RwAtomicSectorChunk atomicSector = entry.getDataSource();
-        int faceCount = atomicSector.getTriangles().size();
-        int texCoordInterval = atomicSector.getTexCoordSets().size();
-        if (localTexCoordIndex < 0 || localTexCoordIndex >= RpTriangle.VERTEX_COUNT * faceCount * texCoordInterval)
-            throw new IllegalArgumentException("Unsupported local texCoordIndex " + localTexCoordIndex);
+        RwAtomicSectorChunk atomicSector = entry.getDataSource();
 
         // Calculate index information.
-        int texCoordSetIndex = (localTexCoordIndex % texCoordInterval);
-        int localVertexIndex = (localTexCoordIndex % (texCoordInterval * RpTriangle.VERTEX_COUNT)) / texCoordInterval;
-        int triangleIndex = localTexCoordIndex / (texCoordInterval * RpTriangle.VERTEX_COUNT);
-        List<RwTexCoords> texCoordSet = atomicSector.getTexCoordSets().get(texCoordSetIndex);
-        // localTexCoordIndex should be (triangleIndex * RpTriangle.VERTEX_COUNT * texCoordInterval) + (localVertexIndex * texCoordInterval) + texCoordSetIndex;
+        int localVertexIndex = (localTexCoordIndex % RpTriangle.VERTEX_COUNT);
+        int bufferTriangleIndex = localTexCoordIndex / RpTriangle.VERTEX_COUNT;
 
-        // Calculate material texture.
-        RpTriangle triangle = atomicSector.getTriangles().get(triangleIndex);
-        PSXShadeTextureDefinition shadeDefinition = getMesh().getShadedTextureManager().getShadedTexture(triangle);
-        AtlasTexture materialTexture = getMesh().getTextureAtlas().getTextureFromSourceOrFallback(shadeDefinition);
+        RpTriangle triangle = null;
+        for (int i = 0; i < atomicSector.getTriangles().size(); i++) {
+            triangle = atomicSector.getTriangles().get(i);
+            if (atomicSector.getMaterialListBaseIndex() + triangle.getMaterialIndex() != getMesh().getRwMaterialIndex())
+                continue;
+
+            if (bufferTriangleIndex-- <= 0)
+                break;
+        }
+
+        if (triangle == null)
+            return;
 
         // Write updated texCoord.
-        RwTexCoords texCoords = texCoordSet.get(triangle.getVertexIndices()[localVertexIndex]);
-        this.tempVector.setXY(texCoords.getU() % 1F, texCoords.getV() % 1F);
-        Vector2f localUv = getMesh().getTextureAtlas().getUV(materialTexture, this.tempVector, this.tempVector);
-        entry.writeTexCoordValue(localTexCoordIndex, localUv);*/ // TODO: This is kinda busted.
+        List<RwTexCoords> texCoordSet = getTexCoordSet(atomicSector);
+        int targetVertexId = triangle.getVertexIndices()[localVertexIndex];
+        if (texCoordSet != null && texCoordSet.size() > targetVertexId) {
+            RwTexCoords texCoords = texCoordSet.get(targetVertexId);
+            entry.writeTexCoordValue(localTexCoordIndex, texCoords.getU(), texCoords.getV());
+        } else {
+            Vector2f texCoord = DEFAULT_TEXCOORDS[localVertexIndex];
+            entry.writeTexCoordValue(localTexCoordIndex, texCoord.getX(), texCoord.getY());
+        }
+    }
+
+    private List<RwTexCoords> getTexCoordSet(RwAtomicSectorChunk atomicSector) {
+        if (atomicSector == null || atomicSector.getTexCoordSets().isEmpty())
+            return null;
+
+        return atomicSector.getTexCoordSets().get(Math.min(this.texCoordSetIndex, atomicSector.getTexCoordSets().size() - 1));
     }
 }
