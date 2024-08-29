@@ -18,6 +18,10 @@ import java.util.List;
  * So, while most models will display fine, others such as water models must use a more sophisticated renderer.
  * TODO: Allow morphing.
  * TODO: Preview texCoord animations.
+ * TODO: Can we get 3D models to show up in levels?
+ * TODO: Figure out how to properly handle frames and atomics, as I think they are a key to properly setting things up.
+ *  -> Are models duplicated for each level?
+ * TODO: Texture resolution should be a little more flexible, there are tons of models and maps which don't resolve textures that I think are registered, just not in the limited places FrogLord checks.
  * Created by Kneesnap on 8/26/2024.
  */
 public class RwClumpMeshNode extends DynamicMeshAdapterNode<RwGeometryChunk> {

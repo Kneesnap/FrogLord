@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.zone.FroggerMapCameraZone;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.zone.FroggerMapZone;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 
@@ -81,5 +82,21 @@ public class FroggerMapFilePacketZone extends FroggerMapFilePacket {
     public PropertyList addToPropertyList(PropertyList propertyList) {
         propertyList.add("Zone Count", this.zones.size());
         return propertyList;
+    }
+
+    /**
+     * Finds the first camera zone which contains the given position.
+     * @param gridX the x grid coordinate to find
+     * @param gridZ the z grid coordinate to find
+     * @return cameraZone, if one exists
+     */
+    public FroggerMapCameraZone getCameraZone(int gridX, int gridZ) {
+        for (int i = 0; i < this.zones.size(); i++) {
+            FroggerMapZone mapZone = this.zones.get(i);
+            if (mapZone instanceof FroggerMapCameraZone && mapZone.contains(gridX, gridZ))
+                return (FroggerMapCameraZone) mapZone;
+        }
+
+        return null;
     }
 }

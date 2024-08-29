@@ -344,12 +344,11 @@ public class FirstPersonCamera extends Parent {
         // Extract camera orientation angles from the affine transformation into the camera's internal yaw, pitch, roll (not currently used).
         double yaw, pitch;
         if (this.invertY) {
-            yaw = Math.toDegrees(Math.atan2(this.affineXform.getMzx(), -this.affineXform.getMzz())); // NOTE: Semi-broken when Y is not zero.
+            yaw = Math.toDegrees(Math.atan2(this.affineXform.getMzx(), -this.affineXform.getMzz()));
             pitch = Math.toDegrees(Math.atan2(Math.sqrt(deltaPos.getX() * deltaPos.getX() + deltaPos.getZ() * deltaPos.getZ()), -deltaPos.getY()) + (Math.PI / 2));
         } else {
             yaw = Math.toDegrees(Math.atan2(-this.affineXform.getMzx(), this.affineXform.getMzz()));
-            // pitch = Math.toDegrees(Math.asin(this.affineXform.getMzy())); // This works mostly but has a few wonky angles.
-            pitch = Math.toDegrees(Math.atan2(Math.sqrt(deltaPos.getX() * deltaPos.getX() + deltaPos.getZ() * deltaPos.getZ()), deltaPos.getY()) - (Math.PI / 2)); // This is slightly better on SUBM.MAP
+            pitch = Math.toDegrees(Math.asin(this.affineXform.getMzy()));
         }
 
         setPitchAndYaw(pitch, yaw);

@@ -114,7 +114,10 @@ public abstract class FroggerMapZone extends SCGameData<FroggerGameInstance> {
      * @return contains
      */
     public boolean contains(int gridX, int gridZ) {
-        return getRegion(gridX, gridZ) != null;
+        if (this.regions.size() > 0)
+            return getRegion(gridX, gridZ) != this.boundingRegion;
+
+        return this.boundingRegion.contains(gridX, gridZ);
     }
 
     /**
