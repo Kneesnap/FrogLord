@@ -118,6 +118,7 @@ public class AtlasBuilderTextureSource implements ITextureSource {
         this.atlas.prepareImageGeneration();
 
         // Create and submit tasks.
+        this.atlas.startBulkOperations();
         while (THREAD_COUNT > this.asyncWriteTasks.size())
             this.asyncWriteTasks.add(new AsyncTaskWriteTexture(this.writeTaskState));
 
@@ -127,6 +128,7 @@ public class AtlasBuilderTextureSource implements ITextureSource {
 
         // Write textures to the atlas on the main thread.
         this.writeTaskState.writeTextures();
+        this.atlas.endBulkOperations();
 
         // NOTE:
         // We tried to build a large BufferedImage then write it to the WritableImage, but that was significantly slower than just writing directly to the FX image.
