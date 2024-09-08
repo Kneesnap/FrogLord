@@ -32,6 +32,7 @@ import java.util.List;
 
 /**
  * Manages map collision displays in 3D space.
+ * TODO: I think we should switch to using flat colored textures for collision, BUT, using lighting to highlight geometry. (Parallel light approximation / real directional light in later FX)
  * Created by Kneesnap on 4/17/2024.
  */
 public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCResourceTriMesh, MeshView> {

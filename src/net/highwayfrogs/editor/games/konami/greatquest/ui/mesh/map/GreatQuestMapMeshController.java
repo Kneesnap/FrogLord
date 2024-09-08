@@ -26,6 +26,7 @@ import net.highwayfrogs.editor.utils.Utils;
 public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMapMesh> {
     private GreatQuestMapMeshCollection meshViewCollection;
     private static final double DEFAULT_FAR_CLIP = 1000; // Far enough away to see the skybox.
+    private static final double DEFAULT_NEAR_CLIP = .1; // Great Quest needs a fairly small near clip as the map geometry is shown at a small scale.
     private static final double DEFAULT_MOVEMENT_SPEED = 25;
 
     private static final PhongMaterial VERTEX_MATERIAL = Utils.makeUnlitSharpMaterial(Color.YELLOW);
@@ -38,6 +39,7 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
         this.meshViewCollection.setMesh(getMesh().getActualMesh());
 
         super.setupBindings(subScene3D, meshView);
+        getFirstPersonCamera().getCamera().setNearClip(DEFAULT_NEAR_CLIP);
         getFirstPersonCamera().getCamera().setFarClip(DEFAULT_FAR_CLIP);
         getFirstPersonCamera().setDefaultMoveSpeed(DEFAULT_MOVEMENT_SPEED);
         getComboBoxMeshCullFace().setValue(CullFace.NONE); // Great Quest has no back-face culling.
