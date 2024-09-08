@@ -36,12 +36,12 @@ public class FroggerMapMeshNode extends SCPolygonAdapterNode<FroggerMapPolygon> 
         // Setup polygons.
         // First, setup the non-transparent polygons.
         for (FroggerMapPolygon polygon : getMap().getPolygonPacket().getPolygons())
-            if (!polygon.isSemiTransparent())
+            if (polygon.isFullyOpaque())
                 this.add(polygon);
 
         // Second, add the transparent polygons.
         for (FroggerMapPolygon polygon : getMap().getPolygonPacket().getPolygons())
-            if (polygon.isSemiTransparent())
+            if (!polygon.isFullyOpaque())
                 this.add(polygon);
     }
 

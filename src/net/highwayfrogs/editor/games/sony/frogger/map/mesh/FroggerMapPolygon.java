@@ -280,6 +280,17 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
     }
 
     /**
+     * Tests if this polygon is fully opaque, all pixels having maximum alpha/opacity.
+     */
+    public boolean isFullyOpaque() {
+        GameImage image = getTexture();
+        if (image != null && image.testFlag(GameImage.FLAG_BLACK_IS_TRANSPARENT))
+            return false;
+
+        return !isSemiTransparent();
+    }
+
+    /**
      * Gets the UV horizontal offset applied from map animation.
      * @param animation the animation to apply the offset from
      * @param frame the animation frame to apply

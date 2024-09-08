@@ -37,12 +37,12 @@ public class SCMapMeshNode extends SCPolygonAdapterNode<SCMapPolygon> {
         SCMapPolygonPacket<?> polygonPacket = getMap().getPolygonPacket();
         ISCLevelTableEntry levelTableEntry = getMap().getLevelTableEntry();
         for (SCMapPolygon polygon : polygonPacket.getPolygons())
-            if (!polygon.isSemiTransparent(levelTableEntry))
+            if (polygon.isFullyOpaque(levelTableEntry))
                 this.add(polygon);
 
         // Second, add the transparent polygons.
         for (SCMapPolygon polygon : polygonPacket.getPolygons())
-            if (polygon.isSemiTransparent(levelTableEntry))
+            if (!polygon.isFullyOpaque(levelTableEntry))
                 this.add(polygon);
     }
 

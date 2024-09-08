@@ -132,6 +132,17 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
     }
 
     /**
+     * If the polygon renders as fully opaque, this will return true.
+     */
+    public boolean isFullyOpaque(MediEvilLevelTableEntry levelTableEntry) {
+        GameImage image = getTexture(levelTableEntry);
+        if (image != null && (image.testFlag(GameImage.FLAG_TRANSLUCENT) || image.testFlag(GameImage.FLAG_BLACK_IS_TRANSPARENT)))
+            return false;
+
+        return (this.flags & FLAG_SEMI_TRANSPARENT) != FLAG_SEMI_TRANSPARENT;
+    }
+
+    /**
      * Get the type of PSX polygon.
      */
     public PSXPolygonType getPolygonType() {

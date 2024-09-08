@@ -196,6 +196,17 @@ public class SCMapPolygon extends SCGameData<SCGameInstance> {
     }
 
     /**
+     * If the polygon renders as fully opaque, this will return true.
+     */
+    public boolean isFullyOpaque(ISCLevelTableEntry levelTableEntry) {
+        GameImage image = getTexture(levelTableEntry);
+        if (image != null && image.testFlag(GameImage.FLAG_BLACK_IS_TRANSPARENT))
+            return false;
+
+        return !isSemiTransparent(levelTableEntry);
+    }
+
+    /**
      * Get the type of PSX polygon.
      */
     public PSXPolygonType getPolygonType() {

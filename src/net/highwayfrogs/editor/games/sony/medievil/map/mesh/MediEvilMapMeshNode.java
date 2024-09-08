@@ -31,12 +31,12 @@ public class MediEvilMapMeshNode extends SCPolygonAdapterNode<MediEvilMapPolygon
         // First, setup the non-transparent polygons.
         MediEvilLevelTableEntry levelTableEntry = getMap().getLevelTableEntry();
         for (MediEvilMapPolygon polygon : getMap().getGraphicsPacket().getPolygons())
-            if (!polygon.isSemiTransparent(levelTableEntry))
+            if (polygon.isFullyOpaque(levelTableEntry))
                 this.add(polygon);
 
         // Second, add the transparent polygons.
         for (MediEvilMapPolygon polygon : getMap().getGraphicsPacket().getPolygons())
-            if (polygon.isSemiTransparent(levelTableEntry))
+            if (!polygon.isFullyOpaque(levelTableEntry))
                 this.add(polygon);
     }
 
