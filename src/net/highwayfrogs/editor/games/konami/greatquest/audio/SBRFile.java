@@ -283,6 +283,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         @Override
         public PropertyList addToPropertyList(PropertyList propertyList) {
             propertyList.add("Wave ID", getWaveID());
+            propertyList.add("Wave Flags", Utils.toHexString(getFlags()));
             propertyList.add("Wave Size", getWaveSize() + " (" + DataSizeUnit.formatSize(getWaveSize()) + ")");
             return propertyList;
         }
@@ -513,7 +514,6 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         @Override
         public PropertyList addToPropertyList(PropertyList propertyList) {
             propertyList = super.addToPropertyList(propertyList);
-            propertyList.add("Flags", Utils.toHexString(this.flags));
             propertyList.add("Unknown Value", this.unknownValue);
             return propertyList;
         }
