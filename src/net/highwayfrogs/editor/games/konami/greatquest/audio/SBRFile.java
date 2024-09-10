@@ -152,7 +152,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
 
     @Override
     public GameUIController<?> makeEditorUI() {
-        return DefaultFileEditorUISoundListComponent.loadEditor(getGameInstance(), new DefaultFileEditorUISoundListComponent<>(getGameInstance(), getFileName()), this);
+        return DefaultFileEditorUISoundListComponent.loadEditor(getGameInstance(), new DefaultFileEditorUISoundListComponent<>(getGameInstance()), this);
     }
 
     @Override
