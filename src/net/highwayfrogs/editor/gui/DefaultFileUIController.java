@@ -31,6 +31,7 @@ public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFi
     @FXML private ImageView iconImageView;
     @FXML private Label fileNameLabel;
     private TGameFile file;
+    private Class<? extends TGameFile> fileClass;
     private final PropertyListViewerComponent<TGameInstance> propertyListViewer;
 
     private static final String TEMPLATE_URL = "edit-file-default-template";
@@ -61,12 +62,27 @@ public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFi
      * Setup this window, by loading a GameFile to edit.
      * @param file The file to load and edit.
      */
+    @SuppressWarnings("unchecked")
     public void setTargetFile(TGameFile file) {
         TGameFile oldFile = this.file;
         if (oldFile != file) {
+            if (file != null && (this.fileClass == null || file.getClass().isAssignableFrom(this.fileClass)))
+                this.fileClass = (Class<? extends TGameFile>) file.getClass();
+
             this.file = file;
             this.propertyListViewer.showProperties(file != null ? file.createPropertyList() : null);
         }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public boolean trySetTargetFile(GameObject<?> file) {
+        if ((this.fileClass != null && this.fileClass.isInstance(file))) {
+            setTargetFile((TGameFile) file);
+            return true;
+        }
+
+        return super.trySetTargetFile(file);
     }
 
     /**

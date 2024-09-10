@@ -221,11 +221,6 @@ public abstract class GroupedCollectionViewComponent<TGameInstance extends GameI
         }
 
         @Override
-        public ICollectionViewEntry getCollectionViewParentEntry() {
-            return null;
-        }
-
-        @Override
         public String getCollectionViewDisplayName() {
             return this.name + " (" + this.entries.size() + " Entries)";
         }

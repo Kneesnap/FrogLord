@@ -48,11 +48,6 @@ public abstract class RwStruct extends SharedGameObject implements ICollectionVi
     }
 
     @Override
-    public ICollectionViewEntry getCollectionViewParentEntry() {
-        return null;
-    }
-
-    @Override
     public String getCollectionViewDisplayName() {
         return this.structType.getDisplayName();
     }

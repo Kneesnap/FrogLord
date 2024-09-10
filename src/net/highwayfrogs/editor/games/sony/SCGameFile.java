@@ -70,11 +70,6 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
     }
 
     @Override
-    public ICollectionViewEntry getCollectionViewParentEntry() {
-        return null;
-    }
-
-    @Override
     public String getCollectionViewDisplayStyle() {
         return null;
     }

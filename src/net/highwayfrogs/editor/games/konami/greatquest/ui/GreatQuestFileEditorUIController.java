@@ -5,8 +5,9 @@ import javafx.scene.Node;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import lombok.Getter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestArchiveFile;
+import net.highwayfrogs.editor.games.generic.GameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestConfig;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestGameFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent;
@@ -16,7 +17,7 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent;
  * Created by Kneesnap on 4/14/2024.
  */
 @Getter
-public class GreatQuestFileEditorUIController<TGameFile extends GreatQuestArchiveFile> extends GameUIController<GreatQuestInstance> {
+public class GreatQuestFileEditorUIController<TGameFile extends GreatQuestGameFile> extends GameUIController<GreatQuestInstance> {
     @FXML private HBox contentBox;
     private TGameFile file;
     private Class<? extends TGameFile> fileClass;
@@ -56,5 +57,16 @@ public class GreatQuestFileEditorUIController<TGameFile extends GreatQuestArchiv
             this.file = file;
             this.propertyListViewer.showProperties(file != null ? file.createPropertyList() : null);
         }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public boolean trySetTargetFile(GameObject<?> file) {
+        if ((this.fileClass != null && this.fileClass.isInstance(file))) {
+            setTargetFile((TGameFile) file);
+            return true;
+        }
+
+        return super.trySetTargetFile(file);
     }
 }

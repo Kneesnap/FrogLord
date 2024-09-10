@@ -18,7 +18,6 @@ import net.highwayfrogs.editor.games.renderware.struct.RwStruct;
 import net.highwayfrogs.editor.games.renderware.ui.IRwStreamChunkUIEntry;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.DataSizeUnit;
 import net.highwayfrogs.editor.utils.Utils;
@@ -477,11 +476,6 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
     public final String toString() {
         String locationName = this.streamFile != null ? this.streamFile.getLocationName() : null;
         return (locationName != null ? locationName + "@" : "") + getChunkDescriptor();
-    }
-
-    @Override
-    public ICollectionViewEntry getCollectionViewParentEntry() {
-        return this.parentChunk;
     }
 
     @Override

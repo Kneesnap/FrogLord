@@ -1,8 +1,8 @@
 package net.highwayfrogs.editor.games.shared.sound;
 
 import net.highwayfrogs.editor.utils.IGameObject;
+import net.highwayfrogs.editor.utils.Utils;
 
-import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
@@ -25,10 +25,7 @@ public interface ISoundSample extends IGameObject {
      * @return clip
      */
     default Clip getAudioClip() throws LineUnavailableException {
-        Clip result = AudioSystem.getClip();
-        byte[] pcmData = getRawAudioPlaybackData();
-        result.open(getAudioFormat(), pcmData, 0, pcmData.length);
-        return result;
+        return Utils.getClipFromRawAudioData(getAudioFormat(), getRawAudioPlaybackData());
     }
 
     /**

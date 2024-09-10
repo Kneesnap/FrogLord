@@ -1,22 +1,36 @@
 package net.highwayfrogs.editor.games.konami.greatquest.audio;
 
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.image.Image;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GamePlatform;
+import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.generic.GameObject;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestLooseGameFile;
 import net.highwayfrogs.editor.games.psx.sound.VAGUtil;
+import net.highwayfrogs.editor.gui.GameUIController;
+import net.highwayfrogs.editor.gui.ImageResource;
+import net.highwayfrogs.editor.gui.components.DefaultFileEditorUISoundListComponent;
+import net.highwayfrogs.editor.gui.components.DefaultFileEditorUISoundListComponent.IBasicSound;
+import net.highwayfrogs.editor.gui.components.DefaultFileEditorUISoundListComponent.IBasicSoundList;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.DataSizeUnit;
 import net.highwayfrogs.editor.utils.Utils;
 
-import javax.sound.sampled.*;
-import java.io.ByteArrayInputStream;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.Clip;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -25,8 +39,7 @@ import java.util.concurrent.CountDownLatch;
  * Created by Kneesnap on 8/17/2023.
  */
 @Getter
-public class SBRFile extends GameObject {
-    private final GamePlatform platform;
+public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList {
     private int sfxBankId;
     private final List<SfxEntry> soundEffects = new ArrayList<>();
     private final List<SfxWave> waves = new ArrayList<>();
@@ -34,8 +47,8 @@ public class SBRFile extends GameObject {
     private static final int SIGNATURE = 0x42584653; // 'SFXB'
     private static final int SUPPORTED_VERSION = 0x100;
 
-    public SBRFile(GamePlatform platform) {
-        this.platform = platform;
+    public SBRFile(GreatQuestInstance instance, File file) {
+        super(instance, file);
     }
 
     @Override
@@ -68,7 +81,7 @@ public class SBRFile extends GameObject {
             int currentSfxAttrOffset = reader.readInt();
 
             reader.jumpTemp(sfxAttrOffset + currentSfxAttrOffset);
-            SfxAttributes attributes = SfxAttributes.readAttributes(reader);
+            SfxAttributes attributes = SfxAttributes.readAttributes(getGameInstance(), reader);
             reader.jumpReturn();
 
             this.soundEffects.add(new SfxEntry(sfxId, attributes));
@@ -137,28 +150,37 @@ public class SBRFile extends GameObject {
         writer.writeAddressAt(waveDataSize, writer.getIndex() - waveDataStartsAt);
     }
 
+    @Override
+    public GameUIController<?> makeEditorUI() {
+        return DefaultFileEditorUISoundListComponent.loadEditor(getGameInstance(), new DefaultFileEditorUISoundListComponent<>(getGameInstance(), getFileName()), this);
+    }
+
+    @Override
+    public Image getCollectionViewIcon() {
+        return ImageResource.MUSIC_NOTE_16.getFxImage();
+    }
+
     /**
      * Creates a new sfx wave object.
      */
     public SfxWave createNewAttributes() {
-        switch (this.platform) {
+        switch (getGameInstance().getPlatform()) {
             case WINDOWS:
-                return new SfxWavePC();
+                return new SfxWavePC(getGameInstance());
             case PLAYSTATION_2:
-                return new SfxWavePS2();
+                return new SfxWavePS2(getGameInstance());
             default:
-                throw new RuntimeException("Cannot create new wave attributes for the " + this.platform + " platform.");
+                throw new RuntimeException("Cannot create new wave attributes for the " + getGameInstance().getPlatform() + " platform.");
         }
     }
 
     /**
      * Plays the audio SFX blocking. Primary purpose is for debugging.
      * @param wave The sfx to play.
-     * @throws LineUnavailableException Thrown if the clip cannot be created.
-     * @throws InterruptedException     Thrown if waiting for the audio clip to finish is interrupted.
+     * @throws InterruptedException Thrown if waiting for the audio clip to finish is interrupted.
      */
     @SuppressWarnings("unused")
-    public static void playSfxBlocking(SfxWave wave) throws LineUnavailableException, InterruptedException {
+    public static void playSfxBlocking(SfxWave wave) throws InterruptedException {
         Clip clip = wave.getClip();
         clip.setMicrosecondPosition(0);
         CountDownLatch latch = new CountDownLatch(1);
@@ -171,7 +193,17 @@ public class SBRFile extends GameObject {
         clip.close();
     }
 
-    public interface SfxWave {
+    @Override
+    public Collection<? extends IBasicSound> getSounds() {
+        return this.waves;
+    }
+
+    @Override
+    public boolean isAllowAddRemoveOperationUI() {
+        return false; // TODO: We should show the SfxEntries instead, and allow editing them, since they will indirectly reference the waves if I recall.
+    }
+
+    public interface SfxWave extends IBasicSound {
         /**
          * Loads data from the reader.
          * @param reader The reader to read data from.
@@ -192,17 +224,18 @@ public class SBRFile extends GameObject {
         void saveADPCM(DataWriter writer);
 
         /**
-         * Gets an audio clip with the audio data playable.
-         * @throws LineUnavailableException Thrown if the clip cannot be created.
-         */
-        Clip getClip() throws LineUnavailableException;
-
-        /**
          * Save as a .wav file.
          * @param file The file to save to.
          * @throws IOException If it was impossible to write the file.
          */
         void exportToWav(File file) throws IOException;
+
+        /**
+         * Loads from a .wav file.
+         * @param file The file to save to.
+         * @throws IOException If it was impossible to write the file.
+         */
+        void importFromWav(File file) throws IOException;
 
         /**
          * Returns the Wave ID used by this sound effect.
@@ -222,12 +255,78 @@ public class SBRFile extends GameObject {
         int getWaveSize();
     }
 
+    private abstract static class BaseSfxWave extends GameObject<GreatQuestInstance> implements SfxWave {
+        public BaseSfxWave(GreatQuestInstance instance) {
+            super(instance);
+        }
+
+        @Override
+        public String getCollectionViewDisplayName() {
+            return getExportFileName();
+        }
+
+        @Override
+        public String getCollectionViewDisplayStyle() {
+            return null;
+        }
+
+        @Override
+        public Image getCollectionViewIcon() {
+            return ImageResource.MUSIC_NOTE_16.getFxImage();
+        }
+
+        @Override
+        public String getExportFileName() {
+            return Utils.padNumberString(getWaveID(), 1) + ".wav";
+        }
+
+        @Override
+        public PropertyList addToPropertyList(PropertyList propertyList) {
+            propertyList.add("Wave ID", getWaveID());
+            propertyList.add("Wave Size", getWaveSize() + " (" + DataSizeUnit.formatSize(getWaveSize()) + ")");
+            return propertyList;
+        }
+
+        @Override
+        public void setupRightClickMenuItems(ContextMenu contextMenu) {
+            MenuItem menuItemImport = new MenuItem("Import Sound");
+            contextMenu.getItems().add(menuItemImport);
+            menuItemImport.setOnAction(event -> {
+                File inputFile = Utils.promptFileOpen(getGameInstance(), "Specify the sound file to import", "Audio File", "wav");
+                if (inputFile != null) {
+                    try {
+                        importFromWav(inputFile);
+                    } catch (Throwable th) {
+                        Utils.handleError(getLogger(), th, true, "Failed to import file '%s'.", inputFile.getName());
+                    }
+                }
+            });
+
+            MenuItem menuItemExport = new MenuItem("Export Sound");
+            contextMenu.getItems().add(menuItemExport);
+            menuItemExport.setOnAction(event -> {
+                File outputFile = Utils.promptFileSave(getGameInstance(), "Specify the file to save the chunk data as...", getExportFileName(), "Raw RenderWare Stream", "rawrws");
+                if (outputFile != null) {
+                    try {
+                        exportToWav(outputFile);
+                    } catch (Throwable th) {
+                        Utils.handleError(getLogger(), th, true, "Failed to export sound as '%s'.", outputFile.getName());
+                    }
+                }
+            });
+        }
+    }
+
     @Getter
-    public static class SfxWavePS2 implements SfxWave {
+    public static class SfxWavePS2 extends BaseSfxWave implements SfxWave {
         private int waveID;
         private int flags;
         private int sampleRate;
         private byte[] ADPCMData;
+
+        public SfxWavePS2(GreatQuestInstance instance) {
+            super(instance);
+        }
 
         @Override
         public void load(DataReader reader, int wavDataOffset) {
@@ -256,7 +355,6 @@ public class SBRFile extends GameObject {
 
         @Override
         public void saveADPCM(DataWriter writer) {
-            // TODO: We have an audio pop problem. Perhaps a few bytes need to be removed.
             if (this.ADPCMData != null)
                 writer.writeBytes(this.ADPCMData);
         }
@@ -267,23 +365,37 @@ public class SBRFile extends GameObject {
         }
 
         @Override
-        public Clip getClip() throws LineUnavailableException {
-            Clip clip = AudioSystem.getClip();
+        public Clip getClip() {
             AudioFormat format = new AudioFormat(getSampleRate(), 16, 1, true, false);
-
             byte[] convertedAudioData = VAGUtil.rawVagToWav(this.ADPCMData);
-            clip.open(format, convertedAudioData, 0, convertedAudioData.length);
-            return clip;
+            return Utils.getClipFromRawAudioData(format, convertedAudioData);
         }
 
         @Override
         public void exportToWav(File file) throws IOException {
             Files.write(file.toPath(), VAGUtil.rawVagToWav(this.ADPCMData, getSampleRate()));
         }
+
+        @Override
+        public void importFromWav(File file) throws IOException {
+            byte[] rawFileBytes = Files.readAllBytes(file.toPath());
+            this.ADPCMData = VAGUtil.wavToVag(Utils.getRawAudioDataFromWavFile(rawFileBytes));
+
+            AudioFormat newFormat = Utils.getAudioFormatFromWavFile(rawFileBytes);
+            if (newFormat != null)
+                this.sampleRate = (int) newFormat.getSampleRate();
+        }
+
+        @Override
+        public PropertyList addToPropertyList(PropertyList propertyList) {
+            propertyList = super.addToPropertyList(propertyList);
+            propertyList.add("Sample Rate", this.sampleRate);
+            return propertyList;
+        }
     }
 
     @Getter
-    public static class SfxWavePC implements SfxWave {
+    public static class SfxWavePC extends BaseSfxWave implements SfxWave {
         private int waveID;
         private int flags;
         private int unknownValue;
@@ -293,6 +405,10 @@ public class SBRFile extends GameObject {
         private static final String RIFF_SIGNATURE = "RIFF";
         private static final String WAV_SIGNATURE = "WAVE";
         private static final String DATA_CHUNK_SIGNATURE = "data";
+
+        public SfxWavePC(GreatQuestInstance instance) {
+            super(instance);
+        }
 
         @Override
         public void load(DataReader reader, int wavDataOffset) {
@@ -335,22 +451,9 @@ public class SBRFile extends GameObject {
         }
 
         @Override
-        public Clip getClip() throws LineUnavailableException {
-            Clip clip = AudioSystem.getClip();
-
-            byte[] wavFileContents = toWavFileBytes();
-
-            AudioInputStream audioStream;
-            try {
-                audioStream = AudioSystem.getAudioInputStream(new ByteArrayInputStream(wavFileContents));
-                clip.open(audioStream);
-            } catch (UnsupportedAudioFileException ex) {
-                throw new RuntimeException("The file was in an unsupported audio format.", ex);
-            } catch (IOException ex) {
-                throw new RuntimeException("An IOException happened somehow?", ex);
-            }
-
-            return clip;
+        public Clip getClip() {
+            // The file data here has info about the AudioFormat, and the easiest way to deal with the lack of the AudioFormat is to just complete the wav file and read it directly.
+            return Utils.getClipFromWavFile(toWavFileBytes());
         }
 
         /**
@@ -369,7 +472,7 @@ public class SBRFile extends GameObject {
             writer.writeBytes(this.waveFormatEx);
             writer.writeStringBytes(DATA_CHUNK_SIGNATURE);
             writer.writeInt(this.ADPCMData.length);
-            writer.writeBytes(this.ADPCMData); // TODO: We have an audio pop problem. Perhaps a few bytes need to be removed.
+            writer.writeBytes(this.ADPCMData);
             writer.writeAddressAt(fileSizeAddress, writer.getIndex() - (fileSizeAddress + Constants.INTEGER_SIZE));
 
             writer.closeReceiver();
@@ -383,19 +486,47 @@ public class SBRFile extends GameObject {
         }
 
         @Override
+        public void importFromWav(File file) throws IOException {
+            DataReader reader = new DataReader(new FileSource(file));
+
+            try {
+                reader.verifyString(RIFF_SIGNATURE);
+                reader.skipInt();
+                reader.verifyString(WAV_SIGNATURE);
+                reader.verifyString("fmt ");
+                int waveFormatExLength = reader.readInt();
+                this.waveFormatEx = reader.readBytes(waveFormatExLength);
+                reader.verifyString(DATA_CHUNK_SIGNATURE);
+                int adpcmDataLength = reader.readInt();
+                this.ADPCMData = reader.readBytes(adpcmDataLength);
+            } catch (Throwable th) {
+                throw new RuntimeException("Invalid wav file '" + file.getName() + "'.", th);
+            }
+        }
+
+        @Override
         public int getWaveSize() {
             return (this.waveFormatEx != null ? this.waveFormatEx.length : 0)
                     + (this.ADPCMData != null ? this.ADPCMData.length : 0);
         }
+
+        @Override
+        public PropertyList addToPropertyList(PropertyList propertyList) {
+            propertyList = super.addToPropertyList(propertyList);
+            propertyList.add("Flags", Utils.toHexString(this.flags));
+            propertyList.add("Unknown Value", this.unknownValue);
+            return propertyList;
+        }
     }
 
     @Getter
-    public static abstract class SfxAttributes extends GameObject {
+    public static abstract class SfxAttributes extends GameData<GreatQuestInstance> {
         private final byte type;
         private short flags;
         private short priority;
 
-        protected SfxAttributes(byte typeOpcode) {
+        protected SfxAttributes(GreatQuestInstance instance, byte typeOpcode) {
+            super(instance);
             this.type = typeOpcode;
         }
 
@@ -414,16 +545,17 @@ public class SBRFile extends GameObject {
 
         /**
          * Read sound effect attributes from the reader.
+         * @param instance the game instance to create the attributes for
          * @param reader The reader to read the data from.
          * @return attributes
          */
-        public static SfxAttributes readAttributes(DataReader reader) {
+        public static SfxAttributes readAttributes(GreatQuestInstance instance, DataReader reader) {
             byte type = reader.readByte();
             SfxAttributes attributes;
             if (type == SfxEntrySimpleAttributes.TYPE_OPCODE) {
-                attributes = new SfxEntrySimpleAttributes();
+                attributes = new SfxEntrySimpleAttributes(instance);
             } else if (type == SfxEntryStreamAttributes.TYPE_OPCODE) {
-                attributes = new SfxEntryStreamAttributes();
+                attributes = new SfxEntryStreamAttributes(instance);
             } else {
                 throw new RuntimeException("Don't know what SfxAttributes type " + type + " is.");
             }
@@ -447,8 +579,8 @@ public class SBRFile extends GameObject {
 
         private static final byte TYPE_OPCODE = 0;
 
-        protected SfxEntrySimpleAttributes() {
-            super(TYPE_OPCODE);
+        protected SfxEntrySimpleAttributes(GreatQuestInstance instance) {
+            super(instance, TYPE_OPCODE);
         }
 
         @Override
@@ -481,8 +613,8 @@ public class SBRFile extends GameObject {
 
         private static final byte TYPE_OPCODE = 1;
 
-        protected SfxEntryStreamAttributes() {
-            super(TYPE_OPCODE);
+        protected SfxEntryStreamAttributes(GreatQuestInstance instance) {
+            super(instance, TYPE_OPCODE);
         }
 
         @Override

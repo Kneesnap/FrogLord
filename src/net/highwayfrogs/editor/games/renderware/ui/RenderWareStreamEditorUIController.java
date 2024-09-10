@@ -55,7 +55,7 @@ public class RenderWareStreamEditorUIController<TGameInstance extends GameInstan
 
     @Override
     protected void onControllerLoad(Node rootNode) {
-        this.treeView.setCellFactory(treeViewParam -> new ContextMenuTreeCell());
+        this.treeView.setCellFactory(treeViewParam -> new CollectionViewEntryTreeCell<>());
 
         TreeItem<IRwStreamChunkUIEntry> treeRootNode = new TreeItem<>(null);
         treeRootNode.setExpanded(true);
@@ -150,28 +150,5 @@ public class RenderWareStreamEditorUIController<TGameInstance extends GameInstan
             throw new RuntimeException("The provided game instance did not match the stream file's game instance.");
 
         return loadController(instance, FXML_TEMPLATE_LOADER, new RenderWareStreamEditorUIController<>(streamFile));
-    }
-
-    /**
-     * Applies collection view entry display properties to a JavaFX TreeCell.
-     * Created by Kneesnap on 8/9/2024.
-     */
-    private static class ContextMenuTreeCell extends CollectionViewEntryTreeCell<IRwStreamChunkUIEntry> {
-        @Override
-        public void updateItem(IRwStreamChunkUIEntry uiEntry, boolean empty) {
-            super.updateItem(uiEntry, empty);
-            if (empty) {
-                setOnContextMenuRequested(null);
-                return;
-            }
-
-            // NOTE: Make a more capable context menu system later.
-            setOnContextMenuRequested(evt -> {
-                ContextMenu contextMenu = new ContextMenu();
-                uiEntry.setupRightClickMenuItems(contextMenu);
-                if (!contextMenu.getItems().isEmpty())
-                    contextMenu.show((Node) evt.getSource(), evt.getScreenX(), evt.getScreenY());
-            });
-        }
     }
 }

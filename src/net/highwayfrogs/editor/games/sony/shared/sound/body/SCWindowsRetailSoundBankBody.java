@@ -11,9 +11,10 @@ import net.highwayfrogs.editor.games.sony.shared.sound.body.SCWindowsRetailSound
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCWindowsSoundBankHeader.SCWindowsSoundBankHeaderEntry;
 import net.highwayfrogs.editor.utils.Utils;
 
-import javax.sound.sampled.AudioFileFormat.Type;
-import javax.sound.sampled.*;
-import java.io.ByteArrayInputStream;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import java.io.File;
 import java.io.IOException;
 
@@ -71,9 +72,7 @@ public class SCWindowsRetailSoundBankBody extends SCWindowsSoundBankBody<SCWindo
 
         @Override
         public void saveToImportableFile(File saveTo) throws IOException, LineUnavailableException {
-            Clip clip = getAudioClip();
-            AudioInputStream inputStream = new AudioInputStream(new ByteArrayInputStream(getRawAudioPlaybackData()), clip.getFormat(), clip.getFrameLength());
-            AudioSystem.write(inputStream, Type.WAVE, saveTo);
+            Utils.saveRawAudioDataToWavFile(saveTo, getAudioClip(), getRawAudioPlaybackData());
         }
 
         @Override

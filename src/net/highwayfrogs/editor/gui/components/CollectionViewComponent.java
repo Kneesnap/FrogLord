@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.gui.components;
 
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
@@ -94,11 +95,6 @@ public abstract class CollectionViewComponent<TGameInstance extends GameInstance
 
     public interface ICollectionViewEntry {
         /**
-         * Gets a parent entry representing the category.
-         */
-        ICollectionViewEntry getCollectionViewParentEntry();
-
-        /**
          * Returns the name to display in the viewer.
          */
         String getCollectionViewDisplayName();
@@ -112,5 +108,13 @@ public abstract class CollectionViewComponent<TGameInstance extends GameInstance
          * Gets the icon (if there is one) to display next to the entry name.
          */
         Image getCollectionViewIcon();
+
+        /**
+         * Sets up right-click menu items when clicked.
+         * @param contextMenu the menu to add the right-click menu items to.
+         */
+        default void setupRightClickMenuItems(ContextMenu contextMenu) {
+            // Setup nothing by default.
+        }
     }
 }

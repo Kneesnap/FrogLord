@@ -214,6 +214,15 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
     }
 
     /**
+     * Attempts to set the target file to the given game object, returning true if successful, false if not.
+     * @param file the file to set
+     * @return successfully applied
+     */
+    public boolean trySetTargetFile(GameObject<?> file) {
+        return false;
+    }
+
+    /**
      * Loads a UI controller from the provided fxml template
      * @param instance the game instance to create the ui template from
      * @param fxmlLoader the fxml template loader, caching is recommended for performance

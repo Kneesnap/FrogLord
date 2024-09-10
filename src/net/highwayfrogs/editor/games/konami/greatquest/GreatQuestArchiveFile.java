@@ -2,9 +2,6 @@ package net.highwayfrogs.editor.games.konami.greatquest;
 
 import javafx.fxml.FXMLLoader;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData;
-import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestFileEditorUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
@@ -23,7 +20,7 @@ import java.util.logging.Logger;
  * A base TGQ file.
  * Created by Kneesnap on 8/17/2019.
  */
-public abstract class GreatQuestArchiveFile extends GameData<GreatQuestInstance> implements ICollectionViewEntry, IPropertyListCreator {
+public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implements ICollectionViewEntry, IPropertyListCreator {
     @Getter private byte[] rawData;
     @Getter private String fileName;
     @Getter private String filePath;
@@ -52,26 +49,13 @@ public abstract class GreatQuestArchiveFile extends GameData<GreatQuestInstance>
     }
 
     @Override
-    public ICollectionViewEntry getCollectionViewParentEntry() {
-        return null;
-    }
-
-    @Override
     public String getCollectionViewDisplayName() {
         return (this.fileName != null ? this.fileName : getExportName()) + " [Hash: " + Utils.toHexString(this.nameHash) + (this.filePath != null ? ", Full Path: " + this.filePath : "") + "]";
     }
 
     @Override
-    public String getCollectionViewDisplayStyle() {
-        return null;
-    }
-
-    @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {
-        if (this.fileName != null)
-            propertyList.add("File Name", this.fileName);
-        if (this.filePath != null)
-            propertyList.add("File Path", this.filePath);
+        propertyList = super.addToPropertyList(propertyList);
 
         propertyList.add("Name Hash", Utils.to0PrefixedHexString(this.nameHash));
         propertyList.add("Name Collision", this.collision);
@@ -81,30 +65,6 @@ public abstract class GreatQuestArchiveFile extends GameData<GreatQuestInstance>
 
         return propertyList;
     }
-
-    @Override
-    public void save(DataWriter writer) {
-        throw new UnsupportedOperationException("TGQ Files cannot be saved now.");
-    }
-
-    /**
-     * The first method called after all files have been loaded.
-     */
-    public void afterLoad1(kcLoadContext context) {
-        // Do nothing.
-    }
-
-    /**
-     * The second method called after all files have been loaded.
-     */
-    public void afterLoad2(kcLoadContext context) {
-        // Do nothing.
-    }
-
-    /**
-     * Creates an editor UI for the file.
-     */
-    public abstract GameUIController<?> makeEditorUI();
 
     /**
      * Initialize the information about this file.

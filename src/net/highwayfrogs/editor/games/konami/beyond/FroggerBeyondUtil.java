@@ -6,12 +6,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.utils.Utils;
 
-import javax.sound.sampled.AudioFileFormat.Type;
 import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.nio.file.Files;
 
@@ -60,11 +55,7 @@ public class FroggerBeyondUtil {
             if (isXbox) {
                 Files.write(new File(exportDir, (count++) + ".wavm").toPath(), byteData);
             } else if (isPC) {
-                Clip clip = AudioSystem.getClip();
-                clip.open(pcFormat, byteData, 0, byteData.length);
-
-                AudioInputStream inputStream = new AudioInputStream(new ByteArrayInputStream(byteData), clip.getFormat(), clip.getFrameLength());
-                AudioSystem.write(inputStream, Type.WAVE, new File(exportDir, (count++) + ".wav"));
+                Utils.saveRawAudioDataToWavFile(new File(exportDir, (count++) + ".wav"), pcFormat, byteData);
             }
         }
     }
@@ -122,10 +113,7 @@ public class FroggerBeyondUtil {
                 Files.write(new File(exportDir, (count++) + ".dsp").toPath(), byteData);
             } else*/
             if (isXbox || isPC) {
-                Clip clip = AudioSystem.getClip();
-                clip.open(pcFormat, byteData, 0, byteData.length);
-                AudioInputStream inputStream = new AudioInputStream(new ByteArrayInputStream(byteData), clip.getFormat(), clip.getFrameLength());
-                AudioSystem.write(inputStream, Type.WAVE, new File(exportDir, (count++) + ".wav"));
+                Utils.saveRawAudioDataToWavFile(new File(exportDir, (count++) + ".wav"), pcFormat, byteData);
             }
         }
     }

@@ -32,6 +32,7 @@ import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh.DynamicMeshTextureQuality;
 
 import javax.imageio.ImageIO;
+import javax.sound.sampled.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -2791,5 +2792,203 @@ public class Utils {
             return null;
 
         return fileName.substring(dotIndex + 1);
+    }
+
+    /**
+     * Gets an audio clip from the raw audio data.
+     * @param format the format to create the clip with
+     * @param rawAudioData the raw audio data to supply to the clip
+     * @return audioClip, if successful
+     */
+    public static Clip getClipFromRawAudioData(AudioFormat format, byte[] rawAudioData) {
+        if (format == null)
+            throw new NullPointerException("format");
+        if (rawAudioData == null)
+            throw new NullPointerException("rawAudioData");
+
+        Clip audioClip = null;
+        try {
+            audioClip = AudioSystem.getClip();
+            audioClip.open(format, rawAudioData, 0, rawAudioData.length);
+            return audioClip;
+        } catch (LineUnavailableException ex) {
+            handleError(null, ex, false, "Failed to create an audio Clip.");
+            if (audioClip != null)
+                audioClip.close();
+
+            return null;
+        }
+    }
+
+    /**
+     * Gets the AudioFormat from file bytes representing a supported audio file type (Usually .wav)
+     * @param wavFileContents the file contents to load.
+     * @return rawAudioFormat
+     */
+    public static AudioFormat getAudioFormatFromWavFile(byte[] wavFileContents) {
+        if (wavFileContents == null)
+            throw new NullPointerException("wavFileContents");
+
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(wavFileContents);
+        AudioInputStream audioInputStream = null;
+        AudioInputStream convertedInputStream;
+
+        try {
+            audioInputStream = AudioSystem.getAudioInputStream(inputStream);
+            return audioInputStream.getFormat();
+        } catch (UnsupportedAudioFileException | IOException ex) {
+            Utils.handleError(getLogger(), ex, true, "Couldn't read the audio data.");
+            return null;
+        } finally {
+            try {
+                if (audioInputStream != null)
+                    audioInputStream.close();
+            } catch (Throwable th) {
+                Utils.handleError(null, th, false, "Failed to close AudioInputStream.");
+            }
+        }
+    }
+
+    /**
+     * Gets an audio Clip from file bytes representing a supported audio file type (Usually .wav)
+     * @param wavFileContents the file contents to load.
+     * @return audioClip
+     */
+    public static Clip getClipFromWavFile(byte[] wavFileContents) {
+        if (wavFileContents == null)
+            throw new NullPointerException("wavFileContents");
+
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(wavFileContents);
+        AudioInputStream audioInputStream = null;
+        AudioInputStream convertedInputStream;
+
+        try {
+            audioInputStream = AudioSystem.getAudioInputStream(inputStream);
+
+            Clip clip = AudioSystem.getClip();
+            clip.open(audioInputStream);
+            return clip;
+        } catch (UnsupportedAudioFileException | IOException ex) {
+            Utils.handleError(getLogger(), ex, true, "Couldn't read the audio data.");
+            return null;
+        } catch (LineUnavailableException ex) {
+            Utils.handleError(getLogger(), ex, true, "Couldn't get an audio line.");
+            return null;
+        } finally {
+            try {
+                if (audioInputStream != null)
+                    audioInputStream.close();
+            } catch (Throwable th) {
+                Utils.handleError(null, th, false, "Failed to close AudioInputStream.");
+            }
+        }
+    }
+
+    /**
+     * Gets raw audio data from file bytes representing a supported audio file type (Usually .wav)
+     * @param wavFileContents the file contents to load.
+     * @return rawAudioDataInBytes
+     */
+    public static byte[] getRawAudioDataFromWavFile(byte[] wavFileContents) {
+        return getRawAudioDataConvertedFromWavFile(null, wavFileContents);
+    }
+
+    /**
+     * Gets raw audio data from file bytes representing a supported audio file type (Usually .wav)
+     * @param targetFormat the target format to convert the audio to. Null indicates no conversion should occur.
+     * @param wavFileContents the file contents to load.
+     * @return rawAudioDataInBytes
+     */
+    public static byte[] getRawAudioDataConvertedFromWavFile(AudioFormat targetFormat, byte[] wavFileContents) {
+        if (wavFileContents == null)
+            throw new NullPointerException("wavFileContents");
+
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(wavFileContents);
+        AudioInputStream audioInputStream;
+        AudioInputStream convertedInputStream;
+
+        try {
+            audioInputStream = AudioSystem.getAudioInputStream(inputStream);
+            if (targetFormat == null)
+                targetFormat = audioInputStream.getFormat();
+
+            convertedInputStream = AudioSystem.getAudioInputStream(targetFormat, audioInputStream);
+            audioInputStream.close();
+        } catch (UnsupportedAudioFileException | IOException ex) {
+            Utils.handleError(getLogger(), ex, true, "Couldn't read the audio data. The audio will still play, but it will have a pop.");
+            return wavFileContents;
+        }
+
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream((int) (audioInputStream.getFrameLength() * targetFormat.getFrameSize()));
+        Utils.copyInputStreamData(convertedInputStream, byteArrayOutputStream, true);
+        return byteArrayOutputStream.toByteArray();
+    }
+
+    /**
+     * Saves the raw audio clip provided to the given wav file.
+     * @param file the file to save the audio data to
+     * @param format the format to get data from
+     * @param rawAudioData the raw (header-less) audio data.
+     */
+    public static void saveRawAudioDataToWavFile(File file, AudioFormat format, byte[] rawAudioData) {
+        saveRawAudioDataToFile(file, AudioFileFormat.Type.WAVE, format, rawAudioData);
+    }
+
+    /**
+     * Saves the raw audio clip provided to the given file.
+     * @param file the file to save the audio data to
+     * @param fileType the format (usually .wav) to save the file contents as
+     * @param format the format to get data from
+     * @param rawAudioData the raw (header-less) audio data.
+     */
+    public static void saveRawAudioDataToFile(File file, AudioFileFormat.Type fileType, AudioFormat format, byte[] rawAudioData) {
+        if (file == null)
+            throw new NullPointerException("file");
+        if (format == null)
+            throw new NullPointerException("format");
+
+        Clip audioClip = getClipFromRawAudioData(format, rawAudioData);
+        if (audioClip == null)
+            return;
+
+        saveRawAudioDataToFile(file, fileType, audioClip, rawAudioData);
+        audioClip.close();
+    }
+
+    /**
+     * Saves the raw audio clip provided to the given wav file.
+     * @param file the file to save the audio data to
+     * @param audioClip the audio clip to source format and information from
+     * @param rawAudioData the raw (header-less) audio data.
+     */
+    public static void saveRawAudioDataToWavFile(File file, Clip audioClip, byte[] rawAudioData) {
+        saveRawAudioDataToFile(file, AudioFileFormat.Type.WAVE, audioClip, rawAudioData);
+    }
+
+    /**
+     * Saves the raw audio clip provided to the given file.
+     * @param file the file to save the audio data to
+     * @param fileType the format (usually .wav) to save the file contents as
+     * @param audioClip the audio clip to source format and information from
+     * @param rawAudioData the raw (header-less) audio data.
+     */
+    public static void saveRawAudioDataToFile(File file, AudioFileFormat.Type fileType, Clip audioClip, byte[] rawAudioData) {
+        if (file == null)
+            throw new NullPointerException("file");
+        if (fileType == null)
+            throw new NullPointerException("fileType");
+        if (audioClip == null)
+            throw new NullPointerException("audioClip");
+        if (rawAudioData == null)
+            throw new NullPointerException("rawAudioData");
+        if (Utils.testSignature(rawAudioData, "RIFF"))
+            throw new IllegalArgumentException("The 'rawAudioData' appears to have a RIFF header, making it already already directly savable as a .wav file!");
+
+        AudioInputStream inputStream = new AudioInputStream(new ByteArrayInputStream(rawAudioData), audioClip.getFormat(), audioClip.getFrameLength());
+        try {
+            AudioSystem.write(inputStream, fileType, file);
+        } catch (IOException ex) {
+            handleError(null, ex, false, "Failed to save sound to file '%s'.", file.getName());
+        }
     }
 }

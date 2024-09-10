@@ -280,11 +280,6 @@ public abstract class CollectionTreeViewComponent<TGameInstance extends GameInst
         }
 
         @Override
-        public CollectionViewTreeNode<TViewEntry> getCollectionViewParentEntry() {
-            return this.fxTreeItem != null && this.fxTreeItem.getParent() != null ? this.fxTreeItem.getParent().getValue() : null;
-        }
-
-        @Override
         public String getCollectionViewDisplayName() {
             if (this.value != null) {
                 return this.value.getCollectionViewDisplayName();

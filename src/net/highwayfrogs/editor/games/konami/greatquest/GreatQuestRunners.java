@@ -7,8 +7,6 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.file.writer.LargeFileReceiver;
 import net.highwayfrogs.editor.games.generic.GamePlatform;
-import net.highwayfrogs.editor.games.konami.greatquest.audio.IDXFile;
-import net.highwayfrogs.editor.games.konami.greatquest.audio.IDXFile.kcStreamIndexEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxEntrySimpleAttributes;
@@ -27,12 +25,6 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
 import net.highwayfrogs.editor.utils.Utils;
 
-import javax.sound.sampled.AudioFileFormat.Type;
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -248,73 +240,23 @@ public class GreatQuestRunners {
 
         List<File> sbrFiles = new ArrayList<>();
         List<SBRFile> sbrLoadedFiles = new ArrayList<>();
-        IDXFile idxFile = null;
-        File sckFile = null;
         for (File file : Utils.listFiles(soundFolder)) {
             if (!file.isFile())
                 continue;
 
             String fileNameLowerCase = file.getName().toLowerCase();
 
-            if (fileNameLowerCase.endsWith(".sck")) {
-                if (sckFile != null)
-                    throw new RuntimeException("Found multiple .SCK files! (" + file.getName() + ")");
-
-                System.out.println("Found '" + file.getName() + "'...");
-                sckFile = file;
-            } else if (fileNameLowerCase.endsWith(".idx")) {
-                if (idxFile != null)
-                    throw new RuntimeException("Found multiple .IDX files! (" + file.getName() + ")");
-
+            if (fileNameLowerCase.endsWith(".sbr")) {
                 System.out.println("Reading '" + file.getName() + "'...");
-                idxFile = new IDXFile();
-                idxFile.load(new DataReader(new FileSource(file)));
-            } else if (fileNameLowerCase.endsWith(".sbr")) {
-                System.out.println("Reading '" + file.getName() + "'...");
-                SBRFile sbrFile = new SBRFile(platform);
+                SBRFile sbrFile = new SBRFile(null, file);
                 sbrFile.load(new DataReader(new FileSource(file)));
                 sbrFiles.add(file);
                 sbrLoadedFiles.add(sbrFile);
             }
         }
 
-        if (idxFile == null && sckFile != null) {
-            System.out.println("Couldn't find the SNDCHUNK.IDX file in this folder.");
-            return;
-        }
-
-        if (sckFile == null && idxFile != null) {
-            System.out.println("Couldn't find the SNDCHUNK.SCK file in this folder.");
-            return;
-        }
-
         File exportFolder = new File(soundFolder, "Export/");
         Utils.makeDirectory(exportFolder);
-
-        if (sckFile != null) {
-            File chunkFolder = new File(exportFolder, Utils.stripExtension(sckFile.getName()));
-            Utils.makeDirectory(chunkFolder);
-            AudioFormat sckAudioFormat = new AudioFormat(24000, 16, 1, true, false);
-
-            DataReader sckReader = new DataReader(new FileSource(sckFile));
-            for (int i = 0; i < idxFile.getIndexEntries().size(); i++) {
-                kcStreamIndexEntry entry = idxFile.getIndexEntries().get(i);
-                int stopReadingAt = idxFile.getIndexEntries().size() > i + 1 ? idxFile.getIndexEntries().get(i + 1).getOffset() : sckReader.getSize();
-                byte[] rawAudioData = sckReader.readBytes(stopReadingAt - sckReader.getIndex());
-
-                String fileName = Utils.padNumberString(entry.getSfxId(), 4) + ".wav";
-                File wavFile = new File(chunkFolder, fileName);
-                if (wavFile.exists())
-                    continue;
-
-                Clip clip = AudioSystem.getClip();
-                clip.open(sckAudioFormat, rawAudioData, 0, rawAudioData.length);
-                AudioInputStream inputStream = new AudioInputStream(new ByteArrayInputStream(rawAudioData), clip.getFormat(), clip.getFrameLength());
-                AudioSystem.write(inputStream, Type.WAVE, wavFile);
-            }
-        } else {
-            System.out.println("No .SCK file found.");
-        }
 
         for (int i = 0; i < sbrFiles.size(); i++) {
             File file = sbrFiles.get(i);

@@ -13,7 +13,6 @@ import net.highwayfrogs.editor.games.renderware.chunks.RwImageChunk.RwImageViewU
 import net.highwayfrogs.editor.games.renderware.ui.IRwStreamChunkUIEntry;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.IBinarySerializable;
 import net.highwayfrogs.editor.utils.Utils;
@@ -209,11 +208,6 @@ public class RwPlatformIndependentTextureDictionaryChunk extends RwStreamChunk {
         public GameUIController<?> makeEditorUI() {
             RwImageChunk largestImage = getLargestImage();
             return largestImage != null ? new RwImageViewUIController(largestImage) : null;
-        }
-
-        @Override
-        public ICollectionViewEntry getCollectionViewParentEntry() {
-            return this.parentChunk;
         }
 
         @Override
