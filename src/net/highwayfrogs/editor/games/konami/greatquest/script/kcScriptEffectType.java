@@ -9,16 +9,17 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptF
 import java.util.function.BiFunction;
 
 /**
- * Represents different instructions.
+ * Represents different script effect types.
+ * This is used by kcCScriptMgr::FireEffect() to determine handling for a particular effect.
  * Created by Kneesnap on 8/1/2023.
  */
 @Getter
 @AllArgsConstructor
 public enum kcScriptEffectType {
-    ACTOR(Constants.BIT_FLAG_5, kcScriptEffectActor::new), // 32|0x20
-    CAMERA(Constants.BIT_FLAG_16, kcScriptEffectCamera::new), // 65536|0x10000
-    ENTITY(Constants.BIT_FLAG_17, kcScriptEffectEntity::new), // 131072|0x20000
-    AI(Constants.BIT_FLAG_18, kcScriptEffectAI::new); // 262144|0x40000
+    ACTOR(Constants.BIT_FLAG_5, kcScriptEffectActor::new), // 32|0x20, kcCScriptMgr::FireActorEffect sends the command to the target entity.
+    CAMERA(Constants.BIT_FLAG_16, kcScriptEffectCamera::new), // 65536|0x10000, kcCScriptMgr::FireCameraEffect handles the camera effect.
+    ENTITY(Constants.BIT_FLAG_17, kcScriptEffectEntity::new), // 131072|0x20000, kcCScriptMgr::FireEntityEffect builds the command to send to the entity.
+    AI(Constants.BIT_FLAG_18, kcScriptEffectAI::new); // 262144|0x40000, kcCScriptMgr::FireEffect builds & sends the command to the entity.
 
     private final int value;
     private final BiFunction<kcScriptFunction, Integer, kcScriptEffect> effectMaker;

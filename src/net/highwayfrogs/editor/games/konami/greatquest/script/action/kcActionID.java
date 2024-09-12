@@ -49,7 +49,7 @@ public enum kcActionID {
     DIALOG((byte) 0x30, kcActionLazyTemplate.DIALOG_ARGUMENTS), // kcCActorBase::OnCommand, kcCActor::OnCommand
     SET_ALARM((byte) 0x32, kcActionLazyTemplate.SET_ALARM_ARGUMENTS), // kcCActorBase::ProcessAction, kcCEntity::OnCommand
     TRIGGER_EVENT((byte) 0x33, kcActionTriggerEvent::new), // kcCActorBase::ProcessAction, kcCEntity::OnCommand
-    PLAY_SFX((byte) 0x34, kcActionLazyTemplate.PLAY_SFX_ARGUMENTS), // kcCEntity::OnCommand, kcCEntity3D::OnCommand
+    PLAY_SFX((byte) 0x34, kcActionLazyTemplate.PLAY_SFX_ARGUMENTS), // kcCEntity::OnCommand, kcCEntity3D::OnCommand (If kcCEntity3D, then it will be positional audio at the position of the entity, otherwise it will be played directly.)
     VARIABLE_SET((byte) 0x35, kcActionLazyTemplate.VARIABLE_SET_ARGUMENTS), // kcCEntity::OnCommand
     VARIABLE_ADD((byte) 0x36, kcActionLazyTemplate.VARIABLE_ADD_ARGUMENTS), // kcCEntity::OnCommand
     NUMBER((byte) 0x37, kcActionNumber::new), // kcCEntity::OnCommand

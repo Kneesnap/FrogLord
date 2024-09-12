@@ -23,6 +23,32 @@ import java.util.List;
  * Represents a single script.
  * Scripts are a surprisingly complex system for the simple capabilities they offer.
  * Using a debugger was crucial to understanding how they worked properly.
+ *
+ * The way the script flow works is as follows:
+ * kcCScriptMgr::OnCommand:
+ *  -> This entity receives messages which indicate a trigger has fired, which trigger, what entity it has fired for, etc.
+ *   - ?/0x00 - _kcMsgID
+ *   - ?/0x04 - filter
+ *   - 0/0x08 - cause (kcScriptCauseType)
+ *   - 1/0x0C - subCause (The sub cause type can differ in meaning/usage per kcScriptCauseType)
+ *   - 2/0x10 - Script Index
+ *   - 3/0x14 - Target Entity Hash
+ *   - 4/0x18 - Hash? This might be the hash of the message sender.
+ *   - 5/0x1C - Script Cause Argument 0 (Optional)
+ *   - 6/0x20 - Script Cause Argument 1 (Optional)
+ *
+ *  -> If it receives a message targeting 'kcCScriptMgr' (44EDFE47), it will broadcast the event globally to all entities listening.
+ *   -> This is done by executing kcCScriptMgr::ProcessGlobalScript.
+ *   -> That function will go through all scripts, skipping any which do not report having the provided cause type, via a bit mask check.
+ *   -> Then, for each script cause in each script, it will check that the cause type & sub cause type match the expected values.
+ *   -> Finally, all script causes which matched this criteria will have their effects run immediately.
+ *   -> Because the only globally broadcasted script causes are LEVEL and EVENT, it seems they forgot to actually include proper checks.
+ *   -> Sooo, it seems like the EVENT script cause will trigger regardless of if the event hash matches the expected value or not.
+ *
+ *  -> Otherwise, it will find and execute all functions in the target entity's script which have their "cause" met by the provided arguments.
+ *   -> It will find the target entity by the target entity hash, and then obtain the entity's script.
+ *   -> For the entity's script, it will test the causes to see if their cause criteria match. If they do, then the effects are executed.
+ *
  * TODO:
  *  - Go over why some hashes aren't reversed in scripts.
  *  - The action sequences can sometimes not show animation name if the animation is in another file. (Eg: 00.dat)
@@ -146,7 +172,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
             int causeTypeNumber = interim.readNextCauseValue();
             int effectOffset = interim.readNextCauseValue() * Constants.INTEGER_SIZE; // Change from an offset of ints to an offset of bytes.
             int effectCount = interim.readNextCauseValue();
-            int causeValueNumber = interim.readNextCauseValue();
+            int subCauseTypeNumber = interim.readNextCauseValue();
 
             // Read unhandled data.
             List<Integer> unhandledData = null;
@@ -157,7 +183,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
             }
 
             // Read cause.
-            kcScriptCause cause = readCause(interim.getGameInstance(), causeTypeNumber, causeValueNumber, unhandledData);
+            kcScriptCause cause = readCause(interim.getGameInstance(), causeTypeNumber, subCauseTypeNumber, unhandledData);
 
             // Read effects.
             List<kcScriptEffect> effects = new ArrayList<>();
@@ -187,7 +213,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
         return newScript;
     }
 
-    private static kcScriptCause readCause(GreatQuestInstance gameInstance, int causeTypeNumber, int causeValueNumber, List<Integer> unhandledData) {
+    private static kcScriptCause readCause(GreatQuestInstance gameInstance, int causeTypeNumber, int subCauseTypeNumber, List<Integer> unhandledData) {
         // Setup cause.
         kcScriptCauseType causeType = kcScriptCauseType.getCauseType(causeTypeNumber, false);
         if (causeType == null)
@@ -199,7 +225,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
         if (!cause.validateArgumentCount(optionalArgumentCount))
             throw new RuntimeException("kcScriptCauseType " + causeType + " cannot accept " + optionalArgumentCount + " optional arguments.");
 
-        cause.load(causeValueNumber, unhandledData);
+        cause.load(subCauseTypeNumber, unhandledData);
         return cause;
     }
 

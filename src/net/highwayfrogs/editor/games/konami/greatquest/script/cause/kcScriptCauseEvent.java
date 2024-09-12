@@ -7,6 +7,10 @@ import java.util.List;
 
 /**
  * Allows a script event to trigger for an event.
+ * This may appear like it should only fire when the event hash in here matches the event which has been fired.
+ * However, it seems they forgot to add verification check to that, so actually the event hash specified here is unused.
+ * This cause appears unused in the game, so that's probably why this slipped into the final game.
+ * Perhaps it would be feasible to fix the feature, but it may not matter.
  * Created by Kneesnap on 8/17/2023.
  */
 public class kcScriptCauseEvent extends kcScriptCause {
@@ -32,8 +36,8 @@ public class kcScriptCauseEvent extends kcScriptCause {
 
     @Override
     public void toString(StringBuilder builder, kcScriptDisplaySettings settings) {
-        builder.append("When the event ");
+        builder.append("When the any event occurs (Bugged, should be for just '");
         builder.append(kcScriptDisplaySettings.getHashDisplay(settings, this.eventNameHash, true));
-        builder.append(" occurs");
+        builder.append("'.)");
     }
 }

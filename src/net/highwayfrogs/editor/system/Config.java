@@ -590,13 +590,13 @@ public class Config implements IBinarySerializable {
     /**
      * Loads a text config from the input stream.
      * @param inputStream the input stream to read from
-     * @param versionConfigName the name of the config
+     * @param configFileName the name of the config
      * @return loadedConfig
      */
-    public static Config loadTextConfigFromInputStream(InputStream inputStream, String versionConfigName) {
+    public static Config loadTextConfigFromInputStream(InputStream inputStream, String configFileName) {
         List<String> configLines = Utils.readLinesFromStream(inputStream);
         String configFileText = String.join(Constants.NEWLINE, configLines);
-        return loadConfigFromString(configFileText, versionConfigName);
+        return loadConfigFromString(configFileText, configFileName);
     }
 
 

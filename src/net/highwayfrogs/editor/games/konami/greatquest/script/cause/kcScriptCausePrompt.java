@@ -8,6 +8,7 @@ import java.util.List;
 /**
  * Caused by the player responding to a prompt.
  * This functionality is unused in unmodified gameplay.
+ * It does not appear to be possible to actually show a prompt to the player, attempting to do so will instead immediately trigger this cause with a hash of zero.
  * Created by Kneesnap on 8/17/2023.
  */
 public class kcScriptCausePrompt extends kcScriptCause {
@@ -35,6 +36,6 @@ public class kcScriptCausePrompt extends kcScriptCause {
     public void toString(StringBuilder builder, kcScriptDisplaySettings settings) {
         builder.append("The player responds to the dialog prompt ");
         builder.append(kcScriptDisplaySettings.getHashDisplay(settings, this.promptHash, true));
-        builder.append(" (This feature appears unfinished/not working)");
+        builder.append(" (This feature was not finished, so it will not work properly)");
     }
 }

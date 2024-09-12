@@ -11,13 +11,13 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum kcScriptCauseEntityAction {
     UNKNOWN_0(0, "Never", false, false), // Rolling Rapids Creek - Hides a bug. (Separate from the script to hide the bug in the tutorial.)
-    INTERACT(1, "When the player interacts with the attached entity", true, false), // Triggers: CFrogCtl::OnBeginAction, CFrogCtl::CheckForHealthBug
-    BUMPS(2, "When the player collides/bumps into the attached entity", true, true), // Triggers: CProp::TriggerHitCallback, CCharacter::BumpCallback
-    ATTACK(5, "When the player targets the attached entity for an attack", true, false), // Triggers: CFrogCtl::Spit, CFrogCtl::OnBeginMissile, CFrogCtl::OnBeginMagicStone, and, CFrogCtl::OnBeginMelee
-    PICKUP_ITEM(7, "When the player picks up the attached item entity", true, false), // Trigger: CCharacter::PickupCallback
-    TAKE_NEGATIVE_DAMAGE(8, "When the attached entity takes negative damage (gains health), which is how scripts cause healing.", false, true),
+    INTERACT(1, "When the player interacts with the attached entity", true, false), // Target Triggers: CFrogCtl::OnBeginAction, CFrogCtl::CheckForHealthBug
+    BUMPS(2, "When the player collides/bumps into the attached entity", true, true), // Target Triggers: CProp::TriggerHitCallback, CCharacter::BumpCallback
+    ATTACK(5, "When the player targets the attached entity for an attack", true, false), // Target Triggers: CFrogCtl::Spit, CFrogCtl::OnBeginMissile, CFrogCtl::OnBeginMagicStone, and, CFrogCtl::OnBeginMelee
+    PICKUP_ITEM(7, "When the player picks up the attached item entity", true, false), // Target Trigger: CCharacter::PickupCallback
+    TAKE_NEGATIVE_DAMAGE(8, "When the attached entity takes negative damage (gains health), which is how scripts cause healing.", false, true), // Target Trigger: kcCActor::OnDamage
     UNKNOWN_9(9, "Never", false, false), // Bog Town - Plays Random Frogger Hurt Noise
-    DEATH(10, "When the attached entity dies", false, true), // Trigger: kcCActor::OnDamage, Player deaths are also broadcast from the actor cause, but not from the player cause.
+    DEATH(10, "When the attached entity dies", false, true), // Target Trigger: kcCActor::OnDamage, Player deaths are also broadcast from the actor cause, but not from the player cause.
     UNKNOWN_13(13, "Never", false, false); // Rolling Rapids Creek - Starts unused copy of tutorial sequence from after opening the locked door.
 
     private final int value;

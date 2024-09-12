@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.effect;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionAISetGoal;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
@@ -14,7 +13,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptEffectType
  */
 @Getter
 public class kcScriptEffectAI extends kcScriptEffectAction {
-    private kcAction action;
+    private kcActionAISetGoal action;
 
     public kcScriptEffectAI(kcScriptFunction parentFunction, int effectID) {
         super(parentFunction, kcScriptEffectType.AI, effectID);

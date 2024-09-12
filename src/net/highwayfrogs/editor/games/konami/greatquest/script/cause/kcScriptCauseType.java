@@ -9,23 +9,24 @@ import java.util.function.Function;
 
 /**
  * Represents the script cause type.
+ * These are processed within kcCScriptMgr::OnCommand where the execution conditions are tested, and if passed, the script effects will be queued for processing.
  * Created by Kneesnap on 6/26/2023.
  */
 @Getter
 @AllArgsConstructor
 public enum kcScriptCauseType {
-    LEVEL(Constants.BIT_FLAG_1, kcScriptCauseLevel::new), // 2|0x02
-    PLAYER(Constants.BIT_FLAG_4, kcScriptCausePlayer::new), // 16|0x10
-    ACTOR(Constants.BIT_FLAG_5, kcScriptCauseActor::new), // 32|0x20
-    DAMAGE(Constants.BIT_FLAG_6, kcScriptCauseDamage::new), // 64|0x40
-    TIMER(Constants.BIT_FLAG_8, kcScriptCauseTimer::new), // 256|0x100
-    PROMPT(Constants.BIT_FLAG_9, kcScriptCausePrompt::new), // 512|0x200
-    EVENT(Constants.BIT_FLAG_11, kcScriptCauseEvent::new), // 2048|0x800
-    DIALOG(Constants.BIT_FLAG_12, kcScriptCauseDialog::new), // 4096|0x1000
-    NUMBER(Constants.BIT_FLAG_13, kcScriptCauseNumber::new), // 8192|0x2000
-    WHEN_ITEM(Constants.BIT_FLAG_14, kcScriptCauseWhenItem::new), // 16384|0x4000
-    ENTITY_3D(Constants.BIT_FLAG_15, kcScriptCauseEntity3D::new), // 32768|0x8000
-    WAYPOINT(Constants.BIT_FLAG_19, kcScriptCauseWaypoint::new); // 524288|0x80000
+    LEVEL(Constants.BIT_FLAG_1, kcScriptCauseLevel::new), // 2|0x02, Global Triggers: EvLevelBegin, EvLevelEnd
+    PLAYER(Constants.BIT_FLAG_4, kcScriptCausePlayer::new), // 16|0x10, See kcScriptCauseEntityAction for triggers
+    ACTOR(Constants.BIT_FLAG_5, kcScriptCauseActor::new), // 32|0x20, See kcScriptCauseEntityAction for triggers
+    DAMAGE(Constants.BIT_FLAG_6, kcScriptCauseDamage::new), // 64|0x40, Target Trigger: kcCActorBase::OnDamage
+    TIMER(Constants.BIT_FLAG_8, kcScriptCauseTimer::new), // 256|0x100, Target Trigger: kcCEntity::AlarmCallback
+    PROMPT(Constants.BIT_FLAG_9, kcScriptCausePrompt::new), // 512|0x200, Target Trigger: kcCActorBase::OnCommand[PROMPT]
+    EVENT(Constants.BIT_FLAG_11, kcScriptCauseEvent::new), // 2048|0x800, Global Trigger: kcCEventMgr::Trigger
+    DIALOG(Constants.BIT_FLAG_12, kcScriptCauseDialog::new), // 4096|0x1000, Target Triggers: EvDialogBegin, EvDialogEnd
+    NUMBER(Constants.BIT_FLAG_13, kcScriptCauseNumber::new), // 8192|0x2000, Target Trigger: kcCEntity::OnNumber
+    WHEN_ITEM(Constants.BIT_FLAG_14, kcScriptCauseWhenItem::new), // 16384|0x4000, Target Triggers: CCharacter::OnWithItem, CProp::OnWithItem
+    ENTITY_3D(Constants.BIT_FLAG_15, kcScriptCauseEntity3D::new), // 32768|0x8000, Target Triggers: kcCEntity3D::Notify, sSendWaypointStatus triggers for the non-waypoint entity
+    WAYPOINT(Constants.BIT_FLAG_19, kcScriptCauseWaypoint::new); // 524288|0x80000, Target Trigger: sSendWaypointStatus triggers for the waypoint itself
 
     // Unimplemented:
     // Bit Flag 3|0x08 has runtime support, but doesn't appear to ever be fired. It validates a single matches a value, in addition to the normal subCause check.
