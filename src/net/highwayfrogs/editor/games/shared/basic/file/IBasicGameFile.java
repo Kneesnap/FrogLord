@@ -38,6 +38,11 @@ public interface IBasicGameFile extends IGameObject, ICollectionViewEntry, IProp
     GameUIController<?> makeEditorUI();
 
     /**
+     * Handles when the file is double-clicked in many UI situations.
+     */
+    void handleDoubleClick();
+
+    /**
      * Exports the file to the given folder. This export is usually not the form in which the data is originally stored.
      * This is often used for debugging purposes, or to get files in some standard format like .bmp.
      * @param exportFolder the root export folder

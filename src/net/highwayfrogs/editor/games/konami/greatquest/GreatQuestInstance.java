@@ -8,12 +8,17 @@ import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SoundChunkFile;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestMainMenuUIController;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
+import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Represents an instance of 'Frogger: The Great Quest'.
@@ -26,6 +31,8 @@ public class GreatQuestInstance extends GameInstance {
     private GreatQuestAssetBinFile mainArchive;
     private SoundChunkFile soundChunkFile;
     private File mainArchiveBinFile;
+    private final Map<Integer, String> soundPathsById = new HashMap<>();
+    private final Map<String, Integer> soundIdsByPath = new HashMap<>();
 
     public static final float JUMP_SLOPE_THRESHOLD = .8F;
 
@@ -53,6 +60,7 @@ public class GreatQuestInstance extends GameInstance {
 
         this.mainArchiveBinFile = binFile;
         loadGameConfig(gameVersionConfigName);
+        loadSoundFilePaths();
 
         // Load the sound files.
         loadSoundFolder();
@@ -65,6 +73,33 @@ public class GreatQuestInstance extends GameInstance {
             this.allFiles.addAll(this.mainArchive.getFiles());
         } catch (IOException ex) {
             Utils.handleError(getLogger(), ex, true, "Failed to load the bin file.");
+        }
+    }
+
+    private void loadSoundFilePaths() {
+        Config config = Config.loadTextConfigFromInputStream(getGameType().getEmbeddedResourceStream("sound-list.cfg"), "sound-list");
+
+        this.soundIdsByPath.clear();
+        this.soundPathsById.clear();
+        for (Entry<String, ConfigValueNode> keyValuePair : config.getKeyValuePairs().entrySet()) {
+            if (!Utils.isInteger(keyValuePair.getKey())) {
+                getLogger().warning("sound-list key '" + keyValuePair.getKey() + "' is not an integer, skipping!");
+                continue;
+            }
+
+            int soundId = Integer.parseInt(keyValuePair.getKey());
+            String soundPath = keyValuePair.getValue().getAsString();
+            if (soundPath == null || soundPath.trim().isEmpty()) {
+                getLogger().warning("sound-list key '" + keyValuePair.getKey() + "' has not associated value, skipping!");
+                continue;
+            }
+
+            this.soundPathsById.put(soundId, soundPath);
+            Integer oldSoundId = this.soundIdsByPath.put(soundPath, soundId);
+
+            // Warn if there are any duplicate file paths.
+            if (oldSoundId != null)
+                getLogger().warning("Both SFX ID " + oldSoundId + " & " + soundId + " share the path '" + soundPath + "'! This will cause issues trying to export all sounds at once!");
         }
     }
 
@@ -139,5 +174,57 @@ public class GreatQuestInstance extends GameInstance {
         } else {
             throw new IllegalStateException("The folder is not known since the game has not been loaded yet.");
         }
+    }
+
+    /**
+     * Gets the full sound file path for the given sound ID.
+     * @param soundId the sound ID to resolve.
+     * @return fullSoundPath, or the ID as a string if there is none.
+     */
+    public String getFullSoundPath(int soundId) {
+        String soundPath = this.soundPathsById.get(soundId);
+        if (soundPath != null)
+            return soundPath;
+
+        return String.valueOf(soundId);
+    }
+
+    /**
+     * Gets the shorted sound file path for the given sound ID.
+     * @param soundId the sound ID to resolve.
+     * @param includeId if true, the sound id will be guaranteed to be included as part of the name
+     * @return shortenedSoundPath
+     */
+    public String getShortenedSoundPath(int soundId, boolean includeId) {
+        String soundPath = this.soundPathsById.get(soundId);
+        if (soundPath == null)
+            return Utils.padNumberString(soundId, 4);
+
+        int lastSlashFound = soundPath.lastIndexOf('/');
+        if (lastSlashFound >= 0) {
+            int secondToLastSlashFound = soundPath.lastIndexOf('/', lastSlashFound - 1);
+            if (secondToLastSlashFound >= 0)
+                soundPath = soundPath.substring(secondToLastSlashFound + 1);
+        }
+
+        return (includeId ? "[" + Utils.padNumberString(soundId, 4) + "] " : "") + soundPath;
+    }
+
+    /**
+     * Gets the sound file name for the given sound ID.
+     * @param soundId the sound ID to resolve.
+     * @param includeId if true, the sound id will be guaranteed to be included as part of the name
+     * @return soundFileName
+     */
+    public String getSoundFileName(int soundId, boolean includeId) {
+        String soundPath = this.soundPathsById.get(soundId);
+        if (soundPath == null)
+            return Utils.padNumberString(soundId, 4);
+
+        int lastSlashFound = soundPath.lastIndexOf('/');
+        if (lastSlashFound >= 0)
+            return soundPath.substring(lastSlashFound + 1);
+
+        return (includeId ? "[" + Utils.padNumberString(soundId, 4) + "] " : "") + soundPath;
     }
 }

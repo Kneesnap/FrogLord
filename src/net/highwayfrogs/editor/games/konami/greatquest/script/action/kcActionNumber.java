@@ -7,9 +7,13 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWri
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcArgument;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcParam;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcParamType;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Represents the 'NUMBER' (broadcast number) kcAction.
+ * Each kcCEntity contains eight int32 variable slots, indexed by 0 through 7.
+ * It may contain an entity argument, suggesting it can access variables on another entity.
+ * However, upon further investigation, kcCScriptMgr::FireActorEvent() ignores the script parameter, always using the target entity instead.
  * Created by Kneesnap on 8/24/2023.
  */
 @Getter
@@ -26,8 +30,8 @@ public class kcActionNumber extends kcAction {
 
     @Override
     public kcArgument[] getArgumentTemplate(kcParam[] arguments) {
-        if (arguments != null && arguments.length > 2 && arguments[1].getAsInteger() == NumberOperation.ENTITY_VARIABLE.ordinal()) {
-            return WITH_ENTITY_ARGUMENTS;
+        if (arguments != null && arguments.length > 2 && arguments[1].getAsInteger() == NumberOperation.ENTITY_VARIABLE.ordinal() && arguments[2].getAsInteger() != 0) {
+            return WITH_ENTITY_ARGUMENTS; // This does nothing, so we will always hide it unless we have a reason to show it.
         } else {
             return DEFAULT_ARGUMENTS;
         }
@@ -37,8 +41,11 @@ public class kcActionNumber extends kcAction {
     public void load(kcParamReader reader) {
         this.number = reader.next().getAsInteger();
         this.operation = NumberOperation.getType(reader.next().getAsInteger(), false);
-        if (this.operation == NumberOperation.ENTITY_VARIABLE)
+        if (this.operation == NumberOperation.ENTITY_VARIABLE) {
             this.entityHash = reader.next().getAsInteger();
+            if (this.entityHash != 0)
+                getLogger().warning("kcActionNumber had an non-zero entity hash set! (Value: " + Utils.toHexString(this.entityHash) + ") This value is has been determined to be ignored by the retail game!");
+        }
     }
 
     @Override

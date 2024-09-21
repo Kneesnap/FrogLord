@@ -11,6 +11,6 @@ import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
  */
 public class SCGameFileListEditor<TGameInstance extends SCGameInstance> extends CollectionEditorComponent<TGameInstance, SCGameFile<?>> {
     public SCGameFileListEditor(TGameInstance instance) {
-        super(instance,  new SCGameFileGroupedListViewComponent<>(instance));
+        super(instance,  new SCGameFileGroupedListViewComponent<>(instance), false);
     }
 }

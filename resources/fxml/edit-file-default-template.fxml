@@ -15,29 +15,29 @@
             <children>
                 <AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="240.0" HBox.hgrow="NEVER">
                     <children>
-                        <VBox fx:id="leftSidePanelFreeArea" prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0"
-                              AnchorPane.leftAnchor="8.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="8.0">
+                        <HBox fx:id="leftSidePanelTopBox" spacing="5.0"
+                              AnchorPane.leftAnchor="1.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="1.0">
                             <children>
-                                <HBox fx:id="leftSidePanelTopBox" spacing="5.0">
-                                    <children>
-                                        <Label fx:id="fileNameLabel" text="Unnamed File Type" HBox.hgrow="SOMETIMES">
-                                            <graphic>
-                                                <ImageView fx:id="iconImageView" fitHeight="16.0" fitWidth="16.0" pickOnBounds="true"
-                                                           preserveRatio="true">
-                                                </ImageView>
-                                            </graphic>
-                                            <font>
-                                                <Font name="System Bold" size="14.0"/>
-                                            </font>
-                                        </Label>
-                                    </children>
-                                </HBox>
+                                <Label fx:id="fileNameLabel" text="Unnamed File Type" HBox.hgrow="SOMETIMES">
+                                    <graphic>
+                                        <ImageView fx:id="iconImageView" fitHeight="16.0" fitWidth="16.0" pickOnBounds="true"
+                                                   preserveRatio="true">
+                                        </ImageView>
+                                    </graphic>
+                                    <font>
+                                        <Font name="System Bold" size="14.0"/>
+                                    </font>
+                                </Label>
                             </children>
-                        </VBox>
+                        </HBox>
+                        <VBox fx:id="leftSidePanelFreeArea" prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0"
+                              AnchorPane.leftAnchor="1.0" AnchorPane.rightAnchor="1.0" AnchorPane.topAnchor="28.0" spacing="1" />
                     </children>
                 </AnchorPane>
                 <Separator maxWidth="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefWidth="0.0"
                            HBox.hgrow="NEVER"/>
+                <VBox fx:id="rightSidePanelFreeArea" prefHeight="305.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+                      AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
             </children>
         </HBox>
     </children>

@@ -84,6 +84,13 @@ public abstract class GreatQuestGameFile extends GameData<GreatQuestInstance> im
     public abstract GameUIController<?> makeEditorUI();
 
     /**
+     * Called when the file is double-clicked in the file list.
+     */
+    public void handleDoubleClick() {
+        // Do nothing by default.
+    }
+
+    /**
      * Tests if this file has a file path assigned.
      * @return hasFilePath
      */

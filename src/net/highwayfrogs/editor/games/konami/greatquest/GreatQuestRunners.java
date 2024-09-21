@@ -1,16 +1,10 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
-import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.file.writer.LargeFileReceiver;
-import net.highwayfrogs.editor.games.generic.GamePlatform;
-import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile;
-import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxEntry;
-import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxEntrySimpleAttributes;
-import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxWave;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceString;
@@ -26,8 +20,6 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptF
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
 
 /**
@@ -167,116 +159,5 @@ public class GreatQuestRunners {
         }
 
         return binFile;
-    }
-
-    /**
-     * Get the platform.
-     * @param file    The file in question, if there is one.
-     * @param scanner An optional scanner to read data from.
-     * @return GamePlatform or null if one was not given.
-     */
-    public static GamePlatform getPlatform(File file, Scanner scanner) {
-        GamePlatform platform = null;
-
-        if (file != null) {
-            String filePath = file.getPath();
-            if (filePath.contains("PC") || filePath.contains("Windows") || filePath.contains(":\\Program Files"))
-                platform = GamePlatform.WINDOWS;
-            if (filePath.contains("PS2") || filePath.contains("Play"))
-                platform = GamePlatform.PLAYSTATION_2;
-        }
-
-        if (platform == null) {
-            boolean makeScanner = (scanner == null);
-            if (makeScanner)
-                scanner = new Scanner(System.in);
-
-            System.out.print("Please enter the platform the files came from (WINDOWS, PLAYSTATION_2): ");
-            String platformName = scanner.nextLine();
-
-            try {
-                platform = GamePlatform.valueOf(platformName.toUpperCase());
-            } catch (Throwable th) {
-                // We don't care. This is some temporary development CLI mode for devs.
-            }
-
-            if (makeScanner)
-                scanner.close();
-        }
-
-        // Verify platform.
-        if (platform == null)
-            System.out.println("That is not a valid platform.");
-
-        return platform;
-    }
-
-    /**
-     * Runs a program which will export sound files.
-     * @param args The arguments to the program.
-     */
-    @SneakyThrows
-    @SuppressWarnings("unused")
-    public static void exportSoundFiles(String[] args) {
-        String filePath;
-        if (args.length > 0) {
-            filePath = String.join(" ", args);
-        } else {
-            System.out.print("Please enter the file path to the sound folder: ");
-            Scanner scanner = new Scanner(System.in);
-            filePath = scanner.nextLine();
-            scanner.close();
-        }
-
-        File soundFolder = new File(filePath);
-        if (!soundFolder.exists() || !soundFolder.isDirectory()) {
-            System.out.println("That is not a valid folder!");
-            return;
-        }
-
-        GamePlatform platform = getPlatform(soundFolder, null);
-        if (platform == null)
-            return;
-
-        List<File> sbrFiles = new ArrayList<>();
-        List<SBRFile> sbrLoadedFiles = new ArrayList<>();
-        for (File file : Utils.listFiles(soundFolder)) {
-            if (!file.isFile())
-                continue;
-
-            String fileNameLowerCase = file.getName().toLowerCase();
-
-            if (fileNameLowerCase.endsWith(".sbr")) {
-                System.out.println("Reading '" + file.getName() + "'...");
-                SBRFile sbrFile = new SBRFile(null, file);
-                sbrFile.load(new DataReader(new FileSource(file)));
-                sbrFiles.add(file);
-                sbrLoadedFiles.add(sbrFile);
-            }
-        }
-
-        File exportFolder = new File(soundFolder, "Export/");
-        Utils.makeDirectory(exportFolder);
-
-        for (int i = 0; i < sbrFiles.size(); i++) {
-            File file = sbrFiles.get(i);
-            SBRFile sbrFile = sbrLoadedFiles.get(i);
-            File sbrFolder = new File(exportFolder, Utils.stripExtension(file.getName()));
-            Utils.makeDirectory(sbrFolder);
-
-            for (SfxEntry entry : sbrFile.getSoundEffects()) {
-                if (!(entry.getAttributes() instanceof SfxEntrySimpleAttributes))
-                    continue;
-
-                String fileName = Utils.padNumberString(entry.getSfxId(), 4) + ".wav";
-                File targetFile = new File(sbrFolder, fileName);
-                if (targetFile.exists())
-                    continue;
-
-                int waveId = (int) ((SfxEntrySimpleAttributes) entry.getAttributes()).getWave();
-                SfxWave wave = sbrFile.getWaves().get(waveId);
-                wave.exportToWav(targetFile);
-            }
-        }
     }
 }

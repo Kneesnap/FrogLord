@@ -5,7 +5,6 @@ import javafx.fxml.FXML;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestFileEditorUIController;
-import net.highwayfrogs.editor.gui.editor.MeshViewController;
 
 /**
  * Shows information about the model.
@@ -18,6 +17,6 @@ public class GreatQuestModelInfoController extends GreatQuestFileEditorUIControl
 
     @FXML
     private void onView(ActionEvent evt) {
-        MeshViewController.setupMeshViewer(getGameInstance(), new GreatQuestModelViewController(), new GreatQuestModelMesh(getFile(), true));
+        getFile().openMeshViewer();
     }
 }

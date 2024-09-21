@@ -7,7 +7,6 @@ import javafx.scene.control.Button;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestFileEditorUIController;
-import net.highwayfrogs.editor.gui.editor.MeshViewController;
 
 /**
  * Shows information about the map.
@@ -39,6 +38,7 @@ public class GreatQuestChunkedFileInfoController extends GreatQuestFileEditorUIC
 
     @FXML
     private void onView(ActionEvent evt) {
-        MeshViewController.setupMeshViewer(getGameInstance(), new GreatQuestMapMeshController(), new GreatQuestMapMesh(getFile()));
+        if (!getFile().openMeshViewer())
+            throw new IllegalStateException("Cannot open the map mesh viewer, this is unexpected!");
     }
 }

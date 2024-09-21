@@ -54,4 +54,9 @@ public class HudsonRwStreamFile extends HudsonGameFile {
     public GameUIController<?> makeEditorUI() {
         return RenderWareStreamEditorUIController.loadController(getGameInstance(), this.rwStreamFile);
     }
+
+    @Override
+    public void handleDoubleClick() {
+        this.rwStreamFile.handleDoubleClick();
+    }
 }

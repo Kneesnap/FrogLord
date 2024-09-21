@@ -45,6 +45,7 @@ import java.util.logging.Logger;
  * Everything after '#' on a line of text will be ignored, as a comment. If you need to put '#' into a line of text or a value, escape it by typing '\#' instead.
  * Created by Kneesnap on 4/25/2024.
  */
+@SuppressWarnings("unused")
 public class Config implements IBinarySerializable {
     private final Map<String, ConfigValueNode> keyValuePairs = new HashMap<>();
     private final Map<String, List<Config>> childConfigsByName = new HashMap<>();
@@ -608,11 +609,8 @@ public class Config implements IBinarySerializable {
      * @return readConfig
      */
     public static Config loadConfigFromString(String configString, String configFileName) {
-        BadStringReader reader = new BadStringReader(new StringReader(configString));
-        try {
+        try (BadStringReader reader = new BadStringReader(new StringReader(configString))) {
             return loadConfigFromString(null, reader, 0, configFileName, null);
-        } finally {
-            reader.close();
         }
     }
 
@@ -760,9 +758,11 @@ public class Config implements IBinarySerializable {
      * Settings/data used when loading a config.
      * This is an example of passing settings / data among IBinarySerializable can work.
      */
-    private static class ConfigSettings {
-        @Getter @Setter private boolean readingCommentsEnabled = true;
-        @Getter @Setter private boolean headerPending = true;
+    @Setter
+    @Getter
+    public static class ConfigSettings {
+        private boolean readingCommentsEnabled = true;
+        private boolean headerPending = true;
     }
 
     /**

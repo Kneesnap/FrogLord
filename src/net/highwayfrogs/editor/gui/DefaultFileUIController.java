@@ -28,6 +28,7 @@ public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFi
     @FXML private VBox leftSidePanelFreeArea;
     @FXML private HBox leftSidePanelTopBox;
     @FXML private HBox contentBox;
+    @FXML private VBox rightSidePanelFreeArea;
     @FXML private ImageView iconImageView;
     @FXML private Label fileNameLabel;
     private TGameFile file;
@@ -50,10 +51,11 @@ public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFi
         if (this.fileNameLabel != null)
             this.fileNameLabel.setText(this.fileNameText != null ? this.fileNameText : "Unnamed File Type");
 
-        if (this.contentBox != null) {
+        if (this.rightSidePanelFreeArea != null) {
             Node propertyListViewRootNode = this.propertyListViewer.getRootNode();
             HBox.setHgrow(propertyListViewRootNode, Priority.ALWAYS);
-            this.contentBox.getChildren().add(propertyListViewRootNode);
+            getPropertyListViewer().bindSize();
+            getRightSidePanelFreeArea().getChildren().add(propertyListViewRootNode);
             addController(this.propertyListViewer);
         }
     }

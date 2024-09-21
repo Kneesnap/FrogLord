@@ -78,7 +78,8 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
                             Object result = pair.getOnClickBehavior().get();
                             if (result != null) {
                                 pair.setValue(String.valueOf(result));
-                                showProperties(propertyList); // Refresh the UI.
+                                if (pair.getPropertyList() != null)
+                                    showProperties(pair.getPropertyList()); // Refresh the UI.
                             }
                         } catch (Throwable th) {
                             Utils.handleError(getGameInstance().getLogger(), th, true, "Failed to run click handler for '%s'.", pair.getName());
@@ -140,6 +141,18 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
 
     /**
      * Contains a list of properties to display in a UI.
+     * TODO: Consider an ideal way for editing property list values.
+     *  -> Consider tree property lists based on the same design pattern we're already using.
+     *  -> Consider fleshing out the InputMenu design alongside PropertyList in order to yield maximum synergy.
+     *  -> Scenario where it is non-blocking
+     *  -> Scenario where it returns void.
+     *  -> Scenario for more than just integer
+     *  -> Ensure we handle things such as exiting the window cleanly.
+     *  -> Allow passing logger maybe?
+     *  -> How do we make it apparent which properties can/cannot be edited?
+     *  -> Fix the issue where often times PropertyListViewerComponents don't properly use the space available (Eg: Improper resizing, etc)
+     *  -> Many properties probably shouldn't make a full pop-up, but instead accept editing a textbox in-place. There should be a system which allows both pop-up prompts as well as text field edits, which can use the same validation.
+     *  -> Refer to SfxEntrySimpleAttributes.addToPropertyList() to see places where we might want to have convenience method definitions to avoid tons of duplicated code.
      */
     @Getter
     public static class PropertyList {
@@ -161,7 +174,7 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
          * @param onClickBehavior behavior to run when the property is clicked
          */
         public <TObject> void add(String key, TObject value, Supplier<TObject> onClickBehavior) {
-            this.entries.add(new PropertyListPair(key, String.valueOf(value), onClickBehavior));
+            this.entries.add(new PropertyListPair(this, key, String.valueOf(value), onClickBehavior));
         }
 
         /**
@@ -176,10 +189,12 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
 
     @Getter
     public static class PropertyListPair extends NameValuePair {
+        private final PropertyList propertyList;
         private final Supplier<?> onClickBehavior;
 
-        public PropertyListPair(String name, String value, Supplier<?> onClickBehavior) {
+        public PropertyListPair(PropertyList propertyList, String name, String value, Supplier<?> onClickBehavior) {
             super(name, value);
+            this.propertyList = propertyList;
             this.onClickBehavior = onClickBehavior;
         }
     }

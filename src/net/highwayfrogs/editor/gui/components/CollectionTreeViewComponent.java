@@ -2,10 +2,14 @@ package net.highwayfrogs.editor.gui.components;
 
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.scene.Node;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.image.Image;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.GameInstance;
@@ -41,7 +45,7 @@ public abstract class CollectionTreeViewComponent<TGameInstance extends GameInst
         treeView.setEditable(false);
         treeView.setShowRoot(false); // Hide the root node.
         treeView.setFixedCellSize(Constants.RECOMMENDED_TREE_VIEW_FIXED_CELL_SIZE); // Fixes performance issues. Recommended by https://docs.oracle.com/javase/8/javafx/api/javafx/scene/control/TreeView.html#fixedCellSizeProperty--
-        treeView.setCellFactory(treeViewParam -> new CollectionViewEntryTreeCell<>());
+        treeView.setCellFactory(treeViewParam -> new CollectionTreeViewEntryTreeCell<>(this));
 
         this.rootNode = new CollectionViewTreeNode<>(null, this, "root");
         TreeItem<CollectionViewTreeNode<TViewEntry>> rootTreeItem = this.rootNode.createFxTreeItem();
@@ -61,16 +65,13 @@ public abstract class CollectionTreeViewComponent<TGameInstance extends GameInst
     }
 
     private void onSelectionChange(ObservableValue<? extends TreeItem<CollectionViewTreeNode<TViewEntry>>> observableValue, TreeItem<CollectionViewTreeNode<TViewEntry>> oldViewEntry, TreeItem<CollectionViewTreeNode<TViewEntry>> newViewEntry) {
-        if (newViewEntry == null || newViewEntry.getValue() == null || newViewEntry.getValue().getValue() == null)
-            return;
-
-        // Select it in the view component.
-        setSelectedViewEntry(newViewEntry.getValue().getValue());
+        TViewEntry viewEntry = newViewEntry != null ? (newViewEntry.getValue() != null ? newViewEntry.getValue().getValue() : null) : null;
+        setSelectedViewEntry(viewEntry);
     }
 
     @Override
     public void refreshDisplay() {
-        Collection<TViewEntry> sourceViewEntries = getViewEntries();
+        Collection<? extends TViewEntry> sourceViewEntries = getViewEntries();
 
         // Remove existing expired entries.
         Iterator<TViewEntry> iterator = this.activeEntries.iterator();
@@ -335,6 +336,33 @@ public abstract class CollectionTreeViewComponent<TGameInstance extends GameInst
             } else {
                 throw new NullPointerException("Either this.value or other.value was null! This should not be possible!");
             }
+        }
+    }
+
+    private static class CollectionTreeViewEntryTreeCell<TGameInstance extends GameInstance, TViewEntry extends ICollectionViewEntry> extends CollectionViewEntryTreeCell<CollectionViewTreeNode<TViewEntry>> {
+        private final CollectionTreeViewComponent<TGameInstance, TViewEntry> component;
+        private final EventHandler<? super MouseEvent> doubleClickHandler;
+
+        @SuppressWarnings("unchecked")
+        private CollectionTreeViewEntryTreeCell(CollectionTreeViewComponent<TGameInstance, TViewEntry> component) {
+            this.component = component;
+            this.doubleClickHandler = event -> {
+                if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
+                    event.consume();
+                    this.component.onDoubleClick(((ListCell<CollectionViewTreeNode<TViewEntry>>) event.getSource()).getItem().getValue());
+                }
+            };
+        }
+
+        @Override
+        public void updateItem(CollectionViewTreeNode<TViewEntry> viewEntry, boolean empty) {
+            super.updateItem(viewEntry, empty);
+            if (empty) {
+                setOnMouseClicked(null);
+                return;
+            }
+
+            setOnMouseClicked(this.doubleClickHandler);
         }
     }
 }

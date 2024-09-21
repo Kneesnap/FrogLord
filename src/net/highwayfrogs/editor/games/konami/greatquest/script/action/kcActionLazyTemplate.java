@@ -39,7 +39,7 @@ public class kcActionLazyTemplate extends kcActionTemplate {
     public static final kcArgument[] PROMPT_ARGUMENTS = kcArgument.make(kcParamType.HASH, "promptRes");
     public static final kcArgument[] DIALOG_ARGUMENTS = kcArgument.make(kcParamType.HASH, "dialogRes");
     public static final kcArgument[] SET_ALARM_ARGUMENTS = kcArgument.make(kcParamType.INT, "alarmId", kcParamType.UNSIGNED_INT, "duration", kcParamType.INT, "repeatCount");
-    public static final kcArgument[] PLAY_SFX_ARGUMENTS = kcArgument.make(kcParamType.INT, "sound");
+    public static final kcArgument[] PLAY_SFX_ARGUMENTS = kcArgument.make(kcParamType.SOUND, "sound");
     public static final kcArgument[] VARIABLE_SET_ARGUMENTS = kcArgument.make(kcParamType.INT, "variableId", kcParamType.INT, "value");
     public static final kcArgument[] VARIABLE_ADD_ARGUMENTS = kcArgument.make(kcParamType.INT, "variableId", kcParamType.INT, "value");
     public static final kcArgument[] PARTICLE_ARGUMENTS = kcArgument.make(kcParamType.HASH, "particle");

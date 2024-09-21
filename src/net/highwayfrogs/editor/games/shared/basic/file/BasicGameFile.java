@@ -104,6 +104,14 @@ public abstract class BasicGameFile<TGameInstance extends BasicGameInstance> ext
     }
 
     /**
+     * Handles when the file is double-clicked in most UI situations.
+     * The default behavior is to do nothing.
+     */
+    public void handleDoubleClick() {
+        // Do nothing by default.
+    }
+
+    /**
      * Loads a GameFile editor.
      * @param gameInstance the game instance to create the editor for
      * @param controller the controller to control the GUI

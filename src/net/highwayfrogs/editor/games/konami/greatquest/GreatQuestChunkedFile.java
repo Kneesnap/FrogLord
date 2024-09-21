@@ -24,9 +24,12 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.*;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceNamedHash.HashTableEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.GreatQuestChunkedFileInfoController;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.GreatQuestMapMesh;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.GreatQuestMapMeshController;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
+import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -125,6 +128,11 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     }
 
     @Override
+    public void handleDoubleClick() {
+        openMeshViewer();
+    }
+
+    @Override
     public String getDefaultFolderName() {
         return "ChunkedDataFiles";
     }
@@ -206,6 +214,18 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                     .collect(Collectors.toList());
 
             Files.write(hashFile.toPath(), lines);
+        }
+    }
+
+    /**
+     * Opens the mesh viewer for viewing the map, if possible.
+     */
+    public boolean openMeshViewer() {
+        if (getSceneManager() != null) {
+            MeshViewController.setupMeshViewer(getGameInstance(), new GreatQuestMapMeshController(), new GreatQuestMapMesh(this));
+            return true;
+        } else {
+            return false;
         }
     }
 

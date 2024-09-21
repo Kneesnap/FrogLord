@@ -73,6 +73,18 @@ public class RwWorldChunk extends RwStreamChunk implements IRwWorldProvider {
         return new RwWorldUIController(this);
     }
 
+    @Override
+    public void handleDoubleClick() {
+        openMeshView();
+    }
+
+    /**
+     * Opens the MeshView for the mesh.
+     */
+    public void openMeshView() {
+        MeshViewController.setupMeshViewer(getGameInstance(), new RwWorldMeshController(), new RwWorldCombinedMesh(this));
+    }
+
     @SuppressWarnings("FieldCanBeLocal")
     public static class RwWorldUIController extends GameUIController<GameInstance> {
         private final Button viewButton;
@@ -82,7 +94,7 @@ public class RwWorldChunk extends RwStreamChunk implements IRwWorldProvider {
             super(world.getGameInstance());
             this.world = world;
             this.viewButton = new Button("View World");
-            this.viewButton.setOnAction(evt -> MeshViewController.setupMeshViewer(getGameInstance(), new RwWorldMeshController(), new RwWorldCombinedMesh(this.world)));
+            this.viewButton.setOnAction(evt -> this.world.openMeshView());
             loadController(new VBox(3, this.viewButton));
         }
 

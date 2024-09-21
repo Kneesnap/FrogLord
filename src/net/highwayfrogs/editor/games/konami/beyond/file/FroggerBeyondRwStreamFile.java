@@ -61,6 +61,11 @@ public class FroggerBeyondRwStreamFile extends FroggerBeyondFile {
     }
 
     @Override
+    public void handleDoubleClick() {
+        this.rwStreamFile.handleDoubleClick();
+    }
+
+    @Override
     public void export(File exportFolder) {
         File imagesExportDir = new File(exportFolder, "Images [" + getFileDefinition().getFile().getParentFile().getName() + "_" + getDisplayName() + "]");
         this.rwStreamFile.exportTextures(imagesExportDir, new HashMap<>());

@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.sony.shared.ui.file;
 
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ListCell;
@@ -11,6 +12,8 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.reader.ArraySource;
@@ -72,7 +75,7 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
 
     private void updateEntryText() {
         entryList.setCellFactory(null);
-        entryList.setCellFactory(param -> new WADEntryListCell());
+        entryList.setCellFactory(param -> new WADEntryListCell(this));
     }
 
     /**
@@ -205,12 +208,32 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
     }
 
     private static class WADEntryListCell extends ListCell<WADEntry> {
+        private final WADController controller;
+        private final EventHandler<? super MouseEvent> doubleClickHandler;
+
+        @SuppressWarnings("unchecked")
+        private WADEntryListCell(WADController controller) {
+            this.controller = controller;
+            this.doubleClickHandler = event -> {
+                if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
+                    event.consume();
+                    WADEntry wadEntry = ((ListCell<WADEntry>) event.getSource()).getItem();
+                    if (wadEntry != null) {
+                        SCGameFile<?> gameFile = wadEntry.getFile();
+                        if (gameFile != null)
+                            gameFile.handleWadEdit(this.controller.getFile());
+                    }
+                }
+            };
+        }
+
         @Override
         public void updateItem(WADEntry wadEntry, boolean empty) {
             super.updateItem(wadEntry, empty);
             if (empty) {
                 setGraphic(null);
                 setText(null);
+                setOnMouseClicked(null);
                 return;
             }
 
@@ -224,6 +247,7 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
             }
 
             setGraphic(iconView);
+            setOnMouseClicked(this.doubleClickHandler);
 
             // Update text.
             setStyle(wadEntryFile.getCollectionViewDisplayStyle());

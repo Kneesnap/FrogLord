@@ -76,7 +76,7 @@ public class GreatQuestMainMenuUIController extends MainMenuController<GreatQues
 
     @Override
     protected CollectionEditorComponent<GreatQuestInstance, GreatQuestGameFile> createFileListEditor() {
-        return new CollectionEditorComponent<>(getGameInstance(), new GreatQuestFileBasicListViewComponent(getGameInstance()));
+        return new CollectionEditorComponent<>(getGameInstance(), new GreatQuestFileBasicListViewComponent(getGameInstance()), false);
     }
 
     protected static MenuItem addMenuItem(Menu menuBar, String title, Runnable action) {

@@ -24,8 +24,16 @@ public class BasicFileListViewComponent<TGameInstance extends BasicGameInstance>
 
     @Override
     protected void onSelect(BasicGameFile<?> file) {
+        if (file == null)
+            return;
+
         GameUIController<?> controller = file.makeEditorUI();
         getGameInstance().getMainMenuController().showEditor(controller);
+    }
+
+    @Override
+    protected void onDoubleClick(BasicGameFile<?> file) {
+        file.handleDoubleClick();
     }
 
     @Override

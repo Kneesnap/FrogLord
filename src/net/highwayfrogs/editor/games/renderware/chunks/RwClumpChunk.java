@@ -120,6 +120,18 @@ public class RwClumpChunk extends RwStreamChunk {
         return new RwClumpUIController(this);
     }
 
+    @Override
+    public void handleDoubleClick() {
+        openMeshViewer();
+    }
+
+    /**
+     * Opens the mesh viewer for the clump.
+     */
+    public void openMeshViewer() {
+        MeshViewController.setupMeshViewer(getGameInstance(), new RwClumpCombinedMeshController(), new RwClumpCombinedMesh(this));
+    }
+
     /**
      * Represents RpClumpChunkInfo as defined in baclump.h.
      */
@@ -199,7 +211,7 @@ public class RwClumpChunk extends RwStreamChunk {
             super(clump.getGameInstance());
             this.clump = clump;
             this.viewButton = new Button("View Model");
-            this.viewButton.setOnAction(evt -> MeshViewController.setupMeshViewer(getGameInstance(), new RwClumpCombinedMeshController(), new RwClumpCombinedMesh(this.clump)));
+            this.viewButton.setOnAction(evt -> this.clump.openMeshViewer());
             loadController(new VBox(3, this.viewButton));
             // TODO: Can we include a 3D preview within this area. Would be nice if there was an extra-simple 3D viewer.
         }

@@ -146,6 +146,14 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
     }
 
     /**
+     * Handles when the stream chunk is double-clicked in the view UI.
+     * By default, this does nothing.
+     */
+    public void handleDoubleClick() {
+        // Do nothing by default.
+    }
+
+    /**
      * Reads data specific to this chunk type.
      * @param reader The reader to read data from.
      * @param dataLength the amount of bytes of data to read

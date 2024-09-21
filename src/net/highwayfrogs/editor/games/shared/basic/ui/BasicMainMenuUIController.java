@@ -81,7 +81,7 @@ public class BasicMainMenuUIController<TGameInstance extends BasicGameInstance> 
 
     @Override
     protected CollectionEditorComponent<TGameInstance, BasicGameFile<?>> createFileListEditor() {
-        return new CollectionEditorComponent<>(getGameInstance(), new BasicFileListViewComponent<>(getGameInstance()));
+        return new CollectionEditorComponent<>(getGameInstance(), new BasicFileListViewComponent<>(getGameInstance()), false);
     }
 
     protected static MenuItem addMenuItem(Menu menuBar, String title, Runnable action) {

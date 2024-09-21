@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
@@ -43,6 +44,39 @@ public class InputMenu {
     public static String promptInput(GameInstance instance, String prompt, String defaultText) {
         AtomicReference<String> resultHolder = new AtomicReference<>(null);
         promptInput(instance, prompt, defaultText, resultHolder::set);
+        return resultHolder.get();
+    }
+
+    /**
+     * Prompts the user to respond with an integer value.
+     * @param instance the game instance to prompt under
+     * @param prompt the prompt to show to the user
+     * @param startValue the initial value to put in the text box
+     * @param handler the handler for handling an integer value. If an exception is thrown, the prompt response will be considered invalid.
+     * @return integer if successful, or null to indicate there is no new value
+     */
+    public static Integer promptInputInt(GameInstance instance, String prompt, int startValue, Consumer<Integer> handler) {
+        AtomicReference<Integer> resultHolder = new AtomicReference<>(null);
+        InputMenu.promptInput(instance, prompt, String.valueOf(startValue), response -> {
+            int parsedValue;
+            try {
+                parsedValue = Integer.parseInt(response);
+            } catch (NumberFormatException nfe) {
+                Utils.makePopUp("The value '" + response + "' cannot be interpreted as an integer!", AlertType.WARNING);
+                return;
+            }
+
+            try {
+                if (handler != null)
+                    handler.accept(parsedValue);
+            } catch (Throwable th) {
+                Utils.handleError(instance.getLogger(), th, true);
+                return;
+            }
+
+            resultHolder.set(parsedValue);
+        });
+
         return resultHolder.get();
     }
 

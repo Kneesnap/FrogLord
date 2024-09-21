@@ -26,6 +26,8 @@ import java.io.IOException;
 
 /**
  * Controls the VAB sound screen.
+ * TODO: This menu has speed issues due to usage of Clip.close(). We should switch to a cached Clip model to avoid this issue.
+ *  -> Alternatively, it might be feasible to use AudioClip.getProvider().create()? Perhaps this would give us more control and be less likely to fail?
  * Created by Kneesnap on 5/13/2024.
  */
 public class SCVABUIController extends SCFileEditorUIController<SCGameInstance, SCSplitVBFile> {

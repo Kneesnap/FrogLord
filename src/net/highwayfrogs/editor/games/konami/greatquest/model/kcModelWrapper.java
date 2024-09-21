@@ -10,10 +10,13 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IFileExport;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelInfoController;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelMesh;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelViewController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.editor.MeshViewController;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,6 +72,11 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
     }
 
     @Override
+    public void handleDoubleClick() {
+        openMeshViewer();
+    }
+
+    @Override
     public String getExtension() {
         return "vtx";
     }
@@ -105,5 +113,12 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
             this.model.addToPropertyList(propertyList);
 
         return propertyList;
+    }
+
+    /**
+     * Opens the mesh viewer for the wrapped model.
+     */
+    public void openMeshViewer() {
+        MeshViewController.setupMeshViewer(getGameInstance(), new GreatQuestModelViewController(), new GreatQuestModelMesh(this, true));
     }
 }

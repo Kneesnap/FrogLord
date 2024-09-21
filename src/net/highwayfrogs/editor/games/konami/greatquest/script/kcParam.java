@@ -133,6 +133,9 @@ public class kcParam {
             case ATTACH_ID:
                 builder.append(getEnum(kcAttachID.values()));
                 break;
+            case SOUND:
+                builder.append('"').append(settings.getGameInstance().getFullSoundPath(getAsInteger())).append('"');
+                break;
             default:
                 throw new RuntimeException("Could not convert kcParamType " + paramType + " toString for value " + Utils.toByteString(this.bytes) + ".");
         }

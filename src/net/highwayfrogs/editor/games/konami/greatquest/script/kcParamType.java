@@ -17,4 +17,5 @@ public enum kcParamType {
     NUMBER_OPERATION,
     CAMERA_PIVOT_PARAM,
     ATTACH_ID, // Unsigned int.
+    SOUND, // INT
 }

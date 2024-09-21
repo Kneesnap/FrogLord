@@ -26,6 +26,8 @@ import javafx.stage.Window;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.file.writer.ArrayReceiver;
+import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.GameUIController;
@@ -1102,7 +1104,7 @@ public class Utils {
         fileChooser.setInitialDirectory(getValidFolder(GUIMain.getWorkingDirectory()));
         if (suggestName != null) {
             String initialName = suggestName;
-            if (extension != null && !extension.equals("*"))
+            if (extension != null && !extension.equals("*") && !initialName.endsWith("." + extension))
                 initialName += "." + extension;
 
             fileChooser.setInitialFileName(initialName);
@@ -2854,7 +2856,7 @@ public class Utils {
      * @param wavFileContents the file contents to load.
      * @return audioClip
      */
-    public static Clip getClipFromWavFile(byte[] wavFileContents) {
+    public static Clip getClipFromWavFile(byte[] wavFileContents, boolean showErrorWindow) {
         if (wavFileContents == null)
             throw new NullPointerException("wavFileContents");
 
@@ -2868,11 +2870,14 @@ public class Utils {
             Clip clip = AudioSystem.getClip();
             clip.open(audioInputStream);
             return clip;
-        } catch (UnsupportedAudioFileException | IOException ex) {
-            Utils.handleError(getLogger(), ex, true, "Couldn't read the audio data.");
+        } catch (UnsupportedAudioFileException ex) {
+            Utils.handleError(getLogger(), ex, showErrorWindow, "The audio file format appears to be unsupported.\nThe file may only be playable using an external audio player such as VLC.");
+            return null;
+        } catch (IOException ex) {
+            Utils.handleError(getLogger(), ex, showErrorWindow, "Problems with IO when reading the audio data.");
             return null;
         } catch (LineUnavailableException ex) {
-            Utils.handleError(getLogger(), ex, true, "Couldn't get an audio line.");
+            Utils.handleError(getLogger(), ex, showErrorWindow, "Couldn't get an audio line.");
             return null;
         } finally {
             try {
@@ -2990,5 +2995,102 @@ public class Utils {
         } catch (IOException ex) {
             handleError(null, ex, false, "Failed to save sound to file '%s'.", file.getName());
         }
+    }
+
+    /**
+     * Runs the provided task on the FX Application Thread.
+     * @param task the task to run
+     */
+    public static void runOnFXThread(Runnable task) {
+        if (task == null)
+            throw new NullPointerException("task");
+
+        if (Platform.isFxApplicationThread()) {
+            task.run();
+        } else {
+            Platform.runLater(task);
+        }
+    }
+
+    /**
+     * Creates a wav file with the given data.
+     * @param formatHeaderSource a byte array containing ONLY a wave format header
+     * @param rawAudioDataSource a byte array containing ONLY the raw audio data
+     * @return wavFile
+     */
+    public static byte[] createWavFile(byte[] formatHeaderSource, byte[] rawAudioDataSource) {
+        if (formatHeaderSource == null)
+            throw new NullPointerException("formatHeaderSource");
+        if (rawAudioDataSource == null)
+            throw new NullPointerException("rawAudioDataSource");
+
+        return createWavFile(formatHeaderSource, 0, formatHeaderSource.length, rawAudioDataSource, 0, rawAudioDataSource.length);
+    }
+
+    /**
+     * Creates a wav file with the given data.
+     * @param formatHeaderSource a byte array containing a wave format header
+     * @param formatStartIndex the index where the data to the wave data header starts
+     * @param formatLength the amount of bytes in the format header
+     * @param rawAudioDataSource a byte array containing the raw audio data
+     * @param audioDataStartIndex the index where the raw audio data starts
+     * @param audioDataLength the amount of bytes to read of raw audio data
+     * @return wavFile
+     */
+    public static byte[] createWavFile(byte[] formatHeaderSource, int formatStartIndex, int formatLength, byte[] rawAudioDataSource, int audioDataStartIndex, int audioDataLength) {
+        if (formatHeaderSource == null)
+            throw new NullPointerException("formatHeaderSource");
+        if (rawAudioDataSource == null)
+            throw new NullPointerException("rawAudioDataSource");
+
+        if (formatLength < 16)
+            throw new IllegalArgumentException("The size of a wave audio header format must be at least 16 bytes! (Was: " + formatLength + ")");
+        if (formatStartIndex < 0)
+            throw new IllegalArgumentException("The offset into the wave audio header byte array must be at least 0! (Was: " + formatStartIndex + ")");
+        if (formatLength > formatHeaderSource.length - formatStartIndex)
+            throw new IllegalArgumentException("The format size (" + formatLength + ") was greater than the total number of bytes available! (" + (formatHeaderSource.length - formatStartIndex) + ")");
+
+        if (audioDataStartIndex < 0)
+            throw new IllegalArgumentException("The offset into the raw audio data byte array must be at least 0! (Was: " + audioDataStartIndex + ")");
+        if (audioDataLength < 0)
+            throw new IllegalArgumentException("The size of the raw audio data must be at least 0 bytes! (Was: " + audioDataLength + ")");
+        if (audioDataLength > rawAudioDataSource.length - audioDataStartIndex)
+            throw new IllegalArgumentException("The format size (" + formatLength + ") was greater than the total number of bytes available! (" + (rawAudioDataSource.length - audioDataStartIndex) + ")");
+
+        // Read the audio format header.
+        byte[] waveFormatEx;
+        if (formatStartIndex == 0 && formatHeaderSource.length == formatLength) {
+            waveFormatEx = formatHeaderSource;
+        } else {
+            waveFormatEx = new byte[formatLength];
+            System.arraycopy(formatHeaderSource, formatStartIndex, waveFormatEx, 0, formatLength);
+        }
+
+        // Read the raw audio data.
+        byte[] rawAudioData;
+        if (audioDataStartIndex == 0 && rawAudioDataSource.length == audioDataLength) {
+            rawAudioData = rawAudioDataSource;
+        } else {
+            rawAudioData = new byte[audioDataLength];
+            System.arraycopy(rawAudioDataSource, audioDataStartIndex, rawAudioData, 0, audioDataLength);
+        }
+
+        // Write the WAV file.
+        ArrayReceiver receiver = new ArrayReceiver();
+        DataWriter writer = new DataWriter(receiver);
+
+        writer.writeStringBytes("RIFF");
+        int fileSizeAddress = writer.writeNullPointer();
+        writer.writeStringBytes("WAVE");
+        writer.writeStringBytes("fmt ");
+        writer.writeInt(waveFormatEx.length); // Write chunk 1 size.
+        writer.writeBytes(waveFormatEx);
+        writer.writeStringBytes("data");
+        writer.writeInt(rawAudioData.length);
+        writer.writeBytes(rawAudioData);
+        writer.writeAddressAt(fileSizeAddress, writer.getIndex() - (fileSizeAddress + Constants.INTEGER_SIZE));
+
+        writer.closeReceiver();
+        return receiver.toArray();
     }
 }

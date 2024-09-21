@@ -1,6 +1,7 @@
 <component name="ProjectDictionaryState">
     <dictionary name="kneesnap">
         <words>
+            <w>adpcm</w>
             <w>anims</w>
             <w>bbox</w>
             <w>celset</w>
@@ -53,6 +54,7 @@
             <w>unpacker</w>
             <w>vertice</w>
             <w>vram</w>
+            <w>waveformatex</w>
             <w>xbox</w>
             <w>xor'd</w>
         </words>

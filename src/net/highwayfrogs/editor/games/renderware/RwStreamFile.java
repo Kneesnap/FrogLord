@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.IRwStreamChunkType.RwStreamChunkTypeDisplayImportance;
 import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk.IRwPlatformIndependentTexturePrefix;
+import net.highwayfrogs.editor.games.renderware.chunks.RwWorldChunk;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -180,5 +181,18 @@ public class RwStreamFile extends SharedGameData {
         }
 
         return readIndex == rawBytes.length;
+    }
+
+    /**
+     * Handles this file being double-clicked in a UI.
+     */
+    public void handleDoubleClick() {
+        for (int i = 0; i < this.chunks.size(); i++) {
+            RwStreamChunk chunk = this.chunks.get(i);
+            if (chunk instanceof RwWorldChunk) {
+                ((RwWorldChunk) chunk).openMeshView();
+                return;
+            }
+        }
     }
 }

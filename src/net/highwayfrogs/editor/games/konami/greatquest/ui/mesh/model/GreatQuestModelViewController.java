@@ -21,6 +21,7 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
     private GreatQuestModelMeshViewCollection meshViewCollection;
 
     private static final double DEFAULT_FAR_CLIP = 50;
+    private static final double DEFAULT_NEAR_CLIP = 0.1;
     private static final double DEFAULT_MOVEMENT_SPEED = 3;
 
     private static final PhongMaterial VERTEX_MATERIAL = Utils.makeUnlitSharpMaterial(Color.YELLOW);
@@ -30,6 +31,7 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
     public void setupBindings(SubScene subScene3D, MeshView meshView) {
         super.setupBindings(subScene3D, meshView);
         getFirstPersonCamera().getCamera().setFarClip(DEFAULT_FAR_CLIP);
+        getFirstPersonCamera().getCamera().setNearClip(DEFAULT_NEAR_CLIP);
         getFirstPersonCamera().setDefaultMoveSpeed(DEFAULT_MOVEMENT_SPEED);
 
         getLightingGroup().getChildren().add(getMeshView());
@@ -55,7 +57,7 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
 
     @Override
     protected void setDefaultCameraPosition() {
-        setupDefaultInverseCamera();
+        setupDefaultInverseCamera(0, 0, 0, 2.5);
     }
 
     @Override
