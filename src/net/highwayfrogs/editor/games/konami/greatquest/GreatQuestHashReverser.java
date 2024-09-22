@@ -99,6 +99,7 @@ public class GreatQuestHashReverser {
         System.out.println("By default, what you type in will be hashed and you'll be shown the hash of the text.");
         System.out.println("Starting your input with '$<hash>,<template>' will find all strings which matches the hash by filling in the '*' characters in the template.");
         System.out.println("Starting your input with '@<hash>,<template>' will perform searches on the template by replacing '*' with increasing numbers of asterisks.");
+        System.out.println("Starting your input with '#<hash>,<suffix>' will return the hash with the provided suffix removed. (Useful for finding the hash of a shared prefix)");
         System.out.println("Putting a '!' at the end will force non-repeat mode.");
         // Example Command: '$6AFA9D47,D00lILog*t' will find the letter 'o' for '*' making D00lILog*t.
 
@@ -171,6 +172,18 @@ public class GreatQuestHashReverser {
             for (String str : reverseHashes)
                 System.out.println(" - " + str);
             System.out.println(reverseHashes.size() + " result(s) in " + (hashEndTime - hashStartTime) + " ms for " + Utils.to0PrefixedHexString(hash) + ".");
+        } else if (line.startsWith("#")) {
+            line = line.substring(1);
+
+            if (!line.contains(",")) {
+                System.out.println("There was no suffix provided.");
+                return;
+            }
+
+            String[] split = line.split(",", 2);
+            int hash = Integer.parseUnsignedInt(split[0], 16);
+            String suffix = split[1];
+            System.out.println("Reversed Hash: " +  Utils.to0PrefixedHexString(GreatQuestUtils.reverseHash(hash, suffix, true)));
         } else if (line.startsWith("\\")) {
             String hashFilePath = GreatQuestUtils.getFileIdFromPath(line);
             System.out.println("Full File Path: '" + line + "'");

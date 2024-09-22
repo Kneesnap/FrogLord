@@ -261,6 +261,44 @@ public class GreatQuestUtils {
     }
 
     /**
+     * Undo a suffix from the hash.
+     * If you have two or more hashes with a shared prefix, and know the suffix of each of the hashes that will make them match.
+     * This hash is supposed to represent the hash of the original string, if it had been hashed with the suffix chopped off.
+     * However, due to the length of the string being included in the hash, up to two bytes of the hash will not be the expected value.
+     * If these bytes were together XOR'd with the full string length, then XOR'd by the chopped string length, that would correct this hash to become the hash of the chopped string.
+     * For example reverseHash(DDFCEF0E, 'spike01g') -> 9B018C7E, where the real hash for 'S16nPTnlFence\' is 83018C7E. (9B vs 83).
+     * When there are multiple hashes (multiple strings), it is possible to use this to our advantage, since it tells us which byte is modulo 8 of the real string length. (The byte which differs between two hashes of different length strings must be the one which has the length data, and we can calculate modulo 8 of the real string length from that.)
+     * So in theory with multiple strings, it should be possible to calculate the full length of each string by looping through each string length with the correct modulo, then calculating the length of each provided string based on the calculated prefix length and the provided suffix length, then using XOR to tell which lengths cause a match between both hashes.
+     * Whew that's kinda long-winded and not super clear, but I'm not sure if we'll ever need that functionality.
+     *
+     * Example:
+     * File 1065 in PS2 PAL (\GameSource\Level01RollingRapids\Props\TunlGate\doorhndl copy.img) and File 1066 (\GameSource\Level01RollingRapids\Props\TunlGate\logend copy.img)
+     * These files gave me a very hard time, because I saw there was already a folder called "TunlGate". Multiple 3D models use images that look like this, so I was confident that the file names "doorhndl.img" and "logend.img" were correct.
+     * All of my effort went into trying to crack the folder name. "TunlGateOld", "TunlGateCopy", "TunlGate Copy", etc.
+     * It wasn't until I tried reverse hashing to obtain the common prefix did it become clear that either there was no common prefix (highly unlikely given the sorted nature of the file list), or that I had given the wrong suffixes (file names).
+     * From there I was able to instead focus on the file names, and easily found the " copy" was the part I had been missing.
+     *
+     * @param suffix The suffix known to be used at the end of the original string.
+     * @param ignoreCase Whether case should be considered when hashing. There is no known situation where this should be false.
+     * @return reversedHash
+     */
+    public static int reverseHash(int hash, String suffix, boolean ignoreCase) { // Reverse engineered the "Hash" function, in the kcHash (Hash table) namespace.
+        if (suffix == null || suffix.isEmpty())
+            return hash;
+
+        for (int i = suffix.length() - 1; i >= 0; i--) {
+            char tempChar = suffix.charAt(i);
+            if (ignoreCase && (tempChar >= 'A') && (tempChar <= 'Z')) // If the letter is upper-case.
+                tempChar = Character.toLowerCase(tempChar);
+
+            hash ^= tempChar;
+            hash = (hash >>> 4) | (hash << 28);
+        }
+
+        return hash;
+    }
+
+    /**
      * Find the index a string is found at, doing a case-insensitive search.
      * @param input    The string to search.
      * @param patterns The strings to find.
