@@ -1,6 +1,12 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
 import javafx.fxml.FXMLLoader;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
+import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.reader.FileSource;
+import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestFileEditorUIController;
@@ -10,6 +16,8 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPrope
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.logging.Logger;
 
 /**
@@ -49,6 +57,69 @@ public abstract class GreatQuestGameFile extends GameData<GreatQuestInstance> im
     @Override
     public String getCollectionViewDisplayStyle() {
         return null;
+    }
+
+    @Override
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        MenuItem exportFileData = new MenuItem("Export File");
+        contextMenu.getItems().add(exportFileData);
+        exportFileData.setOnAction(event -> {
+            File outputFile = Utils.promptFileSave(getGameInstance(), "Please select the file to save '" + getFileName() + "' as...", getFileName(), "All Files", "*");
+            if (outputFile != null)
+                saveToFile(outputFile);
+        });
+
+        MenuItem importFileData = new MenuItem("Import File");
+        contextMenu.getItems().add(importFileData);
+        importFileData.setOnAction(event -> {
+            File inputFile = Utils.promptFileOpen(getGameInstance(), "Please select the file to import as '" + getFileName() + "'...", "All Files", "*");
+            if (inputFile != null) {
+                try {
+                    loadFromFile(inputFile);
+                } catch (Throwable th) {
+                    Utils.handleError(getLogger(), th, true, "Failed to load file '%s' as '%s'.", inputFile.getName(), getFileName());
+                }
+            }
+        });
+    }
+
+    /**
+     * Loads the file contents from the file.
+     * NOTE: Importing files may break references to assets between files!
+     * @param file the file to load the data from
+     * @throws IOException thrown if the file cannot be read
+     */
+    public void loadFromFile(File file) throws IOException {
+        if (file == null)
+            throw new NullPointerException("file");
+
+        DataReader reader = new DataReader(new FileSource(file));
+
+        try {
+            // TODO: PROBLEM!!! I think we need to clear tracking so afterLoad() can be valid to run.
+            load(reader);
+            // TODO: PROBLEM!!! We need to run the afterLoad hooks
+        } catch (Throwable th) {
+            throw new RuntimeException("Failed to load contents of file from '" + file.getName() + "'. This has the potential to break things in weird ways, so be careful!", th);
+        }
+    }
+
+    /**
+     * Saves the file contents to the file.
+     * @param file the file to save the data to
+     */
+    public void saveToFile(File file) {
+        if (file == null)
+            throw new NullPointerException("file");
+
+        DataWriter writer = new DataWriter(new FileReceiver(file));
+
+        try {
+            save(writer);
+            writer.closeReceiver();
+        } catch (Throwable th) {
+            throw new RuntimeException("Failed to save contents of file '" + getFileName() + "' to '" + file.getName() + "'.", th);
+        }
     }
 
     @Override

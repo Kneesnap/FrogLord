@@ -1,6 +1,8 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
 import javafx.fxml.FXMLLoader;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestFileEditorUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
@@ -39,6 +41,36 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
             this.cachedLogger = Logger.getLogger(getExportName());
 
         return this.cachedLogger;
+    }
+
+    @Override
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        if (this.rawData != null) {
+            MenuItem saveOriginalFileData = new MenuItem("Export Original File Data");
+            contextMenu.getItems().add(saveOriginalFileData);
+            saveOriginalFileData.setOnAction(event -> {
+                File outputFile = Utils.promptFileSave(getGameInstance(), "Please select the file to save '" + getFileName() + "' as...", getFileName(), "All Files", "*");
+                if (outputFile != null)
+                    exportOriginalFileData(outputFile);
+            });
+        }
+
+        super.setupRightClickMenuItems(contextMenu);
+    }
+
+    /**
+     * Exports original file data to the given file.
+     * @param targetFile the file to save the original data to
+     */
+    public void exportOriginalFileData(File targetFile) {
+        if (targetFile == null)
+            throw new NullPointerException("targetFile");
+
+        try {
+            Files.write(targetFile.toPath(), this.rawData);
+        } catch (IOException ex) {
+            throw new RuntimeException("Failed to export original file data for '" + getFileName() + "' to '" + targetFile.getName() + "'.", ex);
+        }
     }
 
     /**
@@ -174,13 +206,8 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
     public void export(File baseFolder) {
         File targetFile = GreatQuestUtils.getExportFile(baseFolder, this);
         File targetFolder = targetFile.getParentFile();
-        if (this.rawData != null && (!targetFile.exists() || targetFile.length() != this.rawData.length)) {
-            try {
-                Files.write(targetFile.toPath(), this.rawData);
-            } catch (IOException ex) {
-                throw new RuntimeException("Failed to export file '" + targetFile + "'.", ex);
-            }
-        }
+        if (this.rawData != null && (!targetFile.exists() || targetFile.length() != this.rawData.length))
+            exportOriginalFileData(targetFile);
 
         if (this instanceof IFileExport) {
             File exportFolder = new File(targetFolder, getExportFolderName() + "/");
