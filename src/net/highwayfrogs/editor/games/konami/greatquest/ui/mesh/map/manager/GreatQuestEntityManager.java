@@ -24,7 +24,6 @@ import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshCollection.MeshViewCollection;
-import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -136,12 +135,12 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
         kcEntityInst entity = entityInst.getEntity();
 
         kcCResourceModel model = null;
-        kcEntity3DDesc entityDescription = entity != null ? entity.getDescription(getMap()) : null;
+        kcEntity3DDesc entityDescription = entity != null ? entity.getDescription() : null;
         if (entityDescription instanceof kcActorBaseDesc) {
             kcActorBaseDesc actorBaseDesc = (kcActorBaseDesc) entityDescription;
-            kcModelDesc modelDesc = actorBaseDesc.getModelDesc(getMap());
+            kcModelDesc modelDesc = actorBaseDesc.getModelDescription();
             if (modelDesc != null)
-                model = modelDesc.getModelResource(getMap());
+                model = modelDesc.getModel().getResource();
         }
 
         GreatQuestModelMesh modelMesh = this.cachedModelMeshes.computeIfAbsent(model, key -> new GreatQuestModelMesh(key, false));
@@ -155,7 +154,7 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
     @Override
     protected void updateEditor(kcCResourceEntityInst entityInst) {
         getEditorGrid().addLabel("Entity Name", entityInst.getName());
-        getEditorGrid().addLabel("Entity Hash", Utils.to0PrefixedHexString(entityInst.getHash()));
+        getEditorGrid().addLabel("Entity Hash", entityInst.getHashAsHexString());
         entityInst.getEntity().setupEditor(this, getEditorGrid(), getDelegatesByValue().get(entityInst));
     }
 

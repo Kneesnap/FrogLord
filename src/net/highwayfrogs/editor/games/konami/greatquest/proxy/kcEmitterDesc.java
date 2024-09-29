@@ -5,11 +5,14 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
  * Implements the 'kcEmitterDesc' struct.
+ * This may seem unused, but it's actually used once in Mushroom Valley, the 'TEST' value. Which... may not actually be used, I'm not sure.
  * Loaded by kcCEmitter::Init
  * Created by Kneesnap on 8/22/2023.
  */
@@ -22,10 +25,11 @@ public class kcEmitterDesc extends kcProxyCapsuleDesc {
     private int spawnLimit;
     private int maxSpawn;
     private float spawnRange;
-    private int entityDescHash;
+    private final GreatQuestHash<kcCResourceGeneric> entityDescRef;
 
-    public kcEmitterDesc(GreatQuestInstance instance) {
-        super(instance);
+    public kcEmitterDesc(kcCResourceGeneric resource) {
+        super(resource);
+        this.entityDescRef = new GreatQuestHash<>();
     }
 
     @Override
@@ -42,7 +46,9 @@ public class kcEmitterDesc extends kcProxyCapsuleDesc {
         this.spawnLimit = reader.readInt();
         this.maxSpawn = reader.readInt();
         this.spawnRange = reader.readFloat();
-        this.entityDescHash = reader.readInt();
+        int entityDescHash = reader.readInt();
+
+        GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, this, this.entityDescRef, entityDescHash, true);
     }
 
     @Override
@@ -54,7 +60,7 @@ public class kcEmitterDesc extends kcProxyCapsuleDesc {
         writer.writeInt(this.spawnLimit);
         writer.writeInt(this.maxSpawn);
         writer.writeFloat(this.spawnRange);
-        writer.writeInt(this.entityDescHash);
+        writer.writeInt(this.entityDescRef.getHashNumber());
     }
 
     @Override
@@ -66,7 +72,6 @@ public class kcEmitterDesc extends kcProxyCapsuleDesc {
         builder.append("Spawn Limit: ").append(this.spawnLimit).append(Constants.NEWLINE);
         builder.append("Max Spawn: ").append(this.maxSpawn).append(Constants.NEWLINE);
         builder.append("Spawn Range: ").append(this.spawnRange).append(Constants.NEWLINE);
-        builder.append("Max Spawn: ").append(this.maxSpawn).append(Constants.NEWLINE);
-        writeAssetLine(builder, padding, "Entity Description", this.entityDescHash);
+        writeAssetLine(builder, padding, "Entity Description", this.entityDescRef);
     }
 }

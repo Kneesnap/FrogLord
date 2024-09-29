@@ -2,12 +2,15 @@ package net.highwayfrogs.editor.games.konami.greatquest.toc;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -20,12 +23,17 @@ import java.util.List;
  * An example of how this is used is that the idle animations are in different files called different things.
  * But, the code wants a clean way to make any entity enter the idle animation.
  * So, in many named hash chunks, there is an entry for "NrmIdle01" so the code can easily find the idle animation regardless of entity.
- * An actor chooses one of these chunks for its "mpSeqMap" field.
+ * An actor chooses one of these chunks for its "mpSeqMap" field, in methods such as kcCActorBase::SetSequence or kcCActorBase::IsSequence
+ * While in theory any resource could be kept in this hash table, it seems the code only ever uses this for action sequences, so we can treat it as if that's all it supports.
+ * TODO: Implement a new hashing system which can do it. (Frick, how are we going to avoid collisions with the name itself? Just create a new random hash and apply it after loading/resolution?)
+ *  -> How will we handle kcProxyTriMeshDesc
  * Created by Kneesnap on 8/26/2019.
  */
 @Getter
 public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoWriter {
     private final List<HashTableEntry> entries = new ArrayList<>();
+
+    public static final String NAME_SUFFIX = "{seqs}";
 
     public kcCResourceNamedHash(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.NAMEDHASH);
@@ -45,7 +53,7 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
         // Read entries.
         this.entries.clear();
         for (int i = 0; i < entryCount; i++) {
-            HashTableEntry newEntry = new HashTableEntry();
+            HashTableEntry newEntry = new HashTableEntry(this);
             newEntry.load(reader);
             this.entries.add(newEntry);
         }
@@ -72,35 +80,54 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
         for (HashTableEntry hashTableEntry : this.entries) {
             builder.append(padding).append(" - '").append(hashTableEntry.getKeyName()).append("'/")
                     .append(Utils.to0PrefixedHexString(hashTableEntry.getKeyHash())).append(" -> ")
-                    .append(Utils.to0PrefixedHexString(hashTableEntry.getValueHash()));
-
-            kcCResource targetFile = GreatQuestUtils.findResourceByHash(getParentFile(), getGameInstance(), hashTableEntry.getValueHash());
-            if (targetFile != null)
-                builder.append("/'").append(targetFile.getName()).append("'");
-
-            builder.append(Constants.NEWLINE);
+                    .append(hashTableEntry.getValueRef())
+                    .append(Constants.NEWLINE);
         }
     }
 
     @Getter
-    public static class HashTableEntry extends GameObject {
-        private static final int NAME_SIZE = 32;
-        private int keyHash; // If name = 'SlpIdle01', this is hash("SlpIdle01", ignoreCase: true)
-        private int valueHash; // This is a hash of another file.
+    public static class HashTableEntry extends GameData<GreatQuestInstance> {
+        private final kcCResourceNamedHash parentHashTable;
+        private final GreatQuestHash<kcCActionSequence> valueRef; // This is a hash of another file.
         private String keyName;
+
+        private static final int NAME_SIZE = 32;
+
+        public HashTableEntry(kcCResourceNamedHash parentHashTable) {
+            super(parentHashTable.getGameInstance());
+            this.parentHashTable = parentHashTable;
+            this.valueRef = new GreatQuestHash<>();
+        }
 
         @Override
         public void load(DataReader reader) {
-            this.keyHash = reader.readInt();
-            this.valueHash = reader.readInt();
-            this.keyName = reader.readTerminatedStringOfLength(NAME_SIZE);
+            int originalKeyHash = reader.readInt();
+            int valueHash = reader.readInt();
+            this.keyName = reader.readNullTerminatedFixedSizeString(NAME_SIZE, Constants.NULL_BYTE);
+
+            // Validate key.
+            int ourHash = getKeyHash();
+            if (ourHash != originalKeyHash)
+                throw new IllegalArgumentException("The kcCResourceNamedHash read an entry for key '" + this.keyName + "' with hash " + Utils.to0PrefixedHexString(originalKeyHash) + ". However, the key actually hashes to " + Utils.to0PrefixedHexString(ourHash) + ".");
+
+            // Resolve value.
+            GreatQuestUtils.resolveResourceHash(kcCActionSequence.class, this.parentHashTable, this.valueRef, valueHash, false);
         }
 
         @Override
         public void save(DataWriter writer) {
-            writer.writeInt(this.keyHash);
-            writer.writeInt(this.valueHash);
-            writer.writeTerminatedStringOfLength(this.keyName, NAME_SIZE);
+            writer.writeInt(getKeyHash());
+            writer.writeInt(this.valueRef.getHashNumber());
+            writer.writeNullTerminatedFixedSizeString(this.keyName, NAME_SIZE, Constants.NULL_BYTE);
+        }
+
+        /**
+         * Gets the hash of the key.
+         * @return keyHash
+         */
+        public int getKeyHash() {
+            // If name = 'SlpIdle01', this is hash("SlpIdle01", ignoreCase: true)
+            return GreatQuestUtils.hash(this.keyName);
         }
     }
 }

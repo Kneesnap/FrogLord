@@ -29,7 +29,7 @@ public class RwStringChunk extends RwStreamChunk {
     @Override
     protected void loadChunkData(DataReader reader, int dataLength, int version) {
         // Seen in Frogger Ancient Shadow + Rescue + Beyond
-        this.value = reader.readTerminatedStringOfLength(dataLength);
+        this.value = reader.readNullTerminatedFixedSizeString(dataLength);
         reader.align(Constants.INTEGER_SIZE); // There's unallocated data after the null terminator.
     }
 

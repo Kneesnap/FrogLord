@@ -54,8 +54,8 @@ public class kcMaterial extends GameObject implements IMultiLineInfoWriter {
 
     @Override
     public void load(DataReader reader) {
-        this.materialName = reader.readTerminatedStringOfLength(NAME_SIZE);
-        this.textureFileName = reader.readTerminatedStringOfLength(FILENAME_SIZE);
+        this.materialName = reader.readNullTerminatedFixedSizeString(NAME_SIZE, Constants.NULL_BYTE);
+        this.textureFileName = reader.readNullTerminatedFixedSizeString(FILENAME_SIZE, Constants.NULL_BYTE);
         this.flags = reader.readInt();
         this.xpVal = reader.readFloat();
         this.diffuseRed = reader.readFloat();
@@ -122,8 +122,8 @@ public class kcMaterial extends GameObject implements IMultiLineInfoWriter {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeTerminatedStringOfLength(this.materialName, NAME_SIZE);
-        writer.writeTerminatedStringOfLength(this.textureFileName, FILENAME_SIZE);
+        writer.writeNullTerminatedFixedSizeString(this.materialName, NAME_SIZE);
+        writer.writeNullTerminatedFixedSizeString(this.textureFileName, FILENAME_SIZE);
         writer.writeInt(this.flags);
         writer.writeFloat(this.xpVal);
         writer.writeFloat(this.diffuseRed);

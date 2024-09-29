@@ -1,11 +1,12 @@
 package net.highwayfrogs.editor.games.konami.greatquest.proxy;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
@@ -19,8 +20,8 @@ public class kcProxyCapsuleDesc extends kcProxyDesc {
     private float length;
     private float offset;
 
-    public kcProxyCapsuleDesc(GreatQuestInstance instance) {
-        super(instance);
+    public kcProxyCapsuleDesc(@NonNull kcCResourceGeneric resource) {
+        super(resource);
     }
 
     @Override

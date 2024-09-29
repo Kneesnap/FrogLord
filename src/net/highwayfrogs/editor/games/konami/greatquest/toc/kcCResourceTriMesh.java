@@ -19,6 +19,8 @@ import java.util.List;
 
 /**
  * Represents a triangle mesh, likely used for collision.
+ * In the retail game, some of these are named, others are unnamed, despite having valid hashes.
+ * The names can be found by taking the corresponding kcTriProxyDesc sections and chopping off "ProxyDesc".
  * Created by Kneesnap on 4/17/2024.
  */
 @Getter

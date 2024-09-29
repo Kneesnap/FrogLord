@@ -32,7 +32,7 @@ public class OldFroggerMapHeaderPacket extends OldFroggerMapPacket {
         int packetCount = reader.readUnsignedShortAsInt();
         reader.skipShort(); // Padding
         reader.verifyString(VERSION);
-        this.comment = reader.readTerminatedStringOfLength(COMMENT_LENGTH);
+        this.comment = reader.readNullTerminatedFixedSizeString(COMMENT_LENGTH);
 
         // Read header pointers.
         long levelSpecificAddr = reader.readUnsignedIntAsLong();
@@ -57,7 +57,7 @@ public class OldFroggerMapHeaderPacket extends OldFroggerMapPacket {
         writer.writeUnsignedShort(EXPECTED_PACKET_COUNT);
         writer.writeUnsignedShort(0); // Padding
         writer.writeStringBytes(VERSION);
-        writer.writeTerminatedStringOfLength(this.comment, COMMENT_LENGTH);
+        writer.writeNullTerminatedFixedSizeString(this.comment, COMMENT_LENGTH);
 
         writer.writeUnsignedInt(0); // levelSpecificAddr
         writer.writeUnsignedInt(0); // graphicalAddr

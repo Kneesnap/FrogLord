@@ -1,12 +1,12 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
@@ -24,17 +24,25 @@ import net.highwayfrogs.editor.utils.Utils;
 @Getter
 @Setter
 public class kcActorBaseDesc extends kcEntity3DDesc {
-    private int hThis; // Seems unused.
-    private int modelDescHash;
-    private int hierarchyHash;
+    private final GreatQuestHash<kcCResourceGeneric> parentHash;
+    private final GreatQuestHash<kcCResourceGeneric> modelDescRef;
+    private final GreatQuestHash<kcCResourceSkeleton> hierarchyRef;
     private int numChan; // Used for initializing the skeleton hierarchy in kcCActorBase::Init
-    private int animSetHash; // TODO: MIGHT be unused.
-    private int proxyDescHash;
-    private int animationHash;
+    private final GreatQuestHash<kcCResourceAnimSet> animSetRef; // MIGHT be unused. Not sure yet.
+    private final GreatQuestHash<kcCResourceGeneric> proxyDescRef;
+    private final GreatQuestHash<kcCResourceNamedHash> animationRef;
     private static final int PADDING_VALUES = 4;
+    private static final String NAME_SUFFIX = "ActorDesc";
 
-    public kcActorBaseDesc(GreatQuestInstance instance) {
-        super(instance);
+    public kcActorBaseDesc(@NonNull kcCResourceGeneric resource) {
+        super(resource);
+        this.parentHash = new GreatQuestHash<>(resource);
+        this.modelDescRef = new GreatQuestHash<>();
+        this.hierarchyRef = new GreatQuestHash<>();
+        this.animSetRef = new GreatQuestHash<>();
+        this.proxyDescRef = new GreatQuestHash<>();
+        this.animationRef = new GreatQuestHash<>();
+        GreatQuestUtils.applySelfNameSuffixAndToFutureNameChanges(resource, NAME_SUFFIX);
     }
 
     @Override
@@ -45,83 +53,71 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.hThis = reader.readInt();
-        this.modelDescHash = reader.readInt();
-        this.hierarchyHash = reader.readInt();
+        int hThis = reader.readInt();
+        int modelDescHash = reader.readInt();
+        int hierarchyHash = reader.readInt();
         this.numChan = reader.readInt();
-        this.animSetHash = reader.readInt();
-        this.proxyDescHash = reader.readInt();
-        this.animationHash = reader.readInt();
+        int animSetHash = reader.readInt();
+        int proxyDescHash = reader.readInt();
+        int animationHash = reader.readInt();
         reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
+
+        // Validate self hash.
+        if (hThis != this.parentHash.getHashNumber())
+            throw new RuntimeException("The kcActorBaseDesc reported the parent chunk as " + Utils.to0PrefixedHexString(hThis) + ", but it was expected to be " + this.parentHash.getHashNumberAsString() + ".");
+
+        // Resolve assets.
+        GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, this, this.modelDescRef, modelDescHash, true);
+        GreatQuestUtils.resolveResourceHash(kcCResourceSkeleton.class, this, this.hierarchyRef, hierarchyHash, true);
+        GreatQuestUtils.resolveResourceHash(kcCResourceAnimSet.class, this, this.animSetRef, animSetHash, true);
+        GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, this, this.proxyDescRef, proxyDescHash, !isParentResourceNamed("Dummy", "Tree 8", "Tree 9")); // There are only 3 places this doesn't resolve, all in Rolling Rapids Creek (PC version, PS2 untested).
+        if (!GreatQuestUtils.resolveResourceHash(kcCResourceNamedHash.class, this, this.animationRef, animationHash, false) && animationHash != -1) // There are TONS of hashes set which correspond to sequences which don't exist. TODO: There are enough where I'm almost wondering if we should be automatically naming/resolving this
+            this.animationRef.setOriginalString(getParentResource().getName() + kcCResourceNamedHash.NAME_SUFFIX); // If we don't resolve the asset, we can at least apply the original string.
     }
 
     @Override
     public void saveData(DataWriter writer) {
         super.saveData(writer);
-        writer.writeInt(this.hThis);
-        writer.writeInt(this.modelDescHash);
-        writer.writeInt(this.hierarchyHash);
+
+        // Unless the hash number is -1, it seems this is ALWAYS the resource name + "{seqs}", so ensure we save it like that.
+        if (getParentResource() != null && getParentResource().getResourceName() != null && this.animationRef.getHashNumber() != -1)
+            this.animationRef.setHash(getParentResource().getName() + kcCResourceNamedHash.NAME_SUFFIX);
+
+        writer.writeInt(this.parentHash.getHashNumber());
+        writer.writeInt(this.modelDescRef.getHashNumber());
+        writer.writeInt(this.hierarchyRef.getHashNumber());
         writer.writeInt(this.numChan);
-        writer.writeInt(this.animSetHash);
-        writer.writeInt(this.proxyDescHash);
-        writer.writeInt(this.animationHash);
+        writer.writeInt(this.animSetRef.getHashNumber());
+        writer.writeInt(this.proxyDescRef.getHashNumber());
+        writer.writeInt(this.animationRef.getHashNumber());
         writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         super.writeMultiLineInfo(builder, padding);
-        builder.append(padding).append("Hash: ").append(Utils.to0PrefixedHexString(this.hThis)).append(Constants.NEWLINE);
-        writeAssetLine(builder, padding, "Model", this.modelDescHash);
-        writeAssetLine(builder, padding, "Animation Hierarchy", this.hierarchyHash);
+        builder.append(padding).append("Hash: ").append(this.parentHash.getHashNumberAsString()).append(Constants.NEWLINE);
+        writeAssetLine(builder, padding, "Model", this.modelDescRef);
+        writeAssetLine(builder, padding, "Animation Hierarchy", this.hierarchyRef);
         builder.append(padding).append("NumChan: ").append(this.numChan).append(Constants.NEWLINE);
-        writeAssetLine(builder, padding, "Anim Set", this.animSetHash);
-        writeAssetLine(builder, padding, "Collision Proxy", this.proxyDescHash);
-        writeAssetLine(builder, padding, "Animation", this.animationHash); // TODO: It may be desired to look at the anim set to map this hash if it's unmapped.
+        writeAssetLine(builder, padding, "Anim Set", this.animSetRef);
+        writeAssetLine(builder, padding, "Collision Proxy", this.proxyDescRef);
+        writeAssetLine(builder, padding, "Animation", this.animationRef);
     }
 
     /**
-     * Search for the model description referenced in this description.
-     * @param parentFile the file to start the search from
+     * Return the model description referenced in this description.
      * @return modelDesc
      */
-    public kcModelDesc getModelDesc(GreatQuestChunkedFile parentFile) {
-        return GreatQuestUtils.findGenericResourceByHash(parentFile, getGameInstance(), this.modelDescHash, kcCResourceGeneric::getAsModelDescription);
+    public kcModelDesc getModelDescription() {
+        return this.modelDescRef.getResource() != null ? this.modelDescRef.getResource().getAsModelDescription() : null;
     }
 
     /**
-     * Search for the animation hierarchy referenced in this description.
-     * @param parentFile the file to start the search from
-     * @return modelDesc
+     * Return the collision proxy description referenced in this description.
+     * @return collisionProxyDescription
      */
-    public kcCResourceSkeleton getAnimationHierarchy(GreatQuestChunkedFile parentFile) {
-        return GreatQuestUtils.findResourceByHash(parentFile, getGameInstance(), this.hierarchyHash);
-    }
-
-    /**
-     * Search for the animation set referenced in this description.
-     * @param parentFile the file to start the search from
-     * @return animSet
-     */
-    public kcCResourceAnimSet getAnimationSet(GreatQuestChunkedFile parentFile) {
-        return GreatQuestUtils.findResourceByHash(parentFile, getGameInstance(), this.animSetHash);
-    }
-
-    /**
-     * Search for the active animation referenced in this description.
-     * @param parentFile the file to start the search from
-     * @return animation
-     */
-    public kcCResourceNamedHash getAnimation(GreatQuestChunkedFile parentFile) {
-        return GreatQuestUtils.findResourceByHash(parentFile, getGameInstance(), this.animationHash);
-    }
-
-    /**
-     * Search for the collision proxy description referenced in this description.
-     * @param parentFile the file to start the search from
-     * @return animation
-     */
-    public kcProxyDesc getCollisionProxyDescription(GreatQuestChunkedFile parentFile) {
-        return GreatQuestUtils.findGenericResourceByHash(parentFile, getGameInstance(), this.proxyDescHash, kcCResourceGeneric::getAsProxyDescription);
+    public kcProxyDesc getCollisionProxyDescription() {
+        return this.proxyDescRef.getResource() != null ? this.proxyDescRef.getResource().getAsProxyDescription() : null;
     }
 }

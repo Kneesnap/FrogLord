@@ -47,9 +47,9 @@ public class GreatQuestRunners {
         // Switch the level hashes, so it loads it.
         GreatQuestArchiveFile theGoblinFort = instance.getMainArchive().getFiles().get(31);
         GreatQuestArchiveFile ruinsOfJoyTown = instance.getMainArchive().getFiles().get(32);
-        int goblinFortHash = theGoblinFort.getNameHash();
+        int goblinFortHash = theGoblinFort.getHash();
         boolean goblinFortCollision = theGoblinFort.isCollision();
-        theGoblinFort.init(ruinsOfJoyTown.getFilePath(), theGoblinFort.isCompressed(), ruinsOfJoyTown.getNameHash(), theGoblinFort.getRawData(), ruinsOfJoyTown.isCollision());
+        theGoblinFort.init(ruinsOfJoyTown.getFilePath(), theGoblinFort.isCompressed(), ruinsOfJoyTown.getHash(), theGoblinFort.getRawData(), ruinsOfJoyTown.isCollision());
         ruinsOfJoyTown.init(theGoblinFort.getFilePath(), ruinsOfJoyTown.isCompressed(), goblinFortHash, ruinsOfJoyTown.getRawData(), goblinFortCollision);
 
         System.out.println("Saving.");
@@ -81,11 +81,9 @@ public class GreatQuestRunners {
 
             // Add dialog resource.
             kcCResourceGeneric clearFlagDialog = new kcCResourceGeneric(rollingRapidsCreek, kcCResourceGenericType.STRING_RESOURCE, new kcCResourceString(instance, "Knee Flag Clear Test: " + i));
-            clearFlagDialog.setName("FgClr" + Utils.padNumberString(i, 2));
+            clearFlagDialog.setName("FgClr" + Utils.padNumberString(i, 2), true);
             int clearFlagDialogHash = GreatQuestUtils.hash(clearFlagDialog.getName());
-            clearFlagDialog.setHash(clearFlagDialogHash);
             rollingRapidsCreek.getChunks().add(clearFlagDialog);
-            rollingRapidsCreek.getFirstTOCChunk().getHashes().add(clearFlagDialogHash);
 
             // Add dialog action.
             kcActionTemplate actionClearFlagDialog = (kcActionTemplate) kcActionID.DIALOG.newInstance(rollingRapidsCreek);
@@ -106,11 +104,9 @@ public class GreatQuestRunners {
 
             // Add dialog resource.
             kcCResourceGeneric setFlagDialog = new kcCResourceGeneric(rollingRapidsCreek, kcCResourceGenericType.STRING_RESOURCE, new kcCResourceString(instance, "Knee Flag Set: " + i));
-            setFlagDialog.setName("FgSet" + Utils.padNumberString(i, 2));
+            setFlagDialog.setName("FgSet" + Utils.padNumberString(i, 2), true);
             int setFlagDialogHash = GreatQuestUtils.hash(setFlagDialog.getName());
-            setFlagDialog.setHash(setFlagDialogHash);
             rollingRapidsCreek.getChunks().add(setFlagDialog);
-            rollingRapidsCreek.getFirstTOCChunk().getHashes().add(setFlagDialogHash);
 
             // Add dialog action.
             kcActionTemplate actionSetFlagDialog = (kcActionTemplate) kcActionID.DIALOG.newInstance(rollingRapidsCreek);

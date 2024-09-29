@@ -4,6 +4,9 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import lombok.Getter;
+import net.highwayfrogs.editor.file.reader.ArraySource;
+import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedResource;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestFileEditorUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
@@ -22,17 +25,23 @@ import java.util.logging.Logger;
  * A base TGQ file.
  * Created by Kneesnap on 8/17/2019.
  */
-public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implements ICollectionViewEntry, IPropertyListCreator {
+public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implements ICollectionViewEntry, IPropertyListCreator, kcHashedResource {
+    @Getter private final GreatQuestHash<GreatQuestArchiveFile> selfHash;
     @Getter private byte[] rawData;
     @Getter private String fileName;
     @Getter private String filePath;
-    @Getter private int nameHash;
     @Getter private boolean collision; // This is true iff there are multiple files that share the hash.
     @Getter private boolean compressed;
     private Logger cachedLogger;
 
     public GreatQuestArchiveFile(GreatQuestInstance instance) {
         super(instance);
+        this.selfHash = new GreatQuestHash<>(this);
+    }
+
+    @Override
+    public String getResourceName() {
+        return this.filePath; // If the file path is null, then so be it.
     }
 
     @Override
@@ -82,14 +91,14 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
 
     @Override
     public String getCollectionViewDisplayName() {
-        return (this.fileName != null ? this.fileName : getExportName()) + " [Hash: " + Utils.toHexString(this.nameHash) + (this.filePath != null ? ", Full Path: " + this.filePath : "") + "]";
+        return (this.fileName != null ? this.fileName : getExportName()) + " [Hash: " + Utils.toHexString(getHash()) + (this.filePath != null ? ", Full Path: " + this.filePath : "") + "]";
     }
 
     @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {
         propertyList = super.addToPropertyList(propertyList);
 
-        propertyList.add("Name Hash", Utils.to0PrefixedHexString(this.nameHash));
+        propertyList.add("Name Hash", Utils.to0PrefixedHexString(getHash()));
         propertyList.add("Name Collision", this.collision);
         propertyList.add("Compression Enabled", this.compressed);
         if (this.rawData != null)
@@ -106,9 +115,23 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
     public void init(String realName, boolean compressed, int hash, byte[] rawBytes, boolean collision) {
         setFilePath(realName);
         this.compressed = compressed;
-        this.nameHash = hash;
+        this.selfHash.setHash(hash);
         this.rawData = rawBytes;
         this.collision = collision;
+    }
+
+    /**
+     * Loads the file from the provided bytes.
+     * @param fileBytes the bytes to load the file data from
+     */
+    public void loadFileFromBytes(byte[] fileBytes) {
+        // Read file.
+        try {
+            DataReader fileReader = new DataReader(new ArraySource(fileBytes));
+            this.load(fileReader);
+        } catch (Exception ex) {
+            throw new RuntimeException("There was a problem reading " + getClass().getSimpleName() + " [" + getDebugName() + "]", ex);
+        }
     }
 
     /**

@@ -260,8 +260,8 @@ public class RwPlatformIndependentTextureDictionaryChunk extends RwStreamChunk {
 
         @Override
         public void load(DataReader reader) {
-            this.name = reader.readTerminatedStringOfLength(TEXTURE_BASE_NAME_LENGTH);
-            this.mask = reader.readTerminatedStringOfLength(TEXTURE_BASE_NAME_LENGTH);
+            this.name = reader.readNullTerminatedFixedSizeString(TEXTURE_BASE_NAME_LENGTH);
+            this.mask = reader.readNullTerminatedFixedSizeString(TEXTURE_BASE_NAME_LENGTH);
             int mipLevelCount = reader.readInt();
             this.flags = reader.readInt();
 
@@ -272,8 +272,8 @@ public class RwPlatformIndependentTextureDictionaryChunk extends RwStreamChunk {
 
         @Override
         public void save(DataWriter writer) {
-            writer.writeTerminatedStringOfLength(this.name, TEXTURE_BASE_NAME_LENGTH);
-            writer.writeTerminatedStringOfLength(this.mask, TEXTURE_BASE_NAME_LENGTH);
+            writer.writeNullTerminatedFixedSizeString(this.name, TEXTURE_BASE_NAME_LENGTH);
+            writer.writeNullTerminatedFixedSizeString(this.mask, TEXTURE_BASE_NAME_LENGTH);
             writer.writeInt(this.mipMapImages.size());
             writer.writeInt(this.flags);
             for (int i = 0; i < this.mipMapImages.size(); i++)

@@ -331,23 +331,56 @@ public class DataWriter {
     }
 
     /**
-     * Writes a terminated string of a given length.
+     * Writes a null-terminated string to a fixed-length buffer with US_ASCII encoding and null-bytes used as padding
      * @param stringToWrite The string to write
-     * @param byteSize      The string fixed size.
+     * @param fixedLength The string buffer fixed size in bytes.
      */
-    public void writeTerminatedStringOfLength(String stringToWrite, int byteSize) {
-        writeTerminatedStringOfLength(stringToWrite, byteSize, Constants.NULL_BYTE);
+    public void writeNullTerminatedFixedSizeString(String stringToWrite, int fixedLength) {
+        writeNullTerminatedFixedSizeString(stringToWrite, StandardCharsets.US_ASCII, fixedLength, Constants.NULL_BYTE);
     }
 
     /**
-     * Writes a terminated string of a given length.
+     * Writes a null-terminated string to a fixed-length buffer.
      * @param stringToWrite The string to write
-     * @param byteSize      The string fixed size.
+     * @param fixedLength The string buffer fixed size in bytes.
+     * @param padding The padding byte used to pad empty string data. Generally 0x00.
      */
-    public void writeTerminatedStringOfLength(String stringToWrite, int byteSize, byte terminator) {
-        int pathEndIndex = (getIndex() + byteSize);
-        writeTerminatorString(stringToWrite, terminator); // Include the null byte after the string data before using 0xCD.
+    public void writeNullTerminatedFixedSizeString(String stringToWrite, int fixedLength, byte padding) {
+        writeNullTerminatedFixedSizeString(stringToWrite, StandardCharsets.US_ASCII, fixedLength, padding);
+    }
+
+    /**
+     * Writes a null-terminated string to a fixed-length buffer.
+     * @param stringToWrite The string to write
+     * @param charset the charset to encode the string to a byte array with
+     * @param fixedLength The string buffer fixed size in bytes.
+     */
+    public void writeNullTerminatedFixedSizeString(String stringToWrite, Charset charset, int fixedLength) {
+        writeNullTerminatedFixedSizeString(stringToWrite, charset, fixedLength, Constants.NULL_BYTE);
+    }
+
+    /**
+     * Writes a null-terminated string to a fixed-length buffer.
+     * @param stringToWrite The string to write. If null is provided, this function will behave as if an empty string had been provided.
+     * @param charset the charset to encode the string to a byte array with. This will pretty much always be US_ASCII, as there aren't many other encodings which are null-terminated.
+     * @param fixedLength The string buffer fixed size in bytes.
+     * @param padding The padding byte used to pad empty string data. Generally 0x00.
+     */
+    public void writeNullTerminatedFixedSizeString(String stringToWrite, Charset charset, int fixedLength, byte padding) {
+        if (charset == null)
+            throw new NullPointerException("charset");
+
+        int pathEndIndex = (getIndex() + fixedLength);
+        if (stringToWrite != null) {
+            byte[] stringBytes = stringToWrite.getBytes(charset);
+            if (stringBytes.length >= fixedLength)
+                throw new RuntimeException("The string '" + stringToWrite + "' is too large to be written. (Allowed: " + fixedLength + " bytes, Actual Size: " + stringBytes.length + " bytes)");
+
+            writeBytes(stringBytes);
+        }
+
+        writeByte(Constants.NULL_BYTE); // Terminator Byte
         if (pathEndIndex != getIndex() - 1) // If the string reaches the end, it should be considered cut off because it was too long.
-            writeTo(pathEndIndex, terminator);
+            writeTo(pathEndIndex, padding);
     }
 }

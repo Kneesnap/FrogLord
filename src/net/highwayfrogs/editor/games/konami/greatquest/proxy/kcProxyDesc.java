@@ -1,13 +1,16 @@
 package net.highwayfrogs.editor.games.konami.greatquest.proxy;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcBaseDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Implements the 'kcProxyDesc' struct.
@@ -16,16 +19,17 @@ import net.highwayfrogs.editor.games.konami.greatquest.entity.kcBaseDesc;
 @Getter
 @Setter
 public class kcProxyDesc extends kcBaseDesc {
-    private int hash; // Hash of the chunk holding this description.
+    private final GreatQuestHash<kcCResourceGeneric> parentHash; // The hash of this object's parent.
     private int reaction;
     private int collisionGroup;
-    private int collideWith;
+    private int collideWith; // Not a hash
     private boolean isStatic;
 
     public static final int CLASS_ID = GreatQuestUtils.hash("kcCProxy");
 
-    public kcProxyDesc(GreatQuestInstance instance) {
-        super(instance);
+    public kcProxyDesc(@NonNull kcCResourceGeneric resource) {
+        super(resource);
+        this.parentHash = new GreatQuestHash<>(resource);
     }
 
     @Override
@@ -36,16 +40,19 @@ public class kcProxyDesc extends kcBaseDesc {
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.hash = reader.readInt();
+        int hThis = reader.readInt();
         this.reaction = reader.readInt();
         this.collisionGroup = reader.readInt();
         this.collideWith = reader.readInt();
         this.isStatic = GreatQuestUtils.readTGQBoolean(reader);
+
+        if (hThis != this.parentHash.getHashNumber() && (getParentResource() == null || !getParentResource().doesNameMatch("TEST")))
+            throw new RuntimeException("The kcProxyDesc reported the parent chunk as " + Utils.to0PrefixedHexString(hThis) + ", but it was expected to be " + this.parentHash.getHashNumberAsString() + ".");
     }
 
     @Override
     public void saveData(DataWriter writer) {
-        writer.writeInt(this.hash);
+        writer.writeInt(this.parentHash.getHashNumber());
         writer.writeInt(this.reaction);
         writer.writeInt(this.collisionGroup);
         writer.writeInt(this.collideWith);

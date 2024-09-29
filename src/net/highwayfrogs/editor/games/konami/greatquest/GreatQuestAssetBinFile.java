@@ -1,8 +1,8 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
@@ -60,27 +60,33 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         int nameCount = reader.readInt();
         this.globalPaths = new ArrayList<>(nameCount);
         for (int i = 0; i < nameCount; i++)
-            this.globalPaths.add(reader.readTerminatedStringOfLength(NAME_SIZE));
+            this.globalPaths.add(reader.readNullTerminatedFixedSizeString(NAME_SIZE, Constants.NULL_BYTE));
         reader.jumpReturn();
 
         Map<Integer, String> nameMap = new HashMap<>();
         GreatQuestUtils.addHardcodedFileNameHashesToMap(nameMap);
 
-        // Read unnamed files.
+        // Prepare unnamed files.
         if (progressBar != null)
             progressBar.setTotalProgress(unnamedFiles);
         for (int i = 0; i < unnamedFiles; i++) {
             int hash = reader.readInt();
-            readFile(reader, nameMap.get(hash), hash, false, progressBar);
+            prepareFile(reader, nameMap.get(hash), hash, false, progressBar);
         }
 
-        // Read named files. Files are named if they have a collision with other files.
+        // Prepare named files. Files are named if they have a collision with other files.
         if (progressBar != null)
             progressBar.setTotalProgress(namedFiles);
         for (int i = 0; i < namedFiles; i++) {
-            String fullFilePath = reader.readTerminatedStringOfLength(NAME_SIZE);
-            readFile(reader, fullFilePath, GreatQuestUtils.hashFilePath(fullFilePath), true, progressBar);
+            String fullFilePath = reader.readNullTerminatedFixedSizeString(NAME_SIZE, GreatQuestInstance.PADDING_BYTE_CD);
+            prepareFile(reader, fullFilePath, GreatQuestUtils.hashFilePath(fullFilePath), true, progressBar);
         }
+
+        // Read files. (File reading occurs only after we have an object for every single game file, so that file hash references can be resolved regardless of file order.)
+        if (progressBar != null)
+            progressBar.setTotalProgress(this.files.size());
+        for (int i = 0; i < this.files.size(); i++)
+            loadFile(this.files.get(i), progressBar);
 
         // Handle post-load setup.
         kcLoadContext context = new kcLoadContext(this);
@@ -108,7 +114,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         context.onComplete();
     }
 
-    private GreatQuestArchiveFile readFile(DataReader reader, String name, int crc, boolean hasCollision, ProgressBarComponent progressBar) {
+    private GreatQuestArchiveFile prepareFile(DataReader reader, String name, int crc, boolean hasCollision, ProgressBarComponent progressBar) {
         int size = reader.readInt();
         int zSize = reader.readInt();
         int offset = reader.readInt();
@@ -138,26 +144,28 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         // Setup file.
         readFile.init(name, isCompressed, crc, fileBytes, hasCollision);
         if (progressBar != null)
-            progressBar.setStatusMessage("Reading '" + readFile.getExportName() + "'");
+            progressBar.setStatusMessage("Preparing '" + readFile.getExportName() + "'");
 
         this.files.add(readFile); // Add before loading, so it can find its ID.
         if (hasCollision) {
-            this.fileCollisions.computeIfAbsent(readFile.getNameHash(), key -> new ArrayList<>()).add(readFile);
+            this.fileCollisions.computeIfAbsent(readFile.getHash(), key -> new ArrayList<>()).add(readFile);
         } else {
-            this.nameMap.put(readFile.getNameHash(), readFile);
-        }
-
-        // Read file.
-        try {
-            DataReader fileReader = new DataReader(new ArraySource(fileBytes));
-            readFile.load(fileReader);
-        } catch (Exception ex) {
-            throw new RuntimeException("There was a problem reading " + readFile.getClass().getSimpleName() + " [File " + (this.files.size() - 1) + "]", ex);
+            this.nameMap.put(readFile.getHash(), readFile);
         }
 
         if (progressBar != null)
             progressBar.addCompletedProgress(1);
         return readFile;
+    }
+
+    private void loadFile(GreatQuestArchiveFile file, ProgressBarComponent progressBar) {
+        if (progressBar != null)
+            progressBar.setStatusMessage("Reading '" + file.getExportName() + "'");
+
+        file.loadFileFromBytes(file.getRawData());
+
+        if (progressBar != null)
+            progressBar.addCompletedProgress(1);
     }
 
     @Override
@@ -188,11 +196,9 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         // Write file headers:
         for (GreatQuestArchiveFile file : getFiles()) {
             if (file.hasFilePath() && file.isCollision()) {
-                int endIndex = (writer.getIndex() + NAME_SIZE);
-                writer.writeTerminatorString(file.getFilePath());
-                writer.writeTo(endIndex, (byte) 0xCD);
+                writer.writeNullTerminatedFixedSizeString(file.getFilePath(), NAME_SIZE, GreatQuestInstance.PADDING_BYTE_CD);
             } else {
-                writer.writeInt(file.getNameHash());
+                writer.writeInt(file.getHash());
             }
 
             fileSizeTable.put(file, writer.getIndex());
@@ -249,11 +255,8 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         // Lastly, write global strings.
         writer.writeAddressTo(nameAddress);
         writer.writeInt(this.globalPaths.size());
-        for (String name : getGlobalPaths()) {
-            int endIndex = (writer.getIndex() + NAME_SIZE);
-            writer.writeStringBytes(name);
-            writer.writeTo(endIndex);
-        }
+        for (String globalPath : this.globalPaths)
+            writer.writeNullTerminatedFixedSizeString(globalPath, NAME_SIZE);
     }
 
     /**
@@ -268,7 +271,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
             fileLine.append(" # File ");
             fileLine.append(Utils.padNumberString(i, 4));
             fileLine.append(", Hash: ");
-            fileLine.append(Utils.to0PrefixedHexString(file.getNameHash()));
+            fileLine.append(file.getHashAsHexString());
             if (file.isCollision())
                 fileLine.append(" (Collision)");
             if (file.isCompressed())
@@ -402,7 +405,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
             GreatQuestArchiveFile file = mainArchive.getFiles().get(i);
 
             lines.add(" - File #" + Utils.padNumberString(i, 4)
-                    + ": " + Utils.to0PrefixedHexString(file.getNameHash())
+                    + ": " + file.getHashAsHexString()
                     + ", " + file.getClass().getSimpleName()
                     + (file.getFilePath() != null ? ", " + file.getFilePath() + ", " + GreatQuestUtils.getFileIdFromPath(file.getFilePath()) : ""));
         }

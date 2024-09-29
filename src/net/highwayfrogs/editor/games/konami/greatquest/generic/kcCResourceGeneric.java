@@ -31,7 +31,7 @@ import java.util.function.BiFunction;
 @Getter
 @Setter
 public class kcCResourceGeneric extends kcCResource {
-    private int tag;
+    private int tag = -1;
     private byte[] bytes;
     private GameData<GreatQuestInstance> cachedObject;
 
@@ -46,12 +46,25 @@ public class kcCResourceGeneric extends kcCResource {
     }
 
     @Override
+    protected String getExtraLoggerInfo() {
+        if (this.tag != -1) {
+            return super.getExtraLoggerInfo() + "|" + getResourceType();
+        } else {
+            return super.getExtraLoggerInfo();
+        }
+    }
+
+    @Override
     public void load(DataReader reader) {
         super.load(reader);
         this.tag = reader.readInt();
         int sizeInBytes = reader.readInt();
         reader.skipPointer(); // Pointer.
         this.bytes = reader.readBytes(sizeInBytes);
+
+        // Clear & load the cached object.
+        this.cachedObject = null;
+        loadAsObject();
     }
 
     @Override
@@ -76,7 +89,6 @@ public class kcCResourceGeneric extends kcCResource {
 
     /**
      * Get the resource as an entity description.
-     * TODO: Allow throwing an exception if it doesn't match, but have it be optional. (Extend this to other similar functions too)
      * Returns null if this is not an entity description.
      */
     public kcEntity3DDesc getAsEntityDescription() {
@@ -100,15 +112,15 @@ public class kcCResourceGeneric extends kcCResource {
      * Get the data in this resource as launcher params, if it is launcher params.
      */
     public kcActorBaseDesc getAsActorDescription() {
-        return loadAsObject(kcCResourceGenericType.ACTOR_BASE_DESCRIPTION, (gameInstance, classID) -> {
+        return loadAsObject(kcCResourceGenericType.ACTOR_BASE_DESCRIPTION, (resource, classID) -> {
             kcClassID kcClass = kcClassID.getClassById(classID);
             switch (kcClass) {
                 case ACTOR:
-                    return new kcActorDesc(gameInstance);
+                    return new kcActorDesc(resource);
                 case ACTOR_BASE:
-                    return new kcActorBaseDesc(gameInstance);
+                    return new kcActorBaseDesc(resource);
                 case CHARACTER:
-                    return new CharacterParams(gameInstance);
+                    return new CharacterParams(resource);
                 default:
                     throw new RuntimeException("Not sure what actor description class to use for " + Utils.to0PrefixedHexString(classID) + "/" + kcClass + ".");
             }
@@ -119,28 +131,28 @@ public class kcCResourceGeneric extends kcCResource {
      * Get the data in this resource as an emitter description, if it is one.
      */
     public kcEmitterDesc getAsEmitterDescription() {
-        return loadAsObject(kcCResourceGenericType.EMITTER_DESCRIPTION, (gameInstance, classID) -> new kcEmitterDesc(gameInstance));
+        return loadAsObject(kcCResourceGenericType.EMITTER_DESCRIPTION, (resource, classID) -> new kcEmitterDesc(resource));
     }
 
     /**
      * Get the data in this resource as an item description, if it is one.
      */
     public CItemDesc getAsItemDescription() {
-        return loadAsObject(kcCResourceGenericType.ITEM_DESCRIPTION, (gameInstance, classID) -> {
+        return loadAsObject(kcCResourceGenericType.ITEM_DESCRIPTION, (resource, classID) -> {
             kcClassID kcClass = kcClassID.getClassById(classID);
             switch (kcClass) {
                 case COIN:
-                    return new CCoinDesc(gameInstance);
+                    return new CCoinDesc(resource);
                 case HONEY_POT:
-                    return new CHoneyPotDesc(gameInstance);
+                    return new CHoneyPotDesc(resource);
                 case GEM:
-                    return new CGemDesc(gameInstance);
+                    return new CGemDesc(resource);
                 case MAGIC_STONE:
-                    return new CMagicStoneDesc(gameInstance);
+                    return new CMagicStoneDesc(resource);
                 case OBJ_KEY:
-                    return new CObjKeyDesc(gameInstance);
+                    return new CObjKeyDesc(resource);
                 case UNIQUE_ITEM:
-                    return new CUniqueItemDesc(gameInstance);
+                    return new CUniqueItemDesc(resource);
                 default:
                     throw new RuntimeException("Not sure what item description class to use for " + Utils.to0PrefixedHexString(classID) + "/" + kcClass + ".");
             }
@@ -151,25 +163,29 @@ public class kcCResourceGeneric extends kcCResource {
      * Get the data in this resource as launcher params, if it is one.
      */
     public LauncherParams getAsLauncherParams() {
-        return loadAsObject(kcCResourceGenericType.LAUNCHER_DESCRIPTION, (gameInstance, classID) -> new LauncherParams(getParentFile()));
+        return loadAsObject(kcCResourceGenericType.LAUNCHER_DESCRIPTION, (resource, classID) -> new LauncherParams(resource));
     }
 
     /**
      * Get the data in this resource as a model description, if it is one.
      */
     public kcModelDesc getAsModelDescription() {
-        return loadAsObject(kcCResourceGenericType.MODEL_DESCRIPTION, (gameInstance, classID) -> new kcModelDesc(gameInstance));
+        return loadAsObject(kcCResourceGenericType.MODEL_DESCRIPTION, (resource, classID) -> new kcModelDesc(resource));
     }
 
     /**
      * Get the data in this resource as a particle emitter param, if it is one.
      */
     public kcParticleEmitterParam getAsParticleEmitterParam() {
-        return loadAsObject(kcCResourceGenericType.PARTICLE_EMITTER_PARAM, (gameInstance, classID) -> {
-            if (classID == kcClassID.PARTICLE_EMITTER.getAlternateClassId())
-                return null; // This appears to be old data in a format we don't understand. Data is unused. Example: 1st GEN chunk "CoinGrab" in Level 06 Fairy Town Spring. TODO: Or alternatively, maybe there's a conflict with the texture hash and we need to specify the full file path? Dunno.
+        return loadAsObject(kcCResourceGenericType.PARTICLE_EMITTER_PARAM, (resource, classID) -> {
+            if (classID == kcClassID.PARTICLE_EMITTER.getAlternateClassId()) { // Impacts: "CoinGrab", "GooberHit", "UnderWaterSpit"
+                if (resource.getSelfHash().getOriginalString() == null)
+                    resource.getSelfHash().setOriginalString(resource.getName() + kcParticleEmitterParam.NAME_SUFFIX);
 
-            return new kcParticleEmitterParam(gameInstance);
+                return null; // This appears to be old data in a format we don't understand. Data is unused.
+            }
+
+            return new kcParticleEmitterParam(resource);
         });
     }
 
@@ -177,7 +193,7 @@ public class kcCResourceGeneric extends kcCResource {
      * Get the data in this resource as a prop description, if it is one.
      */
     public CPropDesc getAsPropDescription() {
-        return loadAsObject(kcCResourceGenericType.PROP_DESCRIPTION, (gameInstance, classID) -> new CPropDesc(gameInstance));
+        return loadAsObject(kcCResourceGenericType.PROP_DESCRIPTION, (resource, classID) -> new CPropDesc(resource));
     }
 
     /**
@@ -198,11 +214,11 @@ public class kcCResourceGeneric extends kcCResource {
      * Get the data in this resource as a proxy capsule description, if it is one.
      */
     public kcProxyCapsuleDesc getAsProxyCapsuleDescription() {
-        return loadAsObject(kcCResourceGenericType.PROXY_CAPSULE_DESCRIPTION, (gameInstance, classID) -> {
-            if (classID == kcClassID.PROXY_CAPSULE.getAlternateClassId())
-                return null; // This appears to be old data in a format we don't understand. (Likely outdated format) TODO: Investigate further.
+        return loadAsObject(kcCResourceGenericType.PROXY_CAPSULE_DESCRIPTION, (resource, classID) -> {
+            if (classID == kcClassID.PROXY_CAPSULE.getAlternateClassId()) // Impacts: Two unnamed files from Mushroom Valley.
+                return null; // This appears to be old data in a format we don't understand. (Likely outdated format)
 
-            return new kcProxyCapsuleDesc(gameInstance);
+            return new kcProxyCapsuleDesc(resource);
         });
     }
 
@@ -210,14 +226,14 @@ public class kcCResourceGeneric extends kcCResource {
      * Get the data in this resource as a proxy tri mesh description, if it is one.
      */
     public kcProxyTriMeshDesc getAsProxyTriMeshDescription() {
-        return loadAsObject(kcCResourceGenericType.PROXY_TRI_MESH_DESCRIPTION, (gameInstance, classID) -> new kcProxyTriMeshDesc(gameInstance));
+        return loadAsObject(kcCResourceGenericType.PROXY_TRI_MESH_DESCRIPTION, (resource, classID) -> new kcProxyTriMeshDesc(resource));
     }
 
     /**
      * Get the data in this resource as a resource path, if it is one.
      */
     public kcCResourcePath getAsResourcePath() {
-        return loadAsObject(kcCResourceGenericType.RESOURCE_PATH, (gameInstance, classID) -> new kcCResourcePath(gameInstance));
+        return loadAsObject(kcCResourceGenericType.RESOURCE_PATH, (resource, classID) -> new kcCResourcePath(resource));
     }
 
     /**
@@ -231,17 +247,17 @@ public class kcCResourceGeneric extends kcCResource {
      * Get the data in this resource as a string resource, if it is one.
      */
     public kcCResourceString getAsStringResource() {
-        return loadAsObject(kcCResourceGenericType.STRING_RESOURCE, (gameInstance, classID) -> new kcCResourceString(gameInstance));
+        return loadAsObject(kcCResourceGenericType.STRING_RESOURCE, (resource, classID) -> new kcCResourceString(resource.getGameInstance()));
     }
 
     /**
      * Get the data in this resource as a waypoint description, if it is one.
      */
     public kcWaypointDesc getAsWaypointDescription() {
-        return loadAsObject(kcCResourceGenericType.WAYPOINT_DESCRIPTION, (gameInstance, classID) -> new kcWaypointDesc(gameInstance));
+        return loadAsObject(kcCResourceGenericType.WAYPOINT_DESCRIPTION, (resource, classID) -> new kcWaypointDesc(resource));
     }
 
-    private <T extends GameData<GreatQuestInstance>> T loadAsObject(kcCResourceGenericType desiredType, BiFunction<GreatQuestInstance, Integer, T> maker) {
+    private <T extends GameData<GreatQuestInstance>> T loadAsObject(kcCResourceGenericType desiredType, BiFunction<kcCResourceGeneric, Integer, T> maker) {
         kcCResourceGenericType genericType = getResourceType();
         if (genericType != desiredType)
             throw new RuntimeException("Expected the generic resource type to be " + desiredType + ", but was " + genericType + " instead.");
@@ -254,14 +270,9 @@ public class kcCResourceGeneric extends kcCResource {
         int classID = reader.getRemaining() >= Constants.INTEGER_SIZE ? reader.readInt() : 0;
         reader.jumpReturn();
 
-        T newObject = maker.apply(getGameInstance(), classID);
+        T newObject = maker.apply(this, classID);
         if (newObject == null)
             return null;
-
-        if (newObject instanceof kcBaseDesc) {
-            ((kcBaseDesc) newObject).setParentFile(getParentFile());
-            ((kcBaseDesc) newObject).setGenericResourceParent(this);
-        }
 
         try {
             newObject.load(reader);
@@ -275,6 +286,42 @@ public class kcCResourceGeneric extends kcCResource {
 
         return newObject;
     }
+
+    private GameData<GreatQuestInstance> loadAsObject() {
+        if (this.cachedObject != null)
+            return this.cachedObject;
+
+        kcCResourceGenericType genericType = getResourceType();
+        switch (genericType) {
+            case ACTOR_BASE_DESCRIPTION:
+                return getAsActorDescription();
+            case EMITTER_DESCRIPTION:
+                return getAsEmitterDescription();
+            case ITEM_DESCRIPTION:
+                return getAsItemDescription();
+            case LAUNCHER_DESCRIPTION:
+                return getAsLauncherParams();
+            case MODEL_DESCRIPTION:
+                return getAsModelDescription();
+            case PARTICLE_EMITTER_PARAM:
+                return getAsParticleEmitterParam();
+            case PROP_DESCRIPTION:
+                return getAsPropDescription();
+            case PROXY_CAPSULE_DESCRIPTION:
+                return getAsProxyCapsuleDescription();
+            case PROXY_TRI_MESH_DESCRIPTION:
+                return getAsProxyTriMeshDescription();
+            case RESOURCE_PATH:
+                return getAsResourcePath();
+            case STRING_RESOURCE:
+                return getAsStringResource();
+            case WAYPOINT_DESCRIPTION:
+                return getAsWaypointDescription();
+            default:
+                throw new UnsupportedOperationException("Unsupported kcCResourceGenericType: " + genericType);
+        }
+    }
+
 
     @Getter
     public enum kcCResourceGenericType {
@@ -291,9 +338,8 @@ public class kcCResourceGeneric extends kcCResource {
         STRING_RESOURCE(0x691277A3), // kcResUtil.cpp/kcCreateStringResource.
         WAYPOINT_DESCRIPTION("WaypointDesc", 0x9F9934B5); // Real Struct: kcWaypointDesc
 
-
         private final String name;
-        private final int tag;
+        private final int tag; // The hashes are explicitly included in the code to make Ctrl + F searching for hashes feasible.
 
         kcCResourceGenericType(int tag) {
             this(null, tag);

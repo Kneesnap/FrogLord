@@ -71,7 +71,7 @@ public class MWDFile extends SCSharedGameData {
         // Read header.
         reader.verifyString(MARKER);
         reader.skipBytesRequireEmpty(Constants.INTEGER_SIZE);
-        this.buildNotes = reader.readTerminatedStringOfLength(BUILD_NOTES_SIZE);
+        this.buildNotes = reader.readNullTerminatedFixedSizeString(BUILD_NOTES_SIZE);
         getGameInstance().getLogger().info("Build Notes: \n" + this.buildNotes + (this.buildNotes.endsWith("\n") ? "" : "\n"));
 
         boolean lastFileLoadSuccess = false;

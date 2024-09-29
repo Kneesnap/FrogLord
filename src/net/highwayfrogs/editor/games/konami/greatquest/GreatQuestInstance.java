@@ -38,8 +38,11 @@ public class GreatQuestInstance extends GameInstance {
 
     // Padding data.
     public static final byte PADDING_BYTE_DEFAULT = (byte) 0xCC;
+    public static final byte PADDING_BYTE_CD = (byte) 0xCD;
     private static final byte[] PADDING_DEFAULT_INT_BYTES = {PADDING_BYTE_DEFAULT, PADDING_BYTE_DEFAULT, PADDING_BYTE_DEFAULT, PADDING_BYTE_DEFAULT};
     public static final int PADDING_DEFAULT_INT = Utils.readIntFromBytes(PADDING_DEFAULT_INT_BYTES, 0);
+    private static final byte[] PADDING_CD_INT_BYTES = {PADDING_BYTE_CD, PADDING_BYTE_CD, PADDING_BYTE_CD, PADDING_BYTE_CD};
+    public static final int PADDING_CD_INT = Utils.readIntFromBytes(PADDING_CD_INT_BYTES, 0);
 
     public GreatQuestInstance() {
         super(GreatQuestGameType.INSTANCE);

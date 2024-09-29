@@ -1,11 +1,12 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.utils.Utils;
@@ -18,7 +19,6 @@ import net.highwayfrogs.editor.utils.Utils;
 @Getter
 @Setter
 public class CharacterParams extends kcActorDesc {
-    private int characterDescHash;
     private CharacterType characterType = CharacterType.NONE;
     private int attributes; // Seems to be pretty much unused. 0x40000000 will setup Frogger's inventory, 0x80000000 will make a health bar. However, these flags are added at runtime if the character type is PLAYER. So, this might be completely useless unless somehow this does something on monsters.
     private final kcVector4 homePos = new kcVector4();
@@ -64,8 +64,8 @@ public class CharacterParams extends kcActorDesc {
     private float activationRange;
     private static final int PADDING_VALUES = 56;
 
-    public CharacterParams(GreatQuestInstance instance) {
-        super(instance);
+    public CharacterParams(@NonNull kcCResourceGeneric resource) {
+        super(resource);
     }
 
     @Override
@@ -76,7 +76,7 @@ public class CharacterParams extends kcActorDesc {
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.characterDescHash = reader.readInt();
+        int characterDescHash = reader.readInt();
         this.characterType = CharacterType.getType(reader.readInt(), false);
         this.attributes = reader.readInt();
         this.homePos.load(reader);
@@ -121,12 +121,16 @@ public class CharacterParams extends kcActorDesc {
         this.pad1 = reader.readUnsignedByteAsShort();
         this.activationRange = reader.readFloat();
         reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
+
+        if (characterDescHash != getParentHash().getHashNumber())
+            throw new RuntimeException("The CharacterParams reported the parent chunk as " + Utils.to0PrefixedHexString(characterDescHash) + ", but it was expected to be " + getParentHash().getHashNumberAsString() + ".");
+
     }
 
     @Override
     public void saveData(DataWriter writer) {
         super.saveData(writer);
-        writer.writeInt(this.characterDescHash);
+        writer.writeInt(getParentHash().getHashNumber());
         writer.writeInt(this.characterType.ordinal());
         writer.writeInt(this.attributes);
         this.homePos.save(writer);
@@ -176,7 +180,6 @@ public class CharacterParams extends kcActorDesc {
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         super.writeMultiLineInfo(builder, padding);
-        writeAssetLine(builder, padding, "Character Description", this.characterDescHash);
         builder.append(padding).append("Character Type: ").append(this.characterType).append(Constants.NEWLINE);
         builder.append(padding).append("Character Attributes: ").append(this.attributes).append(Constants.NEWLINE);
         this.homePos.writePrefixedInfoLine(builder, "Home Location", padding);

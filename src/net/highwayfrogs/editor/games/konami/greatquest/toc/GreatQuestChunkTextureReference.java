@@ -4,11 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestArchiveFile;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetBinFile;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestImageFile;
-import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
+import net.highwayfrogs.editor.games.konami.greatquest.*;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -21,7 +17,6 @@ public class GreatQuestChunkTextureReference extends kcCResource {
     private String path;
 
     private static final int PATH_SIZE = 260;
-    private static final byte PATH_TERMINATOR = (byte) 0xCD;
 
     public GreatQuestChunkTextureReference(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.TEXTURE);
@@ -30,23 +25,18 @@ public class GreatQuestChunkTextureReference extends kcCResource {
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.path = reader.readTerminatedStringOfLength(PATH_SIZE);
-    }
+        this.path = reader.readNullTerminatedFixedSizeString(PATH_SIZE); // Don't read with the padding byte, as the padding bytes are only valid when the buffer is initially created, if the is shrunk (Such as shadow.img in 00.dat), after the null byte, the old bytes will still be there.
 
-    @Override
-    public void afterLoad1(kcLoadContext context) {
-        super.afterLoad1(context);
-        // We must wait until afterLoad1() because the file object won't exist for files found later in the file if we don't.
-        // But, this must run before afterLoad2() because that's when we start doing lookups based on file paths.
+        // Apply the file name.
         GreatQuestAssetBinFile mainArchive = getMainArchive();
         if (mainArchive != null)
-            mainArchive.applyFileName(this.path, true);
+            mainArchive.applyFileName(this.path, false);
     }
 
     @Override
     public void save(DataWriter writer) {
         super.save(writer);
-        writer.writeTerminatedStringOfLength(this.path, PATH_SIZE);
+        writer.writeNullTerminatedFixedSizeString(this.path, PATH_SIZE, GreatQuestInstance.PADDING_BYTE_CD);
     }
 
     /**

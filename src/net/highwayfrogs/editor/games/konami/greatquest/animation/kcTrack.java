@@ -20,7 +20,7 @@ import java.util.logging.Logger;
  */
 public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
     private final kcCResourceTrack parentResource;
-    private int value;
+    private int value; // TODO: What is this? Could it be the model node id?
     private int tag; // This directly corresponds with the 'tag' value in a kcCSkeleton.
     private final List<kcTrackKey> keyList = new ArrayList<>();
 

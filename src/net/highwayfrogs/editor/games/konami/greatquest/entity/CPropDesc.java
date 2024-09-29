@@ -1,11 +1,12 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
@@ -22,8 +23,8 @@ public class CPropDesc extends kcActorBaseDesc {
     private int event;
     private static final int PADDING_VALUES = 64;
 
-    public CPropDesc(GreatQuestInstance instance) {
-        super(instance);
+    public CPropDesc(@NonNull kcCResourceGeneric resource) {
+        super(resource);
     }
 
     @Override

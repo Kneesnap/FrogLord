@@ -41,7 +41,7 @@ public class FroggerMapFilePacketHeader extends FroggerMapFilePacket {
         if (!VERSION.equals(versionString))
             throw new RuntimeException("The file '" + getParentFile().getFileDisplayName() + "' reported an unsupported version of v" + versionString + ", whereas only v" + VERSION + " is supported!");
 
-        this.comment = reader.readTerminatedStringOfLength(COMMENT_BYTES); // After the terminator byte we've got uninitialized (uncleared malloc) memory.
+        this.comment = reader.readNullTerminatedFixedSizeString(COMMENT_BYTES); // After the terminator byte we've got uninitialized (uncleared malloc) memory.
         this.generalPacketAddress = reader.readInt();
         this.graphicalPacketAddress = reader.readInt();
         this.formPacketAddress = reader.readInt();
@@ -54,7 +54,7 @@ public class FroggerMapFilePacketHeader extends FroggerMapFilePacket {
     protected void saveBodyFirstPass(DataWriter writer) {
         writer.writeNullPointer(); // Map file size.
         writer.writeStringBytes(VERSION);
-        writer.writeTerminatedStringOfLength(this.comment, COMMENT_BYTES);
+        writer.writeNullTerminatedFixedSizeString(this.comment, COMMENT_BYTES);
         this.generalPacketAddress = writer.writeNullPointer();
         this.graphicalPacketAddress = writer.writeNullPointer();
         this.formPacketAddress = writer.writeNullPointer();

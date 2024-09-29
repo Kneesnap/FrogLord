@@ -33,13 +33,13 @@ public class OldFroggerLanguageFile extends SCGameFile<OldFroggerGameInstance> {
     public void load(DataReader reader) {
         this.entries.clear();
         while (reader.getRemaining() >= FIXED_STRING_LENGTH)
-            this.entries.add(reader.readTerminatedStringOfLength(FIXED_STRING_LENGTH));
+            this.entries.add(reader.readNullTerminatedFixedSizeString(FIXED_STRING_LENGTH));
     }
 
     @Override
     public void save(DataWriter writer) {
         for (int i = 0; i < this.entries.size(); i++)
-            writer.writeTerminatedStringOfLength(this.entries.get(i), FIXED_STRING_LENGTH);
+            writer.writeNullTerminatedFixedSizeString(this.entries.get(i), FIXED_STRING_LENGTH);
     }
 
     @Override

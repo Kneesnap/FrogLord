@@ -190,7 +190,7 @@ public class GreatQuestHashReverser {
             System.out.println("Hash File Path: '" + hashFilePath + "'");
             System.out.println("Hash: " + Utils.to0PrefixedHexString(GreatQuestUtils.hash(hashFilePath)));
         } else {
-            System.out.println("Hash: " + Utils.to0PrefixedHexString(GreatQuestUtils.hash(line)));
+            System.out.println("Hash: " + Utils.to0PrefixedHexString(GreatQuestUtils.hash(line)) + " (Case Sensitive: " + Utils.to0PrefixedHexString(GreatQuestUtils.hash(line, false)) + ")");
         }
     }
 

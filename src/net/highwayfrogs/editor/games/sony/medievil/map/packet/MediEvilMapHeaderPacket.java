@@ -39,7 +39,7 @@ public class MediEvilMapHeaderPacket extends MediEvilMapPacket implements IPrope
         long fileLengthInBytes = reader.readUnsignedIntAsLong();
         int packetCount = reader.readUnsignedShortAsInt();
         int versionCode = reader.readUnsignedShortAsInt();
-        this.levelString = reader.readTerminatedStringOfLength(LEVEL_STRING_LENGTH);
+        this.levelString = reader.readNullTerminatedFixedSizeString(LEVEL_STRING_LENGTH);
 
         // Read header identifiers.
         int headerListPtr = reader.readInt();
@@ -67,7 +67,7 @@ public class MediEvilMapHeaderPacket extends MediEvilMapPacket implements IPrope
         writer.writeNullPointer(); // fileLengthInBytes
         writer.writeUnsignedShort(getParentFile().getActivePacketCount()); // Packet Count
         writer.writeUnsignedShort(VERSION_CODE); // Version code.
-        writer.writeTerminatedStringOfLength(this.levelString, LEVEL_STRING_LENGTH);
+        writer.writeNullTerminatedFixedSizeString(this.levelString, LEVEL_STRING_LENGTH);
         int headerListPtrAddress = writer.writeNullPointer();
         writer.writeAddressTo(headerListPtrAddress);
         for (int i = 0; i < getParentFile().getFilePackets().size(); i++) {

@@ -1,11 +1,12 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
@@ -20,9 +21,9 @@ public class kcActorDesc extends kcActorBaseDesc {
     private int invincibleDurationLimitMs; // TODO: May not be used?
     private static final int PADDING_VALUES = 3;
 
-    public kcActorDesc(GreatQuestInstance instance) {
-        super(instance);
-        this.health = new kcHealthDesc(instance);
+    public kcActorDesc(@NonNull kcCResourceGeneric resource) {
+        super(resource);
+        this.health = new kcHealthDesc(resource.getGameInstance());
     }
 
     @Override

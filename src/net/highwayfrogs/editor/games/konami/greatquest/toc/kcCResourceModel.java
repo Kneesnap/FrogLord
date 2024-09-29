@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetBinFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
@@ -19,7 +20,6 @@ public class kcCResourceModel extends kcCResource {
     private String fullPath; // Full file path to the real model file.
 
     public static final int FULL_PATH_SIZE = 260;
-    public static final byte FULL_NAME_PADDING = (byte) 0xCD;
 
     public kcCResourceModel(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.MODEL);
@@ -28,13 +28,18 @@ public class kcCResourceModel extends kcCResource {
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.fullPath = reader.readTerminatedStringOfLength(FULL_PATH_SIZE);
+        this.fullPath = reader.readNullTerminatedFixedSizeString(FULL_PATH_SIZE); // Don't read with the padding byte, as the padding bytes are only valid when the buffer is initially created, if the is shrunk (Such as GOOBER.VTX in 00.dat), after the null byte, the old bytes will still be there.
+
+        GreatQuestAssetBinFile mainArchive = getMainArchive();
+        if (mainArchive != null)
+            mainArchive.applyFileName(this.fullPath, false);
+
     }
 
     @Override
     public void save(DataWriter writer) {
         super.save(writer);
-        writer.writeTerminatedStringOfLength(this.fullPath, FULL_PATH_SIZE);
+        writer.writeNullTerminatedFixedSizeString(this.fullPath, FULL_PATH_SIZE, GreatQuestInstance.PADDING_BYTE_CD);
     }
 
     @Override
@@ -42,11 +47,6 @@ public class kcCResourceModel extends kcCResource {
         super.afterLoad1(context);
         // We must wait until afterLoad1() because the file object won't exist for files found later in the file if we don't.
         // But, this must run before afterLoad2() because that's when we start doing lookups based on file paths.
-        GreatQuestAssetBinFile mainArchive = getMainArchive();
-        if (mainArchive != null)
-            mainArchive.applyFileName(this.fullPath, true);
-
-        // Apply texture file names. This is done in afterLoad2() to wait for our own file path to be set.
         kcModelWrapper wrapper = getModelWrapper();
         if (wrapper != null)
             context.getMaterialLoadContext().applyLevelTextureFileNames(getParentFile(), this.fullPath, wrapper.getModel().getMaterials());

@@ -28,7 +28,7 @@ public enum KCResourceID {
     ACTORDESC("RAD\0", null), // Game Registered ID: 9 (Unused?)
     TRIMESH("RTM\0", kcCResourceTriMesh::new),
     GENERIC("GEN\0", kcCResourceGeneric::new),
-    TOC("TOC\0", TOCChunk::new),
+    TOC("TOC\0", kcCResourceTOC::new),
     ACTIONSEQUENCE("ASQ\0", kcCActionSequence::new),
     NAMEDHASH("NHS\0", kcCResourceNamedHash::new),
     ENTITYINST("NST\0", kcCResourceEntityInst::new),

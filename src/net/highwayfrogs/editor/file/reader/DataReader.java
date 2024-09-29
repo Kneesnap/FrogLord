@@ -195,7 +195,6 @@ public class DataReader {
         return new String(readBytes(length), charset);
     }
 
-
     /**
      * Verify the next few bytes match a string.
      * @param verify The string to verify.
@@ -238,28 +237,91 @@ public class DataReader {
     }
 
     /**
-     * Read a string of a fixed size that has a terminator byte if it's smaller than that size.
-     * @param length The fixed string size.
-     * @return readString
+     * Read a string until a given byte is found.
+     * @param terminator The byte which terminates the string. Usually 0.
+     * @return strValue
      */
-    public String readTerminatedStringOfLength(int length) {
-        return readTerminatedStringOfLength(length, Constants.NULL_BYTE);
+    public String readString(byte terminator, Charset charset) {
+        if (charset == null)
+            throw new NullPointerException("charset");
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        try {
+            byte[] temp = new byte[1];
+            while ((temp[0] = readByte()) != terminator)
+                out.write(temp);
+            out.close();
+            return out.toString(charset.name());
+        } catch (Exception ex) {
+            throw new RuntimeException("Failed to read terminating string.", ex);
+        }
     }
 
     /**
-     * Read a string of a fixed size that has a terminator byte if it's smaller than that size.
-     * @param length     The fixed string size.
-     * @param terminator The terminator byte.
-     * @return readString
+     * Reads a null-terminated string from a fixed-length buffer with US_ASCII encoding and null-bytes used as padding.
+     * @param fixedLength The string buffer fixed size in bytes.
      */
-    public String readTerminatedStringOfLength(int length, byte terminator) {
-        jumpTemp(getIndex());
-        String result = readString(terminator);
-        jumpReturn();
-        skipBytes(length);
+    public String readNullTerminatedFixedSizeString(int fixedLength) {
+        return readNullTerminatedFixedSizeString(StandardCharsets.US_ASCII, fixedLength);
+    }
 
-        if (result.length() > length)
-            result = result.substring(0, length);
+    /**
+     * Reads a null-terminated string from a fixed-length buffer.
+     * @param fixedLength The string buffer fixed size in bytes.
+     * @param padding The padding byte used expected to fill the empty string data. Generally 0x00.
+     */
+    public String readNullTerminatedFixedSizeString(int fixedLength, byte padding) {
+        return readNullTerminatedFixedSizeString(StandardCharsets.US_ASCII, fixedLength, padding);
+    }
+
+    /**
+     * Reads a null-terminated string from a fixed-length buffer.
+     * This will not validate the padding bytes.
+     * @param charset the charset to decode the string from a byte array with. This will pretty much always be US_ASCII, as there aren't many other encodings which are null-terminated.
+     * @param fixedLength The string buffer fixed size in bytes.
+     */
+    public String readNullTerminatedFixedSizeString(Charset charset, int fixedLength) {
+        if (charset == null)
+            throw new NullPointerException("charset");
+        if (fixedLength < 0)
+            throw new IllegalArgumentException("Cannot read a string with a fixed buffer size of " + fixedLength + ".");
+
+        int startIndex = getIndex();
+        int expectedEndIndex = startIndex + fixedLength;
+        String result = readString(Constants.NULL_BYTE, charset);
+        if (getIndex() > expectedEndIndex) {
+            result = result.substring(0, fixedLength);
+            setIndex(expectedEndIndex);
+        } else {
+            skipBytes(expectedEndIndex - getIndex());
+        }
+
+        return result;
+    }
+
+    /**
+     * Reads a null-terminated string from a fixed-length buffer.
+     * @param charset the charset to decode the string from a byte array with. This will pretty much always be US_ASCII, as there aren't many other encodings which are null-terminated.
+     * @param fixedLength The string buffer fixed size in bytes.
+     * @param padding The padding byte used to pad empty string data. An exception will be thrown if the subsequent data does not match this byte.
+     */
+    public String readNullTerminatedFixedSizeString(Charset charset, int fixedLength, byte padding) {
+        if (charset == null)
+            throw new NullPointerException("charset");
+        if (fixedLength < 0)
+            throw new IllegalArgumentException("Cannot read a string with a fixed buffer size of " + fixedLength + ".");
+
+        int startIndex = getIndex();
+        int expectedEndIndex = startIndex + fixedLength;
+        String result = readString(Constants.NULL_BYTE, charset);
+        if (getIndex() > expectedEndIndex) {
+            result = result.substring(0, fixedLength);
+            setIndex(expectedEndIndex);
+        } else {
+            skipBytesRequire(padding, expectedEndIndex - getIndex());
+        }
+
         return result;
     }
 

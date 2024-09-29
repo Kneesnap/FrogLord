@@ -1,21 +1,18 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.*;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
-import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.function.Function;
+import java.util.logging.Logger;
 
 /**
  * Implements the 'kcBaseDesc' struct.
@@ -26,11 +23,17 @@ import java.util.function.Function;
  */
 @Getter
 public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
-    @Setter private GreatQuestChunkedFile parentFile;
-    @Setter private kcCResourceGeneric genericResourceParent;
+    private final GreatQuestChunkedFile parentFile;
+    private final kcCResource parentResource;
 
-    public kcBaseDesc(GreatQuestInstance instance) {
+    public kcBaseDesc(@NonNull kcCResource resource) {
+        this(resource.getGameInstance(), resource, resource.getParentFile());
+    }
+
+    private kcBaseDesc(GreatQuestInstance instance, kcCResource resource, GreatQuestChunkedFile parentFile) {
         super(instance);
+        this.parentResource = resource;
+        this.parentFile = parentFile;
     }
 
     /**
@@ -43,6 +46,14 @@ public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements
      */
     public boolean allowAlternativeClassID() {
         return false;
+    }
+
+    @Override
+    public Logger getLogger() {
+        if (this.parentResource != null)
+            return this.parentResource.getLogger();
+
+        return super.getLogger();
     }
 
     @Override
@@ -84,6 +95,15 @@ public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements
     protected abstract void saveData(DataWriter writer);
 
     /**
+     * Return true if the parent resource is named any one of the given names.
+     * @param names the names to test
+     * @return parent resources
+     */
+    public boolean isParentResourceNamed(String... names) {
+        return this.parentResource != null && this.parentResource.doesNameMatch(names);
+    }
+
+    /**
      * Write the asset name to the builder to a single line.
      * @param builder      The builder to write to.
      * @param padding      The line padding data.
@@ -92,6 +112,17 @@ public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements
      */
     protected StringBuilder writeAssetLine(StringBuilder builder, String padding, String prefix, int resourceHash) {
         return writeAssetInfo(builder, padding, prefix, resourceHash, kcCResource::getName).append(Constants.NEWLINE);
+    }
+
+    /**
+     * Write the asset name to the builder to a single line.
+     * @param builder The builder to write to.
+     * @param padding The line padding data.
+     * @param prefix The prefix to write.
+     * @param hashObj The hash value to lookup.
+     */
+    protected StringBuilder writeAssetLine(StringBuilder builder, String padding, String prefix, GreatQuestHash<?> hashObj) {
+        return writeAssetInfo(builder, padding, prefix, hashObj != null ? hashObj.getHashNumber() : 0, kcCResource::getName).append(Constants.NEWLINE);
     }
 
     /**

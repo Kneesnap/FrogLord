@@ -61,7 +61,7 @@ public class MWIResourceEntry extends SCSharedGameData implements ISCFileDefinit
 
         int unpackedSizeWithSafetyMargin;
         if (isOldFormat()) {
-            this.filePath = reader.readTerminatedStringOfLength(OLD_FIXED_FILE_PATH_LENGTH);
+            this.filePath = reader.readNullTerminatedFixedSizeString(OLD_FIXED_FILE_PATH_LENGTH);
             this.flags = reader.readInt();
             warnAboutInvalidBitFlags(this.flags, OLD_FORMAT_VALIDATION_MASK);
             this.typeId = reader.readInt();
@@ -125,7 +125,7 @@ public class MWIResourceEntry extends SCSharedGameData implements ISCFileDefinit
     public void save(DataWriter writer) {
         this.filePathPointerAddress = NO_FILE_NAME_MARKER;
         if (isOldFormat()) {
-            writer.writeTerminatedStringOfLength(this.filePath != null ? this.filePath : "", OLD_FIXED_FILE_PATH_LENGTH);
+            writer.writeNullTerminatedFixedSizeString(this.filePath != null ? this.filePath : "", OLD_FIXED_FILE_PATH_LENGTH);
             writer.writeInt(this.flags);
             writer.writeInt(this.typeId);
             writer.writeInt(this.sectorOffset);

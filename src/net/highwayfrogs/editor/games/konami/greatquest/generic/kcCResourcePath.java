@@ -1,37 +1,116 @@
 package net.highwayfrogs.editor.games.konami.greatquest.generic;
 
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NonNull;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.utils.Utils;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 /**
  * Represents a resource path.
- * This appears unused by the game, but perhaps it was used by an editor.
+ * This appears fully unused by the game as there is no code to handle this data, but perhaps it was used by an editor.
+ * This appears to be how the game specifies where an animation file came from. Eg:
  * Created by Kneesnap on 8/21/2023.
  */
 @Getter
-@Setter
 public class kcCResourcePath extends GameData<GreatQuestInstance> {
-    private static final int PATH_LENGTH = 260;
-    private int fileHash; // The hash to the chunk which the path is included for.
-    private String filePath;
+    private final kcCResourceGeneric parentResource;
+    private String filePath = "";
 
-    public kcCResourcePath(GreatQuestInstance instance) {
-        super(instance);
+    private static final int PATH_LENGTH = 260;
+
+    public kcCResourcePath(@NonNull kcCResourceGeneric parentResource) {
+        super(parentResource.getGameInstance());
+        this.parentResource = parentResource;
     }
 
     @Override
     public void load(DataReader reader) {
-        this.fileHash = reader.readInt();
-        this.filePath = reader.readTerminatedStringOfLength(PATH_LENGTH);
+        // NOTE: This file when looked at in a hex editor may appear to have extra data. Remember that this data is actually the header of the kcCResourceGeneric.
+        int fileNameHash = reader.readInt();
+        this.filePath = reader.readNullTerminatedFixedSizeString(PATH_LENGTH, GreatQuestInstance.PADDING_BYTE_DEFAULT);
+
+        // Validations:
+        if (fileNameHash != getFileNameHash() && Objects.equals(this.parentResource.getName(), getResourceName(this.parentResource.getHash())))
+            throw new RuntimeException("The resource path '" + this.filePath + "' was paired with hash " + Utils.to0PrefixedHexString(fileNameHash) + " but FrogLord thinks it should be " + Utils.to0PrefixedHexString(getFileNameHash()));
+        String expectedResourceName = getResourceName(getFileName());
+        if (expectedResourceName != null && !expectedResourceName.equals(this.parentResource.getName()))
+            throw new RuntimeException("Expected kcCResourcePath to be named '" + expectedResourceName + "', but was actually named '" + this.parentResource.getName() + "'.");
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeInt(this.fileHash);
-        writer.writeTerminatedStringOfLength(this.filePath, PATH_LENGTH); // MTF Future Note: Terminator 0x00, Padding: 0xCC
+        writer.writeInt(getFileNameHash());
+        writer.writeNullTerminatedFixedSizeString(this.filePath, PATH_LENGTH, GreatQuestInstance.PADDING_BYTE_DEFAULT);
+    }
+
+    /**
+     * Get the file name from the file path.
+     * This can often be null if the file name was not included as part of the file path. (It would be determinable by finding the file by its hash)
+     */
+    public String getFileName() {
+        return getFileName(this.filePath);
+    }
+
+    /**
+     * Get the hash of the file name.
+     */
+    public int getFileNameHash() {
+        String fileName = getFileName();
+        return fileName != null && fileName.length() > 0 ? GreatQuestUtils.hash(fileName) : this.parentResource.getHash();
+    }
+
+    /**
+     * Sets the file path.
+     * @param newFilePath The new file path to apply
+     */
+    public void setFilePath(String newFilePath) {
+        if (newFilePath == null)
+            throw new NullPointerException("newFilePath");
+
+        String newFileName = getFileName(newFilePath);
+        if (newFileName == null || newFileName.trim().isEmpty())
+            throw new IllegalArgumentException("The file path '" + newFilePath + "' does not appear to have a valid file name.");
+
+        if (newFilePath.getBytes(StandardCharsets.US_ASCII).length >= PATH_LENGTH) // We can conflate characters with bytes here as the charset is US_ASCII.
+            throw new IllegalArgumentException("The file path is too long, the game only has room for 260 characters!");
+
+        if (this.parentResource.isHashBasedOnName()) {
+            String newResourceName = getResourceName(newFileName);
+            if (newResourceName != null && Objects.equals(this.parentResource.getName(), getResourceName(this.parentResource.getHash())))
+                this.parentResource.setName(newResourceName, true);
+        }
+    }
+
+    private static String getResourceName(String fileName) {
+        if (fileName == null || fileName.isEmpty())
+            return null;
+
+        int fileNameHash = GreatQuestUtils.hash(fileName);
+        return getResourceName(fileNameHash);
+    }
+
+    private static String getResourceName(int fileNameHash) {
+        return "respath-0x" + Utils.to0PrefixedHexStringLower(fileNameHash); // The padding is confirmed to occur by referencing Level18JoyTowers 'respath-0x0307826a'.
+    }
+
+    private static String getFileName(String fullPath) {
+        String fileName = fullPath;
+
+        int lastBackslashIndex = fileName.lastIndexOf('\\');
+        if (lastBackslashIndex >= 0)
+            fileName = fileName.substring(lastBackslashIndex + 1);
+
+        int lastSlashIndex = fileName.lastIndexOf('/');
+        if (lastSlashIndex >= 0)
+            fileName = fileName.substring(lastSlashIndex + 1);
+
+        return fileName;
     }
 }

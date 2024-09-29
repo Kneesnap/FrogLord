@@ -86,7 +86,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         this.soundEffects.clear();
         for (int i = 0; i < sfxCount; i++) {
             int sfxId = reader.readInt();
-            if (sfxId == 0xCDCDCDCD)
+            if (sfxId == GreatQuestInstance.PADDING_CD_INT)
                 break; // Uninitialized memory.... This seems like the file has invalid data to be honest... Perhaps since the data isn't actually parsed until it gets used, since this bad data is never used it never gets parsed by the game, and thus never has a chance to break stuff.
 
             int currentSfxAttrOffset = reader.readInt();

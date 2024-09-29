@@ -6,8 +6,11 @@ import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedResource;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
+import net.highwayfrogs.editor.utils.IGameObject;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.image.BufferedImage;
@@ -181,8 +184,8 @@ public class GreatQuestUtils {
     public static String getFileIdFromPath(String filePath) { // Reversed from the 'Hash' function, in the global namespace. (To make it distinct from the other hash method)
         int gameIndex = indexOfMultiple(filePath, GAME_PATH_INDEX_PATTERNS);
 
-        StringBuilder fileId = new StringBuilder();
         if (gameIndex != -1) { // If it was found.
+            StringBuilder fileId = new StringBuilder();
             String cutPath = filePath.substring(gameIndex + 6); // Cut out \\game and everything before it.
             fileId.append(filePath.charAt(gameIndex + 5));
             int levelIndex = indexOfMultiple(cutPath, LEVEL_PATH_INDEX_PATTERNS);
@@ -214,9 +217,9 @@ public class GreatQuestUtils {
                 return fileId.append(cutSepString).toString();
             }
             return fileId.append(cutPath).toString();
+        } else {
+            return filePath;
         }
-
-        return fileId.append(filePath).toString();
     }
 
     /**
@@ -372,6 +375,70 @@ public class GreatQuestUtils {
     }
 
     /**
+     * Resolves a resource hash to a particular asset.
+     * @param resourceClass the desired resource class
+     * @param resource the game object resolving the hash.
+     * @param hashObj the hash object to save results within
+     * @param hash the numerical hash to resolve.
+     * @return if the resource was successfully resolved
+     * @param <TResource> the type of resource to resolve
+     */
+    public static <TResource extends kcHashedResource> boolean resolveResourceHash(Class<TResource> resourceClass, kcCResource resource, GreatQuestHash<TResource> hashObj, int hash, boolean warnIfNotFound) {
+        return resolveResourceHash(resourceClass, resource.getParentFile(), resource, hashObj, hash, warnIfNotFound);
+    }
+
+    /**
+     * Resolves a resource hash to a particular asset.
+     * @param resourceClass the desired resource class
+     * @param gameObj the game object resolving the hash.
+     * @param hashObj the hash object to save results within
+     * @param hash the numerical hash to resolve.
+     * @return if the resource was successfully resolved
+     * @param <TResource> the type of resource to resolve
+     */
+    public static <TResource extends kcHashedResource> boolean resolveResourceHash(Class<TResource> resourceClass, kcBaseDesc gameObj, GreatQuestHash<TResource> hashObj, int hash, boolean warnIfNotFound) {
+        return resolveResourceHash(resourceClass, gameObj.getParentFile(), gameObj, hashObj, hash, warnIfNotFound);
+    }
+
+    /**
+     * Resolves a resource hash to a particular asset.
+     * @param resourceClass the desired resource class
+     * @param parentFile the file to find assets within
+     * @param gameObj the game object resolving the hash.
+     * @param hashObj the hash object to save results within
+     * @param hash the numerical hash to resolve.
+     * @param warnIfNotFound if true and the resource is not found, a warning will be written.
+     * @return if the resource was successfully resolved
+     * @param <TResource> the type of resource to resolve
+     */
+    public static <TResource extends kcHashedResource> boolean resolveResourceHash(Class<TResource> resourceClass, GreatQuestChunkedFile parentFile, IGameObject gameObj, GreatQuestHash<TResource> hashObj, int hash, boolean warnIfNotFound) {
+        if (resourceClass == null)
+            throw new NullPointerException("resourceClass");
+        if (gameObj == null)
+            throw new NullPointerException("gameObj");
+        if (hashObj == null)
+            throw new NullPointerException("hashObj");
+
+        // Apply the hash.
+        hashObj.setHash(hash);
+
+        // Resolve the resource.
+        kcCResource resource = GreatQuestUtils.findResourceByHash(parentFile, (GreatQuestInstance) gameObj.getGameInstance(), hash);
+        if (resource != null) {
+            if (!resourceClass.isInstance(resource))
+                throw new ClassCastException("Resolved hash " + hashObj.getHashNumberAsString() + " to a " + Utils.getSimpleName(resource) + " named '" + resource.getName() + "', but a " + resourceClass.getName() + " was expected instead!");
+
+            TResource castedResource = resourceClass.cast(resource);
+            hashObj.setResource(castedResource, true);
+            return true;
+        } else {
+            if (warnIfNotFound && hash != 0 && hash != -1)
+                gameObj.getLogger().warning("Failed to resolve " + resourceClass.getSimpleName() + " by its " + Utils.getSimpleName(gameObj) + " hash: " + hashObj.getHashNumberAsString() + ".");
+            return false;
+        }
+    }
+
+    /**
      * Find a resource by its hash
      * @param parentFile the parent file. searched first
      * @param mainInstance the main game instance, all chunked files are searched if not found
@@ -397,7 +464,6 @@ public class GreatQuestUtils {
 
         return null;
     }
-
 
     /**
      * Find a generic resource by its hash
@@ -492,5 +558,37 @@ public class GreatQuestUtils {
             if (nextByte != Constants.NULL_BYTE && nextByte != alternateValue)
                 throw new RuntimeException("Reader wanted to skip " + byteCount + " bytes to reach " + Utils.toHexString(index + byteCount) + ", but got 0x" + Utils.toByteString(nextByte) + " at " + Utils.toHexString(index + i) + " when 0x" + Utils.toByteString(alternateValue) + " or 0x00 were expected.");
         }
+    }
+
+    /**
+     * Adds a listener for a kcCResource which will apply a suffix to its name and use that new string for the hash.
+     * @param resource the resource to apply the listener to
+     * @param suffix the suffix to apply to the name
+     */
+    public static void applySelfNameSuffixAndToFutureNameChanges(kcCResource resource, String suffix) {
+        if (resource == null)
+            throw new NullPointerException("resource");
+        if (suffix == null)
+            throw new NullPointerException("suffix");
+
+        if (resource.getSelfHash().getOriginalString() == null) {
+            // Setup the name based on the suffix.
+            resource.getSelfHash().setOriginalString(resource.getName() + suffix);
+        } else if (!resource.getSelfHash().getOriginalString().endsWith(suffix)) {
+            // Not sure what the original name is, but it doesn't end with our suffix, so we should not apply the suffix to future options.
+            return;
+        }
+
+        // Listen for future names.
+        resource.getNameProperty().addListener((property, oldName, newName) -> {
+            if (resource.getHash() == -1)
+                return; // Don't apply a new name if the hash is -1.
+
+            if (newName == null)
+                throw new NullPointerException("The " + Utils.getSimpleName(resource) + "/" + resource + " did not supply a name!");
+
+            String newHashName = newName.endsWith(suffix) ? newName : newName + suffix;
+            resource.getSelfHash().setHash(newHashName);
+        });
     }
 }

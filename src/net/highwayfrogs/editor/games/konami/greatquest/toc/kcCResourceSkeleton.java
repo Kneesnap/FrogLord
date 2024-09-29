@@ -69,7 +69,7 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
 
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        builder.append(padding).append("kcCResourceSkeleton['").append(getName()).append("'/").append(Utils.to0PrefixedHexString(getHash())).append("]:").append(Constants.NEWLINE);
+        builder.append(padding).append("kcCResourceSkeleton['").append(getName()).append("'/").append(getHashAsHexString()).append("]:").append(Constants.NEWLINE);
         this.rootNode.writeMultiLineInfo(builder, padding + " ");
     }
 
@@ -120,6 +120,8 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
         @Getter private final kcMatrix matrix;
         private transient int loadEndPosition = -1;
 
+        private static final int NAME_SIZE = 32;
+
         public kcNode(kcCResourceSkeleton skeleton, kcNode parent) {
             super(skeleton.getGameInstance());
             this.skeleton = skeleton;
@@ -130,7 +132,7 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
         @Override
         public void load(DataReader reader) {
             int nodeBaseAddress = reader.getIndex();
-            this.name = reader.readTerminatedStringOfLength(32);
+            this.name = reader.readNullTerminatedFixedSizeString(NAME_SIZE, Constants.NULL_BYTE);
             this.tag = reader.readInt();
             this.flags = reader.readInt();
             reader.skipPointer(); // Runtime pointer. (There does seem to be a pointer here, but I think it's overwritten at runtime)
@@ -166,7 +168,7 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
         @Override
         public void save(DataWriter writer) {
             int nodeBaseAddress = writer.getIndex();
-            writer.writeTerminatedStringOfLength(this.name, 32);
+            writer.writeNullTerminatedFixedSizeString(this.name, NAME_SIZE, Constants.NULL_BYTE);
             writer.writeInt(this.tag);
             writer.writeInt(this.flags);
             writer.writeNullPointer(); // Runtime pointer. (There does seem to be a pointer here, but I think it's overwritten at runtime)

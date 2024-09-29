@@ -16,7 +16,7 @@ public class kcCResourceAnimSet extends kcCResource {
 
     public kcCResourceAnimSet(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.ANIMSET);
-        this.animSetDesc = new kcAnimSetDesc(parentFile.getGameInstance());
+        this.animSetDesc = new kcAnimSetDesc(this);
     }
 
     @Override

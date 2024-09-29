@@ -1,12 +1,13 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcSphere;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -65,8 +66,8 @@ public class kcEntity3DDesc extends kcBaseDesc {
 
     private static final int CLASS_ID = GreatQuestUtils.hash("kcCEntity3D");
 
-    public kcEntity3DDesc(GreatQuestInstance instance) {
-        super(instance);
+    protected kcEntity3DDesc(@NonNull kcCResourceGeneric resource) {
+        super(resource);
         this.boundingSphere.setRadius(1F); // Default radius is 1.
     }
 

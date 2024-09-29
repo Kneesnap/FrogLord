@@ -43,23 +43,23 @@ public class OldFroggerLevelTableEntry extends SCGameData<OldFroggerGameInstance
 
     @Override
     public void load(DataReader reader) {
-        this.filePath = getGameInstance().isPC() ? reader.readTerminatedStringOfLength(WINDOWS_FILEPATH_LENGTH) : null;
+        this.filePath = getGameInstance().isPC() ? reader.readNullTerminatedFixedSizeString(WINDOWS_FILEPATH_LENGTH) : null;
         this.mapResourceId = getGameInstance().isPSX() ? reader.readInt() : -1;
         this.wadResourceId = reader.readInt();
         this.ulrResourceId = getGameInstance().isPSX() ? reader.readInt() : -1;
-        this.fileName = reader.readTerminatedStringOfLength(getGameInstance().isPC() ? WINDOWS_FILENAME_LENGTH : PSX_FILENAME_LENGTH);
+        this.fileName = reader.readNullTerminatedFixedSizeString(getGameInstance().isPC() ? WINDOWS_FILENAME_LENGTH : PSX_FILENAME_LENGTH);
     }
 
     @Override
     public void save(DataWriter writer) {
         if (getGameInstance().isPC())
-            writer.writeTerminatedStringOfLength(this.filePath != null ? this.filePath : "", WINDOWS_FILEPATH_LENGTH);
+            writer.writeNullTerminatedFixedSizeString(this.filePath != null ? this.filePath : "", WINDOWS_FILEPATH_LENGTH);
         if (getGameInstance().isPSX())
             writer.writeInt(this.mapResourceId);
         writer.writeInt(this.wadResourceId);
         if (getGameInstance().isPSX())
             writer.writeInt(this.ulrResourceId);
-        writer.writeTerminatedStringOfLength(this.fileName, getGameInstance().isPC() ? WINDOWS_FILENAME_LENGTH : PSX_FILENAME_LENGTH);
+        writer.writeNullTerminatedFixedSizeString(this.fileName, getGameInstance().isPC() ? WINDOWS_FILENAME_LENGTH : PSX_FILENAME_LENGTH);
     }
 
     /**

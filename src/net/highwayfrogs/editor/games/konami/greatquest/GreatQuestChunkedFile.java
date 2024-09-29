@@ -5,7 +5,6 @@ import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
@@ -55,7 +54,11 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
     @Override
     public void load(DataReader reader) {
-        TOCChunk lastTocChunk = null;
+        this.chunks.clear();
+
+        // Prepare chunks.
+        Map<kcCResource, byte[]> cachedRawDataMap = new HashMap<>();
+        kcCResourceTOC tocChunk = null;
         int tocPos = 0;
         while (reader.hasMore()) {
             String magic = reader.readString(4);
@@ -76,26 +79,35 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 newChunk = new GreatQuestDummyFileChunk(this, magic);
             }
 
-            DataReader chunkReader = new DataReader(new ArraySource(readBytes));
-            try {
-                if (lastTocChunk != null && lastTocChunk.getHashes().size() > tocPos)
-                    newChunk.setHash(lastTocChunk.getHashes().get(tocPos++));
+            if (newChunk instanceof kcCResourceTOC) {
+                // If we encounter a table of contents, use it for reading the upcoming chunks!
+                if (this.chunks.size() > 0)
+                    throw new IllegalStateException("kcCResourceTOC was not the first chunk in the file!");
 
-                newChunk.load(chunkReader);
+                tocChunk = (kcCResourceTOC) newChunk;
+                tocChunk.loadFromRawBytes(readBytes);
+            } else {
+                cachedRawDataMap.put(newChunk, readBytes);
+                this.chunks.add(newChunk);
 
-                // Warn if not all data is read.
-                if (chunkReader.hasMore())
-                    getLogger().warning("GreatQuest Chunk " + Utils.stripAlphanumeric(newChunk.getChunkMagic()) + "/'" + newChunk.getName() + "' in '" + getDebugName() + "' had " + chunkReader.getRemaining() + " remaining unread bytes.");
-            } catch (Throwable th) {
-                Utils.handleError(getLogger(), th, false, "Failed to read %s chunk from '%s'.", newChunk != null ? newChunk.getChunkType() : null, getDebugName());
+                // Apply the hash from the table of contents.
+                if (tocChunk != null && tocChunk.getHashes().size() > tocPos)
+                    newChunk.getSelfHash().setHash(tocChunk.getHashes().get(tocPos++));
             }
+        }
 
-            if (newChunk instanceof TOCChunk) {
-                lastTocChunk = (TOCChunk) newChunk;
-                tocPos = 0;
-            }
+        // Read the chunks. (Chunk data reading occurs after all chunks have been read, in order to allow resolving of hashes into chunk object references, regardless of if the order they are read.)
+        for (int i = 0; i < this.chunks.size(); i++) {
+            kcCResource chunk = this.chunks.get(i);
+            if (!(chunk instanceof kcCResourceTOC))
+                chunk.loadFromRawBytes(cachedRawDataMap.remove(chunk));
+        }
 
-            this.chunks.add(newChunk);
+        // Alert about chunks which are missing names.
+        for (int i = 0; i < this.chunks.size(); i++) {
+            kcCResource chunk = this.chunks.get(i);
+            if (chunk.getSelfHash().getOriginalString() == null && !(chunk instanceof kcCActionSequence) && !kcCResource.DEFAULT_RESOURCE_NAME.equals(chunk.getName())) // Action sequences are skipped because at this point they are unburdened by reality.
+                chunk.getLogger().warning("Name hash mismatch! Calculated: " + Utils.to0PrefixedHexString(chunk.calculateHash()) + ", Real: " + chunk.getHashAsHexString());
         }
     }
 
@@ -111,6 +123,29 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         super.afterLoad2(context);
         for (int i = 0; i < this.chunks.size(); i++)
             this.chunks.get(i).afterLoad2(context);
+    }
+
+    @Override
+    public void save(DataWriter writer) {
+        // Write table of contents.
+        kcCResourceTOC tableOfContents = new kcCResourceTOC(this);
+        tableOfContents.update();
+        writeChunk(writer, tableOfContents);
+
+        // Write chunks.
+        for (kcCResource chunk : getChunks())
+            writeChunk(writer, chunk);
+    }
+
+    private void writeChunk(DataWriter writer, kcCResource chunk) {
+        writer.writeStringBytes(chunk.getChunkMagic());
+        int lengthAddress = writer.writeNullPointer();
+
+        // Write chunk data.
+        int dataStartIndex = writer.getIndex();
+        chunk.save(writer);
+        int dataEndIndex = writer.getIndex();
+        writer.writeAddressAt(lengthAddress, (dataEndIndex - dataStartIndex) - 0x20);
     }
 
     @Override
@@ -137,20 +172,6 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         return "ChunkedDataFiles";
     }
 
-    @Override
-    public void save(DataWriter writer) {
-        for (kcCResource chunk : getChunks()) {
-            writer.writeStringBytes(chunk.getChunkMagic());
-            int lengthAddress = writer.writeNullPointer();
-
-            // Write chunk data.
-            int dataStart = writer.getIndex();
-            chunk.save(writer);
-            int dataEnd = writer.getIndex();
-            writer.writeAddressAt(lengthAddress, (dataEnd - dataStart) - 0x20);
-        }
-    }
-
     /**
      * Create a map of hash numbers to corresponding strings from files present in the chunks.
      * @return localHashes
@@ -158,8 +179,9 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     public Map<Integer, String> calculateLocalHashes() {
         Map<Integer, String> nameMap = new HashMap<>();
         for (kcCResource testChunk : this.chunks) {
-            if (testChunk.getName() != null && testChunk.getName().length() > 0)
-                nameMap.put(testChunk.getNameHash(), testChunk.getName());
+            String realName = testChunk.getSelfHash().getOriginalString();
+            if (realName != null && (realName.length() > 0))
+                nameMap.put(testChunk.getHash(), realName);
 
             if (testChunk instanceof kcCResourceNamedHash) {
                 kcCResourceNamedHash namedHashChunk = (kcCResourceNamedHash) testChunk;
@@ -196,8 +218,8 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         saveEntities(new File(folder, "entity-instances.txt"));
         saveGenericEntityDescriptions(new File(folder, "entity-descriptions.txt"));
         saveGenericProxyInfo(new File(folder, "proxy-descriptions.txt"));
-        saveGenericEmitterInfo(new File(folder, "launchers.txt"));
-        saveGenericLauncherInfo(new File(folder, "emitters.txt"));
+        saveGenericEmitterInfo(new File(folder, "emitters.txt"));
+        saveGenericLauncherInfo(new File(folder, "launchers.txt"));
         saveGenericResourcePaths(new File(folder, "resource-paths.txt"));
         saveGenericModelDescriptions(new File(folder, "model-descriptions.txt"));
         saveOctTreeSceneManager(new File(folder, "oct-tree-scene-manager.txt"));
@@ -275,19 +297,6 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     }
 
     /**
-     * Gets the first TOC chunk in the file.
-     */
-    public TOCChunk getFirstTOCChunk() {
-        for (int i = 0; i < this.chunks.size(); i++) {
-            kcCResource resource = this.chunks.get(i);
-            if (resource instanceof TOCChunk)
-                return (TOCChunk) resource;
-        }
-
-        return null;
-    }
-
-    /**
      * Gets a resource by its hash.
      * @param hash        The hash to lookup.
      * @param <TResource> The type of resource to return.
@@ -300,7 +309,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
         for (int i = 0; i < this.chunks.size(); i++) {
             kcCResource resource = this.chunks.get(i);
-            if (resource.getHash() == hash || (resource.getName() != null && resource.getNameHash() == hash))
+            if (resource.getHash() == hash)
                 return (TResource) resource;
         }
 
@@ -394,7 +403,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             if (generic.getResourceType() != kcCResourceGenericType.STRING_RESOURCE)
                 continue;
 
-            builder.append(Utils.to0PrefixedHexString(generic.getHash()))
+            builder.append(generic.getHashAsHexString())
                     .append("/'").append(generic.getName()).append("': ")
                     .append(generic.getAsString()).append(Constants.NEWLINE);
         }
@@ -405,7 +414,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     private void writeData(StringBuilder builder, kcCResource resource, IMultiLineInfoWriter data) {
         builder.append(data != null ? data.getClass().getSimpleName() : "Unknown Format")
                 .append(' ').append(resource.getName()).append('[')
-                .append(Utils.to0PrefixedHexString(resource.getHash())).append("]:").append(Constants.NEWLINE);
+                .append(resource.getHashAsHexString()).append("]:").append(Constants.NEWLINE);
 
         if (data == null) {
             builder.append(" This data is in an unknown (potentially outdated) format.")
@@ -513,7 +522,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 continue;
 
             kcCResourceAnimSet animSet = (kcCResourceAnimSet) chunk;
-            builder.append(chunk.getName()).append('[').append(Utils.to0PrefixedHexString(chunk.getHash()))
+            builder.append(chunk.getName()).append('[').append(chunk.getHashAsHexString())
                     .append("]: ").append(Constants.NEWLINE);
             animSet.getAnimSetDesc().writeMultiLineInfo(builder, " ");
         }
@@ -572,9 +581,9 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 continue;
 
             kcCResourcePath resourcePath = generic.getAsResourcePath();
-            builder.append(chunk.getName()).append('[').append(Utils.to0PrefixedHexString(chunk.getHash()))
+            builder.append(chunk.getName()).append('[').append(chunk.getHashAsHexString())
                     .append("]: ").append(resourcePath.getFilePath()).append(" ")
-                    .append(Utils.to0PrefixedHexString(resourcePath.getFileHash())).append(Constants.NEWLINE);
+                    .append(Utils.to0PrefixedHexString(resourcePath.getFileNameHash())).append(Constants.NEWLINE);
         }
 
         saveExport(file, builder);
@@ -595,7 +604,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 continue;
 
             kcModelDesc modelDesc = generic.getAsModelDescription();
-            builder.append(chunk.getName()).append('[').append(Utils.to0PrefixedHexString(chunk.getHash())).append("], ");
+            builder.append(chunk.getName()).append('[').append(chunk.getHashAsHexString()).append("], ");
             modelDesc.writeInfo(builder);
             builder.append(Constants.NEWLINE);
         }
@@ -609,7 +618,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             return;
 
         StringBuilder builder = new StringBuilder();
-        builder.append(sceneMgr.getName()).append('[').append(Utils.to0PrefixedHexString(sceneMgr.getHash())).append("], ");
+        builder.append(sceneMgr.getName()).append('[').append(sceneMgr.getHashAsHexString()).append("], ");
         sceneMgr.writeMultiLineInfo(builder, " ");
         saveExport(file, builder);
     }
@@ -625,7 +634,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 continue;
 
             kcCResourceNamedHash namedHash = (kcCResourceNamedHash) chunk;
-            builder.append(chunk.getName()).append('[').append(Utils.to0PrefixedHexString(chunk.getHash())).append("]:").append(Constants.NEWLINE);
+            builder.append(chunk.getName()).append('[').append(chunk.getHashAsHexString()).append("]:").append(Constants.NEWLINE);
             namedHash.writeMultiLineInfo(builder, " ");
             builder.append(Constants.NEWLINE);
         }
@@ -645,7 +654,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             builder.append("Name: ").append(getFilePath()).append(Constants.NEWLINE);
 
         builder.append("File ID: #").append(getArchiveIndex()).append(Constants.NEWLINE);
-        builder.append("Name Hash: ").append(Utils.to0PrefixedHexString(getNameHash())).append(Constants.NEWLINE);
+        builder.append("Name Hash: ").append(getHashAsHexString()).append(Constants.NEWLINE);
         builder.append("Has Compression: ").append(isCompressed()).append(Constants.NEWLINE);
 
         if (this.chunks.size() > 0) {
@@ -665,12 +674,12 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             builder.append(Constants.NEWLINE);
             for (kcCResource chunk : this.chunks) {
                 builder.append(" - [");
-                builder.append(Utils.to0PrefixedHexString(chunk.getHash()));
+                builder.append(chunk.getHashAsHexString());
 
-                int nameHash = chunk.getNameHash();
+                int nameHash = GreatQuestUtils.hash(chunk.getName());
                 if (nameHash != chunk.getHash()) {
                     builder.append("|");
-                    builder.append(Utils.to0PrefixedHexString(chunk.getNameHash()));
+                    builder.append(Utils.to0PrefixedHexString(nameHash));
                 }
 
                 if (chunk instanceof kcCResourceGeneric) {
@@ -755,6 +764,18 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     }
 
     /**
+     * Write the asset name to the builder to a single line.
+     * @param file The chunked file to search for assets from.
+     * @param builder The builder to write to.
+     * @param padding The line padding data.
+     * @param prefix The prefix to write.
+     * @param hashObj The hash to lookup.
+     */
+    public static StringBuilder writeAssetLine(GreatQuestChunkedFile file, StringBuilder builder, String padding, String prefix, GreatQuestHash<?> hashObj) {
+        return writeAssetInfo(file, builder, padding, prefix, hashObj != null ? hashObj.getHashNumber() : 0, kcCResource::getName).append(Constants.NEWLINE);
+    }
+
+    /**
      * Write asset information to the builder. The information written is specified via the function.
      * If the asset isn't found, the hash is written instead.
      * @param file         The chunked file to search for assets from.
@@ -788,6 +809,16 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
      */
     public static Label writeAssetLine(GUIEditorGrid grid, GreatQuestChunkedFile file, String label, int resourceHash) {
         return writeAssetInfo(grid, file, label, resourceHash, kcCResource::getName);
+    }
+
+    /**
+     * Write the asset name to the UI.
+     * @param file The chunked file to search for assets from.
+     * @param label The label to write.
+     * @param hashObj The hash to lookup.
+     */
+    public static Label writeAssetLine(GUIEditorGrid grid, GreatQuestChunkedFile file, String label, GreatQuestHash<?> hashObj) {
+        return writeAssetInfo(grid, file, label, hashObj != null ? hashObj.getHashNumber() : 0, kcCResource::getName);
     }
 
     /**

@@ -1,9 +1,10 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
+import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
@@ -14,8 +15,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 public class CHoneyPotDesc extends CItemDesc {
     private static final int PADDING_VALUES = 8;
 
-    public CHoneyPotDesc(GreatQuestInstance instance) {
-        super(instance);
+    public CHoneyPotDesc(@NonNull kcCResourceGeneric resource) {
+        super(resource);
     }
 
     @Override

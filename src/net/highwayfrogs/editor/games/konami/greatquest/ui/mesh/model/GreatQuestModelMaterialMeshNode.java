@@ -14,6 +14,13 @@ import java.util.List;
  */
 public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcModelPrim> {
     private static final double PS2_SCALE = .01D;
+    // TODO: Get access to the skeleton.
+    // TODO: Get access to the animation.
+    // TODO: Animation info? Probably in the GreatQuestModelMaterialMesh.
+
+    // TODO: Automatically generate the named hash section data? (How? -> Is there a scenario where an unresolved hash is there?)
+    // TODO: Add section to doc that we need a todo list relating to fixing all file saving logic, and automatically generating certain data sections when possible.
+    // TODO: Should come along with a TODO list for VC plans and UI.
 
     public GreatQuestModelMaterialMeshNode(GreatQuestModelMaterialMesh mesh) {
         super(mesh);
@@ -41,6 +48,9 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
     @Override
     protected DynamicMeshTypedDataEntry writeValuesToArrayAndCreateEntry(kcModelPrim modelPrim) {
         DynamicMeshTypedDataEntry entry = new DynamicMeshTypedDataEntry(getMesh(), modelPrim);
+
+        // TODO: Get Bone ID. If it is zero, add a single transform, g_ModelTransformArray[nodeId]
+        // TODO: Otherwise, add a double transform, g_ModelTransformArray[nodeId] & g_ModelTransformArray[boneId]
 
         // Write vertices and uvs.
         double scaleMultiplier = getVertexScalingMultiplier();

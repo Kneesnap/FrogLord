@@ -77,7 +77,7 @@ public class GreatQuestMapEditorEntityDisplay {
      */
     public kcEntity3DDesc getEntity3DDescription() {
         kcEntityInst entityInstance = this.entityInstance != null ? this.entityInstance.getEntity() : null;
-        return entityInstance != null ? entityInstance.getDescription(this.entityManager.getMap()) : null;
+        return entityInstance != null ? entityInstance.getDescription() : null;
     }
 
     /**
@@ -88,7 +88,7 @@ public class GreatQuestMapEditorEntityDisplay {
         if (!(entity3DDesc instanceof kcActorBaseDesc))
             return null;
 
-        return ((kcActorBaseDesc) entity3DDesc).getCollisionProxyDescription(this.entityManager.getMap());
+        return ((kcActorBaseDesc) entity3DDesc).getCollisionProxyDescription();
     }
 
     /**
@@ -156,7 +156,7 @@ public class GreatQuestMapEditorEntityDisplay {
             cylinder.setMouseTransparent(true);
             result = cylinder;
         } else if (proxyDesc instanceof kcProxyTriMeshDesc) {
-            kcCResourceTriMesh triMesh = ((kcProxyTriMeshDesc) proxyDesc).getTriMesh(this.entityManager.getMap());
+            kcCResourceTriMesh triMesh = ((kcProxyTriMeshDesc) proxyDesc).getMeshRef().getResource();
             if (triMesh != null) {
                 GreatQuestMapCollisionMesh collisionMesh = new GreatQuestMapCollisionMesh(null, triMesh);
                 MeshView view = new MeshView();
@@ -283,12 +283,12 @@ public class GreatQuestMapEditorEntityDisplay {
 
         // Calculate rotation.
         kcEntity3DInst entity3D = (kcEntity3DInst) this.entityInstance.getEntity();
-        kcEntity3DDesc entityDesc = entity3D.getDescription(this.entityManager.getMap());
+        kcEntity3DDesc entityDesc = entity3D.getDescription();
         // TODO: Some objects if PI / 2 is subtracted from their X start looking correct. However, this breaks others. Need to figure out what's going on here.
         //  - It seems animated objects are usually what need this.
         //  - I bet the animations fix the rotations.
-        boolean hasAnimationSet = (entityDesc instanceof kcActorBaseDesc) && ((kcActorBaseDesc) entityDesc).getAnimationSet(this.entityManager.getMap()) != null;
-        boolean hasAnimation = (entityDesc instanceof kcActorBaseDesc) && ((kcActorBaseDesc) entityDesc).getAnimationHash() != 0 && ((kcActorBaseDesc) entityDesc).getAnimationHash() != -1;
+        boolean hasAnimationSet = (entityDesc instanceof kcActorBaseDesc) && ((kcActorBaseDesc) entityDesc).getAnimSetRef().getResource() != null;
+        boolean hasAnimation = (entityDesc instanceof kcActorBaseDesc) && ((kcActorBaseDesc) entityDesc).getAnimationRef().getHashNumber() != 0 && ((kcActorBaseDesc) entityDesc).getAnimationRef().getHashNumber() != -1;
         double xRotationOffset = Math.PI / 2;
         double xRotation = entity3D.getRotation().getX();
         double yRotation = entity3D.getRotation().getY();
