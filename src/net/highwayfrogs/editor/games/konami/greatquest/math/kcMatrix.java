@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.math;
 
+import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -7,10 +8,13 @@ import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.system.math.Vector3f;
 
+import java.util.Arrays;
+
 /**
  * Represents a 4x4 matrix.
  * Created by Kneesnap on 4/19/2024.
  */
+@Getter
 public class kcMatrix extends GameData<GreatQuestInstance> {
     private final float[][] matrix = new float[MATRIX_HEIGHT][MATRIX_WIDTH];
 
@@ -34,6 +38,11 @@ public class kcMatrix extends GameData<GreatQuestInstance> {
         for (int y = 0; y < MATRIX_HEIGHT; y++)
             for (int x = 0; x < MATRIX_WIDTH; x++)
                 writer.writeFloat(this.matrix[y][x]);
+    }
+
+    @Override
+    public String toString() {
+        return "kcMatrix[" + Arrays.toString(this.matrix[0]) + "," + Arrays.toString(this.matrix[1]) + "," + Arrays.toString(this.matrix[2]) + "," + Arrays.toString(this.matrix[3]) + "]";
     }
 
     /**

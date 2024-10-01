@@ -373,14 +373,14 @@ public class DataWriter {
         int pathEndIndex = (getIndex() + fixedLength);
         if (stringToWrite != null) {
             byte[] stringBytes = stringToWrite.getBytes(charset);
-            if (stringBytes.length >= fixedLength)
+            if (stringBytes.length > fixedLength)
                 throw new RuntimeException("The string '" + stringToWrite + "' is too large to be written. (Allowed: " + fixedLength + " bytes, Actual Size: " + stringBytes.length + " bytes)");
 
             writeBytes(stringBytes);
         }
 
         writeByte(Constants.NULL_BYTE); // Terminator Byte
-        if (pathEndIndex != getIndex() - 1) // If the string reaches the end, it should be considered cut off because it was too long.
+        if (pathEndIndex != getIndex()) // If the string reaches the end, it should be considered cut off because it was too long.
             writeTo(pathEndIndex, padding);
     }
 }
