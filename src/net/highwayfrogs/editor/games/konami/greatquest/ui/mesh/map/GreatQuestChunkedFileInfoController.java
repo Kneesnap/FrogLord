@@ -4,8 +4,8 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestFileEditorUIController;
 
 /**

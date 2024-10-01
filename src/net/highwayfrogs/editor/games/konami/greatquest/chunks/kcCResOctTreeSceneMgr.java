@@ -1,19 +1,19 @@
-package net.highwayfrogs.editor.games.konami.greatquest.toc;
+package net.highwayfrogs.editor.games.konami.greatquest.chunks;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GamePlatform;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTriMesh.kcCTriMesh;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcOctTree;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcBox4;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.games.konami.greatquest.model.*;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceTriMesh.kcCTriMesh;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;

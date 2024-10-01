@@ -8,13 +8,13 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceAnimSet;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceNamedHash;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceAnimSet;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceNamedHash;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceSkeleton;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**

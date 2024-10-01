@@ -5,8 +5,8 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.ImageView;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestImageFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestImageFile;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;

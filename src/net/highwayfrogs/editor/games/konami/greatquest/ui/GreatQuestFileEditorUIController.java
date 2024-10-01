@@ -7,8 +7,8 @@ import javafx.scene.layout.Priority;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.GameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestConfig;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestGameFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestGameFile;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent;
 

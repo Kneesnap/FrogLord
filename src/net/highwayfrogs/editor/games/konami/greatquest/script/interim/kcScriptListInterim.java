@@ -5,8 +5,8 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.utils.Utils;
 

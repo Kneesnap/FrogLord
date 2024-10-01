@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.games.konami.greatquest;
+package net.highwayfrogs.editor.games.konami.greatquest.file;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
@@ -8,6 +8,9 @@ import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHashReverser;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;

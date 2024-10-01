@@ -1,12 +1,12 @@
 package net.highwayfrogs.editor.games.konami.greatquest.loading;
 
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestArchiveFile;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetBinFile;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestImageFile;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkTextureReference;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestImageFile;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.GreatQuestChunkTextureReference;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.*;

@@ -6,9 +6,13 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData;
-import net.highwayfrogs.editor.games.konami.greatquest.*;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.function.Function;

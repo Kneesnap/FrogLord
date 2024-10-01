@@ -6,6 +6,8 @@ import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SoundChunkFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestGameFile;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestMainMenuUIController;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.Config;

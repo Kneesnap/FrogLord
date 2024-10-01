@@ -1,12 +1,12 @@
-package net.highwayfrogs.editor.games.konami.greatquest.toc;
+package net.highwayfrogs.editor.games.konami.greatquest.chunks;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestArchiveFile;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetBinFile;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;

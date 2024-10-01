@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.games.konami.greatquest;
+package net.highwayfrogs.editor.games.konami.greatquest.file;
 
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
@@ -7,7 +7,13 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.IFileExport;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceNamedHash.HashTableEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
@@ -20,8 +26,6 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.*;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceNamedHash.HashTableEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.GreatQuestChunkedFileInfoController;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.GreatQuestMapMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.GreatQuestMapMeshController;

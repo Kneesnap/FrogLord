@@ -47,9 +47,9 @@ public enum kcClassID {
     PROP("CProp", 0x00347480, 0x800A),
     UNIQUE_ITEM("CUniqueItem", 0xE6333605);
 
-    @Getter private final String name;
-    @Getter private final int classId; // This is a hash of the class name.
-    @Getter private final int alternateClassId;
+    private final String name;
+    private final int classId; // This is a hash of the class name.
+    private final int alternateClassId;
     private static final Map<Integer, kcClassID> CLASS_ID_MAP = new HashMap<>();
 
     kcClassID(String name, int classId) {

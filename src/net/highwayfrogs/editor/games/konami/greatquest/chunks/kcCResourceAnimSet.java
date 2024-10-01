@@ -1,10 +1,10 @@
-package net.highwayfrogs.editor.games.konami.greatquest.toc;
+package net.highwayfrogs.editor.games.konami.greatquest.chunks;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcAnimSetDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 
 /**
  * Represents either kcCAnimSet or kcAnimSetDesc. One of those.

@@ -6,9 +6,9 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTriMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceTriMesh;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.Arrays;

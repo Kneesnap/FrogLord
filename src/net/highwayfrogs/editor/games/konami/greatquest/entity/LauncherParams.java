@@ -4,12 +4,12 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceModel;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceModel;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.function.Function;

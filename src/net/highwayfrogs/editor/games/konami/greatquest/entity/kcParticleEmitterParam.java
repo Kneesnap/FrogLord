@@ -9,10 +9,10 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkTextureReference;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcBlend;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.GreatQuestChunkTextureReference;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**

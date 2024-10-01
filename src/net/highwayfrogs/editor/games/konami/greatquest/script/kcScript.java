@@ -4,15 +4,15 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.GameObject;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCause;
 import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCauseType;
 import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffect;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcScriptListInterim;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcScriptTOC;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceEntityInst;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;

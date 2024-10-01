@@ -1,12 +1,12 @@
-package net.highwayfrogs.editor.games.konami.greatquest.toc;
+package net.highwayfrogs.editor.games.konami.greatquest.chunks;
 
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 
 /**
  * Recreation of the 'kcCResourceEntityInst' class from the PS2 version.

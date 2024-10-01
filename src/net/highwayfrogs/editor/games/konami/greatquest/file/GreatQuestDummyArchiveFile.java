@@ -1,9 +1,10 @@
-package net.highwayfrogs.editor.games.konami.greatquest;
+package net.highwayfrogs.editor.games.konami.greatquest.file;
 
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.utils.Utils;

@@ -8,7 +8,7 @@ import javafx.scene.shape.CullFace;
 import javafx.scene.shape.Mesh;
 import javafx.scene.shape.MeshView;
 import lombok.Getter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestMapCollisionManager;

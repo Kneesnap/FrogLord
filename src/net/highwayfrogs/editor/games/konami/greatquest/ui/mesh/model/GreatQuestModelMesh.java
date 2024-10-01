@@ -1,10 +1,10 @@
 package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceModel;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceModel;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshCollection;

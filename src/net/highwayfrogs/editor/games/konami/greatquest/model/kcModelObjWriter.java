@@ -3,8 +3,8 @@ package net.highwayfrogs.editor.games.konami.greatquest.model;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResOctTreeSceneMgr;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResOctTreeSceneMgr.kcVtxBufFileStruct;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResOctTreeSceneMgr;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResOctTreeSceneMgr.kcVtxBufFileStruct;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;

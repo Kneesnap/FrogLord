@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcArgument;
 
 import java.util.function.BiFunction;

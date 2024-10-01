@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.games.konami.greatquest;
+package net.highwayfrogs.editor.games.konami.greatquest.file;
 
 import javafx.scene.image.Image;
 import lombok.AllArgsConstructor;
@@ -7,6 +7,8 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.IFileExport;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestImageController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;

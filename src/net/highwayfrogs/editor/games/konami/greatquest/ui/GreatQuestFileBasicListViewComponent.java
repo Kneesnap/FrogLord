@@ -1,8 +1,8 @@
 package net.highwayfrogs.editor.games.konami.greatquest.ui;
 
 import javafx.scene.Scene;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestGameFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestGameFile;
 import net.highwayfrogs.editor.gui.components.ListViewComponent;
 
 import java.util.List;

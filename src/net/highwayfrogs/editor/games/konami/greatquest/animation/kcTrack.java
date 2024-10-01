@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcTrackKey;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceTrack;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTrack;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;

@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.games.konami.greatquest.loading;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetBinFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
 
 /**
  * Contains all data shared between files for loading.

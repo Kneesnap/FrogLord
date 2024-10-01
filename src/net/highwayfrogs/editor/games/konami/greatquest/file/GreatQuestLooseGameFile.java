@@ -1,6 +1,7 @@
-package net.highwayfrogs.editor.games.konami.greatquest;
+package net.highwayfrogs.editor.games.konami.greatquest.file;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;

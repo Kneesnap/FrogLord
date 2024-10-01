@@ -7,9 +7,11 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedResource;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcBaseDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
 import net.highwayfrogs.editor.utils.IGameObject;
 import net.highwayfrogs.editor.utils.Utils;
 

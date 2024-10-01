@@ -3,10 +3,10 @@ package net.highwayfrogs.editor.games.konami.greatquest.script;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.KCResourceID;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.KCResourceID;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
 
 import java.util.ArrayList;
 import java.util.List;

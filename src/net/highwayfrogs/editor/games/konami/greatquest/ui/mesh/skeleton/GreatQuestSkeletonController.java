@@ -6,7 +6,7 @@ import javafx.scene.shape.CullFace;
 import javafx.scene.shape.MeshView;
 import lombok.Getter;
 import lombok.NonNull;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceSkeleton;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;

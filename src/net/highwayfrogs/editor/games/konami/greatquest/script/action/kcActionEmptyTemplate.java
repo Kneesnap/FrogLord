@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcArgument;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcParam;
 

@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcArgument;

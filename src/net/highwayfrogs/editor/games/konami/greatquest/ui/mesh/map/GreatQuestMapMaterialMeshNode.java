@@ -1,10 +1,10 @@
 package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map;
 
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResOctTreeSceneMgr;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResOctTreeSceneMgr.kcVtxBufFileStruct;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcVertex;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResOctTreeSceneMgr;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResOctTreeSceneMgr.kcVtxBufFileStruct;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
 
 import java.util.List;
