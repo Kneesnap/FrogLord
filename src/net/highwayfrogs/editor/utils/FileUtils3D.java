@@ -410,7 +410,7 @@ public class FileUtils3D {
                         MOFPart part = staticMof.getParts().get(i);
                         TransformObject transform = animatedMof.getTransform(part, action, frame);
                         PSXMatrix matrix = transform.createMatrix();
-                        keyframes.add(new MMSkeletalAnimationFrame(i, MMAnimationKeyframeType.ROTATION, (float) -matrix.getRollAngle(), (float) -matrix.getPitchAngle(), (float) matrix.getYawAngle()));
+                        keyframes.add(new MMSkeletalAnimationFrame(i, MMAnimationKeyframeType.ROTATION, (float) -matrix.getPitchAngle(), (float) -matrix.getYawAngle(), (float) matrix.getRollAngle()));
                         keyframes.add(new MMSkeletalAnimationFrame(i, MMAnimationKeyframeType.TRANSLATION, -Utils.fixedPointIntToFloat4Bit(matrix.getTransform()[0]), -Utils.fixedPointIntToFloat4Bit(matrix.getTransform()[1]), Utils.fixedPointIntToFloat4Bit(matrix.getTransform()[2])));
                     }
 

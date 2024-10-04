@@ -450,20 +450,20 @@ public class MediEvilMapCollprim extends SCGameData<MediEvilGameInstance> {
             Rotate rotate = (Rotate) transform;
             if (rotate.getAxis() == Rotate.X_AXIS) {
                 foundRotations++;
-                rotate.setAngle(Math.toDegrees(this.matrix.getRollAngle()));
+                rotate.setAngle(Math.toDegrees(this.matrix.getPitchAngle()));
             } else if (rotate.getAxis() == Rotate.Y_AXIS) {
                 foundRotations++;
-                rotate.setAngle(Math.toDegrees(-this.matrix.getPitchAngle()));
+                rotate.setAngle(Math.toDegrees(-this.matrix.getYawAngle()));
             } else if (rotate.getAxis() == Rotate.Z_AXIS) {
                 foundRotations++;
-                rotate.setAngle(Math.toDegrees(this.matrix.getYawAngle()));
+                rotate.setAngle(Math.toDegrees(this.matrix.getRollAngle()));
             }
         }
 
         if (foundRotations == 0) { // There are no rotations, so add rotations.
-            box.getTransforms().add(new Rotate(Math.toDegrees(this.matrix.getYawAngle()), Rotate.Z_AXIS));
-            box.getTransforms().add(new Rotate(Math.toDegrees(-this.matrix.getPitchAngle()), Rotate.Y_AXIS));
-            box.getTransforms().add(new Rotate(Math.toDegrees(this.matrix.getRollAngle()), Rotate.X_AXIS));
+            box.getTransforms().add(new Rotate(Math.toDegrees(this.matrix.getRollAngle()), Rotate.Z_AXIS));
+            box.getTransforms().add(new Rotate(Math.toDegrees(-this.matrix.getYawAngle()), Rotate.Y_AXIS));
+            box.getTransforms().add(new Rotate(Math.toDegrees(this.matrix.getPitchAngle()), Rotate.X_AXIS));
         }
     }
 

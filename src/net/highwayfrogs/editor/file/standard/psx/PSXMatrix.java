@@ -82,13 +82,6 @@ public class PSXMatrix extends GameObject {
     }
 
     /**
-     * Returns the transpose of this matrix.
-     */
-    public PSXMatrix transpose() {
-        return this.transpose(new PSXMatrix());
-    }
-
-    /**
      * Copy matrix data from another matrix.
      * @param otherMatrix the matrix to copy data from
      */
@@ -104,68 +97,33 @@ public class PSXMatrix extends GameObject {
     }
 
     /**
-     * Calculates the transpose of this matrix, storing it in the result parameter.
-     * @param result The matrix to store the transpose result in.
-     */
-    public PSXMatrix transpose(PSXMatrix result) {
-        for (int y = 0; y < this.matrix.length; y++)
-            for (int x = 0; x < this.matrix[y].length; x++)
-                result.matrix[x][y] = this.matrix[y][x];
-
-        return result;
-    }
-
-    /**
-     * Gets the yaw from this matrix.
-     * @return yaw
-     */
-    public double getYawAngle() {
-        double r31 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][0]);
-
-        if (r31 >= .95 || r31 <= -.95) { // Gymbal lock at pitch = -90 or 90
-            return 0F;
-        } else {
-            double r11 = Utils.fixedPointShortToFloat12Bit(getMatrix()[0][0]);
-            double r21 = Utils.fixedPointShortToFloat12Bit(getMatrix()[1][0]);
-            return Math.atan2(r21, r11);
-        }
-    }
-
-    /**
-     * Gets the pitch from this matrix.
-     * @return pitch
+     * Gets the x-axis angle (pitch) from this matrix.
+     * The rules for approaching 1 are from here: <a href="https://www.gregslabaugh.net/publications/euler.pdf"/>
+     * @return pitchInRadians
      */
     public double getPitchAngle() {
-        float r31 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][0]);
-
-        if (r31 >= .95) {
-            return -Math.PI / 2;
-        } else if (r31 <= -.95) {
-            return Math.PI / 2;
-        } else {
-            return Math.asin(-r31);
-        }
+        double r32 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][1]);
+        double r33 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][2]);
+        return Math.atan2(r32, r33);
     }
 
     /**
-     * Gets the roll from this matrix.
-     * The rules for approaching 1 are from here. https://www.gregslabaugh.net/publications/euler.pdf
-     * @return roll
+     * Gets the y-axis angle (yaw) from this matrix.
+     * @return yawInRadians
+     */
+    public double getYawAngle() {
+        float r31 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][0]);
+        return Math.asin(-r31);
+    }
+
+    /**
+     * Gets the z-axis angle (roll) from this matrix.
+     * @return rollInRadians
      */
     public double getRollAngle() {
-        double r31 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][0]);
-
-        double r12 = Utils.fixedPointShortToFloat12Bit(getMatrix()[0][1]);
-        double r13 = Utils.fixedPointShortToFloat12Bit(getMatrix()[0][2]);
-        if (r31 >= .95) { // Gymbal lock at pitch = -90
-            return Math.atan2(-r12, -r13);
-        } else if (r31 <= -.95) { // Lock at pitch = 90
-            return Math.atan2(r12, r13);
-        } else {
-            double r32 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][1]);
-            double r33 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][2]);
-            return Math.atan2(r32, r33);
-        }
+        double r11 = Utils.fixedPointShortToFloat12Bit(getMatrix()[0][0]);
+        double r21 = Utils.fixedPointShortToFloat12Bit(getMatrix()[1][0]);
+        return Math.atan2(r21, r11);
     }
 
     /**
@@ -175,13 +133,16 @@ public class PSXMatrix extends GameObject {
      * @param pitch The new yaw.
      * @param roll  The new roll.
      */
-    public void updateMatrix(double yaw, double pitch, double roll) {
-        double sx = Math.sin(roll);
-        double cx = Math.cos(roll);
-        double sy = Math.sin(pitch);
-        double cy = Math.cos(pitch);
-        double sz = Math.sin(yaw);
-        double cz = Math.cos(yaw);
+    public void updateMatrix(double pitch, double yaw, double roll) {
+        double sx = Math.sin(pitch);
+        double cx = Math.cos(pitch);
+        double sy = Math.sin(yaw);
+        double cy = Math.cos(yaw);
+        double sz = Math.sin(roll);
+        double cz = Math.cos(roll);
+
+        if (sy >= 1 || sy <= -1)
+            return; // Avoid gymbal lock. (Or at least I think that's what we call the reset to pitch/roll by this, and the weird behavior which can happen when Y is in this range.)
 
         // Update rotation matrix.
         this.matrix[0][0] = Utils.floatToFixedPointShort12Bit((float) (cy * cz)); // r11
@@ -311,7 +272,7 @@ public class PSXMatrix extends GameObject {
 
     @Override
     public String toString() {
-        return "PsxMatrix Pos[" + getTransform()[0] + ", " + getTransform()[1] + ", " + getTransform()[2] + "] Yaw: " + getYawAngle() + ", Pitch: " + getPitchAngle() + ", Roll: " + getRollAngle();
+        return "PsxMatrix Pos[" + getTransform()[0] + ", " + getTransform()[1] + ", " + getTransform()[2] + "] Pitch: " + getPitchAngle() + ", Yaw: " + getYawAngle() + ", Roll: " + getRollAngle();
     }
 
     /**

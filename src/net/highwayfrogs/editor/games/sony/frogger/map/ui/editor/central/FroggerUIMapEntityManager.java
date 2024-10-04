@@ -254,9 +254,9 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
 
         float[] positionData = entity.getPositionAndRotation(this.posCache);
 
-        float roll = positionData != null ? positionData[3] : 0;
-        float pitch = positionData != null ? positionData[4] : 0;
-        float yaw = positionData != null ? positionData[5] : 0;
+        float pitch = positionData != null ? positionData[3] : 0;
+        float yaw = positionData != null ? positionData[4] : 0;
+        float roll = positionData != null ? positionData[5] : 0;
 
         int foundRotations = 0;
         for (Transform transform : entityMeshView.getTransforms()) { // Update existing rotations.
@@ -266,20 +266,20 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
             foundRotations++;
             Rotate rotate = (Rotate) transform;
             if (rotate.getAxis() == Rotate.X_AXIS) {
-                rotate.setAngle(Math.toDegrees(roll));
-            } else if (rotate.getAxis() == Rotate.Y_AXIS) {
                 rotate.setAngle(Math.toDegrees(pitch));
-            } else if (rotate.getAxis() == Rotate.Z_AXIS) {
+            } else if (rotate.getAxis() == Rotate.Y_AXIS) {
                 rotate.setAngle(Math.toDegrees(yaw));
+            } else if (rotate.getAxis() == Rotate.Z_AXIS) {
+                rotate.setAngle(Math.toDegrees(roll));
             } else {
                 foundRotations--;
             }
         }
 
         if (foundRotations == 0) { // There are no rotations, so add rotations.
-            entityMeshView.getTransforms().add(new Rotate(Math.toDegrees(yaw), Rotate.Z_AXIS));
-            entityMeshView.getTransforms().add(new Rotate(Math.toDegrees(pitch), Rotate.Y_AXIS));
-            entityMeshView.getTransforms().add(new Rotate(Math.toDegrees(roll), Rotate.X_AXIS));
+            entityMeshView.getTransforms().add(new Rotate(Math.toDegrees(roll), Rotate.Z_AXIS));
+            entityMeshView.getTransforms().add(new Rotate(Math.toDegrees(yaw), Rotate.Y_AXIS));
+            entityMeshView.getTransforms().add(new Rotate(Math.toDegrees(pitch), Rotate.X_AXIS));
         }
 
         entityMeshView.setTranslateX(positionData != null ? positionData[0] : 0);

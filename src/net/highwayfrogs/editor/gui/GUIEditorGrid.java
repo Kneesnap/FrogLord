@@ -1854,26 +1854,35 @@ public class GUIEditorGrid {
     public void addRotationMatrix(PSXMatrix matrix, Runnable onUpdate) {
         addNormalLabel("Rotation:");
 
-        Slider yawUI = addDoubleSlider("Yaw", matrix.getYawAngle(), yaw -> {
-            matrix.updateMatrix(yaw, matrix.getPitchAngle(), matrix.getRollAngle());
-            if (onUpdate != null)
-                onUpdate.run();
+        Runnable[] updateHook = new Runnable[1];
+        Slider pitchUI = addDoubleSlider("Pitch (X)", matrix.getPitchAngle(), pitch -> {
+            matrix.updateMatrix(pitch, matrix.getYawAngle(), matrix.getRollAngle());
+            if (updateHook[0] != null)
+                updateHook[0].run();
         }, -Math.PI, Math.PI);
 
-        Slider pitchUI = addDoubleSlider("Pitch", matrix.getPitchAngle(), pitch -> {
-            if (Math.abs(pitch) >= Math.PI / 2)
-                return; // LOCK! ABORT!
-
-            matrix.updateMatrix(matrix.getYawAngle(), pitch, matrix.getRollAngle());
-            if (onUpdate != null)
-                onUpdate.run();
+        Slider yawUI = addDoubleSlider("Yaw (Y)", matrix.getYawAngle(), yaw -> {
+            matrix.updateMatrix(matrix.getPitchAngle(), yaw, matrix.getRollAngle());
+            if (updateHook[0] != null)
+                updateHook[0].run();
         }, -Math.PI / 2, Math.PI / 2); // Cuts off at 90 degrees to prevent gymbal lock.
 
-        Slider rollUI = addDoubleSlider("Roll", matrix.getRollAngle(), roll -> {
-            matrix.updateMatrix(matrix.getYawAngle(), matrix.getPitchAngle(), roll);
+        Slider rollUI = addDoubleSlider("Roll (Z)", matrix.getRollAngle(), roll -> {
+            matrix.updateMatrix(matrix.getPitchAngle(), matrix.getYawAngle(), roll);
+            if (updateHook[0] != null)
+                updateHook[0].run();
+        }, -Math.PI, Math.PI);
+
+        updateHook[0] = () -> {
             if (onUpdate != null)
                 onUpdate.run();
-        }, -Math.PI, Math.PI);
+
+            // Setting yaw to near -90/+90 can reset the other angles. It's confusing, but having the sliders update makes it seem better.
+            // We try to avoid letting this reset occur, so ideally this won't matter.
+            pitchUI.setValue(matrix.getPitchAngle());
+            yawUI.setValue(matrix.getYawAngle());
+            rollUI.setValue(matrix.getRollAngle());
+        };
 
         yawUI.setLabelFormatter(SLIDER_DEGREE_CONVERTER);
         pitchUI.setLabelFormatter(SLIDER_DEGREE_CONVERTER);

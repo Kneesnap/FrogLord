@@ -49,9 +49,9 @@ public class MatrixEntityData<TDifficultyData extends OldFroggerDifficultyData> 
         position[0] = Utils.fixedPointIntToFloat4Bit(pos[0]);
         position[1] = Utils.fixedPointIntToFloat4Bit(pos[1]);
         position[2] = Utils.fixedPointIntToFloat4Bit(pos[2]);
-        position[3] = (float) this.matrix.getRollAngle();
-        position[4] = (float) this.matrix.getPitchAngle();
-        position[5] = (float) this.matrix.getYawAngle();
+        position[3] = (float) this.matrix.getPitchAngle();
+        position[4] = (float) this.matrix.getYawAngle();
+        position[5] = (float) this.matrix.getRollAngle();
         return position;
     }
 }

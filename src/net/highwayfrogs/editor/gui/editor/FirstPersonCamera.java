@@ -331,7 +331,7 @@ public class FirstPersonCamera extends Parent {
      */
     public void setCameraLookAt(Point3D target) {
         // Calculate the camera's reference frame in terms of look, right and up vectors
-        Point3D deltaPos = target.subtract(getPos());
+        Point3D deltaPos = target.subtract(getPos()); // (eye - target) = right-handed matrix... Don't we need to convert this to a left-handed matrix?
         Point3D zVec = deltaPos.normalize();
         Point3D xVec = new Point3D(0, 1, 0).normalize().crossProduct(zVec).normalize();
         Point3D yVec = zVec.crossProduct(xVec).normalize();
