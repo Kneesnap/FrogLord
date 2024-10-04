@@ -14,11 +14,11 @@ import java.util.List;
  */
 @Getter
 public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
-    private List<T> blocks = new ArrayList<>();
+    private final List<T> blocks = new ArrayList<>();
     private int invalidBodies;
 
-    private transient OffsetType offsetType;
-    private transient MisfitModel3DObject parent;
+    private transient final OffsetType offsetType;
+    private transient final MisfitModel3DObject parent;
 
     private static final short FLAGS = 0x00;
 

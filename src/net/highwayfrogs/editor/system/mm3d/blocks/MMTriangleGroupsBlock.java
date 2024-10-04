@@ -21,7 +21,7 @@ import java.util.List;
 public class MMTriangleGroupsBlock extends MMDataBlockBody {
     private short flags;
     private String name = "";
-    private List<Integer> triangleIndices = new ArrayList<>();
+    private final List<Integer> triangleIndices = new ArrayList<>();
     private short smoothness = 0xFF;
     private int material = -1; // Index into material list.
 

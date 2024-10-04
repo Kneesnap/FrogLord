@@ -493,31 +493,31 @@ public class FileUtils3D {
 
                 if (poly.getNormals().length == 1) {
                     SVector normal = partcel.getNormals().get(poly.getNormals()[0]);
-                    normal1.setV1Normals(vecToFloat(normal));
-                    normal1.setV2Normals(vecToFloat(normal));
-                    normal1.setV3Normals(vecToFloat(normal));
+                    vecToFloat(normal, normal1.getV1Normals());
+                    vecToFloat(normal, normal1.getV2Normals());
+                    vecToFloat(normal, normal1.getV3Normals());
 
                     if (poly.isQuadFace()) {
                         MMTriangleNormalsBlock normal2 = model.getNormals().addNewElement();
                         normal2.setIndex(faceIndex + 1);
-                        normal2.setV1Normals(vecToFloat(normal));
-                        normal2.setV2Normals(vecToFloat(normal));
-                        normal2.setV3Normals(vecToFloat(normal));
+                        vecToFloat(normal, normal2.getV1Normals());
+                        vecToFloat(normal, normal2.getV2Normals());
+                        vecToFloat(normal, normal2.getV3Normals());
                     }
                 } else if (poly.getNormals().length == 3) {
-                    normal1.setV1Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[0])));
-                    normal1.setV2Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[1])));
-                    normal1.setV3Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[2])));
+                    vecToFloat(partcel.getNormals().get(poly.getNormals()[0]), normal1.getV1Normals());
+                    vecToFloat(partcel.getNormals().get(poly.getNormals()[1]), normal1.getV2Normals());
+                    vecToFloat(partcel.getNormals().get(poly.getNormals()[2]), normal1.getV3Normals());
                 } else if (poly.getNormals().length == 4) {
-                    normal1.setV1Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[1])));
-                    normal1.setV2Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[3])));
-                    normal1.setV3Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[0])));
+                    vecToFloat(partcel.getNormals().get(poly.getNormals()[1]), normal1.getV1Normals());
+                    vecToFloat(partcel.getNormals().get(poly.getNormals()[3]), normal1.getV2Normals());
+                    vecToFloat(partcel.getNormals().get(poly.getNormals()[0]), normal1.getV3Normals());
 
                     MMTriangleNormalsBlock normal2 = model.getNormals().addNewElement();
                     normal2.setIndex(faceIndex + 1);
-                    normal2.setV1Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[2])));
-                    normal2.setV2Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[3])));
-                    normal2.setV3Normals(vecToFloat(partcel.getNormals().get(poly.getNormals()[1])));
+                    vecToFloat(partcel.getNormals().get(poly.getNormals()[2]), normal2.getV1Normals());
+                    vecToFloat(partcel.getNormals().get(poly.getNormals()[3]), normal2.getV2Normals());
+                    vecToFloat(partcel.getNormals().get(poly.getNormals()[1]), normal2.getV3Normals());
                 }
             }
         }
@@ -525,8 +525,10 @@ public class FileUtils3D {
         return model;
     }
 
-    private static float[] vecToFloat(SVector vec) {
-        return new float[]{vec.getExportFloatX(), vec.getExportFloatY(), vec.getExportFloatZ()};
+    private static void vecToFloat(SVector vec, float[] output) {
+        output[0] = vec.getExportFloatX();
+        output[1] = vec.getExportFloatY();
+        output[2] = vec.getExportFloatZ();
     }
 
     @Getter

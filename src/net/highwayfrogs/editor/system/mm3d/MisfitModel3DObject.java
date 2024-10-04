@@ -19,6 +19,7 @@ import java.util.*;
  * Format Version: 1.6
  * Specification: http://www.misfitcode.com/misfitmodel3d/olh_mm3dformat.html
  * New Spec: https://clover.moe/mm3d_manual/olh_mm3dformat.html#overview
+ * Maverick Model 3D uses a right-handed coordinate system.
  * Created by Kneesnap on 2/28/2019.
  */
 @Getter

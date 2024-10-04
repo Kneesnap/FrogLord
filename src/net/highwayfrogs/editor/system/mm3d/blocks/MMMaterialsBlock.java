@@ -18,11 +18,11 @@ import net.highwayfrogs.editor.system.mm3d.OffsetType;
 public class MMMaterialsBlock extends MMDataBlockBody {
     private short flags;
     private int texture; // This can expand past normal texture count, as long as we increase texture count saved.
-    private String name;
-    private float[] ambient = new float[4];
-    private float[] diffuse = new float[4]; // Diffuse color.
-    private float[] specular = new float[4];
-    private float[] emissive = new float[4];
+    private String name = "";
+    private final float[] ambient = new float[4];
+    private final float[] diffuse = new float[4]; // Diffuse color.
+    private final float[] specular = new float[4];
+    private final float[] emissive = new float[4];
     private float shininess;
 
     public static final short FLAG_NO_TEXTURE = 0b1111;

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -24,7 +25,9 @@ public class MMSkeletalAnimationBlock extends MMDataBlockBody {
     private short flags;
     private String name;
     private float fps;
-    private List<List<MMSkeletalAnimationFrame>> frames = new ArrayList<>();
+    private final List<List<MMSkeletalAnimationFrame>> frames = new ArrayList<>();
+
+    public static final int FLAG_LOOPING = Constants.BIT_FLAG_0; // 1.7+
 
     public MMSkeletalAnimationBlock(MisfitModel3DObject parent) {
         super(OffsetType.SKELETAL_ANIMATIONS, parent);

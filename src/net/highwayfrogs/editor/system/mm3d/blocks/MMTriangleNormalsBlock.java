@@ -12,13 +12,12 @@ import net.highwayfrogs.editor.system.mm3d.OffsetType;
  * Holds the normals for each face of the model.
  * Created by Kneesnap on 2/28/2019.
  */
-@Getter
-@Setter
 public class MMTriangleNormalsBlock extends MMDataBlockBody {
-    private int index; // Triangle index (0 based)
-    private float[] v1Normals = new float[3];
-    private float[] v2Normals = new float[3];
-    private float[] v3Normals = new float[3];
+    private int unusedFlags;
+    @Getter @Setter private int index; // Triangle index (0 based)
+    @Getter private final float[] v1Normals = new float[3];
+    @Getter private final float[] v2Normals = new float[3];
+    @Getter private final float[] v3Normals = new float[3];
 
     public MMTriangleNormalsBlock(MisfitModel3DObject parent) {
         super(OffsetType.TRIANGLE_NORMALS, parent);
@@ -26,19 +25,19 @@ public class MMTriangleNormalsBlock extends MMDataBlockBody {
 
     @Override
     public void load(DataReader reader) {
-        reader.skipShort(); // Flags
+        this.unusedFlags = reader.readUnsignedShortAsInt();
         this.index = reader.readInt();
-        readFloatArray(reader, v1Normals);
-        readFloatArray(reader, v2Normals);
-        readFloatArray(reader, v3Normals);
+        readFloatArray(reader, this.v1Normals);
+        readFloatArray(reader, this.v2Normals);
+        readFloatArray(reader, this.v3Normals);
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedShort(0); // Flags
+        writer.writeUnsignedShort(this.unusedFlags);
         writer.writeInt(this.index);
-        writeFloatArray(writer, v1Normals);
-        writeFloatArray(writer, v2Normals);
-        writeFloatArray(writer, v3Normals);
+        writeFloatArray(writer, this.v1Normals);
+        writeFloatArray(writer, this.v2Normals);
+        writeFloatArray(writer, this.v3Normals);
     }
 }

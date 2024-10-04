@@ -17,7 +17,7 @@ import net.highwayfrogs.editor.system.mm3d.OffsetType;
 @Setter
 public class MMTriangleFaceBlock extends MMDataBlockBody {
     private short flags;
-    private int[] vertices = new int[3];
+    private final int[] vertices = new int[3];
 
     public static final short FLAG_HIDDEN = Constants.BIT_FLAG_0; // Set if hidden, clear if visible
     public static final short FLAG_SELECTED = Constants.BIT_FLAG_1; // Set if selected, clear if unselected
