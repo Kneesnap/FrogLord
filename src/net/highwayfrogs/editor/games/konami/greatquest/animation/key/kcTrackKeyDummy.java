@@ -5,14 +5,14 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.kcControlType;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton.kcNode;
 
 /**
  * Represents a dummy/unimplemented kcTrackKey.
  * Created by Kneesnap on 5/2/2024.
  */
 @Getter
-public class kcTrackKeyDummy extends kcTrackKey {
+public class kcTrackKeyDummy extends kcTrackKey<kcTrackKeyDummy> {
     private byte[] rawBytes;
 
     public kcTrackKeyDummy(GreatQuestInstance instance, kcControlType controlType) {
@@ -39,9 +39,13 @@ public class kcTrackKeyDummy extends kcTrackKey {
     }
 
     @Override
+    protected void applyInterpolateValueImpl(kcNode node, kcTrackKeyDummy previousKey, kcAnimState state, float t) {
+        // Do nothing.
+    }
+
+    @Override
     public void writeInfo(StringBuilder builder) {
-        builder.append(Utils.getSimpleName(this)).append("{Type=").append(getControlType())
-                .append(",Timestamp=").append(getTimeStamp())
-                .append(",RawBytes=").append(this.rawBytes != null ? this.rawBytes.length : "None").append("}");
+        super.writeInfo(builder);
+        builder.append(",RawBytes=").append(this.rawBytes != null ? this.rawBytes.length : "None").append("}");
     }
 }

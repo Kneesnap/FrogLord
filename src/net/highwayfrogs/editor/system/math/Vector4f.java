@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.system.math;
 
-import javafx.geometry.Point3D;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -8,56 +7,68 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.utils.IBinarySerializable;
 
 /**
- * Represents a vector with three 32 bit floating point values.
+ * Represents a vector with four 32 bit floating point values.
  * This is a backport from ModToolFramework.
- * Created by Kneesnap on 9/23/2023.
+ * Created by Kneesnap on 10/2/2023.
  */
 @Getter
 @Setter
-public class Vector3f implements IBinarySerializable {
-    private float x;
-    private float y;
-    private float z;
+public class Vector4f implements IBinarySerializable {
+    protected float x;
+    protected float y;
+    protected float z;
+    protected float w;
 
     /**
-     * Defines a unit-length Vector3 that points towards the X-axis.
+     * Defines a unit-length Vector4 that points towards the X-axis.
      */
-    public static final Vector3f UNIT_X = new Vector3f(1f, 0f, 0f);
+    public static final Vector4f UNIT_X = new Vector4f(1f, 0f, 0f, 0f);
 
     /**
-     * Defines a unit-length Vector3 that points towards the Y-axis.
+     * Defines a unit-length Vector4 that points towards the Y-axis.
      */
-    public static final Vector3f UNIT_Y = new Vector3f(0f, 1f, 0f);
+    public static final Vector4f UNIT_Y = new Vector4f(0f, 1f, 0f, 0f);
 
     /**
-     * Defines a unit-length Vector3 that points towards the Z-axis.
+     * Defines a unit-length Vector4 that points towards the Z-axis.
      */
-    public static final Vector3f UNIT_Z = new Vector3f(0f, 0f, 1f);
+    public static final Vector4f UNIT_Z = new Vector4f(0f, 0f, 1f, 0f);
 
     /**
-     * Defines a zero-length Vector3.
+     * Defines a unit-length Vector4 that points towards the W-axis.
      */
-    public static final Vector3f ZERO = new Vector3f(0f, 0f, 0f);
+    public static final Vector4f UNIT_W = new Vector4f(0f, 0f, 0f, 1f);
+
+    /**
+     * Defines a zero-length Vector4.
+     */
+    public static final Vector4f ZERO = new Vector4f(0f, 0f, 0f, 0f);
 
     /**
      * Defines an instance with all components set to 1.
      */
-    public static final Vector3f ONE = new Vector3f(1f, 1f, 1f);
+    public static final Vector4f ONE = new Vector4f(1f, 1f, 1f, 1f);
 
-    public Vector3f() {
+    public Vector4f() {
         this.x = 0;
         this.y = 0;
         this.z = 0;
+        this.w = 0;
     }
 
-    public Vector3f(float x, float y, float z) {
+    public Vector4f(float x, float y, float z, float w) {
         this.x = x;
         this.y = y;
         this.z = z;
+        this.w = w;
     }
 
-    public Vector3f(Vector3f vec) {
-        this(vec.x, vec.y, vec.z);
+    public Vector4f(Vector3f vec, float w) {
+        this(vec.getX(), vec.getY(), vec.getZ(), w);
+    }
+
+    public Vector4f(Vector4f vec) {
+        this(vec.x, vec.y, vec.z, vec.w);
     }
 
     @Override
@@ -65,6 +76,7 @@ public class Vector3f implements IBinarySerializable {
         this.x = reader.readFloat();
         this.y = reader.readFloat();
         this.z = reader.readFloat();
+        this.w = reader.readFloat();
     }
 
     @Override
@@ -72,6 +84,7 @@ public class Vector3f implements IBinarySerializable {
         writer.writeFloat(this.x);
         writer.writeFloat(this.y);
         writer.writeFloat(this.z);
+        writer.writeFloat(this.w);
     }
 
     /**
@@ -85,23 +98,24 @@ public class Vector3f implements IBinarySerializable {
      * Calculates the length of this vector, squared.
      */
     public double calculateLengthSquared() {
-        return ((double) this.x * this.x) + ((double) this.y * this.y) + ((double) this.z * this.z);
+        return ((double) this.x * this.x) + ((double) this.y * this.y) + ((double) this.z * this.z) + ((double) this.w * this.w);
     }
 
     /**
      * Clones the vector.
      */
-    public Vector3f clone() {
-        return new Vector3f(this);
+    public Vector4f clone() {
+        return new Vector4f(this);
     }
 
     /**
      * Applies the absolute value of the components stored by this vector.
      */
-    public Vector3f abs() {
+    public Vector4f abs() {
         this.x = Math.abs(this.x);
         this.y = Math.abs(this.y);
         this.z = Math.abs(this.z);
+        this.w = Math.abs(this.w);
         return this;
     }
 
@@ -110,24 +124,11 @@ public class Vector3f implements IBinarySerializable {
      * @param other The vector to add.
      * @return this
      */
-    public Vector3f add(Vector3f other) {
+    public Vector4f add(Vector4f other) {
         this.x += other.x;
         this.y += other.y;
         this.z += other.z;
-        return this;
-    }
-
-    /**
-     * Adds xyz components to this vector.
-     * @param x The x value to add.
-     * @param y The y value to add.
-     * @param z The z value to add.
-     * @return this
-     */
-    public Vector3f add(float x, float y, float z) {
-        this.x += x;
-        this.y += y;
-        this.z += z;
+        this.w += other.w;
         return this;
     }
 
@@ -136,10 +137,11 @@ public class Vector3f implements IBinarySerializable {
      * @param other The vector to subtract.
      * @return this
      */
-    public Vector3f subtract(Vector3f other) {
+    public Vector4f subtract(Vector4f other) {
         this.x -= other.x;
         this.y -= other.y;
         this.z -= other.z;
+        this.w -= other.w;
         return this;
     }
 
@@ -148,23 +150,12 @@ public class Vector3f implements IBinarySerializable {
      * @param other The vector to multiply
      * @return this
      */
-    public Vector3f multiply(Vector3f other) {
+    public Vector4f multiply(Vector4f other) {
         this.x *= other.x;
         this.y *= other.y;
         this.z *= other.z;
+        this.w *= other.w;
         return this;
-    }
-
-    /**
-     * Multiply this against a Matrix4x4.
-     * @param matrix The matrix to multiply against
-     * @return this
-     */
-    public Vector3f multiply(Matrix4x4f matrix) {
-        if (matrix == null)
-            throw new NullPointerException("matrix");
-
-        return matrix.multiply(this, this);
     }
 
     /**
@@ -172,10 +163,11 @@ public class Vector3f implements IBinarySerializable {
      * @param scale The scalar value to multiply the vector by.
      * @return this
      */
-    public Vector3f multiplyScalar(float scale) {
+    public Vector4f multiplyScalar(float scale) {
         this.x *= scale;
         this.y *= scale;
         this.z *= scale;
+        this.w *= scale;
         return this;
     }
 
@@ -184,7 +176,7 @@ public class Vector3f implements IBinarySerializable {
      * @param scale The scalar.
      * @return this
      */
-    public Vector3f divideScalar(float scale) {
+    public Vector4f divideScalar(float scale) {
         float mult = 1.0f / scale;
         return this.multiplyScalar(mult);
     }
@@ -193,10 +185,11 @@ public class Vector3f implements IBinarySerializable {
      * Negates the vector.
      * @return this
      */
-    public Vector3f negate() {
+    public Vector4f negate() {
         this.x = -this.x;
         this.y = -this.y;
         this.z = -this.z;
+        this.w = -this.w;
         return this;
     }
 
@@ -204,8 +197,8 @@ public class Vector3f implements IBinarySerializable {
      * Normalises the vector.
      * @return this
      */
-    public Vector3f normalise() {
-        double magnitudeSq = (this.x * this.x) + (this.y * this.y) + (this.z * this.z);
+    public Vector4f normalise() {
+        double magnitudeSq = (this.x * this.x) + (this.y * this.y) + (this.z * this.z) + (this.w * this.w);
         if (!Double.isFinite(magnitudeSq))
             throw new RuntimeException(this + " cannot be normalized, its magnitudeSq was: " + magnitudeSq);
 
@@ -213,19 +206,22 @@ public class Vector3f implements IBinarySerializable {
         this.x = (float) (this.x * inverseMagnitude);
         this.y = (float) (this.y * inverseMagnitude);
         this.z = (float) (this.z * inverseMagnitude);
+        this.w = (float) (this.w * inverseMagnitude);
         return this;
     }
 
     /**
-     * Sets the x, y, and z scalar components of the vector.
+     * Sets the x, y, z, and w scalar components of the vector.
      * @param x The new x value
      * @param y The new y value
      * @param z The new z value
+     * @param w The new w value
      */
-    public Vector3f setXYZ(float x, float y, float z) {
+    public Vector4f setXYZW(float x, float y, float z, float w) {
         this.x = x;
         this.y = y;
         this.z = z;
+        this.w = w;
         return this;
     }
 
@@ -233,60 +229,24 @@ public class Vector3f implements IBinarySerializable {
      * Copies the values of another vector to this one.
      * @param other The vector to copy values from
      */
-    public Vector3f setXYZ(Vector3f other) {
+    public Vector4f setXYZW(Vector4f other) {
         if (other == null)
             throw new NullPointerException("other");
 
         this.x = other.x;
         this.y = other.y;
         this.z = other.z;
+        this.w = other.w;
         return this;
-    }
-
-    /**
-     * Copies the values of another vector to this one.
-     * @param other The vector to copy values from
-     */
-    public Vector3f setXYZ(Point3D other) {
-        if (other == null)
-            throw new NullPointerException("other");
-
-        this.x = (float) other.getX();
-        this.y = (float) other.getY();
-        this.z = (float) other.getZ();
-        return this;
-    }
-
-    /**
-     * Calculate the cross-product of this and another vector
-     * @param other the other vector
-     * @param result the vector to store the output within
-     * @return crossProduct
-     */
-    public Vector3f crossProduct(Vector3f other, Vector3f result) {
-        if (result == null)
-            result = new Vector3f();
-
-        result.setXYZ(((this.y * other.z) - (this.z * other.y)), ((this.z * other.x) - (this.x * other.z)), ((this.x * other.y) - (this.y * other.x)));
-        return result;
-    }
-
-    /**
-     * Calculate the cross-product of this and another vector.
-     * @param other the other vector
-     * @return crossProduct
-     */
-    public Vector3f crossProduct(Vector3f other) {
-        return crossProduct(other, new Vector3f());
     }
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof Vector3f))
+        if (!(other instanceof Vector4f))
             return false;
 
-        Vector3f otherVector = (Vector3f) other;
-        return this.x == otherVector.x && this.y == otherVector.y && this.z == otherVector.z;
+        Vector4f otherVector = (Vector4f) other;
+        return this.x == otherVector.x && this.y == otherVector.y && this.z == otherVector.z && this.w == otherVector.w;
     }
 
     /**
@@ -294,12 +254,12 @@ public class Vector3f implements IBinarySerializable {
      */
     @Override
     public int hashCode() {
-        return Float.hashCode(this.x) * 397 * Float.hashCode(this.y) ^ Float.hashCode(this.z);
+        return Float.hashCode(this.x) ^ Float.hashCode(this.y) ^ Float.hashCode(this.z) ^ Float.hashCode(this.w);
     }
 
     @Override
     public String toString() {
-        return "Vector3f{x=" + this.x + ",y=" + this.y + ",z=" + this.z + "}";
+        return "Vector4f{x=" + this.x + ",y=" + this.y + ",z=" + this.z + ",w=" + this.w + "}";
     }
 
     /**
@@ -308,8 +268,8 @@ public class Vector3f implements IBinarySerializable {
      * @param b Second operand.
      * @return The component-wise minimum.
      */
-    public static Vector3f componentMin(Vector3f a, Vector3f b) {
-        return new Vector3f(Math.min(a.x, b.x), Math.min(a.y, b.y), Math.min(a.z, b.z));
+    public static Vector4f componentMin(Vector4f a, Vector4f b) {
+        return new Vector4f(Math.min(a.x, b.x), Math.min(a.y, b.y), Math.min(a.z, b.z), Math.min(a.w, b.w));
     }
 
     /**
@@ -318,29 +278,29 @@ public class Vector3f implements IBinarySerializable {
      * @param b Second operand.
      * @return The component-wise maximum.
      */
-    public static Vector3f componentMax(Vector3f a, Vector3f b) {
-        return new Vector3f(Math.max(a.x, b.x), Math.max(a.y, b.y), Math.max(a.z, b.z));
+    public static Vector4f componentMax(Vector4f a, Vector4f b) {
+        return new Vector4f(Math.max(a.x, b.x), Math.max(a.y, b.y), Math.max(a.z, b.z), Math.max(a.w, b.w));
     }
 
     /**
-     * Returns the Vector3f with the minimum magnitude. If the magnitudes are equal, the second vector
+     * Returns the Vector4f with the minimum magnitude. If the magnitudes are equal, the second vector
      * is selected.
      * @param left  Left operand.
      * @param right Right operand.
-     * @return The minimum Vector3f.
+     * @return The minimum Vector4f.
      */
-    public static Vector3f magnitudeMin(Vector3f left, Vector3f right) {
+    public static Vector4f magnitudeMin(Vector4f left, Vector4f right) {
         return left.calculateLengthSquared() >= right.calculateLengthSquared() ? right : left;
     }
 
     /**
-     * Returns the Vector3f with the maximum magnitude. If the magnitudes are equal, the first vector
+     * Returns the Vector4f with the maximum magnitude. If the magnitudes are equal, the first vector
      * is selected.
      * @param left  Left operand.
      * @param right Right operand.
-     * @return The maximum Vector3f.
+     * @return The maximum Vector4f.
      */
-    public static Vector3f magnitudeMax(Vector3f left, Vector3f right) {
+    public static Vector4f magnitudeMax(Vector4f left, Vector4f right) {
         return left.calculateLengthSquared() < right.calculateLengthSquared() ? right : left;
     }
 
@@ -351,11 +311,12 @@ public class Vector3f implements IBinarySerializable {
      * @param max Maximum vector.
      * @return The clamped vector.
      */
-    public static Vector3f clamp(Vector3f vec, Vector3f min, Vector3f max) {
+    public static Vector4f clamp(Vector4f vec, Vector4f min, Vector4f max) {
         float resultX = vec.x < min.x ? min.x : Math.min(vec.x, max.x);
         float resultY = vec.y < min.y ? min.y : Math.min(vec.y, max.y);
         float resultZ = vec.z < min.z ? min.z : Math.min(vec.z, max.z);
-        return new Vector3f(resultX, resultY, resultZ);
+        float resultW = vec.w < min.w ? min.w : Math.min(vec.w, max.w);
+        return new Vector4f(resultX, resultY, resultZ, resultW);
     }
 
     /**
@@ -365,25 +326,27 @@ public class Vector3f implements IBinarySerializable {
      * @param blend The blend factor. a when blend=0, b when blend=1.
      * @return a when blend=0, b when blend=1, and a linear combination otherwise.
      */
-    public static Vector3f lerp(Vector3f a, Vector3f b, float blend) {
+    public static Vector4f lerp(Vector4f a, Vector4f b, float blend) {
+        return lerp(a, b, blend, null);
+    }
+
+    /**
+     * Returns a new Vector that is the linear blend of the 2 given Vectors.
+     * @param a First input vector.
+     * @param b Second input vector.
+     * @param blend The blend factor. a when blend=0, b when blend=1.
+     * @param output The vector to save the lerp results within
+     * @return a when blend=0, b when blend=1, and a linear combination otherwise.
+     */
+    public static Vector4f lerp(Vector4f a, Vector4f b, float blend, Vector4f output) {
+        if (output == null)
+            output = new Vector4f();
+
         float resultX = blend * (b.x - a.x) + a.x;
         float resultY = blend * (b.y - a.y) + a.y;
         float resultZ = blend * (b.z - a.z) + a.z;
-        return new Vector3f(resultX, resultY, resultZ);
-    }
-
-    /**
-     * Returns a new Vector that is the linear blend of the 2 given Vectors.
-     * @param a     First input vector.
-     * @param b     Second input vector.
-     * @param blend The blend factor. a when blend=0, b when blend=1.
-     * @return a when blend=0, b when blend=1, and a linear combination otherwise.
-     */
-    public static Vector3f lerp(Vector3f a, Vector3f b, float blend, Vector3f result) {
-        result.setX(blend * (b.x - a.x) + a.x);
-        result.setY(blend * (b.y - a.y) + a.y);
-        result.setZ(blend * (b.z - a.z) + a.z);
-        return result;
+        float resultW = blend * (b.w - a.w) + a.w;
+        return output.setXYZW(resultX, resultY, resultZ, resultW);
     }
 
     /**
@@ -392,7 +355,7 @@ public class Vector3f implements IBinarySerializable {
      * @param b the second input vector
      * @return dotProduct
      */
-    public static double dotProduct(Vector3f a, Vector3f b) {
-        return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
+    public static double dotProduct(Vector4f a, Vector4f b) {
+        return (a.x * b.x) + (a.y * b.y) + (a.z * b.z) + (a.w * b.w);
     }
 }

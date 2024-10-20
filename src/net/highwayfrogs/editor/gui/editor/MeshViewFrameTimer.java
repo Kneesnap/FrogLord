@@ -6,6 +6,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.games.psx.shading.IPSXShadedMesh;
+import net.highwayfrogs.editor.utils.TriConsumer;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ import java.util.logging.Logger;
 public class MeshViewFrameTimer extends AnimationTimer {
     private final MeshViewController<?> controller;
     private final List<MeshViewFixedFrameRateTimer> registeredTaskTimers = new ArrayList<>();
+    private final List<PerFrameTask<?>> perFrameTasks = new ArrayList<>();
     private String baseTitle;
     private final long[] frameTimes = new long[100];
     private int frameTimeIndex;
@@ -46,10 +48,23 @@ public class MeshViewFrameTimer extends AnimationTimer {
                 this.registeredTaskTimers.remove(i--);
         }
 
+        // Tick per-frame timers.
+        long elapsedNanos = now - oldFrameTime;
+        if (oldFrameTime != 0) {
+            float deltaTimeSeconds = (float) (elapsedNanos / 100000000000D);
+            for (int i = 0; i < this.perFrameTasks.size(); i++) {
+                PerFrameTask<?> task = this.perFrameTasks.get(i);
+                task.run(i, deltaTimeSeconds);
+
+                // Remove timers once they no longer have any tasks.
+                if (task.isCancellationScheduled())
+                    this.perFrameTasks.remove(i--);
+            }
+        }
+
         if (this.frameTimeIndex == 0) {
-            long elapsedNanos = now - oldFrameTime;
             long elapsedNanosPerFrame = elapsedNanos / this.frameTimes.length;
-            double frameRate = 1000000000.0 / elapsedNanosPerFrame;
+            double frameRate = 1000000000D / elapsedNanosPerFrame;
             Stage stage = this.controller.getOverwrittenStage();
             if (stage != null) {
                 String currentStageTitle = stage.getTitle();
@@ -93,6 +108,93 @@ public class MeshViewFrameTimer extends AnimationTimer {
             MeshViewFixedFrameRateTimer newTimer = new MeshViewFixedFrameRateTimer(this, framesPerSecond);
             this.registeredTaskTimers.add(-(timerIndex + 1), newTimer);
             return newTimer;
+        }
+    }
+
+    /**
+     * Adds a new task which will run every frame.
+     * @param task the task to run on repeat
+     * @return taskObject
+     * @param <TTaskParam> data passed to the task in a memory-safe fashion.
+     */
+    public <TTaskParam> PerFrameTask<TTaskParam> addPerFrameTask(Consumer<Float> task) {
+        if (task == null)
+            throw new NullPointerException("task");
+
+        return addPerFrameTask(null, (param, taskObj, deltaTime) -> task.accept(deltaTime));
+    }
+
+    /**
+     * Adds a new task which will run every frame.
+     * @param task the task to run on repeat
+     * @return timerTaskObject
+     * @param <TTaskParam> data passed to the task in a memory-safe fashion.
+     */
+    public <TTaskParam> PerFrameTask<TTaskParam> addPerFrameTask(BiConsumer<PerFrameTask<TTaskParam>, Float> task) {
+        if (task == null)
+            throw new NullPointerException("task");
+
+        return addPerFrameTask(null, (param, taskObj, deltaTime) -> task.accept(taskObj, deltaTime));
+    }
+
+    /**
+     * Adds a new task which will run every so many frames.
+     * @param task the task to run on repeat
+     * @return timerTaskObject
+     * @param <TTaskParam> data passed to the task in a memory-safe fashion.
+     */
+    public <TTaskParam> PerFrameTask<TTaskParam> addPerFrameTask(TTaskParam taskParam, BiConsumer<TTaskParam, Float> task) {
+        if (task == null)
+            throw new NullPointerException("task");
+
+        return addPerFrameTask(taskParam, (param, taskObj, deltaTime) -> task.accept(param, deltaTime));
+
+    }
+
+    /**
+     * Adds a new task which will run every so many frames.
+     * @param task the task to run on repeat
+     * @return timerTaskObject
+     * @param <TTaskParam> data passed to the task in a memory-safe fashion.
+     */
+    public <TTaskParam> PerFrameTask<TTaskParam> addPerFrameTask(TTaskParam taskParam, TriConsumer<TTaskParam, PerFrameTask<TTaskParam>, Float> task) {
+        if (task == null)
+            throw new NullPointerException("task");
+
+        PerFrameTask<TTaskParam> nextTask = new PerFrameTask<>(this, task, taskParam);
+        this.perFrameTasks.add(nextTask);
+        return nextTask;
+    }
+
+    @Getter
+    @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class PerFrameTask<TTaskParam> {
+        private final MeshViewFrameTimer parent;
+        private final TriConsumer<TTaskParam, PerFrameTask<TTaskParam>, Float> task;
+        private final TTaskParam taskParam;
+        private boolean cancellationScheduled;
+
+        /**
+         * Ticks the task. Assumes the task should be ticked.
+         */
+        public void run(int taskId, float deltaTime) {
+            if (this.cancellationScheduled)
+                return;
+
+            try {
+                this.task.accept(this.taskParam, this, deltaTime);
+            } catch (Throwable th) {
+                cancel();
+                Logger logger = this.parent.getLogger();
+                Utils.handleError(logger, th, false, "Task %d (%s/%s) in perFrameTasks threw an error while executing, so it has been cancelled!", taskId, this.task, this.taskParam);
+            }
+        }
+
+        /**
+         * Cancel the task so it will not run again.
+         */
+        public void cancel() {
+            this.cancellationScheduled = true;
         }
     }
 

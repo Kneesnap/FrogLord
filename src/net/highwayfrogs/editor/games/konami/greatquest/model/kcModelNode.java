@@ -11,11 +11,13 @@ import java.util.List;
 
 /**
  * Represents a model node in the kcGameSystem.
+ * This seems to be a group of primitives which render together. When iterating the model for rendering, the game will iterate this instead of going through the other list.
+ * TODO: Should we start rendering models by this? Probably.
  * Created by Kneesnap on 6/22/2023.
  */
 @Getter
 public class kcModelNode extends GameData<GreatQuestInstance> {
-    private long nodeId; // uint, This is not the index of the node in the model node list. It most likely corresponds to bone ID
+    private int nodeId; // uint, bone tag
     private final List<kcModelPrim> primitives = new ArrayList<>();
 
     public kcModelNode(GreatQuestInstance instance) {
@@ -24,7 +26,7 @@ public class kcModelNode extends GameData<GreatQuestInstance> {
 
     @Override
     public void load(DataReader reader) {
-        this.nodeId = reader.readUnsignedIntAsLong();
+        this.nodeId = reader.readInt();
         long primitiveCount = reader.readUnsignedIntAsLong();
 
         // Populate primitives list for reading.
@@ -35,7 +37,7 @@ public class kcModelNode extends GameData<GreatQuestInstance> {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedInt(this.nodeId);
+        writer.writeInt(this.nodeId);
         writer.writeUnsignedInt(this.primitives.size());
     }
 
@@ -50,8 +52,11 @@ public class kcModelNode extends GameData<GreatQuestInstance> {
             throw new RuntimeException("kcModelNode[nodeId=" + this.nodeId + "] said it had " + this.primitives.size() + ", but this bled outside the range of valid primitives!");
 
         // Copy into list.
-        for (int i = 0; i < this.primitives.size(); i++)
-            this.primitives.set(i, primitives.get(startIndex + i));
+        for (int i = 0; i < this.primitives.size(); i++) {
+            kcModelPrim targetPrim = primitives.get(startIndex + i);
+            this.primitives.set(i, targetPrim);
+            targetPrim.setParentNode(this, true);
+        }
 
         return startIndex + this.primitives.size();
     }

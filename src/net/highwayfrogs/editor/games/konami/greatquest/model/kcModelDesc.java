@@ -23,14 +23,14 @@ import net.highwayfrogs.editor.utils.Utils;
 @Setter
 public class kcModelDesc extends kcBaseDesc implements IInfoWriter {
     private final GreatQuestHash<kcCResourceGeneric> parentHash; // The hash of this object's parent.
-    private final GreatQuestHash<kcCResourceModel> model;
+    private final GreatQuestHash<kcCResourceModel> modelRef;
 
     private static final int EXPECTED_MATERIAL_HASH = -1; // Never used.
 
     public kcModelDesc(@NonNull kcCResourceGeneric resource) {
         super(resource);
         this.parentHash = new GreatQuestHash<>(resource);
-        this.model = new GreatQuestHash<>();
+        this.modelRef = new GreatQuestHash<>();
     }
 
     @Override
@@ -51,7 +51,7 @@ public class kcModelDesc extends kcBaseDesc implements IInfoWriter {
         int materialHash = reader.readInt();
 
         // Resolve the model.
-        GreatQuestUtils.resolveResourceHash(kcCResourceModel.class, this, this.model, modelHash, false); // There are quite a few models which have been removed but still have their model descriptions.
+        GreatQuestUtils.resolveResourceHash(kcCResourceModel.class, this, this.modelRef, modelHash, false); // There are quite a few models which have been removed but still have their model descriptions.
 
         // Warn if things look wrong.
         if (materialHash != EXPECTED_MATERIAL_HASH)
@@ -63,17 +63,24 @@ public class kcModelDesc extends kcBaseDesc implements IInfoWriter {
     @Override
     public void saveData(DataWriter writer) {
         writer.writeInt(this.parentHash.getHashNumber());
-        writer.writeInt(this.model.getHashNumber());
+        writer.writeInt(this.modelRef.getHashNumber());
         writer.writeInt(EXPECTED_MATERIAL_HASH);
     }
 
     @Override
     public void writeInfo(StringBuilder builder) {
-        writeAssetInfo(builder, ", ", "Model", this.model.getHashNumber(), kcCResourceModel::getFileName);
+        writeAssetInfo(builder, ", ", "Model", this.modelRef.getHashNumber(), kcCResourceModel::getFileName);
     }
 
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        writeAssetLine(builder, padding, "Model", this.model);
+        writeAssetLine(builder, padding, "Model", this.modelRef);
+    }
+
+    /**
+     * Gets the referenced model.
+     */
+    public kcCResourceModel getModel() {
+        return this.modelRef.getResource();
     }
 }

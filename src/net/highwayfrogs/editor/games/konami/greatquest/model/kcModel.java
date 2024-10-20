@@ -69,7 +69,7 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
     }
 
     @Override
-    public void load(DataReader reader) {
+    public void load(DataReader reader) { // Based on kcModelPrepare()
         // 1. Read Header.
         this.fvf = reader.readUnsignedIntAsLong();
         int componentCount = reader.readInt();
@@ -208,6 +208,30 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
         // 8. Write vertex buffers.
         for (int i = 0; i < this.primitives.size(); i++)
             this.primitives.get(i).saveVertices(writer);
+    }
+
+    /**
+     * Test if the model uses the given FVF component.
+     * @param fvfComponent the fvf component to test
+     * @return true iff the model has the given fvf component
+     */
+    public boolean hasComponent(kcVertexFormatComponent fvfComponent) {
+        return this.components != null && Utils.contains(this.components, fvfComponent);
+    }
+
+    /**
+     * Test if the vertex components contain normal data.
+     */
+    public boolean hasVertexNormals() {
+        return hasComponent(kcVertexFormatComponent.NORMAL_XYZF) || hasComponent(kcVertexFormatComponent.NORMAL_XYZWF);
+    }
+
+    /**
+     * Test if the vertex components contain texCoord data.
+     */
+    public boolean hasVertexTexCoords() {
+        return hasComponent(kcVertexFormatComponent.TEX1F) || hasComponent(kcVertexFormatComponent.TEX2F)
+                || hasComponent(kcVertexFormatComponent.TEX1_STQP);
     }
 
     /**

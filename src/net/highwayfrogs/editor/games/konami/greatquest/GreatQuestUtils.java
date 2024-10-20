@@ -1,5 +1,8 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
+import javafx.scene.Node;
+import javafx.scene.transform.Rotate;
+import javafx.scene.transform.Transform;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.Config;
@@ -592,5 +595,84 @@ public class GreatQuestUtils {
             String newHashName = newName.endsWith(suffix) ? newName : newName + suffix;
             resource.getSelfHash().setHash(newHashName);
         });
+    }
+
+    /**
+     * Set the rotation of an entity node in 3D space with the rotations applied the way rotations are applied to entities in Frogger: The Great Quest.
+     * @param node node to update the rotation of
+     * @param x x angle in radians
+     * @param y y angle in radians
+     * @param z z angle in radians
+     * @param hasSkeleton true if there is a skeleton
+     */
+    public static void setEntityRotation(Node node, double x, double y, double z, boolean hasSkeleton) {
+        Rotate xRotation = null;
+        Rotate yRotation = null;
+        Rotate zRotation = null;
+
+        // How exactly we rotate the model may appear a little strange, but it is based on the behavior observed in the original game.
+        // 1) There is a global rotation matrix, 'gChangeOfBasis', which is setup by kcCGameSystem::__ct to be a rotation on the X-axis by -PI / 2.
+        // 2) Application:
+        //  a) When evaluating skeleton bone transforms (kcCSkeleton::Execute), this gChangeOfBasis is the root matrix, meaning all bones are transformed by this (Thus rotated by PI / 2)
+        //  b) kcCProxyTriMesh::BuildLcsToWcs will also do something.
+        // So, when the entity has a skeleton, it will be rotated.
+        Rotate skelRotation = null;
+
+        for (Transform transform : node.getTransforms()) {
+            if (!(transform instanceof Rotate))
+                continue;
+
+            Rotate rotate = (Rotate) transform;
+            if (Rotate.X_AXIS.equals(rotate.getAxis())) {
+                if (xRotation == null) {
+                    xRotation = rotate;
+                } else {
+                    skelRotation = rotate;
+                }
+            } else if (Rotate.Y_AXIS.equals(rotate.getAxis())) {
+                yRotation = rotate;
+            } else if (Rotate.Z_AXIS.equals(rotate.getAxis())) {
+                zRotation = rotate;
+            }
+        }
+
+        // However, there's slightly more to it than the X rotation.
+        // kcCEntity3D::BuildLcsToWcs() shows the rotation angles getting turned into matrices.
+        // And, as such we must apply our rotations in the same order as the original code.
+        // The original ordering was Y -> X -> Z, so that's how we'll do it.
+
+        if (yRotation != null) {
+            yRotation.setAngle(Math.toDegrees(y));
+        } else {
+            yRotation = new Rotate(Math.toDegrees(y), Rotate.Y_AXIS);
+            node.getTransforms().add(yRotation);
+        }
+
+        if (xRotation != null) {
+            xRotation.setAngle(Math.toDegrees(x));
+        } else {
+            xRotation = new Rotate(Math.toDegrees(x), Rotate.X_AXIS);
+            node.getTransforms().add(xRotation);
+        }
+
+        if (zRotation != null) {
+            zRotation.setAngle(Math.toDegrees(z));
+        } else {
+            zRotation = new Rotate(Math.toDegrees(z), Rotate.Z_AXIS);
+            node.getTransforms().add(zRotation);
+        }
+
+        // The skeletal animation is last, so it doesn't break the Y or Z rotations.
+        // See above for documentation on how this applied by the game.
+        if (hasSkeleton) {
+            if (skelRotation != null) {
+                skelRotation.setAngle(Math.toDegrees(-Math.PI / 2));
+            } else {
+                skelRotation = new Rotate(Math.toDegrees(-Math.PI / 2), Rotate.X_AXIS);
+                node.getTransforms().add(skelRotation);
+            }
+        } else if (skelRotation != null) {
+            skelRotation.setAngle(0);
+        }
     }
 }

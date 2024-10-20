@@ -19,7 +19,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.generic.GameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
-import net.highwayfrogs.editor.games.konami.greatquest.audio.SoundChunkFile.SoundChunkIndexFile.SoundChunkEntry;
+import net.highwayfrogs.editor.games.konami.greatquest.audio.SoundChunkFile.SoundChunkEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestLooseGameFile;
 import net.highwayfrogs.editor.games.psx.sound.VAGUtil;
 import net.highwayfrogs.editor.gui.GameUIController;

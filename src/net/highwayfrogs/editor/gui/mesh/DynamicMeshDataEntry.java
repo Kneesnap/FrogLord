@@ -272,6 +272,15 @@ public class DynamicMeshDataEntry {
     }
 
     /**
+     * Writes vertex position data to a vertex.
+     * @param localVtxIndex The index to a vertex saved here.
+     * @param position the position vector to write
+     */
+    public void writeVertexXYZ(int localVtxIndex, Vector3f position) {
+        writeVertexXYZ(localVtxIndex, position.getX(), position.getY(), position.getZ());
+    }
+
+    /**
      * Removes a vertex position from the array.
      * @param localVtxIndex The local index of the position to remove.
      */

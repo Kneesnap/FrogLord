@@ -260,7 +260,7 @@ public class Scene3DUtils {
     /**
      * Gets (or creates) the scale transform of a node in 3D space.
      * Creates the transform if it does not exist.
-     * @param node node to update the position of
+     * @param node node to get the scale from
      */
     public static Scale get3DScale(Node node) {
         return get3DScale(node, true);
@@ -269,7 +269,7 @@ public class Scene3DUtils {
     /**
      * Gets (or creates) the scale transform of a node in 3D space.
      * Returns null if it does not exist.
-     * @param node node to update the position of
+     * @param node node to get the scale from
      */
     public static Scale getOptional3DScale(Node node) {
         return get3DScale(node, false);
@@ -277,7 +277,7 @@ public class Scene3DUtils {
 
     /**
      * Gets (or creates) the scale transform of a node in 3D space.
-     * @param node            node to update the position of
+     * @param node            node to get the scale from
      * @param createIfMissing whether the transform should be created if it doesn't exist
      */
     public static Scale get3DScale(Node node, boolean createIfMissing) {
@@ -299,7 +299,7 @@ public class Scene3DUtils {
 
     /**
      * Set the scale of a node in 3D space.
-     * @param node node to update the position of
+     * @param node node to update the scale of
      * @param x    x-axis scalar value
      * @param y    y-axis scalar value
      * @param z    z-axis scalar value
@@ -321,7 +321,7 @@ public class Scene3DUtils {
 
     /**
      * Set the scale of a node in 3D space.
-     * @param node node to update the position of
+     * @param node node to update the pivot position of
      * @param x    x-axis pivot position value
      * @param y    y-axis pivot position value
      * @param z    z-axis pivot position value
@@ -344,7 +344,7 @@ public class Scene3DUtils {
     /**
      * Gets (or creates) the rotation transform of a node in 3D space.
      * Creates the transform if it does not exist.
-     * @param node node to update the position of
+     * @param node node to get the rotation from
      */
     public static Rotate get3DRotation(Node node) {
         return get3DRotation(node, true);
@@ -353,7 +353,7 @@ public class Scene3DUtils {
     /**
      * Gets (or creates) the rotation transform of a node in 3D space.
      * Returns null if it does not exist.
-     * @param node node to update the position of
+     * @param node node to get the rotation from
      */
     public static Rotate getOptional3DRotation(Node node) {
         return get3DRotation(node, false);
@@ -361,7 +361,7 @@ public class Scene3DUtils {
 
     /**
      * Gets (or creates) the rotation transform of a node in 3D space.
-     * @param node            node to update the position of
+     * @param node            node to get the rotation from
      * @param createIfMissing whether the transform should be created if it doesn't exist
      */
     public static Rotate get3DRotation(Node node, boolean createIfMissing) {
@@ -384,7 +384,7 @@ public class Scene3DUtils {
     /**
      * Gets (or creates) the rotation transform of a node in 3D space.
      * Creates the transform if it does not exist.
-     * @param node node to update the position of
+     * @param node node to update the rotation of
      */
     public static Rotate get3DRotationWithAxis(Node node, Point3D axis) {
         return get3DRotationWithAxis(node, axis, true);
@@ -401,7 +401,7 @@ public class Scene3DUtils {
 
     /**
      * Gets (or creates) the rotation transform of a node in 3D space.
-     * @param node            node to update the position of
+     * @param node            node to update the rotation of
      * @param createIfMissing whether the transform should be created if it doesn't exist
      */
     public static Rotate get3DRotationWithAxis(Node node, Point3D withAxis, boolean createIfMissing) {
@@ -423,7 +423,7 @@ public class Scene3DUtils {
 
     /**
      * Set the rotation of a node in 3D space.
-     * @param node node to update the position of
+     * @param node node to update the rotation of
      * @param axis the axis to apply rotation to
      * @param angle the angle to apply
      */
@@ -434,7 +434,7 @@ public class Scene3DUtils {
 
     /**
      * Set the rotation of a node in 3D space.
-     * @param node node to update the position of
+     * @param node node to update the rotation of
      * @param x x angle in radians
      * @param y y angle in radians
      * @param z z angle in radians
@@ -481,7 +481,7 @@ public class Scene3DUtils {
 
     /**
      * Set the rotation pivot of a node in 3D space.
-     * @param node node to update the position of
+     * @param node node to update the rotation pivot of
      * @param x x world pivot position
      * @param y y world pivot position
      * @param z z world pivot position
@@ -537,7 +537,7 @@ public class Scene3DUtils {
      */
     public static PhongMaterial updateHighlightMaterial(PhongMaterial material, BufferedImage rawTexture) {
         // Setup graphics.
-        BufferedImage highlightedImage = new BufferedImage(rawTexture.getWidth(), rawTexture.getHeight(), rawTexture.getType());
+        BufferedImage highlightedImage = new BufferedImage(rawTexture.getWidth(), rawTexture.getHeight(), BufferedImage.TYPE_INT_ARGB); // Using the rawTexture's type can cause weird color patterns in Frogger: The Great Quest entities.
         Graphics2D g = highlightedImage.createGraphics();
         try {
             // Clean image.

@@ -6,6 +6,7 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.*;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTriMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.*;
@@ -16,6 +17,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyTriMeshDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager.GreatQuestMapModelMeshCollection;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestMapCollisionManager.GreatQuestMapCollisionMesh;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -28,6 +30,7 @@ import net.highwayfrogs.editor.utils.Utils;
 @RequiredArgsConstructor
 public class GreatQuestMapEditorEntityDisplay {
     private final GreatQuestEntityManager entityManager;
+    private final GreatQuestModelMesh modelMesh;
     private final kcCResourceEntityInst entityInstance;
     private final GreatQuestMapModelMeshCollection modelViews;
     private Node collisionPreview;
@@ -284,31 +287,24 @@ public class GreatQuestMapEditorEntityDisplay {
         // Calculate rotation.
         kcEntity3DInst entity3D = (kcEntity3DInst) this.entityInstance.getEntity();
         kcEntity3DDesc entityDesc = entity3D.getDescription();
-        // TODO: Some objects if PI / 2 is subtracted from their X start looking correct. However, this breaks others. Need to figure out what's going on here.
-        //  - It seems animated objects are usually what need this.
-        //  - I bet the animations fix the rotations.
-        boolean hasAnimationSet = (entityDesc instanceof kcActorBaseDesc) && ((kcActorBaseDesc) entityDesc).getAnimSetRef().getResource() != null;
-        boolean hasAnimation = (entityDesc instanceof kcActorBaseDesc) && ((kcActorBaseDesc) entityDesc).getAnimationRef().getHashNumber() != 0 && ((kcActorBaseDesc) entityDesc).getAnimationRef().getHashNumber() != -1;
-        double xRotationOffset = Math.PI / 2;
+        boolean hasSkeleton = (entityDesc instanceof kcActorBaseDesc) && ((kcActorBaseDesc) entityDesc).getSkeleton() != null; // kcCActorBase::Render() will choose which method to render with based on if the skeleton is set or not.
         double xRotation = entity3D.getRotation().getX();
         double yRotation = entity3D.getRotation().getY();
         double zRotation = entity3D.getRotation().getZ();
+        boolean isCollisionNode = (node == this.collisionPreview);
+        boolean isBoundingSphereNode = (node == this.boundingSpherePreview);
 
-        if (this.collisionPreview != null && (node == null || node == this.collisionPreview))
-            Scene3DUtils.setNodeRotation(this.collisionPreview, xRotation + (hasAnimation ? 0 : xRotationOffset), yRotation, zRotation);
-        if (this.boundingSpherePreview != null && (node == null || node == this.boundingSpherePreview))
-            Scene3DUtils.setNodeRotation(this.boundingSpherePreview, xRotation, yRotation, zRotation);
+        if (this.collisionPreview != null && (node == null || isCollisionNode)) // NOTE: The behavior of rotations has not been fully understood. Eg: We've not found the exact code cause for this in the original code yet.
+            GreatQuestUtils.setEntityRotation(this.collisionPreview, xRotation, yRotation, zRotation, false);
+        if (this.boundingSpherePreview != null && (node == null || isBoundingSphereNode))
+            GreatQuestUtils.setEntityRotation(this.boundingSpherePreview, xRotation, yRotation, zRotation, false);
 
-        if (this.modelViews != null) {
-            double offsetX = xRotation - (hasAnimationSet ? xRotationOffset : 0);
-
+        if (this.modelViews != null && !isCollisionNode && !isBoundingSphereNode) {
             // Pick all or a single mesh view.
             if (node == null) {
-                this.modelViews.setRotation(offsetX, yRotation, zRotation);
+                this.modelViews.setRotation(xRotation, yRotation, zRotation, hasSkeleton);
             } else if (node instanceof MeshView) {
-                int meshViewIndex = this.modelViews.getMeshViews().indexOf(node);
-                if (meshViewIndex >= 0)
-                    Scene3DUtils.setNodeRotation(this.modelViews.getMeshViews().get(meshViewIndex), offsetX, yRotation, zRotation);
+                GreatQuestUtils.setEntityRotation(node, xRotation, yRotation, zRotation, hasSkeleton);
             }
         }
     }

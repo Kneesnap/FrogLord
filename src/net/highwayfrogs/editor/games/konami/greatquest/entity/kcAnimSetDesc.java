@@ -68,4 +68,19 @@ public class kcAnimSetDesc extends kcBaseDesc {
     protected int getTargetClassID() {
         return kcClassID.ANIM_SET.getClassId();
     }
+
+    /**
+     * Get a list containing all resolved animations.
+     */
+    public List<kcCResourceTrack> getAnimations() {
+        List<kcCResourceTrack> animations = new ArrayList<>();
+        for (int i = 0; i < this.animationRefs.size(); i++) {
+            GreatQuestHash<kcCResourceTrack> animationRef = this.animationRefs.get(i);
+            kcCResourceTrack track = animationRef.getResource();
+            if (track != null && !animations.contains(track))
+                animations.add(track);
+        }
+
+        return animations;
+    }
 }

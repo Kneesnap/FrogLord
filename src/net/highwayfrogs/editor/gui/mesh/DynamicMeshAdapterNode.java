@@ -271,17 +271,11 @@ public abstract class DynamicMeshAdapterNode<TDataSource> extends DynamicMeshNod
 
         public DynamicMeshTypedDataEntry(DynamicMesh mesh, TDataSource dataSource) {
             super(mesh);
-            if (dataSource == null)
-                throw new NullPointerException("dataSource");
-
             this.dataSource = dataSource;
         }
 
         public DynamicMeshTypedDataEntry(DynamicMesh mesh, TDataSource dataSource, int vertexCount, int texCoordCount, int faceCount) {
             super(mesh, vertexCount, texCoordCount, faceCount);
-            if (dataSource == null)
-                throw new NullPointerException("dataSource");
-
             this.dataSource = dataSource;
         }
     }

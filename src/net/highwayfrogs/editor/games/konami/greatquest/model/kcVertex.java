@@ -16,6 +16,7 @@ public class kcVertex implements IInfoWriter {
     private float x;
     private float y;
     private float z;
+    private float w;
     private float normalX;
     private float normalY;
     private float normalZ;
@@ -26,8 +27,7 @@ public class kcVertex implements IInfoWriter {
     private float u1;
     private float v1;
     private float[] weight;
-    private float w;
-    private float psize;
+    private float pointSize; // Presumably only used when a vertex might be rendered as part of a POINT display list
 
     /**
      * Loads vertex data from the reader for the given components.
@@ -176,7 +176,7 @@ public class kcVertex implements IInfoWriter {
                 reader.skipBytes(16);
                 break;
             case PSIZE: // 4
-                this.psize = reader.readFloat();
+                this.pointSize = reader.readFloat();
                 break;
             default:
                 throw new RuntimeException("Cannot read vertex data due to unsupported kcVertexFormatComponent " + component);
@@ -302,7 +302,7 @@ public class kcVertex implements IInfoWriter {
                 reader.skipBytes(8);
                 break;
             case PSIZE: // 2
-                this.psize = readCompressedFloat(reader, COMPRESSION_OTHER_MULTIPLIER);
+                this.pointSize = readCompressedFloat(reader, COMPRESSION_OTHER_MULTIPLIER);
                 break;
             default:
                 throw new RuntimeException("Cannot read compressed vertex data due to unsupported kcVertexFormatComponent " + component);
@@ -454,7 +454,7 @@ public class kcVertex implements IInfoWriter {
                 writer.writeNull(16);
                 break;
             case PSIZE: // 4
-                writer.writeFloat(this.psize);
+                writer.writeFloat(this.pointSize);
                 break;
             default:
                 throw new RuntimeException("Cannot read vertex data due to unsupported kcVertexFormatComponent " + component);
@@ -563,7 +563,7 @@ public class kcVertex implements IInfoWriter {
                 writer.writeNull(8);
                 break;
             case PSIZE: // 2
-                writeCompressedFloat(writer, this.psize, COMPRESSION_FIXED_PT_OTHER_UNIT);
+                writeCompressedFloat(writer, this.pointSize, COMPRESSION_FIXED_PT_OTHER_UNIT);
                 break;
             default:
                 throw new RuntimeException("Cannot read vertex data due to unsupported kcVertexFormatComponent " + component);
@@ -641,6 +641,6 @@ public class kcVertex implements IInfoWriter {
         builder.append("},diffuse=").append(this.diffuse).append(",specular=").append(this.specular);
         builder.append(",uv0=[").append(this.u0).append(",").append(this.v0);
         builder.append("],uv1=[").append(this.u1).append(",").append(this.v1);
-        builder.append("],weight=").append(Arrays.toString(this.weight)).append(",w=").append(this.w).append(",psize=").append(this.psize);
+        builder.append("],weight=").append(Arrays.toString(this.weight)).append(",w=").append(this.w).append(",pointSize=").append(this.pointSize);
     }
 }

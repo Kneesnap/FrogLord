@@ -280,4 +280,14 @@ public class Vector2f {
         float resultY = blend * (b.y - a.y) + a.y;
         return new Vector2f(resultX, resultY);
     }
+
+    /**
+     * Calculate the dot product of two vectors.
+     * @param a the first input vector
+     * @param b the second input vector
+     * @return dotProduct
+     */
+    public static double dotProduct(Vector2f a, Vector2f b) {
+        return (a.x * b.x) + (a.y * b.y);
+    }
 }

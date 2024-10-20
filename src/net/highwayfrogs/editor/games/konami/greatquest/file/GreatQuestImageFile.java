@@ -44,6 +44,7 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
     private static final byte TYPE_CODE_NO_COLOR_TABLE = (byte) 2;
     private static final byte TYPE_CODE_GRAYSCALE_TABLE = (byte) 3;
     private static final int[] GRAYSCALE_COLOR_MODEL = new int[256];
+    private static final int EXPECTED_MIPLOD = 1; // kcImageLoad8BitHeader() sets mipLod to 1 regardless.
 
     public static final int SIGNATURE = 0x64474D49; // 'IMGd'
     public static final String SIGNATURE_STR = "IMGd"; // 'IMGd'
@@ -79,9 +80,9 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
             if (getGameInstance().isPC()) // TODO: Is this safe? Eg: If we do this, and then save files, will the game still load images?
                 bitsPerPixel = 32;
 
-            int mipLod = reader.readInt(); // Always 1?
-            if (mipLod != 1)
-                getLogger().warning("The image '" + getDebugName() + "'was read with an LOD of " + mipLod + ", but 1 was expected!");
+            int mipLod = reader.readInt();
+            if (mipLod != EXPECTED_MIPLOD)
+                getLogger().warning("The image '" + getDebugName() + "'was read with an LOD of " + mipLod + ", but " + EXPECTED_MIPLOD + " was expected!");
 
             // TODO: Is it always 8 or 16 bytes here? Let's read the code to figure this poop out.
 
@@ -90,8 +91,8 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
             int skipData = reader.getRemaining() - imageBytes;
             if (skipData != 16) {
                 getLogger().warning(" - The image " + getDebugName() + " skipped " + skipData + " bytes, with the image being " + imageBytes + " bytes...");
-                // TODO: On PC this seems to include two images. But, I suspect there's more to it, as skycloud.img doesn't look right.
-                // TODO: This only triggers for 26 bytes on PS2 version.
+                // TODO: On PC this seems to include two images. But, I suspect there's more to it, as skycloud.img doesn't look right. (MAAYBE?)
+                // TODO: I think the bytes we're actually skipping here (at least on PS2) are padding / alignment bytes, since I see them in kcImageSave()
             }
 
             reader.skipBytes(skipData);
@@ -104,7 +105,8 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
         }
 
         if (reader.getRemaining() > 0) // Test we're not skipping any data.
-            getLogger().warning(" - The image '" + getDebugName() + "' has " + reader.getRemaining() + " unread bytes.");
+            getLogger().warning(" - The image '" + getDebugName() + "' has " + reader.getRemaining() + " unread bytes."); // TODO: This only triggers for 26 bytes on PS2 version.
+
     }
 
     private void kcLoad8BitImageHeader(DataReader reader) {
@@ -232,13 +234,13 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
         // TODO: Verify this method works.
         int headerSizeAddress = -1;
 
-        if (this.hasHeader) {
+        if (this.hasHeader) { // Based on kcImageSave(_kcImage p, int handle)
             writer.writeInt(SIGNATURE);
             headerSizeAddress = writer.writeNullPointer();
             writer.writeInt(this.image.getWidth());
             writer.writeInt(this.image.getHeight());
             writer.writeInt(getBitsPerPixel());
-            writer.writeInt(1); // Always 1.
+            writer.writeInt(EXPECTED_MIPLOD);
             // TODO: May need to write additional data.
         } else {
             // TODO: Write 8 bit header.

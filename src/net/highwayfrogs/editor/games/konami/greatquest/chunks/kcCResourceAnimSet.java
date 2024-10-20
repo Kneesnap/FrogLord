@@ -6,6 +6,8 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcAnimSetDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 
+import java.util.List;
+
 /**
  * Represents either kcCAnimSet or kcAnimSetDesc. One of those.
  * Created by Kneesnap on 4/16/2024.
@@ -29,5 +31,12 @@ public class kcCResourceAnimSet extends kcCResource {
     public void save(DataWriter writer) {
         super.save(writer);
         this.animSetDesc.save(writer);
+    }
+
+    /**
+     * Get a list containing all resolved animations.
+     */
+    public List<kcCResourceTrack> getAnimations() {
+        return this.animSetDesc.getAnimations();
     }
 }
