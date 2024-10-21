@@ -21,9 +21,9 @@ import java.util.function.Function;
  */
 @Getter
 public class LauncherParams extends kcProjectileParams {
-    private final GreatQuestHash<kcCResourceModel> vtxModelRef;
-    private final GreatQuestHash<kcCResourceGeneric> cruiseParticleEffectRef;
-    private final GreatQuestHash<kcCResourceGeneric> hitParticleEffectRef;
+    private final GreatQuestHash<kcCResourceModel> vtxModelRef; // Resolved in CLauncher::Init()
+    private final GreatQuestHash<kcCResourceGeneric> cruiseParticleEffectRef; // Resolved in CLauncher::Init()
+    private final GreatQuestHash<kcCResourceGeneric> hitParticleEffectRef; // Resolved in CLauncher::Init()
     private int projectileLifeTime;
     private float speed;
     private final kcCResourceGeneric parentResource;

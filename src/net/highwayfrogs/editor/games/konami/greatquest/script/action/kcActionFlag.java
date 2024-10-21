@@ -82,7 +82,7 @@ public class kcActionFlag extends kcActionTemplate {
         UNKNOWN_4(kcEntityFlagType.ENTITY, Constants.BIT_FLAG_4), // 0x10 TODO: FINISH / better name.
 
         // Tracks if the entity has a target entity set.
-        // Assignments: kcCEntity::ResetInt, kcCEntity3D::OnSetTarget
+        // Assignments: kcCEntity::ResetInt, kcCEntity3D::OnSetTarget, kcCEntity::OnCommand() for id 9.
         HAS_TARGET(kcEntityFlagType.ENTITY, Constants.BIT_FLAG_5), // 0x20
 
         // Tracks if the entity should be registered as a waypoint.

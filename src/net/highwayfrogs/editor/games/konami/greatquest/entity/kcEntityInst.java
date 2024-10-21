@@ -31,11 +31,11 @@ import java.util.Map;
 @Setter
 public class kcEntityInst extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
     private final kcCResourceEntityInst resource;
-    private final GreatQuestHash<kcCResourceGeneric> descriptionRef;
+    private final GreatQuestHash<kcCResourceGeneric> descriptionRef; // Resolved by kcCGameSystem::CreateInstance(), kcCGameSystem::CreateInstance(), kcCEntity::Reset, kcCEntity::Init
     private int priority = 1;
     private int group;
     private int scriptIndex = -1;
-    private final GreatQuestHash<kcCResourceEntityInst> targetEntityRef;
+    private final GreatQuestHash<kcCResourceEntityInst> targetEntityRef; // Observed both in raw data, but also kcCEntity::OnCommand[action=9], kcCEntity::ResetInt.
 
     public static final int SIZE_IN_BYTES = 28;
 

@@ -126,7 +126,11 @@ public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements
      * @param hashObj The hash value to lookup.
      */
     protected StringBuilder writeAssetLine(StringBuilder builder, String padding, String prefix, GreatQuestHash<?> hashObj) {
-        return writeAssetInfo(builder, padding, prefix, hashObj != null ? hashObj.getHashNumber() : 0, kcCResource::getName).append(Constants.NEWLINE);
+        if (hashObj == null)
+            throw new NullPointerException("hashObj");
+
+        builder.append(padding).append(prefix).append(": ");
+        return builder.append(hashObj.getDisplayString(false));
     }
 
     /**

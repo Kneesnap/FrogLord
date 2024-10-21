@@ -132,7 +132,7 @@ public class GreatQuestModelMesh extends DynamicMesh {
 
         for (int i = 0; i < this.actualMesh.getMeshes().size(); i++) {
             GreatQuestModelMaterialMesh mesh = this.actualMesh.getMeshes().get(i);
-            mesh.updateVertices(); // TODO: We should also update texCoords to animate UVs.
+            mesh.updateVertices(); // TODO: We should also update texCoords to animate UVs, sWaterParam contains per-level water speed data.
         }
     }
 

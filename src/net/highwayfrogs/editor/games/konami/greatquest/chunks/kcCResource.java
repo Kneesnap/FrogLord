@@ -40,7 +40,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
 
     public kcCResource(GreatQuestChunkedFile parentFile, KCResourceID chunkType) {
         super(parentFile != null ? parentFile.getGameInstance() : null);
-        this.selfHash = new GreatQuestHash<>(this);
+        this.selfHash = new GreatQuestHash<>(this); // kcCBaseResource::Init, kcCResource::Init
         this.chunkType = chunkType;
         this.parentFile = parentFile;
         setName(DEFAULT_RESOURCE_NAME, false); // By default, resources are 'unnamed'. See kcCResource::Init()

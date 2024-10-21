@@ -23,7 +23,7 @@ import java.util.List;
  */
 @Getter
 public class kcProxyTriMeshDesc extends kcProxyDesc {
-    private final GreatQuestHash<kcCResourceTriMesh> meshRef; // '.CTM' collision mesh
+    private final GreatQuestHash<kcCResourceTriMesh> meshRef; // '.CTM' collision mesh. This is handled by kcCActorBase::CreateCollisionProxy()
 
     public static final String NAME_SUFFIX = "ProxyDesc"; // This is applied to all kcProxyTriMeshDescs.
     private static final List<String> RECOGNIZED_INVALID_NAMES = Arrays.asList("Fairy Key A", "Fairy Key B", "Fairy Key C", "clover-2");

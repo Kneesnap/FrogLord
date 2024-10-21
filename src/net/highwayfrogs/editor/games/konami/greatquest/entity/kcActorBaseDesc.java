@@ -28,22 +28,22 @@ import java.util.List;
 public class kcActorBaseDesc extends kcEntity3DDesc {
     private final GreatQuestHash<kcCResourceGeneric> parentHash;
     private final GreatQuestHash<kcCResourceGeneric> modelDescRef;
-    private final GreatQuestHash<kcCResourceSkeleton> hierarchyRef; // If this value is -1, it means create a new kcCAnimCtl with CID_PRS for the animation controller. Otherwise, create a new kcCSkeleton from this. If no skeleton can be found by the hash, then an error occurs. So in other words, ZERO SHOULD BE AVOIDED.
+    private final GreatQuestHash<kcCResourceSkeleton> hierarchyRef; // If this value is -1, it means create a new kcCAnimCtl with CID_PRS for the animation controller. Otherwise, create a new kcCSkeleton from this. kcCSkeleton::InitHierarchy() will be called whenever the hash is not -1.
     private int numChan; // Used for initializing the skeleton hierarchy in kcCActorBase::Init
-    private final GreatQuestHash<kcCResourceAnimSet> animSetRef; // MIGHT be unused. Not sure yet.
-    private final GreatQuestHash<kcCResourceGeneric> proxyDescRef; // AVOID ZERO, USE -1 INSTEAD! kcCActorBase::Init() will fail if this is not either -1 or a valid hash.
-    private final GreatQuestHash<kcCResourceNamedHash> animationRef;
+    private final GreatQuestHash<kcCResourceAnimSet> animSetRef; // I've done an extensive search and am confident that this is completely unused.
+    private final GreatQuestHash<kcCResourceGeneric> proxyDescRef; // kcCActorBase::Init() will fail if this is not either -1 or a valid hash.
+    private final GreatQuestHash<kcCResourceNamedHash> animationSequencesRef; // hAnimHash, kcCActorBase::Init, kcCActorBase::ResetInt TODO: The sequence 'NrmIdle01' is applied by kcCActorBase::ResetInt, if the sequence is found. Does this occur on level load? If so, we might want to put that in the editor. It appears repeating the sequence is enabled, so consider that in the editor too. We should probably have a way to preview action sequences actually.
     private static final int PADDING_VALUES = 4;
     private static final String NAME_SUFFIX = "ActorDesc";
 
     public kcActorBaseDesc(@NonNull kcCResourceGeneric resource) {
         super(resource);
-        this.parentHash = new GreatQuestHash<>(resource);
-        this.modelDescRef = new GreatQuestHash<>();
-        this.hierarchyRef = new GreatQuestHash<>();
-        this.animSetRef = new GreatQuestHash<>();
-        this.proxyDescRef = new GreatQuestHash<>();
-        this.animationRef = new GreatQuestHash<>();
+        this.parentHash = new GreatQuestHash<>(resource); // kcActorBaseDesc::__ct
+        this.modelDescRef = new GreatQuestHash<>(); // kcCActorBase::__ct, kcCActorBase::Init()
+        this.hierarchyRef = new GreatQuestHash<>(); // kcCActorBase::Init()
+        this.animSetRef = new GreatQuestHash<>(); // kcCActorBase::__ct
+        this.proxyDescRef = new GreatQuestHash<>(); // kcCActorBase::Init()
+        this.animationSequencesRef = new GreatQuestHash<>(); // kcCActorBase::__ct
         GreatQuestUtils.applySelfNameSuffixAndToFutureNameChanges(resource, NAME_SUFFIX);
     }
 
@@ -73,8 +73,8 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         GreatQuestUtils.resolveResourceHash(kcCResourceSkeleton.class, this, this.hierarchyRef, hierarchyHash, true);
         GreatQuestUtils.resolveResourceHash(kcCResourceAnimSet.class, this, this.animSetRef, animSetHash, true);
         GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, this, this.proxyDescRef, proxyDescHash, !isParentResourceNamed("Dummy", "Tree 8", "Tree 9")); // There are only 3 places this doesn't resolve, all in Rolling Rapids Creek (PC version, PS2 untested).
-        if (!GreatQuestUtils.resolveResourceHash(kcCResourceNamedHash.class, this, this.animationRef, animationHash, false) && animationHash != -1) // There are TONS of hashes set which correspond to sequences which don't exist. TODO: There are enough where I'm almost wondering if we should be automatically naming/resolving this
-            this.animationRef.setOriginalString(getParentResource().getName() + kcCResourceNamedHash.NAME_SUFFIX); // If we don't resolve the asset, we can at least apply the original string.
+        if (!GreatQuestUtils.resolveResourceHash(kcCResourceNamedHash.class, this, this.animationSequencesRef, animationHash, false) && animationHash != -1) // There are TONS of hashes set which correspond to sequences which don't exist. TODO: There are enough where I'm almost wondering if we should be automatically naming/resolving this
+            this.animationSequencesRef.setOriginalString(getParentResource().getName() + kcCResourceNamedHash.NAME_SUFFIX); // If we don't resolve the asset, we can at least apply the original string.
     }
 
     @Override
@@ -82,8 +82,8 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         super.saveData(writer);
 
         // Unless the hash number is -1, it seems this is ALWAYS the resource name + "{seqs}", so ensure we save it like that.
-        if (getParentResource() != null && getParentResource().getResourceName() != null && this.animationRef.getHashNumber() != -1)
-            this.animationRef.setHash(getParentResource().getName() + kcCResourceNamedHash.NAME_SUFFIX);
+        if (getParentResource() != null && getParentResource().getResourceName() != null && this.animationSequencesRef.getHashNumber() != -1)
+            this.animationSequencesRef.setHash(getParentResource().getName() + kcCResourceNamedHash.NAME_SUFFIX);
 
         writer.writeInt(this.parentHash.getHashNumber());
         writer.writeInt(this.modelDescRef.getHashNumber());
@@ -91,7 +91,7 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         writer.writeInt(this.numChan);
         writer.writeInt(this.animSetRef.getHashNumber());
         writer.writeInt(this.proxyDescRef.getHashNumber());
-        writer.writeInt(this.animationRef.getHashNumber());
+        writer.writeInt(this.animationSequencesRef.getHashNumber());
         writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
@@ -104,7 +104,7 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         builder.append(padding).append("NumChan: ").append(this.numChan).append(Constants.NEWLINE);
         writeAssetLine(builder, padding, "Anim Set", this.animSetRef);
         writeAssetLine(builder, padding, "Collision Proxy", this.proxyDescRef);
-        writeAssetLine(builder, padding, "Animation List", this.animationRef);
+        writeAssetLine(builder, padding, "Animation List", this.animationSequencesRef);
     }
 
     /**
@@ -139,10 +139,10 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
     }
 
     /**
-     * Gets the animation which the actor will be using by default, if there is one.
+     * Gets the animation sequences which the actor can use, if there are any.
      */
-    public kcCResourceNamedHash getAnimation() {
-        return this.animationRef.getResource();
+    public kcCResourceNamedHash getAnimationSequences() {
+        return this.animationSequencesRef.getResource();
     }
 
     /**

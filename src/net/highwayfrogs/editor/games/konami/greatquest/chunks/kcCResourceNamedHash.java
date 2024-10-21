@@ -26,12 +26,13 @@ import java.util.List;
  * An actor chooses one of these chunks for its "mpSeqMap" field, in methods such as kcCActorBase::SetSequence or kcCActorBase::IsSequence
  * While in theory any resource could be kept in this hash table, it seems the code only ever uses this for action sequences, so we can treat it as if that's all it supports.
  * TODO: Implement a new hashing system which can do it. (Frick, how are we going to avoid collisions with the name itself? Just create a new random hash and apply it after loading/resolution?)
- *  -> How will we handle kcProxyTriMeshDesc
+ *  -> How will we handle kcProxyTriMeshDesc?
+ *  -> The action sequence chunk is never used by the game itself, and this takes its place.
  * Created by Kneesnap on 8/26/2019.
  */
 @Getter
 public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoWriter {
-    private final List<HashTableEntry> entries = new ArrayList<>();
+    private final List<HashTableEntry> entries = new ArrayList<>(); // Searched by kcCActorBase::IsSequence()
 
     public static final String NAME_SUFFIX = "{seqs}";
 

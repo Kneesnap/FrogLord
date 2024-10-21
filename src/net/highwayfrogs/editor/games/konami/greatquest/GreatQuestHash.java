@@ -33,6 +33,10 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
     private int hashNumber;
     private String originalString; // The "original" string is the one which created the hash, if known.
 
+    // Some hashes need to use zero for their null value instead of -1, due to how they are processed by the game.
+    // For the purposes of distinction, when this is set, we will treat an empty string as zero, and a null string as -1.
+    private boolean nullZero;
+
     // This is the resource associated with the hash number.
     // When this is null, it means the resource was not resolved. (Perhaps we forgot to resolve it, or perhaps it could not be resolved.)
     // It is used as the source of the updated hash, if the hash were to change.
@@ -83,11 +87,11 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
      * Gets the display string, meant for displaying to the user, but NOT modification.
      */
     public String getDisplayString(boolean forceIncludeHash) {
-        if (!forceIncludeHash && (this.originalString == null || this.originalString.isEmpty()) && this.hashNumber != 0)
+        if (!forceIncludeHash && (this.originalString == null || this.originalString.isEmpty()) && !isHashNullOrEmpty())
             return getHashNumberAsString();
 
         String dispStr = (this.originalString != null ? "\"" + escape(this.originalString) + "\"" : "null");
-        if (forceIncludeHash || this.originalString == null || (this.originalString.isEmpty() && this.hashNumber != 0)) {
+        if (forceIncludeHash || this.originalString == null || (this.originalString.isEmpty() && !isHashNullOrEmpty())) {
             return getHashNumberAsString() + "@" + dispStr;
         } else {
             return dispStr;
@@ -104,10 +108,10 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
             } else {
                 return this.originalString;
             }
-        } else if (this.hashNumber != 0) {
-            return getHashNumberAsString();
-        } else {
+        } else if (this.hashNumber == getValueRepresentingNull()) {
             return "null";
+        } else {
+            return getHashNumberAsString();
         }
     }
 
@@ -192,7 +196,7 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
      * This should generally only be called for the master hash.
      */
     public void updateHashFromResource() {
-        int hashNumber = this.resource != null ? this.resource.calculateHash() : 0;
+        int hashNumber = this.resource != null ? this.resource.calculateHash() : getValueRepresentingNull();
         String originalString = this.resource != null ? this.resource.getResourceName() : null;
         if (this.hashNumber != hashNumber || !Objects.equals(originalString, this.originalString))
             setHash(hashNumber, originalString, false);
@@ -207,7 +211,7 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
         if (Objects.equals(this.originalString, originalString))
             return; // Already matches.
 
-        int newHash = GreatQuestUtils.hashFilePath(originalString);
+        int newHash = calculateHash(originalString);
         if (newHash != this.hashNumber)
             throw new IllegalArgumentException("Cannot set '" + originalString + "' to be the original string for " + this + ", as its hash (" + Utils.to0PrefixedHexString(newHash) + ") is incorrect.");
 
@@ -254,7 +258,7 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
     }
 
     private void setHash(String newOriginalString, boolean allowResourceReset) {
-        int newHash = GreatQuestUtils.hashFilePath(newOriginalString);
+        int newHash = calculateHash(newOriginalString);
         if (newHash == this.hashNumber) {
             setOriginalString(newOriginalString);
             return;
@@ -289,7 +293,7 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
 
     private void setHash(int newHash, String newString, boolean requireMatchingHash, boolean allowResourceReset) {
         if (requireMatchingHash) {
-            int realHash = GreatQuestUtils.hashFilePath(newString);
+            int realHash = calculateHash(newString);
             if (realHash != newHash)
                 throw new IllegalArgumentException("The string provided ('" + newString + "') had a hash of " + Utils.to0PrefixedHexString(realHash) + ", but it did not match the provided hash of " + Utils.to0PrefixedHexString(newHash) + ".");
 
@@ -383,6 +387,49 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
             newResource.getSelfHash().getLinkedHashes().add(this);
     }
 
+    private boolean isHashNullOrEmpty() {
+        return this.hashNumber == getValueRepresentingNull() || this.hashNumber == 0;
+    }
+
+    private int getValueRepresentingNull() {
+        return isNullZero() ? 0 : -1;
+    }
+
+    /**
+     * Marks -1 as the value for null.
+     */
+    public GreatQuestHash<TResource> setNullRepresentedAsZero() {
+        if (this.nullZero)
+            throw new IllegalStateException("Null is already set to be -1.");
+
+        this.nullZero = true;
+        if (this.resource == null && this.hashNumber == -1)
+            setHash(0, getOriginalString(), false, false);
+
+        return this;
+    }
+
+    /**
+     * Returns true if a null value should be hashed as -1.
+     * Usage of this feature is entirely dependent on how the original game processes the given hash number.
+     */
+    public boolean isNullZero() {
+        return this.nullZero || (this.resource != null && this.resource.getSelfHash().isNullZero());
+    }
+
+    /**
+     * Calculates the hash of an arbitrary string based on the configuration of this object.
+     * @param input the string to hash
+     * @return hashValue
+     */
+    public int calculateHash(String input) {
+        if (input != null) {
+            return GreatQuestUtils.hashFilePath(input);
+        } else {
+            return getValueRepresentingNull();
+        }
+    }
+
     @Override
     public int hashCode() {
         return this.hashNumber;
@@ -425,7 +472,7 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
          * @return calculatedHash
          */
         default int calculateHash() {
-            return GreatQuestUtils.hashFilePath(getResourceName());
+            return calculateHash(getResourceName());
         }
 
         /**
@@ -442,6 +489,23 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
         default String getHashAsHexString() {
             GreatQuestHash<?> hash = getSelfHash();
             return hash != null ? hash.getHashNumberAsString() : null;
+        }
+
+        /**
+         * Calculates the hash for an arbitrary input string.
+         * Usually this is the default hashing behavior, but it can differ when necessary.
+         * @param input the input string to calculate the hash from
+         * @return hash
+         */
+        default int calculateHash(String input) {
+            GreatQuestHash<?> selfHash = getSelfHash();
+            if (selfHash != null) {
+                return selfHash.calculateHash(input);
+            } else if (input != null) {
+                return GreatQuestUtils.hashFilePath(input);
+            } else {
+                return 0;
+            }
         }
     }
 

@@ -22,8 +22,8 @@ import net.highwayfrogs.editor.utils.Utils;
 @Getter
 @Setter
 public class kcModelDesc extends kcBaseDesc implements IInfoWriter {
-    private final GreatQuestHash<kcCResourceGeneric> parentHash; // The hash of this object's parent.
-    private final GreatQuestHash<kcCResourceModel> modelRef;
+    private final GreatQuestHash<kcCResourceGeneric> parentHash; // The hash of this object's parent. Unused.
+    private final GreatQuestHash<kcCResourceModel> modelRef; // Resolved by kcCModel::Init()
 
     private static final int EXPECTED_MATERIAL_HASH = -1; // Never used.
 

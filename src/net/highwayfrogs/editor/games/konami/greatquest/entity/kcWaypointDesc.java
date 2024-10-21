@@ -24,8 +24,8 @@ public class kcWaypointDesc extends kcEntity3DDesc {
     private final GreatQuestHash<kcCResourceGeneric> parentHash;
     private short type; // TODO: I think this is always 0. Extensions of kcCWaypoint might have other types, but in terms of what is stored in the game data, I think it's just this.
     private short subType; // TODO: FOR game data, it's either 0 or 1. (Replace with enum later?)
-    private final GreatQuestHash<kcCResourceEntityInst> previousWaypointEntityRef; // NOTE: -1 when not found.
-    private final GreatQuestHash<kcCResourceEntityInst> nextWaypointEntityRef; // NOTE: -1 when not found.
+    private final GreatQuestHash<kcCResourceEntityInst> previousWaypointEntityRef; // NOTE: -1 when not found, kcCWaypoint::RenderDebug, kcCWaypoint::__ct, MonsterClass::Do_Guard
+    private final GreatQuestHash<kcCResourceEntityInst> nextWaypointEntityRef; // NOTE: -1 when not found, kcCWaypoint::RenderDebug, kcCWaypoint::__ct, MonsterClass::Do_Guard
     private int waypointFlags; // TODO: What are these? Editor?
     private final kcColor4 color = new kcColor4(); // When this is type 0 subType 1, THIS IS NOT ACTUALLY A COLOR. TODO: REAL EDITOR.
     private float strength;
@@ -35,8 +35,8 @@ public class kcWaypointDesc extends kcEntity3DDesc {
     public kcWaypointDesc(kcCResourceGeneric resource) {
         super(resource);
         this.parentHash = new GreatQuestHash<>(resource);
-        this.previousWaypointEntityRef = new GreatQuestHash<>(-1);
-        this.nextWaypointEntityRef = new GreatQuestHash<>(-1);
+        this.previousWaypointEntityRef = new GreatQuestHash<>();
+        this.nextWaypointEntityRef = new GreatQuestHash<>();
         GreatQuestUtils.applySelfNameSuffixAndToFutureNameChanges(resource, NAME_SUFFIX);
     }
 

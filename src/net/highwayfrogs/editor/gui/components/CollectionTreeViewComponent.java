@@ -4,7 +4,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
-import javafx.scene.control.ListCell;
+import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.image.Image;
@@ -349,7 +349,7 @@ public abstract class CollectionTreeViewComponent<TGameInstance extends GameInst
             this.doubleClickHandler = event -> {
                 if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
                     event.consume();
-                    this.component.onDoubleClick(((ListCell<CollectionViewTreeNode<TViewEntry>>) event.getSource()).getItem().getValue());
+                    this.component.onDoubleClick(((TreeCell<CollectionViewTreeNode<TViewEntry>>) event.getSource()).getItem().getValue());
                 }
             };
         }

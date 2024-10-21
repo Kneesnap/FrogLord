@@ -68,7 +68,7 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
     }
 
     @Override
-    public void load(DataReader reader) {
+    public void load(DataReader reader) { // TODO: Go over kcImportTexture()/kcImportTextureDynamic()/kcImportMaterialTexture().
         int startIndex = reader.getIndex();
         this.hasHeader = (reader.readInt() == SIGNATURE);
         reader.skipInt(); // Skip read size.

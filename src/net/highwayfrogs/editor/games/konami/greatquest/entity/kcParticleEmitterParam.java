@@ -25,8 +25,8 @@ import net.highwayfrogs.editor.utils.Utils;
 public class kcParticleEmitterParam extends kcEntity3DDesc {
     @Getter private kcBlend srcBlend = kcBlend.ONE; // ZERO actually means ONE.
     @Getter private kcBlend dstBlend = kcBlend.ONE; // ZERO actually means ONE.
-    @Getter private final GreatQuestHash<GreatQuestChunkTextureReference> textureRef;
-    @Getter private final GreatQuestHash<kcCResourceGeneric> parentHash; // This is -1 sometimes. The conditions for it being -1 seem unclear, but it looks like potentially it's older data OR data shared between levels though it's hard to say for sure.
+    @Getter private final GreatQuestHash<GreatQuestChunkTextureReference> textureRef; // Resolved by kcCParticleEmitter::Init. CFrogCtl::__ct() shows how parent hash can be set to -1. However, some hashes already exist which are not -1.
+    @Getter private final GreatQuestHash<kcCResourceGeneric> parentHash; // This is -1 sometimes. The conditions for it being -1 seem unclear, but it looks like potentially it's older data OR data shared between levels though it's hard to say for sure. CFrogCtl::__ct() shows how parent hash can be set to -1. However, some hashes already exist which are not -1.
     @Getter private final kcParticleParam particleParam = new kcParticleParam();
     @Getter private float lifeTimeEmitter = -1F; // Valid Values: [-1, 0) union (0, 60) (Seen in kcCParticleEmitter::SetParticleDefaults) If the value is not in the specified range, the kcParticleParam value will be used instead.
     private int maxParticle = DEFAULT_MAX_PARTICLE;

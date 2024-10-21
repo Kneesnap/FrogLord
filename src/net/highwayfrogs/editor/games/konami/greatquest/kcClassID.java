@@ -21,8 +21,8 @@ public enum kcClassID {
     SKELETON("kcCSkeleton", 0x5D3AFFCA, 0x7),
     MODEL("kcCModel", 0xD55B9232, 0x8),
     ANIM_SET("kcCAnimSet", 0x578FA9F1, 0xA),
-    PROXY_CAPSULE("kcCProxyCapsule", 0x6833372A, 0xB), // Don't need to implement.
-    PROXY_TRI_MESH("kcCProxyTriMesh", 0x7E1BC6D7, 0xC), // Don't need to implement.
+    PROXY_CAPSULE("kcCProxyCapsule", 0x6833372A, 0xB), // kcCActorBase::CreateCollisionProxy().
+    PROXY_TRI_MESH("kcCProxyTriMesh", 0x7E1BC6D7, 0xC), // kcCActorBase::CreateCollisionProxy().
     CAMERA_BASE("kcCCameraBase", 0xB2FA1302, 0xD),
     CAMERA_PID("kcCCameraPid", 0x7B2EB3A1, 0xE), // Don't need to implement.
     CAMERA_FREE("kcCCameraFree", 0xB2FA4162, 0xF), // Don't need to implement.
