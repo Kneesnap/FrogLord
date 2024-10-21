@@ -181,7 +181,6 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
     /**
      * Export the current file in its original form.
      */
-    @SneakyThrows
     public void exportOriginalFile() {
         SCGameFile<?> currentFile = getSelectedFileEntry();
         if (currentFile == null || currentFile.getRawFileData() == null) {
@@ -193,8 +192,8 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
         if (selectedFile == null)
             return; // Cancel.
 
-        Files.write(selectedFile.toPath(), currentFile.getRawFileData());
-        getLogger().info("Exported " + selectedFile.getName() + ".");
+        if (Utils.writeBytesToFile(getLogger(), selectedFile, currentFile.getRawFileData(), true))
+            getLogger().info("Exported " + selectedFile.getName() + ".");
     }
 
     /**

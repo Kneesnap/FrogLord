@@ -3,9 +3,9 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.interim;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.IBinarySerializable;
 
 /**
  * Implementation of the 'kcScriptTOC' class.
@@ -14,7 +14,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class kcScriptTOC extends GameObject {
+public class kcScriptTOC implements IBinarySerializable {
     private long causeTypes;
     private long causeStartIndex;
     private long causeCount;

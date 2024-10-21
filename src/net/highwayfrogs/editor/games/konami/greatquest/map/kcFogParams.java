@@ -5,12 +5,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.IBinarySerializable;
 
 /**
  * Represents the '_kcFogParams' struct.
@@ -20,7 +20,7 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class kcFogParams extends GameObject implements IMultiLineInfoWriter {
+public class kcFogParams implements IMultiLineInfoWriter, IBinarySerializable {
     private kcFogMode mode;
     private final kcColor3 color = new kcColor3();
     private float start;

@@ -4,13 +4,13 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.system.mm3d.OffsetType;
+import net.highwayfrogs.editor.utils.IBinarySerializable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,8 +66,8 @@ public class MMFrameAnimationsBlock extends MMDataBlockBody {
 
     @Getter
     @NoArgsConstructor
-    public static final class MMAnimationFrame extends GameObject {
-        private List<MMFloatVertex> vertexPositions = new ArrayList<>();
+    public static final class MMAnimationFrame implements IBinarySerializable {
+        private final List<MMFloatVertex> vertexPositions = new ArrayList<>();
         private transient int loadVertexCount;
 
         public MMAnimationFrame(int vertexCount) {
@@ -92,7 +92,7 @@ public class MMFrameAnimationsBlock extends MMDataBlockBody {
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
-    public static final class MMFloatVertex extends GameObject {
+    public static final class MMFloatVertex implements IBinarySerializable {
         private float x;
         private float y;
         private float z;

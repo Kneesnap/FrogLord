@@ -4,10 +4,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter;
+import net.highwayfrogs.editor.utils.IBinarySerializable;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
@@ -21,7 +21,7 @@ import java.text.DecimalFormat;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class kcColor3 extends GameObject implements IInfoWriter {
+public class kcColor3 implements IInfoWriter, IBinarySerializable {
     private static final DecimalFormat DISPLAY_FORMAT = new DecimalFormat("0.###");
     private float red;
     private float green;

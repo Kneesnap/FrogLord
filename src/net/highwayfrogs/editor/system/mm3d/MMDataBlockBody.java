@@ -2,9 +2,9 @@ package net.highwayfrogs.editor.system.mm3d;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.IBinarySerializable;
 
 /**
  * A general data block body type.
@@ -12,7 +12,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
  */
 @Getter
 @AllArgsConstructor
-public abstract class MMDataBlockBody extends GameObject {
+public abstract class MMDataBlockBody implements IBinarySerializable {
     private OffsetType bodyType;
     private MisfitModel3DObject parent;
 

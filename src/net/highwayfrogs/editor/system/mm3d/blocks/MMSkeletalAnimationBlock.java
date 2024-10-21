@@ -5,12 +5,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.system.mm3d.OffsetType;
+import net.highwayfrogs.editor.utils.IBinarySerializable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,7 +73,7 @@ public class MMSkeletalAnimationBlock extends MMDataBlockBody {
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class MMSkeletalAnimationFrame extends GameObject {
+    public static class MMSkeletalAnimationFrame implements IBinarySerializable {
         private int jointIndex;
         private MMAnimationKeyframeType keyframeType;
         private float posX; // In radians, might be transform, might be rotation.

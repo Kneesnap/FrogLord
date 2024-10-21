@@ -1240,7 +1240,6 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             this.addNewWaveItem.setDisable(viewType == SBRFileUIViewType.ENTRIES);
             this.addNewWaveEntryItem.setDisable(viewType == SBRFileUIViewType.WAVES);
             this.addNewStreamEntryItem.setDisable(viewType == SBRFileUIViewType.WAVES);
-
         }
 
         /**

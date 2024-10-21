@@ -323,11 +323,8 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
             if (this.cachedClip != null)
                 return this.cachedClip;
 
-            if (getGameInstance().isPC()) {
+            if (getGameInstance().isPC() || getGameInstance().isPS2()) {
                 return this.cachedClip = Utils.getClipFromWavFile(toWavFileBytes(), true);
-            } else if (getGameInstance().isPS2()) {
-                // The PS2 version contains wav files with full headers.
-                return this.cachedClip = Utils.getClipFromWavFile(this.rawFileBytes, true);
             } else {
                 throw new UnsupportedOperationException("Unsupported game platform: " + getGameInstance().getPlatform());
             }
@@ -339,14 +336,14 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
         public byte[] toWavFileBytes() {
             if (getGameInstance().isPS2())  {
                 return this.rawFileBytes;
-            } else if (!getGameInstance().isPC()) {
+            } else if (getGameInstance().isPC()) {
+                // The PC version contains raw audio data prefixed with an audio format header.
+                // We try to create a wav file by reading such data.
+                int expectedSize = Utils.readNumberFromBytes(this.rawFileBytes, 2, 14); // Read cbSize from WAVEFORMATEX.
+                return Utils.createWavFile(this.rawFileBytes, 0, expectedSize, this.rawFileBytes, expectedSize, this.rawFileBytes.length - expectedSize);
+            } else {
                 throw new IllegalStateException("Cannot use toWavFileBytes() when the platform is not supported!! (" + getGameInstance().getPlatform() + ")");
             }
-
-            // The PC version contains raw audio data prefixed with an audio format header.
-            // We try to create a wav file by reading such data.
-            int expectedSize = Utils.readNumberFromBytes(this.rawFileBytes, 2, 14); // Read cbSize from WAVEFORMATEX.
-            return Utils.createWavFile(this.rawFileBytes, 0, expectedSize, this.rawFileBytes, expectedSize, this.rawFileBytes.length - expectedSize);
         }
 
         private void clearCachedClip() {
@@ -366,23 +363,7 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
             if (outputFile.isDirectory())
                 outputFile = new File(outputFile, Utils.padNumberString(this.id, 4) + ".wav");
 
-            if (getGameInstance().isPC()) {
-                // The PC version contains a wav file which has some data stripped.
-                try {
-                    Files.write(outputFile.toPath(), toWavFileBytes());
-                } catch (IOException ex) {
-                    Utils.handleError(null, ex, false, "Failed to save audio file '%s'.", outputFile.getName());
-                }
-            } else if (getGameInstance().isPS2()) {
-                // The PS2 version contains wav files with full headers.
-                try {
-                    Files.write(outputFile.toPath(), this.rawFileBytes);
-                } catch (IOException ex) {
-                    Utils.handleError(null, ex, false, "Failed to save audio file '%s'.", outputFile.getName());
-                }
-            } else {
-                throw new UnsupportedOperationException("Unsupported game platform: " + getGameInstance().getPlatform());
-            }
+            Utils.writeBytesToFile(getLogger(), outputFile, toWavFileBytes(), false);
         }
 
         /**

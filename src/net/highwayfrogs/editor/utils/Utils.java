@@ -3102,4 +3102,38 @@ public class Utils {
         writer.closeReceiver();
         return receiver.toArray();
     }
+
+    /**
+     * Safely writes the given bytes to a file, replacing the file if it already exists.
+     * If an exception occurs during the writing of the file, false will be returned, and the error will be handled
+     * @param logger the logger to write any error to. If null is provided, the util logger will be used.
+     * @param outputFile The file to write the data to
+     * @param bytes The bytes to write to the file
+     * @param showPopupOnError If true and an error occurs, a popup will be displayed.
+     * @return true iff the file was successfully written
+     */
+    public static boolean writeBytesToFile(Logger logger, File outputFile, byte[] bytes, boolean showPopupOnError) {
+        if (outputFile == null)
+            throw new NullPointerException("outputFile");
+        if (bytes == null)
+            throw new NullPointerException("bytes");
+
+        if (!outputFile.isFile())
+            throw new IllegalArgumentException("'" + outputFile + "' is not a valid file!");
+
+        File folder = outputFile.getParentFile();
+        if (!folder.exists())
+            throw new IllegalArgumentException("The path to '" + outputFile + "' did not exist, therefore the file cannot be written.");
+
+        try {
+            if (!folder.canWrite()) // We want it to properly create popups based on thread/etc, since this error is one which is likely the user's responsibility.
+                throw new IOException("Can't write to the file '" + outputFile.getName() + "'." + Constants.NEWLINE + "Do you have permission to save in this folder?");
+
+            Files.write(outputFile.toPath(), bytes);
+            return true;
+        } catch (IOException ex) {
+            Utils.handleError(logger, ex, showPopupOnError, "Failed to save file '%s'.", outputFile.getName());
+            return false;
+        }
+    }
 }

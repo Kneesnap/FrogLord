@@ -1,9 +1,9 @@
 package net.highwayfrogs.editor.system.mm3d;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.IBinarySerializable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +13,7 @@ import java.util.List;
  * Created by Kneesnap on 2/28/2019.
  */
 @Getter
-public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
+public class MMDataBlockHeader<T extends MMDataBlockBody> implements IBinarySerializable {
     private final List<T> blocks = new ArrayList<>();
     private int invalidBodies;
 

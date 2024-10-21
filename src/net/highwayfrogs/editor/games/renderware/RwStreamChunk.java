@@ -23,9 +23,7 @@ import net.highwayfrogs.editor.utils.DataSizeUnit;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.ref.SoftReference;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -128,13 +126,8 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
         contextMenu.getItems().add(menuItem);
         menuItem.setOnAction(event -> {
             File outputFile = Utils.promptFileSave(getGameInstance(), "Specify the file to save the chunk data as...", "raw-chunk-data", "Raw RenderWare Stream", "rawrws");
-            if (outputFile != null) {
-                try {
-                    Files.write(outputFile.toPath(), getRawReadData());
-                } catch (IOException ex) {
-                    Utils.handleError(getLogger(), ex, true, "Failed to save file '%s'.", outputFile);
-                }
-            }
+            if (outputFile != null)
+                Utils.writeBytesToFile(getLogger(), outputFile, getRawReadData(), true);
         });
     }
 

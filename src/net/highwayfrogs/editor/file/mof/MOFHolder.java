@@ -39,7 +39,6 @@ import net.highwayfrogs.editor.utils.FileUtils3D;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
-import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -78,7 +77,7 @@ public class MOFHolder extends SCSharedGameFile {
         // TODO: TOSS
         File outputFile = new File(GUIMain.getWorkingDirectory(), getFileDisplayName());
         if (this.rawBytes != null)
-            Files.write(outputFile.toPath(), this.rawBytes);
+            Utils.writeBytesToFile(getLogger(), outputFile, this.rawBytes, true);
     }
 
     @Override

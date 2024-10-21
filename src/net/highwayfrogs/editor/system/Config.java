@@ -12,7 +12,6 @@ import net.highwayfrogs.editor.utils.Utils;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
@@ -423,11 +422,7 @@ public class Config implements IBinarySerializable {
         if (parentFile != null && !parentFile.exists())
             Utils.makeDirectory(parentFile);
 
-        try {
-            Files.write(outputFile.toPath(), toString().getBytes(StandardCharsets.UTF_8));
-        } catch (IOException ex) {
-            Utils.handleError(getLogger(), ex, true, "Failed to save to the file '%s'.", outputFile);
-        }
+        Utils.writeBytesToFile(getLogger(), outputFile, toString().getBytes(StandardCharsets.UTF_8), true);
     }
 
     @Override

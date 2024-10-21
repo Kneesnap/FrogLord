@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.games.konami.greatquest.entity;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
@@ -11,6 +10,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.map.kcColor4;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
+import net.highwayfrogs.editor.utils.IBinarySerializable;
 
 /**
  * Represents the 'kcParticleParam' struct.
@@ -19,7 +19,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
  */
 @Getter
 @Setter
-public class kcParticleParam extends GameObject implements IMultiLineInfoWriter {
+public class kcParticleParam implements IMultiLineInfoWriter, IBinarySerializable {
     private int burstMode = 1;
     private float emitAngle = .55F;
     private float emitAngleVariance = 0F;
