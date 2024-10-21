@@ -101,6 +101,9 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
      * Binds the column widths to the table size.
      */
     public void bindSize() {
+        getRootNode().maxWidth(Double.POSITIVE_INFINITY);
+        getRootNode().prefWidth(Double.POSITIVE_INFINITY);
+
         double oneThirdWidth = getRootNode().getWidth() / 3D;
         this.tableColumnKey.setPrefWidth(oneThirdWidth);
         this.tableColumnValue.setPrefWidth(oneThirdWidth * 2);

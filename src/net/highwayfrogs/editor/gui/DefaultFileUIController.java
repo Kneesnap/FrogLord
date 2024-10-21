@@ -52,9 +52,11 @@ public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFi
             this.fileNameLabel.setText(this.fileNameText != null ? this.fileNameText : "Unnamed File Type");
 
         if (this.rightSidePanelFreeArea != null) {
+            HBox.setHgrow(this.rightSidePanelFreeArea, Priority.ALWAYS);
+
             Node propertyListViewRootNode = this.propertyListViewer.getRootNode();
-            HBox.setHgrow(propertyListViewRootNode, Priority.ALWAYS);
-            getPropertyListViewer().bindSize();
+            VBox.setVgrow(propertyListViewRootNode, Priority.ALWAYS);
+            this.propertyListViewer.bindSize();
             getRightSidePanelFreeArea().getChildren().add(propertyListViewRootNode);
             addController(this.propertyListViewer);
         }
@@ -117,5 +119,4 @@ public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFi
 
         return controller;
     }
-
 }
