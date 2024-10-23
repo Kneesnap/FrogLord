@@ -24,6 +24,7 @@ import java.util.Map.Entry;
 
 /**
  * Represents an instance of 'Frogger: The Great Quest'.
+ * TODO: Fix transparency for the bone icon.
  * Created by Kneesnap on 4/13/2024.
  */
 @Getter
