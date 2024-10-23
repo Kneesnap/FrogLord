@@ -12,6 +12,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
+import javafx.stage.Stage;
 import lombok.AllArgsConstructor;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.vlo.GameImage;
@@ -39,7 +40,16 @@ public class SelectionMenu {
      * @param handler The behavior to execute when the user accepts.
      */
     public static <T> void promptSelection(GameInstance instance, String prompt, Consumer<T> handler, Collection<T> values, Function<T, String> nameFunction, Function<T, Image> imageFunction) {
-        Utils.createWindowFromFXMLTemplate("window-wait-for-user-select", new SelectionController<>(instance, prompt, handler, values, nameFunction, imageFunction), "Waiting for selection...", true);
+        Utils.createWindowFromFXMLTemplate("window-wait-for-user-select", new SelectionController<>(instance, prompt, handler, values, nameFunction, imageFunction, false), "Waiting for selection...", true);
+    }
+
+    /**
+     * Require the user to perform a selection.
+     * @param prompt  The prompt to display the user.
+     * @param handler The behavior to execute when the user accepts.
+     */
+    public static <T> void promptSelectionAllowNull(GameInstance instance, String prompt, Consumer<T> handler, Collection<T> values, Function<T, String> nameFunction, Function<T, Image> imageFunction) {
+        Utils.createWindowFromFXMLTemplate("window-wait-for-user-select", new SelectionController<>(instance, prompt, handler, values, nameFunction, imageFunction, true), "Waiting for selection...", false);
     }
 
     /**
@@ -80,14 +90,17 @@ public class SelectionMenu {
         private final Collection<T> values;
         private final Function<T, String> nameFunction;
         private final Function<T, Image> imageFunction;
+        private final boolean handleNull;
+        private boolean handlerAccepted;
 
-        public SelectionController(GameInstance instance, String prompt, Consumer<T> handler, Collection<T> values, Function<T, String> nameFunction, Function<T, Image> imageFunction) {
+        public SelectionController(GameInstance instance, String prompt, Consumer<T> handler, Collection<T> values, Function<T, String> nameFunction, Function<T, Image> imageFunction, boolean handleNull) {
             super(instance);
             this.values = values;
             this.prompt = prompt;
             this.handler = handler;
             this.nameFunction = nameFunction;
             this.imageFunction = imageFunction;
+            this.handleNull = handleNull;
         }
 
         @Override
@@ -98,6 +111,16 @@ public class SelectionMenu {
             optionList.getSelectionModel().selectFirst();
             promptText.setText(prompt);
 
+            Stage stage = getStage();
+            if (stage != null) {
+                stage.setOnCloseRequest(event -> {
+                    if (!this.handlerAccepted && this.handleNull) {
+                        this.handlerAccepted = true;
+                        this.handler.accept(null);
+                    }
+                });
+            }
+
             // Since the l
             optionList.setOnKeyPressed(evt -> {
                 if (evt.getCode() == KeyCode.ESCAPE)
@@ -107,6 +130,7 @@ public class SelectionMenu {
 
         @FXML
         private void onAccept(ActionEvent event) {
+            this.handlerAccepted = true;
             handler.accept(optionList.getSelectionModel().getSelectedItem());
             closeWindow();
         }

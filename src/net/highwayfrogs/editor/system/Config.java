@@ -117,6 +117,22 @@ public class Config implements IBinarySerializable {
     }
 
     /**
+     * Gets the individual lines of text (with their comments) from a list of config value nodes.
+     * @return textStringList
+     */
+    public List<String> getTextWithComments() {
+        List<String> textList = new ArrayList<>(this.internalText.size());
+        for (int i = 0; i < this.internalText.size(); i++) {
+            ConfigValueNode node = this.internalText.get(i);
+            String text = node != null ? node.getTextWithComments() : null;
+            if (text != null)
+                textList.add(text);
+        }
+
+        return textList;
+    }
+
+    /**
      * Is this Config a root config? (A root config is the configuration which parents any child configs. There is no parent to the root config.)
      */
     public boolean isRootNode() {
@@ -471,7 +487,7 @@ public class Config implements IBinarySerializable {
 
         builder.append(sectionEnd);
         if (!Utils.isNullOrWhiteSpace(node.getSectionComment())) {
-            builder.append(" # ");
+            builder.append(ConfigValueNode.DEFAULT_COMMENT_SEPARATOR);
             builder.append(node.getSectionComment());
         }
 
@@ -688,6 +704,7 @@ public class Config implements IBinarySerializable {
             // Read the comment, if there is one.
             String text = trimmedLine;
 
+            String commentSeparator = ConfigValueNode.DEFAULT_COMMENT_SEPARATOR;
             String commentText = "";
             int commentAt = -1;
             for (int i = 0; i < text.length(); i++) {
@@ -702,8 +719,11 @@ public class Config implements IBinarySerializable {
             }
 
             if (commentAt != -1) {
-                commentText = Utils.trimStart(text.substring(commentAt + 1));
-                text = Utils.trimEnd(text.substring(0, commentAt));
+                String rawCommentText = text.substring(commentAt + 1);
+                commentText = Utils.trimStart(rawCommentText);
+                String rawText = text.substring(0, commentAt);
+                text = Utils.trimEnd(rawText);
+                commentSeparator = rawText.substring(text.length()) + '#' + rawCommentText.substring(0, rawText.length() - text.length());
             }
 
             if (Utils.isNullOrWhiteSpace(text) && Utils.isNullOrWhiteSpace(commentText))
@@ -728,10 +748,10 @@ public class Config implements IBinarySerializable {
             if (splitAt != -1) { // It's a key-value pair.
                 String key = unescapeKey(text.substring(0, splitAt));
                 String value = unescapeString(text.substring(splitAt + 1));
-                config.keyValuePairs.put(key, new ConfigValueNode(value, commentText));
+                config.keyValuePairs.put(key, new ConfigValueNode(value, commentText, commentSeparator));
             } else { // It's raw text.
                 boolean isEmpty = text.equalsIgnoreCase("```");
-                ConfigValueNode newNode = isEmpty ? new ConfigValueNode("", commentText) : new ConfigValueNode(text, commentText);
+                ConfigValueNode newNode = isEmpty ? new ConfigValueNode("", commentText, commentSeparator) : new ConfigValueNode(text, commentText, commentSeparator);
                 newNode.setEscapedNewLine(isEmpty);
                 config.getInternalText().add(newNode);
             }
@@ -768,10 +788,18 @@ public class Config implements IBinarySerializable {
         @Setter private String comment;
         @Setter(AccessLevel.PRIVATE) private boolean escapedNewLine;
         @Setter private String value; // Can be empty, but not null.
+        @Setter private String commentSeparator;
+
+        public static final String DEFAULT_COMMENT_SEPARATOR = " # ";
 
         public ConfigValueNode(String value, String comment) {
+            this(value, comment, DEFAULT_COMMENT_SEPARATOR);
+        }
+
+        public ConfigValueNode(String value, String comment, String commentSeparator) {
             this.value = value != null ? value : "";
             this.comment = comment;
+            this.commentSeparator = commentSeparator;
         }
 
         /**
@@ -999,12 +1027,19 @@ public class Config implements IBinarySerializable {
 
         @Override
         public String toString() {
+            return getTextWithComments();
+        }
+
+        /**
+         * Gets the text with the comment(s) included.
+         */
+        public String getTextWithComments() {
             if (this.escapedNewLine)
-                return "```" + (Utils.isNullOrWhiteSpace(this.comment) ? "" : " # " + this.comment);
+                return "```" + (Utils.isNullOrWhiteSpace(this.comment) ? "" : this.commentSeparator + this.comment);
             if (Utils.isNullOrWhiteSpace(this.comment))
                 return Config.escapeString(this.value != null ? this.value : "");
             return Config.escapeString(this.value != null ? this.value : "")
-                    + (Utils.isNullOrWhiteSpace(this.value) ? "# " : " # ") + this.comment;
+                    + this.commentSeparator + this.comment;
         }
     }
 

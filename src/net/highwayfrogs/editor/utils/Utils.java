@@ -711,6 +711,15 @@ public class Utils {
     }
 
     /**
+     * Read text from a file.
+     * @param file The file to read from.
+     * @return fileText
+     */
+    public static String readFileText(File file) {
+        return String.join(Constants.NEWLINE, readLinesFromFile(file));
+    }
+
+    /**
      * Read bytes from an InputStream
      * Stolen from sun.nio.ch
      * @param stream The stream to read from.
@@ -3135,5 +3144,96 @@ public class Utils {
             Utils.handleError(logger, ex, showPopupOnError, "Failed to save file '%s'.", outputFile.getName());
             return false;
         }
+    }
+
+    /**
+     * Format a string safely, not throwing an exception if there is an issue.
+     * @param str  The string to format.
+     * @param args The arguments to format it with.
+     * @return formattedString
+     */
+    public static String formatStringSafely(String str, Object... args) {
+        if (args.length == 0)
+            return str;
+
+        try {
+            return String.format(str, args);
+        } catch (IllegalFormatException ife) {
+            handleError(null, ife, false, "There was an issue formatting the string '%s'.", str);
+            return str + " (FORMATTING ERROR)";
+        }
+    }
+
+    /**
+     * Gets the clean string of a double value.
+     * Examples:
+     * - 12.34 -> "12.34"
+     * - 12.0  -> "12"
+     * @param doubleVal The value to get the string of.
+     * @return numString
+     */
+    public static String doubleToCleanString(double doubleVal) {
+        return ((int) doubleVal == doubleVal) ? String.valueOf((int) doubleVal) : String.valueOf(doubleVal);
+    }
+
+    /**
+     * Gets the number of digits for a number.
+     * @param number The number to get digits for.
+     * @return digitCount
+     */
+    public static int getDigitCount(int number) {
+        return (int) Math.max(Math.log10(number), 0) + 1;
+    }
+
+    /**
+     * Appends left-based padding.
+     * @return paddedStr
+     */
+    public static String appendLeftPadding(String str, int goalSize, char add) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < (goalSize - str.length()); i++)
+            sb.append(add);
+        sb.append(str);
+        return sb.toString();
+    }
+
+    /**
+     * Get the error messages as a list of strings.
+     * @param throwable The error to get messages from.
+     * @return errorMessages
+     */
+    public static List<String> getErrorMessages(Throwable throwable) {
+        List<String> messages = new ArrayList<>();
+        while (throwable != null) {
+            messages.add(0, throwable.getMessage());
+            throwable = throwable.getCause();
+        }
+
+        return messages;
+    }
+
+    /**
+     * Get the error messages as a newline separated string.
+     * @param throwable The error to get messages from.
+     * @return errorMessages
+     */
+    public static String getErrorMessagesString(Throwable throwable) {
+        StringBuilder builder = new StringBuilder();
+        List<Throwable> errors = new ArrayList<>();
+        while (throwable != null) {
+            errors.add(0, throwable);
+            throwable = throwable.getCause();
+        }
+
+        for (Throwable error : errors) {
+            if (builder.length() > 0)
+                builder.append("\n");
+            String message = error.getMessage();
+            if (message == null)
+                message = error.getLocalizedMessage();
+            builder.append(message);
+        }
+
+        return builder.toString();
     }
 }
