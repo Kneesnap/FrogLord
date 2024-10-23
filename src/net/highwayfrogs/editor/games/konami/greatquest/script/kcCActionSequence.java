@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.KCResourceID;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -103,5 +104,15 @@ public class kcCActionSequence extends kcCResource {
         super.save(writer);
         for (int i = 0; i < this.actions.size(); i++)
             this.actions.get(i).save(writer);
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        propertyList.add("Actions", this.actions.size());
+        for (int i = 0; i < this.actions.size(); i++)
+            propertyList.add("Action " + i, this.actions.get(i));
+
+        return propertyList;
     }
 }

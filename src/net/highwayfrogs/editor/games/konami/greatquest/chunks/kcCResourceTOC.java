@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,7 +19,7 @@ import java.util.Map;
 public class kcCResourceTOC extends kcCResource {
     private final List<Integer> hashes = new ArrayList<>();
 
-    private static final String SECTION_NAME = "TOC"; // The hash is 4293, which means the section name is 'TOC'. Applied by default since there should only be one TOC section.
+    private static final String SECTION_NAME = "TOC"; // The hash is 4293, which means the section name is 'TOC'. PS2 PAL is the only build seen to contain multiple TOC chunks per file, but they also use the same name/hash too.
 
     public kcCResourceTOC(GreatQuestChunkedFile chunkedFile) {
         super(chunkedFile, KCResourceID.TOC);
@@ -40,15 +41,26 @@ public class kcCResourceTOC extends kcCResource {
             writer.writeInt(hash);
     }
 
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        propertyList.add("Hashes", this.hashes.size());
+        return propertyList;
+    }
+
     /**
      * Generates updated contents, for saving.
+     * @param resources the resources to create the hash list from
      */
-    public void update() {
+    public void update(List<kcCResource> resources) {
+        if (resources == null)
+            throw new NullPointerException("resources");
+
         Map<Integer, kcCResource> collisionMap = new HashMap<>();
 
         this.hashes.clear();
-        for (int i = 0; i < getParentFile().getChunks().size(); i++) {
-            kcCResource chunk = getParentFile().getChunks().get(i);
+        for (int i = 0; i < resources.size(); i++) {
+            kcCResource chunk = resources.get(i);
 
             kcCResource collidingChunk = collisionMap.put(chunk.getHash(), chunk);
             if (collidingChunk != null)

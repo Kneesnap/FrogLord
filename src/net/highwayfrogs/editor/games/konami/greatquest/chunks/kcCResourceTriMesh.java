@@ -11,6 +11,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInf
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcBox4;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -44,8 +46,14 @@ public class kcCResourceTriMesh extends kcCResource {
         this.triMesh.save(writer);
     }
 
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        return this.triMesh.addToPropertyList(propertyList);
+    }
+
     @Getter
-    public static class kcCTriMesh extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
+    public static class kcCTriMesh extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter, IPropertyListCreator {
         private final kcBox4 boundingBox;
         private final List<kcVector4> vertices = new ArrayList<>();
         private final List<kcCFace> faces = new ArrayList<>();
@@ -114,6 +122,14 @@ public class kcCResourceTriMesh extends kcCResource {
             builder.append(padding).append("Faces (").append(this.faces.size()).append("):").append(Constants.NEWLINE);
             for (int i = 0; i < this.faces.size(); i++)
                 this.faces.get(i).writePrefixedInfoLine(builder, "", newPadding);
+        }
+
+        @Override
+        public PropertyList addToPropertyList(PropertyList propertyList) {
+            // TODO: Nested Property: this.boundingBox.writePrefixedMultiLineInfo(builder, "Bounding Box", padding, newPadding);
+            propertyList.add("Vertices", this.vertices.size());
+            propertyList.add("Faces", this.faces.size());
+            return propertyList;
         }
     }
 

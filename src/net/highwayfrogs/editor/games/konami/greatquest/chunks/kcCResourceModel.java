@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFil
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 
 /**
  * A reference to a 3D model.
@@ -33,7 +34,6 @@ public class kcCResourceModel extends kcCResource {
         GreatQuestAssetBinFile mainArchive = getMainArchive();
         if (mainArchive != null)
             mainArchive.applyFileName(this.fullPath, false);
-
     }
 
     @Override
@@ -60,6 +60,13 @@ public class kcCResourceModel extends kcCResource {
         kcModelWrapper wrapper = getModelWrapper();
         if (wrapper != null)
             context.getMaterialLoadContext().resolveMaterialTexturesInChunk(getParentFile(), wrapper, wrapper.getModel().getMaterials());
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        propertyList.add("File Path", this.fullPath); // TODO: Allow changing.
+        return propertyList;
     }
 
     /**

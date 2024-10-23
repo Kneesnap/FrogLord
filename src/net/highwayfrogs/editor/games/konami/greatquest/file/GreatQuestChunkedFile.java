@@ -26,9 +26,10 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
-import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.GreatQuestChunkedFileInfoController;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestChunkFileEditor;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.GreatQuestMapMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.GreatQuestMapMeshController;
+import net.highwayfrogs.editor.gui.DefaultFileUIController;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
@@ -133,7 +134,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     public void save(DataWriter writer) {
         // Write table of contents.
         kcCResourceTOC tableOfContents = new kcCResourceTOC(this);
-        tableOfContents.update();
+        tableOfContents.update(getChunks());
         writeChunk(writer, tableOfContents);
 
         // Write chunks.
@@ -163,7 +164,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
     @Override
     public GameUIController<?> makeEditorUI() {
-        return loadEditor(getGameInstance(), "edit-file-toc", new GreatQuestChunkedFileInfoController(getGameInstance()), this);
+        return DefaultFileUIController.loadEditor(getGameInstance(), new GreatQuestChunkFileEditor(getGameInstance()), this);
     }
 
     @Override

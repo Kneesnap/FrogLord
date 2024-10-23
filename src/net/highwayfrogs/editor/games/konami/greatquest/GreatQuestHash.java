@@ -414,7 +414,7 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
      * Usage of this feature is entirely dependent on how the original game processes the given hash number.
      */
     public boolean isNullZero() {
-        return this.nullZero || (this.resource != null && this.resource.getSelfHash().isNullZero());
+        return this.nullZero || (this.resource != null && this.resource.getSelfHash() != this && this.resource.getSelfHash().isNullZero());
     }
 
     /**

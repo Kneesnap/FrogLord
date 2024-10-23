@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script;
 
+import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -11,6 +12,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcInterimS
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcScriptListInterim;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcScriptTOC;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
+import net.highwayfrogs.editor.gui.ImageResource;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -86,6 +89,18 @@ public class kcScriptList extends kcCResource {
         // Write unhandled data.
         if (this.rawUnhandledData != null && this.rawUnhandledData.length > 0)
             writer.writeBytes(this.rawUnhandledData);
+    }
+
+    @Override
+    public Image getCollectionViewIcon() {
+        return ImageResource.WIN98_TERMINAL_16.getFxImage();
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        propertyList.add("Scripts", this.scripts.size());
+        return propertyList;
     }
 
     /**

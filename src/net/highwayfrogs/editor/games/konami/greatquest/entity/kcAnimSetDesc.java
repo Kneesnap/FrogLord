@@ -10,6 +10,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceAnimSet;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -20,7 +22,7 @@ import java.util.List;
  * Created by Kneesnap on 4/16/2024.
  */
 @Getter
-public class kcAnimSetDesc extends kcBaseDesc {
+public class kcAnimSetDesc extends kcBaseDesc implements IPropertyListCreator {
     private final GreatQuestHash<kcCResourceAnimSet> parentHash;
     private final List<GreatQuestHash<kcCResourceTrack>> animationRefs = new ArrayList<>();
 
@@ -82,5 +84,13 @@ public class kcAnimSetDesc extends kcBaseDesc {
         }
 
         return animations;
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList.add("Animation References", this.animationRefs.size());
+        for (int i = 0; i < this.animationRefs.size(); i++)
+            propertyList.add("Animation Ref " + i, this.animationRefs.get(i).getDisplayString(false));
+        return propertyList;
     }
 }

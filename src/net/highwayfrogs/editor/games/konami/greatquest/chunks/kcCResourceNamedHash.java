@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -84,6 +85,18 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
                     .append(hashTableEntry.getValueRef())
                     .append(Constants.NEWLINE);
         }
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        propertyList.add("Entries", this.entries.size());
+        for (int i = 0; i < this.entries.size(); i++) {
+            HashTableEntry entry = this.entries.get(i);
+            propertyList.add(entry.getKeyName() + " (" + Utils.to0PrefixedHexString(entry.getKeyHash()) + ")", entry.getValueRef().getDisplayString(false));
+        }
+
+        return propertyList;
     }
 
     @Getter

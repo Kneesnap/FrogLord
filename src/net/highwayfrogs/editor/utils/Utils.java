@@ -3118,7 +3118,7 @@ public class Utils {
         if (bytes == null)
             throw new NullPointerException("bytes");
 
-        if (!outputFile.isFile())
+        if (outputFile.exists() && !outputFile.isFile())
             throw new IllegalArgumentException("'" + outputFile + "' is not a valid file!");
 
         File folder = outputFile.getParentFile();

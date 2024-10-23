@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFil
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestImageFile;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -41,6 +42,13 @@ public class GreatQuestChunkTextureReference extends kcCResource {
     public void save(DataWriter writer) {
         super.save(writer);
         writer.writeNullTerminatedFixedSizeString(this.path, PATH_SIZE, GreatQuestInstance.PADDING_BYTE_CD);
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        propertyList.add("File Path", this.path); // TODO: Allow changing. (Make sure to validate the hash though!)
+        return propertyList;
     }
 
     /**

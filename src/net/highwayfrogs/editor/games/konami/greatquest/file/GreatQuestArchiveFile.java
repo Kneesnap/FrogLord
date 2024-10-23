@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.games.konami.greatquest.file;
 
-import javafx.fxml.FXMLLoader;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import lombok.Getter;
@@ -11,8 +10,6 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedRe
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IFileExport;
-import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestFileEditorUIController;
-import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
@@ -246,25 +243,5 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
                 throw new RuntimeException("Failed to export file '" + getDebugName() + "' to usable format.", ex);
             }
         }
-    }
-
-    /**
-     * Loads a GameFile editor.
-     * @param gameInstance the game instance to create the editor for
-     * @param controller the controller to control the GUI
-     * @param template the gui layout template
-     * @param fileToEdit the file to edit
-     * @return editor
-     */
-    public static <TGameFile extends GreatQuestArchiveFile, TUIController extends GreatQuestFileEditorUIController<TGameFile>> TUIController loadEditor(GreatQuestInstance gameInstance, String template, TUIController controller, TGameFile fileToEdit) {
-        try {
-            FXMLLoader templateLoader = Utils.getFXMLTemplateLoader(gameInstance, template);
-            GameUIController.loadController(gameInstance, templateLoader, controller);
-            controller.setTargetFile(fileToEdit);
-        } catch (Throwable th) {
-            Utils.handleError(fileToEdit.getLogger(), th, true, "Failed to create editor UI.");
-        }
-
-        return controller;
     }
 }

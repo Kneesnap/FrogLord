@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.generic;
 
+import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
@@ -19,6 +20,9 @@ import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcEmitterDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyCapsuleDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyTriMeshDesc;
+import net.highwayfrogs.editor.gui.ImageResource;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.function.BiFunction;
@@ -77,6 +81,40 @@ public class kcCResourceGeneric extends kcCResource {
             this.cachedObject.save(writer);
         } else if (this.bytes != null) {
             writer.writeBytes(this.bytes);
+        }
+    }
+
+    // TODO: On double click -> Pass to the generic. [Open model viewer]
+    // TODO: Add property stuff for generics.
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        propertyList.add("Generic Resource Type", getResourceType());
+        if (this.cachedObject instanceof IPropertyListCreator)
+            propertyList = ((IPropertyListCreator) this.cachedObject).addToPropertyList(propertyList);
+
+        return propertyList;
+    }
+
+    @Override
+    public String getCollectionViewDisplayName() {
+        kcCResourceGenericType type = getResourceType();
+        if (type != null && type.getDisplayName() != null) {
+            return super.getCollectionViewDisplayName() + " (" + type.getDisplayName() + ")";
+        } else {
+            return super.getCollectionViewDisplayName();
+        }
+    }
+
+    @Override
+    public Image getCollectionViewIcon() {
+        kcCResourceGenericType type = getResourceType();
+        ImageResource imageResource = type != null ? type.getImageResource() : null;
+        if (imageResource != null) {
+            return imageResource.getFxImage();
+        } else {
+            return super.getCollectionViewIcon();
         }
     }
 
@@ -322,30 +360,33 @@ public class kcCResourceGeneric extends kcCResource {
         }
     }
 
-
     @Getter
     public enum kcCResourceGenericType {
-        ACTOR_BASE_DESCRIPTION("ActorBaseDesc", 0x46E460D7), // Real Struct: kcActorBaseDesc
-        EMITTER_DESCRIPTION("EmitterDesc", 0x3224F1ED), // Real Struct: kcEmitterDesc
-        ITEM_DESCRIPTION("ItemDesc", 0xE23B225D), // Real Struct: CUniqueItemDesc
-        LAUNCHER_DESCRIPTION("LauncherDesc", 0x5E2E846B), // Real Struct: kcLauncherParams
-        MODEL_DESCRIPTION("", 0x00000000), // Real Struct: "kcModelDesc". The class tag is created from string "", and it is not known why.
-        PARTICLE_EMITTER_PARAM("ParticleParam", 0x5A800152), // Real Struct: kcParticleEmitterParam.
-        PROP_DESCRIPTION("PropDesc", 0x7486225C), // Real Struct: CPropDesc
-        PROXY_CAPSULE_DESCRIPTION("ProxyCapsule", 0xF56C372A), // Real Struct: kcProxyCapsuleDesc
-        PROXY_TRI_MESH_DESCRIPTION("ProxyTriMesh", 0xE344C6D7), // Real Struct: kcProxyDesc but with an extra hash value at the end for the model file name. Let's call it kcProxyTriMeshDesc.
-        RESOURCE_PATH("ResourcePath", 0x24592470), // It appears this is unused and there is no corresponding class/struct in debug symbols.
-        STRING_RESOURCE(0x691277A3), // kcResUtil.cpp/kcCreateStringResource.
-        WAYPOINT_DESCRIPTION("WaypointDesc", 0x9F9934B5); // Real Struct: kcWaypointDesc
+        ACTOR_BASE_DESCRIPTION(ImageResource.GHIDRA_ICON_MONKEY_16, "Actor Entity Data", "ActorBaseDesc", 0x46E460D7), // Real Struct: kcActorBaseDesc
+        EMITTER_DESCRIPTION(ImageResource.GHIDRA_ICON_MONKEY_16, "Emitter Entity Data", "EmitterDesc", 0x3224F1ED), // Real Struct: kcEmitterDesc
+        ITEM_DESCRIPTION(ImageResource.GHIDRA_ICON_MONKEY_16, "Item Entity Data", "ItemDesc", 0xE23B225D), // Real Struct: CUniqueItemDesc
+        LAUNCHER_DESCRIPTION(ImageResource.GHIDRA_ICON_LOCATION_OUT_16, "Launcher Entity Data", "LauncherDesc", 0x5E2E846B), // Real Struct: kcLauncherParams
+        MODEL_DESCRIPTION(ImageResource.GEOMETRIC_SHAPES_16, "3D Model Identifier", "", 0x00000000), // Real Struct: "kcModelDesc". The class tag is created from string "", and it is not known why.
+        PARTICLE_EMITTER_PARAM(ImageResource.GHIDRA_ICON_MONKEY_16, "Particle Emitter Entity Data", "ParticleParam", 0x5A800152), // Real Struct: kcParticleEmitterParam.
+        PROP_DESCRIPTION(ImageResource.GHIDRA_ICON_MONKEY_16, "Prop Entity Data", "PropDesc", 0x7486225C), // Real Struct: CPropDesc
+        PROXY_CAPSULE_DESCRIPTION(ImageResource.GEOMETRIC_SHAPES_16, "Collision Capsule Data", "ProxyCapsule", 0xF56C372A), // Real Struct: kcProxyCapsuleDesc
+        PROXY_TRI_MESH_DESCRIPTION(ImageResource.GOURAUD_TRIANGLE_LIST_16, "Collision Mesh Data", "ProxyTriMesh", 0xE344C6D7), // Real Struct: kcProxyDesc but with an extra hash value at the end for the model file name. Let's call it kcProxyTriMeshDesc.
+        RESOURCE_PATH(ImageResource.GHIDRA_ICON_OPEN_SMALL_FOLDER_16, "Resource File Path", "ResourcePath", 0x24592470), // It appears this is unused and there is no corresponding class/struct in debug symbols.
+        STRING_RESOURCE(ImageResource.WIN98_HELP_FAQ_16, "String", 0x691277A3), // kcResUtil.cpp/kcCreateStringResource.
+        WAYPOINT_DESCRIPTION(ImageResource.GHIDRA_ICON_FLAG_GREEN_16, "Waypoint Entity Data", "WaypointDesc", 0x9F9934B5); // Real Struct: kcWaypointDesc
 
+        private final ImageResource imageResource;
+        private final String displayName;
         private final String name;
         private final int tag; // The hashes are explicitly included in the code to make Ctrl + F searching for hashes feasible.
 
-        kcCResourceGenericType(int tag) {
-            this(null, tag);
+        kcCResourceGenericType(ImageResource imageResource, String displayName, int tag) {
+            this(imageResource, displayName, null, tag);
         }
 
-        kcCResourceGenericType(String name, int tag) {
+        kcCResourceGenericType(ImageResource imageResource, String displayName, String name, int tag) {
+            this.imageResource = imageResource;
+            this.displayName = displayName;
             this.name = name;
             this.tag = tag;
             if (name != null && GreatQuestUtils.hash(name) != tag)

@@ -14,6 +14,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcBox4;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.games.konami.greatquest.model.*;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -220,6 +221,20 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
         builder.append(padding).append("Visual Tree:").append(Constants.NEWLINE);
         this.visualTree.writeMultiLineInfo(builder, newPadding);
         builder.append(Constants.NEWLINE);
+    }
+
+    @Override
+    public void handleDoubleClick() {
+        getParentFile().openMeshViewer();
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        propertyList.add("Vertex Buffers", this.vertexBuffers.size());
+        propertyList.add("Materials", this.materials.size());
+        propertyList.add("Collision Meshes", this.collisionMeshes.size());
+        return propertyList;
     }
 
     @Getter

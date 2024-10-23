@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.map;
 
+import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
@@ -11,6 +12,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.KCResourceID;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.ImageResource;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -63,6 +66,11 @@ public class kcEnvironment extends kcCResource implements IMultiLineInfoWriter {
         getPerspective().save(writer);
     }
 
+    @Override
+    public Image getCollectionViewIcon() {
+        return ImageResource.GHIDRA_ICON_INTERNET_16.getFxImage();
+    }
+
     /**
      * Creates the editor for the data here.
      * @param editorGrid the editor to setup
@@ -85,6 +93,27 @@ public class kcEnvironment extends kcCResource implements IMultiLineInfoWriter {
             editorGrid.addBoldLabel("Directional Light #" + (i + 1));
             this.directionalLights[i].setupEditor(editorGrid, viewController);
         }
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        // TODO: Nested properties of "Perspective": this.perspective.addToPropertyList(propertyList);
+
+        propertyList.add("Fog Enabled", this.fogEnabled);
+        // TODO: Nested properties of "Fog": this.fog.addToPropertyList(propertyList);
+
+        propertyList.add("Lighting Enabled", this.lightingEnabled);
+        propertyList.add("Ambient Light Color", Utils.to0PrefixedHexString(this.ambientLightPackedColor));
+
+        for (int i = 0; i < this.directionalLights.length; i++) {
+            if (this.directionalLights[i] == null)
+                continue;
+
+            // TODO: Nested properties of "Directional Light #" + (i + 1): this.this.directionalLights[i].addToPropertyList(propertyList);
+        }
+
+        return propertyList;
     }
 
     @Override

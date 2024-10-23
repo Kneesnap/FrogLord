@@ -13,7 +13,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
-import net.highwayfrogs.editor.gui.components.DefaultFileEditorUISoundListComponent.IBasicSound;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -180,7 +179,7 @@ public abstract class ListViewComponent<TGameInstance extends GameInstance, TVie
      * @param editorComponent the editor component to apply the behavior to
      */
     @SuppressWarnings("unchecked")
-    public void applyDefaultEditor(CollectionEditorComponent<TGameInstance, ? extends IBasicSound> editorComponent) {
+    public void applyDefaultEditor(CollectionEditorComponent<TGameInstance, ?> editorComponent) {
         editorComponent.setRemoveButtonLogic(viewEntry -> removeViewEntry((TViewEntry) viewEntry));
         editorComponent.setMoveButtonLogic((viewEntry, direction) -> moveViewEntry((TViewEntry) viewEntry, direction.getOffset()));
     }

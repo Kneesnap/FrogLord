@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.kcTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -93,6 +94,14 @@ public class kcCResourceTrack extends kcCResource implements IMultiLineInfoWrite
             this.tracks.get(i).writeMultiLineInfo(builder, newPadding);
             builder.append(Constants.NEWLINE);
         }
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        propertyList.add("Tracks", this.tracks.size());
+        // TODO: Nest the track information for each track.
+        return propertyList;
     }
 
     /**

@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcAnimSetDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 
 import java.util.List;
 
@@ -31,6 +32,12 @@ public class kcCResourceAnimSet extends kcCResource {
     public void save(DataWriter writer) {
         super.save(writer);
         this.animSetDesc.save(writer);
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        return this.animSetDesc.addToPropertyList(propertyList);
     }
 
     /**

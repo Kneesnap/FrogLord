@@ -2,6 +2,10 @@ package net.highwayfrogs.editor.games.konami.greatquest.chunks;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
@@ -17,8 +21,15 @@ import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFil
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
+import net.highwayfrogs.editor.gui.ImageResource;
+import net.highwayfrogs.editor.gui.InputMenu;
+import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.DataSizeUnit;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.io.File;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -26,7 +37,7 @@ import java.util.logging.Logger;
  * Represents a resource in a TGQ file.
  * Created by Kneesnap on 8/25/2019.
  */
-public abstract class kcCResource extends GameData<GreatQuestInstance> implements kcHashedResource {
+public abstract class kcCResource extends GameData<GreatQuestInstance> implements kcHashedResource, ICollectionViewEntry, IPropertyListCreator {
     @Getter private byte[] rawData;
     @Getter private final KCResourceID chunkType;
     @Getter private final GreatQuestHash<kcCResource> selfHash; // The real hash comes from the TOC chunk.
@@ -71,6 +82,11 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
     @Override
     public String getResourceName() {
         return getName();
+    }
+
+    @Override
+    public String toString() {
+        return Utils.getSimpleName(this) + "['" + getName() + "'," + getHashAsHexString() + "]";
     }
 
     @Override
@@ -237,5 +253,92 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
                 return true;
 
         return false;
+    }
+
+    @Override
+    public String getCollectionViewDisplayName() {
+        String name = getName();
+        String originalStr = this.selfHash.getOriginalString();
+        return name + (!this.hashBasedOnName && originalStr != null && !originalStr.equalsIgnoreCase(name) ? " [" + originalStr + "]" : "");
+    }
+
+    @Override
+    public String getCollectionViewDisplayStyle() {
+        return null;
+    }
+
+    @Override
+    public Image getCollectionViewIcon() {
+        return this.chunkType != null ? this.chunkType.getIcon().getFxImage() : ImageResource.GHIDRA_ICON_TRIANGLE_WARNING_16.getFxImage();
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList.add("Resource Type", this.chunkType);
+        propertyList.add("Hash", this.selfHash.getHashNumberAsString());
+        propertyList.add("Name", getName());
+        if (!this.hashBasedOnName)
+            propertyList.add("Original Name", this.selfHash.getOriginalString());
+        if (this.rawData != null)
+            propertyList.add("Loaded Data Length", DataSizeUnit.formatSize(this.rawData.length) + " (" + this.rawData.length + " bytes)");
+
+        return propertyList;
+    }
+
+    @Override
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        MenuItem renameItem = new MenuItem("Rename");
+        contextMenu.getItems().add(renameItem);
+        renameItem.setOnAction(event -> {
+            InputMenu.promptInput(getGameInstance(), "Please enter the new name for the chunk.", getName(), newName -> {
+                if (newName.length() >= NAME_SIZE) {
+                    Utils.makePopUp("The provided name is too long! (Max: " + NAME_SIZE + " characters)", AlertType.ERROR);
+                    return;
+                }
+
+                if (isHashBasedOnName()) {
+                    int newHash = calculateHash(newName);
+                    kcCResource otherResource = getParentFile().getResourceByHash(newHash);
+                    if (otherResource != this) {
+                        Utils.makePopUp("The provided name conflicts with another resource: " + otherResource + ".", AlertType.ERROR);
+                        return;
+                    }
+                }
+
+                setName(newName);
+            });
+        });
+
+        MenuItem exportRawDataItem = new MenuItem("Export Original Data");
+        contextMenu.getItems().add(exportRawDataItem);
+        exportRawDataItem.setOnMenuValidation(event -> ((MenuItem) event.getTarget()).setDisable(this.rawData == null));
+        exportRawDataItem.setOnAction(event -> {
+            File outputFile = Utils.promptFileSave(getGameInstance(), "Please select the file to save the raw chunk data as.", getName() + "-RAW", "All Files", "*");
+            if (outputFile != null)
+                Utils.writeBytesToFile(getLogger(), outputFile, getRawData(), true);
+        });
+
+        MenuItem exportChunkItem = new MenuItem("Export Chunk");
+        contextMenu.getItems().add(exportChunkItem);
+        exportRawDataItem.setOnAction(event -> {
+            File outputFile = Utils.promptFileSave(getGameInstance(), "Please select the file to save the chunk as.", getName(), "All Files", "*");
+            if (outputFile != null)
+                writeDataToFile(outputFile, true);
+        });
+
+        MenuItem importChunkItem = new MenuItem("Import Chunk");
+        contextMenu.getItems().add(importChunkItem);
+        importChunkItem.setOnAction(event -> {
+            File inputFile = Utils.promptFileOpen(getGameInstance(), "Please select the file to import.", "All Files", "*");
+            if (inputFile != null)
+                importDataFromFile(inputFile, true);
+        });
+    }
+
+    /**
+     * Called when a double click occurs on this particular resource.
+     */
+    public void handleDoubleClick() {
+        // Do nothing.
     }
 }

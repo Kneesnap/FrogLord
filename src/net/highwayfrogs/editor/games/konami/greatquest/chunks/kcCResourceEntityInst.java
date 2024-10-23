@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 
 /**
  * Recreation of the 'kcCResourceEntityInst' class from the PS2 version.
@@ -56,5 +57,12 @@ public class kcCResourceEntityInst extends kcCResource {
         } else if (this.dummyBytes != null) {
             writer.writeBytes(this.dummyBytes);
         }
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        // TODO: ADD ENTITY DATA INTO PROPERTY LIST!
+        return propertyList;
     }
 }
