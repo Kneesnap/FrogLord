@@ -30,6 +30,8 @@ public class NoodleScriptEngine extends SharedGameObject {
     private final String name;
     @Getter private final NoodleBuiltinManager builtinManager = new NoodleBuiltinManager();
     private final List<NoodleObjectTemplate<?>> templates = new ArrayList<>();
+    private final Map<Class<?>, List<NoodleObjectTemplate<?>>> templatesByClass = new HashMap<>();
+    private final Map<String, NoodleObjectTemplate<?>> templatesByName = new HashMap<>();
     private final Map<String, NoodleFunction> functionMap = new HashMap<>(); // <label, function>
     private final Map<String, NoodlePrimitive> constantMap = new HashMap<>(); // <name, constant>
     private Logger logger;
@@ -110,10 +112,18 @@ public class NoodleScriptEngine extends SharedGameObject {
         if (object == null)
             return null;
 
-        for (int i = 0; i < this.templates.size(); i++) {
-            NoodleObjectTemplate<?> template = this.templates.get(i);
-            if (template.isObjectSupported(object))
-                return (NoodleObjectTemplate<? extends T>) template;
+        Class<?> tempClass = object.getClass();
+        while (tempClass != null && !Object.class.equals(tempClass)) {
+            List<NoodleObjectTemplate<?>> templates = this.templatesByClass.get(tempClass);
+            if (templates != null) {
+                for (int i = 0; i < templates.size(); i++) {
+                    NoodleObjectTemplate<?> template = templates.get(i);
+                    if (template.isObjectSupported(object))
+                        return (NoodleObjectTemplate<? extends T>) template;
+                }
+            }
+
+            tempClass = tempClass.getSuperclass();
         }
 
         return null;
@@ -125,30 +135,7 @@ public class NoodleScriptEngine extends SharedGameObject {
      * @return objectType
      */
     public NoodleObjectTemplate<?> getTemplateByName(String name) {
-        for (int i = this.templates.size() - 1; i >= 0; i--) {
-            NoodleObjectTemplate<?> template = this.templates.get(i);
-            if (template.getName().equals(name))
-                return template;
-        }
-
-        return null;
-    }
-
-    /**
-     * Gets a noodle template of the given type.
-     * @param templateClass The type of object the template represents.
-     * @return noodleTemplate
-     * @param <TType> templateType
-     */
-    @SuppressWarnings("unchecked")
-    public <TType> NoodleObjectTemplate<TType> getTypedTemplate(Class<? extends TType> templateClass) {
-        for (int i = this.templates.size() - 1; i >= 0; i--) {
-            NoodleObjectTemplate<?> template = this.templates.get(i);
-            if (templateClass.equals(template.getWrappedClass()) || (template.getWrappedClass().isAssignableFrom(templateClass) && !templateClass.isAssignableFrom(template.getWrappedClass())))
-                return (NoodleObjectTemplate<TType>) template;
-        }
-
-        return null;
+        return this.templatesByName.get(name);
     }
 
     /**
@@ -159,11 +146,21 @@ public class NoodleScriptEngine extends SharedGameObject {
         if (template == null)
             throw new NullPointerException("template");
 
-        NoodleObjectTemplate<?> oldTemplate = getTemplateByName(template.getName());
-        if (oldTemplate != null)
-            throw new NoodleRuntimeException("A template named '%s' has already been registered! (%s/%s)", template.getName(), Utils.getSimpleName(template), Utils.getSimpleName(oldTemplate));
+        String templateName = template.getName();
+        if (templateName == null)
+            throw new NullPointerException("template.getName()");
 
+        Class<?> templateWrappedClass = template.getWrappedClass();
+        if (templateWrappedClass == null)
+            throw new NullPointerException("template.getWrappedClass()");
+
+        NoodleObjectTemplate<?> oldTemplate = getTemplateByName(templateName);
+        if (oldTemplate != null)
+            throw new NoodleRuntimeException("A template named '%s' has already been registered! (%s/%s)", templateName, Utils.getSimpleName(template), Utils.getSimpleName(oldTemplate));
+
+        this.templatesByName.put(templateName, template);
         this.templates.add(template);
+        this.templatesByClass.computeIfAbsent(templateWrappedClass, key -> new ArrayList<>()).add(template);
     }
 
     /**

@@ -54,7 +54,7 @@ public class NoodleHeap {
         if (instance != null && instance.getTemplate() != null) {
             return (NoodleObjectTemplate<TType>) instance.getTemplate();
         } else {
-            return(NoodleObjectTemplate<TType>) getThread().getEngine().getTemplateFromObject(object);
+            return (NoodleObjectTemplate<TType>) getThread().getEngine().getTemplateFromObject(object);
         }
     }
 
