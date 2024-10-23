@@ -14,6 +14,8 @@ import java.util.Arrays;
  * Prompts the player(s) a callback question.
  */
 public class NDLFunctionPresetPrompt extends NoodleFunction {
+    public static final NDLFunctionPresetPrompt INSTANCE = new NDLFunctionPresetPrompt();
+
     public NDLFunctionPresetPrompt() {
         super("presetPrompt", "<question> <args...>");
     }

@@ -209,18 +209,21 @@ public class NoodleScriptEngine extends SharedGameObject {
     }
 
     private void registerFunctions() {
-        addGlobalFunction(new NDLFunctionGetArgument());
-        addGlobalFunction(new NDLFunctionCastToInt());
-        addGlobalFunction(new NDLFunctionLogError());
-        addGlobalFunction(new NDLFunctionLogInfo());
-        addGlobalFunction(new NDLFunctionLogWarning());
-        addGlobalFunction(new NDLFunctionPresetPrompt());
+        addGlobalFunction(NDLFunctionGetArgument.INSTANCE);
+        addGlobalFunction(NDLFunctionCastToInt.INSTANCE);
+        addGlobalFunction(NDLFunctionLogError.INSTANCE);
+        addGlobalFunction(NDLFunctionLogInfo.INSTANCE);
+        addGlobalFunction(NDLFunctionLogWarning.INSTANCE);
+        addGlobalFunction(NDLFunctionPresetPrompt.INSTANCE);
         addGlobalFunction(NDLFunctionMakePopup.INSTANCE);
 
-        // Add 'getArgumentCount()' and map it to the 'argumentCount' macro.
-        NDLFunctionGetArgumentCount getArgumentCount = new NDLFunctionGetArgumentCount();
-        addGlobalFunction(getArgumentCount);
-        this.builtinManager.registerSystemMacroBasicFunction("argumentCount", getArgumentCount);
+        // Functions which we also register as macros.
+        registerGlobalFunctionAndBuiltinMacro("argumentCount", NDLFunctionGetArgumentCount.INSTANCE);
+    }
+
+    private void registerGlobalFunctionAndBuiltinMacro(String macroName, NoodleFunction function) {
+        addGlobalFunction(function);
+        this.builtinManager.registerSystemMacroBasicFunction(macroName, function);
     }
 
     /**

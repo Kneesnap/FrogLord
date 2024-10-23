@@ -8,6 +8,8 @@ import net.highwayfrogs.editor.scripting.runtime.NoodleThread;
  * Equivalent to casting to int in java.
  */
 public class NDLFunctionCastToInt extends NoodleFunction {
+    public static final NDLFunctionCastToInt INSTANCE = new NDLFunctionCastToInt();
+
     public NDLFunctionCastToInt() {
         super("int", "<decimal>");
     }

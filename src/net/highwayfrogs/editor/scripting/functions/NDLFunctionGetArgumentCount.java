@@ -8,6 +8,8 @@ import net.highwayfrogs.editor.scripting.runtime.NoodleThread;
  * Gets the amount of arguments passed to this script.
  */
 public class NDLFunctionGetArgumentCount extends NoodleFunction {
+    public static final NDLFunctionGetArgumentCount INSTANCE = new NDLFunctionGetArgumentCount();
+
     public NDLFunctionGetArgumentCount() {
         super("argumentCount", "");
     }

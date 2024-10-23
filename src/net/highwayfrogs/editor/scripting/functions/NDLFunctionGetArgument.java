@@ -9,6 +9,8 @@ import net.highwayfrogs.editor.scripting.runtime.NoodleThread;
  * Gets an argument passed to the script.
  */
 public class NDLFunctionGetArgument extends NoodleFunction {
+    public static final NDLFunctionGetArgument INSTANCE = new NDLFunctionGetArgument();
+
     public NDLFunctionGetArgument() {
         super("getArgument", "<argIndex>");
     }

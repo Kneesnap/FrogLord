@@ -8,6 +8,8 @@ import net.highwayfrogs.editor.scripting.runtime.NoodleThread;
  * Prints an error to the logger.
  */
 public class NDLFunctionLogError extends NoodleFunction {
+    public static final NDLFunctionLogError INSTANCE = new NDLFunctionLogError();
+
     public NDLFunctionLogError() {
         super("logError", "<message>");
     }

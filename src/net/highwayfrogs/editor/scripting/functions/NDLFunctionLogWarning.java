@@ -8,6 +8,8 @@ import net.highwayfrogs.editor.scripting.runtime.NoodleThread;
  * Prints a warning to the logger.
  */
 public class NDLFunctionLogWarning extends NoodleFunction {
+    public static final NDLFunctionLogWarning INSTANCE = new NDLFunctionLogWarning();
+
     public NDLFunctionLogWarning() {
         super("logWarning", "<message>");
     }
