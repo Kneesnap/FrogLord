@@ -23,8 +23,14 @@ import java.util.logging.*;
 
 /**
  * The entry point to FrogLord.
- * TODO: Search bar, add bar, etc.
  * TODO: Use new config system in existing code parts?
+ * TODO: At some point we want to:
+ *  -> Make a better logging system, one which can dynamically create its information portion without creating memory leaks. One which can log per-game instance, and only log to that instance's main window. Also, it should be able to use format messages.
+ *  -> Split up Utils.java
+ *  -> Save many different file paths, so when we open up file dialog prompts we don't have to consistently move between directories.
+ *  -> Allow automatic version selection when selecting a game.
+ *  -> PropertyList with nested portions.
+ *  -> Add a scripting console + a way to run scripts for each game, as well as an actual mod system definition.
  *
  * TODO: Solve TODOs in:
  *  - GUIMain.java

@@ -22,6 +22,9 @@ import java.util.logging.Logger;
 
 /**
  * Represents a runtime for running scripts.
+ * TODO: A scripting console would be nice. It should have some commands to show documentation too. #help test
+ *  -> Use the tokenizer for highlighting maybe?
+ *  -> Have documentation functions. (Allow typing help [class|method], to view available options)
  */
 public class NoodleScriptEngine extends SharedGameObject {
     private final String name;
@@ -212,7 +215,7 @@ public class NoodleScriptEngine extends SharedGameObject {
         addGlobalFunction(new NDLFunctionLogInfo());
         addGlobalFunction(new NDLFunctionLogWarning());
         addGlobalFunction(new NDLFunctionPresetPrompt());
-        // TODO: Functions to create popups.
+        addGlobalFunction(NDLFunctionMakePopup.INSTANCE);
 
         // Add 'getArgumentCount()' and map it to the 'argumentCount' macro.
         NDLFunctionGetArgumentCount getArgumentCount = new NDLFunctionGetArgumentCount();
