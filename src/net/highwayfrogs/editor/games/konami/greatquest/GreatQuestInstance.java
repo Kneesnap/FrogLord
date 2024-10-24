@@ -8,8 +8,10 @@ import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SoundChunkFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestGameFile;
+import net.highwayfrogs.editor.games.konami.greatquest.noodle.GreatQuestInstanceNoodleTemplate;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestMainMenuUIController;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
+import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.Utils;
@@ -171,6 +173,14 @@ public class GreatQuestInstance extends GameInstance {
     @Override
     protected GreatQuestMainMenuUIController makeMainMenuController() {
         return new GreatQuestMainMenuUIController(this);
+    }
+
+    @Override
+    protected void setupScriptEngine(NoodleScriptEngine engine) {
+        super.setupScriptEngine(engine);
+        engine.addTemplate(GreatQuestInstanceNoodleTemplate.INSTANCE);
+
+        // TODO: MORE!!!
     }
 
     @Override

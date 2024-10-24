@@ -37,6 +37,25 @@ public class NoodlePrimitive {
     }
 
     /**
+     * Gets the display name of the type.
+     */
+    public String getTypeDisplayName() {
+        switch (this.primitiveType) {
+            case NUMBER:
+                return "Number";
+            case STRING:
+                return "String";
+            case OBJECT_REFERENCE:
+                if (this.objectInstance == null)
+                    return "Null";
+
+                return this.objectInstance.getTemplate().getName();
+            default:
+                throw new NoodleRuntimeException("Don't know how to get the primitive type %s (of %s) as a string!", this.primitiveType, this);
+        }
+    }
+
+    /**
      * Clones the primitive.
      */
     public NoodlePrimitive clone() {
@@ -285,6 +304,17 @@ public class NoodlePrimitive {
     }
 
     /**
+     * Tests if the value this primitive represents is a boolean.
+     */
+    public boolean isBoolean() {
+        if (!isInteger())
+            return false;
+
+        int intValue = getIntegerValue();
+        return (intValue == 0) || (intValue == 1);
+    }
+
+    /**
      * Tests if this primitive is a pseudo-pointer to an object instance.
      */
     public boolean isObjectReference() {
@@ -399,5 +429,38 @@ public class NoodlePrimitive {
             return this.objectInstance != null;
 
         return false;
+    }
+
+    /**
+     * Gets the argument types as a display string.
+     * @param args the argument types to get as a display string.
+     * @return argumentDisplayTypes
+     */
+    public static String getArgumentDisplayTypesAsString(NoodlePrimitive[] args) {
+        if (args == null)
+            return "";
+
+        StringBuilder builder = new StringBuilder();
+        getArgumentDisplayTypesAsString(builder, args);
+        return builder.toString();
+    }
+
+    /**
+     * Gets the argument types as a string for display. Eg: "String, GameInstance, Number"
+     * @param builder the builder to write to
+     * @param args the argument types to get as a display string.
+     */
+    public static void getArgumentDisplayTypesAsString(StringBuilder builder, NoodlePrimitive[] args) {
+        if (builder == null)
+            throw new NullPointerException("builder");
+        if (args == null)
+            return;
+
+        for (int i = 0; i < args.length; i++) {
+            if (i > 0)
+                builder.append(", ");
+
+            builder.append(args[i] != null ? args[i].getTypeDisplayName() : "Null");
+        }
     }
 }

@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.scripting.runtime.NoodleRuntimeException;
 import net.highwayfrogs.editor.scripting.runtime.NoodleThread;
 import net.highwayfrogs.editor.scripting.runtime.NoodleThreadStatus;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleObjectTemplate;
-import net.highwayfrogs.editor.scripting.runtime.templates.NoodleTemplateFunction.NoodleStaticTemplateFunction;
+import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleStaticTemplateFunction;
 import net.highwayfrogs.editor.scripting.tracking.NoodleCodeLocation;
 
 /**
@@ -39,7 +39,6 @@ public class NoodleInstructionCallStatic extends NoodleInstruction {
     }
 
     @Override
-    @SuppressWarnings({"unchecked", "rawtypes"})
     public void execute(NoodleThread<? extends NoodleScript> thread) {
         // Gather arguments.
         NoodlePrimitive[] arguments = this.argumentCount > 0 ? new NoodlePrimitive[this.argumentCount] : EMPTY_ARGS;
@@ -47,18 +46,18 @@ public class NoodleInstructionCallStatic extends NoodleInstruction {
             arguments[i] = thread.getStack().popWithoutGC();
 
         // Find template.
-        NoodleStaticTemplateFunction function = this.template.getStaticFunction(this.functionLabel, this.argumentCount);
+        NoodleStaticTemplateFunction<?> function = this.template.getStaticFunction(this.functionLabel, this.argumentCount);
         if (function == null)
             throw new NoodleRuntimeException("The template for object '%s' does not have a static function named '%s' taking %d arguments.", template.getName(), this.functionLabel, this.argumentCount);
 
         // Execute function.
         int stackSize = thread.getStack().size();
-        NoodlePrimitive resultValue = null;
+        NoodlePrimitive resultValue;
         try {
             resultValue = function.execute(thread, null, arguments);
         } catch (Throwable ex) {
             StringBuilder builder = new StringBuilder("Error executing Noodle static function: '");
-            builder.append(template.getName()).append(".");
+            builder.append(this.template.getName()).append(".");
             function.writeSignature(builder);
             builder.append("' with arguments (");
             writeArguments(builder, arguments);

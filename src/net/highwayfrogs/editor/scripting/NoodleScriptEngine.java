@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.scripting.compiler.NoodleCompiler;
 import net.highwayfrogs.editor.scripting.compiler.NoodleCompilerException;
 import net.highwayfrogs.editor.scripting.compiler.preprocessor.builtins.NoodleBuiltinManager;
 import net.highwayfrogs.editor.scripting.functions.*;
+import net.highwayfrogs.editor.scripting.runtime.NoodleObjectInstance;
 import net.highwayfrogs.editor.scripting.runtime.NoodlePrimitive;
 import net.highwayfrogs.editor.scripting.runtime.NoodleRuntimeException;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleObjectTemplate;
@@ -34,6 +35,7 @@ public class NoodleScriptEngine extends SharedGameObject {
     private final Map<String, NoodleObjectTemplate<?>> templatesByName = new HashMap<>();
     private final Map<String, NoodleFunction> functionMap = new HashMap<>(); // <label, function>
     private final Map<String, NoodlePrimitive> constantMap = new HashMap<>(); // <name, constant>
+    @Getter private boolean sealed; // No longer ready for changes.
     private Logger logger;
 
     public NoodleScriptEngine(GameInstance instance, String name) {
@@ -52,10 +54,26 @@ public class NoodleScriptEngine extends SharedGameObject {
     /**
      * Sets up the default runtime features.
      */
-    public void setupDefaultFeatures() {
+    private void setupDefaultFeatures() {
+        throwIfSealed();
         this.builtinManager.registerPreprocessorBuiltins();
         registerFunctions();
         registerConstants();
+    }
+
+    /**
+     * Seals the engine, disabling all setup functions, and enabling runtime functions.
+     */
+    public void seal() {
+       if (this.sealed)
+           throw new IllegalStateException("Cannot seal the engine, as it is already sealed.");
+
+       setupDefaultFeatures();
+       this.sealed = true;
+
+       // Register the wrapped Java functions.
+       for (int i = 0; i < this.templates.size(); i++)
+           this.templates.get(i).setupJvm();
     }
 
     /**
@@ -64,7 +82,7 @@ public class NoodleScriptEngine extends SharedGameObject {
      * @return function, null if not found.
      */
     public NoodleFunction getGlobalFunctionByName(String functionName) {
-        return functionMap.get(functionName);
+        return this.functionMap.get(functionName);
     }
 
     /**
@@ -73,7 +91,12 @@ public class NoodleScriptEngine extends SharedGameObject {
      * @return constantValue, null if not found.
      */
     public NoodlePrimitive getConstantByName(String constantName) {
-        return constantMap.get(constantName);
+        return this.constantMap.get(constantName);
+    }
+
+    private void throwIfSealed() {
+        if (this.sealed)
+            throw new UnsupportedOperationException("This operation cannot be performed after the engine is sealed.");
     }
 
     /**
@@ -113,6 +136,9 @@ public class NoodleScriptEngine extends SharedGameObject {
             return null;
 
         Class<?> tempClass = object.getClass();
+        if (tempClass.isPrimitive() || String.class.equals(tempClass))
+            return null;
+
         while (tempClass != null && !Object.class.equals(tempClass)) {
             List<NoodleObjectTemplate<?>> templates = this.templatesByClass.get(tempClass);
             if (templates != null) {
@@ -143,6 +169,7 @@ public class NoodleScriptEngine extends SharedGameObject {
      * @param template the template to register
      */
     public void addTemplate(NoodleObjectTemplate<?> template) {
+        throwIfSealed();
         if (template == null)
             throw new NullPointerException("template");
 
@@ -161,6 +188,25 @@ public class NoodleScriptEngine extends SharedGameObject {
         this.templatesByName.put(templateName, template);
         this.templates.add(template);
         this.templatesByClass.computeIfAbsent(templateWrappedClass, key -> new ArrayList<>()).add(template);
+        template.setup();
+    }
+
+    private void throwIfNotSealed() {
+        if (!this.sealed)
+            throw new UnsupportedOperationException("This operation cannot be performed until the engine is sealed.");
+    }
+
+    /**
+     * Loads the script file.
+     * @param scriptFile The file to load.
+     */
+    public NoodleScript loadScriptFile(File scriptFile) {
+        throwIfNotSealed();
+        if (scriptFile == null)
+            throw new NullPointerException("sourceCodeFile");
+
+        String scriptName = Utils.stripExtension(scriptFile.getName());
+        return loadScript(scriptFile, scriptName, new NoodleScript(this, scriptName));
     }
 
     /**
@@ -169,6 +215,7 @@ public class NoodleScriptEngine extends SharedGameObject {
      * @param maker The script object maker.
      */
     public <T extends NoodleScript> T loadScriptFile(File scriptFile, BiFunction<NoodleScriptEngine, String, T> maker) {
+        throwIfNotSealed();
         if (scriptFile == null)
             throw new NullPointerException("sourceCodeFile");
         if (maker == null)
@@ -182,6 +229,7 @@ public class NoodleScriptEngine extends SharedGameObject {
      * Loads a script from disk.
      */
     public <T extends NoodleScript> T loadScript(File sourceCodeFile, String scriptName, T script) {
+        throwIfNotSealed();
         if (sourceCodeFile == null)
             throw new NullPointerException("sourceCodeFile");
         if (scriptName == null)
@@ -238,6 +286,33 @@ public class NoodleScriptEngine extends SharedGameObject {
             template.printFunctionList();
             getLogger().info("");
         }
+    }
+
+    /**
+     * Returns true iff the given object can be represented in Noodle.
+     * @param object The object to test
+     * @return true iff the given object can be represented in a Noodle script.
+     */
+    public boolean isRepresentable(Object object) {
+        return object == null || isRepresentable(object.getClass());
+    }
+
+    /**
+     * Returns true iff the given class can be represented in Noodle.
+     * @param testClass The class to test
+     * @return true iff the given class can be represented in a Noodle script.
+     */
+    public boolean isRepresentable(Class<?> testClass) {
+        if (testClass == null)
+            throw new NullPointerException("testClass");
+
+        if (testClass.isPrimitive())
+            return true;
+
+        if (testClass.equals(Void.class) || testClass.equals(Boolean.class) || Number.class.isAssignableFrom(testClass) || String.class.equals(testClass) || testClass.equals(NoodlePrimitive.class) || testClass.equals(NoodleObjectInstance.class))
+            return true;
+
+        return this.templatesByClass.get(testClass) != null;
     }
 
     private void registerConstants() {

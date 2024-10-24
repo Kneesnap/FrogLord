@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.scripting.runtime.templates.collection;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
 import net.highwayfrogs.editor.scripting.runtime.NoodleObjectInstance;
 import net.highwayfrogs.editor.scripting.runtime.NoodlePrimitive;
 import net.highwayfrogs.editor.scripting.runtime.NoodleThread;
@@ -16,8 +15,8 @@ import java.util.function.Consumer;
  * Represents a list data structure in Noodle.
  */
 public abstract class NoodleCollectionTemplate<TNoodleCollection extends NoodleCollection<?>> extends NoodleObjectTemplate<TNoodleCollection> {
-    protected NoodleCollectionTemplate(NoodleScriptEngine engine, Class<TNoodleCollection> collectionClass, String collectionName) {
-        super(engine, collectionClass, collectionName);
+    protected NoodleCollectionTemplate(Class<TNoodleCollection> collectionClass, String collectionName) {
+        super(collectionClass, collectionName);
     }
 
     @Override
@@ -46,6 +45,11 @@ public abstract class NoodleCollectionTemplate<TNoodleCollection extends NoodleC
             newCollection.addAll(args[0]);
             return newCollection;
         }, "collection");
+    }
+
+    @Override
+    protected void onSetupJvmWrapper() {
+        // Do nothing, we don't have any wrapped functions.
     }
 
     /**

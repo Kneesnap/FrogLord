@@ -1,12 +1,13 @@
 package net.highwayfrogs.editor.scripting.runtime.templates;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
 import net.highwayfrogs.editor.scripting.compiler.NoodleCallHolder;
 import net.highwayfrogs.editor.scripting.runtime.*;
-import net.highwayfrogs.editor.scripting.runtime.templates.NoodleTemplateFunction.ConstructorTemplateFunction;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleTemplateFunction.LazyNoodleTemplateFunction;
-import net.highwayfrogs.editor.scripting.runtime.templates.NoodleTemplateFunction.NoodleStaticTemplateFunction;
+import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleStaticTemplateFunction;
+import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleStaticTemplateFunction.LazyNoodleStaticTemplateFunction;
+import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleTemplateConstructor;
+import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleTemplateConstructor.LazyNoodleTemplateConstructor;
 import net.highwayfrogs.editor.utils.Consumer3;
 import net.highwayfrogs.editor.utils.Function3;
 import net.highwayfrogs.editor.utils.Utils;
@@ -22,26 +23,24 @@ import java.util.logging.Logger;
  * It defines all functions, fields, etc for a particular object type.
  */
 public abstract class NoodleObjectTemplate<TType> {
-    @Getter private final NoodleScriptEngine engine;
     @Getter private final String name;
     @Getter private final Class<TType> wrappedClass;
+    @Getter private final NoodleJvmWrapper<TType> jvmWrapper;
     private final Map<String, BiFunction<NoodleThread<?>, TType, NoodlePrimitive>> getters = new HashMap<>();
     private final Map<String, Consumer3<NoodleThread<?>, TType, NoodlePrimitive>> setters = new HashMap<>();
-    private final NoodleCallHolder<NoodleTemplateFunction<TType, ?>> instanceFunctions = new NoodleCallHolder<>();
-    private final NoodleCallHolder<NoodleStaticTemplateFunction<TType, ?>> staticFunctions = new NoodleCallHolder<>();
+    private final NoodleCallHolder<NoodleTemplateFunction<TType>> instanceFunctions = new NoodleCallHolder<>();
+    private final NoodleCallHolder<NoodleStaticTemplateFunction<TType>> staticFunctions = new NoodleCallHolder<>();
+    private boolean setupHasOccurred;
+    private boolean jvmSetupHasOccurred;
 
     public static final String CONSTRUCTOR_FUNCTION_NAME = "new";
 
-    public NoodleObjectTemplate(NoodleScriptEngine engine, Class<TType> wrappedClass, String name) {
-        this.engine = engine;
+    public NoodleObjectTemplate(Class<TType> wrappedClass, String name) {
         this.name = name;
         this.wrappedClass = wrappedClass;
+        this.jvmWrapper = new NoodleJvmWrapper<>(wrappedClass);
     }
-    
-    private Logger getLogger() {
-        return this.engine.getLogger();
-    }
-    
+
     private void warn(String template, Object... args) {
         getLogger().warning(Utils.formatStringSafely(template, args));
     }
@@ -50,12 +49,21 @@ public abstract class NoodleObjectTemplate<TType> {
         getLogger().info(Utils.formatStringSafely(template, args));
     }
 
+    private Logger getLogger() {
+        return Logger.getLogger(getClass().getSimpleName() + "[" + getName() + "]");
+    }
+
     /**
      * Sets up the template.
      */
     public void setup() {
+        if (this.setupHasOccurred)
+            return;
+
+        this.setupHasOccurred = true;
         this.onSetup();
-        this.instanceFunctions.registerCallable(new NoodleTemplateEqualsFunction<>(this, NoodleThread.class));
+        this.instanceFunctions.registerCallable(new NoodleTemplateEqualsFunction<>(this));
+        this.instanceFunctions.registerCallable(new NoodleTemplateToStringFunction<>(this));
         addGetter("template", (thread, value) -> thread.getStack().pushString(getName()));
     }
 
@@ -63,6 +71,26 @@ public abstract class NoodleObjectTemplate<TType> {
      * Sets up the template.
      */
     protected abstract void onSetup();
+
+    /**
+     * Sets up the template.
+     * Should be run after ALL templates have been setup()
+     */
+    public void setupJvm() {
+        if (this.jvmSetupHasOccurred) {
+            this.jvmWrapper.registerFunctions(this); // Register the wrapped functions.
+            return;
+        }
+
+        this.jvmSetupHasOccurred = true;
+        this.onSetupJvmWrapper();
+        this.jvmWrapper.registerFunctions(this); // Register the wrapped functions.
+    }
+
+    /**
+     * Sets up the template.
+     */
+    protected abstract void onSetupJvmWrapper();
 
     /**
      * Called when a thread shuts down, regardless of what the shutdown cause was.
@@ -163,8 +191,8 @@ public abstract class NoodleObjectTemplate<TType> {
      * Registers a function in this template.
      * @param function The function to register.
      */
-    public <TThread extends NoodleThread<?>> void addFunction(NoodleTemplateFunction<TType, TThread> function) {
-        if (CONSTRUCTOR_FUNCTION_NAME.equalsIgnoreCase(function.getName()) && !(function instanceof ConstructorTemplateFunction)) {
+    public void addFunction(NoodleTemplateFunction<TType> function) {
+        if (CONSTRUCTOR_FUNCTION_NAME.equalsIgnoreCase(function.getName()) && !(function instanceof NoodleTemplateConstructor<?>)) {
             Utils.printStackTrace();
             warn("Tried to register a function with a constructor name for Noodle %s!", this.name);
             return;
@@ -179,24 +207,11 @@ public abstract class NoodleObjectTemplate<TType> {
     /**
      * Registers a function in this template.
      * @param name The name of the function.
-     * @param threadClass The required thread type.
      * @param delegateHandler Function code.
      * @param argumentNames Names of required arguments
      */
-    public <TThread extends NoodleThread<?>> void addFunction(String name, Class<TThread> threadClass, Function3<TThread, TType, NoodlePrimitive[], NoodlePrimitive> delegateHandler, String... argumentNames) {
-        addFunction(new LazyNoodleTemplateFunction<>(name, this.wrappedClass, threadClass, delegateHandler, argumentNames));
-    }
-
-    /**
-     * Registers a function in this template.
-     * @param name The name of the function.
-     * @param delegateHandler Function code.
-     * @param argumentNames Names of required arguments
-     */
-    @SuppressWarnings({"rawtypes", "unchecked"})
-
     public void addFunction(String name, Function3<NoodleThread<?>, TType, NoodlePrimitive[], NoodlePrimitive> delegateHandler, String... argumentNames) {
-        addFunction(new LazyNoodleTemplateFunction(name, this.wrappedClass, NoodleThread.class, delegateHandler, argumentNames));
+        addFunction(new LazyNoodleTemplateFunction<>(name, this.wrappedClass, delegateHandler, argumentNames));
     }
 
     /**
@@ -205,28 +220,15 @@ public abstract class NoodleObjectTemplate<TType> {
      * @param delegateHandler Function code.
      * @param argumentNames Names of required arguments
      */
-    @SuppressWarnings({"rawtypes", "unchecked"})
     public void addStaticFunction(String name, BiFunction<NoodleThread<?>, NoodlePrimitive[], NoodlePrimitive> delegateHandler, String... argumentNames) {
-        addStaticFunction(new NoodleStaticTemplateFunction(name, this.wrappedClass, NoodleThread.class, delegateHandler, argumentNames));
-    }
-
-    /**
-     * Registers a static function in this template.
-     * @param name The name of the function.
-     * @param threadClass The required thread type.
-     * @param delegateHandler Function code.
-     * @param argumentNames Names of required arguments
-     */
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    public <TThread extends NoodleThread<?>> void addStaticFunction(String name, Class<TThread> threadClass, BiFunction<NoodleThread<?>, NoodlePrimitive[], NoodlePrimitive> delegateHandler, String... argumentNames) {
-        addStaticFunction(new NoodleStaticTemplateFunction(name, this.wrappedClass, threadClass, delegateHandler, argumentNames));
+        addStaticFunction(new LazyNoodleStaticTemplateFunction<>(name, this.wrappedClass, delegateHandler, argumentNames));
     }
 
     /**
      * Registers a static function.
      * @param function The function to register.
      */
-    public <TThread extends NoodleThread<?>> void addStaticFunction(NoodleStaticTemplateFunction<TType, TThread> function) {
+    public void addStaticFunction(NoodleStaticTemplateFunction<TType> function) {
         if (!this.staticFunctions.registerCallable(function)) {
             Utils.printStackTrace();
             warn("NoodleObjectTemplate-STATIC/%s.%s(%d args) is already registered.", this.name, function.getName(), function.getArgumentCount());
@@ -238,21 +240,8 @@ public abstract class NoodleObjectTemplate<TType> {
      * @param constructor The constructor code.
      * @param argumentNames The names of the constructor arguments.
      */
-    @SuppressWarnings({"rawtypes", "unchecked"})
     public void addConstructor(BiFunction<NoodleThread<?>, NoodlePrimitive[], TType> constructor, String... argumentNames) {
-        addStaticFunction(new ConstructorTemplateFunction(this.wrappedClass, NoodleThread.class, constructor, argumentNames));
-    }
-
-    /**
-     * Registers a constructor.
-     * @param threadClass The class of the thread which the constructor can be used with.
-     * @param constructor The constructor code.
-     * @param argumentNames The names of the constructor arguments.
-     * @param <TThread> The thread type which the constructor can be used with.
-     */
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    public <TThread extends NoodleThread<?>> void addConstructor(Class<TThread> threadClass, BiFunction<NoodleThread<?>, NoodlePrimitive[], TType> constructor, String... argumentNames) {
-        addStaticFunction(new ConstructorTemplateFunction(this.wrappedClass, threadClass, constructor, argumentNames));
+        addStaticFunction(new LazyNoodleTemplateConstructor<>(this.wrappedClass, constructor, argumentNames));
     }
     
     /**
@@ -325,6 +314,9 @@ public abstract class NoodleObjectTemplate<TType> {
     }
 
     private static void writeArguments(StringBuilder builder, NoodlePrimitive[] arguments) {
+        if (arguments == null)
+            return;
+
         for (int i = 0; i < arguments.length; i++) {
             if (i > 0)
                 builder.append(", ");
@@ -338,7 +330,7 @@ public abstract class NoodleObjectTemplate<TType> {
      * @param argumentCount The number of arguments the function uses.
      * @return foundFunction
      */
-    public NoodleTemplateFunction<?, ?> getInstanceFunction(String functionName, int argumentCount) {
+    public NoodleTemplateFunction<?> getInstanceFunction(String functionName, int argumentCount) {
         return this.instanceFunctions.getByNameAndArgumentCount(functionName, argumentCount);
     }
 
@@ -348,7 +340,7 @@ public abstract class NoodleObjectTemplate<TType> {
      * @param argumentCount The number of arguments the function uses.
      * @return foundFunction
      */
-    public NoodleStaticTemplateFunction<?, ?> getStaticFunction(String functionName, int argumentCount) {
+    public NoodleStaticTemplateFunction<?> getStaticFunction(String functionName, int argumentCount) {
         return this.staticFunctions.getByNameAndArgumentCount(functionName, argumentCount);
     }
 
@@ -425,22 +417,33 @@ public abstract class NoodleObjectTemplate<TType> {
         return threadClass.cast(thread);
     }
 
-    private class NoodleTemplateEqualsFunction<TThread extends NoodleThread<?>> extends NoodleTemplateFunction<TType, TThread> {
+    private static class NoodleTemplateEqualsFunction<TType> extends NoodleTemplateFunction<TType> {
         private final NoodleObjectTemplate<TType> template;
 
-        public NoodleTemplateEqualsFunction(NoodleObjectTemplate<TType> template, Class<TThread> threadClass) {
-            super("equals", template.getWrappedClass(), threadClass, "other");
+        public NoodleTemplateEqualsFunction(NoodleObjectTemplate<TType> template) {
+            super("equals", template.getWrappedClass(), "other");
             this.template = template;
         }
 
         @Override
-        protected NoodlePrimitive executeImpl(TThread thread, TType thisRef, NoodlePrimitive[] args) {
+        protected NoodlePrimitive executeImpl(NoodleThread<?> thread, TType thisRef, NoodlePrimitive[] args) {
             NoodleObjectInstance otherRef = args[0].getObjectReference();
             if (otherRef == null)
                 return thread.getStack().pushBoolean(false);
 
-            TType other = otherRef.getOptionalObjectInstance(getWrappedClass());
+            TType other = otherRef.getOptionalObjectInstance(this.template.getWrappedClass());
             return thread.getStack().pushBoolean(this.template.areObjectContentsEqual(thisRef, other));
+        }
+    }
+
+    private static class NoodleTemplateToStringFunction<TType> extends NoodleTemplateFunction<TType> {
+        public NoodleTemplateToStringFunction(NoodleObjectTemplate<TType> template) {
+            super("toString", template.getWrappedClass());
+        }
+
+        @Override
+        protected NoodlePrimitive executeImpl(NoodleThread<?> thread, TType thisRef, NoodlePrimitive[] args) {
+            return thread.getStack().pushString(thisRef.toString());
         }
     }
 }

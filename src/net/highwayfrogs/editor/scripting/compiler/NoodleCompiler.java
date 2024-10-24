@@ -55,7 +55,8 @@ public class NoodleCompiler {
      * @return compiledScript
      */
     public static <T extends NoodleScript> T compileScript(NoodleScriptEngine engine, String fileText, T scriptToLoad) {
-        return compileScript(engine, new Config(fileText), scriptToLoad);
+        Config codeConfig = Config.loadConfigFromString(fileText, scriptToLoad.getName());
+        return compileScript(engine, codeConfig, scriptToLoad);
     }
 
     /**

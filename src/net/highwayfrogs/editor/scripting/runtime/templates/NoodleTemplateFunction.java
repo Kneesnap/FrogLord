@@ -5,29 +5,27 @@ import net.highwayfrogs.editor.scripting.compiler.NoodleCallHolder.INoodleCallab
 import net.highwayfrogs.editor.scripting.runtime.NoodlePrimitive;
 import net.highwayfrogs.editor.scripting.runtime.NoodleRuntimeException;
 import net.highwayfrogs.editor.scripting.runtime.NoodleThread;
+import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleStaticTemplateFunction;
 import net.highwayfrogs.editor.utils.Function3;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.BiFunction;
 
 /**
  * Represents a function which is usable inside a template object.
  */
 @Getter
-public abstract class NoodleTemplateFunction<TObject, TThread extends NoodleThread<?>> implements INoodleCallable {
+public abstract class NoodleTemplateFunction<TObject> implements INoodleCallable {
     private final String name;
     private final Class<TObject> objectClass;
-    private final Class<TThread> threadClass;
     private final List<String> argumentNames;
     private List<String> optionalArguments;
 
-    public NoodleTemplateFunction(String label, Class<TObject> objectClass, Class<TThread> threadClass, String... argumentNames) {
+    public NoodleTemplateFunction(String label, Class<TObject> objectClass, String... argumentNames) {
         this.name = label;
         this.objectClass = objectClass;
-        this.threadClass = threadClass;
         this.argumentNames = new ArrayList<>(Arrays.asList(argumentNames));
     }
 
@@ -47,15 +45,15 @@ public abstract class NoodleTemplateFunction<TObject, TThread extends NoodleThre
     /**
      * Executes the template function.
      * @param thread The thread to execute under.
-     * @param thisRef The reference to the object excecution occurs under.
+     * @param thisRef The reference to the object execution occurs under.
      * @param args The arguments to the function.
      * @return returnValue
      */
-    public NoodlePrimitive execute(TThread thread, TObject thisRef, NoodlePrimitive[] args) {
-        if (!this.threadClass.isInstance(thread))
-            throw new NoodleRuntimeException("Expected thread of type %s, but got %s instead.", this.threadClass.getSimpleName(), Utils.getSimpleName(thread));
+    public NoodlePrimitive execute(NoodleThread<?> thread, TObject thisRef, NoodlePrimitive[] args) {
+        if (thread == null)
+            throw new NullPointerException("thread");
 
-        if (this instanceof NoodleStaticTemplateFunction) {
+        if (this instanceof NoodleStaticTemplateFunction<?>) {
             if (thisRef != null)
                 throw new NoodleRuntimeException("Static noodle function %s.%s was passed a non-null object instance.", this.objectClass.getSimpleName(), getSignature());
         } else {
@@ -76,26 +74,26 @@ public abstract class NoodleTemplateFunction<TObject, TThread extends NoodleThre
     /**
      * Executes the template function.
      * @param thread The thread to execute under.
-     * @param thisRef The reference to the object excecution occurs under.
+     * @param thisRef The reference to the object execution occurs under.
      * @param args The arguments to the function.
      * @return returnValue
      */
-    protected abstract NoodlePrimitive executeImpl(TThread thread, TObject thisRef, NoodlePrimitive[] args);
+    protected abstract NoodlePrimitive executeImpl(NoodleThread<?> thread, TObject thisRef, NoodlePrimitive[] args);
 
     /**
      * A noodle template function which can have its logic delegated.
      */
-    public static class LazyNoodleTemplateFunction<TObject, TThread extends NoodleThread<?>> extends NoodleTemplateFunction<TObject, TThread> {
-        private final Function3<TThread, TObject, NoodlePrimitive[], NoodlePrimitive> delegateHandler;
+    public static class LazyNoodleTemplateFunction<TObject> extends NoodleTemplateFunction<TObject> {
+        private final Function3<NoodleThread<?>, TObject, NoodlePrimitive[], NoodlePrimitive> delegateHandler;
 
-        public LazyNoodleTemplateFunction(String label, Class<TObject> objectClass, Class<TThread> threadClass, Function3<TThread, TObject, NoodlePrimitive[], NoodlePrimitive> delegateHandler, String... argumentNames) {
-            super(label, objectClass, threadClass, getArgumentNames(argumentNames));
+        public LazyNoodleTemplateFunction(String label, Class<TObject> objectClass, Function3<NoodleThread<?>, TObject, NoodlePrimitive[], NoodlePrimitive> delegateHandler, String... argumentNames) {
+            super(label, objectClass, getArgumentNames(argumentNames));
             setOptionalArguments(getOptionalArgumentNames(argumentNames));
             this.delegateHandler = delegateHandler;
         }
 
         @Override
-        protected NoodlePrimitive executeImpl(TThread thread, TObject thisRef, NoodlePrimitive[] args) {
+        protected NoodlePrimitive executeImpl(NoodleThread<?> thread, TObject thisRef, NoodlePrimitive[] args) {
             return this.delegateHandler.apply(thread, thisRef, args);
         }
 
@@ -135,34 +133,6 @@ public abstract class NoodleTemplateFunction<TObject, TThread extends NoodleThre
             }
 
             return results;
-        }
-    }
-
-    public static class ConstructorTemplateFunction<TObject, TThread extends NoodleThread<?>> extends NoodleStaticTemplateFunction<TObject, TThread> {
-        private final BiFunction<TThread, NoodlePrimitive[], TObject> constructor;
-
-        public ConstructorTemplateFunction(Class<TObject> objectClass, Class<TThread> threadClass, BiFunction<TThread, NoodlePrimitive[], TObject> constructor, String... argumentNames) {
-            super(NoodleObjectTemplate.CONSTRUCTOR_FUNCTION_NAME, objectClass, threadClass, null, argumentNames);
-            this.constructor = constructor;
-        }
-
-        @Override
-        protected NoodlePrimitive executeImpl(TThread thread, TObject thisRef, NoodlePrimitive[] args) {
-            return thread.getStack().pushObject(this.constructor.apply(thread, args));
-        }
-    }
-
-    public static class NoodleStaticTemplateFunction<TObject, TThread extends NoodleThread<?>> extends NoodleTemplateFunction<TObject, TThread> {
-        private final BiFunction<TThread, NoodlePrimitive[], NoodlePrimitive> handler;
-
-        public NoodleStaticTemplateFunction(String name, Class<TObject> objectClass, Class<TThread> threadClass, BiFunction<TThread, NoodlePrimitive[], NoodlePrimitive> handler, String... argumentNames) {
-            super(name, objectClass, threadClass, argumentNames);
-            this.handler = handler;
-        }
-
-        @Override
-        protected NoodlePrimitive executeImpl(TThread thread, TObject thisRef, NoodlePrimitive[] args) {
-            return thread.getStack().pushPrimitive(this.handler.apply(thread, args));
         }
     }
 }

@@ -9,7 +9,6 @@ import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.Arrays;
 
-
 /**
  * Prompts the player(s) a callback question.
  */
@@ -24,7 +23,7 @@ public class NDLFunctionPresetPrompt extends NoodleFunction {
     public NoodlePrimitive execute(NoodleThread<? extends NoodleScript> thread, NoodlePrimitive[] args) {
         // Read arguments.
         String question = args[0].getStringValue();
-        String[] presetResponses = new String[args.length - 2];
+        String[] presetResponses = new String[args.length - 1];
         for (int i = 0; i < presetResponses.length; i++)
             presetResponses[i] = args[i + 1].getStringValue();
 

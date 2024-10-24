@@ -18,6 +18,6 @@ public class NoodleFileCodeSource extends NoodleCodeSource {
 
     @Override
     public String getDisplay() {
-        return Utils.toLocalPath(this.file, this.script.getScriptFolder(), true);
+        return Utils.toLocalPath(this.script.getScriptFolder(), this.file, true);
     }
 }

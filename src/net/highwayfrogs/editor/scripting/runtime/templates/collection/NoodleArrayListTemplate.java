@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.scripting.runtime.templates.collection;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
 import net.highwayfrogs.editor.scripting.runtime.NoodlePrimitive;
 import net.highwayfrogs.editor.scripting.runtime.NoodleRuntimeException;
 import net.highwayfrogs.editor.scripting.runtime.templates.collection.NoodleArrayListTemplate.NoodleArrayList;
@@ -13,8 +12,8 @@ import java.util.List;
  * Represents a list data structure in Noodle.
  */
 public class NoodleArrayListTemplate extends NoodleCollectionTemplate<NoodleArrayList> {
-    public NoodleArrayListTemplate(NoodleScriptEngine engine) {
-        super(engine, NoodleArrayList.class, "ArrayList");
+    public NoodleArrayListTemplate() {
+        super(NoodleArrayList.class, "ArrayList");
     }
 
     @Override

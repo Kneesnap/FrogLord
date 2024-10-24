@@ -403,4 +403,19 @@ public class NoodleThread<T extends NoodleScript> extends SharedGameObject {
         setPosition(this.jumpStack.pop());
         return true;
     }
+
+    /**
+     * Add an object instance to the thread arguments.
+     * @param object the object to add
+     * @return the object instance
+     */
+    public NoodleObjectInstance addObjectInstanceArgument(Object object) {
+        NoodleObjectInstance instance = this.getHeap().getObjectInstance(object);
+        if (instance == null)
+            instance = new NoodleObjectInstance(this, object);
+
+        instance.incrementRefCount();
+        this.arguments.add(new NoodlePrimitive(instance));
+        return instance;
+    }
 }

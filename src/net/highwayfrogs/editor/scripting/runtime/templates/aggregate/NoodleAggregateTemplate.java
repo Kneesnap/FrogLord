@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.scripting.runtime.templates.aggregate;
 
-import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
 import net.highwayfrogs.editor.scripting.runtime.NoodleObjectInstance;
 import net.highwayfrogs.editor.scripting.runtime.NoodleThread;
 
@@ -14,10 +13,8 @@ import net.highwayfrogs.editor.scripting.runtime.NoodleThread;
  * For example, if you have clones with different locations, using the "location" getter will result in an error.
  */
 public class NoodleAggregateTemplate<TWrappedType> extends UnsavedAggregateTemplate<TWrappedType> {
-    public static final NoodleAggregateTemplate<?> INSTANCE = new NoodleAggregateTemplate<>();
-
-    public NoodleAggregateTemplate(NoodleScriptEngine engine) {
-        super(engine, NoodleAggregateWrapper.class, "AggregateWrapper");
+    public NoodleAggregateTemplate() {
+        super(NoodleAggregateWrapper.class, "AggregateWrapper");
     }
 
     @Override

@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.MainMenuController;
+import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -25,6 +26,7 @@ import java.util.logging.Logger;
  */
 public abstract class GameInstance implements IGameInstance {
     @Getter private final IGameType gameType;
+    @Getter private NoodleScriptEngine scriptEngine;
     @Getter private GameConfig config;
     @Getter private MainMenuController<?, ?> mainMenuController;
     private Logger cachedLogger;
@@ -132,10 +134,23 @@ public abstract class GameInstance implements IGameInstance {
         GUIMain.getActiveGameInstances().add(this);
         getLogger().info("Hello! FrogLord is loading config '" + configName + "'.");
 
+        this.scriptEngine = new NoodleScriptEngine(this, configName + "@" + Utils.getSimpleName(this));
+
         // Create & load config.
         this.config = this.gameType.createConfig(configName);
         this.config.loadData(config, this.gameType);
         this.onConfigLoad(config);
+
+        // Setup script engine.
+        setupScriptEngine(this.scriptEngine);
+        this.scriptEngine.seal();
+    }
+
+    /**
+     * Sets up the script engine for use with this game instance.
+     */
+    protected void setupScriptEngine(NoodleScriptEngine engine) {
+        // TODO: Default stuff.
     }
 
     /**

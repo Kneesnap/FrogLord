@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.gui;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -111,15 +112,17 @@ public class SelectionMenu {
             optionList.getSelectionModel().selectFirst();
             promptText.setText(prompt);
 
-            Stage stage = getStage();
-            if (stage != null) {
-                stage.setOnCloseRequest(event -> {
-                    if (!this.handlerAccepted && this.handleNull) {
-                        this.handlerAccepted = true;
-                        this.handler.accept(null);
-                    }
-                });
-            }
+            Platform.runLater(() -> {
+                        Stage stage = getStage();
+                        if (stage != null) {
+                            stage.setOnCloseRequest(event -> {
+                                if (!this.handlerAccepted && this.handleNull) {
+                                    this.handlerAccepted = true;
+                                    this.handler.accept(null);
+                                }
+                            });
+                        }
+                    });
 
             // Since the l
             optionList.setOnKeyPressed(evt -> {

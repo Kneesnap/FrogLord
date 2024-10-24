@@ -1,5 +1,8 @@
 package net.highwayfrogs.editor.scripting.runtime;
 
+import net.highwayfrogs.editor.scripting.runtime.templates.NoodleObjectTemplate;
+import net.highwayfrogs.editor.utils.Utils;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -106,6 +109,16 @@ public class NoodleStack {
      * @return pushedPrimitive
      */
     public NoodlePrimitive pushObject(Object object) {
+        return pushObject(object, true);
+    }
+
+    /**
+     * Pushes a value onto the stack.
+     * @param object The object to push on the stack.
+     * @param errorIfMissingTemplate If true, an error will be thrown if the object template cannot be resolved. Otherwise, null will be pushed on the stack.
+     * @return pushedPrimitive
+     */
+    public NoodlePrimitive pushObject(Object object, boolean errorIfMissingTemplate) {
         if (object == null)
             return pushNull();
         if (object instanceof String)
@@ -124,8 +137,18 @@ public class NoodleStack {
             objectInstance = this.thread != null ? this.thread.getHeap().getObjectInstance(object) : null;
 
             // If there is no object instance, create one.
-            if (objectInstance == null)
-                objectInstance = new NoodleObjectInstance(this.thread, object);
+            if (objectInstance == null) {
+                NoodleObjectTemplate<?> template = this.thread != null ? this.thread.getEngine().getTemplateFromObject(object) : null;
+                if (template == null) {
+                    if (errorIfMissingTemplate)
+                        throw new NoodleRuntimeException("The %s passed in is not an object which can be represented in Noodle. (Has no corresponding template)", Utils.getSimpleName(object));
+
+                    // If errorIfMissingTemplate is false, we don't want to error, we're just going to push null on the stack.
+                    // objectInstance is currently null, so we don't need to do anything to make this happen.
+                } else {
+                    objectInstance = new NoodleObjectInstance(this.thread, object, template);
+                }
+            }
         }
 
         return pushPrimitive(new NoodlePrimitive(objectInstance));

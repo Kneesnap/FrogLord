@@ -20,10 +20,6 @@ public class NoodleObjectInstance {
     private NoodleObjectTemplate<?> template;
     private int refCount;
 
-    public NoodleObjectInstance(Object object) {
-        this(null, object);
-    }
-
     public NoodleObjectInstance(NoodleThread<?> thread, Object object) {
         this.thread = thread;
         setObject(object);
@@ -54,9 +50,12 @@ public class NoodleObjectInstance {
         if (newObject == null) // Null is not allowed. If you want a NoodlePrimitive to be null, you set the NoodleObjectInstance to be null instead.
             throw new NoodleRuntimeException("NoodleObjectInstance cannot track a null object.");
 
-        NoodleObjectTemplate<?> template = this.thread != null ? this.thread.getEngine().getTemplateFromObject(newObject) : null;
+        if (this.thread == null)
+            throw new NoodleRuntimeException("The NoodleObjectInstance does not have a thread, so we can't resolve the template for the provided object.");
+
+        NoodleObjectTemplate<?> template = this.thread.getEngine().getTemplateFromObject(newObject);
         if (template == null)
-            throw new NoodleRuntimeException("The %s passed in is not an object which can be represented in Noodle.", Utils.getSimpleName(object));
+            throw new NoodleRuntimeException("The %s passed in is not an object which can be represented in Noodle. (Has no corresponding template)", Utils.getSimpleName(newObject));
 
         setObject(newObject, template);
     }

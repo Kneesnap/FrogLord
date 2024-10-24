@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.scripting.runtime.templates.aggregate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.var;
-import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
 import net.highwayfrogs.editor.scripting.runtime.*;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleObjectTemplate;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleTemplateFunction;
@@ -25,10 +24,10 @@ import java.util.function.BiFunction;
  * For example, if you spawn clones, but they all have different locations, using the "location" getter will result in an error.
  */
 public abstract class UnsavedAggregateTemplate<TWrappedType> extends NoodleObjectTemplate<NoodleAggregateWrapper<TWrappedType>> {
-    private final Map<String, NoodleTemplateFunction<?, ?>> cachedFunctionMappers = new HashMap<>(); // Tracking it ourselves lets us override default "is this function correct" behavior in getInstanceFunction(), we can just always return it regardless of things like argument counts, etc.
+    private final Map<String, NoodleTemplateFunction<?>> cachedFunctionMappers = new HashMap<>(); // Tracking it ourselves lets us override default "is this function correct" behavior in getInstanceFunction(), we can just always return it regardless of things like argument counts, etc.
 
-    protected UnsavedAggregateTemplate(NoodleScriptEngine engine, Class<?> wrappedTypeClass, String name) {
-        super(engine, (Class<NoodleAggregateWrapper<TWrappedType>>) wrappedTypeClass, name);
+    protected UnsavedAggregateTemplate(Class<?> wrappedTypeClass, String name) {
+        super((Class<NoodleAggregateWrapper<TWrappedType>>) wrappedTypeClass, name);
     }
 
     @Override
@@ -37,8 +36,13 @@ public abstract class UnsavedAggregateTemplate<TWrappedType> extends NoodleObjec
     }
 
     @Override
-    public NoodleTemplateFunction<?, ?> getInstanceFunction(String functionName, int argumentCount) {
-        return this.cachedFunctionMappers.computeIfAbsent(functionName, name -> new NoodleTemplateFunctionAggregate<>(name, this, NoodleThread.class));
+    protected void onSetupJvmWrapper() {
+        // Do nothing, we don't have any wrapped functions.
+    }
+
+    @Override
+    public NoodleTemplateFunction<?> getInstanceFunction(String functionName, int argumentCount) {
+        return this.cachedFunctionMappers.computeIfAbsent(functionName, name -> new NoodleTemplateFunctionAggregate<>(name, this));
     }
 
     @Override
@@ -257,13 +261,13 @@ public abstract class UnsavedAggregateTemplate<TWrappedType> extends NoodleObjec
         }
     }
 
-    private static class NoodleTemplateFunctionAggregate<TThread extends NoodleThread<?>, TWrappedType> extends NoodleTemplateFunction<NoodleAggregateWrapper<TWrappedType>, TThread> {
-        public NoodleTemplateFunctionAggregate(String label, NoodleObjectTemplate<NoodleAggregateWrapper<TWrappedType>> template, Class<TThread> threadClass) {
-            super(label, template.getWrappedClass(), threadClass);
+    private static class NoodleTemplateFunctionAggregate<TWrappedType> extends NoodleTemplateFunction<NoodleAggregateWrapper<TWrappedType>> {
+        public NoodleTemplateFunctionAggregate(String label, NoodleObjectTemplate<NoodleAggregateWrapper<TWrappedType>> template) {
+            super(label, template.getWrappedClass());
         }
 
         @Override
-        protected NoodlePrimitive executeImpl(TThread thread, NoodleAggregateWrapper<TWrappedType> thisRef, NoodlePrimitive[] args) {
+        protected NoodlePrimitive executeImpl(NoodleThread<?> thread, NoodleAggregateWrapper<TWrappedType> thisRef, NoodlePrimitive[] args) {
             NoodleObjectTemplate<TWrappedType> template = (NoodleObjectTemplate<TWrappedType>)  thisRef.getWrappedTemplate();
             final String label = getName();
 

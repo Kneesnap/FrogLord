@@ -30,7 +30,7 @@ public class NoodleCachedInclude {
         NoodleScript script = this.preprocessor.getCompileContext().getTargetScript();
         File scriptFolder = script != null ? script.getScriptFolder() : null;
         if (scriptFolder != null) {
-            return Utils.toLocalPath(this.file, scriptFolder, true);
+            return Utils.toLocalPath(scriptFolder, this.file, true);
         } else {
             return this.file.getName();
         }
