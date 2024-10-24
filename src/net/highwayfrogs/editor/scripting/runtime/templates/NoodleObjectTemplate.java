@@ -77,10 +77,8 @@ public abstract class NoodleObjectTemplate<TType> {
      * Should be run after ALL templates have been setup()
      */
     public void setupJvm() {
-        if (this.jvmSetupHasOccurred) {
-            this.jvmWrapper.registerFunctions(this); // Register the wrapped functions.
+        if (this.jvmSetupHasOccurred)
             return;
-        }
 
         this.jvmSetupHasOccurred = true;
         this.onSetupJvmWrapper();
@@ -189,6 +187,7 @@ public abstract class NoodleObjectTemplate<TType> {
 
     /**
      * Registers a function in this template.
+     * Fails & logs warnings if the function is unable to be registered.
      * @param function The function to register.
      */
     public void addFunction(NoodleTemplateFunction<TType> function) {
@@ -205,13 +204,30 @@ public abstract class NoodleObjectTemplate<TType> {
     }
 
     /**
+     * Registers a function in this template, but only if it does not conflict with any existing functions.
+     * @param function The function to register.
+     * @return true iff the function was successfully registered
+     */
+    public boolean addFunctionIfMissing(NoodleTemplateFunction<TType> function) {
+        if (CONSTRUCTOR_FUNCTION_NAME.equalsIgnoreCase(function.getName()) && !(function instanceof NoodleTemplateConstructor<?>)) {
+            Utils.printStackTrace();
+            warn("Tried to register a function with a constructor name for Noodle %s!", this.name);
+            return false;
+        }
+
+        return this.instanceFunctions.registerCallable(function);
+    }
+
+    /**
      * Registers a function in this template.
      * @param name The name of the function.
      * @param delegateHandler Function code.
      * @param argumentNames Names of required arguments
      */
-    public void addFunction(String name, Function3<NoodleThread<?>, TType, NoodlePrimitive[], NoodlePrimitive> delegateHandler, String... argumentNames) {
-        addFunction(new LazyNoodleTemplateFunction<>(name, this.wrappedClass, delegateHandler, argumentNames));
+    public NoodleTemplateFunction<TType> addFunction(String name, Function3<NoodleThread<?>, TType, NoodlePrimitive[], NoodlePrimitive> delegateHandler, String... argumentNames) {
+        NoodleTemplateFunction<TType> newFunction = new LazyNoodleTemplateFunction<>(name, this.wrappedClass, delegateHandler, argumentNames);
+        addFunction(newFunction);
+        return newFunction;
     }
 
     /**
@@ -226,6 +242,7 @@ public abstract class NoodleObjectTemplate<TType> {
 
     /**
      * Registers a static function.
+     * Fails and logs warnings if the function could not be registered.
      * @param function The function to register.
      */
     public void addStaticFunction(NoodleStaticTemplateFunction<TType> function) {
@@ -233,6 +250,15 @@ public abstract class NoodleObjectTemplate<TType> {
             Utils.printStackTrace();
             warn("NoodleObjectTemplate-STATIC/%s.%s(%d args) is already registered.", this.name, function.getName(), function.getArgumentCount());
         }
+    }
+
+    /**
+     * Registers a static function if the function does not conflict with any existing function definitions.
+     * @param function The function to register.
+     * @return true iff the function was successfully registered
+     */
+    public boolean addStaticFunctionIfMissing(NoodleStaticTemplateFunction<TType> function) {
+        return this.staticFunctions.registerCallable(function);
     }
 
     /**

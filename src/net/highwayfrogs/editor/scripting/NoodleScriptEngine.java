@@ -11,13 +11,12 @@ import net.highwayfrogs.editor.scripting.runtime.NoodleObjectInstance;
 import net.highwayfrogs.editor.scripting.runtime.NoodlePrimitive;
 import net.highwayfrogs.editor.scripting.runtime.NoodleRuntimeException;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleObjectTemplate;
+import net.highwayfrogs.editor.scripting.runtime.templates.NoodleWrapperTemplate;
+import net.highwayfrogs.editor.scripting.runtime.templates.utils.NoodleLoggerTemplate;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.logging.Logger;
 
@@ -59,6 +58,7 @@ public class NoodleScriptEngine extends SharedGameObject {
         this.builtinManager.registerPreprocessorBuiltins();
         registerFunctions();
         registerConstants();
+        registerDefaultTemplates();
     }
 
     /**
@@ -271,6 +271,20 @@ public class NoodleScriptEngine extends SharedGameObject {
         this.builtinManager.registerSystemMacroBasicFunction(macroName, function);
     }
 
+    private void registerDefaultTemplates() {
+        // A bunch of classes which are generally useful, and good to expose to any script.
+        // For the interface/abstract classes added here, they are a temporary measure so that isRepresentable() can return true.
+        // Consider revisiting them at a later date once the scripting system has been used more.
+        addTemplate(NoodleWrapperTemplate.getCachedTemplate(Collection.class));
+        addTemplate(NoodleWrapperTemplate.getCachedTemplate(List.class));
+        addTemplate(NoodleWrapperTemplate.getCachedTemplate(ArrayList.class));
+        addTemplate(NoodleWrapperTemplate.getCachedTemplate(Set.class));
+        addTemplate(NoodleWrapperTemplate.getCachedTemplate(HashSet.class));
+        addTemplate(NoodleWrapperTemplate.getCachedTemplate(Map.class));
+        addTemplate(NoodleWrapperTemplate.getCachedTemplate(HashMap.class));
+        addTemplate(NoodleLoggerTemplate.INSTANCE);
+    }
+
     /**
      * Write a list of all accessible functions (global, instance, static, getter, setter, etc) to the console.
      */
@@ -298,7 +312,7 @@ public class NoodleScriptEngine extends SharedGameObject {
     }
 
     /**
-     * Returns true iff the given class can be represented in Noodle.
+     * Returns true iff the given class can for certain be represented in Noodle.
      * @param testClass The class to test
      * @return true iff the given class can be represented in a Noodle script.
      */

@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.scripting.runtime.NoodleRuntimeException;
 import net.highwayfrogs.editor.scripting.runtime.NoodleThread;
 import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleStaticTemplateFunction;
 import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleTemplateConstructor;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -32,26 +33,52 @@ public class NoodleJvmWrapper<TWrappedType> {
 
     /**
      * Makes the entirety of the class fully accessible in Noodle scripts.
+     * @param excludeMethods The names of methods to explicitly exclude
      */
-    public void makeFullyAccessible() {
-        makeFullyAccessible(null);
+    public void makeFullyAccessible(String... excludeMethods) {
+        makeFullyAccessible(null, excludeMethods);
     }
 
     /**
      * Makes the entirety of the class fully accessible in Noodle scripts.
      * If only methods returning supported objects are included, this method should be run only after all templates have been registered.
      * @param engine If an engine is provided, only methods which return supported objects will be included.
+     * @param excludeMethods The names of methods to explicitly exclude
      */
     @SuppressWarnings("unchecked")
-    public void makeFullyAccessible(NoodleScriptEngine engine) {
+    public void makeFullyAccessible(NoodleScriptEngine engine, String... excludeMethods) {
         // Add constructors.
         for (Constructor<?> constructor : this.wrappedClass.getConstructors()) // getConstructors() only includes public methods.
             addConstructor((Constructor<TWrappedType>) constructor);
 
         // Add public methods. (Including inherited ones)
-        for (Method method : this.wrappedClass.getMethods()) // getMethods() only includes public methods.
-            if (engine == null || method.getReturnType() == null || engine.isRepresentable(method.getReturnType()))
-                addFunction(method);
+        for (Method method : this.wrappedClass.getMethods()) { // getMethods() only includes public methods.
+            if (engine != null) {
+                if (method.getReturnType() != null && !engine.isRepresentable(method.getReturnType()))
+                    continue;
+
+                boolean paramsRepresentable = true;
+                Class<?>[] paramTypes = method.getParameterTypes();
+                for (int i = 0; i < paramTypes.length; i++) {
+                    Class<?> paramType = paramTypes[i];
+                    if (paramType == null || !engine.isRepresentable(paramType)) {
+                        paramsRepresentable = false;
+                        break;
+                    }
+                }
+
+                if (!paramsRepresentable)
+                    continue;
+            }
+
+            if (excludeMethods != null && Utils.contains(excludeMethods, method.getName()))
+                continue;
+
+            if (Object.class.equals(method.getDeclaringClass()))
+                continue;
+
+            addFunction(method);
+        }
     }
 
     /**
@@ -144,6 +171,7 @@ public class NoodleJvmWrapper<TWrappedType> {
 
     /**
      * Register the functions tracked by this wrapper to the noodle template.
+     * If there are any conflicts with functions previously defined, any impacted methods will be skipped.
      * @param template the template to register the functions to
      */
     public void registerFunctions(NoodleObjectTemplate<TWrappedType> template) {
@@ -164,20 +192,34 @@ public class NoodleJvmWrapper<TWrappedType> {
 
         // Register methods:
         for (Entry<String, List<CachedMethod>> entry : this.cachedMethods.entrySet()) {
-            lastArgumentCount = -1;
             String methodName = entry.getKey();
             List<CachedMethod> methods = entry.getValue();
+
+            // Static methods.
+            lastArgumentCount = -1;
             for (int i = 0; i < methods.size(); i++) {
                 CachedMethod cachedMethod = methods.get(i);
                 int tempArgumentCount = cachedMethod.getParameterCount();
+                if (!cachedMethod.isStaticMethod())
+                    continue;
 
                 if (lastArgumentCount != tempArgumentCount) {
-                    if (cachedMethod.isStaticMethod()) {
-                        template.addStaticFunction(new NoodleJvmStaticFunction<>(this, methodName, tempArgumentCount));
-                    } else {
-                        template.addFunction(new NoodleJvmTemplateFunction<>(this, methodName, tempArgumentCount));
-                    }
+                    template.addStaticFunctionIfMissing(new NoodleJvmStaticFunction<>(this, methodName, tempArgumentCount));
+                    lastArgumentCount = tempArgumentCount;
+                }
+            }
 
+            // Instance methods.
+            lastArgumentCount = -1;
+            for (int i = 0; i < methods.size(); i++) {
+                CachedMethod cachedMethod = methods.get(i);
+                if (cachedMethod.isStaticMethod())
+                    continue;
+
+                int tempArgumentCount = cachedMethod.getParameterCount();
+
+                if (lastArgumentCount != tempArgumentCount) {
+                    template.addFunctionIfMissing(new NoodleJvmTemplateFunction<>(this, methodName, tempArgumentCount));
                     lastArgumentCount = tempArgumentCount;
                 }
             }
