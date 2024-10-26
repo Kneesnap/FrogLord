@@ -335,7 +335,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
 
         MenuItem exportChunkItem = new MenuItem("Export Chunk");
         contextMenu.getItems().add(exportChunkItem);
-        exportRawDataItem.setOnAction(event -> {
+        exportChunkItem.setOnAction(event -> {
             File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), CHUNK_FILE_PATH, getName(), true);
             if (outputFile != null)
                 writeDataToFile(outputFile, true);
