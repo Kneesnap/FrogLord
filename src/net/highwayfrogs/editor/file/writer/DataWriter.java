@@ -380,8 +380,9 @@ public class DataWriter {
             writeBytes(stringBytes);
         }
 
-        writeByte(Constants.NULL_BYTE); // Terminator Byte
-        if (pathEndIndex != getIndex()) // If the string reaches the end, it should be considered cut off because it was too long.
+        if (pathEndIndex != getIndex()) { // If the string reaches the end, it should be considered cut off because it was too long.
+            writeByte(Constants.NULL_BYTE); // Terminator Byte
             writeTo(pathEndIndex, padding);
+        }
     }
 }

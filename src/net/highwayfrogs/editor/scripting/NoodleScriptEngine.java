@@ -13,6 +13,7 @@ import net.highwayfrogs.editor.scripting.runtime.NoodleRuntimeException;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleObjectTemplate;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleWrapperTemplate;
 import net.highwayfrogs.editor.scripting.runtime.templates.utils.NoodleLoggerTemplate;
+import net.highwayfrogs.editor.scripting.runtime.templates.utils.NoodleStringTemplate;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.math.*;
 import net.highwayfrogs.editor.utils.*;
@@ -294,14 +295,13 @@ public class NoodleScriptEngine extends SharedGameObject {
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(Map.class));
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(HashMap.class));
         addTemplate(NoodleLoggerTemplate.INSTANCE);
+        addTemplate(NoodleStringTemplate.INSTANCE);
 
         // Various utility components of FrogLord.
         addWrapperTemplates(Matrix4x4f.class, Vector2f.class, Vector3f.class, Vector4f.class, Quaternion.class);
         addWrapperTemplates(AudioUtils.class, ColorUtils.class, DataUtils.class, FileUtils.class, MathUtils.class,
                 NumberUtils.class, StringUtils.class, TimeUtils.class, Utils.class);
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(Config.class));
-        addTemplate(NoodleWrapperTemplate.getCachedTemplate(MathUtils.class));
-        addTemplate(NoodleWrapperTemplate.getCachedTemplate(TimeUtils.class));
 
         // DataReader/DataWriter is considered not very helpful to Noodle, as its data types are somewhat bizarre.
         // Perhaps we should have a way to create them, and pass them to functions, but not necessarily use them.

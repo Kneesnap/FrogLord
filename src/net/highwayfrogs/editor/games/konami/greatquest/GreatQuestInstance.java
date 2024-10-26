@@ -73,6 +73,9 @@ import java.util.Map.Entry;
  *   -> Consider rigid primitives, upsides & downsides.
  *   -> Register public static fields as well.
  *   -> Fix interfaces.
+ *   -> throw "" keyword.
+ *   -> I believe config is not properly handling escapes, either that or NoodleCompiler isn't properly handling escapes in strings.
+ *   -> Are for loops actually evaluating the condition each time?
  *
  * TODO Future:
  *  -> Support previewing action sequences in-editor.

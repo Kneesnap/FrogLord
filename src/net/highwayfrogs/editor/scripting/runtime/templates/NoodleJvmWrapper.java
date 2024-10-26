@@ -387,7 +387,7 @@ public class NoodleJvmWrapper<TWrappedType> {
                 case INTEGER:
                     return value.isInteger();
                 default:
-                    throw new NoodleRuntimeException("Unsupported JvmPrimitiveGroup: %s.", currTargetGroup);
+                    return false;
             }
         } else if (value.isObjectReference()) {
             Object refObject = value.getObjectReference().getObject();
