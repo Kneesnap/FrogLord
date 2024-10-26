@@ -151,7 +151,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         int dataStartIndex = writer.getIndex();
         chunk.save(writer);
         int dataEndIndex = writer.getIndex();
-        writer.writeAddressAt(lengthAddress, (dataEndIndex - dataStartIndex) - 0x20);
+        writer.writeIntAtPos(lengthAddress, (dataEndIndex - dataStartIndex) - 0x20);
     }
 
     @Override

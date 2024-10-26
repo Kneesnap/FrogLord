@@ -118,7 +118,7 @@ public class SCPlayStationVabSoundBankHeader extends SCSplitSoundBankHeader<SCPl
 
         // Write the final size.
         int headerSize = writer.getIndex();
-        writer.writeAddressAt(bodyAndHeaderSizeAddress, headerSize + this.savedBodyTotalSize);
+        writer.writeIntAtPos(bodyAndHeaderSizeAddress, headerSize + this.savedBodyTotalSize);
     }
 
     public static class SCPlayStationVabHeaderEntry extends SCSplitSoundBankHeaderEntry {

@@ -89,7 +89,7 @@ public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements
         saveData(writer);
 
         // Write correct size.
-        writer.writeAddressAt(writtenDataSizeAddress, writer.getIndex() - writtenDataStartIndex);
+        writer.writeIntAtPos(writtenDataSizeAddress, writer.getIndex() - writtenDataStartIndex);
     }
 
     /**

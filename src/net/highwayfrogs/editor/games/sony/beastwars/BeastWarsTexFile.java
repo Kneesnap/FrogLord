@@ -153,7 +153,7 @@ public class BeastWarsTexFile extends SCGameFile<BeastWarsInstance> {
         }
 
         // Write size.
-        writer.writeAddressAt(sizePtr, writer.getIndex() - sizePtr);
+        writer.writeIntAtPos(sizePtr, writer.getIndex() - sizePtr);
     }
 
     private void writePcImages(DataWriter writer) {

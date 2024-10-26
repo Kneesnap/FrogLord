@@ -84,10 +84,10 @@ public class kcCResourceGeneric extends kcCResource {
         if (this.cachedObject != null) {
             int dataWriteStart = writer.getIndex();
             this.cachedObject.save(writer);
-            writer.writeAddressAt(dataLengthPos, writer.getIndex() - dataWriteStart);
+            writer.writeIntAtPos(dataLengthPos, writer.getIndex() - dataWriteStart);
         } else if (this.rawResourceData != null) {
             writer.writeBytes(this.rawResourceData);
-            writer.writeAddressAt(dataLengthPos, this.rawResourceData.length);
+            writer.writeIntAtPos(dataLengthPos, this.rawResourceData.length);
         }
     }
 

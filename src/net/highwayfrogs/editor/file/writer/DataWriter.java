@@ -316,7 +316,7 @@ public class DataWriter {
      * @param writeTo The old address to write the current address to.
      */
     public void writeAddressTo(int writeTo) {
-        writeAddressAt(writeTo, getIndex());
+        writeIntAtPos(writeTo, getIndex());
     }
 
     /**
@@ -324,7 +324,7 @@ public class DataWriter {
      * @param addressLocation The old address to write the value to.
      * @param pointerValue    The value to write at that location.
      */
-    public void writeAddressAt(int addressLocation, int pointerValue) {
+    public void writeIntAtPos(int addressLocation, int pointerValue) {
         jumpTemp(addressLocation);
         writeInt(pointerValue);
         jumpReturn();

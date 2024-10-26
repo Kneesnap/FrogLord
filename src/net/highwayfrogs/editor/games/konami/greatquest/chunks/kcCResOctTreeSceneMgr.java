@@ -151,12 +151,12 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
         // Write oct tree data.
         int treeEntityStartIndex = writer.getIndex();
         this.entityTree.save(writer);
-        writer.writeAddressAt(treeEntityDataSizeAddress, writer.getIndex() - treeEntityStartIndex);
+        writer.writeIntAtPos(treeEntityDataSizeAddress, writer.getIndex() - treeEntityStartIndex);
 
         // Write visual tree data.
         int treeVisualStartIndex = writer.getIndex();
         this.visualTree.save(writer);
-        writer.writeAddressAt(treeVisualDataSizeAddress, writer.getIndex() - treeVisualStartIndex);
+        writer.writeIntAtPos(treeVisualDataSizeAddress, writer.getIndex() - treeVisualStartIndex);
 
         // Write primitives.
         for (int i = 0; i < this.vertexBuffers.size(); i++)
@@ -170,7 +170,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
         for (int i = 0; i < this.collisionMeshes.size(); i++)
             this.collisionMeshes.get(i).save(writer);
 
-        writer.writeAddressAt(fullSizeAddress, writer.getIndex() - fullSizeAddress);
+        writer.writeIntAtPos(fullSizeAddress, writer.getIndex() - fullSizeAddress);
     }
 
     @Override
@@ -353,8 +353,8 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
             // Write lengths.
             int headerByteLength = (writer.getIndex() - otaPrimHeaderSizeAddress);
             int vtxByteLength = (writer.getIndex() - vtxDataStart);
-            writer.writeAddressAt(otaPrimHeaderSizeAddress, headerByteLength + vtxByteLength);
-            writer.writeAddressAt(vtxByteLengthAddress, vtxByteLength);
+            writer.writeIntAtPos(otaPrimHeaderSizeAddress, headerByteLength + vtxByteLength);
+            writer.writeIntAtPos(vtxByteLengthAddress, vtxByteLength);
         }
 
         @Override

@@ -167,7 +167,7 @@ public class MWIResourceEntry extends SCSharedGameData implements ISCFileDefinit
             return; // No address to write the file name pointer to.
 
         if (!hasFilePath()) {
-            writer.writeAddressAt(this.filePathPointerAddress, NO_FILE_NAME_MARKER);
+            writer.writeIntAtPos(this.filePathPointerAddress, NO_FILE_NAME_MARKER);
             this.filePathPointerAddress = NO_FILE_NAME_MARKER;
             return;
         }

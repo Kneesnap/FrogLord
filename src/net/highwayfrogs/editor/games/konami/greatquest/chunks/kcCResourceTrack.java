@@ -83,7 +83,7 @@ public class kcCResourceTrack extends kcCResource implements IMultiLineInfoWrite
             this.tracks.get(i).save(writer, baseByteOffset, i == 0, this.tracks.size() > i + 1);
 
         // Ensure we get the size right.
-        writer.writeAddressAt(dataSizeAddress, writer.getIndex() - dataStartAddress);
+        writer.writeIntAtPos(dataSizeAddress, writer.getIndex() - dataStartAddress);
     }
 
     @Override

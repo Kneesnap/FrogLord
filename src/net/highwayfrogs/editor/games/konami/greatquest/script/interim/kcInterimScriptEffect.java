@@ -85,7 +85,7 @@ public class kcInterimScriptEffect extends GameData<GreatQuestInstance> {
             writer.writeBytes(this.unhandledRawBytes);
 
         // Write the length.
-        writer.writeAddressAt(startIndex, writer.getIndex() - startIndex);
+        writer.writeIntAtPos(startIndex, writer.getIndex() - startIndex);
     }
 
     /**

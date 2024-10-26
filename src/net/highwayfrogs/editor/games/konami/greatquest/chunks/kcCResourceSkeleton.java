@@ -59,7 +59,7 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
         this.rootNode.save(writer);
 
         // Ensure we get the size right.
-        writer.writeAddressAt(dataSizeAddress, writer.getIndex() - dataStartAddress);
+        writer.writeIntAtPos(dataSizeAddress, writer.getIndex() - dataStartAddress);
     }
 
     @Override
@@ -277,7 +277,7 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
 
             // Write child nodes.
             for (int i = 0; i < this.children.size(); i++) {
-                writer.writeAddressAt(childNodeOffsetList + (i * Constants.INTEGER_SIZE), writer.getIndex() - nodeBaseAddress);
+                writer.writeIntAtPos(childNodeOffsetList + (i * Constants.INTEGER_SIZE), writer.getIndex() - nodeBaseAddress);
                 this.children.get(i).save(writer);
             }
         }

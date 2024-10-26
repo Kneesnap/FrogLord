@@ -136,10 +136,10 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         int sfxAttributeDataStart = writer.getIndex();
         writer.writeAddressTo(sfxAttrOffset);
         for (int i = 0; i < this.soundEffects.size(); i++) {
-            writer.writeAddressAt(sfxAttrOffsets[i], writer.getIndex() - sfxAttributeDataStart);
+            writer.writeIntAtPos(sfxAttrOffsets[i], writer.getIndex() - sfxAttributeDataStart);
             this.soundEffects.get(i).getAttributes().save(writer);
         }
-        writer.writeAddressAt(sfxAttrSize, writer.getIndex() - sfxAttributeDataStart);
+        writer.writeIntAtPos(sfxAttrSize, writer.getIndex() - sfxAttributeDataStart);
 
         // Write wav.
         int writtenWaveDataBytes = 0;
@@ -150,7 +150,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             writtenWaveDataBytes += wave.getWaveSize();
         }
 
-        writer.writeAddressAt(waveAttrSize, writtenWaveDataBytes);
+        writer.writeIntAtPos(waveAttrSize, writtenWaveDataBytes);
 
         // Write wav data.
         int waveDataStartsAt = writer.getIndex();
@@ -158,7 +158,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         for (int i = 0; i < this.waves.size(); i++)
             this.waves.get(i).saveADPCM(writer);
 
-        writer.writeAddressAt(waveDataSize, writer.getIndex() - waveDataStartsAt);
+        writer.writeIntAtPos(waveDataSize, writer.getIndex() - waveDataStartsAt);
     }
 
     @Override

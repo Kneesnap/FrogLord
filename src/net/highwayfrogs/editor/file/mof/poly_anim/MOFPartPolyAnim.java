@@ -70,7 +70,7 @@ public class MOFPartPolyAnim extends GameObject {
      */
     public void saveExtra(DataWriter writer) {
         Utils.verify(this.tempAnimAddress > 0, "save() was not called first.");
-        writer.writeAddressAt(this.tempAnimAddress, this.entryList.getTempSavePointer());
+        writer.writeIntAtPos(this.tempAnimAddress, this.entryList.getTempSavePointer());
         this.tempAnimAddress = 0;
     }
 

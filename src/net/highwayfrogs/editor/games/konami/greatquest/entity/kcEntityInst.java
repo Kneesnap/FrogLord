@@ -64,7 +64,7 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
     public final void save(DataWriter writer) {
         int sizePtr = writer.writeNullPointer();
         saveData(writer);
-        writer.writeAddressAt(sizePtr, writer.getIndex() - sizePtr);
+        writer.writeIntAtPos(sizePtr, writer.getIndex() - sizePtr);
     }
 
     /**

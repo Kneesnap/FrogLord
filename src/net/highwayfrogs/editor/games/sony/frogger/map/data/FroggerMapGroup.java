@@ -211,7 +211,7 @@ public class FroggerMapGroup extends SCGameData<FroggerGameInstance> {
             }
 
             List<FroggerMapPolygon> localTypedPolygons = this.polygonsByType[i];
-            writer.writeAddressAt(this.loadPolygonPointers[i], polygonOffsets[i]); // Write polygon data offset.
+            writer.writeIntAtPos(this.loadPolygonPointers[i], polygonOffsets[i]); // Write polygon data offset.
             polygonOffsets[i] += localTypedPolygons.size() * polygonType.getSizeInBytes();
             this.loadPolygonPointers[i] = -1;
         }

@@ -64,7 +64,6 @@ import java.util.Map.Entry;
  *  -> Fix transparency for the bone icon.
  *  -> Add PS2 PAL TOC support.
  *  -> Split up Utils & add it to the game script engine.
- *  -> Change DataWriter.writeAddressAt() to something named writeIntAtPos().
  *  -> Scripting Engine
  *   -> Strings should be an object with a template.
  *   -> Enums should be an object with a template too.

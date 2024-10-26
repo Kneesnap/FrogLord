@@ -110,13 +110,13 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
         int dataWriteStartIndex = writer.getIndex();
         try {
             saveChunkData(writer);
-            writer.writeAddressAt(chunkDataSizeAddress, writer.getIndex() - dataWriteStartIndex);
+            writer.writeIntAtPos(chunkDataSizeAddress, writer.getIndex() - dataWriteStartIndex);
         } catch (Throwable th) {
             Utils.handleError(getLogger(), th, false, "Failed to write RwStreamChunk data.");
 
             // Null out the data chunk.
             writer.setIndex(dataWriteStartIndex);
-            writer.writeAddressAt(chunkDataSizeAddress, 0);
+            writer.writeIntAtPos(chunkDataSizeAddress, 0);
         }
     }
 

@@ -250,7 +250,7 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
         // TODO: Save image function call.
 
         if (this.hasHeader)
-            writer.writeAddressAt(headerSizeAddress, writer.getIndex() - headerSizeAddress - Constants.INTEGER_SIZE);
+            writer.writeIntAtPos(headerSizeAddress, writer.getIndex() - headerSizeAddress - Constants.INTEGER_SIZE);
     }
     @Override
     public String getExtension() {

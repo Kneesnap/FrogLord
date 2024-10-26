@@ -49,7 +49,7 @@ public abstract class MOFBase extends SCSharedGameData {
         int sizeAddress = writer.writeNullPointer();
         writer.writeInt(buildFlags());
         onSave(writer);
-        writer.writeAddressAt(sizeAddress, writer.getIndex() - startIndex);
+        writer.writeIntAtPos(sizeAddress, writer.getIndex() - startIndex);
     }
 
     /**

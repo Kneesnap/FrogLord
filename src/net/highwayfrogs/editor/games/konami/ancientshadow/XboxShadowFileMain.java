@@ -361,10 +361,10 @@ public class XboxShadowFileMain {
                     cdSector += (writtenBytes / Constants.CD_SECTOR_SIZE) + ((writtenBytes % Constants.CD_SECTOR_SIZE) != 0 ? 1 : 0);
                     writer.writeTo(cdSector * Constants.CD_SECTOR_SIZE);
                     writer.jumpReturn();
-                    writer.writeAddressAt(dataSizePtr, writtenBytes);
+                    writer.writeIntAtPos(dataSizePtr, writtenBytes);
                 }
 
-                writer.writeAddressAt(fullFileSizePtr, cdSector * Constants.CD_SECTOR_SIZE);
+                writer.writeIntAtPos(fullFileSizePtr, cdSector * Constants.CD_SECTOR_SIZE);
             }
         }
 
@@ -389,10 +389,10 @@ public class XboxShadowFileMain {
                 cdSector += (writtenBytes / Constants.CD_SECTOR_SIZE) + ((writtenBytes % Constants.CD_SECTOR_SIZE) != 0 ? 1 : 0);
                 writer.writeTo(cdSector * Constants.CD_SECTOR_SIZE);
                 writer.jumpReturn();
-                writer.writeAddressAt(dataSizePtr, writtenBytes);
+                writer.writeIntAtPos(dataSizePtr, writtenBytes);
             }
 
-            writer.writeAddressAt(fullFileSizePtr, cdSector * Constants.CD_SECTOR_SIZE);
+            writer.writeIntAtPos(fullFileSizePtr, cdSector * Constants.CD_SECTOR_SIZE);
             writer.closeReceiver();
         }
 

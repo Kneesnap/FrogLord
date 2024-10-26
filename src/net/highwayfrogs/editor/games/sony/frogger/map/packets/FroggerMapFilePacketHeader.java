@@ -69,12 +69,12 @@ public class FroggerMapFilePacketHeader extends FroggerMapFilePacket {
         writer.writeUnsignedInt(fileSizeInBytes);
 
         // Write pointer addresses.
-        writer.writeAddressAt(this.generalPacketAddress, getParentFile().getGeneralPacket().getLastValidWriteHeaderAddress());
-        writer.writeAddressAt(this.graphicalPacketAddress, getParentFile().getGraphicalPacket().getLastValidWriteHeaderAddress());
-        writer.writeAddressAt(this.formPacketAddress, getParentFile().getFormPacket().getLastValidWriteHeaderAddress());
-        writer.writeAddressAt(this.entityPacketAddress, getParentFile().getEntityPacket().getLastValidWriteHeaderAddress());
-        writer.writeAddressAt(this.zonePacketAddress, getParentFile().getZonePacket().getLastValidWriteHeaderAddress());
-        writer.writeAddressAt(this.pathPacketAddress, getParentFile().getPathPacket().getLastValidWriteHeaderAddress());
+        writer.writeIntAtPos(this.generalPacketAddress, getParentFile().getGeneralPacket().getLastValidWriteHeaderAddress());
+        writer.writeIntAtPos(this.graphicalPacketAddress, getParentFile().getGraphicalPacket().getLastValidWriteHeaderAddress());
+        writer.writeIntAtPos(this.formPacketAddress, getParentFile().getFormPacket().getLastValidWriteHeaderAddress());
+        writer.writeIntAtPos(this.entityPacketAddress, getParentFile().getEntityPacket().getLastValidWriteHeaderAddress());
+        writer.writeIntAtPos(this.zonePacketAddress, getParentFile().getZonePacket().getLastValidWriteHeaderAddress());
+        writer.writeIntAtPos(this.pathPacketAddress, getParentFile().getPathPacket().getLastValidWriteHeaderAddress());
 
         // Update internal tracking.
         this.generalPacketAddress = getParentFile().getGeneralPacket().getLastValidWriteHeaderAddress();

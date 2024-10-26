@@ -58,7 +58,7 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
         writer.writeStringBytes(SIGNATURE_STR);
         int sizePos = writer.writeNullPointer();
         this.model.save(writer);
-        writer.writeAddressAt(sizePos, writer.getIndex() - sizePos - Constants.INTEGER_SIZE);
+        writer.writeIntAtPos(sizePos, writer.getIndex() - sizePos - Constants.INTEGER_SIZE);
     }
 
     @Override

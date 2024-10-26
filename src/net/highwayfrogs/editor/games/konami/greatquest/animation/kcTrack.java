@@ -160,7 +160,7 @@ public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineI
         int keyListDataStartIndex = writer.getIndex();
         for (int i = 0; i < this.keyList.size(); i++) {
             // Write offset in table.
-            writer.writeAddressAt(keyListOffsetStartIndex + (i * Constants.POINTER_SIZE), writer.getIndex() - keyListDataStartIndex);
+            writer.writeIntAtPos(keyListOffsetStartIndex + (i * Constants.POINTER_SIZE), writer.getIndex() - keyListDataStartIndex);
 
             // Write key data.
             kcTrackKey<?> key = this.keyList.get(i);
@@ -174,7 +174,7 @@ public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineI
 
         // Write the pointer of the next track unless this is the last track.
         if (this.parentResource.getTracks().size() > 0 && this.parentResource.getTracks().get(this.parentResource.getTracks().size() - 1) != this)
-            writer.writeAddressAt(nextTrackAddress, writer.getIndex() - baseOffset);
+            writer.writeIntAtPos(nextTrackAddress, writer.getIndex() - baseOffset);
     }
 
     /**

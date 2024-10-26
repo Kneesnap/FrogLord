@@ -344,7 +344,7 @@ public class PSXTIMFile extends SCSharedGameFile {
             this.writePalettes(writer, this.palettes);
 
             int clutSize = writer.getIndex() - clutStartPos;
-            writer.writeAddressAt(clutSizePos, clutSize);
+            writer.writeIntAtPos(clutSizePos, clutSize);
         }
 
         // Write image header.
@@ -362,7 +362,7 @@ public class PSXTIMFile extends SCSharedGameFile {
 
         // Write image size.
         int imageSize = writer.getIndex() - imageStartPos;
-        writer.writeAddressAt(imageSizePos, imageSize);
+        writer.writeIntAtPos(imageSizePos, imageSize);
     }
 
     private void writePalettes(DataWriter writer, PSXClutColor[][] palettes) {

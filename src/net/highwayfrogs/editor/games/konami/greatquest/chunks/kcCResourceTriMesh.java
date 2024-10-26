@@ -118,7 +118,7 @@ public class kcCResourceTriMesh extends kcCResource {
                 this.vertices.get(i).save(writer);
 
             // Ensure we get the size right.
-            writer.writeAddressAt(dataSizeAddress, writer.getIndex() - dataStartAddress);
+            writer.writeIntAtPos(dataSizeAddress, writer.getIndex() - dataStartAddress);
         }
 
         @Override

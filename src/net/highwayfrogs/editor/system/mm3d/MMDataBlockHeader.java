@@ -69,13 +69,13 @@ public class MMDataBlockHeader<T extends MMDataBlockBody> implements IBinarySeri
                 int writeSizeTo = writer.writeNullPointer();
                 int structStart = writer.getIndex();
                 body.save(writer);
-                writer.writeAddressAt(writeSizeTo, (writer.getIndex() - structStart));
+                writer.writeIntAtPos(writeSizeTo, (writer.getIndex() - structStart));
             }
         } else if (getOffsetType().isTypeB()) {
             int writeSizeTo = writer.writeNullPointer();
             int structStart = writer.getIndex();
             this.blocks.forEach(block -> block.save(writer));
-            writer.writeAddressAt(writeSizeTo, (writer.getIndex() - structStart) / this.blocks.size());
+            writer.writeIntAtPos(writeSizeTo, (writer.getIndex() - structStart) / this.blocks.size());
         }
     }
 

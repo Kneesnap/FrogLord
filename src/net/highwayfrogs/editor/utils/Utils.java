@@ -3106,7 +3106,7 @@ public class Utils {
         writer.writeStringBytes("data");
         writer.writeInt(rawAudioData.length);
         writer.writeBytes(rawAudioData);
-        writer.writeAddressAt(fileSizeAddress, writer.getIndex() - (fileSizeAddress + Constants.INTEGER_SIZE));
+        writer.writeIntAtPos(fileSizeAddress, writer.getIndex() - (fileSizeAddress + Constants.INTEGER_SIZE));
 
         writer.closeReceiver();
         return receiver.toArray();
