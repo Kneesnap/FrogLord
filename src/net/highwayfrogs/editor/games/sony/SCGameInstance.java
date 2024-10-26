@@ -21,6 +21,7 @@ import net.highwayfrogs.editor.games.sony.shared.overlay.SCOverlayTable;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCMainMenuUIController;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -138,7 +139,7 @@ public abstract class SCGameInstance extends GameInstance {
     public URL getFXMLTemplateURL(String template) {
         URL templateUrl = super.getFXMLTemplateURL(template);
         if (templateUrl == null) // Lookup from shared fxml templates if the lookup in this game fails.
-            templateUrl = Utils.getResourceURL("games/sony/fxml/" + template + ".fxml");
+            templateUrl = FileUtils.getResourceURL("games/sony/fxml/" + template + ".fxml");
 
         return templateUrl;
     }
@@ -705,7 +706,7 @@ public abstract class SCGameInstance extends GameInstance {
         data = getConfig().applyConfigIdentifier(data);
 
         // Write file.
-        Utils.deleteFile(outputFile);
+        FileUtils.deleteFile(outputFile);
         Files.write(outputFile.toPath(), data);
     }
 

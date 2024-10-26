@@ -24,8 +24,8 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
+import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
-import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,10 +39,10 @@ import java.util.Map;
 public class OldFroggerZoneManager extends OldFroggerMapListManager<OldFroggerMapZone, ZonePreview3D> {
     private DisplayList boxDisplayList;
 
-    private static final PhongMaterial DEFAULT_MATERIAL = Utils.makeUnlitSharpMaterial(Color.LIME);
-    private static final PhongMaterial SELECTED_MATERIAL = Utils.makeUnlitSharpMaterial(Color.YELLOW);
-    private static final PhongMaterial WHITE_MATERIAL = Utils.makeUnlitSharpMaterial(Color.WHITE);
-    private static final PhongMaterial BLUE_MATERIAL = Utils.makeUnlitSharpMaterial(Color.LIGHTBLUE);
+    private static final PhongMaterial DEFAULT_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.LIME);
+    private static final PhongMaterial SELECTED_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
+    private static final PhongMaterial WHITE_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.WHITE);
+    private static final PhongMaterial BLUE_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.LIGHTBLUE);
 
     public OldFroggerZoneManager(MeshViewController<OldFroggerMapMesh> controller) {
         super(controller);
@@ -71,11 +71,11 @@ public class OldFroggerZoneManager extends OldFroggerMapListManager<OldFroggerMa
 
     @Override
     protected ZonePreview3D setupDisplay(OldFroggerMapZone zone) {
-        float minX = Utils.fixedPointIntToFloat4Bit(zone.getObjBoundAX1());
-        float maxX = Utils.fixedPointIntToFloat4Bit(zone.getObjBoundAX2());
-        float y = Utils.fixedPointShortToFloat4Bit(zone.getPlaneY());
-        float minZ = Utils.fixedPointIntToFloat4Bit(zone.getObjBoundAZ1());
-        float maxZ = Utils.fixedPointIntToFloat4Bit(zone.getObjBoundAZ2());
+        float minX = DataUtils.fixedPointIntToFloat4Bit(zone.getObjBoundAX1());
+        float maxX = DataUtils.fixedPointIntToFloat4Bit(zone.getObjBoundAX2());
+        float y = DataUtils.fixedPointShortToFloat4Bit(zone.getPlaneY());
+        float minZ = DataUtils.fixedPointIntToFloat4Bit(zone.getObjBoundAZ1());
+        float maxZ = DataUtils.fixedPointIntToFloat4Bit(zone.getObjBoundAZ2());
 
         Box box = this.boxDisplayList.addBoundingBoxFromMinMax(minX, y - 5, minZ, maxX, y + 5, maxZ, DEFAULT_MATERIAL, false);
         box.setOnMouseClicked(event -> getValueSelectionBox().setValue(zone));
@@ -136,10 +136,10 @@ public class OldFroggerZoneManager extends OldFroggerMapListManager<OldFroggerMa
          * @param region The region to preview.
          */
         public void addRegionPreview(OldFroggerMapZone zone, OldFroggerMapZoneRegion region) {
-            float y = Utils.fixedPointIntToFloat4Bit(zone.getPlaneY());
-            float x = Utils.fixedPointIntToFloat4Bit(region.getWorldX());
-            float regionMinZ = Utils.fixedPointIntToFloat4Bit(region.getWorldZ1());
-            float regionMaxZ = Utils.fixedPointIntToFloat4Bit(region.getWorldZ2());
+            float y = DataUtils.fixedPointIntToFloat4Bit(zone.getPlaneY());
+            float x = DataUtils.fixedPointIntToFloat4Bit(region.getWorldX());
+            float regionMinZ = DataUtils.fixedPointIntToFloat4Bit(region.getWorldZ1());
+            float regionMaxZ = DataUtils.fixedPointIntToFloat4Bit(region.getWorldZ2());
             Cylinder line = this.displayList.addLine(x, y - 10, regionMinZ, x, y - 10, regionMaxZ, 1, WHITE_MATERIAL);
             Sphere startSphere = this.displayList.addSphere(x, y - 10, regionMinZ, 3, BLUE_MATERIAL, false);
             Sphere endSphere = this.displayList.addSphere(x, y - 10, regionMaxZ, 3, BLUE_MATERIAL, false);
@@ -175,9 +175,9 @@ public class OldFroggerZoneManager extends OldFroggerMapListManager<OldFroggerMa
                     continue;
 
                 Translate translate = (Translate) transform;
-                translate.setX(Utils.fixedPointIntToFloat4Bit((zone.getObjBoundAX1() + zone.getObjBoundAX2()) / 2));
-                translate.setY(Utils.fixedPointIntToFloat4Bit(zone.getPlaneY()));
-                translate.setZ(Utils.fixedPointIntToFloat4Bit((zone.getObjBoundAZ1() + zone.getObjBoundAZ2()) / 2));
+                translate.setX(DataUtils.fixedPointIntToFloat4Bit((zone.getObjBoundAX1() + zone.getObjBoundAX2()) / 2));
+                translate.setY(DataUtils.fixedPointIntToFloat4Bit(zone.getPlaneY()));
+                translate.setZ(DataUtils.fixedPointIntToFloat4Bit((zone.getObjBoundAZ1() + zone.getObjBoundAZ2()) / 2));
             }
         }
 
@@ -252,9 +252,9 @@ public class OldFroggerZoneManager extends OldFroggerMapListManager<OldFroggerMa
          * @param region The region to update data from.
          */
         public void updateRegionLinePreview(OldFroggerMapZoneRegion region) {
-            float newX = Utils.fixedPointIntToFloat4Bit(region.getWorldX());
-            float newZ1 = Utils.fixedPointIntToFloat4Bit(region.getWorldZ1());
-            float newZ2 = Utils.fixedPointIntToFloat4Bit(region.getWorldZ2());
+            float newX = DataUtils.fixedPointIntToFloat4Bit(region.getWorldX());
+            float newZ1 = DataUtils.fixedPointIntToFloat4Bit(region.getWorldZ1());
+            float newZ2 = DataUtils.fixedPointIntToFloat4Bit(region.getWorldZ2());
             Scene3DUtils.get3DTranslation(this.startSphere).setX(newX);
             Scene3DUtils.get3DTranslation(this.startSphere).setZ(newZ1);
             Scene3DUtils.get3DTranslation(this.endSphere).setX(newX);
@@ -269,7 +269,7 @@ public class OldFroggerZoneManager extends OldFroggerMapListManager<OldFroggerMa
          * @param zone The zone to update height from
          */
         public void updateRegionLineHeight(OldFroggerMapZone zone) {
-            float newY = Utils.fixedPointIntToFloat4Bit(zone.getPlaneY()) - 10;
+            float newY = DataUtils.fixedPointIntToFloat4Bit(zone.getPlaneY()) - 10;
             Scene3DUtils.get3DTranslation(this.startSphere).setY(newY);
             Scene3DUtils.get3DTranslation(this.endSphere).setY(newY);
             Scene3DUtils.get3DTranslation(this.line).setY(newY);
@@ -352,7 +352,7 @@ public class OldFroggerZoneManager extends OldFroggerMapListManager<OldFroggerMa
             if (this.xTextField != null) {
                 this.xTextField.setDisable(region == null);
                 if (region != null)
-                    this.xTextField.setText(String.valueOf(Utils.fixedPointIntToFloat4Bit(region.getWorldX())));
+                    this.xTextField.setText(String.valueOf(DataUtils.fixedPointIntToFloat4Bit(region.getWorldX())));
             } else if (region != null) {
                 this.xTextField = editor.addFixedInt("X", this.region.getWorldX(), newValue -> {
                     this.region.setWorldX(newValue);
@@ -363,7 +363,7 @@ public class OldFroggerZoneManager extends OldFroggerMapListManager<OldFroggerMa
             if (this.z1TextField != null) {
                 this.z1TextField.setDisable(region == null);
                 if (region != null)
-                    this.z1TextField.setText(String.valueOf(Utils.fixedPointIntToFloat4Bit(region.getWorldZ1())));
+                    this.z1TextField.setText(String.valueOf(DataUtils.fixedPointIntToFloat4Bit(region.getWorldZ1())));
             } else if (region != null) {
                 this.z1TextField = editor.addFixedInt("Min Z", this.region.getWorldZ1(), newValue -> {
                     this.region.setWorldZ1(newValue);
@@ -374,7 +374,7 @@ public class OldFroggerZoneManager extends OldFroggerMapListManager<OldFroggerMa
             if (this.z2TextField != null) {
                 this.z2TextField.setDisable(region == null);
                 if (region != null)
-                    this.z2TextField.setText(String.valueOf(Utils.fixedPointIntToFloat4Bit(region.getWorldZ2())));
+                    this.z2TextField.setText(String.valueOf(DataUtils.fixedPointIntToFloat4Bit(region.getWorldZ2())));
             } else if (region != null) {
                 this.z2TextField = editor.addFixedInt("Max Z", this.region.getWorldZ2(), newValue -> {
                     this.region.setWorldZ2(newValue);

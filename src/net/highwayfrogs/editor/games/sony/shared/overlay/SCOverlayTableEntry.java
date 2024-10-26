@@ -7,8 +7,7 @@ import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.games.sony.SCUtils;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,7 +52,7 @@ public class SCOverlayTableEntry extends SCSharedGameData {
 
         reader.skipBytesRequireEmpty(EMPTY_BYTES);
         if (this.filePath != null || this.overlayStartPointer != 0)
-            getLogger().fine(" - Overlay Entry '" + this.filePath + "', Address: " + Utils.toHexString(this.overlayStartPointer));
+            getLogger().fine(" - Overlay Entry '" + this.filePath + "', Address: " + NumberUtils.toHexString(this.overlayStartPointer));
     }
 
     @Override

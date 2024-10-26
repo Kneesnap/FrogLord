@@ -11,6 +11,9 @@ import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.ui.PaletteController;
 import net.highwayfrogs.editor.gui.ImageResource;
+import net.highwayfrogs.editor.utils.ColorUtils;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
@@ -58,7 +61,7 @@ public class FroggerPaletteFile extends SCSharedGameFile {
             if (flag != FLAG)
                 throw new RuntimeException("Unknown flag value: " + flag);
 
-            getColors().add(Utils.fromRGB(Utils.toRGB(red, green, blue)));
+            getColors().add(ColorUtils.fromRGB(ColorUtils.toRGB(red, green, blue)));
         }
 
         if (reader.hasMore())
@@ -80,10 +83,10 @@ public class FroggerPaletteFile extends SCSharedGameFile {
         writer.writeShort((short) getColors().size());
 
         for (Color color : colors) {
-            int intColor = Utils.toRGB(color);
-            writer.writeByte(Utils.getRed(intColor));
-            writer.writeByte(Utils.getGreen(intColor));
-            writer.writeByte(Utils.getBlue(intColor));
+            int intColor = ColorUtils.toRGB(color);
+            writer.writeByte(ColorUtils.getRed(intColor));
+            writer.writeByte(ColorUtils.getGreen(intColor));
+            writer.writeByte(ColorUtils.getBlue(intColor));
             writer.writeByte(FLAG);
         }
 
@@ -116,14 +119,14 @@ public class FroggerPaletteFile extends SCSharedGameFile {
             for (int y = 0; y < colorsPerLine; y++) {
                 int index = (y * colorsPerLine) + x;
                 if (getColors().size() > index)
-                    graphics.setColor(Utils.toAWTColor(getColors().get(index)));
+                    graphics.setColor(ColorUtils.toAWTColor(getColors().get(index)));
                 graphics.fillRect(x * colorSize, y * colorSize, colorSize, colorSize);
             }
         }
 
         graphics.dispose();
 
-        return Utils.toFXImage(image, false);
+        return FXUtils.toFXImage(image, false);
     }
 
     /**
@@ -131,13 +134,13 @@ public class FroggerPaletteFile extends SCSharedGameFile {
      */
     @Override
     public void exportAlternateFormat() {
-        File file = Utils.promptFileSave(getGameInstance(), "Save the Color Palette.", Utils.stripExtension(getFileDisplayName()), "ACT File", "act");
+        File file = FXUtils.promptFileSave(getGameInstance(), "Save the Color Palette.", FileUtils.stripExtension(getFileDisplayName()), "ACT File", "act");
         if (file != null) {
             final int redMask = 0xFF0000, greenMask = 0xFF00, blueMask = 0xFF;
 
             DataWriter writer = new DataWriter(new FileReceiver(file));
             for (Color color : colors) {
-                final int intColor = Utils.toRGB(color);
+                final int intColor = ColorUtils.toRGB(color);
                 writer.writeByte((byte)((intColor & redMask) >> 16));
                 writer.writeByte((byte)((intColor & greenMask) >> 8));
                 writer.writeByte((byte)(intColor & blueMask));

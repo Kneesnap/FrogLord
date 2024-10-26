@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResOctTreeSceneMgr;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResOctTreeSceneMgr.kcVtxBufFileStruct;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -120,12 +121,12 @@ public class kcModelObjWriter {
             if (material.getTexture() == null)
                 continue;
 
-            String outputImagePrefix = Utils.stripExtension(context.getFileName()) + "_";
+            String outputImagePrefix = FileUtils.stripExtension(context.getFileName()) + "_";
             if (context.getOutputFolder() != null) {
                 File texFolder = new File(context.getOutputFolder(), "Textures/");
-                Utils.makeDirectory(texFolder);
+                FileUtils.makeDirectory(texFolder);
 
-                String outputImageFileName = outputImagePrefix + Utils.stripExtension(material.getTextureFileName()) + ".png";
+                String outputImageFileName = outputImagePrefix + FileUtils.stripExtension(material.getTextureFileName()) + ".png";
                 try {
                     material.getTexture().saveImageToFile(new File(texFolder, outputImageFileName));
                 } catch (IOException ex) {

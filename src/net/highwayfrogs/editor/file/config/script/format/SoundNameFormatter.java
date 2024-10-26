@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.file.config.script.ScriptParseException;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.ui.ScriptEditorController;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -38,7 +39,7 @@ public class SoundNameFormatter extends ScriptFormatter {
 
     @Override
     public int stringToNumber(FroggerGameInstance instance, String str) {
-        if (Utils.isInteger(str))
+        if (NumberUtils.isInteger(str))
             return super.stringToNumber(instance, str);
 
         NameBank bank = getBank(instance);

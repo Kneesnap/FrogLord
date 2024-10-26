@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.games.renderware.chunks.RwStructChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwUnsupportedChunk;
 import net.highwayfrogs.editor.games.renderware.struct.RwUnsupportedStruct;
 import net.highwayfrogs.editor.system.TriFunction;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.HashMap;
@@ -131,7 +132,7 @@ public class RwStreamChunkTypeRegistry implements Cloneable {
 
         int typeId = reader.readInt();
         if (typeId != chunk.getChunkType().getTypeId())
-            throw new IllegalArgumentException("Expected the stream type ID to be " + Utils.toHexString(chunk.getChunkType().getTypeId()) + " to read the provided " + Utils.getSimpleName(chunk) + ", but got " + Utils.toHexString(typeId) + " instead!");
+            throw new IllegalArgumentException("Expected the stream type ID to be " + NumberUtils.toHexString(chunk.getChunkType().getTypeId()) + " to read the provided " + Utils.getSimpleName(chunk) + ", but got " + NumberUtils.toHexString(typeId) + " instead!");
 
         chunk.load(reader);
         return chunk;

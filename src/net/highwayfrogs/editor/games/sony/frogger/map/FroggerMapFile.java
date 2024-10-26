@@ -33,8 +33,11 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
-import net.highwayfrogs.editor.utils.IndexBitArray;
+import net.highwayfrogs.editor.utils.ColorUtils;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.objects.IndexBitArray;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -117,7 +120,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
             if (info != null) {
                 GameImage levelTextureImage = getGameInstance().getImageFromPointer(info.getLevelTexturePointer());
                 if (levelTextureImage != null)
-                    getGameInstance().getLevelImageMap().put(level, levelImage = Utils.toFXImage(Utils.resizeImage(levelTextureImage.toBufferedImage(), 32, 32), false));
+                    getGameInstance().getLevelImageMap().put(level, levelImage = FXUtils.toFXImage(Utils.resizeImage(levelTextureImage.toBufferedImage(), 32, 32), false));
             }
         }
 
@@ -244,10 +247,10 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
 
         // Create stacks.
         Random random = new Random();
-        float xSize = Utils.fixedPointShortToFloat4Bit(this.gridPacket.getGridXSize());
-        float zSize = Utils.fixedPointShortToFloat4Bit(this.gridPacket.getGridZSize());
-        float baseX = Utils.fixedPointShortToFloat4Bit(this.gridPacket.getBaseGridX());
-        float baseZ = Utils.fixedPointShortToFloat4Bit(this.gridPacket.getBaseGridZ());
+        float xSize = DataUtils.fixedPointShortToFloat4Bit(this.gridPacket.getGridXSize());
+        float zSize = DataUtils.fixedPointShortToFloat4Bit(this.gridPacket.getGridZSize());
+        float baseX = DataUtils.fixedPointShortToFloat4Bit(this.gridPacket.getBaseGridX());
+        float baseZ = DataUtils.fixedPointShortToFloat4Bit(this.gridPacket.getBaseGridZ());
         for (int z = 0; z < this.gridPacket.getGridZCount(); z++) {
             for (int x = 0; x < this.gridPacket.getGridXCount(); x++) {
                 FroggerGridStack gridStack = this.gridPacket.getGridStack(x, z);
@@ -284,12 +287,12 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
 
         // Add Lights (Makes sure models get colored in):
         FroggerMapLight light1 = new FroggerMapLight(this, MRLightType.PARALLEL);
-        light1.setColor(Utils.toBGR(Color.WHITE));
+        light1.setColor(ColorUtils.toBGR(Color.WHITE));
         light1.getDirection().setValues(-140.375F, 208.375F, 48.125F, 4);
         this.lightPacket.getLights().add(light1);
 
         FroggerMapLight light2 = new FroggerMapLight(this, MRLightType.AMBIENT);
-        light2.setColor(Utils.toBGR(Utils.fromRGB(0x494949)));
+        light2.setColor(ColorUtils.toBGR(ColorUtils.fromRGB(0x494949)));
         this.lightPacket.getLights().add(light2);
 
         // Setup Group:

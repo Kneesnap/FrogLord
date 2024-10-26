@@ -24,6 +24,8 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.WADController;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.ImageResource;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -106,7 +108,7 @@ public class WADFile extends SCSharedGameFile {
                 DataReader wadFileReader = new DataReader(new ArraySource(fileBytes));
                 file.load(wadFileReader);
                 if (wadFileReader.hasMore() && file.warnIfEndNotReached())
-                    file.getLogger().warning("File contents were read to index " + Utils.toHexString(wadFileReader.getIndex()) + ", leaving " + wadFileReader.getRemaining() + " bytes unread. (Length: " + Utils.toHexString(wadFileReader.getSize()) + ")");
+                    file.getLogger().warning("File contents were read to index " + NumberUtils.toHexString(wadFileReader.getIndex()) + ", leaving " + wadFileReader.getRemaining() + " bytes unread. (Length: " + NumberUtils.toHexString(wadFileReader.getSize()) + ")");
             } catch (Exception ex) {
                 Utils.handleError(getLogger(), ex, false, "Failed to load %s. (%d)", fileName, resourceId);
 
@@ -154,7 +156,7 @@ public class WADFile extends SCSharedGameFile {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public void exportAlternateFormat() {
         getArchive().promptVLOSelection(getFroggerMapTheme(), vlo -> {
-            File folder = new File(GUIMain.getWorkingDirectory(), Utils.stripExtension(getFileDisplayName()).toLowerCase(Locale.ROOT) + File.separator);
+            File folder = new File(GUIMain.getWorkingDirectory(), FileUtils.stripExtension(getFileDisplayName()).toLowerCase(Locale.ROOT) + File.separator);
             if (!folder.exists())
                 folder.mkdirs();
 

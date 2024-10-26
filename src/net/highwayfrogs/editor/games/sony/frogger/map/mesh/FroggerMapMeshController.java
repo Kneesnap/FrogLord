@@ -14,7 +14,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.baked.FroggerUIG
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.baked.FroggerUIMapAnimationManager;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.*;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
 
 /**
  * Controls a Frogger map mesh.
@@ -74,9 +74,9 @@ public class FroggerMapMeshController extends MeshViewController<FroggerMapMesh>
         SVector targetOffset = zone != null ? zone.getNorthTargetOffset() : generalPacket.getDefaultCameraTargetOffset();
 
         FroggerGridStack startStack = gridPacket.getGridStack(generalPacket.getStartGridCoordX(), generalPacket.getStartGridCoordZ());
-        float gridX = Utils.fixedPointIntToFloat4Bit(gridPacket.getWorldXFromGridX(generalPacket.getStartGridCoordX(), true));
+        float gridX = DataUtils.fixedPointIntToFloat4Bit(gridPacket.getWorldXFromGridX(generalPacket.getStartGridCoordX(), true));
         float baseY = startStack != null ? startStack.getHighestGridSquareYAsFloat() : 0;
-        float gridZ = Utils.fixedPointIntToFloat4Bit(gridPacket.getWorldZFromGridZ(generalPacket.getStartGridCoordZ(), true));
+        float gridZ = DataUtils.fixedPointIntToFloat4Bit(gridPacket.getWorldZFromGridZ(generalPacket.getStartGridCoordZ(), true));
 
         // Make sure the start position is off the ground.
         float yOffset = sourceOffset.getFloatY();

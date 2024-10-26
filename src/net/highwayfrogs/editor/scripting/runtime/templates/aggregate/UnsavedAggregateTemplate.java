@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.scripting.runtime.*;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleObjectTemplate;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleTemplateFunction;
 import net.highwayfrogs.editor.scripting.runtime.templates.aggregate.UnsavedAggregateTemplate.NoodleAggregateWrapper;
-import net.highwayfrogs.editor.utils.Consumer3;
+import net.highwayfrogs.editor.utils.lambda.Consumer3;
 
 import java.util.*;
 import java.util.function.BiFunction;

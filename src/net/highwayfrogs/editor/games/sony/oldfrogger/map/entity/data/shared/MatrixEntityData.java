@@ -9,7 +9,7 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.OldFroggerD
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.OldFroggerEntityData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
 
 import java.util.function.Function;
 
@@ -46,9 +46,9 @@ public class MatrixEntityData<TDifficultyData extends OldFroggerDifficultyData> 
     @Override
     public float[] getPosition(float[] position) {
         int[] pos = this.matrix.getTransform();
-        position[0] = Utils.fixedPointIntToFloat4Bit(pos[0]);
-        position[1] = Utils.fixedPointIntToFloat4Bit(pos[1]);
-        position[2] = Utils.fixedPointIntToFloat4Bit(pos[2]);
+        position[0] = DataUtils.fixedPointIntToFloat4Bit(pos[0]);
+        position[1] = DataUtils.fixedPointIntToFloat4Bit(pos[1]);
+        position[2] = DataUtils.fixedPointIntToFloat4Bit(pos[2]);
         position[3] = (float) this.matrix.getPitchAngle();
         position[4] = (float) this.matrix.getYawAngle();
         position[5] = (float) this.matrix.getRollAngle();

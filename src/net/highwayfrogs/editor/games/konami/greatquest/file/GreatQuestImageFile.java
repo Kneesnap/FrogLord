@@ -13,7 +13,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestImageControl
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.ColorUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -214,7 +215,7 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
                         byte red = reader.readByte();
                         byte green = reader.readByte();
                         byte blue = reader.readByte();
-                        this.image.setRGB(x, height - y - 1, Utils.toRGB(red, green, blue));
+                        this.image.setRGB(x, height - y - 1, ColorUtils.toRGB(red, green, blue));
                     }
                 }
                 break;
@@ -272,7 +273,7 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
 
     @Override
     public void exportToFolder(File folder) throws IOException {
-        File imageFile = new File(folder, Utils.stripExtension(getExportName()) + ".png");
+        File imageFile = new File(folder, FileUtils.stripExtension(getExportName()) + ".png");
         if (!imageFile.exists())
             saveImageToFile(imageFile);
     }

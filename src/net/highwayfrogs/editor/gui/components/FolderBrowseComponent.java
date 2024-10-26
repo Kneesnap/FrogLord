@@ -16,7 +16,8 @@ import net.highwayfrogs.editor.gui.GameConfigController.GameConfigUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 
 import java.io.File;
 import java.util.Objects;
@@ -67,7 +68,7 @@ public abstract class FolderBrowseComponent extends GameUIController<GameInstanc
         browseButton.setOnMouseClicked(event -> {
             event.consume();
             String oldFilePath = getCurrentFolderPath();
-            File selectedFile = Utils.promptChooseDirectory(null, folderPromptTitle, saveDirectory);
+            File selectedFile = FXUtils.promptChooseDirectory(null, folderPromptTitle, saveDirectory);
             if (selectedFile != null) {
                 String newFilePath = selectedFile.getAbsolutePath();
                 if (!Objects.equals(oldFilePath, newFilePath)) {
@@ -100,7 +101,7 @@ public abstract class FolderBrowseComponent extends GameUIController<GameInstanc
     public void onSceneAdd(Scene newScene) {
         super.onSceneAdd(newScene);
         String startFilePath = getStartingFolderPath();
-        if (!Utils.isNullOrWhiteSpace(startFilePath) && Utils.isNullOrWhiteSpace(getCurrentFolderPath()))
+        if (!StringUtils.isNullOrWhiteSpace(startFilePath) && StringUtils.isNullOrWhiteSpace(getCurrentFolderPath()))
             this.folderPathField.setText(startFilePath);
     }
 

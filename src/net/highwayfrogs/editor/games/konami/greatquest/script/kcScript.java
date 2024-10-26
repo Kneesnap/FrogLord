@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.script;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.games.generic.GameObject;
+import net.highwayfrogs.editor.games.generic.data.GameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
@@ -13,7 +13,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCaus
 import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffect;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcScriptListInterim;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcScriptTOC;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -192,7 +192,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
             // Find effect.
             int startingEffectIndex = interim.getEffectByOffset(effectOffset);
             if (startingEffectIndex < 0)
-                throw new RuntimeException("The index '" + Utils.toHexString(effectOffset) + "' did not correspond to the start of a script effect.");
+                throw new RuntimeException("The index '" + NumberUtils.toHexString(effectOffset) + "' did not correspond to the start of a script effect.");
 
             // Read effects.
             for (int j = 0; j < effectCount; j++)
@@ -208,7 +208,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
         // Verify calculated cause types are correct.
         int calculatedCauseTypes = newScript.calculateCauseTypes();
         if (calculatedCauseTypes != toc.getCauseTypes())
-            throw new RuntimeException("The kcScript created from the kcScriptTOC has a different calculated cause type value! (kcScriptTOC: " + Utils.toHexString(toc.getCauseTypes()) + ", kcScript: " + Utils.toHexString(calculatedCauseTypes) + ")");
+            throw new RuntimeException("The kcScript created from the kcScriptTOC has a different calculated cause type value! (kcScriptTOC: " + NumberUtils.toHexString(toc.getCauseTypes()) + ", kcScript: " + NumberUtils.toHexString(calculatedCauseTypes) + ")");
 
         return newScript;
     }

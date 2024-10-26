@@ -10,7 +10,7 @@ import net.highwayfrogs.editor.file.patch.reference.PatchWrapperValue;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameObject.SCSharedGameObject;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -72,7 +72,7 @@ public class PatchRuntime extends SCSharedGameObject {
             printRuntimeInformation();
             System.out.println("Encountered an error while running '" + getPatch().getName() + "'.");
             System.out.println("Line: '" + lastLine + "'.");
-            Utils.makeErrorPopUp("There was an error while applying the patch.", ex, true);
+            FXUtils.makeErrorPopUp("There was an error while applying the patch.", ex, true);
         }
         onFinish();
     }
@@ -99,7 +99,7 @@ public class PatchRuntime extends SCSharedGameObject {
             printRuntimeInformation();
             System.out.println("Encountered an error while running setup for '" + getPatch().getName() + "'.");
             System.out.println("Line: '" + lastLine + "'.");
-            Utils.makeErrorPopUp("There was an error while setting up the patch.", ex, true);
+            FXUtils.makeErrorPopUp("There was an error while setting up the patch.", ex, true);
             return false;
         }
     }

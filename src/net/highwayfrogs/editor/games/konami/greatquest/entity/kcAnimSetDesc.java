@@ -12,7 +12,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +36,7 @@ public class kcAnimSetDesc extends kcBaseDesc implements IPropertyListCreator {
         super.load(reader);
         int selfHash = reader.readInt();
         if (selfHash != this.parentHash.getHashNumber())
-            throw new RuntimeException("The kcAnimSetDesc reported the parent chunk as " + Utils.to0PrefixedHexString(selfHash) + ", but it was expected to be " + this.parentHash.getHashNumberAsString() + ".");
+            throw new RuntimeException("The kcAnimSetDesc reported the parent chunk as " + NumberUtils.to0PrefixedHexString(selfHash) + ", but it was expected to be " + this.parentHash.getHashNumberAsString() + ".");
 
         this.animationRefs.clear();
         int animationCount = reader.readInt() + 1;

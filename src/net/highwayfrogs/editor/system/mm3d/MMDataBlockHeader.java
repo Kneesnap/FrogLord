@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.system.mm3d;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.utils.IBinarySerializable;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 
 import java.util.ArrayList;
 import java.util.List;

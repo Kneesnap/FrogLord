@@ -5,7 +5,7 @@ import net.highwayfrogs.editor.scripting.compiler.NoodleCompiler;
 import net.highwayfrogs.editor.scripting.compiler.tokens.NoodleToken;
 import net.highwayfrogs.editor.scripting.compiler.tokens.NoodleTokenType;
 import net.highwayfrogs.editor.scripting.tracking.NoodleCodeSource;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -30,7 +30,7 @@ public class NoodleCachedInclude {
         NoodleScript script = this.preprocessor.getCompileContext().getTargetScript();
         File scriptFolder = script != null ? script.getScriptFolder() : null;
         if (scriptFolder != null) {
-            return Utils.toLocalPath(scriptFolder, this.file, true);
+            return FileUtils.toLocalPath(scriptFolder, this.file, true);
         } else {
             return this.file.getName();
         }
@@ -49,7 +49,7 @@ public class NoodleCachedInclude {
         if (!this.fileHasBeenRead) {
             this.fileHasBeenRead = true;
             this.tokens.clear();
-            String fileContents = Utils.readFileText(this.file);
+            String fileContents = FileUtils.readFileText(this.file);
             NoodleCompiler.parseIntoTokens(codeSource, fileContents, this.tokens, 1);
 
             // Remove EOF token.

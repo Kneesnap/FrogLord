@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapGeneralManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.List;
@@ -178,14 +179,14 @@ public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
      * Gets the group square/rectangle X size as a floating point number.
      */
     public float getGroupXSizeAsFloat() {
-        return Utils.fixedPointIntToFloatNBits(this.groupXSize, 8);
+        return DataUtils.fixedPointIntToFloatNBits(this.groupXSize, 8);
     }
 
     /**
      * Gets the group square/rectangle Z size as a floating point number.
      */
     public float getGroupZSizeAsFloat() {
-        return Utils.fixedPointIntToFloatNBits(this.groupZSize, 8);
+        return DataUtils.fixedPointIntToFloatNBits(this.groupZSize, 8);
     }
 
     /**

@@ -8,7 +8,7 @@ import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapCollprim;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +32,7 @@ public class MediEvilMapCollprimsPacket extends MediEvilMapPacket implements IPr
         reader.skipBytesRequireEmpty(Constants.SHORT_SIZE); // Padding
         int collprimListPtr = reader.readInt();
         if (collprimListPtr != reader.getIndex()) {
-            getLogger().warning("The collprim list pointer was not at the expected position! (Was: " + Utils.toHexString(collprimListPtr) + ", Expected: " + Utils.toHexString(reader.getIndex()));
+            getLogger().warning("The collprim list pointer was not at the expected position! (Was: " + NumberUtils.toHexString(collprimListPtr) + ", Expected: " + NumberUtils.toHexString(reader.getIndex()));
             reader.setIndex(collprimListPtr);
         }
 

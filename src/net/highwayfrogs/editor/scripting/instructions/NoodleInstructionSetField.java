@@ -6,8 +6,8 @@ import net.highwayfrogs.editor.scripting.runtime.NoodleRuntimeException;
 import net.highwayfrogs.editor.scripting.runtime.NoodleThread;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleObjectTemplate;
 import net.highwayfrogs.editor.scripting.tracking.NoodleCodeLocation;
-import net.highwayfrogs.editor.utils.Consumer3;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.lambda.Consumer3;
 
 /**
  * Sets a field on an instanced template.

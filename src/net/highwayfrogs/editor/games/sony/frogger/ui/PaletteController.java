@@ -10,7 +10,7 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.file.FroggerPaletteFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.ColorUtils;
 
 /**
  * Allows changing palette files.
@@ -70,6 +70,6 @@ public class PaletteController extends SCFileEditorUIController<SCGameInstance, 
         paletteImageView.setImage(getFile().makeImage(IMAGE_SIZE));
         colorList.setCellFactory(null);
         colorList.setItems(FXCollections.observableArrayList(getFile().getColors()));
-        colorList.setCellFactory(param -> new AbstractAttachmentCell<>((color, index) -> "Color #" + index, (color, index) -> color != null ? new ImageView(Utils.makeColorImage(color)) : null));
+        colorList.setCellFactory(param -> new AbstractAttachmentCell<>((color, index) -> "Color #" + index, (color, index) -> color != null ? new ImageView(ColorUtils.makeColorImage(color)) : null));
     }
 }

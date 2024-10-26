@@ -15,7 +15,9 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.gui.texture.BufferedImageWrapper;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -56,7 +58,7 @@ public class TexController extends SCFileEditorUIController<BeastWarsInstance, B
     @FXML
     @SneakyThrows
     private void exportImage(ActionEvent event) {
-        File selectedFile = Utils.promptFileSave(getGameInstance(), "Specify the file to export this image as...", null, "Image Files", "png");
+        File selectedFile = FXUtils.promptFileSave(getGameInstance(), "Specify the file to export this image as...", null, "Image Files", "png");
         if (selectedFile != null)
             ImageIO.write(this.selectedImage, "png", selectedFile);
     }
@@ -64,13 +66,13 @@ public class TexController extends SCFileEditorUIController<BeastWarsInstance, B
     @FXML
     @SneakyThrows
     private void importImage(ActionEvent event) {
-        File selectedFile = Utils.promptFileOpen(getGameInstance(), "Select the image to import...", "Image Files", "png");
+        File selectedFile = FXUtils.promptFileOpen(getGameInstance(), "Select the image to import...", "Image Files", "png");
         if (selectedFile == null)
             return; // Cancelled.
 
         BufferedImage importImage = ImageIO.read(selectedFile);
         if (importImage.getWidth() != BeastWarsTexFile.TEXTURE_DIMENSION || importImage.getHeight() != BeastWarsTexFile.TEXTURE_DIMENSION) {
-            Utils.makePopUp("Only images of size " + BeastWarsTexFile.TEXTURE_DIMENSION + "x" + BeastWarsTexFile.TEXTURE_DIMENSION + " pixels can be imported. This image is " + importImage.getWidth() + "x" + importImage.getHeight(), AlertType.ERROR);
+            FXUtils.makePopUp("Only images of size " + BeastWarsTexFile.TEXTURE_DIMENSION + "x" + BeastWarsTexFile.TEXTURE_DIMENSION + " pixels can be imported. This image is " + importImage.getWidth() + "x" + importImage.getHeight(), AlertType.ERROR);
             return;
         }
 
@@ -85,7 +87,7 @@ public class TexController extends SCFileEditorUIController<BeastWarsInstance, B
 
     @FXML
     private void exportAllImages(ActionEvent event) {
-        File directory = Utils.promptChooseDirectory(getGameInstance(), "Select the directory to export images to.", true);
+        File directory = FXUtils.promptChooseDirectory(getGameInstance(), "Select the directory to export images to.", true);
         if (directory == null)
             return; // Cancelled.
 
@@ -103,14 +105,14 @@ public class TexController extends SCFileEditorUIController<BeastWarsInstance, B
     @FXML
     @SneakyThrows
     private void importAllImages(ActionEvent event) {
-        File selectedFolder = Utils.promptChooseDirectory(getGameInstance(), "Select the directory to import images from.", true);
+        File selectedFolder = FXUtils.promptChooseDirectory(getGameInstance(), "Select the directory to import images from.", true);
         if (selectedFolder == null)
             return; // Cancelled.
 
         int importedFiles = 0;
-        for (File file : Utils.listFiles(selectedFolder)) {
-            String name = Utils.stripExtension(file.getName());
-            if (!Utils.isInteger(name))
+        for (File file : FileUtils.listFiles(selectedFolder)) {
+            String name = FileUtils.stripExtension(file.getName());
+            if (!NumberUtils.isInteger(name))
                 continue;
 
             int id = Integer.parseInt(name);
@@ -168,7 +170,7 @@ public class TexController extends SCFileEditorUIController<BeastWarsInstance, B
 
             this.imageView.setFitWidth(image.getWidth());
             this.imageView.setFitHeight(image.getHeight());
-            this.imageView.setImage(Utils.toFXImage(image, false));
+            this.imageView.setImage(FXUtils.toFXImage(image, false));
         }
     }
 

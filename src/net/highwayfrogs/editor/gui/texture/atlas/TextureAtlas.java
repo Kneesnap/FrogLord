@@ -7,7 +7,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.gui.texture.SimpleTexture;
 import net.highwayfrogs.editor.gui.texture.Texture;
-import net.highwayfrogs.editor.utils.SortedList;
+import net.highwayfrogs.editor.utils.objects.SortedList;
 
 import java.util.function.Function;
 

@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.games.shared.basic.file.BasicGameFile;
 import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -30,7 +31,7 @@ public class BasicMainMenuUIController<TGameInstance extends BasicGameInstance> 
 
         // Allow exporting MWI.
         addMenuItem(this.menuBarFile, "Export Files", () -> { // TODO: Make this use the progress bar later.
-            File exportFolder = Utils.promptChooseDirectory(getGameInstance(), "Choose the folder to export files into...", true);
+            File exportFolder = FXUtils.promptChooseDirectory(getGameInstance(), "Choose the folder to export files into...", true);
             if (exportFolder == null)
                 return; // Cancel.
 
@@ -86,7 +87,7 @@ public class BasicMainMenuUIController<TGameInstance extends BasicGameInstance> 
 
     protected static MenuItem addMenuItem(Menu menuBar, String title, Runnable action) {
         MenuItem menuItem = new MenuItem(title);
-        menuItem.setOnAction(event -> Utils.reportErrorIfFails(action));
+        menuItem.setOnAction(event -> FXUtils.reportErrorIfFails(action));
         menuBar.getItems().add(menuItem);
         return menuItem;
     }

@@ -11,7 +11,7 @@ import net.highwayfrogs.editor.games.sony.beastwars.map.mesh.BeastWarsMapMesh;
 import net.highwayfrogs.editor.games.sony.beastwars.ui.BeastWarsMapUIManager.BeastWarsMapListManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 import java.util.List;
 
@@ -20,8 +20,8 @@ import java.util.List;
  * Created by Kneesnap on 9/26/2023.
  */
 public class BeastWarsLineManager extends BeastWarsMapListManager<BeastWarsMapLine, DisplayList> {
-    private static final PhongMaterial MATERIAL_WHITE = Utils.makeUnlitSharpMaterial(Color.WHITE);
-    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeUnlitSharpMaterial(Color.YELLOW);
+    private static final PhongMaterial MATERIAL_WHITE = Scene3DUtils.makeUnlitSharpMaterial(Color.WHITE);
+    private static final PhongMaterial MATERIAL_YELLOW = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
 
     public BeastWarsLineManager(MeshViewController<BeastWarsMapMesh> controller) {
         super(controller);

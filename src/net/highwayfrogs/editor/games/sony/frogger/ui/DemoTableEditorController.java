@@ -13,7 +13,8 @@ import net.highwayfrogs.editor.file.config.exe.general.DemoTableEntry;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.util.List;
 
@@ -40,7 +41,7 @@ public class DemoTableEditorController extends GameUIController<FroggerGameInsta
     @Override
     protected void onControllerLoad(Node rootNode) {
         this.demoSelector.setItems(FXCollections.observableArrayList(getGameInstance().getDemoTableEntries()));
-        this.demoSelector.setConverter(new AbstractIndexStringConverter<>(getGameInstance().getDemoTableEntries(), (index, entry) -> "#" + (index + 1) + ", " + (entry.isValidData() ? Utils.stripExtension(getGameInstance().getResourceEntryByID(entry.getDemoResourceFile()).getDisplayName()) : "SKIPPED")));
+        this.demoSelector.setConverter(new AbstractIndexStringConverter<>(getGameInstance().getDemoTableEntries(), (index, entry) -> "#" + (index + 1) + ", " + (entry.isValidData() ? FileUtils.stripExtension(getGameInstance().getResourceEntryByID(entry.getDemoResourceFile()).getDisplayName()) : "SKIPPED")));
         this.demoSelector.valueProperty().addListener(((observable, oldValue, newValue) -> selectEntry(newValue)));
 
         List<DemoFile> demoFiles = getGameInstance().getMainArchive().getAllFiles(DemoFile.class);
@@ -48,7 +49,7 @@ public class DemoTableEditorController extends GameUIController<FroggerGameInsta
         fileSelector.setItems(FXCollections.observableArrayList(demoFiles));
         unlockSelector.setItems(FXCollections.observableArrayList(MAPLevel.values()));
 
-        fileSelector.setConverter(new AbstractIndexStringConverter<>(demoFiles, (index, entry) -> Utils.stripExtension(entry.getFileDisplayName())));
+        fileSelector.setConverter(new AbstractIndexStringConverter<>(demoFiles, (index, entry) -> FileUtils.stripExtension(entry.getFileDisplayName())));
 
         levelSelector.valueProperty().addListener(((observable, oldValue, newValue) -> this.selectedEntry.setLevel(newValue)));
         fileSelector.valueProperty().addListener(((observable, oldValue, newValue) -> this.selectedEntry.setDemoResourceFile(newValue.getFileResourceId())));
@@ -62,7 +63,7 @@ public class DemoTableEditorController extends GameUIController<FroggerGameInsta
     public void onSceneAdd(Scene newScene) {
         super.onSceneAdd(newScene);
         Stage stage = (Stage) newScene.getWindow();
-        Utils.closeOnEscapeKey(stage, null);
+        FXUtils.closeOnEscapeKey(stage, null);
     }
 
     private void selectEntry(DemoTableEntry newEntry) {
@@ -82,6 +83,6 @@ public class DemoTableEditorController extends GameUIController<FroggerGameInsta
      * Opens the demo table Editor.
      */
     public static void openEditor(FroggerGameInstance instance) {
-        Utils.createWindowFromFXMLTemplate("edit-hardcoded-demo-table", new DemoTableEditorController(instance), "Demo Table Editor", true);
+        FXUtils.createWindowFromFXMLTemplate("edit-hardcoded-demo-table", new DemoTableEditorController(instance), "Demo Table Editor", true);
     }
 }

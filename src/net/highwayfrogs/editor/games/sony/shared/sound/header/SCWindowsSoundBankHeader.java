@@ -13,6 +13,7 @@ import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankBodyEntry
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankHeader;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankHeaderEntry;
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCWindowsSoundBankHeader.SCWindowsSoundBankHeaderEntry;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -101,7 +102,7 @@ public class SCWindowsSoundBankHeader<TBodyEntry extends SCSplitSoundBankBodyEnt
 
         @Override
         public String toString() {
-            return "[Data: (" + Utils.toHexString(this.dataStartOffset) + "->" + Utils.toHexString(this.dataStartOffset + this.dataSize)
+            return "[Data: (" + NumberUtils.toHexString(this.dataStartOffset) + "->" + NumberUtils.toHexString(this.dataStartOffset + this.dataSize)
                     + "), Sample Rate: " + (int) this.audioFormat.getSampleRate() + ", Bit-Width: " + this.audioFormat.getSampleSizeInBits() + ", Has Audio: " + this.audioPresent + "]";
         }
 

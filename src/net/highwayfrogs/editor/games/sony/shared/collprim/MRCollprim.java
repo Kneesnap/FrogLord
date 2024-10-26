@@ -20,7 +20,8 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshUIManager;
 import net.highwayfrogs.editor.gui.editor.RenderManager;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.function.Consumer;
 
@@ -56,10 +57,10 @@ public abstract class MRCollprim extends SCSharedGameData implements ICollprim {
         this.flags = reader.readUnsignedShortAsInt();
         reader.skipBytesRequireEmpty(2 * Constants.POINTER_SIZE); // Run-time pointers.
         this.offset.loadWithPadding(reader);
-        this.radiusSquared = Utils.fixedPointIntToFloatNBits(reader.readInt(), 8); // 8 bits are used because multiplying two fixed point numbers together increases the position of the radius.
-        this.xLength = Utils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4);
-        this.yLength = Utils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4);
-        this.zLength = Utils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4);
+        this.radiusSquared = DataUtils.fixedPointIntToFloatNBits(reader.readInt(), 8); // 8 bits are used because multiplying two fixed point numbers together increases the position of the radius.
+        this.xLength = DataUtils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4);
+        this.yLength = DataUtils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4);
+        this.zLength = DataUtils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4);
         this.userData = reader.readUnsignedShortAsInt();
         setRawMatrixValue(reader, reader.readInt());
     }
@@ -71,10 +72,10 @@ public abstract class MRCollprim extends SCSharedGameData implements ICollprim {
         writer.writeInt(0); // Run-time.
         writer.writeInt(0); // Run-time.
         this.offset.saveWithPadding(writer);
-        writer.writeInt(Utils.floatToFixedPointInt(this.radiusSquared, 8));
-        writer.writeUnsignedShort(Utils.floatToFixedPointInt4Bit(this.xLength));
-        writer.writeUnsignedShort(Utils.floatToFixedPointInt4Bit(this.yLength));
-        writer.writeUnsignedShort(Utils.floatToFixedPointInt4Bit(this.zLength));
+        writer.writeInt(DataUtils.floatToFixedPointInt(this.radiusSquared, 8));
+        writer.writeUnsignedShort(DataUtils.floatToFixedPointInt4Bit(this.xLength));
+        writer.writeUnsignedShort(DataUtils.floatToFixedPointInt4Bit(this.yLength));
+        writer.writeUnsignedShort(DataUtils.floatToFixedPointInt4Bit(this.zLength));
         writer.writeUnsignedShort(this.userData);
         writer.writeInt(getRawMatrixValue());
     }
@@ -181,10 +182,10 @@ public abstract class MRCollprim extends SCSharedGameData implements ICollprim {
 
         // Flags
         grid.addSeparator();
-        Label flagLabel = grid.addLabel("Flags", Utils.toHexString(this.flags));
+        Label flagLabel = grid.addLabel("Flags", NumberUtils.toHexString(this.flags));
         grid.addCheckBox("Disable Collision", testFlag(FLAG_COLLISION_DISABLED), newValue -> {
             setFlag(FLAG_COLLISION_DISABLED, newValue);
-            flagLabel.setText(Utils.toHexString(updateFlags()));
+            flagLabel.setText(NumberUtils.toHexString(updateFlags()));
         });
 
         // Shape data
@@ -272,10 +273,10 @@ public abstract class MRCollprim extends SCSharedGameData implements ICollprim {
 
         // Flags
         grid.addSeparator();
-        Label flagLabel = grid.addLabel("Flags", Utils.toHexString(this.flags));
+        Label flagLabel = grid.addLabel("Flags", NumberUtils.toHexString(this.flags));
         grid.addCheckBox("Disable Collision", testFlag(FLAG_COLLISION_DISABLED), newValue -> {
             setFlag(FLAG_COLLISION_DISABLED, newValue);
-            flagLabel.setText(Utils.toHexString(updateFlags()));
+            flagLabel.setText(NumberUtils.toHexString(updateFlags()));
         });
 
         // Shape data

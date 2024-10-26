@@ -13,7 +13,7 @@ import net.highwayfrogs.editor.games.renderware.chunks.sector.RwAtomicSectorChun
 import net.highwayfrogs.editor.games.renderware.struct.RwStruct;
 import net.highwayfrogs.editor.games.renderware.struct.RwStructType;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Implemented from 'babinworld.h'
@@ -89,7 +89,7 @@ public class RpWorldChunkInfo extends RwStruct {
         propertyList.add("Vertices", this.numVertices);
         propertyList.add("Plane Sectors", this.numPlaneSectors);
         propertyList.add("Collision Sector Size", this.colSectorSize);
-        propertyList.add("World Format Flags", Utils.toHexString(this.formatFlags));
+        propertyList.add("World Format Flags", NumberUtils.toHexString(this.formatFlags));
         if (this.boundingBox != null)
             propertyList.add("Bounding Box", this.boundingBox);
 

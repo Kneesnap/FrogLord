@@ -8,6 +8,8 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.DataSizeUnit;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.logging.ConsoleOutputHandler;
 import net.highwayfrogs.editor.utils.logging.LogFormatter;
@@ -26,7 +28,6 @@ import java.util.logging.*;
  * TODO: Use new config system in existing code parts?
  * TODO: At some point we want to:
  *  -> Make a better logging system, one which can dynamically create its information portion without creating memory leaks. One which can log per-game instance, and only log to that instance's main window. Also, it should be able to use format messages.
- *  -> Split up Utils.java
  *  -> Save many different file paths, so when we open up file dialog prompts we don't have to consistently move between directories.
  *  -> Allow automatic version selection when selecting a game.
  *  -> PropertyList with nested portions.
@@ -67,7 +68,7 @@ public class GUIMain extends Application {
         long availableMemory = Runtime.getRuntime().maxMemory();
         long minMemory = DataSizeUnit.GIGABYTE.getIncrement();
         if (availableMemory < minMemory)
-            Utils.makePopUp("FrogLord needs at least 1GB of RAM to function properly.\n"
+            FXUtils.makePopUp("FrogLord needs at least 1GB of RAM to function properly.\n"
                     + "FrogLord has only been given " + DataSizeUnit.formatSize(availableMemory) + " Memory.\n"
                     + "Proceed at your own risk. Things may not work properly.", AlertType.WARNING);
 
@@ -98,7 +99,7 @@ public class GUIMain extends Application {
                 throw new RuntimeException("Failed to delete working directory test file '" + testFile + "'.");
         }
 
-        Utils.makeDirectory(mainApplicationFolder);
+        FileUtils.makeDirectory(mainApplicationFolder);
     }
 
     private static void handleFxThreadError(Thread thread, Throwable throwable) {
@@ -159,7 +160,7 @@ public class GUIMain extends Application {
     }
 
     private static void setupLogger() {
-        Utils.makeDirectory(new File(getMainApplicationFolder(), "logs")); // Ensure the logs directory exists.
+        FileUtils.makeDirectory(new File(getMainApplicationFolder(), "logs")); // Ensure the logs directory exists.
 
         // Setup global logger.
         Logger logger = Logger.getGlobal();

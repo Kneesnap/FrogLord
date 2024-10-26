@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.gui.GameConfigController.GameConfigUIController;
 import net.highwayfrogs.editor.gui.components.FolderBrowseComponent.GameConfigFolderBrowseComponent;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -42,7 +43,7 @@ public class FroggerRescueGameType implements IGameType {
             throw new ClassCastException("The provided instance was " + Utils.getSimpleName(instance) + ", when " + FroggerRescueInstance.class.getSimpleName() + " was required.");
 
         String mainFilePath = gameSetupConfig.getKeyValueNodeOrError(CONFIG_MAIN_FOLDER_PATH).getAsString();
-        if (Utils.isNullOrWhiteSpace(mainFilePath))
+        if (StringUtils.isNullOrWhiteSpace(mainFilePath))
             throw new IllegalArgumentException("Invalid mainFolderPath.");
 
         File mainFile = new File(mainFilePath);
@@ -73,7 +74,7 @@ public class FroggerRescueGameType implements IGameType {
 
         @Override
         public boolean isLoadButtonDisabled() {
-            return Utils.isNullOrWhiteSpace(this.binFileBrowseComponent.getCurrentFolderPath());
+            return StringUtils.isNullOrWhiteSpace(this.binFileBrowseComponent.getCurrentFolderPath());
         }
 
         @Override

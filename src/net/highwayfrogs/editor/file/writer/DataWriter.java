@@ -3,7 +3,8 @@ package net.highwayfrogs.editor.file.writer;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -47,13 +48,13 @@ public class DataWriter {
     public void writeByte(byte value, int amount) {
         int startIndex = getIndex();
         if (amount < 0)
-            throw new RuntimeException("Cannot write a byte (" + Utils.toByteString(value) + ") " + amount + " times to " + Utils.toHexString(startIndex) + ".");
+            throw new RuntimeException("Cannot write a byte (" + DataUtils.toByteString(value) + ") " + amount + " times to " + NumberUtils.toHexString(startIndex) + ".");
 
         try {
             for (int i = 0; i < amount; i++)
                 this.output.writeByte(value);
         } catch (IOException ex) {
-            throw new RuntimeException("Failed to write byte (" + Utils.toByteString(value) + ") " + amount + " times to " + Utils.toHexString(startIndex) + ".");
+            throw new RuntimeException("Failed to write byte (" + DataUtils.toByteString(value) + ") " + amount + " times to " + NumberUtils.toHexString(startIndex) + ".");
         }
     }
 
@@ -198,7 +199,7 @@ public class DataWriter {
      * @param value the short to write.
      */
     public void writeUnsignedByte(short value) {
-        writeByte(Utils.unsignedShortToByte(value));
+        writeByte(DataUtils.unsignedShortToByte(value));
     }
 
     /**
@@ -206,7 +207,7 @@ public class DataWriter {
      * @param value The int to write.
      */
     public void writeUnsignedShort(int value) {
-        writeShort(Utils.unsignedIntToShort(value));
+        writeShort(DataUtils.unsignedIntToShort(value));
     }
 
     /**
@@ -214,7 +215,7 @@ public class DataWriter {
      * @param value The long to write.
      */
     public void writeUnsignedInt(long value) {
-        writeInt(Utils.unsignedLongToInt(value));
+        writeInt(DataUtils.unsignedLongToInt(value));
     }
 
     /**

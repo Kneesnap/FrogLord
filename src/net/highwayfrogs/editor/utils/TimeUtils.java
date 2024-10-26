@@ -46,7 +46,7 @@ public class TimeUtils {
             throw new NullPointerException("input");
 
         // Parse epoch timestamp.
-        if (input.length() > 7 && Utils.isInteger(input))
+        if (input.length() > 7 && NumberUtils.isInteger(input))
             return Instant.ofEpochSecond(Long.parseLong(input));
 
         try {

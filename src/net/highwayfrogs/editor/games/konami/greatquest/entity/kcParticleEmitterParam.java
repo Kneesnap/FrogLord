@@ -13,7 +13,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkTex
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcBlend;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Represents the 'kcParticleEmitterParam' struct.
@@ -64,7 +64,7 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
         // Resolve hashes.
         GreatQuestUtils.resolveResourceHash(GreatQuestChunkTextureReference.class, this, this.textureRef, textureReferenceHash, true);
         if (hThis != this.parentHash.getHashNumber() && hThis != -1)
-            throw new RuntimeException("The kcParticleEmitterParam reported the parent chunk as " + Utils.to0PrefixedHexString(hThis) + ", but it was expected to be " + this.parentHash.getHashNumberAsString() + ".");
+            throw new RuntimeException("The kcParticleEmitterParam reported the parent chunk as " + NumberUtils.to0PrefixedHexString(hThis) + ", but it was expected to be " + this.parentHash.getHashNumberAsString() + ".");
     }
 
     @Override

@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.games.renderware;
 
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Contains utilities for working with RenderWare.
@@ -22,7 +22,7 @@ public class RwUtils {
         } else if (value == 0) {
             return false;
         } else {
-            throw new IllegalArgumentException("Cannot interpret " + Utils.toHexString(value) + " as an RwBool!");
+            throw new IllegalArgumentException("Cannot interpret " + NumberUtils.toHexString(value) + " as an RwBool!");
         }
     }
 

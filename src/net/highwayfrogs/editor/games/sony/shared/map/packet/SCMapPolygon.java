@@ -19,7 +19,9 @@ import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
 import net.highwayfrogs.editor.games.sony.shared.map.mesh.SCMapMesh;
 import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapPolygonPacket.SCMapPolygonUV;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.ColorUtils;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.Arrays;
 
@@ -149,7 +151,7 @@ public class SCMapPolygon extends SCGameData<SCGameInstance> {
                 result.setFloatUV(1F, 1F);
                 break;
             default:
-                throw new RuntimeException("The UV Info " + Utils.toHexString(this.uvInfo) + " seems to use an invalid offset.");
+                throw new RuntimeException("The UV Info " + NumberUtils.toHexString(this.uvInfo) + " seems to use an invalid offset.");
         }
 
         return result;
@@ -385,7 +387,7 @@ public class SCMapPolygon extends SCGameData<SCGameInstance> {
         short red = (short) ((packedColor & 0x1F) << 3);
         short green = (short) (((packedColor >> 5) & 0x1F) << 3);
         short blue = (short) (((packedColor >> 10) & 0x1F) << 3);
-        int rgbColor = Utils.toRGB(Utils.unsignedShortToByte(red), Utils.unsignedShortToByte(green), Utils.unsignedShortToByte(blue));
+        int rgbColor = ColorUtils.toRGB(DataUtils.unsignedShortToByte(red), DataUtils.unsignedShortToByte(green), DataUtils.unsignedShortToByte(blue));
 
         // Calculate GPU code.
         byte gpuCode = CVector.GP0_COMMAND_POLYGON_PRIMITIVE | CVector.FLAG_GOURAUD_SHADING | CVector.FLAG_MODULATION;

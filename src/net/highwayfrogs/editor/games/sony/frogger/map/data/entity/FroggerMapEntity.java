@@ -30,6 +30,8 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.lang.ref.SoftReference;
@@ -204,7 +206,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
         List<FroggerMapForm> forms = this.mapFile.getFormPacket().getForms();
         if (this.mapFile.getMapConfig().isOldFormFormat() && this.formGridId >= 0 && oldForms != null && oldForms.size() > this.formGridId) {
             editor.addSelectionBox("Form Grid", oldForms.get(this.formGridId), oldForms, newForm -> this.formGridId = oldForms.indexOf(newForm))
-                    .setConverter(new AbstractIndexStringConverter<>(oldForms, (index, form) -> "Form #" + index + " (" + Utils.fixedPointShortToFloat4Bit(form.getXMin()) + "," + Utils.fixedPointShortToFloat4Bit(form.getYMin()) + "," + Utils.fixedPointShortToFloat4Bit(form.getZMin()) + ")"));
+                    .setConverter(new AbstractIndexStringConverter<>(oldForms, (index, form) -> "Form #" + index + " (" + DataUtils.fixedPointShortToFloat4Bit(form.getXMin()) + "," + DataUtils.fixedPointShortToFloat4Bit(form.getYMin()) + "," + DataUtils.fixedPointShortToFloat4Bit(form.getZMin()) + ")"));
         } else if (!this.mapFile.getMapConfig().isOldFormFormat() && this.formGridId >= 0 && forms.size() > this.formGridId) {
             editor.addSelectionBox("Form Grid", forms.get(this.formGridId), forms, newForm -> this.formGridId = newForm.getFormIndex())
                     .setConverter(new AbstractIndexStringConverter<>(forms, (index, form) -> "Form #" + index + " (" + form.getXGridSquareCount() + "," + form.getZGridSquareCount() + ")"));
@@ -214,7 +216,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
 
         editor.addBoldLabel("Flags:");
         for (FroggerMapEntityEntityFlag flag : FroggerMapEntityEntityFlag.values())
-            editor.addCheckBox(Utils.capitalize(flag.name()), testFlag(flag), newState -> {
+            editor.addCheckBox(StringUtils.capitalize(flag.name()), testFlag(flag), newState -> {
                 setFlag(flag, newState);
                 manager.updateEntityPositionRotation(this);
             }).setTooltip(new Tooltip(flag.getDescription()));
@@ -247,7 +249,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
 
         // Add raw data.
         if (this.rawData != null)
-            editor.addTextField("Raw Data", Utils.toByteString(this.rawData));
+            editor.addTextField("Raw Data", DataUtils.toByteString(this.rawData));
     }
 
     /**

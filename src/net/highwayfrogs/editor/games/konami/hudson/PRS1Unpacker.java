@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.games.konami.hudson;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
 
 /**
  * Contains PRS1 compression utilities.
@@ -95,6 +95,6 @@ public class PRS1Unpacker {
      * @return isCompressedData.
      */
     public static boolean isCompressedPRS1(byte[] data) {
-        return data != null && data.length > 12 && Utils.testSignature(data, MAGIC);
+        return data != null && data.length > 12 && DataUtils.testSignature(data, MAGIC);
     }
 }

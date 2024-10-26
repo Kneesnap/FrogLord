@@ -19,7 +19,7 @@ import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitVHFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.LazySCGameFileListGroup;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -120,7 +120,7 @@ public class MediEvilGameInstance extends SCGameInstance {
     @Override
     protected void onRemapRead(TextureRemapArray remap, DataReader reader) {
         super.onRemapRead(remap, reader);
-        getLogger().info("Added remap " + remap.getDebugName() + " at " + Utils.toHexString(remap.getReaderIndex()) + " with " + remap.getTextureIds().size() + " entries. (" + Utils.toHexString(reader.getIndex()) + ")");
+        getLogger().info("Added remap " + remap.getDebugName() + " at " + NumberUtils.toHexString(remap.getReaderIndex()) + " with " + remap.getTextureIds().size() + " entries. (" + NumberUtils.toHexString(reader.getIndex()) + ")");
     }
 
     @Override

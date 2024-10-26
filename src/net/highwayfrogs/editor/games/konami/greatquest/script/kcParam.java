@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionAISetGoal.kcGoalType;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionNumber.NumberOperation;
 import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffectCamera.kcCameraPivotParam;
+import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -52,14 +53,14 @@ public class kcParam {
      * Gets the value as an integer.
      */
     public int getAsInteger() {
-        return Utils.readIntFromBytes(this.bytes, 0);
+        return DataUtils.readIntFromBytes(this.bytes, 0);
     }
 
     /**
      * Gets the value as a float.
      */
     public float getAsFloat() {
-        return Utils.readFloatFromBytes(this.bytes);
+        return DataUtils.readFloatFromBytes(this.bytes);
     }
 
     /**
@@ -73,14 +74,14 @@ public class kcParam {
      * Sets the integer value.
      */
     public void setValue(int value) {
-        this.bytes = Utils.toByteArray(value);
+        this.bytes = DataUtils.toByteArray(value);
     }
 
     /**
      * Sets the float value.
      */
     public void setValue(float value) {
-        this.bytes = Utils.writeFloatToBytes(value);
+        this.bytes = DataUtils.writeFloatToBytes(value);
     }
 
     /**
@@ -137,7 +138,7 @@ public class kcParam {
                 builder.append('"').append(settings.getGameInstance().getFullSoundPath(getAsInteger())).append('"');
                 break;
             default:
-                throw new RuntimeException("Could not convert kcParamType " + paramType + " toString for value " + Utils.toByteString(this.bytes) + ".");
+                throw new RuntimeException("Could not convert kcParamType " + paramType + " toString for value " + DataUtils.toByteString(this.bytes) + ".");
         }
     }
 

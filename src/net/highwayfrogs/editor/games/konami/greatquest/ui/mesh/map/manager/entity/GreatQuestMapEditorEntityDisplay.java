@@ -20,7 +20,6 @@ import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.Great
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
-import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * Represents a Great Quest entity displayed in the editor, and any additional 3D data with its representation.
@@ -36,9 +35,9 @@ public class GreatQuestMapEditorEntityDisplay {
     private Node collisionPreview;
     private Shape3D boundingSpherePreview;
 
-    private static final PhongMaterial BOUNDING_OBB_MATERIAL = Utils.makeHighlightOverlayMaterial(Color.RED);
-    private static final PhongMaterial BOUNDING_SPHERE_MATERIAL = Utils.makeHighlightOverlayMaterial(Color.BLUE);
-    private static final PhongMaterial PROXY_SPHERE_MATERIAL = Utils.makeHighlightOverlayMaterial(Color.LIMEGREEN);
+    private static final PhongMaterial BOUNDING_OBB_MATERIAL = Scene3DUtils.makeHighlightOverlayMaterial(Color.RED);
+    private static final PhongMaterial BOUNDING_SPHERE_MATERIAL = Scene3DUtils.makeHighlightOverlayMaterial(Color.BLUE);
+    private static final PhongMaterial PROXY_SPHERE_MATERIAL = Scene3DUtils.makeHighlightOverlayMaterial(Color.LIMEGREEN);
 
     /**
      * Setup the entity display.

@@ -1,7 +1,7 @@
-package net.highwayfrogs.editor.games.generic;
+package net.highwayfrogs.editor.games.generic.data;
 
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.utils.IBinarySerializable;
+import net.highwayfrogs.editor.games.generic.GameInstance;
 
 import java.io.File;
 

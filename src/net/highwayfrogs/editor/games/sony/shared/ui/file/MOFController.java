@@ -57,7 +57,7 @@ import net.highwayfrogs.editor.gui.editor.RenderManager;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.*;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -106,16 +106,16 @@ public class MOFController extends SCFileEditorUIController<SCGameInstance, MOFH
     private static final String COLLPRIM_BOX_LIST = "collprimBoxes";
     public static final String HILITE_VERTICE_LIST = "mofHiliteVerticeChoices";
 
-    private static final PhongMaterial HILITE_MATERIAL = Utils.makeUnlitSharpMaterial(Color.PURPLE);
-    private static final PhongMaterial COLLPRIM_MATERIAL = Utils.makeUnlitSharpMaterial(Color.LIGHTGREEN);
-    private static final PhongMaterial BBOX_MATERIAL = Utils.makeUnlitSharpMaterial(Color.RED);
+    private static final PhongMaterial HILITE_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.PURPLE);
+    private static final PhongMaterial COLLPRIM_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.LIGHTGREEN);
+    private static final PhongMaterial BBOX_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.RED);
 
     private static final String GENERIC_POS_LIST = "genericPositionList";
     private static final double GENERIC_POS_SIZE = 3;
-    private static final PhongMaterial GENERIC_POS_MATERIAL = Utils.makeUnlitSharpMaterial(Color.YELLOW);
+    private static final PhongMaterial GENERIC_POS_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
     public static final CursorVertexColor ANIMATION_COLOR = new CursorVertexColor(java.awt.Color.MAGENTA, java.awt.Color.BLACK);
     public static final CursorVertexColor CANT_APPLY_COLOR = new CursorVertexColor(java.awt.Color.RED, java.awt.Color.BLACK);
-    public static final CursorVertexColor HILITE_COLOR = new CursorVertexColor(Utils.toAWTColor(Color.PURPLE), java.awt.Color.BLACK);
+    public static final CursorVertexColor HILITE_COLOR = new CursorVertexColor(ColorUtils.toAWTColor(Color.PURPLE), java.awt.Color.BLACK);
     public static final double MAP_VIEW_FAR_CLIP = 2000.0;
     public static final ImageFilterSettings PREVIEW_SETTINGS = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(true);
 
@@ -145,7 +145,7 @@ public class MOFController extends SCFileEditorUIController<SCGameInstance, MOFH
         this.camera = new PerspectiveCamera(true);
 
         // Initialise the MOF UI.
-        FXMLLoader fxmlLoader = Utils.getFXMLTemplateLoader(getGameInstance(), "scene-mof-viewer-3d");
+        FXMLLoader fxmlLoader = FXUtils.getFXMLTemplateLoader(getGameInstance(), "scene-mof-viewer-3d");
         GameUIController.loadController(getGameInstance(), fxmlLoader, this.uiController);
 
         // Create the 3D elements and use them within a subscene.
@@ -166,7 +166,7 @@ public class MOFController extends SCFileEditorUIController<SCGameInstance, MOFH
 
         // Create and set the scene.
         mofScene = new Scene(uiPane);
-        Scene defaultScene = Utils.setSceneKeepPosition(stageToOverride, mofScene);
+        Scene defaultScene = FXUtils.setSceneKeepPosition(stageToOverride, mofScene);
         onSceneAdd(this.mofScene);
 
         // Handle scaling of SubScene on stage resizing.
@@ -191,16 +191,16 @@ public class MOFController extends SCFileEditorUIController<SCGameInstance, MOFH
 
                 getUiController().stopPlaying();
                 getRenderManager().removeAllDisplayLists();
-                Utils.setSceneKeepPosition(stageToOverride, defaultScene);
+                FXUtils.setSceneKeepPosition(stageToOverride, defaultScene);
                 onSceneRemove(this.mofScene);
                 return;
             } else if (event.getCode() == KeyCode.F10) {
-                Utils.takeScreenshot(getGameInstance(), subScene3D, getMofScene(), Utils.stripExtension(getFile().getFileDisplayName()), true);
+                Scene3DUtils.takeScreenshot(getGameInstance(), subScene3D, getMofScene(), FileUtils.stripExtension(getFile().getFileDisplayName()), true);
             }
 
             if (event.getCode() == KeyCode.S && event.isControlDown()) { // Save the texture map.
                 try {
-                    ImageIO.write(getMofMesh().getTextureMap().getTextureTree().getImage(), "png", new File(GUIMain.getWorkingDirectory(), "texMap-" + Utils.stripExtension(getMofMesh().getMofHolder().getFileDisplayName()) + ".png"));
+                    ImageIO.write(getMofMesh().getTextureMap().getTextureTree().getImage(), "png", new File(GUIMain.getWorkingDirectory(), "texMap-" + FileUtils.stripExtension(getMofMesh().getMofHolder().getFileDisplayName()) + ".png"));
                 } catch (IOException ex) {
                     Utils.handleError(getLogger(), ex, true, "Failed to save texture sheet.");
                 }
@@ -599,7 +599,7 @@ public class MOFController extends SCFileEditorUIController<SCGameInstance, MOFH
             final int tempIndex = i;
             MOFPartPolyAnimEntry entry = entryList.getEntries().get(i);
             GameImage image = getGameInstance().getMainArchive().getImageByTextureId(entry.getImageId());
-            Image scaledImage = Utils.toFXImage(image.toBufferedImage(VLOArchive.ICON_EXPORT), true);
+            Image scaledImage = FXUtils.toFXImage(image.toBufferedImage(VLOArchive.ICON_EXPORT), true);
             ImageView view = new ImageView(scaledImage);
             view.setFitWidth(20);
             view.setFitHeight(20);
@@ -618,7 +618,7 @@ public class MOFController extends SCFileEditorUIController<SCGameInstance, MOFH
             HBox hbox2 = new HBox();
 
             TextField durationField = grid.setupSecondNode(new TextField(String.valueOf(entry.getDuration())), false);
-            Utils.setHandleTestKeyPress(durationField, Utils::isInteger, newValue -> {
+            FXUtils.setHandleTestKeyPress(durationField, NumberUtils::isInteger, newValue -> {
                 entry.setDuration(Integer.parseInt(newValue));
                 setupAnimationEditor(entryList);
             });
@@ -815,7 +815,7 @@ public class MOFController extends SCFileEditorUIController<SCGameInstance, MOFH
             });
 
             this.addHiliteButton.setOnAction(evt -> {
-                PhongMaterial material = Utils.makeUnlitSharpMaterial(Color.MAGENTA);
+                PhongMaterial material = Scene3DUtils.makeUnlitSharpMaterial(Color.MAGENTA);
                 RenderManager manager = getController().getRenderManager();
                 manager.clearDisplayList(HILITE_VERTICE_LIST);
 
@@ -863,8 +863,8 @@ public class MOFController extends SCFileEditorUIController<SCGameInstance, MOFH
                 }
             });
 
-            Utils.setHandleKeyPress(fpsField, newString -> {
-                if (!Utils.isInteger(newString))
+            FXUtils.setHandleKeyPress(fpsField, newString -> {
+                if (!NumberUtils.isInteger(newString))
                     return false;
 
                 int newFps = Integer.parseInt(newString);

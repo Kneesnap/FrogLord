@@ -15,7 +15,7 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 import java.util.List;
 
@@ -28,8 +28,8 @@ public class BeastWarsCollprimManager extends BeastWarsMapListManager<BeastWarsM
     private final DisplayList collprimDisplayList;
     private CheckBox wireframePreviewCheckBox;
 
-    private static final PhongMaterial MATERIAL_GREEN = Utils.makeUnlitSharpMaterial(Color.GREEN);
-    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeUnlitSharpMaterial(Color.YELLOW);
+    private static final PhongMaterial MATERIAL_GREEN = Scene3DUtils.makeUnlitSharpMaterial(Color.GREEN);
+    private static final PhongMaterial MATERIAL_YELLOW = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
 
 
     public BeastWarsCollprimManager(MeshViewController<BeastWarsMapMesh> controller) {

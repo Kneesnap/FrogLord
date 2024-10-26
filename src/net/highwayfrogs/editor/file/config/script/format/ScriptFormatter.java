@@ -6,7 +6,7 @@ import net.highwayfrogs.editor.file.config.script.ScriptCommand;
 import net.highwayfrogs.editor.file.config.script.ScriptParseException;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.ui.ScriptEditorController;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 /**
  * The base script formatter.
@@ -45,13 +45,13 @@ public class ScriptFormatter {
      */
     public Node makeEditor(FroggerGameInstance instance, ScriptEditorController controller, ScriptCommand command, int index) {
         TextField field = new TextField(numberToString(instance, command.getArguments()[index]));
-        Utils.setHandleKeyPress(field, newValue -> {
+        FXUtils.setHandleKeyPress(field, newValue -> {
             try {
                 command.getArguments()[index] = stringToNumber(instance, newValue);
                 controller.updateCodeDisplay();
                 return true;
             } catch (ScriptParseException spe) {
-                Utils.makeErrorPopUp(null, spe, false);
+                FXUtils.makeErrorPopUp(null, spe, false);
                 return false;
             }
         }, null);

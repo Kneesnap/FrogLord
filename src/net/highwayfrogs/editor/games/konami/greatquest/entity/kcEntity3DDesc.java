@@ -9,7 +9,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcSphere;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Represents the 'kcEntity3DDesc' struct.
@@ -98,7 +98,7 @@ public class kcEntity3DDesc extends kcBaseDesc {
 
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        builder.append(padding).append("Flags: ").append(Utils.toHexString(this.instanceFlags)).append(Constants.NEWLINE);
+        builder.append(padding).append("Flags: ").append(NumberUtils.toHexString(this.instanceFlags)).append(Constants.NEWLINE);
         this.boundingSphere.writePrefixedMultiLineInfo(builder, "Bounding Sphere", padding);
     }
 }

@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.utils.IBinarySerializable;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 
 /**
  * Implementation of the 'kcScriptTOC' class.

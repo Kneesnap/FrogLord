@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.games.shared.basic.file.definition.PhysicalFileDe
 import net.highwayfrogs.editor.games.shared.basic.ui.BasicMainMenuUIController;
 import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -72,7 +73,7 @@ public abstract class BasicGameInstance extends GameInstance {
             File file = files.remove(0);
             if (file.isFile()) {
                 String fileName = file.getName();
-                String extension = Utils.getFileNameExtension(fileName);
+                String extension = FileUtils.getFileNameExtension(fileName);
                 if (shouldLoadAsGameFile(file, fileName, extension))
                     loadFiles.add(file);
             } else if (file.isDirectory()) {
@@ -114,7 +115,7 @@ public abstract class BasicGameInstance extends GameInstance {
                 gameFile.load(reader);
             }
         } catch (Throwable th) {
-            Utils.handleError(getLogger(), th, singleGameDataFile, "Failed to load file '%s'.", Utils.toLocalPath(this.rootFolder, file, true));
+            Utils.handleError(getLogger(), th, singleGameDataFile, "Failed to load file '%s'.", FileUtils.toLocalPath(this.rootFolder, file, true));
         }
 
         if (gameFile != null) {

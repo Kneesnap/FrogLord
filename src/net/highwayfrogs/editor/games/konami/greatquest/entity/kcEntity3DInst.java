@@ -10,7 +10,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.entity.GreatQuestMapEditorEntityDisplay;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.UUID;
 
@@ -66,7 +66,7 @@ public class kcEntity3DInst extends kcEntityInst {
     @Override
     protected void setupMainEditor(GreatQuestEntityManager manager, GUIEditorGrid grid, GreatQuestMapEditorEntityDisplay entityDisplay) {
         super.setupMainEditor(manager, grid, entityDisplay);
-        grid.addLabel("Flags", Utils.toHexString(this.flags));
+        grid.addLabel("Flags", NumberUtils.toHexString(this.flags));
         grid.addEnumSelector("Billboard Axis", this.billboardAxis, kcAxisType.values(), false, this::setBillboardAxis);
 
         // Position Editor
@@ -117,7 +117,7 @@ public class kcEntity3DInst extends kcEntityInst {
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         super.writeMultiLineInfo(builder, padding);
-        builder.append(padding).append("Flags: ").append(Utils.toHexString(this.flags)).append(Constants.NEWLINE);
+        builder.append(padding).append("Flags: ").append(NumberUtils.toHexString(this.flags)).append(Constants.NEWLINE);
         builder.append(padding).append("Billboard Axis: ").append(this.billboardAxis).append(Constants.NEWLINE);
         this.position.writePrefixedInfoLine(builder, "Position", padding);
         this.rotation.writePrefixedInfoLine(builder, "Rotation", padding);

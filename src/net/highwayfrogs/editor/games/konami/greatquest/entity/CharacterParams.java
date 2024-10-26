@@ -9,7 +9,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Represents the 'CharacterParams' struct.
@@ -123,7 +123,7 @@ public class CharacterParams extends kcActorDesc {
         reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
 
         if (characterDescHash != getParentHash().getHashNumber())
-            throw new RuntimeException("The CharacterParams reported the parent chunk as " + Utils.to0PrefixedHexString(characterDescHash) + ", but it was expected to be " + getParentHash().getHashNumberAsString() + ".");
+            throw new RuntimeException("The CharacterParams reported the parent chunk as " + NumberUtils.to0PrefixedHexString(characterDescHash) + ", but it was expected to be " + getParentHash().getHashNumberAsString() + ".");
 
     }
 
@@ -194,7 +194,7 @@ public class CharacterParams extends kcActorDesc {
         builder.append(padding).append("Attack Range: ").append(this.attackRange).append(Constants.NEWLINE);
         builder.append(padding).append("Melee Range: ").append(this.meleeRange).append(Constants.NEWLINE);
         builder.append(padding).append("Missile Range: ").append(this.missileRange).append(Constants.NEWLINE);
-        builder.append(padding).append("Weapon Flags (BitMask): ").append(Utils.toHexString(this.weaponMask)).append(Constants.NEWLINE);
+        builder.append(padding).append("Weapon Flags (BitMask): ").append(NumberUtils.toHexString(this.weaponMask)).append(Constants.NEWLINE);
         builder.append(padding).append("Attack Strength: ").append(this.attackStrength).append(Constants.NEWLINE);
         builder.append(padding).append("Attack Rate: ").append(this.attackRate).append(Constants.NEWLINE);
         builder.append(padding).append("Aggression: ").append(this.aggression).append(Constants.NEWLINE);

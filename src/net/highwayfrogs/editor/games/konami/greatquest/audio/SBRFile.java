@@ -16,8 +16,8 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData;
-import net.highwayfrogs.editor.games.generic.GameObject;
+import net.highwayfrogs.editor.games.generic.data.GameData;
+import net.highwayfrogs.editor.games.generic.data.GameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SoundChunkFile.SoundChunkEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestLooseGameFile;
@@ -33,8 +33,7 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPrope
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
-import net.highwayfrogs.editor.utils.DataSizeUnit;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.*;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.Clip;
@@ -66,7 +65,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
     public void load(DataReader reader) {
         int signature = reader.readInt();
         if (signature != SIGNATURE)
-            throw new RuntimeException("Expected signature '" + Utils.to0PrefixedHexString(SIGNATURE) + "' for SFX Bank but got '" + Utils.to0PrefixedHexString(signature) + "' instead.");
+            throw new RuntimeException("Expected signature '" + NumberUtils.to0PrefixedHexString(SIGNATURE) + "' for SFX Bank but got '" + NumberUtils.to0PrefixedHexString(signature) + "' instead.");
 
         int version = reader.readInt();
         if (version != SUPPORTED_VERSION)
@@ -373,7 +372,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
          * @return Returns true iff a sound is successfully imported.
          */
         public boolean promptUserImportWavFile() {
-            File inputFile = Utils.promptFileOpen(getGameInstance(), "Specify the sound file to import", "Audio File", "wav");
+            File inputFile = FXUtils.promptFileOpen(getGameInstance(), "Specify the sound file to import", "Audio File", "wav");
             if (inputFile == null)
                 return false;
 
@@ -391,7 +390,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
          * @return Returns true iff a sound is successfully exported.
          */
         public boolean promptUserExportWavFile() {
-            File outputFile = Utils.promptFileSave(getGameInstance(), "Specify the file to save the sound as...", getExportFileName(), "Audio File", "wav");
+            File outputFile = FXUtils.promptFileSave(getGameInstance(), "Specify the file to save the sound as...", getExportFileName(), "Audio File", "wav");
             if (outputFile == null)
                 return false;
 
@@ -463,7 +462,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
 
             AudioFormat format = new AudioFormat(getSampleRate(), 16, 1, true, false);
             byte[] convertedAudioData = VAGUtil.rawVagToWav(this.ADPCMData);
-            return this.cachedClip = Utils.getClipFromRawAudioData(format, convertedAudioData);
+            return this.cachedClip = AudioUtils.getClipFromRawAudioData(format, convertedAudioData);
         }
 
         private void clearCachedClip() {
@@ -486,9 +485,9 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         @Override
         public void importFromWav(File file) throws IOException {
             byte[] rawFileBytes = Files.readAllBytes(file.toPath());
-            this.ADPCMData = VAGUtil.wavToVag(Utils.getRawAudioDataFromWavFile(rawFileBytes));
+            this.ADPCMData = VAGUtil.wavToVag(AudioUtils.getRawAudioDataFromWavFile(rawFileBytes));
 
-            AudioFormat newFormat = Utils.getAudioFormatFromWavFile(rawFileBytes);
+            AudioFormat newFormat = AudioUtils.getAudioFormatFromWavFile(rawFileBytes);
             if (newFormat != null)
                 setSampleRate((int) newFormat.getSampleRate());
 
@@ -531,7 +530,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
          */
         public void setFlagState(int flagMask, boolean bitsSet) {
             if ((flagMask & FLAG_VALIDATION_MASK) != flagMask)
-                throw new IllegalArgumentException("flagMask (" + Utils.toHexString(flagMask) + ") had unsupported bits set!");
+                throw new IllegalArgumentException("flagMask (" + NumberUtils.toHexString(flagMask) + ") had unsupported bits set!");
 
             if (bitsSet) {
                 this.flags |= flagMask;
@@ -607,13 +606,13 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             // So in theory if the files were converted to one that Java did support, it would play just fine, but the problem is they compressed the sounds to take up less space in memory.
 
             // The file data here has info about the AudioFormat, and the easiest way to deal with the lack of the AudioFormat is to just complete the wav file and read it directly.
-            this.cachedClip = Utils.getClipFromWavFile(toWavFileBytes(), false);
+            this.cachedClip = AudioUtils.getClipFromWavFile(toWavFileBytes(), false);
             if (this.cachedClip != null)
                 return this.cachedClip;
 
             if (!hasPcWarningBeenShown) {
                 hasPcWarningBeenShown = true;
-                Utils.makePopUp("FrogLord is unable to play these sound effects due to Java not supporting this audio format.\nHowever, FrogLord will still let you import/export it, as other programs will be able to play it.", AlertType.WARNING);
+                FXUtils.makePopUp("FrogLord is unable to play these sound effects due to Java not supporting this audio format.\nHowever, FrogLord will still let you import/export it, as other programs will be able to play it.", AlertType.WARNING);
             }
 
             return null;
@@ -630,7 +629,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
          * Gets the sound as a .wav file.
          */
         public byte[] toWavFileBytes() {
-            return Utils.createWavFile(this.waveFormatEx, this.ADPCMData);
+            return AudioUtils.createWavFile(this.waveFormatEx, this.ADPCMData);
         }
 
         @Override
@@ -714,7 +713,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         public PropertyList addToPropertyList(PropertyList propertyList) {
             propertyList.add("Type", this.type + " (" + Utils.getSimpleName(this) + ")");
             String flagString = getFlagsAsString();
-            propertyList.add("Flags", Utils.toHexString(this.flags) + (flagString != null ? " (" + flagString + ")" : ""));
+            propertyList.add("Flags", NumberUtils.toHexString(this.flags) + (flagString != null ? " (" + flagString + ")" : ""));
             addFlagToggle(propertyList, "Repeat", FLAG_REPEAT);
             addFlagToggle(propertyList, "Voice Clip", FLAG_VOICE_CLIP);
             addFlagToggle(propertyList, "Music", FLAG_MUSIC);
@@ -731,7 +730,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
          */
         public void setFlagState(int flagMask, boolean bitsSet) {
             if ((flagMask & FLAG_VALIDATION_MASK) != flagMask)
-                throw new IllegalArgumentException("flagMask (" + Utils.toHexString(flagMask) + ") had unsupported bits set!");
+                throw new IllegalArgumentException("flagMask (" + NumberUtils.toHexString(flagMask) + ") had unsupported bits set!");
 
             if (bitsSet) {
                 this.flags |= (short) flagMask;
@@ -1215,7 +1214,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
          * Prompts the user to replace the sound data with another wav file.
          */
         public void promptImportWavFile() {
-            File inputFile = Utils.promptFileOpen(getGameInstance(), "Specify the sound file to import", "Audio File", "wav");
+            File inputFile = FXUtils.promptFileOpen(getGameInstance(), "Specify the sound file to import", "Audio File", "wav");
             if (inputFile != null) {
                 try {
                     this.attributes.loadFromWavFile(this, inputFile);
@@ -1229,7 +1228,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
          * Prompts the user to save the sound to a wav file.
          */
         public void promptExportWavFile() {
-            File outputFile = Utils.promptFileSave(getGameInstance(), "Specify the file to save the sound as...", getExportFileName(), "Audio File", "wav");
+            File outputFile = FXUtils.promptFileSave(getGameInstance(), "Specify the file to save the sound as...", getExportFileName(), "Audio File", "wav");
             if (outputFile != null) {
                 try {
                     this.attributes.saveToWavFile(this, outputFile);
@@ -1354,7 +1353,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             this.addNewWaveEntryItem.setOnAction(event -> {
                 SBRFile sbrFile = getListComponent().getFile();
                 if (sbrFile.getWaves().isEmpty()) {
-                    Utils.makePopUp("There are no sound waves in this file currently, so it is not possible to add a reference.", AlertType.WARNING);
+                    FXUtils.makePopUp("There are no sound waves in this file currently, so it is not possible to add a reference.", AlertType.WARNING);
                     return;
                 }
 

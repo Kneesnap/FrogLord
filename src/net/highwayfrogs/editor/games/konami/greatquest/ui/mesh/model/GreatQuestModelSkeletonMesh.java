@@ -5,8 +5,8 @@ import javafx.scene.paint.PhongMaterial;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
+import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
-import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.image.BufferedImage;
 
@@ -23,7 +23,7 @@ public class GreatQuestModelSkeletonMesh extends DynamicMesh {
     public GreatQuestModelSkeletonMesh(GreatQuestModelMesh fullMesh, String modelName) {
         super(null, DynamicMeshTextureQuality.LIT_BLURRY, modelName);
         this.fullMesh = fullMesh;
-        updateMaterial(Utils.makeColorImage(Color.TEAL));
+        updateMaterial(ColorUtils.makeColorImage(Color.TEAL));
 
         this.mainNode = new GreatQuestModelSkeletonMeshNode(this);
         addNode(this.mainNode);

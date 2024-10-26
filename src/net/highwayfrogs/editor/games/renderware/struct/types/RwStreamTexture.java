@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.struct.RwStruct;
 import net.highwayfrogs.editor.games.renderware.struct.RwStructType;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Implements the 'rwStreamTexture' struct defined in babintex.c
@@ -39,7 +39,7 @@ public class RwStreamTexture extends RwStruct {
     @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {
         propertyList = super.addToPropertyList(propertyList);
-        propertyList.add("Filter & Address Flags", Utils.toHexString(this.filterAndAddress));
+        propertyList.add("Filter & Address Flags", NumberUtils.toHexString(this.filterAndAddress));
         return propertyList;
     }
 }

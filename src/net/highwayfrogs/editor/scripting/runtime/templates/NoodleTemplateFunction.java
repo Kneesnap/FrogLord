@@ -6,8 +6,8 @@ import net.highwayfrogs.editor.scripting.runtime.NoodlePrimitive;
 import net.highwayfrogs.editor.scripting.runtime.NoodleRuntimeException;
 import net.highwayfrogs.editor.scripting.runtime.NoodleThread;
 import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleStaticTemplateFunction;
-import net.highwayfrogs.editor.utils.Function3;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.lambda.Function3;
 
 import java.util.ArrayList;
 import java.util.Arrays;

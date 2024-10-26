@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.utils;
+package net.highwayfrogs.editor.games.sony.shared.utils;
 
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
@@ -27,7 +27,7 @@ import java.util.Set;
  * Contains static file analysis tools.
  * Created by Kneesnap on 2/20/2019.
  */
-public class AnalysisUtils {
+public class SCAnalysisUtils {
     /**
      * Prints unused textures found in a MWD File.
      * There are some VLOs which frogger can't determine if a texture is used or not, so it will not scan them.

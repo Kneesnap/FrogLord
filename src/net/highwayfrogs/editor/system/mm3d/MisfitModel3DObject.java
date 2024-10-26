@@ -4,12 +4,13 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.system.mm3d.blocks.*;
 import net.highwayfrogs.editor.system.mm3d.holders.MMExternalTextureHolder;
 import net.highwayfrogs.editor.system.mm3d.holders.MMMetadataHolder;
 import net.highwayfrogs.editor.system.mm3d.holders.MMTextureCoordinateHolder;
 import net.highwayfrogs.editor.system.mm3d.holders.MMTriangleFaceHolder;
-import net.highwayfrogs.editor.utils.IBinarySerializable;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.*;
@@ -77,7 +78,7 @@ public class MisfitModel3DObject implements IBinarySerializable {
             int offsetAddress = reader.readInt();
 
             if (type == null) {
-                System.out.println("Unknown OffsetType: " + Utils.toHexString(offsetType));
+                System.out.println("Unknown OffsetType: " + NumberUtils.toHexString(offsetType));
                 continue;
             }
 

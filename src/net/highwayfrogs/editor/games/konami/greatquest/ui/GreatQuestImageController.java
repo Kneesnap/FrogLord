@@ -7,7 +7,7 @@ import javafx.scene.image.ImageView;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestImageFile;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -33,7 +33,7 @@ public class GreatQuestImageController extends GreatQuestFileEditorUIController<
     @FXML
     @SneakyThrows
     private void exportImage(ActionEvent event) {
-        File selectedFile = Utils.promptFileSave(getGameInstance(), "Specify the file to export this image as...", null, "Image Files", "png");
+        File selectedFile = FXUtils.promptFileSave(getGameInstance(), "Specify the file to export this image as...", null, "Image Files", "png");
         if (selectedFile != null)
             ImageIO.write(getFile().getImage(), "png", selectedFile);
     }
@@ -47,7 +47,7 @@ public class GreatQuestImageController extends GreatQuestFileEditorUIController<
 
         getFile().replaceImage(ImageIO.read(selectedFile));
         updateImage();*/ // TODO: Implement.
-        Utils.makePopUp("Importing images is not supported yet.", AlertType.WARNING);
+        FXUtils.makePopUp("Importing images is not supported yet.", AlertType.WARNING);
     }
 
     /**
@@ -61,7 +61,7 @@ public class GreatQuestImageController extends GreatQuestFileEditorUIController<
         if (hasImage) {
             this.imageView.setFitWidth(image.getWidth());
             this.imageView.setFitHeight(image.getHeight());
-            this.imageView.setImage(Utils.toFXImage(image, false));
+            this.imageView.setImage(FXUtils.toFXImage(image, false));
         }
     }
 }

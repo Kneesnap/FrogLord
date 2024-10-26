@@ -11,7 +11,7 @@ import net.highwayfrogs.editor.scripting.compiler.tokens.NoodleTokenType;
 import net.highwayfrogs.editor.scripting.tracking.NoodleCodeLocation;
 import net.highwayfrogs.editor.scripting.tracking.NoodleCodeSource;
 import net.highwayfrogs.editor.scripting.tracking.NoodleFileCodeSource;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -68,7 +68,7 @@ public class NoodlePreprocessorDirectiveInclude extends NoodlePreprocessorDirect
             errorOccurred = true;
         }
 
-        if (errorOccurred || !Utils.isFileWithinParent(loadFile, scriptFolder)) // [SECURITY FEATURE] Do not allow loading scripts outside the script folder. This may not be necessary tbh.
+        if (errorOccurred || !FileUtils.isFileWithinParent(loadFile, scriptFolder)) // [SECURITY FEATURE] Do not allow loading scripts outside the script folder. This may not be necessary tbh.
             throw new NoodleSyntaxException("The relative file path '%s' is not accessible to Noodle scripts for security reasons.", this, this.filePath);
 
         if (!loadFile.exists())

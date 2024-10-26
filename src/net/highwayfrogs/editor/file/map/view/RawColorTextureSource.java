@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.file.map.view;
 import lombok.Getter;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.system.math.Vector2f;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.ColorUtils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -23,7 +23,7 @@ public class RawColorTextureSource implements ITextureSource {
     public static final Vector2f TEXTURE_UV = new Vector2f(.5F, .5F);
 
     public RawColorTextureSource(javafx.scene.paint.Color fxColor) {
-        this(fxColor != null ? Utils.toARGB(fxColor) : 0);
+        this(fxColor != null ? ColorUtils.toARGB(fxColor) : 0);
     }
 
     public RawColorTextureSource(Color color) {

@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.file.patch.commands;
 import net.highwayfrogs.editor.file.patch.PatchRuntime;
 import net.highwayfrogs.editor.file.patch.PatchValue;
 import net.highwayfrogs.editor.file.patch.reference.PatchValueReference;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.List;
 
@@ -22,6 +22,6 @@ public class PatchCommandHex extends PatchCommand {
         PatchValue value = getValue(runtime, args, 0);
         if (!value.isInteger())
             throw new RuntimeException("Can only hexify integer numbers! Not: " + value);
-        value.setString(Utils.toHexString(value.getAsInteger()));
+        value.setString(NumberUtils.toHexString(value.getAsInteger()));
     }
 }

@@ -29,7 +29,6 @@ import net.highwayfrogs.editor.gui.editor.MeshViewFrameTimer.MeshViewFixedFrameR
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
-import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -49,7 +48,7 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
 
     public static final float ENTITY_PLACEHOLDER_SPRITE_SIZE = 16F;
     public static final TriangleMesh ENTITY_PLACEHOLDER_SPRITE_MESH = Scene3DUtils.createSpriteMesh(ENTITY_PLACEHOLDER_SPRITE_SIZE);
-    public static final PhongMaterial ENTITY_PLACEHOLDER_SPRITE_MATERIAL = Utils.makeUnlitSharpMaterial(ImageResource.SQUARE_LETTER_E_128.getFxImage());
+    public static final PhongMaterial ENTITY_PLACEHOLDER_SPRITE_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(ImageResource.SQUARE_LETTER_E_128.getFxImage());
     public static final PhongMaterial ENTITY_HIGHLIGHTED_PLACEHOLDER_SPRITE_MATERIAL = Scene3DUtils.updateHighlightMaterial(null, ImageResource.SQUARE_LETTER_E_128.getAwtImage());
 
     public FroggerUIMapEntityManager(MeshViewController<FroggerMapMesh> controller) {

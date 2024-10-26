@@ -6,8 +6,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.games.psx.shading.IPSXShadedMesh;
-import net.highwayfrogs.editor.utils.TriConsumer;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.lambda.TriConsumer;
 
 import java.util.ArrayList;
 import java.util.List;

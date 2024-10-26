@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -44,11 +45,11 @@ public class MediEvilMapHeaderPacket extends MediEvilMapPacket implements IPrope
         // Read header identifiers.
         int headerListPtr = reader.readInt();
         if (headerListPtr != reader.getIndex())
-            throw new RuntimeException("MediEvilMapHeaderPacket expected header list at " + Utils.toHexString(reader.getIndex()) + ", but was actually at " + Utils.toHexString(headerListPtr));
+            throw new RuntimeException("MediEvilMapHeaderPacket expected header list at " + NumberUtils.toHexString(reader.getIndex()) + ", but was actually at " + NumberUtils.toHexString(headerListPtr));
 
         this.headerIdentifiers = new String[packetCount];
         for (int i = 0; i < packetCount; i++)
-            this.headerIdentifiers[i] = Utils.toMagicString(reader.readInt());
+            this.headerIdentifiers[i] = Utils.toIdentifierString(reader.readInt());
 
         // Verify data
         if (versionCode != VERSION_CODE)

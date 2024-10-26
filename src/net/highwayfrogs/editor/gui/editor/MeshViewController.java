@@ -28,6 +28,9 @@ import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList.RenderListManager;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
@@ -252,7 +255,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
 
         // Create and set the scene with antialiasing.
         this.meshScene = new Scene(uiPane, -1, -1, true, SceneAntialiasing.DISABLED);
-        this.originalScene = Utils.setSceneKeepPosition(stageToOverride, this.meshScene);
+        this.originalScene = FXUtils.setSceneKeepPosition(stageToOverride, this.meshScene);
 
         // Handle scaling of SubScene on stage resizing.
         this.meshScene.widthProperty().addListener((observable, old, newVal) -> subScene3D.setWidth(newVal.doubleValue() - uiRootPaneWidth()));
@@ -288,12 +291,12 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                 }
 
                 getMesh().removeView(getMeshView()); // Remove view from mesh.
-                Utils.setSceneKeepPosition(this.overwrittenStage, this.originalScene);
+                FXUtils.setSceneKeepPosition(this.overwrittenStage, this.originalScene);
                 this.root3D.getChildren().clear(); // Clear data to avoid memory leak.
             } else if (event.getCode() == KeyCode.F9) { // Print mesh information.
                 getMesh().printDebugMeshInfo();
             } else if (event.getCode() == KeyCode.F10) { // Take screenshot.
-                Utils.takeScreenshot(null, this.subScene, getMeshScene(), Utils.stripExtension(getMeshDisplayName()), false);
+                Scene3DUtils.takeScreenshot(null, this.subScene, getMeshScene(), FileUtils.stripExtension(getMeshDisplayName()), false);
             } else if (event.getCode() == KeyCode.F12 && getMesh().getTextureAtlas() != null) {
 
                 if (getMesh().getTextureAtlas().getTextureSource().isEnableAwtImage()) {
@@ -301,7 +304,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                     try {
                         ImageIO.write(getMesh().getTextureAtlas().getImage(), "png", new File(GUIMain.getWorkingDirectory(), "texture-sheet-awt.png"));
                     } catch (IOException ex) {
-                        Utils.makeErrorPopUp("Failed to save 'texture-sheet-awt.png'.", ex, true);
+                        FXUtils.makeErrorPopUp("Failed to save 'texture-sheet-awt.png'.", ex, true);
                     }
                 }
 
@@ -310,7 +313,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                     try {
                         ImageIO.write(SwingFXUtils.fromFXImage(getMesh().getTextureAtlas().getFxImage(), null), "png", new File(GUIMain.getWorkingDirectory(), "texture-sheet-fx.png"));
                     } catch (IOException ex) {
-                        Utils.makeErrorPopUp("Failed to save 'texture-sheet-fx.png'.", ex, true);
+                        FXUtils.makeErrorPopUp("Failed to save 'texture-sheet-fx.png'.", ex, true);
                     }
                 }
             } else if ((event.isControlDown() && event.getCode() == KeyCode.ENTER)) { // Toggle full-screen.
@@ -502,9 +505,9 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         final double lineSize = getAxisDisplaySize();
 
         this.axisDisplayList = getRenderManager().createDisplayListWithNewGroup();
-        this.axisDisplayList.addLine(0, 0, 0, axisLength, 0, 0, lineSize, Utils.makeUnlitSharpMaterial(Color.RED)); // X Axis.
-        this.axisDisplayList.addLine(0, 0, 0, 0, axisLength, 0, lineSize, Utils.makeUnlitSharpMaterial(Color.GREEN)); // Y Axis.
-        this.axisDisplayList.addLine(0, 0, 0, 0, 0, axisLength, lineSize, Utils.makeUnlitSharpMaterial(Color.BLUE)); // Z Axis.
+        this.axisDisplayList.addLine(0, 0, 0, axisLength, 0, 0, lineSize, Scene3DUtils.makeUnlitSharpMaterial(Color.RED)); // X Axis.
+        this.axisDisplayList.addLine(0, 0, 0, 0, axisLength, 0, lineSize, Scene3DUtils.makeUnlitSharpMaterial(Color.GREEN)); // Y Axis.
+        this.axisDisplayList.addLine(0, 0, 0, 0, 0, axisLength, lineSize, Scene3DUtils.makeUnlitSharpMaterial(Color.BLUE)); // Z Axis.
 
         this.axisDisplayList.setVisible(this.checkBoxShowAxis.isSelected());
         this.checkBoxShowAxis.selectedProperty().addListener((listener, oldValue, newValue) -> this.axisDisplayList.setVisible(newValue));
@@ -626,7 +629,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
      */
     public static <TController extends MeshViewController<TDynMesh>, TDynMesh extends DynamicMesh> TController setupMeshViewer(Stage stageToOverride, TController controller, TDynMesh mesh) {
         if (!Platform.isSupported(ConditionalFeature.SCENE3D)) {
-            Utils.makePopUp("Your version of JavaFX does not support 3D, so meshes cannot be previewed.", AlertType.WARNING);
+            FXUtils.makePopUp("Your version of JavaFX does not support 3D, so meshes cannot be previewed.", AlertType.WARNING);
             return null;
         }
 

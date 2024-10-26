@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.utils.fx.wrapper;
 
 import javafx.collections.ObservableFloatArray;
-import net.highwayfrogs.editor.utils.IndexBitArray;
+import net.highwayfrogs.editor.utils.objects.IndexBitArray;
 
 import java.util.Arrays;
 

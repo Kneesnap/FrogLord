@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
-import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestFileEditorUIController;
@@ -15,6 +15,7 @@ import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -65,7 +66,7 @@ public abstract class GreatQuestGameFile extends GameData<GreatQuestInstance> im
         MenuItem exportFileData = new MenuItem("Export File");
         contextMenu.getItems().add(exportFileData);
         exportFileData.setOnAction(event -> {
-            File outputFile = Utils.promptFileSave(getGameInstance(), "Please select the file to save '" + getFileName() + "' as...", getFileName(), "All Files", "*");
+            File outputFile = FXUtils.promptFileSave(getGameInstance(), "Please select the file to save '" + getFileName() + "' as...", getFileName(), "All Files", "*");
             if (outputFile != null)
                 saveToFile(outputFile);
         });
@@ -73,7 +74,7 @@ public abstract class GreatQuestGameFile extends GameData<GreatQuestInstance> im
         MenuItem importFileData = new MenuItem("Import File");
         contextMenu.getItems().add(importFileData);
         importFileData.setOnAction(event -> {
-            File inputFile = Utils.promptFileOpen(getGameInstance(), "Please select the file to import as '" + getFileName() + "'...", "All Files", "*");
+            File inputFile = FXUtils.promptFileOpen(getGameInstance(), "Please select the file to import as '" + getFileName() + "'...", "All Files", "*");
             if (inputFile != null) {
                 try {
                     loadFromFile(inputFile);
@@ -180,7 +181,7 @@ public abstract class GreatQuestGameFile extends GameData<GreatQuestInstance> im
      */
     public static <TGameFile extends GreatQuestGameFile, TUIController extends GreatQuestFileEditorUIController<TGameFile>> TUIController loadEditor(GreatQuestInstance gameInstance, String template, TUIController controller, TGameFile fileToEdit) {
         try {
-            FXMLLoader templateLoader = Utils.getFXMLTemplateLoader(gameInstance, template);
+            FXMLLoader templateLoader = FXUtils.getFXMLTemplateLoader(gameInstance, template);
             GameUIController.loadController(gameInstance, templateLoader, controller);
             controller.setTargetFile(fileToEdit);
         } catch (Throwable th) {

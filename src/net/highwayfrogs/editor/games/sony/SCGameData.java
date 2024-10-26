@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.games.sony;
 
-import net.highwayfrogs.editor.utils.IBinarySerializable;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 
 /**
  * Represents a game object which has the capability of saving / loading data.

@@ -1,11 +1,12 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.games.generic.data.IGameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedResource;
-import net.highwayfrogs.editor.utils.Consumer5;
-import net.highwayfrogs.editor.utils.IGameObject;
-import net.highwayfrogs.editor.utils.TriConsumer;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.lambda.Consumer5;
+import net.highwayfrogs.editor.utils.lambda.TriConsumer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,7 +81,7 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
      * Does not include the original string, if known.
      */
     public String getHashNumberAsString() {
-        return Utils.to0PrefixedHexString(this.hashNumber);
+        return NumberUtils.to0PrefixedHexString(this.hashNumber);
     }
 
     /**
@@ -125,7 +126,7 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
             setHash(null);
         } else if (input.startsWith("\"") && input.endsWith("\"")) {
             setHash(unescape(input.substring(1, input.length() - 1)));
-        } else if (input.length() == 8 && Utils.isHexInteger("0x" + input)) {
+        } else if (input.length() == 8 && NumberUtils.isHexInteger("0x" + input)) {
             setHash(Integer.parseInt(input, 16));
         } else {
             setHash(input);
@@ -213,7 +214,7 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
 
         int newHash = calculateHash(originalString);
         if (newHash != this.hashNumber)
-            throw new IllegalArgumentException("Cannot set '" + originalString + "' to be the original string for " + this + ", as its hash (" + Utils.to0PrefixedHexString(newHash) + ") is incorrect.");
+            throw new IllegalArgumentException("Cannot set '" + originalString + "' to be the original string for " + this + ", as its hash (" + NumberUtils.to0PrefixedHexString(newHash) + ") is incorrect.");
 
         fireEvents(this, this.stringChangeListeners, this.originalString, originalString, this.hashNumber, newHash);
         this.originalString = originalString;
@@ -295,7 +296,7 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
         if (requireMatchingHash) {
             int realHash = calculateHash(newString);
             if (realHash != newHash)
-                throw new IllegalArgumentException("The string provided ('" + newString + "') had a hash of " + Utils.to0PrefixedHexString(realHash) + ", but it did not match the provided hash of " + Utils.to0PrefixedHexString(newHash) + ".");
+                throw new IllegalArgumentException("The string provided ('" + newString + "') had a hash of " + NumberUtils.to0PrefixedHexString(realHash) + ", but it did not match the provided hash of " + NumberUtils.to0PrefixedHexString(newHash) + ".");
 
             setOriginalString(newString);
             return;
@@ -366,7 +367,7 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
 
         // Validate data before applying.
         if (requireCurrentHash && newHashNumber != this.hashNumber)
-            throw new IllegalArgumentException("The new resource's hash is " + Utils.to0PrefixedHexString(newHashNumber) + ", but was required to match the existing hash of " + getHashNumberAsString() + ".");
+            throw new IllegalArgumentException("The new resource's hash is " + NumberUtils.to0PrefixedHexString(newHashNumber) + ", but was required to match the existing hash of " + getHashNumberAsString() + ".");
 
         // Fire events.
         if (fireEvents) {

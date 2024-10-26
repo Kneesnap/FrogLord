@@ -46,6 +46,8 @@ import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -63,7 +65,6 @@ import java.util.Map.Entry;
  *  -> Fix model loading/saving.
  *  -> Fix transparency for the bone icon.
  *  -> Add PS2 PAL TOC support.
- *  -> Split up Utils & add it to the game script engine.
  *  -> Scripting Engine
  *   -> Strings should be an object with a template.
  *   -> Enums should be an object with a template too.
@@ -101,9 +102,9 @@ public class GreatQuestInstance extends GameInstance {
     public static final byte PADDING_BYTE_DEFAULT = (byte) 0xCC;
     public static final byte PADDING_BYTE_CD = (byte) 0xCD;
     private static final byte[] PADDING_DEFAULT_INT_BYTES = {PADDING_BYTE_DEFAULT, PADDING_BYTE_DEFAULT, PADDING_BYTE_DEFAULT, PADDING_BYTE_DEFAULT};
-    public static final int PADDING_DEFAULT_INT = Utils.readIntFromBytes(PADDING_DEFAULT_INT_BYTES, 0);
+    public static final int PADDING_DEFAULT_INT = DataUtils.readIntFromBytes(PADDING_DEFAULT_INT_BYTES, 0);
     private static final byte[] PADDING_CD_INT_BYTES = {PADDING_BYTE_CD, PADDING_BYTE_CD, PADDING_BYTE_CD, PADDING_BYTE_CD};
-    public static final int PADDING_CD_INT = Utils.readIntFromBytes(PADDING_CD_INT_BYTES, 0);
+    public static final int PADDING_CD_INT = DataUtils.readIntFromBytes(PADDING_CD_INT_BYTES, 0);
 
     public GreatQuestInstance() {
         super(GreatQuestGameType.INSTANCE);
@@ -146,7 +147,7 @@ public class GreatQuestInstance extends GameInstance {
         this.soundIdsByPath.clear();
         this.soundPathsById.clear();
         for (Entry<String, ConfigValueNode> keyValuePair : config.getKeyValuePairs().entrySet()) {
-            if (!Utils.isInteger(keyValuePair.getKey())) {
+            if (!NumberUtils.isInteger(keyValuePair.getKey())) {
                 getLogger().warning("sound-list key '" + keyValuePair.getKey() + "' is not an integer, skipping!");
                 continue;
             }
@@ -299,7 +300,7 @@ public class GreatQuestInstance extends GameInstance {
     public String getShortenedSoundPath(int soundId, boolean includeId) {
         String soundPath = this.soundPathsById.get(soundId);
         if (soundPath == null)
-            return Utils.padNumberString(soundId, 4);
+            return NumberUtils.padNumberString(soundId, 4);
 
         int lastSlashFound = soundPath.lastIndexOf('/');
         if (lastSlashFound >= 0) {
@@ -308,7 +309,7 @@ public class GreatQuestInstance extends GameInstance {
                 soundPath = soundPath.substring(secondToLastSlashFound + 1);
         }
 
-        return (includeId ? "[" + Utils.padNumberString(soundId, 4) + "] " : "") + soundPath;
+        return (includeId ? "[" + NumberUtils.padNumberString(soundId, 4) + "] " : "") + soundPath;
     }
 
     /**
@@ -320,12 +321,12 @@ public class GreatQuestInstance extends GameInstance {
     public String getSoundFileName(int soundId, boolean includeId) {
         String soundPath = this.soundPathsById.get(soundId);
         if (soundPath == null)
-            return Utils.padNumberString(soundId, 4);
+            return NumberUtils.padNumberString(soundId, 4);
 
         int lastSlashFound = soundPath.lastIndexOf('/');
         if (lastSlashFound >= 0)
             return soundPath.substring(lastSlashFound + 1);
 
-        return (includeId ? "[" + Utils.padNumberString(soundId, 4) + "] " : "") + soundPath;
+        return (includeId ? "[" + NumberUtils.padNumberString(soundId, 4) + "] " : "") + soundPath;
     }
 }

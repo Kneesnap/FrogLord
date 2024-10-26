@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.utils.IBinarySerializable;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 
 /**
  * Represents a vector with three 32 bit floating point values.

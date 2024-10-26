@@ -17,7 +17,8 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.gui.GameUIController;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.ColorUtils;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -66,7 +67,7 @@ public class ImagePaddingController extends GameUIController<SCGameInstance> {
     @Override
     public void onSceneAdd(Scene newScene) {
         super.onSceneAdd(newScene);
-        Utils.closeOnEscapeKey((Stage) newScene.getWindow(), null);
+        FXUtils.closeOnEscapeKey((Stage) newScene.getWindow(), null);
     }
 
     private void updateDisplay() {
@@ -74,7 +75,7 @@ public class ImagePaddingController extends GameUIController<SCGameInstance> {
 
         Graphics2D graphics = image.createGraphics();
         graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .5F));
-        graphics.setPaint(Utils.toAWTColor(this.bgColor.getValue()));
+        graphics.setPaint(ColorUtils.toAWTColor(this.bgColor.getValue()));
 
         int imgWidth = image.getWidth();
         int imgHeight = image.getHeight();
@@ -94,7 +95,7 @@ public class ImagePaddingController extends GameUIController<SCGameInstance> {
         graphics.fillRect(imgWidth - xClip, yClip, xClip, secondY - yClip);
         graphics.dispose();
 
-        imageView.setImage(Utils.toFXImage(image, false));
+        imageView.setImage(FXUtils.toFXImage(image, false));
     }
 
     @FXML
@@ -115,6 +116,6 @@ public class ImagePaddingController extends GameUIController<SCGameInstance> {
      * @param controller The VLO controller opening this.
      */
     public static void openPaddingMenu(VLOController controller) {
-        Utils.createWindowFromFXMLTemplate("window-edit-vlo-image-padding", new ImagePaddingController(controller), "Image Padding Editor", true);
+        FXUtils.createWindowFromFXMLTemplate("window-edit-vlo-image-padding", new ImagePaddingController(controller), "Image Padding Editor", true);
     }
 }

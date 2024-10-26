@@ -16,7 +16,8 @@ import net.highwayfrogs.editor.games.sony.shared.sound.body.SCPlayStationSoundBa
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCPlayStationMinimalSoundBankHeader.SCPlayStationMinimalSoundBankHeaderEntry;
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCPlayStationVabSoundBankHeader;
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCPlayStationVabSoundBankHeader.SCPlayStationVabHeaderEntry;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -106,7 +107,7 @@ public class SCPlayStationSoundBankBody extends SCSplitSoundBankBody<SCPlayStati
             try {
                 wavBytes = Files.readAllBytes(file.toPath());
             } catch (Exception ex) {
-                Utils.makeErrorPopUp("There was an error reading the wav file.", ex, true);
+                FXUtils.makeErrorPopUp("There was an error reading the wav file.", ex, true);
                 return;
             }
 
@@ -135,7 +136,7 @@ public class SCPlayStationSoundBankBody extends SCSplitSoundBankBody<SCPlayStati
         private static int makeGlobalId(SCSplitSoundBankBody<?, ?> body, int internalTrackId) {
             // Generate name.
             SCGameConfig config = body.getGameInstance().getConfig();
-            String bankName = Utils.stripExtension(body.getFileName());
+            String bankName = FileUtils.stripExtension(body.getFileName());
             NameBank bank = config.getSoundBank().getChildBank(bankName);
             if (bank != null) {
                 String soundName = bank.getName(internalTrackId);

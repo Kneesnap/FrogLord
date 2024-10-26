@@ -5,7 +5,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.StringUtils;
 
 /**
  * Represents a Frogger script command and its data.
@@ -59,7 +59,7 @@ public class ScriptCommand extends SCGameData<FroggerGameInstance> {
      * @return command
      */
     public static ScriptCommand readCommandFromString(FroggerGameInstance instance, String inputLine) {
-        inputLine = Utils.removeDuplicateSpaces(inputLine);
+        inputLine = StringUtils.removeDuplicateSpaces(inputLine);
         if (inputLine.isEmpty())
             return null;
 

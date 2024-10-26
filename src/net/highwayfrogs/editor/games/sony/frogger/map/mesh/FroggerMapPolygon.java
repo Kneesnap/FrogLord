@@ -18,7 +18,8 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapA
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.Arrays;
 import java.util.logging.Logger;
@@ -77,7 +78,7 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
 
     @Override
     public Logger getLogger() {
-        return Logger.getLogger((this.mapFile != null ? this.mapFile.getFileDisplayName() + "|" : "") + "FroggerMapPolygon{" + this.polygonType + "," + Utils.toHexString(this.lastReadAddress) + "}");
+        return Logger.getLogger((this.mapFile != null ? this.mapFile.getFileDisplayName() + "|" : "") + "FroggerMapPolygon{" + this.polygonType + "," + NumberUtils.toHexString(this.lastReadAddress) + "}");
     }
 
     @Override
@@ -423,7 +424,7 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
             if (textureRemap != null) {
                 int remapIndex = textureRemap.getRemapIndex(gameImage.getTextureId());
                 if (remapIndex >= 0)
-                    this.textureId = Utils.unsignedIntToShort(remapIndex);
+                    this.textureId = DataUtils.unsignedIntToShort(remapIndex);
             }
         }
     }

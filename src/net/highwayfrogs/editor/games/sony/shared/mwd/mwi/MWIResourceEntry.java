@@ -8,7 +8,8 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.*;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
-import net.highwayfrogs.editor.utils.FroggerVersionComparison;
+import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerVersionComparison;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.Locale;
@@ -318,7 +319,7 @@ public class MWIResourceEntry extends SCSharedGameData implements ISCFileDefinit
             byte[] rawBytes = compressedFileBytes != null ? compressedFileBytes : fileBytes;
             int calculatedChecksum = SCUtils.calculateChecksum(rawBytes);
             if (calculatedChecksum != this.checksum)
-                getLogger().warning("Checksum Mismatch!! MWI Checksum: " + Utils.toHexString(this.checksum) + ", Calculated Checksum: " + Utils.toHexString(calculatedChecksum) + " [Compressed: " + isCompressed() + "]");
+                getLogger().warning("Checksum Mismatch!! MWI Checksum: " + NumberUtils.toHexString(this.checksum) + ", Calculated Checksum: " + NumberUtils.toHexString(calculatedChecksum) + " [Compressed: " + isCompressed() + "]");
         }
 
         if (safetyMarginWordCount != this.safetyMarginWordCount)

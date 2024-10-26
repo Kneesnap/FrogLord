@@ -3,10 +3,10 @@ package net.highwayfrogs.editor.games.sony.frogger;
 import javafx.scene.Node;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.ui.*;
+import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerVersionComparison;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCMainMenuUIController;
 import net.highwayfrogs.editor.gui.GUIMain;
-import net.highwayfrogs.editor.utils.FroggerVersionComparison;
-import net.highwayfrogs.editor.utils.IndexBitArray;
+import net.highwayfrogs.editor.utils.objects.IndexBitArray;
 
 /**
  * The main menu controller for Frogger.

@@ -10,7 +10,7 @@ import javafx.stage.Stage;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.utils.DataSizeUnit;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 /**
  * Controls the about menu.
@@ -38,7 +38,7 @@ public class AboutController extends GameUIController<GameInstance> {
     public void onSceneAdd(Scene newScene) {
         super.onSceneAdd(newScene);
         Stage stage = (Stage) newScene.getWindow();
-        Utils.closeOnEscapeKey(stage, null);
+        FXUtils.closeOnEscapeKey(stage, null);
     }
 
     @FXML
@@ -50,7 +50,7 @@ public class AboutController extends GameUIController<GameInstance> {
      * Opens the about menu.
      */
     public static void openAboutMenu(GameInstance instance) {
-        Utils.createWindowFromFXMLTemplate("window-about", new AboutController(instance), "About FrogLord", true);
+        FXUtils.createWindowFromFXMLTemplate("window-about", new AboutController(instance), "About FrogLord", true);
     }
 
     @FXML

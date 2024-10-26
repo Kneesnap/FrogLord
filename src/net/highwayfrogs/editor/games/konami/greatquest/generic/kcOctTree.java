@@ -5,11 +5,11 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector3;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -134,10 +134,10 @@ public class kcOctTree extends GameData<GreatQuestInstance> implements IMultiLin
         builder.append(padding).append("Max Resolution E: ").append(this.maxResolutionE).append(Constants.NEWLINE);
         this.offset.writePrefixedInfoLine(builder, "Offset", padding);
         builder.append(padding).append("Root: ").append(this.root).append(Constants.NEWLINE);
-        builder.append(padding).append("Flags: ").append(Utils.toHexString(this.flags)).append(Constants.NEWLINE);
-        builder.append(padding).append("Branches: ").append(Utils.toHexString(this.branches.size())).append(Constants.NEWLINE);
-        builder.append(padding).append("Leaves: ").append(Utils.toHexString(this.leaves.size())).append(Constants.NEWLINE);
-        builder.append(padding).append("Quad Branches: ").append(Utils.toHexString(this.quadBranches.size())).append(Constants.NEWLINE);
+        builder.append(padding).append("Flags: ").append(NumberUtils.toHexString(this.flags)).append(Constants.NEWLINE);
+        builder.append(padding).append("Branches: ").append(NumberUtils.toHexString(this.branches.size())).append(Constants.NEWLINE);
+        builder.append(padding).append("Leaves: ").append(NumberUtils.toHexString(this.leaves.size())).append(Constants.NEWLINE);
+        builder.append(padding).append("Quad Branches: ").append(NumberUtils.toHexString(this.quadBranches.size())).append(Constants.NEWLINE);
     }
 
     @Getter

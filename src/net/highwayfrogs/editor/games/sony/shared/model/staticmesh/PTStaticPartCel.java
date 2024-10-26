@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.games.sony.shared.model.PTModel;
 import net.highwayfrogs.editor.games.sony.shared.model.primitive.PTPrimitiveBlock;
 import net.highwayfrogs.editor.games.sony.shared.model.primitive.PTPrimitiveControl;
 import net.highwayfrogs.editor.games.sony.shared.model.primitive.PTPrimitiveType;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -75,7 +76,7 @@ public class PTStaticPartCel extends SCSharedGameData {
      */
     void readPrimitiveBlocks(DataReader reader) {
         if (this.primitiveBlockStartAddress <= 0)
-            throw new RuntimeException("Cannot primitive block list, the pointer " + Utils.toHexString(this.primitiveBlockStartAddress) + " is invalid.");
+            throw new RuntimeException("Cannot primitive block list, the pointer " + NumberUtils.toHexString(this.primitiveBlockStartAddress) + " is invalid.");
 
         reader.requireIndex(getLogger(), this.primitiveBlockStartAddress, "Expected PTPrimitiveBlock list");
         for (int i = 0; i < this.primitiveBlocks.size(); i++)
@@ -92,7 +93,7 @@ public class PTStaticPartCel extends SCSharedGameData {
         if (this.collprimListAddress == 0 && this.collprims.isEmpty())
             return; // No collprims available to read.
         if (this.collprimListAddress <= 0)
-            throw new RuntimeException("Cannot read collprim list, the pointer " + Utils.toHexString(this.collprimListAddress) + " is invalid.");
+            throw new RuntimeException("Cannot read collprim list, the pointer " + NumberUtils.toHexString(this.collprimListAddress) + " is invalid.");
 
         reader.requireIndex(getLogger(), this.collprimListAddress, "Expected PTCollprim list");
         for (int i = 0; i < this.collprims.size(); i++) {
@@ -119,7 +120,7 @@ public class PTStaticPartCel extends SCSharedGameData {
      */
     void readMimeVectors(DataReader reader) {
         if (this.mimeVectorStartAddress <= 0)
-            throw new RuntimeException("Cannot read mime vector list, the pointer " + Utils.toHexString(this.mimeVectorStartAddress) + " is invalid.");
+            throw new RuntimeException("Cannot read mime vector list, the pointer " + NumberUtils.toHexString(this.mimeVectorStartAddress) + " is invalid.");
 
         this.mimeVectors.clear();
         reader.requireIndex(getLogger(), this.mimeVectorStartAddress, "Expected mime vector list");
@@ -136,7 +137,7 @@ public class PTStaticPartCel extends SCSharedGameData {
      */
     void readVectors(DataReader reader) {
         if (this.vectorStartAddress <= 0)
-            throw new RuntimeException("Cannot read vector list, the pointer " + Utils.toHexString(this.vectorStartAddress) + " is invalid.");
+            throw new RuntimeException("Cannot read vector list, the pointer " + NumberUtils.toHexString(this.vectorStartAddress) + " is invalid.");
 
         // Calculate end index.
         int endIndex = reader.getSize(); // Fallback -> read to end of file.
@@ -190,7 +191,7 @@ public class PTStaticPartCel extends SCSharedGameData {
      */
     void writePrimitiveBlocks(DataWriter writer) {
         if (this.primitiveBlockStartAddress <= 0)
-            throw new RuntimeException("Cannot write primitive block list, the pointer " + Utils.toHexString(this.primitiveBlockStartAddress) + " is invalid.");
+            throw new RuntimeException("Cannot write primitive block list, the pointer " + NumberUtils.toHexString(this.primitiveBlockStartAddress) + " is invalid.");
 
         writer.writeAddressTo(this.primitiveBlockStartAddress);
         for (int i = 0; i < this.primitiveBlocks.size(); i++)
@@ -205,7 +206,7 @@ public class PTStaticPartCel extends SCSharedGameData {
      */
     void writeCollprims(DataWriter writer) {
         if (this.collprimListAddress <= 0)
-            throw new RuntimeException("Cannot write collprim list, the pointer " + Utils.toHexString(this.collprimListAddress) + " is invalid.");
+            throw new RuntimeException("Cannot write collprim list, the pointer " + NumberUtils.toHexString(this.collprimListAddress) + " is invalid.");
 
         writer.writeAddressTo(this.collprimListAddress);
         for (int i = 0; i < this.collprims.size(); i++)
@@ -229,7 +230,7 @@ public class PTStaticPartCel extends SCSharedGameData {
      */
     void writeMimeVectors(DataWriter writer) {
         if (this.mimeVectorStartAddress <= 0)
-            throw new RuntimeException("Cannot write mime vector list, the pointer " + Utils.toHexString(this.mimeVectorStartAddress) + " is invalid.");
+            throw new RuntimeException("Cannot write mime vector list, the pointer " + NumberUtils.toHexString(this.mimeVectorStartAddress) + " is invalid.");
 
         writer.writeAddressTo(this.mimeVectorStartAddress);
         if ((this.parentPart.getFlags() & PTStaticPart.FLAG_MIME_ENABLED) == PTStaticPart.FLAG_MIME_ENABLED)
@@ -245,7 +246,7 @@ public class PTStaticPartCel extends SCSharedGameData {
      */
     void writeVectors(DataWriter writer) {
         if (this.vectorStartAddress <= 0)
-            throw new RuntimeException("Cannot write vector list, the pointer " + Utils.toHexString(this.vectorStartAddress) + " is invalid.");
+            throw new RuntimeException("Cannot write vector list, the pointer " + NumberUtils.toHexString(this.vectorStartAddress) + " is invalid.");
 
         writer.writeAddressTo(this.vectorStartAddress);
         for (int i = 0; i < this.vectors.size(); i++)

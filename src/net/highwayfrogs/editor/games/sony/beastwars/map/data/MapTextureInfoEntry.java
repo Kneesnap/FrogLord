@@ -6,7 +6,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsInstance;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * A single entry representing a texture choice which can be applied to the Beast Wars map grid.
@@ -43,18 +43,18 @@ public class MapTextureInfoEntry extends SCGameData<BeastWarsInstance> {
             this.active = false;
         } else if (getGameInstance().isPSX()) {
             // TODO: SUPPORT THIS PROPERLY ON PSX.
-            System.err.println("Unexpected value for what was thought to be if the texture info entry was active. (Value: " + someBoolValue + ", Location: " + Utils.toHexString(readStart) + ")");
+            System.err.println("Unexpected value for what was thought to be if the texture info entry was active. (Value: " + someBoolValue + ", Location: " + NumberUtils.toHexString(readStart) + ")");
             this.active = (someBoolValue != 0);
         } else {
-            throw new RuntimeException("Unexpected value for what was thought to be if the texture info entry was active. (Value: " + someBoolValue + ", Location: " + Utils.toHexString(readStart) + ")");
+            throw new RuntimeException("Unexpected value for what was thought to be if the texture info entry was active. (Value: " + someBoolValue + ", Location: " + NumberUtils.toHexString(readStart) + ")");
         }
 
         if (getGameInstance().isPC()) {
             // TODO: SUPPORT THIS PROPERLY ON PSX.
             if (unknown1Zero != 0)
-                throw new RuntimeException("Unknown Value1 Expected to be 0 was " + unknown1Zero + " near " + Utils.toHexString(readStart) + ".");
+                throw new RuntimeException("Unknown Value1 Expected to be 0 was " + unknown1Zero + " near " + NumberUtils.toHexString(readStart) + ".");
             if (unknown2Zero != 0)
-                throw new RuntimeException("Unknown Value2 Expected to be 0 was " + unknown2Zero + " near " + Utils.toHexString(readStart) + ".");
+                throw new RuntimeException("Unknown Value2 Expected to be 0 was " + unknown2Zero + " near " + NumberUtils.toHexString(readStart) + ".");
         }
     }
 

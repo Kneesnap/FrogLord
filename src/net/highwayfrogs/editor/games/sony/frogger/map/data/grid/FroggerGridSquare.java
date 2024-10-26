@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.Collections;
@@ -52,7 +53,7 @@ public class FroggerGridSquare extends SCGameData<FroggerGameInstance> {
         List<FroggerMapPolygon> polygons = getMapFile().getPolygonPacket().getPolygons();
         int polygonIndex = Utils.binarySearch(polygons, polygonPointer, FroggerMapPolygon::getLastReadAddress);
         if (polygonIndex < 0)
-            throw new RuntimeException("FroggerGridSquare's Polygon Pointer does not point to a valid polygon! (" + Utils.toHexString(polygonPointer) + ")");
+            throw new RuntimeException("FroggerGridSquare's Polygon Pointer does not point to a valid polygon! (" + NumberUtils.toHexString(polygonPointer) + ")");
 
         this.polygon = polygons.get(polygonIndex);
     }

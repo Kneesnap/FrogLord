@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.frogger2;
 
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.system.ByteArrayWrapper;
+import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -25,7 +26,7 @@ public class FLA2Unpacker {
      * @return isCompressed
      */
     public static boolean isCompressed(byte[] a) {
-        return a.length > UNPACK_START_INDEX && Utils.testSignature(a, MARKER_BYTES);
+        return a.length > UNPACK_START_INDEX && DataUtils.testSignature(a, MARKER_BYTES);
     }
 
     /**
@@ -40,25 +41,25 @@ public class FLA2Unpacker {
         byte[] lzHistory = new byte[HISTORY_SIZE]; // New clear history.
         int lzHistoryOff = 0;
 
-        int resultSize = Utils.readIntFromBytes(data, MARKER_BYTES.length);
+        int resultSize = DataUtils.readIntFromBytes(data, MARKER_BYTES.length);
         ByteArrayWrapper outputWrapper = new ByteArrayWrapper(resultSize);
 
         while (true) {
-            int tag = Utils.byteToUnsignedShort(data[readIndex++]);
+            int tag = DataUtils.byteToUnsignedShort(data[readIndex++]);
             for (int loop = 0; loop < Constants.BITS_PER_BYTE; loop++) {
                 if ((tag & FLAG_FINISHED) > 0) {
-                    short count = Utils.byteToUnsignedShort(data[readIndex++]);
+                    short count = DataUtils.byteToUnsignedShort(data[readIndex++]);
 
                     if (count == 0) {
                         Utils.verify(outputWrapper.size() == resultSize, "Invalid result size for decompression!");
                         return outputWrapper.toNewArray(); // Finished decompressing.
                     } else { // Copy from earlier.
-                        int offset = HISTORY_SIZE - (((MASK_UPPER & count) * SHIFT_UPPER) + Utils.byteToUnsignedShort(data[readIndex++]));
+                        int offset = HISTORY_SIZE - (((MASK_UPPER & count) * SHIFT_UPPER) + DataUtils.byteToUnsignedShort(data[readIndex++]));
 
                         count &= MASK_LOWER;
                         count += Constants.SHORT_SIZE;
                         while (count-- > 0) {
-                            byte toAdd = data[Utils.byteToUnsignedShort(lzHistory[(lzHistoryOff + offset) & MASK_HISTORY])];
+                            byte toAdd = data[DataUtils.byteToUnsignedShort(lzHistory[(lzHistoryOff + offset) & MASK_HISTORY])];
                             outputWrapper.add(toAdd);
                             lzHistory[lzHistoryOff] = toAdd;
                             lzHistoryOff = (lzHistoryOff + 1) & MASK_HISTORY;

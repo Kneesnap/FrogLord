@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.scripting.runtime;
 import lombok.Getter;
 import net.highwayfrogs.editor.scripting.NoodleUtils;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleObjectTemplate;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.Objects;
 
@@ -346,7 +346,7 @@ public class NoodlePrimitive {
             return this.stringValue;
 
         if (isNumber())
-            return Utils.doubleToCleanString(this.numberValue);
+            return NumberUtils.doubleToCleanString(this.numberValue);
 
         if (isObjectReference())
             return this.objectInstance != null && this.objectInstance.getObject() != null ? this.objectInstance.getObject().toString() : "null";
@@ -359,7 +359,7 @@ public class NoodlePrimitive {
         if (isString()) {
             return "STRING=\"" + NoodleUtils.compiledStringToCodeString(this.stringValue) + "\"";
         } else if (isNumber()) {
-            return "NUMBER=" + Utils.doubleToCleanString(this.numberValue);
+            return "NUMBER=" + NumberUtils.doubleToCleanString(this.numberValue);
         } else if (isObjectReference()) {
             return "OBJECT=" + (this.objectInstance != null && this.objectInstance.getObject() != null ? this.objectInstance.getObject().toString() : "null");
         } else {

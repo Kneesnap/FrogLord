@@ -14,6 +14,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerU
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapLightManager.FroggerMapLightPreview;
 import net.highwayfrogs.editor.games.sony.shared.misc.MRLightType;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.logging.Logger;
@@ -159,9 +160,9 @@ public class FroggerMapLight extends SCGameData<FroggerGameInstance> {
         });
 
         // Light color.
-        int rgbColor = Utils.toRGB(Utils.fromBGR(this.color));
+        int rgbColor = ColorUtils.toRGB(ColorUtils.fromBGR(this.color));
         editor.addColorPicker("Color", 25, rgbColor, newColor -> {
-            this.color = Utils.toBGR(Utils.fromRGB(newColor));
+            this.color = ColorUtils.toBGR(ColorUtils.fromRGB(newColor));
             lightPreview.updateLight();
         });
 

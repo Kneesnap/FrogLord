@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.file.writer;
 
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,6 +51,6 @@ public class FileReceiver implements DataReceiver {
     @Override
     public void close() {
         this.arrayReceiver.close();
-        Utils.writeBytesToFile(null, this.targetFile, this.arrayReceiver.toArray(), true);
+        FileUtils.writeBytesToFile(null, this.targetFile, this.arrayReceiver.toArray(), true);
     }
 }

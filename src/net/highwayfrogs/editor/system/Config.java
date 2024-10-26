@@ -6,8 +6,10 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.utils.IBinarySerializable;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 
 import java.io.*;
 import java.net.URL;
@@ -109,7 +111,7 @@ public class Config implements IBinarySerializable {
         for (int i = 0; i < this.internalText.size(); i++) {
             ConfigValueNode node = this.internalText.get(i);
             String text = node != null ? node.getValue() : null;
-            if (!Utils.isNullOrWhiteSpace(text) && !node.isEscapedNewLine())
+            if (!StringUtils.isNullOrWhiteSpace(text) && !node.isEscapedNewLine())
                 textList.add(text);
         }
 
@@ -309,7 +311,7 @@ public class Config implements IBinarySerializable {
         ConfigValueNode existingNode = this.keyValuePairs.get(keyName);
         if (existingNode != null) { // Get existing node.
             existingNode.setValue(node.getValue());
-            if (!Utils.isNullOrWhiteSpace(node.getComment()) && Utils.isNullOrWhiteSpace(existingNode.getComment()))
+            if (!StringUtils.isNullOrWhiteSpace(node.getComment()) && StringUtils.isNullOrWhiteSpace(existingNode.getComment()))
                 existingNode.setComment(node.getComment());
         } else { // Create new node.
             this.keyValuePairs.put(keyName, node.clone());
@@ -436,9 +438,9 @@ public class Config implements IBinarySerializable {
 
         File parentFile = outputFile.getParentFile();
         if (parentFile != null && !parentFile.exists())
-            Utils.makeDirectory(parentFile);
+            FileUtils.makeDirectory(parentFile);
 
-        Utils.writeBytesToFile(getLogger(), outputFile, toString().getBytes(StandardCharsets.UTF_8), true);
+        FileUtils.writeBytesToFile(getLogger(), outputFile, toString().getBytes(StandardCharsets.UTF_8), true);
     }
 
     @Override
@@ -486,7 +488,7 @@ public class Config implements IBinarySerializable {
         builder.append(escapeString(node.getSectionName()));
 
         builder.append(sectionEnd);
-        if (!Utils.isNullOrWhiteSpace(node.getSectionComment())) {
+        if (!StringUtils.isNullOrWhiteSpace(node.getSectionComment())) {
             builder.append(ConfigValueNode.DEFAULT_COMMENT_SEPARATOR);
             builder.append(node.getSectionComment());
         }
@@ -576,10 +578,10 @@ public class Config implements IBinarySerializable {
 
             configFileText = "";
         } else {
-            configFileText = String.join(Constants.NEWLINE, Utils.readLinesFromFile(targetFile));
+            configFileText = String.join(Constants.NEWLINE, FileUtils.readLinesFromFile(targetFile));
         }
 
-        return loadConfigFromString(configFileText, Utils.stripExtension(targetFile.getName()));
+        return loadConfigFromString(configFileText, FileUtils.stripExtension(targetFile.getName()));
     }
 
     /**
@@ -588,7 +590,7 @@ public class Config implements IBinarySerializable {
      * @return loadedConfig
      */
     public static Config loadTextConfigFromURL(URL url) {
-        String versionConfigName = Utils.getFileNameWithoutExtension(url);
+        String versionConfigName = FileUtils.getFileNameWithoutExtension(url);
         InputStream inputStream;
         try {
             inputStream = url.openStream();
@@ -606,7 +608,7 @@ public class Config implements IBinarySerializable {
      * @return loadedConfig
      */
     public static Config loadTextConfigFromInputStream(InputStream inputStream, String configFileName) {
-        List<String> configLines = Utils.readLinesFromStream(inputStream);
+        List<String> configLines = FileUtils.readLinesFromStream(inputStream);
         String configFileText = String.join(Constants.NEWLINE, configLines);
         return loadConfigFromString(configFileText, configFileName);
     }
@@ -634,7 +636,7 @@ public class Config implements IBinarySerializable {
             if (line == null)
                 return config; // Reached end of file?
 
-            if (Utils.isNullOrWhiteSpace(line))
+            if (StringUtils.isNullOrWhiteSpace(line))
                 continue; // Empty lines are skipped.
 
             String trimmedLine = line.trim();
@@ -646,8 +648,8 @@ public class Config implements IBinarySerializable {
                 // Read the comment, if there is one.
                 int commentIndex = sectionLine.indexOf('#');
                 if (commentIndex != -1) {
-                    comment = Utils.trimStart(sectionLine.substring(commentIndex + 1));
-                    sectionLine = Utils.trimEnd(sectionLine.substring(0, commentIndex));
+                    comment = StringUtils.trimStart(sectionLine.substring(commentIndex + 1));
+                    sectionLine = StringUtils.trimEnd(sectionLine.substring(0, commentIndex));
                 }
 
                 // This is the start of a new section.
@@ -720,13 +722,13 @@ public class Config implements IBinarySerializable {
 
             if (commentAt != -1) {
                 String rawCommentText = text.substring(commentAt + 1);
-                commentText = Utils.trimStart(rawCommentText);
+                commentText = StringUtils.trimStart(rawCommentText);
                 String rawText = text.substring(0, commentAt);
-                text = Utils.trimEnd(rawText);
+                text = StringUtils.trimEnd(rawText);
                 commentSeparator = rawText.substring(text.length()) + '#' + rawCommentText.substring(0, rawText.length() - text.length());
             }
 
-            if (Utils.isNullOrWhiteSpace(text) && Utils.isNullOrWhiteSpace(commentText))
+            if (StringUtils.isNullOrWhiteSpace(text) && StringUtils.isNullOrWhiteSpace(commentText))
                 continue; // If there is no text, and no comment on a line, skip it.
 
             // Determine if this is a key-value pair.
@@ -899,9 +901,9 @@ public class Config implements IBinarySerializable {
          * @throws IllegalConfigSyntaxException Thrown if the value is not formatted as either an integer or a hex integer.
          */
         public int getAsInteger() {
-            if (!Utils.isNullOrWhiteSpace(this.value)) {
+            if (!StringUtils.isNullOrWhiteSpace(this.value)) {
                 try {
-                    return Utils.isHexInteger(this.value) ? Utils.parseHexInteger(this.value) : Integer.parseInt(this.value);
+                    return NumberUtils.isHexInteger(this.value) ? NumberUtils.parseHexInteger(this.value) : Integer.parseInt(this.value);
                 } catch (NumberFormatException nfe) {
                     throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid integer.", nfe);
                 }
@@ -918,9 +920,9 @@ public class Config implements IBinarySerializable {
          * @throws IllegalConfigSyntaxException Thrown if the value is not formatted as either an integer or a hex integer.
          */
         public double getAsInteger(int fallback) {
-            if (!Utils.isNullOrWhiteSpace(this.value)) {
+            if (!StringUtils.isNullOrWhiteSpace(this.value)) {
                 try {
-                    return Utils.isHexInteger(this.value) ? Utils.parseHexInteger(this.value) : Integer.parseInt(this.value);
+                    return NumberUtils.isHexInteger(this.value) ? NumberUtils.parseHexInteger(this.value) : Integer.parseInt(this.value);
                 } catch (NumberFormatException nfe) {
                     throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid integer.", nfe);
                 }
@@ -943,7 +945,7 @@ public class Config implements IBinarySerializable {
          * @throws IllegalConfigSyntaxException Thrown if the value is not formatted as either an integer or a hex integer.
          */
         public double getAsDouble() {
-            if (!Utils.isNullOrWhiteSpace(this.value)) {
+            if (!StringUtils.isNullOrWhiteSpace(this.value)) {
                 try {
                     return Double.parseDouble(this.value);
                 } catch (NumberFormatException nfe) {
@@ -961,7 +963,7 @@ public class Config implements IBinarySerializable {
          * @throws IllegalConfigSyntaxException Thrown if the value is not formatted as either an integer or a hex integer.
          */
         public double getAsDouble(double fallback) {
-            if (!Utils.isNullOrWhiteSpace(this.value)) {
+            if (!StringUtils.isNullOrWhiteSpace(this.value)) {
                 try {
                     return Double.parseDouble(value);
                 } catch (NumberFormatException nfe) {
@@ -986,7 +988,7 @@ public class Config implements IBinarySerializable {
          * @throws IllegalConfigSyntaxException Thrown if the value was not a valid enum or a valid enum index.
          */
         public <TEnum extends Enum<TEnum>> TEnum getAsEnum(Class<TEnum> enumClass) {
-            if (Utils.isNullOrEmpty(this.value))
+            if (StringUtils.isNullOrEmpty(this.value))
                 return null;
 
             try {
@@ -1005,7 +1007,7 @@ public class Config implements IBinarySerializable {
             if (defaultEnum == null)
                 throw new NullPointerException("defaultEnum");
 
-            if (!Utils.isNullOrWhiteSpace(this.value)) {
+            if (!StringUtils.isNullOrWhiteSpace(this.value)) {
                 try {
                     return Enum.valueOf(defaultEnum.getDeclaringClass(), this.value);
                 } catch (Exception e) {
@@ -1035,8 +1037,8 @@ public class Config implements IBinarySerializable {
          */
         public String getTextWithComments() {
             if (this.escapedNewLine)
-                return "```" + (Utils.isNullOrWhiteSpace(this.comment) ? "" : this.commentSeparator + this.comment);
-            if (Utils.isNullOrWhiteSpace(this.comment))
+                return "```" + (StringUtils.isNullOrWhiteSpace(this.comment) ? "" : this.commentSeparator + this.comment);
+            if (StringUtils.isNullOrWhiteSpace(this.comment))
                 return Config.escapeString(this.value != null ? this.value : "");
             return Config.escapeString(this.value != null ? this.value : "")
                     + this.commentSeparator + this.comment;

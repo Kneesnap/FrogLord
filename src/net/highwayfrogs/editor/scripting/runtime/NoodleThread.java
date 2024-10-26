@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.GameInstance;
-import net.highwayfrogs.editor.games.generic.GameObject.SharedGameObject;
+import net.highwayfrogs.editor.games.generic.data.GameObject.SharedGameObject;
 import net.highwayfrogs.editor.scripting.NoodleScript;
 import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
 import net.highwayfrogs.editor.scripting.NoodleScriptFunction;

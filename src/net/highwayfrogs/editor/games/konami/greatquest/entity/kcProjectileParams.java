@@ -5,11 +5,11 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.ProxyReact;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Represents the 'kcProjectileParams' struct.
@@ -69,9 +69,9 @@ public class kcProjectileParams extends GameData<GreatQuestInstance> implements 
 
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        builder.append(padding).append("Flags: ").append(Utils.toHexString(this.flags)).append(Constants.NEWLINE);
+        builder.append(padding).append("Flags: ").append(NumberUtils.toHexString(this.flags)).append(Constants.NEWLINE);
         builder.append(padding).append("Hit Strength: ").append(this.hitStrength)
-                .append(", Damage Flags: ").append(Utils.toHexString(this.damageFlags)).append(Constants.NEWLINE);
+                .append(", Damage Flags: ").append(NumberUtils.toHexString(this.damageFlags)).append(Constants.NEWLINE);
         builder.append(padding).append("Collision Proxy Reaction: ").append(this.proxyReact).append(Constants.NEWLINE);
         builder.append(padding).append("Sensor Radius: ").append(this.sensorRadius).append(Constants.NEWLINE);
         builder.append(padding).append("Group: ").append(this.group).append(", Focus: ").append(this.focus).append(Constants.NEWLINE);

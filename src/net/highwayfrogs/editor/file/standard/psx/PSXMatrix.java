@@ -9,7 +9,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
 
 import java.util.Arrays;
 
@@ -102,8 +102,8 @@ public class PSXMatrix extends GameObject {
      * @return pitchInRadians
      */
     public double getPitchAngle() {
-        double r32 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][1]);
-        double r33 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][2]);
+        double r32 = DataUtils.fixedPointShortToFloat12Bit(getMatrix()[2][1]);
+        double r33 = DataUtils.fixedPointShortToFloat12Bit(getMatrix()[2][2]);
         return Math.atan2(r32, r33);
     }
 
@@ -112,7 +112,7 @@ public class PSXMatrix extends GameObject {
      * @return yawInRadians
      */
     public double getYawAngle() {
-        float r31 = Utils.fixedPointShortToFloat12Bit(getMatrix()[2][0]);
+        float r31 = DataUtils.fixedPointShortToFloat12Bit(getMatrix()[2][0]);
         return Math.asin(-r31);
     }
 
@@ -121,8 +121,8 @@ public class PSXMatrix extends GameObject {
      * @return rollInRadians
      */
     public double getRollAngle() {
-        double r11 = Utils.fixedPointShortToFloat12Bit(getMatrix()[0][0]);
-        double r21 = Utils.fixedPointShortToFloat12Bit(getMatrix()[1][0]);
+        double r11 = DataUtils.fixedPointShortToFloat12Bit(getMatrix()[0][0]);
+        double r21 = DataUtils.fixedPointShortToFloat12Bit(getMatrix()[1][0]);
         return Math.atan2(r21, r11);
     }
 
@@ -145,15 +145,15 @@ public class PSXMatrix extends GameObject {
             return; // Avoid gymbal lock. (Or at least I think that's what we call the reset to pitch/roll by this, and the weird behavior which can happen when Y is in this range.)
 
         // Update rotation matrix.
-        this.matrix[0][0] = Utils.floatToFixedPointShort12Bit((float) (cy * cz)); // r11
-        this.matrix[0][1] = Utils.floatToFixedPointShort12Bit((float) (sx * sy * cz - cx * sz)); // r12
-        this.matrix[0][2] = Utils.floatToFixedPointShort12Bit((float) (cx * sy * cz + sx * sz)); // r13
-        this.matrix[1][0] = Utils.floatToFixedPointShort12Bit((float) (cy * sz)); // r21
-        this.matrix[1][1] = Utils.floatToFixedPointShort12Bit((float) (sx * sy * sz + cx * cz)); // r22
-        this.matrix[1][2] = Utils.floatToFixedPointShort12Bit((float) (cx * sy * sz - sx * cz)); // r23
-        this.matrix[2][0] = Utils.floatToFixedPointShort12Bit((float) -sy); // r31
-        this.matrix[2][1] = Utils.floatToFixedPointShort12Bit((float) (sx * cy)); // r32
-        this.matrix[2][2] = Utils.floatToFixedPointShort12Bit((float) (cx * cy)); // r33
+        this.matrix[0][0] = DataUtils.floatToFixedPointShort12Bit((float) (cy * cz)); // r11
+        this.matrix[0][1] = DataUtils.floatToFixedPointShort12Bit((float) (sx * sy * cz - cx * sz)); // r12
+        this.matrix[0][2] = DataUtils.floatToFixedPointShort12Bit((float) (cx * sy * cz + sx * sz)); // r13
+        this.matrix[1][0] = DataUtils.floatToFixedPointShort12Bit((float) (cy * sz)); // r21
+        this.matrix[1][1] = DataUtils.floatToFixedPointShort12Bit((float) (sx * sy * sz + cx * cz)); // r22
+        this.matrix[1][2] = DataUtils.floatToFixedPointShort12Bit((float) (cx * sy * sz - sx * cz)); // r23
+        this.matrix[2][0] = DataUtils.floatToFixedPointShort12Bit((float) -sy); // r31
+        this.matrix[2][1] = DataUtils.floatToFixedPointShort12Bit((float) (sx * cy)); // r32
+        this.matrix[2][2] = DataUtils.floatToFixedPointShort12Bit((float) (cx * cy)); // r33
     }
 
     /**

@@ -24,11 +24,16 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.system.Tuple2;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 
 /**
@@ -137,7 +142,7 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
             if (newImage != null) {
                 xField.setText(String.valueOf(newImage.getVramX()));
                 yField.setText(String.valueOf(newImage.getVramY()));
-                this.selectedView.setImage(Utils.toFXImage(newImage.toBufferedImage(), true));
+                this.selectedView.setImage(FXUtils.toFXImage(newImage.toBufferedImage(), true));
                 this.imageView.requestFocus(); // Allow arrow keys to be listened for, instead of moving cursor.
             }
 
@@ -145,8 +150,8 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
             updateDisplay();
         });
 
-        Utils.setHandleTestKeyPress(this.xField, Utils::isSignedShort, newX -> setPosition(Integer.parseInt(newX), this.selectedImage.getVramY(), false));
-        Utils.setHandleTestKeyPress(this.yField, Utils::isSignedShort, newY -> setPosition(this.selectedImage.getVramX(), Integer.parseInt(newY), false));
+        FXUtils.setHandleTestKeyPress(this.xField, NumberUtils::isSignedShort, newX -> setPosition(Integer.parseInt(newX), this.selectedImage.getVramY(), false));
+        FXUtils.setHandleTestKeyPress(this.yField, NumberUtils::isSignedShort, newY -> setPosition(this.selectedImage.getVramX(), Integer.parseInt(newY), false));
         updateAll();
     }
 
@@ -157,7 +162,7 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
         // Run after stage / scene setup.
         Stage stage = (Stage) newScene.getWindow();
         stage.setOnCloseRequest(evt -> cancel()); // Window closed -> cancel.
-        Utils.closeOnEscapeKey(stage, this::cancel); // Escape -> cancel.
+        FXUtils.closeOnEscapeKey(stage, this::cancel); // Escape -> cancel.
     }
 
     /**
@@ -237,7 +242,7 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
             updateSplitImage(updatePage);
         this.changedPages.clear();
 
-        this.imageView.setImage(Utils.toFXImage(this.splitImages[this.selectedPage], false));
+        this.imageView.setImage(FXUtils.toFXImage(this.splitImages[this.selectedPage], false));
         this.imageView.setPreserveRatio(false);
         this.imageView.setFitWidth(256);
         this.imageView.setFitHeight(256);
@@ -275,7 +280,7 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
 
         if (isPsxMode()) { // Update displayed image.
             ImageView updateView = this.splitImageViews[splitIndex];
-            updateView.setImage(Utils.toFXImage(image, false));
+            updateView.setImage(FXUtils.toFXImage(image, false));
             updateView.setFitWidth(32);
             updateView.setFitHeight(128);
         }
@@ -407,6 +412,6 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
         boolean isPsx = controller.getFile().isPsxMode();
         String templateName = "edit-file-vlo-vram-" + (isPsx ? "psx" : "pc");
         String windowTitle = (isPsx ? "PS1" : "PC") + " VRAM Editor";
-        Utils.createWindowFromFXMLTemplate(templateName, new VRAMPageController(controller), windowTitle, true);
+        FXUtils.createWindowFromFXMLTemplate(templateName, new VRAMPageController(controller), windowTitle, true);
     }
 }

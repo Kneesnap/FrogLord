@@ -13,7 +13,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import lombok.Getter;
-import net.highwayfrogs.editor.games.generic.GameObject;
+import net.highwayfrogs.editor.games.generic.data.GameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.KCResourceID;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
@@ -24,6 +24,7 @@ import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
 import net.highwayfrogs.editor.gui.components.ListViewComponent;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.Collections;
@@ -164,7 +165,7 @@ public class GreatQuestChunkFileEditor extends DefaultFileUIController<GreatQues
             this.addNewChunkItem.setOnAction(event -> {
                 // TODO: PS2 PAL FIX -> Multiple TOC Support.
                 // TODO: SORTING? [Ensure loaded order matches what is expected, Disable our ability to manually order sections, and automatically sort sections to ensure ordering is OK.]
-                Utils.makePopUp("Not yet implemented.", AlertType.ERROR); // TODO: IMPLEMENT!
+                FXUtils.makePopUp("Not yet implemented.", AlertType.ERROR); // TODO: IMPLEMENT!
             });
 
             getListComponent().getCollectionEditorComponent().addMenuItemToAddButtonLogic(this.addNewChunkItem);

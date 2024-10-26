@@ -11,7 +11,7 @@ import net.highwayfrogs.editor.games.renderware.RwUtils;
 import net.highwayfrogs.editor.games.renderware.struct.RwStruct;
 import net.highwayfrogs.editor.games.renderware.struct.RwStructType;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Represents an RwMaterial.
@@ -82,7 +82,7 @@ public class RwMaterialChunk extends RwStreamChunk {
         public PropertyList addToPropertyList(PropertyList propertyList) {
             propertyList = super.addToPropertyList(propertyList);
             if (this.flags != 0)
-                propertyList.add("Flags", Utils.toHexString(this.flags));
+                propertyList.add("Flags", NumberUtils.toHexString(this.flags));
             propertyList.add("Color", this.color);
             if (this.unused != 0)
                 propertyList.add("Unused (Garbage?)", this.unused);

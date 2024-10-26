@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -108,7 +109,7 @@ public abstract class GameInstance implements IGameInstance {
     public Stage getMainStage() {
         Stage stage = this.mainMenuController != null ? this.mainMenuController.getStage() : null;
         if (stage == null) {
-            Utils.makePopUp("There was no stage available to override.", AlertType.ERROR);
+            FXUtils.makePopUp("There was no stage available to override.", AlertType.ERROR);
             return null;
         }
 

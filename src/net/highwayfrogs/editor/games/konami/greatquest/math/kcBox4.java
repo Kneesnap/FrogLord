@@ -3,8 +3,8 @@ package net.highwayfrogs.editor.games.konami.greatquest.math;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
-import net.highwayfrogs.editor.utils.IBinarySerializable;
 
 /**
  * This represents the '_kcBox4' struct in kcMath3D.h

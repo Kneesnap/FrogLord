@@ -11,7 +11,7 @@ import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 import java.awt.image.BufferedImage;
 import java.util.function.Consumer;
@@ -121,7 +121,7 @@ public abstract class PSXShadingEditor<TShadeTarget> {
 
     protected void updatePreviewImage(BufferedImage newShadedImage) {
         if (this.shadeDefinition != null && newShadedImage != null) {
-            this.previewImageView.setImage(Utils.toFXImage(ImageWorkHorse.resizeImage(newShadedImage, (int) this.previewImageView.getFitWidth(), (int) this.previewImageView.getFitHeight(), true), false));
+            this.previewImageView.setImage(FXUtils.toFXImage(ImageWorkHorse.resizeImage(newShadedImage, (int) this.previewImageView.getFitWidth(), (int) this.previewImageView.getFitHeight(), true), false));
         } else {
             this.previewImageView.setImage(null);
         }

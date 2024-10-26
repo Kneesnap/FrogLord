@@ -15,7 +15,8 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEditorUtil
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEntityManager;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.lang.ref.SoftReference;
 import java.util.logging.Logger;
@@ -56,7 +57,7 @@ public class OldFroggerMapEntity extends SCGameData<OldFroggerGameInstance> {
                 try {
                     this.entityData.load(reader);
                 } catch (Throwable th) {
-                    String errorMessage = "Failed to load " + entityDataFactory.getName() + " for " + getDebugName() + " at " + Utils.toHexString(entityDataStartIndex);
+                    String errorMessage = "Failed to load " + entityDataFactory.getName() + " for " + getDebugName() + " at " + NumberUtils.toHexString(entityDataStartIndex);
                     getLogger().throwing("OldFroggerMapEntity", "load", new RuntimeException(errorMessage, th));
                     // Don't throw an exception, there's a pointer table so the next entity will read from the right spot.
                 }
@@ -165,7 +166,7 @@ public class OldFroggerMapEntity extends SCGameData<OldFroggerGameInstance> {
         if (form != null) {
             WADEntry mofEntry = form.getMofFileEntry();
             if (mofEntry != null)
-                return Utils.stripExtension(mofEntry.getDisplayName());
+                return FileUtils.stripExtension(mofEntry.getDisplayName());
         }
 
         return "Entity #" + this.entityId;

@@ -1,12 +1,12 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.games.generic.GameObject;
+import net.highwayfrogs.editor.games.generic.data.GameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.Map;
 
@@ -49,7 +49,7 @@ public class kcScriptDisplaySettings extends GameObject<GreatQuestInstance> {
 
         // Fallback to number.
         if (prefixHexNumber) {
-            return "0x" + Utils.to0PrefixedHexString(hash);
+            return "0x" + NumberUtils.to0PrefixedHexString(hash);
         } else {
             return "0x" + Integer.toHexString(hash).toUpperCase();
         }
@@ -66,7 +66,7 @@ public class kcScriptDisplaySettings extends GameObject<GreatQuestInstance> {
             return settings.getHashDisplay(hash, prefixHexNumber);
 
         if (prefixHexNumber) {
-            return "0x" + Utils.to0PrefixedHexString(hash);
+            return "0x" + NumberUtils.to0PrefixedHexString(hash);
         } else {
             return "0x" + Integer.toHexString(hash).toUpperCase();
         }

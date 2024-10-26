@@ -14,7 +14,7 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.OldFroggerMapPat
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.OldFroggerMapPathPacket.OldFroggerMapPath;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
 
 import java.text.DecimalFormat;
 
@@ -116,16 +116,16 @@ public class OldFroggerPathData extends SCGameData<OldFroggerGameInstance> {
      * @param editor  The editor to create ui elements for.
      */
     public void setupEditor(OldFroggerEntityManager manager, OldFroggerMapEntity entity, GUIEditorGrid editor) {
-        final float distAlongPath = Utils.fixedPointIntToFloat4Bit(getTotalPathDistance(manager.getMap()));
-        final float totalPathDist = Utils.fixedPointIntToFloat4Bit(getPath(manager.getMap()).getTotalLength());
+        final float distAlongPath = DataUtils.fixedPointIntToFloat4Bit(getTotalPathDistance(manager.getMap()));
+        final float totalPathDist = DataUtils.fixedPointIntToFloat4Bit(getPath(manager.getMap()).getTotalLength());
 
         Slider travDistSlider = editor.addDoubleSlider("Travel Distance:", distAlongPath, newValue -> {
-            setTotalPathDistance(manager.getMap(), Utils.floatToFixedPointInt4Bit(newValue.floatValue()));
+            setTotalPathDistance(manager.getMap(), DataUtils.floatToFixedPointInt4Bit(newValue.floatValue()));
             manager.updateEntityPositionRotation(entity);
         }, 0.0, totalPathDist);
 
         TextField travDistText = editor.addFloatField("", distAlongPath, newValue -> {
-            setTotalPathDistance(manager.getMap(), Utils.floatToFixedPointInt4Bit(newValue));
+            setTotalPathDistance(manager.getMap(), DataUtils.floatToFixedPointInt4Bit(newValue));
             manager.updateEntityPositionRotation(entity);
         }, newValue -> !((newValue < 0.0f) || (newValue > totalPathDist)));
         travDistText.textProperty().bindBidirectional(travDistSlider.valueProperty(), new NumberStringConverter(new DecimalFormat("####0.00")));

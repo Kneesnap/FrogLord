@@ -7,10 +7,10 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.math.Vector2f;
-import net.highwayfrogs.editor.utils.IBinarySerializable;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
 
 /**
  * Represents a texture UV pair stored as bytes in a Sony Cambridge game.
@@ -72,7 +72,7 @@ public class SCByteTextureUV implements IBinarySerializable {
      * @return floatU
      */
     public float getFloatU() {
-        return Utils.unsignedByteToFloat(this.u);
+        return DataUtils.unsignedByteToFloat(this.u);
     }
 
     /**
@@ -88,7 +88,7 @@ public class SCByteTextureUV implements IBinarySerializable {
      * @return floatV
      */
     public float getFloatV() {
-        return Utils.unsignedByteToFloat(this.v);
+        return DataUtils.unsignedByteToFloat(this.v);
     }
 
     /**

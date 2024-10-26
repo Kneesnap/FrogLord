@@ -20,7 +20,7 @@ import net.highwayfrogs.editor.scripting.tracking.NoodleCodeLocation;
 import net.highwayfrogs.editor.scripting.tracking.NoodleCodeSource;
 import net.highwayfrogs.editor.scripting.tracking.NoodleFileCodeSource;
 import net.highwayfrogs.editor.system.Config;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -44,7 +44,7 @@ public class NoodleCompiler {
         if (!file.exists())
             throw new NoodleCompilerException("Tried to load compile file '%s', because it cannot be found!", file.getName());
 
-        return compileScript(engine, Utils.readFileText(file), scriptToLoad);
+        return compileScript(engine, FileUtils.readFileText(file), scriptToLoad);
     }
 
     /**

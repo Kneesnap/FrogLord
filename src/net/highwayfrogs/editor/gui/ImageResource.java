@@ -4,6 +4,7 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
@@ -195,7 +196,7 @@ public enum ImageResource {
 
         if (this.resourcePath != null) {
             // Read the image.
-            URL imageUrl = Utils.getResourceURL(this.resourcePath);
+            URL imageUrl = FileUtils.getResourceURL(this.resourcePath);
             if (imageUrl == null)
                 throw new IllegalStateException("Cannot load image from resource '" + this.resourcePath + "'.");
 

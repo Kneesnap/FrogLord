@@ -26,7 +26,7 @@ import net.highwayfrogs.editor.gui.mesh.fxobject.ScaleGizmo;
 import net.highwayfrogs.editor.gui.mesh.fxobject.ScaleGizmo.IScaleChangeListener;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo.IPositionChangeListener;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.*;
 
 import java.text.DecimalFormat;
 import java.util.*;
@@ -47,8 +47,8 @@ public class GUIEditorGrid {
     private int rowIndex;
 
     private static final DecimalFormat FORMAT = new DecimalFormat("#.#######");
-    private static final Image GRAY_IMAGE_XZ = Utils.makeColorImageNoCache(Color.GRAY, 60, 60);
-    private static final Image GRAY_IMAGE_Y = Utils.makeColorImageNoCache(Color.GRAY, 15, 60);
+    private static final Image GRAY_IMAGE_XZ = ColorUtils.makeColorImageNoCache(Color.GRAY, 60, 60);
+    private static final Image GRAY_IMAGE_Y = ColorUtils.makeColorImageNoCache(Color.GRAY, 15, 60);
     private static final StringConverter<Double> SLIDER_DEGREE_CONVERTER = new StringConverter<Double>() {
         @Override
         public String toString(Double num) {
@@ -208,7 +208,7 @@ public class GUIEditorGrid {
      */
     public TextField addTextField(String label, String value, Function<String, Boolean> setter) {
         TextField field = addTextField(label, value);
-        Utils.setHandleKeyPress(field, setter, this::onChange);
+        FXUtils.setHandleKeyPress(field, setter, this::onChange);
         return field;
     }
 
@@ -233,7 +233,7 @@ public class GUIEditorGrid {
      */
     public TextField addSignedByteField(String label, byte number, Function<Byte, Boolean> validityTest, Consumer<Byte> setter) {
         return addTextField(label, String.valueOf(number), str -> {
-            if (!Utils.isInteger(str))
+            if (!NumberUtils.isInteger(str))
                 return false;
 
             int parsedNumber = Integer.parseInt(str);
@@ -284,7 +284,7 @@ public class GUIEditorGrid {
      */
     public TextField addUnsignedByteField(String label, short number, Function<Short, Boolean> validityTest, Consumer<Short> setter) {
         return addTextField(label, String.valueOf(number), str -> {
-            if (!Utils.isInteger(str))
+            if (!NumberUtils.isInteger(str))
                 return false;
 
             int parsedNumber = Integer.parseInt(str);
@@ -335,7 +335,7 @@ public class GUIEditorGrid {
      */
     public TextField addSignedShortField(String label, short number, Function<Short, Boolean> validityTest, Consumer<Short> setter) {
         return addTextField(label, String.valueOf(number), str -> {
-            if (!Utils.isInteger(str))
+            if (!NumberUtils.isInteger(str))
                 return false;
 
             int parsedNumber = Integer.parseInt(str);
@@ -396,9 +396,9 @@ public class GUIEditorGrid {
      * @return textField
      */
     public TextField addUnsignedShortField(String label, short number, Function<Short, Boolean> validityTest, Consumer<Short> setter) {
-        return addUnsignedShortField(label, Utils.shortToUnsignedInt(number),
-                validityTest != null ? intValue -> validityTest.apply(Utils.unsignedIntToShort(intValue)) : null,
-                newValue -> setter.accept(Utils.unsignedIntToShort(newValue)));
+        return addUnsignedShortField(label, DataUtils.shortToUnsignedInt(number),
+                validityTest != null ? intValue -> validityTest.apply(DataUtils.unsignedIntToShort(intValue)) : null,
+                newValue -> setter.accept(DataUtils.unsignedIntToShort(newValue)));
     }
 
     /**
@@ -411,7 +411,7 @@ public class GUIEditorGrid {
      */
     public TextField addUnsignedShortField(String label, int number, Function<Integer, Boolean> validityTest, Consumer<Integer> setter) {
         return addTextField(label, String.valueOf(number), str -> {
-            if (!Utils.isInteger(str))
+            if (!NumberUtils.isInteger(str))
                 return false;
 
             int parsedNumber = Integer.parseInt(str);
@@ -461,7 +461,7 @@ public class GUIEditorGrid {
      */
     public TextField addSignedIntegerField(String label, int number, Function<Integer, Boolean> validityTest, Consumer<Integer> setter) {
         return addTextField(label, String.valueOf(number), str -> {
-            if (!Utils.isInteger(str))
+            if (!NumberUtils.isInteger(str))
                 return false;
 
             long parsedNumber = Long.parseLong(str);
@@ -522,9 +522,9 @@ public class GUIEditorGrid {
      * @return textField
      */
     public TextField addUnsignedIntegerField(String label, int number, Function<Integer, Boolean> validityTest, Consumer<Integer> setter) {
-        return addUnsignedIntegerField(label, Utils.intToUnsignedLong(number),
-                validityTest != null ? longValue -> validityTest.apply(Utils.unsignedLongToInt(longValue)) : null,
-                newValue -> setter.accept(Utils.unsignedLongToInt(newValue)));
+        return addUnsignedIntegerField(label, DataUtils.intToUnsignedLong(number),
+                validityTest != null ? longValue -> validityTest.apply(DataUtils.unsignedLongToInt(longValue)) : null,
+                newValue -> setter.accept(DataUtils.unsignedLongToInt(newValue)));
     }
 
     /**
@@ -537,7 +537,7 @@ public class GUIEditorGrid {
      */
     public TextField addUnsignedIntegerField(String label, long number, Function<Long, Boolean> validityTest, Consumer<Long> setter) {
         return addTextField(label, String.valueOf(number), str -> {
-            if (!Utils.isInteger(str))
+            if (!NumberUtils.isInteger(str))
                 return false;
 
             long parsedNumber = Long.parseLong(str);
@@ -584,7 +584,7 @@ public class GUIEditorGrid {
      */
     public TextField addFloatField(String label, float number, Consumer<Float> setter, Predicate<Float> test) {
         TextField field = addTextField(label, String.valueOf(number), str -> {
-            if (!Utils.isNumber(str))
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             float floatValue = Float.parseFloat(str);
@@ -606,7 +606,7 @@ public class GUIEditorGrid {
      */
     public TextField addDoubleField(String label, double number, Consumer<Double> setter, Predicate<Double> test) {
         TextField field = addTextField(label, String.valueOf(number), str -> {
-            if (!Utils.isNumber(str))
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             double doubleValue = Double.parseDouble(str);
@@ -649,7 +649,7 @@ public class GUIEditorGrid {
         AtomicBoolean firstOpen = new AtomicBoolean(true);
         box.addEventFilter(ComboBox.ON_SHOWN, event -> { // Show the selected value when the dropdown is opened.
             if (firstOpen.getAndSet(false))
-                Utils.comboBoxScrollToValue(box);
+                FXUtils.comboBoxScrollToValue(box);
         });
 
         if (setter != null) {
@@ -767,22 +767,22 @@ public class GUIEditorGrid {
         xField.setPrefWidth(60);
         yField.setPrefWidth(60);
         zField.setPrefWidth(60);
-        Utils.setHandleKeyPress(xField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(xField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             vector.setFloatX(Float.parseFloat(str), bits);
             return true;
         }, onPass);
-        Utils.setHandleKeyPress(yField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(yField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             vector.setFloatY(Float.parseFloat(str), bits);
             return true;
         }, onPass);
-        Utils.setHandleKeyPress(zField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(zField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             vector.setFloatZ(Float.parseFloat(str), bits);
@@ -894,22 +894,22 @@ public class GUIEditorGrid {
         xField.setPrefWidth(60);
         yField.setPrefWidth(60);
         zField.setPrefWidth(60);
-        Utils.setHandleKeyPress(xField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(xField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             vector.setFloatX(Float.parseFloat(str), bits);
             return true;
         }, onPass);
-        Utils.setHandleKeyPress(yField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(yField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             vector.setFloatY(Float.parseFloat(str), bits);
             return true;
         }, onPass);
-        Utils.setHandleKeyPress(zField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(zField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             vector.setFloatZ(Float.parseFloat(str), bits);
@@ -995,7 +995,7 @@ public class GUIEditorGrid {
      * @param vector The SVector itself.
      */
     public void addSVector(String text, int bits, SVector vector, Runnable runnable) {
-        addTextField(text, Utils.fixedPointShortToFloatNBits(vector.getX(), bits) + ", " + Utils.fixedPointShortToFloatNBits(vector.getY(), bits) + ", " + Utils.fixedPointShortToFloatNBits(vector.getZ(), bits), newText -> {
+        addTextField(text, DataUtils.fixedPointShortToFloatNBits(vector.getX(), bits) + ", " + DataUtils.fixedPointShortToFloatNBits(vector.getY(), bits) + ", " + DataUtils.fixedPointShortToFloatNBits(vector.getZ(), bits), newText -> {
             if (!vector.loadFromFloatText(newText, bits))
                 return false;
 
@@ -1174,8 +1174,8 @@ public class GUIEditorGrid {
         xField.setPrefWidth(60);
         yField.setPrefWidth(60);
         zField.setPrefWidth(60);
-        Utils.setHandleKeyPress(xField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(xField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             double newValue = Double.parseDouble(str);
@@ -1196,8 +1196,8 @@ public class GUIEditorGrid {
 
             return true;
         }, this::onChange);
-        Utils.setHandleKeyPress(yField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(yField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             double newValue = Double.parseDouble(str);
@@ -1218,8 +1218,8 @@ public class GUIEditorGrid {
 
             return true;
         }, this::onChange);
-        Utils.setHandleKeyPress(zField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(zField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             double newValue = Double.parseDouble(str);
@@ -1319,8 +1319,8 @@ public class GUIEditorGrid {
         xField.setPrefWidth(60);
         yField.setPrefWidth(60);
         zField.setPrefWidth(60);
-        Utils.setHandleKeyPress(xField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(xField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             double newValue = Double.parseDouble(str);
@@ -1341,8 +1341,8 @@ public class GUIEditorGrid {
 
             return true;
         }, this::onChange);
-        Utils.setHandleKeyPress(yField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(yField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             double newValue = Double.parseDouble(str);
@@ -1363,8 +1363,8 @@ public class GUIEditorGrid {
 
             return true;
         }, this::onChange);
-        Utils.setHandleKeyPress(zField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(zField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             double newValue = Double.parseDouble(str);
@@ -1634,9 +1634,9 @@ public class GUIEditorGrid {
      */
     public ColorPicker addColorPicker(String text, double height, int color, Consumer<Integer> handler) {
         addLabel(text);
-        ColorPicker picker = setupSecondNode(new ColorPicker(Utils.fromRGB(color)), false);
+        ColorPicker picker = setupSecondNode(new ColorPicker(ColorUtils.fromRGB(color)), false);
         picker.valueProperty().addListener((observable, oldValue, newValue) -> {
-            handler.accept(Utils.toARGB(newValue));
+            handler.accept(ColorUtils.toARGB(newValue));
             onChange();
         });
 
@@ -1654,15 +1654,15 @@ public class GUIEditorGrid {
     public ColorPicker addColorPickerWithAlpha(String text, double height, int color, Consumer<Integer> handler) {
         addLabel(text);
         AtomicInteger colorArgb = new AtomicInteger(color);
-        ColorPicker picker = setupSecondNode(new ColorPicker(Utils.fromRGB(color)), false);
+        ColorPicker picker = setupSecondNode(new ColorPicker(ColorUtils.fromRGB(color)), false);
         picker.valueProperty().addListener((observable, oldValue, newValue) -> {
-            colorArgb.set((Utils.toARGB(newValue) & 0x00FFFFFF) | (Utils.getAlphaInt(colorArgb.get()) << 24));
+            colorArgb.set((ColorUtils.toARGB(newValue) & 0x00FFFFFF) | (ColorUtils.getAlphaInt(colorArgb.get()) << 24));
             handler.accept(colorArgb.get());
             onChange();
         });
         addRow(height);
 
-        addIntegerSlider("Opacity (Alpha)", Utils.getAlphaInt(color), newAlpha -> {
+        addIntegerSlider("Opacity (Alpha)", ColorUtils.getAlphaInt(color), newAlpha -> {
             colorArgb.set((colorArgb.get() & 0x00FFFFFF) | (newAlpha << 24));
             handler.accept(colorArgb.get());
             onChange();
@@ -1701,7 +1701,7 @@ public class GUIEditorGrid {
         AtomicBoolean firstOpen = new AtomicBoolean(true);
         box.addEventFilter(ComboBox.ON_SHOWN, event -> { // Show the selected value when the dropdown is opened.
             if (firstOpen.getAndSet(false))
-                Utils.comboBoxScrollToValue(box);
+                FXUtils.comboBoxScrollToValue(box);
         });
 
         button.setOnAction(evt -> {

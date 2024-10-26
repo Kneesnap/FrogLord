@@ -18,7 +18,7 @@ import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.CollectionViewEntryTreeCell;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent;
 import net.highwayfrogs.editor.system.NameValuePair;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -43,7 +43,7 @@ public class RenderWareStreamEditorUIController<TGameInstance extends GameInstan
     private final RwStreamFile streamFile;
     private IRwStreamChunkUIEntry shownChunk;
 
-    private static final URL FXML_TEMPLATE_URL = Utils.getResourceURL("fxml/edit-file-renderware-stream.fxml");
+    private static final URL FXML_TEMPLATE_URL = FileUtils.getResourceURL("fxml/edit-file-renderware-stream.fxml");
     private static final FXMLLoader FXML_TEMPLATE_LOADER = new FXMLLoader(FXML_TEMPLATE_URL);
 
     @SuppressWarnings("unchecked")

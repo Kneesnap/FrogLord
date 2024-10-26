@@ -9,7 +9,7 @@ import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
 
 /**
  * Holds texture UV information.
@@ -27,8 +27,8 @@ public class ByteUV extends GameObject {
     private static final String SPLIT_CHAR = ",";
 
     public ByteUV(float u, float v) {
-        this.u = Utils.floatToByte(u);
-        this.v = Utils.floatToByte(v);
+        this.u = DataUtils.floatToByte(u);
+        this.v = DataUtils.floatToByte(v);
     }
 
     @Override
@@ -42,7 +42,7 @@ public class ByteUV extends GameObject {
      * @return floatU
      */
     public float getFloatU() {
-        return Utils.unsignedByteToFloat(this.u);
+        return DataUtils.unsignedByteToFloat(this.u);
     }
 
     /**
@@ -50,7 +50,7 @@ public class ByteUV extends GameObject {
      * @return floatV
      */
     public float getFloatV() {
-        return Utils.unsignedByteToFloat(this.v);
+        return DataUtils.unsignedByteToFloat(this.v);
     }
 
     @Override
@@ -94,8 +94,8 @@ public class ByteUV extends GameObject {
             if ((u < 0.0) || (u > 1.0) || (v < 0.0) || (v > 1.0))
                 return false;
 
-            this.u = Utils.floatToByte(u);
-            this.v = Utils.floatToByte(v);
+            this.u = DataUtils.floatToByte(u);
+            this.v = DataUtils.floatToByte(v);
             if (onUpdate != null)
                 onUpdate.run();
             return true;

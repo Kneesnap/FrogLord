@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.games.shared.basic.file.BasicGameFile;
 import net.highwayfrogs.editor.games.shared.basic.file.definition.IGameFileDefinition;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -47,7 +48,7 @@ public abstract class HudsonGameFile extends BasicGameFile<HudsonGameInstance> {
      */
     public static <TGameFile extends HudsonGameFile, TUIController extends HudsonFileEditorUIController<TGameFile>> TUIController loadEditor(HudsonGameInstance gameInstance, String template, TUIController controller, TGameFile fileToEdit) {
         try {
-            FXMLLoader templateLoader = Utils.getFXMLTemplateLoader(gameInstance, template);
+            FXMLLoader templateLoader = FXUtils.getFXMLTemplateLoader(gameInstance, template);
             GameUIController.loadController(gameInstance, templateLoader, controller);
             controller.setTargetFile(fileToEdit);
         } catch (Throwable th) {

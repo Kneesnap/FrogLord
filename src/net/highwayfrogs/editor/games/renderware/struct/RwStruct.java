@@ -6,7 +6,7 @@ import lombok.NonNull;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
-import net.highwayfrogs.editor.games.generic.GameObject.SharedGameObject;
+import net.highwayfrogs.editor.games.generic.data.GameObject.SharedGameObject;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;

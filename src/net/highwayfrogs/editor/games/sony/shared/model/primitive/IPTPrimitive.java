@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.games.sony.shared.model.primitive;
 
-import net.highwayfrogs.editor.utils.IBinarySerializable;
-import net.highwayfrogs.editor.utils.IGameObject;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
+import net.highwayfrogs.editor.games.generic.data.IGameObject;
 
 /**
  * Represents a primitive.

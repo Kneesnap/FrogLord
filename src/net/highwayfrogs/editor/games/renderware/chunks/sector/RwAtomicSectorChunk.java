@@ -12,7 +12,7 @@ import net.highwayfrogs.editor.games.renderware.struct.RwStructType;
 import net.highwayfrogs.editor.games.renderware.struct.types.*;
 import net.highwayfrogs.editor.games.renderware.struct.types.RpTriangle.IRwGeometryMesh;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -386,7 +386,7 @@ public class RwAtomicSectorChunk extends RwSectorBase implements IRwGeometryMesh
         @Override
         public PropertyList addToPropertyList(PropertyList propertyList) {
             propertyList = super.addToPropertyList(propertyList);
-            propertyList.add("cType", Utils.toHexString(this.cType & 0xFF));
+            propertyList.add("cType", NumberUtils.toHexString(this.cType & 0xFF));
             propertyList.add("Vertex Index", this.vertexIndex);
             propertyList.add("Start Polygon", this.startPolygon);
             return propertyList;
@@ -394,7 +394,7 @@ public class RwAtomicSectorChunk extends RwSectorBase implements IRwGeometryMesh
 
         @Override
         public String toString() {
-            return "RpCollSector{cType=" + Utils.toHexString(this.cType & 0xFF)
+            return "RpCollSector{cType=" + NumberUtils.toHexString(this.cType & 0xFF)
                     + ",vtxIndex=" + this.vertexIndex + ",startPolygon="  + this.startPolygon + "}";
         }
     }

@@ -17,7 +17,6 @@ import net.highwayfrogs.editor.gui.mesh.fxobject.ScaleGizmo.IScaleChangeListener
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo.IPositionChangeListener;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
-import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,7 +37,7 @@ public class MeshUIMarkerManager<TMesh extends DynamicMesh> extends MeshUIManage
     private Vector showPosition;
 
     private static final double GENERIC_POS_SIZE = 3;
-    private static final PhongMaterial GENERIC_POS_MATERIAL = Utils.makeUnlitSharpMaterial(Color.YELLOW);
+    private static final PhongMaterial GENERIC_POS_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
 
     public MeshUIMarkerManager(MeshViewController<TMesh> controller) {
         super(controller);

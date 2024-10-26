@@ -11,7 +11,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceModel;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.function.Function;
 
@@ -88,7 +88,7 @@ public class LauncherParams extends kcProjectileParams {
         if (resource != null) {
             builder.append(getter.apply(resource));
         } else if (resourceHash != 0 && resourceHash != -1) {
-            builder.append(Utils.to0PrefixedHexString(resourceHash));
+            builder.append(NumberUtils.to0PrefixedHexString(resourceHash));
         } else {
             builder.append("None");
         }

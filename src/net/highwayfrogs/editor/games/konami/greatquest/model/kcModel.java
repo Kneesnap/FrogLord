@@ -4,11 +4,12 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.generic.GamePlatform;
+import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -446,7 +447,7 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
         propertyList.add("Materials", this.materials.size());
         propertyList.add("Nodes", this.nodes.size());
         propertyList.add("Primitives", this.primitives.size());
-        propertyList.add("FvF", Utils.toHexString(this.fvf));
+        propertyList.add("FvF", NumberUtils.toHexString(this.fvf));
         propertyList.add("Components", Arrays.toString(this.components));
         propertyList.add("Bones Per Primitive", this.bonesPerPrimitive);
         return propertyList;

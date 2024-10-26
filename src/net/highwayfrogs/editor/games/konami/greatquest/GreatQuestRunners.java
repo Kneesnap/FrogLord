@@ -20,7 +20,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEff
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcParam;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.io.File;
 import java.util.Scanner;
@@ -84,7 +84,7 @@ public class GreatQuestRunners {
 
             // Add dialog resource.
             kcCResourceGeneric clearFlagDialog = new kcCResourceGeneric(rollingRapidsCreek, kcCResourceGenericType.STRING_RESOURCE, new kcCResourceString(instance, "Knee Flag Clear Test: " + i));
-            clearFlagDialog.setName("FgClr" + Utils.padNumberString(i, 2), true);
+            clearFlagDialog.setName("FgClr" + NumberUtils.padNumberString(i, 2), true);
             int clearFlagDialogHash = GreatQuestUtils.hash(clearFlagDialog.getName());
             rollingRapidsCreek.getChunks().add(clearFlagDialog);
 
@@ -107,7 +107,7 @@ public class GreatQuestRunners {
 
             // Add dialog resource.
             kcCResourceGeneric setFlagDialog = new kcCResourceGeneric(rollingRapidsCreek, kcCResourceGenericType.STRING_RESOURCE, new kcCResourceString(instance, "Knee Flag Set: " + i));
-            setFlagDialog.setName("FgSet" + Utils.padNumberString(i, 2), true);
+            setFlagDialog.setName("FgSet" + NumberUtils.padNumberString(i, 2), true);
             int setFlagDialogHash = GreatQuestUtils.hash(setFlagDialog.getName());
             rollingRapidsCreek.getChunks().add(setFlagDialog);
 

@@ -1,6 +1,8 @@
 package net.highwayfrogs.editor.file.reader;
 
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
@@ -116,7 +118,7 @@ public class DataReader {
      * @return unsignedByteShort.
      */
     public short readUnsignedByteAsShort() {
-        return Utils.byteToUnsignedShort(readByte());
+        return DataUtils.byteToUnsignedShort(readByte());
     }
 
     /**
@@ -124,7 +126,7 @@ public class DataReader {
      * @return unsignedShortInt.
      */
     public int readUnsignedShortAsInt() {
-        return Utils.shortToUnsignedInt(readShort());
+        return DataUtils.shortToUnsignedInt(readShort());
     }
 
     /**
@@ -132,7 +134,7 @@ public class DataReader {
      * @return unsignedIntLong
      */
     public long readUnsignedIntAsLong() {
-        return Utils.intToUnsignedLong(readInt());
+        return DataUtils.intToUnsignedLong(readInt());
     }
 
     /**
@@ -141,7 +143,7 @@ public class DataReader {
      * @return floatValue
      */
     public float readFloat() {
-        return Utils.readFloatFromBytes(readBytes(Constants.FLOAT_SIZE));
+        return DataUtils.readFloatFromBytes(readBytes(Constants.FLOAT_SIZE));
     }
 
     /**
@@ -212,7 +214,7 @@ public class DataReader {
      */
     public void requireIndex(Logger logger, int desiredIndex, String messagePrefix) {
         if (getIndex() != desiredIndex) {
-            logger.warning(messagePrefix + " at " + Utils.toHexString(getIndex()) + ", but it actually started at " + Utils.toHexString(desiredIndex) + ".");
+            logger.warning(messagePrefix + " at " + NumberUtils.toHexString(getIndex()) + ", but it actually started at " + NumberUtils.toHexString(desiredIndex) + ".");
             setIndex(desiredIndex);
         }
     }
@@ -392,7 +394,7 @@ public class DataReader {
         for (int i = 0; i < amount; i++) {
             byte nextByte = readByte();
             if (nextByte != expected)
-                throw new RuntimeException("Reader wanted to skip " + amount + " bytes to reach " + Utils.toHexString(index + amount) + ", but got 0x" + Utils.toByteString(nextByte) + " at " + Utils.toHexString(index + i) + " when 0x" + Utils.toByteString(expected) + " was desired.");
+                throw new RuntimeException("Reader wanted to skip " + amount + " bytes to reach " + NumberUtils.toHexString(index + amount) + ", but got 0x" + DataUtils.toByteString(nextByte) + " at " + NumberUtils.toHexString(index + i) + " when 0x" + DataUtils.toByteString(expected) + " was desired.");
         }
     }
 

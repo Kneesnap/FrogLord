@@ -15,7 +15,7 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerLightManager;
 import net.highwayfrogs.editor.games.sony.shared.misc.MRLightType;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.ColorUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -141,12 +141,12 @@ public class OldFroggerMapLightPacket extends OldFroggerMapPacket {
             switch (this.apiType) {
                 case AMBIENT:
                     AmbientLight ambLight = new AmbientLight();
-                    ambLight.setColor(Utils.fromRGB(this.color.toRGB()));
+                    ambLight.setColor(ColorUtils.fromRGB(this.color.toRGB()));
                     return ambLight;
                 case PARALLEL:
                     // IMPORTANT! JavaFX does NOT support parallel (directional) lights [AndyEder]
                     PointLight parallelLight = new PointLight();
-                    parallelLight.setColor(Utils.fromRGB(this.color.toRGB()));
+                    parallelLight.setColor(ColorUtils.fromRGB(this.color.toRGB()));
                     // Use direction as a vector to set a position to simulate a parallel light with JavaFX.
                     // This has 12 decimal bits, so by only using 2 we place the light very far away, which approximates a parallel light, albeit inaccurately.
                     parallelLight.setTranslateX(-this.direction.getFloatX(2));
@@ -155,7 +155,7 @@ public class OldFroggerMapLightPacket extends OldFroggerMapPacket {
                     return parallelLight;
                 case POINT:
                     PointLight pointLight = new PointLight();
-                    pointLight.setColor(Utils.fromRGB(this.color.toRGB()));
+                    pointLight.setColor(ColorUtils.fromRGB(this.color.toRGB()));
 
                     // Assuming direction is position? Are POINT lights ever used? [AndyEder]
                     // I recall point lights getting used somewhere, but I can't recall and could be wrong. (~Knee)

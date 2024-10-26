@@ -5,7 +5,7 @@ import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
@@ -13,7 +13,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInf
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -75,7 +75,7 @@ public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements
             }
 
             if (shouldError)
-                throw new RuntimeException("Read an unexpected target class ID: " + Utils.to0PrefixedHexString(classID) + " for " + getClass().getSimpleName() + " in " + (this.parentFile != null ? this.parentFile.getDebugName() : ""));
+                throw new RuntimeException("Read an unexpected target class ID: " + NumberUtils.to0PrefixedHexString(classID) + " for " + getClass().getSimpleName() + " in " + (this.parentFile != null ? this.parentFile.getDebugName() : ""));
         }
     }
 
@@ -157,7 +157,7 @@ public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements
         if (resource != null) {
             builder.append(getter.apply(resource));
         } else if (resourceHash != 0 && resourceHash != -1) {
-            builder.append(Utils.to0PrefixedHexString(resourceHash));
+            builder.append(NumberUtils.to0PrefixedHexString(resourceHash));
         } else {
             builder.append("None");
         }

@@ -1,7 +1,8 @@
-package net.highwayfrogs.editor.games.generic;
+package net.highwayfrogs.editor.games.generic.data;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.IGameObject;
+import net.highwayfrogs.editor.games.generic.GameConfig;
+import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.logging.Logger;

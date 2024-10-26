@@ -5,7 +5,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.file.FroggerPaletteFile;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.ColorUtils;
 
 /**
  * Beast Wars Palette Support.
@@ -30,13 +30,13 @@ public class PLTFile extends FroggerPaletteFile {
     public void load(DataReader reader) {
         int count = reader.readInt(); // Actually, we should just get the lowest 8 bits as the count, it seems they're usually correct.
         while (reader.getRemaining() >= Constants.INTEGER_SIZE)
-            getColors().add(Utils.fromRGB(reader.readInt(), 1D));
+            getColors().add(ColorUtils.fromRGB(reader.readInt(), 1D));
     }
 
     @Override
     public void save(DataWriter writer) {
         writer.writeInt(getColors().size());
         for (Color color : getColors())
-            writer.writeInt(Utils.toRGB(color));
+            writer.writeInt(ColorUtils.toRGB(color));
     }
 }

@@ -4,7 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.scripting.NoodleScript;
 import net.highwayfrogs.editor.scripting.runtime.NoodleThread;
 import net.highwayfrogs.editor.scripting.tracking.NoodleCodeLocation;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * This instruction pushes a constant (read: encoded in the instruction) number to the stack.
@@ -25,7 +25,7 @@ public class NoodleInstructionPushConstantNumber extends NoodleInstruction {
     @Override
     public void toString(StringBuilder builder, NoodleScript script) {
         super.toString(builder, script);
-        builder.append(" ").append(Utils.doubleToCleanString(this.numberValue));
+        builder.append(" ").append(NumberUtils.doubleToCleanString(this.numberValue));
     }
 
     @Override

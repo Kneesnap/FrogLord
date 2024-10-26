@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.utils;
+package net.highwayfrogs.editor.games.sony.shared.utils;
 
 import javafx.scene.control.Alert.AlertType;
 import lombok.AllArgsConstructor;
@@ -35,6 +35,7 @@ import net.highwayfrogs.editor.system.mm3d.blocks.MMSkeletalAnimationBlock.MMAni
 import net.highwayfrogs.editor.system.mm3d.blocks.MMSkeletalAnimationBlock.MMSkeletalAnimationFrame;
 import net.highwayfrogs.editor.system.mm3d.blocks.MMWeightedInfluencesBlock.MMWeightedInfluenceType;
 import net.highwayfrogs.editor.system.mm3d.blocks.MMWeightedInfluencesBlock.MMWeightedPositionType;
+import net.highwayfrogs.editor.utils.*;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -61,7 +62,7 @@ public class FileUtils3D {
         boolean exportTextures = vloTable != null;
 
         String mofName = staticMof.getFileDisplayName();
-        String cleanName = Utils.stripExtension(mofName);
+        String cleanName = FileUtils.stripExtension(mofName);
         String mtlName = cleanName + ".mtl";
         @Cleanup PrintWriter objWriter = new PrintWriter(new File(folder, cleanName + ".obj"));
 
@@ -166,7 +167,7 @@ public class FileUtils3D {
                 mtlWriter.write("newmtl color" + i + Constants.NEWLINE);
                 if (i == 0)
                     mtlWriter.write("d 1" + Constants.NEWLINE); // All further textures should be completely solid.
-                mtlWriter.write("Kd " + Utils.unsignedByteToFloat(color.getRed()) + " " + Utils.unsignedByteToFloat(color.getGreen()) + " " + Utils.unsignedByteToFloat(color.getBlue()) + Constants.NEWLINE); // Diffuse color.
+                mtlWriter.write("Kd " + DataUtils.unsignedByteToFloat(color.getRed()) + " " + DataUtils.unsignedByteToFloat(color.getGreen()) + " " + DataUtils.unsignedByteToFloat(color.getBlue()) + Constants.NEWLINE); // Diffuse color.
                 mtlWriter.write(Constants.NEWLINE);
             }
         }
@@ -411,7 +412,7 @@ public class FileUtils3D {
                         TransformObject transform = animatedMof.getTransform(part, action, frame);
                         PSXMatrix matrix = transform.createMatrix();
                         keyframes.add(new MMSkeletalAnimationFrame(i, MMAnimationKeyframeType.ROTATION, (float) -matrix.getPitchAngle(), (float) -matrix.getYawAngle(), (float) matrix.getRollAngle()));
-                        keyframes.add(new MMSkeletalAnimationFrame(i, MMAnimationKeyframeType.TRANSLATION, -Utils.fixedPointIntToFloat4Bit(matrix.getTransform()[0]), -Utils.fixedPointIntToFloat4Bit(matrix.getTransform()[1]), Utils.fixedPointIntToFloat4Bit(matrix.getTransform()[2])));
+                        keyframes.add(new MMSkeletalAnimationFrame(i, MMAnimationKeyframeType.TRANSLATION, -DataUtils.fixedPointIntToFloat4Bit(matrix.getTransform()[0]), -DataUtils.fixedPointIntToFloat4Bit(matrix.getTransform()[1]), DataUtils.fixedPointIntToFloat4Bit(matrix.getTransform()[2])));
                     }
 
                     skeletalAnimation.getFrames().add(keyframes);
@@ -467,9 +468,9 @@ public class FileUtils3D {
                     MMMaterialsBlock material = model.getMaterials().addNewElement();
                     material.setFlags(MMMaterialsBlock.FLAG_NO_TEXTURE);
                     material.setName("color" + materialId);
-                    material.getDiffuse()[0] = Utils.unsignedByteToFloat(colorKey.getRed());
-                    material.getDiffuse()[1] = Utils.unsignedByteToFloat(colorKey.getGreen());
-                    material.getDiffuse()[2] = Utils.unsignedByteToFloat(colorKey.getBlue());
+                    material.getDiffuse()[0] = DataUtils.unsignedByteToFloat(colorKey.getRed());
+                    material.getDiffuse()[1] = DataUtils.unsignedByteToFloat(colorKey.getGreen());
+                    material.getDiffuse()[2] = DataUtils.unsignedByteToFloat(colorKey.getBlue());
 
                     // Create new group.
                     MMTriangleGroupsBlock group = model.getGroups().addNewElement();
@@ -568,19 +569,19 @@ public class FileUtils3D {
      */
     public static void importMofFromModel(MisfitModel3DObject model, MOFHolder holder) {
         if (holder.isIncomplete()) {
-            Utils.makePopUp("Importing over incomplete mofs is not currently supported.", AlertType.WARNING);
+            FXUtils.makePopUp("Importing over incomplete mofs is not currently supported.", AlertType.WARNING);
             return;
         }
 
         boolean isReplacementAnimated = model.getSkeletalAnimations().size() > 0;
         boolean isUnsafeReplacementArea = (holder.getTheme() == null || holder.getTheme() == FroggerMapTheme.GENERAL);
         if (isUnsafeReplacementArea && (isReplacementAnimated != holder.isAnimatedMOF())) { // Any model which is accessed directly by the game code via hardcoded ids is assumed to be a certain type by the code, and we should not change this type.
-            Utils.makePopUp("This " + (holder.isAnimatedMOF() ? "animated" : "static") + " model cannot be overwritten by a " + (isReplacementAnimated ? "animated" : "static") + " model.", AlertType.ERROR);
+            FXUtils.makePopUp("This " + (holder.isAnimatedMOF() ? "animated" : "static") + " model cannot be overwritten by a " + (isReplacementAnimated ? "animated" : "static") + " model.", AlertType.ERROR);
             return;
         }
 
         if (model.getFrameAnimationPoints().size() > 0)
-            Utils.makePopUp("Frame Point animations are not supported. " + model.getFrameAnimationPoints().size() + " frame point animations will be skipped.", AlertType.WARNING);
+            FXUtils.makePopUp("Frame Point animations are not supported. " + model.getFrameAnimationPoints().size() + " frame point animations will be skipped.", AlertType.WARNING);
 
         MOFFile staticMof = holder.isDummy() ? new MOFFile(holder.getGameInstance(), holder) : holder.asStaticFile();
         MOFAnimation animatedMof = isReplacementAnimated ? new MOFAnimation(holder.getGameInstance(), holder, staticMof) : null;
@@ -641,7 +642,7 @@ public class FileUtils3D {
         }
 
         if (failCount > 0)
-            Utils.makePopUp(failCount + " could not be linked to a part / joint. They will be ignored.", AlertType.WARNING);
+            FXUtils.makePopUp(failCount + " could not be linked to a part / joint. They will be ignored.", AlertType.WARNING);
 
         // Figure out which textures are allowed. (All of them) Maybe later we can put extra restrictions to figure out which ones are loaded when the model is loaded.
         Set<Short> allowedTextureIds = new HashSet<>();
@@ -684,9 +685,9 @@ public class FileUtils3D {
                         // Create rotation matrix.
                         PSXMatrix matrix = new PSXMatrix();
                         if (posFrame != null) {
-                            matrix.getTransform()[0] = Utils.floatToFixedPointInt4Bit(-posFrame.getPosX());
-                            matrix.getTransform()[1] = Utils.floatToFixedPointInt4Bit(-posFrame.getPosY());
-                            matrix.getTransform()[2] = Utils.floatToFixedPointInt4Bit(posFrame.getPosZ());
+                            matrix.getTransform()[0] = DataUtils.floatToFixedPointInt4Bit(-posFrame.getPosX());
+                            matrix.getTransform()[1] = DataUtils.floatToFixedPointInt4Bit(-posFrame.getPosY());
+                            matrix.getTransform()[2] = DataUtils.floatToFixedPointInt4Bit(posFrame.getPosZ());
                         }
                         matrix.updateMatrix(rotFrame != null ? rotFrame.getPosZ() : 0D, rotFrame != null ? -rotFrame.getPosY() : 0D, rotFrame != null ? -rotFrame.getPosX() : 0D);
                         TransformObject newTransform = animatedMof.getTransformType().makeTransform(matrix); // Create transform from matrix.
@@ -836,7 +837,7 @@ public class FileUtils3D {
                 if (flipbook.getActions().size() > 0)
                     part.setFlipbook(flipbook);
             } else if (model.getFrameAnimations().size() > 0) {
-                Utils.makePopUp(model.getFrameAnimations().size() + " flipbook (frame) animations have been skipped, since this is either XAR or has more than one part.", AlertType.WARNING);
+                FXUtils.makePopUp(model.getFrameAnimations().size() + " flipbook (frame) animations have been skipped, since this is either XAR or has more than one part.", AlertType.WARNING);
             }
 
             // Build Polygons.
@@ -859,7 +860,7 @@ public class FileUtils3D {
                 if (isTextured && (poly instanceof MOFPolyTexture) && material.getName().startsWith(MATERIAL_NAME_PREFIX)) {
                     MOFPolyTexture polyTex = (MOFPolyTexture) poly;
                     String trailingNumber = material.getName().substring(MATERIAL_NAME_PREFIX.length()).split("-")[0];  //TODO: Eventually switch this to check the texture filename, not the material name.
-                    if (!Utils.isInteger(trailingNumber))
+                    if (!NumberUtils.isInteger(trailingNumber))
                         throw new RuntimeException("'" + trailingNumber + "' is not a numeric texture id. (Material Name)");
 
                     int textureId = Integer.parseInt(trailingNumber);
@@ -876,7 +877,7 @@ public class FileUtils3D {
                     byte red = (byte) (int) (material.getDiffuse()[0] * 128);
                     byte green = (byte) (int) (material.getDiffuse()[1] * 128);
                     byte blue = (byte) (int) (material.getDiffuse()[2] * 128);
-                    polyTex.getColor().fromRGB(Utils.toRGB(red, green, blue));
+                    polyTex.getColor().fromRGB(ColorUtils.toRGB(red, green, blue));
                 }
 
                 // Apply Vertices.

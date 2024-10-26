@@ -13,6 +13,9 @@ import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquareFlag;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.HashMap;
@@ -52,7 +55,7 @@ public class FroggerMapFormData extends SCGameData<FroggerGameInstance> {
 
         // Validate expectations for grid square heights. (This is more of a sanity check)
         if (expectedGridSquareHeightsPointer != gridSquareHeightsPointer)
-            getLogger().warning("Expected the GridSquare height list to point to the single height at " + Utils.toHexString(expectedGridSquareHeightsPointer) + ", but it actually pointed to " + Utils.toHexString(gridSquareHeightsPointer));
+            getLogger().warning("Expected the GridSquare height list to point to the single height at " + NumberUtils.toHexString(expectedGridSquareHeightsPointer) + ", but it actually pointed to " + NumberUtils.toHexString(gridSquareHeightsPointer));
 
         // Read grid square flag list, and warn if we don't recognize them.
         reader.requireIndex(getLogger(), gridSquareFlagsPointer, "Expected GridSquareFlag list");
@@ -61,7 +64,7 @@ public class FroggerMapFormData extends SCGameData<FroggerGameInstance> {
                 short gridSquareFlags = this.gridFlags[z][x] = reader.readShort();
                 FroggerMapFormSquareReaction reaction = FroggerMapFormSquareReaction.getReactionFromFlags(gridSquareFlags);
                 if (reaction == null)
-                    getLogger().warning("Grid Square[z=" + z + ",x=" + x + "] contains an unrecognized grid square flag reaction! (Value: " + Utils.toHexString(Utils.shortToUnsignedInt(gridSquareFlags)) + ")");
+                    getLogger().warning("Grid Square[z=" + z + ",x=" + x + "] contains an unrecognized grid square flag reaction! (Value: " + NumberUtils.toHexString(DataUtils.shortToUnsignedInt(gridSquareFlags)) + ")");
             }
         }
 
@@ -295,7 +298,7 @@ public class FroggerMapFormData extends SCGameData<FroggerGameInstance> {
                 if (!flag.isFormData())
                     continue;
 
-                CheckBox box = new CheckBox(Utils.capitalize(flag.name()));
+                CheckBox box = new CheckBox(StringUtils.capitalize(flag.name()));
                 box.setSelected(getGridSquareFlagState(selectedIndex.get(), flag));
                 box.selectedProperty().addListener((listener, oldVal, newState) ->
                         setGridSquareFlagState(selectedIndex.get(), flag, newState));

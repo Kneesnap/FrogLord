@@ -12,7 +12,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedResource;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
@@ -26,8 +26,7 @@ import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.DataSizeUnit;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.*;
 
 import java.io.File;
 import java.util.Objects;
@@ -60,7 +59,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
     @Override
     public Logger getLogger() {
         if (this.cachedLogger == null)
-            this.cachedLogger = Logger.getLogger((this.chunkType != null ? Utils.stripAlphanumeric(this.chunkType.getSignature()) : "????") + "|" + getName() + (this.parentFile != null ? "@" + this.parentFile.getExportName() : "") + getExtraLoggerInfo());
+            this.cachedLogger = Logger.getLogger((this.chunkType != null ? StringUtils.stripAlphanumeric(this.chunkType.getSignature()) : "????") + "|" + getName() + (this.parentFile != null ? "@" + this.parentFile.getExportName() : "") + getExtraLoggerInfo());
 
         return this.cachedLogger;
     }
@@ -190,7 +189,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
 
             // Warn if not all data is read.
             if (chunkReader.hasMore())
-                getLogger().warning("GreatQuest Chunk " + Utils.stripAlphanumeric(getChunkIdentifier()) + "/'" + getName() + "' in '" + getParentFile().getDebugName() + "' had " + chunkReader.getRemaining() + " remaining unread bytes.");
+                getLogger().warning("GreatQuest Chunk " + StringUtils.stripAlphanumeric(getChunkIdentifier()) + "/'" + getName() + "' in '" + getParentFile().getDebugName() + "' had " + chunkReader.getRemaining() + " remaining unread bytes.");
         } catch (Throwable th) {
             Utils.handleError(getLogger(), th, false, "Failed to read %s chunk from '%s'.", getChunkType(), getParentFile().getDebugName());
         }
@@ -304,7 +303,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
         renameItem.setOnAction(event -> {
             InputMenu.promptInput(getGameInstance(), "Please enter the new name for the chunk.", getName(), newName -> {
                 if (newName.length() >= NAME_SIZE) {
-                    Utils.makePopUp("The provided name is too long! (Max: " + (NAME_SIZE - 1) + " characters)", AlertType.ERROR);
+                    FXUtils.makePopUp("The provided name is too long! (Max: " + (NAME_SIZE - 1) + " characters)", AlertType.ERROR);
                     return;
                 }
 
@@ -312,7 +311,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
                     int newHash = calculateHash(newName);
                     kcCResource otherResource = getParentFile().getResourceByHash(newHash);
                     if (otherResource != this) {
-                        Utils.makePopUp("The provided name conflicts with another resource: " + otherResource + ".", AlertType.ERROR);
+                        FXUtils.makePopUp("The provided name conflicts with another resource: " + otherResource + ".", AlertType.ERROR);
                         return;
                     }
                 }
@@ -325,15 +324,15 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
         contextMenu.getItems().add(exportRawDataItem);
         exportRawDataItem.setOnMenuValidation(event -> ((MenuItem) event.getTarget()).setDisable(this.rawData == null));
         exportRawDataItem.setOnAction(event -> {
-            File outputFile = Utils.promptFileSave(getGameInstance(), "Please select the file to save the raw chunk data as.", getName() + "-RAW", "All Files", "*");
+            File outputFile = FXUtils.promptFileSave(getGameInstance(), "Please select the file to save the raw chunk data as.", getName() + "-RAW", "All Files", "*");
             if (outputFile != null)
-                Utils.writeBytesToFile(getLogger(), outputFile, getRawData(), true);
+                FileUtils.writeBytesToFile(getLogger(), outputFile, getRawData(), true);
         });
 
         MenuItem exportChunkItem = new MenuItem("Export Chunk");
         contextMenu.getItems().add(exportChunkItem);
         exportRawDataItem.setOnAction(event -> {
-            File outputFile = Utils.promptFileSave(getGameInstance(), "Please select the file to save the chunk as.", getName(), "All Files", "*");
+            File outputFile = FXUtils.promptFileSave(getGameInstance(), "Please select the file to save the chunk as.", getName(), "All Files", "*");
             if (outputFile != null)
                 writeDataToFile(outputFile, true);
         });
@@ -341,7 +340,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
         MenuItem importChunkItem = new MenuItem("Import Chunk");
         contextMenu.getItems().add(importChunkItem);
         importChunkItem.setOnAction(event -> {
-            File inputFile = Utils.promptFileOpen(getGameInstance(), "Please select the file to import.", "All Files", "*");
+            File inputFile = FXUtils.promptFileOpen(getGameInstance(), "Please select the file to import.", "All Files", "*");
             if (inputFile != null)
                 importDataFromFile(inputFile, true);
         });

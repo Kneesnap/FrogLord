@@ -2,8 +2,8 @@ package net.highwayfrogs.editor.utils.fx.wrapper;
 
 import javafx.collections.ObservableIntegerArray;
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.IndexBitArray;
-import net.highwayfrogs.editor.utils.IntegerCounter;
+import net.highwayfrogs.editor.utils.objects.IndexBitArray;
+import net.highwayfrogs.editor.utils.objects.IntegerCounter;
 
 /**
  * Batches insert/remove array operations for a FXIntArray into single operations to increase performance.

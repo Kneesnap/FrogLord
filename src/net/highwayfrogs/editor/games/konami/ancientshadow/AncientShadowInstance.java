@@ -4,7 +4,7 @@ import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameInstance;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkTypeRegistry;
 import net.highwayfrogs.editor.games.shared.basic.file.definition.IGameFileDefinition;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
 
 /**
  * Represents an instance of Frogger Ancient Shadow.
@@ -24,7 +24,7 @@ public class AncientShadowInstance extends HudsonGameInstance {
 
     @Override
     public HudsonGameFile createGameFile(IGameFileDefinition fileDefinition, byte[] rawData) {
-        if (Utils.testSignature(rawData, HFSFile.SIGNATURE)) {
+        if (DataUtils.testSignature(rawData, HFSFile.SIGNATURE)) {
             return new HFSFile(fileDefinition);
         } else {
             return super.createGameFile(fileDefinition, rawData);

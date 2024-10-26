@@ -11,7 +11,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityI
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.games.konami.greatquest.map.kcColor4;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Represents the kcWaypointDesc struct.
@@ -82,7 +82,7 @@ public class kcWaypointDesc extends kcEntity3DDesc {
         builder.append(padding).append("SubType: ").append(this.subType).append(Constants.NEWLINE);
         writeAssetLine(builder, padding, "Previous", this.previousWaypointEntityRef);
         writeAssetLine(builder, padding, "Next", this.nextWaypointEntityRef);
-        builder.append(padding).append("Waypoint Flags: ").append(Utils.toHexString(this.waypointFlags)).append(Constants.NEWLINE);
+        builder.append(padding).append("Waypoint Flags: ").append(NumberUtils.toHexString(this.waypointFlags)).append(Constants.NEWLINE);
         this.color.writePrefixedInfoLine(builder, "Color", padding);
         builder.append(padding).append("Strength: ").append(this.strength).append(Constants.NEWLINE);
     }

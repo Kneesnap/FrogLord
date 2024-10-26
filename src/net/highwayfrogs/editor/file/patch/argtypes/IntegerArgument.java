@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.file.patch.argtypes;
 
 import net.highwayfrogs.editor.file.patch.PatchArgument;
 import net.highwayfrogs.editor.file.patch.PatchValue;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Created by Kneesnap on 1/15/2020.
@@ -15,7 +15,7 @@ public class IntegerArgument extends PatchArgumentBehavior<Integer> {
 
     @Override
     public boolean isValidString(String text) {
-        return Utils.isInteger(text) || Utils.isHexInteger(text);
+        return NumberUtils.isInteger(text) || NumberUtils.isHexInteger(text);
     }
 
     @Override

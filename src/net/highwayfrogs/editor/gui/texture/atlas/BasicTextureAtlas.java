@@ -4,8 +4,8 @@ import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.gui.texture.Texture;
 import net.highwayfrogs.editor.system.QuadConsumer;
 import net.highwayfrogs.editor.system.math.Vector2f;
-import net.highwayfrogs.editor.utils.SortedList;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.objects.SortedList;
 
 import java.awt.image.BufferedImage;
 import java.util.Comparator;

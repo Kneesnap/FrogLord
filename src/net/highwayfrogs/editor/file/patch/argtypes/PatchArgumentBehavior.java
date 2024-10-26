@@ -5,7 +5,7 @@ import javafx.scene.control.TextField;
 import net.highwayfrogs.editor.file.patch.PatchArgument;
 import net.highwayfrogs.editor.file.patch.PatchValue;
 import net.highwayfrogs.editor.games.sony.frogger.ui.PatchController;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 /**
  * Base patch argument behavior.
@@ -86,7 +86,7 @@ public abstract class PatchArgumentBehavior<T> {
      */
     public Node createEditor(PatchController controller, PatchArgument argument, PatchValue variable) {
         TextField field = new TextField(variable.toString());
-        Utils.setHandleKeyPress(field, newValue -> {
+        FXUtils.setHandleKeyPress(field, newValue -> {
             PatchArgumentBehavior<?> behavior = argument.getType().getBehavior();
             if (!behavior.isValidString(newValue))
                 return false;

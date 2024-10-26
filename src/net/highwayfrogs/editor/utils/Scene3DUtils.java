@@ -1,7 +1,10 @@
 package net.highwayfrogs.editor.utils;
 
+import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Point3D;
 import javafx.scene.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.WritableImage;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
 import javafx.scene.shape.TriangleMesh;
@@ -10,11 +13,17 @@ import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
+import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.editor.FirstPersonCamera;
+import net.highwayfrogs.editor.gui.mesh.DynamicMesh.DynamicMeshTextureQuality;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -24,7 +33,7 @@ import java.util.Objects;
  * Created by Kneesnap on 1/7/2024.
  */
 public class Scene3DUtils {
-    private static final PhongMaterial TRANSPARENT_MATERIAL = Utils.makeUnlitSharpMaterial(javafx.scene.paint.Color.TRANSPARENT);
+    private static final PhongMaterial TRANSPARENT_MATERIAL = makeUnlitSharpMaterial(javafx.scene.paint.Color.TRANSPARENT);
     private static final double AXIS_PLANE_SIZE = 10000;
     private static final double VERTICAL_BOX_SIZE = 20;
 
@@ -553,12 +562,12 @@ public class Scene3DUtils {
         }
 
         if (material == null) {
-            material = Utils.makeLitBlurryMaterial(Utils.toFXImage(highlightedImage, false));
+            material = makeLitBlurryMaterial(FXUtils.toFXImage(highlightedImage, false));
             return material;
         }
 
         // Update material image.
-        material.setDiffuseMap(Utils.toFXImage(highlightedImage, false));
+        material.setDiffuseMap(FXUtils.toFXImage(highlightedImage, false));
         return material;
     }
 
@@ -573,5 +582,183 @@ public class Scene3DUtils {
         triMesh.getTexCoords().addAll(0, 1, 0, 0, 1, 0, 1, 1);
         triMesh.getFaces().addAll(0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 0, 0);
         return triMesh;
+    }
+
+    /**
+     * Creates an PhongMaterial which uses nearest-neighbor texture display and is unaffected by lighting.
+     * When the transparency outlines look poorly, the solution is to resize the image to use a higher resolution (while also using nearest neighbor)
+     * @param texture The texture to create.
+     * @return phongMaterial
+     */
+    public static PhongMaterial makeUnlitSharpMaterial(Image texture) {
+        return updateUnlitSharpMaterial(new PhongMaterial(), texture);
+    }
+
+    /**
+     * Updates a PhongMaterial which uses nearest-neighbor texture display and is unaffected by lighting.
+     * When the transparency outlines look poorly, the solution is to resize the image to use a higher resolution (while also using nearest neighbor)
+     * @param material The material to update.
+     * @param texture The texture to apply to the material.
+     * @return phongMaterial
+     */
+    public static PhongMaterial updateUnlitSharpMaterial(PhongMaterial material, Image texture) {
+        // DirectX / Direct3D
+        // When the alpha in the diffuse map is zero, "discard" occurs, causing the pixel to be transparent, regardless of what the self-illumination map says.
+        // At the end Mtl1PS.hlsl in JavaFX is when the pixel RGB from the self-illumination map is added, but importantly it ignores the self-illumination alpha.
+        // Since the RGB value is added and not overridden, the color should be zero (black) so that the self-illumination map can provide the color.
+        // To achieve this, we set the diffuse color to be black, to multiply out the RGB values while keeping alpha intact.
+        // The alpha is obtained from the previous multiplication between the diffuse texture pixel and the diffuse color.
+        // I assume that the reason self-illumination is not blurry but diffuse is blurry probably means the textures are configured differently.
+
+        if (material.getDiffuseColor() != javafx.scene.paint.Color.BLACK)
+            material.setDiffuseColor(javafx.scene.paint.Color.BLACK); // When this is set to the default (WHITE), the coloring looks wrong when combined with a self-illumination map, since it's combining the light from both sources.
+        if (material.getDiffuseMap() != texture)
+            material.setDiffuseMap(texture); // Setting the diffuse map this seems to enable transparency, where-as it will be the diffuse color if not set.
+        if (material.getSelfIlluminationMap() != texture)
+            material.setSelfIlluminationMap(texture); // When this is not present, the material becomes fully black, because the diffuse color is off. If the color is changed to white, then the image does display but it's blurry and still has the same transparency problems.
+        return material;
+    }
+
+    /**
+     * Make the phong material with the given quality setting.
+     * @param texture the texture to create a material for
+     * @param quality the quality of the material
+     * @return newMaterial
+     */
+    public static PhongMaterial makePhongMaterial(Image texture, DynamicMeshTextureQuality quality) {
+        switch (quality) {
+            case LIT_BLURRY:
+                return makeLitBlurryMaterial(texture);
+            case UNLIT_SHARP:
+                return makeUnlitSharpMaterial(texture);
+            default:
+                throw new IllegalArgumentException("Unsupported texture quality: " + quality);
+        }
+    }
+
+    /**
+     * Update the phong material with the given quality setting.
+     * @param material the material to update
+     * @param texture the texture to update the material with
+     * @param quality the quality of the material
+     * @return material
+     */
+    public static PhongMaterial updatePhongMaterial(PhongMaterial material, Image texture, DynamicMeshTextureQuality quality) {
+        switch (quality) {
+            case LIT_BLURRY:
+                return updateLitBlurryMaterial(material, texture);
+            case UNLIT_SHARP:
+                return updateUnlitSharpMaterial(material, texture);
+            default:
+                throw new IllegalArgumentException("Unsupported texture quality: " + quality);
+        }
+    }
+
+    /**
+     * Creates a lit PhongMaterial which uses some kind of blurring/smoothing for the texture but is impacted by lighting.
+     * @param texture The texture to create.
+     * @return phongMaterial
+     */
+    public static PhongMaterial makeLitBlurryMaterial(Image texture) {
+        return updateLitBlurryMaterial(new PhongMaterial(), texture);
+    }
+
+    /**
+     * Updates a lit PhongMaterial which uses some kind of blurring/smoothing for the texture but is impacted by lighting.
+     * @param texture The texture to create.
+     * @return phongMaterial
+     */
+    public static PhongMaterial updateLitBlurryMaterial(PhongMaterial material, Image texture) {
+        // The following is what would seem to intuitively work, and it does. But the image is also blurry, which doesn't seem to be the case with self-illumination.
+        // However, self-illumination is unaffected by lighting.
+
+        if (material.getDiffuseColor() != javafx.scene.paint.Color.WHITE)
+            material.setDiffuseColor(javafx.scene.paint.Color.WHITE); // The default PhongMaterial diffuseColor is WHITE, which is what we want.
+        if (material.getDiffuseMap() != texture)
+            material.setDiffuseMap(texture);
+        if (material.getSelfIlluminationMap() != null)
+            material.setSelfIlluminationMap(null);
+        return material;
+    }
+
+    /**
+     * Creates a PhongMaterial with a texture affected by lighting, and using only diffuse components.
+     * @param texture The texture to create.
+     * @return phongMaterial
+     */
+    public static PhongMaterial makeDiffuseMaterial(Image texture) {
+        PhongMaterial material = new PhongMaterial();
+        material.setDiffuseMap(texture);
+        return material;
+    }
+
+    /**
+     * Creates a PhongMaterial with a color unaffected by lighting which can be used for highlight overlays.
+     * @param color The color to create.
+     * @return phongMaterial
+     */
+    public static PhongMaterial makeHighlightOverlayMaterial(javafx.scene.paint.Color color) {
+        BufferedImage colorImage = new BufferedImage(10, 10, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = colorImage.createGraphics();
+        graphics.setColor(ColorUtils.toAWTColor(color, (byte) 0x80));
+        graphics.fillRect(0, 0, colorImage.getWidth(), colorImage.getHeight());
+        graphics.dispose();
+
+        return makeUnlitSharpMaterial(FXUtils.toFXImage(colorImage, false));
+    }
+
+    /**
+     * Creates a PhongMaterial with a color unaffected by lighting.
+     * @param color The color to create.
+     * @return phongMaterial
+     */
+    public static PhongMaterial makeUnlitSharpMaterial(javafx.scene.paint.Color color) {
+        return makeUnlitSharpMaterial(ColorUtils.makeColorImage(color));
+    }
+
+    /**
+     * Takes a screenshot of a given SubScene.
+     * @param subScene   The subScene to take a screenshot of.
+     * @param namePrefix The file name prefix to save the image as.
+     */
+    public static void takeScreenshot(GameInstance instance, SubScene subScene, Scene scene, String namePrefix, boolean transparentBackground) {
+        javafx.scene.paint.Paint subSceneColor = subScene.getFill();
+
+        if (transparentBackground)
+            subScene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+
+        SnapshotParameters snapshotParameters = new SnapshotParameters();
+        snapshotParameters.setFill(javafx.scene.paint.Color.TRANSPARENT);
+
+        WritableImage wImage = new WritableImage((int) subScene.getWidth(), (int) subScene.getHeight());
+        BufferedImage sceneImage = SwingFXUtils.fromFXImage(subScene.snapshot(snapshotParameters, wImage), null);
+
+        if (transparentBackground)
+            subScene.setFill(subSceneColor);
+
+        // Write to file.
+        int id = -1;
+        while (id++ < 10000) {
+            String fileName = (namePrefix != null && namePrefix.length() > 0 ? namePrefix + "-" : "")
+                    + StringUtils.padStringLeft(Integer.toString(id), 4, '0') + ".png";
+
+            File testFile = new File(GUIMain.getWorkingDirectory(), fileName);
+            if (!testFile.exists()) {
+                try {
+                    ImageIO.write(sceneImage, "png", testFile);
+                    break;
+                } catch (IOException ex) {
+                    try {
+                        // Let user pick a directory (in case current working directory is not writeable)
+                        File targetDirectory = FXUtils.promptChooseDirectory(instance, "Save Screenshot", true);
+                        ImageIO.write(sceneImage, "png", new File(targetDirectory, fileName));
+                        break;
+                    } catch (IOException ex2) {
+                        Utils.handleError(instance.getLogger(), ex2, true, "Failed to write screenshot to '%s'. (No permissions to write here?)", fileName);
+                        return;
+                    }
+                }
+            }
+        }
     }
 }

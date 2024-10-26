@@ -6,7 +6,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
 
 /**
  * Represents the basic mof file types, static and animated.
@@ -39,7 +39,7 @@ public abstract class MOFBase extends SCSharedGameData {
         if (flags != buildFlags())
             throw new RuntimeException("Generated Flags (" + buildFlags() + ") do not match read flags (" + flags + ") in " + getFileDisplayName());
         if (!makeSignature().equals(new String(signature)) && (getGameInstance().isFrogger() && !((FroggerConfig) getConfig()).isAtOrBeforeBuild1())) // Build 1 seems to skip on the signature.
-            throw new RuntimeException("Generated Signature (" + makeSignature() + ") does not match read signature (" + new String(signature) + ") in " + getFileDisplayName() + " (Real Signature Bytes: " + Utils.toByteString(signature) + ")");
+            throw new RuntimeException("Generated Signature (" + makeSignature() + ") does not match read signature (" + new String(signature) + ") in " + getFileDisplayName() + " (Real Signature Bytes: " + DataUtils.toByteString(signature) + ")");
     }
 
     @Override

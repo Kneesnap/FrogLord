@@ -24,7 +24,9 @@ import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.gui.extra.hash.HashPlaygroundController;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -50,11 +52,11 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
 
         // Allow exporting MWI.
         addMenuItem(this.menuBarFile, "Export MWI", () -> {
-            File selectedFile = Utils.promptFileSave(getGameInstance(), "Specify the file to export the MWI as...", "FROGPSX", "Millennium WAD Index", "MWI");
+            File selectedFile = FXUtils.promptFileSave(getGameInstance(), "Specify the file to export the MWI as...", "FROGPSX", "Millennium WAD Index", "MWI");
             if (selectedFile == null)
                 return; // Cancel.
 
-            Utils.deleteFile(selectedFile); // Don't merge files, create a new one.
+            FileUtils.deleteFile(selectedFile); // Don't merge files, create a new one.
             DataWriter writer = new DataWriter(new FileReceiver(selectedFile));
             getGameInstance().getArchiveIndex().save(writer);
             writer.closeReceiver();
@@ -75,7 +77,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
     @Override
     protected void saveMainGameData() {
         if (getGameInstance().getGameType().isShowSaveWarning()) {
-            boolean saveAnyways = Utils.makePopUpYesNo("Saving " + getGameInstance().getGameType().getDisplayName() + " is not supported yet.\n"
+            boolean saveAnyways = FXUtils.makePopUpYesNo("Saving " + getGameInstance().getGameType().getDisplayName() + " is not supported yet.\n"
                     + "It will most likely crash the game if used. Would you like to continue?");
             if (!saveAnyways)
                 return;
@@ -83,7 +85,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
 
         if (getConfig().isMwdLooseFiles()) {
             // We can support this at any time I think.
-            boolean saveAnyways = Utils.makePopUpYesNo("Saving files outside of the MWD is not supported yet.\n"
+            boolean saveAnyways = FXUtils.makePopUpYesNo("Saving files outside of the MWD is not supported yet.\n"
                     + "So, this will create a MWD file instead. Would you like to continue?");
             if (!saveAnyways)
                 return;
@@ -91,14 +93,14 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
 
         File baseFolder = getGameInstance().getMainGameFolder();
         if (!baseFolder.canWrite()) {
-            Utils.makePopUp("Can't write to the file." + Constants.NEWLINE + "Do you have permission to save in this folder?", AlertType.ERROR);
+            FXUtils.makePopUp("Can't write to the file." + Constants.NEWLINE + "Do you have permission to save in this folder?", AlertType.ERROR);
             return;
         }
 
         // The canWrite check does not work on the files, only on the directory.
-        File outputMwdFile = new File(baseFolder, Utils.stripExtension(getGameInstance().getMwdFile().getName()) + "-MODIFIED.MWD");
-        File outputMwiFile = new File(baseFolder, Utils.stripExtension(getGameInstance().getMwdFile().getName()) + "-MODIFIED.MWI");
-        File outputExeFile = new File(baseFolder, Utils.stripExtension(getGameInstance().getExeFile().getName()) + "-modified.exe");
+        File outputMwdFile = new File(baseFolder, FileUtils.stripExtension(getGameInstance().getMwdFile().getName()) + "-MODIFIED.MWD");
+        File outputMwiFile = new File(baseFolder, FileUtils.stripExtension(getGameInstance().getMwdFile().getName()) + "-MODIFIED.MWI");
+        File outputExeFile = new File(baseFolder, FileUtils.stripExtension(getGameInstance().getExeFile().getName()) + "-modified.exe");
 
         ProgressBarComponent.openProgressBarWindow(getGameInstance(), "Saving Files", progressBar -> {
             // Save the MWD file.
@@ -122,7 +124,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
             }
 
             // Wait until after the MWD has been saved to save the MWI.
-            Utils.deleteFile(outputMwiFile); // Don't merge files, create a new one.
+            FileUtils.deleteFile(outputMwiFile); // Don't merge files, create a new one.
             DataWriter writer = new DataWriter(new FileReceiver(outputMwiFile));
             getGameInstance().getArchiveIndex().save(writer);
             writer.closeReceiver();
@@ -153,14 +155,14 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
      */
     @SneakyThrows
     public void importFile() {
-        File selectedFile = Utils.promptFileOpen(getGameInstance(), "Select the file to import...", "All Files", "*");
+        File selectedFile = FXUtils.promptFileOpen(getGameInstance(), "Select the file to import...", "All Files", "*");
         if (selectedFile == null)
             return; // Cancelled.
 
         // Load old data.
         SCGameFile<?> oldFile = getSelectedFileEntry();
         if (oldFile == null) {
-            Utils.makePopUp("Can't import over null file.", AlertType.ERROR);
+            FXUtils.makePopUp("Can't import over null file.", AlertType.ERROR);
             return;
         }
 
@@ -184,15 +186,15 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
     public void exportOriginalFile() {
         SCGameFile<?> currentFile = getSelectedFileEntry();
         if (currentFile == null || currentFile.getRawFileData() == null) {
-            Utils.makePopUp("Cannot export file.", AlertType.ERROR);
+            FXUtils.makePopUp("Cannot export file.", AlertType.ERROR);
             return;
         }
 
-        File selectedFile = Utils.promptFileSave(getGameInstance(), "Specify the file to export this data as...", currentFile.getFileDisplayName(), "All Files", "*");
+        File selectedFile = FXUtils.promptFileSave(getGameInstance(), "Specify the file to export this data as...", currentFile.getFileDisplayName(), "All Files", "*");
         if (selectedFile == null)
             return; // Cancel.
 
-        if (Utils.writeBytesToFile(getLogger(), selectedFile, currentFile.getRawFileData(), true))
+        if (FileUtils.writeBytesToFile(getLogger(), selectedFile, currentFile.getRawFileData(), true))
             getLogger().info("Exported " + selectedFile.getName() + ".");
     }
 
@@ -203,15 +205,15 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
     public void exportFile() {
         SCGameFile<?> currentFile = getSelectedFileEntry();
         if (currentFile == null) {
-            Utils.makePopUp("Cannot export null file.", AlertType.ERROR);
+            FXUtils.makePopUp("Cannot export null file.", AlertType.ERROR);
             return;
         }
 
-        File selectedFile = Utils.promptFileSave(getGameInstance(), "Specify the file to export this data as...", currentFile.getFileDisplayName(), "All Files", "*");
+        File selectedFile = FXUtils.promptFileSave(getGameInstance(), "Specify the file to export this data as...", currentFile.getFileDisplayName(), "All Files", "*");
         if (selectedFile == null)
             return; // Cancel.
 
-        Utils.deleteFile(selectedFile); // Don't merge files, create a new one.
+        FileUtils.deleteFile(selectedFile); // Don't merge files, create a new one.
         DataWriter writer = new DataWriter(new FileReceiver(selectedFile));
         currentFile.save(writer);
         writer.closeReceiver();
@@ -220,33 +222,33 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
     }
 
     private void exportBulkTextures() {
-        File targetFolder = Utils.promptChooseDirectory(getGameInstance(), "Choose the directory to save all textures to.", false);
+        File targetFolder = FXUtils.promptChooseDirectory(getGameInstance(), "Choose the directory to save all textures to.", false);
 
         ImageFilterSettings exportSettings = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(false).setAllowTransparency(true);
         List<VLOArchive> allVlos = getArchive().getAllFiles(VLOArchive.class);
         for (VLOArchive saveVLO : allVlos) {
-            File vloFolder = new File(targetFolder, Utils.stripExtension(saveVLO.getFileDisplayName()));
-            Utils.makeDirectory(vloFolder);
+            File vloFolder = new File(targetFolder, FileUtils.stripExtension(saveVLO.getFileDisplayName()));
+            FileUtils.makeDirectory(vloFolder);
             saveVLO.exportAllImages(vloFolder, exportSettings);
         }
     }
 
     private void promptSearchForTexture() {
         InputMenu.promptInput(getGameInstance(), "Please enter the texture id to lookup.", str -> {
-            if (!Utils.isInteger(str)) {
-                Utils.makePopUp("'" + str + "' is not a valid number.", AlertType.WARNING);
+            if (!NumberUtils.isInteger(str)) {
+                FXUtils.makePopUp("'" + str + "' is not a valid number.", AlertType.WARNING);
                 return;
             }
 
             int texId = Integer.parseInt(str);
             List<GameImage> images = getArchive().getImagesByTextureId(texId);
             if (images.isEmpty()) {
-                Utils.makePopUp("Could not find an image with the id " + texId + ".", AlertType.WARNING);
+                FXUtils.makePopUp("Could not find an image with the id " + texId + ".", AlertType.WARNING);
                 return;
             }
 
             for (GameImage image : images)
-                getLogger().info("Found " + texId + " as texture #" + image.getLocalImageID() + " in " + Utils.stripExtension(image.getParent().getFileDisplayName()) + ".");
+                getLogger().info("Found " + texId + " as texture #" + image.getLocalImageID() + " in " + FileUtils.stripExtension(image.getParent().getFileDisplayName()) + ".");
 
             GameImage image = images.get(0);
             VLOController controller = image.getParent().makeEditorUI();

@@ -37,7 +37,7 @@ import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode.OverlayTarget;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 import java.util.Collections;
 import java.util.List;
@@ -50,7 +50,7 @@ import java.util.Objects;
  */
 public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMapMesh, FroggerMapPolygon> {
     private static final double VERTEX_BOX_SIZE = 1.5;
-    private static final PhongMaterial VERTEX_BOX_MATERIAL = Utils.makeUnlitSharpMaterial(Color.YELLOW);
+    private static final PhongMaterial VERTEX_BOX_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
     @Getter private final SelectionPromptTracker<FroggerMapPolygon> polygonSelector;
 
     // UI

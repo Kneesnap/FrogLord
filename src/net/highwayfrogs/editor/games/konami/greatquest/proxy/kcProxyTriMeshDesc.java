@@ -9,8 +9,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTriMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
-import net.highwayfrogs.editor.utils.Consumer5;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.lambda.Consumer5;
 
 import java.util.Arrays;
 import java.util.List;
@@ -56,7 +56,7 @@ public class kcProxyTriMeshDesc extends kcProxyDesc {
             if (newHash == this.meshRef.getResource().getHash()) {
                 this.meshRef.getResource().getSelfHash().setOriginalString(modelName);
             } else if (!RECOGNIZED_INVALID_NAMES.contains(modelName)) { // This has been observed to happen for a few things in the release game.
-                getLogger().warning("Couldn't apply name '" + modelName + "' (" + Utils.to0PrefixedHexString(newHash) + ") to kcCResourceTriMesh " + this.meshRef.getResource().getHashAsHexString() + ".");
+                getLogger().warning("Couldn't apply name '" + modelName + "' (" + NumberUtils.to0PrefixedHexString(newHash) + ") to kcCResourceTriMesh " + this.meshRef.getResource().getHashAsHexString() + ".");
             }
         }
     }

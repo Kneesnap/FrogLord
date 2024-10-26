@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.utils;
+package net.highwayfrogs.editor.utils.lambda;
 
 /**
  * Represents a function interface accepting three arguments.

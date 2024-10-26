@@ -6,7 +6,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.KCResourceID;
@@ -22,6 +22,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyTriMeshDesc;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.function.BiFunction;
@@ -170,7 +172,7 @@ public class kcCResourceGeneric extends kcCResource {
                 case CHARACTER:
                     return new CharacterParams(resource);
                 default:
-                    throw new RuntimeException("Not sure what actor description class to use for " + Utils.to0PrefixedHexString(classID) + "/" + kcClass + ".");
+                    throw new RuntimeException("Not sure what actor description class to use for " + NumberUtils.to0PrefixedHexString(classID) + "/" + kcClass + ".");
             }
         });
     }
@@ -202,7 +204,7 @@ public class kcCResourceGeneric extends kcCResource {
                 case UNIQUE_ITEM:
                     return new CUniqueItemDesc(resource);
                 default:
-                    throw new RuntimeException("Not sure what item description class to use for " + Utils.to0PrefixedHexString(classID) + "/" + kcClass + ".");
+                    throw new RuntimeException("Not sure what item description class to use for " + NumberUtils.to0PrefixedHexString(classID) + "/" + kcClass + ".");
             }
         });
     }
@@ -314,7 +316,7 @@ public class kcCResourceGeneric extends kcCResource {
             return (T) this.cachedObject;
 
         // Not all resources actually use this. But, it's helpful to provide it for the ones which do.
-        int classID = this.rawResourceData != null && this.rawResourceData.length >= Constants.INTEGER_SIZE ? Utils.readIntFromBytes(this.rawResourceData, 0) : 0;
+        int classID = this.rawResourceData != null && this.rawResourceData.length >= Constants.INTEGER_SIZE ? DataUtils.readIntFromBytes(this.rawResourceData, 0) : 0;
 
         T newObject = maker.apply(this, classID);
         if (newObject == null)
@@ -401,7 +403,7 @@ public class kcCResourceGeneric extends kcCResource {
             this.name = name;
             this.tag = tag;
             if (name != null && GreatQuestUtils.hash(name) != tag)
-                throw new RuntimeException("Generic Resource type '" + name + "'/" + name() + " hashes to " + Utils.to0PrefixedHexString(GreatQuestUtils.hash(name)) + ", instead of " + Utils.to0PrefixedHexString(tag));
+                throw new RuntimeException("Generic Resource type '" + name + "'/" + name() + " hashes to " + NumberUtils.to0PrefixedHexString(GreatQuestUtils.hash(name)) + ", instead of " + NumberUtils.to0PrefixedHexString(tag));
         }
 
         /**
@@ -418,7 +420,7 @@ public class kcCResourceGeneric extends kcCResource {
             }
 
             if (!allowNull)
-                throw new RuntimeException("Couldn't determine the generic type from tag " + Utils.to0PrefixedHexString(tag) + ".");
+                throw new RuntimeException("Couldn't determine the generic type from tag " + NumberUtils.to0PrefixedHexString(tag) + ".");
             return null;
         }
     }

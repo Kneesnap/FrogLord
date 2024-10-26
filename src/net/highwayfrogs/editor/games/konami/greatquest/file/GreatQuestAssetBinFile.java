@@ -7,14 +7,17 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHashReverser;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -132,11 +135,11 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         reader.jumpReturn();
 
         GreatQuestArchiveFile readFile;
-        if (Utils.testSignature(fileBytes, GreatQuestImageFile.SIGNATURE_STR)) {
+        if (DataUtils.testSignature(fileBytes, GreatQuestImageFile.SIGNATURE_STR)) {
             readFile = new GreatQuestImageFile(getGameInstance());
-        } else if (Utils.testSignature(fileBytes, kcModelWrapper.SIGNATURE_STR)) {
+        } else if (DataUtils.testSignature(fileBytes, kcModelWrapper.SIGNATURE_STR)) {
             readFile = new kcModelWrapper(getGameInstance());
-        } else if (Utils.testSignature(fileBytes, "TOC\0")) {
+        } else if (DataUtils.testSignature(fileBytes, "TOC\0")) {
             readFile = new GreatQuestChunkedFile(getGameInstance());
         } else if (this.files.size() > 100 && fileBytes.length > 30) {
             readFile = new GreatQuestImageFile(getGameInstance());
@@ -272,7 +275,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
             GreatQuestArchiveFile file = this.files.get(i);
             fileLine.append(file.hasFilePath() ? file.getFilePath() : "UNKNOWN");
             fileLine.append(" # File ");
-            fileLine.append(Utils.padNumberString(i, 4));
+            fileLine.append(NumberUtils.padNumberString(i, 4));
             fileLine.append(", Hash: ");
             fileLine.append(file.getHashAsHexString());
             if (file.isCollision())
@@ -295,7 +298,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
             fileName = scanner.nextLine();
         }
 
-        if (Utils.stripAlphanumeric(fileName).equalsIgnoreCase("hash"))
+        if (StringUtils.stripAlphanumeric(fileName).equalsIgnoreCase("hash"))
             GreatQuestHashReverser.runHashPlayground();
 
         File binFile = new File(fileName);
@@ -332,7 +335,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
             configName = scanner.nextLine();
 
             String fullPath = "games/greatquest/versions/" + configName + ".cfg";
-            inputStream = Utils.getResourceStream(fullPath);
+            inputStream = FileUtils.getResourceStream(fullPath);
             if (inputStream == null)
                 System.out.println("Invalid configuration, please try again.");
         } while (inputStream == null);
@@ -354,7 +357,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
 
         int hash = GreatQuestUtils.hashFilePath(filePath);
         if (showMessageIfNotFound)
-            getLogger().warning("Attempted to apply the file path '" + filePath + "', but no file matched the hash " + Utils.to0PrefixedHexString(hash) + ".");
+            getLogger().warning("Attempted to apply the file path '" + filePath + "', but no file matched the hash " + NumberUtils.to0PrefixedHexString(hash) + ".");
         return null;
     }
 
@@ -407,7 +410,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         for (int i = 0; i < mainArchive.getFiles().size(); i++) {
             GreatQuestArchiveFile file = mainArchive.getFiles().get(i);
 
-            lines.add(" - File #" + Utils.padNumberString(i, 4)
+            lines.add(" - File #" + NumberUtils.padNumberString(i, 4)
                     + ": " + file.getHashAsHexString()
                     + ", " + file.getClass().getSimpleName()
                     + (file.getFilePath() != null ? ", " + file.getFilePath() + ", " + GreatQuestUtils.getFileIdFromPath(file.getFilePath()) : ""));

@@ -15,7 +15,7 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * A representation of the 'kcEnvironment' struct.
@@ -104,7 +104,7 @@ public class kcEnvironment extends kcCResource implements IMultiLineInfoWriter {
         // TODO: Nested properties of "Fog": this.fog.addToPropertyList(propertyList);
 
         propertyList.add("Lighting Enabled", this.lightingEnabled);
-        propertyList.add("Ambient Light Color", Utils.to0PrefixedHexString(this.ambientLightPackedColor));
+        propertyList.add("Ambient Light Color", NumberUtils.to0PrefixedHexString(this.ambientLightPackedColor));
 
         for (int i = 0; i < this.directionalLights.length; i++) {
             if (this.directionalLights[i] == null)
@@ -126,7 +126,7 @@ public class kcEnvironment extends kcCResource implements IMultiLineInfoWriter {
         this.fog.writePrefixedMultiLineInfo(builder, "Fog", padding, newPadding);
 
         builder.append(padding).append("Lighting Enabled: ").append(this.lightingEnabled).append(Constants.NEWLINE);
-        builder.append(padding).append("Ambient Light Color: ").append(Utils.to0PrefixedHexString(this.ambientLightPackedColor)).append(Constants.NEWLINE);
+        builder.append(padding).append("Ambient Light Color: ").append(NumberUtils.to0PrefixedHexString(this.ambientLightPackedColor)).append(Constants.NEWLINE);
 
         for (int i = 0; i < this.directionalLights.length; i++) {
             if (this.directionalLights[i] == null)

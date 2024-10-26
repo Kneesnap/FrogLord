@@ -5,6 +5,7 @@ import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
@@ -14,8 +15,7 @@ import net.highwayfrogs.editor.games.renderware.ui.IRwStreamChunkUIEntry;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.IBinarySerializable;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -144,7 +144,7 @@ public class RwPlatformIndependentTextureDictionaryChunk extends RwStreamChunk {
             return (name != null && name.length() > 0 ? "'" + name + "'" : "Unknown Name")
                     + (getMipMapImages().size() > 1 && mipMapId >= 0 ? ", mipMap=" + mipMapId : "")
                     + (mask != null && mask.trim().length() > 0 ? ", Mask: '" + mask + "'" : "")
-                    + (flags != 0 ? ", Flags: " + Utils.toHexString(flags) : "");
+                    + (flags != 0 ? ", Flags: " + NumberUtils.toHexString(flags) : "");
         }
 
         /**
@@ -161,7 +161,7 @@ public class RwPlatformIndependentTextureDictionaryChunk extends RwStreamChunk {
                 propertyList.add("Mask", mask);
 
             propertyList.add("Mip-Map Images", getMipMapImages().size());
-            propertyList.add("Flags", Utils.toHexString(getFlags()));
+            propertyList.add("Flags", NumberUtils.toHexString(getFlags()));
             return propertyList;
         }
 

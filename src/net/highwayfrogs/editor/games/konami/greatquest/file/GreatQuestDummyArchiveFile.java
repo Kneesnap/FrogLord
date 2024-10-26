@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.StringUtils;
 
 /**
  * A TGQ dummy file.
@@ -37,7 +37,7 @@ public class GreatQuestDummyArchiveFile extends GreatQuestArchiveFile {
     public String getExtension() {
         if (this.data.length >= 3) {
             String useString = new String(new byte[]{data[0], data[1], data[2]});
-            if (Utils.isAlphanumeric(useString))
+            if (StringUtils.isAlphanumeric(useString))
                 return useString;
         }
 

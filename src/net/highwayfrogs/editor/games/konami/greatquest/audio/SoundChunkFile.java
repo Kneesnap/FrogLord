@@ -12,8 +12,8 @@ import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.file.writer.LargeFileReceiver;
-import net.highwayfrogs.editor.games.generic.GameData;
-import net.highwayfrogs.editor.games.generic.GameObject;
+import net.highwayfrogs.editor.games.generic.data.GameData;
+import net.highwayfrogs.editor.games.generic.data.GameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestGameFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestLooseGameFile;
@@ -23,8 +23,7 @@ import net.highwayfrogs.editor.gui.components.DefaultFileEditorUISoundListCompon
 import net.highwayfrogs.editor.gui.components.DefaultFileEditorUISoundListComponent.IBasicSound;
 import net.highwayfrogs.editor.gui.components.DefaultFileEditorUISoundListComponent.IBasicSoundList;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.DataSizeUnit;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.*;
 
 import javax.sound.sampled.Clip;
 import java.io.File;
@@ -60,7 +59,7 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
 
     @Override
     public String getFilePath() {
-        return Utils.stripSingleExtension(this.index.getFilePath());
+        return FileUtils.stripSingleExtension(this.index.getFilePath());
     }
 
     @Override
@@ -324,7 +323,7 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
                 return this.cachedClip;
 
             if (getGameInstance().isPC() || getGameInstance().isPS2()) {
-                return this.cachedClip = Utils.getClipFromWavFile(toWavFileBytes(), true);
+                return this.cachedClip = AudioUtils.getClipFromWavFile(toWavFileBytes(), true);
             } else {
                 throw new UnsupportedOperationException("Unsupported game platform: " + getGameInstance().getPlatform());
             }
@@ -339,8 +338,8 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
             } else if (getGameInstance().isPC()) {
                 // The PC version contains raw audio data prefixed with an audio format header.
                 // We try to create a wav file by reading such data.
-                int expectedSize = Utils.readNumberFromBytes(this.rawFileBytes, 2, 14); // Read cbSize from WAVEFORMATEX.
-                return Utils.createWavFile(this.rawFileBytes, 0, expectedSize, this.rawFileBytes, expectedSize, this.rawFileBytes.length - expectedSize);
+                int expectedSize = DataUtils.readNumberFromBytes(this.rawFileBytes, 2, 14); // Read cbSize from WAVEFORMATEX.
+                return AudioUtils.createWavFile(this.rawFileBytes, 0, expectedSize, this.rawFileBytes, expectedSize, this.rawFileBytes.length - expectedSize);
             } else {
                 throw new IllegalStateException("Cannot use toWavFileBytes() when the platform is not supported!! (" + getGameInstance().getPlatform() + ")");
             }
@@ -361,9 +360,9 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
             if (outputFile == null)
                 throw new NullPointerException("outputFile");
             if (outputFile.isDirectory())
-                outputFile = new File(outputFile, Utils.padNumberString(this.id, 4) + ".wav");
+                outputFile = new File(outputFile, NumberUtils.padNumberString(this.id, 4) + ".wav");
 
-            Utils.writeBytesToFile(getLogger(), outputFile, toWavFileBytes(), false);
+            FileUtils.writeBytesToFile(getLogger(), outputFile, toWavFileBytes(), false);
         }
 
         /**
@@ -403,7 +402,7 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
                 System.arraycopy(rawData, 0, this.rawFileBytes, formatHeaderLength, rawDataLength);
             } else if (getGameInstance().isPS2()) {
                 // The PS2 version contains wav files with full headers.
-                if (!Utils.testSignature(rawFileData, "RIFF"))
+                if (!DataUtils.testSignature(rawFileData, "RIFF"))
                     throw new RuntimeException("The provided file does not look like a .wav file!");
 
                 this.rawFileBytes = rawFileData;
@@ -451,7 +450,7 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
             MenuItem menuItemImport = new MenuItem("Import Sound");
             contextMenu.getItems().add(menuItemImport);
             menuItemImport.setOnAction(event -> {
-                File inputFile = Utils.promptFileOpen(getGameInstance(), "Specify the sound file to import", "Audio File", "wav");
+                File inputFile = FXUtils.promptFileOpen(getGameInstance(), "Specify the sound file to import", "Audio File", "wav");
                 if (inputFile != null) {
                     try {
                         loadSupportedAudioFile(inputFile);
@@ -464,7 +463,7 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
             MenuItem menuItemExport = new MenuItem("Export Sound");
             contextMenu.getItems().add(menuItemExport);
             menuItemExport.setOnAction(event -> {
-                File outputFile = Utils.promptFileSave(getGameInstance(), "Specify the file to save the sound as...", getExportFileName(), "Audio File", "wav");
+                File outputFile = FXUtils.promptFileSave(getGameInstance(), "Specify the file to save the sound as...", getExportFileName(), "Audio File", "wav");
                 if (outputFile != null) {
                     try {
                         saveAsWavFile(outputFile);
@@ -488,7 +487,7 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
             MenuItem importFromWavFileItem = new MenuItem("Import Sound Wave");
             getCollectionEditorComponent().addMenuItemToAddButtonLogic(importFromWavFileItem);
             importFromWavFileItem.setOnAction(event -> {
-                File inputFile = Utils.promptFileOpen(getGameInstance(), "Specify the sound file to import", "Audio File", "wav");
+                File inputFile = FXUtils.promptFileOpen(getGameInstance(), "Specify the sound file to import", "Audio File", "wav");
                 if (inputFile == null || !inputFile.isFile())
                     return;
 

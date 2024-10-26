@@ -10,7 +10,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Implements the 'kcProxyDesc' struct.
@@ -47,7 +47,7 @@ public class kcProxyDesc extends kcBaseDesc {
         this.isStatic = GreatQuestUtils.readTGQBoolean(reader);
 
         if (hThis != this.parentHash.getHashNumber() && (getParentResource() == null || !getParentResource().doesNameMatch("TEST")))
-            throw new RuntimeException("The kcProxyDesc reported the parent chunk as " + Utils.to0PrefixedHexString(hThis) + ", but it was expected to be " + this.parentHash.getHashNumberAsString() + ".");
+            throw new RuntimeException("The kcProxyDesc reported the parent chunk as " + NumberUtils.to0PrefixedHexString(hThis) + ", but it was expected to be " + this.parentHash.getHashNumberAsString() + ".");
     }
 
     @Override

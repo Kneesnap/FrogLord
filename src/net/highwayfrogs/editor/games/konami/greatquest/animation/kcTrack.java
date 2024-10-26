@@ -4,12 +4,12 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcTrackKey;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTrack;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -98,7 +98,7 @@ public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineI
             int readStartIndex = keyListDataStartIndex + dataOffset;
             reader.jumpTemp(readStartIndex);
             if (lastEndPosition >= 0 && readStartIndex != lastEndPosition)
-                getLogger().severe("The ending position of " + this.keyList.get(this.keyList.size() - 1) + " was expected to be " + Utils.toHexString(readStartIndex) + ", but was actually " + Utils.toHexString(lastEndPosition) + ".");
+                getLogger().severe("The ending position of " + this.keyList.get(this.keyList.size() - 1) + " was expected to be " + NumberUtils.toHexString(readStartIndex) + ", but was actually " + NumberUtils.toHexString(lastEndPosition) + ".");
 
             kcTrackKey<?> newKey = controlType.createKey(getGameInstance());
             newKey.load(reader);
@@ -116,7 +116,7 @@ public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineI
         }
 
         if (lastEndPosition >= 0 && lastEndPosition != keyListDataEndIndex)
-            getLogger().severe("The ending position of the keyList data (" + this.keyList.get(this.keyList.size() - 1) + ") was expected to be " + Utils.toHexString(keyListDataEndIndex) + ", but we actually stopped reading at " + Utils.toHexString(lastEndPosition) + ".");
+            getLogger().severe("The ending position of the keyList data (" + this.keyList.get(this.keyList.size() - 1) + ") was expected to be " + NumberUtils.toHexString(keyListDataEndIndex) + ", but we actually stopped reading at " + NumberUtils.toHexString(lastEndPosition) + ".");
         reader.setIndex(keyListDataEndIndex);
 
         // Validate flags.
@@ -231,7 +231,7 @@ public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineI
      */
     private void setFlags(int newFlags) {
         if ((newFlags & BIT_FLAG_MASK) != newFlags)
-            throw new IllegalArgumentException("The bit flags " + Utils.toHexString(newFlags) + " contained bits outside of the flag mask of " + BIT_FLAG_MASK);
+            throw new IllegalArgumentException("The bit flags " + NumberUtils.toHexString(newFlags) + " contained bits outside of the flag mask of " + BIT_FLAG_MASK);
 
         this.packedValue = (this.packedValue & ~(BIT_FLAG_MASK << TRACK_MODE_SIZE)) | (newFlags << TRACK_MODE_SIZE);
     }
@@ -256,7 +256,7 @@ public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineI
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         builder.append(padding);
-        builder.append("Track{Type=").append(getTrackControlType()).append(",Flags=").append(Utils.toHexString(getFlags())).append(",Mode=").append(getTrackMode()).append(",Tag=").append(this.tag).append(",Keys=").append(this.keyList.size()).append("}");
+        builder.append("Track{Type=").append(getTrackControlType()).append(",Flags=").append(NumberUtils.toHexString(getFlags())).append(",Mode=").append(getTrackMode()).append(",Tag=").append(this.tag).append(",Keys=").append(this.keyList.size()).append("}");
         builder.append(Constants.NEWLINE);
 
         // Write keyList

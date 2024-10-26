@@ -19,6 +19,7 @@ import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectio
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.logging.Logger;
@@ -87,7 +88,7 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
             if (uiController instanceof SCFileEditorUIController<?, ?>)
                 ((SCFileEditorUIController<?, ?>) uiController).setParentWadFile(parent);
         } else {
-            Utils.makePopUp("There is no editor available for " + Utils.getSimpleName(this), AlertType.ERROR);
+            FXUtils.makePopUp("There is no editor available for " + Utils.getSimpleName(this), AlertType.ERROR);
         }
     }
 
@@ -194,7 +195,7 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
      */
     public static <TGameInstance extends SCGameInstance, TGameFile extends SCGameFile<?>, TUIController extends SCFileEditorUIController<TGameInstance, TGameFile>> TUIController loadEditor(TGameInstance gameInstance, String template, TUIController controller, TGameFile fileToEdit) {
         try {
-            FXMLLoader templateLoader = Utils.getFXMLTemplateLoader(gameInstance, template);
+            FXMLLoader templateLoader = FXUtils.getFXMLTemplateLoader(gameInstance, template);
             GameUIController.loadController(gameInstance, templateLoader, controller);
             controller.setTargetFile(fileToEdit);
         } catch (Throwable th) {

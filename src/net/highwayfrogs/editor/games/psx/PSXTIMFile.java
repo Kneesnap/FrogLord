@@ -14,7 +14,9 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.TIMController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.ColorUtils;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
@@ -59,7 +61,7 @@ public class PSXTIMFile extends SCSharedGameFile {
     public void load(DataReader reader) {
         int readSignature = reader.readInt();
         if (readSignature != SIGNATURE)
-            throw new RuntimeException("There was no .TIM signature present. (Got: " + Utils.toHexString(readSignature) + ")");
+            throw new RuntimeException("There was no .TIM signature present. (Got: " + NumberUtils.toHexString(readSignature) + ")");
 
         this.flags = reader.readInt();
         if (hasClut()) {
@@ -79,7 +81,7 @@ public class PSXTIMFile extends SCSharedGameFile {
             // Ensure the reader position is in the expected spot.
             int clutEndPos = clutStartPos + clutSize;
             if (reader.getIndex() != clutEndPos) {
-                getLogger().warning("CLUT Position Mismatch for " + getFileDisplayName() + ", expected " + Utils.toHexString(clutEndPos) + ", but got " + Utils.toHexString(reader.getIndex()) + ".");
+                getLogger().warning("CLUT Position Mismatch for " + getFileDisplayName() + ", expected " + NumberUtils.toHexString(clutEndPos) + ", but got " + NumberUtils.toHexString(reader.getIndex()) + ".");
                 reader.setIndex(clutEndPos);
             }
         }
@@ -237,7 +239,7 @@ public class PSXTIMFile extends SCSharedGameFile {
                 byte blue = reader.readByte();
 
                 // Alpha is always 0xFF I think.
-                image.setRGB(x, y, Utils.toARGB(red, green, blue, (byte) 0xFF));
+                image.setRGB(x, y, ColorUtils.toARGB(red, green, blue, (byte) 0xFF));
             }
         }
     }
@@ -320,9 +322,9 @@ public class PSXTIMFile extends SCSharedGameFile {
         for (int y = 0; y < image.getHeight(); y++) {
             for (int x = 0; x < image.getWidth(); x++) {
                 int argbColor = image.getRGB(x, y);
-                writer.writeByte(Utils.getRed(argbColor));
-                writer.writeByte(Utils.getGreen(argbColor));
-                writer.writeByte(Utils.getBlue(argbColor));
+                writer.writeByte(ColorUtils.getRed(argbColor));
+                writer.writeByte(ColorUtils.getGreen(argbColor));
+                writer.writeByte(ColorUtils.getBlue(argbColor));
             }
         }
     }
@@ -391,7 +393,7 @@ public class PSXTIMFile extends SCSharedGameFile {
     @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {
         propertyList = super.addToPropertyList(propertyList);
-        propertyList.add("Flags", Utils.toHexString(this.flags));
+        propertyList.add("Flags", NumberUtils.toHexString(this.flags));
         propertyList.add("Palette Count", this.palettes != null ? this.palettes.length : 0);
         propertyList.add("Image Dimensions", getImageWidth() + "x" + getImageHeight());
         propertyList.add("Image Position", "X: " + this.imageX + ", Y: " + this.imageHeight);
@@ -497,7 +499,7 @@ public class PSXTIMFile extends SCSharedGameFile {
      * @return isTimFile
      */
     public static boolean isTIMFile(SCGameInstance instance, byte[] data) {
-        if (!Utils.testSignature(data, SIGNATURE_BYTES))
+        if (!DataUtils.testSignature(data, SIGNATURE_BYTES))
             return false;
 
         // Because the signature of a .TIM file is not reliably uniquely identifiable, false-positives may occur with the above check.

@@ -30,7 +30,8 @@ import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.SelectionMenu.AttachmentListCell;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -163,7 +164,7 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
         // Ensure we've got the VLO to find textures from.
         VLOArchive vloFile = getFile().getVloFile();
         if (vloFile == null) {
-            Utils.makePopUp("Cannot edit remaps for a map which has no associated VLO!", AlertType.WARNING);
+            FXUtils.makePopUp("Cannot edit remaps for a map which has no associated VLO!", AlertType.WARNING);
             return;
         }
 
@@ -186,29 +187,29 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
         InputMenu.promptInput(getGameInstance(), "Please enter the grid dimensions for the cleared map.", "5,5", newText -> {
             String[] split = newText.split(",");
             if (split.length != 2) {
-                Utils.makePopUp("'" + newText + "' was invalid.\nPlease enter two numbers separated by a comma.", AlertType.ERROR);
+                FXUtils.makePopUp("'" + newText + "' was invalid.\nPlease enter two numbers separated by a comma.", AlertType.ERROR);
                 return;
             }
 
-            if (!Utils.isInteger(split[0])) {
-                Utils.makePopUp("'" + split[0] + "' is not a valid number.", AlertType.ERROR);
+            if (!NumberUtils.isInteger(split[0])) {
+                FXUtils.makePopUp("'" + split[0] + "' is not a valid number.", AlertType.ERROR);
                 return;
             }
 
-            if (!Utils.isInteger(split[1])) {
-                Utils.makePopUp("'" + split[1] + "' is not a valid number.", AlertType.ERROR);
+            if (!NumberUtils.isInteger(split[1])) {
+                FXUtils.makePopUp("'" + split[1] + "' is not a valid number.", AlertType.ERROR);
                 return;
             }
 
             int x = Integer.parseInt(split[0]);
             int z = Integer.parseInt(split[1]);
             if (x < 0 || z < 0) {
-                Utils.makePopUp("Dimensions cannot be less than zero.", AlertType.ERROR);
+                FXUtils.makePopUp("Dimensions cannot be less than zero.", AlertType.ERROR);
                 return;
             }
 
             if (x > 255 || z > 255) { // Frogger limitation.
-                Utils.makePopUp("The collision grid cannot go larger than 255x255.", AlertType.ERROR);
+                FXUtils.makePopUp("The collision grid cannot go larger than 255x255.", AlertType.ERROR);
                 return;
             }
 
@@ -220,7 +221,7 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
     @SneakyThrows
     private void exportToObj(ActionEvent event) {
         // TODO: IMPLEMENT
-        Utils.makePopUp("Exporting to obj is not currently supported.", AlertType.ERROR);
+        FXUtils.makePopUp("Exporting to obj is not currently supported.", AlertType.ERROR);
         // TODO: FileUtils3D.exportMapToObj(getFile(), Utils.promptChooseDirectory(getGameInstance(), "Choose the directory to save the map to.", false));
     }
 }

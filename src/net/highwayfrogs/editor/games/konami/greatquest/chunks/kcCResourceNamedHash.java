@@ -4,7 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
@@ -12,7 +12,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInf
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -81,7 +81,7 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         for (HashTableEntry hashTableEntry : this.entries) {
             builder.append(padding).append(" - '").append(hashTableEntry.getKeyName()).append("'/")
-                    .append(Utils.to0PrefixedHexString(hashTableEntry.getKeyHash())).append(" -> ")
+                    .append(NumberUtils.to0PrefixedHexString(hashTableEntry.getKeyHash())).append(" -> ")
                     .append(hashTableEntry.getValueRef())
                     .append(Constants.NEWLINE);
         }
@@ -93,7 +93,7 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
         propertyList.add("Entries", this.entries.size());
         for (int i = 0; i < this.entries.size(); i++) {
             HashTableEntry entry = this.entries.get(i);
-            propertyList.add(entry.getKeyName() + " (" + Utils.to0PrefixedHexString(entry.getKeyHash()) + ")", entry.getValueRef().getDisplayString(false));
+            propertyList.add(entry.getKeyName() + " (" + NumberUtils.to0PrefixedHexString(entry.getKeyHash()) + ")", entry.getValueRef().getDisplayString(false));
         }
 
         return propertyList;
@@ -122,7 +122,7 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
             // Validate key.
             int ourHash = getKeyHash();
             if (ourHash != originalKeyHash)
-                throw new IllegalArgumentException("The kcCResourceNamedHash read an entry for key '" + this.keyName + "' with hash " + Utils.to0PrefixedHexString(originalKeyHash) + ". However, the key actually hashes to " + Utils.to0PrefixedHexString(ourHash) + ".");
+                throw new IllegalArgumentException("The kcCResourceNamedHash read an entry for key '" + this.keyName + "' with hash " + NumberUtils.to0PrefixedHexString(originalKeyHash) + ". However, the key actually hashes to " + NumberUtils.to0PrefixedHexString(ourHash) + ".");
 
             // Resolve value.
             GreatQuestUtils.resolveResourceHash(kcCActionSequence.class, this.parentHashTable, this.valueRef, valueHash, false);

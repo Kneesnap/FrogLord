@@ -21,6 +21,9 @@ import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -65,7 +68,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
             "Those games will need to be extracted first with other software such as ISOBuster, PowerISO, etc.",
             "Once all the information is ready, press the 'Load' button to load the game data.");
 
-    private static final URL FXML_TEMPLATE_URL = Utils.getResourceURL("fxml/window-load-game.fxml");
+    private static final URL FXML_TEMPLATE_URL = FileUtils.getResourceURL("fxml/window-load-game.fxml");
     private static final FXMLLoader FXML_TEMPLATE_LOADER = new FXMLLoader(FXML_TEMPLATE_URL);
 
     public GameConfigController(Config gameConfigRoot) {
@@ -87,7 +90,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
         // Load previously active gameType.
         ConfigValueNode gameTypeNode = this.gameConfigRoot.getOptionalKeyValueNode(CONFIG_ROOT_LAST_SELECTED_GAME_TYPE);
         String gameTypeIdentifier = gameTypeNode != null ? gameTypeNode.getAsString() : null;
-        if (!Utils.isNullOrWhiteSpace(gameTypeIdentifier)) {
+        if (!StringUtils.isNullOrWhiteSpace(gameTypeIdentifier)) {
             for (int i = 0; i < Constants.getGameTypes().size(); i++) {
                 IGameType gameType = Constants.getGameTypes().get(i);
                 if (Objects.equals(gameTypeIdentifier, gameType.getIdentifier())) {
@@ -119,8 +122,8 @@ public class GameConfigController extends GameUIController<GameInstance> {
         String gameVersion = this.selectedVersionConfigName;
 
         // Failsafe.
-        if (gameType == null || Utils.isNullOrWhiteSpace(gameVersion) || this.activeConfigController == null || this.activeConfigController.isLoadButtonDisabled()) {
-            Utils.makePopUp("Cannot load game without being fully configured!", AlertType.ERROR);
+        if (gameType == null || StringUtils.isNullOrWhiteSpace(gameVersion) || this.activeConfigController == null || this.activeConfigController.isLoadButtonDisabled()) {
+            FXUtils.makePopUp("Cannot load game without being fully configured!", AlertType.ERROR);
             return;
         }
 
@@ -207,7 +210,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
         Config lastVersionConfig = gameConfig.getChildConfigByName(newVersionConfig.getInternalName());
         ConfigValueNode lastFolderPathAccessedNode = lastVersionConfig != null ? lastVersionConfig.getOptionalKeyValueNode(CONFIG_GAME_LAST_FOLDER) : null;
         String lastFolderPathAccessed = lastFolderPathAccessedNode != null ? lastFolderPathAccessedNode.getAsString() : null;
-        if (!Utils.isNullOrWhiteSpace(lastFolderPathAccessed)) {
+        if (!StringUtils.isNullOrWhiteSpace(lastFolderPathAccessed)) {
             File testFolder = new File(lastFolderPathAccessed);
             if (testFolder.isDirectory())
                 GUIMain.setWorkingDirectory(testFolder);
@@ -283,7 +286,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
         // Load the last selected version of a game, if there is one.
         ConfigValueNode lastVersionNode = perGameConfig.getOptionalKeyValueNode(CONFIG_GAME_LAST_SELECTED_VERSION);
         String lastVersion = lastVersionNode != null ? lastVersionNode.getAsString() : null;
-        if (Utils.isNullOrWhiteSpace(lastVersion))
+        if (StringUtils.isNullOrWhiteSpace(lastVersion))
             return this.unknownGameConfig; // Don't know the version yet!
 
         return perGameConfig.getOrCreateChildConfigByName(lastVersion);

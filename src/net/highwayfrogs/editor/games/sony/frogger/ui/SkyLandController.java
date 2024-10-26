@@ -8,7 +8,7 @@ import javafx.scene.image.ImageView;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.file.FroggerSkyLand;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -49,12 +49,12 @@ public class SkyLandController extends SCFileEditorUIController<FroggerGameInsta
         this.previewImage.setDisable(!hasImage);
         this.exportButton.setDisable(!hasImage);
         if (hasImage)
-            this.previewImage.setImage(Utils.toFXImage(this.image, false));
+            this.previewImage.setImage(FXUtils.toFXImage(this.image, false));
     }
 
     @FXML
     private void actionExport(ActionEvent evt) throws IOException {
-        File file = Utils.promptFileSave(getGameInstance(), "Save the sky backdrop.", "sky_land", "Image File", "png");
+        File file = FXUtils.promptFileSave(getGameInstance(), "Save the sky backdrop.", "sky_land", "Image File", "png");
         if (file != null)
             ImageIO.write(this.image, "png", file);
     }

@@ -18,7 +18,8 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshUIManager;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Seems to be a new / slightly changed collprim.
@@ -47,13 +48,13 @@ public abstract class PTCollprim extends SCSharedGameData implements ICollprim {
 
     @Override
     public void load(DataReader reader) {
-        getLogger().info("Reading PTCollprim at " + Utils.toHexString(reader.getIndex())); // TODO: TOSS
+        getLogger().info("Reading PTCollprim at " + NumberUtils.toHexString(reader.getIndex())); // TODO: TOSS
         this.type = CollprimType.values()[reader.readInt()];
         this.flags = reader.readShort();
-        this.xLength = Utils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4);
-        this.yLength = Utils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4);
-        this.zLength = Utils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4);
-        this.radiusSquared = Utils.fixedPointIntToFloatNBits(reader.readInt(), 8); // 8 bits are used because multiplying two fixed point numbers together increases the position of the radius.
+        this.xLength = DataUtils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4);
+        this.yLength = DataUtils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4);
+        this.zLength = DataUtils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4);
+        this.radiusSquared = DataUtils.fixedPointIntToFloatNBits(reader.readInt(), 8); // 8 bits are used because multiplying two fixed point numbers together increases the position of the radius.
         this.offset.loadWithPadding(reader);
         setRawMatrixValue(reader, reader.readInt());
     }
@@ -62,10 +63,10 @@ public abstract class PTCollprim extends SCSharedGameData implements ICollprim {
     public void save(DataWriter writer) {
         writer.writeInt(this.type != null ? this.type.ordinal() : CollprimType.CUBOID.ordinal());
         writer.writeShort(updateFlags());
-        writer.writeUnsignedShort(Utils.floatToFixedPointInt4Bit(this.xLength));
-        writer.writeUnsignedShort(Utils.floatToFixedPointInt4Bit(this.yLength));
-        writer.writeUnsignedShort(Utils.floatToFixedPointInt4Bit(this.zLength));
-        writer.writeInt(Utils.floatToFixedPointInt(this.radiusSquared, 8));
+        writer.writeUnsignedShort(DataUtils.floatToFixedPointInt4Bit(this.xLength));
+        writer.writeUnsignedShort(DataUtils.floatToFixedPointInt4Bit(this.yLength));
+        writer.writeUnsignedShort(DataUtils.floatToFixedPointInt4Bit(this.zLength));
+        writer.writeInt(DataUtils.floatToFixedPointInt(this.radiusSquared, 8));
         this.offset.saveWithPadding(writer);
         writeRawMatrixValue(writer);
     }
@@ -177,14 +178,14 @@ public abstract class PTCollprim extends SCSharedGameData implements ICollprim {
 
         // Flags
         grid.addSeparator();
-        Label flagLabel = grid.addLabel("Flags", Utils.toHexString(this.flags));
+        Label flagLabel = grid.addLabel("Flags", NumberUtils.toHexString(this.flags));
         grid.addCheckBox("Enable Bounding", testFlag(FLAG_BOUNDING_ENABLED), newValue -> {
             setFlag(FLAG_BOUNDING_ENABLED, newValue);
-            flagLabel.setText(Utils.toHexString(updateFlags()));
+            flagLabel.setText(NumberUtils.toHexString(updateFlags()));
         });
         grid.addCheckBox("Enable Collision", testFlag(FLAG_COLLISION_ENABLED), newValue -> {
             setFlag(FLAG_COLLISION_ENABLED, newValue);
-            flagLabel.setText(Utils.toHexString(updateFlags()));
+            flagLabel.setText(NumberUtils.toHexString(updateFlags()));
         });
 
         // Shape data

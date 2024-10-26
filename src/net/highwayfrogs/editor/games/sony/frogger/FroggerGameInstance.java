@@ -34,6 +34,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerFlyScoreType;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketHeader;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerGridSquareFlagTester;
+import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerVersionComparison;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
@@ -42,7 +43,8 @@ import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewCom
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
-import net.highwayfrogs.editor.utils.FroggerVersionComparison;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -105,7 +107,7 @@ public class FroggerGameInstance extends SCGameInstance {
     public SCGameFile<?> createFile(MWIResourceEntry resourceEntry, byte[] fileData) {
         if (resourceEntry.getTypeId() == FILE_TYPE_ANY && resourceEntry.getDisplayName().startsWith(Constants.SKY_LAND_PREFIX)) {
             return new FroggerSkyLand(this);
-        } else if ((resourceEntry.getTypeId() == FILE_TYPE_ANY && resourceEntry.hasExtension("map")) || Utils.testSignature(fileData, FroggerMapFilePacketHeader.IDENTIFIER)) {
+        } else if ((resourceEntry.getTypeId() == FILE_TYPE_ANY && resourceEntry.hasExtension("map")) || DataUtils.testSignature(fileData, FroggerMapFilePacketHeader.IDENTIFIER)) {
             return new FroggerMapFile(this, resourceEntry);
         } else if (resourceEntry.getTypeId() == FILE_TYPE_PAL || resourceEntry.hasExtension("pal")) {
             return new FroggerPaletteFile(this);
@@ -597,8 +599,8 @@ public class FroggerGameInstance extends SCGameInstance {
             if (demoEntry == null)
                 return; // Couldn't find a demo by this name, so... skip.
 
-            byte[] levelId = Utils.toByteArray(MAPLevel.SUBURBIA1.ordinal());
-            byte[] demoId = Utils.toByteArray(demoEntry.getResourceId());
+            byte[] levelId = DataUtils.toByteArray(MAPLevel.SUBURBIA1.ordinal());
+            byte[] demoId = DataUtils.toByteArray(demoEntry.getResourceId());
 
             byte[] searchFor = new byte[levelId.length + demoId.length];
             System.arraycopy(levelId, 0, searchFor, 0, levelId.length);
@@ -611,7 +613,7 @@ public class FroggerGameInstance extends SCGameInstance {
             }
 
             getConfig().setDemoTableAddress(findIndex);
-            getLogger().info("Found the demo table address at " + Utils.toHexString(findIndex));
+            getLogger().info("Found the demo table address at " + NumberUtils.toHexString(findIndex));
         }
 
         reader.setIndex(getConfig().getDemoTableAddress());

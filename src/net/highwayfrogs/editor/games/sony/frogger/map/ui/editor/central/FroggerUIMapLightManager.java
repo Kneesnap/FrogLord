@@ -15,7 +15,7 @@ import net.highwayfrogs.editor.games.sony.shared.misc.MRLightType;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.ColorUtils;
 
 import java.util.List;
 
@@ -136,14 +136,14 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
         switch (light.getLightType()) {
             case AMBIENT:
                 AmbientLight ambLight = fxLight instanceof AmbientLight ? (AmbientLight) fxLight : new AmbientLight();
-                ambLight.setColor(Utils.fromBGR(light.getColor()));
+                ambLight.setColor(ColorUtils.fromBGR(light.getColor()));
                 fxLight = ambLight;
                 break;
 
             case PARALLEL:
                 // IMPORTANT! JavaFX does NOT support parallel (directional) lights [AndyEder]
                 PointLight parallelLight = fxLight instanceof PointLight ? (PointLight) fxLight : new PointLight();
-                parallelLight.setColor(Utils.fromBGR(light.getColor()));
+                parallelLight.setColor(ColorUtils.fromBGR(light.getColor()));
                 // Use direction as a vector to set a position to simulate a parallel light as best as we can
                 parallelLight.setTranslateX(-light.getDirection().getFloatX(12) * 1024);
                 parallelLight.setTranslateY(-light.getDirection().getFloatY(12) * 1024);
@@ -153,7 +153,7 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
 
             case POINT: // Point lights are not used.
                 PointLight pointLight = fxLight instanceof PointLight ? (PointLight) fxLight : new PointLight();
-                pointLight.setColor(Utils.fromBGR(light.getColor()));
+                pointLight.setColor(ColorUtils.fromBGR(light.getColor()));
                 // Assuming direction is position? Are POINT lights ever used? [AndyEder]
                 pointLight.setTranslateX(light.getDirection().getFloatX());
                 pointLight.setTranslateY(light.getDirection().getFloatY());
@@ -189,7 +189,7 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
                 return this.colorPreviewImage;
 
             this.lastColorPreviewColorValue = this.mapLight.getColor();
-            return this.colorPreviewImage = Utils.makeColorImageNoCache(Utils.fromBGR(this.mapLight.getColor()), 8, 8);
+            return this.colorPreviewImage = ColorUtils.makeColorImageNoCache(ColorUtils.fromBGR(this.mapLight.getColor()), 8, 8);
         }
 
         /**

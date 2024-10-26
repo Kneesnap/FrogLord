@@ -9,7 +9,7 @@ import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk.IRwPlatformIndependentTexturePrefix;
 import net.highwayfrogs.editor.games.renderware.struct.types.RwStreamTexture;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Implements the texture stream chunk as seen in rtpitexd.c/rtpitexdTextureStreamReadPre
@@ -58,7 +58,7 @@ public class RwTextureChunk extends RwStreamChunk {
             propertyList.add("Name", this.name);
         if (this.mask != null && this.mask.trim().length() > 0)
             propertyList.add("Mask", this.mask);
-        propertyList.add("Flags", Utils.toHexString(this.texFiltAddr));
+        propertyList.add("Flags", NumberUtils.toHexString(this.texFiltAddr));
         return propertyList;
     }
 
@@ -67,7 +67,7 @@ public class RwTextureChunk extends RwStreamChunk {
         return super.getLoggerInfo()
                 + (this.name != null && this.name.trim().length() > 0 ? ",name='" + this.name + "'" : "")
                 + (this.mask != null && this.mask.trim().length() > 0 ? ",mask='" + this.mask + "'" : "")
-                + ",flags=" + Utils.toHexString(this.texFiltAddr);
+                + ",flags=" + NumberUtils.toHexString(this.texFiltAddr);
     }
 
     /**

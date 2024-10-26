@@ -9,7 +9,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquar
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquareFlag;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGrid;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
 
 import java.util.List;
 
@@ -119,7 +119,7 @@ public class FroggerGridSquareFlagTester extends SCGameObject<FroggerGameInstanc
                     short[][] gridFlags = formData.getGridFlags();
                     for (int z = 0; z < gridFlags.length; z++)
                         for (int x = 0; x < gridFlags[z].length; x++)
-                            formFlagTester.add(Utils.shortToUnsignedInt(gridFlags[z][x]));
+                            formFlagTester.add(DataUtils.shortToUnsignedInt(gridFlags[z][x]));
                 }
             }
         }

@@ -7,6 +7,8 @@ import net.highwayfrogs.editor.games.sony.beastwars.map.data.BeastWarsMapCollpri
 import net.highwayfrogs.editor.games.sony.beastwars.map.data.MapTextureInfoEntry;
 import net.highwayfrogs.editor.games.sony.shared.collprim.MRCollprim.CollprimType;
 import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
@@ -29,7 +31,7 @@ public class BeastWarsMapObjConverter {
      * @param map The map file to export to obj.
      */
     public static void exportMapToObj(BeastWarsMapFile map) {
-        String strippedName = Utils.stripExtension(map.getFileDisplayName());
+        String strippedName = FileUtils.stripExtension(map.getFileDisplayName());
         exportMapToObj(new File(GUIMain.getWorkingDirectory(), strippedName), strippedName, map);
     }
 
@@ -46,10 +48,10 @@ public class BeastWarsMapObjConverter {
         // Find the corresponding texture file.
         BeastWarsTexFile texFile = map.getTextureFile();
         if (texFile == null)
-            Utils.makePopUp("Couldn't find the associated .TEX file. Exporting anyways.", AlertType.WARNING);
+            FXUtils.makePopUp("Couldn't find the associated .TEX file. Exporting anyways.", AlertType.WARNING);
 
         // Create folder.
-        Utils.makeDirectory(folder);
+        FileUtils.makeDirectory(folder);
 
         // Setup textures by vertex list.
         List<Integer>[] verticesPerTexture = new ArrayList[BeastWarsTexFile.MAXIMUM_TEXTURE_COUNT + 1];

@@ -4,13 +4,13 @@ import lombok.Getter;
 import lombok.NonNull;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
@@ -41,7 +41,7 @@ public class kcCResourcePath extends GameData<GreatQuestInstance> implements IPr
 
         // Validations:
         if (fileNameHash != getFileNameHash() && Objects.equals(this.parentResource.getName(), getResourceName(this.parentResource.getHash())))
-            throw new RuntimeException("The resource path '" + this.filePath + "' was paired with hash " + Utils.to0PrefixedHexString(fileNameHash) + " but FrogLord thinks it should be " + Utils.to0PrefixedHexString(getFileNameHash()));
+            throw new RuntimeException("The resource path '" + this.filePath + "' was paired with hash " + NumberUtils.to0PrefixedHexString(fileNameHash) + " but FrogLord thinks it should be " + NumberUtils.to0PrefixedHexString(getFileNameHash()));
         String expectedResourceName = getResourceName(getFileName());
         if (expectedResourceName != null && !expectedResourceName.equals(this.parentResource.getName()))
             throw new RuntimeException("Expected kcCResourcePath to be named '" + expectedResourceName + "', but was actually named '" + this.parentResource.getName() + "'.");
@@ -108,6 +108,6 @@ public class kcCResourcePath extends GameData<GreatQuestInstance> implements IPr
     }
 
     private static String getResourceName(int fileNameHash) {
-        return "respath-0x" + Utils.to0PrefixedHexStringLower(fileNameHash); // The padding is confirmed to occur by referencing Level18JoyTowers 'respath-0x0307826a'.
+        return "respath-0x" + NumberUtils.to0PrefixedHexStringLower(fileNameHash); // The padding is confirmed to occur by referencing Level18JoyTowers 'respath-0x0307826a'.
     }
 }

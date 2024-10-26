@@ -12,7 +12,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestGameFile;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,12 +33,12 @@ public class GreatQuestMainMenuUIController extends MainMenuController<GreatQues
 
         // Allow exporting MWI.
         addMenuItem(this.menuBarFile, "Export Files", () -> { // TODO: Make this use the progress bar later.
-            File exportFolder = Utils.promptChooseDirectory(getGameInstance(), "Choose the folder to export files into...", true);
+            File exportFolder = FXUtils.promptChooseDirectory(getGameInstance(), "Choose the folder to export files into...", true);
             if (exportFolder == null)
                 return; // Cancel.
 
             File exportDir = new File(exportFolder, "Export");
-            Utils.makeDirectory(exportDir);
+            FileUtils.makeDirectory(exportDir);
 
             try {
                 GreatQuestAssetBinFile.exportFileList(exportDir, getMainArchive());
@@ -81,7 +82,7 @@ public class GreatQuestMainMenuUIController extends MainMenuController<GreatQues
 
     protected static MenuItem addMenuItem(Menu menuBar, String title, Runnable action) {
         MenuItem menuItem = new MenuItem(title);
-        menuItem.setOnAction(event -> Utils.reportErrorIfFails(action));
+        menuItem.setOnAction(event -> FXUtils.reportErrorIfFails(action));
         menuBar.getItems().add(menuItem);
         return menuItem;
     }

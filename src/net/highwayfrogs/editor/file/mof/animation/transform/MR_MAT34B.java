@@ -5,7 +5,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
 
 /**
  * Represents the "MR_MAT34B" transformation struct.
@@ -46,7 +46,7 @@ public class MR_MAT34B extends TransformObject {
 
         for (int i = 0; i < getMatrix().length; i++) {
             for (int j = 0; j < getMatrix()[i].length; j++) {
-                float floatVal = Utils.fixedPointShortToFloat12Bit(matrix.getMatrix()[i][j]) * 128.0F;
+                float floatVal = DataUtils.fixedPointShortToFloat12Bit(matrix.getMatrix()[i][j]) * 128.0F;
                 getMatrix()[i][j] = (byte) (Math.max(-128.0F, Math.min(127.0F, floatVal)));
             }
         }

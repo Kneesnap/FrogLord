@@ -1,12 +1,12 @@
-package net.highwayfrogs.editor.utils;
+package net.highwayfrogs.editor.utils.objects;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 
 import java.util.Arrays;
 
 /**
- * Tracks any number of bit flags, and whether or not they are set.
- * TODO: Make this a standalone class bundled in MTF.
+ * Tracks any number of bit flags, and whether they are set.
  * Created by Kneesnap on 2/25/2022.
  */
 public class FlagTracker {
@@ -28,11 +28,11 @@ public class FlagTracker {
         }
 
         this.flagSlots = numOfFlags;
-        this.bytes = new byte[(numOfFlags / 8) + (numOfFlags % 8 > 0 ? 1 : 0)];
+        this.bytes = new byte[(numOfFlags / Constants.BITS_PER_BYTE) + (numOfFlags % Constants.BITS_PER_BYTE > 0 ? 1 : 0)];
     }
 
     /**
-     * Updates whether or not a particular flag is set.
+     * Updates whether a particular flag is set.
      * @param flag     The flag to set the state for.
      * @param newState The new state to apply.
      */
@@ -44,10 +44,10 @@ public class FlagTracker {
         if (oldState == newState)
             return;
 
-        int index = flag / 8;
-        int bit = flag % 8;
+        int index = flag / Constants.BITS_PER_BYTE;
+        int bit = flag % Constants.BITS_PER_BYTE;
         if (newState) {
-            this.bytes[index] |= (1 << bit);
+            this.bytes[index] |= (byte) (1 << bit);
             this.activeFlagCount++;
 
             if (flag > this.maxFlag/* || this.maxFlag == -1*/)
@@ -55,7 +55,7 @@ public class FlagTracker {
             if (flag < this.minFlag || this.minFlag == -1)
                 this.minFlag = flag;
         } else {
-            this.bytes[index] &= ~(1 << bit);
+            this.bytes[index] &= (byte) ~(1 << bit);
             this.activeFlagCount--;
 
             if (flag == this.maxFlag) {
@@ -89,8 +89,8 @@ public class FlagTracker {
         if (flag < 0 || flag >= this.flagSlots)
             return false;
 
-        int index = flag / 8;
-        int bit = flag % 8;
+        int index = flag / Constants.BITS_PER_BYTE;
+        int bit = flag % Constants.BITS_PER_BYTE;
         return (this.bytes[index] & (1 << bit)) == (1 << bit);
     }
 

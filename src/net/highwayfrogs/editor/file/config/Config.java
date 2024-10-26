@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.config;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.InputStream;
@@ -27,11 +28,11 @@ public class Config {
     public static final String CHILD_CLOSE_TAG = "]";
 
     public Config(InputStream stream) {
-        this(Utils.readLinesFromStream(stream));
+        this(FileUtils.readLinesFromStream(stream));
     }
 
     public Config(InputStream stream, String name) {
-        this(Utils.readLinesFromStream(stream), name, 0);
+        this(FileUtils.readLinesFromStream(stream), name, 0);
     }
 
     public Config(List<String> lines) {

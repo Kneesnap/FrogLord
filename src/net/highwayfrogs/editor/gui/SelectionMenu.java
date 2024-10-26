@@ -20,7 +20,7 @@ import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,7 +41,7 @@ public class SelectionMenu {
      * @param handler The behavior to execute when the user accepts.
      */
     public static <T> void promptSelection(GameInstance instance, String prompt, Consumer<T> handler, Collection<T> values, Function<T, String> nameFunction, Function<T, Image> imageFunction) {
-        Utils.createWindowFromFXMLTemplate("window-wait-for-user-select", new SelectionController<>(instance, prompt, handler, values, nameFunction, imageFunction, false), "Waiting for selection...", true);
+        FXUtils.createWindowFromFXMLTemplate("window-wait-for-user-select", new SelectionController<>(instance, prompt, handler, values, nameFunction, imageFunction, false), "Waiting for selection...", true);
     }
 
     /**
@@ -50,7 +50,7 @@ public class SelectionMenu {
      * @param handler The behavior to execute when the user accepts.
      */
     public static <T> void promptSelectionAllowNull(GameInstance instance, String prompt, Consumer<T> handler, Collection<T> values, Function<T, String> nameFunction, Function<T, Image> imageFunction) {
-        Utils.createWindowFromFXMLTemplate("window-wait-for-user-select", new SelectionController<>(instance, prompt, handler, values, nameFunction, imageFunction, true), "Waiting for selection...", false);
+        FXUtils.createWindowFromFXMLTemplate("window-wait-for-user-select", new SelectionController<>(instance, prompt, handler, values, nameFunction, imageFunction, true), "Waiting for selection...", false);
     }
 
     /**

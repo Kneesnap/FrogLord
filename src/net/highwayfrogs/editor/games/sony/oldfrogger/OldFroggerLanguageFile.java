@@ -10,7 +10,7 @@ import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -63,7 +63,7 @@ public class OldFroggerLanguageFile extends SCGameFile<OldFroggerGameInstance> {
                 if (newValue == null)
                     return null;
                 if (newValue.length() >= FIXED_STRING_LENGTH) {
-                    Utils.makePopUp("The string provided is too long.", AlertType.ERROR);
+                    FXUtils.makePopUp("The string provided is too long.", AlertType.ERROR);
                     return null;
                 }
 

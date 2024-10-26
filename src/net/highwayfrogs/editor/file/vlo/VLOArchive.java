@@ -14,6 +14,7 @@ import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
@@ -146,7 +147,7 @@ public class VLOArchive extends SCSharedGameFile {
     @Override
     @SneakyThrows
     public void exportAlternateFormat() {
-        ImageIO.write(makeVRAMImage(), "png", new File(GUIMain.getWorkingDirectory(), Utils.stripExtension(getFileDisplayName()) + ".png"));
+        ImageIO.write(makeVRAMImage(), "png", new File(GUIMain.getWorkingDirectory(), FileUtils.stripExtension(getFileDisplayName()) + ".png"));
         System.out.println("Exported VRAM Image.");
     }
 

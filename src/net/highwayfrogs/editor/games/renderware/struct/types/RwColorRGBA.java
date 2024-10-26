@@ -9,7 +9,8 @@ import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.struct.RwStruct;
 import net.highwayfrogs.editor.games.renderware.struct.RwStructType;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.ColorUtils;
+import net.highwayfrogs.editor.utils.DataUtils;
 
 /**
  * Represents RwRGBA defined in bacolor.h
@@ -57,7 +58,7 @@ public class RwColorRGBA extends RwStruct {
 
     @Override
     public String toString() {
-        int colorRGBA = Utils.readIntFromBytes(Utils.reverseByteArray(Utils.toByteArray(this.colorABGR)), 0);
+        int colorRGBA = DataUtils.readIntFromBytes(DataUtils.reverseByteArray(DataUtils.toByteArray(this.colorABGR)), 0);
         return "RwColorRGBA{" + Integer.toString(colorRGBA).toUpperCase() + "}";
     }
 
@@ -75,35 +76,35 @@ public class RwColorRGBA extends RwStruct {
      * Returns the red color component as a byte value.
      */
     public byte getRed() {
-        return Utils.getBlue(this.colorABGR); // Get the blue component since Utils.getBlue() assumes ARGB format, but we're providing ABGR.
+        return ColorUtils.getBlue(this.colorABGR); // Get the blue component since Utils.getBlue() assumes ARGB format, but we're providing ABGR.
     }
 
     /**
      * Returns the green color component as a byte value.
      */
     public byte getGreen() {
-        return Utils.getGreen(this.colorABGR);
+        return ColorUtils.getGreen(this.colorABGR);
     }
 
     /**
      * Returns the blue color component as a byte value.
      */
     public byte getBlue() {
-        return Utils.getRed(this.colorABGR); // Get the red component since Utils.getRed() assumes ARGB format, but we're providing ABGR.
+        return ColorUtils.getRed(this.colorABGR); // Get the red component since Utils.getRed() assumes ARGB format, but we're providing ABGR.
     }
 
     /**
      * Returns the alpha color component as a byte value.
      */
     public byte getAlpha() {
-        return Utils.getAlpha(this.colorABGR);
+        return ColorUtils.getAlpha(this.colorABGR);
     }
 
     /**
      * Gets the color as an ARGB integer.
      */
     public int getColorARGB() {
-        return Utils.swapRedBlue(this.colorABGR);
+        return ColorUtils.swapRedBlue(this.colorABGR);
     }
 
     /**
@@ -111,6 +112,6 @@ public class RwColorRGBA extends RwStruct {
      * @param colorARGB the ARGB value to apply
      */
     public void setColorARGB(int colorARGB) {
-        this.colorABGR = Utils.swapRedBlue(colorARGB);
+        this.colorABGR = ColorUtils.swapRedBlue(colorARGB);
     }
 }

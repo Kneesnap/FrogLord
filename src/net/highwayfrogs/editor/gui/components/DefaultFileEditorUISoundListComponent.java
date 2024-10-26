@@ -11,13 +11,13 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
-import net.highwayfrogs.editor.games.generic.GameObject;
+import net.highwayfrogs.editor.games.generic.data.GameObject;
 import net.highwayfrogs.editor.gui.DefaultFileUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
 import net.highwayfrogs.editor.gui.components.DefaultFileEditorUISoundListComponent.IBasicSoundList;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineEvent.Type;
@@ -42,7 +42,7 @@ public class DefaultFileEditorUISoundListComponent<TGameInstance extends GameIns
         if (event.getType() != Type.STOP || event.getSource() != this.activeAudioClip)
             return;
 
-        Utils.runOnFXThread(this::resetUIOnPlaybackStop);
+        FXUtils.runOnFXThread(this::resetUIOnPlaybackStop);
     };
 
     public DefaultFileEditorUISoundListComponent(TGameInstance instance) {

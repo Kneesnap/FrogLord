@@ -5,10 +5,10 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Represents the kcHealthDesc struct.
@@ -43,6 +43,6 @@ public class kcHealthDesc extends GameData<GreatQuestInstance> implements IMulti
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         builder.append(padding).append("Durability: ").append(this.durability).append(Constants.NEWLINE);
         builder.append(padding).append("Start Health: ").append(this.startHealth).append(Constants.NEWLINE);
-        builder.append(padding).append("Immune Mask: ").append(Utils.toHexString(this.immuneMask)).append(Constants.NEWLINE);
+        builder.append(padding).append("Immune Mask: ").append(NumberUtils.toHexString(this.immuneMask)).append(Constants.NEWLINE);
     }
 }

@@ -18,6 +18,9 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.InputMenu;
+import net.highwayfrogs.editor.utils.ColorUtils;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
@@ -111,7 +114,7 @@ public class PSXColorVector extends GameObject {
      * @return javaColor
      */
     public Color toColor(byte alpha) {
-        return new Color(Utils.byteToUnsignedShort(getRed()), Utils.byteToUnsignedShort(getGreen()), Utils.byteToUnsignedShort(getBlue()), (alpha & 0xFF));
+        return new Color(DataUtils.byteToUnsignedShort(getRed()), DataUtils.byteToUnsignedShort(getGreen()), DataUtils.byteToUnsignedShort(getBlue()), (alpha & 0xFF));
     }
 
     /**
@@ -119,7 +122,7 @@ public class PSXColorVector extends GameObject {
      * @return rgbValue
      */
     public int toShadeRGB() {
-        return Utils.toRGB(getShadingRed(), getShadingGreen(), getShadingBlue());
+        return ColorUtils.toRGB(getShadingRed(), getShadingGreen(), getShadingBlue());
     }
 
     /**
@@ -127,7 +130,7 @@ public class PSXColorVector extends GameObject {
      * @return rgbValue
      */
     public int toRGB() {
-        return Utils.toRGB(getRed(), getGreen(), getBlue());
+        return ColorUtils.toRGB(getRed(), getGreen(), getBlue());
     }
 
     /**
@@ -135,7 +138,7 @@ public class PSXColorVector extends GameObject {
      * @return rgbValue
      */
     public int toFullRGB() {
-        return Utils.toRGB((byte) (getRed() * 2), (byte) (getGreen() * 2), (byte) (getBlue() * 2));
+        return ColorUtils.toRGB((byte) (getRed() * 2), (byte) (getGreen() * 2), (byte) (getBlue() * 2));
     }
 
     /**
@@ -143,9 +146,9 @@ public class PSXColorVector extends GameObject {
      * @param rgbValue The value to read from.
      */
     public void fromRGB(int rgbValue) {
-        this.red = Utils.unsignedShortToByte((short) ((rgbValue >> 16) & 0xFF));
-        this.green = Utils.unsignedShortToByte((short) ((rgbValue >> 8) & 0xFF));
-        this.blue = Utils.unsignedShortToByte((short) (rgbValue & 0xFF));
+        this.red = DataUtils.unsignedShortToByte((short) ((rgbValue >> 16) & 0xFF));
+        this.green = DataUtils.unsignedShortToByte((short) ((rgbValue >> 8) & 0xFF));
+        this.blue = DataUtils.unsignedShortToByte((short) (rgbValue & 0xFF));
     }
 
     /**
@@ -187,13 +190,13 @@ public class PSXColorVector extends GameObject {
         VBox greenBox = new VBox();
         VBox blueBox = new VBox();
 
-        Slider redSlider = new Slider(0D, fullRange ? 255D : 127D, Utils.byteToUnsignedShort(getRed()));
+        Slider redSlider = new Slider(0D, fullRange ? 255D : 127D, DataUtils.byteToUnsignedShort(getRed()));
         redSlider.setBlockIncrement(1);
         redSlider.setMinorTickCount(1);
         redSlider.setSnapToTicks(true);
         redSlider.valueProperty().addListener(((observable, oldValue, newValue) -> {
             if (fullRange) {
-                setRed(Utils.unsignedShortToByte((short) (double) newValue));
+                setRed(DataUtils.unsignedShortToByte((short) (double) newValue));
             } else {
                 setRed((byte) (int) (double) newValue);
             }
@@ -202,13 +205,13 @@ public class PSXColorVector extends GameObject {
                 onUpdate.run();
         }));
 
-        Slider greenSlider = new Slider(0D, fullRange ? 255D : 127D, Utils.byteToUnsignedShort(getGreen()));
+        Slider greenSlider = new Slider(0D, fullRange ? 255D : 127D, DataUtils.byteToUnsignedShort(getGreen()));
         greenSlider.setBlockIncrement(1);
         greenSlider.setMinorTickCount(1);
         greenSlider.setSnapToTicks(true);
         greenSlider.valueProperty().addListener(((observable, oldValue, newValue) -> {
             if (fullRange) {
-                setGreen(Utils.unsignedShortToByte((short) (double) newValue));
+                setGreen(DataUtils.unsignedShortToByte((short) (double) newValue));
             } else {
                 setGreen((byte) (int) (double) newValue);
             }
@@ -217,13 +220,13 @@ public class PSXColorVector extends GameObject {
                 onUpdate.run();
         }));
 
-        Slider blueSlider = new Slider(0D, fullRange ? 255D : 127D, Utils.byteToUnsignedShort(getBlue()));
+        Slider blueSlider = new Slider(0D, fullRange ? 255D : 127D, DataUtils.byteToUnsignedShort(getBlue()));
         blueSlider.setBlockIncrement(1);
         blueSlider.setMinorTickCount(1);
         blueSlider.setSnapToTicks(true);
         blueSlider.valueProperty().addListener(((observable, oldValue, newValue) -> {
             if (fullRange) {
-                setBlue(Utils.unsignedShortToByte((short) (double) newValue));
+                setBlue(DataUtils.unsignedShortToByte((short) (double) newValue));
             } else {
                 setBlue((byte) (int) (double) newValue);
             }
@@ -245,33 +248,33 @@ public class PSXColorVector extends GameObject {
             graphics.dispose();
         }
 
-        ImageView preview = new ImageView(Utils.toFXImage(applyImage, false));
+        ImageView preview = new ImageView(FXUtils.toFXImage(applyImage, false));
         preview.setOnMouseClicked(evt ->
                 InputMenu.promptInput(null, "Please enter the color value you'd like to use.", Integer.toHexString(toRGB()), newText -> {
                     int colorRGB;
                     try {
                         colorRGB = Integer.parseInt(newText, 16);
                     } catch (NumberFormatException nfe) {
-                        Utils.makePopUp("'" + newText + "' is not a valid hex number.", AlertType.ERROR);
+                        FXUtils.makePopUp("'" + newText + "' is not a valid hex number.", AlertType.ERROR);
                         return;
                     }
 
                     if ((colorRGB & 0b100000001000000010000000) != 0) {
-                        Utils.makePopUp("Each value may not exceed $7F (127). Try Again.", AlertType.ERROR);
+                        FXUtils.makePopUp("Each value may not exceed $7F (127). Try Again.", AlertType.ERROR);
                         return;
                     }
 
                     fromRGB(colorRGB);
-                    redSlider.setValue(Utils.byteToUnsignedShort(getRed()));
-                    greenSlider.setValue(Utils.byteToUnsignedShort(getGreen()));
-                    blueSlider.setValue(Utils.byteToUnsignedShort(getBlue()));
+                    redSlider.setValue(DataUtils.byteToUnsignedShort(getRed()));
+                    greenSlider.setValue(DataUtils.byteToUnsignedShort(getGreen()));
+                    blueSlider.setValue(DataUtils.byteToUnsignedShort(getBlue()));
                     imageUpdate[0].run();
                     if (onUpdate != null)
                         onUpdate.run();
                 }));
 
         imageUpdate[0] = () ->
-                preview.setImage(Utils.toFXImage(makeFlatShadedTexture(applyImage, Utils.fromRGB(toRGB()), fullRange), false));
+                preview.setImage(FXUtils.toFXImage(makeFlatShadedTexture(applyImage, ColorUtils.fromRGB(toRGB()), fullRange), false));
         imageUpdate[0].run();
 
         previewBox.getChildren().addAll(labelFont(label, useFont), preview);
@@ -296,15 +299,15 @@ public class PSXColorVector extends GameObject {
      * @return shadedTexture
      */
     private static BufferedImage makeFlatShadedTexture(BufferedImage applyImage, javafx.scene.paint.Color color, boolean fullRange) {
-        int overlay = Utils.toRGB(color);
+        int overlay = ColorUtils.toRGB(color);
         BufferedImage newImage = new BufferedImage(applyImage.getWidth(), applyImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
         for (int x = 0; x < newImage.getWidth(); x++) {
             for (int y = 0; y < newImage.getHeight(); y++) {
                 int rgb = applyImage.getRGB(x, y);
                 int alpha = (rgb & 0xFF000000) >> 24;
-                int red = (int) (((double) Utils.getRedInt(overlay) / (fullRange ? 255D : 127D)) * (double) Utils.getRedInt(rgb));
-                int green = (int) (((double) Utils.getGreenInt(overlay) / (fullRange ? 255D : 127D)) * (double) Utils.getGreenInt(rgb));
-                int blue = (int) (((double) Utils.getBlueInt(overlay) / (fullRange ? 255D : 127D)) * (double) Utils.getBlueInt(rgb));
+                int red = (int) (((double) ColorUtils.getRedInt(overlay) / (fullRange ? 255D : 127D)) * (double) ColorUtils.getRedInt(rgb));
+                int green = (int) (((double) ColorUtils.getGreenInt(overlay) / (fullRange ? 255D : 127D)) * (double) ColorUtils.getGreenInt(rgb));
+                int blue = (int) (((double) ColorUtils.getBlueInt(overlay) / (fullRange ? 255D : 127D)) * (double) ColorUtils.getBlueInt(rgb));
                 newImage.setRGB(x, y, ((alpha << 24) | ((red & 0xFF) << 16) | ((green & 0xFF) << 8) | (blue & 0xFF)));
             }
         }

@@ -9,7 +9,8 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankBodyEntry;
 import net.highwayfrogs.editor.games.sony.shared.sound.body.SCWindowsRetailSoundBankBody.SCWindowsSoundBodyEntry;
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCWindowsSoundBankHeader.SCWindowsSoundBankHeaderEntry;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.AudioUtils;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -72,7 +73,7 @@ public class SCWindowsRetailSoundBankBody extends SCWindowsSoundBankBody<SCWindo
 
         @Override
         public void saveToImportableFile(File saveTo) throws IOException, LineUnavailableException {
-            Utils.saveRawAudioDataToWavFile(saveTo, getAudioClip(), getRawAudioPlaybackData());
+            AudioUtils.saveRawAudioDataToWavFile(saveTo, getAudioClip(), getRawAudioPlaybackData());
         }
 
         @Override
@@ -81,7 +82,7 @@ public class SCWindowsRetailSoundBankBody extends SCWindowsSoundBankBody<SCWindo
 
             String errorMessage;
             if ((errorMessage = getAudioFormat().applyAudioFormat(inputStream.getFormat())) != null) {
-                Utils.makePopUp(errorMessage, AlertType.ERROR);
+                FXUtils.makePopUp(errorMessage, AlertType.ERROR);
                 return; // Import failed.
             }
 

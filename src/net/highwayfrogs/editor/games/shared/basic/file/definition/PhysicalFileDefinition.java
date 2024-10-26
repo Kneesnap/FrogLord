@@ -2,11 +2,11 @@ package net.highwayfrogs.editor.games.shared.basic.file.definition;
 
 import lombok.Getter;
 import lombok.NonNull;
-import net.highwayfrogs.editor.games.generic.GameObject;
+import net.highwayfrogs.editor.games.generic.data.GameObject;
 import net.highwayfrogs.editor.games.shared.basic.BasicGameInstance;
 import net.highwayfrogs.editor.games.shared.basic.file.BasicGameFile;
 import net.highwayfrogs.editor.gui.components.CollectionTreeViewComponent.CollectionViewTreeNode;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ public class PhysicalFileDefinition extends GameObject<BasicGameInstance> implem
     @Override
     public String getFullFilePath() {
         if (this.cachedFullFilePath == null)
-            this.cachedFullFilePath = Utils.toLocalPath(getGameInstance().getMainGameFolder(), this.file, false);
+            this.cachedFullFilePath = FileUtils.toLocalPath(getGameInstance().getMainGameFolder(), this.file, false);
 
         return this.cachedFullFilePath;
     }

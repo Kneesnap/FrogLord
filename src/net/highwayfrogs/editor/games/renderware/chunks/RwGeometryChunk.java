@@ -11,7 +11,7 @@ import net.highwayfrogs.editor.games.renderware.struct.RwStructType;
 import net.highwayfrogs.editor.games.renderware.struct.types.*;
 import net.highwayfrogs.editor.games.renderware.struct.types.RpTriangle.IRwGeometryMesh;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -174,7 +174,7 @@ public class RwGeometryChunk extends RwStreamChunk implements IRwGeometryMesh {
     @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {
         propertyList = super.addToPropertyList(propertyList);
-        propertyList.add("Format Flags", Utils.toHexString(this.formatFlags));
+        propertyList.add("Format Flags", NumberUtils.toHexString(this.formatFlags));
         propertyList.add("Vertex Count", this.vertexCount);
         propertyList.add("Triangle Count", this.triangles.size());
         propertyList.add("Morph Target Set Count", this.morphTargets.size());
@@ -280,7 +280,7 @@ public class RwGeometryChunk extends RwStreamChunk implements IRwGeometryMesh {
         @Override
         public PropertyList addToPropertyList(PropertyList propertyList) {
             propertyList = super.addToPropertyList(propertyList);
-            propertyList.add("Format Flags", Utils.toHexString(this.formatFlags));
+            propertyList.add("Format Flags", NumberUtils.toHexString(this.formatFlags));
             propertyList.add("Triangle Count", this.triangleCount);
             propertyList.add("Vertex Count", this.vertexCount);
             propertyList.add("Morph Target Count", this.morphTargetCount);
@@ -289,7 +289,7 @@ public class RwGeometryChunk extends RwStreamChunk implements IRwGeometryMesh {
 
         @Override
         public String toString() {
-            return "RpGeometryChunkInfo{formatFlags=" + Utils.toHexString(this.formatFlags)
+            return "RpGeometryChunkInfo{formatFlags=" + NumberUtils.toHexString(this.formatFlags)
                     + ",triCount" + this.triangleCount + ",vtxCount=" + this.vertexCount
                     + ",morphTargetCount=" + this.morphTargetCount + "}";
         }

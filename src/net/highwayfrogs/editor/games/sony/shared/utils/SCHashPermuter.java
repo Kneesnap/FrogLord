@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.utils;
+package net.highwayfrogs.editor.games.sony.shared.utils;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.gui.extra.hash.FroggerHashUtil;

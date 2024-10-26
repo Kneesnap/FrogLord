@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.gui.components.FileOpenBrowseComponent.GameConfig
 import net.highwayfrogs.editor.gui.components.FolderBrowseComponent.GameConfigFolderBrowseComponent;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -44,7 +45,7 @@ public class AncientShadowGameType implements IGameType {
             throw new ClassCastException("The provided instance was " + Utils.getSimpleName(instance) + ", when " + AncientShadowInstance.class.getSimpleName() + " was required.");
 
         String mainFilePath = gameSetupConfig.getKeyValueNodeOrError(CONFIG_MAIN_FILE_PATH).getAsString();
-        if (Utils.isNullOrWhiteSpace(mainFilePath))
+        if (StringUtils.isNullOrWhiteSpace(mainFilePath))
             throw new IllegalArgumentException("Invalid mainFilePath.");
 
         File mainFile = new File(mainFilePath);
@@ -82,8 +83,8 @@ public class AncientShadowGameType implements IGameType {
 
         @Override
         public boolean isLoadButtonDisabled() {
-            return (this.binFileBrowseComponent != null && Utils.isNullOrWhiteSpace(this.binFileBrowseComponent.getCurrentFilePath()))
-                    || (this.folderBrowseComponent != null && Utils.isNullOrWhiteSpace(this.folderBrowseComponent.getCurrentFolderPath()));
+            return (this.binFileBrowseComponent != null && StringUtils.isNullOrWhiteSpace(this.binFileBrowseComponent.getCurrentFilePath()))
+                    || (this.folderBrowseComponent != null && StringUtils.isNullOrWhiteSpace(this.folderBrowseComponent.getCurrentFolderPath()));
         }
 
         @Override

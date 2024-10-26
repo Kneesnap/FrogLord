@@ -10,7 +10,7 @@ import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.games.renderware.chunks.RwFrameListChunk.RwStreamFrame;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.List;
 
@@ -66,7 +66,7 @@ public class RwAtomicChunk extends RwStreamChunk implements IRwStreamChunkWithEm
         propertyList = super.addToPropertyList(propertyList);
         propertyList.add("Frame Index", this.frameIndex);
         propertyList.add("Geometry Index", this.geometryIndex);
-        propertyList.add("Flags", Utils.toHexString(this.flags));
+        propertyList.add("Flags", NumberUtils.toHexString(this.flags));
         return propertyList;
     }
 

@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.gui.extra.hash.tree;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.gui.extra.hash.FroggerHashUtil;
-import net.highwayfrogs.editor.utils.FlagTracker;
+import net.highwayfrogs.editor.utils.objects.FlagTracker;
 
 import java.util.HashSet;
 import java.util.Set;

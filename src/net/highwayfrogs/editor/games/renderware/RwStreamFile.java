@@ -6,13 +6,15 @@ import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData.SharedGameData;
 import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.games.generic.data.GameData.SharedGameData;
 import net.highwayfrogs.editor.games.renderware.IRwStreamChunkType.RwStreamChunkTypeDisplayImportance;
 import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk.IRwPlatformIndependentTexturePrefix;
 import net.highwayfrogs.editor.games.renderware.chunks.RwWorldChunk;
 import net.highwayfrogs.editor.gui.ImageResource;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
@@ -96,7 +98,7 @@ public class RwStreamFile extends SharedGameData {
                     String baseName = entry.makeFileName(i);
                     int num = fileNameCountMap.computeIfAbsent(baseName, key -> new AtomicInteger()).getAndIncrement();
 
-                    Utils.makeDirectory(outputFolder);
+                    FileUtils.makeDirectory(outputFolder);
                     File imageOutputFile = new File(outputFolder, String.format("%s_%02d.png", baseName, num));
 
                     try {
@@ -153,8 +155,8 @@ public class RwStreamFile extends SharedGameData {
             return false;
 
         // int typeId; // Skipped
-        int chunkReadSize = Utils.readIntFromBytes(rawBytes, index + Constants.INTEGER_SIZE);
-        int version = Utils.readIntFromBytes(rawBytes, index + (2 * Constants.INTEGER_SIZE));
+        int chunkReadSize = DataUtils.readIntFromBytes(rawBytes, index + Constants.INTEGER_SIZE);
+        int version = DataUtils.readIntFromBytes(rawBytes, index + (2 * Constants.INTEGER_SIZE));
         return chunkReadSize >= 0 && RwVersion.doesVersionAppearValid(version);
     }
 
@@ -169,8 +171,8 @@ public class RwStreamFile extends SharedGameData {
         int readIndex = 0;
         while (rawBytes.length >= readIndex + HEADER_SIZE_IN_BYTES) {
             // int typeId; // Skipped
-            int chunkReadSize = Utils.readIntFromBytes(rawBytes, readIndex + Constants.INTEGER_SIZE);
-            int version = Utils.readIntFromBytes(rawBytes, readIndex + (2 * Constants.INTEGER_SIZE));
+            int chunkReadSize = DataUtils.readIntFromBytes(rawBytes, readIndex + Constants.INTEGER_SIZE);
+            int version = DataUtils.readIntFromBytes(rawBytes, readIndex + (2 * Constants.INTEGER_SIZE));
             readIndex += HEADER_SIZE_IN_BYTES;
 
             // Byte amount is less than zero or the version index appears invalid.

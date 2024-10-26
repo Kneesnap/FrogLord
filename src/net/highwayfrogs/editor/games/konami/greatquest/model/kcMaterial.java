@@ -5,10 +5,11 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestImageFile;
-import net.highwayfrogs.editor.utils.IBinarySerializable;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Represents a material.
@@ -179,7 +180,7 @@ public class kcMaterial implements IMultiLineInfoWriter, IBinarySerializable {
         if (textureFilePrefix != null)
             builder.append(textureFilePrefix);
         if (this.textureFileName != null)
-            builder.append(Utils.stripExtension(this.textureFileName));
+            builder.append(FileUtils.stripExtension(this.textureFileName));
         builder.append(".png").append(Constants.NEWLINE);
     }
 
@@ -187,7 +188,7 @@ public class kcMaterial implements IMultiLineInfoWriter, IBinarySerializable {
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         builder.append(padding).append("kcMaterial[Name='").append(this.materialName).append("',Texture='").append(this.textureFileName).append("']:").append(Constants.NEWLINE);
         String newPadding = padding + " ";
-        builder.append(newPadding).append("Flags: ").append(Utils.toHexString(this.flags)).append(Constants.NEWLINE);
+        builder.append(newPadding).append("Flags: ").append(NumberUtils.toHexString(this.flags)).append(Constants.NEWLINE);
         builder.append(newPadding).append("xpVal: ").append(this.xpVal).append(Constants.NEWLINE);
         builder.append(newPadding).append("Diffuse: [Red=").append(this.diffuseRed).append(",Green=").append(this.diffuseGreen).append(",Blue=").append(this.diffuseBlue).append(",Alpha=").append(this.diffuseAlpha).append("]").append(Constants.NEWLINE);
         builder.append(newPadding).append("Ambient: [Red=").append(this.ambientRed).append(",Green=").append(this.ambientGreen).append(",Blue=").append(this.ambientBlue).append(",Alpha=").append(this.ambientAlpha).append("]").append(Constants.NEWLINE);

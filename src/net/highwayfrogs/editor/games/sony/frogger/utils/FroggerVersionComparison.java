@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.utils;
+package net.highwayfrogs.editor.games.sony.frogger.utils;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
+import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -306,7 +307,7 @@ public class FroggerVersionComparison {
     }
 
     private static void loadFromConfig() {
-        Config loadConfig = new Config(Utils.readLinesFromFile(versionConfigFile));
+        Config loadConfig = new Config(FileUtils.readLinesFromFile(versionConfigFile));
 
         gameBuilds.clear();
         gameBuildsByName.clear();

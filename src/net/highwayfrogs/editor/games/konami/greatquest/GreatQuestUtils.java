@@ -9,14 +9,14 @@ import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.data.IGameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedResource;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
-import net.highwayfrogs.editor.utils.IGameObject;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.*;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -372,10 +372,10 @@ public class GreatQuestUtils {
             exportFolder = new File(new File(baseFolder, "Unidentified Files/"), file.getDefaultFolderName() + "/");
         }
 
-        if (Utils.isNullOrEmpty(fileName))
+        if (StringUtils.isNullOrEmpty(fileName))
             fileName = file.getExportName();
 
-        Utils.makeDirectory(exportFolder);
+        FileUtils.makeDirectory(exportFolder);
         return new File(exportFolder, fileName);
     }
 
@@ -561,7 +561,7 @@ public class GreatQuestUtils {
         for (int i = 0; i < byteCount; i++) {
             byte nextByte = reader.readByte();
             if (nextByte != Constants.NULL_BYTE && nextByte != alternateValue)
-                throw new RuntimeException("Reader wanted to skip " + byteCount + " bytes to reach " + Utils.toHexString(index + byteCount) + ", but got 0x" + Utils.toByteString(nextByte) + " at " + Utils.toHexString(index + i) + " when 0x" + Utils.toByteString(alternateValue) + " or 0x00 were expected.");
+                throw new RuntimeException("Reader wanted to skip " + byteCount + " bytes to reach " + NumberUtils.toHexString(index + byteCount) + ", but got 0x" + DataUtils.toByteString(nextByte) + " at " + NumberUtils.toHexString(index + i) + " when 0x" + DataUtils.toByteString(alternateValue) + " or 0x00 were expected.");
         }
     }
 

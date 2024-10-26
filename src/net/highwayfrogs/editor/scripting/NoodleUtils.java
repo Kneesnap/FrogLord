@@ -5,7 +5,7 @@ import net.highwayfrogs.editor.scripting.compiler.preprocessor.directives.Noodle
 import net.highwayfrogs.editor.scripting.compiler.tokens.NoodleToken;
 import net.highwayfrogs.editor.scripting.instructions.NoodleInstruction;
 import net.highwayfrogs.editor.scripting.tracking.NoodleCodeLocation;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.io.File;
 
@@ -69,7 +69,7 @@ public class NoodleUtils {
      * @param file The file to get the script name from.
      */
     public static String getScriptNameFromFile(File file) {
-        return Utils.stripExtension(file.getName());
+        return FileUtils.stripExtension(file.getName());
     }
 
     /**

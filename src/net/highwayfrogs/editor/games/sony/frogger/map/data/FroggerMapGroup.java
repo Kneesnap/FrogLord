@@ -12,6 +12,8 @@ import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygonType;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketPolygon;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -69,7 +71,7 @@ public class FroggerMapGroup extends SCGameData<FroggerGameInstance> {
 
             // Ensure the value is zero unless G2 is enabled.
             if (g2Supported && type == FroggerMapPolygonType.G2 && !mapConfig.isG2Enabled() && this.loadPolygonPointers[i] != 0)
-                throw new RuntimeException("The G2 polygon pointer was expected to be NULL, but was " + Utils.toHexString(this.loadPolygonPointers[i]) + ".");
+                throw new RuntimeException("The G2 polygon pointer was expected to be NULL, but was " + NumberUtils.toHexString(this.loadPolygonPointers[i]) + ".");
         }
 
         this.staticEntityListPointer = reader.readInt();
@@ -87,7 +89,7 @@ public class FroggerMapGroup extends SCGameData<FroggerGameInstance> {
         }
 
         if (this.staticEntityListPointer <= 0)
-            throw new RuntimeException("Cannot read static entity list, the pointer " + Utils.toHexString(this.staticEntityListPointer) + " is invalid.");
+            throw new RuntimeException("Cannot read static entity list, the pointer " + NumberUtils.toHexString(this.staticEntityListPointer) + " is invalid.");
 
         // There isn't actually any static entity list saved, so we'll just validate the pointer as a sanity check and continue.
         reader.requireIndex(getLogger(), this.staticEntityListPointer, "Expected static entity list");
@@ -104,10 +106,10 @@ public class FroggerMapGroup extends SCGameData<FroggerGameInstance> {
         for (int i = 0; i < FroggerMapPolygonType.values().length; i++) {
             FroggerMapPolygonType polygonType = FroggerMapPolygonType.values()[i];
             List<FroggerMapPolygon> typedPolygons = this.polygonsByType[i];
-            int polygonCount = Utils.shortToUnsignedInt(this.loadPolygonCounts[i]);
+            int polygonCount = DataUtils.shortToUnsignedInt(this.loadPolygonCounts[i]);
             int polygonPointerAddress = this.loadPolygonPointers[i];
             if (polygonPointerAddress < 0 || polygonCount < 0)
-                throw new RuntimeException("Cannot load polygon list with " + polygonCount + " from " + Utils.toHexString(polygonPointerAddress) + ".");
+                throw new RuntimeException("Cannot load polygon list with " + polygonCount + " from " + NumberUtils.toHexString(polygonPointerAddress) + ".");
 
             this.loadPolygonCounts[i] = -1;
             this.loadPolygonPointers[i] = -1;
@@ -122,7 +124,7 @@ public class FroggerMapGroup extends SCGameData<FroggerGameInstance> {
             int polygonIndex = Utils.binarySearch(globalPolygonsByType, polygonPointerAddress, FroggerMapPolygon::getLastReadAddress);
             if (polygonIndex < 0) {
                 if (!isEarlyJulyPointerFormat())
-                    getLogger().severe("Failed to resolve map group polygon block " + polygonType + " at " + Utils.toHexString(polygonPointerAddress) + " with " + polygonCount + " polygons.");
+                    getLogger().severe("Failed to resolve map group polygon block " + polygonType + " at " + NumberUtils.toHexString(polygonPointerAddress) + " with " + polygonCount + " polygons.");
                 continue;
             }
 
@@ -184,7 +186,7 @@ public class FroggerMapGroup extends SCGameData<FroggerGameInstance> {
      */
     public void saveStaticEntityList(DataWriter writer) {
         if (this.staticEntityListPointer <= 0)
-            throw new RuntimeException("Cannot write static entity list, the pointer " + Utils.toHexString(this.staticEntityListPointer) + " is invalid.");
+            throw new RuntimeException("Cannot write static entity list, the pointer " + NumberUtils.toHexString(this.staticEntityListPointer) + " is invalid.");
 
         // If this is the invisible map group, don't write anything, there are no entities.
         // Keep the null pointer written.

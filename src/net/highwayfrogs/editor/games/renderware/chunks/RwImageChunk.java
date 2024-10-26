@@ -22,6 +22,9 @@ import net.highwayfrogs.editor.games.renderware.struct.types.RwImage;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
+import net.highwayfrogs.editor.utils.ColorUtils;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
@@ -157,7 +160,7 @@ public class RwImageChunk extends RwStreamChunk implements ITextureSource {
                     break;
                 case 32:
                     int value3 = reader.readInt();
-                    setPixel(this.image, bytePos / COLOR_SIZE_IN_BYTES, stride / COLOR_SIZE_IN_BYTES, bitDepth, Utils.swapRedBlue(value3), value3);
+                    setPixel(this.image, bytePos / COLOR_SIZE_IN_BYTES, stride / COLOR_SIZE_IN_BYTES, bitDepth, ColorUtils.swapRedBlue(value3), value3);
                     break;
             }
         }
@@ -177,7 +180,7 @@ public class RwImageChunk extends RwStreamChunk implements ITextureSource {
         int transPixelIndex = -1;
         int[] colors = new int[paletteSize];
         for (int i = 0; i < colors.length; i++) {
-            int color = Utils.swapRedBlue(reader.readInt());
+            int color = ColorUtils.swapRedBlue(reader.readInt());
             colors[i] = color;
             if ((color & 0xFF000000) == 0 && (transPixelIndex < 0 || colors[transPixelIndex] > color))
                 transPixelIndex = i;
@@ -208,7 +211,7 @@ public class RwImageChunk extends RwStreamChunk implements ITextureSource {
                         writer.writeUnsignedByte((short) this.image.getRaster().getDataElements(x, y, null));
                         break;
                     case 32:
-                        writer.writeInt(Utils.swapRedBlue(this.image.getRGB(x, y)));
+                        writer.writeInt(ColorUtils.swapRedBlue(this.image.getRGB(x, y)));
                         break;
                     default:
                         throw new UnsupportedOperationException("Unsupported bitDepth: " + bitDepth);
@@ -222,7 +225,7 @@ public class RwImageChunk extends RwStreamChunk implements ITextureSource {
         if (bitDepth <= 8) {
             int paletteSize = getPaletteSize(bitDepth);
             for (int i = 0; i < paletteSize; i++)
-                writer.writeInt(Utils.swapRedBlue(palette.getRGB(i)));
+                writer.writeInt(ColorUtils.swapRedBlue(palette.getRGB(i)));
         }
     }
 
@@ -335,7 +338,7 @@ public class RwImageChunk extends RwStreamChunk implements ITextureSource {
         int y = bytePos / stride;
         if (x >= image.getWidth()) {
             if (((bitDepth == 32) || (bitDepth == 4 && (value & 0xF0) != 0) || (bitDepth == 8 && value != (PADDING_BYTE & 0xFF))) && (image.getWidth() > 4 || image.getHeight() > 4)) // Frogger's Adventures The Rescue seems to have garbage data for extremely tiny images. No clue why.
-                getLogger().warning("Unusual padding value at [" + x + ", " + y + "]. Value: " + Utils.toHexString(value));
+                getLogger().warning("Unusual padding value at [" + x + ", " + y + "]. Value: " + NumberUtils.toHexString(value));
             return;
         }
 
@@ -406,7 +409,7 @@ public class RwImageChunk extends RwStreamChunk implements ITextureSource {
         public RwImageViewUIController(RwImageChunk imageChunk) {
             super(imageChunk.getGameInstance());
             this.imageChunk = imageChunk;
-            this.imageView = new ImageView(Utils.toFXImage(imageChunk.getImage(), false)); // Must be assigned here, or it will be null in onControllerLoad().
+            this.imageView = new ImageView(FXUtils.toFXImage(imageChunk.getImage(), false)); // Must be assigned here, or it will be null in onControllerLoad().
             this.importButton = new Button("Import");
             this.importButton.setOnAction(evt -> importImage());
             this.exportButton = new Button("Export");
@@ -434,7 +437,7 @@ public class RwImageChunk extends RwStreamChunk implements ITextureSource {
             if (suggestedTextureName == null || suggestedTextureName.trim().isEmpty())
                 suggestedTextureName = "unknown";
 
-            File outputFile = Utils.promptFileSave(getGameInstance(), "Select a file to save the image as", suggestedTextureName + ".png", "PNG Image File", "png");
+            File outputFile = FXUtils.promptFileSave(getGameInstance(), "Select a file to save the image as", suggestedTextureName + ".png", "PNG Image File", "png");
             if (outputFile == null)
                 return;
 
@@ -449,7 +452,7 @@ public class RwImageChunk extends RwStreamChunk implements ITextureSource {
          * Prompts the user to overwrite the active image.
          */
         public void importImage() {
-            File file = Utils.promptFileOpenExtensions(getGameInstance(), "Title", "Images", Constants.IMAGE_EXTENSIONS);
+            File file = FXUtils.promptFileOpenExtensions(getGameInstance(), "Title", "Images", Constants.IMAGE_EXTENSIONS);
             if (file == null)
                 return;
 
@@ -462,7 +465,7 @@ public class RwImageChunk extends RwStreamChunk implements ITextureSource {
             }
 
             if (image == null) {
-                Utils.makePopUp("Could not interpret '" + file.getName() + "' as an image file.", AlertType.ERROR);
+                FXUtils.makePopUp("Could not interpret '" + file.getName() + "' as an image file.", AlertType.ERROR);
                 return;
             }
 

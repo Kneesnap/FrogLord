@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.gui.GameConfigController;
 import net.highwayfrogs.editor.gui.GameConfigController.GameConfigUIController;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.TimeUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -65,7 +66,7 @@ public interface IGameType {
      * @return embeddedResourceStream
      */
     default InputStream getEmbeddedResourceStream(String localPath) {
-        return Utils.getResourceStream("games/" + getIdentifier() + "/" + localPath);
+        return FileUtils.getResourceStream("games/" + getIdentifier() + "/" + localPath);
     }
 
     /**
@@ -74,7 +75,7 @@ public interface IGameType {
      * @return embeddedResourceURL
      */
     default URL getEmbeddedResourceURL(String localPath) {
-        return Utils.getResourceURL("games/" + getIdentifier() + "/" + localPath);
+        return FileUtils.getResourceURL("games/" + getIdentifier() + "/" + localPath);
     }
 
     /**
@@ -88,12 +89,12 @@ public interface IGameType {
         // Load configs.
         versionConfigs = new ArrayList<>();
         Logger logger = Logger.getLogger(getClass().getSimpleName());
-        List<URL> versionConfigFiles = Utils.getInternalResourceFilesInDirectory(getEmbeddedResourceURL("versions"), true);
+        List<URL> versionConfigFiles = FileUtils.getInternalResourceFilesInDirectory(getEmbeddedResourceURL("versions"), true);
         if (versionConfigFiles.isEmpty())
             logger.severe("Did not find any version configs for the game type " + getIdentifier() + "/'" + getDisplayName() + "'. This seems like a bug.");
 
         for (URL url : versionConfigFiles) {
-            String versionConfigName = Utils.getFileNameWithoutExtension(url);
+            String versionConfigName = FileUtils.getFileNameWithoutExtension(url);
 
             net.highwayfrogs.editor.file.config.Config versionConfig;
             try {

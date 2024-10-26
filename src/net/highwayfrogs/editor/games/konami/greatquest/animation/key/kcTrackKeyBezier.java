@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.kcControlType;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton.kcNode;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Represents a cubic Bézier curve.
@@ -59,7 +59,7 @@ public abstract class kcTrackKeyBezier extends kcTrackKey<kcTrackKeyBezier> {
     public void writeInfo(StringBuilder builder) {
         super.writeInfo(builder);
         builder.append(", Flags: ");
-        builder.append(Utils.toHexString(getFlags()));
+        builder.append(NumberUtils.toHexString(getFlags()));
         builder.append(", Start Position: ");
         this.startPosition.writeInfo(builder);
         builder.append(", End Position: ");

@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.scripting.tracking;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.scripting.NoodleScript;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.io.File;
 
@@ -18,6 +18,6 @@ public class NoodleFileCodeSource extends NoodleCodeSource {
 
     @Override
     public String getDisplay() {
-        return Utils.toLocalPath(this.script.getScriptFolder(), this.file, true);
+        return FileUtils.toLocalPath(this.script.getScriptFolder(), this.file, true);
     }
 }

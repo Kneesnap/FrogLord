@@ -15,7 +15,8 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 /**
  * Manages editing of general data in a Frogger map.
@@ -83,9 +84,9 @@ public class FroggerUIMapGeneralManager extends FroggerCentralUIManager {
         SVector basePoint = groupPacket.getBasePoint();
         float baseX = basePoint.getFloatX();
         float baseZ = basePoint.getFloatZ();
-        float xSize = Utils.fixedPointIntToFloat4Bit(groupPacket.getGroupXSize());
-        float zSize = Utils.fixedPointIntToFloat4Bit(groupPacket.getGroupZSize());
-        PhongMaterial material = Utils.makeUnlitSharpMaterial(Color.YELLOW);
+        float xSize = DataUtils.fixedPointIntToFloat4Bit(groupPacket.getGroupXSize());
+        float zSize = DataUtils.fixedPointIntToFloat4Bit(groupPacket.getGroupZSize());
+        PhongMaterial material = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
         for (int x = 0; x < groupPacket.getGroupXCount(); x++)
             for (int z = 0; z < groupPacket.getGroupZCount(); z++)
                 this.groupPreviewList.addBoundingBoxFromMinMax(baseX + (x * xSize), 0, baseZ + (z * zSize), baseX + ((x + 1) * xSize), 0, baseZ + ((z + 1) * zSize), material, true);
@@ -100,12 +101,12 @@ public class FroggerUIMapGeneralManager extends FroggerCentralUIManager {
             return;
 
         FroggerMapFilePacketGrid gridPacket = getMap().getGridPacket();
-        float baseX = Utils.fixedPointIntToFloatNBits(gridPacket.getBaseGridX(), 4);
-        float baseZ = Utils.fixedPointIntToFloatNBits(gridPacket.getBaseGridZ(), 4);
+        float baseX = DataUtils.fixedPointIntToFloatNBits(gridPacket.getBaseGridX(), 4);
+        float baseZ = DataUtils.fixedPointIntToFloatNBits(gridPacket.getBaseGridZ(), 4);
         float xSize = gridPacket.getGridXSizeAsFloat();
         float zSize = gridPacket.getGridZSizeAsFloat();
-        PhongMaterial gridMaterial = Utils.makeUnlitSharpMaterial(Color.RED);
-        PhongMaterial heightMaterial = Utils.makeUnlitSharpMaterial(Color.GREEN);
+        PhongMaterial gridMaterial = Scene3DUtils.makeUnlitSharpMaterial(Color.RED);
+        PhongMaterial heightMaterial = Scene3DUtils.makeUnlitSharpMaterial(Color.GREEN);
         for (int x = 0; x < gridPacket.getGridXCount(); x++) {
             for (int z = 0; z < gridPacket.getGridZCount(); z++) {
                 this.gridPreviewList.addBoundingBoxFromMinMax(baseX + (x * xSize), 0, baseZ + (z * zSize), baseX + ((x + 1) * xSize), 0, baseZ + ((z + 1) * zSize), gridMaterial, true);

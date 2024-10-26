@@ -4,7 +4,9 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.AudioUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import javax.sound.sampled.AudioFormat;
 import java.io.File;
@@ -33,7 +35,7 @@ public class FroggerBeyondUtil {
             throw new UnsupportedOperationException("Platform not supported yet: '" + platform + "'.");
 
         DataReader reader = new DataReader(new FileSource(mcpFile));
-        Utils.makeDirectory(exportDir);
+        FileUtils.makeDirectory(exportDir);
 
         int count = 0;
         boolean isPC = (platform == FroggerBeyondPlatform.WINDOWS);
@@ -55,7 +57,7 @@ public class FroggerBeyondUtil {
             if (isXbox) {
                 Files.write(new File(exportDir, (count++) + ".wavm").toPath(), byteData);
             } else if (isPC) {
-                Utils.saveRawAudioDataToWavFile(new File(exportDir, (count++) + ".wav"), pcFormat, byteData);
+                AudioUtils.saveRawAudioDataToWavFile(new File(exportDir, (count++) + ".wav"), pcFormat, byteData);
             }
         }
     }
@@ -73,7 +75,7 @@ public class FroggerBeyondUtil {
 
         DataReader reader = new DataReader(new FileSource(mcpFile));
         reader.setIndex(0x1000);
-        Utils.makeDirectory(exportDir);
+        FileUtils.makeDirectory(exportDir);
 
         int count = 0;
         boolean isPC = (platform == FroggerBeyondPlatform.WINDOWS);
@@ -96,12 +98,12 @@ public class FroggerBeyondUtil {
                         break;
 
                 if (nullCount >= 8) {
-                    System.out.println("NEXT! " + (count + 1) + " = " + Utils.toHexString(reader.getIndex()) + " - " + nullCount);
+                    System.out.println("NEXT! " + (count + 1) + " = " + NumberUtils.toHexString(reader.getIndex()) + " - " + nullCount);
                     lastIndex = reader.getIndex();
                     break;
                 }
 
-                System.out.println(count + " = " + Utils.toHexString(reader.getIndex()) + " - " + nullCount);
+                System.out.println(count + " = " + NumberUtils.toHexString(reader.getIndex()) + " - " + nullCount);
             }
             reader.jumpReturn();
 
@@ -113,7 +115,7 @@ public class FroggerBeyondUtil {
                 Files.write(new File(exportDir, (count++) + ".dsp").toPath(), byteData);
             } else*/
             if (isXbox || isPC) {
-                Utils.saveRawAudioDataToWavFile(new File(exportDir, (count++) + ".wav"), pcFormat, byteData);
+                AudioUtils.saveRawAudioDataToWavFile(new File(exportDir, (count++) + ".wav"), pcFormat, byteData);
             }
         }
     }

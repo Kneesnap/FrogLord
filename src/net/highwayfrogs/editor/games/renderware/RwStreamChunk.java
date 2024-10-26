@@ -9,7 +9,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData.SharedGameData;
+import net.highwayfrogs.editor.games.generic.data.GameData.SharedGameData;
 import net.highwayfrogs.editor.games.renderware.chunks.RwExtensionChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwStringChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwStructChunk;
@@ -19,8 +19,7 @@ import net.highwayfrogs.editor.games.renderware.ui.IRwStreamChunkUIEntry;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.DataSizeUnit;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.*;
 
 import java.io.File;
 import java.lang.ref.SoftReference;
@@ -66,7 +65,7 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
         this.version = reader.readInt();
 
         if (!RwVersion.doesVersionAppearValid(this.version))
-            getLogger().warning("The version " + RwVersion.getDebugString(this.version) + " was read from " + Utils.toHexString(versionDataIndex) + ", and does not appear valid!");
+            getLogger().warning("The version " + RwVersion.getDebugString(this.version) + " was read from " + NumberUtils.toHexString(versionDataIndex) + ", and does not appear valid!");
 
         if (readSize > reader.getRemaining())
             throw new RuntimeException("Cannot read chunk " + Utils.getSimpleName(this) + " of size " + readSize + " when there are only " + reader.getRemaining() + " bytes left.");
@@ -92,8 +91,8 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
         } catch (Throwable th) {
             this.readResult = ChunkReadResult.EXCEPTION;
             Utils.handleError(getLogger(), th, false, "Failed to read RwStreamChunk data."
-                    + " (Parent Index: " + Utils.toHexString(reader.getIndex() + chunkReader.getIndex())
-                    + ", Local Index: " + Utils.toHexString(chunkReader.getIndex()) + ")");
+                    + " (Parent Index: " + NumberUtils.toHexString(reader.getIndex() + chunkReader.getIndex())
+                    + ", Local Index: " + NumberUtils.toHexString(chunkReader.getIndex()) + ")");
         }
     }
 
@@ -125,9 +124,9 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
         MenuItem menuItem = new MenuItem("Export Raw Chunk Data");
         contextMenu.getItems().add(menuItem);
         menuItem.setOnAction(event -> {
-            File outputFile = Utils.promptFileSave(getGameInstance(), "Specify the file to save the chunk data as...", "raw-chunk-data", "Raw RenderWare Stream", "rawrws");
+            File outputFile = FXUtils.promptFileSave(getGameInstance(), "Specify the file to save the chunk data as...", "raw-chunk-data", "Raw RenderWare Stream", "rawrws");
             if (outputFile != null)
-                Utils.writeBytesToFile(getLogger(), outputFile, getRawReadData(), true);
+                FileUtils.writeBytesToFile(getLogger(), outputFile, getRawReadData(), true);
         });
     }
 
@@ -287,7 +286,7 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
 
         int typeId = reader.readInt();
         if (typeId != RwStreamChunkType.STRUCT.getTypeId())
-            throw new IllegalArgumentException("Expected the stream type ID to be " + Utils.toHexString(RwStreamChunkType.STRUCT.getTypeId()) + " for a struct, but got " + Utils.toHexString(typeId) + " instead!");
+            throw new IllegalArgumentException("Expected the stream type ID to be " + NumberUtils.toHexString(RwStreamChunkType.STRUCT.getTypeId()) + " for a struct, but got " + NumberUtils.toHexString(typeId) + " instead!");
 
         reader.jumpTemp(reader.getIndex() + Constants.INTEGER_SIZE);
         int version = reader.readInt();
@@ -519,7 +518,7 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
 
     @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList.add("Type ID", Utils.toHexString(this.chunkType.getTypeId()) + " (" + Utils.getSimpleName(this) + ")");
+        propertyList.add("Type ID", NumberUtils.toHexString(this.chunkType.getTypeId()) + " (" + Utils.getSimpleName(this) + ")");
         propertyList.add("RenderWare Version", RwVersion.getDebugString(this.version));
         if (this.rawReadData != null)
             propertyList.add("Size (In Bytes)", this.rawReadData.length + " (" + DataSizeUnit.formatSize(this.rawReadData.length) + ")");

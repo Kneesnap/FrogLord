@@ -8,9 +8,10 @@ import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleStati
 import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleStaticTemplateFunction.LazyNoodleStaticTemplateFunction;
 import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleTemplateConstructor;
 import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleTemplateConstructor.LazyNoodleTemplateConstructor;
-import net.highwayfrogs.editor.utils.Consumer3;
-import net.highwayfrogs.editor.utils.Function3;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.lambda.Consumer3;
+import net.highwayfrogs.editor.utils.lambda.Function3;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,11 +43,11 @@ public abstract class NoodleObjectTemplate<TType> {
     }
 
     private void warn(String template, Object... args) {
-        getLogger().warning(Utils.formatStringSafely(template, args));
+        getLogger().warning(StringUtils.formatStringSafely(template, args));
     }
 
     private void info(String template, Object... args) {
-        getLogger().info(Utils.formatStringSafely(template, args));
+        getLogger().info(StringUtils.formatStringSafely(template, args));
     }
 
     private Logger getLogger() {

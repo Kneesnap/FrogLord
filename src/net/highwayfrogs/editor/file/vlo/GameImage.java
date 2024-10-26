@@ -15,6 +15,9 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
+import net.highwayfrogs.editor.utils.ColorUtils;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
@@ -429,7 +432,7 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
      * @return fxImage
      */
     public Image toFXImage(ImageFilterSettings settings) {
-        return Utils.toFXImage(toBufferedImage(settings), false);
+        return FXUtils.toFXImage(toBufferedImage(settings), false);
     }
 
     /**
@@ -437,7 +440,7 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
      * @return fxImage
      */
     public Image toFXImage() {
-        return Utils.toFXImage(toBufferedImage(), false);
+        return FXUtils.toFXImage(toBufferedImage(), false);
     }
 
     /**
@@ -462,7 +465,7 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
      * @return ingameWidth
      */
     public short getIngameWidth() {
-        return (short) ((this.ingameWidth == 0 ? MAX_DIMENSION : Utils.byteToUnsignedShort(this.ingameWidth)) - (testFlag(FLAG_HIT_X) ? 1 : 0));
+        return (short) ((this.ingameWidth == 0 ? MAX_DIMENSION : DataUtils.byteToUnsignedShort(this.ingameWidth)) - (testFlag(FLAG_HIT_X) ? 1 : 0));
     }
 
     /**
@@ -471,7 +474,7 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
      */
     public void setIngameWidth(short width) {
         Utils.verify(width >= 0 && width <= MAX_DIMENSION, "Image width is not in the required range: (0,%d].", MAX_DIMENSION);
-        this.ingameWidth = (width == MAX_DIMENSION ? 0 : Utils.unsignedShortToByte(width));
+        this.ingameWidth = (width == MAX_DIMENSION ? 0 : DataUtils.unsignedShortToByte(width));
         setFlag(FLAG_HIT_X, (width % 2) > 0);
     }
 
@@ -480,7 +483,7 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
      * @return ingameHeight
      */
     public short getIngameHeight() {
-        return (short) ((this.ingameHeight == 0 ? MAX_DIMENSION : Utils.byteToUnsignedShort(this.ingameHeight)) - (testFlag(FLAG_HIT_Y) ? 1 : 0));
+        return (short) ((this.ingameHeight == 0 ? MAX_DIMENSION : DataUtils.byteToUnsignedShort(this.ingameHeight)) - (testFlag(FLAG_HIT_Y) ? 1 : 0));
     }
 
     /**
@@ -489,7 +492,7 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
      */
     public void setIngameHeight(short height) {
         Utils.verify(height >= 0 && height <= MAX_DIMENSION, "Image height is not in the required range (0,%d].", MAX_DIMENSION);
-        this.ingameHeight = (height == MAX_DIMENSION ? 0 : Utils.unsignedShortToByte(height));
+        this.ingameHeight = (height == MAX_DIMENSION ? 0 : DataUtils.unsignedShortToByte(height));
         setFlag(FLAG_HIT_Y, (height % 2) > 0);
     }
 
@@ -551,7 +554,7 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
             byte blue = this.imageBytes[i + 1];
             byte green = this.imageBytes[i + 2];
             byte red = this.imageBytes[i + 3];
-            imageDataBuffer[i / PC_BYTES_PER_PIXEL] = Utils.toARGB(red, green, blue, alpha);
+            imageDataBuffer[i / PC_BYTES_PER_PIXEL] = ColorUtils.toARGB(red, green, blue, alpha);
         }
 
         return image;

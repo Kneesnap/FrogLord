@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.ui.ScriptEditorController;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.function.Function;
@@ -33,7 +34,7 @@ public class BankFormatter extends ScriptFormatter {
 
     @Override
     public int stringToNumber(FroggerGameInstance instance, String str) {
-        if (Utils.isInteger(str))
+        if (NumberUtils.isInteger(str))
             return super.stringToNumber(instance, str);
 
         NameBank bank = getBank(instance);

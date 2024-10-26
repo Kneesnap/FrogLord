@@ -1,10 +1,12 @@
-package net.highwayfrogs.editor.utils;
+package net.highwayfrogs.editor.games.generic.data;
 
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -122,6 +124,6 @@ public interface IBinarySerializable {
             return false;
         }
 
-        return Utils.writeBytesToFile(logger, outputFile, arrayReceiver.toArray(), showPopupOnError);
+        return FileUtils.writeBytesToFile(logger, outputFile, arrayReceiver.toArray(), showPopupOnError);
     }
 }

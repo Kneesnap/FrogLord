@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.games.generic.GameObject;
+import net.highwayfrogs.editor.games.generic.data.GameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;

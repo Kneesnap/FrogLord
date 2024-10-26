@@ -15,7 +15,7 @@ import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankBodyEntry
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitVBFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineEvent.Type;
@@ -56,7 +56,7 @@ public class SCVABUIController extends SCFileEditorUIController<SCGameInstance, 
 
             String errorMessage = this.selectedSound.getAudioFormat().setSampleRate(newValue.intValue()); // Apply the new sample rate.
             if (errorMessage != null) {
-                Utils.makePopUp(errorMessage, AlertType.ERROR);
+                FXUtils.makePopUp(errorMessage, AlertType.ERROR);
                 return;
             }
 
@@ -87,7 +87,7 @@ public class SCVABUIController extends SCFileEditorUIController<SCGameInstance, 
 
     @FXML
     private void exportSound(ActionEvent event) {
-        File selectedFile = Utils.promptFileSave(getGameInstance(), "Specify the file to export this sound as...", this.selectedSound.getSoundName(), "Sound Files", "wav");
+        File selectedFile = FXUtils.promptFileSave(getGameInstance(), "Specify the file to export this sound as...", this.selectedSound.getSoundName(), "Sound Files", "wav");
         if (selectedFile == null)
             return;
 
@@ -100,14 +100,14 @@ public class SCVABUIController extends SCFileEditorUIController<SCGameInstance, 
 
     @FXML
     private void importSound(ActionEvent event) {
-        File selectedFile = Utils.promptFileOpen(getGameInstance(), "Select the sound to import...", "Sound Files", "wav");
+        File selectedFile = FXUtils.promptFileOpen(getGameInstance(), "Select the sound to import...", "Sound Files", "wav");
         if (selectedFile == null)
             return; // Cancelled.
 
         try {
             this.selectedSound.importSoundFromFile(selectedFile);
         } catch (UnsupportedAudioFileException | IOException ex) {
-            Utils.makeErrorPopUp("Failed to import sound file " + selectedFile.getName(), ex, true);
+            FXUtils.makeErrorPopUp("Failed to import sound file " + selectedFile.getName(), ex, true);
         }
 
         updateInterface();
@@ -116,7 +116,7 @@ public class SCVABUIController extends SCFileEditorUIController<SCGameInstance, 
     @FXML
     @SneakyThrows
     private void exportAllSounds(ActionEvent event) {
-        File selectedFolder = Utils.promptChooseDirectory(getGameInstance(), "Select the directory to export sounds to.", false);
+        File selectedFolder = FXUtils.promptChooseDirectory(getGameInstance(), "Select the directory to export sounds to.", false);
         if (selectedFolder == null)
             return; // Cancelled.
 
@@ -155,13 +155,13 @@ public class SCVABUIController extends SCFileEditorUIController<SCGameInstance, 
         try {
             newRate = Integer.parseInt(text);
         } catch (NumberFormatException nfx) {
-            Utils.makePopUp("Improperly formatted number: '" + text + "'.", AlertType.ERROR);
+            FXUtils.makePopUp("Improperly formatted number: '" + text + "'.", AlertType.ERROR);
             return;
         }
 
         String errorMessage = this.selectedSound.getAudioFormat().setSampleRate(newRate); // Apply the new sample rate.
         if (errorMessage != null) {
-            Utils.makePopUp(errorMessage, AlertType.ERROR);
+            FXUtils.makePopUp(errorMessage, AlertType.ERROR);
             return;
         }
 

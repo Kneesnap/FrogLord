@@ -5,7 +5,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameObject;
+import net.highwayfrogs.editor.games.generic.data.GameObject;
 import net.highwayfrogs.editor.games.konami.hudson.HFSHeaderFileEntry;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameInstance;
@@ -16,6 +16,7 @@ import net.highwayfrogs.editor.games.shared.basic.file.definition.IGameFileDefin
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.CollectionTreeViewComponent.CollectionViewTreeNode;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -148,7 +149,7 @@ public class HFSFile extends HudsonGameFile implements IVirtualFileSystem {
     @Override
     public void export(File exportFolder) {
         File rawFilesFolder = new File(exportFolder, "Raw Files");
-        Utils.makeDirectory(rawFilesFolder);
+        FileUtils.makeDirectory(rawFilesFolder);
 
         for (int i = 0; i < this.hfsFiles.size(); i++) {
             File outputFile = new File(rawFilesFolder, "FILE" + String.format("%03d", i));
@@ -156,7 +157,7 @@ public class HFSFile extends HudsonGameFile implements IVirtualFileSystem {
             try {
                 Files.write(outputFile.toPath(), this.hfsFiles.get(i).getRawData());
             } catch (IOException ex) {
-                Utils.handleError(getLogger(), ex, false, "Failed to export file '%s'.", Utils.toLocalPath(exportFolder, outputFile, true));
+                Utils.handleError(getLogger(), ex, false, "Failed to export file '%s'.", FileUtils.toLocalPath(exportFolder, outputFile, true));
             }
         }
 

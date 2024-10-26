@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.gui.texture.atlas;
 
-import net.highwayfrogs.editor.utils.SortedList;
+import net.highwayfrogs.editor.utils.objects.SortedList;
 
 import java.util.Arrays;
 

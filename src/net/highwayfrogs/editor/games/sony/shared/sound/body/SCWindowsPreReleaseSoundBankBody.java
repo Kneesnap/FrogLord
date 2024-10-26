@@ -7,6 +7,8 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.sound.body.SCWindowsPreReleaseSoundBankBody.SCWindowsPreReleaseSoundBodyEntry;
 import net.highwayfrogs.editor.games.sony.shared.sound.body.SCWindowsRetailSoundBankBody.SCWindowsSoundBodyEntry;
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCWindowsSoundBankHeader.SCWindowsSoundBankHeaderEntry;
+import net.highwayfrogs.editor.utils.AudioUtils;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.sound.sampled.AudioFormat;
@@ -56,7 +58,7 @@ public class SCWindowsPreReleaseSoundBankBody extends SCWindowsSoundBankBody<SCW
             if (this.cachedRawAudio != null)
                 return this.cachedRawAudio;
 
-            return this.cachedRawAudio = Utils.getRawAudioDataConvertedFromWavFile(getAudioFormat(), this.rawAudioData);
+            return this.cachedRawAudio = AudioUtils.getRawAudioDataConvertedFromWavFile(getAudioFormat(), this.rawAudioData);
         }
 
         @Override
@@ -68,7 +70,7 @@ public class SCWindowsPreReleaseSoundBankBody extends SCWindowsSoundBankBody<SCW
         public void importSoundFromFile(File file) throws IOException {
             byte[] newWavBytes = Files.readAllBytes(file.toPath());
             if (newWavBytes == null || newWavBytes.length == 0) {
-                Utils.makePopUp("The file is empty.", AlertType.ERROR);
+                FXUtils.makePopUp("The file is empty.", AlertType.ERROR);
                 return;
             }
 
@@ -85,7 +87,7 @@ public class SCWindowsPreReleaseSoundBankBody extends SCWindowsSoundBankBody<SCW
             String errorMessage;
             if ((errorMessage = getAudioFormat().applyAudioFormat(getAudioFormatFromRawData())) != null) {
                 this.rawAudioData = oldWavBytes;
-                Utils.makePopUp(errorMessage, AlertType.ERROR);
+                FXUtils.makePopUp(errorMessage, AlertType.ERROR);
             } else {
                 // Reset cache.
                 this.cachedRawAudio = null;
@@ -95,7 +97,7 @@ public class SCWindowsPreReleaseSoundBankBody extends SCWindowsSoundBankBody<SCW
         @SneakyThrows
         private AudioFormat getAudioFormatFromRawData() {
 
-            return this.rawAudioData != null && this.rawAudioData.length > 0 ? Utils.getAudioFormatFromWavFile(this.rawAudioData) : null;
+            return this.rawAudioData != null && this.rawAudioData.length > 0 ? AudioUtils.getAudioFormatFromWavFile(this.rawAudioData) : null;
         }
     }
 }

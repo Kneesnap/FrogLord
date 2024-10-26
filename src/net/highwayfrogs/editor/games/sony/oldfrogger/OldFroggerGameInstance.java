@@ -18,7 +18,7 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.io.File;
 import java.util.*;
@@ -110,7 +110,7 @@ public class OldFroggerGameInstance extends SCGameInstance {
             if (i >= mapFileEntries.size()) {
                 remapNameSuffix = "unknown" + (++unknownMapCount);
             } else {
-                remapNameSuffix = Utils.stripExtension(mapFileEntries.get(i).getDisplayName()).toLowerCase(Locale.ROOT);
+                remapNameSuffix = FileUtils.stripExtension(mapFileEntries.get(i).getDisplayName()).toLowerCase(Locale.ROOT);
             }
 
             // Create new remap.

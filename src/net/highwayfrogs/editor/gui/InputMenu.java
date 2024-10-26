@@ -9,6 +9,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -34,7 +35,7 @@ public class InputMenu {
      * @param handler The behavior to execute when the user accepts.
      */
     public static void promptInput(GameInstance instance, String prompt, String defaultText, Consumer<String> handler) {
-        Utils.createWindowFromFXMLTemplate("window-wait-for-user-input", new InputController(instance, prompt, handler, defaultText), "Waiting for user input...", true);
+        FXUtils.createWindowFromFXMLTemplate("window-wait-for-user-input", new InputController(instance, prompt, handler, defaultText), "Waiting for user input...", true);
     }
 
     /**
@@ -76,7 +77,7 @@ public class InputMenu {
             try {
                 parsedValue = Integer.parseInt(response);
             } catch (NumberFormatException nfe) {
-                Utils.makePopUp("The value '" + response + "' cannot be interpreted as an integer!", AlertType.WARNING);
+                FXUtils.makePopUp("The value '" + response + "' cannot be interpreted as an integer!", AlertType.WARNING);
                 return;
             }
 

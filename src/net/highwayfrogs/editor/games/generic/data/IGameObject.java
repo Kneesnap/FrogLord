@@ -1,7 +1,8 @@
-package net.highwayfrogs.editor.utils;
+package net.highwayfrogs.editor.games.generic.data;
 
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.logging.Logger;
 
@@ -45,9 +46,9 @@ public interface IGameObject {
             return true;
 
         if (target != null) {
-            getLogger().warning(target + " had bit flag value " + Utils.toHexString(value) + ", which contained unhandled bits. (Mask: " + Utils.toHexString(mask) + ")");
+            getLogger().warning(target + " had bit flag value " + NumberUtils.toHexString(value) + ", which contained unhandled bits. (Mask: " + NumberUtils.toHexString(mask) + ")");
         } else {
-            getLogger().warning("Bit flag value " + Utils.toHexString(value) + " had unexpected bits set! (Mask: " + Utils.toHexString(mask) + ")");
+            getLogger().warning("Bit flag value " + NumberUtils.toHexString(value) + " had unexpected bits set! (Mask: " + NumberUtils.toHexString(mask) + ")");
         }
         return false;
     }

@@ -11,7 +11,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceModel;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Represents the kcModelDesc struct.
@@ -53,9 +53,9 @@ public class kcModelDesc extends kcBaseDesc implements IInfoWriter {
 
         // Warn if things look wrong.
         if (materialHash != EXPECTED_MATERIAL_HASH)
-            getLogger().warning("Expected material hash to be " + EXPECTED_MATERIAL_HASH + ", but was actually " + Utils.to0PrefixedHexString(materialHash));
+            getLogger().warning("Expected material hash to be " + EXPECTED_MATERIAL_HASH + ", but was actually " + NumberUtils.to0PrefixedHexString(materialHash));
         if (hThis != this.parentHash.getHashNumber())
-            throw new RuntimeException("The kcModelDesc reported the parent chunk as " + Utils.to0PrefixedHexString(hThis) + ", but it was expected to be " + this.parentHash.getHashNumberAsString() + ".");
+            throw new RuntimeException("The kcModelDesc reported the parent chunk as " + NumberUtils.to0PrefixedHexString(hThis) + ", but it was expected to be " + this.parentHash.getHashNumberAsString() + ".");
     }
 
     @Override

@@ -12,8 +12,8 @@ import net.highwayfrogs.editor.games.psx.shading.PSXShadedTextureManager.PSXMesh
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshNode;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
-import net.highwayfrogs.editor.utils.SortedList;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.objects.SortedList;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;

@@ -26,7 +26,7 @@ import net.highwayfrogs.editor.file.config.script.format.ScriptFormatter;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 /**
  * Manages the script editor.
@@ -78,7 +78,7 @@ public class ScriptEditorController extends GameUIController<FroggerGameInstance
     public void onSceneAdd(Scene newScene) {
         super.onSceneAdd(newScene);
         this.doneButton.setOnAction(evt -> closeWindow());
-        Utils.closeOnEscapeKey((Stage) newScene.getWindow(), null);
+        FXUtils.closeOnEscapeKey((Stage) newScene.getWindow(), null);
         updateCodeDisplay();
     }
 
@@ -223,13 +223,13 @@ public class ScriptEditorController extends GameUIController<FroggerGameInstance
      * Opens the Script Editor.
      */
     public static void openEditor(FroggerGameInstance instance) {
-        Utils.createWindowFromFXMLTemplate("window-script-editor", new ScriptEditorController(instance), "Script Editor", true);
+        FXUtils.createWindowFromFXMLTemplate("window-script-editor", new ScriptEditorController(instance), "Script Editor", true);
     }
 
     /**
      * Opens the Script Editor and view a given script.
      */
     public static void openEditor(FroggerGameInstance instance, FroggerScript script) {
-        Utils.createWindowFromFXMLTemplate("window-script-editor", new ScriptEditorController(instance, script), "Script Editor", true);
+        FXUtils.createWindowFromFXMLTemplate("window-script-editor", new ScriptEditorController(instance, script), "Script Editor", true);
     }
 }

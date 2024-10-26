@@ -8,9 +8,9 @@ import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
-import net.highwayfrogs.editor.utils.IndexBitArray;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.fx.wrapper.FXIntArray;
+import net.highwayfrogs.editor.utils.objects.IndexBitArray;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -643,7 +643,7 @@ public class PSXTextureShader {
             byte newRed = (byte) Math.min(255, (shadeRed / 128D) * oldRed);
             byte newGreen = (byte) Math.min(255, (shadeGreen / 128D) * oldGreen);
             byte newBlue = (byte) Math.min(255, (shadeBlue / 128D) * oldBlue);
-            targetImage[pixelIndex] = Utils.toARGB(newRed, newGreen, newBlue, alpha);
+            targetImage[pixelIndex] = ColorUtils.toARGB(newRed, newGreen, newBlue, alpha);
         } else {
             targetImage[pixelIndex] = shadeColor;
         }

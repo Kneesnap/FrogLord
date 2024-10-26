@@ -1,8 +1,8 @@
 package net.highwayfrogs.editor.gui.texture.atlas;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.SortedList;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.objects.SortedList;
 
 import java.util.*;
 import java.util.function.ToLongFunction;

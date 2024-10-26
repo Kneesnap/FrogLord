@@ -12,7 +12,8 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.extra.hash.tree.HashTreeStringGenerator;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.io.File;
 import java.util.List;
@@ -45,7 +46,7 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
             gen.loadDictionaryFromFile(dictionaryFile);
             this.stringGenerator = gen;
         } else {
-            Utils.makePopUp("Could not file 'dictionary.txt'. No dictionary will be used for autocompletes.\n"
+            FXUtils.makePopUp("Could not file 'dictionary.txt'. No dictionary will be used for autocompletes.\n"
                     + "Any text file with one word per line can be used as dictionary.txt.", AlertType.ERROR);
             this.stringGenerator = new HashTreeStringGenerator();
         }
@@ -78,16 +79,16 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
 
     @FXML
     private void generateStrings(ActionEvent evt) {
-        if (!Utils.isInteger(this.targetLinkerHashField.getText()))
+        if (!NumberUtils.isInteger(this.targetLinkerHashField.getText()))
             return;
 
         int targetLinkerHash = Integer.parseInt(this.targetLinkerHashField.getText());
         if (targetLinkerHash < 0 || targetLinkerHash >= FroggerHashUtil.LINKER_HASH_TABLE_SIZE) {
-            Utils.makePopUp("The target linker hash must be within the range [0, " + FroggerHashUtil.LINKER_HASH_TABLE_SIZE + ").", AlertType.WARNING);
+            FXUtils.makePopUp("The target linker hash must be within the range [0, " + FroggerHashUtil.LINKER_HASH_TABLE_SIZE + ").", AlertType.WARNING);
             return;
         }
 
-        int maxWordSize = Utils.isInteger(this.maxWordSizeField.getText()) ? Integer.parseInt(this.maxWordSizeField.getText()) : 0;
+        int maxWordSize = NumberUtils.isInteger(this.maxWordSizeField.getText()) ? Integer.parseInt(this.maxWordSizeField.getText()) : 0;
 
         String prefix = this.prefixTextField.getText();
         String suffix = this.suffixTextField.getText();
@@ -121,6 +122,6 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
      * Open the level info controller.
      */
     public static void openEditor(SCGameInstance gameInstance) {
-        Utils.createWindowFromFXMLTemplate("window-hash-playground", new HashPlaygroundController(gameInstance), "Hash Playground", false);
+        FXUtils.createWindowFromFXMLTemplate("window-hash-playground", new HashPlaygroundController(gameInstance), "Hash Playground", false);
     }
 }

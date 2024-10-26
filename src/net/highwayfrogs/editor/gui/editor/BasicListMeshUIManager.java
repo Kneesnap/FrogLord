@@ -12,6 +12,7 @@ import javafx.scene.paint.PhongMaterial;
 import lombok.Getter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.HashMap;
@@ -36,8 +37,8 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
     private Button addValueButton;
     private Button removeValueButton;
 
-    private static final PhongMaterial MATERIAL_WHITE = Utils.makeUnlitSharpMaterial(Color.WHITE);
-    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeUnlitSharpMaterial(Color.YELLOW);
+    private static final PhongMaterial MATERIAL_WHITE = Scene3DUtils.makeUnlitSharpMaterial(Color.WHITE);
+    private static final PhongMaterial MATERIAL_YELLOW = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
 
     public BasicListMeshUIManager(MeshViewController<TMesh> controller) {
         super(controller);

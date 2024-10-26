@@ -4,7 +4,7 @@ import javafx.scene.control.Alert.AlertType;
 import net.highwayfrogs.editor.scripting.NoodleScript;
 import net.highwayfrogs.editor.scripting.runtime.NoodlePrimitive;
 import net.highwayfrogs.editor.scripting.runtime.NoodleThread;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 /**
  * Creates and displays popup window.
@@ -21,7 +21,7 @@ public class NDLFunctionMakePopup extends NoodleFunction {
     public NoodlePrimitive execute(NoodleThread<? extends NoodleScript> thread, NoodlePrimitive[] args) {
         String message = args[0].getAsString();
         AlertType alertType = args.length > 1 ? args[1].getStringValueAsEnum(AlertType.class) : AlertType.INFORMATION;
-        Utils.makePopUp(message, alertType);
+        FXUtils.makePopUp(message, alertType);
         return null;
     }
 }

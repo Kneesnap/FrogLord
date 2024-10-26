@@ -11,7 +11,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.renderware.chunks.RwWorldChunk;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshCollection.MeshViewCollection;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 /**
  * Implements a world mesh view controller for RenderWare world meshes.
@@ -23,8 +23,8 @@ public class RwWorldMeshController extends MeshViewController<RwWorldCombinedMes
     private static final double DEFAULT_FAR_CLIP = 3500; // Far enough away to see the end of Frogger Beyond Mountain.
     private static final double DEFAULT_MOVEMENT_SPEED = 50;
 
-    private static final PhongMaterial VERTEX_MATERIAL = Utils.makeUnlitSharpMaterial(Color.YELLOW);
-    private static final PhongMaterial CONNECTION_MATERIAL = Utils.makeUnlitSharpMaterial(Color.LIMEGREEN);
+    private static final PhongMaterial VERTEX_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
+    private static final PhongMaterial CONNECTION_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.LIMEGREEN);
 
     @Override
     public void setupBindings(SubScene subScene3D, MeshView meshView) {

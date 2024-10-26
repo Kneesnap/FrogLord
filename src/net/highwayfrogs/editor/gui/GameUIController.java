@@ -12,7 +12,7 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
-import net.highwayfrogs.editor.games.generic.GameObject;
+import net.highwayfrogs.editor.games.generic.data.GameObject;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.IOException;

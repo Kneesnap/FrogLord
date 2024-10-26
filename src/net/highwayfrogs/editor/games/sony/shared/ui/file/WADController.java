@@ -26,11 +26,12 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
+import net.highwayfrogs.editor.games.sony.shared.utils.FileUtils3D;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.system.NameValuePair;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
-import net.highwayfrogs.editor.utils.FileUtils3D;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -98,7 +99,7 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
     @FXML
     @SneakyThrows
     private void importEntry(ActionEvent event) {
-        File selectedFile = Utils.promptFileOpenExtensions(getGameInstance(), "Select the WAD Entry to import...", "Usable Files", "mm3d", "VLO", "XAR", "XMR", "*");
+        File selectedFile = FXUtils.promptFileOpenExtensions(getGameInstance(), "Select the WAD Entry to import...", "Usable Files", "mm3d", "VLO", "XAR", "XMR", "*");
         if (selectedFile == null)
             return; // Cancelled.
 
@@ -108,7 +109,7 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
         if (fileName.endsWith(".mm3d")) {
             SCGameFile<?> selectFile = this.selectedEntry.getFile();
             if (!(selectFile instanceof MOFHolder)) {
-                Utils.makePopUp("You cannot import a model over a " + (selectFile != null ? selectFile.getClass().getSimpleName() : "null") + ".", AlertType.ERROR);
+                FXUtils.makePopUp("You cannot import a model over a " + (selectFile != null ? selectFile.getClass().getSimpleName() : "null") + ".", AlertType.ERROR);
                 return;
             }
 
@@ -119,20 +120,20 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
             try {
                 newObject.load(reader);
             } catch (Exception ex) {
-                Utils.makeErrorPopUp("There was an error loading the mm3d model.", ex, true);
+                FXUtils.makeErrorPopUp("There was an error loading the mm3d model.", ex, true);
                 return;
             }
 
             try {
                 FileUtils3D.importMofFromModel(newObject, mofHolder);
             } catch (Exception ex) {
-                Utils.makeErrorPopUp("An error occurred when importing the model.", ex, true);
+                FXUtils.makeErrorPopUp("An error occurred when importing the model.", ex, true);
                 return;
             }
         } else if (fileName.endsWith(".vlo") || fileName.endsWith(".xar") || fileName.endsWith(".xmr")) {
             this.selectedEntry.setFile(getFile().getArchive().replaceFile(newBytes, this.selectedEntry.getFileEntry(), this.selectedEntry.getFile(), true));
         } else {
-            Utils.makePopUp("Don't know how to import this file type. Aborted.", AlertType.WARNING);
+            FXUtils.makePopUp("Don't know how to import this file type. Aborted.", AlertType.WARNING);
             return;
         }
 
@@ -144,7 +145,7 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
     @FXML
     @SneakyThrows
     private void exportEntry(ActionEvent event) {
-        File selectedFile = Utils.promptFileSave(getGameInstance(), "Specify the file to export this entry as...", this.selectedEntry.getFileEntry().getDisplayName(), null, null);
+        File selectedFile = FXUtils.promptFileSave(getGameInstance(), "Specify the file to export this entry as...", this.selectedEntry.getFileEntry().getDisplayName(), null, null);
         if (selectedFile == null)
             return; // Cancelled.
 
@@ -156,14 +157,14 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
     @FXML
     @SneakyThrows
     private void exportAll(ActionEvent event) {
-        File selectedFolder = Utils.promptChooseDirectory(getGameInstance(), "Select the directory to export WAD contents to.", true);
+        File selectedFolder = FXUtils.promptChooseDirectory(getGameInstance(), "Select the directory to export WAD contents to.", true);
         if (selectedFolder == null)
             return; // Cancelled.
 
         for (WADEntry wadEntry : getFile().getFiles()) {
             MWIResourceEntry resourceEntry = wadEntry.getFileEntry();
 
-            File save = Utils.getNonExistantFile(new File(selectedFolder, resourceEntry.getDisplayName()));
+            File save = FileUtils.getNonExistantFile(new File(selectedFolder, resourceEntry.getDisplayName()));
             getLogger().info("Saving: " + resourceEntry.getDisplayName());
 
             DataWriter writer = new DataWriter(new FileReceiver(save));

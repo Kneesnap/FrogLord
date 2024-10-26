@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.games.sony;
 
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FileUtils;
 
 /**
  * Represents math capabilities used by Sony Cambridge games.
@@ -34,7 +34,7 @@ public class SCMath {
         SIN_ENTRIES = new short[ACOSTABLE_ENTRIES];
 
         // Read data.
-        DataReader reader = new DataReader(new ArraySource(Utils.readBytesFromStream(Utils.getResourceStream("games/sony/ACOSTABLE"))));
+        DataReader reader = new DataReader(new ArraySource(FileUtils.readBytesFromStream(FileUtils.getResourceStream("games/sony/ACOSTABLE"))));
         for (int i = 0; i < ACOSTABLE_ENTRIES; i++) {
             SIN_ENTRIES[i] = reader.readShort();
             COS_ENTRIES[i] = reader.readShort();

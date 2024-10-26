@@ -15,6 +15,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathSegme
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapPathManager.FroggerPathPreview;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.List;
@@ -50,9 +51,9 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
             int diffLength = newLength - this.length;
             if (Math.abs(diffLength) > getIncorrectLengthTolerance()) {
                 String extraMessage = getCalculatedIncorrectLengthString();
-                getLogger().warning("calculateFixedPointLength() was inaccurate! [Read Length: " + this.length + "/" + Utils.fixedPointIntToFloat4Bit(this.length)
-                        + ", Calculated Length: " + newLength + "/" + Utils.fixedPointIntToFloat4Bit(this.length)
-                        + ", Diff: " + diffLength + "/" + Utils.fixedPointIntToFloat4Bit(diffLength)
+                getLogger().warning("calculateFixedPointLength() was inaccurate! [Read Length: " + this.length + "/" + DataUtils.fixedPointIntToFloat4Bit(this.length)
+                        + ", Calculated Length: " + newLength + "/" + DataUtils.fixedPointIntToFloat4Bit(this.length)
+                        + ", Diff: " + diffLength + "/" + DataUtils.fixedPointIntToFloat4Bit(diffLength)
                         + (extraMessage != null && extraMessage.length() > 0 ? ", " + extraMessage : "") + "]");
             }
         }
@@ -156,8 +157,8 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
      */
     public void setupEditor(FroggerPathPreview pathPreview, GUIEditorGrid editor) {
         editor.addLabel("Type:", getType().name(), 25);
-        TextField segmentLengthField = editor.addFloatField("Segment Length:", Utils.fixedPointIntToFloat4Bit(getLength()), isAllowLengthEdit() ? newVal -> {
-            setLength(pathPreview, Utils.floatToFixedPointShort4Bit(newVal));
+        TextField segmentLengthField = editor.addFloatField("Segment Length:", DataUtils.fixedPointIntToFloat4Bit(getLength()), isAllowLengthEdit() ? newVal -> {
+            setLength(pathPreview, DataUtils.floatToFixedPointShort4Bit(newVal));
             onManualLengthUpdate(pathPreview, editor);
             updateDisplay(pathPreview); // Don't call onUpdate because that will recalculate length.
         } : null, null); // Read-Only.
@@ -202,7 +203,7 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
 
         if (pathPreview != null) {
             // Update length field.
-            pathPreview.getPathSegmentLengthField().setText(String.valueOf(Utils.fixedPointIntToFloat4Bit(newFixedPointSegmentLength)));
+            pathPreview.getPathSegmentLengthField().setText(String.valueOf(DataUtils.fixedPointIntToFloat4Bit(newFixedPointSegmentLength)));
 
             // Update main path length display.
             if (pathPreview.getPathManager().getSelectedValue() == getPath())

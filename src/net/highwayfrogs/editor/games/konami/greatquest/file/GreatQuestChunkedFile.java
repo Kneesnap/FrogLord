@@ -34,7 +34,7 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -74,9 +74,9 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             KCResourceID readType = KCResourceID.getByMagic(identifier);
 
             kcCResource newChunk;
-            if (readType == KCResourceID.RAW && Utils.testSignature(readBytes, kcEnvironment.ENVIRONMENT_NAME)) {
+            if (readType == KCResourceID.RAW && DataUtils.testSignature(readBytes, kcEnvironment.ENVIRONMENT_NAME)) {
                 newChunk = new kcEnvironment(this);
-            } else if (readType == KCResourceID.RAW && Utils.testSignature(readBytes, kcScriptList.GLOBAL_SCRIPT_NAME)) {
+            } else if (readType == KCResourceID.RAW && DataUtils.testSignature(readBytes, kcScriptList.GLOBAL_SCRIPT_NAME)) {
                 newChunk = new kcScriptList(this);
             } else if (readType != null && readType.getMaker() != null) {
                 newChunk = readType.getMaker().apply(this);
@@ -113,7 +113,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         for (int i = 0; i < this.chunks.size(); i++) {
             kcCResource chunk = this.chunks.get(i);
             if (chunk.getSelfHash().getOriginalString() == null && !(chunk instanceof kcCActionSequence) && !kcCResource.DEFAULT_RESOURCE_NAME.equals(chunk.getName())) // Action sequences are skipped because at this point they are unburdened by reality.
-                chunk.getLogger().warning("Name hash mismatch! Calculated: " + Utils.to0PrefixedHexString(chunk.calculateHash()) + ", Real: " + chunk.getHashAsHexString());
+                chunk.getLogger().warning("Name hash mismatch! Calculated: " + NumberUtils.to0PrefixedHexString(chunk.calculateHash()) + ", Real: " + chunk.getHashAsHexString());
         }
     }
 
@@ -201,7 +201,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
     @Override
     public String getExportFolderName() {
-        return Utils.stripExtension(getExportName());
+        return FileUtils.stripExtension(getExportName());
     }
 
     @Override
@@ -238,7 +238,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
             List<String> lines = nameMap.entrySet().stream()
                     .sorted(Comparator.comparingInt(Entry::getKey))
-                    .map(entry -> Utils.to0PrefixedHexString(entry.getKey()) + "=" + entry.getValue())
+                    .map(entry -> NumberUtils.to0PrefixedHexString(entry.getKey()) + "=" + entry.getValue())
                     .collect(Collectors.toList());
 
             Files.write(hashFile.toPath(), lines);
@@ -269,7 +269,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
         if (mainModel != null) {
             try {
-                mainModel.exportAsObj(folder, Utils.stripExtension(getExportName()));
+                mainModel.exportAsObj(folder, FileUtils.stripExtension(getExportName()));
             } catch (IOException ex) {
                 throw new RuntimeException("Failed to export map to .obj", ex);
             }
@@ -589,7 +589,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             kcCResourcePath resourcePath = generic.getAsResourcePath();
             builder.append(chunk.getName()).append('[').append(chunk.getHashAsHexString())
                     .append("]: ").append(resourcePath.getFilePath()).append(" ")
-                    .append(Utils.to0PrefixedHexString(resourcePath.getFileNameHash())).append(Constants.NEWLINE);
+                    .append(NumberUtils.to0PrefixedHexString(resourcePath.getFileNameHash())).append(Constants.NEWLINE);
         }
 
         saveExport(file, builder);
@@ -685,7 +685,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 int nameHash = GreatQuestUtils.hash(chunk.getName());
                 if (nameHash != chunk.getHash()) { // Should be equivalent to !chunk.isHashBasedOnName()
                     builder.append("|");
-                    builder.append(Utils.to0PrefixedHexString(nameHash));
+                    builder.append(NumberUtils.to0PrefixedHexString(nameHash));
                 }
 
                 if (chunk instanceof kcCResourceGeneric) {
@@ -698,7 +698,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                     }
                 } else {
                     builder.append("|");
-                    builder.append(Utils.stripAlphanumeric(chunk.getChunkIdentifier()));
+                    builder.append(StringUtils.stripAlphanumeric(chunk.getChunkIdentifier()));
                     builder.append("|");
                     builder.append(chunk.getClass().getSimpleName());
                 }
@@ -738,12 +738,12 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     public void exportChunksToDirectory(File directory) {
         Map<String, Integer> countMap = new HashMap<>();
         for (kcCResource chunk : this.chunks) {
-            String signature = Utils.stripAlphanumeric(chunk.getChunkIdentifier());
+            String signature = StringUtils.stripAlphanumeric(chunk.getChunkIdentifier());
             int count = countMap.getOrDefault(signature, 0) + 1;
             countMap.put(signature, count);
 
             // Check there is data.
-            String fileName = Utils.padNumberString(count, 3);
+            String fileName = NumberUtils.padNumberString(count, 3);
             if (chunk.getRawData() == null) {
                 getLogger().warning("Skipping chunk with null data: '" + signature + "-" + fileName + "'.");
                 continue;
@@ -751,7 +751,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
             // Create sub-directory.
             File subDirectory = new File(directory, signature);
-            Utils.makeDirectory(subDirectory);
+            FileUtils.makeDirectory(subDirectory);
 
             // Save file contents.
             File outputFile = new File(subDirectory, fileName);
@@ -802,7 +802,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         if (resource != null) {
             builder.append(getter.apply(resource));
         } else if (resourceHash != 0 && resourceHash != -1) {
-            builder.append(Utils.to0PrefixedHexString(resourceHash));
+            builder.append(NumberUtils.to0PrefixedHexString(resourceHash));
         } else {
             builder.append("None");
         }
@@ -845,6 +845,6 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         if (resource != null)
             resourceName = getter.apply(resource);
 
-        return grid.addLabel(label + ":", (resourceName != null ? resourceName : "Not Found") + " (" + Utils.to0PrefixedHexString(resourceHash) + ")");
+        return grid.addLabel(label + ":", (resourceName != null ? resourceName : "Not Found") + " (" + NumberUtils.to0PrefixedHexString(resourceHash) + ")");
     }
 }

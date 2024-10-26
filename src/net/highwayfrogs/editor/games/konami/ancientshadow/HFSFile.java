@@ -5,8 +5,8 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData;
-import net.highwayfrogs.editor.games.generic.GameObject;
+import net.highwayfrogs.editor.games.generic.data.GameData;
+import net.highwayfrogs.editor.games.generic.data.GameObject;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameInstance;
 import net.highwayfrogs.editor.games.konami.hudson.file.HudsonRwStreamFile;
@@ -16,6 +16,7 @@ import net.highwayfrogs.editor.games.shared.basic.file.definition.IGameFileDefin
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.CollectionTreeViewComponent.CollectionViewTreeNode;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -172,12 +173,12 @@ public class HFSFile extends HudsonGameFile implements IVirtualFileSystem {
     @Override
     public void export(File exportFolder) {
         File filesExportDir = new File(exportFolder, "Files [" + getDisplayName() + "]");
-        Utils.makeDirectory(filesExportDir);
+        FileUtils.makeDirectory(filesExportDir);
 
         for (int i = 0; i < this.hfsFiles.size(); i++) {
             File groupFolder = new File(filesExportDir, "GROUP" + String.format("%02d", i));
             List<HudsonGameFile> groupFiles = this.hfsFiles.get(i);
-            Utils.makeDirectory(groupFolder);
+            FileUtils.makeDirectory(groupFolder);
 
             for (int j = 0; j < groupFiles.size(); j++) {
                 File outputFile = new File(groupFolder, "FILE" + String.format("%03d", j));
@@ -185,13 +186,13 @@ public class HFSFile extends HudsonGameFile implements IVirtualFileSystem {
                 try {
                     Files.write(outputFile.toPath(), groupFiles.get(j).getRawData());
                 } catch (IOException ex) {
-                    Utils.handleError(getLogger(), ex, false, "Failed to export file '%s'.", Utils.toLocalPath(exportFolder, outputFile, true));
+                    Utils.handleError(getLogger(), ex, false, "Failed to export file '%s'.", FileUtils.toLocalPath(exportFolder, outputFile, true));
                 }
             }
         }
 
         File imagesExportDir = new File(exportFolder, "Images [" + getDisplayName() + "]");
-        Utils.makeDirectory(imagesExportDir);
+        FileUtils.makeDirectory(imagesExportDir);
 
         Map<String, AtomicInteger> nameCountMap = new HashMap<>();
         for (int i = 0; i < this.hfsFiles.size(); i++) {

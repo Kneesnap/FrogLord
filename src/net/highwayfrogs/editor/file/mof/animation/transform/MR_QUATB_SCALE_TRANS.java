@@ -5,7 +5,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.MathUtils;
 
 import java.util.Arrays;
 
@@ -79,7 +79,7 @@ public class MR_QUATB_SCALE_TRANS extends TransformObject {
 
         int trace = matrix.getMatrix()[0][0] + matrix.getMatrix()[1][1] + matrix.getMatrix()[2][2];
         if (trace > 0) {
-            int s = Utils.fixedSqrt((trace + 0x1000) << 12);
+            int s = MathUtils.fixedSqrt((trace + 0x1000) << 12);
             this.c = (byte) (s >> 7);
             this.x = (byte) (((matrix.getMatrix()[1][2] - matrix.getMatrix()[2][1]) << 5) / s);
             this.y = (byte) (((matrix.getMatrix()[2][0] - matrix.getMatrix()[0][2]) << 5) / s);
@@ -93,7 +93,7 @@ public class MR_QUATB_SCALE_TRANS extends TransformObject {
 
             int j = (i == 2 ? 0 : i + 1);
             int k = (j == 2 ? 0 : j + 1);
-            int s = Utils.fixedSqrt(((matrix.getMatrix()[i][i] - (matrix.getMatrix()[j][j] + matrix.getMatrix()[k][k])) + 0x1000) << 12);
+            int s = MathUtils.fixedSqrt(((matrix.getMatrix()[i][i] - (matrix.getMatrix()[j][j] + matrix.getMatrix()[k][k])) + 0x1000) << 12);
             byte v1 = (byte) (s >> 7);
             byte v2 = (byte) (((matrix.getMatrix()[i][j] + matrix.getMatrix()[j][i]) << 5) / s);
             byte v3 = (byte) (((matrix.getMatrix()[i][k] + matrix.getMatrix()[k][i]) << 5) / s);

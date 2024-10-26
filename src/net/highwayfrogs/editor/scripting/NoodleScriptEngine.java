@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.scripting;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
-import net.highwayfrogs.editor.games.generic.GameObject.SharedGameObject;
+import net.highwayfrogs.editor.games.generic.data.GameObject.SharedGameObject;
 import net.highwayfrogs.editor.scripting.compiler.NoodleCompiler;
 import net.highwayfrogs.editor.scripting.compiler.NoodleCompilerException;
 import net.highwayfrogs.editor.scripting.compiler.preprocessor.builtins.NoodleBuiltinManager;
@@ -15,9 +15,7 @@ import net.highwayfrogs.editor.scripting.runtime.templates.NoodleWrapperTemplate
 import net.highwayfrogs.editor.scripting.runtime.templates.utils.NoodleLoggerTemplate;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.math.*;
-import net.highwayfrogs.editor.utils.MathUtils;
-import net.highwayfrogs.editor.utils.TimeUtils;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.*;
 
 import java.io.File;
 import java.util.*;
@@ -218,7 +216,7 @@ public class NoodleScriptEngine extends SharedGameObject {
         if (scriptFile == null)
             throw new NullPointerException("sourceCodeFile");
 
-        String scriptName = Utils.stripExtension(scriptFile.getName());
+        String scriptName = FileUtils.stripExtension(scriptFile.getName());
         return loadScript(scriptFile, scriptName, new NoodleScript(this, scriptName));
     }
 
@@ -234,7 +232,7 @@ public class NoodleScriptEngine extends SharedGameObject {
         if (maker == null)
             throw new NullPointerException("scriptName");
 
-        String scriptName = Utils.stripExtension(scriptFile.getName());
+        String scriptName = FileUtils.stripExtension(scriptFile.getName());
         return loadScript(scriptFile, scriptName, maker.apply(this, scriptName));
     }
 
@@ -299,6 +297,8 @@ public class NoodleScriptEngine extends SharedGameObject {
 
         // Various utility components of FrogLord.
         addWrapperTemplates(Matrix4x4f.class, Vector2f.class, Vector3f.class, Vector4f.class, Quaternion.class);
+        addWrapperTemplates(AudioUtils.class, ColorUtils.class, DataUtils.class, FileUtils.class, MathUtils.class,
+                NumberUtils.class, StringUtils.class, TimeUtils.class, Utils.class);
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(Config.class));
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(MathUtils.class));
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(TimeUtils.class));

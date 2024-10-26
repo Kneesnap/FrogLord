@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.games.renderware;
 
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * This handles utilities for version-related
@@ -121,7 +121,7 @@ public class RwVersion {
      * @return debug string
      */
     public static String getDebugString(int version) {
-        return convertVersionToString(version) + "/" + Utils.toHexString(version);
+        return convertVersionToString(version) + "/" + NumberUtils.toHexString(version);
     }
 
     /**

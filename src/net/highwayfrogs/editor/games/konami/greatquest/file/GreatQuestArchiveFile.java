@@ -15,7 +15,9 @@ import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectio
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.DataSizeUnit;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,7 +62,7 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
             MenuItem saveOriginalFileData = new MenuItem("Export Original File Data");
             contextMenu.getItems().add(saveOriginalFileData);
             saveOriginalFileData.setOnAction(event -> {
-                File outputFile = Utils.promptFileSave(getGameInstance(), "Please select the file to save '" + getFileName() + "' as...", getFileName(), "All Files", "*");
+                File outputFile = FXUtils.promptFileSave(getGameInstance(), "Please select the file to save '" + getFileName() + "' as...", getFileName(), "All Files", "*");
                 if (outputFile != null)
                     exportOriginalFileData(outputFile);
             });
@@ -93,14 +95,14 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
 
     @Override
     public String getCollectionViewDisplayName() {
-        return (this.fileName != null ? this.fileName : getExportName()) + " [Hash: " + Utils.toHexString(getHash()) + (this.filePath != null ? ", Full Path: " + this.filePath : "") + "]";
+        return (this.fileName != null ? this.fileName : getExportName()) + " [Hash: " + NumberUtils.toHexString(getHash()) + (this.filePath != null ? ", Full Path: " + this.filePath : "") + "]";
     }
 
     @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {
         propertyList = super.addToPropertyList(propertyList);
 
-        propertyList.add("Name Hash", Utils.to0PrefixedHexString(getHash()));
+        propertyList.add("Name Hash", NumberUtils.to0PrefixedHexString(getHash()));
         propertyList.add("Name Collision", this.collision);
         propertyList.add("Compression Enabled", this.compressed);
         if (this.rawData != null)
@@ -184,7 +186,7 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
      * @return exportName
      */
     public String getExportName() {
-        if (hasFilePath() && Utils.isValidFileName(getFileName()))
+        if (hasFilePath() && FileUtils.isValidFileName(getFileName()))
             return getFileName();
 
         int index = getArchiveIndex();
@@ -236,7 +238,7 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
 
         if (this instanceof IFileExport) {
             File exportFolder = new File(targetFolder, getExportFolderName() + "/");
-            Utils.makeDirectory(exportFolder);
+            FileUtils.makeDirectory(exportFolder);
 
             try {
                 ((IFileExport) this).exportToFolder(exportFolder);

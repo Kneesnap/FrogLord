@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.games.shared.sound;
 
-import net.highwayfrogs.editor.utils.IGameObject;
+import net.highwayfrogs.editor.games.generic.data.IGameObject;
 
 import java.util.List;
 

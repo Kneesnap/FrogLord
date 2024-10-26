@@ -8,7 +8,7 @@ import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -90,7 +90,7 @@ public class RwTableOfContentsChunk extends RwStreamChunk {
 
         @Override
         public String toString() {
-            return "ChunkDef{offset=" + Utils.toHexString(this.offset) + ",game=" + Integer.toHexString(this.gameId).toUpperCase()
+            return "ChunkDef{offset=" + NumberUtils.toHexString(this.offset) + ",game=" + Integer.toHexString(this.gameId).toUpperCase()
                     + ",type=" + Integer.toHexString(this.chunkId).toUpperCase() + ",guid=" + Arrays.toString(this.guid) + "}";
         }
     }

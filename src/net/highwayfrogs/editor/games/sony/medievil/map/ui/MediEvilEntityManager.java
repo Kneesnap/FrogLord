@@ -15,7 +15,7 @@ import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMesh;
 import net.highwayfrogs.editor.games.sony.medievil.map.ui.MediEvilMapUIManager.MediEvilMapListManager;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -161,9 +161,9 @@ public class MediEvilEntityManager extends MediEvilMapListManager<MediEvilMapEnt
         }
 
         SVector position = entity.getPosition();
-        entityMeshView.setTranslateX(Utils.fixedPointIntToFloat4Bit(position.getX()));
-        entityMeshView.setTranslateY(Utils.fixedPointIntToFloat4Bit(position.getY()));
-        entityMeshView.setTranslateZ(Utils.fixedPointIntToFloat4Bit(position.getZ()));
+        entityMeshView.setTranslateX(DataUtils.fixedPointIntToFloat4Bit(position.getX()));
+        entityMeshView.setTranslateY(DataUtils.fixedPointIntToFloat4Bit(position.getY()));
+        entityMeshView.setTranslateZ(DataUtils.fixedPointIntToFloat4Bit(position.getZ()));
     }
 
 

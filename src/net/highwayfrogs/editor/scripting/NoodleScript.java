@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.scripting.compiler.NoodleCallHolder;
 import net.highwayfrogs.editor.scripting.instructions.NoodleInstruction;
 import net.highwayfrogs.editor.scripting.tracking.NoodleRuntimeCodeSource;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -49,7 +50,7 @@ public class NoodleScript {
      */
 
     public void disassemble(StringBuilder builder, boolean includeLineNumbers) {
-        int goalDigits = Utils.getDigitCount(getInstructions().size());
+        int goalDigits = NumberUtils.getDigitCount(getInstructions().size());
 
         // Get labels.
         List<String> labels = new ArrayList<>(this.labels.keySet());
@@ -97,7 +98,7 @@ public class NoodleScript {
 
             // Write assembly instruction to line.
             if (includeLineNumbers)
-                builder.append(Utils.appendLeftPadding(String.valueOf(i), goalDigits, '0')).append(": ");
+                builder.append(NumberUtils.padNumberString(i, goalDigits)).append(": ");
 
             instruction.toString(builder, this);
             builder.append(Constants.NEWLINE);

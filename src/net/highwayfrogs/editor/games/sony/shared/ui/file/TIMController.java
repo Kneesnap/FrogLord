@@ -15,7 +15,7 @@ import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.system.NameValuePair;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -97,7 +97,7 @@ public class TIMController extends SCFileEditorUIController<SCGameInstance, PSXT
         double aspectRatioInverse = (double) tim.getImageHeight() / tim.getImageWidth();
         this.imageView.setFitWidth(chosenWidth);
         this.imageView.setFitHeight((int) Math.round(aspectRatioInverse * chosenWidth));
-        this.imageView.setImage(Utils.toFXImage(image, false));
+        this.imageView.setImage(FXUtils.toFXImage(image, false));
     }
 
     @FXML
@@ -108,7 +108,7 @@ public class TIMController extends SCFileEditorUIController<SCGameInstance, PSXT
     @FXML
     @SneakyThrows
     private void exportFile(ActionEvent event) {
-        File selectedFile = Utils.promptFileSave(getGameInstance(), "Specify the file to export this image as...", null, "Image Files", "png");
+        File selectedFile = FXUtils.promptFileSave(getGameInstance(), "Specify the file to export this image as...", null, "Image Files", "png");
         if (selectedFile != null)
             ImageIO.write(getImage(), "png", selectedFile);
     }
@@ -116,8 +116,8 @@ public class TIMController extends SCFileEditorUIController<SCGameInstance, PSXT
     @FXML
     @SneakyThrows
     private void importFile(ActionEvent event) {
-        Utils.makePopUp("Importing TIM images is not supported at this time.", AlertType.ERROR);
-        File selectedFile = Utils.promptFileOpenExtensions(getGameInstance(), "Select the image to import...", "Image Files", "png", "bmp");
+        FXUtils.makePopUp("Importing TIM images is not supported at this time.", AlertType.ERROR);
+        File selectedFile = FXUtils.promptFileOpenExtensions(getGameInstance(), "Select the image to import...", "Image Files", "png", "bmp");
         if (selectedFile == null)
             return; // Cancelled.
 

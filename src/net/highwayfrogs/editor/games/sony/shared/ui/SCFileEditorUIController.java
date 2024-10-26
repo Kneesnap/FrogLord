@@ -10,7 +10,7 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.WADController;
 import net.highwayfrogs.editor.gui.GameUIController;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 /**
  * Represents editor UI for a SCGameFile.
@@ -53,7 +53,7 @@ public abstract class SCFileEditorUIController<TGameInstance extends SCGameInsta
     public void tryReturnToParentWadFile() {
         WADFile wadFile = getParentWadFile();
         if (wadFile == null) {
-            Utils.makePopUp("There's no file to return to.", AlertType.WARNING);
+            FXUtils.makePopUp("There's no file to return to.", AlertType.WARNING);
             return;
         }
 

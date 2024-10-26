@@ -8,6 +8,8 @@ import javafx.scene.shape.VertexFormat;
 import lombok.Getter;
 import net.highwayfrogs.editor.gui.texture.Texture;
 import net.highwayfrogs.editor.gui.texture.atlas.TextureAtlas;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.fx.wrapper.FXIntArray;
 import net.highwayfrogs.editor.utils.fx.wrapper.FXIntArrayBatcher;
@@ -303,7 +305,7 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
      * @param newImage the image to apply
      */
     protected PhongMaterial updateMaterial(BufferedImage newImage) {
-        return updateMaterial(Utils.toFXImage(newImage, false));
+        return updateMaterial(FXUtils.toFXImage(newImage, false));
     }
 
     /**
@@ -312,7 +314,7 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
      */
     protected PhongMaterial updateMaterial(Image newFxImage) {
         if (this.material == null) {
-            this.material = Utils.makePhongMaterial(this.materialFxImage = newFxImage, this.textureQuality);
+            this.material = Scene3DUtils.makePhongMaterial(this.materialFxImage = newFxImage, this.textureQuality);
 
             // Apply newly created material to meshes.
             for (int i = 0; i < this.meshViews.size(); i++)
@@ -323,7 +325,7 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
 
         // Update material image.
         if (this.materialFxImage != newFxImage) {
-            this.material = Utils.updatePhongMaterial(this.material, newFxImage, this.textureQuality);
+            this.material = Scene3DUtils.updatePhongMaterial(this.material, newFxImage, this.textureQuality);
             this.materialFxImage = newFxImage;
         }
         return this.material;

@@ -6,7 +6,8 @@ import javafx.scene.paint.Color;
 import net.highwayfrogs.editor.file.patch.PatchArgument;
 import net.highwayfrogs.editor.file.patch.PatchValue;
 import net.highwayfrogs.editor.games.sony.frogger.ui.PatchController;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.ColorUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Allows editing colors.
@@ -16,17 +17,17 @@ public class ColorArgument extends PatchArgumentBehavior<Color> {
     @Override
     public Color parseString(String text) {
         int rgbColor = text.startsWith("0x") ? Integer.parseInt(text.substring(2), 16) : Integer.parseInt(text);
-        return Utils.fromRGB(rgbColor);
+        return ColorUtils.fromRGB(rgbColor);
     }
 
     @Override
     public boolean isValidString(String text) {
-        return Utils.isInteger(text) || Utils.isHexInteger(text);
+        return NumberUtils.isInteger(text) || NumberUtils.isHexInteger(text);
     }
 
     @Override
     public String valueToString(Color color) {
-        return Utils.toHexString(Utils.toRGB(color));
+        return NumberUtils.toHexString(ColorUtils.toRGB(color));
     }
 
     @Override

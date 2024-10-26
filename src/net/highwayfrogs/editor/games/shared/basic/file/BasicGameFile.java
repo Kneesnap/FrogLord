@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.games.shared.basic.file;
 import javafx.fxml.FXMLLoader;
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.shared.basic.BasicGameInstance;
 import net.highwayfrogs.editor.games.shared.basic.file.definition.IGameFileDefinition;
 import net.highwayfrogs.editor.games.shared.basic.ui.BasicFileEditorUIController;
@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.gui.DefaultFileUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.DataSizeUnit;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -121,7 +122,7 @@ public abstract class BasicGameFile<TGameInstance extends BasicGameInstance> ext
      */
     public static <TGameFile extends BasicGameFile<?>, TGameInstance extends BasicGameInstance, TUIController extends BasicFileEditorUIController<TGameFile, TGameInstance>> TUIController loadEditor(TGameInstance gameInstance, String template, TUIController controller, TGameFile fileToEdit) {
         try {
-            FXMLLoader templateLoader = Utils.getFXMLTemplateLoader(gameInstance, template);
+            FXMLLoader templateLoader = FXUtils.getFXMLTemplateLoader(gameInstance, template);
             GameUIController.loadController(gameInstance, templateLoader, controller);
             controller.setTargetFile(fileToEdit);
         } catch (Throwable th) {

@@ -6,7 +6,7 @@ import net.highwayfrogs.editor.scripting.compiler.preprocessor.directives.Noodle
 import net.highwayfrogs.editor.scripting.compiler.tokens.NoodleToken;
 import net.highwayfrogs.editor.scripting.instructions.NoodleInstruction;
 import net.highwayfrogs.editor.scripting.tracking.NoodleCodeLocation;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.StringUtils;
 
 /**
  * Represents an exception which happened in the Noodle compiler.
@@ -17,27 +17,27 @@ public class NoodleCompilerException extends RuntimeException {
     }
 
     public NoodleCompilerException(String message, Object... args) {
-        this(getMessage(Utils.formatStringSafely(message, args), null));
+        this(getMessage(StringUtils.formatStringSafely(message, args), null));
     }
 
     public NoodleCompilerException(String message, NoodleCodeLocation codeLocation, Object... args) {
-        this(null, Utils.formatStringSafely(message, args), codeLocation);
+        this(null, StringUtils.formatStringSafely(message, args), codeLocation);
     }
 
     public NoodleCompilerException(String message, NoodleToken token, Object... args) {
-        this(null, Utils.formatStringSafely(message, args), token);
+        this(null, StringUtils.formatStringSafely(message, args), token);
     }
 
     public NoodleCompilerException(String message, NoodleNode astNode, Object... args) {
-        this(null, Utils.formatStringSafely(message, args), astNode);
+        this(null, StringUtils.formatStringSafely(message, args), astNode);
     }
 
     public NoodleCompilerException(String message, NoodleInstruction instruction, Object... args) {
-        this(null, Utils.formatStringSafely(message, args), instruction);
+        this(null, StringUtils.formatStringSafely(message, args), instruction);
     }
 
     public NoodleCompilerException(String message, NoodlePreprocessorDirective directive, Object... args) {
-        this(null, Utils.formatStringSafely(message, args), directive);
+        this(null, StringUtils.formatStringSafely(message, args), directive);
     }
 
     public NoodleCompilerException(Throwable cause, String message, NoodleCodeLocation codeLocation) {
@@ -57,7 +57,7 @@ public class NoodleCompilerException extends RuntimeException {
     }
 
     public NoodleCompilerException(Throwable cause, String message, NoodleToken token, Object... args) {
-        super(getMessage(Utils.formatStringSafely(message, args), cause, token), cause);
+        super(getMessage(StringUtils.formatStringSafely(message, args), cause, token), cause);
     }
 
     public NoodleCompilerException(Throwable cause, String message, NoodlePreprocessorDirective directive) {
@@ -65,7 +65,7 @@ public class NoodleCompilerException extends RuntimeException {
     }
 
     public NoodleCompilerException(Throwable cause, String message, NoodlePreprocessorDirective directive, Object... args) {
-        super(getMessage(Utils.formatStringSafely(message, args), cause, directive), cause);
+        super(getMessage(StringUtils.formatStringSafely(message, args), cause, directive), cause);
     }
 
     /**

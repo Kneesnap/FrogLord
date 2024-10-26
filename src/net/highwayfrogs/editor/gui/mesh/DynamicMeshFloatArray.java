@@ -2,11 +2,11 @@ package net.highwayfrogs.editor.gui.mesh;
 
 import javafx.collections.ObservableFloatArray;
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.IndexBitArray;
 import net.highwayfrogs.editor.utils.fx.wrapper.FXFloatArray;
 import net.highwayfrogs.editor.utils.fx.wrapper.FXFloatArrayBatcher;
 import net.highwayfrogs.editor.utils.fx.wrapper.FXIntArray;
 import net.highwayfrogs.editor.utils.fx.wrapper.FXIntArrayBatcher;
+import net.highwayfrogs.editor.utils.objects.IndexBitArray;
 
 import java.util.logging.Logger;
 

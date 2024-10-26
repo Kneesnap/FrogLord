@@ -8,7 +8,7 @@ import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Implements lighting data types as seen in balight.h
@@ -68,7 +68,7 @@ public class RwLightChunk extends RwStreamChunk implements IRwStreamChunkWithEmb
         propertyList.add("Green", this.green);
         propertyList.add("Blue", this.blue);
         propertyList.add("-cosAngle", this.minusCosAngle);
-        propertyList.add("Type & Flags", Utils.toHexString(this.typeAndFlags));
+        propertyList.add("Type & Flags", NumberUtils.toHexString(this.typeAndFlags));
         return propertyList;
     }
 }

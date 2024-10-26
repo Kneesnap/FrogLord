@@ -13,6 +13,8 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquar
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketForm;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapFormManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
@@ -131,14 +133,14 @@ public class FroggerMapForm extends SCGameData<FroggerGameInstance> {
      * Gets the x offset as a floating point number.
      */
     public float getXOffsetAsFloat() {
-        return Utils.fixedPointShortToFloat4Bit(this.xOffset);
+        return DataUtils.fixedPointShortToFloat4Bit(this.xOffset);
     }
 
     /**
      * Gets the z offset as a floating point number.
      */
     public float getZOffsetAsFloat() {
-        return Utils.fixedPointShortToFloat4Bit(this.zOffset);
+        return DataUtils.fixedPointShortToFloat4Bit(this.zOffset);
     }
 
     /**
@@ -168,7 +170,7 @@ public class FroggerMapForm extends SCGameData<FroggerGameInstance> {
         if (this.formDataEntries.isEmpty()) {
             editor.addButton("Add Form Data", () -> {
                 if (this.xGridSquareCount <= 0 || this.zGridSquareCount <= 0) {
-                    Utils.makePopUp("Grid Counts must be positive non-zero numbers!", AlertType.WARNING);
+                    FXUtils.makePopUp("Grid Counts must be positive non-zero numbers!", AlertType.WARNING);
                     return;
                 }
 
@@ -294,7 +296,7 @@ public class FroggerMapForm extends SCGameData<FroggerGameInstance> {
         }
 
         graphics.dispose();
-        return Utils.toFXImage(newImage, false);
+        return FXUtils.toFXImage(newImage, false);
     }
 
     /**

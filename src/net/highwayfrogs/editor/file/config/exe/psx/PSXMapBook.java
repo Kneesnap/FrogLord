@@ -10,7 +10,7 @@ import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.function.Function;
 
@@ -107,7 +107,7 @@ public class PSXMapBook extends MapBook {
     @Override
     public String toString() {
         return "MAP[" + getGameInstance().getResourceName(this.mapId)
-                + "] Remap[" + Utils.toHexString(getFileRemapPointer())
+                + "] Remap[" + NumberUtils.toHexString(getFileRemapPointer())
                 + "] WAD[" + getGameInstance().getResourceName(this.wadId)
                 + "] ENV[" + getGameInstance().getTextureIdFromPointer(this.environmentTexturePointer) + "]";
     }

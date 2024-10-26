@@ -16,7 +16,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.Great
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshCollection.MeshViewCollection;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 /**
  * Controls the map mesh for Great Quest.
@@ -29,8 +29,8 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
     private static final double DEFAULT_NEAR_CLIP = .1; // Great Quest needs a fairly small near clip as the map geometry is shown at a small scale.
     private static final double DEFAULT_MOVEMENT_SPEED = 25;
 
-    private static final PhongMaterial VERTEX_MATERIAL = Utils.makeUnlitSharpMaterial(Color.YELLOW);
-    private static final PhongMaterial CONNECTION_MATERIAL = Utils.makeUnlitSharpMaterial(Color.LIMEGREEN);
+    private static final PhongMaterial VERTEX_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
+    private static final PhongMaterial CONNECTION_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.LIMEGREEN);
 
     @Override
     public void setupBindings(SubScene subScene3D, MeshView meshView) {

@@ -5,8 +5,8 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.BitReader;
 import net.highwayfrogs.editor.file.writer.BitWriter;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.system.classlist.GlobalClassRegistry.ClassEntry;
-import net.highwayfrogs.editor.utils.IBinarySerializable;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;

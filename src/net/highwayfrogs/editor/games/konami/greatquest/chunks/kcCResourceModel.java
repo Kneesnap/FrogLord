@@ -13,7 +13,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FileUtils;
 
 /**
  * A reference to a 3D model.
@@ -123,7 +123,7 @@ public class kcCResourceModel extends kcCResource {
 
     private void applyCollisionMeshName() {
         // If we resolve the model successfully, our goal is to generate the name of any corresponding collision mesh.
-        String baseName = Utils.stripExtension(getFileName());
+        String baseName = FileUtils.stripExtension(getFileName());
         String collisionMeshName = (baseName + kcCResourceTriMesh.EXTENSION_SUFFIX.toUpperCase());
         if (baseName.equals(baseName.toUpperCase()))
             collisionMeshName = collisionMeshName.toUpperCase();

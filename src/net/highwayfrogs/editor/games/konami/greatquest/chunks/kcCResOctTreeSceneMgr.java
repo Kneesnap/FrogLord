@@ -16,7 +16,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.math.kcBox4;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.games.konami.greatquest.model.*;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -87,7 +87,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
         int treeEntityEndIndex = reader.getIndex() + treeEntityDataSize;
         this.entityTree.load(reader);
         if (treeEntityEndIndex != reader.getIndex()) {
-            getLogger().warning("Entity kcOctTree ended at the wrong position! (Expected: " + Utils.toHexString(treeEntityEndIndex) + ", Actual: " + Utils.toHexString(reader.getIndex()) + ")");
+            getLogger().warning("Entity kcOctTree ended at the wrong position! (Expected: " + NumberUtils.toHexString(treeEntityEndIndex) + ", Actual: " + NumberUtils.toHexString(reader.getIndex()) + ")");
             reader.setIndex(treeEntityEndIndex);
         }
 
@@ -95,7 +95,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
         int treeVisualEndIndex = reader.getIndex() + treeVisualDataSize;
         this.visualTree.load(reader);
         if (treeVisualEndIndex != reader.getIndex()) {
-            getLogger().warning("Visual kcOctTree ended at the wrong position! (Expected: " + Utils.toHexString(treeVisualEndIndex) + ", Actual: " + Utils.toHexString(reader.getIndex()) + ")");
+            getLogger().warning("Visual kcOctTree ended at the wrong position! (Expected: " + NumberUtils.toHexString(treeVisualEndIndex) + ", Actual: " + NumberUtils.toHexString(reader.getIndex()) + ")");
             reader.setIndex(treeVisualEndIndex);
         }
 
@@ -364,7 +364,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
             this.normalAverage.writePrefixedInfoLine(builder, "Normal Average", padding);
             String newPadding = padding + " ";
             this.boundingBox.writePrefixedMultiLineInfo(builder, "Bounding Box", padding, newPadding);
-            builder.append(padding).append("FVF: ").append(Utils.toHexString(this.fvf)).append(Constants.NEWLINE);
+            builder.append(padding).append("FVF: ").append(NumberUtils.toHexString(this.fvf)).append(Constants.NEWLINE);
             builder.append(padding).append("Components: ").append(Arrays.toString(this.components)).append(Constants.NEWLINE);
             builder.append(padding).append("FVF Stride: ").append(this.fvfStride).append(Constants.NEWLINE);
             builder.append(padding).append("Primitive Type: ").append(this.primitiveType).append(Constants.NEWLINE);

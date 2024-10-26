@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.games.sony;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.games.generic.GameObject;
+import net.highwayfrogs.editor.games.generic.data.GameObject;
 import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
 
 /**

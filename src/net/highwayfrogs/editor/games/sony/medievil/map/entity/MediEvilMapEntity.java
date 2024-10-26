@@ -15,7 +15,7 @@ import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.medievil.map.ui.MediEvilEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo.IPositionChangeListener;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.UUID;
 
@@ -194,7 +194,7 @@ public class MediEvilMapEntity extends SCGameData<MediEvilGameInstance> {
         }, 0, 0xFF);
 
         // Other data
-        editor.addLabel("Trigger Data: ", Utils.toHexString(this.triggerData));
+        editor.addLabel("Trigger Data: ", NumberUtils.toHexString(this.triggerData));
         editor.addSignedIntegerField("Init Flags", this.initFlags, newFlags -> this.initFlags = newFlags);
         editor.addSignedIntegerField("Destroy Flags", this.destroyFlags, newFlags -> this.destroyFlags = newFlags);
         editor.addUnsignedByteField("Base Generic Data", this.baseGenericData, newFormId -> this.baseGenericData = newFormId);
