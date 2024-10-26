@@ -20,6 +20,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEff
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcParam;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
+import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.io.File;
@@ -41,7 +42,7 @@ public class GreatQuestRunners {
         System.out.println("Loading file...");
         DataReader reader = new DataReader(new FileSource(binFile));
         GreatQuestInstance instance = new GreatQuestInstance();
-        instance.loadGame("pc-retail", binFile, null);
+        instance.loadGame("pc-retail", new Config("FakeConfig"), binFile, null);
         instance.getMainArchive().load(reader);
         System.out.println("Loaded.");
 

@@ -24,7 +24,7 @@ public interface IGameInstance {
     /**
      * Gets the configuration used by the instance.
      */
-    GameConfig getConfig();
+    GameConfig getVersionConfig();
 
     /**
      * Gets the main menu controller currently active for the instance.
@@ -67,14 +67,15 @@ public interface IGameInstance {
      * Loads the game configuration from the provided config.
      * @param configName the name of the configuration game data is loaded from
      * @param config the config object to load data from
+     * @param instanceConfig the config containing configuration for this specific instance
      */
-    void loadGameConfig(String configName, Config config);
+    void loadGameConfig(String configName, Config config, net.highwayfrogs.editor.system.Config instanceConfig);
 
     /**
      * Get the target platform this game version runs on.
      */
     default GamePlatform getPlatform() {
-        GameConfig config = getConfig();
+        GameConfig config = getVersionConfig();
         return config != null ? config.getPlatform() : null;
     }
 

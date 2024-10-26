@@ -314,7 +314,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         System.out.println("Loading file...");
         DataReader reader = new DataReader(new FileSource(binFile));
         GreatQuestInstance instance = new GreatQuestInstance();
-        instance.loadGame(config.getName(), binFile, null);
+        instance.loadGame(config.getName(), new net.highwayfrogs.editor.system.Config("FakeConfig"), binFile, null);
         instance.getMainArchive().load(reader);
 
         // Export.

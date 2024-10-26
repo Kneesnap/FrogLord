@@ -53,8 +53,8 @@ public class MediEvilGameInstance extends SCGameInstance {
     private static final int FILE_TYPE_PGD = 6;
 
     @Override
-    public MediEvilConfig getConfig() {
-        return (MediEvilConfig) super.getConfig();
+    public MediEvilConfig getVersionConfig() {
+        return (MediEvilConfig) super.getVersionConfig();
     }
 
     @Override
@@ -75,11 +75,11 @@ public class MediEvilGameInstance extends SCGameInstance {
 
     private void readLevelTable(DataReader reader) {
         this.levelTable.clear();
-        if (getConfig().getLevelTableAddress() < 0)
+        if (this.getVersionConfig().getLevelTableAddress() < 0)
             return;
 
-        reader.jumpTemp(getConfig().getLevelTableAddress());
-        for (int i = 0; i < getConfig().getLevelTableSize(); i++) {
+        reader.jumpTemp(this.getVersionConfig().getLevelTableAddress());
+        for (int i = 0; i < this.getVersionConfig().getLevelTableSize(); i++) {
             MediEvilLevelTableEntry newEntry = new MediEvilLevelTableEntry(this);
             newEntry.load(reader);
             this.levelTable.add(newEntry);
@@ -90,8 +90,8 @@ public class MediEvilGameInstance extends SCGameInstance {
     private void readEntityTable(DataReader reader) {
         this.entityTable.clear();
 
-        if (getConfig().getEntityTableAddress() > 0) {
-            reader.jumpTemp(getConfig().getEntityTableAddress());
+        if (this.getVersionConfig().getEntityTableAddress() > 0) {
+            reader.jumpTemp(this.getVersionConfig().getEntityTableAddress());
 
             try {
                 this.entityTable.load(reader);

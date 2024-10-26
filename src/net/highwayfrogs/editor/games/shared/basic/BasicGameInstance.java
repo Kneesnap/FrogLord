@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.games.shared.basic.file.definition.PhysicalFileDe
 import net.highwayfrogs.editor.games.shared.basic.ui.BasicMainMenuUIController;
 import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
+import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -39,7 +40,7 @@ public abstract class BasicGameInstance extends GameInstance {
      * @param mainFolder the main folder file to read game files from
      * @param progressBar the progress bar to display load progress on, if it exists
      */
-    public void loadGame(String gameVersionConfigName, File mainFolder, ProgressBarComponent progressBar) {
+    public void loadGame(String gameVersionConfigName, Config userConfig, File mainFolder, ProgressBarComponent progressBar) {
         if (this.rootFolder != null)
             throw new RuntimeException("The game instance has already been loaded.");
 
@@ -48,7 +49,7 @@ public abstract class BasicGameInstance extends GameInstance {
 
         if (mainFolder.isDirectory()) {
             this.rootFolder = mainFolder;
-            loadGameConfig(gameVersionConfigName);
+            loadGameConfig(gameVersionConfigName, userConfig);
             loadFilesFromFolderRecursive(mainFolder, progressBar);
         } else {
             throw new RuntimeException("Don't know how to load '" + mainFolder + "', which reported as not a directory!");

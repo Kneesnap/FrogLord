@@ -50,6 +50,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
     @FXML private Button loadButton;
     @FXML private Button cancelButton;
 
+    public static final String CONFIG_GAME_INSTANCE_DATA = "InstanceData";
     public static final String CONFIG_ROOT_LAST_SELECTED_GAME_TYPE = "lastSelectedGame";
     public static final String CONFIG_GAME_LAST_SELECTED_VERSION = "lastSelectedVersion";
     public static final String CONFIG_GAME_TYPE = "gameType";
@@ -135,7 +136,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
         GameInstance newInstance = gameType.createGameInstance();
         ProgressBarComponent.openProgressBarWindow(newInstance, "Loading Game Data...", progressBar -> {
             try {
-                gameType.loadGameInstance(newInstance, gameVersion, getOrCreateGameConfig(), progressBar);
+                gameType.loadGameInstance(newInstance, gameVersion, getOrCreateGameConfig(), getOrCreateInstanceConfig(), progressBar);
             } catch (Throwable th) {
                 // Eat the error, we still want to boot into the main menu if an error occurs.
                 Utils.handleError(newInstance.getLogger(), th, true, "Failed to load the game data.");
@@ -290,6 +291,14 @@ public class GameConfigController extends GameUIController<GameInstance> {
             return this.unknownGameConfig; // Don't know the version yet!
 
         return perGameConfig.getOrCreateChildConfigByName(lastVersion);
+    }
+
+    /**
+     * Gets or creates the configuration for the instance which would be loaded for the active selection.
+     * @return instanceConfig
+     */
+    public Config getOrCreateInstanceConfig() {
+        return getOrCreateGameConfig().getOrCreateChildConfigByName(CONFIG_GAME_INSTANCE_DATA);
     }
 
     /**

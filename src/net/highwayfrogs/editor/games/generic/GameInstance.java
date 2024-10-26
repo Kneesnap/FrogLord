@@ -20,15 +20,14 @@ import java.util.logging.Logger;
 
 /**
  * Represents an instance of a game. For example, a folder containing the files for a single version of a game.
- * TODO: UI Plans?
- *  - Standardize 3D UI.
  *  TODO: I think there's some kind of caching bug with shading. It happened on "Time Device", where none of the shading in the world was right. Then, after I toggled shading off/on, it was fine. I suspect there's probably some tracking issue then.
  * Created by Kneesnap on 4/10/2024.
  */
 public abstract class GameInstance implements IGameInstance {
     @Getter private final IGameType gameType;
     @Getter private NoodleScriptEngine scriptEngine;
-    @Getter private GameConfig config;
+    @Getter private net.highwayfrogs.editor.system.Config config; // This contains user/instance configuration data. It is automatically saved on shutdown, and differs on a per-game-config basis.
+    @Getter private GameConfig versionConfig;
     @Getter private MainMenuController<?, ?> mainMenuController;
     private Logger cachedLogger;
     private StringBuilder cachedLogging;
@@ -79,7 +78,7 @@ public abstract class GameInstance implements IGameInstance {
 
         this.mainMenuController = makeMainMenuController();
         if (this.mainMenuController != null) {
-            String versionName = (this.config.getDisplayName() != null ? this.config.getDisplayName() : this.config.getInternalName());
+            String versionName = (this.versionConfig.getDisplayName() != null ? this.versionConfig.getDisplayName() : this.versionConfig.getInternalName());
             GameUIController.loadController(this, MainMenuController.MAIN_MENU_FXML_TEMPLATE_LOADER, this.mainMenuController);
             Stage stage = GameUIController.openWindow(this.mainMenuController, "FrogLord " + Constants.VERSION + " -- " + this.gameType.getDisplayName() + " " + versionName, false);
             stage.setResizable(true);
@@ -127,22 +126,26 @@ public abstract class GameInstance implements IGameInstance {
      * @param configName the name of the configuration game data is loaded from
      * @param config the config object to load data from
      */
-    public void loadGameConfig(String configName, Config config) {
-        if (this.config != null)
+    public void loadGameConfig(String configName, Config config, net.highwayfrogs.editor.system.Config userConfig) {
+        if (userConfig == null)
+            throw new NullPointerException("userConfig");
+        if (this.versionConfig != null)
             throw new IllegalStateException("Cannot load the game configuration '" + configName + "' because it has already been loaded.");
 
         // Register to GUIMain and log.
         GUIMain.getActiveGameInstances().add(this);
         getLogger().info("Hello! FrogLord is loading config '" + configName + "'.");
 
+        // Setup.
+        this.config = userConfig;
         this.scriptEngine = new NoodleScriptEngine(this, configName + "@" + Utils.getSimpleName(this));
 
         // Create & load config.
-        this.config = this.gameType.createConfig(configName);
-        this.config.loadData(config, this.gameType);
+        this.versionConfig = this.gameType.createConfig(configName);
+        this.versionConfig.loadData(config, this.gameType);
         this.onConfigLoad(config);
 
-        // Setup script engine.
+        // Setup script engine. (Occurs after loading configs)
         setupScriptEngine(this.scriptEngine);
         this.scriptEngine.seal();
     }
@@ -157,32 +160,39 @@ public abstract class GameInstance implements IGameInstance {
     /**
      * Load and setup game config data relating to the game such as version configuration and game files.
      * @param gameVersionConfigName the name of the version config file to load
+     * @param instanceConfig the instance configuration
      */
-    protected void loadGameConfig(String gameVersionConfigName) {
-        if (this.config != null)
+    protected void loadGameConfig(String gameVersionConfigName, net.highwayfrogs.editor.system.Config instanceConfig) {
+        if (this.versionConfig != null)
             throw new IllegalStateException("Cannot load the game configuration '" + gameVersionConfigName + "' because it has already been loaded.");
 
         // Load config.
         net.highwayfrogs.editor.file.config.Config gameConfig = new net.highwayfrogs.editor.file.config.Config(this.gameType.getEmbeddedResourceStream("versions/" + gameVersionConfigName + ".cfg"));
-        loadGameConfig(gameVersionConfigName, gameConfig);
+        loadGameConfig(gameVersionConfigName, gameConfig, instanceConfig);
     }
 
     /**
      * Load and setup game config data relating to the game such as version configuration and game files.
      * @param config the already loaded config file
+     * @param instanceConfig the instance configuration
      */
-    protected void loadGameConfig(GameConfig config) {
+    protected void loadGameConfig(GameConfig config, net.highwayfrogs.editor.system.Config instanceConfig) {
         if (config == null)
             throw new NullPointerException("config");
-        if (this.config != null)
+        if (this.config == null)
+            throw new NullPointerException("userConfig");
+        if (this.versionConfig != null)
             throw new IllegalStateException("Cannot load the game configuration '" + config.getInternalName() + "' because it has already been loaded.");
+
+        // Setup user config.
+        this.config = instanceConfig;
 
         // Register to GUIMain and log.
         GUIMain.getActiveGameInstances().add(this);
         getLogger().info("Hello! FrogLord is loading config '" + config.getInternalName() + "'.");
 
         // Create & load config.
-        this.config = config;
+        this.versionConfig = config;
         this.onConfigLoad(config.getConfig());
     }
 

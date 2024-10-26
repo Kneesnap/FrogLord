@@ -25,21 +25,17 @@ import java.util.logging.*;
 
 /**
  * The entry point to FrogLord.
- * TODO: Use new config system in existing code parts?
  * TODO: At some point we want to:
  *  -> Make a better logging system, one which can dynamically create its information portion without creating memory leaks. One which can log per-game instance, and only log to that instance's main window. Also, it should be able to use format messages.
- *  -> Save many different file paths, so when we open up file dialog prompts we don't have to consistently move between directories.
  *  -> Allow automatic version selection when selecting a game.
  *  -> PropertyList with nested portions.
  *  -> Add a scripting console + a way to run scripts for each game, as well as an actual mod system definition.
+ *  -> Use new config system in existing code parts?
  *
  * TODO: Solve TODOs in:
  *  - GUIMain.java
  *  - GameInstance.java
  *  - GroupedCollectionViewComponent.java
- *  - CollectionViewComponent.java
- *  - CollectionEditorComponent.java
- *  - SCGameFileListEditor.java
  *
  * TODO: Globus's computer seems to have different text settings than mine, so many of the UI buttons are just too small for the text.
  *  -> What do I need to make the FrogLord UI appear consistent across systems?
@@ -114,6 +110,7 @@ public class GUIMain extends Application {
     @SuppressWarnings("CallToPrintStackTrace")
     private static void onShutdown() {
         Logger.getLogger(GUIMain.class.getSimpleName()).info("FrogLord is shutting down...");
+        saveMainConfig();
         
         // Logger shutdown.
         Logger globalLogger = Logger.getGlobal();

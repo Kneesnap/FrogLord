@@ -135,7 +135,7 @@ public class SCPlayStationSoundBankBody extends SCSplitSoundBankBody<SCPlayStati
 
         private static int makeGlobalId(SCSplitSoundBankBody<?, ?> body, int internalTrackId) {
             // Generate name.
-            SCGameConfig config = body.getGameInstance().getConfig();
+            SCGameConfig config = body.getGameInstance().getVersionConfig();
             String bankName = FileUtils.stripExtension(body.getFileName());
             NameBank bank = config.getSoundBank().getChildBank(bankName);
             if (bank != null) {

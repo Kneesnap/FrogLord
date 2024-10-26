@@ -33,7 +33,7 @@ public class MediEvilLevelTableEntry extends SCGameData<MediEvilGameInstance> {
 
     @Override
     public void load(DataReader reader) {
-        int byteSize = getGameInstance().getConfig().getLevelTableEntryByteSize();
+        int byteSize = getGameInstance().getVersionConfig().getLevelTableEntryByteSize();
         int endIndex = reader.getIndex() + byteSize;
         this.wadResourceId = reader.readInt();
         this.vloResourceId = reader.readInt();
@@ -48,11 +48,11 @@ public class MediEvilLevelTableEntry extends SCGameData<MediEvilGameInstance> {
         this.textureRemapPointer = reader.readUnsignedIntAsLong();
 
         // TODO: Read all this (and make into separate classes as per above if necessary)
-        if (byteSize > 92 && getGameInstance().getConfig().getEntityTableSize() > 294) { // Retail to 0.37
+        if (byteSize > 92 && getGameInstance().getVersionConfig().getEntityTableSize() > 294) { // Retail to 0.37
             reader.skipBytes(60);
         } else if (byteSize > 92) { // 0.36 and below
             reader.skipBytes(56);
-        } else if (getGameInstance().getConfig().getLevelTableSize() > 25 && byteSize > 76) { // ECTS Pre-Alpha build
+        } else if (getGameInstance().getVersionConfig().getLevelTableSize() > 25 && byteSize > 76) { // ECTS Pre-Alpha build
             reader.skipBytes(68);
         } else { // Version ???
             reader.skipBytes(52);

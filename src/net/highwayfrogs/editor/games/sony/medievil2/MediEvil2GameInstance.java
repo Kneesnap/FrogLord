@@ -85,8 +85,8 @@ public class MediEvil2GameInstance extends SCGameInstance {
     }
 
     @Override
-    public MediEvil2Config getConfig() {
-        return (MediEvil2Config) super.getConfig();
+    public MediEvil2Config getVersionConfig() {
+        return (MediEvil2Config) super.getVersionConfig();
     }
 
     @Override
@@ -106,13 +106,13 @@ public class MediEvil2GameInstance extends SCGameInstance {
     }
 
     private void readLevelTable(DataReader reader) {
-        if (getConfig().getLevelTableAddress() <= 0 || getConfig().getLevelTableEntryCount() <= 0)
+        if (this.getVersionConfig().getLevelTableAddress() <= 0 || this.getVersionConfig().getLevelTableEntryCount() <= 0)
             return;
 
         // Read the level table.
         this.levelTable.clear();
-        reader.setIndex(getConfig().getLevelTableAddress());
-        for (int i = 0; i < getConfig().getLevelTableEntryCount(); i++) {
+        reader.setIndex(this.getVersionConfig().getLevelTableAddress());
+        for (int i = 0; i < this.getVersionConfig().getLevelTableEntryCount(); i++) {
             MediEvil2LevelDefinition levelDefinition = new MediEvil2LevelDefinition(this);
             levelDefinition.load(reader);
             this.levelTable.add(levelDefinition);

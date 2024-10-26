@@ -63,6 +63,7 @@ import java.util.Map.Entry;
  * TODO Immediate:
  *  -> Fix image loading/saving.
  *  -> Fix model loading/saving.
+ *  -> Validate chunked file saving.
  *  -> Fix transparency for the bone icon.
  *  -> Add PS2 PAL TOC support.
  *  -> Scripting Engine
@@ -72,11 +73,6 @@ import java.util.Map.Entry;
  *   -> Consider rigid primitives, upsides & downsides.
  *   -> Register public static fields as well.
  *   -> Fix interfaces.
- *  -> Config
- *   -> Handle '=' in text.
- *   -> Renaming sections?
- *   -> How do we handle comments in the key-value-pair section? (Multi-line)
- *   -> Keep empty lines? (Removal of ```)
  *
  * TODO Future:
  *  -> Support previewing action sequences in-editor.
@@ -84,6 +80,12 @@ import java.util.Map.Entry;
  *  -> Further support previewing & editing generic data.
  *  -> Preview texture references in chunk file viewer.
  *  -> Improve how the scripting UI feels to use. (Eg: the UI shouldn't be completely blocked)
+ *  -> Config
+ *   -> Handle '=' in text.
+ *   -> Renaming sections?
+ *   -> How do we handle comments in the key-value-pair section? (Multi-line)
+ *   -> Keep empty lines? (Removal of ```)
+ *   -> Phase out the old Config class.
  * Created by Kneesnap on 4/13/2024.
  */
 @Getter
@@ -113,10 +115,11 @@ public class GreatQuestInstance extends GameInstance {
     /**
      * Load and setup all instance data relating to the game such as version configuration and game files.
      * @param gameVersionConfigName The name of the version configuration file to load.
+     * @param instanceConfig the configuration stored for the user on a per-game-version basis.
      * @param binFile the main archive file to read
      * @param progressBar the progress bar to display load progress on, if it exists
      */
-    public void loadGame(String gameVersionConfigName, File binFile, ProgressBarComponent progressBar) {
+    public void loadGame(String gameVersionConfigName, Config instanceConfig, File binFile, ProgressBarComponent progressBar) {
         if (this.mainArchive != null)
             throw new RuntimeException("The game instance has already been loaded.");
 
@@ -124,7 +127,7 @@ public class GreatQuestInstance extends GameInstance {
             throw new RuntimeException("The main archive file '" + binFile + "' does not exist.");
 
         this.mainArchiveBinFile = binFile;
-        loadGameConfig(gameVersionConfigName);
+        loadGameConfig(gameVersionConfigName, instanceConfig);
         loadSoundFilePaths();
 
         // Load the sound files.

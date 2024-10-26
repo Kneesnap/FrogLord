@@ -103,7 +103,7 @@ public class SCUtils {
         MOFHolder completeMof = null;
 
         // Override lookup.
-        String otherMofFile = instance.getConfig().getMofParentOverrides().get(fileName);
+        String otherMofFile = instance.getVersionConfig().getMofParentOverrides().get(fileName);
         if (otherMofFile != null) {
             MWIResourceEntry replaceEntry = instance.getResourceEntryByName(otherMofFile);
             if (replaceEntry != null)
@@ -209,7 +209,7 @@ public class SCUtils {
             return new SCPlayStationMinimalSoundBankBody(instance, fileName);
         } else if (instance.isPSX()) {
             return new SCPlayStationSoundBankBody(instance, fileName);
-        } else if (instance.getGameType().isAtOrBefore(SCGameType.OLD_FROGGER) || (instance.isFrogger() && !((FroggerGameInstance) instance).getConfig().isAtLeastRetailWindows())) {
+        } else if (instance.getGameType().isAtOrBefore(SCGameType.OLD_FROGGER) || (instance.isFrogger() && !((FroggerGameInstance) instance).getVersionConfig().isAtLeastRetailWindows())) {
             return new SCWindowsPreReleaseSoundBankBody(instance, fileName);
         } else {
             return new SCWindowsRetailSoundBankBody(instance, fileName);

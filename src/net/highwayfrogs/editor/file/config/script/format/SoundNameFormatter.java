@@ -27,7 +27,7 @@ public class SoundNameFormatter extends ScriptFormatter {
         if (bank == null)
             return super.numberToString(instance, number);
 
-        if (instance.isPSX() && instance.getConfig().getBuild() == 71) { // PSX builds do lookup differently.
+        if (instance.isPSX() && instance.getVersionConfig().getBuild() == 71) { // PSX builds do lookup differently.
             NameBank childBank = bank.getChildBank("GENERIC");
             if (childBank != null && number >= childBank.size() + 5)
                 number -= 5; // The PSX version has a few duplicate entries which are here to
@@ -47,7 +47,7 @@ public class SoundNameFormatter extends ScriptFormatter {
         if (index == -1)
             throw new ScriptParseException("Could not find sound named '" + str + "'.");
 
-        if (instance.isPSX() && instance.getConfig().getBuild() == 71) { // PSX builds do lookup differently.
+        if (instance.isPSX() && instance.getVersionConfig().getBuild() == 71) { // PSX builds do lookup differently.
             NameBank childBank = bank.getChildBank("GENERIC");
             if (childBank != null && index >= childBank.size() + 5)
                 index += 5; // The PSX version has a few duplicate entries which are here to
@@ -74,6 +74,6 @@ public class SoundNameFormatter extends ScriptFormatter {
     }
 
     private NameBank getBank(FroggerGameInstance instance) {
-        return instance.getConfig().getSoundBank();
+        return instance.getVersionConfig().getSoundBank();
     }
 }

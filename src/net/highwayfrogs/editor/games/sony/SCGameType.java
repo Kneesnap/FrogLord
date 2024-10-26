@@ -104,7 +104,7 @@ public enum SCGameType implements IGameType {
     }
 
     @Override
-    public void loadGameInstance(GameInstance instance, String gameVersionConfigName, Config gameSetupConfig, ProgressBarComponent progressBar) {
+    public void loadGameInstance(GameInstance instance, String gameVersionConfigName, Config gameSetupConfig, Config instanceConfig, ProgressBarComponent progressBar) {
         if (!(instance instanceof SCGameInstance))
             throw new ClassCastException("The provided instance was " + Utils.getSimpleName(instance) + ", which was not " + SCGameInstance.class.getSimpleName() + ".");
 
@@ -118,7 +118,7 @@ public enum SCGameType implements IGameType {
             throw new RuntimeException("Invalid mwdFilePath.");
 
         File exeFile = new File(exeFilePath);
-        ((SCGameInstance) instance).loadGame(gameVersionConfigName, mwdFile, exeFile, progressBar);
+        ((SCGameInstance) instance).loadGame(gameVersionConfigName, instanceConfig, mwdFile, exeFile, progressBar);
     }
 
     @Override

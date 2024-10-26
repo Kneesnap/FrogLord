@@ -384,7 +384,7 @@ public class MOFPart extends SCSharedGameData {
         incompletePart.matrices = this.matrices;
         incompletePart.flipbook = this.flipbook;
         SCGameInstance instance = getParent().getGameInstance();
-        if (getParent().hasTextureAnimation() && (!instance.isFrogger() || !((FroggerConfig) instance.getConfig()).isAtOrBeforeBuild23())) // TODO: Replace with some kind of warning system, where instead of throwing exceptions, we can have warnings per-file, etc.
+        if (getParent().hasTextureAnimation() && (!instance.isFrogger() || !((FroggerConfig) instance.getVersionConfig()).isAtOrBeforeBuild23())) // TODO: Replace with some kind of warning system, where instead of throwing exceptions, we can have warnings per-file, etc.
             throw new RuntimeException("Texture animation cannot be copied to an incomplete MOF right now!"); // It is believed this wouldn't work in the retail game either.
     }
 

@@ -373,7 +373,7 @@ public class MOFHolder extends SCSharedGameFile {
             return false;
 
         FroggerGameInstance frogger = (FroggerGameInstance) getGameInstance();
-        if (frogger.getConfig().isAtOrBeforeBuild4() || frogger.getConfig().getBuild() >= 50)
+        if (frogger.getVersionConfig().isAtOrBeforeBuild4() || frogger.getVersionConfig().getBuild() >= 50)
             return false; // Note: Build 5 may or may not be included. Build 50 is also probably not the correct build to test against here.
 
         String name = getFileDisplayName();
@@ -384,6 +384,6 @@ public class MOFHolder extends SCSharedGameFile {
                 || "GEN_CHECKPOINT_5.XMR".equals(name);
         boolean isGoldenFrog = "GEN_GOLD_FROG.XMR".equals(name);
 
-        return isFroglet || (isGoldenFrog && !frogger.getConfig().isAtOrBeforeBuild20());
+        return isFroglet || (isGoldenFrog && !frogger.getVersionConfig().isAtOrBeforeBuild20());
     }
 }

@@ -197,7 +197,7 @@ public class MWIResourceEntry extends SCSharedGameData implements ISCFileDefinit
      * Get the config active for the game instance.
      */
     public SCGameConfig getConfig() {
-        return getGameInstance().getConfig();
+        return getGameInstance().getVersionConfig();
     }
 
     /**

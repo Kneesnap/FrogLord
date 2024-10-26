@@ -6,7 +6,6 @@ import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
-import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
 import net.highwayfrogs.editor.games.sony.shared.overlay.SCOverlayTableEntry;
@@ -65,7 +64,7 @@ public class MediEvilEntityDefinition extends SCGameData<MediEvilGameInstance> {
         this.subtypeCount = reader.readUnsignedShortAsInt();
 
         // ECTS Pre-Alpha entities
-        if (getGameInstance().getConfig().getEntityTableSize() <= 111) {
+        if (getGameInstance().getVersionConfig().getEntityTableSize() <= 111) {
             reader.skipBytes(186);
         }
         // All others

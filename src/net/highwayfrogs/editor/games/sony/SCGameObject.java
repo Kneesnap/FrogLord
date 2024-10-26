@@ -25,7 +25,7 @@ public abstract class SCGameObject<TGameInstance extends SCGameInstance> extends
 
     @Override
     public SCGameConfig getConfig() {
-        return getGameInstance().getConfig();
+        return getGameInstance().getVersionConfig();
     }
 
     /**

@@ -287,7 +287,7 @@ public class MWDFile extends SCSharedGameData {
                 + "\nCreation Time: " + TIME_FORMAT.format(date)
                 + "\n[BuildInfo]"
                 + "\ngame=" + getGameInstance().getGameType().getIdentifier()
-                + "\ngameVersion=" + getGameInstance().getConfig().getInternalName()
+                + "\ngameVersion=" + getGameInstance().getVersionConfig().getInternalName()
                 + "\nversion=1"
                 + "\n");
         writer.align(Constants.CD_SECTOR_SIZE);

@@ -89,8 +89,8 @@ public class FroggerGameInstance extends SCGameInstance {
     }
 
     @Override
-    public void loadGame(String versionConfigName, File mwdFile, File exeFile, ProgressBarComponent progressBar) {
-        super.loadGame(versionConfigName, mwdFile, exeFile, progressBar);
+    public void loadGame(String versionConfigName, net.highwayfrogs.editor.system.Config instanceConfig, File mwdFile, File exeFile, ProgressBarComponent progressBar) {
+        super.loadGame(versionConfigName, instanceConfig, mwdFile, exeFile, progressBar);
 
         // Setup version comparison.
         FroggerVersionComparison.setup(GUIMain.getWorkingDirectory());
@@ -99,8 +99,8 @@ public class FroggerGameInstance extends SCGameInstance {
     }
 
     @Override
-    public FroggerConfig getConfig() {
-        return (FroggerConfig) super.getConfig();
+    public FroggerConfig getVersionConfig() {
+        return (FroggerConfig) super.getVersionConfig();
     }
 
     @Override
@@ -125,8 +125,8 @@ public class FroggerGameInstance extends SCGameInstance {
     @Override
     protected void setupTextureRemaps(DataReader exeReader, MillenniumWadIndex wadIndex) {
         // Add sky land.
-        if (getConfig().getSkyLandTextureAddress() > 0) {
-            this.skyLandTextureRemap.setFileOffset(getConfig().getSkyLandTextureAddress());
+        if (this.getVersionConfig().getSkyLandTextureAddress() > 0) {
+            this.skyLandTextureRemap.setFileOffset(this.getVersionConfig().getSkyLandTextureAddress());
             addRemap(this.skyLandTextureRemap);
         }
 
@@ -146,7 +146,7 @@ public class FroggerGameInstance extends SCGameInstance {
         if (remap instanceof FroggerTextureRemap) {
             MWIResourceEntry resourceEntry = ((FroggerTextureRemap) remap).getResourceEntry();
 
-            if ((!getConfig().isBeforeBuild1() && getConfig().isAtOrBeforeBuild20()) && resourceEntry.getDisplayName().equals("ARN1.MAP")) {
+            if ((!this.getVersionConfig().isBeforeBuild1() && this.getVersionConfig().isAtOrBeforeBuild20()) && resourceEntry.getDisplayName().equals("ARN1.MAP")) {
                 MWIResourceEntry islandMap = getResourceEntryByName("ISLAND.MAP");
 
                 // Register island remap
@@ -158,7 +158,7 @@ public class FroggerGameInstance extends SCGameInstance {
             }
 
             // Hack to read txl_for3 remap.
-            if (!getConfig().isAtLeastRetailWindows() && !getConfig().isAtOrBeforeBuild23() && resourceEntry.getDisplayName().equals("FOR2.MAP")) {
+            if (!this.getVersionConfig().isAtLeastRetailWindows() && !this.getVersionConfig().isAtOrBeforeBuild23() && resourceEntry.getDisplayName().equals("FOR2.MAP")) {
                 TextureRemapArray forestRemap = new TextureRemapArray(this, "txl_for3");
                 forestRemap.setFileOffset(reader.getIndex());
                 addRemap(forestRemap);
@@ -180,7 +180,7 @@ public class FroggerGameInstance extends SCGameInstance {
 
         // The Sony Presentation Build (April '97) has extremely low texture IDs, low enough to be mistaken for a pointer.
         // The simplest solution for now is just to use the above check to end the remap, which is confirmed to work.
-        return !getConfig().isSonyPresentation() && super.isEndOfRemap(current, next, reader, value);
+        return !this.getVersionConfig().isSonyPresentation() && super.isEndOfRemap(current, next, reader, value);
     }
 
     @Override
@@ -266,8 +266,8 @@ public class FroggerGameInstance extends SCGameInstance {
             imageNames[i] = "im_img" + i;
 
         // Apply image names.
-        if (getConfig().getImageNames().size() > 0)
-            for (Entry<Short, String> imageEntry : getConfig().getImageNames().entrySet())
+        if (this.getVersionConfig().getImageNames().size() > 0)
+            for (Entry<Short, String> imageEntry : this.getVersionConfig().getImageNames().entrySet())
                 imageNames[imageEntry.getKey()] = imageEntry.getValue();
 
         // Write start of .H file.
@@ -278,7 +278,7 @@ public class FroggerGameInstance extends SCGameInstance {
 
         // Write start of .c file.
         vramCWriter.write(Constants.NEWLINE);
-        vramCWriter.write("// frogvram.c - FrogLord Export " + getConfig().getDisplayName() + " (" + getConfig().getInternalName() + ")" + Constants.NEWLINE);
+        vramCWriter.write("// frogvram.c - FrogLord Export " + this.getVersionConfig().getDisplayName() + " (" + this.getVersionConfig().getInternalName() + ")" + Constants.NEWLINE);
         vramCWriter.write("// This file contains texture definitions generated from the game. Must be accompanied by texmacro.h generated from the ghidra script." + Constants.NEWLINE);
         vramCWriter.write(Constants.NEWLINE);
 
@@ -365,7 +365,7 @@ public class FroggerGameInstance extends SCGameInstance {
     }
 
     private void saveTextureCfg(PrintWriter writer) {
-        for (Entry<Short, String> entry : getConfig().getImageNames().entrySet())
+        for (Entry<Short, String> entry : this.getVersionConfig().getImageNames().entrySet())
             writer.append(String.valueOf(entry.getKey())).append("=").append(entry.getValue()).append(Constants.NEWLINE);
     }
 
@@ -477,10 +477,10 @@ public class FroggerGameInstance extends SCGameInstance {
     }
 
     private void readPickupData(DataReader reader) {
-        if (getConfig().getPickupDataAddress() <= 0)
+        if (this.getVersionConfig().getPickupDataAddress() <= 0)
             return;
 
-        reader.setIndex(getConfig().getPickupDataAddress());
+        reader.setIndex(this.getVersionConfig().getPickupDataAddress());
         for (int i = 0; i < this.pickupData.length; i++) {
             long tempPointer = reader.readUnsignedIntAsLong();
             reader.jumpTemp((int) (tempPointer - getRamOffset()));
@@ -492,10 +492,10 @@ public class FroggerGameInstance extends SCGameInstance {
     }
 
     private void readThemeLibrary(DataReader reader, Config config) {
-        if (getConfig().getThemeBookAddress() <= 0)
+        if (this.getVersionConfig().getThemeBookAddress() <= 0)
             return;
 
-        reader.setIndex(getConfig().getThemeBookAddress());
+        reader.setIndex(this.getVersionConfig().getThemeBookAddress());
         for (int i = 0; i < this.themeLibrary.length; i++) {
             ThemeBook book = TargetPlatform.makeNewThemeBook(this);
             book.setTheme(FroggerMapTheme.values()[i]);
@@ -516,10 +516,10 @@ public class FroggerGameInstance extends SCGameInstance {
     }
 
     private void writeThemeLibrary(DataWriter exeWriter) {
-        if (getConfig().getThemeBookAddress() <= 0)
+        if (this.getVersionConfig().getThemeBookAddress() <= 0)
             return;
 
-        exeWriter.setIndex(getConfig().getThemeBookAddress());
+        exeWriter.setIndex(this.getVersionConfig().getThemeBookAddress());
         for (ThemeBook book : this.themeLibrary)
             book.save(exeWriter);
     }
@@ -535,9 +535,9 @@ public class FroggerGameInstance extends SCGameInstance {
                 continue;
 
             // Determine number of form entries and compare with name bank.
-            NameBank formBank = getConfig().getFormBank().getChildBank(lastTheme.name());
+            NameBank formBank = this.getVersionConfig().getFormBank().getChildBank(lastTheme.name());
             int nameCount = formBank != null ? formBank.size() : 0;
-            int byteSize = getConfig().isAtOrBeforeBuild4() ? FormEntry.OLD_BYTE_SIZE : FormEntry.BYTE_SIZE;
+            int byteSize = this.getVersionConfig().isAtOrBeforeBuild4() ? FormEntry.OLD_BYTE_SIZE : FormEntry.BYTE_SIZE;
             int entryCount = (int) (currentBook.getFormLibraryPointer() - lastBook.getFormLibraryPointer()) / byteSize;
             if (entryCount != nameCount)
                 getLogger().warning(lastTheme + " has " + nameCount + " configured form names but " + entryCount + " calculated form entries in the form library.");
@@ -550,17 +550,17 @@ public class FroggerGameInstance extends SCGameInstance {
         // Load the last theme, which we use the number of names for to determine size.
         ThemeBook lastBook = getThemeBook(lastTheme);
         if (lastBook != null && lastBook.getFormLibraryPointer() != 0) {
-            int nameCount = getConfig().getFormBank().getChildBank(lastTheme.name()).size();
+            int nameCount = this.getVersionConfig().getFormBank().getChildBank(lastTheme.name()).size();
             lastBook.loadFormLibrary(this, nameCount);
         }
     }
 
     private void readMapLibrary(DataReader reader, Config config) {
-        if (getConfig().getMapBookAddress() <= 0)
+        if (this.getVersionConfig().getMapBookAddress() <= 0)
             return;
 
-        reader.setIndex(getConfig().getMapBookAddress());
-        int themeAddress = getConfig().isSonyPresentation() ? Integer.MAX_VALUE : getConfig().getThemeBookAddress();
+        reader.setIndex(this.getVersionConfig().getMapBookAddress());
+        int themeAddress = this.getVersionConfig().isSonyPresentation() ? Integer.MAX_VALUE : this.getVersionConfig().getThemeBookAddress();
         if (themeAddress >= 0) {
             while (themeAddress > reader.getIndex()) {
                 MapBook book = TargetPlatform.makeNewMapBook(this);
@@ -568,7 +568,7 @@ public class FroggerGameInstance extends SCGameInstance {
                 this.mapLibrary.add(book);
                 Constants.logExeInfo(book);
 
-                if (getConfig().isSonyPresentation())
+                if (this.getVersionConfig().isSonyPresentation())
                     break; // There's only one map.
             }
         }
@@ -586,15 +586,15 @@ public class FroggerGameInstance extends SCGameInstance {
     }
 
     private void writeMapLibrary(DataWriter exeWriter) {
-        if (getConfig().getMapBookAddress() <= 0)
+        if (this.getVersionConfig().getMapBookAddress() <= 0)
             return;
 
-        exeWriter.setIndex(getConfig().getMapBookAddress());
+        exeWriter.setIndex(this.getVersionConfig().getMapBookAddress());
         this.mapLibrary.forEach(book -> book.save(exeWriter));
     }
 
     private void readDemoTable(MillenniumWadIndex wadIndex, DataReader reader) {
-        if (getConfig().getDemoTableAddress() <= 0) { // The demo table wasn't specified, so we'll search for it ourselves.
+        if (this.getVersionConfig().getDemoTableAddress() <= 0) { // The demo table wasn't specified, so we'll search for it ourselves.
             MWIResourceEntry demoEntry = wadIndex.getEntries().stream().filter(file -> file.getDisplayName().startsWith("SUB1DEMO.DAT")).findAny().orElse(null);
             if (demoEntry == null)
                 return; // Couldn't find a demo by this name, so... skip.
@@ -612,11 +612,11 @@ public class FroggerGameInstance extends SCGameInstance {
                 return; // Didn't find the bytes, ABORT!
             }
 
-            getConfig().setDemoTableAddress(findIndex);
+            this.getVersionConfig().setDemoTableAddress(findIndex);
             getLogger().info("Found the demo table address at " + NumberUtils.toHexString(findIndex));
         }
 
-        reader.setIndex(getConfig().getDemoTableAddress());
+        reader.setIndex(this.getVersionConfig().getDemoTableAddress());
         while (reader.hasMore()) {
             int levelId = reader.readInt();
             int resourceId = reader.readInt();
@@ -632,20 +632,20 @@ public class FroggerGameInstance extends SCGameInstance {
     }
 
     private void writeDemoTable(DataWriter exeWriter) {
-        if (getConfig().getDemoTableAddress() <= 0)
+        if (this.getVersionConfig().getDemoTableAddress() <= 0)
             return;
 
-        exeWriter.setIndex(getConfig().getDemoTableAddress());
+        exeWriter.setIndex(this.getVersionConfig().getDemoTableAddress());
         for (DemoTableEntry entry : this.demoTableEntries)
             entry.save(exeWriter);
     }
 
     private void readScripts(DataReader reader) {
-        if (getConfig().getScriptArrayAddress() <= 0)
+        if (this.getVersionConfig().getScriptArrayAddress() <= 0)
             return; // Wasn't specified.
 
-        reader.setIndex(getConfig().getScriptArrayAddress());
-        for (int i = 0; i < getConfig().getScriptBank().size(); i++) {
+        reader.setIndex(this.getVersionConfig().getScriptArrayAddress());
+        for (int i = 0; i < this.getVersionConfig().getScriptBank().size(); i++) {
             long address = reader.readUnsignedIntAsLong();
             if (address == 0) { // Default / null.
                 this.scripts.add(FroggerScript.EMPTY_SCRIPT);
@@ -658,7 +658,7 @@ public class FroggerGameInstance extends SCGameInstance {
             try {
                 newScript.load(reader);
             } catch (Throwable th) {
-                Utils.handleError(getLogger(), th, false, "Failed to load script '%s'.", getConfig().getScriptBank().getName(i));
+                Utils.handleError(getLogger(), th, false, "Failed to load script '%s'.", this.getVersionConfig().getScriptBank().getName(i));
             } finally {
                 reader.jumpReturn();
             }
@@ -666,11 +666,11 @@ public class FroggerGameInstance extends SCGameInstance {
     }
 
     private void writeScripts(DataWriter exeWriter) {
-        if (getConfig().getScriptArrayAddress() <= 0)
+        if (this.getVersionConfig().getScriptArrayAddress() <= 0)
             return; // Wasn't specified.
 
         DataReader reader = getExecutableReader();
-        reader.setIndex(getConfig().getScriptArrayAddress());
+        reader.setIndex(this.getVersionConfig().getScriptArrayAddress());
         for (int i = 0; i < this.scripts.size(); i++) {
             long address = reader.readUnsignedIntAsLong();
             if (address == 0) // Default / null.
@@ -686,29 +686,29 @@ public class FroggerGameInstance extends SCGameInstance {
     }
 
     private void readMusicData(DataReader reader) {
-        if (getConfig().getMusicAddress() <= 0)
+        if (this.getVersionConfig().getMusicAddress() <= 0)
             return;
 
         byte readByte;
-        reader.setIndex(getConfig().getMusicAddress());
+        reader.setIndex(this.getVersionConfig().getMusicAddress());
         while ((readByte = reader.readByte()) != MusicTrack.TERMINATOR)
             this.musicTracks.add(MusicTrack.getTrackById(this, readByte));
     }
 
     private void writeMusicData(DataWriter exeWriter) {
-        if (getConfig().getMusicAddress() <= 0)
+        if (this.getVersionConfig().getMusicAddress() <= 0)
             return;
 
-        exeWriter.setIndex(getConfig().getMusicAddress());
+        exeWriter.setIndex(this.getVersionConfig().getMusicAddress());
         this.musicTracks.forEach(track -> exeWriter.writeByte(track.getTrack(this)));
         exeWriter.writeByte(MusicTrack.TERMINATOR);
     }
 
     private void readLevelData(DataReader reader) {
-        if (getConfig().getArcadeLevelAddress() <= 0)
+        if (this.getVersionConfig().getArcadeLevelAddress() <= 0)
             return; // No level select is present.
 
-        reader.setIndex(getConfig().getArcadeLevelAddress());
+        reader.setIndex(this.getVersionConfig().getArcadeLevelAddress());
         LevelInfo level = null;
         while (level == null || !level.isTerminator()) {
             level = new LevelInfo(this);
@@ -732,10 +732,10 @@ public class FroggerGameInstance extends SCGameInstance {
     }
 
     private void writeLevelData(DataWriter exeWriter) {
-        if (getConfig().getArcadeLevelAddress() <= 0)
+        if (this.getVersionConfig().getArcadeLevelAddress() <= 0)
             return; // No level select is present.
 
-        exeWriter.setIndex(getConfig().getArcadeLevelAddress());
+        exeWriter.setIndex(this.getVersionConfig().getArcadeLevelAddress());
         this.arcadeLevelInfo.forEach(level -> level.save(exeWriter));
         this.raceLevelInfo.forEach(level -> level.save(exeWriter));
     }

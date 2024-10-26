@@ -43,9 +43,10 @@ public interface IGameType {
      * @param instance the game instance to setup from configuration
      * @param gameVersionConfigName the name of the version config file to use
      * @param gameSetupConfig the configuration data to load the game instance with
+     * @param instanceConfig the config which the instance stores its user-configuration data within
      * @param progressBar the progress bar to display load progress on (optional)
      */
-    void loadGameInstance(GameInstance instance, String gameVersionConfigName, Config gameSetupConfig, ProgressBarComponent progressBar);
+    void loadGameInstance(GameInstance instance, String gameVersionConfigName, Config gameSetupConfig, Config instanceConfig, ProgressBarComponent progressBar);
 
     /**
      * Creates a new config for this game type.

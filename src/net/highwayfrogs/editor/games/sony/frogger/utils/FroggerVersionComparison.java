@@ -178,12 +178,12 @@ public class FroggerVersionComparison {
         if (!isEnabled())
             return;
 
-        if (gameBuildsByName.containsKey(versionToAdd.getConfig().getInternalName())) {
+        if (gameBuildsByName.containsKey(versionToAdd.getVersionConfig().getInternalName())) {
             System.out.println("This build is already tracked in the version cache.");
             return;
         }
 
-        FroggerGameBuild newBuild = new FroggerGameBuild(versionToAdd.getConfig().getInternalName());
+        FroggerGameBuild newBuild = new FroggerGameBuild(versionToAdd.getVersionConfig().getInternalName());
         for (MWIResourceEntry entry : versionToAdd.getArchiveIndex().getEntries())
             if (entry != null && entry.getFullFilePath() != null)
                 newBuild.getFiles().add(new FroggerGameFileEntry(newBuild, entry.getFullFilePath().replace('/', '\\'), entry.getUnpackedSize(), entry.getSha1Hash()));

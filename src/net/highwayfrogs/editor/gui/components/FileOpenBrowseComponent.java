@@ -16,7 +16,9 @@ import net.highwayfrogs.editor.gui.GameConfigController.GameConfigUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
-import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
+import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.StringUtils;
 
 import java.io.File;
@@ -73,7 +75,8 @@ public abstract class FileOpenBrowseComponent extends GameUIController<GameInsta
         browseButton.setOnMouseClicked(event -> {
             event.consume();
             String oldFilePath = getCurrentFilePath();
-            File selectedFile = FXUtils.promptFileOpenExtensions(null, fileOpenPromptTitle, fileOpenPromptTypeInfo, fileExtensions);
+            SavedFilePath pathConfig = new SavedFilePath(this.fileIdLabel.getText(), fileOpenPromptTitle, new BrowserFileType(fileOpenPromptTypeInfo, fileExtensions));
+            File selectedFile = FileUtils.askUserToOpenFile(null, pathConfig);
             if (selectedFile != null) {
                 String newFilePath = selectedFile.getAbsolutePath();
                 if (!Objects.equals(oldFilePath, newFilePath)) {

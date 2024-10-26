@@ -27,6 +27,8 @@ import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectio
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.*;
+import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
+import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 
 import java.io.File;
 import java.util.Objects;
@@ -47,6 +49,8 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
 
     private static final int NAME_SIZE = 32;
     public static final String DEFAULT_RESOURCE_NAME = "unnamed";
+
+    private static final SavedFilePath CHUNK_FILE_PATH = new SavedFilePath("rawChunkFilePath", "Please select the file to use as the chunk data.", BrowserFileType.ALL_FILES);
 
     public kcCResource(GreatQuestChunkedFile parentFile, KCResourceID chunkType) {
         super(parentFile != null ? parentFile.getGameInstance() : null);
@@ -324,7 +328,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
         contextMenu.getItems().add(exportRawDataItem);
         exportRawDataItem.setOnMenuValidation(event -> ((MenuItem) event.getTarget()).setDisable(this.rawData == null));
         exportRawDataItem.setOnAction(event -> {
-            File outputFile = FXUtils.promptFileSave(getGameInstance(), "Please select the file to save the raw chunk data as.", getName() + "-RAW", "All Files", "*");
+            File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), CHUNK_FILE_PATH, getName() + "-RAW", true);
             if (outputFile != null)
                 FileUtils.writeBytesToFile(getLogger(), outputFile, getRawData(), true);
         });
@@ -332,7 +336,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
         MenuItem exportChunkItem = new MenuItem("Export Chunk");
         contextMenu.getItems().add(exportChunkItem);
         exportRawDataItem.setOnAction(event -> {
-            File outputFile = FXUtils.promptFileSave(getGameInstance(), "Please select the file to save the chunk as.", getName(), "All Files", "*");
+            File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), CHUNK_FILE_PATH, getName(), true);
             if (outputFile != null)
                 writeDataToFile(outputFile, true);
         });
@@ -340,7 +344,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
         MenuItem importChunkItem = new MenuItem("Import Chunk");
         contextMenu.getItems().add(importChunkItem);
         importChunkItem.setOnAction(event -> {
-            File inputFile = FXUtils.promptFileOpen(getGameInstance(), "Please select the file to import.", "All Files", "*");
+            File inputFile = FileUtils.askUserToOpenFile(getGameInstance(), CHUNK_FILE_PATH);
             if (inputFile != null)
                 importDataFromFile(inputFile, true);
         });

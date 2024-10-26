@@ -38,7 +38,7 @@ public class RwGenericGameType implements IGameType {
     }
 
     @Override
-    public void loadGameInstance(GameInstance instance, String gameVersionConfigName, Config gameSetupConfig, ProgressBarComponent progressBar) {
+    public void loadGameInstance(GameInstance instance, String gameVersionConfigName, Config gameSetupConfig, Config instanceConfig, ProgressBarComponent progressBar) {
         if (!(instance instanceof RwGenericGameInstance))
             throw new ClassCastException("The provided instance was " + Utils.getSimpleName(instance) + ", when " + RwGenericGameInstance.class.getSimpleName() + " was required.");
 
@@ -47,7 +47,7 @@ public class RwGenericGameType implements IGameType {
             throw new IllegalArgumentException("Invalid mainFolderPath.");
 
         File mainFile = new File(mainFilePath);
-        ((RwGenericGameInstance) instance).loadGame(gameVersionConfigName, mainFile, progressBar);
+        ((RwGenericGameInstance) instance).loadGame(gameVersionConfigName, instanceConfig, mainFile, progressBar);
     }
 
     @Override

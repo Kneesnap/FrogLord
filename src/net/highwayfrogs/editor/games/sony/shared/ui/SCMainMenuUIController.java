@@ -26,6 +26,8 @@ import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.gui.extra.hash.HashPlaygroundController;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
+import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.io.File;
@@ -37,6 +39,11 @@ import java.util.List;
  * Created by Kneesnap on 4/12/2024.
  */
 public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extends MainMenuController<TGameInstance, SCGameFile<?>> {
+    private static final SavedFilePath IMPORT_PATH = new SavedFilePath("singleFileImportPath", "Select the file to import...", BrowserFileType.ALL_FILES);
+    private static final SavedFilePath EXPORT_PATH = new SavedFilePath("singleFileExportPath", "Specify the file to export this data as...", BrowserFileType.ALL_FILES);
+    private static final SavedFilePath TEXTURE_FOLDER = new SavedFilePath("bulkTextureExportPath", "Choose the folder to save all textures to.");
+    private static final SavedFilePath MWI_FILE = new SavedFilePath("mwiFilePath", "Specify the file to save the MWI as...", new BrowserFileType("Millennium WAD Index", "MWI"));
+
     public SCMainMenuUIController(TGameInstance instance) {
         super(instance);
     }
@@ -52,7 +59,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
 
         // Allow exporting MWI.
         addMenuItem(this.menuBarFile, "Export MWI", () -> {
-            File selectedFile = FXUtils.promptFileSave(getGameInstance(), "Specify the file to export the MWI as...", "FROGPSX", "Millennium WAD Index", "MWI");
+            File selectedFile = FileUtils.askUserToSaveFile(getGameInstance(), MWI_FILE, "FROGPSX.MWI");
             if (selectedFile == null)
                 return; // Cancel.
 
@@ -133,7 +140,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
 
     @Override
     protected CollectionEditorComponent<TGameInstance, SCGameFile<?>> createFileListEditor() {
-        return new SCGameFileListEditor<>(getGameInstance());
+        return new CollectionEditorComponent<>(getGameInstance(),  new SCGameFileGroupedListViewComponent<>(getGameInstance()), false);
     }
 
     protected static MenuItem addMenuItem(Menu menuBar, String title, Runnable action) {
@@ -155,7 +162,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
      */
     @SneakyThrows
     public void importFile() {
-        File selectedFile = FXUtils.promptFileOpen(getGameInstance(), "Select the file to import...", "All Files", "*");
+        File selectedFile = FileUtils.askUserToOpenFile(getGameInstance(), IMPORT_PATH);
         if (selectedFile == null)
             return; // Cancelled.
 
@@ -190,7 +197,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
             return;
         }
 
-        File selectedFile = FXUtils.promptFileSave(getGameInstance(), "Specify the file to export this data as...", currentFile.getFileDisplayName(), "All Files", "*");
+        File selectedFile = FileUtils.askUserToSaveFile(getGameInstance(), EXPORT_PATH, currentFile.getFileDisplayName());
         if (selectedFile == null)
             return; // Cancel.
 
@@ -209,7 +216,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
             return;
         }
 
-        File selectedFile = FXUtils.promptFileSave(getGameInstance(), "Specify the file to export this data as...", currentFile.getFileDisplayName(), "All Files", "*");
+        File selectedFile = FileUtils.askUserToSaveFile(getGameInstance(), EXPORT_PATH, currentFile.getFileDisplayName());
         if (selectedFile == null)
             return; // Cancel.
 
@@ -222,7 +229,9 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
     }
 
     private void exportBulkTextures() {
-        File targetFolder = FXUtils.promptChooseDirectory(getGameInstance(), "Choose the directory to save all textures to.", false);
+        File targetFolder = FileUtils.askUserToSelectFolder(getGameInstance(), TEXTURE_FOLDER);
+        if (targetFolder == null)
+            return;
 
         ImageFilterSettings exportSettings = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(false).setAllowTransparency(true);
         List<VLOArchive> allVlos = getArchive().getAllFiles(VLOArchive.class);

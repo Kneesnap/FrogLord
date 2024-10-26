@@ -25,7 +25,7 @@ public abstract class GameObject<TGameInstance extends GameInstance> implements 
      */
     public GameConfig getConfig() {
         GameInstance instance = getGameInstance();
-        return instance != null ? instance.getConfig() : null;
+        return instance != null ? instance.getVersionConfig() : null;
     }
 
     /**

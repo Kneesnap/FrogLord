@@ -3,6 +3,8 @@ package net.highwayfrogs.editor.utils;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
+import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 
 import javax.sound.sampled.*;
 import java.io.ByteArrayInputStream;
@@ -15,6 +17,10 @@ import java.io.IOException;
  * Created by Kneesnap on 10/25/2024.
  */
 public class AudioUtils {
+    public static final BrowserFileType BROWSER_WAV_FILE_TYPE = new BrowserFileType("Audio File", "wav");
+    public static final SavedFilePath EXPORT_WAV_FILE_PATH = new SavedFilePath("wavFileExportPath", "Specify the file to save the sound as...", BROWSER_WAV_FILE_TYPE);
+    public static final SavedFilePath IMPORT_WAV_FILE_PATH = new SavedFilePath("wavFileImportPath", "Specify the sound file to load...", BROWSER_WAV_FILE_TYPE);
+
     /**
      * Creates a wav file with the given data.
      * @param formatHeaderSource a byte array containing ONLY a wave format header

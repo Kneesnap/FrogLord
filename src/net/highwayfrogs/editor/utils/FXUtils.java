@@ -82,11 +82,13 @@ public class FXUtils {
 
     /**
      * Prompt the user to select a file.
+     * TODO: Replace with FileUtils.askUserToOpenFile()
      * @param title      The title of the window to display.
      * @param typeInfo   The label to show for the file-type.
      * @param extensions Allowed extensions.
      * @return selectedFile, Can be null.
      */
+    @Deprecated
     public static File promptFileOpenExtensions(GameInstance instance, String title, String typeInfo, String... extensions) {
         Utils.verify(extensions.length > 0, "");
         FileChooser fileChooser = new FileChooser();
@@ -118,23 +120,27 @@ public class FXUtils {
 
     /**
      * Prompt the user to select a file.
+     * TODO: Replace with FileUtils.askUserToOpenFile()
      * @param title     The title of the window to display.
      * @param typeInfo  The label to show for the file-type.
      * @param extension Allowed extension.
      * @return selectedFile, Can be null.
      */
+    @Deprecated
     public static File promptFileOpen(GameInstance instance, String title, String typeInfo, String extension) {
         return promptFileOpenExtensions(instance, title, typeInfo, extension);
     }
 
     /**
      * Prompt the user to save a file.
+     * TODO: Replace with FileUtils.askUserToSaveFile()
      * @param title       The title of the window to display.
      * @param suggestName The initial name to suggest saving the file as.
      * @param typeInfo    The label to show for the file-type.
      * @param extension   Allowed extension.
      * @return selectedFile, Can be null.
      */
+    @Deprecated
     public static File promptFileSave(GameInstance instance, String title, String suggestName, String typeInfo, String extension) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(title);
@@ -170,10 +176,12 @@ public class FXUtils {
 
     /**
      * Prompt the user to select a directory.
+     * TODO: Replace with FileUtils.askUserToSelectFolder()
      * @param title         The title of the window.
      * @param saveDirectory Should this directory be saved as the current directory?
      * @return directoryFile
      */
+    @Deprecated
     public static File promptChooseDirectory(GameInstance instance, String title, boolean saveDirectory) {
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle(title);
@@ -193,8 +201,7 @@ public class FXUtils {
      * @param title the title of the window to show
      * @param waitUntilClose if true, the thread will be blocked until the window is closed
      */
-    @SuppressWarnings("ConstantValue")
-    public static <T> boolean createWindowFromFXMLTemplate(String template, GameUIController<?> controller, String title, boolean waitUntilClose) {
+    public static boolean createWindowFromFXMLTemplate(String template, GameUIController<?> controller, String title, boolean waitUntilClose) {
         if (controller == null)
             throw new NullPointerException("controller");
 

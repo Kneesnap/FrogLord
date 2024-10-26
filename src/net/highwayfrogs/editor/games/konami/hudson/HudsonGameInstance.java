@@ -13,6 +13,7 @@ import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.games.shared.basic.BasicGameInstance;
 import net.highwayfrogs.editor.games.shared.basic.file.definition.IGameFileDefinition;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
+import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -34,7 +35,7 @@ public abstract class HudsonGameInstance extends BasicGameInstance {
      * @param mainFile the main archive file to read
      * @param progressBar the progress bar to display load progress on, if it exists
      */
-    public void loadGame(String gameVersionConfigName, File mainFile, ProgressBarComponent progressBar) {
+    public void loadGame(String gameVersionConfigName, Config userConfig, File mainFile, ProgressBarComponent progressBar) {
         if (this.rootFolder != null)
             throw new RuntimeException("The game instance has already been loaded.");
 
@@ -43,10 +44,10 @@ public abstract class HudsonGameInstance extends BasicGameInstance {
 
         if (mainFile.isFile()) {
             this.rootFolder = mainFile.getParentFile();
-            loadGameConfig(gameVersionConfigName);
+            loadGameConfig(gameVersionConfigName, userConfig);
             loadFile(mainFile, true, progressBar);
         } else {
-            super.loadGame(gameVersionConfigName, mainFile, progressBar);
+            super.loadGame(gameVersionConfigName, userConfig, mainFile, progressBar);
         }
     }
 

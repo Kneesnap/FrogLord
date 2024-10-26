@@ -1,9 +1,18 @@
 package net.highwayfrogs.editor.utils;
 
 import javafx.scene.control.Alert.AlertType;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
 import lombok.Cleanup;
+import lombok.Getter;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 
 import java.io.*;
 import java.net.URISyntaxException;
@@ -541,5 +550,194 @@ public class FileUtils {
         } catch (IOException e) {
             return false;
         }
+    }
+
+    @Getter
+    public static final class SavedFilePath {
+        @NonNull private final String configKeyName;
+        @NonNull private final String title;
+        private final List<BrowserFileType> fileTypes = new ArrayList<>();
+
+        public SavedFilePath(@NonNull String configKeyName, @NonNull String title, BrowserFileType... fileTypes) {
+            this.configKeyName = configKeyName;
+            this.title = title;
+            this.fileTypes.addAll((fileTypes != null && fileTypes.length > 0) ? Arrays.asList(fileTypes) : Collections.singletonList(BrowserFileType.ALL_FILES));
+        }
+
+        private Config getSavedPaths(GameInstance instance) {
+            if (instance == null)
+                throw new NullPointerException("instance");
+            return instance.getConfig().getOrCreateChildConfigByName("FilePaths");
+        }
+
+        /**
+         * Gets the folder to open a prompt within.
+         * @param instance the instance to get the start folder from
+         * @return startFolder
+         */
+        public File getLastPath(GameInstance instance) {
+            if (instance == null)
+                return GUIMain.getWorkingDirectory();
+
+            Config savedPaths = getSavedPaths(instance);
+            ConfigValueNode node = savedPaths.getOrCreateKeyValueNode(this.configKeyName);
+
+            File prevFile;
+            if (!StringUtils.isNullOrWhiteSpace(node.getAsString())) {
+                prevFile = new File(node.getAsString());
+            } else {
+                prevFile = GUIMain.getWorkingDirectory();
+            }
+
+            return prevFile;
+        }
+
+        /**
+         * Sets the folder to open a prompt within for next time.
+         * @param instance the instance to set the start folder for
+         */
+        public void setResult(GameInstance instance, File result) {
+            if (instance == null)
+                return;
+            if (result == null)
+                throw new NullPointerException("result");
+
+            Config savedPaths = getSavedPaths(instance);
+            ConfigValueNode node = savedPaths.getOrCreateKeyValueNode(this.configKeyName);
+
+            try {
+                node.setAsString(result.getCanonicalPath());
+            } catch (IOException ex) {
+                Utils.handleError(instance.getLogger(), ex, false, "Failed to get '%s' as a canonical path.", result);
+            }
+        }
+    }
+
+    @Getter
+    public static final class BrowserFileType {
+        private final String typeDescription;
+        private final List<String> extensions = new ArrayList<>();
+
+        public static final BrowserFileType ALL_FILES = new BrowserFileType("All Files", "*");
+
+        public BrowserFileType(String typeDescription, String... extensions) {
+            this.typeDescription = typeDescription;
+
+            for (int i = 0; i < extensions.length; i++) {
+                String tempExtension = extensions[i];
+                String type = tempExtension.contains(".") ? tempExtension : "*." + tempExtension; // Unix is case-sensitive, so we add both lower-case and upper-case.
+                String lowerCase = type.toLowerCase();
+                String upperCase = type.toUpperCase();
+
+                if (lowerCase.equals(upperCase)) {
+                    this.extensions.add(type);
+                } else {
+                    this.extensions.add(lowerCase);
+                    this.extensions.add(upperCase);
+                }
+            }
+        }
+    }
+
+    /**
+     * Prompt the user to select a file.
+     * @param instance The game instance to find the file path saved within.
+     * @param savedPath The information on how to obtain the saved path, as well as file extensions.
+     * @return selectedFile, or null if the user cancelled the prompt
+     */
+    public static File askUserToOpenFile(GameInstance instance, SavedFilePath savedPath) {
+        if (savedPath == null)
+            throw new NullPointerException("savedPath");
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle(savedPath.getTitle());
+        for (BrowserFileType fileType : savedPath.getFileTypes())
+            fileChooser.getExtensionFilters().add(new ExtensionFilter(fileType.getTypeDescription(), fileType.getExtensions()));
+
+        File lastDirectory = FileUtils.getValidFolder(savedPath.getLastPath(instance));
+        fileChooser.setInitialDirectory(lastDirectory);
+        File selectedFile = fileChooser.showOpenDialog(instance != null ? instance.getMainStage() : null);
+        if (selectedFile != null) {
+            savedPath.setResult(instance, selectedFile);
+            GUIMain.setWorkingDirectory(selectedFile.getParentFile());
+        }
+
+        return selectedFile;
+    }
+
+    /**
+     * Prompt the user to select a file.
+     * @param instance The game instance to find the file path saved within.
+     * @param savedPath The information on how to obtain the saved path, as well as file extensions.
+     * @return selectedFile, or null if the user cancelled the prompt
+     */
+    public static File askUserToSaveFile(GameInstance instance, SavedFilePath savedPath, String suggestedFileName) {
+        return askUserToSaveFile(instance, savedPath, suggestedFileName, false);
+    }
+
+    /**
+     * Prompt the user to select a file.
+     * @param instance The game instance to find the file path saved within.
+     * @param savedPath The information on how to obtain the saved path, as well as file extensions.
+     * @return selectedFile, or null if the user cancelled the prompt
+     */
+    public static File askUserToSaveFile(GameInstance instance, SavedFilePath savedPath, String suggestedFileName, boolean overrideLastFileName) {
+        if (savedPath == null)
+            throw new NullPointerException("savedPath");
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle(savedPath.getTitle());
+        for (BrowserFileType fileType : savedPath.getFileTypes())
+            fileChooser.getExtensionFilters().add(new ExtensionFilter(fileType.getTypeDescription(), fileType.getExtensions()));
+
+        File lastFile = savedPath.getLastPath(instance);
+        File lastDirectory = FileUtils.getValidFolder(savedPath.getLastPath(instance));
+        fileChooser.setInitialDirectory(lastDirectory);
+
+        if (!overrideLastFileName && lastFile != null && lastFile.isFile()) {
+            fileChooser.setInitialFileName(lastFile.getName());
+        } else if (savedPath.getFileTypes().size() > 0){
+            String startFileName = suggestedFileName;
+            String extension = savedPath.getFileTypes().get(0).getExtensions().get(0);
+            if (extension != null && !extension.equals("*") && !startFileName.endsWith("." + extension))
+                startFileName += "." + extension;
+
+            fileChooser.setInitialFileName(startFileName);
+        }
+
+        File selectedFile = fileChooser.showSaveDialog(instance != null ? instance.getMainStage() : null);
+        if (selectedFile != null) {
+            savedPath.setResult(instance, selectedFile);
+            GUIMain.setWorkingDirectory(selectedFile.getParentFile());
+        }
+
+        return selectedFile;
+    }
+
+    /**
+     * Prompt the user to select a directory.
+     * @param instance The game instance to find the file path saved within.
+     * @param savedPath The information on how to obtain the saved path, as well as file extensions.
+     * @return directoryFile, or null if the user cancelled the prompt
+     */
+    public static File askUserToSelectFolder(GameInstance instance, SavedFilePath savedPath) {
+        if (savedPath == null)
+            throw new NullPointerException("savedPath");
+        if (!savedPath.getFileTypes().isEmpty())
+            throw new IllegalArgumentException("The provided SavedBrowser path had file types set, making it unusable for a directory picker!");
+
+        DirectoryChooser chooser = new DirectoryChooser();
+        chooser.setTitle(savedPath.getTitle());
+
+        File lastDirectory = FileUtils.getValidFolder(savedPath.getLastPath(instance));
+        chooser.setInitialDirectory(lastDirectory);
+
+        File selectedFolder = chooser.showDialog(instance != null ? instance.getMainStage() : null);
+        if (selectedFolder != null) {
+            savedPath.setResult(instance, selectedFolder);
+            GUIMain.setWorkingDirectory(selectedFolder);
+        }
+
+        return selectedFolder;
     }
 }

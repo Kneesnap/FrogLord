@@ -133,7 +133,7 @@ public abstract class FroggerEntityData extends SCGameData<FroggerGameInstance> 
         if (formEntry == null)
             return null;
 
-        String dataClassName = instance.getConfig().getEntityBank().getConfig().getString(formEntry.getEntityTypeName(), null);
+        String dataClassName = instance.getVersionConfig().getEntityBank().getConfig().getString(formEntry.getEntityTypeName(), null);
         if (dataClassName == null)
             return null;
 

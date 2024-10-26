@@ -450,7 +450,7 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
             MenuItem menuItemImport = new MenuItem("Import Sound");
             contextMenu.getItems().add(menuItemImport);
             menuItemImport.setOnAction(event -> {
-                File inputFile = FXUtils.promptFileOpen(getGameInstance(), "Specify the sound file to import", "Audio File", "wav");
+                File inputFile = FileUtils.askUserToOpenFile(getGameInstance(), AudioUtils.IMPORT_WAV_FILE_PATH);
                 if (inputFile != null) {
                     try {
                         loadSupportedAudioFile(inputFile);
@@ -463,7 +463,7 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
             MenuItem menuItemExport = new MenuItem("Export Sound");
             contextMenu.getItems().add(menuItemExport);
             menuItemExport.setOnAction(event -> {
-                File outputFile = FXUtils.promptFileSave(getGameInstance(), "Specify the file to save the sound as...", getExportFileName(), "Audio File", "wav");
+                File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), AudioUtils.EXPORT_WAV_FILE_PATH, getExportFileName(), true);
                 if (outputFile != null) {
                     try {
                         saveAsWavFile(outputFile);
@@ -487,8 +487,8 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
             MenuItem importFromWavFileItem = new MenuItem("Import Sound Wave");
             getCollectionEditorComponent().addMenuItemToAddButtonLogic(importFromWavFileItem);
             importFromWavFileItem.setOnAction(event -> {
-                File inputFile = FXUtils.promptFileOpen(getGameInstance(), "Specify the sound file to import", "Audio File", "wav");
-                if (inputFile == null || !inputFile.isFile())
+                File inputFile = FileUtils.askUserToOpenFile(getGameInstance(), AudioUtils.IMPORT_WAV_FILE_PATH);
+                if (inputFile == null)
                     return;
 
                 SoundChunkEntry newSound = new SoundChunkEntry(getFile());

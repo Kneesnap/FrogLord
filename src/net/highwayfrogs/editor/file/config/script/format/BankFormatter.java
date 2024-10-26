@@ -60,6 +60,6 @@ public class BankFormatter extends ScriptFormatter {
     }
 
     private NameBank getBank(FroggerGameInstance instance) {
-        return getter.apply(instance.getConfig());
+        return getter.apply(instance.getVersionConfig());
     }
 }

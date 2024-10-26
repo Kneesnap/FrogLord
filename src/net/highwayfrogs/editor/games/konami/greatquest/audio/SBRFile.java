@@ -372,7 +372,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
          * @return Returns true iff a sound is successfully imported.
          */
         public boolean promptUserImportWavFile() {
-            File inputFile = FXUtils.promptFileOpen(getGameInstance(), "Specify the sound file to import", "Audio File", "wav");
+            File inputFile = FileUtils.askUserToOpenFile(getGameInstance(), AudioUtils.IMPORT_WAV_FILE_PATH);
             if (inputFile == null)
                 return false;
 
@@ -390,7 +390,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
          * @return Returns true iff a sound is successfully exported.
          */
         public boolean promptUserExportWavFile() {
-            File outputFile = FXUtils.promptFileSave(getGameInstance(), "Specify the file to save the sound as...", getExportFileName(), "Audio File", "wav");
+            File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), AudioUtils.EXPORT_WAV_FILE_PATH, getExportFileName(), true);
             if (outputFile == null)
                 return false;
 
@@ -1214,7 +1214,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
          * Prompts the user to replace the sound data with another wav file.
          */
         public void promptImportWavFile() {
-            File inputFile = FXUtils.promptFileOpen(getGameInstance(), "Specify the sound file to import", "Audio File", "wav");
+            File inputFile = FileUtils.askUserToOpenFile(getGameInstance(), AudioUtils.IMPORT_WAV_FILE_PATH);
             if (inputFile != null) {
                 try {
                     this.attributes.loadFromWavFile(this, inputFile);
@@ -1228,7 +1228,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
          * Prompts the user to save the sound to a wav file.
          */
         public void promptExportWavFile() {
-            File outputFile = FXUtils.promptFileSave(getGameInstance(), "Specify the file to save the sound as...", getExportFileName(), "Audio File", "wav");
+            File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), AudioUtils.EXPORT_WAV_FILE_PATH, getExportFileName(), true);
             if (outputFile != null) {
                 try {
                     this.attributes.saveToWavFile(this, outputFile);
