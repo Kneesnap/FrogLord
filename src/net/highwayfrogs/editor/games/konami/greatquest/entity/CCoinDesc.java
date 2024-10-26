@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
+import lombok.Getter;
 import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -12,6 +13,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
  * Loaded by CCoin::Init.
  * Created by Kneesnap on 8/22/2023.
  */
+@Getter
 public class CCoinDesc extends CItemDesc {
     private CoinType type = CoinType.NONE;
     private static final int PADDING_VALUES = 8;
@@ -43,6 +45,18 @@ public class CCoinDesc extends CItemDesc {
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         super.writeMultiLineInfo(builder, padding);
         builder.append(padding).append("Coin Type: ").append(this.type).append(Constants.NEWLINE);
+    }
+
+    /**
+     * Sets the coin type.
+     * @param newCoinType The coin type to apply
+     */
+    @SuppressWarnings("unused") // Available to Noodle scripts.
+    public void setType(CoinType newCoinType) {
+        if (newCoinType == null)
+            throw new NullPointerException("newCoinType");
+
+        this.type = newCoinType;
     }
 
     public enum CoinType {

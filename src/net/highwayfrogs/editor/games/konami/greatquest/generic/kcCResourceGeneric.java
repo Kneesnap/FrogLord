@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.konami.greatquest.generic;
 
 import javafx.scene.image.Image;
 import lombok.Getter;
-import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -32,15 +31,19 @@ import java.util.function.BiFunction;
  * Holds data representing the 'kcCGeneric' data struct.
  * Created by Kneesnap on 3/23/2020.
  */
-@Getter
-@Setter
 public class kcCResourceGeneric extends kcCResource {
-    private int tag = -1;
-    private byte[] bytes;
-    private GameData<GreatQuestInstance> cachedObject;
+    private int tag = -1; // This is the ID identifying the type of resource this is.
+    private byte[] rawResourceData;
+    @Getter private GameData<GreatQuestInstance> cachedObject;
 
     public kcCResourceGeneric(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.GENERIC);
+    }
+
+    public kcCResourceGeneric(GreatQuestChunkedFile parentFile, kcCResourceGenericType resourceType) {
+        this(parentFile);
+        this.tag = resourceType.getTag();
+        this.cachedObject = loadAsObject();
     }
 
     public kcCResourceGeneric(GreatQuestChunkedFile parentFile, kcCResourceGenericType resourceType, GameData<GreatQuestInstance> resource) {
@@ -64,7 +67,7 @@ public class kcCResourceGeneric extends kcCResource {
         this.tag = reader.readInt();
         int sizeInBytes = reader.readInt();
         reader.skipPointer(); // Pointer.
-        this.bytes = reader.readBytes(sizeInBytes);
+        this.rawResourceData = reader.readBytes(sizeInBytes);
 
         // Clear & load the cached object.
         this.cachedObject = null;
@@ -75,17 +78,24 @@ public class kcCResourceGeneric extends kcCResource {
     public void save(DataWriter writer) {
         super.save(writer);
         writer.writeInt(this.tag);
-        writer.writeInt(this.bytes != null ? this.bytes.length : 0);
+        int dataLengthPos = writer.writeNullPointer();
         writer.writeNullPointer(); // Pointer
+
         if (this.cachedObject != null) {
+            int dataWriteStart = writer.getIndex();
             this.cachedObject.save(writer);
-        } else if (this.bytes != null) {
-            writer.writeBytes(this.bytes);
+            writer.writeAddressAt(dataLengthPos, writer.getIndex() - dataWriteStart);
+        } else if (this.rawResourceData != null) {
+            writer.writeBytes(this.rawResourceData);
+            writer.writeAddressAt(dataLengthPos, this.rawResourceData.length);
         }
     }
 
-    // TODO: On double click -> Pass to the generic. [Open model viewer]
-    // TODO: Add property stuff for generics.
+    @Override
+    public void handleDoubleClick() {
+        if (this.cachedObject instanceof kcBaseDesc)
+            ((kcBaseDesc) this.cachedObject).handleDoubleClick();
+    }
 
     @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {
@@ -303,24 +313,25 @@ public class kcCResourceGeneric extends kcCResource {
         if (this.cachedObject != null)
             return (T) this.cachedObject;
 
-        DataReader reader = new DataReader(new ArraySource(this.bytes));
-        reader.jumpTemp(reader.getIndex());
-        int classID = reader.getRemaining() >= Constants.INTEGER_SIZE ? reader.readInt() : 0;
-        reader.jumpReturn();
+        // Not all resources actually use this. But, it's helpful to provide it for the ones which do.
+        int classID = this.rawResourceData != null && this.rawResourceData.length >= Constants.INTEGER_SIZE ? Utils.readIntFromBytes(this.rawResourceData, 0) : 0;
 
         T newObject = maker.apply(this, classID);
         if (newObject == null)
             return null;
 
-        try {
-            newObject.load(reader);
-        } catch (Throwable th) {
-            Utils.handleError(getLogger(), th, false, "Failed to load kcCResourceGeneric '%s' as %s.", getName(), genericType);
-        }
-
         this.cachedObject = newObject;
-        if (reader.hasMore())
-            getLogger().warning("Resource '" + getName() + "'/" + genericType + " read only " + reader.getIndex() + " bytes, leaving " + reader.getRemaining() + " unread.");
+        if (this.rawResourceData != null) {
+            DataReader reader = new DataReader(new ArraySource(this.rawResourceData));
+            try {
+                newObject.load(reader);
+            } catch (Throwable th) {
+                Utils.handleError(getLogger(), th, false, "Failed to load kcCResourceGeneric '%s' as %s.", getName(), genericType);
+            }
+
+            if (reader.hasMore())
+                getLogger().warning("Resource '" + getName() + "'/" + genericType + " read only " + reader.getIndex() + " bytes, leaving " + reader.getRemaining() + " unread.");
+        }
 
         return newObject;
     }

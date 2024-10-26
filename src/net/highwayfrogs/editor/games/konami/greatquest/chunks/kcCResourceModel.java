@@ -4,13 +4,16 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
+import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * A reference to a 3D model.
@@ -18,7 +21,7 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.Proper
  */
 @Getter
 public class kcCResourceModel extends kcCResource {
-    private String fullPath; // Full file path to the real model file.
+    private String fullPath = ""; // Full file path to the real model file.
 
     public static final int FULL_PATH_SIZE = 260;
 
@@ -34,6 +37,8 @@ public class kcCResourceModel extends kcCResource {
         GreatQuestAssetBinFile mainArchive = getMainArchive();
         if (mainArchive != null)
             mainArchive.applyFileName(this.fullPath, false);
+
+        applyCollisionMeshName();
     }
 
     @Override
@@ -65,7 +70,8 @@ public class kcCResourceModel extends kcCResource {
     @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {
         propertyList = super.addToPropertyList(propertyList);
-        propertyList.add("File Path", this.fullPath); // TODO: Allow changing.
+        propertyList.add("File Path", this.fullPath,
+                () -> InputMenu.promptInputBlocking(getGameInstance(), "Please enter the new path.", this.fullPath, newPath -> setFullPath(newPath, true)));
         return propertyList;
     }
 
@@ -73,11 +79,7 @@ public class kcCResourceModel extends kcCResource {
      * Gets the file name without the full path.
      */
     public String getFileName() {
-        int lastBackslash = this.fullPath.lastIndexOf('\\');
-        if (lastBackslash == -1)
-            return this.fullPath;
-
-        return this.fullPath.substring(lastBackslash + 1);
+        return GreatQuestUtils.getFileNameFromPath(this.fullPath);
     }
 
     /**
@@ -96,5 +98,38 @@ public class kcCResourceModel extends kcCResource {
     public kcModelWrapper getModelWrapper() {
         GreatQuestArchiveFile file = getOptionalFileByName(this.fullPath);
         return (file instanceof kcModelWrapper) ? ((kcModelWrapper) file) : null;
+    }
+
+    /**
+     * Sets the file path of the asset referenced here.
+     * @param newPath the file path to apply
+     * @param throwIfPathCannotBeResolved if the file path cannot be resolved to a valid asset and this is true, an exception will be thrown.
+     */
+    public void setFullPath(String newPath, boolean throwIfPathCannotBeResolved) {
+        if (newPath == null)
+            throw new NullPointerException("newPath");
+        if (newPath.length() >= FULL_PATH_SIZE)
+            throw new IllegalArgumentException("The provided path is too large! (Provided: " + newPath.length() + ", Maximum: " + (FULL_PATH_SIZE - 1) + ")");
+
+        if (throwIfPathCannotBeResolved) {
+            GreatQuestArchiveFile file = getOptionalFileByName(newPath);
+            if (!(file instanceof kcModelWrapper))
+                throw new IllegalArgumentException("The file path could not be resolved to a model! (" + newPath + ")");
+        }
+
+        this.fullPath = newPath;
+        setName(GreatQuestUtils.getFileNameFromPath(newPath));
+    }
+
+    private void applyCollisionMeshName() {
+        // If we resolve the model successfully, our goal is to generate the name of any corresponding collision mesh.
+        String baseName = Utils.stripExtension(getFileName());
+        String collisionMeshName = (baseName + kcCResourceTriMesh.EXTENSION_SUFFIX.toUpperCase());
+        if (baseName.equals(baseName.toUpperCase()))
+            collisionMeshName = collisionMeshName.toUpperCase();
+
+        kcCResource triMesh = getParentFile().getResourceByHash(GreatQuestUtils.hash(collisionMeshName));
+        if (triMesh != null)
+            triMesh.getSelfHash().setOriginalString(collisionMeshName);
     }
 }

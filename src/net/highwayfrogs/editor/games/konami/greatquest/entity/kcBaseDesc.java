@@ -99,6 +99,13 @@ public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements
     protected abstract void saveData(DataWriter writer);
 
     /**
+     * Called when the entry is double-clicked in the UI.
+     */
+    public void handleDoubleClick() {
+        // Do nothing.
+    }
+
+    /**
      * Return true if the parent resource is named any one of the given names.
      * @param names the names to test
      * @return parent resources

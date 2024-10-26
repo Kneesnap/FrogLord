@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.konami.greatquest.chunks;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -240,8 +241,8 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
     @Getter
     public static class kcVtxBufFileStruct implements IMultiLineInfoWriter {
         // _OTAPrimHeader
-        private long materialId;
-        private float normalTolerance;
+        @Setter private long materialId;
+        @Setter private float normalTolerance;
         private final kcVector4 normalAverage = new kcVector4();
         private final kcBox4 boundingBox = new kcBox4();
 
@@ -249,7 +250,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
         private long fvf;
         private kcVertexFormatComponent[] components;
         private int fvfStride;
-        private kcPrimitiveType primitiveType;
+        @Setter private kcPrimitiveType primitiveType;
         private final List<kcVertex> vertices = new ArrayList<>();
 
         /**

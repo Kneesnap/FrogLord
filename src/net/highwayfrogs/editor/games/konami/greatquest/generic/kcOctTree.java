@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.konami.greatquest.generic;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -18,6 +19,7 @@ import java.util.List;
  * Created by Kneesnap on 4/20/2024.
  */
 @Getter
+@Setter
 public class kcOctTree extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
     private int maxDimension; // TODO: Figure this one out.
     private int maxDimensionE; // TODO: Figure this one out.
@@ -168,6 +170,7 @@ public class kcOctTree extends GameData<GreatQuestInstance> implements IMultiLin
     }
 
     @Getter
+    @Setter
     public static class kcOctLeaf extends GameData<GreatQuestInstance> {
         private int nodeDimension;
         private int nodeX;

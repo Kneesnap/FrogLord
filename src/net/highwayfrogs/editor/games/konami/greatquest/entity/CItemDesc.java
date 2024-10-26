@@ -1,6 +1,8 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -15,6 +17,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
  * TODO: Communicate this in FrogLord.
  * Created by Kneesnap on 8/21/2023.
  */
+@Getter
+@Setter
 public class CItemDesc extends kcActorBaseDesc {
     private int value;
     private int properties;

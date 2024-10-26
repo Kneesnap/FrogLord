@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.konami.greatquest.model;
 
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
@@ -20,7 +19,6 @@ import net.highwayfrogs.editor.utils.Utils;
  * Created by Kneesnap on 8/21/2023.
  */
 @Getter
-@Setter
 public class kcModelDesc extends kcBaseDesc implements IInfoWriter {
     private final GreatQuestHash<kcCResourceGeneric> parentHash; // The hash of this object's parent. Unused.
     private final GreatQuestHash<kcCResourceModel> modelRef; // Resolved by kcCModel::Init()

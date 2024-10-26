@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.math;
 
+import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
@@ -10,17 +11,14 @@ import net.highwayfrogs.editor.utils.IBinarySerializable;
  * NOTE: The 'kcBox4' type in the exported header file uses kcVector3. Not sure why, as ghidra sees it as a kcVector4.
  * Created by Kneesnap on 7/12/2023.
  */
+@Getter
 public class kcBox4 implements IMultiLineInfoWriter, IBinarySerializable {
-    private kcVector4 min;
-    private kcVector4 max;
+    private final kcVector4 min = new kcVector4();
+    private final kcVector4 max = new kcVector4();
 
     @Override
     public void load(DataReader reader) {
-        if (this.min == null)
-            this.min = new kcVector4();
         this.min.load(reader);
-        if (this.max == null)
-            this.max = new kcVector4();
         this.max.load(reader);
     }
 

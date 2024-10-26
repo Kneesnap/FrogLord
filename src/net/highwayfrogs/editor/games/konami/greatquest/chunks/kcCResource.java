@@ -40,7 +40,7 @@ import java.util.logging.Logger;
 public abstract class kcCResource extends GameData<GreatQuestInstance> implements kcHashedResource, ICollectionViewEntry, IPropertyListCreator {
     @Getter private byte[] rawData;
     @Getter private final KCResourceID chunkType;
-    @Getter private final GreatQuestHash<kcCResource> selfHash; // The real hash comes from the TOC chunk.
+    @Getter private final GreatQuestHash<? extends kcCResource> selfHash; // The real hash comes from the TOC chunk.
     @Getter private final ObjectProperty<String> nameProperty = new SimpleObjectProperty<>(); // Usually this is what the hash is based on, but not always.
     @Getter protected boolean hashBasedOnName;
     @Getter @Setter private GreatQuestChunkedFile parentFile;
@@ -118,12 +118,18 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
     public void setName(String newName, boolean updateHash) {
         if (newName == null)
             throw new NullPointerException("newName");
+        if (newName.length() >= NAME_SIZE)
+            throw new IllegalArgumentException("The provided name is too long! (Max: " + (NAME_SIZE - 1) + " characters, '" + newName + "')");
 
         String oldName = this.nameProperty.getName();
         boolean didNameChange = oldName == null || !oldName.equalsIgnoreCase(newName);
-        if (!Objects.equals(oldName, newName)) {
-            this.nameProperty.set(newName);
-            this.cachedLogger = null; // The logger is no longer valid!
+
+        // Validate new name.
+        if (updateHash && didNameChange) {
+            int newHash = calculateHash(newName);
+            kcCResource otherResource = getParentFile().getResourceByHash(newHash);
+            if (otherResource != this)
+                throw new IllegalArgumentException("The provided name '" + newName + "' conflicts with another resource: " + otherResource + ".");
         }
 
         if (updateHash) {
@@ -131,6 +137,12 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
             this.selfHash.setHash(newName); // Replace whatever the old hash was with a new hash based on the name.
         } else if (this.hashBasedOnName && didNameChange) {
             this.hashBasedOnName = false;
+        }
+
+        // Apply new name. (Triggers any listeners, so it should run after the hash is updated, allowing further changes to occur.)
+        if (!Objects.equals(oldName, newName)) {
+            this.nameProperty.set(newName);
+            this.cachedLogger = null; // The logger is no longer valid!
         }
     }
 
@@ -178,7 +190,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
 
             // Warn if not all data is read.
             if (chunkReader.hasMore())
-                getLogger().warning("GreatQuest Chunk " + Utils.stripAlphanumeric(getChunkMagic()) + "/'" + getName() + "' in '" + getParentFile().getDebugName() + "' had " + chunkReader.getRemaining() + " remaining unread bytes.");
+                getLogger().warning("GreatQuest Chunk " + Utils.stripAlphanumeric(getChunkIdentifier()) + "/'" + getName() + "' in '" + getParentFile().getDebugName() + "' had " + chunkReader.getRemaining() + " remaining unread bytes.");
         } catch (Throwable th) {
             Utils.handleError(getLogger(), th, false, "Failed to read %s chunk from '%s'.", getChunkType(), getParentFile().getDebugName());
         }
@@ -219,7 +231,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
      * Gets the signature this chunk uses
      * @return signature
      */
-    public String getChunkMagic() {
+    public String getChunkIdentifier() {
         if (getChunkType().getSignature() == null)
             throw new UnsupportedOperationException("getSignature() was called on " + getChunkType() + ", which needs to be overwritten instead.");
         return getChunkType().getSignature();
@@ -292,7 +304,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
         renameItem.setOnAction(event -> {
             InputMenu.promptInput(getGameInstance(), "Please enter the new name for the chunk.", getName(), newName -> {
                 if (newName.length() >= NAME_SIZE) {
-                    Utils.makePopUp("The provided name is too long! (Max: " + NAME_SIZE + " characters)", AlertType.ERROR);
+                    Utils.makePopUp("The provided name is too long! (Max: " + (NAME_SIZE - 1) + " characters)", AlertType.ERROR);
                     return;
                 }
 

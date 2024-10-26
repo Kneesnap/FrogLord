@@ -407,7 +407,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
 
     public static class SfxWavePS2 extends BaseSfxWave implements SfxWave {
         @Getter private int flags;
-        @Getter private int sampleRate;
+        @Getter private int sampleRate = 22050; // 22050 for most SFX, 11025 for some SFX, 24000 for voice clips.
         private byte[] ADPCMData;
         private Clip cachedClip;
 
@@ -522,6 +522,22 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
 
             this.sampleRate = newSampleRate;
             clearCachedClip();
+        }
+
+        /**
+         * Set the state of the given bit flags
+         * @param flagMask the bit flags to set
+         * @param bitsSet the state of the flags
+         */
+        public void setFlagState(int flagMask, boolean bitsSet) {
+            if ((flagMask & FLAG_VALIDATION_MASK) != flagMask)
+                throw new IllegalArgumentException("flagMask (" + Utils.toHexString(flagMask) + ") had unsupported bits set!");
+
+            if (bitsSet) {
+                this.flags |= flagMask;
+            } else {
+                this.flags &= ~flagMask;
+            }
         }
     }
 
@@ -669,7 +685,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         private short flags;
         private short priority = 100; // 100 seems to be default, 50 for vase break/barrel breaks, 50 for unimportant, 200 for music
 
-        public static final int FLAG_VALIDATION_MASK = 0b11000001;
+        private static final int FLAG_VALIDATION_MASK = 0b11000001;
         public static final int FLAG_REPEAT = Constants.BIT_FLAG_0;
         public static final int FLAG_VOICE_CLIP = Constants.BIT_FLAG_6;
         public static final int FLAG_MUSIC = Constants.BIT_FLAG_7;
@@ -703,14 +719,25 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             addFlagToggle(propertyList, "Voice Clip", FLAG_VOICE_CLIP);
             addFlagToggle(propertyList, "Music", FLAG_MUSIC);
             propertyList.add("Priority", this.priority,
-                    () -> InputMenu.promptInputInt(getGameInstance(), "What should the new priority value be set to? (Default = 100)", this.priority, newPriority -> {
-                        if (newPriority < 0 || newPriority > 255)
-                            throw new IllegalArgumentException("The value was outside of the range [0, 255]. (Value: " + newPriority + ")");
-
-                        this.priority = (short) (int) newPriority;
-                    }));
+                    () -> InputMenu.promptInputInt(getGameInstance(), "What should the new priority value be set to? (Default = 100)", this.priority, this::setPriority));
 
             return propertyList;
+        }
+
+        /**
+         * Set the state of the given bit flags
+         * @param flagMask the bit flags to set
+         * @param bitsSet the state of the flags
+         */
+        public void setFlagState(int flagMask, boolean bitsSet) {
+            if ((flagMask & FLAG_VALIDATION_MASK) != flagMask)
+                throw new IllegalArgumentException("flagMask (" + Utils.toHexString(flagMask) + ") had unsupported bits set!");
+
+            if (bitsSet) {
+                this.flags |= (short) flagMask;
+            } else {
+                this.flags &= (short) ~flagMask;
+            }
         }
 
         @SuppressWarnings("lossy-conversions")
@@ -805,6 +832,16 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             return attributes;
         }
 
+        /**
+         * Sets the priority value.
+         * @param newPriority The new priority
+         */
+        public void setPriority(int newPriority) {
+            if (newPriority < 0 || newPriority > 255)
+                throw new IllegalArgumentException("The value was outside of the range [0, 255]. (Value: " + newPriority + ")");
+
+            this.priority = (short) newPriority;
+        }
     }
 
     /**
@@ -850,37 +887,11 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         @Override
         public PropertyList addToPropertyList(PropertyList propertyList) {
             propertyList = super.addToPropertyList(propertyList);
-            propertyList.add("Instance Limit", this.instanceLimit, () -> InputMenu.promptInputInt(getGameInstance(), "What is the new instance limit? (Default: 127)", this.instanceLimit, newInstanceLimit -> {
-                if (newInstanceLimit < 0 || newInstanceLimit > 127)
-                    throw new IllegalArgumentException("The provided value is outside of the allowed range of [0, 127]. (Value: " + newInstanceLimit + ")");
-
-                this.instanceLimit = (short) (int) newInstanceLimit;
-            }));
-            propertyList.add("Volume", this.volume, () -> InputMenu.promptInputInt(getGameInstance(), "What is the new volume? (Default: 127)", this.volume, newVolume -> {
-                if (newVolume < 0 || newVolume > 127)
-                    throw new IllegalArgumentException("The provided value is outside of the allowed range of [0, 127]. (Value: " + newVolume + ")");
-
-                this.volume = (short) (int) newVolume;
-            }));
-            propertyList.add("Pan", this.pan, () -> InputMenu.promptInputInt(getGameInstance(), "What is the new pan? (Default: 64)", this.pan, newPan -> {
-                if (newPan < 0 || newPan > 127)
-                    throw new IllegalArgumentException("The provided value is outside of the allowed range of [0, 127]. (Value: " + newPan + ")");
-
-                this.pan = (short) (int) newPan;
-            }));
-            propertyList.add("Pitch", this.pitch, () -> InputMenu.promptInputInt(getGameInstance(), "What is the new pitch? (Default: 0)", this.pitch, newPitch -> {
-                if (newPitch < 0 || newPitch > 127)
-                    throw new IllegalArgumentException("The provided value is outside of the allowed range of [0, 127]. (Value: " + newPitch + ")");
-
-                this.pitch = (short) (int) newPitch;
-            }));
-
-            propertyList.add("Wave ID", this.waveIndex, () -> InputMenu.promptInputInt(getGameInstance(), "What is the local ID of the wave to apply?", this.waveIndex, newWaveIndex -> {
-                if (newWaveIndex < 0 || newWaveIndex >= getParentFile().getWaves().size())
-                    throw new IllegalArgumentException("That is not a valid Wave ID! (" + newWaveIndex + "). Perhaps this is an SFX ID instead?");
-
-                this.waveIndex = (short) (int) newWaveIndex;
-            }));
+            propertyList.add("Instance Limit", this.instanceLimit, () -> InputMenu.promptInputInt(getGameInstance(), "What is the new instance limit? (Default: 127)", this.instanceLimit, this::setInstanceLimit));
+            propertyList.add("Volume", this.volume, () -> InputMenu.promptInputInt(getGameInstance(), "What is the new volume? (Default: 127)", this.volume, this::setVolume));
+            propertyList.add("Pan", this.pan, () -> InputMenu.promptInputInt(getGameInstance(), "What is the new pan? (Default: 64)", this.pan, this::setPan));
+            propertyList.add("Pitch", this.pitch, () -> InputMenu.promptInputInt(getGameInstance(), "What is the new pitch? (Default: 0)", this.pitch, this::setPitch));
+            propertyList.add("Wave ID", this.waveIndex, () -> InputMenu.promptInputInt(getGameInstance(), "What is the local ID of the wave to apply?", this.waveIndex, this::setWaveIndex));
 
             // NOTE: I don't actually know that the limits are 127. It's possible values higher might be supported, but I don't see much of a reason to care.
             return propertyList;
@@ -928,6 +939,61 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
 
             wave.exportToWav(outputFile);
         }
+
+        /**
+         * Sets the instance limit value.
+         * @param newInstanceLimit The new instance limit
+         */
+        public void setInstanceLimit(int newInstanceLimit) {
+            if (newInstanceLimit < 0 || newInstanceLimit > 127)
+                throw new IllegalArgumentException("The provided value is outside of the allowed range of [0, 127]. (Value: " + newInstanceLimit + ")");
+
+            this.instanceLimit = (short) newInstanceLimit;
+        }
+
+        /**
+         * Sets the volume value.
+         * @param newVolume The new volume
+         */
+        public void setVolume(int newVolume) {
+            if (newVolume < 0 || newVolume > 127)
+                throw new IllegalArgumentException("The provided value is outside of the allowed range of [0, 127]. (Value: " + newVolume + ")");
+
+            this.volume = (short) newVolume;
+        }
+
+        /**
+         * Sets the pan value.
+         * @param newPan The new pan
+         */
+        public void setPan(int newPan) {
+            if (newPan < 0 || newPan > 127)
+                throw new IllegalArgumentException("The provided value is outside of the allowed range of [0, 127]. (Value: " + newPan + ")");
+
+            this.pan = (short) newPan;
+        }
+
+        /**
+         * Sets the pitch value.
+         * @param newPitch The new pitch
+         */
+        public void setPitch(int newPitch) {
+            if (newPitch < 0 || newPitch > 127)
+                throw new IllegalArgumentException("The provided value is outside of the allowed range of [0, 127]. (Value: " + newPitch + ")");
+
+            this.pitch = (short) newPitch;
+        }
+
+        /**
+         * Sets the wave index.
+         * @param newWaveIndex The new wave index
+         */
+        public void setWaveIndex(int newWaveIndex) {
+            if (newWaveIndex < 0 || newWaveIndex >= getParentFile().getWaves().size())
+                throw new IllegalArgumentException("That is not a valid Wave ID! (" + newWaveIndex + "). Perhaps this is an SFX ID instead?");
+
+            this.waveIndex = (short) newWaveIndex;
+        }
     }
 
     /**
@@ -935,7 +1001,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
      */
     @Getter
     public static class SfxEntryStreamAttributes extends SfxAttributes {
-        private short volume = 127; // 127 seems to be the default.
+        private short volume = 127; // 127 seems to be the default (Full volume)
 
         private static final byte TYPE_OPCODE = 1;
 
@@ -958,7 +1024,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         @Override
         public PropertyList addToPropertyList(PropertyList propertyList) {
             propertyList = super.addToPropertyList(propertyList);
-            propertyList.add("Volume", this.volume);
+            propertyList.add("Volume", this.volume, () -> InputMenu.promptInputInt(getGameInstance(), "What is the new volume? (Default: 127)", this.volume, this::setVolume));
             return propertyList;
         }
 
@@ -1002,6 +1068,17 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
                 throw new IllegalStateException("Could not resolve SoundChunkEntry.");
 
             soundChunkEntry.saveAsWavFile(outputFile);
+        }
+
+        /**
+         * Sets the volume value.
+         * @param newVolume The new volume
+         */
+        public void setVolume(int newVolume) {
+            if (newVolume < 0 || newVolume > 127)
+                throw new IllegalArgumentException("The provided value is outside of the allowed range of [0, 127]. (Value: " + newVolume + ")");
+
+            this.volume = (short) newVolume;
         }
     }
 

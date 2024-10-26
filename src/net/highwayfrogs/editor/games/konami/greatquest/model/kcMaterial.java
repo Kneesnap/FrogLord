@@ -15,6 +15,7 @@ import net.highwayfrogs.editor.utils.Utils;
  * Created by Kneesnap on 6/22/2023.
  */
 @Getter
+@Setter
 public class kcMaterial implements IMultiLineInfoWriter, IBinarySerializable {
     private String materialName;
     private String textureFileName;
@@ -37,7 +38,7 @@ public class kcMaterial implements IMultiLineInfoWriter, IBinarySerializable {
     private float emissiveBlue;
     private float emissiveAlpha = 1F;
     private float power = 1F;
-    @Setter private transient GreatQuestImageFile texture;
+    private transient GreatQuestImageFile texture;
 
     private static final int NAME_SIZE = 32;
     private static final int FILENAME_SIZE = 32;

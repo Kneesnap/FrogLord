@@ -4,11 +4,43 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.animation.kcTrack;
+import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcAnimState;
+import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcTrackKeyBezier.kcTrackKeyBezierPosition;
+import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcTrackKeyDummy;
+import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcTrackKeyTcb.kcTrackKeyTcbPosition;
+import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcTrackKeyTcb.kcTrackKeyTcbRotation;
+import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcTrackKeyVector.kcTrackKeyLinearPosition;
+import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcTrackKeyVector.kcTrackKeyLinearRotation;
+import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcTrackKeyVector.kcTrackKeyLinearScale;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile;
+import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.*;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SoundChunkFile;
-import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
-import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestGameFile;
+import net.highwayfrogs.editor.games.konami.greatquest.audio.SoundChunkFile.SoundChunkEntry;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResOctTreeSceneMgr.kcVtxBufFileStruct;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceNamedHash.HashTableEntry;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton.kcNode;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTriMesh.kcCFace;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTriMesh.kcCTriMesh;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.*;
+import net.highwayfrogs.editor.games.konami.greatquest.file.*;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourcePath;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceString;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcOctTree;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcOctTree.kcOctBranch;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcOctTree.kcOctLeaf;
+import net.highwayfrogs.editor.games.konami.greatquest.map.*;
+import net.highwayfrogs.editor.games.konami.greatquest.math.*;
+import net.highwayfrogs.editor.games.konami.greatquest.model.*;
 import net.highwayfrogs.editor.games.konami.greatquest.noodle.GreatQuestInstanceNoodleTemplate;
+import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcEmitterDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyCapsuleDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyTriMeshDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.script.interim.*;
+import net.highwayfrogs.editor.games.konami.greatquest.script.*;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestMainMenuUIController;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
@@ -26,7 +58,32 @@ import java.util.Map.Entry;
 
 /**
  * Represents an instance of 'Frogger: The Great Quest'.
- * TODO: Fix transparency for the bone icon.
+ * TODO Immediate:
+ *  -> Fix image loading/saving.
+ *  -> Fix model loading/saving.
+ *  -> Fix transparency for the bone icon.
+ *  -> Add PS2 PAL TOC support.
+ *  -> Split up Utils & add it to the game script engine.
+ *  -> Change DataWriter.writeAddressAt() to something named writeIntAtPos().
+ *  -> Scripting Engine
+ *   -> Strings should be an object with a template.
+ *   -> Enums should be an object with a template too.
+ *   -> Support Arrays
+ *   -> Consider rigid primitives, upsides & downsides.
+ *   -> Register public static fields as well.
+ *   -> Fix interfaces.
+ *  -> Config
+ *   -> Handle '=' in text.
+ *   -> Renaming sections?
+ *   -> How do we handle comments in the key-value-pair section? (Multi-line)
+ *   -> Keep empty lines? (Removal of ```)
+ *
+ * TODO Future:
+ *  -> Support previewing action sequences in-editor.
+ *  -> Flesh out the PropertyList behavior. (Nesting!)
+ *  -> Further support previewing & editing generic data.
+ *  -> Preview texture references in chunk file viewer.
+ *  -> Improve how the scripting UI feels to use. (Eg: the UI shouldn't be completely blocked)
  * Created by Kneesnap on 4/13/2024.
  */
 @Getter
@@ -179,8 +236,37 @@ public class GreatQuestInstance extends GameInstance {
     protected void setupScriptEngine(NoodleScriptEngine engine) {
         super.setupScriptEngine(engine);
         engine.addTemplate(GreatQuestInstanceNoodleTemplate.INSTANCE);
-
-        // TODO: MORE!!!
+        engine.addWrapperTemplates(kcTrack.class, kcAnimState.class, kcTrackKeyDummy.class,
+                kcTrackKeyBezierPosition.class, kcTrackKeyTcbPosition.class,
+                kcTrackKeyTcbRotation.class, kcTrackKeyLinearRotation.class, kcTrackKeyLinearPosition.class,
+                kcTrackKeyLinearScale.class);
+        engine.addWrapperTemplates(SBRFile.class, SfxWavePC.class, SfxWavePS2.class, SfxEntry.class,
+                SfxEntryStreamAttributes.class,SfxEntrySimpleAttributes.class, SoundChunkFile.class, SoundChunkEntry.class);
+        engine.addWrapperTemplates(kcCResource.class, GreatQuestChunkTextureReference.class, GreatQuestDummyFileChunk.class,
+                kcCResOctTreeSceneMgr.class, kcCResourceAnimSet.class, kcCResourceEntityInst.class,
+                kcCResourceModel.class, kcCResourceNamedHash.class, kcCResourceSkeleton.class,
+                kcCResourceTOC.class, kcCResourceTrack.class, kcCResourceTriMesh.class,
+                HashTableEntry.class, kcNode.class);
+        engine.addWrapperTemplates(CCoinDesc.class, CGemDesc.class, CharacterParams.class, CHoneyPotDesc.class,
+                CItemDesc.class, CMagicStoneDesc.class, CObjKeyDesc.class, CPropDesc.class, CUniqueItemDesc.class,
+                kcActorBaseDesc.class, kcActorDesc.class, kcAnimSetDesc.class, kcEntity3DDesc.class,
+                kcEntity3DInst.class, kcEntityInst.class, kcHealthDesc.class, kcParticleEmitterParam.class,
+                kcParticleParam.class, kcProjectileParams.class, kcWaypointDesc.class, LauncherParams.class);
+        engine.addWrapperTemplates(GreatQuestArchiveFile.class, GreatQuestAssetBinFile.class,
+                GreatQuestChunkedFile.class, GreatQuestDummyArchiveFile.class, GreatQuestImageFile.class,
+                GreatQuestLooseGameFile.class);
+        engine.addWrapperTemplates(kcCResourceGeneric.class, kcCResourcePath.class, kcCResourceString.class, kcOctTree.class,
+                kcOctBranch.class, kcOctLeaf.class, kcVtxBufFileStruct.class, kcCTriMesh.class);
+        engine.addWrapperTemplates(kcColor3.class, kcColor4.class, kcMatrix.class, kcQuat.class,
+                kcBox4.class, kcSphere.class, kcVector3.class, kcVector4.class, kcCFace.class);
+        engine.addWrapperTemplates(kcEnvironment.class, kcFogParams.class, kcLight.class, kcPerspective.class);
+        engine.addWrapperTemplates(kcMaterial.class, kcModel.class, kcModelNode.class, kcModelPrim.class,
+                kcModelWrapper.class, kcVertex.class);
+        engine.addWrapperTemplates(kcEmitterDesc.class, kcProxyCapsuleDesc.class, kcProxyDesc.class, kcProxyTriMeshDesc.class);
+        engine.addWrapperTemplates(kcScriptList.class, kcScript.class, kcScriptDisplaySettings.class,
+                kcArgument.class, kcCActionSequence.class, kcParam.class, kcInterimScriptEffect.class, kcParamReader.class,
+                kcParamWriter.class, kcScriptListInterim.class, kcScriptTOC.class);
+        engine.addWrapperTemplates(GreatQuestHash.class, GreatQuestUtils.class);
     }
 
     @Override

@@ -36,6 +36,8 @@ public class kcCResourceEntityInst extends kcCResource {
         if (sizeInBytes != calculatedSize)
             throw new RuntimeException("The expected amount of entity data (" + sizeInBytes + " bytes) different from the actual amount (" + calculatedSize + " bytes).");
 
+        this.entity = null;
+        this.dummyBytes = null;
         if (sizeInBytes == kcEntity3DInst.SIZE_IN_BYTES) {
             this.entity = new kcEntity3DInst(this);
             this.entity.load(reader);

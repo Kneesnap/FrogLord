@@ -32,7 +32,7 @@ import java.util.*;
  */
 @Getter
 public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
-    private List<String> globalPaths;
+    private final List<String> globalPaths = new ArrayList<>();
     private final List<GreatQuestArchiveFile> files = new ArrayList<>();
     private final Map<Integer, GreatQuestArchiveFile> nameMap = new HashMap<>();
     private final Map<Integer, List<GreatQuestArchiveFile>> fileCollisions = new HashMap<>();
@@ -61,7 +61,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         int nameAddress = reader.readInt();
         reader.jumpTemp(nameAddress);
         int nameCount = reader.readInt();
-        this.globalPaths = new ArrayList<>(nameCount);
+        this.globalPaths.clear();
         for (int i = 0; i < nameCount; i++)
             this.globalPaths.add(reader.readNullTerminatedFixedSizeString(NAME_SIZE, Constants.NULL_BYTE));
         reader.jumpReturn();

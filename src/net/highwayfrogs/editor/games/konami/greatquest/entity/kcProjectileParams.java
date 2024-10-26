@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -15,8 +16,9 @@ import net.highwayfrogs.editor.utils.Utils;
  * Created by Kneesnap on 8/21/2023.
  */
 @Getter
+@Setter
 public class kcProjectileParams extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
-    private ProxyReact proxyReact;
+    private ProxyReact proxyReact = ProxyReact.NOTIFY;
     private float sensorRadius;
     private int group;
     private int focus;
@@ -76,5 +78,17 @@ public class kcProjectileParams extends GameData<GreatQuestInstance> implements 
         builder.append(padding).append("Mass: ").append(this.mass).append(", Gravity: ").append(this.gravity).append(Constants.NEWLINE);
         builder.append(padding).append("Retain Bounce: ").append(this.retainBounce)
                 .append(", Retain Slide: ").append(this.retainSlide).append(Constants.NEWLINE);
+    }
+
+    /**
+     * Sets the reaction type.
+     * @param reactionType The reaction type to apply.
+     */
+    @SuppressWarnings("unused") // Available to Noodle scripts.
+    public void setReactionType(ProxyReact reactionType) {
+        if (reactionType == null)
+            throw new NullPointerException("reactionType");
+
+        this.proxyReact = reactionType;
     }
 }

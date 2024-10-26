@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.file;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
@@ -32,7 +33,7 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
     @Getter private String fileName;
     @Getter private String filePath;
     @Getter private boolean collision; // This is true iff there are multiple files that share the hash.
-    @Getter private boolean compressed;
+    @Getter @Setter private boolean compressed;
     private Logger cachedLogger;
 
     public GreatQuestArchiveFile(GreatQuestInstance instance) {
@@ -136,7 +137,7 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
     }
 
     /**
-     * Sets the raw file name of this file.
+     * Sets the raw file path of this file. This will also update the file name.
      * @param filePath The raw file name. (Full path)
      */
     public void setFilePath(String filePath) {

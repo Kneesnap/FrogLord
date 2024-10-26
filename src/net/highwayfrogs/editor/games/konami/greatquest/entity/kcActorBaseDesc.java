@@ -16,6 +16,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelMesh;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelViewController;
+import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -31,7 +33,7 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
     private final GreatQuestHash<kcCResourceGeneric> parentHash;
     private final GreatQuestHash<kcCResourceGeneric> modelDescRef;
     private final GreatQuestHash<kcCResourceSkeleton> hierarchyRef; // If this value is -1, it means create a new kcCAnimCtl with CID_PRS for the animation controller. Otherwise, create a new kcCSkeleton from this. kcCSkeleton::InitHierarchy() will be called whenever the hash is not -1.
-    private int numChan; // Used for initializing the skeleton hierarchy in kcCActorBase::Init
+    private int channelCount; // Used for initializing the skeleton hierarchy in kcCActorBase::Init
     private final GreatQuestHash<kcCResourceAnimSet> animSetRef; // I've done an extensive search and am confident that this is completely unused.
     private final GreatQuestHash<kcCResourceGeneric> proxyDescRef; // kcCActorBase::Init() will fail if this is not either -1 or a valid hash.
     private final GreatQuestHash<kcCResourceNamedHash> animationSequencesRef; // hAnimHash, kcCActorBase::Init, kcCActorBase::ResetInt TODO: The sequence 'NrmIdle01' is applied by kcCActorBase::ResetInt, if the sequence is found. Does this occur on level load? If so, we might want to put that in the editor. It appears repeating the sequence is enabled, so consider that in the editor too. We should probably have a way to preview action sequences actually.
@@ -60,7 +62,7 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         int hThis = reader.readInt();
         int modelDescHash = reader.readInt();
         int hierarchyHash = reader.readInt();
-        this.numChan = reader.readInt();
+        this.channelCount = reader.readInt();
         int animSetHash = reader.readInt();
         int proxyDescHash = reader.readInt();
         int animationHash = reader.readInt();
@@ -90,7 +92,7 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         writer.writeInt(this.parentHash.getHashNumber());
         writer.writeInt(this.modelDescRef.getHashNumber());
         writer.writeInt(this.hierarchyRef.getHashNumber());
-        writer.writeInt(this.numChan);
+        writer.writeInt(this.channelCount);
         writer.writeInt(this.animSetRef.getHashNumber());
         writer.writeInt(this.proxyDescRef.getHashNumber());
         writer.writeInt(this.animationSequencesRef.getHashNumber());
@@ -103,7 +105,7 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         builder.append(padding).append("Hash: ").append(this.parentHash.getHashNumberAsString()).append(Constants.NEWLINE);
         writeAssetLine(builder, padding, "Model", this.modelDescRef);
         writeAssetLine(builder, padding, "Animation Hierarchy", this.hierarchyRef);
-        builder.append(padding).append("NumChan: ").append(this.numChan).append(Constants.NEWLINE);
+        builder.append(padding).append("Channel Count: ").append(this.channelCount).append(Constants.NEWLINE);
         writeAssetLine(builder, padding, "Anim Set", this.animSetRef);
         writeAssetLine(builder, padding, "Collision Proxy", this.proxyDescRef);
         writeAssetLine(builder, padding, "Animation List", this.animationSequencesRef);
@@ -145,6 +147,19 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
      */
     public kcCResourceNamedHash getAnimationSequences() {
         return this.animationSequencesRef.getResource();
+    }
+
+    @Override
+    public void handleDoubleClick() {
+        super.handleDoubleClick();
+        openMeshViewer();
+    }
+
+    /**
+     * Opens the mesh viewer using the actor description.
+     */
+    public void openMeshViewer() {
+        MeshViewController.setupMeshViewer(getGameInstance(), new GreatQuestModelViewController(), createModelMesh());
     }
 
     /**

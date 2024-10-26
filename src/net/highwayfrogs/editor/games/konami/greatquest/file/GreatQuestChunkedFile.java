@@ -66,12 +66,12 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         kcCResourceTOC tocChunk = null;
         int tocPos = 0;
         while (reader.hasMore()) {
-            String magic = reader.readString(4);
+            String identifier = reader.readString(4);
             int length = reader.readInt() + 0x20; // 0x20 and not 0x24 because we're reading from the start of the data, not the length.
             byte[] readBytes = reader.readBytes(Math.min(reader.getRemaining(), length));
 
             // Read chunk.
-            KCResourceID readType = KCResourceID.getByMagic(magic);
+            KCResourceID readType = KCResourceID.getByMagic(identifier);
 
             kcCResource newChunk;
             if (readType == KCResourceID.RAW && Utils.testSignature(readBytes, kcEnvironment.ENVIRONMENT_NAME)) {
@@ -81,7 +81,8 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             } else if (readType != null && readType.getMaker() != null) {
                 newChunk = readType.getMaker().apply(this);
             } else {
-                newChunk = new GreatQuestDummyFileChunk(this, magic);
+                newChunk = new GreatQuestDummyFileChunk(this, identifier);
+                getLogger().warning("Reading unsupported chunk with identifier '" + identifier + "'.");
             }
 
             if (newChunk instanceof kcCResourceTOC) {
@@ -143,7 +144,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     }
 
     private void writeChunk(DataWriter writer, kcCResource chunk) {
-        writer.writeStringBytes(chunk.getChunkMagic());
+        writer.writeStringBytes(chunk.getChunkIdentifier());
         int lengthAddress = writer.writeNullPointer();
 
         // Write chunk data.
@@ -682,7 +683,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 builder.append(chunk.getHashAsHexString());
 
                 int nameHash = GreatQuestUtils.hash(chunk.getName());
-                if (nameHash != chunk.getHash()) {
+                if (nameHash != chunk.getHash()) { // Should be equivalent to !chunk.isHashBasedOnName()
                     builder.append("|");
                     builder.append(Utils.to0PrefixedHexString(nameHash));
                 }
@@ -697,7 +698,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                     }
                 } else {
                     builder.append("|");
-                    builder.append(Utils.stripAlphanumeric(chunk.getChunkMagic()));
+                    builder.append(Utils.stripAlphanumeric(chunk.getChunkIdentifier()));
                     builder.append("|");
                     builder.append(chunk.getClass().getSimpleName());
                 }
@@ -707,6 +708,9 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 builder.append("', ");
                 builder.append(chunk.getRawData() != null ? chunk.getRawData().length : 0);
                 builder.append(" bytes");
+                if (!chunk.isHashBasedOnName() && chunk.getSelfHash().getOriginalString() != null)
+                    builder.append(" (").append(chunk.getSelfHash().getOriginalString()).append(')');
+
                 builder.append(Constants.NEWLINE);
             }
         }
@@ -734,7 +738,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     public void exportChunksToDirectory(File directory) {
         Map<String, Integer> countMap = new HashMap<>();
         for (kcCResource chunk : this.chunks) {
-            String signature = Utils.stripAlphanumeric(chunk.getChunkMagic());
+            String signature = Utils.stripAlphanumeric(chunk.getChunkIdentifier());
             int count = countMap.getOrDefault(signature, 0) + 1;
             countMap.put(signature, count);
 

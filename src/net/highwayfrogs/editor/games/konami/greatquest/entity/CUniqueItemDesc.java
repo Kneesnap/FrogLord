@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -15,7 +14,6 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
  * Created by Kneesnap on 8/21/2023.
  */
 @Getter
-@Setter
 public class CUniqueItemDesc extends CItemDesc {
     private UniqueItemType type = UniqueItemType.NONE;
     private static final int PADDING_VALUES = 8;
@@ -47,6 +45,18 @@ public class CUniqueItemDesc extends CItemDesc {
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         super.writeMultiLineInfo(builder, padding);
         builder.append(padding).append("Unique Item Type: ").append(this.type).append(Constants.NEWLINE);
+    }
+
+    /**
+     * Sets the unique item type.
+     * @param newType The unique item type to apply
+     */
+    @SuppressWarnings("unused") // Available to Noodle scripts.
+    public void setType(UniqueItemType newType) {
+        if (newType == null)
+            throw new NullPointerException("newType");
+
+        this.type = newType;
     }
 
     public enum UniqueItemType {

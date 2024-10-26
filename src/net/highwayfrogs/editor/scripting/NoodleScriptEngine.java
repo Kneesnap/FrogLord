@@ -13,6 +13,10 @@ import net.highwayfrogs.editor.scripting.runtime.NoodleRuntimeException;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleObjectTemplate;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleWrapperTemplate;
 import net.highwayfrogs.editor.scripting.runtime.templates.utils.NoodleLoggerTemplate;
+import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.system.math.*;
+import net.highwayfrogs.editor.utils.MathUtils;
+import net.highwayfrogs.editor.utils.TimeUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -165,6 +169,15 @@ public class NoodleScriptEngine extends SharedGameObject {
     }
 
     /**
+     * Registers automatic wrapped templates for each of the provided classes.
+     * @param wrappedClasses the classes to wrap & register
+     */
+    public void addWrapperTemplates(Class<?>... wrappedClasses) {
+        for (int i = 0; i < wrappedClasses.length; i++)
+            addTemplate(new NoodleWrapperTemplate<>(wrappedClasses[i]));
+    }
+
+    /**
      * Registers a template with the scripting engine.
      * @param template the template to register
      */
@@ -283,6 +296,15 @@ public class NoodleScriptEngine extends SharedGameObject {
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(Map.class));
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(HashMap.class));
         addTemplate(NoodleLoggerTemplate.INSTANCE);
+
+        // Various utility components of FrogLord.
+        addWrapperTemplates(Matrix4x4f.class, Vector2f.class, Vector3f.class, Vector4f.class, Quaternion.class);
+        addTemplate(NoodleWrapperTemplate.getCachedTemplate(Config.class));
+        addTemplate(NoodleWrapperTemplate.getCachedTemplate(MathUtils.class));
+        addTemplate(NoodleWrapperTemplate.getCachedTemplate(TimeUtils.class));
+
+        // DataReader/DataWriter is considered not very helpful to Noodle, as its data types are somewhat bizarre.
+        // Perhaps we should have a way to create them, and pass them to functions, but not necessarily use them.
     }
 
     /**

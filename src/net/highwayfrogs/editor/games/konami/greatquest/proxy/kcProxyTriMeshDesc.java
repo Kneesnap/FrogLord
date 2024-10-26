@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTriMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
+import net.highwayfrogs.editor.utils.Consumer5;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.Arrays;
@@ -17,13 +18,11 @@ import java.util.List;
 /**
  * This is not an official name, no class/struct seemed to exist here, but it still is likely necessary.
  * This represents a collision proxy that uses a mesh.
- * TODO: Do not allow manual name control of this generic section.
- * TODO: When the name of the kcCResourceTriMesh changes, update our own name here. (Also, this should apply when we switch the selected kcCResourceTriMesh)
  * Created by Kneesnap on 8/22/2023.
  */
-@Getter
 public class kcProxyTriMeshDesc extends kcProxyDesc {
-    private final GreatQuestHash<kcCResourceTriMesh> meshRef; // '.CTM' collision mesh. This is handled by kcCActorBase::CreateCollisionProxy()
+    @Getter private final GreatQuestHash<kcCResourceTriMesh> meshRef; // '.CTM' collision mesh. This is handled by kcCActorBase::CreateCollisionProxy()
+    private final Consumer5<GreatQuestHash<kcCResourceTriMesh>, String, String, Integer, Integer> nameChangeListener = this::onMeshNameChange;
 
     public static final String NAME_SUFFIX = "ProxyDesc"; // This is applied to all kcProxyTriMeshDescs.
     private static final List<String> RECOGNIZED_INVALID_NAMES = Arrays.asList("Fairy Key A", "Fairy Key B", "Fairy Key C", "clover-2");
@@ -31,6 +30,7 @@ public class kcProxyTriMeshDesc extends kcProxyDesc {
     public kcProxyTriMeshDesc(@NonNull kcCResourceGeneric resource) {
         super(resource);
         this.meshRef = new GreatQuestHash<>();
+        this.meshRef.getResourceChangeListeners().add(this::onMeshChange);
     }
 
     @Override
@@ -42,6 +42,8 @@ public class kcProxyTriMeshDesc extends kcProxyDesc {
     public void load(DataReader reader) {
         super.load(reader);
         int meshHash = reader.readInt();
+
+        // If we resolve the tri mesh successfully, our goal is to generate the collision mesh name.
         if (GreatQuestUtils.resolveResourceHash(kcCResourceTriMesh.class, this, this.meshRef, meshHash, true)) {
             String modelName = getParentHash().getOriginalString();
             if (!modelName.endsWith(NAME_SUFFIX))
@@ -69,5 +71,28 @@ public class kcProxyTriMeshDesc extends kcProxyDesc {
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         super.writeMultiLineInfo(builder, padding);
         writeAssetLine(builder, padding, "Collision Mesh", this.meshRef);
+    }
+
+    // When the reference to kcCResourceTriMesh changes, update the name listeners.
+    private void onMeshChange(GreatQuestHash<kcCResourceTriMesh> hashObj, kcCResourceTriMesh oldMesh, kcCResourceTriMesh newMesh, int newHash, String newName) {
+        if (oldMesh != null)
+            oldMesh.getSelfHash().getStringChangeListeners().remove(this.nameChangeListener);
+        if (newMesh != null) {
+            // Add a name change listener.
+            newMesh.getSelfHash().getStringChangeListeners().add(this.nameChangeListener);
+
+            // Change the name of this section to match the newly applied mesh.
+            if (getParentResource().isHashBasedOnName() && newMesh.isHashBasedOnName() && newName != null)
+                getParentResource().setName(newName + NAME_SUFFIX);
+        }
+    }
+
+    // When the name of the linked kcCResourceTriMesh changes, update the name of this too.
+    private void onMeshNameChange(GreatQuestHash<kcCResourceTriMesh> hashObj, String oldName, String newName, int oldHash, int newHash) {
+        if (getParentResource().isHashBasedOnName() && hashObj.getResource().isHashBasedOnName() && newName != null) {
+            getParentResource().setName(newName + NAME_SUFFIX);
+        } else if (getParentResource().getHash() == oldHash) {
+            getParentResource().getSelfHash().setHash(newHash, newName, false);
+        }
     }
 }

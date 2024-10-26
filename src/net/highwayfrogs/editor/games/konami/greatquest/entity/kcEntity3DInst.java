@@ -19,9 +19,8 @@ import java.util.UUID;
  * Created by Kneesnap on 8/24/2023.
  */
 @Getter
-@Setter
 public class kcEntity3DInst extends kcEntityInst {
-    private int flags; // TODO: InitFlags() is called.
+    @Setter private int flags; // TODO: InitFlags() is called.
     private kcAxisType billboardAxis = kcAxisType.Y;
     private final kcVector4 position = new kcVector4();
     private final kcVector4 rotation = new kcVector4();
@@ -68,7 +67,7 @@ public class kcEntity3DInst extends kcEntityInst {
     protected void setupMainEditor(GreatQuestEntityManager manager, GUIEditorGrid grid, GreatQuestMapEditorEntityDisplay entityDisplay) {
         super.setupMainEditor(manager, grid, entityDisplay);
         grid.addLabel("Flags", Utils.toHexString(this.flags));
-        grid.addEnumSelector("Billboard Axis", this.billboardAxis, kcAxisType.values(), false, newType -> this.billboardAxis = newType);
+        grid.addEnumSelector("Billboard Axis", this.billboardAxis, kcAxisType.values(), false, this::setBillboardAxis);
 
         // Position Editor
         grid.addPositionEditor(manager.getController(), GIZMO_ID, "Position", this.position.getX(), this.position.getY(), this.position.getZ(), (meshView, oldX, oldY, oldZ, newX, newY, newZ, flags) -> {
@@ -101,6 +100,18 @@ public class kcEntity3DInst extends kcEntityInst {
             this.rotation.setZ((float) (double) newValue);
             entityDisplay.updateRotation();
         }, -Math.PI, Math.PI);
+    }
+
+    /**
+     * Sets the billboard axis.
+     * @param newAxis The axis to apply
+     */
+    @SuppressWarnings("unused") // Available to Noodle scripts.
+    public void setBillboardAxis(kcAxisType newAxis) {
+        if (newAxis == null)
+            throw new NullPointerException("newAxis");
+
+        this.billboardAxis = newAxis;
     }
 
     @Override

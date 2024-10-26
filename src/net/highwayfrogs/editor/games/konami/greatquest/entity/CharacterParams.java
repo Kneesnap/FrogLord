@@ -225,6 +225,18 @@ public class CharacterParams extends kcActorDesc {
         builder.append(padding).append("Activation Range: ").append(this.activationRange).append(Constants.NEWLINE);
     }
 
+    /**
+     * Sets the character type.
+     * @param newType The character type to apply.
+     */
+    @SuppressWarnings("unused") // Available to Noodle scripts.
+    public void setCharacterType(CharacterType newType) {
+        if (newType == null)
+            throw new NullPointerException("newType");
+
+        this.characterType = newType;
+    }
+
     public enum CharacterType {
         NONE, PLAYER, STATIC, WALKER, FLYER, SWIMMER;
 

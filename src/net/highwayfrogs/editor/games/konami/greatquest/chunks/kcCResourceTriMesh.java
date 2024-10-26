@@ -1,10 +1,12 @@
 package net.highwayfrogs.editor.games.konami.greatquest.chunks;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
@@ -29,6 +31,9 @@ import java.util.List;
 public class kcCResourceTriMesh extends kcCResource {
     private final kcCTriMesh triMesh;
 
+    public static final String EXTENSION = "ctm";
+    public static final String EXTENSION_SUFFIX = "." + EXTENSION;
+
     public kcCResourceTriMesh(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.TRIMESH);
         this.triMesh = new kcCTriMesh(getGameInstance());
@@ -47,6 +52,12 @@ public class kcCResourceTriMesh extends kcCResource {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    public GreatQuestHash<kcCResourceTriMesh> getSelfHash() {
+        return (GreatQuestHash<kcCResourceTriMesh>) super.getSelfHash();
+    }
+
+    @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {
         propertyList = super.addToPropertyList(propertyList);
         return this.triMesh.addToPropertyList(propertyList);
@@ -54,13 +65,12 @@ public class kcCResourceTriMesh extends kcCResource {
 
     @Getter
     public static class kcCTriMesh extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter, IPropertyListCreator {
-        private final kcBox4 boundingBox;
+        private final kcBox4 boundingBox = new kcBox4();
         private final List<kcVector4> vertices = new ArrayList<>();
         private final List<kcCFace> faces = new ArrayList<>();
 
         public kcCTriMesh(GreatQuestInstance gameInstance) {
             super(gameInstance);
-            this.boundingBox = new kcBox4();
         }
 
         @Override
@@ -137,7 +147,7 @@ public class kcCResourceTriMesh extends kcCResource {
     public static class kcCFace extends GameData<GreatQuestInstance> implements IInfoWriter {
         private final kcCTriMesh parentMesh;
         private final int[] vertices = new int[3];
-        private int flags;
+        @Setter private int flags;
         private final kcVector4 normal;
 
         public static final int FLAG_DEBUG_USE_OFFSET_WHEN_DRAWING_WIREFRAME = Constants.BIT_FLAG_24; // 0x01000000 (????, Not Seen, kcCTriMesh::RenderWireframe)

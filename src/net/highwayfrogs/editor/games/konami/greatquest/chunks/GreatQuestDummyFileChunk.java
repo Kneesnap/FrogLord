@@ -11,12 +11,12 @@ import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFil
  */
 @Getter
 public class GreatQuestDummyFileChunk extends kcCResource {
-    private final String magic;
+    private final String identifier;
     private byte[] unhandledBytes;
 
-    public GreatQuestDummyFileChunk(GreatQuestChunkedFile parentFile, String magic) {
-        super(parentFile, KCResourceID.getByMagic(magic));
-        this.magic = magic;
+    public GreatQuestDummyFileChunk(GreatQuestChunkedFile parentFile, String identifier) {
+        super(parentFile, KCResourceID.getByMagic(identifier));
+        this.identifier = identifier;
     }
 
     @Override
@@ -33,7 +33,7 @@ public class GreatQuestDummyFileChunk extends kcCResource {
     }
 
     @Override
-    public String getChunkMagic() {
-        return this.magic;
+    public String getChunkIdentifier() {
+        return this.identifier;
     }
 }

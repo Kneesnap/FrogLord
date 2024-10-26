@@ -32,6 +32,7 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
     private int maxParticle = DEFAULT_MAX_PARTICLE;
     private static final int PADDING_VALUES = 6;
 
+    private static final int DEFAULT_FIREBALL_PARTICLE = 100;
     private static final int DEFAULT_MAX_PARTICLE = 250;
     public static final String NAME_SUFFIX = "ParticleParam";
 
@@ -100,9 +101,9 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
             return this.maxParticle;
 
         if (getParentResource() != null && getParentResource().doesNameMatch("FireBall")) { // CFrogCtl::SetParticleParams
-            return 100;
+            return DEFAULT_FIREBALL_PARTICLE;
         } else {
-            return 250;
+            return DEFAULT_MAX_PARTICLE;
         }
     }
 }

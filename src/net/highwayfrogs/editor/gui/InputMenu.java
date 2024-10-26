@@ -48,6 +48,20 @@ public class InputMenu {
     }
 
     /**
+     * Require the user to perform a selection.
+     * @param prompt The prompt to display the user.
+     */
+    public static String promptInputBlocking(GameInstance instance, String prompt, String defaultText, Consumer<String> handler) {
+        AtomicReference<String> resultHolder = new AtomicReference<>(null);
+        promptInput(instance, prompt, defaultText, newValue -> {
+            resultHolder.set(newValue);
+            if (handler != null)
+                handler.accept(newValue);
+        });
+        return resultHolder.get();
+    }
+
+    /**
      * Prompts the user to respond with an integer value.
      * @param instance the game instance to prompt under
      * @param prompt the prompt to show to the user

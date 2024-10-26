@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -24,8 +25,8 @@ public class LauncherParams extends kcProjectileParams {
     private final GreatQuestHash<kcCResourceModel> vtxModelRef; // Resolved in CLauncher::Init()
     private final GreatQuestHash<kcCResourceGeneric> cruiseParticleEffectRef; // Resolved in CLauncher::Init()
     private final GreatQuestHash<kcCResourceGeneric> hitParticleEffectRef; // Resolved in CLauncher::Init()
-    private int projectileLifeTime;
-    private float speed;
+    @Setter private int projectileLifeTime;
+    @Setter private float speed;
     private final kcCResourceGeneric parentResource;
     private static final int PADDING_VALUES = 7;
 

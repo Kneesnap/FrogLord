@@ -150,7 +150,7 @@ public abstract class GameInstance implements IGameInstance {
      * Sets up the script engine for use with this game instance.
      */
     protected void setupScriptEngine(NoodleScriptEngine engine) {
-        // TODO: Default stuff.
+        engine.addWrapperTemplates(GameUtils.class, GameConfig.class);
     }
 
     /**

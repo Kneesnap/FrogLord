@@ -675,4 +675,23 @@ public class GreatQuestUtils {
             skelRotation.setAngle(0);
         }
     }
+
+    /**
+     * Gets the fileName from a full GreatQuest file path.
+     * @param filePath the file path to get the file name from
+     * @return fileName
+     */
+    public static String getFileNameFromPath(String filePath) {
+        String fileName = filePath;
+
+        int lastBackslashIndex = fileName.lastIndexOf('\\');
+        if (lastBackslashIndex >= 0)
+            fileName = fileName.substring(lastBackslashIndex + 1);
+
+        int lastSlashIndex = fileName.lastIndexOf('/');
+        if (lastSlashIndex >= 0)
+            fileName = fileName.substring(lastSlashIndex + 1);
+
+        return fileName;
+    }
 }
