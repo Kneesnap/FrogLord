@@ -65,7 +65,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         kcCResourceTOC tocChunk = null;
         int tocPos = 0;
         while (reader.hasMore()) {
-            String identifier = reader.readString(4);
+            String identifier = reader.readTerminatedString(4);
             int length = reader.readInt() + 0x20; // 0x20 and not 0x24 because we're reading from the start of the data, not the length.
             byte[] readBytes = reader.readBytes(Math.min(reader.getRemaining(), length));
 

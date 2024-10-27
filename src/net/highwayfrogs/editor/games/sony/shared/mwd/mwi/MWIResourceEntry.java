@@ -176,7 +176,7 @@ public class MWIResourceEntry extends SCSharedGameData implements ISCFileDefinit
         // Write the current address to the file path location.
         writer.writeAddressTo(this.filePathPointerAddress);
         this.filePathPointerAddress = NO_FILE_NAME_MARKER;
-        writer.writeTerminatorString(this.filePath);
+        writer.writeNullTerminatedString(this.filePath);
         writer.align(Constants.INTEGER_SIZE);
     }
 

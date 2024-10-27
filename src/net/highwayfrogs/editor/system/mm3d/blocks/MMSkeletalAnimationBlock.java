@@ -57,7 +57,7 @@ public class MMSkeletalAnimationBlock extends MMDataBlockBody {
     @Override
     public void save(DataWriter writer) {
         writer.writeShort(this.flags);
-        writer.writeTerminatorString(this.name);
+        writer.writeNullTerminatedString(this.name);
         writer.writeFloat(this.fps);
 
         // Write frames.

@@ -35,6 +35,6 @@ public class MMExternalTexturesBlock extends MMDataBlockBody {
     @Override
     public void save(DataWriter writer) {
         writer.writeShort(this.flags);
-        writer.writeTerminatorString(this.path != null ? this.path.replace(File.separatorChar, SEPARATOR_CHAR) : null);
+        writer.writeNullTerminatedString(this.path != null ? this.path.replace(File.separatorChar, SEPARATOR_CHAR) : null);
     }
 }

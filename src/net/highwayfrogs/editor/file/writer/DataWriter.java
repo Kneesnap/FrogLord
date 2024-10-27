@@ -298,8 +298,16 @@ public class DataWriter {
      * Writes a string to the receiver, terminated with a null byte.
      * @param str The string to write.
      */
-    public void writeTerminatorString(String str) {
+    public void writeNullTerminatedString(String str) {
         writeTerminatorString(str, Constants.NULL_BYTE);
+    }
+
+    /**
+     * Writes a string to the receiver, terminated with a null byte.
+     * @param str The string to write.
+     */
+    public void writeNullTerminatedString(String str, Charset charset) {
+        writeTerminatorString(str, Constants.NULL_BYTE, charset);
     }
 
     /**
@@ -308,8 +316,21 @@ public class DataWriter {
      * @param terminator The terminator. Usually a null byte.
      */
     public void writeTerminatorString(String str, byte terminator) {
-        writeBytes(str.getBytes());
-        writeByte(terminator);
+        writeTerminatorString(str, terminator, StandardCharsets.US_ASCII);
+    }
+
+    /**
+     * Writes a string to the receiver, using a byte as the terminator.
+     * @param str        The string to write.
+     * @param terminator The terminator. Usually a null byte.
+     */
+    public void writeTerminatorString(String str, byte terminator, Charset charset) {
+        if (charset == null)
+            throw new NullPointerException("charset");
+
+        if (str != null)
+            writeBytes(str.getBytes(charset));
+        writeByte(terminator); // Terminator Byte
     }
 
     /**

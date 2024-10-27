@@ -24,7 +24,7 @@ public class RwUnicodeStringChunk extends RwStreamChunk {
 
     @Override
     protected void loadChunkData(DataReader reader, int dataLength, int version) {
-        this.value = reader.readString(dataLength, StandardCharsets.UTF_8);
+        this.value = reader.readTerminatedString(dataLength, StandardCharsets.UTF_8);
     }
 
     @Override

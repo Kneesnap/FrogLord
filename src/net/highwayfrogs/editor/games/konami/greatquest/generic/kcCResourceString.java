@@ -5,6 +5,7 @@ import lombok.NonNull;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestCharsetProvider;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.gui.InputMenu;
@@ -32,12 +33,12 @@ public class kcCResourceString extends GameData<GreatQuestInstance> implements k
 
     @Override
     public void load(DataReader reader) {
-        this.value = reader.readNullTerminatedString();
+        this.value = reader.readNullTerminatedString(GreatQuestCharsetProvider.getCharset());
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeTerminatorString(this.value);
+        writer.writeNullTerminatedString(this.value, GreatQuestCharsetProvider.getCharset());
     }
 
     @Override

@@ -282,7 +282,7 @@ public class MWDFile extends SCSharedGameData {
         writer.writeInt(0);
 
         Date date = Date.from(Calendar.getInstance().toInstant());
-        writer.writeTerminatorString("\nCreated by FrogLord"
+        writer.writeNullTerminatedString("\nCreated by FrogLord"
                 + "\nCreation Date: " + DATE_FORMAT.format(date)
                 + "\nCreation Time: " + TIME_FORMAT.format(date)
                 + "\n[BuildInfo]"

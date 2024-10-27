@@ -184,8 +184,8 @@ public class DataReader {
      * @param length The length of the string.
      * @return readStr
      */
-    public String readString(int length) {
-        return readString(length, StandardCharsets.US_ASCII);
+    public String readTerminatedString(int length) {
+        return readTerminatedString(length, StandardCharsets.US_ASCII);
     }
 
     /**
@@ -193,7 +193,7 @@ public class DataReader {
      * @param length The length of the string.
      * @return readStr
      */
-    public String readString(int length, Charset charset) {
+    public String readTerminatedString(int length, Charset charset) {
         return new String(readBytes(length), charset);
     }
 
@@ -202,7 +202,7 @@ public class DataReader {
      * @param verify The string to verify.
      */
     public void verifyString(String verify) {
-        String str = readString(verify.getBytes().length);
+        String str = readTerminatedString(verify.getBytes().length);
         Utils.verify(str.equals(verify), "String verify failure! \"%s\" does not match \"%s\".", str, verify);
     }
 
@@ -224,26 +224,7 @@ public class DataReader {
      * @param terminator The byte which terminates the string. Usually 0.
      * @return strValue
      */
-    public String readString(byte terminator) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-        try {
-            byte[] temp = new byte[1];
-            while ((temp[0] = readByte()) != terminator)
-                out.write(temp);
-            out.close();
-            return out.toString();
-        } catch (Exception ex) {
-            throw new RuntimeException("Failed to read terminating string.", ex);
-        }
-    }
-
-    /**
-     * Read a string until a given byte is found.
-     * @param terminator The byte which terminates the string. Usually 0.
-     * @return strValue
-     */
-    public String readString(byte terminator, Charset charset) {
+    public String readTerminatedString(byte terminator, Charset charset) {
         if (charset == null)
             throw new NullPointerException("charset");
 
@@ -291,7 +272,7 @@ public class DataReader {
 
         int startIndex = getIndex();
         int expectedEndIndex = startIndex + fixedLength;
-        String result = readString(Constants.NULL_BYTE, charset);
+        String result = readTerminatedString(Constants.NULL_BYTE, charset);
         if (getIndex() > expectedEndIndex) {
             result = result.substring(0, fixedLength);
             setIndex(expectedEndIndex);
@@ -316,7 +297,7 @@ public class DataReader {
 
         int startIndex = getIndex();
         int expectedEndIndex = startIndex + fixedLength;
-        String result = readString(Constants.NULL_BYTE, charset);
+        String result = readTerminatedString(Constants.NULL_BYTE, charset);
         if (getIndex() > expectedEndIndex) {
             result = result.substring(0, fixedLength);
             setIndex(expectedEndIndex);
@@ -332,7 +313,15 @@ public class DataReader {
      * @return strValue
      */
     public String readNullTerminatedString() {
-        return readString(Constants.NULL_BYTE);
+        return readTerminatedString(Constants.NULL_BYTE, StandardCharsets.US_ASCII);
+    }
+
+    /**
+     * Read a string which is terminated by a null byte.
+     * @return strValue
+     */
+    public String readNullTerminatedString(Charset charset) {
+        return readTerminatedString(Constants.NULL_BYTE, charset);
     }
 
     /**

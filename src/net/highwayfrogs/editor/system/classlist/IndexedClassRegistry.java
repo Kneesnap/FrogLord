@@ -56,9 +56,9 @@ public class IndexedClassRegistry<TBase> implements IBinarySerializable {
             }
 
             // Read & lookup global class data.
-            String identifier = reader.readString(identifierLength + 1);
+            String identifier = reader.readTerminatedString(identifierLength + 1);
             int fullClassNameLength = reader.readUnsignedShortAsInt();
-            String fullClassName = reader.readString(fullClassNameLength);
+            String fullClassName = reader.readTerminatedString(fullClassNameLength);
             ClassEntry<TBase> classEntry = this.globalClassRegistry.getClassEntry(identifier, fullClassName);
             if (classEntry == null)
                 throw new RuntimeException("Failed to resolve class registry entry for identifier: '" + identifier + "', fullClassName: '" + fullClassName + "'.");

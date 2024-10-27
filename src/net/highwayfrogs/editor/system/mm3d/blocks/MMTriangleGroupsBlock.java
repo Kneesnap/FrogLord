@@ -49,7 +49,7 @@ public class MMTriangleGroupsBlock extends MMDataBlockBody {
     @Override
     public void save(DataWriter writer) {
         writer.writeShort(this.flags);
-        writer.writeTerminatorString(this.name);
+        writer.writeNullTerminatedString(this.name);
         writer.writeInt(this.triangleIndices.size());
         for (int toWrite : this.triangleIndices)
             writer.writeInt(toWrite);

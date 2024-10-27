@@ -36,7 +36,7 @@ public class RwStringChunk extends RwStreamChunk {
     @Override
     protected void saveChunkData(DataWriter writer) {
         // Seen in Frogger Ancient Shadow + Rescue + Beyond
-        writer.writeTerminatorString(this.value);
+        writer.writeNullTerminatedString(this.value);
         writer.align(Constants.INTEGER_SIZE); // There's unallocated data after the null terminator.
     }
 

@@ -58,7 +58,7 @@ public class MMFrameAnimationsBlock extends MMDataBlockBody {
     @Override
     public void save(DataWriter writer) {
         writer.writeShort(this.flags);
-        writer.writeTerminatorString(this.name);
+        writer.writeNullTerminatedString(this.name);
         writer.writeFloat(this.framesPerSecond);
         writer.writeInt(getFrameCount());
         this.frames.forEach(frame -> frame.save(writer));

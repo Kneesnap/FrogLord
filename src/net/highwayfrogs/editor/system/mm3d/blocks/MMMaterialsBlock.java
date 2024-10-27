@@ -62,7 +62,7 @@ public class MMMaterialsBlock extends MMDataBlockBody {
     public void save(DataWriter writer) {
         writer.writeShort(this.flags);
         writer.writeInt(this.texture);
-        writer.writeTerminatorString(this.name);
+        writer.writeNullTerminatedString(this.name);
         writeFloatArray(writer, this.ambient);
         writeFloatArray(writer, this.diffuse);
         writeFloatArray(writer, this.specular);

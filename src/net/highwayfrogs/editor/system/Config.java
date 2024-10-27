@@ -171,17 +171,17 @@ public class Config implements IBinarySerializable {
         }
 
         short sectionNameLength = reader.readUnsignedByteAsShort();
-        this.sectionName = reader.readString(sectionNameLength);
+        this.sectionName = reader.readTerminatedString(sectionNameLength);
         if (loadSettings.isReadingCommentsEnabled()) {
             int sectionCommentLength = reader.readInt();
-            this.sectionComment = reader.readString(sectionCommentLength);
+            this.sectionComment = reader.readTerminatedString(sectionCommentLength);
         }
 
         // Read key value pairs.
         int keyValueCount = reader.readInt();
         for (int i = 0; i < keyValueCount; i++) {
             short keyLength = reader.readUnsignedByteAsShort();
-            String key = reader.readString(keyLength);
+            String key = reader.readTerminatedString(keyLength);
             ConfigValueNode node = new ConfigValueNode("", "");
             node.loadFromReader(reader, loadSettings);
             this.keyValuePairs.put(key, node);
@@ -811,11 +811,11 @@ public class Config implements IBinarySerializable {
          */
         public void loadFromReader(DataReader reader, ConfigSettings configSettings) {
             int valueLength = reader.readUnsignedShortAsInt();
-            this.value = reader.readString(valueLength);
+            this.value = reader.readTerminatedString(valueLength);
             this.escapedNewLine = reader.readByte() != 0;
             if (configSettings.isReadingCommentsEnabled()) {
                 int commentLength = reader.readUnsignedShortAsInt();
-                this.comment = reader.readString(commentLength);
+                this.comment = reader.readTerminatedString(commentLength);
             }
         }
 

@@ -54,7 +54,7 @@ public class VLOArchive extends SCSharedGameFile {
 
     @Override
     public void load(DataReader reader) {
-        String readSignature = reader.readString(SIGNATURE_LENGTH);
+        String readSignature = reader.readTerminatedString(SIGNATURE_LENGTH);
         if (readSignature.equals(PSX_SIGNATURE)) {
             this.psxMode = true;
         } else {
