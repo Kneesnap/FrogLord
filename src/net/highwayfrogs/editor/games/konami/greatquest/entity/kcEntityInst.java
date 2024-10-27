@@ -122,7 +122,7 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
         kcEntity3DDesc entityDescription = getDescription();
         if (entityDescription != null) {
             grid.addSeparator();
-            String name = entityDescription.getParentResource() != null ? entityDescription.getParentResource().getName() : null;
+            String name = entityDescription.getResource() != null ? entityDescription.getResource().getName() : null;
             grid.addBoldLabel("Description" + (name != null ? " '" + name + "'" : "") + " (" + Utils.getSimpleName(entityDescription) + "):");
 
             StringBuilder builder = new StringBuilder();

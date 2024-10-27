@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkTextureReference;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcBlend;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.utils.NumberUtils;
 
@@ -41,11 +42,6 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
         this.textureRef = new GreatQuestHash<>();
         this.parentHash = new GreatQuestHash<>(resource);
         GreatQuestUtils.applySelfNameSuffixAndToFutureNameChanges(resource, NAME_SUFFIX);
-    }
-
-    @Override
-    public int getTargetClassID() {
-        return kcClassID.PARTICLE_EMITTER.getClassId();
     }
 
     @Override
@@ -93,6 +89,16 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
         builder.append(padding).append("Max Particle: ").append(getMaxParticle()).append(Constants.NEWLINE);
     }
 
+    @Override
+    public int getTargetClassID() {
+        return kcClassID.PARTICLE_EMITTER.getClassId();
+    }
+
+    @Override
+    public kcCResourceGenericType getResourceType() {
+        return kcCResourceGenericType.PARTICLE_EMITTER_PARAM;
+    }
+
     /**
      * Gets the max particle value.
      */
@@ -100,7 +106,7 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
         if (this.maxParticle != 0 && this.maxParticle != GreatQuestInstance.PADDING_DEFAULT_INT) // CFrogCtl::SetParticleParams
             return this.maxParticle;
 
-        if (getParentResource() != null && getParentResource().doesNameMatch("FireBall")) { // CFrogCtl::SetParticleParams
+        if (getResource() != null && getResource().doesNameMatch("FireBall")) { // CFrogCtl::SetParticleParams
             return DEFAULT_FIREBALL_PARTICLE;
         } else {
             return DEFAULT_MAX_PARTICLE;

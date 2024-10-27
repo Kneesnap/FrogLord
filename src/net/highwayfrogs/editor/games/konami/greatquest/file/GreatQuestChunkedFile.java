@@ -692,9 +692,9 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                     kcCResourceGeneric genericResource = (kcCResourceGeneric) chunk;
                     builder.append("|");
                     builder.append(genericResource.getResourceType());
-                    if (genericResource.getCachedObject() != null) {
+                    if (genericResource.getResourceData() != null) {
                         builder.append("|");
-                        builder.append(Utils.getSimpleName(genericResource.getCachedObject()));
+                        builder.append(Utils.getSimpleName(genericResource.getResourceData()));
                     }
                 } else {
                     builder.append("|");

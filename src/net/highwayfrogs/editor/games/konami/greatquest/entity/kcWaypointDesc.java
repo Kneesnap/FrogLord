@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.games.konami.greatquest.map.kcColor4;
 import net.highwayfrogs.editor.utils.NumberUtils;
@@ -38,11 +39,6 @@ public class kcWaypointDesc extends kcEntity3DDesc {
         this.previousWaypointEntityRef = new GreatQuestHash<>();
         this.nextWaypointEntityRef = new GreatQuestHash<>();
         GreatQuestUtils.applySelfNameSuffixAndToFutureNameChanges(resource, NAME_SUFFIX);
-    }
-
-    @Override
-    public int getTargetClassID() {
-        return kcClassID.WAYPOINT.getClassId();
     }
 
     @Override
@@ -85,5 +81,15 @@ public class kcWaypointDesc extends kcEntity3DDesc {
         builder.append(padding).append("Waypoint Flags: ").append(NumberUtils.toHexString(this.waypointFlags)).append(Constants.NEWLINE);
         this.color.writePrefixedInfoLine(builder, "Color", padding);
         builder.append(padding).append("Strength: ").append(this.strength).append(Constants.NEWLINE);
+    }
+
+    @Override
+    public int getTargetClassID() {
+        return kcClassID.WAYPOINT.getClassId();
+    }
+
+    @Override
+    public kcCResourceGenericType getResourceType() {
+        return kcCResourceGenericType.WAYPOINT_DESCRIPTION;
     }
 }

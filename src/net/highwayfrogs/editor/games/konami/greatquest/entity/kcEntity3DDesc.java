@@ -8,6 +8,8 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcIGenericResourceData;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcSphere;
 import net.highwayfrogs.editor.utils.NumberUtils;
 
@@ -17,7 +19,7 @@ import net.highwayfrogs.editor.utils.NumberUtils;
  */
 @Getter
 @Setter
-public class kcEntity3DDesc extends kcBaseDesc {
+public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericResourceData {
     private int instanceFlags; // TODO: These seem to be just the mapped flags.
     private final kcSphere boundingSphere = new kcSphere(0, 0, 0, 1F); // Positioned relative to entity position.
     private static final int PADDING_VALUES = 3;
@@ -100,5 +102,18 @@ public class kcEntity3DDesc extends kcBaseDesc {
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         builder.append(padding).append("Flags: ").append(NumberUtils.toHexString(this.instanceFlags)).append(Constants.NEWLINE);
         this.boundingSphere.writePrefixedMultiLineInfo(builder, "Bounding Sphere", padding);
+    }
+
+    @Override
+    public kcCResourceGeneric getResource() {
+        return (kcCResourceGeneric) super.getResource();
+    }
+
+    @Override
+    public abstract kcCResourceGenericType getResourceType();
+
+    @Override
+    public void handleDoubleClick() {
+        // Do nothing by default.
     }
 }

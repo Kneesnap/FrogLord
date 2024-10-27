@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
@@ -28,11 +29,6 @@ public class CPropDesc extends kcActorBaseDesc {
     }
 
     @Override
-    protected int getTargetClassID() {
-        return kcClassID.PROP.getClassId();
-    }
-
-    @Override
     public void load(DataReader reader) {
         super.load(reader);
         this.mode = reader.readInt();
@@ -46,6 +42,16 @@ public class CPropDesc extends kcActorBaseDesc {
         writer.writeInt(this.mode);
         writer.writeInt(this.event);
         writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
+    }
+
+    @Override
+    protected int getTargetClassID() {
+        return kcClassID.PROP.getClassId();
+    }
+
+    @Override
+    public kcCResourceGenericType getResourceType() {
+        return kcCResourceGenericType.PROP_DESCRIPTION;
     }
 
     @Override

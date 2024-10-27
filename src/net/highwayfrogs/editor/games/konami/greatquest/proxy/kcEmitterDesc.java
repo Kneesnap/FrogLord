@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
@@ -30,11 +31,6 @@ public class kcEmitterDesc extends kcProxyCapsuleDesc {
     public kcEmitterDesc(kcCResourceGeneric resource) {
         super(resource);
         this.entityDescRef = new GreatQuestHash<>();
-    }
-
-    @Override
-    protected int getTargetClassID() {
-        return kcClassID.EMITTER.getClassId();
     }
 
     @Override
@@ -61,6 +57,16 @@ public class kcEmitterDesc extends kcProxyCapsuleDesc {
         writer.writeInt(this.maxSpawn);
         writer.writeFloat(this.spawnRange);
         writer.writeInt(this.entityDescRef.getHashNumber());
+    }
+
+    @Override
+    protected int getTargetClassID() {
+        return kcClassID.EMITTER.getClassId();
+    }
+
+    @Override
+    public kcCResourceGenericType getResourceType() {
+        return kcCResourceGenericType.EMITTER_DESCRIPTION;
     }
 
     @Override

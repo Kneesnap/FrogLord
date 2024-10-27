@@ -10,7 +10,6 @@ import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFi
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
-import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceString;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionFlag;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionID;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionTemplate;
@@ -84,7 +83,8 @@ public class GreatQuestRunners {
             kcScriptFunction clearFlagFunc = new kcScriptFunction(script, clearFlagDialogCause);
 
             // Add dialog resource.
-            kcCResourceGeneric clearFlagDialog = new kcCResourceGeneric(rollingRapidsCreek, kcCResourceGenericType.STRING_RESOURCE, new kcCResourceString(instance, "Knee Flag Clear Test: " + i));
+            kcCResourceGeneric clearFlagDialog = new kcCResourceGeneric(rollingRapidsCreek, kcCResourceGenericType.STRING_RESOURCE);
+            clearFlagDialog.getAsStringResource().setValue("Knee Flag Clear Test: " + i);
             clearFlagDialog.setName("FgClr" + NumberUtils.padNumberString(i, 2), true);
             int clearFlagDialogHash = GreatQuestUtils.hash(clearFlagDialog.getName());
             rollingRapidsCreek.getChunks().add(clearFlagDialog);
@@ -107,7 +107,8 @@ public class GreatQuestRunners {
             kcScriptFunction setFlagFunc = new kcScriptFunction(script, setFlagDialogCause);
 
             // Add dialog resource.
-            kcCResourceGeneric setFlagDialog = new kcCResourceGeneric(rollingRapidsCreek, kcCResourceGenericType.STRING_RESOURCE, new kcCResourceString(instance, "Knee Flag Set: " + i));
+            kcCResourceGeneric setFlagDialog = new kcCResourceGeneric(rollingRapidsCreek, kcCResourceGenericType.STRING_RESOURCE);
+            setFlagDialog.getAsStringResource().setValue("Knee Flag Set: " + i);
             setFlagDialog.setName("FgSet" + NumberUtils.padNumberString(i, 2), true);
             int setFlagDialogHash = GreatQuestUtils.hash(setFlagDialog.getName());
             rollingRapidsCreek.getChunks().add(setFlagDialog);

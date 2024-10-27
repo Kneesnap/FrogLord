@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
@@ -22,11 +23,6 @@ public class kcProxyCapsuleDesc extends kcProxyDesc {
 
     public kcProxyCapsuleDesc(@NonNull kcCResourceGeneric resource) {
         super(resource);
-    }
-
-    @Override
-    protected int getTargetClassID() {
-        return kcClassID.PROXY_CAPSULE.getClassId();
     }
 
     @Override
@@ -51,6 +47,16 @@ public class kcProxyCapsuleDesc extends kcProxyDesc {
         writer.writeFloat(this.radius);
         writer.writeFloat(this.length);
         writer.writeFloat(this.offset);
+    }
+
+    @Override
+    protected int getTargetClassID() {
+        return kcClassID.PROXY_CAPSULE.getClassId();
+    }
+
+    @Override
+    public kcCResourceGenericType getResourceType() {
+        return kcCResourceGenericType.PROXY_CAPSULE_DESCRIPTION;
     }
 
     @Override

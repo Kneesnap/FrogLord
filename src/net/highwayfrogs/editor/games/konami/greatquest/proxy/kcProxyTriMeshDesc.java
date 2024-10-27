@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTriMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.lambda.Consumer5;
@@ -68,6 +69,11 @@ public class kcProxyTriMeshDesc extends kcProxyDesc {
     }
 
     @Override
+    public kcCResourceGenericType getResourceType() {
+        return kcCResourceGenericType.PROXY_TRI_MESH_DESCRIPTION;
+    }
+
+    @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         super.writeMultiLineInfo(builder, padding);
         writeAssetLine(builder, padding, "Collision Mesh", this.meshRef);
@@ -82,17 +88,17 @@ public class kcProxyTriMeshDesc extends kcProxyDesc {
             newMesh.getSelfHash().getStringChangeListeners().add(this.nameChangeListener);
 
             // Change the name of this section to match the newly applied mesh.
-            if (getParentResource().isHashBasedOnName() && newMesh.isHashBasedOnName() && newName != null)
-                getParentResource().setName(newName + NAME_SUFFIX);
+            if (getResource().isHashBasedOnName() && newMesh.isHashBasedOnName() && newName != null)
+                getResource().setName(newName + NAME_SUFFIX);
         }
     }
 
     // When the name of the linked kcCResourceTriMesh changes, update the name of this too.
     private void onMeshNameChange(GreatQuestHash<kcCResourceTriMesh> hashObj, String oldName, String newName, int oldHash, int newHash) {
-        if (getParentResource().isHashBasedOnName() && hashObj.getResource().isHashBasedOnName() && newName != null) {
-            getParentResource().setName(newName + NAME_SUFFIX);
-        } else if (getParentResource().getHash() == oldHash) {
-            getParentResource().getSelfHash().setHash(newHash, newName, false);
+        if (getResource().isHashBasedOnName() && hashObj.getResource().isHashBasedOnName() && newName != null) {
+            getResource().setName(newName + NAME_SUFFIX);
+        } else if (getResource().getHash() == oldHash) {
+            getResource().getSelfHash().setHash(newHash, newName, false);
         }
     }
 }

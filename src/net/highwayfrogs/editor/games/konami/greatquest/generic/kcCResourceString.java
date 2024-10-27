@@ -1,10 +1,12 @@
 package net.highwayfrogs.editor.games.konami.greatquest.generic;
 
 import lombok.Getter;
+import lombok.NonNull;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
@@ -14,15 +16,17 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.Proper
  * Created by Kneesnap on 8/21/2023.
  */
 @Getter
-public class kcCResourceString extends GameData<GreatQuestInstance> implements IPropertyListCreator {
+public class kcCResourceString extends GameData<GreatQuestInstance> implements kcIGenericResourceData, IPropertyListCreator {
+    private final kcCResourceGeneric resource;
     private String value;
 
-    public kcCResourceString(GreatQuestInstance instance) {
-        this(instance, "");
+    public kcCResourceString(@NonNull kcCResourceGeneric resource) {
+        this(resource, "");
     }
 
-    public kcCResourceString(GreatQuestInstance instance, String value) {
-        super(instance);
+    public kcCResourceString(@NonNull kcCResourceGeneric resource, @NonNull String value) {
+        super(resource.getGameInstance());
+        this.resource = resource;
         this.value = value;
     }
 
@@ -34,6 +38,11 @@ public class kcCResourceString extends GameData<GreatQuestInstance> implements I
     @Override
     public void save(DataWriter writer) {
         writer.writeTerminatorString(this.value);
+    }
+
+    @Override
+    public kcCResourceGenericType getResourceType() {
+        return kcCResourceGenericType.STRING_RESOURCE;
     }
 
     @Override

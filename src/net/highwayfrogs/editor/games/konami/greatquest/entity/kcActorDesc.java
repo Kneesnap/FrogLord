@@ -27,11 +27,6 @@ public class kcActorDesc extends kcActorBaseDesc {
     }
 
     @Override
-    protected int getTargetClassID() {
-        return kcClassID.ACTOR.getClassId();
-    }
-
-    @Override
     public void load(DataReader reader) {
         super.load(reader);
         this.health.load(reader);
@@ -45,6 +40,11 @@ public class kcActorDesc extends kcActorBaseDesc {
         this.health.save(writer);
         writer.writeInt(this.invincibleDurationLimitMs);
         writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
+    }
+
+    @Override
+    protected int getTargetClassID() {
+        return kcClassID.ACTOR.getClassId();
     }
 
     @Override

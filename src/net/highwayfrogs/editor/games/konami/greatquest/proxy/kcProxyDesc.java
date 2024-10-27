@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcIGenericResourceData;
 import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
@@ -18,7 +19,7 @@ import net.highwayfrogs.editor.utils.NumberUtils;
  */
 @Getter
 @Setter
-public class kcProxyDesc extends kcBaseDesc {
+public abstract class kcProxyDesc extends kcBaseDesc implements kcIGenericResourceData {
     private final GreatQuestHash<kcCResourceGeneric> parentHash; // The hash of this object's parent.
     private int reaction;
     private int collisionGroup;
@@ -46,7 +47,7 @@ public class kcProxyDesc extends kcBaseDesc {
         this.collideWith = reader.readInt();
         this.isStatic = GreatQuestUtils.readTGQBoolean(reader);
 
-        if (hThis != this.parentHash.getHashNumber() && (getParentResource() == null || !getParentResource().doesNameMatch("TEST")))
+        if (hThis != this.parentHash.getHashNumber() && (getResource() == null || !getResource().doesNameMatch("TEST")))
             throw new RuntimeException("The kcProxyDesc reported the parent chunk as " + NumberUtils.to0PrefixedHexString(hThis) + ", but it was expected to be " + this.parentHash.getHashNumberAsString() + ".");
     }
 
@@ -66,5 +67,10 @@ public class kcProxyDesc extends kcBaseDesc {
         builder.append(padding).append("Collision Group: ").append(this.collisionGroup).append(Constants.NEWLINE);
         builder.append(padding).append("Collide With: ").append(this.collideWith).append(Constants.NEWLINE);
         builder.append(padding).append("Static: ").append(this.isStatic).append(Constants.NEWLINE);
+    }
+
+    @Override
+    public kcCResourceGeneric getResource() {
+        return (kcCResourceGeneric) super.getResource();
     }
 }

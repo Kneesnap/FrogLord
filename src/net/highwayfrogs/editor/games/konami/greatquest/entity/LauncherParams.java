@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -11,6 +12,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceModel;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcIGenericResourceData;
 import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.function.Function;
@@ -21,24 +24,24 @@ import java.util.function.Function;
  * Created by Kneesnap on 8/21/2023.
  */
 @Getter
-public class LauncherParams extends kcProjectileParams {
+public class LauncherParams extends kcProjectileParams implements kcIGenericResourceData {
+    private final kcCResourceGeneric resource;
     private final GreatQuestHash<kcCResourceModel> vtxModelRef; // Resolved in CLauncher::Init()
     private final GreatQuestHash<kcCResourceGeneric> cruiseParticleEffectRef; // Resolved in CLauncher::Init()
     private final GreatQuestHash<kcCResourceGeneric> hitParticleEffectRef; // Resolved in CLauncher::Init()
     @Setter private int projectileLifeTime;
     @Setter private float speed;
-    private final kcCResourceGeneric parentResource;
     private static final int PADDING_VALUES = 7;
 
     private static final String NAME_SUFFIX = "LauncherDesc";
 
-    public LauncherParams(kcCResourceGeneric parentResource) {
-        super(parentResource != null ? parentResource.getGameInstance() : null);
-        this.parentResource = parentResource;
+    public LauncherParams(@NonNull kcCResourceGeneric resource) {
+        super(resource.getGameInstance());
+        this.resource = resource;
         this.vtxModelRef = new GreatQuestHash<>();
         this.cruiseParticleEffectRef = new GreatQuestHash<>();
         this.hitParticleEffectRef = new GreatQuestHash<>();
-        GreatQuestUtils.applySelfNameSuffixAndToFutureNameChanges(parentResource, NAME_SUFFIX);
+        GreatQuestUtils.applySelfNameSuffixAndToFutureNameChanges(resource, NAME_SUFFIX);
     }
 
     @Override
@@ -51,7 +54,7 @@ public class LauncherParams extends kcProjectileParams {
         this.speed = reader.readFloat();
         reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
 
-        GreatQuestChunkedFile parentFile = this.parentResource.getParentFile();
+        GreatQuestChunkedFile parentFile = this.resource.getParentFile();
         GreatQuestUtils.resolveResourceHash(kcCResourceModel.class, parentFile, this, this.vtxModelRef, vtxResourceHash, true);
         GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, parentFile, this, this.cruiseParticleEffectRef, cruiseParticleEffectHash, true);
         GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, parentFile, this, this.hitParticleEffectRef, hitParticleEffectHash, true);
@@ -94,5 +97,10 @@ public class LauncherParams extends kcProjectileParams {
         }
 
         builder.append(Constants.NEWLINE);
+    }
+
+    @Override
+    public kcCResourceGenericType getResourceType() {
+        return kcCResourceGenericType.LAUNCHER_DESCRIPTION;
     }
 }

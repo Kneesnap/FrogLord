@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceNamedHash.HashTableEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
@@ -78,7 +79,7 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         GreatQuestUtils.resolveResourceHash(kcCResourceAnimSet.class, this, this.animSetRef, animSetHash, true);
         GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, this, this.proxyDescRef, proxyDescHash, !isParentResourceNamed("Dummy", "Tree 8", "Tree 9")); // There are only 3 places this doesn't resolve, all in Rolling Rapids Creek (PC version, PS2 untested).
         if (!GreatQuestUtils.resolveResourceHash(kcCResourceNamedHash.class, this, this.animationSequencesRef, animationHash, false) && animationHash != -1) // There are TONS of hashes set which correspond to sequences which don't exist. TODO: There are enough where I'm almost wondering if we should be automatically naming/resolving this
-            this.animationSequencesRef.setOriginalString(getParentResource().getName() + kcCResourceNamedHash.NAME_SUFFIX); // If we don't resolve the asset, we can at least apply the original string.
+            this.animationSequencesRef.setOriginalString(getResource().getName() + kcCResourceNamedHash.NAME_SUFFIX); // If we don't resolve the asset, we can at least apply the original string.
     }
 
     @Override
@@ -86,8 +87,8 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         super.saveData(writer);
 
         // Unless the hash number is -1, it seems this is ALWAYS the resource name + "{seqs}", so ensure we save it like that.
-        if (getParentResource() != null && getParentResource().getResourceName() != null && this.animationSequencesRef.getHashNumber() != -1)
-            this.animationSequencesRef.setHash(getParentResource().getName() + kcCResourceNamedHash.NAME_SUFFIX);
+        if (getResource() != null && getResource().getResourceName() != null && this.animationSequencesRef.getHashNumber() != -1)
+            this.animationSequencesRef.setHash(getResource().getName() + kcCResourceNamedHash.NAME_SUFFIX);
 
         writer.writeInt(this.parentHash.getHashNumber());
         writer.writeInt(this.modelDescRef.getHashNumber());
@@ -109,6 +110,11 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         writeAssetLine(builder, padding, "Anim Set", this.animSetRef);
         writeAssetLine(builder, padding, "Collision Proxy", this.proxyDescRef);
         writeAssetLine(builder, padding, "Animation List", this.animationSequencesRef);
+    }
+
+    @Override
+    public kcCResourceGenericType getResourceType() {
+        return kcCResourceGenericType.ACTOR_BASE_DESCRIPTION;
     }
 
     /**

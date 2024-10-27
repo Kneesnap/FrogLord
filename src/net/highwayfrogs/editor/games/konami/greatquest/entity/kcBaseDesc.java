@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
 import lombok.Getter;
-import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -27,17 +26,15 @@ import java.util.logging.Logger;
  */
 @Getter
 public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
-    private final GreatQuestChunkedFile parentFile;
-    private final kcCResource parentResource;
+    private final kcCResource resource;
 
-    public kcBaseDesc(@NonNull kcCResource resource) {
-        this(resource.getGameInstance(), resource, resource.getParentFile());
+    public kcBaseDesc(kcCResource resource) {
+        this(resource != null ? resource.getGameInstance() : null, resource);
     }
 
-    private kcBaseDesc(GreatQuestInstance instance, kcCResource resource, GreatQuestChunkedFile parentFile) {
+    private kcBaseDesc(GreatQuestInstance instance, kcCResource resource) {
         super(instance);
-        this.parentResource = resource;
-        this.parentFile = parentFile;
+        this.resource = resource;
     }
 
     /**
@@ -54,8 +51,8 @@ public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements
 
     @Override
     public Logger getLogger() {
-        if (this.parentResource != null)
-            return this.parentResource.getLogger();
+        if (this.resource != null)
+            return this.resource.getLogger();
 
         return super.getLogger();
     }
@@ -74,8 +71,10 @@ public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements
                     shouldError = false;
             }
 
-            if (shouldError)
-                throw new RuntimeException("Read an unexpected target class ID: " + NumberUtils.to0PrefixedHexString(classID) + " for " + getClass().getSimpleName() + " in " + (this.parentFile != null ? this.parentFile.getDebugName() : ""));
+            if (shouldError) {
+                GreatQuestChunkedFile parentFile = getParentFile();
+                throw new RuntimeException("Read an unexpected target class ID: " + NumberUtils.to0PrefixedHexString(classID) + " for " + getClass().getSimpleName() + " in " + (parentFile != null ? parentFile.getDebugName() : ""));
+            }
         }
     }
 
@@ -99,19 +98,19 @@ public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements
     protected abstract void saveData(DataWriter writer);
 
     /**
-     * Called when the entry is double-clicked in the UI.
-     */
-    public void handleDoubleClick() {
-        // Do nothing.
-    }
-
-    /**
      * Return true if the parent resource is named any one of the given names.
      * @param names the names to test
      * @return parent resources
      */
     public boolean isParentResourceNamed(String... names) {
-        return this.parentResource != null && this.parentResource.doesNameMatch(names);
+        return this.resource != null && this.resource.doesNameMatch(names);
+    }
+
+    /**
+     * Gets the parent chunk file containing the resource which contains this data.
+     */
+    public GreatQuestChunkedFile getParentFile() {
+        return this.resource != null ? this.resource.getParentFile() : null;
     }
 
     /**
@@ -153,7 +152,7 @@ public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements
     protected <TResource extends kcCResource> StringBuilder writeAssetInfo(StringBuilder builder, String padding, String prefix, int resourceHash, Function<TResource, String> getter) {
         builder.append(padding).append(prefix).append(": ");
 
-        TResource resource = GreatQuestUtils.findResourceByHash(this.parentFile, getGameInstance(), resourceHash);
+        TResource resource = GreatQuestUtils.findResourceByHash(getParentFile(), getGameInstance(), resourceHash);
         if (resource != null) {
             builder.append(getter.apply(resource));
         } else if (resourceHash != 0 && resourceHash != -1) {
