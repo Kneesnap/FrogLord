@@ -12,10 +12,12 @@ import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestGameFile;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
+import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -70,15 +72,21 @@ public class GreatQuestMainMenuUIController extends MainMenuController<GreatQues
     }
 
     @Override
-    protected void saveMainGameData() {
+    protected void saveMainGameData(ProgressBarComponent progressBar) {
         File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), OUTPUT_BIN_FILE_PATH, "data.bin");
         if (outputFile == null)
             return;
 
         DataWriter writer = new DataWriter(new LargeFileReceiver(outputFile));
-        getMainArchive().save(writer);
-        writer.closeReceiver();
-        // TODO: Progress bar.
+
+        try {
+            getMainArchive().save(writer, progressBar);
+        } catch (Throwable th) {
+            // Eat the error, we still want to boot into the main menu if an error occurs.
+            Utils.handleError(getGameInstance().getLogger(), th, true, "Failed to save the game data.");
+        } finally {
+            writer.closeReceiver();
+        }
     }
 
     @Override
