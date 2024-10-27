@@ -68,7 +68,7 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
 
     @Override
     public GameUIController<?> makeEditorUI() {
-        return loadEditor(getGameInstance(), "edit-file-vtx", new GreatQuestModelInfoController(getGameInstance()), this);
+        return loadEditor(getGameInstance(), new GreatQuestModelInfoController(getGameInstance()), this);
     }
 
     @Override

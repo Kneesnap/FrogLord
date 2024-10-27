@@ -285,7 +285,7 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
 
     @Override
     public GreatQuestImageController makeEditorUI() {
-        return loadEditor(getGameInstance(), "edit-file-img", new GreatQuestImageController(getGameInstance()), this);
+        return loadEditor(getGameInstance(), new GreatQuestImageController(getGameInstance()), this);
     }
 
     @Override

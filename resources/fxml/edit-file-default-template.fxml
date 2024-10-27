@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
@@ -10,35 +10,39 @@
             AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
             xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1">
     <children>
-        <HBox fx:id="contentBox" prefHeight="100.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
-              AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-            <children>
-                <AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="240.0" HBox.hgrow="NEVER">
+        <SplitPane fx:id="mainSplitPane" dividerPositions="0.25585284280936454" maxHeight="1.7976931348623157E308"
+                   maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+                   AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <items>
+                <HBox fx:id="contentBox" prefHeight="100.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+                      AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                     <children>
-                        <HBox fx:id="leftSidePanelTopBox" spacing="5.0"
-                              AnchorPane.leftAnchor="1.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="1.0">
+                        <AnchorPane fx:id="leftSideAnchorPane" maxWidth="Infinity" minWidth="-Infinity" prefWidth="200.0" HBox.hgrow="ALWAYS">
                             <children>
-                                <Label fx:id="fileNameLabel" text="Unnamed File Type" HBox.hgrow="SOMETIMES">
-                                    <graphic>
-                                        <ImageView fx:id="iconImageView" fitHeight="16.0" fitWidth="16.0" pickOnBounds="true"
-                                                   preserveRatio="true">
-                                        </ImageView>
-                                    </graphic>
-                                    <font>
-                                        <Font name="System Bold" size="14.0"/>
-                                    </font>
-                                </Label>
+                                <HBox fx:id="leftSidePanelTopBox" spacing="5.0"
+                                      AnchorPane.leftAnchor="1.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="1.0">
+                                    <children>
+                                        <Label fx:id="fileNameLabel" text="Unnamed File Type" HBox.hgrow="SOMETIMES">
+                                            <graphic>
+                                                <ImageView fx:id="iconImageView" fitHeight="16.0" fitWidth="16.0" pickOnBounds="true"
+                                                           preserveRatio="true">
+                                                </ImageView>
+                                            </graphic>
+                                            <font>
+                                                <Font name="System Bold" size="14.0"/>
+                                            </font>
+                                        </Label>
+                                    </children>
+                                </HBox>
+                                <VBox fx:id="leftSidePanelFreeArea" prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0"
+                                      AnchorPane.leftAnchor="1.0" AnchorPane.rightAnchor="1.0" AnchorPane.topAnchor="28.0" spacing="1" />
                             </children>
-                        </HBox>
-                        <VBox fx:id="leftSidePanelFreeArea" prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0"
-                              AnchorPane.leftAnchor="1.0" AnchorPane.rightAnchor="1.0" AnchorPane.topAnchor="28.0" spacing="1" />
+                        </AnchorPane>
                     </children>
-                </AnchorPane>
-                <Separator maxWidth="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefWidth="0.0"
-                           HBox.hgrow="NEVER"/>
-                <VBox fx:id="rightSidePanelFreeArea" prefHeight="305.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+                </HBox>
+                <VBox fx:id="rightSidePanelFreeArea" prefHeight="305.0" prefWidth="400.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
                       AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
-            </children>
-        </HBox>
+            </items>
+        </SplitPane>
     </children>
 </AnchorPane>

@@ -1,11 +1,14 @@
 package net.highwayfrogs.editor.gui;
 
+import javafx.beans.property.DoubleProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.SplitPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -26,6 +29,8 @@ import net.highwayfrogs.editor.utils.Utils;
 public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFile extends GameObject<?> & IPropertyListCreator> extends GameUIController<TGameInstance> {
     private final Image icon;
     private final String fileNameText;
+    @FXML private SplitPane mainSplitPane;
+    @FXML private AnchorPane leftSideAnchorPane;
     @FXML private VBox leftSidePanelFreeArea;
     @FXML private HBox leftSidePanelTopBox;
     @FXML private HBox contentBox;
@@ -36,7 +41,7 @@ public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFi
     private Class<? extends TGameFile> fileClass;
     private final PropertyListViewerComponent<TGameInstance> propertyListViewer;
 
-    private static final String TEMPLATE_URL = "edit-file-default-template";
+    public static final String TEMPLATE_URL = "edit-file-default-template";
 
     public DefaultFileUIController(TGameInstance instance, String fileNameText, Image icon) {
         super(instance);
@@ -51,6 +56,15 @@ public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFi
             this.iconImageView.setImage(this.icon != null ? this.icon : ImageResource.QUESTION_MARK_32.getFxImage());
         if (this.fileNameLabel != null)
             this.fileNameLabel.setText(this.fileNameText != null ? this.fileNameText : "Unnamed File Type");
+
+        if (this.mainSplitPane.getDividers().size() > 0) {
+            DoubleProperty position = this.mainSplitPane.getDividers().get(0).positionProperty();
+            position.set(.4D);
+            this.contentBox.prefWidthProperty().bind(position);
+            this.leftSidePanelFreeArea.prefWidthProperty().bind(position);
+            this.leftSideAnchorPane.prefWidthProperty().bind(position);
+            this.leftSidePanelTopBox.prefWidthProperty().bind(position);
+        }
 
         if (this.rightSidePanelFreeArea != null) {
             HBox.setHgrow(this.rightSidePanelFreeArea, Priority.ALWAYS);

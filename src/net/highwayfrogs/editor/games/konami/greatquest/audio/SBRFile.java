@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.konami.greatquest.audio;
 
 import javafx.collections.FXCollections;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.*;
@@ -1388,6 +1389,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             comboBox.setValue(SBRFileUIViewType.ENTRIES);
             comboBox.setConverter(new AbstractStringConverter<>(SBRFileUIViewType::getDisplayName));
             comboBox.setCellFactory(listView -> new AbstractAttachmentCell<>((viewType, index) -> viewType != null ? viewType.getDisplayName() : "NULL"));
+            HBox.setMargin(comboBox, new Insets(0, 2, 0, 0));
             return comboBox;
         }
     }

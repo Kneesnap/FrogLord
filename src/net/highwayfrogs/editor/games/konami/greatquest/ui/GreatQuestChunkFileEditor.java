@@ -1,12 +1,12 @@
 package net.highwayfrogs.editor.games.konami.greatquest.ui;
 
 import javafx.collections.FXCollections;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.Label;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -18,7 +18,6 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.KCResourceID;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
-import net.highwayfrogs.editor.gui.DefaultFileUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
 import net.highwayfrogs.editor.gui.components.ListViewComponent;
@@ -35,7 +34,7 @@ import java.util.List;
  * Created by Kneesnap on 10/20/2024.
  */
 @Getter
-public class GreatQuestChunkFileEditor extends DefaultFileUIController<GreatQuestInstance, GreatQuestChunkedFile> {
+public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<GreatQuestChunkedFile> {
     private final CollectionEditorComponent<GreatQuestInstance, kcCResource> collectionEditorComponent;
     private final GreatQuestChunkListViewComponent chunkListComponent;
 
@@ -44,10 +43,10 @@ public class GreatQuestChunkFileEditor extends DefaultFileUIController<GreatQues
     }
 
     public GreatQuestChunkFileEditor(GreatQuestInstance instance, String fileNameText) {
-        this(instance, fileNameText, ImageResource.ZIPPED_FOLDER_16.getFxImage());
+        this(instance, fileNameText, ImageResource.ZIPPED_FOLDER_16);
     }
 
-    public GreatQuestChunkFileEditor(GreatQuestInstance instance, String fileNameText, Image icon) {
+    public GreatQuestChunkFileEditor(GreatQuestInstance instance, String fileNameText, ImageResource icon) {
         super(instance, fileNameText, icon);
         this.chunkListComponent = new GreatQuestChunkListViewComponent(this);
         this.collectionEditorComponent = new CollectionEditorComponent<>(instance, this.chunkListComponent, true);
@@ -57,7 +56,6 @@ public class GreatQuestChunkFileEditor extends DefaultFileUIController<GreatQues
     protected void onControllerLoad(Node rootNode) {
         super.onControllerLoad(rootNode);
         this.chunkListComponent.extendParentUI();
-        getContentBox().setPrefWidth(300);
 
         // Register the editor.
         if (getLeftSidePanelFreeArea() != null) {
@@ -177,6 +175,7 @@ public class GreatQuestChunkFileEditor extends DefaultFileUIController<GreatQues
             comboBox.setConverter(new AbstractStringConverter<>(GreatQuestChunkResourceCategory::getDisplayName));
             comboBox.setCellFactory(listView -> new AbstractAttachmentCell<>((resourceType, index) -> resourceType != null ? resourceType.getDisplayName() : null,
                     (resourceType, index) -> resourceType != null ? new ImageView(resourceType.getIcon().getFxImage()) : null));
+            HBox.setMargin(comboBox, new Insets(0, 2, 0, 0));
             return comboBox;
         }
     }

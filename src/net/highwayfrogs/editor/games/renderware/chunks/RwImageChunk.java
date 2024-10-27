@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.renderware.chunks;
 
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -22,17 +21,11 @@ import net.highwayfrogs.editor.games.renderware.struct.types.RwImage;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
-import net.highwayfrogs.editor.utils.ColorUtils;
-import net.highwayfrogs.editor.utils.FXUtils;
-import net.highwayfrogs.editor.utils.NumberUtils;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.*;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -437,39 +430,16 @@ public class RwImageChunk extends RwStreamChunk implements ITextureSource {
             if (suggestedTextureName == null || suggestedTextureName.trim().isEmpty())
                 suggestedTextureName = "unknown";
 
-            File outputFile = FXUtils.promptFileSave(getGameInstance(), "Select a file to save the image as", suggestedTextureName + ".png", "PNG Image File", "png");
-            if (outputFile == null)
-                return;
-
-            try {
-                ImageIO.write(this.imageChunk.getImage(), "png", outputFile);
-            } catch (IOException ex) {
-                Utils.handleError(this.imageChunk.getLogger(), ex, true, "Failed to save image as '%s'.", outputFile.getName());
-            }
+            FileUtils.askUserToSaveImageFile(getLogger(), getGameInstance(), this.imageChunk.getImage(), suggestedTextureName + ".png", true);
         }
 
         /**
          * Prompts the user to overwrite the active image.
          */
         public void importImage() {
-            File file = FXUtils.promptFileOpenExtensions(getGameInstance(), "Title", "Images", Constants.IMAGE_EXTENSIONS);
-            if (file == null)
-                return;
-
-            BufferedImage image;
-            try {
-                image = ImageIO.read(file);
-            } catch (IOException ex) {
-                Utils.handleError(this.imageChunk.getLogger(), ex, true, "Failed to read image '%s'.", file.getName());
-                return;
-            }
-
-            if (image == null) {
-                FXUtils.makePopUp("Could not interpret '" + file.getName() + "' as an image file.", AlertType.ERROR);
-                return;
-            }
-
-            this.imageChunk.setImage(image);
+            BufferedImage image = FileUtils.askUserToOpenImageFile(getLogger(), getGameInstance());
+            if (image != null)
+                this.imageChunk.setImage(image);
         }
     }
 }

@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestFileEditorUIController;
+import net.highwayfrogs.editor.gui.DefaultFileUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
@@ -175,13 +176,12 @@ public abstract class GreatQuestGameFile extends GameData<GreatQuestInstance> im
      * Loads a GameFile editor.
      * @param gameInstance the game instance to create the editor for
      * @param controller the controller to control the GUI
-     * @param template the gui layout template
      * @param fileToEdit the file to edit
      * @return editor
      */
-    public static <TGameFile extends GreatQuestGameFile, TUIController extends GreatQuestFileEditorUIController<TGameFile>> TUIController loadEditor(GreatQuestInstance gameInstance, String template, TUIController controller, TGameFile fileToEdit) {
+    public static <TGameFile extends GreatQuestGameFile, TUIController extends GreatQuestFileEditorUIController<TGameFile>> TUIController loadEditor(GreatQuestInstance gameInstance, TUIController controller, TGameFile fileToEdit) {
         try {
-            FXMLLoader templateLoader = FXUtils.getFXMLTemplateLoader(gameInstance, template);
+            FXMLLoader templateLoader = FXUtils.getFXMLTemplateLoader(gameInstance, DefaultFileUIController.TEMPLATE_URL);
             GameUIController.loadController(gameInstance, templateLoader, controller);
             controller.setTargetFile(fileToEdit);
         } catch (Throwable th) {

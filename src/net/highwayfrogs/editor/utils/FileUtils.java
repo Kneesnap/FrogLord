@@ -14,6 +14,8 @@ import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -31,6 +33,10 @@ import java.util.stream.Stream;
  * Created by Kneesnap on 10/25/2024.
  */
 public class FileUtils {
+    public static final BrowserFileType IMPORT_IMAGE_FILE_TYPE = new BrowserFileType("Image File", ImageIO.getReaderFileSuffixes());
+    public static final BrowserFileType EXPORT_IMAGE_FILE_TYPE = new BrowserFileType("Image File", ImageIO.getWriterFileSuffixes());
+    public static final SavedFilePath IMPORT_SINGLE_IMAGE_PATH = new SavedFilePath("singleImageFileImportPath", "Please select the image file to open.", IMPORT_IMAGE_FILE_TYPE);
+    public static final SavedFilePath EXPORT_SINGLE_IMAGE_PATH = new SavedFilePath("singleImageFileExportPath", "Please select the file to save the image as...", EXPORT_IMAGE_FILE_TYPE);
     private static final File[] EMPTY_FILE_ARRAY = new File[0];
 
     /**
@@ -503,6 +509,19 @@ public class FileUtils {
     }
 
     /**
+     * Gets the file name extension from the file name in lower-case form.
+     * @param fileName the file name to get the extension from
+     * @return fileNameExtension, if there is one
+     */
+    public static String getFileNameExtensionLower(String fileName) {
+        int dotIndex = fileName.lastIndexOf('.');
+        if (dotIndex < 0)
+            return null;
+
+        return fileName.substring(dotIndex + 1).toLowerCase();
+    }
+
+    /**
      * Safely writes the given bytes to a file, replacing the file if it already exists.
      * If an exception occurs during the writing of the file, false will be returned, and the error will be handled
      * @param logger the logger to write any error to. If null is provided, the util logger will be used.
@@ -666,6 +685,25 @@ public class FileUtils {
     }
 
     /**
+     * Asks the user to provide the image file, then it will be imported.
+     * @param logger The logger to provide in-case of failure.
+     * @param instance The game instance to save the image path to.
+     * @return image, if successfully loaded
+     */
+    public static BufferedImage askUserToOpenImageFile(Logger logger, GameInstance instance) {
+        File selectedFile = askUserToOpenFile(instance, IMPORT_SINGLE_IMAGE_PATH);
+        if (selectedFile == null)
+            return null;
+
+        try {
+            return ImageIO.read(selectedFile);
+        } catch (IOException ex) {
+            Utils.handleError(logger, ex, true, "Failed to load image from file '%s'.", selectedFile.getName());
+            return null;
+        }
+    }
+
+    /**
      * Prompt the user to select a file.
      * @param instance The game instance to find the file path saved within.
      * @param savedPath The information on how to obtain the saved path, as well as file extensions.
@@ -698,9 +736,9 @@ public class FileUtils {
             fileChooser.setInitialFileName(lastFile.getName());
         } else if (savedPath.getFileTypes().size() > 0){
             String startFileName = suggestedFileName;
-            String extension = savedPath.getFileTypes().get(0).getExtensions().get(0);
-            if (extension != null && !extension.equals("*.*") && !startFileName.endsWith(extension))
-                startFileName += extension;
+            String extension = getFileNameExtension(savedPath.getFileTypes().get(0).getExtensions().get(0));
+            if (extension != null && !extension.equals("*") && !startFileName.contains("."))
+                startFileName += "." + extension;
 
             fileChooser.setInitialFileName(startFileName);
         }
@@ -709,6 +747,36 @@ public class FileUtils {
         if (selectedFile != null) {
             savedPath.setResult(instance, selectedFile);
             GUIMain.setWorkingDirectory(selectedFile.getParentFile());
+        }
+
+        return selectedFile;
+    }
+
+    /**
+     * Asks the user where to save the image file, then saves it there.
+     * @param logger The logger to provide in-case of failure.
+     * @param instance The game instance to save the image path to.
+     * @param image The image to save
+     * @param suggestedFileName The suggested file name
+     * @param overrideLastFileName Whether the suggested file name has priority over the previous file name.
+     * @return file, if successfully saved
+     */
+    public static File askUserToSaveImageFile(Logger logger, GameInstance instance, BufferedImage image, String suggestedFileName, boolean overrideLastFileName) {
+        File selectedFile = askUserToSaveFile(instance, EXPORT_SINGLE_IMAGE_PATH, suggestedFileName, true);
+        if (selectedFile == null)
+            return null;
+
+        String extension = FileUtils.getFileNameExtensionLower(selectedFile.getName());
+        if (extension == null || !Utils.contains(ImageIO.getWriterFileSuffixes(), extension)) {
+            FXUtils.makePopUp("Couldn't figure out the image format by the file extension. (" + extension + ")", AlertType.ERROR);
+            return null;
+        }
+
+        try {
+            ImageIO.write(image, extension, selectedFile);
+        } catch (IOException ex) {
+            Utils.handleError(logger, ex, true, "Failed to save image to file '%s'.", selectedFile.getName());
+            return null;
         }
 
         return selectedFile;
