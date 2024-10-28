@@ -14,7 +14,6 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
-import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.scripting.NoodleConstants;
 import net.highwayfrogs.editor.scripting.NoodleScript;
 import net.highwayfrogs.editor.scripting.runtime.NoodleThread;
@@ -187,14 +186,7 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
         }
 
         try {
-            ProgressBarComponent.openProgressBarWindow(getGameInstance(), "Saving Game Files", progressBar -> {
-                try {
-                    saveMainGameData(progressBar);
-                } catch (Throwable th) {
-                    // Eat the error, we still want to boot into the main menu if an error occurs.
-                    Utils.handleError(getGameInstance().getLogger(), th, true, "Failed to save the game data.");
-                }
-            });
+            saveMainGameData();
         } catch (Throwable th) {
             handleError(th, true, "Failed to save game data.");
         }
@@ -202,9 +194,8 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
 
     /**
      * Saves the main game data.
-     * @param progressBar The progress bar to show save progress with.
      */
-    protected abstract void saveMainGameData(ProgressBarComponent progressBar);
+    protected abstract void saveMainGameData();
 
     /**
      * Creates the file list editor.

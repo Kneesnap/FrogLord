@@ -82,7 +82,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
     }
 
     @Override
-    protected void saveMainGameData(ProgressBarComponent progressBar) {
+    protected void saveMainGameData() {
         if (getGameInstance().getGameType().isShowSaveWarning()) {
             boolean saveAnyways = FXUtils.makePopUpYesNo("Saving " + getGameInstance().getGameType().getDisplayName() + " is not supported yet.\n"
                     + "It will most likely crash the game if used. Would you like to continue?");
@@ -109,31 +109,33 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
         File outputMwiFile = new File(baseFolder, FileUtils.stripExtension(getGameInstance().getMwdFile().getName()) + "-MODIFIED.MWI");
         File outputExeFile = new File(baseFolder, FileUtils.stripExtension(getGameInstance().getExeFile().getName()) + "-modified.exe");
 
-        // Save the MWD file.
-        DataWriter mwdWriter = new DataWriter(new FileReceiver(outputMwdFile));
+        ProgressBarComponent.openProgressBarWindow(getGameInstance(), "Saving Files", progressBar -> {
+            // Save the MWD file.
+            DataWriter mwdWriter = new DataWriter(new FileReceiver(outputMwdFile));
 
-        try {
-            getGameInstance().getMainArchive().save(mwdWriter, progressBar);
-        } catch (Throwable th) {
-            throw new RuntimeException("Failed to save the MWD file: '" + outputMwdFile.getName() + "'.", th);
-        } finally {
-            mwdWriter.closeReceiver();
-        }
+            try {
+                getGameInstance().getMainArchive().save(mwdWriter, progressBar);
+            } catch (Throwable th) {
+                throw new RuntimeException("Failed to save the MWD file: '" + outputMwdFile.getName() + "'.", th);
+            } finally {
+                mwdWriter.closeReceiver();
+            }
 
-        // Save the executable too.
-        progressBar.update(0, 1, "Saving the modified executable...");
-        try {
-            getGameInstance().saveExecutable(outputExeFile, true);
-            progressBar.addCompletedProgress(1);
-        } catch (Throwable th) {
-            throw new RuntimeException("Failed to save the patched game executable '" + outputExeFile.getName() + "'.", th);
-        }
+            // Save the executable too.
+            progressBar.update(0, 1, "Saving the modified executable...");
+            try {
+                getGameInstance().saveExecutable(outputExeFile, true);
+                progressBar.addCompletedProgress(1);
+            } catch (Throwable th) {
+                throw new RuntimeException("Failed to save the patched game executable '" + outputExeFile.getName() + "'.", th);
+            }
 
-        // Wait until after the MWD has been saved to save the MWI.
-        FileUtils.deleteFile(outputMwiFile); // Don't merge files, create a new one.
-        DataWriter writer = new DataWriter(new FileReceiver(outputMwiFile));
-        getGameInstance().getArchiveIndex().save(writer);
-        writer.closeReceiver();
+            // Wait until after the MWD has been saved to save the MWI.
+            FileUtils.deleteFile(outputMwiFile); // Don't merge files, create a new one.
+            DataWriter writer = new DataWriter(new FileReceiver(outputMwiFile));
+            getGameInstance().getArchiveIndex().save(writer);
+            writer.closeReceiver();
+        });
     }
 
     @Override

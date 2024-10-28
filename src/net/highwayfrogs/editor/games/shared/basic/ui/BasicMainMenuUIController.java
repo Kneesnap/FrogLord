@@ -59,23 +59,25 @@ public class BasicMainMenuUIController<TGameInstance extends BasicGameInstance> 
     }
 
     @Override
-    protected void saveMainGameData(ProgressBarComponent progressBar) {
-        progressBar.update(0, getGameInstance().getFiles().size(), "");
+    protected void saveMainGameData() {
+        ProgressBarComponent.openProgressBarWindow(getGameInstance(), "Saving Files", progressBar -> {
+            progressBar.update(0, getGameInstance().getFiles().size(), "");
 
-        for (BasicGameFile<?> file : getGameInstance().getFiles()) {
-            if (file.getFileDefinition().getFile() == null) {
-                getLogger().severe("File '" + file.getDisplayName() + "' was defined by a(n) " + Utils.getSimpleName(file) + ", which should not have been possible.");
-                continue;
+            for (BasicGameFile<?> file : getGameInstance().getFiles()) {
+                if (file.getFileDefinition().getFile() == null) {
+                    getLogger().severe("File '" + file.getDisplayName() + "' was defined by a(n) " + Utils.getSimpleName(file) + ", which should not have been possible.");
+                    continue;
+                }
+
+                File targetFile = file.getFileDefinition().getFile();
+                progressBar.setStatusMessage("Saving '" + targetFile.getName() + "'");
+                DataWriter writer = new DataWriter(targetFile.getName().equalsIgnoreCase("gamedata.bin") ? new LargeFileReceiver(targetFile) : new FileReceiver(targetFile)); // TODO: Allow specifying if it needs a large receiver.
+                file.save(writer);
+                writer.closeReceiver();
+
+                progressBar.addCompletedProgress(1);
             }
-
-            File targetFile = file.getFileDefinition().getFile();
-            progressBar.setStatusMessage("Saving '" + targetFile.getName() + "'");
-            DataWriter writer = new DataWriter(targetFile.getName().equalsIgnoreCase("gamedata.bin") ? new LargeFileReceiver(targetFile) : new FileReceiver(targetFile)); // TODO: Allow specifying if it needs a large receiver.
-            file.save(writer);
-            writer.closeReceiver();
-
-            progressBar.addCompletedProgress(1);
-        }
+        });
     }
 
     @Override
