@@ -31,6 +31,8 @@ public class GreatQuestCharsetProvider extends CharsetProvider {
         CHARACTER_MAPPINGS[0x05] = '␡'; // Symbol for delete.
         CHARACTER_MAPPINGS[0x06] = '␃'; // Symbol for "End of Text"
         CHARACTER_MAPPINGS[0x07] = '—'; // "End of Guarded Area" U+0097
+        CHARACTER_MAPPINGS[0x0A] = '\n'; // LF
+        CHARACTER_MAPPINGS[0x0D] = '\r'; // CR
         // [0x08, 0x1F] are unused, sporting graphics displaying their hex number.
         // [0x20, 0x7E] perfectly match the 7-bit ASCII specification, so we'll copy them directly.
         for (char i = ' '; i <= '~'; i++)
