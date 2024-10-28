@@ -147,9 +147,13 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         int lengthAddress = writer.writeNullPointer();
 
         // Write chunk data.
+        writer.pushAnchorPoint(); // Ensure the data aligns properly and such.
         int dataStartIndex = writer.getIndex();
         chunk.save(writer);
         int dataEndIndex = writer.getIndex();
+        writer.popAnchorPoint();
+
+        // Write chunk length. (Must do after popping)
         writer.writeIntAtPos(lengthAddress, (dataEndIndex - dataStartIndex) - 0x20);
     }
 

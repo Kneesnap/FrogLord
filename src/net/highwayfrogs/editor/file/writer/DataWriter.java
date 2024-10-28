@@ -19,11 +19,12 @@ import java.util.Stack;
  * TODO: Go over this and error when we write stuff outside of the expected values.
  * Created by Kneesnap on 8/10/2018.
  */
-@Getter
 public class DataWriter {
-    @Setter private ByteOrder endian = ByteOrder.LITTLE_ENDIAN;
-    private final DataReceiver output;
+    @Getter @Setter private ByteOrder endian = ByteOrder.LITTLE_ENDIAN;
+    @Getter private final DataReceiver output;
     private final Stack<Integer> jumpStack = new Stack<>();
+    private final Stack<Integer> anchorPoints = new Stack<>();
+    private int currentAnchorPoint;
 
     private static final ByteBuffer INT_BUFFER = ByteBuffer.allocate(Constants.INTEGER_SIZE);
     private static final ByteBuffer SHORT_BUFFER = ByteBuffer.allocate(Constants.SHORT_SIZE);
@@ -125,7 +126,7 @@ public class DataWriter {
      */
     public void setIndex(int newIndex) {
         try {
-            output.setIndex(newIndex);
+            this.output.setIndex(newIndex + this.currentAnchorPoint);
         } catch (IOException ex) {
             throw new RuntimeException("Failed to set writer index.", ex);
         }
@@ -143,7 +144,7 @@ public class DataWriter {
      * Close the DataReceiver from receiving more data. In-case of streams, this safely closes the stream.
      */
     public void closeReceiver() {
-        output.close();
+        this.output.close();
     }
 
     /**
@@ -152,7 +153,7 @@ public class DataWriter {
      */
     public int getIndex() {
         try {
-            return output.getIndex();
+            return this.output.getIndex() - this.currentAnchorPoint;
         } catch (IOException ex) {
             throw new RuntimeException("Failed to get writer index.", ex);
         }
@@ -164,7 +165,7 @@ public class DataWriter {
      */
     public void writeByte(byte value) {
         try {
-            output.writeByte(value);
+            this.output.writeByte(value);
         } catch (IOException ex) {
             throw new RuntimeException("Failed to write a byte to the receiver.", ex);
         }
@@ -176,7 +177,7 @@ public class DataWriter {
      */
     public void writeBytes(byte... bytes) {
         try {
-            output.writeBytes(bytes);
+            this.output.writeBytes(bytes);
         } catch (IOException ex) {
             throw new RuntimeException("Failed to write a byte-array to the receiver.", ex);
         }
@@ -188,7 +189,7 @@ public class DataWriter {
      */
     public void writeBytes(byte[] array, int offset, int amount) {
         try {
-            output.writeBytes(array, offset, amount);
+            this.output.writeBytes(array, offset, amount);
         } catch (IOException ex) {
             throw new RuntimeException("Failed to write a byte-array to the receiver.", ex);
         }
@@ -405,5 +406,38 @@ public class DataWriter {
             writeByte(Constants.NULL_BYTE); // Terminator Byte
             writeTo(pathEndIndex, padding);
         }
+    }
+
+    /**
+     * Push a new anchor point onto the stack.
+     * An anchor point is a position relative to the parent anchor point, which when pushed, becomes the new origin (0x00000000) of the data.
+     * This helps align data properly, and do pointer math properly.
+     */
+    public void pushAnchorPoint() {
+        pushAnchorPoint(getIndex());
+    }
+
+    /**
+     * Push a new anchor point onto the stack.
+     * An anchor point is a position relative to the parent anchor point, which when pushed, becomes the new origin (0x00000000) of the data.
+     * This helps align data properly, and do pointer math properly.
+     * @param localIndex the index to push the anchor point for
+     */
+    public void pushAnchorPoint(int localIndex) {
+        int absoluteIndex = this.currentAnchorPoint + localIndex;
+        this.anchorPoints.push(this.currentAnchorPoint);
+        this.currentAnchorPoint = absoluteIndex;
+    }
+
+    /**
+     * Pops the most recent anchor point from the stack.
+     * An anchor point is a position relative to the parent anchor point, which when pushed, becomes the new origin (0x00000000) of the data.
+     * This helps align data properly, and do pointer math properly.
+     */
+    public void popAnchorPoint() {
+        if (this.anchorPoints.isEmpty())
+            throw new IllegalStateException("Cannot pop an anchor point when there are none on the stack!");
+
+        this.currentAnchorPoint = this.anchorPoints.pop();
     }
 }

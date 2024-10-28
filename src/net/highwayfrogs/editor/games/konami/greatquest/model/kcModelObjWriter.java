@@ -202,7 +202,7 @@ public class kcModelObjWriter {
         StringBuilder objWriter = context.getObjWriter();
         StringBuilder mtlWriter = context.getMtlWriter();
 
-        long lastMaterialId = -1;
+        int lastMaterialId = -1;
         for (int i = 0; i < context.getMap().getVertexBuffers().size(); i++) {
             kcVtxBufFileStruct vtxBuf = context.getMap().getVertexBuffers().get(i);
 
@@ -218,7 +218,7 @@ public class kcModelObjWriter {
                     // TODO: !
                     context.getLogger().warning("Got material ID " + vtxBuf.getMaterialId() + ", but... there are only " + context.getMap().getMaterials().size() + " material(s) available in the model.");
                 } else {
-                    kcMaterial material = context.getMap().getMaterials().get((int) vtxBuf.getMaterialId());
+                    kcMaterial material = context.getMap().getMaterials().get(vtxBuf.getMaterialId());
                     objWriter.append("usemtl ");
                     objWriter.append(material.getMaterialName());
                     objWriter.append(Constants.NEWLINE);

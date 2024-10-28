@@ -31,7 +31,7 @@ public class GreatQuestMapMaterialMeshNode extends DynamicMeshAdapterNode<kcVtxB
         kcCResOctTreeSceneMgr sceneMgr = getMap().getSceneManager();
         List<kcMaterial> materials = sceneMgr.getMaterials();
         for (kcVtxBufFileStruct vertexBuffer : sceneMgr.getVertexBuffers()) {
-            int materialId = (int) vertexBuffer.getMaterialId();
+            int materialId = vertexBuffer.getMaterialId();
             kcMaterial material = materialId >= 0 && materials.size() > materialId ? materials.get(materialId) : null;
             if (material == getMesh().getMapMaterial())
                 this.add(vertexBuffer);

@@ -86,18 +86,12 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
         // Read oct tree data.
         int treeEntityEndIndex = reader.getIndex() + treeEntityDataSize;
         this.entityTree.load(reader);
-        if (treeEntityEndIndex != reader.getIndex()) {
-            getLogger().warning("Entity kcOctTree ended at the wrong position! (Expected: " + NumberUtils.toHexString(treeEntityEndIndex) + ", Actual: " + NumberUtils.toHexString(reader.getIndex()) + ")");
-            reader.setIndex(treeEntityEndIndex);
-        }
+        requireReaderIndex(reader, treeEntityEndIndex, "Expected visual kcOctTree");
 
         // Read visual tree data.
         int treeVisualEndIndex = reader.getIndex() + treeVisualDataSize;
         this.visualTree.load(reader);
-        if (treeVisualEndIndex != reader.getIndex()) {
-            getLogger().warning("Visual kcOctTree ended at the wrong position! (Expected: " + NumberUtils.toHexString(treeVisualEndIndex) + ", Actual: " + NumberUtils.toHexString(reader.getIndex()) + ")");
-            reader.setIndex(treeVisualEndIndex);
-        }
+        requireReaderIndex(reader, treeVisualEndIndex, "Expected primitive buffers");
 
         // Read primitives.
         this.vertexBuffers.clear();
@@ -241,7 +235,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
     @Getter
     public static class kcVtxBufFileStruct implements IMultiLineInfoWriter {
         // _OTAPrimHeader
-        @Setter private long materialId;
+        @Setter private int materialId;
         @Setter private float normalTolerance;
         private final kcVector4 normalAverage = new kcVector4();
         private final kcBox4 boundingBox = new kcBox4();
@@ -280,15 +274,14 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
             int startReadIndex = reader.getIndex();
 
             // _OTAPrimHeader from kcCVtxBufList.h
-            long otaPrimHeaderSize = reader.readUnsignedIntAsLong();
-            this.materialId = reader.readUnsignedIntAsLong();
+            int otaPrimHeaderSize = reader.readInt();
+            this.materialId = reader.readInt();
             this.normalTolerance = reader.readFloat();
             int otaZero = reader.readInt();
             this.normalAverage.load(reader);
             this.boundingBox.load(reader);
             if (otaZero != 0)
                 throw new RuntimeException("The reserved field in the _OTAPrimHeader was supposed to be zero, but actually was " + otaZero + ".");
-
 
             // _kcVtxBufFileStruct
             setFVF(reader.readUnsignedIntAsLong(), platform);
@@ -330,7 +323,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
         public void save(DataWriter writer) {
             // _OTAPrimHeader from kcCVtxBufList.h
             int otaPrimHeaderSizeAddress = writer.writeNullPointer(); // otaPrimHeaderSize
-            writer.writeUnsignedInt(this.materialId);
+            writer.writeInt(this.materialId);
             writer.writeFloat(this.normalTolerance);
             writer.writeInt(0); // Verified to be zero. (Reserved)
             this.normalAverage.save(writer);
@@ -346,15 +339,17 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
                 writer.writeInt(0); // These are known to be empty.
 
             // Write vertices.
-            int vtxDataStart = writer.getIndex();
-            for (int i = 0; i < this.vertices.size(); i++)
+            for (int i = 0; i < this.vertices.size(); i++) {
+                int vertexWriteStartIndex = writer.getIndex();
                 this.vertices.get(i).save(writer, this.components, this.fvf);
+                int vertexBytesWritten = writer.getIndex() - vertexWriteStartIndex;
+                if (vertexBytesWritten != this.fvfStride)
+                    throw new RuntimeException("The fvfStride expected us to write " + this.fvfStride + " per vertex, but we actually wrote " + vertexBytesWritten + ".");
+            }
 
             // Write lengths.
-            int headerByteLength = (writer.getIndex() - otaPrimHeaderSizeAddress);
-            int vtxByteLength = (writer.getIndex() - vtxDataStart);
-            writer.writeIntAtPos(otaPrimHeaderSizeAddress, headerByteLength + vtxByteLength);
-            writer.writeIntAtPos(vtxByteLengthAddress, vtxByteLength);
+            writer.writeIntAtPos(otaPrimHeaderSizeAddress, (writer.getIndex() - otaPrimHeaderSizeAddress));
+            writer.writeIntAtPos(vtxByteLengthAddress, (writer.getIndex() - vtxByteLengthAddress - ((RESERVED_PRIM_HEADER_FIELDS + 1) * Constants.INTEGER_SIZE)));
         }
 
         @Override

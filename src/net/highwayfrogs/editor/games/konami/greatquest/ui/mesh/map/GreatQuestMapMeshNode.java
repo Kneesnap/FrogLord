@@ -93,7 +93,7 @@ public class GreatQuestMapMeshNode extends DynamicMeshAdapterNode<kcVtxBufFileSt
     }
 
     private Texture getTexture(kcVtxBufFileStruct vtxBuf) {
-        int materialId = (int) vtxBuf.getMaterialId();
+        int materialId = vtxBuf.getMaterialId();
         List<kcMaterial> materials = getMap().getSceneManager().getMaterials();
         kcMaterial material = materialId >= 0 && materials.size() > materialId ? materials.get(materialId) : null;
         return getMesh().getTextureAtlas().getTextureFromSourceOrFallback(material != null ? material.getTexture() : null);
