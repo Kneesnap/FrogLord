@@ -52,8 +52,8 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
     public void save(DataWriter writer) {
         warnIfTagsDoNotFollowExpectedPattern();
 
-        int dataStartAddress = writer.getIndex();
         super.save(writer);
+        int dataStartAddress = writer.getIndex();
         writer.writeStringBytes(KCResourceID.HIERARCHY.getSignature());
         int dataSizeAddress = writer.writeNullPointer();
         this.rootNode.save(writer);

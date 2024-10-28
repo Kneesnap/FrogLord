@@ -72,8 +72,8 @@ public class kcCResourceTrack extends kcCResource implements IMultiLineInfoWrite
 
     @Override
     public void save(DataWriter writer) {
-        int dataStartAddress = writer.getIndex();
         super.save(writer);
+        int dataStartAddress = writer.getIndex();
         writer.writeStringBytes(KCResourceID.TRACK.getSignature());
         int dataSizeAddress = writer.writeNullPointer();
         int baseByteOffset = writer.getIndex(); // 40 (32 bytes for name, and 8 for the file ID + size.)
