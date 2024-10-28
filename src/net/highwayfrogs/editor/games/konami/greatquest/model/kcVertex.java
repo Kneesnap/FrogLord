@@ -429,8 +429,8 @@ public class kcVertex implements IInfoWriter {
             case TEX1_STQP: // 16
                 writer.writeFloat(this.u0);
                 writer.writeFloat(this.v0);
-                writer.writeFloat(1F); // Unused
-                writer.writeFloat(1F); // Unused
+                writer.writeFloat(1F); // Unused (Value seen in C001.VTX)
+                writer.writeFloat(0F); // Unused (Value seen in C001.VTX)
                 break;
             case WEIGHT3F: // 12
                 if (this.weight == null || this.weight.length != 3)

@@ -61,9 +61,7 @@ import java.util.Map.Entry;
 /**
  * Represents an instance of 'Frogger: The Great Quest'.
  * TODO Immediate:
- *  -> Fix image loading/saving.
- *  -> Fix model loading/saving.
- *  -> Validate chunked file saving.
+ *  -> Validate chunked file saving. [Fix OctTreeSceneMgr]
  *  -> Fix transparency for the bone icon.
  *  -> Add PS2 PAL TOC support.
  *  -> Scripting Engine

@@ -224,33 +224,27 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
                 progressBar.setStatusMessage("Saving '" + file.getExportName() + "'");
             writer.writeAddressTo(fileOffsetTable.get(file));
 
-            byte[] rawBytes; // TODO :TOSS
-            if ((file instanceof kcModelWrapper) && file.getRawData() != null) {
-                // TODO: Seems both models and images are busted.
-                // TODO: We're missing nearly 100MB of texture data when we let textures save themselves.
-                rawBytes = file.getRawData();
-            } else {
-                ArrayReceiver receiver = new ArrayReceiver();
-                file.save(new DataWriter(receiver));
-                rawBytes = receiver.toArray();
-            }
+            // Write the file contents.
+            ArrayReceiver receiver = new ArrayReceiver();
+            file.save(new DataWriter(receiver));
+            byte[] fileBytes = receiver.toArray();
 
             // Write size.
             writer.jumpTemp(fileSizeTable.get(file));
-            writer.writeInt(rawBytes.length);
+            writer.writeInt(fileBytes.length);
             writer.jumpReturn();
 
             // File is compressed.
             if (file.isCompressed()) {
-                rawBytes = GreatQuestUtils.zlibCompress(rawBytes); // Compress data.
+                fileBytes = GreatQuestUtils.zlibCompress(fileBytes); // Compress data.
 
                 // Write z size.
                 writer.jumpTemp(fileZSizeTable.get(file));
-                writer.writeInt(rawBytes.length);
+                writer.writeInt(fileBytes.length);
                 writer.jumpReturn();
             }
 
-            writer.writeBytes(rawBytes);
+            writer.writeBytes(fileBytes);
             if (progressBar != null)
                 progressBar.addCompletedProgress(1);
         }
