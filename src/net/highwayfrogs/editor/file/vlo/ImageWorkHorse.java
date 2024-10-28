@@ -2,12 +2,15 @@ package net.highwayfrogs.editor.file.vlo;
 
 import javafx.scene.image.PixelFormat;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.system.IntList;
+import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.*;
 import java.nio.IntBuffer;
+import java.util.Arrays;
 
 /**
  * Apply image filters.
@@ -243,7 +246,7 @@ public class ImageWorkHorse {
 
     /**
      * Takes an image and creates a new rotated version.
-     * Copied from https://stackoverflow.com/questions/37758061/rotate-a-buffered-image-in-java/37758533
+     * Copied from <a href="https://stackoverflow.com/questions/37758061/rotate-a-buffered-image-in-java/37758533"/>
      * @param img   The image to rotate.
      * @param angle The angle to rotate.
      * @return rotatedImage
@@ -382,5 +385,104 @@ public class ImageWorkHorse {
                 if ((image.getRGB(x, y) & 0xFF000000) != 0xFF000000)
                     return true;
         return false;
+    }
+
+    /**
+     * Converts to a byte-indexed image with a maximum of 256 colors, if possible. Otherwise, null will be returned.
+     * @param sourceImage The image to convert
+     * @return convertedImage
+     */
+    public static BufferedImage tryConvertToRgbImage(BufferedImage sourceImage) {
+        if (sourceImage == null)
+            throw new NullPointerException("sourceBufferedImage");
+
+        if (sourceImage.getType() == BufferedImage.TYPE_INT_RGB)
+            return sourceImage;
+
+        // With this constructor, we create an indexed buffered image with the same dimension and with a default 256 color model
+        int[] imagePixels = sourceImage.getRGB(0, 0, sourceImage.getWidth(), sourceImage.getHeight(), null, 0, sourceImage.getWidth());
+        for (int i = 0; i < imagePixels.length; i++) {
+            int rgb = imagePixels[i];
+            if (ColorUtils.getAlpha(rgb) != (byte) 0xFF)
+                return null;
+        }
+
+        // Create the new image.
+        BufferedImage newImage = new BufferedImage(sourceImage.getWidth(), sourceImage.getHeight(), BufferedImage.TYPE_INT_RGB);
+        newImage.setRGB(0, 0, sourceImage.getWidth(), sourceImage.getHeight(), imagePixels, 0, sourceImage.getWidth());
+        return newImage;
+    }
+
+    /**
+     * Converts to a byte-indexed image with a maximum of 256 colors, if possible. Otherwise, null will be returned.
+     * @param sourceImage The image to convert
+     * @return convertedImage
+     */
+    public static BufferedImage tryConvertTo8BitIndexedBufferedImage(BufferedImage sourceImage) {
+        if (sourceImage == null)
+            throw new NullPointerException("sourceBufferedImage");
+
+        if (sourceImage.getType() == BufferedImage.TYPE_BYTE_INDEXED)
+            return sourceImage;
+
+        final int maxColorCount = 256;
+
+        // With this constructor, we create an indexed buffered image with the same dimension and with a default 256 color model
+        IntList colors = new IntList(maxColorCount);
+        colors.add(0);
+        int[] imagePixels = sourceImage.getRGB(0, 0, sourceImage.getWidth(), sourceImage.getHeight(), null, 0, sourceImage.getWidth());
+        for (int i = 0; i < imagePixels.length; i++) {
+            int rgb = imagePixels[i];
+            if (rgb != 0 && ColorUtils.getAlpha(rgb) == 0) {
+                imagePixels[i] = 0; // All transparent pixels should share the same color as to allow for maximum color re-use.
+                continue;
+            }
+
+            // Normal search to add to palette.
+            int paletteIndex = Arrays.binarySearch(colors.getInternalArray(), 0, colors.size(), rgb);
+            if (paletteIndex < 0) {
+                if (colors.size() >= maxColorCount)
+                    return null; // There aren't enough color slots.
+
+                colors.add(-(paletteIndex + 1), rgb);
+            }
+        }
+
+        // Create the new image.
+        IndexColorModel colorPalette = new IndexColorModel(8, 256, colors.getInternalArray(), 0, true, 0, DataBuffer.TYPE_BYTE);
+        BufferedImage newImage = new BufferedImage(sourceImage.getWidth(), sourceImage.getHeight(), BufferedImage.TYPE_BYTE_INDEXED, colorPalette);
+        newImage.setRGB(0, 0, sourceImage.getWidth(), sourceImage.getHeight(), imagePixels, 0, sourceImage.getWidth());
+        return newImage;
+    }
+
+    /**
+     * Converts an image to a byte-indexed image.
+     * Copied from <a href="https://stackoverflow.com/questions/22613520/how-to-convert-bufferedimage-to-indexed-type-and-then-extract-the-argb-color-pal"/>
+     * @param sourceBufferedImage The image to convert
+     * @return convertedImage
+     */
+    public static BufferedImage rgbaToIndexedBufferedImage(BufferedImage sourceBufferedImage) {
+        // With this constructor, we create an indexed buffered image with the same dimension and with a default 256 color model
+        BufferedImage indexedImage = new BufferedImage(sourceBufferedImage.getWidth(), sourceBufferedImage.getHeight(), BufferedImage.TYPE_BYTE_INDEXED);
+
+
+        ColorModel cm = indexedImage.getColorModel();
+        IndexColorModel icm = (IndexColorModel) cm;
+
+        int size = icm.getMapSize();
+
+        byte[] reds = new byte[size];
+        byte[] greens = new byte[size];
+        byte[] blues = new byte[size];
+        icm.getReds(reds);
+        icm.getGreens(greens);
+        icm.getBlues(blues);
+
+        WritableRaster raster = indexedImage.getRaster();
+        int pixel = raster.getSample(0, 0, 0);
+        IndexColorModel icm2 = new IndexColorModel(8, size, reds, greens, blues, pixel);
+        indexedImage = new BufferedImage(icm2, raster, sourceBufferedImage.isAlphaPremultiplied(), null);
+        indexedImage.getGraphics().drawImage(sourceBufferedImage, 0, 0, null);
+        return indexedImage;
     }
 }

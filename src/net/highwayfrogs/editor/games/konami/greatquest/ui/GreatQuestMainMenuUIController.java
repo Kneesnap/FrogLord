@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestGameFile;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
+import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
@@ -76,9 +77,17 @@ public class GreatQuestMainMenuUIController extends MainMenuController<GreatQues
             return;
 
         DataWriter writer = new DataWriter(new LargeFileReceiver(outputFile));
-        getMainArchive().save(writer);
-        writer.closeReceiver();
-        // TODO: Progress bar.
+
+        ProgressBarComponent.openProgressBarWindow(getGameInstance(), "Saving Files", progressBar -> {
+            try {
+                getMainArchive().save(writer, progressBar);
+            } catch (Throwable th) {
+                // Bubble the error upwards.
+                throw new RuntimeException("Failed to save game data.", th);
+            } finally {
+                writer.closeReceiver();
+            }
+        });
     }
 
     @Override

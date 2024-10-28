@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.konami.greatquest.ui;
 
 import javafx.event.ActionEvent;
 import javafx.scene.Node;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
@@ -66,24 +65,28 @@ public class GreatQuestImageController extends GreatQuestFileEditorUIController<
 
     @SneakyThrows
     private void importImage(ActionEvent event) {
-        /*File selectedFile = Utils.promptFileOpen(getGameInstance(), "Select the image to import...", "Image Files", "png");
-        if (selectedFile == null)
+        GreatQuestImageFile image = getFile();
+        if (image == null)
+            return;
+
+        BufferedImage loadedImage = FileUtils.askUserToOpenImageFile(image.getLogger(), getGameInstance());
+        if (loadedImage == null)
             return; // Cancelled.
 
-        getFile().replaceImage(ImageIO.read(selectedFile));
-        updateImage();*/ // TODO: Implement.
-        FXUtils.makePopUp("Importing images is not supported yet.", AlertType.WARNING);
+        getFile().setImage(loadedImage);
+        updateImage();
+        getPropertyListViewer().showProperties(image.createPropertyList()); // Update the property list, which may have changed.
     }
 
     /**
      * Update the displayed image.
      */
     public void updateImage() {
-        BufferedImage image = getFile().getImage();
-        boolean hasImage = (image != null);
+        boolean hasImage = (getFile() != null);
         this.imageView.setVisible(hasImage);
 
         if (hasImage) {
+            BufferedImage image = getFile().getImage();
             this.imageView.setFitWidth(image.getWidth());
             this.imageView.setFitHeight(image.getHeight());
             this.imageView.setImage(FXUtils.toFXImage(image, false));

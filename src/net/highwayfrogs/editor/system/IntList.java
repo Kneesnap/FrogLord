@@ -38,6 +38,21 @@ public class IntList {
         return false;
     }
 
+    public boolean add(int index, int value) {
+        if (this.size == this.array.length - 1)
+            resize(this.array.length * 2);
+
+        if (this.size == index) {
+            add(value);
+        } else {
+            System.arraycopy(this.array, index, this.array, index + 1, this.size - index);
+            this.array[index] = value;
+            this.size++;
+        }
+
+        return false;
+    }
+
     private void resize(int newSize) {
         this.array = Arrays.copyOf(array, newSize);
     }
@@ -74,5 +89,9 @@ public class IntList {
 
     public int[] getArray() {
         return Arrays.copyOf(array, this.size);
+    }
+
+    public int[] getInternalArray() {
+        return this.array;
     }
 }

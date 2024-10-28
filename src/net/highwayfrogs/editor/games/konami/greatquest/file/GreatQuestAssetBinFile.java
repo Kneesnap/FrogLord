@@ -222,20 +222,17 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         for (GreatQuestArchiveFile file : getFiles()) {
             if (progressBar != null)
                 progressBar.setStatusMessage("Saving '" + file.getExportName() + "'");
-            getLogger().info("Saving " + file.getFilePath());
             writer.writeAddressTo(fileOffsetTable.get(file));
 
             byte[] rawBytes; // TODO :TOSS
-            if (!(file instanceof GreatQuestChunkedFile) && file.getRawData() != null) {
+            if ((file instanceof kcModelWrapper) && file.getRawData() != null) {
                 // TODO: Seems both models and images are busted.
                 // TODO: We're missing nearly 100MB of texture data when we let textures save themselves.
                 rawBytes = file.getRawData();
-                getLogger().info("Wrote " + rawBytes.length + " raw bytes.");
             } else {
                 ArrayReceiver receiver = new ArrayReceiver();
                 file.save(new DataWriter(receiver));
                 rawBytes = receiver.toArray();
-                getLogger().info("Wrote " + rawBytes.length + " bytes.");
             }
 
             // Write size.
