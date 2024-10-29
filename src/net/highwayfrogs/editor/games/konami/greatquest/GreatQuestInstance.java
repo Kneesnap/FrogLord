@@ -86,6 +86,7 @@ import java.util.Map.Entry;
  *   -> How do we handle comments in the key-value-pair section? (Multi-line)
  *   -> Keep empty lines? (Removal of ```)
  *   -> Phase out the old Config class.
+ *   -> I'd like a better way of handling escape characters. Specifically, '\\\\' being required to include two backslashes, while '\' is valid for one doesn't feel right. If we only need to escape comments, perhaps make it two pounds or something.
  * Created by Kneesnap on 4/13/2024.
  */
 @Getter
@@ -269,7 +270,12 @@ public class GreatQuestInstance extends GameInstance {
         engine.addWrapperTemplates(kcScriptList.class, kcScript.class, kcScriptDisplaySettings.class,
                 kcArgument.class, kcCActionSequence.class, kcParam.class, kcInterimScriptEffect.class, kcParamReader.class,
                 kcParamWriter.class, kcScriptListInterim.class, kcScriptTOC.class);
-        engine.addWrapperTemplates(GreatQuestHash.class, GreatQuestUtils.class);
+        engine.addWrapperTemplates(GreatQuestHash.class, GreatQuestUtils.class, GreatQuestConfig.class);
+    }
+
+    @Override
+    public GreatQuestConfig getVersionConfig() {
+        return (GreatQuestConfig) super.getVersionConfig();
     }
 
     @Override
