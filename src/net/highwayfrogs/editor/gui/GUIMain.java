@@ -31,6 +31,9 @@ import java.util.logging.*;
  *  -> PropertyList with nested portions.
  *  -> Add a scripting console + a way to run scripts for each game, as well as an actual mod system definition.
  *  -> Use new config system in existing code parts?
+ *  -> Improve the file path system by thinking about all the places we use it, and if we want to combine any usages.
+ *   -> Also, I don't like GUIMain.getWorkingDirectory(), we should allow paths to specify their default directories.
+ *   -> I also don't like how having multiple instances of FrogLord can break the configuration. Is there some way we can handle this better? Perhaps reloading configs which are not for the active game instance when we go to save and the file was unexpectedly changed?
  *
  * TODO: Solve TODOs in:
  *  - GUIMain.java

@@ -1,23 +1,28 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script;
 
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.data.GameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
-import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCause;
 import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCauseType;
 import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffect;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcScriptListInterim;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcScriptTOC;
+import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Represents a single script.
@@ -48,22 +53,21 @@ import java.util.List;
  *  -> Otherwise, it will find and execute all functions in the target entity's script which have their "cause" met by the provided arguments.
  *   -> It will find the target entity by the target entity hash, and then obtain the entity's script.
  *   -> For the entity's script, it will test the causes to see if their cause criteria match. If they do, then the effects are executed.
- *
- * TODO:
- *  - Go over why some hashes aren't reversed in scripts.
- *  - The action sequences can sometimes not show animation name if the animation is in another file. (Eg: 00.dat)
- *  - Still figuring out why SETSEQUENCE doesn't show right. The hashes are seen in resource hashes too. (Some of these like the Vase are in 00.dat) (Seems it's in the TOC..?) "Positive" -> "PositiveActorDesc"
- *  - Still figuring out why actor names don't always resolve. (Could it be names added to the scene dynamically?)
  * Created by Kneesnap on 6/26/2023.
  */
 @Getter
 public class kcScript extends GameObject<GreatQuestInstance> {
     private final kcScriptList scriptList;
     private final List<kcScriptFunction> functions;
+    private final kcCResourceEntityInst entity;
 
-    public kcScript(GreatQuestInstance instance, kcScriptList scriptList, List<kcScriptFunction> functions) {
+    public static final String CONFIG_FIELD_SCRIPT_CAUSE = "trigger";
+    public static final String EXTENSION = "gqs";
+
+    public kcScript(GreatQuestInstance instance, kcScriptList scriptList, kcCResourceEntityInst entity, List<kcScriptFunction> functions) {
         super(instance);
         this.scriptList = scriptList;
+        this.entity = entity;
         this.functions = functions;
     }
 
@@ -105,10 +109,10 @@ public class kcScript extends GameObject<GreatQuestInstance> {
                 continue;
 
             kcCResourceEntityInst entity = (kcCResourceEntityInst) resource;
-            if (entity.getEntity() == null || entity.getEntity().getScriptIndex() < 0)
+            if (entity.getInstance() == null || entity.getInstance().getScriptIndex() < 0)
                 continue;
 
-            kcScript script = scriptList.getScripts().get(entity.getEntity().getScriptIndex());
+            kcScript script = scriptList.getScripts().get(entity.getInstance().getScriptIndex());
             if (script == this)
                 entities.add(entity);
         }
@@ -151,17 +155,56 @@ public class kcScript extends GameObject<GreatQuestInstance> {
     }
 
     /**
+     * Saves this script to a Config node.
+     * @param settings The settings to save the script with
+     * @return configNode
+     */
+    public Config toConfigNode(kcScriptDisplaySettings settings) {
+        Config result = new Config(this.entity != null ? this.entity.getName() : "Unused_" + this.scriptList.getScripts().indexOf(this));
+        for (int i = 0; i < this.functions.size(); i++)
+            result.addChildConfig(this.functions.get(i).toConfigNode(settings));
+
+        return result;
+    }
+
+    /**
+     * Adds all function definitions found in a Config node.
+     * @param baseConfigNode The config node to add functions from
+     * @param sourceName The source name (usually a file name) representing where the scripts came from.
+     */
+    public void addFunctionsFromConfigNode(Config baseConfigNode, String sourceName) {
+        if (baseConfigNode == null)
+            throw new NullPointerException("baseConfigNode");
+
+        for (Config nestedFunction : baseConfigNode.getChildConfigNodes()) {
+            kcScriptFunction newFunction = new kcScriptFunction(this, null);
+
+            try {
+                newFunction.loadFromConfigNode(nestedFunction);
+            } catch (Throwable th) {
+                Logger logger = getEntity() != null ? getEntity().getLogger() : getLogger();
+                String entityName = getEntity() != null ? "'" + getEntity().getName() + "'" : "null";
+                Utils.handleError(logger, th, false, "Failed to load script function for entity %s from '%s'.", entityName, sourceName);
+                continue; // Skip registration.
+            }
+
+            this.functions.add(newFunction);
+        }
+    }
+
+    /**
      * Loads a kcScript from the interim data model.
      * @param interim The interim data to load from.
      * @param scriptList The script list to add scripts to.
+     * @param entity The entity which the script belongs to.
      * @param toc The table of contents entry declaring the script.
      */
-    public static kcScript loadScript(kcScriptListInterim interim, kcScriptList scriptList, kcScriptTOC toc) {
+    public static kcScript loadScript(kcScriptListInterim interim, kcScriptList scriptList, kcCResourceEntityInst entity, kcScriptTOC toc) {
         int causeIndex = (int) toc.getCauseStartIndex();
 
         int totalEffects = 0;
         List<kcScriptFunction> functions = new ArrayList<>();
-        kcScript newScript = new kcScript(interim.getGameInstance(), scriptList, functions);
+        kcScript newScript = new kcScript(interim.getGameInstance(), scriptList, entity, functions);
         for (int i = 0; i < toc.getCauseCount(); i++) {
             interim.setupCauseReader(causeIndex++, 1);
             int mSize = interim.readNextCauseValue();
@@ -183,7 +226,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
             }
 
             // Read cause.
-            kcScriptCause cause = readCause(interim.getGameInstance(), causeTypeNumber, subCauseTypeNumber, unhandledData);
+            kcScriptCause cause = readCause(newScript, causeTypeNumber, subCauseTypeNumber, unhandledData);
 
             // Read effects.
             List<kcScriptEffect> effects = new ArrayList<>();
@@ -213,13 +256,13 @@ public class kcScript extends GameObject<GreatQuestInstance> {
         return newScript;
     }
 
-    private static kcScriptCause readCause(GreatQuestInstance gameInstance, int causeTypeNumber, int subCauseTypeNumber, List<Integer> unhandledData) {
+    private static kcScriptCause readCause(kcScript script, int causeTypeNumber, int subCauseTypeNumber, List<Integer> unhandledData) {
         // Setup cause.
         kcScriptCauseType causeType = kcScriptCauseType.getCauseType(causeTypeNumber, false);
         if (causeType == null)
             throw new RuntimeException("Failed to find causeType from " + causeTypeNumber + ".");
 
-        kcScriptCause cause = causeType.createNew(gameInstance);
+        kcScriptCause cause = causeType.createNew(script);
 
         int optionalArgumentCount = unhandledData != null ? unhandledData.size() : 0;
         if (!cause.validateArgumentCount(optionalArgumentCount))
@@ -235,15 +278,15 @@ public class kcScript extends GameObject<GreatQuestInstance> {
     @Getter
     public static class kcScriptFunction extends GameObject<GreatQuestInstance> {
         private final kcScript script;
-        @Setter private kcScriptCause cause;
+        private kcScriptCause cause;
         private final List<kcScriptEffect> effects;
 
-        public kcScriptFunction(kcScript script, kcScriptCause cause) {
+        public kcScriptFunction(@NonNull kcScript script, kcScriptCause cause) {
             this(script, cause, new ArrayList<>());
         }
 
-        public kcScriptFunction(kcScript script, kcScriptCause cause, List<kcScriptEffect> effects) {
-            super(script != null ? script.getGameInstance() : null);
+        public kcScriptFunction(@NonNull kcScript script, kcScriptCause cause, List<kcScriptEffect> effects) {
+            super(script.getGameInstance());
             this.script = script;
             this.cause = cause;
             this.effects = effects;
@@ -286,6 +329,54 @@ public class kcScript extends GameObject<GreatQuestInstance> {
                 effect.toString(builder, settings);
                 builder.append('\n');
             }
+        }
+
+        /**
+         * Saves this script to a Config node.
+         * @param settings The settings to save the script with
+         * @return configNode
+         */
+        public Config toConfigNode(kcScriptDisplaySettings settings) {
+            OptionalArguments tempArguments = new OptionalArguments();
+            StringBuilder builder = new StringBuilder();
+
+            // Create new config node.
+            Config result = new Config("Function");
+            result.setSectionComment(this.cause.toString(settings));
+
+            // Set cause.
+            this.cause.save(tempArguments, settings);
+            result.getOrCreateKeyValueNode(CONFIG_FIELD_SCRIPT_CAUSE).setAsString(tempArguments.toString());
+
+            // Add script effects.
+            tempArguments.clear();
+            for (int i = 0; i < this.effects.size(); i++) {
+                kcScriptEffect effect = this.effects.get(i);
+                effect.saveEffect(tempArguments, settings);
+                tempArguments.toString(builder);
+                result.getInternalText().add(new ConfigValueNode(builder.toString(), effect.getEndOfLineComment()));
+                builder.setLength(0);
+            }
+
+            return result;
+        }
+
+        /**
+         * Loads this function loaded from a Config node.
+         * @param config The config containing the function definition
+         */
+        public void loadFromConfigNode(Config config) {
+            if (config == null)
+                throw new NullPointerException("config");
+
+            // Set cause.
+            String rawScriptCause = config.getKeyValueNodeOrError(CONFIG_FIELD_SCRIPT_CAUSE).getAsString();
+            this.cause = kcScriptCause.parseScriptCause(this.script, rawScriptCause);
+
+            // Add script effects.
+            this.effects.clear();
+            for (String line : config.getTextWithoutComments())
+                this.effects.add(kcScriptEffect.parseScriptEffect(this, line));
         }
 
         /**

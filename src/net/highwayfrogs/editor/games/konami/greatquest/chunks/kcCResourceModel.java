@@ -7,7 +7,6 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
-import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
@@ -117,8 +116,8 @@ public class kcCResourceModel extends kcCResource {
                 throw new IllegalArgumentException("The file path could not be resolved to a model! (" + newPath + ")");
         }
 
-        this.fullPath = newPath;
         setName(GreatQuestUtils.getFileNameFromPath(newPath));
+        this.fullPath = newPath;
     }
 
     private void applyCollisionMeshName() {

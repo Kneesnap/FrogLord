@@ -78,7 +78,7 @@ public class GreatQuestMapEditorEntityDisplay {
      * Gets the 3D entity description for the entity, if it has one.
      */
     public kcEntity3DDesc getEntity3DDescription() {
-        kcEntityInst entityInstance = this.entityInstance != null ? this.entityInstance.getEntity() : null;
+        kcEntityInst entityInstance = this.entityInstance != null ? this.entityInstance.getInstance() : null;
         return entityInstance != null ? entityInstance.getDescription() : null;
     }
 
@@ -280,11 +280,11 @@ public class GreatQuestMapEditorEntityDisplay {
      * If null is supplied, all nodes will be updated.
      */
     public void updateRotation(Node node) {
-        if (this.entityInstance == null || !(this.entityInstance.getEntity() instanceof kcEntity3DInst))
+        if (this.entityInstance == null || !(this.entityInstance.getInstance() instanceof kcEntity3DInst))
             return;
 
         // Calculate rotation.
-        kcEntity3DInst entity3D = (kcEntity3DInst) this.entityInstance.getEntity();
+        kcEntity3DInst entity3D = (kcEntity3DInst) this.entityInstance.getInstance();
         kcEntity3DDesc entityDesc = entity3D.getDescription();
         boolean hasSkeleton = (entityDesc instanceof kcActorBaseDesc) && ((kcActorBaseDesc) entityDesc).getSkeleton() != null; // kcCActorBase::Render() will choose which method to render with based on if the skeleton is set or not.
         double xRotation = entity3D.getRotation().getX();
@@ -313,7 +313,7 @@ public class GreatQuestMapEditorEntityDisplay {
      * @param node the node to setup
      */
     public void setupNode(Node node) {
-        kcEntityInst entityInstance = this.entityInstance != null ? this.entityInstance.getEntity() : null;
+        kcEntityInst entityInstance = this.entityInstance != null ? this.entityInstance.getInstance() : null;
         if (!(entityInstance instanceof kcEntity3DInst))
             return; // No 3D information to apply.
 

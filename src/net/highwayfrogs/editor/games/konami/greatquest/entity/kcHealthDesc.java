@@ -17,8 +17,11 @@ import net.highwayfrogs.editor.utils.NumberUtils;
 @Getter
 @Setter
 public class kcHealthDesc extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
-    private int durability; // When loaded, if this is less than 1, 100 is used.
+    private int maxHealth; // When loaded, if this is less than 1, 100 is used. The game called this durability.
     private int startHealth; // When loaded, if this is less than 1, 100 is used.
+    // This is a bit mask which represent the types of damage which this object is immune to.
+    // The flags are represented by the DamageFlag class. TODO: Move it here?
+    // If even a single one of these flags is seen when damage should occur, damage will be skipped.
     private int immuneMask;
 
     public kcHealthDesc(GreatQuestInstance instance) {
@@ -27,21 +30,21 @@ public class kcHealthDesc extends GameData<GreatQuestInstance> implements IMulti
 
     @Override
     public void load(DataReader reader) {
-        this.durability = reader.readInt();
+        this.maxHealth = reader.readInt();
         this.startHealth = reader.readInt();
         this.immuneMask = reader.readInt();
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeInt(this.durability);
+        writer.writeInt(this.maxHealth);
         writer.writeInt(this.startHealth);
         writer.writeInt(this.immuneMask);
     }
 
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        builder.append(padding).append("Durability: ").append(this.durability).append(Constants.NEWLINE);
+        builder.append(padding).append("Max Health (Durability): ").append(this.maxHealth).append(Constants.NEWLINE);
         builder.append(padding).append("Start Health: ").append(this.startHealth).append(Constants.NEWLINE);
         builder.append(padding).append("Immune Mask: ").append(NumberUtils.toHexString(this.immuneMask)).append(Constants.NEWLINE);
     }

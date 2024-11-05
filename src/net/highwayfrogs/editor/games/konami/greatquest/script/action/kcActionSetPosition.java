@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
-import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcActionExecutor;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcArgument;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcParam;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcParamType;
@@ -10,10 +10,10 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcParamType;
  * Created by Kneesnap on 8/24/2023.
  */
 public class kcActionSetPosition extends kcActionTemplate {
-    private static final kcArgument[] ARGUMENTS = kcArgument.make(kcParamType.AXIS, "axis", kcParamType.FLOAT, "pos");
+    private static final kcArgument[] ARGUMENTS = kcArgument.make(kcParamType.AXIS, "axis", kcParamType.FLOAT, "coordinate");
 
-    public kcActionSetPosition(GreatQuestChunkedFile chunkedFile) {
-        super(chunkedFile, kcActionID.SET_POSITION);
+    public kcActionSetPosition(kcActionExecutor executor) {
+        super(executor, kcActionID.SET_POSITION);
     }
 
     @Override

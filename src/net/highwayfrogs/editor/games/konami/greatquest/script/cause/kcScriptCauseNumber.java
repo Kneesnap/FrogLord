@@ -3,8 +3,9 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
 
@@ -21,12 +22,12 @@ public class kcScriptCauseNumber extends kcScriptCause {
     private kcScriptCauseNumberOperation operation;
     private int value;
 
-    public kcScriptCauseNumber(GreatQuestInstance gameInstance) {
-        super(gameInstance, kcScriptCauseType.NUMBER, 1);
+    public kcScriptCauseNumber(kcScript script) {
+        super(script, kcScriptCauseType.NUMBER, 1, 2);
     }
 
-    public kcScriptCauseNumber(GreatQuestInstance gameInstance, kcScriptCauseNumberOperation operation, int number) {
-        this(gameInstance);
+    public kcScriptCauseNumber(kcScript script, kcScriptCauseNumberOperation operation, int number) {
+        this(script);
         this.operation = operation;
         this.value = number;
     }
@@ -41,6 +42,18 @@ public class kcScriptCauseNumber extends kcScriptCause {
     public void save(List<Integer> output) {
         output.add(this.operation.ordinal());
         output.add(this.value);
+    }
+
+    @Override
+    protected void loadArguments(OptionalArguments arguments) {
+        this.operation = arguments.useNext().getAsEnumOrError(kcScriptCauseNumberOperation.class);
+        this.value = arguments.useNext().getAsInteger();
+    }
+
+    @Override
+    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+        arguments.createNext().setAsEnum(this.operation);
+        arguments.createNext().setAsInteger(this.value);
     }
 
     @Override

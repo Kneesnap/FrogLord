@@ -4,9 +4,10 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.data.GameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
-import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.objects.StringNode;
 
 import java.util.Map;
 
@@ -57,6 +58,52 @@ public class kcScriptDisplaySettings extends GameObject<GreatQuestInstance> {
 
     /**
      * Get the hash number provided displayed either as its un-hashed string or as a hex number.
+     * This attempts to return values in the GQS syntax.
+     * @param hash The hash to get a display string from.
+     * @return displayString
+     */
+    public String getGqsHashDisplay(int hash) {
+        if (this.namesByHash != null) {
+            String name = this.namesByHash.get(hash);
+            if (name != null)
+                return name;
+        }
+
+        // Search main game file.
+        kcCResource resource = GreatQuestUtils.findResourceByHash(this.chunkedFile, getGameInstance(), hash);
+        if (resource != null && resource.getName() != null)
+            return resource.getName();
+
+        // Fallback to number.
+        return "0x" + NumberUtils.to0PrefixedHexString(hash);
+    }
+
+    /**
+     * Applies the hash number provided displayed either as its un-hashed string or as a hex number.
+     * This attempts to return values in the GQS syntax.
+     * @param hash The hash to get a display string from.
+     */
+    public void applyGqsHashDisplay(StringNode node, int hash) {
+        if (this.namesByHash != null) {
+            String name = this.namesByHash.get(hash);
+            if (name != null) {
+                node.setAsString(name, true);
+                return;
+            }
+        }
+
+        // Search main game file.
+        kcCResource resource = GreatQuestUtils.findResourceByHash(this.chunkedFile, getGameInstance(), hash);
+        if (resource != null && resource.getName() != null) {
+            node.setAsString(resource.getName(), true);
+        } else {
+            // Fallback to number.
+            node.setAsString("0x" + NumberUtils.to0PrefixedHexString(hash), false);
+        }
+    }
+
+    /**
+     * Get the hash number provided displayed either as its un-hashed string or as a hex number.
      * @param hash            The hash to get a display string from.
      * @param prefixHexNumber If the hex number should be padded to 8 characters if it's included directly.
      * @return displayString
@@ -69,6 +116,32 @@ public class kcScriptDisplaySettings extends GameObject<GreatQuestInstance> {
             return "0x" + NumberUtils.to0PrefixedHexString(hash);
         } else {
             return "0x" + Integer.toHexString(hash).toUpperCase();
+        }
+    }
+
+    /**
+     * Get the hash number provided in the FrogLord GreatQuest script syntax.
+     * @param hash The hash to get a display string from.
+     * @return displayString
+     */
+    public static String getGqsSyntaxHashDisplay(kcScriptDisplaySettings settings, int hash) {
+        if (settings != null)
+            return settings.getGqsHashDisplay(hash);
+
+        return (hash == 0 || hash == -1) ? "null" : "0x" + NumberUtils.to0PrefixedHexString(hash);
+    }
+
+    /**
+     * Apply the hash number provided in the FrogLord GreatQuest script syntax.
+     * @param hash The hash to get a display string from.
+     */
+    public static void applyGqsSyntaxHashDisplay(StringNode node, kcScriptDisplaySettings settings, int hash) {
+        if (hash == 0 || hash == -1) {
+            node.setNull();
+        } else if (settings != null) {
+            settings.applyGqsHashDisplay(node, hash);
+        } else {
+            node.setAsString("0x" + NumberUtils.to0PrefixedHexString(hash), false);
         }
     }
 

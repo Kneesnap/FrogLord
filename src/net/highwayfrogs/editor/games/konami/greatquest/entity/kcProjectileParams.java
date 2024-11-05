@@ -20,7 +20,7 @@ import net.highwayfrogs.editor.utils.NumberUtils;
 public class kcProjectileParams extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
     private ProxyReact proxyReact = ProxyReact.NOTIFY;
     private float sensorRadius;
-    private int group;
+    private int group; // Bone ID? Not sure.
     private int focus;
     private float mass;
     private float gravity;

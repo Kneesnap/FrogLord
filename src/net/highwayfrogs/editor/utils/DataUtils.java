@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.zip.CRC32;
 
 /**
@@ -63,8 +64,7 @@ public class DataUtils {
      */
     public static byte[] writeFloatToBytes(float value) {
         FLOAT_BUFFER.clear();
-        FLOAT_BUFFER.putFloat(value);
-        return FLOAT_BUFFER.array();
+        return Arrays.copyOf(FLOAT_BUFFER.order(ByteOrder.LITTLE_ENDIAN).putFloat(value).array(), Constants.FLOAT_SIZE);
     }
 
     /**

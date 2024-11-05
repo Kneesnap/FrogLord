@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.games.konami.greatquest.chunks;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 
 /**
  * Represents a dummy chunk of data.

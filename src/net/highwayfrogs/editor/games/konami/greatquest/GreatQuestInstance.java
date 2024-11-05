@@ -81,12 +81,8 @@ import java.util.Map.Entry;
  *  -> Preview texture references in chunk file viewer.
  *  -> Improve how the scripting UI feels to use. (Eg: the UI shouldn't be completely blocked)
  *  -> Config
- *   -> Handle '=' in text.
- *   -> Renaming sections?
  *   -> How do we handle comments in the key-value-pair section? (Multi-line)
- *   -> Keep empty lines? (Removal of ```)
  *   -> Phase out the old Config class.
- *   -> I'd like a better way of handling escape characters. Specifically, '\\\\' being required to include two backslashes, while '\' is valid for one doesn't feel right. If we only need to escape comments, perhaps make it two pounds or something.
  * Created by Kneesnap on 4/13/2024.
  */
 @Getter
@@ -337,5 +333,18 @@ public class GreatQuestInstance extends GameInstance {
             return soundPath.substring(lastSlashFound + 1);
 
         return (includeId ? "[" + NumberUtils.padNumberString(soundId, 4) + "] " : "") + soundPath;
+    }
+
+    /**
+     * Gets the full sound file path for the given sound ID.
+     * @param fullPath the path to resolve.
+     * @return sfxId, or -1 if the sound effect ID could not be found.
+     */
+    public int getSfxIdFromFullSoundPath(String fullPath) {
+        if (NumberUtils.isInteger(fullPath))
+            return Integer.parseInt(fullPath);
+
+        Integer sfxId = this.soundIdsByPath.get(fullPath);
+        return sfxId != null ? sfxId : -1;
     }
 }

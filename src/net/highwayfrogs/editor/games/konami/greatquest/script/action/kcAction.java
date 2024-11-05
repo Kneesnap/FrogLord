@@ -5,13 +5,13 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
-import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.script.kcArgument;
-import net.highwayfrogs.editor.games.konami.greatquest.script.kcParam;
-import net.highwayfrogs.editor.games.konami.greatquest.script.kcParamType;
-import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.games.konami.greatquest.script.*;
+import net.highwayfrogs.editor.utils.objects.OptionalArguments;
+
+import java.util.logging.Logger;
 
 /**
  * Represents an action.
@@ -19,16 +19,23 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySet
  */
 @Getter
 public abstract class kcAction extends GameData<GreatQuestInstance> {
-    private final GreatQuestChunkedFile chunkedFile;
+    private final kcActionExecutor executor;
     private final kcActionID actionID;
     private kcParam[] unhandledArguments;
 
-    private static final int ARGUMENT_COUNT = 4;
+    public static final int MAX_ARGUMENT_COUNT = 4;
 
-    public kcAction(GreatQuestChunkedFile chunkedFile, kcActionID action) {
-        super(chunkedFile != null ? chunkedFile.getGameInstance() : null);
-        this.chunkedFile = chunkedFile;
+    public kcAction(kcActionExecutor executor, kcActionID action) {
+        super(executor != null ? executor.getGameInstance() : null);
+        this.executor = executor;
         this.actionID = action;
+    }
+
+    /**
+     * Gets the chunked file which this action is defined somewhere within.
+     */
+    public GreatQuestChunkedFile getChunkedFile() {
+        return this.executor != null ? this.executor.getChunkedFile() : null;
     }
 
     /**
@@ -40,7 +47,7 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
 
     @Override
     public void load(DataReader reader) {
-        kcParam[] arguments = new kcParam[ARGUMENT_COUNT];
+        kcParam[] arguments = new kcParam[MAX_ARGUMENT_COUNT];
         for (int i = 0; i < arguments.length; i++)
             arguments[i] = kcParam.readParam(reader);
 
@@ -90,12 +97,73 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
     public abstract void save(kcParamWriter writer);
 
     /**
+     * Gets the number of arguments expected (excluding the action name) when parsing the action in GQS format on the current template.
+     */
+    public int getGqsArgumentCount(kcArgument[] argumentTemplates) {
+        return argumentTemplates.length;
+    }
+
+    /**
+     * Loads this kcAction data from an OptionalArguments object.
+     * @param arguments The arguments to load the data from
+     */
+    public final void load(OptionalArguments arguments) {
+        kcArgument[] argumentTemplates = getArgumentTemplate(null);
+        int expectedArgumentCount = getGqsArgumentCount(argumentTemplates);
+        if (expectedArgumentCount > arguments.getRemainingArgumentCount())
+            throw new RuntimeException("Could not load '" + arguments + "' as kcAction[" + getActionID() + "], as it did not have " + expectedArgumentCount + " arguments.");
+
+        loadArguments(arguments);
+    }
+
+    /**
+     * Saves this kcAction data to an OptionalArguments object.
+     * @param arguments The arguments to save the data to
+     * @param settings The context settings necessary for turning a script into text.
+     */
+    public final void save(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+        int startArgumentCount = arguments.getOrderedArgumentCount();
+        saveArguments(arguments, settings);
+
+        // If there were unhandled arguments, warn about it.
+        if (this.unhandledArguments != null && this.unhandledArguments.length > 0)
+            getLogger().warning("There were unhandled arguments present for '" + arguments + "'.");
+
+        // Ensure it looks ok.
+        kcArgument[] argumentTemplates = getArgumentTemplate(null);
+        int gqsArgumentCount = getGqsArgumentCount(argumentTemplates); // Do not include the name of the action, sometimes a different name is provided.
+        if (gqsArgumentCount > arguments.getOrderedArgumentCount() - startArgumentCount)
+            throw new RuntimeException("Could not save kcAction[" + getActionID() + "] to arguments. We got '" + arguments + "', but were looking for at least " + gqsArgumentCount + " arguments.");
+    }
+
+    /**
+     * Gets a string representing the end of line comment for the action.
+     * Usually this will return null, meaning there is no end of line comment.
+     */
+    public String getEndOfLineComment() {
+        return null;
+    }
+
+    /**
+     * Loads the action arguments from the arguments provided.
+     * @param arguments the arguments to load from
+     */
+    protected abstract void loadArguments(OptionalArguments arguments);
+
+    /**
+     * Save the arguments of the action to the object.
+     * @param arguments The object to store the action arguments within
+     * @param settings settings to use to save the arguments as strings
+     */
+    protected abstract void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings);
+
+    /**
      * Get the kcParam arguments to this action as an array.
      * @param requireNonNull If null arguments should be created and set to zero.
      * @return arguments
      */
     public kcParam[] getArguments(boolean requireNonNull) {
-        kcParam[] output = new kcParam[ARGUMENT_COUNT];
+        kcParam[] output = new kcParam[MAX_ARGUMENT_COUNT];
         kcParamWriter writer = new kcParamWriter(output);
         this.save(writer);
 
@@ -112,6 +180,15 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
     }
 
     /**
+     * Prints warnings about the action which could cause it to behave in undesired ways.
+     * @param logger The logger to print the warnings to.
+     * @param gqsAction The action as a string.
+     */
+    public void printWarnings(Logger logger, String gqsAction) {
+        // Do nothing by default.
+    }
+
+    /**
      * Writes the action to a string builder.
      * @param builder  The builder to write the script to.
      * @param settings The settings used to build the output.
@@ -123,7 +200,7 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        this.toString(builder, kcScriptDisplaySettings.getDefaultSettings(getGameInstance(), this.chunkedFile));
+        this.toString(builder, kcScriptDisplaySettings.getDefaultSettings(getGameInstance(), getChunkedFile()));
         return builder.toString();
     }
 
@@ -134,7 +211,7 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
      * @param settings   The settings used to build the output
      */
     public void writeAction(StringBuilder builder, kcParam[] parameters, kcScriptDisplaySettings settings) {
-        writeAction(builder, this.actionID.name(), getArgumentTemplate(parameters), parameters, settings);
+        writeAction(this.executor, builder, this.actionID.name(), getArgumentTemplate(parameters), parameters, settings);
     }
 
     /**
@@ -145,7 +222,7 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
      * @param parameters       The parameters to the action.
      * @param settings         The settings used to build the output
      */
-    public static void writeAction(StringBuilder builder, String mnemonic, kcArgument[] argumentTemplate, kcParam[] parameters, kcScriptDisplaySettings settings) {
+    public static void writeAction(kcActionExecutor executor, StringBuilder builder, String mnemonic, kcArgument[] argumentTemplate, kcParam[] parameters, kcScriptDisplaySettings settings) {
         builder.append(mnemonic);
 
         for (int i = 0; i < argumentTemplate.length; i++) {
@@ -163,7 +240,7 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
             }
 
             if (parameters != null && parameters.length > i) {
-                parameters[i].toString(builder, parameterType, settings);
+                parameters[i].toString(executor, builder, parameterType, settings);
             } else {
                 builder.append("<MISSING_DATA>");
             }
@@ -193,9 +270,9 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
      * @param reader The reader to read from.
      * @return kcAction
      */
-    public static kcAction readAction(DataReader reader, GreatQuestChunkedFile chunkedFile) {
+    public static kcAction readAction(DataReader reader, kcActionExecutor executor) {
         kcActionID id = kcActionID.getActionByOpcode(reader.readInt());
-        kcAction action = id.newInstance(chunkedFile);
+        kcAction action = id.newInstance(executor);
         action.load(reader);
         return action;
     }

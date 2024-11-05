@@ -1,8 +1,8 @@
 package net.highwayfrogs.editor.games.konami.greatquest.generic;
 
 import net.highwayfrogs.editor.games.generic.data.IGameData;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
-import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 
 /**

@@ -2,8 +2,12 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
 
@@ -14,30 +18,56 @@ import java.util.List;
  */
 public class kcScriptCauseWaypoint extends kcScriptCause {
     private kcScriptCauseWaypointStatus status;
-    private int hEntity;
+    private final GreatQuestHash<kcCResourceEntityInst> otherEntityRef = new GreatQuestHash<>();
 
-    public kcScriptCauseWaypoint(GreatQuestInstance gameInstance) {
-        super(gameInstance, kcScriptCauseType.WAYPOINT, 1);
+    public kcScriptCauseWaypoint(kcScript script) {
+        super(script, kcScriptCauseType.WAYPOINT, 1, 2);
     }
 
     @Override
     public void load(int subCauseType, List<Integer> extraValues) {
         this.status = kcScriptCauseWaypointStatus.getStatus(subCauseType, false);
-        this.hEntity = extraValues.get(0);
+        setOtherEntityHash(extraValues.get(0));
     }
 
     @Override
     public void save(List<Integer> output) {
         output.add(this.status.ordinal());
-        output.add(this.hEntity);
+        output.add(this.otherEntityRef.getHashNumber());
+    }
+
+    @Override
+    protected void loadArguments(OptionalArguments arguments) {
+        this.status = arguments.useNext().getAsEnumOrError(kcScriptCauseWaypointStatus.class);
+        setOtherEntityHash(GreatQuestUtils.getAsHash(arguments.useNext(), -1));
+    }
+
+    @Override
+    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+        arguments.createNext().setAsEnum(this.status);
+        this.otherEntityRef.applyGqsString(arguments.createNext(), settings);
     }
 
     @Override
     public void toString(StringBuilder builder, kcScriptDisplaySettings settings) {
         builder.append("When ");
-        builder.append(kcScriptDisplaySettings.getHashDisplay(settings, this.hEntity, true));
+        builder.append(this.otherEntityRef.getAsGqsString(settings));
         builder.append(' ');
-        builder.append(this.status.getDisplayAction());
+
+        kcCResourceEntityInst targetEntity = getScriptEntity();
+        if (targetEntity != null) {
+            builder.append(this.status.getDisplayAction().replace("the attached waypoint entity", targetEntity.getName()));
+        } else {
+            builder.append(this.status.getDisplayAction());
+        }
+    }
+
+    /**
+     * Changes the hash of the referenced entity resource.
+     * @param otherEntityHash the hash to apply
+     */
+    public void setOtherEntityHash(int otherEntityHash) {
+        GreatQuestUtils.resolveResourceHash(kcCResourceEntityInst.class, getChunkFile(), this, this.otherEntityRef, otherEntityHash, true);
     }
 
     @Getter

@@ -1,7 +1,9 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
 
@@ -14,8 +16,8 @@ import java.util.List;
 public class kcScriptCausePrompt extends kcScriptCause {
     private int promptHash;
 
-    public kcScriptCausePrompt(GreatQuestInstance gameInstance) {
-        super(gameInstance, kcScriptCauseType.PROMPT, 1);
+    public kcScriptCausePrompt(kcScript script) {
+        super(script, kcScriptCauseType.PROMPT, 1, 1);
     }
 
     @Override
@@ -30,6 +32,16 @@ public class kcScriptCausePrompt extends kcScriptCause {
     public void save(List<Integer> output) {
         output.add(1);
         output.add(this.promptHash);
+    }
+
+    @Override
+    protected void loadArguments(OptionalArguments arguments) {
+        this.promptHash = GreatQuestUtils.getAsHash(arguments.useNext(), 0);
+    }
+
+    @Override
+    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+        kcScriptDisplaySettings.applyGqsSyntaxHashDisplay(arguments.createNext(), settings, this.promptHash);
     }
 
     @Override

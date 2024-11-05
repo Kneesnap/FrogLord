@@ -7,7 +7,6 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
-import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestImageFile;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
@@ -83,7 +82,7 @@ public class GreatQuestChunkTextureReference extends kcCResource {
                 throw new IllegalArgumentException("The file path could not be resolved to an image! (" + newPath + ")");
         }
 
-        this.fullPath = newPath;
         setName(GreatQuestUtils.getFileNameFromPath(newPath));
+        this.fullPath = newPath;
     }
 }

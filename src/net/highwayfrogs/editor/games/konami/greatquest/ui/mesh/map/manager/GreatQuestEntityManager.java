@@ -166,7 +166,7 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
 
     @Override
     protected String getListDisplayStyle(int index, kcCResourceEntityInst entity) {
-        return (entity == null || !(entity.getEntity() instanceof kcEntity3DInst)) ? "-fx-text-fill: red;" : super.getListDisplayStyle(index, entity);
+        return (entity == null || !(entity.getInstance() instanceof kcEntity3DInst)) ? "-fx-text-fill: red;" : super.getListDisplayStyle(index, entity);
     }
 
     @Override
@@ -181,7 +181,7 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
 
     @Override
     protected GreatQuestMapEditorEntityDisplay setupDisplay(kcCResourceEntityInst entityInst) {
-        kcEntityInst entity = entityInst.getEntity();
+        kcEntityInst entity = entityInst.getInstance();
         GreatQuestModelMesh modelMesh = this.fallbackModel;
 
         // Resolve entity model, and use cache if possible.
@@ -205,7 +205,7 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
 
         GreatQuestMapEditorEntityDisplay display = getDelegatesByValue().get(entityInst);
         this.activeAnimationCheckBox.setItems(display != null ? display.getModelMesh().getAvailableAnimations() : null);
-        entityInst.getEntity().setupEditor(this, getEditorGrid(), display);
+        entityInst.getInstance().setupEditor(this, getEditorGrid(), display);
     }
 
     @Override

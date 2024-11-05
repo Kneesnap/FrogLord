@@ -580,7 +580,8 @@ public class FileUtils {
         public SavedFilePath(@NonNull String configKeyName, @NonNull String title, BrowserFileType... fileTypes) {
             this.configKeyName = configKeyName;
             this.title = title;
-            this.fileTypes.addAll((fileTypes != null && fileTypes.length > 0) ? Arrays.asList(fileTypes) : Collections.singletonList(BrowserFileType.ALL_FILES));
+            if (fileTypes != null && fileTypes.length > 0)
+                this.fileTypes.addAll(Arrays.asList(fileTypes));
         }
 
         private Config getSavedPaths(GameInstance instance) {

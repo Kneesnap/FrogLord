@@ -178,9 +178,9 @@ public abstract class FolderBrowseComponent extends GameUIController<GameInstanc
         @Override
         protected void onSetFolderPath(String newFilePath) {
             if (this.gameConfig != null) {
-                this.gameConfig.getOrCreateKeyValueNode(this.configKey).setValue(newFilePath);
+                this.gameConfig.getOrCreateKeyValueNode(this.configKey).setAsString(newFilePath);
                 if (GUIMain.getWorkingDirectory() != null)
-                    this.gameConfig.getOrCreateKeyValueNode(GameConfigController.CONFIG_GAME_LAST_FOLDER).setValue(GUIMain.getWorkingDirectory().getAbsolutePath());
+                    this.gameConfig.getOrCreateKeyValueNode(GameConfigController.CONFIG_GAME_LAST_FOLDER).setAsString(GUIMain.getWorkingDirectory().getAbsolutePath());
             }
 
             this.controller.updateLoadButton();

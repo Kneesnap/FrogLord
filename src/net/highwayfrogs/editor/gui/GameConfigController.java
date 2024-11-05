@@ -157,7 +157,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
 
         // Set last selected game type.
         if (this.gameConfigRoot != null && newGameType != null)
-            this.gameConfigRoot.getOrCreateKeyValueNode(CONFIG_ROOT_LAST_SELECTED_GAME_TYPE).setValue(newGameType.getIdentifier());
+            this.gameConfigRoot.getOrCreateKeyValueNode(CONFIG_ROOT_LAST_SELECTED_GAME_TYPE).setAsString(newGameType.getIdentifier());
 
         // Update the game version UI.
         if (newGameType != null) {
@@ -170,7 +170,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
             // Select the last seen version.
             Config gameConfig = this.gameConfigRoot != null ? this.gameConfigRoot.getChildConfigByName(newGameType.getIdentifier()) : null;
             ConfigValueNode versionConfigNameNode = gameConfig != null ? gameConfig.getOptionalKeyValueNode(CONFIG_GAME_LAST_SELECTED_VERSION) : null;
-            String versionConfigName = versionConfigNameNode != null ? versionConfigNameNode.getValue() : null;
+            String versionConfigName = versionConfigNameNode != null ? versionConfigNameNode.getAsString() : null;
 
             for (int i = 0; i < versionConfigs.size(); i++) {
                 GameConfig testGameConfig = versionConfigs.get(i);
@@ -205,7 +205,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
         // Store the last selected option.
         Config gameConfig = this.gameConfigRoot.getOrCreateChildConfigByName(newVersionConfig.getGameType().getIdentifier());
         ConfigValueNode lastVersionNode = gameConfig.getOrCreateKeyValueNode(CONFIG_GAME_LAST_SELECTED_VERSION);
-        lastVersionNode.setValue(newVersionConfig.getInternalName());
+        lastVersionNode.setAsString(newVersionConfig.getInternalName());
 
         // Apply last working directory, if there's one configured.
         Config lastVersionConfig = gameConfig.getChildConfigByName(newVersionConfig.getInternalName());

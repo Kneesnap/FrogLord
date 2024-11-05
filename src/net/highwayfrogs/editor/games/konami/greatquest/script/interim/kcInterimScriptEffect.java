@@ -6,7 +6,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
-import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffect;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcParam;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
@@ -41,7 +41,7 @@ public class kcInterimScriptEffect extends GameData<GreatQuestInstance> {
     public void load(kcScriptEffect effect) {
         this.effectType = effect.getEffectType();
         this.effectID = effect.getEffectID();
-        this.destObjectHash = effect.getTargetEntityHash();
+        this.destObjectHash = effect.getTargetEntityRef().getHashNumber();
         this.unhandledRawBytes = null;
 
         kcParamWriter writer = new kcParamWriter(this.parameters);

@@ -7,7 +7,6 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcMatrix;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcQuat;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector3;
@@ -30,6 +29,8 @@ import java.util.List;
 @Getter
 public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWriter {
     private final kcNode rootNode;
+
+    public static final int MAXIMUM_BONE_COUNT = 255;
 
     public kcCResourceSkeleton(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.HIERARCHY);
@@ -157,6 +158,30 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
         }
 
         // Didn't find any node with this one.
+        return null;
+    }
+
+    /**
+     * Finds a node by its name.
+     * @param name the name to find the node by.
+     * @return node, or null if no node exists with the name.
+     */
+    public kcNode getNodeByName(String name) {
+        if (name == null)
+            throw new NullPointerException("name");
+
+        List<kcNode> nodeQueue = new ArrayList<>();
+        nodeQueue.add(this.rootNode);
+        while (nodeQueue.size() > 0) {
+            kcNode tempNode = nodeQueue.remove(0);
+            if (name.equalsIgnoreCase(tempNode.getName()))
+                return tempNode;
+
+            if (tempNode.children.size() > 0)
+                nodeQueue.addAll(0, tempNode.children);
+        }
+
+        // Didn't find any node with the given name.
         return null;
     }
 

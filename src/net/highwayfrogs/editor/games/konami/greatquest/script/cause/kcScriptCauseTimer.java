@@ -2,8 +2,9 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
 
@@ -15,8 +16,8 @@ public class kcScriptCauseTimer extends kcScriptCause {
     private kcScriptCauseTimerState timerState;
     private int alarmId;
 
-    public kcScriptCauseTimer(GreatQuestInstance gameInstance) {
-        super(gameInstance, kcScriptCauseType.TIMER, 1);
+    public kcScriptCauseTimer(kcScript script) {
+        super(script, kcScriptCauseType.TIMER, 1, 2);
     }
 
     @Override
@@ -29,6 +30,18 @@ public class kcScriptCauseTimer extends kcScriptCause {
     public void save(List<Integer> output) {
         output.add(this.timerState.ordinal());
         output.add(this.alarmId);
+    }
+
+    @Override
+    protected void loadArguments(OptionalArguments arguments) {
+        this.timerState = arguments.useNext().getAsEnumOrError(kcScriptCauseTimerState.class);
+        this.alarmId = arguments.useNext().getAsInteger();
+    }
+
+    @Override
+    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+        arguments.createNext().setAsEnum(this.timerState);
+        arguments.createNext().setAsInteger(this.alarmId);
     }
 
     @Override

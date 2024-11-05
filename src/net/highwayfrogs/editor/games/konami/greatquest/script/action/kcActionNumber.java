@@ -1,13 +1,11 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.script.kcArgument;
-import net.highwayfrogs.editor.games.konami.greatquest.script.kcParam;
-import net.highwayfrogs.editor.games.konami.greatquest.script.kcParamType;
+import net.highwayfrogs.editor.games.konami.greatquest.script.*;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 /**
  * Represents the 'NUMBER' (broadcast number) kcAction.
@@ -19,13 +17,12 @@ import net.highwayfrogs.editor.utils.NumberUtils;
 @Getter
 public class kcActionNumber extends kcAction {
     private static final kcArgument[] DEFAULT_ARGUMENTS = kcArgument.make(kcParamType.INT, "number", kcParamType.NUMBER_OPERATION, "operation");
-    private static final kcArgument[] WITH_ENTITY_ARGUMENTS = kcArgument.make(kcParamType.INT, "number", kcParamType.NUMBER_OPERATION, "operation", kcParamType.HASH, "entity");
+    private static final kcArgument[] WITH_ENTITY_ARGUMENTS = kcArgument.make(kcParamType.INT, "number", kcParamType.NUMBER_OPERATION, "operation", kcParamType.HASH_NULL_IS_ZERO, "entity");
     private int number;
     private NumberOperation operation;
-    private int entityHash;
 
-    public kcActionNumber(GreatQuestChunkedFile chunkedFile) {
-        super(chunkedFile, kcActionID.NUMBER);
+    public kcActionNumber(kcActionExecutor executor) {
+        super(executor, kcActionID.NUMBER);
     }
 
     @Override
@@ -42,9 +39,9 @@ public class kcActionNumber extends kcAction {
         this.number = reader.next().getAsInteger();
         this.operation = NumberOperation.getType(reader.next().getAsInteger(), false);
         if (this.operation == NumberOperation.ENTITY_VARIABLE) {
-            this.entityHash = reader.next().getAsInteger();
-            if (this.entityHash != 0)
-                getLogger().warning("kcActionNumber had an non-zero entity hash set! (Value: " + NumberUtils.toHexString(this.entityHash) + ") This value is has been determined to be ignored by the retail game!");
+            int entityHash = reader.next().getAsInteger();
+            if (entityHash != 0)
+                getLogger().warning("kcActionNumber had an non-zero entity hash set! (Value: " + NumberUtils.toHexString(entityHash) + ") This value is has been determined to be ignored by the retail game!");
         }
     }
 
@@ -53,7 +50,19 @@ public class kcActionNumber extends kcAction {
         writer.write(this.number);
         writer.write(this.operation.ordinal());
         if (this.operation == NumberOperation.ENTITY_VARIABLE)
-            writer.write(this.entityHash);
+            writer.write(0);
+    }
+
+    @Override
+    protected void loadArguments(OptionalArguments arguments) {
+        this.operation = arguments.useNext().getAsEnumOrError(NumberOperation.class);
+        this.number = arguments.useNext().getAsInteger();
+    }
+
+    @Override
+    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+        arguments.createNext().setAsEnum(this.operation);
+        arguments.createNext().setAsInteger(this.number);
     }
 
     public enum NumberOperation {

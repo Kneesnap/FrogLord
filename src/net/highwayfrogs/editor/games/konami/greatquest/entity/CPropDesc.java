@@ -1,8 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
-import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -14,15 +12,11 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
  * Represents the 'CPropDesc' struct.
  * Loaded by CProp::Init.
  * Props have gravity disabled.
- * TODO: This seems to be what rotates collisions differently. Eg: If it is this or extends this, I think this is what causes the rotations to be unexpected. Investigate further.
  * Created by Kneesnap on 8/21/2023.
  */
-@Getter
-@Setter
 public class CPropDesc extends kcActorBaseDesc {
-    private int mode;
-    private int event;
     private static final int PADDING_VALUES = 64;
+    private static final int EVENT_VALUE = -1; // Event is a hash of an event name to trigger when a hit occurs. (CProp::TRiggerHitCallback) But it never appears to be used since why would we want to trigger an event on hit when we can use scripts instead.
 
     public CPropDesc(@NonNull kcCResourceGeneric resource) {
         super(resource);
@@ -31,16 +25,19 @@ public class CPropDesc extends kcActorBaseDesc {
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.mode = reader.readInt();
-        this.event = reader.readInt();
+        reader.skipBytesRequireEmpty(Constants.INTEGER_SIZE); // mode - Seems to always be zero, and it doesn't appear to be used by the code.
+        int event = reader.readInt();
+        if (event != EVENT_VALUE)
+            throw new RuntimeException("Expected 'event' value to always be -1, but was " + event + "!");
+
         reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override
     public void saveData(DataWriter writer) {
         super.saveData(writer);
-        writer.writeInt(this.mode);
-        writer.writeInt(this.event);
+        writer.writeInt(0); // mode - Seems to always be zero.
+        writer.writeInt(EVENT_VALUE); // event - Seems to always be -1.
         writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
@@ -52,12 +49,5 @@ public class CPropDesc extends kcActorBaseDesc {
     @Override
     public kcCResourceGenericType getResourceType() {
         return kcCResourceGenericType.PROP_DESCRIPTION;
-    }
-
-    @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        super.writeMultiLineInfo(builder, padding);
-        builder.append(padding).append("Mode: ").append(this.mode).append(Constants.NEWLINE);
-        builder.append(padding).append("Event: ").append(this.event).append(Constants.NEWLINE);
     }
 }

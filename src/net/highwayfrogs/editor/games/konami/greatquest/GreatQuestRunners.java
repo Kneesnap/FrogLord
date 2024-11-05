@@ -4,23 +4,8 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
-import net.highwayfrogs.editor.file.writer.LargeFileReceiver;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
-import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
-import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
-import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
-import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
-import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionFlag;
-import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionID;
-import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionTemplate;
-import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCauseNumber;
-import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCauseNumber.kcScriptCauseNumberOperation;
-import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffectActor;
-import net.highwayfrogs.editor.games.konami.greatquest.script.kcParam;
-import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
-import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
 import net.highwayfrogs.editor.system.Config;
-import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.io.File;
 import java.util.Scanner;
@@ -60,86 +45,6 @@ public class GreatQuestRunners {
         instance.getMainArchive().save(writer);
         writer.closeReceiver();
         System.out.println("Done.");
-    }
-
-    // This was a test in Rolling Rapids Creek to attempt to mod the game.
-    public static void modRollingRapidsCreek(GreatQuestInstance instance) {
-        GreatQuestAssetBinFile mainFile = instance.getMainArchive();
-
-        // Modify script in rolling rapids creek.
-        GreatQuestChunkedFile rollingRapidsCreek = (GreatQuestChunkedFile) mainFile.getFiles().get(16);
-        kcScript script = rollingRapidsCreek.getScriptList().getScripts().get(33);
-
-        int injectAfter = 1;
-
-        int executionStartNumber = 1337;
-        int executionNumber = executionStartNumber;
-        for (int i = 0; i < 32; i++) {
-            if (i == 0)
-                continue; // Skip
-
-            // Create clear flag function.
-            kcScriptCauseNumber clearFlagDialogCause = new kcScriptCauseNumber(instance, kcScriptCauseNumberOperation.EQUALS, executionNumber++);
-            kcScriptFunction clearFlagFunc = new kcScriptFunction(script, clearFlagDialogCause);
-
-            // Add dialog resource.
-            kcCResourceGeneric clearFlagDialog = new kcCResourceGeneric(rollingRapidsCreek, kcCResourceGenericType.STRING_RESOURCE);
-            clearFlagDialog.getAsStringResource().setValue("Knee Flag Clear Test: " + i);
-            clearFlagDialog.setName("FgClr" + NumberUtils.padNumberString(i, 2), true);
-            int clearFlagDialogHash = GreatQuestUtils.hash(clearFlagDialog.getName());
-            rollingRapidsCreek.getChunks().add(clearFlagDialog);
-
-            // Add dialog action.
-            kcActionTemplate actionClearFlagDialog = (kcActionTemplate) kcActionID.DIALOG.newInstance(rollingRapidsCreek);
-            actionClearFlagDialog.getArguments().add(new kcParam(clearFlagDialogHash));
-            clearFlagFunc.getEffects().add(new kcScriptEffectActor(clearFlagFunc, actionClearFlagDialog, 0x68FF0A2));
-
-            // Add clear action.
-            kcActionFlag actionClearFlag = new kcActionFlag(rollingRapidsCreek, kcActionID.SET_FLAGS);
-            actionClearFlag.getArguments().add(new kcParam(1 << i));
-            clearFlagFunc.getEffects().add(new kcScriptEffectActor(clearFlagFunc, actionClearFlag, 0x68FF0A2));
-
-            // Add increment function.
-            // TODO
-
-            // Created set flag function
-            kcScriptCauseNumber setFlagDialogCause = new kcScriptCauseNumber(instance, kcScriptCauseNumberOperation.EQUALS, executionNumber++);
-            kcScriptFunction setFlagFunc = new kcScriptFunction(script, setFlagDialogCause);
-
-            // Add dialog resource.
-            kcCResourceGeneric setFlagDialog = new kcCResourceGeneric(rollingRapidsCreek, kcCResourceGenericType.STRING_RESOURCE);
-            setFlagDialog.getAsStringResource().setValue("Knee Flag Set: " + i);
-            setFlagDialog.setName("FgSet" + NumberUtils.padNumberString(i, 2), true);
-            int setFlagDialogHash = GreatQuestUtils.hash(setFlagDialog.getName());
-            rollingRapidsCreek.getChunks().add(setFlagDialog);
-
-            // Add dialog action.
-            kcActionTemplate actionSetFlagDialog = (kcActionTemplate) kcActionID.DIALOG.newInstance(rollingRapidsCreek);
-            actionSetFlagDialog.getArguments().add(new kcParam(setFlagDialogHash));
-            setFlagFunc.getEffects().add(new kcScriptEffectActor(setFlagFunc, actionSetFlagDialog, 0x68FF0A2));
-
-            // Add set flag action.
-            kcActionFlag actionSetFlag = new kcActionFlag(rollingRapidsCreek, kcActionID.SET_FLAGS);
-            actionSetFlag.getArguments().add(new kcParam(1 << i));
-            setFlagFunc.getEffects().add(new kcScriptEffectActor(setFlagFunc, actionSetFlag, 0x68FF0A2));
-
-            // Add increment function.
-            // TODO
-
-            // TODO: If last one, set variable to normal trigger.
-
-            // Register functions.
-            script.getFunctions().add(injectAfter++, setFlagFunc);
-            script.getFunctions().add(injectAfter++, clearFlagFunc);
-        }
-
-        File outputFile = new File(instance.getMainGameFolder(), "ModdedPlayable\\data.bin");
-        DataWriter writer = new DataWriter(new LargeFileReceiver(outputFile));
-        mainFile.save(writer);
-        writer.closeReceiver();
-
-        System.out.println("Done.");
-
     }
 
     private static File getBinFile(String[] args) {

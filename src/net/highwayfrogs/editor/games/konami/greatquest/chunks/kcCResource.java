@@ -19,7 +19,6 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
-import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.InputMenu;
@@ -31,6 +30,8 @@ import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -131,7 +132,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
         if (updateHash && didNameChange) {
             int newHash = calculateHash(newName);
             kcCResource otherResource = getParentFile().getResourceByHash(newHash);
-            if (otherResource != this)
+            if (otherResource != this && otherResource != null)
                 throw new IllegalArgumentException("The provided name '" + newName + "' conflicts with another resource: " + otherResource + ".");
         }
 
@@ -314,7 +315,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
                 if (isHashBasedOnName()) {
                     int newHash = calculateHash(newName);
                     kcCResource otherResource = getParentFile().getResourceByHash(newHash);
-                    if (otherResource != this) {
+                    if (otherResource != null && otherResource != this) {
                         FXUtils.makePopUp("The provided name conflicts with another resource: " + otherResource + ".", AlertType.ERROR);
                         return;
                     }
@@ -355,5 +356,30 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
      */
     public void handleDoubleClick() {
         // Do nothing.
+    }
+
+    /**
+     * Returns an empty list if removal is allowed without any prompts/warnings.
+     */
+    public List<String> isRemovalAllowed() {
+        List<String> warnings = new ArrayList<>();
+        if (this.selfHash.getLinkedHashes().size() > 0)
+            warnings.add("There are " + this.selfHash.getLinkedHashes().size() + " usages of " + getName() + "/" + getHashAsHexString() + " which would be broken.");
+
+        return warnings;
+    }
+
+    /**
+     * Called as a hook for when this resource is added to a chunk file.
+     */
+    protected void onAddedToChunkFile() {
+        // Do nothing.
+    }
+
+    /**
+     * Called when this resource is removed from the chunked file.
+     */
+    protected void onRemovedFromChunkFile() {
+        getSelfHash().invalidate(); // Anything references to this hash should be unlinked.
     }
 }

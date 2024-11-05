@@ -3,10 +3,12 @@ package net.highwayfrogs.editor.games.konami.greatquest;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.data.IGameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedResource;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.lambda.Consumer5;
 import net.highwayfrogs.editor.utils.lambda.TriConsumer;
+import net.highwayfrogs.editor.utils.objects.StringNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -113,6 +115,28 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
             return "null";
         } else {
             return getHashNumberAsString();
+        }
+    }
+
+    /**
+     * Get as a string usable in a GreatQuest script.
+     */
+    public String getAsGqsString(kcScriptDisplaySettings settings) {
+        if (this.originalString != null && this.originalString.length() > 0) {
+            return this.originalString;
+        } else {
+            return kcScriptDisplaySettings.getGqsSyntaxHashDisplay(settings, this.hashNumber);
+        }
+    }
+
+    /**
+     * Set a StringNode to have the hash
+     */
+    public void applyGqsString(StringNode node, kcScriptDisplaySettings settings) {
+        if (this.originalString != null && this.originalString.length() > 0) {
+            node.setAsString(this.originalString, true);
+        } else {
+            kcScriptDisplaySettings.applyGqsSyntaxHashDisplay(node, settings, this.hashNumber);
         }
     }
 

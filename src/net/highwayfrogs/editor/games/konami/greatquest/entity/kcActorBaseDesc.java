@@ -34,7 +34,7 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
     private final GreatQuestHash<kcCResourceGeneric> parentHash;
     private final GreatQuestHash<kcCResourceGeneric> modelDescRef;
     private final GreatQuestHash<kcCResourceSkeleton> hierarchyRef; // If this value is -1, it means create a new kcCAnimCtl with CID_PRS for the animation controller. Otherwise, create a new kcCSkeleton from this. kcCSkeleton::InitHierarchy() will be called whenever the hash is not -1.
-    private int channelCount; // Used for initializing the skeleton hierarchy in kcCActorBase::Init
+    private int channelCount = 2; // Used for initializing the skeleton hierarchy in kcCActorBase::Init, this is always seen to be two.
     private final GreatQuestHash<kcCResourceAnimSet> animSetRef; // I've done an extensive search and am confident that this is completely unused.
     private final GreatQuestHash<kcCResourceGeneric> proxyDescRef; // kcCActorBase::Init() will fail if this is not either -1 or a valid hash.
     private final GreatQuestHash<kcCResourceNamedHash> animationSequencesRef; // hAnimHash, kcCActorBase::Init, kcCActorBase::ResetInt TODO: The sequence 'NrmIdle01' is applied by kcCActorBase::ResetInt, if the sequence is found. Does this occur on level load? If so, we might want to put that in the editor. It appears repeating the sequence is enabled, so consider that in the editor too. We should probably have a way to preview action sequences actually.

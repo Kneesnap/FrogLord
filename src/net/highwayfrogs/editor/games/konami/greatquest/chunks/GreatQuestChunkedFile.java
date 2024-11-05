@@ -1,8 +1,7 @@
-package net.highwayfrogs.editor.games.konami.greatquest.file;
+package net.highwayfrogs.editor.games.konami.greatquest.chunks;
 
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
-import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -12,9 +11,9 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IFileExport;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceNamedHash.HashTableEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourcePath;
@@ -45,12 +44,17 @@ import java.util.stream.Collectors;
 
 /**
  * Handles the Frogger TGQ TOC files. (They are maps, but may also have other data(?))
- * These files may appear sorted, but they are not. "\GameData\Level00Global\Text\globaltext.dat", "\GameData\Level07TreeKnowledge\Level\PS2_Level07.dat", and more contain proof that the sorting was just a convention, and not enforced by anything.
+ * These files may appear sorted, but in PS2 PAL there's a little more to it. "\GameData\Level00Global\Text\globaltext.dat", "\GameData\Level07TreeKnowledge\Level\PS2_Level07.dat", etc, show that there may be more to it.
+ * TODO: Over time we should start removing a lot of the export functionality in this class, as it will have been replaced.
  * Created by Kneesnap on 8/25/2019.
  */
-@Getter
 public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFileExport {
     private final List<kcCResource> chunks = new ArrayList<>();
+    private final List<kcCResource> immutableChunks = Collections.unmodifiableList(this.chunks);
+
+    private static final Comparator<kcCResource> RESOURCE_ORDERING = Comparator
+            .comparingInt((kcCResource resource) -> resource.getChunkType().ordinal()) // Sort by resource type.
+            .thenComparing(kcCResource::getName, String.CASE_INSENSITIVE_ORDER); // Sort by name (case-insensitive, alphabetically)
 
     public GreatQuestChunkedFile(GreatQuestInstance instance) {
         super(instance);
@@ -102,10 +106,16 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         }
 
         // Read the chunks. (Chunk data reading occurs after all chunks have been read, in order to allow resolving of hashes into chunk object references, regardless of if the order they are read.)
+        kcCResource lastChunk = null;
         for (int i = 0; i < this.chunks.size(); i++) {
             kcCResource chunk = this.chunks.get(i);
-            if (!(chunk instanceof kcCResourceTOC))
+            if (!(chunk instanceof kcCResourceTOC)) {
                 chunk.loadFromRawBytes(cachedRawDataMap.remove(chunk));
+                if (lastChunk != null && RESOURCE_ORDERING.compare(chunk, lastChunk) < 0)
+                    getLogger().warning("The chunk '" + chunk.getName() + "'/" + chunk.getHashAsHexString() + " was expected to be sorted before '" + lastChunk.getName() + "'/" + lastChunk.getHashAsHexString() + ", but it was found after it!");
+
+                lastChunk = chunk;
+            }
         }
 
         // Alert about chunks which are missing names.
@@ -114,6 +124,11 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             if (chunk.getSelfHash().getOriginalString() == null && !(chunk instanceof kcCActionSequence) && !kcCResource.DEFAULT_RESOURCE_NAME.equals(chunk.getName())) // Action sequences are skipped because at this point they are unburdened by reality.
                 chunk.getLogger().warning("Name hash mismatch! Calculated: " + NumberUtils.to0PrefixedHexString(chunk.calculateHash()) + ", Real: " + chunk.getHashAsHexString());
         }
+
+        // Now that all the data is prepared, load the scripts.
+        kcScriptList scriptList = getScriptList();
+        if (scriptList != null)
+            scriptList.loadScriptsFromInterim();
     }
 
     @Override
@@ -134,11 +149,11 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     public void save(DataWriter writer) {
         // Write table of contents.
         kcCResourceTOC tableOfContents = new kcCResourceTOC(this);
-        tableOfContents.update(getChunks());
+        tableOfContents.update(this.chunks);
         writeChunk(writer, tableOfContents);
 
         // Write chunks.
-        for (kcCResource chunk : getChunks())
+        for (kcCResource chunk : this.chunks)
             writeChunk(writer, chunk);
     }
 
@@ -189,7 +204,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         Map<Integer, String> nameMap = new HashMap<>();
         for (kcCResource testChunk : this.chunks) {
             String realName = testChunk.getSelfHash().getOriginalString();
-            if (realName != null && (realName.length() > 0))
+            if (realName != null && (realName.length() > 0)) // We use the original strings here instead of the section names since we want the strings we use to resolve back to the expected hash values.
                 nameMap.put(testChunk.getHash(), realName);
 
             if (testChunk instanceof kcCResourceNamedHash) {
@@ -207,16 +222,22 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         return FileUtils.stripExtension(getExportName());
     }
 
-    @Override
-    public void exportToFolder(File folder) throws IOException {
+    /**
+     * Creates display settings for scripts.
+     */
+    public kcScriptDisplaySettings createScriptDisplaySettings() {
         // Build the name map.
         Map<Integer, String> nameMap = calculateLocalHashes();
+        GreatQuestUtils.addDefaultHashesToMap(nameMap);
+        return new kcScriptDisplaySettings(getGameInstance(), this, nameMap, true, true);
+    }
 
+    @Override
+    public void exportToFolder(File folder) throws IOException {
         saveMapObj(folder); // TODO: Here's the slowdown.
         exportChunksToDirectory(folder);
 
-        GreatQuestUtils.addDefaultHashesToMap(nameMap);
-        kcScriptDisplaySettings settings = new kcScriptDisplaySettings(getGameInstance(), this, nameMap, true, true);
+        kcScriptDisplaySettings settings = createScriptDisplaySettings();
         saveActionSequences(new File(folder, "sequences.txt"), settings);
         saveScripts(new File(folder, "scripts.txt"), settings);
 
@@ -236,6 +257,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         saveInfo(new File(folder, "info.txt"));
 
         // Save hashes to file.
+        Map<Integer, String> nameMap = settings.getNamesByHash();
         if (nameMap.size() > 0) {
             File hashFile = new File(folder, "hashes.txt");
 
@@ -246,6 +268,13 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
             Files.write(hashFile.toPath(), lines);
         }
+    }
+
+    /**
+     * Gets the resource chunks tracked by this chunked file.
+     */
+    public List<kcCResource> getChunks() {
+        return this.immutableChunks;
     }
 
     /**
@@ -340,6 +369,38 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     }
 
     /**
+     * Add a resource to the chunked file.
+     * An exception will be thrown if it is not possible to add.
+     * @param resource The resource to add.
+     */
+    public void addResource(kcCResource resource) {
+        if (resource == null)
+            throw new NullPointerException("resource");
+        if (resource instanceof kcCResourceTOC)
+            throw new IllegalArgumentException("Table of Contents chunks cannot be manually added to chunked files.");
+
+        int resourceHash = resource.getHash();
+        if (resourceHash == 0 || resourceHash == -1)
+            throw new IllegalArgumentException("Cannot add resource " + resource + ", as its hash is invalid.");
+
+        kcCResource conflictingResource = getResourceByHash(resourceHash);
+        if (conflictingResource == resource)
+            throw new IllegalArgumentException("Cannot add resource " + resource + ", as it is already registered.");
+        if (conflictingResource != null)
+            throw new IllegalArgumentException("Cannot add resource " + resource + ", as another resource (" + conflictingResource + ") has a conflicting hash.");
+
+        int searchResult = Collections.binarySearch(this.chunks, resource, RESOURCE_ORDERING);
+        if (searchResult >= 0) {
+            conflictingResource = this.chunks.get(searchResult);
+            throw new IllegalArgumentException("[Shouldn't Happen] Cannot add resource " + resource + ", as another resource (" + conflictingResource + ") has a conflicting hash.");
+        }
+
+        int insertionIndex = -(searchResult + 1);
+        this.chunks.add(insertionIndex, resource);
+        resource.onAddedToChunkFile();
+    }
+
+    /**
      * Saves all the entity instances to a file.
      * @param file The file to save to.
      */
@@ -350,14 +411,13 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 continue;
 
             kcCResourceEntityInst entityResource = (kcCResourceEntityInst) testChunk;
-            writeData(builder, entityResource, entityResource.getEntity());
+            writeData(builder, entityResource, entityResource.getInstance());
             builder.append(Constants.NEWLINE);
         }
 
         // Save to folder.
         saveExport(file, builder);
     }
-
 
     /**
      * Saves all the scripts to a file.

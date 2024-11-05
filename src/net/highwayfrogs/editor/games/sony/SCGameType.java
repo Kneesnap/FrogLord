@@ -108,11 +108,11 @@ public enum SCGameType implements IGameType {
         if (!(instance instanceof SCGameInstance))
             throw new ClassCastException("The provided instance was " + Utils.getSimpleName(instance) + ", which was not " + SCGameInstance.class.getSimpleName() + ".");
 
-        String exeFilePath = gameSetupConfig.getKeyValueNodeOrError(CONFIG_EXE_PATH).getValue();
+        String exeFilePath = gameSetupConfig.getKeyValueNodeOrError(CONFIG_EXE_PATH).getAsString();
         if (StringUtils.isNullOrWhiteSpace(exeFilePath))
             throw new RuntimeException("Invalid exeFilePath.");
 
-        String mwdFilePath = gameSetupConfig.hasKeyValueNode(CONFIG_MWD_PATH) ? gameSetupConfig.getKeyValueNodeOrError(CONFIG_MWD_PATH).getValue() : null;
+        String mwdFilePath = gameSetupConfig.hasKeyValueNode(CONFIG_MWD_PATH) ? gameSetupConfig.getKeyValueNodeOrError(CONFIG_MWD_PATH).getAsString() : null;
         File mwdFile = mwdFilePath != null && mwdFilePath.length() > 0 ? new File(mwdFilePath) : null;
         if (mwdFile != null && (!mwdFile.exists() || !mwdFile.isFile()))
             throw new RuntimeException("Invalid mwdFilePath.");

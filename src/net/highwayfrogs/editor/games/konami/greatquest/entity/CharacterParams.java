@@ -43,11 +43,11 @@ public class CharacterParams extends kcActorDesc {
     private short climbHeight;
     private short fallHeight;
     private short monsterGroup;
-    private short AITemp2;
-    private short AITemp3;
-    private short AITemp4;
-    private short AITemp5;
-    private short AITemp6;
+    private short AITemp2; // Used as MeleeAttackDamage in MonsterClass::Set_States
+    private short AITemp3; // Used as MissileAttackDamage in MonsterClass::Set_States
+    private short AITemp4; // Used by MonsterClass::Anim_Checks seems to be speed for swimming/flying, after it is casted to float, then divided by the distance to the target.
+    private short AITemp5; // Appears unused.
+    private short AITemp6; // Appears unused.
     private int closeDistance;
     private short dodgePercent;
     private short tauntPercent;

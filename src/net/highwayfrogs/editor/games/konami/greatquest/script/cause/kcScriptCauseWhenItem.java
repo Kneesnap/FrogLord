@@ -1,7 +1,8 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
 
@@ -18,8 +19,8 @@ import java.util.List;
 public class kcScriptCauseWhenItem extends kcScriptCause {
     private boolean playerShouldHaveItem;
 
-    public kcScriptCauseWhenItem(GreatQuestInstance gameInstance) {
-        super(gameInstance, kcScriptCauseType.WHEN_ITEM, 1);
+    public kcScriptCauseWhenItem(kcScript script) {
+        super(script, kcScriptCauseType.WHEN_ITEM, 1, 1);
     }
 
     @Override
@@ -35,6 +36,16 @@ public class kcScriptCauseWhenItem extends kcScriptCause {
     public void save(List<Integer> output) {
         writeBoolean(output, !this.playerShouldHaveItem);
         output.add(0);
+    }
+
+    @Override
+    protected void loadArguments(OptionalArguments arguments) {
+        this.playerShouldHaveItem = arguments.useNext().getAsBoolean();
+    }
+
+    @Override
+    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+        arguments.createNext().setAsBoolean(this.playerShouldHaveItem);
     }
 
     @Override

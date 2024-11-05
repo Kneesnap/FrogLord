@@ -10,8 +10,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
-import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
@@ -19,8 +19,10 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.entity.GreatQuestMapEditorEntityDisplay;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 /**
@@ -32,8 +34,7 @@ import java.util.Map;
 public class kcEntityInst extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
     private final kcCResourceEntityInst resource;
     private final GreatQuestHash<kcCResourceGeneric> descriptionRef; // Resolved by kcCGameSystem::CreateInstance(), kcCGameSystem::CreateInstance(), kcCEntity::Reset, kcCEntity::Init
-    private int priority = 1;
-    private int group;
+    private int priority = 1; // Usually 1, but sometimes two. This is used by kcCEntityMsgStore::RouteMessage() for placement in a priority queue. Basically, it allows overriding the order messages are processed/stored as.
     private int scriptIndex = -1;
     private final GreatQuestHash<kcCResourceEntityInst> targetEntityRef; // Observed both in raw data, but also kcCEntity::OnCommand[action=9], kcCEntity::ResetInt.
 
@@ -52,7 +53,7 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
         int descriptionHash = reader.readInt();
         reader.skipInt(); // Runtime pointer to description.
         this.priority = reader.readInt();
-        this.group = reader.readInt();
+        reader.skipBytesRequireEmpty(Constants.INTEGER_SIZE); // group. Seems to always be zero. Used by kcCGameSystem::Insert(kcCGameSystem*, kcCEntity*)
         this.scriptIndex = reader.readInt();
         int targetEntityHash = reader.readInt();
 
@@ -75,7 +76,7 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
         writer.writeInt(this.descriptionRef.getHashNumber());
         writer.writeInt(0); // Runtime pointer to description.
         writer.writeInt(this.priority);
-        writer.writeInt(this.group);
+        writer.writeInt(0); // group. Seems to always be zero.
         writer.writeInt(this.scriptIndex);
         writer.writeInt(this.targetEntityRef.getHashNumber());
     }
@@ -99,7 +100,6 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
         // Add basic entity data.
         GreatQuestChunkedFile.writeAssetLine(grid, chunkedFile, "Target Entity", this.targetEntityRef);
         grid.addSignedIntegerField("Priority", this.priority, newValue -> this.priority = newValue);
-        grid.addSignedIntegerField("Group", this.group, newValue -> this.group = newValue);
         grid.addSignedIntegerField("Script Index", this.scriptIndex, newValue -> this.scriptIndex = newValue);
 
         // Add script data, if it exists.
@@ -133,6 +133,39 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
     }
 
     /**
+     * Loads script functions from the config to this entity, creating a new script if necessary.
+     * @param scriptList The script list to resolve/create scripts with.
+     * @param config The config to load script functions from
+     * @param sourceName The source name (usually a file name) representing where the scripts came from.
+     */
+    public void addScriptFunctions(kcScriptList scriptList, Config config, String sourceName) {
+        if (scriptList == null)
+            throw new NullPointerException("scriptList");
+        if (config == null)
+            throw new NullPointerException("config");
+
+        // Get or create a script for ourselves.
+        kcScript script;
+        if (this.scriptIndex >= 0 && this.scriptIndex < scriptList.getScripts().size()) {
+            script = scriptList.getScripts().get(this.scriptIndex);
+        } else {
+            this.scriptIndex = scriptList.getScripts().size();
+            script = new kcScript(getGameInstance(), scriptList, this.resource, new ArrayList<>());
+            scriptList.getScripts().add(script);
+        }
+
+        script.addFunctionsFromConfigNode(config, sourceName);
+    }
+
+    /**
+     * Detach the script from the entity.
+     * No cleanup of any sort is performed on the script, use with caution.
+     */
+    public void removeScriptIndex() {
+        this.scriptIndex = -1;
+    }
+
+    /**
      * Sets up the main information to be edited.
      * @param grid the grid to create the UI inside
      */
@@ -146,7 +179,6 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
 
         GreatQuestChunkedFile.writeAssetLine(chunkedFile, builder, padding, "Description", this.descriptionRef);
         builder.append(padding).append("Priority: ").append(this.priority).append(Constants.NEWLINE);
-        builder.append(padding).append("Group: ").append(this.group).append(Constants.NEWLINE);
         builder.append(padding).append("Script Index: ").append(this.scriptIndex).append(Constants.NEWLINE);
         GreatQuestChunkedFile.writeAssetLine(chunkedFile, builder, padding, "Target Entity", this.targetEntityRef);
     }

@@ -27,7 +27,7 @@ public class NumberUtils {
      * @return isHexInteger
      */
     public static boolean isHexInteger(String str) {
-        if (!str.startsWith("0x"))
+        if (str == null || !str.startsWith("0x"))
             return false;
 
         for (int i = 2; i < str.length(); i++) {
@@ -46,7 +46,8 @@ public class NumberUtils {
      * @return parsedNumber
      */
     public static int parseHexInteger(String str) {
-        return str.startsWith("0x") ? Integer.parseInt(str.substring(2), 16) : Integer.parseInt(str);
+        // We need to use Long.parseLong() since Integer.parseInt() will not accept values larger than 0x80000000.
+        return str.startsWith("0x") ? (int) Long.parseLong(str.substring(2), 16) : Integer.parseInt(str);
     }
 
     /**

@@ -18,7 +18,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 @Setter
 public class kcActorDesc extends kcActorBaseDesc {
     private final kcHealthDesc health;
-    private int invincibleDurationLimitMs; // TODO: May not be used?
+    private int invincibleDurationLimitMs = 2000; // TODO: May not be used?
     private static final int PADDING_VALUES = 3;
 
     public kcActorDesc(@NonNull kcCResourceGeneric resource) {

@@ -39,7 +39,7 @@ public class GreatQuestMainMenuUIController extends MainMenuController<GreatQues
         super.onControllerLoad(rootNode);
 
         // Allow exporting MWI.
-        addMenuItem(this.menuBarFile, "Export Files", () -> { // TODO: Make this use the progress bar later.
+        addMenuItem(this.menuBarFile, "Export Files", () -> {
             File exportFolder = FileUtils.askUserToSelectFolder(getGameInstance(), FILE_EXPORT_FOLDER);
             if (exportFolder == null)
                 return; // Cancel.
@@ -53,15 +53,24 @@ public class GreatQuestMainMenuUIController extends MainMenuController<GreatQues
                 handleError(ex, true, "Failed to save file list text file.");
             }
 
-            int exportedFileCount = 0;
-            for (GreatQuestArchiveFile file : getMainArchive().getFiles()) {
-                getLogger().info("Exporting '" + file.getDebugName() + "'...  (" + (++exportedFileCount) + "/" + getMainArchive().getFiles().size() + ")");
-                try {
-                    file.export(exportDir);
-                } catch (Exception ex) {
-                    throw new RuntimeException("Failed to export the file '" + file.getDebugName() + "'.", ex);
+            getLogger().info("Attempting to export game files.");
+            ProgressBarComponent.openProgressBarWindow(getGameInstance(), "File Export", progressBar -> {
+                progressBar.setTotalProgress(getMainArchive().getFiles().size());
+
+                for (GreatQuestArchiveFile file : getMainArchive().getFiles()) {
+                    progressBar.setStatusMessage("Exporting '" + file.getDebugName() + "'");
+
+                    try {
+                        file.export(exportDir);
+                    } catch (Exception ex) {
+                        throw new RuntimeException("Failed to export the file '" + file.getDebugName() + "'.", ex);
+                    }
+
+                    progressBar.addCompletedProgress(1);
                 }
-            }
+
+                getLogger().info("Successfully exported all game files.");
+            });
         });
 
         /*

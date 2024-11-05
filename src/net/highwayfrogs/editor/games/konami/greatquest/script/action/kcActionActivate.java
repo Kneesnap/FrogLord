@@ -1,12 +1,10 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
 import lombok.Setter;
-import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.script.kcArgument;
-import net.highwayfrogs.editor.games.konami.greatquest.script.kcParam;
-import net.highwayfrogs.editor.games.konami.greatquest.script.kcParamType;
+import net.highwayfrogs.editor.games.konami.greatquest.script.*;
+import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 /**
  * Represents the 'ACTIVATE' kcAction command.
@@ -14,11 +12,11 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcParamType;
  */
 @Setter
 public class kcActionActivate extends kcAction {
-    private static final kcArgument[] ARGUMENTS = kcArgument.make(kcParamType.BOOLEAN, "newState");
+    private static final kcArgument[] ARGUMENTS = kcArgument.make(kcParamType.BOOLEAN, "markAsActive");
     private boolean newState;
 
-    public kcActionActivate(GreatQuestChunkedFile chunkedFile) {
-        super(chunkedFile, kcActionID.ACTIVATE);
+    public kcActionActivate(kcActionExecutor executor) {
+        super(executor, kcActionID.ACTIVATE);
     }
 
     @Override
@@ -34,5 +32,15 @@ public class kcActionActivate extends kcAction {
     @Override
     public void save(kcParamWriter writer) {
         writer.write(this.newState);
+    }
+
+    @Override
+    protected void loadArguments(OptionalArguments arguments) {
+        this.newState = arguments.useNext().getAsBoolean();
+    }
+
+    @Override
+    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+        arguments.createNext().setAsBoolean(this.newState);
     }
 }

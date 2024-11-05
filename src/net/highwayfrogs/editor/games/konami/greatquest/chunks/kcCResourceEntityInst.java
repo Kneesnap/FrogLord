@@ -6,7 +6,6 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
-import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 
 /**
@@ -17,7 +16,7 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.Proper
 @Getter
 @Setter
 public class kcCResourceEntityInst extends kcCResource {
-    private kcEntityInst entity;
+    private kcEntityInst instance;
     private byte[] dummyBytes;
 
     public kcCResourceEntityInst(GreatQuestChunkedFile parentFile) {
@@ -36,14 +35,14 @@ public class kcCResourceEntityInst extends kcCResource {
         if (sizeInBytes != calculatedSize)
             throw new RuntimeException("The expected amount of entity data (" + sizeInBytes + " bytes) different from the actual amount (" + calculatedSize + " bytes).");
 
-        this.entity = null;
+        this.instance = null;
         this.dummyBytes = null;
         if (sizeInBytes == kcEntity3DInst.SIZE_IN_BYTES) {
-            this.entity = new kcEntity3DInst(this);
-            this.entity.load(reader);
+            this.instance = new kcEntity3DInst(this);
+            this.instance.load(reader);
         } else if (sizeInBytes == kcEntityInst.SIZE_IN_BYTES) {
-            this.entity = new kcEntityInst(this);
-            this.entity.load(reader);
+            this.instance = new kcEntityInst(this);
+            this.instance.load(reader);
         } else {
             // TODO: Let's reverse engineer this.
             getLogger().severe("Couldn't identify the entity type for '" + getName() + "' from the byte size of " + sizeInBytes + ".");
@@ -54,8 +53,8 @@ public class kcCResourceEntityInst extends kcCResource {
     @Override
     public void save(DataWriter writer) {
         super.save(writer);
-        if (this.entity != null) {
-            this.entity.save(writer);
+        if (this.instance != null) {
+            this.instance.save(writer);
         } else if (this.dummyBytes != null) {
             writer.writeBytes(this.dummyBytes);
         }

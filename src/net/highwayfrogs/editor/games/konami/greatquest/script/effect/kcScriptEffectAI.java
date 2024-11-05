@@ -5,7 +5,9 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionAIS
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptEffectType;
+import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 /**
  * Implements AI script effects.
@@ -13,10 +15,23 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptEffectType
  */
 @Getter
 public class kcScriptEffectAI extends kcScriptEffectAction {
-    private kcActionAISetGoal action;
+    private final kcActionAISetGoal action = new kcActionAISetGoal(this);;
+
+    public static final String EFFECT_COMMAND = "AI.SetGoal";
+
+    public kcScriptEffectAI(kcScriptFunction parentFunction) {
+        this(parentFunction, 0); // An effect ID of 0 has been seen in
+    }
 
     public kcScriptEffectAI(kcScriptFunction parentFunction, int effectID) {
         super(parentFunction, kcScriptEffectType.AI, effectID);
+        if (effectID != 0) // Zero is the only valid effect ID, as seen in kcCScriptMgr::FireEvent()
+            throw new RuntimeException("Unsupported effect ID: " + effectID + " (Expected 0)");
+    }
+
+    @Override
+    public String getEffectCommandName() {
+        return EFFECT_COMMAND;
     }
 
     @Override
@@ -24,12 +39,21 @@ public class kcScriptEffectAI extends kcScriptEffectAction {
         if (getEffectID() != 0)
             throw new RuntimeException("Unknown AI effect ID " + getEffectID());
 
-        this.action = new kcActionAISetGoal(getChunkedFile());
         this.action.load(reader);
     }
 
     @Override
     public void save(kcParamWriter writer) {
         this.action.save(writer);
+    }
+
+    @Override
+    protected void loadArguments(OptionalArguments arguments) {
+        this.action.load(arguments);
+    }
+
+    @Override
+    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+        this.action.save(arguments, settings);
     }
 }
