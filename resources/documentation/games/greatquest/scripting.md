@@ -1,9 +1,8 @@
 # Great Quest Scripting (GQS)
 Frogger: The Great Quest has most of its "story"/per-level occurrences managed entirely through a scripting system.
-This system gives tons of flexibility to create mods due to the immense amount of 
+This system gives tons of flexibility to create mods since this lets us change almost all level behavior.  
 This scripting system is NOT the same thing as Noodle, which is the FrogLord scripting system.
-Instead, GQS/kcScript is a term for the scripting system found in the original Frogger: The Great Quest.
-The official name for this system is not known, so we use the term "QGS" to refer to FrogLord's support for this system, and kcScript as a placeholder name for the original system.
+Instead, GQS/kcScript is a term we made for the scripting system found in the original Frogger: The Great Quest, as the official/original name is not known.
 
 ## The Basics
 Each entity in a level can have a script, for example Frogger, coins, etc.
@@ -14,7 +13,7 @@ On the other hand, effects are the commands which can impact the game, such as b
 The following example would play a sound effect when the level loads.
 
 **Example:**  
-```properties
+```PowerShell
 [Function]
 cause=OnLevel BEGIN
 PlaySound "sfx/level_start_sfx"
@@ -59,7 +58,7 @@ cause=OnNumber EQUALS 2
 ShowDialog "DialogTwo"
 
 [Function]
-cause=.... # This function's cause doesn't matter for the purpose of this example.
+cause=... # This function's cause doesn't matter for the purpose of this example.
 # This is a very basic example, but in the following function we can choose which of the two above functions we run by choosing either:
 #SetVariable 0 1 # This would set Variable #0 to equal 1
 #SetVariable 0 2 # This would set Variable #0 to equal 2
