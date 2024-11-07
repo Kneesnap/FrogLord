@@ -51,6 +51,16 @@ public class kcParamWriter {
         getOrCreateNextParam().setValue(value);
     }
 
+    /**
+     * Writes the value to the next argument index.
+     * @param enumValue The value to write.
+     */
+    public <TEnum extends Enum<TEnum>> void write(TEnum enumValue) {
+        if (enumValue == null)
+            throw new NullPointerException("enumValue");
+
+        getOrCreateNextParam().setValue(enumValue.ordinal());
+    }
 
     /**
      * Writes the value to the next argument index.

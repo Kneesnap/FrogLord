@@ -149,7 +149,7 @@ public class GreatQuestHashReverser {
             for (String str : reverseHashes)
                 System.out.println(" - " + str);
             System.out.println(reverseHashes.size() + " result(s) in " + (hashEndTime - hashStartTime) + " ms for " + NumberUtils.to0PrefixedHexString(hash) + ".");
-
+            printHashIfKnown(hash);
         } else if (line.startsWith("@")) {
             line = line.substring(1);
 
@@ -172,6 +172,7 @@ public class GreatQuestHashReverser {
             for (String str : reverseHashes)
                 System.out.println(" - " + str);
             System.out.println(reverseHashes.size() + " result(s) in " + (hashEndTime - hashStartTime) + " ms for " + NumberUtils.to0PrefixedHexString(hash) + ".");
+            printHashIfKnown(hash);
         } else if (line.startsWith("#")) {
             line = line.substring(1);
 
@@ -189,9 +190,26 @@ public class GreatQuestHashReverser {
             System.out.println("Full File Path: '" + line + "'");
             System.out.println("Hash File Path: '" + hashFilePath + "'");
             System.out.println("Hash: " + NumberUtils.to0PrefixedHexString(GreatQuestUtils.hash(hashFilePath)));
-        } else {
-            System.out.println("Hash: " + NumberUtils.to0PrefixedHexString(GreatQuestUtils.hash(line)) + " (Case Sensitive: " + NumberUtils.to0PrefixedHexString(GreatQuestUtils.hash(line, false)) + ")");
+        } else if (!NumberUtils.isHexInteger("0x" + line) || !printHashIfKnown(NumberUtils.parseHexInteger("0x" + line))) {
+            System.out.println("Hash: " + NumberUtils.to0PrefixedHexString(GreatQuestUtils.hash(line)));
         }
+    }
+
+    private static Map<Integer, String> HARDCODED_HASHES;
+    private static boolean printHashIfKnown(int hash) {
+        if (HARDCODED_HASHES == null) {
+            HARDCODED_HASHES = new HashMap<>();
+            GreatQuestUtils.addDefaultHashesToMap(HARDCODED_HASHES);
+        }
+
+        String knownStr = HARDCODED_HASHES.get(hash);
+        if (knownStr != null) {
+            System.out.println();
+            System.out.println("The hash " + NumberUtils.to0PrefixedHexString(hash) + " is recognized as '" + knownStr + "'.");
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -434,7 +452,6 @@ public class GreatQuestHashReverser {
     }
 
     private static List<String> generateStrings(TGQHashContext context) {
-        // TODO: Consider doing this in parallel. In theory this should distribute very easily.
         // Generate possible strings.
         boolean debugMode = context.isDebugMode();
         List<String> results = new ArrayList<>();

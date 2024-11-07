@@ -61,7 +61,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
     private final List<kcScriptFunction> functions;
     private final kcCResourceEntityInst entity;
 
-    public static final String CONFIG_FIELD_SCRIPT_CAUSE = "trigger";
+    public static final String CONFIG_FIELD_SCRIPT_CAUSE = "cause";
     public static final String EXTENSION = "gqs";
 
     public kcScript(GreatQuestInstance instance, kcScriptList scriptList, kcCResourceEntityInst entity, List<kcScriptFunction> functions) {

@@ -152,6 +152,10 @@ public class kcScriptDisplaySettings extends GameObject<GreatQuestInstance> {
      * @return defaultSettings
      */
     public static kcScriptDisplaySettings getDefaultSettings(GreatQuestInstance gameInstance, GreatQuestChunkedFile parentFile) {
-        return new kcScriptDisplaySettings(gameInstance, parentFile, null, true, true);
+        if (parentFile != null) {
+            return parentFile.createScriptDisplaySettings();
+        } else {
+            return new kcScriptDisplaySettings(gameInstance, null, null, true, true);
+        }
     }
 }

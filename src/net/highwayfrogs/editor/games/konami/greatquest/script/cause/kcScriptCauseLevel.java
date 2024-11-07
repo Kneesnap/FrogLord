@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySet
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * A cause relating to levels.
@@ -39,6 +40,13 @@ public class kcScriptCauseLevel extends kcScriptCause {
     @Override
     protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
         arguments.createNext().setAsEnum(this.subType);
+    }
+
+    @Override
+    public void printWarnings(Logger logger) {
+        super.printWarnings(logger);
+        if (this.subType == kcScriptCauseLevelSubType.END)
+            printWarning(logger, "uses kcScriptCauseLevelSubType " + this.subType + ", which is not properly supported by the game.");
     }
 
     @Override

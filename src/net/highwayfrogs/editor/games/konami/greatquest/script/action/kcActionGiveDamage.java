@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcActorBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcActorDesc;
-import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCauseDamage.DamageFlag;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcHealthDesc.kcDamageType;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
@@ -43,25 +43,25 @@ public class kcActionGiveDamage extends kcActionTemplate {
     @Override
     protected void loadArguments(OptionalArguments arguments) {
         getAttackStrength().setValue(arguments.useNext().getAsInteger());
-        getWeaponMask().setValue(DamageFlag.getValueFromArguments(arguments));
+        getWeaponMask().setValue(kcDamageType.getValueFromArguments(arguments));
     }
 
     @Override
     protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
         arguments.createNext().setAsInteger(getAttackStrength().getAsInteger());
-        DamageFlag.addFlags(getWeaponMask().getAsInteger(), arguments);
+        kcDamageType.addFlags(getWeaponMask().getAsInteger(), arguments);
     }
 
     @Override
-    public void printWarnings(Logger logger, String gqsAction) {
-        super.printWarnings(logger, gqsAction);
+    public void printWarnings(Logger logger) {
+        super.printWarnings(logger);
         int attackStrength = getAttackStrength().getAsInteger();
         int weaponMask = getWeaponMask().getAsInteger();
         if (attackStrength == 0) {
-            getLogger().warning("The action '" + gqsAction + "' will be skipped by the game, since the attackStrength is zero!");
+            printWarning(logger, "the attackStrength is zero!");
         } else if (weaponMask == 0) { // This even occurs when negative attack strength (healing) provided.
             // kcCActor::OnDamage() verifies that weaponMask != 0 before applying or healing.
-            getLogger().warning("The action '" + gqsAction + "' will be skipped by the game, since the weaponMask is zero!");
+            printWarning(logger, "the weaponMask is zero!");
         } else if (attackStrength >= 0) { // When the attackStrength is less than zero, it will cause healing, which doesn't do the immunity test. (But the weaponMask still must not be zero!)
             // Test that the target entity can even receive the damage.
             kcActorBaseDesc actorDesc = getExecutor() != null ? getExecutor().getExecutingActorBaseDescription() : null;
@@ -69,7 +69,7 @@ public class kcActionGiveDamage extends kcActionTemplate {
                 int immuneMask = ((kcActorDesc) actorDesc).getHealth().getImmuneMask();
                 int overlappingMask = (weaponMask & immuneMask);
                 if (overlappingMask != 0)
-                    getLogger().warning("The action '" + gqsAction + "' will be skipped, since the target (" + actorDesc.getResource().getName() + ") is immune to the damage flags: " + DamageFlag.getFlagsAsString(overlappingMask));
+                    printWarning(logger, "the target (" + actorDesc.getResource().getName() + ") is immune to the damage flags: " + kcDamageType.getFlagsAsString(overlappingMask));
             }
         }
     }

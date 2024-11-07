@@ -35,10 +35,8 @@ public class kcActionLazyTemplate extends kcActionTemplate {
     public static final kcArgument[] LOOP_ARGUMENTS = kcArgument.make(kcParamType.INT, "loopCount");
     public static final kcArgument[] IMPULSE_ARGUMENTS = kcArgument.make(kcParamType.FLOAT, "x", kcParamType.FLOAT, "y", kcParamType.FLOAT, "z");
     public static final kcArgument[] PROMPT_ARGUMENTS = kcArgument.make(kcParamType.HASH, "promptRes");
-    public static final kcArgument[] SET_ALARM_ARGUMENTS = kcArgument.make(kcParamType.ALARM_ID, "alarmId", kcParamType.MILLISECONDS, "duration", kcParamType.INT, "repeatCount");
     public static final kcArgument[] VARIABLE_SET_ARGUMENTS = kcArgument.make(kcParamType.VARIABLE_ID, "variableId", kcParamType.INT, "value");
     public static final kcArgument[] VARIABLE_ADD_ARGUMENTS = kcArgument.make(kcParamType.VARIABLE_ID, "variableId", kcParamType.INT, "value");
     public static final kcArgument[] WITH_ITEM_ARGUMENTS = kcArgument.make(kcParamType.INVENTORY_ITEM, "item");
-    public static final kcArgument[] GIVE_TAKE_ITEM_ARGUMENTS = kcArgument.make(kcParamType.INVERTED_BOOLEAN, "shouldGiveItem", kcParamType.INVENTORY_ITEM, "item");
     public static final kcArgument[] SAVEPOINT_ARGUMENTS = kcArgument.make(kcParamType.UNSIGNED_INT, "savePointNumber", kcParamType.FLOAT, "x", kcParamType.FLOAT, "y", kcParamType.FLOAT, "z");
 }

@@ -15,6 +15,7 @@ import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Represents a "cause", or a condition which causes a script to run.
@@ -55,10 +56,13 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
      */
     public final void load(OptionalArguments arguments) {
         if (!validateGqsArgumentCount(arguments.getRemainingArgumentCount()))
-            throw new RuntimeException("Cannot load " + Utils.getSimpleName(this) + "[" + getType() + "] from '" + arguments + "' since " + this.gqsArgumentCount + " arguments were expected, but " + arguments.getRemainingArgumentCount() + " were found.");
+            throw new RuntimeException("Cannot load " + Utils.getSimpleName(this) + "[" + getType() + "] from '" + arguments + "' since " + getGqsArgumentCount() + " arguments were expected, but " + arguments.getRemainingArgumentCount() + " were found.");
 
         loadArguments(arguments);
         arguments.warnAboutUnusedArguments(getLogger());
+        printWarnings(getLogger());
+        if (!validateGqsArgumentCount(arguments.getOrderedArgumentCount()))
+            throw new RuntimeException("Cannot load " + Utils.getSimpleName(this) + "[" + getType() + "] from '" + arguments + "' since " + getGqsArgumentCount() + " arguments were expected, but " + arguments.getOrderedArgumentCount() + " were found.");
     }
 
     /**
@@ -73,7 +77,7 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
 
         int argumentCount = (arguments.getOrderedArgumentCount() - oldCount);
         if (!validateGqsArgumentCount(argumentCount))
-            throw new RuntimeException("Expected '" + arguments + "' to have " + this.gqsArgumentCount + " arguments, but it actually had " + argumentCount + ".");
+            throw new RuntimeException("Expected '" + arguments + "' to have " + getGqsArgumentCount() + " arguments, but it actually had " + argumentCount + ".");
     }
 
     /**
@@ -104,7 +108,7 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
      * @return If we support this many arguments.
      */
     public boolean validateGqsArgumentCount(int argumentCount) {
-        return argumentCount == this.gqsArgumentCount;
+        return argumentCount >= getGqsArgumentCount();
     }
 
     /**
@@ -126,7 +130,37 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
 
     @Override
     public String toString() {
-        return this.toString(kcScriptDisplaySettings.getDefaultSettings(getGameInstance(), this.parentFunction != null ? this.parentFunction.getChunkedFile() : null));
+        return this.toString(createDisplaySettings());
+    }
+
+    /**
+     * Gets this cause as a string in gqs format.
+     */
+    public String getAsGqsStatement() {
+        OptionalArguments arguments = new OptionalArguments();
+        save(arguments, createDisplaySettings());
+        return arguments.toString();
+    }
+
+    /**
+     * Prints warnings about this script cause to the logger.
+     * @param logger the logger to print warnings to
+     */
+    public void printWarnings(Logger logger) {
+        this.type.getMinimumEntityGroup().logEntityTypeWarnings(logger, this, this.type.getDisplayName());
+    }
+
+    /**
+     * Prints a warning.
+     * @param logger the logger to print the warning to
+     * @param warning the warning to print
+     */
+    public final void printWarning(Logger logger, String warning) {
+        logger.warning("The cause '" + getAsGqsStatement() + "' " + warning);
+    }
+
+    private kcScriptDisplaySettings createDisplaySettings() {
+        return kcScriptDisplaySettings.getDefaultSettings(getGameInstance(), this.parentFunction != null ? this.parentFunction.getChunkedFile() : null);
     }
 
     /**

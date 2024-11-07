@@ -77,7 +77,7 @@ public class GreatQuestUtils {
             "ModeAfterMovie", // modeMovieInit()
             "MovieContinueGame", // PlayMovieUpdate()
             "LockPlayerControl", "UnlockPlayerControl", "DialogBegin", "DialogAdvance", "DialogEnd", // kcRegisterEvents()
-            "ShakeCameraRand", "TracePublicEvent", "EvStartDemoBGM", "EvStartDemoBGM", // kcRegisterEvents()
+            "ShakeCameraRand", "TracePublicEvent", "EvStartDemoBGM", // kcRegisterEvents()
             "PlayMidMovie01", "PlayMidMovie02", "PlayMidMovie03", "PlayMidMovie04", "PlayMidMovie05", "PlayMidMovie06", // RegisterEvents()
             "PlayMidMovie07", "PlayMidMovie08", "PlayMidMovie09", "PlayMidMovie10"); // RegisterEvents()
 

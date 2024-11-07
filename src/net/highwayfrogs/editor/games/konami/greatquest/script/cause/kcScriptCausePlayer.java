@@ -2,11 +2,13 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Represents a cause of a player action.
@@ -41,12 +43,27 @@ public class kcScriptCausePlayer extends kcScriptCause {
     }
 
     @Override
+    public void printWarnings(Logger logger) {
+        super.printWarnings(logger);
+        kcCResourceEntityInst entity = getScriptEntity();
+        if (entity != null && entity.getHash() == kcEntityInst.PLAYER_ENTITY_HASH)
+            printWarning(logger, "will never occur because the script entity is the player entity.");
+
+        if (!this.action.isImplementedForPlayer())
+            printWarning(logger, "uses action " + this.action + ", which is not supported by the Player cause type.");
+        this.action.getEntityGroup().logEntityTypeWarnings(logger, this, this.action.name());
+    }
+
+    @Override
     public void toString(StringBuilder builder, kcScriptDisplaySettings settings) {
-        kcCResourceEntityInst targetEntity = getScriptEntity();
-        if (targetEntity != null && targetEntity.getName() != null) {
-            builder.append(this.action.getPlayerDescription().replace("the attached entity", targetEntity.getName()));
-        } else {
-            builder.append(this.action.getPlayerDescription());
-        }
+        kcCResourceEntityInst scriptEntity = getScriptEntity();
+        String actorDescription = this.action.getPlayerDescription()
+                .replace("another entity/player", "the player");
+
+        // Replace script entity name.
+        if (scriptEntity != null && scriptEntity.getName() != null)
+            actorDescription = actorDescription.replace("the script entity", scriptEntity.getName());
+
+        builder.append(actorDescription);
     }
 }

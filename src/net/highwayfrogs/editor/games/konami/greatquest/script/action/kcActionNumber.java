@@ -11,7 +11,13 @@ import net.highwayfrogs.editor.utils.objects.OptionalArguments;
  * Represents the 'NUMBER' (broadcast number) kcAction.
  * Each kcCEntity contains eight int32 variable slots, indexed by 0 through 7.
  * It may contain an entity argument, suggesting it can access variables on another entity.
- * However, upon further investigation, kcCScriptMgr::FireActorEvent() ignores the script parameter, always using the target entity instead.
+ * However, upon further investigation, kcCScriptMgr::FireActorEvent() ensures that the script entity is always where the variables are obtained from.
+ * In other words, when using the --AsEntity flag to broadcast a number as another entity, it will use the variable value from the script entity.
+ * This behavior can be observed by looking at BarrelInst004 in The Goblin Fort on PC.
+ *  -> There are three barrels, and 004 sits on top of the other two.
+ *  -> When either 002 or 003 are broken, they will broadcast their number of 0 to break the top barrel (004)
+ *  -> Upon receiving the number 0 from 002 or 003, it will also break, and mark the variables in 002/003 to be 10, so the next breakage will only move the top barrel up.
+ *  -> Thus, if you break 004 then break 002/003, a glitch will occur where the top barrel will appear to break twice. This is only possible if it's using the variables as described.
  * Created by Kneesnap on 8/24/2023.
  */
 @Getter

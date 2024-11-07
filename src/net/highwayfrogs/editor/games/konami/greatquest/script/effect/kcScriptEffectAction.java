@@ -31,7 +31,7 @@ public abstract class kcScriptEffectAction extends kcScriptEffect implements kcA
     protected void printLoadWarnings(OptionalArguments arguments) {
         kcAction action = getAction();
         if (action != null)
-            action.printWarnings(getLogger(), arguments.toString());
+            action.printWarnings(getLogger());
 
         super.printLoadWarnings(arguments);
     }

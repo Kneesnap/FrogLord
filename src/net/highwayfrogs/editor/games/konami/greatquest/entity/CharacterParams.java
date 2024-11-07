@@ -25,9 +25,9 @@ public class CharacterParams extends kcActorDesc {
     private float homeRange;
     private float coreRange;
     private float visionRange;
-    private float visionFov;
+    private float visionFov; // Used by CCharacter::IsPointInDialogRange
     private float hearRange;
-    private float dialogRange = 2.5F; // Ignored when read.
+    private float dialogRange = 2.5F; // Ignored when read by CCharacter::Init (Used by CCharacter::IsPointInDialogRange)
     private float huntRange;
     private float defendRange;
     private float attackRange;

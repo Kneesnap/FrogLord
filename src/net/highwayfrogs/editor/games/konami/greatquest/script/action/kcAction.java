@@ -104,6 +104,17 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
     }
 
     /**
+     * Gets the action as a gqs statement string.
+     */
+    public String getAsGqsStatement() {
+        OptionalArguments arguments = new OptionalArguments();
+        arguments.createNext().setAsString(this.actionID.getFrogLordName(), false);
+        GreatQuestChunkedFile chunkedFile = getChunkedFile();
+        this.save(arguments, chunkedFile != null ? chunkedFile.createScriptDisplaySettings() : null);
+        return arguments.toString();
+    }
+
+    /**
      * Loads this kcAction data from an OptionalArguments object.
      * @param arguments The arguments to load the data from
      */
@@ -182,10 +193,18 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
     /**
      * Prints warnings about the action which could cause it to behave in undesired ways.
      * @param logger The logger to print the warnings to.
-     * @param gqsAction The action as a string.
      */
-    public void printWarnings(Logger logger, String gqsAction) {
-        // Do nothing by default.
+    public void printWarnings(Logger logger) {
+        this.actionID.getActionTargetType().logEntityTypeWarnings(logger, this, this.actionID.getFrogLordName());
+    }
+
+    /**
+     * Prints a warning.
+     * @param logger the logger to print the warning to
+     * @param warning the warning to print
+     */
+    public void printWarning(Logger logger, String warning) {
+        logger.warning("The action '" + getAsGqsStatement() + "' will be skipped by the game, since " + warning);
     }
 
     /**

@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySet
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Called when the specified entity comes within range of the kcCEntity3D the script is attached to.
@@ -49,6 +50,13 @@ public class kcScriptCauseWaypoint extends kcScriptCause {
     }
 
     @Override
+    public void printWarnings(Logger logger) {
+        super.printWarnings(logger);
+        if (this.otherEntityRef.getResource() == null) // The other entity could be a kcCEntity, there is no type-restriction.
+            printWarning(logger, "will never occur because other entity could not be found.");
+    }
+
+    @Override
     public void toString(StringBuilder builder, kcScriptDisplaySettings settings) {
         builder.append("When ");
         builder.append(this.otherEntityRef.getAsGqsString(settings));
@@ -73,8 +81,8 @@ public class kcScriptCauseWaypoint extends kcScriptCause {
     @Getter
     @AllArgsConstructor
     public enum kcScriptCauseWaypointStatus {
-        ENTITY_ENTERS_WAYPOINT("enters the attached waypoint entity's area"),
-        ENTITY_LEAVES_WAYPOINT("leaves the attached waypoint entity's area");
+        ENTITY_ENTERS("enters the attached waypoint entity's area"),
+        ENTITY_LEAVES("leaves the attached waypoint entity's area");
 
         private final String displayAction;
 

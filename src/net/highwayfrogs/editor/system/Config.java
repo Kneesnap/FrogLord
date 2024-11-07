@@ -463,8 +463,10 @@ public class Config implements IBinarySerializable {
     }
 
     private void toString(StringBuilder builder, String sectionStart, String sectionEnd) {
+        int builderStartLength = builder.length();
+
         // Write key value pairs.
-        for (Entry<String, ConfigValueNode> entry : this.keyValuePairs.entrySet()){
+        for (Entry<String, ConfigValueNode> entry : this.keyValuePairs.entrySet()) {
             builder.append(escapeKey(entry.getKey()));
             builder.append("=");
             builder.append(entry.getValue().getTextWithComments());
@@ -479,7 +481,8 @@ public class Config implements IBinarySerializable {
         }
 
         // Empty line between sections.
-        builder.append(Constants.NEWLINE);
+        if (builder.length() > builderStartLength)
+            builder.append(Constants.NEWLINE);
 
         // Write child sections in order.
         if (this.internalChildConfigs.size() > 0) {

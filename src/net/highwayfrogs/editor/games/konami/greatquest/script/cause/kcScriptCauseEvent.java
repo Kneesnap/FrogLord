@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySet
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Allows a script event to trigger for an event.
@@ -48,9 +49,15 @@ public class kcScriptCauseEvent extends kcScriptCause {
     }
 
     @Override
+    public void printWarnings(Logger logger) {
+        super.printWarnings(logger);
+        printWarning(logger, "is not supported by the game.");
+    }
+
+    @Override
     public void toString(StringBuilder builder, kcScriptDisplaySettings settings) {
-        builder.append("When any event occurs (Should be for just '");
+        builder.append("When any event is triggered. (Should be for just '");
         builder.append(kcScriptDisplaySettings.getHashDisplay(settings, this.eventNameHash, true));
-        builder.append("', but the game looks bugged)");
+        builder.append("', but the game is broken)");
     }
 }

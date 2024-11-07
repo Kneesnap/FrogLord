@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySet
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Represents cause information for a dialog.
@@ -48,6 +49,15 @@ public class kcScriptCauseDialog extends kcScriptCause {
     protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
         arguments.createNext().setAsEnum(this.stage);
         this.dialogRef.applyGqsString(arguments.createNext(), settings);
+    }
+
+    @Override
+    public void printWarnings(Logger logger) {
+        super.printWarnings(logger);
+        if (this.stage == kcScriptDialogStage.END)
+            printWarning(logger, "executes on dialog stage '" + this.stage + "', which is not supported by the game.");
+        if (this.dialogRef.getResource() == null)
+            printWarning(logger, "cannot resolve the dialog string reference, so it will be skipped by the game.");
     }
 
     @Override

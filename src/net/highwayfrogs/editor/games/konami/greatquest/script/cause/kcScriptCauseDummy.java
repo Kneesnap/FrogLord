@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Implements a basic "dumb" script cause that can be used as a replacement for another script.
@@ -80,5 +81,11 @@ public class kcScriptCauseDummy extends kcScriptCause {
     @Override
     public boolean validateGqsArgumentCount(int argumentCount) {
         return true;
+    }
+
+    @Override
+    public void printWarnings(Logger logger) {
+        super.printWarnings(logger);
+        printWarning(logger, "is a dummy cause, which isn't supposed to happen!");
     }
 }

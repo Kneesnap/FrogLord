@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySet
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Caused by the player responding to a prompt.
@@ -45,9 +46,15 @@ public class kcScriptCausePrompt extends kcScriptCause {
     }
 
     @Override
+    public void printWarnings(Logger logger) {
+        super.printWarnings(logger);
+        printWarning(logger, "is not supported by the game.");
+    }
+
+    @Override
     public void toString(StringBuilder builder, kcScriptDisplaySettings settings) {
         builder.append("The player responds to the dialog prompt ");
         builder.append(kcScriptDisplaySettings.getHashDisplay(settings, this.promptHash, true));
-        builder.append(" (This feature was not finished, so it will not work properly)");
+        builder.append(". (This feature was not finished, so it will not work properly)");
     }
 }

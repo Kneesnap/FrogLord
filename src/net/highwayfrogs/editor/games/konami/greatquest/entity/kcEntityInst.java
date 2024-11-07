@@ -39,12 +39,14 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
     private final GreatQuestHash<kcCResourceEntityInst> targetEntityRef; // Observed both in raw data, but also kcCEntity::OnCommand[action=9], kcCEntity::ResetInt.
 
     public static final int SIZE_IN_BYTES = 28;
+    public static final String PLAYER_ENTITY_NAME = "FrogInst001";
+    public static final int PLAYER_ENTITY_HASH = GreatQuestUtils.hash(PLAYER_ENTITY_NAME);
 
     public kcEntityInst(kcCResourceEntityInst resource) {
         super(resource.getGameInstance());
         this.resource = resource;
         this.descriptionRef = new GreatQuestHash<>();
-        this.targetEntityRef = new GreatQuestHash<>("FrogInst001"); // Everything seems to target FrogInst001 by default.
+        this.targetEntityRef = new GreatQuestHash<>(PLAYER_ENTITY_NAME); // Everything seems to target FrogInst001 by default.
     }
 
     @Override

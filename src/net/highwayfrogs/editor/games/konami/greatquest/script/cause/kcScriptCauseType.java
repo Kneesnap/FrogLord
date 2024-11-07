@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInheritanceGroup;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 
 import java.util.HashMap;
@@ -17,18 +18,18 @@ import java.util.function.Function;
 @Getter
 @AllArgsConstructor
 public enum kcScriptCauseType {
-    LEVEL(Constants.BIT_FLAG_1, "OnLevel", kcScriptCauseLevel::new), // 2|0x02, Global Triggers: EvLevelBegin, EvLevelEnd
-    PLAYER(Constants.BIT_FLAG_4, "OnPlayer", kcScriptCausePlayer::new), // 16|0x10, See kcScriptCauseEntityAction for triggers
-    ACTOR(Constants.BIT_FLAG_5, "OnActor", kcScriptCauseActor::new), // 32|0x20, See kcScriptCauseEntityAction for triggers
-    DAMAGE(Constants.BIT_FLAG_6, "OnDamage", kcScriptCauseDamage::new), // 64|0x40, Target Trigger: kcCActorBase::OnDamage
-    TIMER(Constants.BIT_FLAG_8, "OnAlarm", kcScriptCauseTimer::new), // 256|0x100, Target Trigger: kcCEntity::AlarmCallback
-    PROMPT(Constants.BIT_FLAG_9, "OnPrompt", kcScriptCausePrompt::new), // 512|0x200, Target Trigger: kcCActorBase::OnCommand[PROMPT]
-    EVENT(Constants.BIT_FLAG_11, "OnEvent", kcScriptCauseEvent::new), // 2048|0x800, Global Trigger: kcCEventMgr::Trigger
-    DIALOG(Constants.BIT_FLAG_12, "OnDialog", kcScriptCauseDialog::new), // 4096|0x1000, Target Triggers: EvDialogBegin, EvDialogAdvance, EvDialogEnd (I don't believe EvDialogEnd is possible to trigger)
-    NUMBER(Constants.BIT_FLAG_13, "OnNumber", kcScriptCauseNumber::new), // 8192|0x2000, Target Trigger: kcCEntity::OnNumber
-    WHEN_ITEM(Constants.BIT_FLAG_14, "OnPlayerHasItem", kcScriptCauseWhenItem::new), // 16384|0x4000, Target Triggers: CCharacter::OnWithItem, CProp::OnWithItem
-    ENTITY_3D(Constants.BIT_FLAG_15, "OnEntity", kcScriptCauseEntity3D::new), // 32768|0x8000, Target Triggers: kcCEntity3D::Notify, sSendWaypointStatus triggers for the non-waypoint entity
-    WAYPOINT(Constants.BIT_FLAG_19, "OnWaypointVisitor", kcScriptCauseWaypoint::new); // 524288|0x80000, Target Trigger: sSendWaypointStatus triggers for the waypoint itself
+    LEVEL(Constants.BIT_FLAG_1, "OnLevel", kcEntityInheritanceGroup.ENTITY, kcScriptCauseLevel::new), // 2|0x02, Global Triggers: EvLevelBegin, EvLevelEnd
+    PLAYER(Constants.BIT_FLAG_4, "OnPlayer", kcEntityInheritanceGroup.ACTOR_BASE, kcScriptCausePlayer::new), // 16|0x10, See kcScriptCauseEntityAction for triggers
+    ACTOR(Constants.BIT_FLAG_5, "OnActor", kcEntityInheritanceGroup.ACTOR_BASE, kcScriptCauseActor::new), // 32|0x20, See kcScriptCauseEntityAction for triggers
+    DAMAGE(Constants.BIT_FLAG_6, "OnDamage", kcEntityInheritanceGroup.ACTOR_BASE, kcScriptCauseDamage::new), // 64|0x40, Target Trigger: kcCActorBase::OnDamage
+    TIMER(Constants.BIT_FLAG_8, "OnAlarm", kcEntityInheritanceGroup.ENTITY, kcScriptCauseTimer::new), // 256|0x100, Target Trigger: kcCEntity::AlarmCallback
+    PROMPT(Constants.BIT_FLAG_9, "OnPrompt", kcEntityInheritanceGroup.ENTITY, kcScriptCausePrompt::new), // 512|0x200, Target Trigger: kcCActorBase::OnCommand[PROMPT]
+    EVENT(Constants.BIT_FLAG_11, "OnEventTrigger", kcEntityInheritanceGroup.ENTITY, kcScriptCauseEvent::new), // 2048|0x800, Global Trigger: kcCEventMgr::Trigger
+    DIALOG(Constants.BIT_FLAG_12, "OnDialog", kcEntityInheritanceGroup.ACTOR_BASE, kcScriptCauseDialog::new), // 4096|0x1000, Target Triggers: EvDialogBegin, EvDialogAdvance, EvDialogEnd (I don't believe EvDialogEnd is possible to trigger). This requires ACTOR_BASE since only ACTOR_BASE is capable of showing dialog.
+    NUMBER(Constants.BIT_FLAG_13, "OnNumber", kcEntityInheritanceGroup.ENTITY, kcScriptCauseNumber::new), // 8192|0x2000, Target Trigger: kcCEntity::OnNumber
+    WHEN_ITEM(Constants.BIT_FLAG_14, "OnPlayerHasItem", kcEntityInheritanceGroup.PROP_OR_CHARACTER, kcScriptCauseWhenItem::new), // 16384|0x4000, Target Triggers: CCharacter::OnWithItem, CProp::OnWithItem
+    ENTITY_3D(Constants.BIT_FLAG_15, "OnEntity", kcEntityInheritanceGroup.ENTITY3D, kcScriptCauseEntity3D::new), // 32768|0x8000, Target Triggers: kcCEntity3D::Notify, sSendWaypointStatus triggers for the non-waypoint entity AND it also calls kcCEntity3D::Notify.
+    WAYPOINT(Constants.BIT_FLAG_19, "OnWaypoint", kcEntityInheritanceGroup.WAYPOINT, kcScriptCauseWaypoint::new); // 524288|0x80000, Target Trigger: sSendWaypointStatus triggers for the waypoint itself
 
     // Unimplemented:
     // Bit Flag 3|0x08 has runtime support, but doesn't appear to ever be fired. It validates a single matches a value, in addition to the normal subCause check.
@@ -43,6 +44,7 @@ public enum kcScriptCauseType {
 
     private final int value;
     private final String displayName;
+    private final kcEntityInheritanceGroup minimumEntityGroup; // The minimum category which can execute the action.
     private final Function<kcScript, kcScriptCause> maker;
 
     private static final Map<String, kcScriptCauseType> TYPES_BY_NAME = new HashMap<>();

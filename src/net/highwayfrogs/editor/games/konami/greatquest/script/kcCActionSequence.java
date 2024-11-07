@@ -165,7 +165,7 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
                 throw new IllegalConfigSyntaxException("Could not parse the action '" + line + "' when importing sequence " + getName() + ".", th);
             }
 
-            newAction.printWarnings(getLogger(), line);
+            newAction.printWarnings(getLogger());
             if (!actionID.isEnableForActionSequences())
                 getLogger().warning("The action '" + line + "' is not usable in an action sequence, and will be skipped by the game.");
 

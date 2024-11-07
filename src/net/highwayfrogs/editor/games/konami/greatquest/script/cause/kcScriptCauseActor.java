@@ -2,11 +2,16 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.CPropDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.CharacterParams;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Represents a cause of an actor action.
@@ -41,12 +46,35 @@ public class kcScriptCauseActor extends kcScriptCause {
     }
 
     @Override
+    public void printWarnings(Logger logger) {
+        super.printWarnings(logger);
+        if (!this.action.isImplementedForActor())
+            printWarning(logger, "uses action " + this.action + ", which is not supported by the Actor cause type.");
+        this.action.getEntityGroup().logEntityTypeWarnings(logger, this, this.action.name());
+    }
+
+    @Override
     public void toString(StringBuilder builder, kcScriptDisplaySettings settings) {
-        kcCResourceEntityInst targetEntity = getScriptEntity();
-        if (targetEntity != null && targetEntity.getName() != null) {
-            builder.append(this.action.getActorDescription().replace("the attached entity", targetEntity.getName()));
+        kcCResourceEntityInst scriptEntity = getScriptEntity();
+        String actorDescription = this.action.getActorDescription();
+
+        // Replace actor description.
+        if (this.action == kcScriptCauseEntityAction.BUMPS) {
+            kcEntityInst entityInst = scriptEntity != null ? scriptEntity.getInstance() : null;
+            kcEntity3DDesc entityDesc = entityInst != null ? entityInst.getDescription() : null;
+            if (entityDesc instanceof CPropDesc) { // Listening CProp expects CCharacter.
+                actorDescription = actorDescription.replace("another entity/player", "a CCharacter");
+            } else if (entityDesc instanceof CharacterParams) { // Listening CCharacter expects kcCActorBase.
+                actorDescription = actorDescription.replace("another entity/player", "another kcCActorBase");
+            }
         } else {
-            builder.append(this.action.getActorDescription());
+            actorDescription = actorDescription.replace("another entity/player", "another actor (kcCActorBase)");
         }
+
+        // Replace script entity with its name.
+        if (scriptEntity != null && scriptEntity.getName() != null)
+            actorDescription = actorDescription.replace("the script entity", scriptEntity.getName());
+
+        builder.append(actorDescription);
     }
 }
