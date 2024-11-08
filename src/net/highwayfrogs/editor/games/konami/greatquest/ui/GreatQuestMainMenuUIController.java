@@ -3,8 +3,6 @@ package net.highwayfrogs.editor.games.konami.greatquest.ui;
 import javafx.scene.Node;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
-import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.file.writer.LargeFileReceiver;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
@@ -72,31 +70,13 @@ public class GreatQuestMainMenuUIController extends MainMenuController<GreatQues
                 getLogger().info("Successfully exported all game files.");
             });
         });
-
-        /*
-        TODO: Implement.
-        addMenuItem(this.menuBarEdit, "Open Hash Playground", () -> HashPlaygroundController.openEditor(getGameInstance()));
-         */
     }
 
     @Override
     protected void saveMainGameData() {
         File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), OUTPUT_BIN_FILE_PATH, "data.bin");
-        if (outputFile == null)
-            return;
-
-        DataWriter writer = new DataWriter(new LargeFileReceiver(outputFile));
-
-        ProgressBarComponent.openProgressBarWindow(getGameInstance(), "Saving Files", progressBar -> {
-            try {
-                getMainArchive().save(writer, progressBar);
-            } catch (Throwable th) {
-                // Bubble the error upwards.
-                throw new RuntimeException("Failed to save game data.", th);
-            } finally {
-                writer.closeReceiver();
-            }
-        });
+        if (outputFile != null)
+            ProgressBarComponent.openProgressBarWindow(getGameInstance(), "Saving Files", progressBar -> getGameInstance().saveGame(outputFile, progressBar));
     }
 
     @Override

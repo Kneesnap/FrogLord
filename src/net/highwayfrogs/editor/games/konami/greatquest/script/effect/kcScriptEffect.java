@@ -130,7 +130,6 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
 
         // TODO: Need a way to view a sequence list. [Both in-world and in-model viewer]
 
-        // TODO: SNDCHUNK.SCK/IDX/SBR are not automatically saved.
         // TODO: Get our tutorial mod test working, and go over FFM's script file for TODOs.
     }
 

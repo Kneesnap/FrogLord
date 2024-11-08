@@ -22,6 +22,7 @@ import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.DefaultFileEditorUISoundListComponent;
 import net.highwayfrogs.editor.gui.components.DefaultFileEditorUISoundListComponent.IBasicSound;
 import net.highwayfrogs.editor.gui.components.DefaultFileEditorUISoundListComponent.IBasicSoundList;
+import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.*;
 
@@ -33,6 +34,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * This is a conceptual file which combines the sound chunk index file with the sound chunk data file.
@@ -44,7 +46,6 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
     @Getter private final List<SoundChunkEntry> entries = new ArrayList<>();
     private final SoundChunkIndexFile index;
     private final SoundChunkBodyFile body;
-    @Getter private int nextFreeSoundId;
 
     public SoundChunkFile(GreatQuestInstance instance, File idxFile, File sckFile) {
         super(instance);
@@ -82,7 +83,6 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
      */
     public void loadFileContents() {
         this.entries.clear();
-        this.nextFreeSoundId = 0;
 
         // Read index first, so we have the data necessary to read the sounds.
         try {
@@ -102,27 +102,39 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
         }
     }
 
-    /**
-     * Fill the next free sound ID slot, and get that ID.
-     * @return nowUsedSoundIdSlot
-     */
-    public int useNextFreeSoundIdSlot() {
-        return this.nextFreeSoundId++;
-    }
-
     @Override
     public void save(DataWriter writer) {
-        saveFileContents();
+        saveFileContents(null);
     }
 
     /**
      * Saves the file contents to each of the files.
      */
-    public void saveFileContents() {
+    public void saveFileContentsToNewFolder(File oldMainGameFolder, File newMainGameFolder, ProgressBarComponent progressBar) {
+        if (Objects.equals(oldMainGameFolder, newMainGameFolder)) {
+            saveFileContents(progressBar);
+        } else {
+            String localBodyPath = FileUtils.toLocalPath(oldMainGameFolder, this.body.getFile(), false);
+            String localIndexPath = FileUtils.toLocalPath(oldMainGameFolder, this.index.getFile(), false);
+            saveFileContents(new File(newMainGameFolder, localBodyPath), new File(newMainGameFolder, localIndexPath), progressBar);
+        }
+    }
+
+    /**
+     * Saves the file contents to each of the files.
+     */
+    public void saveFileContents(ProgressBarComponent progressBar) {
+        saveFileContents(this.body.getFile(), this.index.getFile(), progressBar);
+    }
+
+    /**
+     * Saves the file contents to each of the files.
+     */
+    public void saveFileContents(File bodyFile, File indexFile, ProgressBarComponent progressBar) {
         // Write Body first (to generate a valid index for the .IDX)
         try {
-            DataWriter bodyWriter = new DataWriter(new LargeFileReceiver(this.body.getFile()));
-            this.body.save(bodyWriter);
+            DataWriter bodyWriter = new DataWriter(new LargeFileReceiver(bodyFile));
+            this.body.save(bodyWriter, progressBar);
         } catch (Throwable th) {
             Utils.handleError(getLogger(), th, true, "Failed to write '" + this.body.getFileName() + "', aborting..!");
             return;
@@ -130,8 +142,8 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
 
         // Write index second, after it has been generated with correct information.
         try {
-            DataWriter indexWriter = new DataWriter(new FileReceiver(this.index.getFile()));
-            this.index.save(indexWriter);
+            DataWriter indexWriter = new DataWriter(new FileReceiver(indexFile));
+            this.index.save(indexWriter, progressBar);
         } catch (Throwable th) {
             Utils.handleError(getLogger(), th, true, "Failed to write '" + this.index.getFileName() + "', aborting..!");
         }
@@ -178,15 +190,32 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
                 this.indexEntries.add(entry);
 
                 // Ensure we don't consider anything before this sound ID as available.
-                this.soundChunkFile.nextFreeSoundId = Math.max(this.soundChunkFile.nextFreeSoundId, entry.getSfxId() + 1);
+                getGameInstance().markSfxIdAsUsed(entry.getSfxId());
             }
         }
 
         @Override
         public void save(DataWriter writer) {
+            save(writer, null);
+        }
+
+        /**
+         * Saves the index chunk file.
+         * @param writer The writer to save to.
+         * @param progressBar The progress bar to show progress with
+         */
+        public void save(DataWriter writer, ProgressBarComponent progressBar) {
+            if (progressBar != null) {
+                progressBar.setTotalProgress(this.indexEntries.size());
+                progressBar.setStatusMessage("Saving index entries...");
+            }
+
             writer.writeInt(this.indexEntries.size());
-            for (int i = 0; i < this.indexEntries.size(); i++)
+            for (int i = 0; i < this.indexEntries.size(); i++) {
                 this.indexEntries.get(i).save(writer);
+                if (progressBar != null)
+                    progressBar.addCompletedProgress(1);
+            }
         }
 
         @Override
@@ -250,11 +279,21 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
                 SoundChunkEntry newSoundEntry = new SoundChunkEntry(this.soundChunkFile);
                 newSoundEntry.load(reader, indexEntry, nextIndexEntry);
                 this.soundChunkFile.entries.add(newSoundEntry);
+                getGameInstance().markSfxIdAsUsed(newSoundEntry.getId());
             }
         }
 
         @Override
         public void save(DataWriter writer) {
+            save(writer, null);
+        }
+
+        /**
+         * Saves the body chunk file.
+         * @param writer The writer to save to.
+         * @param progressBar The progress bar to show progress with
+         */
+        public void save(DataWriter writer, ProgressBarComponent progressBar) {
             List<kcStreamIndexEntry> indexEntries = this.soundChunkFile.index.indexEntries;
             List<SoundChunkEntry> soundEntries = this.soundChunkFile.entries;
 
@@ -264,9 +303,17 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
             while (indexEntries.size() > soundEntries.size())
                 indexEntries.remove(indexEntries.size() - 1);
 
+            if (progressBar != null) {
+                progressBar.setTotalProgress(soundEntries.size());
+                progressBar.setStatusMessage("Saving sound files...");
+            }
+
             // Save the sound entries and update the corresponding index entries.
-            for (int i = 0; i < soundEntries.size(); i++)
+            for (int i = 0; i < soundEntries.size(); i++) {
                 soundEntries.get(i).save(writer, indexEntries.get(i));
+                if (progressBar != null)
+                    progressBar.addCompletedProgress(1);
+            }
         }
     }
 
@@ -492,7 +539,7 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
                     return;
 
                 SoundChunkEntry newSound = new SoundChunkEntry(getFile());
-                newSound.id = getFile().useNextFreeSoundIdSlot();
+                newSound.id = getGameInstance().useNextFreeSoundIdSlot();
 
                 try {
                     newSound.loadSupportedAudioFile(inputFile);

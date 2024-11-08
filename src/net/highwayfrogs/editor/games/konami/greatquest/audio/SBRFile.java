@@ -52,6 +52,7 @@ import java.util.concurrent.CountDownLatch;
 @Getter
 public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList {
     private int sfxBankId; // This value appears to always be 0 on PS2 NTSC, so I don't think we need to modify it.
+    private int dummyEntries;
     private final List<SfxEntry> soundEffects = new ArrayList<>();
     private final List<SfxWave> waves = new ArrayList<>();
 
@@ -82,12 +83,16 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         int waveDataOffset = reader.readInt();
         @SuppressWarnings("unused") int waveDataSize = reader.readInt();
 
-        // Read sfx attributes.
+        // Read sfx entries.
+        this.dummyEntries = 0;
         this.soundEffects.clear();
         for (int i = 0; i < sfxCount; i++) {
             int sfxId = reader.readInt();
-            if (sfxId == GreatQuestInstance.PADDING_CD_INT)
-                break; // Uninitialized memory.... This seems like the file has invalid data to be honest... Perhaps since the data isn't actually parsed until it gets used, since this bad data is never used it never gets parsed by the game, and thus never has a chance to break stuff.
+            if (sfxId == GreatQuestInstance.PADDING_CD_INT) {
+                // Uninitialized memory.... This seems like the file has invalid data to be honest... Perhaps since the data isn't actually parsed until it gets used, since this bad data is never used it never gets parsed by the game, and thus never has a chance to break stuff.
+                this.dummyEntries++;
+                continue;
+            }
 
             int currentSfxAttrOffset = reader.readInt();
 
@@ -96,7 +101,11 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             reader.jumpReturn();
 
             this.soundEffects.add(new SfxEntry(this, sfxId, attributes));
+            getGameInstance().markSfxIdAsUsed(sfxId);
         }
+
+        // Read extra dummy data.
+        reader.skipBytesRequire(GreatQuestInstance.PADDING_BYTE_CD, Constants.INTEGER_SIZE * this.dummyEntries);
 
         // Read wav attributes.
         this.waves.clear();
@@ -117,7 +126,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         writer.writeInt(SIGNATURE);
         writer.writeInt(SUPPORTED_VERSION);
         writer.writeInt(this.sfxBankId);
-        writer.writeInt(this.soundEffects.size());
+        writer.writeInt(this.soundEffects.size() + this.dummyEntries);
         int sfxAttrOffset = writer.writeNullPointer();
         int sfxAttrSize = writer.writeNullPointer();
         writer.writeInt(this.waves.size());
@@ -133,6 +142,10 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             sfxAttrOffsets[i] = writer.writeNullPointer();
         }
 
+        // Write dummy entries.
+        for (int i = 0; i < this.dummyEntries * 2; i++)
+            writer.writeInt(GreatQuestInstance.PADDING_CD_INT);
+
         int sfxAttributeDataStart = writer.getIndex();
         writer.writeAddressTo(sfxAttrOffset);
         for (int i = 0; i < this.soundEffects.size(); i++) {
@@ -142,6 +155,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         writer.writeIntAtPos(sfxAttrSize, writer.getIndex() - sfxAttributeDataStart);
 
         // Write wav.
+        int waveHeaderStartIndex = writer.getIndex();
         int writtenWaveDataBytes = 0;
         writer.writeAddressTo(waveAttrOffset);
         for (int i = 0; i < this.waves.size(); i++) {
@@ -150,7 +164,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             writtenWaveDataBytes += wave.getWaveSize();
         }
 
-        writer.writeIntAtPos(waveAttrSize, writtenWaveDataBytes);
+        writer.writeIntAtPos(waveAttrSize, writer.getIndex() - waveHeaderStartIndex);
 
         // Write wav data.
         int waveDataStartsAt = writer.getIndex();
@@ -211,8 +225,9 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
 
             // Change the wave as well as all references to it.
             wave.setWaveID(i);
-            for (int j = 0; j < entriesUsingWave.size(); j++)
-                entriesUsingWave.get(j).waveIndex = i;
+            if (entriesUsingWave != null)
+                for (int j = 0; j < entriesUsingWave.size(); j++)
+                    entriesUsingWave.get(j).waveIndex = i;
         }
 
         // Set the sounds without valid waves to use wave -1.
@@ -1180,10 +1195,13 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         public static Integer askForUnusedEmbeddedSfxId(SBRFile sbrFile, int oldSfxId) {
             GreatQuestInstance instance = sbrFile.getGameInstance();
 
-            return InputMenu.promptInputInt(instance, "Please enter the ID of a sound effect which exists, but is not currently used by this file.", oldSfxId, newId -> {
+            return InputMenu.promptInputInt(instance, "Please enter an ID for the sound effect.", oldSfxId, newId -> {
+                if ((newId == -1 || newId == instance.getNextFreeSoundId()) && oldSfxId == -1)
+                    newId = instance.useNextFreeSoundIdSlot();
+
                 if (newId < 0)
                     throw new IllegalArgumentException(newId + " is not a valid SFX ID! IDs must be greater than or equal to zero!");
-                if (newId >= instance.getSoundChunkFile().getNextFreeSoundId())
+                if (newId >= instance.getNextFreeSoundId())
                     throw new IllegalArgumentException(newId + " is not a valid SFX ID as it is reserved for newly added sounds!");
                 if (newId == oldSfxId)
                     throw new IllegalArgumentException("The provided SFX ID (" + newId + ") was the same as before.");
@@ -1358,7 +1376,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
                     return;
                 }
 
-                Integer sfxId = SfxEntry.askForUnusedEmbeddedSfxId(sbrFile, 0);
+                Integer sfxId = SfxEntry.askForUnusedEmbeddedSfxId(sbrFile, -1);
                 if (sfxId == null)
                     return;
 

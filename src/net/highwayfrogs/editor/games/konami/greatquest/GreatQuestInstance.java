@@ -3,6 +3,8 @@ package net.highwayfrogs.editor.games.konami.greatquest;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
+import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.file.writer.LargeFileReceiver;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.kcTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcAnimState;
@@ -47,6 +49,7 @@ import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -92,6 +95,7 @@ public class GreatQuestInstance extends GameInstance {
     private GreatQuestAssetBinFile mainArchive;
     private SoundChunkFile soundChunkFile;
     private File mainArchiveBinFile;
+    private int nextFreeSoundId;
     private final Map<Integer, String> soundPathsById = new HashMap<>();
     private final Map<String, Integer> soundIdsByPath = new HashMap<>();
 
@@ -169,6 +173,7 @@ public class GreatQuestInstance extends GameInstance {
     }
 
     private void loadSoundFolder() {
+        this.nextFreeSoundId = 0;
         this.soundChunkFile = null;
         File soundFolder = new File(getMainGameFolder(), "SOUND");
         if (!soundFolder.exists() || !soundFolder.isDirectory())
@@ -219,6 +224,48 @@ public class GreatQuestInstance extends GameInstance {
             } catch (IOException ex) {
                 Utils.handleError(getLogger(), ex, true, "Failed to load the file in the sound folder '%s'.", sndFile.getName());
             }
+        }
+    }
+
+    private File transformLocalFile(File outputBinFile, File relativeFile) {
+        String path = FileUtils.toLocalPath(getMainGameFolder(), relativeFile, false);
+        return new File(outputBinFile.getParentFile(), path);
+    }
+
+    /**
+     * Saves the game.
+     * @param outputBinFile The file to save the .bin to
+     * @param progressBar the progress bar to display progress for
+     */
+    public void saveGame(File outputBinFile, ProgressBarComponent progressBar) {
+        // Save SBRs.
+        if (progressBar != null)
+            progressBar.setTotalProgress(this.looseFiles.size());
+
+        for (GreatQuestGameFile file : this.looseFiles) {
+            if (file instanceof SBRFile) {
+                if (progressBar != null)
+                    progressBar.setStatusMessage("Saving '" + file.getFileName() + "'");
+                file.saveToFile(transformLocalFile(outputBinFile, ((SBRFile) file).getFile()));
+            }
+
+            if (progressBar != null)
+                progressBar.addCompletedProgress(1);
+        }
+
+        // Save SCK/IDK.
+        if (this.soundChunkFile != null)
+            this.soundChunkFile.saveFileContentsToNewFolder(getMainGameFolder(), outputBinFile.getParentFile(), progressBar);
+
+        DataWriter writer = new DataWriter(new LargeFileReceiver(outputBinFile));
+
+        try {
+            getMainArchive().save(writer, progressBar);
+        } catch (Throwable th) {
+            // Bubble the error upwards.
+            throw new RuntimeException("Failed to save game data.", th);
+        } finally {
+            writer.closeReceiver();
         }
     }
 
@@ -346,5 +393,22 @@ public class GreatQuestInstance extends GameInstance {
 
         Integer sfxId = this.soundIdsByPath.get(fullPath);
         return sfxId != null ? sfxId : -1;
+    }
+
+    /**
+     * Marks the given SFX id as used.
+     * @param sfxId the sfx id to mark
+     */
+    public void markSfxIdAsUsed(int sfxId) {
+        if (sfxId >= this.nextFreeSoundId)
+            this.nextFreeSoundId = sfxId + 1;
+    }
+
+    /**
+     * Fill the next free sound ID slot, and get that ID.
+     * @return nowUsedSoundIdSlot
+     */
+    public int useNextFreeSoundIdSlot() {
+        return this.nextFreeSoundId++;
     }
 }
