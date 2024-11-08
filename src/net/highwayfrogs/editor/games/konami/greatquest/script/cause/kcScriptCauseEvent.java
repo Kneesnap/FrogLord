@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
+import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
@@ -17,6 +18,7 @@ import java.util.logging.Logger;
  * It would be feasible to fix the feature, but it may not matter.
  * Created by Kneesnap on 8/17/2023.
  */
+@Getter
 public class kcScriptCauseEvent extends kcScriptCause {
     private int eventNameHash;
 
@@ -52,6 +54,16 @@ public class kcScriptCauseEvent extends kcScriptCause {
     public void printWarnings(Logger logger) {
         super.printWarnings(logger);
         printWarning(logger, "is not supported by the game.");
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode() ^ this.eventNameHash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj) && ((kcScriptCauseEvent) obj).getEventNameHash() == this.eventNameHash;
     }
 
     @Override

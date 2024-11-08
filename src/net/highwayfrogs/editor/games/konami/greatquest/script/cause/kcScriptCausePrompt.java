@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
+import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
@@ -14,6 +15,7 @@ import java.util.logging.Logger;
  * It does not appear to be possible to actually show a prompt to the player, attempting to do so will instead immediately trigger this cause with a hash of zero.
  * Created by Kneesnap on 8/17/2023.
  */
+@Getter
 public class kcScriptCausePrompt extends kcScriptCause {
     private int promptHash;
 
@@ -49,6 +51,16 @@ public class kcScriptCausePrompt extends kcScriptCause {
     public void printWarnings(Logger logger) {
         super.printWarnings(logger);
         printWarning(logger, "is not supported by the game.");
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode() ^ this.promptHash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj) && ((kcScriptCausePrompt) obj).getPromptHash() == this.promptHash;
     }
 
     @Override

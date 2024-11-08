@@ -6,6 +6,7 @@ import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.KCResourceID;
@@ -43,6 +44,7 @@ public class kcScriptList extends kcCResource {
     private static final String SCRIPT_FILE_PATH_KEY = "scriptFilePath";
     private static final SavedFilePath SCRIPT_EXPORT_PATH = new SavedFilePath(SCRIPT_FILE_PATH_KEY, "Select the directory to export scripts to");
     private static final SavedFilePath SCRIPT_IMPORT_PATH = new SavedFilePath(SCRIPT_FILE_PATH_KEY, "Select the directory to import scripts from");
+    private static final SavedFilePath SCRIPT_GROUP_IMPORT_PATH = new SavedFilePath("gqsScriptFilePath", "Select the script group to import", kcScript.GQS_GROUP_FILE_TYPE);
 
     public kcScriptList(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.RAW);
@@ -208,6 +210,20 @@ public class kcScriptList extends kcCResource {
 
             getLogger().info("Imported " + filesImported + " scripts.");
         });
+
+        // Apply GQS Script Group.
+        MenuItem importScriptGroupItem = new MenuItem("Import GQS Script Group");
+        contextMenu.getItems().add(importScriptGroupItem);
+        importScriptGroupItem.setOnAction(event -> {
+            File gqsGroupFile = FileUtils.askUserToOpenFile(getGameInstance(), SCRIPT_GROUP_IMPORT_PATH);
+            if (gqsGroupFile == null)
+                return;
+
+            Config scriptGroupCfg = Config.loadConfigFromTextFile(gqsGroupFile, false);
+            GreatQuestAssetUtils.applyGqsScriptGroup(getParentFile(), scriptGroupCfg);
+            getLogger().info("Imported GQS script group '" + gqsGroupFile.getName() + "'.");
+        });
+
     }
 
     /**

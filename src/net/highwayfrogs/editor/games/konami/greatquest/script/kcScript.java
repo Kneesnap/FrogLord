@@ -15,13 +15,12 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcScriptLi
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcScriptTOC;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
+import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -61,8 +60,10 @@ public class kcScript extends GameObject<GreatQuestInstance> {
     private final List<kcScriptFunction> functions;
     private final kcCResourceEntityInst entity;
 
+    public static final String CONFIG_FIELD_SCRIPT_BEHAVIOR = "behavior";
     public static final String CONFIG_FIELD_SCRIPT_CAUSE = "cause";
     public static final String EXTENSION = "gqs";
+    public static final BrowserFileType GQS_GROUP_FILE_TYPE = new BrowserFileType("Great Quest Script Group", EXTENSION);
 
     public kcScript(GreatQuestInstance instance, kcScriptList scriptList, kcCResourceEntityInst entity, List<kcScriptFunction> functions) {
         super(instance);
@@ -176,9 +177,16 @@ public class kcScript extends GameObject<GreatQuestInstance> {
         if (baseConfigNode == null)
             throw new NullPointerException("baseConfigNode");
 
+        Map<kcScriptCause, List<kcScriptFunction>> functionsByCause = new HashMap<>();
+        for (int i = 0; i < this.functions.size(); i++) {
+            kcScriptFunction function = this.functions.get(i);
+            functionsByCause.computeIfAbsent(function.getCause(), key -> new ArrayList<>()).add(function);
+        }
+
         for (Config nestedFunction : baseConfigNode.getChildConfigNodes()) {
             kcScriptFunction newFunction = new kcScriptFunction(this, null);
 
+            // Load the script function.
             try {
                 newFunction.loadFromConfigNode(nestedFunction);
             } catch (Throwable th) {
@@ -188,7 +196,19 @@ public class kcScript extends GameObject<GreatQuestInstance> {
                 continue; // Skip registration.
             }
 
-            this.functions.add(newFunction);
+            GQSFunctionBehavior behavior = nestedFunction.getOrDefaultKeyValueNode(CONFIG_FIELD_SCRIPT_BEHAVIOR).getAsEnum(GQSFunctionBehavior.ADD);
+            if (behavior == GQSFunctionBehavior.DELETE || behavior == GQSFunctionBehavior.REPLACE) {
+                List<kcScriptFunction> functionsToRemove = functionsByCause.remove(newFunction.getCause());
+                if (functionsToRemove != null && !this.functions.removeAll(functionsToRemove) && behavior == GQSFunctionBehavior.DELETE)
+                    throw new RuntimeException("Function in '" + sourceName + "' used behavior " + behavior + " and tried to delete " + functionsToRemove.size() + " functions with the cause '" + newFunction.getCause().getAsGqsStatement() + "', but failed!");
+            }
+
+            if (behavior == GQSFunctionBehavior.ADD || behavior == GQSFunctionBehavior.REPLACE) {
+                this.functions.add(newFunction);
+                functionsByCause.computeIfAbsent(newFunction.getCause(), key -> new ArrayList<>()).add(newFunction);
+            } else if (behavior == GQSFunctionBehavior.DELETE && !newFunction.getEffects().isEmpty()) {
+                throw new RuntimeException("Function in '" + sourceName + "' used behavior " + behavior + ", but also had " + newFunction.getEffects().size() + " effects!");
+            }
         }
     }
 

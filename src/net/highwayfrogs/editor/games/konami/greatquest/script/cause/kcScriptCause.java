@@ -133,6 +133,17 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
         return this.toString(createDisplaySettings());
     }
 
+    @Override
+    public int hashCode() {
+        return this.type.ordinal() << 28;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return (obj instanceof kcScriptCause) && ((kcScriptCause) obj).getType() == this.type
+                && ((kcScriptCause) obj).getScript() == getScript();
+    }
+
     /**
      * Gets this cause as a string in gqs format.
      */

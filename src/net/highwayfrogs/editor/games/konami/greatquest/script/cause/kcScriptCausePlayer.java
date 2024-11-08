@@ -55,6 +55,16 @@ public class kcScriptCausePlayer extends kcScriptCause {
     }
 
     @Override
+    public int hashCode() {
+        return super.hashCode() ^ this.action.ordinal();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj) && ((kcScriptCausePlayer) obj).getAction() == this.action;
+    }
+
+    @Override
     public void toString(StringBuilder builder, kcScriptDisplaySettings settings) {
         kcCResourceEntityInst scriptEntity = getScriptEntity();
         String actorDescription = this.action.getPlayerDescription()

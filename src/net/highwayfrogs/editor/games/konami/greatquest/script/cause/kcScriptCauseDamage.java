@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
+import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcHealthDesc.kcDamageType;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
@@ -14,6 +15,7 @@ import java.util.List;
  * From doing debugging on this I found there's a fairly long cooldown between enemies taking damage, and your attacks hitting do nothing.
  * Created by Kneesnap on 8/16/2023.
  */
+@Getter
 public class kcScriptCauseDamage extends kcScriptCause {
     private kcDamageType damageType;
 
@@ -39,6 +41,17 @@ public class kcScriptCauseDamage extends kcScriptCause {
     @Override
     protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
         arguments.createNext().setAsEnum(this.damageType);
+    }
+
+
+    @Override
+    public int hashCode() {
+        return super.hashCode() ^ this.damageType.ordinal();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj) && ((kcScriptCauseDamage) obj).getDamageType() == this.damageType;
     }
 
     @Override

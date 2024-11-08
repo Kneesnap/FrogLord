@@ -18,6 +18,7 @@ import java.util.logging.Logger;
  * Caused when a kcCEntity3D enters or leaves the range of another.
  * Created by Kneesnap on 8/19/2023.
  */
+@Getter
 public class kcScriptCauseEntity3D extends kcScriptCause {
     private kcScriptCauseEntity3DStatus status = kcScriptCauseEntity3DStatus.ENTERS_TARGET_WAYPOINT_AREA;
     private final GreatQuestHash<kcCResourceEntityInst> otherEntityRef = new GreatQuestHash<>();
@@ -76,6 +77,17 @@ public class kcScriptCauseEntity3D extends kcScriptCause {
         super.printWarnings(logger);
         if (this.status.hasOtherEntityAsParam())
             this.status.getOtherEntityGroup().logEntityTypeWarnings(logger, this, this.otherEntityRef, this.status.name());
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode() ^ (this.status.ordinal() << 24) ^ this.otherEntityRef.getHashNumber();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj) && ((kcScriptCauseEntity3D) obj).getStatus() == this.status
+                && ((kcScriptCauseEntity3D) obj).getOtherEntityRef().getHashNumber() == this.otherEntityRef.getHashNumber();
     }
 
     @Override

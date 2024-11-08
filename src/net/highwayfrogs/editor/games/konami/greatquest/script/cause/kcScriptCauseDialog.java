@@ -60,6 +60,18 @@ public class kcScriptCauseDialog extends kcScriptCause {
             printWarning(logger, "cannot resolve the dialog string reference, so it will be skipped by the game.");
     }
 
+
+    @Override
+    public int hashCode() {
+        return super.hashCode() ^ (this.stage.ordinal() << 24) ^ this.dialogRef.getHashNumber();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj) && ((kcScriptCauseDialog) obj).getStage() == this.stage
+                && ((kcScriptCauseDialog) obj).getDialogRef().getHashNumber() == this.dialogRef.getHashNumber();
+    }
+
     @Override
     public void toString(StringBuilder builder, kcScriptDisplaySettings settings) {
         builder.append("When dialog definition ");

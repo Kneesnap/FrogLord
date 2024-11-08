@@ -17,6 +17,7 @@ import java.util.logging.Logger;
  * This cause should only be used in scripts attached to waypoints.
  * Created by Kneesnap on 8/18/2023.
  */
+@Getter
 public class kcScriptCauseWaypoint extends kcScriptCause {
     private kcScriptCauseWaypointStatus status;
     private final GreatQuestHash<kcCResourceEntityInst> otherEntityRef = new GreatQuestHash<>();
@@ -54,6 +55,17 @@ public class kcScriptCauseWaypoint extends kcScriptCause {
         super.printWarnings(logger);
         if (this.otherEntityRef.getResource() == null) // The other entity could be a kcCEntity, there is no type-restriction.
             printWarning(logger, "will never occur because other entity could not be found.");
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode() ^ (this.status.ordinal() << 24) ^ this.otherEntityRef.getHashNumber();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj) && ((kcScriptCauseWaypoint) obj).getStatus() == this.status
+                && ((kcScriptCauseWaypoint) obj).getOtherEntityRef().getHashNumber() == this.otherEntityRef.getHashNumber();
     }
 
     @Override

@@ -14,6 +14,7 @@ import java.util.logging.Logger;
  * Runs when an alarm rings. (When a certain amount of time passes since the timer started)
  * Created by Kneesnap on 8/17/2023.
  */
+@Getter
 public class kcScriptCauseTimer extends kcScriptCause {
     private kcScriptCauseTimerState timerState;
     private int alarmId;
@@ -53,6 +54,17 @@ public class kcScriptCauseTimer extends kcScriptCause {
             printWarning(logger, "uses timer state " + this.timerState + ", which is unsupported by the game!");
         if (this.alarmId < 0 || this.alarmId >= Constants.BITS_PER_INTEGER)
             printWarning(logger, "uses an invalid alarm ID, and thus does nothing!");
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj) && ((kcScriptCauseTimer) obj).getAlarmId() == this.alarmId
+                && ((kcScriptCauseTimer) obj).getTimerState() == this.timerState;
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode() ^ (this.timerState.ordinal() << 24) ^ this.alarmId;
     }
 
     @Override

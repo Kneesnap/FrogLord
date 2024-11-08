@@ -26,12 +26,6 @@ public class kcScriptCauseNumber extends kcScriptCause {
         super(script, kcScriptCauseType.NUMBER, 1, 2);
     }
 
-    public kcScriptCauseNumber(kcScript script, kcScriptCauseNumberOperation operation, int number) {
-        this(script);
-        this.operation = operation;
-        this.value = number;
-    }
-
     @Override
     public void load(int subCauseType, List<Integer> extraValues) {
         this.operation = kcScriptCauseNumberOperation.getOperation(subCauseType, false);
@@ -54,6 +48,17 @@ public class kcScriptCauseNumber extends kcScriptCause {
     protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
         arguments.createNext().setAsEnum(this.operation);
         arguments.createNext().setAsInteger(this.value);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode() ^ (this.operation.ordinal() << 24) ^ this.value;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj) && ((kcScriptCauseNumber) obj).getOperation() == this.operation
+                && ((kcScriptCauseNumber) obj).getValue() == this.value;
     }
 
     @Override

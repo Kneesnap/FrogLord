@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
+import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
@@ -16,6 +18,7 @@ import java.util.List;
  * Or alternatively, show a message if a player is trying to open a door they need a key for.
  * Created by Kneesnap on 8/17/2023.
  */
+@Getter
 public class kcScriptCauseWhenItem extends kcScriptCause {
     private boolean playerShouldHaveItem;
 
@@ -46,6 +49,16 @@ public class kcScriptCauseWhenItem extends kcScriptCause {
     @Override
     protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
         arguments.createNext().setAsBoolean(this.playerShouldHaveItem);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode() ^ (this.playerShouldHaveItem ? Constants.BIT_FLAG_24 : 0);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj) && ((kcScriptCauseWhenItem) obj).isPlayerShouldHaveItem() == this.playerShouldHaveItem;
     }
 
     @Override

@@ -160,6 +160,18 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
     }
 
     /**
+     * Gets the script for this entity from the script list.
+     * @param scriptList The script list to get the script from.
+     * @return script
+     */
+    public kcScript getScript(kcScriptList scriptList) {
+        if (scriptList == null)
+            throw new NullPointerException("scriptList");
+
+        return this.scriptIndex >= 0 ? scriptList.getScripts().get(this.scriptIndex) : null;
+    }
+
+    /**
      * Detach the script from the entity.
      * No cleanup of any sort is performed on the script, use with caution.
      */

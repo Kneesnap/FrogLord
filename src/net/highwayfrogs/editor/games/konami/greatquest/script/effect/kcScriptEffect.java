@@ -123,9 +123,6 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
         loadArguments(arguments);
         printLoadWarnings(arguments);
 
-        // TODO: Allow standalone script files which can define dialog (strings), entities, and scripts which can be attached to arbitrary entities. (Without deleting any existing scripts)
-        //  -> I imagine this will make organization a lot better as then we ca`n have a single file containing all of the necessary info for a full sequence.
-        // TODO: Also, we should have the ability to apply the same script file to multiple entities. (NOT INGAME SINCE ENTITY TARGETTING DOESNT ALLOW THAT, BUT IN EDITOR)
         // TODO: Ability to edit entities.
 
         // TODO: Need a way to view a sequence list. [Both in-world and in-model viewer]

@@ -50,6 +50,16 @@ public class kcScriptCauseLevel extends kcScriptCause {
     }
 
     @Override
+    public int hashCode() {
+        return super.hashCode() ^ (this.subType.ordinal() << 24);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj) && ((kcScriptCauseLevel) obj).getSubType() == this.subType;
+    }
+
+    @Override
     public void toString(StringBuilder builder, kcScriptDisplaySettings settings) {
         builder.append(this.subType.getDescription());
     }

@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
+import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.utils.NumberUtils;
@@ -7,12 +8,14 @@ import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 /**
  * Implements a basic "dumb" script cause that can be used as a replacement for another script.
  * Created by Kneesnap on 8/16/2023.
  */
+@Getter
 public class kcScriptCauseDummy extends kcScriptCause {
     private int subCauseType;
     private List<Integer> unhandledValues;
@@ -53,6 +56,17 @@ public class kcScriptCauseDummy extends kcScriptCause {
         if (this.unhandledValues != null)
             for (int i = 0; i < this.unhandledValues.size(); i++)
                 arguments.createNext().setAsString(NumberUtils.to0PrefixedHexString(this.unhandledValues.get(i)), false);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode() ^ (this.subCauseType << 24) ^ this.unhandledValues.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj) && ((kcScriptCauseDummy) obj).getSubCauseType() == this.subCauseType
+                && Objects.equals(((kcScriptCauseDummy) obj).getUnhandledValues(), this.unhandledValues);
     }
 
     @Override
