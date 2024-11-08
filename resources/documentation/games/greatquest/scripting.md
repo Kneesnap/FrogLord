@@ -7,8 +7,8 @@ Instead, GQS/kcScript is a term we made for the scripting system found in the or
 ## The Basics
 Each entity in a level can have a script, for example Frogger, coins, etc.
 Each script is broken up into any number of functions, which contain the actual script behavior.
-A function has two parts, the trigger (cause) and the effects.
-An example of a trigger would be `OnLevel BEGIN`, which indicates that the function should run when the level begins.
+A function has two parts, the cause (conditions for running/trigger) and the effects.
+An example of a script cause would be `OnLevel BEGIN`, which indicates that the function should run when the level begins.
 On the other hand, effects are the commands which can impact the game, such as by playing a sound, making entities invisible, etc.  
 The following example would play a sound effect when the level loads.
 
@@ -30,9 +30,7 @@ The easiest way to get started is by looking at examples. To export scripts from
 By right-clicking it and selecting "Export Scripts" you'll be able to specify a folder to save the scripts to.
 Make sure to use a different folder for each level you export scripts for to avoid confusion and overriding files with the same name.
 While these files have a `.gqs` extension, they are just text files, and can be opened in any text editor.
-For Notepad++, a [user-defined language file](./GreatQuestScript.xml) has been included to allow for colored syntax-highlighting of these files.
-
-TODO: Actually include the Notepad++ file, and maybe link to instructions on how to install it?
+For Notepad++, it is recommended to set the language of these files to PowerShell, as its syntax highlighting works well.
 
 When it's time to import your modified script back into the game, you can right-click `scriptdata` again, but this time select "Import Scripts" instead.  
 This method of importing scripts should only be used for development/testing purposes, since [mods must follow this guide instead](modding-guide.md).  
@@ -226,20 +224,47 @@ Not used in the vanilla game.
 **Summary:** Resets instance entity flags, and then sets the flags provided.  
 **Supported Entity Types:** kcCEntity+  
 **Original Implementations:** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity::OnCommand`  
-**Usage:** `InitFlags [Optional Entity Flags]`  
-TODO: Document the entity flags somewhere.
+**Usage:** `InitFlags [Entity Flags]`  
+```properties
+# There are multiple targeting kcEntityFlag.HIDE because the INIT_FLAGS action will reset this flag at each inheritance level, so each flag is here to allow keeping such a thing.
+# kcCEntity Flags:
+--Hide # Marks the entity to not be drawn. When set, it will also activate/deactivate the entity, along with collision. However, these can then be undone afterward.
+--UnusedBitFlag01 # Couldn't find any behavior tied to this flag, and it is never used by the game.
+--ForceStayActive # The entity should stay active even when the player is outside the normal range.
+
+# kcCEntity3D Flags:
+--FaceTargetEntity # Causes the entity to constantly rotate to face its target entity.
+--HideShadow # Hides the entity shadow. The shadow will also be hidden if --Hide is set.
+--AllowWaypointInteraction # Marks an entity as needing to be registered to trigger waypoint events. This will only work if Reset() is called first, so it's best to keep this on the entity instance, and not via scripts.
+
+# kcCActorBase Flags:
+--Active # Whether the entity is active.
+--EnableTerrainTracking # Makes the entity try to rotate to appear standing on the terrain (I think).
+--DisableAI # Disables AI updates, so attempting to attack the player, wandering, will not occur while this flag is set.
+--EnableCollision # Enables entity collision.
+--EnablePhysics # Controls if physics (gravity, impulses, etc) are enabled for this entity.
+--CanTakeDamage # Controls if the actor is capable of accepting damage right now. Actors without health can take damage for the purposes of handling it in a script.
+--UnusedBitFlag11 # Unused, it appears this does not do anything.
+--UnusedBitFlag12 # Unused, it appears this does not do anything.
+--PlayerCanInteract # Allows the player to interact with the entity.
+--ResetEntity # Reset the entity when it next updates. Unused.
+--UpdatesEnabled # Marks an entity as needing updates, even if it may be hidden.
+--PreventDeath # Makes it impossible for an entity to die, regardless of if it is capable of taking damage.
+```
 
 ### SetFlags (Both)
 **Summary:** Applies the provided entity flags to the entity.  
 **Supported Entity Types:** kcCEntity+  
 **Original Implementations:** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity::OnCommand`  
-**Usage:** `SetFlags [Optional Entity Flags]`  
+**Usage:** `SetFlags [Entity Flags]`  
+See `InitFlags` above for a list of flags.  
 
 ### ClearFlags (Both)
 **Summary:** Removes the provided entity flags from the entity.  
 **Supported Entity Types:** kcCEntity+  
 **Original Implementations:** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity::OnCommand`  
-**Usage:** `ClearFlags [Optional Entity Flags]`  
+**Usage:** `ClearFlags [Entity Flags]`  
+See `InitFlags` above for a list of flags.  
 
 ### SetState (Unsupported)
 **Summary:** Unimplemented, does nothing.  
@@ -565,7 +590,8 @@ Particles will be played at the position of that save point, if found.
 **Original Implementations:** `kcCEntity::OnCommand`  
 **Usage:** `SetUpdatesEnabled <bool shouldEnable>`  
 **Aliases:**  `Entity.EnableUpdates, Entity.DisableUpdates`  
-Used once in the vanilla game for a Ruby in Joy Towers. So it's basically unused.
+Used once in the vanilla game for a Ruby in Joy Towers. So it's basically unused.  
+This command is almost the same as `SetActive`, except it doesn't touch collision/activation state.
 
 ### SetAIGoal (Script Only)
 **Summary:** Sets the current entity AI goal.  

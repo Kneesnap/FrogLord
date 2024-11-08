@@ -20,7 +20,7 @@ import java.util.UUID;
  */
 @Getter
 public class kcEntity3DInst extends kcEntityInst {
-    @Setter private int flags; // TODO: InitFlags() is called.
+    @Setter private int flags;
     private kcAxisType billboardAxis = kcAxisType.Y;
     private final kcVector4 position = new kcVector4();
     private final kcVector4 rotation = new kcVector4();

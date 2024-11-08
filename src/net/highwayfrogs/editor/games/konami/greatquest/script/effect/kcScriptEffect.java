@@ -126,19 +126,12 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
         // TODO: Allow standalone script files which can define dialog (strings), entities, and scripts which can be attached to arbitrary entities. (Without deleting any existing scripts)
         //  -> I imagine this will make organization a lot better as then we ca`n have a single file containing all of the necessary info for a full sequence.
         // TODO: Also, we should have the ability to apply the same script file to multiple entities. (NOT INGAME SINCE ENTITY TARGETTING DOESNT ALLOW THAT, BUT IN EDITOR)
+        // TODO: Ability to edit entities.
 
         // TODO: Need a way to view a sequence list. [Both in-world and in-model viewer]
-        // TODO: Ability to edit entities in-editor.
 
         // TODO: SNDCHUNK.SCK/IDX/SBR are not automatically saved.
         // TODO: Get our tutorial mod test working, and go over FFM's script file for TODOs.
-        // TODO: Reduce the amount of switching between different places when writing scripts...
-
-        // TODO: Figure out names for flags.
-        // TODO: Figure out the order of scripts originally, and see if we can recreate making that order.
-        // TODO: What causes enemies to not target Frogger when dialog is active? Is it also the DISABLE_MOVEMENT flag?
-        // TODO: NOTEPAD++?
-        // TODO: TODOs in folder.
     }
 
     /**

@@ -23,6 +23,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestChunkFileEditor;
@@ -32,6 +33,7 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.*;
 
 import java.io.File;
@@ -425,6 +427,9 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
      * @param settings The settings to print the scripts with.
      */
     public void saveScripts(File file, kcScriptDisplaySettings settings) {
+        File scriptFolder = new File(file.getParentFile(), "scripts/");
+        FileUtils.makeDirectory(scriptFolder);
+
         StringBuilder scriptBuilder = new StringBuilder();
         for (kcCResource testChunk : this.chunks) {
             if (testChunk instanceof kcScriptList) {
@@ -432,6 +437,12 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 scriptBuilder.append("// Script List: '").append(scriptList.getName()).append("'\n");
                 scriptList.toString(this, scriptBuilder, settings);
                 scriptBuilder.append('\n');
+
+                for (int i = 0; i < scriptList.getScripts().size(); i++) {
+                    kcScript script = scriptList.getScripts().get(i);
+                    Config rootNode = script.toConfigNode(settings);
+                    rootNode.saveTextFile(new File(scriptFolder, rootNode.getSectionName() + "." + kcScript.EXTENSION));
+                }
             }
         }
 

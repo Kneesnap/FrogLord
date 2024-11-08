@@ -169,7 +169,11 @@ public class kcCResourceGeneric extends kcCResource {
      * Returns null if this is not an entity description.
      */
     public kcEntity3DDesc getAsEntityDescription() {
-        switch (getResourceType()) {
+        kcCResourceGenericType genericType = getResourceType();
+        if (genericType == null)
+            return null;
+
+        switch (genericType) {
             case ACTOR_BASE_DESCRIPTION:
                 return getAsActorDescription();
             case ITEM_DESCRIPTION:
@@ -238,7 +242,11 @@ public class kcCResourceGeneric extends kcCResource {
      * Get the data in this resource as a proxy description, if it is one.
      */
     public kcProxyDesc getAsProxyDescription() {
-        switch (getResourceType()) {
+        kcCResourceGenericType genericType = getResourceType();
+        if (genericType == null)
+            return null;
+
+        switch (genericType) {
             case PROXY_CAPSULE_DESCRIPTION:
                 return getAsProxyCapsuleDescription();
             case PROXY_TRI_MESH_DESCRIPTION:
