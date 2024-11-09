@@ -17,6 +17,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyTriMeshDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager.GreatQuestMapModelMeshCollection;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestMapCollisionManager.GreatQuestMapCollisionMesh;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestActionSequencePlayback;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
@@ -32,6 +33,7 @@ public class GreatQuestMapEditorEntityDisplay {
     private final GreatQuestModelMesh modelMesh;
     private final kcCResourceEntityInst entityInstance;
     private final GreatQuestMapModelMeshCollection modelViews;
+    private final GreatQuestActionSequencePlayback sequencePlayback;
     private Node collisionPreview;
     private Shape3D boundingSpherePreview;
 

@@ -58,13 +58,15 @@ public class kcAnimState {
      * @param bone the bone which is getting evaluated
      * @param tick the animation tick to evaluate
      * @param tracks the animation tracks to apply
+     * @return true if the animation is occurring, or false if the end of the animation has been reached / no future changes will occur.
      */
-    public void evaluate(kcNode bone, double tick, List<kcTrack> tracks) {
+    public boolean evaluate(kcNode bone, double tick, List<kcTrack> tracks) {
         if (!Double.isFinite(tick))
             throw new IllegalArgumentException("Invalid animation tick provided: " + tick);
         if (tracks == null || tracks.isEmpty())
-            return;
+            return false;
 
+        boolean reachedEndOfAllTracks = true;
         for (int i = 0; i < tracks.size(); i++) {
             kcTrack track = tracks.get(i);
             int trackKeyIndex = track.getKeyIndexForTick((int) tick);
@@ -78,9 +80,12 @@ public class kcAnimState {
             if (nextKey != null) {
                 float t = (float) (tick - trackKey.getTick()) / (nextKey.getTick() - trackKey.getTick());
                 nextKey.applyInterpolateValue(bone, trackKey, this, t);
+                reachedEndOfAllTracks = false;
             } else if (trackKey != null) {
                 trackKey.applyInterpolateValue(bone, lastKey, this, 1f);
             }
         }
+
+        return !reachedEndOfAllTracks;
     }
 }

@@ -23,6 +23,8 @@ import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.objects.StringNode;
 
+import java.util.Arrays;
+
 /**
  * Represents 4 bytes with ambiguous interpretation. Used in Frogger TGQ.
  * Created by Kneesnap on 1/4/2021.
@@ -102,6 +104,16 @@ public class kcParam {
      */
     public float getAsAngleInDegrees() {
         return (float) Math.toDegrees(getAsFloat());
+    }
+
+    /**
+     * Sets the integer value.
+     */
+    public void setValue(kcParam otherParam) {
+        if (otherParam == null)
+            throw new NullPointerException("otherParam");
+
+        this.bytes = Arrays.copyOf(otherParam.bytes, otherParam.bytes.length);
     }
 
     /**
@@ -329,7 +341,7 @@ public class kcParam {
                 if (getAsInteger() == kcActionSetAnimation.DEFAULT_START_TIME) {
                     node.setAsFloat(0);
                 } else {
-                    node.setAsFloat(getAsFloat());
+                    node.setAsFloat((float) getAsInteger() / GreatQuestModelMesh.TICKS_PER_SECOND);
                 }
                 break;
             case TIMESTAMP_TICK:

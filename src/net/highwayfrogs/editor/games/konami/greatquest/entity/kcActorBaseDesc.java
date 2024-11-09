@@ -9,7 +9,6 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceNamedHash.HashTableEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
@@ -21,7 +20,6 @@ import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestM
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.NumberUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -180,17 +178,9 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         kcModelWrapper modelWrapper = model != null ? model.getModelWrapper() : null;
         String name = model != null ? model.getFileName() : getParentHash().getOriginalString();
 
-        List<kcCResourceTrack> animations = animSet != null ? animSet.getAnimations() : new ArrayList<>();
+        List<kcCResourceTrack> animations = animSet != null ? animSet.getAnimations() : null;
+
         kcCResourceNamedHash namedHash = getAnimationSequences();
-        if (namedHash != null) {
-            for (int i = 0; i < namedHash.getEntries().size(); i++) {
-                HashTableEntry entry = namedHash.getEntries().get(i);
-                //kcCResourceTrack animation = entry.getValueRef()
-            }
-            // TODO: ADD ANIMATIONS.
-        }
-
-
-        return new GreatQuestModelMesh(modelWrapper, skeleton, animations, null, name, false);
+        return new GreatQuestModelMesh(modelWrapper, skeleton, animations, namedHash, name, false);
     }
 }

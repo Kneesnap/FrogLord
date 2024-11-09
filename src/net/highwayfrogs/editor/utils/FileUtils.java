@@ -547,10 +547,10 @@ public class FileUtils {
             if (!folder.canWrite() && !folder.setWritable(true)) // We want it to properly create popups based on thread/etc, since this error is one which is likely the user's responsibility.
                 throw new IOException("Can't write to the file '" + outputFile.getName() + "'." + Constants.NEWLINE + "Do you have permission to save in this folder?");
 
-            if (!outputFile.canWrite() && !outputFile.setWritable(true))
+            if (outputFile.isFile() && outputFile.exists() && !outputFile.canWrite() && !outputFile.setWritable(true)) // TODO: Consider changing this to a Yes/No popup, with the ability to accept all
                 throw new IOException("Can't write to the file '" + outputFile.getName() + "'." + Constants.NEWLINE + "Do you have permission to write to this file?");
 
-            if (!outputFile.setLastModified(System.currentTimeMillis()))
+            if (outputFile.exists() && !outputFile.setLastModified(System.currentTimeMillis()))
                 throw new IOException("Failed to update the last modified date for '" + outputFile.getName() + "'.");
 
             Files.write(outputFile.toPath(), bytes);

@@ -5,7 +5,7 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
-<AnchorPane fx:id="anchorPaneUIRoot" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="250.0"
+<AnchorPane fx:id="anchorPaneUIRoot" maxWidth="Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="250.0"
             xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1">
     <children>
         <Accordion fx:id="accordionLeft" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
@@ -13,16 +13,16 @@
             <panes>
                 <TitledPane fx:id="viewSettings" animated="false" text="View Settings">
                     <content>
-                        <ScrollPane fitToWidth="true">
+                        <ScrollPane fitToWidth="true" fx:id="viewScrollPane">
                             <content>
                                 <AnchorPane>
                                     <children>
-                                        <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+                                        <VBox fx:id="viewSettingsBox" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
                                               AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                             <children>
-                                                <GridPane prefWidth="232.0" fx:id="viewSettingsPane">
+                                                <GridPane fx:id="viewSettingsPane">
                                                     <columnConstraints>
-                                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0"
+                                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="-Infinity"
                                                                            prefWidth="100.0"/>
                                                         <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0"
                                                                            prefWidth="100.0"/>
@@ -58,18 +58,18 @@
                                                         <CheckBox fx:id="checkBoxShowMesh" mnemonicParsing="false"
                                                                   nodeOrientation="LEFT_TO_RIGHT" selected="true"
                                                                   GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-                                                        <ComboBox fx:id="comboBoxMeshDrawMode" prefWidth="150.0"
+                                                        <ComboBox fx:id="comboBoxMeshDrawMode" prefWidth="125.0"
                                                                   GridPane.columnIndex="1" GridPane.rowIndex="3"/>
-                                                        <ComboBox fx:id="comboBoxMeshCullFace" prefWidth="150.0"
+                                                        <ComboBox fx:id="comboBoxMeshCullFace" prefWidth="125.0"
                                                                   GridPane.columnIndex="1" GridPane.rowIndex="4"/>
                                                         <ColorPicker fx:id="colorPickerLevelBackground"
                                                                      GridPane.columnIndex="1" GridPane.rowIndex="5"/>
-                                                        <CheckBox fx:id="checkBoxEnablePsxShading" prefWidth="150.0"
+                                                        <CheckBox fx:id="checkBoxEnablePsxShading" prefWidth="125.0"
                                                                   nodeOrientation="LEFT_TO_RIGHT"
                                                                   GridPane.columnIndex="1" GridPane.rowIndex="6"/>
                                                     </children>
                                                 </GridPane>
-                                                <Label text="Texture Sheet (Debug):" underline="true"/>
+                                                <Label fx:id="textureSheetDebugLabel" text="Texture Sheet (Debug):" underline="true"/>
                                                 <ImageView fx:id="textureSheetDebugView"
                                                            fitWidth="250" fitHeight="250"/>
                                             </children>

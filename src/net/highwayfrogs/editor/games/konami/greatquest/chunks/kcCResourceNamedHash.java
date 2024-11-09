@@ -167,7 +167,7 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
                 return entry;
 
             // Test against the real sequence name, since it has been observed to differ due to typos.
-            kcCActionSequence sequence = entry.getValueRef().getResource();
+            kcCActionSequence sequence = entry.getSequence();
             if (sequence != null && (name.equalsIgnoreCase(sequence.getName()) || name.equalsIgnoreCase(sequence.getSequenceName())))
                 return entry;
         }
@@ -205,6 +205,22 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
     }
 
     /**
+     * Gets the action sequences in the table as a list.
+     */
+    public List<kcCActionSequence> getSequences() {
+        List<kcCActionSequence> sequences = new ArrayList<>();
+
+        for (int i = 0; i < this.entries.size(); i++) {
+            HashTableEntry entry = this.entries.get(i);
+            kcCActionSequence sequence = entry.getSequence();
+            if (sequence != null)
+                sequences.add(sequence);
+        }
+
+        return sequences;
+    }
+
+    /**
      * Loads sequences from a Config node.
      * The provided config node will have its child config nodes read, with their names used as the sequence names.
      * Existing sequences will have their actions replaced/read if present in the provided config node.
@@ -239,7 +255,7 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
 
             // Replace (or creates) the existing sequence.
             boolean newlyCreatedSequence = false;
-            kcCActionSequence sequence = entry.getValueRef().getResource();
+            kcCActionSequence sequence = entry.getSequence();
             if (sequence == null) {
                 newlyCreatedSequence = true;
                 sequence = new kcCActionSequence(getParentFile());
@@ -317,6 +333,13 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
          */
         public String makeSequenceName() {
             return this.parentHashTable.getBaseName() + "[" + this.keyName + "]";
+        }
+
+        /**
+         * Gets the linked action sequence value, if it was found.
+         */
+        public kcCActionSequence getSequence() {
+            return this.valueRef.getResource();
         }
     }
 }

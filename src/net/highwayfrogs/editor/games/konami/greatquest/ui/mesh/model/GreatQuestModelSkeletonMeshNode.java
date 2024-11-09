@@ -4,7 +4,9 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleto
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton.kcNode;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
 import net.highwayfrogs.editor.gui.mesh.fxobject.MeshUtils;
+import net.highwayfrogs.editor.gui.texture.atlas.AtlasTexture;
 import net.highwayfrogs.editor.system.math.Matrix4x4f;
+import net.highwayfrogs.editor.system.math.Vector2f;
 import net.highwayfrogs.editor.system.math.Vector3f;
 
 /**
@@ -12,6 +14,7 @@ import net.highwayfrogs.editor.system.math.Vector3f;
  * Created by Kneesnap on 10/9/2024.
  */
 public class GreatQuestModelSkeletonMeshNode extends DynamicMeshAdapterNode<kcNode> {
+    private final Vector2f tempUv = new Vector2f();
     private final Vector3f tempVertex = new Vector3f();
 
     private static final float SIZE = .025f;
@@ -51,10 +54,10 @@ public class GreatQuestModelSkeletonMeshNode extends DynamicMeshAdapterNode<kcNo
             entry.addVertexValue(calculateVertexPos(bone, BASE_VERTICES[i]));
 
         // Add pyramid UV.
-        int uvIndex = entry.getTexCoordStartIndex();
-        entry.addTexCoordValue(.5f, .5f);
+        entry.addTexCoordValue(evaluateUvs(bone));
 
         // Create pyramid.
+        int uvIndex = entry.getTexCoordStartIndex();
         MeshUtils.addPyramidFaces(entry, false, vtxStartIndex, vtxStartIndex + 1, vtxStartIndex + 2, vtxStartIndex + 3, vtxStartIndex + 4, uvIndex);
         return entry;
     }
@@ -66,11 +69,28 @@ public class GreatQuestModelSkeletonMeshNode extends DynamicMeshAdapterNode<kcNo
 
     @Override
     public void updateTexCoord(DynamicMeshTypedDataEntry entry, int localTexCoordIndex) {
-        // Do nothing.
+        entry.writeTexCoordValue(localTexCoordIndex, evaluateUvs(entry.getDataSource()));
     }
 
     private Vector3f calculateVertexPos(kcNode bone, Vector3f input) {
         Matrix4x4f boneTransform = getMesh().getFullMesh().getBoneTransform(bone.getTag());
         return boneTransform.multiply(input, this.tempVertex);
+    }
+
+    private Vector2f evaluateUvs(kcNode bone) {
+        kcNode selectedBone = getMesh().getSelectedBone();
+
+        AtlasTexture boneTexture = getMesh().getDefaultBoneTexture();
+        if (selectedBone != null) {
+            if (selectedBone == bone) {
+                boneTexture = getMesh().getSelectedBoneTexture();
+            } else if (selectedBone.getParent() == bone) {
+                boneTexture = getMesh().getParentBoneTexture();
+            } else if (selectedBone.getChildren().contains(bone)) {
+                boneTexture = getMesh().getChildBoneTexture();
+            }
+        }
+
+        return getMesh().getTextureAtlas().getUV(boneTexture, this.tempUv.setXY(.5F, .5F), this.tempUv);
     }
 }

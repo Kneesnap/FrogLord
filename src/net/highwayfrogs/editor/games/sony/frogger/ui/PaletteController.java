@@ -70,6 +70,6 @@ public class PaletteController extends SCFileEditorUIController<SCGameInstance, 
         paletteImageView.setImage(getFile().makeImage(IMAGE_SIZE));
         colorList.setCellFactory(null);
         colorList.setItems(FXCollections.observableArrayList(getFile().getColors()));
-        colorList.setCellFactory(param -> new AbstractAttachmentCell<>((color, index) -> "Color #" + index, (color, index) -> color != null ? new ImageView(ColorUtils.makeColorImage(color)) : null));
+        colorList.setCellFactory(param -> new AbstractAttachmentCell<>((color, index) -> "Color #" + index, (color, index) -> color != null ? new ImageView(ColorUtils.makeFxColorImage(color)) : null));
     }
 }

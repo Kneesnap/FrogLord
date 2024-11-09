@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelMesh;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 import net.highwayfrogs.editor.utils.objects.StringNode;
 
@@ -39,8 +40,8 @@ public class kcActionSetAnimation extends kcAction {
     @Override
     public void load(kcParamReader reader) {
         setTrackHash(reader.next().getAsInteger());
-        this.startTime.setValue(reader.next().getAsInteger());
-        this.translationTick.setValue(reader.next().getAsInteger());
+        this.startTime.setValue(reader.next());
+        this.translationTick.setValue(reader.next());
         this.mode = kcAnimationMode.getType(reader.next().getAsInteger(), false);
     }
 
@@ -72,7 +73,7 @@ public class kcActionSetAnimation extends kcAction {
         // Load 'startTime' parameter.
         StringNode startTime = arguments.use(ARGUMENT_START_TIME);
         if (startTime != null) {
-            this.startTime.setValue(startTime.getAsFloat());
+            this.startTime.setValue(Math.round(startTime.getAsFloat() * GreatQuestModelMesh.TICKS_PER_SECOND));
         } else {
             this.startTime.setValue(DEFAULT_START_TIME);
         }
@@ -100,7 +101,19 @@ public class kcActionSetAnimation extends kcAction {
 
         // Apply 'startTime' parameter.
         if (this.startTime.getAsInteger() != DEFAULT_START_TIME)
-            arguments.getOrCreate(ARGUMENT_START_TIME).setAsFloat(this.startTime.getAsFloat());
+            arguments.getOrCreate(ARGUMENT_START_TIME).setAsFloat(getStartTime());
+    }
+
+    /**
+     * Gets the start time (in seconds)
+     * @return startTime
+     */
+    public float getStartTime() {
+        if (this.startTime.getAsInteger() == DEFAULT_START_TIME) {
+            return 0F;
+        } else {
+            return (float) this.startTime.getAsInteger() / GreatQuestModelMesh.TICKS_PER_SECOND;
+        }
     }
 
     /**

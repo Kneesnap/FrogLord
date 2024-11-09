@@ -5,6 +5,8 @@ import net.highwayfrogs.editor.Constants;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
@@ -264,6 +266,27 @@ public class Utils {
         // Use the utils logger if we weren't given one.
         if (logger == null)
             logger = getLogger();
+
+        // JavaFX has an error which was fixed beyond Java 8, but it throws an exception in earlier versions with using null in ComboBoxes.
+        // We do NOT want to open a popup for this error, as it will for sure confuse the user into thinking something went wrong.
+        // And even if it doesn't, it's highly annoying.
+        if (th instanceof IndexOutOfBoundsException && "handleFxThreadError".equalsIgnoreCase(callingMethodName)) {
+            // Get the exception as a string.
+            StringWriter stringWriter = new StringWriter();
+            PrintWriter printWriter = new PrintWriter(stringWriter);
+            th.printStackTrace(printWriter);
+            String stackTraceStr = stringWriter.toString();
+
+            if (stackTraceStr.contains("ReadOnlyUnbackedObservableList.subList") && stackTraceStr.contains("clearAndSelect") && stackTraceStr.contains("Scene$MouseHandler.process")) {
+                if (logger != null) {
+                    logger.warning("Skipping an internal JavaFX error which can safely be ignored.");
+                } else {
+                    System.err.println("Skipping an internal JavaFX error which can safely be ignored.");
+                }
+
+                return;
+            }
+        }
 
         // Print stage trace.
         if (logger != null) {

@@ -54,7 +54,7 @@ public class kcActionAttachSensor extends kcAction {
     @Override
     public void load(kcParamReader reader) {
         this.attachID = reader.next().getEnum(kcAttachID.values());
-        this.boneId.setValue(reader.next().getAsInteger());
+        this.boneId.setValue(reader.next());
         switch (this.attachID) {
             case PARTICLE_EMITTER:
                 setParticleEmitterHash(reader.next().getAsInteger());

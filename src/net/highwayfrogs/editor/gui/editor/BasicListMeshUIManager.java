@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.gui.editor;
 
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -27,6 +28,7 @@ import java.util.Objects;
 @Getter
 public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, T3DDelegate> extends MeshUIManager<TMesh> {
     private final Map<TValue, T3DDelegate> delegatesByValue = new HashMap<>();
+    private final boolean includeNull;
 
     // UI:
     private GUIEditorGrid mainGrid;
@@ -41,7 +43,12 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
     private static final PhongMaterial MATERIAL_YELLOW = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
 
     public BasicListMeshUIManager(MeshViewController<TMesh> controller) {
+        this(controller, false);
+    }
+
+    public BasicListMeshUIManager(MeshViewController<TMesh> controller, boolean includeNull) {
         super(controller);
+        this.includeNull = includeNull;
     }
 
     /**
@@ -345,7 +352,7 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
      * @return removed successfully
      */
     protected boolean tryRemoveValue(TValue value) {
-        return getValues().remove(value);
+        return value != null && getValues().remove(value);
     }
 
     /**
@@ -355,7 +362,11 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
         int valueCount = getValues().size();
         this.valueCountLabel.setText(getValueName() + " Count: " + valueCount);
 
-        this.valueSelectionBox.setItems(FXCollections.observableArrayList(getValues()));
+        ObservableList<TValue> items = FXCollections.observableArrayList(getValues());
+        if (this.includeNull && (items.isEmpty() || items.get(0) != null))
+            items.add(0, null);
+
+        this.valueSelectionBox.setItems(items);
     }
 
     public enum ListDisplayType {
@@ -374,11 +385,12 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
         @Override
         public void updateItem(TValue value, boolean empty) {
             super.updateItem(value, empty);
-            int index = this.listManager.valueSelectionBox.getItems().indexOf(value);
-            setText(this.listManager.getListDisplayName(index, value));
-            setStyle(this.listManager.getListDisplayStyle(index, value));
+            int subtractionIndex = (this.listManager.includeNull ? 1 : 0);
+            int index = (value != null) ? this.listManager.valueSelectionBox.getItems().indexOf(value) : (subtractionIndex - 1);
+            setText(this.listManager.getListDisplayName(index - subtractionIndex, value));
+            setStyle(this.listManager.getListDisplayStyle(index - subtractionIndex, value));
 
-            Image image = this.listManager.getListDisplayImage(index, value);
+            Image image = this.listManager.getListDisplayImage(index - subtractionIndex, value);
             ImageView imageView = null;
             if (image != null) {
                 imageView = new ImageView(image);

@@ -6,12 +6,14 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.kcTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcAnimState;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceModel;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceNamedHash;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton.kcNode;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshCollection;
@@ -28,11 +30,15 @@ import java.util.List;
 public class GreatQuestModelMesh extends DynamicMesh {
     @Getter private final kcModelWrapper modelWrapper;
     @Getter private final kcCResourceSkeleton skeleton;
+    @Getter private final kcCResourceNamedHash actionSequenceTable;
     @Getter private final ObservableList<kcCResourceTrack> availableAnimations;
+    @Getter private final ObservableList<kcCActionSequence> availableSequences;
     @Getter private final DynamicMeshCollection<GreatQuestModelMaterialMesh> actualMesh;
     @Getter private final boolean swapAxis;
     @Getter private final boolean environmentalMesh;
     @Getter private kcCResourceTrack activeAnimation;
+    @Getter private boolean repeatAnimationOnFinish; // Whether the animation should repeat upon finish.
+    @Getter private boolean playingAnimation; // Returns true while playing an animation.
     @Getter private double animationTick;
     @Getter private final GreatQuestModelSkeletonMesh skeletonMesh;
 
@@ -56,18 +62,21 @@ public class GreatQuestModelMesh extends DynamicMesh {
         this(modelWrapper, null, null, null, meshName, swapAxis);
     }
 
-    public GreatQuestModelMesh(kcModelWrapper modelWrapper, kcCResourceSkeleton skeleton, List<kcCResourceTrack> animations, kcCResourceTrack activeAnimation, String meshName, boolean swapAxis) {
+    public GreatQuestModelMesh(kcModelWrapper modelWrapper, kcCResourceSkeleton skeleton, List<kcCResourceTrack> animations, kcCResourceNamedHash actionSequenceTable, String meshName, boolean swapAxis) {
         super(null, DynamicMeshTextureQuality.LIT_BLURRY, meshName);
         this.modelWrapper = modelWrapper;
         this.skeleton = skeleton;
+        this.actionSequenceTable = actionSequenceTable;
         this.availableAnimations = animations != null ? FXCollections.observableArrayList(animations) : FXCollections.observableArrayList();
-        this.activeAnimation = activeAnimation;
+        this.availableSequences = actionSequenceTable != null ? FXCollections.observableArrayList(actionSequenceTable.getSequences()) : FXCollections.observableArrayList();
         this.actualMesh = new DynamicMeshCollection<>(getMeshName());
         this.swapAxis = swapAxis;
         this.environmentalMesh = modelWrapper != null && GreatQuestEntityManager.isFileNameEnvironmentalMesh(modelWrapper.getFileName());
         this.skeletonMesh = skeleton != null ? new GreatQuestModelSkeletonMesh(this, meshName + "Skeleton") : null;
         if (!this.availableAnimations.isEmpty())
             this.availableAnimations.add(0, null);
+        if (!this.availableSequences.isEmpty())
+            this.availableSequences.add(0, null);
 
         // Setup actual mesh.
         kcModel model = modelWrapper != null ? modelWrapper.getModel() : null;
@@ -93,10 +102,21 @@ public class GreatQuestModelMesh extends DynamicMesh {
      * @param newAnimation the animation to display
      */
     public void setActiveAnimation(kcCResourceTrack newAnimation) {
+        setActiveAnimation(newAnimation, false);
+    }
+
+    /**
+     * Changes which animation is currently displayed by the mesh
+     * @param newAnimation the animation to display
+     * @param repeat if true, the animation will repeat upon completion.
+     */
+    public void setActiveAnimation(kcCResourceTrack newAnimation, boolean repeat) {
         if (newAnimation == this.activeAnimation)
             return; // No change.
 
         this.activeAnimation = newAnimation;
+        this.repeatAnimationOnFinish = repeat;
+        this.playingAnimation = true;
         this.animationTick = 0;
         updateMeshes();
     }
@@ -106,7 +126,8 @@ public class GreatQuestModelMesh extends DynamicMesh {
      * @param deltaTimeSeconds the amount of time (in seconds) to increase the animation state by
      */
     public void tickAnimation(float deltaTimeSeconds) {
-        setAnimationTick(this.animationTick + ((double) deltaTimeSeconds * TICKS_PER_SECOND));
+        if (this.playingAnimation)
+            setAnimationTick(this.animationTick + ((double) deltaTimeSeconds * TICKS_PER_SECOND));
     }
 
     /**
@@ -155,9 +176,9 @@ public class GreatQuestModelMesh extends DynamicMesh {
         if (startNode == null)
             throw new NullPointerException("startNode");
 
+        this.playingAnimation = false;
         List<kcNode> nodeQueue = new ArrayList<>();
         nodeQueue.add(startNode);
-        kcCResourceTrack animation = this.activeAnimation;
         while (nodeQueue.size() > 0) {
             kcNode tempNode = nodeQueue.remove(0);
             nodeQueue.addAll(tempNode.getChildren());
@@ -170,11 +191,13 @@ public class GreatQuestModelMesh extends DynamicMesh {
 
             // Get the bone's transform in local bone space.
             Matrix4x4f localTransform = this.cachedBoneMatrices.get(tempNode.getTag());
-            if (animation != null) { // Apply animation.
-                List<kcTrack> tracks = animation.getTracksByTag(tempNode.getTag());
+            if (this.activeAnimation != null) { // Apply animation.
+                List<kcTrack> tracks = this.activeAnimation.getTracksByTag(tempNode.getTag());
                 this.tempAnimationState.reset(tempNode);
-                this.tempAnimationState.evaluate(tempNode, this.animationTick, tracks);
+                boolean moreAnimationLeft = this.tempAnimationState.evaluate(tempNode, this.animationTick, tracks);
                 localTransform = this.tempAnimationState.getLocalOffsetMatrix(localTransform);
+                if (moreAnimationLeft)
+                    this.playingAnimation = true;
             } else { // Use default bone transform.
                 localTransform = tempNode.getLocalOffsetMatrix(localTransform);
             }
@@ -188,6 +211,12 @@ public class GreatQuestModelMesh extends DynamicMesh {
             // When multiplying a vertex, the vertex will be in model space, but globalTransform is in local space.
             Matrix4x4f finalTransform = this.cachedFinalBoneMatrices.get(tempNode.getTag());
             tempNode.getModelToBoneMatrix().multiply(globalTransform, finalTransform); // This is the same as multiplying a vector against the two matrices separately.
+        }
+
+        // Restart the animation if configured.
+        if (!this.playingAnimation && this.repeatAnimationOnFinish) {
+            this.playingAnimation = true;
+            this.animationTick = 0;
         }
     }
 

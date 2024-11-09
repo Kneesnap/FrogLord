@@ -13,7 +13,7 @@ import java.util.Map;
  * Created by Kneesnap on 10/25/2024.
  */
 public class ColorUtils {
-    private static final Map<Color, Image> colorImageCacheMap = new HashMap<>();
+    private static final Map<Color, BufferedImage> colorImageCacheMap = new HashMap<>();
 
     /**
      * Get the alpha value from an ARGB8888 value.
@@ -191,14 +191,23 @@ public class ColorUtils {
      * @param color The color to make the image of.
      * @return colorImage
      */
-    public static Image makeColorImage(Color color) {
+    public static Image makeFxColorImage(Color color) {
+        return FXUtils.toFXImage(makeColorImage(color), true);
+    }
+
+    /**
+     * Creates an image of a solid color.
+     * @param color The color to make the image of.
+     * @return colorImage
+     */
+    public static BufferedImage makeColorImage(Color color) {
         return colorImageCacheMap.computeIfAbsent(color, key -> {
             BufferedImage colorImage = new BufferedImage(10, 10, BufferedImage.TYPE_INT_ARGB);
             Graphics2D graphics = colorImage.createGraphics();
             graphics.setColor(toAWTColor(key));
             graphics.fillRect(0, 0, colorImage.getWidth(), colorImage.getHeight());
             graphics.dispose();
-            return FXUtils.toFXImage(colorImage, true);
+            return colorImage;
         });
     }
 

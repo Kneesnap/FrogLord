@@ -12,9 +12,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
@@ -32,6 +30,7 @@ import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.fx.wrapper.FXFixedMouseSplitPaneSkin;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -52,6 +51,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     public static final double MAP_VIEW_NEAR_CLIP = 1; // The closer this value is to 0.0, the worse z-fighting gets. Source: https://www.khronos.org/opengl/wiki/Depth_Buffer_Precision
     public static final double MAP_VIEW_FAR_CLIP = 2000.0;
     public static final double MAP_VIEW_FOV = 60.0;
+    private static final int SPLIT_DIVIDER_SIZE = 10;
 
     private final GameInstance gameInstance;
     private SubScene subScene;
@@ -69,6 +69,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     @FXML private ComboBox<DrawMode> comboBoxMeshDrawMode;
     @FXML private ComboBox<CullFace> comboBoxMeshCullFace;
     @FXML private CheckBox checkBoxEnablePsxShading;
+    @FXML private Label textureSheetDebugLabel;
     @FXML private ImageView textureSheetDebugView;
     @FXML private ColorPicker colorPickerLevelBackground;
     @FXML private TextField textFieldCamMoveSpeed;
@@ -92,6 +93,8 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
 
     // View Settings
     @FXML private TitledPane viewSettings;
+    @FXML private ScrollPane viewScrollPane;
+    @FXML private VBox viewSettingsBox;
     @FXML private GridPane viewSettingsPane;
 
     // Camera Settings.
@@ -237,6 +240,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         SubScene subScene3D = new SubScene(this.root3D, stageToOverride.getScene().getWidth() - uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.DISABLED);
         subScene3D.setFill(Color.BLACK);
         subScene3D.setCamera(this.firstPersonCamera.getCamera());
+        subScene3D.setManaged(false); // Prevents the SubScene from impacting its parent node size.
 
         // Ensure that the render manager has access to the root node
         Group normalGroup = new Group();
@@ -246,20 +250,25 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         this.renderManager.setRoot(normalGroup);
         this.transparentRenderManager.setRoot(transparentGroup);
 
+        // Using a BorderPane attempts to size it properly.
+        BorderPane borderPane3D = new BorderPane();
+        borderPane3D.setCenter(subScene3D);
+
         // Initialise the UI layout.
-        BorderPane uiPane = new BorderPane();
-        uiPane.setLeft(loadRoot);
-        this.subScene2DElements = new Group();
-        this.subScene2DElements.getChildren().add(subScene3D);
-        uiPane.setCenter(this.subScene2DElements);
+        SplitPane splitPane = new SplitPane();
+        splitPane.setSkin(new FXFixedMouseSplitPaneSkin(splitPane)); // Prevents mouse events from getting eaten.
+        SplitPane.setResizableWithParent(loadRoot, false);
+        SplitPane.setResizableWithParent(borderPane3D, true);
+        splitPane.setDividerPositions(.2);
+        splitPane.getItems().addAll(loadRoot, borderPane3D);
 
         // Create and set the scene with antialiasing.
-        this.meshScene = new Scene(uiPane, -1, -1, true, SceneAntialiasing.DISABLED);
+        this.meshScene = new Scene(splitPane, subScene3D.getWidth(), subScene3D.getHeight(), true, SceneAntialiasing.DISABLED);
         this.originalScene = FXUtils.setSceneKeepPosition(stageToOverride, this.meshScene);
 
         // Handle scaling of SubScene on stage resizing.
-        this.meshScene.widthProperty().addListener((observable, old, newVal) -> subScene3D.setWidth(newVal.doubleValue() - uiRootPaneWidth()));
-        subScene3D.heightProperty().bind(this.meshScene.heightProperty());
+        subScene3D.widthProperty().bind(borderPane3D.widthProperty());
+        subScene3D.heightProperty().bind(borderPane3D.heightProperty());
 
         // Associate camera controls with the scene.
         this.firstPersonCamera.assignSceneControls(stageToOverride, this.meshScene);
@@ -360,6 +369,23 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     }
 
     /**
+     * Adds two nodes to the view settings grid.
+     * @param leftNode the node to place in the left column
+     * @param rightNode the node to place in the right column
+     */
+    protected void addToViewSettingsGrid(Node leftNode, Node rightNode) {
+        int oldSize = getViewSettingsPane().getRowConstraints().size();
+        RowConstraints example = getViewSettingsPane().getRowConstraints().get(0);
+        getViewSettingsPane().getRowConstraints().add(new RowConstraints(example.getMinHeight(), example.getPrefHeight(), example.getMaxHeight(), example.getVgrow(), example.getValignment(), example.isFillHeight()));
+        GridPane.setColumnIndex(leftNode, 0);
+        GridPane.setColumnIndex(rightNode, 1);
+        GridPane.setRowIndex(leftNode, oldSize);
+        GridPane.setRowIndex(rightNode, oldSize);
+        getViewSettingsPane().getChildren().add(leftNode);
+        getViewSettingsPane().getChildren().add(rightNode);
+    }
+
+    /**
      * If this is true, it gives a preference to 3D models having transparency over the world.
      */
     protected boolean mapRendersFirst() {
@@ -396,14 +422,14 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
      * Get the root pane width.
      */
     public double uiRootPaneWidth() {
-        return anchorPaneUIRoot.getPrefWidth();
+        return anchorPaneUIRoot.getWidth();
     }
 
     /**
      * Get the root pane height.
      */
     public double uiRootPaneHeight() {
-        return anchorPaneUIRoot.getPrefHeight();
+        return anchorPaneUIRoot.getHeight();
     }
 
     /**
@@ -466,8 +492,11 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
             this.checkBoxEnablePsxShading.setDisable(true);
         }
 
-        if (getMesh().getMaterial() != null)
+        if (getMesh().getMaterial() != null) {
             this.textureSheetDebugView.imageProperty().bind(getMesh().getMaterial().diffuseMapProperty());
+        } else {
+            this.viewSettingsBox.getChildren().removeAll(this.textureSheetDebugLabel, this.textureSheetDebugView);
+        }
 
         // Must be called after FroggerMapInfoUIController is passed.
         runForEachManager(MeshUIManager::onSetup, "onSetup"); // Setup all the managers.

@@ -188,7 +188,7 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
         hashNode.setAsString("0x" + entry.getValueRef().getHashNumberAsString());
         hashNode.setComment("This value is (probably) random. It uniquely identifies this sequence, so the same number should not be used more than once.");
 
-        kcCActionSequence sequence = entry.getValueRef().getResource();
+        kcCActionSequence sequence = entry.getSequence();
         if (sequence == null)
             return result;
 
@@ -247,7 +247,7 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
                 kcCResourceNamedHash actionSequenceTable = actorBaseDesc.getAnimationSequences();
                 if (actionSequenceTable != null) {
                     for (HashTableEntry entry : actorBaseDesc.getAnimationSequences().getEntries()) {
-                        if (entry.getValueRef().getResource() == this) {
+                        if (entry.getSequence() == this) {
                             actionSequenceLinked = true;
                             break;
                         }

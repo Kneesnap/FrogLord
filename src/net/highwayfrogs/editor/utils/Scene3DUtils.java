@@ -713,7 +713,7 @@ public class Scene3DUtils {
      * @return phongMaterial
      */
     public static PhongMaterial makeUnlitSharpMaterial(javafx.scene.paint.Color color) {
-        return makeUnlitSharpMaterial(ColorUtils.makeColorImage(color));
+        return makeUnlitSharpMaterial(ColorUtils.makeFxColorImage(color));
     }
 
     /**

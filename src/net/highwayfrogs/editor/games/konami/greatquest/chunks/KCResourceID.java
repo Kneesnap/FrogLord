@@ -30,7 +30,7 @@ public enum KCResourceID {
     GENERIC("GEN\0", "Generic Data", ImageResource.WIN98_HEXCHAT_16, kcCResourceGeneric::new),
     TOC("TOC\0", "Table of Contents", ImageResource.WIN98_HELP_CONTENTS_16, kcCResourceTOC::new),
     ACTIONSEQUENCE("ASQ\0", "Action Sequence", ImageResource.GHIDRA_ICON_PAPER_WITH_TEXT_16, kcCActionSequence::new),
-    NAMEDHASH("NHS\0", "Animation Names", ImageResource.GHIDRA_ICON_CLIPBOARD_PASTE_16, kcCResourceNamedHash::new),
+    NAMEDHASH("NHS\0", "Action Sequence Names", ImageResource.GHIDRA_ICON_CLIPBOARD_PASTE_16, kcCResourceNamedHash::new),
     ENTITYINST("NST\0", "Entity Instance", ImageResource.GHIDRA_ICON_MONKEY_16, kcCResourceEntityInst::new),
     DUMMY(null,"Dummy", ImageResource.GHIDRA_ICON_RED_X_16, null);
 
