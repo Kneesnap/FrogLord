@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
+import net.highwayfrogs.editor.games.konami.IConfigData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
@@ -31,7 +32,7 @@ import java.util.Map;
  */
 @Getter
 @Setter
-public class kcEntityInst extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
+public class kcEntityInst extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter, IConfigData {
     private final kcCResourceEntityInst resource;
     private final GreatQuestHash<kcCResourceGeneric> descriptionRef; // Resolved by kcCGameSystem::CreateInstance(), kcCGameSystem::CreateInstance(), kcCEntity::Reset, kcCEntity::Init
     private int priority = 1; // Usually 1, but sometimes two. This is used by kcCEntityMsgStore::RouteMessage() for placement in a priority queue. Basically, it allows overriding the order messages are processed/stored as.
@@ -195,5 +196,84 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
         builder.append(padding).append("Priority: ").append(this.priority).append(Constants.NEWLINE);
         builder.append(padding).append("Script Index: ").append(this.scriptIndex).append(Constants.NEWLINE);
         GreatQuestChunkedFile.writeAssetLine(chunkedFile, builder, padding, "Target Entity", this.targetEntityRef);
+    }
+
+    private static final String CONFIG_KEY_ENTITY_DESC = "description";
+    private static final String CONFIG_KEY_PRIORITY = "priority";
+    private static final String CONFIG_KEY_TARGET_ENTITY = "targetEntity";
+    private static final String CONFIG_SECTION_SCRIPT = "Script";
+
+    @Override
+    public void fromConfig(Config input) {
+        if (this.resource == null)
+            throw new NullPointerException("this.resource");
+
+        GreatQuestChunkedFile chunkedFile = this.resource.getParentFile();
+        if (chunkedFile == null)
+            throw new NullPointerException("chunkedFile");
+
+        int entityDescHash = GreatQuestUtils.getAsHash(input.getKeyValueNodeOrError(CONFIG_KEY_ENTITY_DESC), -1);
+        GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, chunkedFile, this.resource, this.descriptionRef, entityDescHash, true);
+
+        this.priority = input.getOrDefaultKeyValueNode(CONFIG_KEY_PRIORITY).getAsInteger(1);
+
+        int targetEntityHash = GreatQuestUtils.getAsHash(input.getKeyValueNodeOrError(CONFIG_KEY_TARGET_ENTITY), -1);
+        GreatQuestUtils.resolveResourceHash(kcCResourceEntityInst.class, chunkedFile, this.resource, this.targetEntityRef, targetEntityHash, true);
+
+        // Read scripts.
+        Config scriptCfg = input.getChildConfigByName(CONFIG_SECTION_SCRIPT);
+        if (scriptCfg != null)
+            addScriptFunctions(chunkedFile.getScriptList(), scriptCfg, scriptCfg.getRootNode().getSectionName());
+    }
+
+    @Override
+    public final void toConfig(Config output) {
+        if (this.resource == null)
+            throw new NullPointerException("this.resource");
+
+        GreatQuestChunkedFile chunkedFile = this.resource.getParentFile();
+        if (chunkedFile == null)
+            throw new NullPointerException("chunkedFile");
+
+        toConfig(output, chunkedFile.getScriptList(), chunkedFile.createScriptDisplaySettings());
+    }
+
+    /**
+     * Writes the entity instance data to a config.
+     * @param output the output configuration
+     * @param scriptList the script list to update the script from
+     * @param settings the script display settings to write entity information with
+     */
+    public void toConfig(Config output, kcScriptList scriptList, kcScriptDisplaySettings settings) {
+        if (output == null)
+            throw new NullPointerException("output");
+        if (scriptList == null)
+            throw new NullPointerException("scriptList");
+
+        if (this.resource != null)
+            output.setSectionName(this.resource.getName());
+
+        output.getOrCreateKeyValueNode(CONFIG_KEY_ENTITY_DESC)
+                .setComment("The name of the description (template) describing what kind of entity this is.")
+                .setAsString(this.descriptionRef.getAsGqsString(settings));
+
+        output.getOrCreateKeyValueNode(CONFIG_KEY_PRIORITY)
+                .setComment("Controls the priority in which actions from different entities are handled. 1 is fine in most cases.")
+                .setAsInteger(this.priority);
+
+        output.getOrCreateKeyValueNode(CONFIG_KEY_TARGET_ENTITY)
+                .setComment("The entity to target. If unsure, use " + PLAYER_ENTITY_NAME + ".")
+                .setAsString(this.targetEntityRef.getAsGqsString(settings));
+
+        Config oldScript = output.getChildConfigByName(CONFIG_SECTION_SCRIPT);
+        if (oldScript != null)
+            output.removeChildConfig(oldScript);
+
+        kcScript script = getScript(scriptList);
+        if (script != null) {
+            Config scriptData = script.toConfigNode(settings);
+            scriptData.setSectionName(CONFIG_SECTION_SCRIPT);
+            output.addChildConfig(scriptData);
+        }
     }
 }

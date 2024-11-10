@@ -1196,12 +1196,9 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             GreatQuestInstance instance = sbrFile.getGameInstance();
 
             return InputMenu.promptInputInt(instance, "Please enter an ID for the sound effect.", oldSfxId, newId -> {
-                if ((newId == -1 || newId == instance.getNextFreeSoundId()) && oldSfxId == -1)
-                    newId = instance.useNextFreeSoundIdSlot();
-
                 if (newId < 0)
                     throw new IllegalArgumentException(newId + " is not a valid SFX ID! IDs must be greater than or equal to zero!");
-                if (newId >= instance.getNextFreeSoundId())
+                if (newId > instance.getNextFreeSoundId() || (newId == instance.getNextFreeSoundId() && oldSfxId != instance.getNextFreeSoundId()))
                     throw new IllegalArgumentException(newId + " is not a valid SFX ID as it is reserved for newly added sounds!");
                 if (newId == oldSfxId)
                     throw new IllegalArgumentException("The provided SFX ID (" + newId + ") was the same as before.");
@@ -1376,9 +1373,12 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
                     return;
                 }
 
-                Integer sfxId = SfxEntry.askForUnusedEmbeddedSfxId(sbrFile, -1);
+                Integer sfxId = SfxEntry.askForUnusedEmbeddedSfxId(sbrFile, getGameInstance().getNextFreeSoundId());
                 if (sfxId == null)
                     return;
+
+                if (sfxId == getGameInstance().getNextFreeSoundId() || sfxId == -1)
+                    sfxId = getGameInstance().useNextFreeSoundIdSlot();
 
                 // The user will be able to change the local wave ID themselves.
                 SfxAttributes newAttributes = new SfxEntrySimpleAttributes(sbrFile);

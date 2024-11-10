@@ -6,11 +6,17 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityFlag.kcEntityInstanceFlag;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.entity.GreatQuestMapEditorEntityDisplay;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.UUID;
 
@@ -22,9 +28,9 @@ import java.util.UUID;
 public class kcEntity3DInst extends kcEntityInst {
     @Setter private int flags;
     private kcAxisType billboardAxis = kcAxisType.Y;
-    private final kcVector4 position = new kcVector4();
-    private final kcVector4 rotation = new kcVector4();
-    private final kcVector4 scale = new kcVector4();
+    private final kcVector4 position = new kcVector4(0, 0, 0, 1);
+    private final kcVector4 rotation = new kcVector4(0, 0, 0, 1);
+    private final kcVector4 scale = new kcVector4(1, 1, 1, 1);
     private final int[] reservedValues = new int[7];
     private final int[] padding = new int[32];
 
@@ -122,5 +128,40 @@ public class kcEntity3DInst extends kcEntityInst {
         this.position.writePrefixedInfoLine(builder, "Position", padding);
         this.rotation.writePrefixedInfoLine(builder, "Rotation", padding);
         this.scale.writePrefixedInfoLine(builder, "Scale", padding);
+    }
+
+    private static final String CONFIG_KEY_FLAGS = "flags";
+    private static final String CONFIG_KEY_BILLBOARD_AXIS = "billboardAxis";
+    private static final String CONFIG_KEY_POSITION = "position";
+    private static final String CONFIG_KEY_ROTATION = "rotation";
+    private static final String CONFIG_KEY_SCALE = "scale";
+
+    @Override
+    public void fromConfig(Config input) {
+        super.fromConfig(input);
+
+        ConfigValueNode flagNode = input.getOptionalKeyValueNode(CONFIG_KEY_FLAGS);
+        OptionalArguments flagArguments = flagNode != null ? OptionalArguments.parseCommaSeparatedNamedArguments(flagNode.getAsString()) : new OptionalArguments();
+        this.flags = kcEntityInstanceFlag.getValueFromArguments(flagArguments);
+        flagArguments.warnAboutUnusedArguments(getResource().getLogger());
+
+        this.billboardAxis = input.getOrDefaultKeyValueNode(CONFIG_KEY_BILLBOARD_AXIS).getAsEnum(kcAxisType.Y);
+        this.position.parse(input.getKeyValueNodeOrError(CONFIG_KEY_POSITION).getAsString(), 1F);
+        this.rotation.parse(input.getKeyValueNodeOrError(CONFIG_KEY_ROTATION).getAsString(), 1F);
+        this.scale.parse(input.getKeyValueNodeOrError(CONFIG_KEY_SCALE).getAsString(), 1F);
+    }
+
+    @Override
+    public void toConfig(Config output, kcScriptList scriptList, kcScriptDisplaySettings settings) {
+        super.toConfig(output, scriptList, settings);
+
+        output.getOrCreateKeyValueNode(CONFIG_KEY_FLAGS)
+                .setComment("For a full list of flags, refer to the GQS scripting documentation.")
+                .setAsString(kcEntityInstanceFlag.getAsOptionalArguments(this.flags).getNamedArgumentsAsCommaSeparatedString());
+
+        output.getOrCreateKeyValueNode(CONFIG_KEY_BILLBOARD_AXIS).setAsEnum(this.billboardAxis);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_POSITION).setAsString(this.position.toParseableString(1F));
+        output.getOrCreateKeyValueNode(CONFIG_KEY_ROTATION).setAsString(this.rotation.toParseableString(1F));
+        output.getOrCreateKeyValueNode(CONFIG_KEY_SCALE).setAsString(this.scale.toParseableString(1F));
     }
 }

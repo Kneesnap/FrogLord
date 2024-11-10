@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.konami.greatquest;
 
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
@@ -50,6 +51,38 @@ public class GreatQuestAssetUtils {
                 }
 
                 generic.getAsStringResource().setValue(entry.getValue().getAsString());
+            }
+        }
+
+        // Add/replace entities.
+        Config entityCfg = gqsScriptGroup.getChildConfigByName("Entities");
+        if (entityCfg != null) {
+            // Add all entities first, so it becomes possible to reference other entities defined together.
+            for (Config entityInstanceCfg : entityCfg.getChildConfigNodes()) {
+                String entityInstName = entityInstanceCfg.getSectionName();
+                int entityInstNameHash = GreatQuestUtils.hash(entityInstName);
+                kcCResourceEntityInst entity = chunkedFile.getResourceByHash(entityInstNameHash);
+                if (entity == null) {
+                    entity = new kcCResourceEntityInst(chunkedFile);
+                    entity.setName(entityInstName, true);
+                    entity.setInstance(new kcEntity3DInst(entity));
+                    chunkedFile.addResource(entity);
+                }
+            }
+
+            // Load entity data.
+            for (Config entityInstanceCfg : entityCfg.getChildConfigNodes()) {
+                String entityInstName = entityInstanceCfg.getSectionName();
+                int entityInstNameHash = GreatQuestUtils.hash(entityInstName);
+                kcCResourceEntityInst entity = chunkedFile.getResourceByHash(entityInstNameHash);
+                if (entity == null)
+                    throw new RuntimeException("Could not find an entity named '" + entityInstName + "' to load data for.");
+
+                kcEntityInst entityInst = entity.getInstance();
+                if (entityInst == null)
+                    throw new RuntimeException("The entity instance for '" + entityInstName + "' was null, so we couldn't modify its script.");
+
+                entityInst.fromConfig(entityInstanceCfg);
             }
         }
 

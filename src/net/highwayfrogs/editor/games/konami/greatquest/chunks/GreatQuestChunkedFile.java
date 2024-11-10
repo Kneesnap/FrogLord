@@ -1,6 +1,8 @@
 package net.highwayfrogs.editor.games.konami.greatquest.chunks;
 
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
@@ -13,6 +15,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.IFileExport;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceNamedHash.HashTableEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
@@ -35,6 +38,7 @@ import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.*;
+import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,6 +57,10 @@ import java.util.stream.Collectors;
 public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFileExport {
     private final List<kcCResource> chunks = new ArrayList<>();
     private final List<kcCResource> immutableChunks = Collections.unmodifiableList(this.chunks);
+
+    private static final String RESOURCE_PATH_NAME = "chunkedResourceImportExportPath";
+    public static final SavedFilePath RESOURCE_IMPORT_PATH = new SavedFilePath(RESOURCE_PATH_NAME, "Please select the folder with the assets to import");
+    public static final SavedFilePath RESOURCE_EXPORT_PATH = new SavedFilePath(RESOURCE_PATH_NAME, "Please select the folder to export assets to");
 
     private static final Comparator<kcCResource> RESOURCE_ORDERING = Comparator
             .comparingInt((kcCResource resource) -> resource.getChunkType().ordinal()) // Sort by resource type.
@@ -239,6 +247,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         saveMapObj(folder); // TODO: Here's the slowdown.
         exportChunksToDirectory(folder);
 
+        kcScriptList scriptList = getScriptList();
         kcScriptDisplaySettings settings = createScriptDisplaySettings();
         saveActionSequences(new File(folder, "sequences.txt"), settings);
         saveScripts(new File(folder, "scripts.txt"), settings);
@@ -247,7 +256,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         saveAnimationSets(new File(folder, "animation-sets.txt"));
         saveAnimationSkeletons(new File(folder, "animation-skeletons.txt"));
         saveAnimationTracks(new File(folder, "animation-tracks.txt"));
-        saveEntities(new File(folder, "entity-instances.txt"));
+        exportEntities(new File(folder, "entities"), scriptList, settings);
         saveGenericEntityDescriptions(new File(folder, "entity-descriptions.txt"));
         saveGenericProxyInfo(new File(folder, "proxy-descriptions.txt"));
         saveGenericEmitterInfo(new File(folder, "emitters.txt"));
@@ -403,22 +412,79 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     }
 
     /**
-     * Saves all the entity instances to a file.
-     * @param file The file to save to.
+     * Import entities from a folder.
+     * @param folder The folder to import entity data from
      */
-    public void saveEntities(File file) {
-        StringBuilder builder = new StringBuilder();
+    public void importEntities(File folder) {
+        if (folder == null)
+            throw new NullPointerException("folder");
+
+        List<Config> importConfigs = new ArrayList<>();
+        for (File file : FileUtils.listFiles(folder)) {
+            if (!file.isFile() || !file.getName().endsWith(Config.DEFAULT_EXTENSION))
+                continue;
+
+            Config entityCfg = Config.loadConfigFromTextFile(file, false);
+            importConfigs.add(entityCfg);
+
+            // Entities can reference each other, so it is important to create new instances for each entity before loading individual entity data.
+            String entityName = entityCfg.getSectionName();
+            kcCResourceEntityInst entityInst = getResourceByHash(GreatQuestUtils.hash(entityName));
+            if (entityInst == null) {
+                entityInst = new kcCResourceEntityInst(this);
+                entityInst.setName(entityName, true);
+                entityInst.setInstance(new kcEntity3DInst(entityInst));
+                addResource(entityInst);
+            }
+
+            importConfigs.add(entityCfg);
+        }
+
+        for (Config entityCfg : importConfigs) {
+            String entityName = entityCfg.getSectionName();
+            kcCResourceEntityInst entityInst = getResourceByHash(GreatQuestUtils.hash(entityName));
+            if (entityInst == null) // Should not happen.
+                throw new RuntimeException("Could not find entity '" + entityName + "'.");
+
+            if (entityInst.getInstance() == null)
+                entityInst.setInstance(new kcEntity3DInst(entityInst));
+
+            entityInst.getInstance().fromConfig(entityCfg);
+        }
+
+        getLogger().info("Imported " + importConfigs.size() + " entity instances.");
+    }
+
+    /**
+     * Export entities to a folder.
+     * @param folder The folder to export entity data to
+     */
+    public void exportEntities(File folder, kcScriptList scriptList, kcScriptDisplaySettings settings) {
+        if (folder == null)
+            throw new NullPointerException("folder");
+        if (scriptList == null)
+            throw new NullPointerException("scriptList");
+
+        FileUtils.makeDirectory(folder);
+
+        int entityCount = 0;
         for (kcCResource testChunk : this.chunks) {
             if (!(testChunk instanceof kcCResourceEntityInst))
                 continue;
 
-            kcCResourceEntityInst entityResource = (kcCResourceEntityInst) testChunk;
-            writeData(builder, entityResource, entityResource.getInstance());
-            builder.append(Constants.NEWLINE);
+            kcCResourceEntityInst entity = (kcCResourceEntityInst) testChunk;
+            if (entity.getInstance() == null) {
+                getLogger().warning("Skipping '" + entity.getName() + "', as the entity instance was null.");
+                continue;
+            }
+
+            Config newEntityCfg = new Config(entity.getName());
+            entity.getInstance().toConfig(newEntityCfg, scriptList, settings);
+            newEntityCfg.saveTextFile(new File(folder, entity.getName() + "." + Config.DEFAULT_EXTENSION));
+            entityCount++;
         }
 
-        // Save to folder.
-        saveExport(file, builder);
+        getLogger().info("Exported " + entityCount + " entity instances.");
     }
 
     /**
@@ -836,18 +902,6 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
     /**
      * Write the asset name to the builder to a single line.
-     * @param file         The chunked file to search for assets from.
-     * @param builder      The builder to write to.
-     * @param padding      The line padding data.
-     * @param prefix       The prefix to write.
-     * @param resourceHash The hash value to lookup.
-     */
-    public static StringBuilder writeAssetLine(GreatQuestChunkedFile file, StringBuilder builder, String padding, String prefix, int resourceHash) {
-        return writeAssetInfo(file, builder, padding, prefix, resourceHash, kcCResource::getName).append(Constants.NEWLINE);
-    }
-
-    /**
-     * Write the asset name to the builder to a single line.
      * @param file The chunked file to search for assets from.
      * @param builder The builder to write to.
      * @param padding The line padding data.
@@ -886,16 +940,6 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
     /**
      * Write the asset name to the UI.
-     * @param file         The chunked file to search for assets from.
-     * @param label        The label to write.
-     * @param resourceHash The hash value to lookup.
-     */
-    public static Label writeAssetLine(GUIEditorGrid grid, GreatQuestChunkedFile file, String label, int resourceHash) {
-        return writeAssetInfo(grid, file, label, resourceHash, kcCResource::getName);
-    }
-
-    /**
-     * Write the asset name to the UI.
      * @param file The chunked file to search for assets from.
      * @param label The label to write.
      * @param hashObj The hash to lookup.
@@ -920,5 +964,30 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             resourceName = getter.apply(resource);
 
         return grid.addLabel(label + ":", (resourceName != null ? resourceName : "Not Found") + " (" + NumberUtils.to0PrefixedHexString(resourceHash) + ")");
+    }
+
+    @Override
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        super.setupRightClickMenuItems(contextMenu);
+
+        boolean hasWorld = getSceneManager() != null;
+
+        if (hasWorld) {
+            MenuItem exportEntitiesItem = new MenuItem("Export Entities");
+            contextMenu.getItems().add(exportEntitiesItem);
+            exportEntitiesItem.setOnAction(event -> {
+                File outputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), RESOURCE_EXPORT_PATH);
+                if (outputFolder != null)
+                    exportEntities(outputFolder, getScriptList(), createScriptDisplaySettings());
+            });
+
+            MenuItem importEntitiesItem = new MenuItem("Import Entities");
+            contextMenu.getItems().add(importEntitiesItem);
+            importEntitiesItem.setOnAction(event -> {
+                File inputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), RESOURCE_IMPORT_PATH);
+                if (inputFolder != null)
+                    importEntities(inputFolder);
+            });
+        }
     }
 }

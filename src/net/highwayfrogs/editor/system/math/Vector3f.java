@@ -280,6 +280,23 @@ public class Vector3f implements IBinarySerializable {
         return crossProduct(other, new Vector3f());
     }
 
+    /**
+     * Reads the contents of this vector from a string
+     * @param input the input to parse
+     */
+    public void parse(String input) {
+        if (input == null)
+            throw new NullPointerException("input");
+
+        String[] split = input.split(",?\\s+");
+        if (split.length != 3)
+            throw new NumberFormatException("'" + input + "' cannot be parsed as a Vector3f because it appears to have " + split.length + " values.");
+
+        this.x = Float.parseFloat(split[0]);
+        this.y = Float.parseFloat(split[1]);
+        this.z = Float.parseFloat(split[2]);
+    }
+
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof Vector3f))
@@ -295,6 +312,13 @@ public class Vector3f implements IBinarySerializable {
     @Override
     public int hashCode() {
         return Float.hashCode(this.x) * 397 * Float.hashCode(this.y) ^ Float.hashCode(this.z);
+    }
+
+    /**
+     * Gets this vector as a string which can be parsed.
+     */
+    public String toParseableString() {
+        return this.x + ", " + this.y + ", " + this.z;
     }
 
     @Override

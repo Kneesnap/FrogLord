@@ -122,10 +122,6 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
 
         loadArguments(arguments);
         printLoadWarnings(arguments);
-
-        // TODO: Ability to edit entities.
-
-        // TODO: Get our tutorial mod test working, and go over FFM's script file for TODOs.
     }
 
     /**

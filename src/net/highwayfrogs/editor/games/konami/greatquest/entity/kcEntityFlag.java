@@ -3,6 +3,8 @@ package net.highwayfrogs.editor.games.konami.greatquest.entity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 /**
@@ -255,7 +257,17 @@ public enum kcEntityFlag {
         private final kcEntityFlag entityFlag;
 
         /**
-         * Add flags to the arguments for the corresponding damage flags.
+         * Add flags to an optional arguments object.
+         * @param value The value to determine which flags to apply from
+         */
+        public static OptionalArguments getAsOptionalArguments(int value) {
+            OptionalArguments arguments = new OptionalArguments();
+            addFlags(value, arguments);
+            return arguments;
+        }
+
+        /**
+         * Add flags to the arguments for the corresponding entity flags.
          * @param value The value to determine which flags to apply from
          * @param arguments The arguments to add the flags to
          */
@@ -263,9 +275,14 @@ public enum kcEntityFlag {
             // Write flags.
             for (int i = 0; i < values().length; i++) {
                 kcEntityInstanceFlag flag = values()[i];
-                if ((value & flag.getInstanceBitFlagMask()) == flag.getInstanceBitFlagMask())
+                if ((value & flag.getInstanceBitFlagMask()) == flag.getInstanceBitFlagMask()) {
                     arguments.getOrCreate(flag.getDisplayName());
+                    value &= ~flag.getInstanceBitFlagMask();
+                }
             }
+
+            if (value != 0)
+                Utils.getLogger().warning("kcEntityFlags.addFlags() skipped some bits! " + NumberUtils.toHexString(value));
         }
 
         /**

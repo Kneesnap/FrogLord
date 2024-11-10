@@ -191,6 +191,22 @@ public class Vector2f {
         return this;
     }
 
+    /**
+     * Reads the contents of this vector from a string
+     * @param input the input to parse
+     */
+    public void parse(String input) {
+        if (input == null)
+            throw new NullPointerException("input");
+
+        String[] split = input.split(",?\\s+");
+        if (split.length != 2)
+            throw new NumberFormatException("'" + input + "' cannot be parsed as a Vector2f because it appears to have " + split.length + " values.");
+
+        this.x = Float.parseFloat(split[0]);
+        this.y = Float.parseFloat(split[1]);
+    }
+
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof Vector2f))
@@ -206,6 +222,13 @@ public class Vector2f {
     @Override
     public int hashCode() {
         return Float.hashCode(this.x) * 397 ^ Float.hashCode(this.y);
+    }
+
+    /**
+     * Gets this vector as a string which can be parsed.
+     */
+    public String toParseableString() {
+        return this.x + ", " + this.y + ", ";
     }
 
     @Override

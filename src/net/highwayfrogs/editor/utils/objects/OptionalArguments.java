@@ -70,6 +70,38 @@ public class OptionalArguments {
     }
 
     /**
+     * If all named arguments have no values, get them as a comma-separated string.
+     */
+    public String getNamedArgumentsAsCommaSeparatedString() {
+        StringBuilder builder = new StringBuilder();
+        getNamedArgumentsAsCommaSeparatedString(builder);
+        return builder.toString();
+    }
+
+    /**
+     * Writes this object parse-able string format to the StringBuilder.
+     * @param builder the builder to write the string to
+     */
+    public void getNamedArgumentsAsCommaSeparatedString(StringBuilder builder) {
+        if (builder == null)
+            throw new NullPointerException("builder");
+
+        // Write optional arguments (in order).
+        for (int i = 0; i < this.namedArgumentsOrder.size(); i++) {
+            String argName = this.namedArgumentsOrder.get(i);
+            StringNode node = this.namedArguments.get(argName);
+
+            if (i > 0)
+                builder.append(", ");
+
+            builder.append(argName);
+            String literal;
+            if (node != null && ((literal = node.getAsStringLiteral()) == null || literal.length() > 0))
+                throw new RuntimeException("The named argument '" + argName + "' had a value of " + literal + ", making it unable to be represented in a comma-separated string!");
+        }
+    }
+
+    /**
      * Gets the number of ordered arguments provided.
      */
     public int getOrderedArgumentCount() {
@@ -260,6 +292,32 @@ public class OptionalArguments {
         }
 
         this.remainingNamedArgumentsUser.clear();
+    }
+
+    /**
+     * Read a comma-separated string, adding the strings seen as argument names.
+     * @param input the string to read
+     */
+    public void readCommaSeparatedNamedArguments(String input) {
+        if (input == null)
+            throw new NullPointerException("input");
+
+        String[] split = input.split(",\\s*");
+        for (String argumentName : split)
+            getOrCreate(argumentName).setAsString("", false);
+    }
+
+    /**
+     * Read a comma-separated string, adding the strings seen as argument names.
+     * @param input the string to read
+     */
+    public static OptionalArguments parseCommaSeparatedNamedArguments(String input) {
+        if (input == null)
+            throw new NullPointerException("input");
+
+        OptionalArguments arguments = new OptionalArguments();
+        arguments.readCommaSeparatedNamedArguments(input);
+        return arguments;
     }
 
     /**

@@ -240,6 +240,42 @@ public class Vector4f implements IBinarySerializable {
         return this;
     }
 
+    /**
+     * Reads the contents of this vector from a string
+     * @param input the input to parse
+     */
+    public void parse(String input, float defaultW) {
+        if (input == null)
+            throw new NullPointerException("input");
+
+        String[] split = input.split(",?\\s+");
+        if (split.length != 3 && split.length != 4)
+            throw new NumberFormatException("'" + input + "' cannot be parsed as a Vector4f because it appears to have " + split.length + " values.");
+
+        this.x = Float.parseFloat(split[0]);
+        this.y = Float.parseFloat(split[1]);
+        this.z = Float.parseFloat(split[2]);
+        this.w = split.length > 3 ? Float.parseFloat(split[3]) : defaultW;
+    }
+
+    /**
+     * Reads the contents of this vector from a string
+     * @param input the input to parse
+     */
+    public void parse(String input) {
+        if (input == null)
+            throw new NullPointerException("input");
+
+        String[] split = input.split(",?\\s+");
+        if (split.length != 4)
+            throw new NumberFormatException("'" + input + "' cannot be parsed as a Vector4f because it appears to have " + split.length + " values.");
+
+        this.x = Float.parseFloat(split[0]);
+        this.y = Float.parseFloat(split[1]);
+        this.z = Float.parseFloat(split[2]);
+        this.w = Float.parseFloat(split[3]);
+    }
+
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof Vector4f))
@@ -255,6 +291,20 @@ public class Vector4f implements IBinarySerializable {
     @Override
     public int hashCode() {
         return Float.hashCode(this.x) ^ Float.hashCode(this.y) ^ Float.hashCode(this.z) ^ Float.hashCode(this.w);
+    }
+
+    /**
+     * Gets this vector as a string which can be parsed.
+     */
+    public String toParseableString() {
+        return this.x + ", " + this.y + ", " + this.z + ", " + this.w;
+    }
+
+    /**
+     * Gets this vector as a string which can be parsed.
+     */
+    public String toParseableString(float skippedW) {
+        return this.x + ", " + this.y + ", " + this.z + (Math.abs(this.w - skippedW) < .00001D ? "" : ", " + this.w);
     }
 
     @Override

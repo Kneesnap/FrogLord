@@ -59,6 +59,15 @@ public class StringNode {
     }
 
     /**
+     * Gets the node value as a string.
+     * @param fallback the text to return if the string is null/empty.
+     * @return stringValueOrFallback
+     */
+    public String getAsString(String fallback) {
+        return this.value != null && this.value.length() > 0 ? this.value : fallback;
+    }
+
+    /**
      * Gets the string value, surrounded by quotes if necessary.
      */
     public String getAsStringLiteral() {

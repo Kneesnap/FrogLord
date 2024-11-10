@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.system;
 
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -9,6 +8,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.objects.StringNode;
 
@@ -50,16 +50,18 @@ import java.util.logging.Logger;
 public class Config implements IBinarySerializable {
     private final Map<String, ConfigValueNode> keyValuePairs = new HashMap<>();
     private final Map<String, List<Config>> childConfigsByName = new HashMap<>();
-    private static final ConfigValueNode EMPTY_DEFAULT_NODE = new ConfigValueNode("");
+    private static final ConfigValueNode EMPTY_DEFAULT_NODE = new ConfigValueNode(null);
     public static final char COMMENT_CHARACTER = '#';
     public static final String COMMENT_CHARACTER_STRING = String.valueOf(COMMENT_CHARACTER); // "#"
     public static final String ESCAPED_COMMENT_CHAR = COMMENT_CHARACTER_STRING + COMMENT_CHARACTER; // "##"
+
+    public static final String DEFAULT_EXTENSION = "cfg";
+    public static final BrowserFileType DEFAULT_FILE_TYPE = new BrowserFileType("FrogLord Config", DEFAULT_EXTENSION);
 
     /**
      * The name of this section. Should NOT contain '[' or ']'.
      */
     @Getter
-    @Setter
     private String sectionName;
 
     /**
@@ -73,7 +75,6 @@ public class Config implements IBinarySerializable {
      * This is the config which holds this config as a child config, if there is one.
      */
     @Getter
-    @Setter(AccessLevel.PROTECTED)
     private Config parentConfig;
 
     /**
@@ -105,6 +106,30 @@ public class Config implements IBinarySerializable {
      */
     @Getter
     private final List<ConfigValueNode> internalText = new ArrayList<>();
+
+    public void setSectionName(String newSectionName) {
+        if (newSectionName == null)
+            throw new NullPointerException("newSectionName");
+        if (newSectionName.equalsIgnoreCase(this.sectionName))
+            return;
+
+        // Remove from parent tracking.
+        if (this.parentConfig != null) {
+            List<Config> configs = this.parentConfig.childConfigsByName.get(this.sectionName);
+            if (configs.remove(this) && configs.isEmpty())
+                this.parentConfig.childConfigsByName.remove(this.sectionName, configs);
+        }
+
+        this.sectionName = newSectionName;
+
+        // Add to parent tracking.
+        if (this.parentConfig != null) {
+            List<Config> configsByName = this.parentConfig.childConfigsByName.computeIfAbsent(this.sectionName, key -> new ArrayList<>());
+            int foundIndex = Collections.binarySearch(configsByName, this, Comparator.comparingInt(this.parentConfig.internalChildConfigs::lastIndexOf));
+            if (foundIndex < 0)
+                configsByName.add(-(foundIndex + 1), this);
+        }
+    }
 
     /**
      * Gets the individual lines of text from a list of config value nodes.
@@ -145,14 +170,20 @@ public class Config implements IBinarySerializable {
         return this.parentConfig == null;
     }
 
+    /**
+     * Gets the config root node.
+     */
+    public Config getRootNode() {
+        Config temp = this;
+        while (temp.getParentConfig() != null)
+            temp = temp.getParentConfig();
+
+        return temp;
+    }
+
     private static final byte BINARY_FORMAT_VERSION = 0;
 
     public Config(String name) {
-        this(null, name);
-    }
-
-    public Config(Config parentConfig, String name) {
-        this.parentConfig = parentConfig;
         this.sectionName = name;
     }
 
@@ -202,10 +233,11 @@ public class Config implements IBinarySerializable {
         // Read child configs.
         int childCount = reader.readInt();
         for (int i = 0; i < childCount; i++) {
-            Config childConfig = new Config(this, "$UnknownChildConfigNode");
+            Config childConfig = new Config("$UnknownChildConfigNode");
             childConfig.loadFromReader(reader, this, loadSettings);
             addChildConfig(childConfig);
-        }}
+        }
+    }
 
     @Override
     public void save(DataWriter writer) {
@@ -409,7 +441,7 @@ public class Config implements IBinarySerializable {
     public Config getOrCreateChildConfigByName(String name) {
         List<Config> childConfigs = this.childConfigsByName.computeIfAbsent(name, key -> new ArrayList<>());
         if (childConfigs.isEmpty()) {
-            Config newConfig = new Config(this, name);
+            Config newConfig = new Config(name);
             addChildConfig(newConfig);
             return newConfig;
         } else {
@@ -552,8 +584,11 @@ public class Config implements IBinarySerializable {
      * @return unescapedValue
      */
     public static String unescapeValue(String value) {
-        if (value == null)
+        if (value == null || value.equals("null")) {
+            return null;
+        } else if (value.equals("\"null\"")) {
             return "null";
+        }
 
         return unescapeComment(value);
     }
@@ -661,12 +696,12 @@ public class Config implements IBinarySerializable {
      */
     public static Config loadConfigFromString(String configString, String configFileName) {
         try (BadStringReader reader = new BadStringReader(new StringReader(configString))) {
-            return loadConfigFromString(null, reader, 0, configFileName, null);
+            return loadConfigFromString(reader, 0, configFileName, null);
         }
     }
 
-    private static Config loadConfigFromString(Config parentConfig, BadStringReader stringReader, int layer, String sectionName, String sectionComment) {
-        Config config = new Config(parentConfig, sectionName);
+    private static Config loadConfigFromString(BadStringReader stringReader, int layer, String sectionName, String sectionComment) {
+        Config config = new Config(sectionName);
         config.setSectionComment(sectionComment);
 
         while (true) {
@@ -738,7 +773,7 @@ public class Config implements IBinarySerializable {
                 // Create child config.
                 if (sectionLayer == layer + 1) {
                     // Read for this config.
-                    Config loadedChildConfig = loadConfigFromString(config, stringReader, sectionLayer, newSectionName, comment);
+                    Config loadedChildConfig = loadConfigFromString(stringReader, sectionLayer, newSectionName, comment);
                     config.addChildConfig(loadedChildConfig);
                 } else {
                     // Some other config earlier in the hierarchy (earlier layer) owns this.
@@ -830,11 +865,10 @@ public class Config implements IBinarySerializable {
     /**
      * A node which contains some kind of value, and potentially a comment.
      */
-    @Setter
     @Getter
     public static class ConfigValueNode extends StringNode {
         private String comment;
-        @NonNull private String commentSeparator;
+        @Setter @NonNull private String commentSeparator;
 
         public static final String DEFAULT_COMMENT_SEPARATOR = " " + COMMENT_CHARACTER + " ";
 
@@ -851,7 +885,7 @@ public class Config implements IBinarySerializable {
         }
 
         public ConfigValueNode(String value, String comment, String commentSeparator) {
-            this.value = value != null ? value : "";
+            super(value);
             this.comment = comment;
             this.commentSeparator = commentSeparator;
         }
@@ -914,6 +948,16 @@ public class Config implements IBinarySerializable {
             if (StringUtils.isNullOrWhiteSpace(this.comment))
                 return escapeValue(getAsStringLiteral());
             return escapeValue(getAsStringLiteral()) + this.commentSeparator + this.comment;
+        }
+
+        /**
+         * Sets the end-of-line comment
+         * @param comment the comment to apply
+         * @return this
+         */
+        public ConfigValueNode setComment(String comment) {
+            this.comment = comment;
+            return this;
         }
     }
 
