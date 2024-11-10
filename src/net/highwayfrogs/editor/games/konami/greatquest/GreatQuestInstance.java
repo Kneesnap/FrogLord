@@ -83,7 +83,6 @@ import java.util.Map.Entry;
  *  -> Manage Model Refs [Before world + entities]
  *  -> Import/Export Models/Animations/Animation Sets/Skeletons/Collision Meshes/OctTree building [PROXY_CAPSULE_DESCRIPTION, PROXY_TRI_MESH_DESCRIPTION]
  *  -> Go over TODOs in the tutorial gqs script example.
- *  -> Config needs to order key-value pairs.
  *
  * TODO Future:
  *  -> Support previewing action sequences in-editor.

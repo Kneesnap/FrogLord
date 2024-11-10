@@ -16,7 +16,6 @@ import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 /**
@@ -49,6 +48,7 @@ import java.util.logging.Logger;
 @SuppressWarnings("unused")
 public class Config implements IBinarySerializable {
     private final Map<String, ConfigValueNode> keyValuePairs = new HashMap<>();
+    private final List<String> orderedKeyValuePairs = new ArrayList<>();
     private final Map<String, List<Config>> childConfigsByName = new HashMap<>();
     private static final ConfigValueNode EMPTY_DEFAULT_NODE = new ConfigValueNode(null);
     public static final char COMMENT_CHARACTER = '#';
@@ -219,7 +219,8 @@ public class Config implements IBinarySerializable {
             String key = reader.readTerminatedString(keyLength);
             ConfigValueNode node = new ConfigValueNode();
             node.loadFromReader(reader, loadSettings);
-            this.keyValuePairs.put(key, node);
+            if (this.keyValuePairs.put(key, node) == null)
+                this.orderedKeyValuePairs.add(key);
         }
 
         // Read Text.
@@ -312,10 +313,11 @@ public class Config implements IBinarySerializable {
 
         // Write key value pairs.
         writer.writeInt(this.keyValuePairs.size());
-        for (Entry<String, ConfigValueNode> entry : this.keyValuePairs.entrySet()) {
-            writer.writeUnsignedByte((short) (entry.getKey() != null ? entry.getKey().length() : 0));
-            writer.writeStringBytes(entry.getKey());
-            entry.getValue().saveToWriter(writer, saveSettings);
+        for (String entryKey : this.orderedKeyValuePairs) {
+            ConfigValueNode valueNode = this.keyValuePairs.get(entryKey);
+            writer.writeUnsignedByte((short) (entryKey != null ? entryKey.length() : 0));
+            writer.writeStringBytes(entryKey);
+            valueNode.saveToWriter(writer, saveSettings);
         }
 
         // Write Text.
@@ -335,7 +337,10 @@ public class Config implements IBinarySerializable {
      * @return removedKeyValuePair
      */
     public ConfigValueNode removeKeyValueNode(String keyName) {
-        return this.keyValuePairs.remove(keyName);
+        ConfigValueNode removedNode = this.keyValuePairs.remove(keyName);
+        if (removedNode != null)
+            this.orderedKeyValuePairs.remove(keyName);
+        return removedNode;
     }
 
     /**
@@ -358,6 +363,7 @@ public class Config implements IBinarySerializable {
                 existingNode.setComment(node.getComment());
         } else { // Create new node.
             this.keyValuePairs.put(keyName, node.clone());
+            this.orderedKeyValuePairs.add(keyName);
         }
 
         return existingNode;
@@ -376,7 +382,8 @@ public class Config implements IBinarySerializable {
             return valueNode;
 
         ConfigValueNode newNode = new ConfigValueNode("$NO_VALUE_WAS_SET$");
-        this.keyValuePairs.put(keyName, newNode);
+        if (this.keyValuePairs.put(keyName, newNode) == null)
+            this.orderedKeyValuePairs.add(keyName);
         return newNode;
     }
 
@@ -498,10 +505,10 @@ public class Config implements IBinarySerializable {
         int builderStartLength = builder.length();
 
         // Write key value pairs.
-        for (Entry<String, ConfigValueNode> entry : this.keyValuePairs.entrySet()) {
-            builder.append(escapeKey(entry.getKey()));
+        for (String entryKey : this.orderedKeyValuePairs) {
+            builder.append(escapeKey(entryKey));
             builder.append("=");
-            builder.append(entry.getValue().getTextWithComments());
+            builder.append(this.keyValuePairs.get(entryKey).getTextWithComments());
 
             builder.append(Constants.NEWLINE);
         }
@@ -833,7 +840,8 @@ public class Config implements IBinarySerializable {
             if (splitAt != -1) { // It's a key-value pair.
                 String key = unescapeKey(text.substring(0, splitAt));
                 String value = unescapeValue(text.substring(splitAt + 1));
-                config.keyValuePairs.put(key, new ConfigValueNode(value, commentText, commentSeparator));
+                if (config.keyValuePairs.put(key, new ConfigValueNode(value, commentText, commentSeparator)) == null)
+                    config.orderedKeyValuePairs.add(key);
             } else { // It's raw text.
                 ConfigValueNode newNode = new ConfigValueNode(text, commentText, commentSeparator);
                 config.getInternalText().add(newNode);
