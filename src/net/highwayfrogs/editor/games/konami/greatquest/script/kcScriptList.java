@@ -205,7 +205,7 @@ public class kcScriptList extends kcCResource {
                 }
 
                 filesImported++;
-                entityInst.addScriptFunctions(this, scriptCfg, scriptCfg.getSectionName());
+                entityInst.addScriptFunctions(this, scriptCfg, scriptCfg.getSectionName(), false);
             }
 
             getLogger().info("Imported " + filesImported + " scripts.");

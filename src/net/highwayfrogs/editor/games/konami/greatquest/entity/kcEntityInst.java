@@ -140,8 +140,9 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
      * @param scriptList The script list to resolve/create scripts with.
      * @param config The config to load script functions from
      * @param sourceName The source name (usually a file name) representing where the scripts came from.
+     * @param clearExistingFunctions if true, any existing functions will be wiped.
      */
-    public void addScriptFunctions(kcScriptList scriptList, Config config, String sourceName) {
+    public void addScriptFunctions(kcScriptList scriptList, Config config, String sourceName, boolean clearExistingFunctions) {
         if (scriptList == null)
             throw new NullPointerException("scriptList");
         if (config == null)
@@ -156,6 +157,9 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
             script = new kcScript(getGameInstance(), scriptList, this.resource, new ArrayList<>());
             scriptList.getScripts().add(script);
         }
+
+        if (clearExistingFunctions)
+            script.getFunctions().clear();
 
         script.addFunctionsFromConfigNode(config, sourceName);
     }
@@ -223,7 +227,7 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
         // Read scripts.
         Config scriptCfg = input.getChildConfigByName(CONFIG_SECTION_SCRIPT);
         if (scriptCfg != null)
-            addScriptFunctions(chunkedFile.getScriptList(), scriptCfg, scriptCfg.getRootNode().getSectionName());
+            addScriptFunctions(chunkedFile.getScriptList(), scriptCfg, scriptCfg.getRootNode().getSectionName(), true);
     }
 
     @Override

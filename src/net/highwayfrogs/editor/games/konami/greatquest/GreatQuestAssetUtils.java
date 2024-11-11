@@ -122,7 +122,7 @@ public class GreatQuestAssetUtils {
                     if (entityInst == null)
                         throw new RuntimeException("The entity instance for '" + entityInstName + "' was null, so we couldn't modify its script.");
 
-                    entityInst.addScriptFunctions(scriptList, entityScriptCfg, gqsScriptGroup.getSectionName());
+                    entityInst.addScriptFunctions(scriptList, entityScriptCfg, gqsScriptGroup.getSectionName(), false);
                 }
             }
         }
