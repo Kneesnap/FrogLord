@@ -6,7 +6,8 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
-import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.system.Config;
 
 /**
  * Represents the 'CCoinDesc' struct.
@@ -19,12 +20,7 @@ public class CCoinDesc extends CItemDesc {
     private static final int PADDING_VALUES = 8;
 
     public CCoinDesc(@NonNull kcCResourceGeneric resource) {
-        super(resource);
-    }
-
-    @Override
-    protected int getTargetClassID() {
-        return kcClassID.COIN.getClassId();
+        super(resource, kcEntityDescType.COIN);
     }
 
     @Override
@@ -45,6 +41,19 @@ public class CCoinDesc extends CItemDesc {
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         super.writeMultiLineInfo(builder, padding);
         builder.append(padding).append("Coin Type: ").append(this.type).append(Constants.NEWLINE);
+    }
+
+    @Override
+    public void fromConfig(Config input) {
+        super.fromConfig(input);
+        this.type = input.getKeyValueNodeOrError("coinType").getAsEnumOrError(CoinType.class);
+
+    }
+
+    @Override
+    public void toConfig(Config output, kcScriptDisplaySettings settings) {
+        super.toConfig(output, settings);
+        output.getOrCreateKeyValueNode("coinType").setAsEnum(this.type);
     }
 
     /**

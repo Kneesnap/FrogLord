@@ -76,9 +76,8 @@ import java.util.Map.Entry;
  *   -> throw "" keyword.
  *   -> I believe config is not properly handling escapes, either that or NoodleCompiler isn't properly handling escapes in strings.
  *   -> Are for loops actually evaluating the condition each time?
- *  -> Generic ACTOR_BASE_DESCRIPTION, ITEM_DESCRIPTION, LAUNCHER_DESCRIPTION, PROP_DESCRIPTION, WAYPOINT_DESCRIPTION
  *  -> Generic RESOURCE_PATH, STRING_RESOURCE
- *  -> Generic EMITTER_DESCRIPTION, MODEL_DESCRIPTION, PARTICLE_EMITTER_PARAM
+ *  -> Generic EMITTER_DESCRIPTION, MODEL_DESCRIPTION
  *  -> Manage Texture Refs [Before world + models]
  *  -> Manage Model Refs [Before world + entities]
  *  -> Import/Export Models/Animations/Animation Sets/Skeletons/Collision Meshes/OctTree building [PROXY_CAPSULE_DESCRIPTION, PROXY_TRI_MESH_DESCRIPTION]

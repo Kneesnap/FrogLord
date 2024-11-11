@@ -6,7 +6,8 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
-import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.system.Config;
 
 /**
  * Represents the 'CUniqueItemDesc' struct.
@@ -19,12 +20,7 @@ public class CUniqueItemDesc extends CItemDesc {
     private static final int PADDING_VALUES = 8;
 
     public CUniqueItemDesc(@NonNull kcCResourceGeneric resource) {
-        super(resource);
-    }
-
-    @Override
-    protected int getTargetClassID() {
-        return kcClassID.UNIQUE_ITEM.getClassId();
+        super(resource, kcEntityDescType.UNIQUE_ITEM);
     }
 
     @Override
@@ -45,6 +41,18 @@ public class CUniqueItemDesc extends CItemDesc {
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         super.writeMultiLineInfo(builder, padding);
         builder.append(padding).append("Unique Item Type: ").append(this.type).append(Constants.NEWLINE);
+    }
+
+    @Override
+    public void fromConfig(Config input) {
+        super.fromConfig(input);
+        this.type = input.getKeyValueNodeOrError("itemType").getAsEnumOrError(UniqueItemType.class);
+    }
+
+    @Override
+    public void toConfig(Config output, kcScriptDisplaySettings settings) {
+        super.toConfig(output, settings);
+        output.getOrCreateKeyValueNode("itemType").setAsEnum(this.type);
     }
 
     /**

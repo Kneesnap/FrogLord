@@ -11,13 +11,15 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
-import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelViewController;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.List;
@@ -35,12 +37,12 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
     private int channelCount = 2; // Used for initializing the skeleton hierarchy in kcCActorBase::Init, this is always seen to be two.
     private final GreatQuestHash<kcCResourceAnimSet> animSetRef; // I've done an extensive search and am confident that this is completely unused.
     private final GreatQuestHash<kcCResourceGeneric> proxyDescRef; // kcCActorBase::Init() will fail if this is not either -1 or a valid hash.
-    private final GreatQuestHash<kcCResourceNamedHash> animationSequencesRef; // hAnimHash, kcCActorBase::Init, kcCActorBase::ResetInt TODO: The sequence 'NrmIdle01' is applied by kcCActorBase::ResetInt, if the sequence is found. Does this occur on level load? If so, we might want to put that in the editor. It appears repeating the sequence is enabled, so consider that in the editor too. We should probably have a way to preview action sequences actually.
+    private final GreatQuestHash<kcCResourceNamedHash> animationSequencesRef; // hAnimHash, kcCActorBase::Init, kcCActorBase::ResetInt
     private static final int PADDING_VALUES = 4;
     private static final String NAME_SUFFIX = "ActorDesc";
 
-    public kcActorBaseDesc(@NonNull kcCResourceGeneric resource) {
-        super(resource);
+    public kcActorBaseDesc(@NonNull kcCResourceGeneric resource, kcEntityDescType descType) {
+        super(resource, descType);
         this.parentHash = new GreatQuestHash<>(resource); // kcActorBaseDesc::__ct
         this.modelDescRef = new GreatQuestHash<>(); // kcCActorBase::__ct, kcCActorBase::Init()
         this.hierarchyRef = new GreatQuestHash<>(); // kcCActorBase::Init()
@@ -48,11 +50,6 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         this.proxyDescRef = new GreatQuestHash<>(); // kcCActorBase::Init()
         this.animationSequencesRef = new GreatQuestHash<>(); // kcCActorBase::__ct
         GreatQuestUtils.applySelfNameSuffixAndToFutureNameChanges(resource, NAME_SUFFIX);
-    }
-
-    @Override
-    protected int getTargetClassID() {
-        return kcClassID.ACTOR_BASE.getClassId();
     }
 
     @Override
@@ -76,7 +73,7 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         GreatQuestUtils.resolveResourceHash(kcCResourceSkeleton.class, this, this.hierarchyRef, hierarchyHash, true);
         GreatQuestUtils.resolveResourceHash(kcCResourceAnimSet.class, this, this.animSetRef, animSetHash, true);
         GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, this, this.proxyDescRef, proxyDescHash, !isParentResourceNamed("Dummy", "Tree 8", "Tree 9")); // There are only 3 places this doesn't resolve, all in Rolling Rapids Creek (PC version, PS2 untested).
-        if (!GreatQuestUtils.resolveResourceHash(kcCResourceNamedHash.class, this, this.animationSequencesRef, animationHash, false) && animationHash != -1) // There are TONS of hashes set which correspond to sequences which don't exist. TODO: There are enough where I'm almost wondering if we should be automatically naming/resolving this
+        if (!GreatQuestUtils.resolveResourceHash(kcCResourceNamedHash.class, this, this.animationSequencesRef, animationHash, false) && animationHash != -1) // There are TONS of hashes set which correspond to sequences which don't exist.
             this.animationSequencesRef.setOriginalString(getResource().getName() + kcCResourceNamedHash.NAME_SUFFIX); // If we don't resolve the asset, we can at least apply the original string.
     }
 
@@ -182,5 +179,36 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
 
         kcCResourceNamedHash namedHash = getAnimationSequences();
         return new GreatQuestModelMesh(modelWrapper, skeleton, animations, namedHash, name, false);
+    }
+
+    private static final String CONFIG_KEY_MODEL_DESC = "modelDesc";
+    private static final String CONFIG_KEY_PROXY_DESC = "proxyDesc";
+    private static final String CONFIG_KEY_HIERARCHY = "skeleton";
+    private static final String CONFIG_KEY_CHANNEL_COUNT = "channelCount";
+    private static final String CONFIG_KEY_ANIMATION_SET = "animationSet";
+    private static final String CONFIG_KEY_ACTION_SEQUENCES = "actionSequenceTable";
+
+    @Override
+    public void fromConfig(Config input) {
+        super.fromConfig(input);
+        resolve(input.getKeyValueNodeOrError(CONFIG_KEY_MODEL_DESC), kcCResourceGeneric.class, this.modelDescRef);
+        resolve(input.getOptionalKeyValueNode(CONFIG_KEY_PROXY_DESC), kcCResourceGeneric.class, this.proxyDescRef);
+        resolve(input.getOptionalKeyValueNode(CONFIG_KEY_HIERARCHY), kcCResourceSkeleton.class, this.hierarchyRef);
+        resolve(input.getOptionalKeyValueNode(CONFIG_KEY_ANIMATION_SET), kcCResourceAnimSet.class, this.animSetRef);
+        resolve(input.getOptionalKeyValueNode(CONFIG_KEY_ACTION_SEQUENCES), kcCResourceNamedHash.class, this.animationSequencesRef);
+        ConfigValueNode channelCountNode = input.getOptionalKeyValueNode(CONFIG_KEY_CHANNEL_COUNT);
+        if (channelCountNode != null)
+            this.channelCount = channelCountNode.getAsInteger();
+    }
+
+    @Override
+    public void toConfig(Config output, kcScriptDisplaySettings settings) {
+        super.toConfig(output, settings);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_MODEL_DESC).setAsString(this.modelDescRef.getAsGqsString(settings));
+        output.getOrCreateKeyValueNode(CONFIG_KEY_PROXY_DESC).setAsString(this.proxyDescRef.getAsGqsString(settings));
+        output.getOrCreateKeyValueNode(CONFIG_KEY_HIERARCHY).setAsString(this.hierarchyRef.getAsGqsString(settings));
+        output.getOrCreateKeyValueNode(CONFIG_KEY_CHANNEL_COUNT).setAsInteger(this.channelCount);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_ANIMATION_SET).setAsString(this.animSetRef.getAsGqsString(settings));
+        output.getOrCreateKeyValueNode(CONFIG_KEY_ACTION_SEQUENCES).setAsString(this.animationSequencesRef.getAsGqsString(settings));
     }
 }

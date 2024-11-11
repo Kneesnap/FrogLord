@@ -10,8 +10,9 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
-import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.games.konami.greatquest.map.kcColor4;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
@@ -34,7 +35,7 @@ public class kcWaypointDesc extends kcEntity3DDesc {
     private static final String NAME_SUFFIX = "WayptDesc";
 
     public kcWaypointDesc(kcCResourceGeneric resource) {
-        super(resource);
+        super(resource, kcEntityDescType.WAYPOINT);
         this.parentHash = new GreatQuestHash<>(resource);
         this.previousWaypointEntityRef = new GreatQuestHash<>();
         this.nextWaypointEntityRef = new GreatQuestHash<>();
@@ -83,9 +84,36 @@ public class kcWaypointDesc extends kcEntity3DDesc {
         builder.append(padding).append("Strength: ").append(this.strength).append(Constants.NEWLINE);
     }
 
+    private static final String CONFIG_KEY_TYPE = "waypointType";
+    private static final String CONFIG_KEY_SUB_TYPE = "waypointSubType";
+    private static final String CONFIG_KEY_PREV_WAYPOINT = "prevWaypoint";
+    private static final String CONFIG_KEY_NEXT_WAYPOINT = "nextWaypoint";
+    private static final String CONFIG_KEY_WAYPOINT_FLAGS = "waypointFlags";
+    private static final String CONFIG_KEY_COLOR = "color";
+    private static final String CONFIG_KEY_STRENGTH = "strength";
+
     @Override
-    public int getTargetClassID() {
-        return kcClassID.WAYPOINT.getClassId();
+    public void fromConfig(Config input) {
+        super.fromConfig(input);
+        this.type = (short) input.getKeyValueNodeOrError(CONFIG_KEY_TYPE).getAsInteger();
+        this.subType = (short) input.getKeyValueNodeOrError(CONFIG_KEY_SUB_TYPE).getAsInteger();
+        resolve(input.getKeyValueNodeOrError(CONFIG_KEY_PREV_WAYPOINT), kcCResourceEntityInst.class, this.previousWaypointEntityRef);
+        resolve(input.getKeyValueNodeOrError(CONFIG_KEY_NEXT_WAYPOINT), kcCResourceEntityInst.class, this.nextWaypointEntityRef);
+        this.waypointFlags = input.getKeyValueNodeOrError(CONFIG_KEY_WAYPOINT_FLAGS).getAsInteger();
+        this.color.fromARGB(input.getKeyValueNodeOrError(CONFIG_KEY_COLOR).getAsInteger());
+        this.strength = input.getKeyValueNodeOrError(CONFIG_KEY_STRENGTH).getAsFloat();
+    }
+
+    @Override
+    public void toConfig(Config output, kcScriptDisplaySettings settings) {
+        super.toConfig(output, settings);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_TYPE).setAsInteger(this.type);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_SUB_TYPE).setAsInteger(this.subType);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_PREV_WAYPOINT).setAsString(this.previousWaypointEntityRef.getAsGqsString(settings));
+        output.getOrCreateKeyValueNode(CONFIG_KEY_NEXT_WAYPOINT).setAsString(this.nextWaypointEntityRef.getAsGqsString(settings));
+        output.getOrCreateKeyValueNode(CONFIG_KEY_WAYPOINT_FLAGS).setAsString(NumberUtils.toHexString(this.waypointFlags));
+        output.getOrCreateKeyValueNode(CONFIG_KEY_COLOR).setAsString(NumberUtils.toHexString(this.color.toARGB()));
+        output.getOrCreateKeyValueNode(CONFIG_KEY_STRENGTH).setAsFloat(this.strength);
     }
 
     @Override

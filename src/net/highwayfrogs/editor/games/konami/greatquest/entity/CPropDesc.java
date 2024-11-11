@@ -6,7 +6,6 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
-import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
  * Represents the 'CPropDesc' struct.
@@ -19,7 +18,7 @@ public class CPropDesc extends kcActorBaseDesc {
     private static final int EVENT_VALUE = -1; // Event is a hash of an event name to trigger when a hit occurs. (CProp::TRiggerHitCallback) But it never appears to be used since why would we want to trigger an event on hit when we can use scripts instead.
 
     public CPropDesc(@NonNull kcCResourceGeneric resource) {
-        super(resource);
+        super(resource, kcEntityDescType.PROP);
     }
 
     @Override
@@ -39,11 +38,6 @@ public class CPropDesc extends kcActorBaseDesc {
         writer.writeInt(0); // mode - Seems to always be zero.
         writer.writeInt(EVENT_VALUE); // event - Seems to always be -1.
         writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
-    }
-
-    @Override
-    protected int getTargetClassID() {
-        return kcClassID.PROP.getClassId();
     }
 
     @Override

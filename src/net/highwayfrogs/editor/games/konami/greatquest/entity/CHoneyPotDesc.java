@@ -5,7 +5,6 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
-import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 
 /**
  * Represents the 'CHoneyPotDesc' struct.
@@ -16,12 +15,7 @@ public class CHoneyPotDesc extends CItemDesc {
     private static final int PADDING_VALUES = 8;
 
     public CHoneyPotDesc(@NonNull kcCResourceGeneric resource) {
-        super(resource);
-    }
-
-    @Override
-    protected int getTargetClassID() {
-        return kcClassID.HONEY_POT.getClassId();
+        super(resource, kcEntityDescType.HONEY_POT);
     }
 
     @Override

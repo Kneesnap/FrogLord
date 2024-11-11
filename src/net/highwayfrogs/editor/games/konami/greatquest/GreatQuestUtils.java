@@ -390,12 +390,33 @@ public class GreatQuestUtils {
     }
 
     /**
+     * Reads a boolean from the reader in the format Frogger TGQ stores them.
+     * @param reader The reader to read from.
+     * @return boolValue
+     */
+    public static boolean readTGQByteBoolean(DataReader reader) {
+        byte boolNumber = reader.readByte();
+        if (boolNumber != 1 && boolNumber != 0)
+            throw new RuntimeException("The byte value was expected to be a boolean, but was actually " + boolNumber + ".");
+        return boolNumber != 0;
+    }
+
+    /**
      * Writes a boolean in the format Frogger TGQ stores them.
      * @param writer The writer to write to.
      * @param value  The boolean value to write.
      */
     public static void writeTGQBoolean(DataWriter writer, boolean value) {
         writer.writeInt(value ? 1 : 0);
+    }
+
+    /**
+     * Writes a boolean in the format Frogger TGQ stores them.
+     * @param writer The writer to write to.
+     * @param value  The boolean value to write.
+     */
+    public static void writeTGQByteBoolean(DataWriter writer, boolean value) {
+        writer.writeByte(value ? (byte) 1 : (byte) 0);
     }
 
     /**
@@ -753,7 +774,7 @@ public class GreatQuestUtils {
      * @return hashValue
      */
     public static int getAsHash(StringNode node, int nullValue) {
-        return node != null ? getAsHash(node.getAsString(), nullValue) : nullValue;
+        return node != null && node.getAsString() != null ? getAsHash(node.getAsString(), nullValue) : nullValue;
     }
 
     /**

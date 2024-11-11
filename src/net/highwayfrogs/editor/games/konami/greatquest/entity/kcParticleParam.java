@@ -6,11 +6,13 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
+import net.highwayfrogs.editor.games.konami.IConfigData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.map.kcColor4;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
+import net.highwayfrogs.editor.system.Config;
 
 /**
  * Represents the 'kcParticleParam' struct.
@@ -19,7 +21,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
  */
 @Getter
 @Setter
-public class kcParticleParam implements IMultiLineInfoWriter, IBinarySerializable {
+public class kcParticleParam implements IMultiLineInfoWriter, IBinarySerializable, IConfigData {
     private int burstMode = 1;
     private float emitAngle = .55F;
     private float emitAngleVariance = 0F;
@@ -111,5 +113,74 @@ public class kcParticleParam implements IMultiLineInfoWriter, IBinarySerializabl
         builder.append(padding).append("Line Left: ").append(this.lineLeft).append(Constants.NEWLINE);
         builder.append(padding).append("Line Right: ").append(this.lineRight).append(Constants.NEWLINE);
         builder.append(padding).append("Orientation: ").append(this.orientation).append(Constants.NEWLINE);
+    }
+
+    private static final String CONFIG_KEY_BURST_MODE = "burstMode";
+    private static final String CONFIG_KEY_EMIT_ANGLE = "emitAngle";
+    private static final String CONFIG_KEY_EMIT_ANGLE_VARIANCE = "emitAngleVariance";
+    private static final String CONFIG_KEY_PART_PER_SECOND = "partPerSecond";
+    private static final String CONFIG_KEY_SPEED = "speed";
+    private static final String CONFIG_KEY_SPEED_VARIANCE = "speedVariance";
+    private static final String CONFIG_KEY_LIFE_TIME = "lifeTime";
+    private static final String CONFIG_KEY_LIFE_VARIANCE = "lifeVariance";
+    private static final String CONFIG_KEY_SIZE_BEGIN = "sizeBegin";
+    private static final String CONFIG_KEY_SIZE_END = "sizeEnd";
+    private static final String CONFIG_KEY_SIZE_VARIANCE = "sizeVariance";
+    private static final String CONFIG_KEY_COLOR_BEGIN = "colorBegin";
+    private static final String CONFIG_KEY_COLOR_END = "colorEnd";
+    private static final String CONFIG_KEY_COLOR_VARIANCE = "colorVariance";
+    private static final String CONFIG_KEY_GRAVITY_BEGIN = "gravityBegin";
+    private static final String CONFIG_KEY_GRAVITY_END = "gravityEnd";
+    private static final String CONFIG_KEY_GRAVITY_VARIANCE = "gravityVariance";
+    private static final String CONFIG_KEY_LINE_LEFT = "lineLeft";
+    private static final String CONFIG_KEY_LINE_RIGHT = "lineRight";
+    private static final String CONFIG_KEY_ORIENTATION = "orientation";
+
+    @Override
+    public void fromConfig(Config input) {
+        this.burstMode = input.getKeyValueNodeOrError(CONFIG_KEY_BURST_MODE).getAsInteger();
+        this.emitAngle = input.getKeyValueNodeOrError(CONFIG_KEY_EMIT_ANGLE).getAsFloat();
+        this.emitAngleVariance = input.getKeyValueNodeOrError(CONFIG_KEY_EMIT_ANGLE_VARIANCE).getAsFloat();
+        this.partPerSecond = input.getKeyValueNodeOrError(CONFIG_KEY_PART_PER_SECOND).getAsInteger();
+        this.speed = input.getKeyValueNodeOrError(CONFIG_KEY_SPEED).getAsFloat();
+        this.speedVariance = input.getKeyValueNodeOrError(CONFIG_KEY_SPEED_VARIANCE).getAsFloat();
+        this.lifeTime = input.getKeyValueNodeOrError(CONFIG_KEY_LIFE_TIME).getAsFloat();
+        this.lifeVariance = input.getKeyValueNodeOrError(CONFIG_KEY_LIFE_VARIANCE).getAsFloat();
+        this.sizeBegin = input.getKeyValueNodeOrError(CONFIG_KEY_SIZE_BEGIN).getAsFloat();
+        this.sizeEnd = input.getKeyValueNodeOrError(CONFIG_KEY_SIZE_END).getAsFloat();
+        this.sizeVariance = input.getKeyValueNodeOrError(CONFIG_KEY_SIZE_VARIANCE).getAsFloat();
+        this.colorBegin.fromARGB(input.getKeyValueNodeOrError(CONFIG_KEY_COLOR_BEGIN).getAsInteger());
+        this.colorEnd.fromARGB(input.getKeyValueNodeOrError(CONFIG_KEY_COLOR_END).getAsInteger());
+        this.colorVariance.fromARGB(input.getKeyValueNodeOrError(CONFIG_KEY_COLOR_VARIANCE).getAsInteger());
+        this.gravityBegin.parse(input.getKeyValueNodeOrError(CONFIG_KEY_GRAVITY_BEGIN).getAsString(), 1F);
+        this.gravityEnd.parse(input.getKeyValueNodeOrError(CONFIG_KEY_GRAVITY_END).getAsString(), 1F);
+        this.gravityVariance = input.getKeyValueNodeOrError(CONFIG_KEY_GRAVITY_VARIANCE).getAsFloat();
+        this.lineLeft = input.getKeyValueNodeOrError(CONFIG_KEY_LINE_LEFT).getAsFloat();
+        this.lineRight = input.getKeyValueNodeOrError(CONFIG_KEY_LINE_RIGHT).getAsFloat();
+        this.orientation = input.getKeyValueNodeOrError(CONFIG_KEY_ORIENTATION).getAsFloat();
+    }
+
+    @Override
+    public void toConfig(Config output) {
+        output.getOrCreateKeyValueNode(CONFIG_KEY_BURST_MODE).setAsInteger(this.burstMode);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_EMIT_ANGLE).setAsFloat(this.emitAngle);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_EMIT_ANGLE_VARIANCE).setAsFloat(this.emitAngleVariance);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_PART_PER_SECOND).setAsInteger(this.partPerSecond);
+        output.getKeyValueNodeOrError(CONFIG_KEY_SPEED).setAsFloat(this.speed);
+        output.getKeyValueNodeOrError(CONFIG_KEY_SPEED_VARIANCE).setAsFloat(this.speedVariance);
+        output.getKeyValueNodeOrError(CONFIG_KEY_LIFE_TIME).setAsFloat(this.lifeTime);
+        output.getKeyValueNodeOrError(CONFIG_KEY_LIFE_VARIANCE).setAsFloat(this.lifeVariance);
+        output.getKeyValueNodeOrError(CONFIG_KEY_SIZE_BEGIN).setAsFloat(this.sizeBegin);
+        output.getKeyValueNodeOrError(CONFIG_KEY_SIZE_END).setAsFloat(this.sizeEnd);
+        output.getKeyValueNodeOrError(CONFIG_KEY_SIZE_VARIANCE).setAsFloat(this.sizeVariance);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_COLOR_BEGIN).setAsInteger(this.colorBegin.toARGB());
+        output.getOrCreateKeyValueNode(CONFIG_KEY_COLOR_END).setAsInteger(this.colorEnd.toARGB());
+        output.getOrCreateKeyValueNode(CONFIG_KEY_COLOR_VARIANCE).setAsInteger(this.colorVariance.toARGB());
+        output.getOrCreateKeyValueNode(CONFIG_KEY_GRAVITY_BEGIN).setAsString(this.gravityBegin.toParseableString(1F));
+        output.getOrCreateKeyValueNode(CONFIG_KEY_GRAVITY_END).setAsString(this.gravityEnd.toParseableString(1F));
+        output.getKeyValueNodeOrError(CONFIG_KEY_GRAVITY_VARIANCE).setAsFloat(this.gravityVariance);
+        output.getKeyValueNodeOrError(CONFIG_KEY_LINE_LEFT).setAsFloat(this.lineLeft);
+        output.getKeyValueNodeOrError(CONFIG_KEY_LINE_RIGHT).setAsFloat(this.lineRight);
+        output.getKeyValueNodeOrError(CONFIG_KEY_ORIENTATION).setAsFloat(this.orientation);
     }
 }

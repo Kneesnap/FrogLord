@@ -7,7 +7,8 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
-import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.system.Config;
 
 /**
  * Represents the 'kcActorDesc' struct.
@@ -21,8 +22,8 @@ public class kcActorDesc extends kcActorBaseDesc {
     private int invincibleDurationLimitMs = 2000; // TODO: May not be used?
     private static final int PADDING_VALUES = 3;
 
-    public kcActorDesc(@NonNull kcCResourceGeneric resource) {
-        super(resource);
+    public kcActorDesc(@NonNull kcCResourceGeneric resource, kcEntityDescType entityDescType) {
+        super(resource, entityDescType);
         this.health = new kcHealthDesc(resource.getGameInstance());
     }
 
@@ -43,8 +44,18 @@ public class kcActorDesc extends kcActorBaseDesc {
     }
 
     @Override
-    protected int getTargetClassID() {
-        return kcClassID.ACTOR.getClassId();
+    public void fromConfig(Config input) {
+        super.fromConfig(input);
+        this.health.fromConfig(input);
+        this.invincibleDurationLimitMs = input.getKeyValueNodeOrError("invincibleDurationLimitMs").getAsInteger();
+
+    }
+
+    @Override
+    public void toConfig(Config output, kcScriptDisplaySettings settings) {
+        super.toConfig(output, settings);
+        this.health.toConfig(output);
+        output.getOrCreateKeyValueNode("invincibleDurationLimitMs").setAsInteger(this.invincibleDurationLimitMs);
     }
 
     @Override

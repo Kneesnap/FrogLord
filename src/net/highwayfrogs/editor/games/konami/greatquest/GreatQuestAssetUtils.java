@@ -2,7 +2,9 @@ package net.highwayfrogs.editor.games.konami.greatquest;
 
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityDescType;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
@@ -51,6 +53,26 @@ public class GreatQuestAssetUtils {
                 }
 
                 generic.getAsStringResource().setValue(entry.getValue().getAsString());
+            }
+        }
+
+        // Add/replace entity descriptions.
+        Config entityDescriptionsCfg = gqsScriptGroup.getChildConfigByName("EntityDescriptions");
+        if (entityDescriptionsCfg != null) {
+            for (Config entityDescCfg : entityDescriptionsCfg.getChildConfigNodes()) {
+                String entityDescName = entityDescCfg.getSectionName();
+                int entityDescNameHash = GreatQuestUtils.hash(entityDescName);
+                kcCResourceGeneric entityDesc = chunkedFile.getResourceByHash(entityDescNameHash);
+                if (entityDesc == null) {
+                    kcEntityDescType descType = entityDescCfg.getKeyValueNodeOrError(kcEntity3DDesc.CONFIG_KEY_DESC_TYPE).getAsEnumOrError(kcEntityDescType.class);
+
+                    entityDesc = new kcCResourceGeneric(chunkedFile);
+                    entityDesc.setName(entityDescName, true);
+                    entityDesc.setResourceData(descType.createNewInstance(entityDesc));
+                    chunkedFile.addResource(entityDesc);
+                }
+
+                entityDesc.getAsEntityDescription().fromConfig(entityDescCfg);
             }
         }
 

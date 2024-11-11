@@ -1,7 +1,9 @@
 package net.highwayfrogs.editor.games.konami.greatquest.generic;
 
+import javafx.scene.control.ContextMenu;
 import javafx.scene.image.Image;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -29,6 +31,7 @@ import net.highwayfrogs.editor.utils.Utils;
  * Holds data representing the 'kcCGeneric' data struct.
  * Created by Kneesnap on 3/23/2020.
  */
+@Setter
 @Getter
 public class kcCResourceGeneric extends kcCResource {
     private kcIGenericResourceData resourceData;
@@ -113,6 +116,13 @@ public class kcCResourceGeneric extends kcCResource {
     }
 
     @Override
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        super.setupRightClickMenuItems(contextMenu);
+        if (this.resourceData != null)
+            this.resourceData.setupRightClickMenuItems(contextMenu);
+    }
+
+    @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {
         propertyList = super.addToPropertyList(propertyList);
         propertyList.add("Generic Resource Type", getResourceType() + " (" + Utils.getSimpleName(this.resourceData) + ")");
@@ -147,10 +157,7 @@ public class kcCResourceGeneric extends kcCResource {
      * Gets the resource type representing the type of resource data.
      */
     public kcCResourceGenericType getResourceType() {
-        if (this.resourceData == null)
-            throw new IllegalStateException("No resource data exists, so no type exists either.");
-
-        return this.resourceData.getResourceType();
+        return this.resourceData != null ? this.resourceData.getResourceType() : null;
     }
 
     /**
@@ -322,9 +329,9 @@ public class kcCResourceGeneric extends kcCResource {
             case ACTOR_BASE_DESCRIPTION:
                 switch (kcClass) {
                     case ACTOR:
-                        return new kcActorDesc(this);
+                        return new kcActorDesc(this, kcEntityDescType.ACTOR);
                     case ACTOR_BASE:
-                        return new kcActorBaseDesc(this);
+                        return new kcActorBaseDesc(this, kcEntityDescType.ACTOR_BASE);
                     case CHARACTER:
                         return new CharacterParams(this);
                     default:

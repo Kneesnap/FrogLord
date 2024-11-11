@@ -45,15 +45,20 @@ public class kcActionAISetGoal extends kcAction {
     }
 
     public enum kcAISystemGoalType {
-        SCRIPT, // I don't think this is implemented/does anything.
-        STATIC, // I don't think this is implemented/does anything.
-        FIND, // Implemented as MonsterClass::Do_Find(), Attempts to run towards the target, and attack if possible. Will attempt to wander sometimes if it gets stuck.
-        FLEE, // Implemented as MonsterClass::TransitionTo() "Run00" -> Starts running. -> MonsterClass:Anim_Checks will be skipped when this is set.
-        WANDER, // Implemented as MonsterClass::Do_Wander(). Picks a random "wander point" up to 15x15 units away in a square, and "Walk00" -> Walks (sometimes aggressively) towards it?
-        GUARD, // Implemented as MonsterClass::Do_Guard(). Seems to try to walk to walk along a waypoint path back and forth until it has an actor target, where it will attempt to chase them. So, if we set the target as a waypoint, it will just keep walking across the path. -> How is this different from when we set waypoint goals?
-        DEAD, // I don't think this is implemented/does anything.
-        SLEEP, // I don't think this is implemented/does anything.
-        UNKNOWN; // I don't think this is implemented/does anything. This name was not in GoalNames[] either.
+        // A goal is selected via MonsterClass::Calculate_Goal every 60 frames.
+        // Each of the kcAISystemGoalType types has a value calculated, a "GOAL VALUE".
+        // The goal with the highest value is always selected to be the current goal.
+        // CanHearTarget is a bit flag, resulting in either 0 or 1.
+        // CanSeeTarget is a bit flag, resulting in either 0 or 1.
+        SCRIPT, // Can never be selected, always has a value of 0.
+        STATIC, // Can never be selected, always has a value of 0.
+        FIND, // (CharacterParams.attackGoalPercent * ((CanHearTarget + CanSeeTarget) * 10)). Implemented as MonsterClass::Do_Find(), Attempts to run towards the target, and attack if possible. Will attempt to wander sometimes if it gets stuck.
+        FLEE, // (Attack Aggression Counter * 10 + fleeGoalPercent * 10) Implemented as MonsterClass::TransitionTo() "Run00" -> Starts running. -> MonsterClass:Anim_Checks will be skipped when this is set.
+        WANDER, // (wanderGoalPercent * 10) Implemented as MonsterClass::Do_Wander(). Picks a random "wander point" up to 15x15 units away in a square, and "Walk00" -> Walks (sometimes aggressively) towards it?
+        GUARD, // (guardGoalPercent * 10) Implemented as MonsterClass::Do_Guard(). Seems to try to walk to walk along a waypoint path back and forth until it has an actor target, where it will attempt to chase them. So, if we set the target as a waypoint, it will just keep walking across the path. -> How is this different from when we set waypoint goals?
+        DEAD, // 100000 when (this->HitPoints = 0), otherwise 0.
+        SLEEP, // (sleepGoalPercent * 20) - (aggresionAttackCounter * 10) - (CanSeeTarget * 10)
+        UNKNOWN; // Can never be selected, always has a value of 0. This name was not in GoalNames[] either.
 
         /**
          * Gets the kcAISystemGoalType corresponding to the provided value.

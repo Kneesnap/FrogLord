@@ -7,8 +7,10 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
+import net.highwayfrogs.editor.games.konami.IConfigData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
+import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
@@ -18,9 +20,9 @@ import net.highwayfrogs.editor.utils.objects.OptionalArguments;
  */
 @Getter
 @Setter
-public class kcHealthDesc extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
-    private int maxHealth; // When loaded, if this is less than 1, 100 is used. The game called this durability.
-    private int startHealth; // When loaded, if this is less than 1, 100 is used.
+public class kcHealthDesc extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter, IConfigData {
+    private int maxHealth = 100; // When loaded, if this is less than 1, 100 is used. The game called this durability.
+    private int startHealth = 100; // When loaded, if this is less than 1, 100 is used.
     // This is a bit mask which represent the types of damage which this object is immune to.
     // The flags are represented by the kcDamageType class.
     // If even a single one of these flags is seen when damage should occur, damage will be skipped.
@@ -49,6 +51,27 @@ public class kcHealthDesc extends GameData<GreatQuestInstance> implements IMulti
         builder.append(padding).append("Max Health (Durability): ").append(this.maxHealth).append(Constants.NEWLINE);
         builder.append(padding).append("Start Health: ").append(this.startHealth).append(Constants.NEWLINE);
         builder.append(padding).append("Immune Mask: ").append(NumberUtils.toHexString(this.immuneMask)).append(Constants.NEWLINE);
+    }
+
+    private static final String CONFIG_KEY_MAX_HEALTH = "maxHealth";
+    private static final String CONFIG_KEY_START_HEALTH = "startHealth";
+    private static final String CONFIG_KEY_IMMUNE_MASK = "immuneMask";
+
+    @Override
+    public void fromConfig(Config input) {
+        this.maxHealth = input.getKeyValueNodeOrError(CONFIG_KEY_MAX_HEALTH).getAsInteger();
+        this.startHealth = input.getKeyValueNodeOrError(CONFIG_KEY_START_HEALTH).getAsInteger();
+
+        OptionalArguments arguments = OptionalArguments.parseCommaSeparatedNamedArguments(input.getKeyValueNodeOrError(CONFIG_KEY_IMMUNE_MASK).getAsString());
+        this.immuneMask = kcDamageType.getValueFromArguments(arguments);
+        arguments.warnAboutUnusedArguments(getGameInstance().getLogger());
+    }
+
+    @Override
+    public void toConfig(Config output) {
+        output.getOrCreateKeyValueNode(CONFIG_KEY_MAX_HEALTH).setAsInteger(this.maxHealth);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_START_HEALTH).setAsInteger(this.startHealth);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_IMMUNE_MASK).setAsString(kcDamageType.getFlagsAsString(this.immuneMask));
     }
 
     /**
@@ -102,7 +125,7 @@ public class kcHealthDesc extends GameData<GreatQuestInstance> implements IMulti
         public static String getFlagsAsString(int value) {
             OptionalArguments arguments = new OptionalArguments();
             addFlags(value, arguments);
-            return arguments.toString();
+            return arguments.getNamedArgumentsAsCommaSeparatedString();
         }
 
         /**

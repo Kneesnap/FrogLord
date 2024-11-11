@@ -13,13 +13,13 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkTex
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcBlend;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
-import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Represents the 'kcParticleEmitterParam' struct.
  * Loaded from kcParticleEmitterParam::Init.
- * TODO: Inst flags are copied in kcCParticleEmitter::SetParticleDefaults. I'm not sure if this matters yet.
  * Created by Kneesnap on 8/22/2023.
  */
 @Setter
@@ -38,7 +38,7 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
     public static final String NAME_SUFFIX = "ParticleParam";
 
     public kcParticleEmitterParam(@NonNull kcCResourceGeneric resource) {
-        super(resource);
+        super(resource, kcEntityDescType.PARTICLE_EMITTER);
         this.textureRef = new GreatQuestHash<>();
         this.parentHash = new GreatQuestHash<>(resource);
         GreatQuestUtils.applySelfNameSuffixAndToFutureNameChanges(resource, NAME_SUFFIX);
@@ -89,9 +89,32 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
         builder.append(padding).append("Max Particle: ").append(getMaxParticle()).append(Constants.NEWLINE);
     }
 
+    private static final String CONFIG_KEY_SOURCE_BLEND = "srcBlend";
+    private static final String CONFIG_KEY_DESTINATION_BLEND = "dstBlend";
+    private static final String CONFIG_KEY_TEXTURE = "texture";
+    private static final String CONFIG_KEY_LIFETIME_EMITTER = "lifeTimeEmitter";
+
     @Override
-    public int getTargetClassID() {
-        return kcClassID.PARTICLE_EMITTER.getClassId();
+    public void fromConfig(Config input) {
+        super.fromConfig(input);
+        this.srcBlend = input.getOrDefaultKeyValueNode(CONFIG_KEY_SOURCE_BLEND).getAsEnum(kcBlend.ONE);
+        this.dstBlend = input.getOrDefaultKeyValueNode(CONFIG_KEY_DESTINATION_BLEND).getAsEnum(kcBlend.ONE);
+        this.lifeTimeEmitter = input.getOrDefaultKeyValueNode(CONFIG_KEY_LIFETIME_EMITTER).getAsFloat(-1);
+        this.resolve(input.getOptionalKeyValueNode(CONFIG_KEY_TEXTURE), GreatQuestChunkTextureReference.class, this.textureRef);
+        if (this.lifeTimeEmitter < -1 || this.lifeTimeEmitter >= 60) // Allow zero as the indicator to use from the kcParticleParam struct instead.
+            throw new RuntimeException("The lifeTimeEmitter value (" + this.lifeTimeEmitter + ") was not in the expected range!");
+
+        this.particleParam.fromConfig(input);
+    }
+
+    @Override
+    public void toConfig(Config output, kcScriptDisplaySettings settings) {
+        super.toConfig(output, settings);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_SOURCE_BLEND).setAsEnum(this.srcBlend);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_DESTINATION_BLEND).setAsEnum(this.dstBlend);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_TEXTURE).setAsString(this.textureRef.getAsGqsString(settings));
+        output.getOrCreateKeyValueNode(CONFIG_KEY_LIFETIME_EMITTER).setAsFloat(this.lifeTimeEmitter);
+        this.particleParam.toConfig(output);
     }
 
     @Override

@@ -16,6 +16,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInf
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceNamedHash.HashTableEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityDescType;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
@@ -257,7 +258,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         saveAnimationSkeletons(new File(folder, "animation-skeletons.txt"));
         saveAnimationTracks(new File(folder, "animation-tracks.txt"));
         exportEntities(new File(folder, "entities"), scriptList, settings);
-        saveGenericEntityDescriptions(new File(folder, "entity-descriptions.txt"));
+        exportEntityDescriptions(new File(folder, "entity-descriptions"));
         saveGenericProxyInfo(new File(folder, "proxy-descriptions.txt"));
         saveGenericEmitterInfo(new File(folder, "emitters.txt"));
         saveGenericLauncherInfo(new File(folder, "launchers.txt"));
@@ -436,8 +437,6 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 entityInst.setInstance(new kcEntity3DInst(entityInst));
                 addResource(entityInst);
             }
-
-            importConfigs.add(entityCfg);
         }
 
         for (Config entityCfg : importConfigs) {
@@ -465,8 +464,6 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         if (scriptList == null)
             throw new NullPointerException("scriptList");
 
-        FileUtils.makeDirectory(folder);
-
         int entityCount = 0;
         for (kcCResource testChunk : this.chunks) {
             if (!(testChunk instanceof kcCResourceEntityInst))
@@ -477,6 +474,8 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 getLogger().warning("Skipping '" + entity.getName() + "', as the entity instance was null.");
                 continue;
             }
+
+            FileUtils.makeDirectory(folder);
 
             Config newEntityCfg = new Config(entity.getName());
             entity.getInstance().toConfig(newEntityCfg, scriptList, settings);
@@ -573,11 +572,46 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     }
 
     /**
-     * Saves entity descriptions found in generic chunks to a text file.
-     * @param file The file to save the info to.
+     * Import entities from a folder.
+     * @param folder The folder to import entity data from
      */
-    public void saveGenericEntityDescriptions(File file) {
-        StringBuilder infoBuilder = new StringBuilder();
+    public void importEntityDescriptions(File folder) {
+        if (folder == null)
+            throw new NullPointerException("folder");
+
+        int importCount = 0;
+        for (File file : FileUtils.listFiles(folder)) {
+            if (!file.isFile() || !file.getName().endsWith(Config.DEFAULT_EXTENSION))
+                continue;
+
+            Config entityDescCfg = Config.loadConfigFromTextFile(file, false);
+            kcEntityDescType descType = entityDescCfg.getKeyValueNodeOrError(kcEntity3DDesc.CONFIG_KEY_DESC_TYPE).getAsEnumOrError(kcEntityDescType.class);
+
+            String entityDescName = entityDescCfg.getSectionName();
+            kcCResourceGeneric generic = getResourceByHash(GreatQuestUtils.hash(entityDescName));
+            if (generic == null) {
+                generic = new kcCResourceGeneric(this);
+                generic.setName(entityDescName, true);
+                addResource(generic);
+            }
+
+            kcEntity3DDesc entityDesc = generic.getAsEntityDescription();
+            if (entityDesc == null)
+                generic.setResourceData(entityDesc = descType.createNewInstance(generic));
+
+            entityDesc.fromConfig(entityDescCfg);
+            importCount++;
+        }
+
+        getLogger().info("Imported " + importCount + " entity descriptions.");
+    }
+
+    /**
+     * Saves entity descriptions found in generic chunks to text files.
+     * @param folder The folder to save the descriptions to.
+     */
+    public void exportEntityDescriptions(File folder) {
+        int exportCount = 0;
         for (kcCResource chunk : this.chunks) {
             if (!(chunk instanceof kcCResourceGeneric))
                 continue;
@@ -585,12 +619,15 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             kcCResourceGeneric generic = (kcCResourceGeneric) chunk;
             kcEntity3DDesc entityDesc = generic.getAsEntityDescription();
             if (entityDesc != null) {
-                writeData(infoBuilder, chunk, entityDesc);
-                infoBuilder.append(Constants.NEWLINE);
+                Config outputCfg = new Config(generic.getName());
+                entityDesc.toConfig(outputCfg);
+                FileUtils.makeDirectory(folder);
+                outputCfg.saveTextFile(new File(folder, generic.getName() + "." + Config.DEFAULT_EXTENSION));
+                exportCount++;
             }
         }
 
-        saveExport(file, infoBuilder);
+        getLogger().info("Imported " + exportCount + " entity descriptions.");
     }
 
     /**
@@ -989,5 +1026,21 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                     importEntities(inputFolder);
             });
         }
+
+        MenuItem exportEntityDescriptionsItem = new MenuItem("Export Entity Descriptions");
+        contextMenu.getItems().add(exportEntityDescriptionsItem);
+        exportEntityDescriptionsItem.setOnAction(event -> {
+            File outputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), RESOURCE_EXPORT_PATH);
+            if (outputFolder != null)
+                exportEntityDescriptions(outputFolder);
+        });
+
+        MenuItem importEntityDescriptionsItem = new MenuItem("Import Entity Descriptions");
+        contextMenu.getItems().add(importEntityDescriptionsItem);
+        importEntityDescriptionsItem.setOnAction(event -> {
+            File inputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), RESOURCE_IMPORT_PATH);
+            if (inputFolder != null)
+                importEntityDescriptions(inputFolder);
+        });
     }
 }

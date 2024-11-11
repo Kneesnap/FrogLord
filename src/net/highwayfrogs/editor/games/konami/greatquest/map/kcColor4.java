@@ -70,6 +70,17 @@ public class kcColor4 implements IInfoWriter, IBinarySerializable {
         return this;
     }
 
+    /**
+     * Gets this color as an ARGB8888 integer.
+     */
+    public int toARGB() {
+        byte red = (byte) Math.round(this.red * 255F);
+        byte green = (byte) Math.round(this.green * 255F);
+        byte blue = (byte) Math.round(this.blue * 255F);
+        byte alpha = (byte) Math.round(this.alpha * 255F);
+        return ColorUtils.toARGB(red, green, blue, alpha);
+    }
+
     @Override
     public void writeInfo(StringBuilder builder) {
         int rgbColor = toColor().getRGB();

@@ -6,7 +6,8 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
-import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.system.Config;
 
 /**
  * Represents the 'CMagicStoneDesc'
@@ -19,12 +20,7 @@ public class CMagicStoneDesc extends CItemDesc {
     private static final int PADDING_VALUES = 8;
 
     public CMagicStoneDesc(@NonNull kcCResourceGeneric resource) {
-        super(resource);
-    }
-
-    @Override
-    protected int getTargetClassID() {
-        return kcClassID.MAGIC_STONE.getClassId();
+        super(resource, kcEntityDescType.MAGIC_STONE);
     }
 
     @Override
@@ -45,6 +41,19 @@ public class CMagicStoneDesc extends CItemDesc {
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         super.writeMultiLineInfo(builder, padding);
         builder.append(padding).append("Magic Stone Type: ").append(this.type).append(Constants.NEWLINE);
+    }
+
+    @Override
+    public void fromConfig(Config input) {
+        super.fromConfig(input);
+        this.type = input.getKeyValueNodeOrError("stoneType").getAsEnumOrError(MagicStoneType.class);
+
+    }
+
+    @Override
+    public void toConfig(Config output, kcScriptDisplaySettings settings) {
+        super.toConfig(output, settings);
+        output.getOrCreateKeyValueNode("stoneType").setAsEnum(this.type);
     }
 
     /**
