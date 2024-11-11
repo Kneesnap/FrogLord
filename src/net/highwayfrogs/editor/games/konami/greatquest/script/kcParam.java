@@ -332,7 +332,8 @@ public class kcParam {
                 setNodeToEnumName(node, kcSpecialActivationMask.values());
                 break;
             case SOUND:
-                node.setAsString(getAsSoundPath(settings != null ? settings.getGameInstance() : null), true);
+                String soundPath = getAsSoundPath(settings != null ? settings.getGameInstance() : null);
+                node.setAsString(soundPath, !NumberUtils.isInteger(soundPath));
                 break;
             case MILLISECONDS:
                 node.setAsFloat(getAsInteger() / 1000F);
