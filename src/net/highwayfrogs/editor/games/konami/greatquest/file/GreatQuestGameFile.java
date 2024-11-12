@@ -64,6 +64,11 @@ public abstract class GreatQuestGameFile extends GameData<GreatQuestInstance> im
 
     @Override
     public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        MenuItem copyFilePathItem = new MenuItem("Copy File Path to Clipboard");
+        contextMenu.getItems().add(copyFilePathItem);
+        copyFilePathItem.setOnAction(event -> FXUtils.setClipboardText(getFilePath()));
+        copyFilePathItem.setDisable(getFilePath() == null);
+
         MenuItem exportFileData = new MenuItem("Export File");
         contextMenu.getItems().add(exportFileData);
         exportFileData.setOnAction(event -> {
