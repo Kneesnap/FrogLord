@@ -44,14 +44,14 @@ public class kcActionActivateSpecial extends kcAction {
 
     @Override
     protected void loadArguments(OptionalArguments arguments) {
-        this.shouldActivate = arguments.useNext().getAsBoolean();
         this.activationMask = arguments.useNext().getAsEnumOrError(kcSpecialActivationMask.class);
+        this.shouldActivate = arguments.useNext().getAsBoolean();
     }
 
     @Override
     protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
-        arguments.createNext().setAsBoolean(this.shouldActivate);
         arguments.createNext().setAsEnum(this.activationMask);
+        arguments.createNext().setAsBoolean(this.shouldActivate);
     }
 
     @Override
