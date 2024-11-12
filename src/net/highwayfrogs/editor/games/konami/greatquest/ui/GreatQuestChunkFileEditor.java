@@ -13,6 +13,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import lombok.Getter;
+import lombok.NonNull;
 import net.highwayfrogs.editor.games.generic.data.GameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
@@ -136,6 +137,13 @@ public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<
             }
         }
 
+        @Override
+        public void removeViewEntry(@NonNull kcCResource resource) {
+            getListComponent().getFile().removeResource(resource);
+            if (getRootNode().getSelectionModel().getSelectedItem() == resource)
+                getRootNode().getSelectionModel().clearSelection();
+        }
+
         private void updateAddMenuEntries(GreatQuestChunkResourceCategory category) {
             this.addNewChunkItem.setDisable(category == GreatQuestChunkResourceCategory.ALL || category == GreatQuestChunkResourceCategory.UNUSED);
             if (category == GreatQuestChunkResourceCategory.OCTTREESCENEMGR && getViewEntries().size() >= 1) // Only allow one OctTreeMgr.
@@ -162,7 +170,6 @@ public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<
 
             this.addNewChunkItem.setOnAction(event -> {
                 // TODO: PS2 PAL FIX -> Multiple TOC Support.
-                // TODO: SORTING? [Ensure loaded order matches what is expected, Disable our ability to manually order sections, and automatically sort sections to ensure ordering is OK.]
                 FXUtils.makePopUp("Not yet implemented.", AlertType.ERROR); // TODO: IMPLEMENT!
             });
 

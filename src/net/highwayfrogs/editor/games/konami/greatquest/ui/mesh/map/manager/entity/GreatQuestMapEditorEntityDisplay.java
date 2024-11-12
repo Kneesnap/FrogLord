@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTriMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.*;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcWaypointDesc.kcWaypointType;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcSphere;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyCapsuleDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc;
@@ -20,10 +21,14 @@ import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.Great
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestActionSequencePlayback;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
+
+import java.util.Comparator;
 
 /**
  * Represents a Great Quest entity displayed in the editor, and any additional 3D data with its representation.
+ * TODO: Sort collision representations by area.
  * Created by Kneesnap on 4/18/2024.
  */
 @Getter
@@ -39,7 +44,11 @@ public class GreatQuestMapEditorEntityDisplay {
 
     private static final PhongMaterial BOUNDING_OBB_MATERIAL = Scene3DUtils.makeHighlightOverlayMaterial(Color.RED);
     private static final PhongMaterial BOUNDING_SPHERE_MATERIAL = Scene3DUtils.makeHighlightOverlayMaterial(Color.BLUE);
+    private static final PhongMaterial WAYPOINT_BOUNDING_SPHERE_MATERIAL = Scene3DUtils.makeHighlightOverlayMaterial(Color.YELLOW);
+    private static final PhongMaterial WAYPOINT_ALTERNATE_BOUNDING_SPHERE_MATERIAL = Scene3DUtils.makeHighlightOverlayMaterial(Color.PURPLE);
     private static final PhongMaterial PROXY_SPHERE_MATERIAL = Scene3DUtils.makeHighlightOverlayMaterial(Color.LIMEGREEN);
+
+    private static final Comparator<? super Node> SORT_BY_VOLUME = Comparator.comparingDouble(FXUtils::calculateVolume);
 
     /**
      * Setup the entity display.
@@ -58,8 +67,14 @@ public class GreatQuestMapEditorEntityDisplay {
     public void setVisible(boolean visible) {
         if (this.collisionPreview != null)
             this.collisionPreview.setVisible(visible && this.entityManager.getShowCollisionCheckBox().isSelected());
-        if (this.boundingSpherePreview != null)
-            this.boundingSpherePreview.setVisible(visible && (hasWaypointBoundingBox() ? this.entityManager.getShowBoundingBoxCheckBox().isSelected() : this.entityManager.getShowBoundingSphereCheckBox().isSelected()));
+        if (this.boundingSpherePreview != null) {
+            if (hasWaypointBoundingBox()) {
+                boolean isSelectedEntity = this.entityManager.getSelectedValue() == this.entityInstance;
+                this.boundingSpherePreview.setVisible(visible && (isSelectedEntity || this.entityManager.getShowBoundingBoxCheckBox().isSelected()));
+            } else {
+                this.boundingSpherePreview.setVisible(visible && this.entityManager.getShowBoundingSphereCheckBox().isSelected());
+            }
+        }
         for (int i = 0; i < this.modelViews.getMeshViews().size(); i++)
             this.modelViews.getMeshViews().get(i).setVisible(visible && this.entityManager.getShowEntityMeshCheckBox().isSelected());
     }
@@ -73,7 +88,7 @@ public class GreatQuestMapEditorEntityDisplay {
             return false; // Not a waypoint!
 
         kcWaypointDesc waypointDesc = (kcWaypointDesc) entity3DDesc;
-        return waypointDesc.getType() == 0 && waypointDesc.getSubType() == 1;
+        return waypointDesc.getType() == kcWaypointType.BOUNDING_BOX;
     }
 
     /**
@@ -110,23 +125,30 @@ public class GreatQuestMapEditorEntityDisplay {
             return null;
 
         Shape3D newShape;
-        if (entity3DDesc instanceof kcWaypointDesc && ((kcWaypointDesc) entity3DDesc).getType() == 0 && ((kcWaypointDesc) entity3DDesc).getSubType() == 1) {
+        kcWaypointType type = entity3DDesc instanceof kcWaypointDesc ? ((kcWaypointDesc) entity3DDesc).getType() : null;
+        if (type == kcWaypointType.BOUNDING_BOX) {
             kcWaypointDesc waypointDesc = ((kcWaypointDesc) entity3DDesc);
             // Leave it up to the Great Quest to store collision data in a field named & typed as a color. Sigh.
             // Reference: kcCWaypoint::Init, kcCWaypoint::UpdateRectangularParameters, kcCWaypoint::Intersects
-            double xMagnitude = Math.max(.05, Math.min(64, waypointDesc.getColor().getRed()));
-            double yMagnitude = Math.max(.05, Math.min(64, waypointDesc.getColor().getGreen()));
-            double zMagnitude = Math.max(.05, Math.min(64, waypointDesc.getColor().getBlue()));
+            double xMagnitude = Math.max(kcWaypointDesc.MINIMUM_BOUNDING_BOX_SIZE, Math.min(kcWaypointDesc.MAXIMUM_BOUNDING_BOX_SIZE, waypointDesc.getBoundingBoxDimensions().getX()));
+            double yMagnitude = Math.max(kcWaypointDesc.MINIMUM_BOUNDING_BOX_SIZE, Math.min(kcWaypointDesc.MAXIMUM_BOUNDING_BOX_SIZE, waypointDesc.getBoundingBoxDimensions().getY()));
+            double zMagnitude = Math.max(kcWaypointDesc.MINIMUM_BOUNDING_BOX_SIZE, Math.min(kcWaypointDesc.MAXIMUM_BOUNDING_BOX_SIZE, waypointDesc.getBoundingBoxDimensions().getZ()));
             newShape = new Box(xMagnitude * 2, yMagnitude * 2, zMagnitude * 2);
             newShape.setMaterial(BOUNDING_OBB_MATERIAL);
         } else {
             newShape = new Sphere(boundingSphere.getRadius());
-            newShape.setMaterial(BOUNDING_SPHERE_MATERIAL);
+            if (type == kcWaypointType.BOUNDING_SPHERE) {
+                newShape.setMaterial(WAYPOINT_BOUNDING_SPHERE_MATERIAL);
+            } else if (type == kcWaypointType.APPLY_WATER_CURRENT) {
+                newShape.setMaterial(WAYPOINT_ALTERNATE_BOUNDING_SPHERE_MATERIAL);
+            } else { // A non-waypoint entity.
+                newShape.setMaterial(BOUNDING_SPHERE_MATERIAL);
+            }
         }
 
         newShape.setMouseTransparent(true);
         this.entityManager.getController().getMainLight().getScope().add(newShape);
-        this.entityManager.getBoundingSphereDisplayList().add(newShape);
+        this.entityManager.getBoundingShapeDisplayList().add(newShape, SORT_BY_VOLUME); // Sorting ensures smaller collision shapes appear inside larger ones.
         this.boundingSpherePreview = newShape; // Do before calling setupNode()
         setupNode(newShape);
 
@@ -141,7 +163,7 @@ public class GreatQuestMapEditorEntityDisplay {
             return;
 
         this.entityManager.getController().getMainLight().getScope().remove(this.boundingSpherePreview);
-        this.entityManager.getBoundingSphereDisplayList().remove(this.boundingSpherePreview);
+        this.entityManager.getBoundingShapeDisplayList().remove(this.boundingSpherePreview);
         this.boundingSpherePreview = null;
     }
 

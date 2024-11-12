@@ -49,7 +49,7 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
     private final Map<GreatQuestModelMesh, GreatQuestActionSequencePlayback> cachedPlaybacksByMesh = new HashMap<>();
     private final GreatQuestModelMesh fallbackModel = new GreatQuestModelMesh((kcModelWrapper) null, false);
     private final DisplayList collisionPreviewDisplayList;
-    private final DisplayList boundingSphereDisplayList;
+    private final DisplayList boundingShapeDisplayList;
     private final List<GreatQuestMapEnvironmentCollection> waterMeshCollections = new ArrayList<>();
     private GreatQuestMapEnvironmentCollection skyBoxCollection;
     private final MeshView selectedSkeletonMeshView = new MeshView();
@@ -66,7 +66,7 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
     public GreatQuestEntityManager(MeshViewController<GreatQuestMapMesh> controller) {
         super(controller);
         this.collisionPreviewDisplayList = getTransparentRenderManager().createDisplayListWithNewGroup();
-        this.boundingSphereDisplayList = getTransparentRenderManager().createDisplayListWithNewGroup(); // Draws on top of collision preview.
+        this.boundingShapeDisplayList = getTransparentRenderManager().createDisplayListWithNewGroup(); // Draws on top of collision preview. Needs a new group so we can sort.
     }
 
     @Override
@@ -109,7 +109,7 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
         this.showBoundingBoxCheckBox = getMainGrid().addCheckBox("Show Waypoint Bounding Box", false, this::setBoundingBoxVisible);
         getMainGrid().addCheckBox("Show Sky Box", true, this::setSkyBoxVisible);
         getMainGrid().addCheckBox("Show Water", true, this::setWaterVisible);
-        this.playSequencesCheckBox = getMainGrid().addCheckBox("Play All Sequences", false, null);
+        this.playSequencesCheckBox = getMainGrid().addCheckBox("Play All Sequences", false, this::onSetPlayAllSequences);
         this.sequenceSelectionBox = getMainGrid().addSelectionBox("Sequences", null, Collections.emptyList(), newSequence -> {
             GreatQuestMapEditorEntityDisplay display = getDelegatesByValue().get(getSelectedValue());
             if (display != null && display.getSequencePlayback() != null)
@@ -210,6 +210,7 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
         this.sequenceSelectionBox.setItems(display != null ? display.getModelMesh().getAvailableSequences() : null);
         this.sequenceSelectionBox.getSelectionModel().clearSelection();
         this.sequenceSelectionBox.setValue(display != null && display.getSequencePlayback() != null ? display.getSequencePlayback().getActiveSequence() : null);
+        this.sequenceSelectionBox.setDisable(display == null || display.getModelMesh().getAvailableSequences().isEmpty());
     }
 
     @Override
@@ -222,7 +223,7 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
     }
 
     @Override
-    protected void setVisible(kcCResourceEntityInst kcCResourceEntityInst, GreatQuestMapEditorEntityDisplay entityDisplay, boolean visible) {
+    protected void setVisible(kcCResourceEntityInst entity, GreatQuestMapEditorEntityDisplay entityDisplay, boolean visible) {
         if (entityDisplay != null)
             entityDisplay.setVisible(visible);
     }
@@ -250,6 +251,7 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
                 }
             }
 
+            oldDisplay.setVisible(isValueVisibleByUI(oldValue)); // Update visibility of collision shapes shown on select.
             if (oldDisplay.getSequencePlayback() != null)
                 setDefaultSequence(oldDisplay.getSequencePlayback());
         }
@@ -268,6 +270,7 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
                 }
             }
 
+            newDisplay.setVisible(isValueVisibleByUI(newValue)); // Update visibility of collision shapes shown on select.
             if (newDisplay.getSequencePlayback() != null)
                 newDisplay.getSequencePlayback().setSequenceAndTick(null);
         }
@@ -286,6 +289,14 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
             display.removeCollisionPreview();
             display.removeBoundingSphere();
         }
+    }
+
+    @Override
+    protected boolean tryRemoveValue(kcCResourceEntityInst entity) {
+        boolean success = super.tryRemoveValue(entity);
+        if (success)
+            entity.getParentFile().removeResource(entity);
+        return success;
     }
 
     /**
@@ -345,6 +356,10 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
     private void setWaterVisible(boolean visible) {
         for (int i = 0; i < this.waterMeshCollections.size(); i++)
             this.waterMeshCollections.get(i).setVisible(visible);
+    }
+
+    private void onSetPlayAllSequences(boolean playAllSequences) {
+        this.cachedPlaybacksByMesh.values().forEach(GreatQuestEntityManager::setDefaultSequence);
     }
 
     @Getter

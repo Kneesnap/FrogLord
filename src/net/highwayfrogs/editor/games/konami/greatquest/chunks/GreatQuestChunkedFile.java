@@ -390,6 +390,8 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             throw new NullPointerException("resource");
         if (resource instanceof kcCResourceTOC)
             throw new IllegalArgumentException("Table of Contents chunks cannot be manually added to chunked files.");
+        if (resource.getParentFile() != this)
+            throw new IllegalArgumentException("Cannot add resource " + resource + ", as it belongs to a different chunked file! (" + (resource.getParentFile() != null ? resource.getParentFile().getFilePath() : "null") + ")");
 
         int resourceHash = resource.getHash();
         if (resourceHash == 0 || resourceHash == -1)
@@ -410,6 +412,29 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         int insertionIndex = -(searchResult + 1);
         this.chunks.add(insertionIndex, resource);
         resource.onAddedToChunkFile();
+    }
+
+    /**
+     * Removes a resource registered to this chunked file.
+     * @param resource the resource to remove
+     */
+    public void removeResource(kcCResource resource) {
+        if (resource == null)
+            throw new NullPointerException("resource");
+        if (resource instanceof kcCResourceTOC)
+            throw new IllegalArgumentException("Table of Contents chunks cannot be manually removed from chunked files.");
+        if (resource.getParentFile() != this)
+            throw new IllegalArgumentException("Cannot remove resource " + resource + ", as it belongs to a different chunked file! (" + (resource.getParentFile() != null ? resource.getParentFile().getFilePath() : "null") + ")");
+
+        int resourceIndex = Collections.binarySearch(this.chunks, resource, RESOURCE_ORDERING);
+        if (resourceIndex < 0)
+            throw new IllegalArgumentException("Cannot remove resource " + resource + ", as it does not appear to be registered in the chunk file.");
+
+        kcCResource removedResource = this.chunks.remove(resourceIndex);
+        if (removedResource != resource)
+            throw new IllegalArgumentException("[Shouldn't happen] The resource we removed (" + removedResource + ") was not the one we expected to remove!! (" + resourceIndex + ")");
+
+        removedResource.onRemovedFromChunkFile();
     }
 
     /**

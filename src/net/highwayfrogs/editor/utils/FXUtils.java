@@ -4,6 +4,7 @@ import com.sun.javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -14,6 +15,10 @@ import javafx.scene.image.Image;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
+import javafx.scene.shape.Box;
+import javafx.scene.shape.Cylinder;
+import javafx.scene.shape.Shape3D;
+import javafx.scene.shape.Sphere;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
@@ -462,5 +467,27 @@ public class FXUtils {
         ClipboardContent content = new ClipboardContent();
         content.putString(clipboardText);
         Clipboard.getSystemClipboard().setContent(content);
+    }
+
+    /**
+     * Calculate the volume of the given 3D Node.
+     * @param node the node to calculate the area from.
+     * @return volume
+     */
+    public static double calculateVolume(Node node) {
+        if (node instanceof Box) {
+            Box box = (Box) node;
+            return box.getWidth() * box.getHeight() * box.getDepth();
+        } else if (node instanceof Sphere) {
+            Sphere sphere = (Sphere) node;
+            return 4 / 3D * Math.PI * (sphere.getRadius() * sphere.getRadius() * sphere.getRadius());
+        } else if (node instanceof Cylinder) {
+            Cylinder cylinder = (Cylinder) node;
+            return Math.PI * (cylinder.getRadius() * cylinder.getRadius()) * cylinder.getHeight();
+        } else if (node instanceof Shape3D) {
+            throw new RuntimeException("Unsupported JavaFX Shape3D: " + Utils.getSimpleName(node));
+        } else {
+            throw new RuntimeException("Unsupported JavaFX Node: " + Utils.getSimpleName(node));
+        }
     }
 }
