@@ -207,8 +207,19 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
     private static final String CONFIG_KEY_TARGET_ENTITY = "targetEntity";
     private static final String CONFIG_SECTION_SCRIPT = "Script";
 
+
     @Override
     public void fromConfig(Config input) {
+        fromConfig(input, true);
+    }
+
+    /**
+     * Loads from the config.
+     * @param input the input config to read from
+     * @param loadScriptsNow whether scripts will be read right now
+     * @return scriptCfg
+     */
+    public Config fromConfig(Config input, boolean loadScriptsNow) {
         if (this.resource == null)
             throw new NullPointerException("this.resource");
 
@@ -226,8 +237,10 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
 
         // Read scripts.
         Config scriptCfg = input.getChildConfigByName(CONFIG_SECTION_SCRIPT);
-        if (scriptCfg != null)
+        if (scriptCfg != null && loadScriptsNow)
             addScriptFunctions(chunkedFile.getScriptList(), scriptCfg, scriptCfg.getRootNode().getSectionName(), true);
+
+        return scriptCfg;
     }
 
     @Override

@@ -130,9 +130,12 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
      */
     protected void printLoadWarnings(OptionalArguments arguments) {
         arguments.warnAboutUnusedArguments(getLogger());
-        if (!isActionApplicableToTarget()) {
+        if (getTargetEntityRef().getResource() == null) {
             kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
-            getLogger().warning("The effect '" + saveEffect(settings) + "' targets an entity (" + this.targetEntityRef.getAsGqsString(settings) + ") which it will silently fail/be skipped.");
+            getLogger().warning("The effect '" + saveEffect(settings) + "' targets an entity which was not found.");
+        } else if (!isActionApplicableToTarget()) {
+            kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
+            getLogger().warning("The effect '" + saveEffect(settings) + "' targets an entity (" + this.targetEntityRef.getAsGqsString(settings) + ") which is unable to execute the effect.");
         }
     }
 

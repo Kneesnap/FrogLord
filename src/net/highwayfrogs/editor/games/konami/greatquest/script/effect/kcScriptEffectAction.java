@@ -38,10 +38,10 @@ public abstract class kcScriptEffectAction extends kcScriptEffect implements kcA
 
     @Override
     public boolean isActionApplicableToTarget() {
-        kcAction action = getAction();
         kcCResourceEntityInst entity = getTargetEntityRef().getResource();
-        return action != null && action.getActionID().getActionTargetType() != null
-                && action.getActionID().getActionTargetType().isApplicable(entity != null ? entity.getInstance() : null);
+        kcAction action = getAction();
+        return action != null && entity != null && action.getActionID().getActionTargetType() != null
+                && action.getActionID().getActionTargetType().isApplicable(entity.getInstance());
     }
 
     @Override

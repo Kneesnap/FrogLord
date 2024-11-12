@@ -167,7 +167,7 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
      * @param warning the warning to print
      */
     public final void printWarning(Logger logger, String warning) {
-        logger.warning("The cause '" + getAsGqsStatement() + "' " + warning);
+        logger.warning("The cause '" + getAsGqsStatement() + "' will never occur because " + warning);
     }
 
     private kcScriptDisplaySettings createDisplaySettings() {

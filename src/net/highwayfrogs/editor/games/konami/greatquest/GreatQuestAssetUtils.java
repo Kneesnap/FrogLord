@@ -12,6 +12,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 
 /**
@@ -19,6 +21,11 @@ import java.util.Map.Entry;
  * Created by Kneesnap on 11/2/2024.
  */
 public class GreatQuestAssetUtils {
+    private static final String CONFIG_SECTION_DIALOG = "Dialog";
+    private static final String CONFIG_SECTION_ENTITY_DESCRIPTIONS = "EntityDescriptions";
+    private static final String CONFIG_SECTION_ENTITIES = "Entities";
+    private static final String CONFIG_SECTION_SCRIPTS = "Scripts";
+
     /**
      * Reads a great quest script group from a config, and applies it to the chunked file.
      * A section named 'Dialog' can contain key-value pairs of dialog strings to add/replace.
@@ -33,12 +40,13 @@ public class GreatQuestAssetUtils {
         if (gqsScriptGroup == null)
             throw new NullPointerException("gqsScriptGroup");
 
+        String sourceName = gqsScriptGroup.getSectionName();
         kcScriptList scriptList = chunkedFile.getScriptList();
         if (scriptList == null)
-            throw new RuntimeException(chunkedFile.getDebugName() + " does not have any script data, so we cannot apply " + gqsScriptGroup.getSectionName() + "!");
+            throw new RuntimeException(chunkedFile.getDebugName() + " does not have any script data, so we cannot apply " + sourceName + "!");
 
         // Add or replace dialog.
-        Config dialogCfg = gqsScriptGroup.getChildConfigByName("Dialog");
+        Config dialogCfg = gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_DIALOG);
         if (dialogCfg != null) {
             for (Entry<String, ConfigValueNode> entry : dialogCfg.getKeyValuePairs().entrySet()) {
                 String dialogResName = entry.getKey();
@@ -57,7 +65,7 @@ public class GreatQuestAssetUtils {
         }
 
         // Add/replace entity descriptions.
-        Config entityDescriptionsCfg = gqsScriptGroup.getChildConfigByName("EntityDescriptions");
+        Config entityDescriptionsCfg = gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ENTITY_DESCRIPTIONS);
         if (entityDescriptionsCfg != null) {
             for (Config entityDescCfg : entityDescriptionsCfg.getChildConfigNodes()) {
                 String entityDescName = entityDescCfg.getSectionName();
@@ -77,7 +85,7 @@ public class GreatQuestAssetUtils {
         }
 
         // Add/replace entities.
-        Config entityCfg = gqsScriptGroup.getChildConfigByName("Entities");
+        Config entityCfg = gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ENTITIES);
         if (entityCfg != null) {
             // Add all entities first, so it becomes possible to reference other entities defined together.
             for (Config entityInstanceCfg : entityCfg.getChildConfigNodes()) {
@@ -93,6 +101,7 @@ public class GreatQuestAssetUtils {
             }
 
             // Load entity data.
+            Map<kcEntityInst, Config> scriptCfgsPerEntity = new HashMap<>();
             for (Config entityInstanceCfg : entityCfg.getChildConfigNodes()) {
                 String entityInstName = entityInstanceCfg.getSectionName();
                 int entityInstNameHash = GreatQuestUtils.hash(entityInstName);
@@ -104,12 +113,19 @@ public class GreatQuestAssetUtils {
                 if (entityInst == null)
                     throw new RuntimeException("The entity instance for '" + entityInstName + "' was null, so we couldn't modify its script.");
 
-                entityInst.fromConfig(entityInstanceCfg);
+                // Scripts should load AFTER core entity data.
+                Config scriptCfg = entityInst.fromConfig(entityInstanceCfg, false);
+                if (scriptCfg != null)
+                    scriptCfgsPerEntity.put(entityInst, scriptCfg);
             }
+
+            // Scripts are loaded last in order to ensure entity data is correct. (Prevents incorrect resolutions and warnings.)
+            for (Entry<kcEntityInst, Config> entry : scriptCfgsPerEntity.entrySet())
+                entry.getKey().addScriptFunctions(scriptList, entry.getValue(), sourceName, true);
         }
 
         // Add/replace scripts.
-        Config scriptCfg = gqsScriptGroup.getChildConfigByName("Scripts");
+        Config scriptCfg = gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_SCRIPTS);
         if (scriptCfg != null) {
             for (Config entityScriptCfg : scriptCfg.getChildConfigNodes()) {
                 for (String entityInstName : entityScriptCfg.getSectionName().split("\\|")) { // Allows multiple entities to be assigned by splitting with the pipe character. I originally wanted comma, but some entity names have commas in them.
@@ -122,7 +138,7 @@ public class GreatQuestAssetUtils {
                     if (entityInst == null)
                         throw new RuntimeException("The entity instance for '" + entityInstName + "' was null, so we couldn't modify its script.");
 
-                    entityInst.addScriptFunctions(scriptList, entityScriptCfg, gqsScriptGroup.getSectionName(), false);
+                    entityInst.addScriptFunctions(scriptList, entityScriptCfg, sourceName, false);
                 }
             }
         }

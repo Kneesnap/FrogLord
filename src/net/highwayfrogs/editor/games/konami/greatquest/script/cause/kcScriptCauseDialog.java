@@ -57,7 +57,9 @@ public class kcScriptCauseDialog extends kcScriptCause {
         if (this.stage == kcScriptDialogStage.END)
             printWarning(logger, "executes on dialog stage '" + this.stage + "', which is not supported by the game.");
         if (this.dialogRef.getResource() == null)
-            printWarning(logger, "cannot resolve the dialog string reference, so it will be skipped by the game.");
+            printWarning(logger, "will never occur because FrogLord cannot resolve the dialog string reference.");
+
+        // TODO: We should have another warning method which runs after all scripts have loaded. For this one it can test if ShowDialog ever shows the correct dialog, since others might be confused by this.
     }
 
 

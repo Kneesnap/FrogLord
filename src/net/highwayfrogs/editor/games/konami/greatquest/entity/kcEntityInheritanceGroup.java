@@ -64,14 +64,14 @@ public enum kcEntityInheritanceGroup {
     public void logEntityTypeWarnings(Logger logger, kcScriptCause scriptCause, String subCauseDisplayName) {
         kcCResourceEntityInst entity = scriptCause.getScriptEntity();
         if (entity == null) {
-            scriptCause.printWarning(logger, "could not find the script entity.");
+            scriptCause.printWarning(logger, "will never occur because FrogLord could not find the script entity.");
             return;
         }
 
         kcEntityInst entityInst = entity.getInstance();
         kcEntity3DDesc entityDesc = entityInst != null ? entityInst.getDescription() : null;
         if (entityDesc == null) {
-            scriptCause.printWarning(logger, "could not find the entity description for '" + entity.getName() + "'.");
+            scriptCause.printWarning(logger, "will never occur because FrogLord could not find the entity description for '" + entity.getName() + "'.");
             return;
         }
 
@@ -87,14 +87,14 @@ public enum kcEntityInheritanceGroup {
     public void logEntityTypeWarnings(Logger logger, kcScriptCause scriptCause, GreatQuestHash<kcCResourceEntityInst> otherEntityRef, String subCauseDisplayName) {
         kcCResourceEntityInst entity = otherEntityRef != null ? otherEntityRef.getResource() : null;
         if (entity == null) {
-            scriptCause.printWarning(logger, "could not find the entity referenced as an argument.");
+            scriptCause.printWarning(logger, "will never occur because FrogLord could not find the entity referenced as an argument.");
             return;
         }
 
         kcEntityInst entityInst = entity.getInstance();
         kcEntity3DDesc entityDesc = entityInst != null ? entityInst.getDescription() : null;
         if (entityDesc == null) {
-            scriptCause.printWarning(logger, "could not find the entity description for '" + entity.getName() + "'.");
+            scriptCause.printWarning(logger, "will never occur because FrogLord could not find the entity description for '" + entity.getName() + "'.");
             return;
         }
 
@@ -114,12 +114,11 @@ public enum kcEntityInheritanceGroup {
 
         kcEntity3DDesc entityDesc = action.getExecutor().getExecutingEntityDescription();
         if (entityDesc == null) {
-            action.printWarning(logger, "could not find the entity description for the script entity.");
+            action.printWarning(logger, "FrogLord could not find the entity description for the script entity.");
             return;
         }
 
         if (!isApplicable(entityDesc))
-            action.printWarning(logger, "will be skipped because '" + relevantData + "' requires the entity description '" + entityDesc.getResource().getName() + "' to extend " + this.displayName + ", but the entity was actually a " + Utils.getSimpleName(entityDesc) + ".");
+            action.printWarning(logger, "'" + relevantData + "' requires the entity description '" + entityDesc.getResource().getName() + "' to extend " + this.displayName + ", but the entity was actually a " + Utils.getSimpleName(entityDesc) + ".");
     }
-
 }
