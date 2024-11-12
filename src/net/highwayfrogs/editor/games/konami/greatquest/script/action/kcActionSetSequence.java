@@ -13,6 +13,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.*;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
+import java.util.logging.Logger;
+
 /**
  * Implements setting an action sequence.
  * Created by Kneesnap on 10/29/2024.
@@ -125,6 +127,19 @@ public class kcActionSetSequence extends kcAction {
             return this.sequenceRef.getResource().getName();
         } else {
             return super.getEndOfLineComment();
+        }
+    }
+
+    @Override
+    public void printWarnings(Logger logger) {
+        super.printWarnings(logger);
+        kcActorBaseDesc actorDesc = getExecutor() != null ? getExecutor().getExecutingActorBaseDescription() : null;
+        if (actorDesc == null) {
+            logger.warning("The action '" + getAsGqsStatement() + "' will CRASH the game, since it cannot resolve the kcEntityDesc.");
+        } else if (actorDesc.getSkeleton() == null) {
+            logger.warning("The action '" + getAsGqsStatement() + "' may CRASH the game, since it cannot resolve the skeleton.");
+        } else if (actorDesc.getAnimationSequences() == null) {
+            logger.warning("The action '" + getAsGqsStatement() + "' may CRASH the game, since it cannot resolve the kcCResourceNamedHash.");
         }
     }
 
