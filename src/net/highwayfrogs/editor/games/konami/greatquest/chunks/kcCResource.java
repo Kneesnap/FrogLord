@@ -194,7 +194,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
 
             // Warn if not all data is read.
             if (chunkReader.hasMore())
-                getLogger().warning("GreatQuest Chunk " + StringUtils.stripAlphanumeric(getChunkIdentifier()) + "/'" + getName() + "' in '" + getParentFile().getDebugName() + "' had " + chunkReader.getRemaining() + " remaining unread bytes.");
+                getLogger().warning("GreatQuest Resource " + StringUtils.stripAlphanumeric(getChunkIdentifier()) + "/'" + getName() + "' in '" + getParentFile().getDebugName() + "' had " + chunkReader.getRemaining() + " remaining unread bytes.");
         } catch (Throwable th) {
             Utils.handleError(getLogger(), th, false, "Failed to read %s chunk from '%s'.", getChunkType(), getParentFile().getDebugName());
         }

@@ -88,18 +88,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
             // Read chunk.
             KCResourceID readType = KCResourceID.getByMagic(identifier);
-
-            kcCResource newChunk;
-            if (readType == KCResourceID.RAW && DataUtils.testSignature(readBytes, kcEnvironment.ENVIRONMENT_NAME)) {
-                newChunk = new kcEnvironment(this);
-            } else if (readType == KCResourceID.RAW && DataUtils.testSignature(readBytes, kcScriptList.GLOBAL_SCRIPT_NAME)) {
-                newChunk = new kcScriptList(this);
-            } else if (readType != null && readType.getMaker() != null) {
-                newChunk = readType.getMaker().apply(this);
-            } else {
-                newChunk = new GreatQuestDummyFileChunk(this, identifier);
-                getLogger().warning("Reading unsupported chunk with identifier '" + identifier + "'.");
-            }
+            kcCResource newChunk = createResource(readType, readBytes, identifier);
 
             if (newChunk instanceof kcCResourceTOC) {
                 // If we encounter a table of contents, use it for reading the upcoming chunks!
@@ -1110,5 +1099,28 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             if (inputFolder != null)
                 importEntityDescriptions(inputFolder);
         });
+    }
+
+    /**
+     * Creates a new resource.
+     * @param readType the type of resource to create
+     * @param rawBytes the raw byte data to create with
+     * @param identifier the raw identifier string
+     * @return newResource
+     */
+    public kcCResource createResource(KCResourceID readType, byte[] rawBytes, String identifier) {
+        kcCResource newChunk;
+        if (readType == KCResourceID.RAW && DataUtils.testSignature(rawBytes, kcEnvironment.ENVIRONMENT_NAME)) {
+            newChunk = new kcEnvironment(this);
+        } else if (readType == KCResourceID.RAW && DataUtils.testSignature(rawBytes, kcScriptList.GLOBAL_SCRIPT_NAME)) {
+            newChunk = new kcScriptList(this);
+        } else if (readType != null && readType.getMaker() != null) {
+            newChunk = readType.getMaker().apply(this);
+        } else {
+            newChunk = new GreatQuestDummyFileChunk(this, identifier);
+            getLogger().warning("Reading unsupported chunk with identifier '" + identifier + "'.");
+        }
+
+        return newChunk;
     }
 }
