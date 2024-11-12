@@ -14,6 +14,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
+import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.system.Config;
@@ -36,6 +37,7 @@ public class GreatQuestAssetUtils {
     private static final String CONFIG_SECTION_ENTITY_DESCRIPTIONS = "EntityDescriptions";
     private static final String CONFIG_SECTION_ENTITIES = "Entities";
     private static final String CONFIG_SECTION_SCRIPTS = "Scripts";
+    private static final String CONFIG_OPTION_CREATE_MODEL_DESC = "CreateModelDesc";
 
     /**
      * Reads a great quest script group from a config, and applies it to the chunked file.
@@ -123,7 +125,10 @@ public class GreatQuestAssetUtils {
         // Add missing 3D model references.
         Config modelCfg = gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_MODELS);
         if (modelCfg != null) {
-            for (String filePath : modelCfg.getTextWithoutComments()) {
+            for (String line : modelCfg.getTextWithoutComments()) {
+                OptionalArguments arguments = OptionalArguments.parse(line);
+                String filePath = arguments.useNext().getAsString();
+
                 GreatQuestArchiveFile foundFile = chunkedFile.getGameInstance().getMainArchive().getOptionalFileByName(filePath);
                 if (foundFile == null) {
                     chunkedFile.getLogger().warning("Skipping model reference '" + filePath + "', it could not be resolved.");
@@ -141,6 +146,23 @@ public class GreatQuestAssetUtils {
                     modelRef.setFullPath(filePath, true);
                     chunkedFile.addResource(modelRef);
                 }
+
+                // Create/update the relevant modelDesc.
+                StringNode modelDescNameNode = arguments.use(CONFIG_OPTION_CREATE_MODEL_DESC);
+                if (modelDescNameNode != null) {
+                    String modelDescName = modelDescNameNode.getAsString();
+                    kcCResourceGeneric genericResource = chunkedFile.getResourceByHash(GreatQuestUtils.hash(modelDescName));
+                    if (genericResource == null) {
+                        genericResource = new kcCResourceGeneric(chunkedFile);
+                        genericResource.setName(modelDescName, true);
+                        genericResource.setResourceData(new kcModelDesc(genericResource));
+                        chunkedFile.addResource(genericResource);
+                    }
+
+                    genericResource.getAsModelDescription().getModelRef().setResource(modelRef, false);
+                }
+
+                arguments.warnAboutUnusedArguments(chunkedFile.getLogger());
             }
         }
 
