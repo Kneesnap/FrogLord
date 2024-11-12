@@ -301,10 +301,13 @@ public class OptionalArguments {
     public void readCommaSeparatedNamedArguments(String input) {
         if (input == null)
             throw new NullPointerException("input");
+        if (input.trim().isEmpty())
+            return; // Avoid adding an empty argument.
 
         String[] split = input.split(",\\s*");
         for (String argumentName : split)
-            getOrCreate(argumentName).setAsString("", false);
+            if (!argumentName.isEmpty())
+                getOrCreate(argumentName).setAsString("", false);
     }
 
     /**
