@@ -1,16 +1,25 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
+import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile;
+import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxAttributes;
+import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxEntry;
+import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxEntryStreamAttributes;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceModel;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityDescType;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
+import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
+import net.highwayfrogs.editor.utils.objects.OptionalArguments;
+import net.highwayfrogs.editor.utils.objects.StringNode;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +30,8 @@ import java.util.Map.Entry;
  * Created by Kneesnap on 11/2/2024.
  */
 public class GreatQuestAssetUtils {
+    private static final String CONFIG_SECTION_MODELS = "Models";
+    private static final String CONFIG_SECTION_SOUND_EFFECTS = "SoundEffects";
     private static final String CONFIG_SECTION_DIALOG = "Dialog";
     private static final String CONFIG_SECTION_ENTITY_DESCRIPTIONS = "EntityDescriptions";
     private static final String CONFIG_SECTION_ENTITIES = "Entities";
@@ -61,6 +72,75 @@ public class GreatQuestAssetUtils {
                 }
 
                 generic.getAsStringResource().setValue(entry.getValue().getAsString());
+            }
+        }
+
+        // Add or replace sound effects.
+        Config soundEffectsCfg = gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_SOUND_EFFECTS);
+        if (soundEffectsCfg != null) {
+            SBRFile sbrFile = chunkedFile.getSoundBankFile();
+            if (sbrFile == null) {
+                chunkedFile.getLogger().warning("Skipping sound file references, as the sound bank file could not be resolved.");
+            } else {
+                for (String line : soundEffectsCfg.getTextWithoutComments()) {
+                    OptionalArguments arguments = OptionalArguments.parse(line);
+                    String filePath = arguments.useNext().getAsString();
+                    int sfxId = chunkedFile.getGameInstance().getSfxIdFromFullSoundPath(filePath);
+                    if (sfxId < 0) {
+                        chunkedFile.getLogger().warning("Skipping sound file reference '" + filePath + "', it could not be resolved.");
+                        continue;
+                    }
+
+                    SfxEntry sfxEntry = null;
+                    for (int i = 0; i < sbrFile.getSoundEffects().size(); i++) {
+                        SfxEntry tempEntry = sbrFile.getSoundEffects().get(i);
+                        if (tempEntry.getSfxId() == sfxId) {
+                            sfxEntry = tempEntry;
+                            break;
+                        }
+                    }
+
+                    // Didn't find an entry.
+                    if (sfxEntry == null) {
+                        SfxEntryStreamAttributes newAttributes = new SfxEntryStreamAttributes(sbrFile);
+                        sfxEntry = new SfxEntry(sbrFile, sfxId, newAttributes);
+                        sbrFile.getSoundEffects().add(sfxEntry);
+                    }
+
+                    SfxAttributes attributes = sfxEntry.getAttributes();
+                    attributes.setFlagState(SfxAttributes.FLAG_REPEAT, arguments.useFlag(SfxAttributes.FLAG_NAME_REPEAT));
+                    attributes.setFlagState(SfxAttributes.FLAG_VOICE_CLIP, arguments.useFlag(SfxAttributes.FLAG_NAME_VOICE_CLIP));
+                    attributes.setFlagState(SfxAttributes.FLAG_MUSIC, arguments.useFlag(SfxAttributes.FLAG_NAME_MUSIC));
+                    StringNode priorityNode = arguments.use(SfxAttributes.FLAG_NAME_PRIORITY);
+                    if (priorityNode != null)
+                        attributes.setPriority(priorityNode.getAsInteger());
+
+                    arguments.warnAboutUnusedArguments(chunkedFile.getLogger());
+                }
+            }
+        }
+
+        // Add missing 3D model references.
+        Config modelCfg = gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_MODELS);
+        if (modelCfg != null) {
+            for (String filePath : modelCfg.getTextWithoutComments()) {
+                GreatQuestArchiveFile foundFile = chunkedFile.getGameInstance().getMainArchive().getOptionalFileByName(filePath);
+                if (foundFile == null) {
+                    chunkedFile.getLogger().warning("Skipping model reference '" + filePath + "', it could not be resolved.");
+                    continue;
+                } else if (!(foundFile instanceof kcModelWrapper)) {
+                    chunkedFile.getLogger().warning("Skipping model reference '" + filePath + "', it was not a 3D model.");
+                    continue;
+                }
+
+                String fileName = foundFile.getFileName();
+                kcCResourceModel modelRef = chunkedFile.getResourceByHash(GreatQuestUtils.hash(fileName));
+                if (modelRef == null) {
+                    modelRef = new kcCResourceModel(chunkedFile);
+                    modelRef.setName(fileName, true);
+                    modelRef.setFullPath(filePath, true);
+                    chunkedFile.addResource(modelRef);
+                }
             }
         }
 

@@ -704,6 +704,10 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         public static final int FLAG_REPEAT = Constants.BIT_FLAG_0;
         public static final int FLAG_VOICE_CLIP = Constants.BIT_FLAG_6;
         public static final int FLAG_MUSIC = Constants.BIT_FLAG_7;
+        public static final String FLAG_NAME_REPEAT = "Repeat";
+        public static final String FLAG_NAME_VOICE_CLIP = "VoiceClip";
+        public static final String FLAG_NAME_MUSIC = "Music";
+        public static final String FLAG_NAME_PRIORITY = "Priority";
 
         protected SfxAttributes(@NonNull SBRFile parentFile, byte typeOpcode) {
             super(parentFile.getGameInstance());
@@ -1020,7 +1024,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
 
         private static final byte TYPE_OPCODE = 1;
 
-        protected SfxEntryStreamAttributes(@NonNull SBRFile parentFile) {
+        public SfxEntryStreamAttributes(@NonNull SBRFile parentFile) {
             super(parentFile, TYPE_OPCODE);
         }
 

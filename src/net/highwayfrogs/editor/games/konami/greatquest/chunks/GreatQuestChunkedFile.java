@@ -13,11 +13,13 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IFileExport;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceNamedHash.HashTableEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityDescType;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestGameFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourcePath;
@@ -378,6 +380,44 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
      */
     public kcCResOctTreeSceneMgr getSceneManager() {
         return getResourceByHash(kcCResOctTreeSceneMgr.LEVEL_RESOURCE_HASH);
+    }
+
+    /**
+     * Gets the sound bank file corresponding to this chunked file, if there is one.
+     * @return soundBankFile
+     */
+    public SBRFile getSoundBankFile() {
+        String filePath = getFilePath();
+        if (filePath == null)
+            return null;
+
+        // Extract numeric level ID from the file path.
+        StringBuilder builder = new StringBuilder();
+        boolean currentlyBuildingNumber = false;
+        for (int i = 0; i < filePath.length(); i++) {
+            char tempChar = filePath.charAt(i);
+            if (Character.isDigit(tempChar)) {
+                if (currentlyBuildingNumber) {
+                    builder.append(tempChar);
+                } else {
+                    currentlyBuildingNumber = true;
+                    builder.setLength(0);
+                    builder.append(tempChar);
+                }
+            } else {
+                currentlyBuildingNumber = false;
+            }
+        }
+
+        if (builder.length() == 0)
+            return null;
+
+        String filePrefix = builder.append('.').toString();
+        for (GreatQuestGameFile file : getGameInstance().getLooseFiles())
+            if (file instanceof SBRFile && file.getFileName().startsWith(filePrefix))
+                return (SBRFile) file;
+
+        return null;
     }
 
     /**
