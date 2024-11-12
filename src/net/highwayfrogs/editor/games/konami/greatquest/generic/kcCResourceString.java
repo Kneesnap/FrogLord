@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.games.konami.greatquest.generic;
 
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import lombok.Getter;
 import lombok.NonNull;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -11,6 +13,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneri
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 /**
  * Represents a string.
@@ -63,5 +66,12 @@ public class kcCResourceString extends GameData<GreatQuestInstance> implements k
             throw new NullPointerException("newValue");
 
         this.value = newValue;
+    }
+
+    @Override
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        MenuItem newItem = new MenuItem("Copy Text to Clipboard");
+        contextMenu.getItems().add(newItem);
+        newItem.setOnAction(event -> FXUtils.setClipboardText(this.value));
     }
 }

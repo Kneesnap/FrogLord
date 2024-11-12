@@ -1217,6 +1217,10 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
 
         @Override
         public void setupRightClickMenuItems(ContextMenu contextMenu) {
+            MenuItem copyPathItem = new MenuItem("Copy Path to Clipboard");
+            contextMenu.getItems().add(copyPathItem);
+            copyPathItem.setOnAction(event -> FXUtils.setClipboardText(getGameInstance().getFullSoundPath(this.sfxId)));
+
             MenuItem menuItemImport = new MenuItem("Import Sound");
             contextMenu.getItems().add(menuItemImport);
             menuItemImport.setOnAction(event -> promptImportWavFile());

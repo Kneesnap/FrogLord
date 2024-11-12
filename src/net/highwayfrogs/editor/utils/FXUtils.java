@@ -11,6 +11,8 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
@@ -450,5 +452,15 @@ public class FXUtils {
         } else {
             Platform.runLater(task);
         }
+    }
+
+    /**
+     * Sets the text on the user's clipboard.
+     * @param clipboardText The text to apply
+     */
+    public static void setClipboardText(String clipboardText) {
+        ClipboardContent content = new ClipboardContent();
+        content.putString(clipboardText);
+        Clipboard.getSystemClipboard().setContent(content);
     }
 }

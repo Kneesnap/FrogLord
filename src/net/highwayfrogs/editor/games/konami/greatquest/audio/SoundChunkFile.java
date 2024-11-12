@@ -494,6 +494,10 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
 
         @Override
         public void setupRightClickMenuItems(ContextMenu contextMenu) {
+            MenuItem copyPathItem = new MenuItem("Copy Path to Clipboard");
+            contextMenu.getItems().add(copyPathItem);
+            copyPathItem.setOnAction(event -> FXUtils.setClipboardText(getGameInstance().getFullSoundPath(this.id)));
+
             MenuItem menuItemImport = new MenuItem("Import Sound");
             contextMenu.getItems().add(menuItemImport);
             menuItemImport.setOnAction(event -> {

@@ -303,6 +303,10 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
 
     @Override
     public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        MenuItem copyNameItem = new MenuItem("Copy Name to Clipboard");
+        contextMenu.getItems().add(copyNameItem);
+        copyNameItem.setOnAction(event -> FXUtils.setClipboardText(getName()));
+
         MenuItem renameItem = new MenuItem("Rename");
         contextMenu.getItems().add(renameItem);
         renameItem.setOnAction(event -> {
