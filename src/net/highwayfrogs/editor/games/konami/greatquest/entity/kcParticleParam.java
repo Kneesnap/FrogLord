@@ -166,21 +166,21 @@ public class kcParticleParam implements IMultiLineInfoWriter, IBinarySerializabl
         output.getOrCreateKeyValueNode(CONFIG_KEY_EMIT_ANGLE).setAsFloat(this.emitAngle);
         output.getOrCreateKeyValueNode(CONFIG_KEY_EMIT_ANGLE_VARIANCE).setAsFloat(this.emitAngleVariance);
         output.getOrCreateKeyValueNode(CONFIG_KEY_PART_PER_SECOND).setAsInteger(this.partPerSecond);
-        output.getKeyValueNodeOrError(CONFIG_KEY_SPEED).setAsFloat(this.speed);
-        output.getKeyValueNodeOrError(CONFIG_KEY_SPEED_VARIANCE).setAsFloat(this.speedVariance);
-        output.getKeyValueNodeOrError(CONFIG_KEY_LIFE_TIME).setAsFloat(this.lifeTime);
-        output.getKeyValueNodeOrError(CONFIG_KEY_LIFE_VARIANCE).setAsFloat(this.lifeVariance);
-        output.getKeyValueNodeOrError(CONFIG_KEY_SIZE_BEGIN).setAsFloat(this.sizeBegin);
-        output.getKeyValueNodeOrError(CONFIG_KEY_SIZE_END).setAsFloat(this.sizeEnd);
-        output.getKeyValueNodeOrError(CONFIG_KEY_SIZE_VARIANCE).setAsFloat(this.sizeVariance);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_SPEED).setAsFloat(this.speed);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_SPEED_VARIANCE).setAsFloat(this.speedVariance);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_LIFE_TIME).setAsFloat(this.lifeTime);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_LIFE_VARIANCE).setAsFloat(this.lifeVariance);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_SIZE_BEGIN).setAsFloat(this.sizeBegin);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_SIZE_END).setAsFloat(this.sizeEnd);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_SIZE_VARIANCE).setAsFloat(this.sizeVariance);
         output.getOrCreateKeyValueNode(CONFIG_KEY_COLOR_BEGIN).setAsInteger(this.colorBegin.toARGB());
         output.getOrCreateKeyValueNode(CONFIG_KEY_COLOR_END).setAsInteger(this.colorEnd.toARGB());
         output.getOrCreateKeyValueNode(CONFIG_KEY_COLOR_VARIANCE).setAsInteger(this.colorVariance.toARGB());
         output.getOrCreateKeyValueNode(CONFIG_KEY_GRAVITY_BEGIN).setAsString(this.gravityBegin.toParseableString(1F));
         output.getOrCreateKeyValueNode(CONFIG_KEY_GRAVITY_END).setAsString(this.gravityEnd.toParseableString(1F));
-        output.getKeyValueNodeOrError(CONFIG_KEY_GRAVITY_VARIANCE).setAsFloat(this.gravityVariance);
-        output.getKeyValueNodeOrError(CONFIG_KEY_LINE_LEFT).setAsFloat(this.lineLeft);
-        output.getKeyValueNodeOrError(CONFIG_KEY_LINE_RIGHT).setAsFloat(this.lineRight);
-        output.getKeyValueNodeOrError(CONFIG_KEY_ORIENTATION).setAsFloat(this.orientation);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_GRAVITY_VARIANCE).setAsFloat(this.gravityVariance);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_LINE_LEFT).setAsFloat(this.lineLeft);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_LINE_RIGHT).setAsFloat(this.lineRight);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_ORIENTATION).setAsFloat(this.orientation);
     }
 }

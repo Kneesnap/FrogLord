@@ -493,7 +493,6 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
      */
     public void saveScripts(File file, kcScriptDisplaySettings settings) {
         File scriptFolder = new File(file.getParentFile(), "scripts/");
-        FileUtils.makeDirectory(scriptFolder);
 
         StringBuilder scriptBuilder = new StringBuilder();
         for (kcCResource testChunk : this.chunks) {
@@ -503,6 +502,10 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 scriptList.toString(this, scriptBuilder, settings);
                 scriptBuilder.append('\n');
 
+                if (scriptList.getScripts().isEmpty())
+                    continue;
+
+                FileUtils.makeDirectory(scriptFolder);
                 for (int i = 0; i < scriptList.getScripts().size(); i++) {
                     kcScript script = scriptList.getScripts().get(i);
                     Config rootNode = script.toConfigNode(settings);

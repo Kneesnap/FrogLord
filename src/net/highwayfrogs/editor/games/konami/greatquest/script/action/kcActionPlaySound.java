@@ -38,4 +38,6 @@ public class kcActionPlaySound extends kcActionTemplate {
         if ((getParamOrError(0).getAsInteger() & BITMASK_STOP_SOUND) != 0)
             arguments.getOrCreate(ARGUMENT_STOP_SOUND);
     }
+
+    // TODO: warn if the sound effect isn't active for the given level
 }
