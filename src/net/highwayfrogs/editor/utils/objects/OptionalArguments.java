@@ -378,69 +378,9 @@ public class OptionalArguments {
     }
 
     private static StringNode parseValue(SequentialStringReader reader, StringBuilder result, boolean includeWhitespace) {
-        boolean isEscape = false;
-        boolean isQuotationString = false;
-        boolean isQuotationOpen = false;
-        char lastChar = ' '; // The last character is usually whitespace.
-        while (reader.hasNext()) {
-            char tempChar = reader.read();
-
-            if (result.length() == 0 && tempChar == '"') { // First character.
-                isQuotationString = isQuotationOpen = true;
-            } else if (isQuotationOpen) {
-                if (isEscape) {
-                    isEscape = false;
-                    if (tempChar == '\\' || tempChar == '"') {
-                        result.append(tempChar);
-                    } else if (tempChar == 'n') {
-                        result.append('\n');
-                    } else if (tempChar == 'r') {
-                        result.append('\r');
-                    } else if (tempChar == 't') {
-                        result.append('\t');
-                    } else {
-                        String displayStr = result.toString();
-                        if (displayStr.length() > 16)
-                            displayStr = displayStr.substring(0, 16) + "...";
-
-                        throw new RuntimeException("The argument beginning with '" + displayStr + "' contains an invalid escape sequence '\\" + tempChar + "'.");
-                    }
-                } else if (tempChar == '"') {
-                    isQuotationOpen = false;
-                    break;
-                } else if (tempChar == '\\') {
-                    isEscape = true;
-                } else {
-                    result.append(tempChar);
-                }
-            } else if (includeWhitespace && Character.isWhitespace(lastChar) && tempChar == '-' && reader.hasNext() && reader.peek() == '-') {
-                reader.setIndex(reader.getIndex() - 1);
-                break;
-            } else if (Character.isWhitespace(tempChar)) {
-                if (result.length() > 0) // If there's whitespace and this is at the start, just skip it.
-                    break;
-            } else {
-                result.append(tempChar);
-            }
-
-            lastChar = tempChar;
-        }
-
-        if (isQuotationOpen) {
-            String displayStr = result.toString();
-            if (displayStr.length() > 16)
-                displayStr = displayStr.substring(0, 16) + "...";
-
-            throw new RuntimeException("The argument beginning with '" + displayStr + "' is never terminated!");
-        }
-
-        if (isQuotationString || !"null".contentEquals(result)) {
-            String resultStr = result.toString();
-            result.setLength(0);
-            return new StringNode(resultStr, isQuotationString);
-        } else {
-            result.setLength(0);
-            return new StringNode(null);
-        }
+        StringNode newNode = new StringNode();
+        newNode.parseStringLiteral(reader, result, includeWhitespace);
+        result.setLength(0);
+        return newNode;
     }
 }

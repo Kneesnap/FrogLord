@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.system.Config.IllegalConfigSyntaxException;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.StringUtils;
+import net.highwayfrogs.editor.utils.Utils;
 
 /**
  * This is a string which represents a value that can be obtained as .
@@ -18,7 +19,7 @@ public class StringNode {
     }
 
     public StringNode(String value) {
-        this.value = value;
+        setAsStringLiteral(value);
     }
 
     public StringNode(String value, boolean surroundByQuotes) {
@@ -76,6 +77,7 @@ public class StringNode {
 
         if (this.value != null) {
             return '"' + this.value
+                    .replace("\\", "\\\\")
                     .replace("\n", "\\n")
                     .replace("\r", "\\r")
                     .replace("\t", "\\t")
@@ -92,6 +94,18 @@ public class StringNode {
     public void setAsString(String newValue, boolean surroundByQuotes) {
         this.value = newValue;
         this.surroundByQuotes = surroundByQuotes;
+    }
+
+    /**
+     * Parses the string literal, and applies it to this node.
+     * @param literal the string literal to read
+     */
+    public void setAsStringLiteral(String literal) {
+        if (literal == null || literal.length() < 2 || !literal.startsWith("\"") || !literal.endsWith("\"")) {
+            setAsString(literal, false);
+        } else {
+            parseStringLiteral(literal);
+        }
     }
 
     /**
@@ -371,5 +385,87 @@ public class StringNode {
     @Override
     public String toString() {
         return getClass().getSimpleName() + "{" + getAsStringLiteral() + "}";
+    }
+
+    /**
+     * Parses the string literal from an input string.
+     * @param input the string to parse
+     */
+    public void parseStringLiteral(String input) {
+        parseStringLiteral(new SequentialStringReader(input), new StringBuilder(), true);
+    }
+
+    /**
+     * Parse a string literal from a string.
+     * @param reader the reader to read from
+     * @param result the result buffer to store temporary stuff within
+     * @param includeWhitespace if whitespace should be included
+     */
+    public void parseStringLiteral(SequentialStringReader reader, StringBuilder result, boolean includeWhitespace) {
+        result.setLength(0);
+
+        boolean isEscape = false;
+        boolean isQuotationString = false;
+        boolean isQuotationOpen = false;
+        char lastChar = ' '; // The last character is usually whitespace.
+        while (reader.hasNext()) {
+            char tempChar = reader.read();
+
+            if (result.length() == 0 && tempChar == '"') { // First character.
+                isQuotationString = isQuotationOpen = true;
+            } else if (isQuotationOpen) {
+                if (isEscape) {
+                    isEscape = false;
+                    if (tempChar == '\\' || tempChar == '"') {
+                        result.append(tempChar);
+                    } else if (tempChar == 'n') {
+                        result.append('\n');
+                    } else if (tempChar == 'r') {
+                        result.append('\r');
+                    } else if (tempChar == 't') {
+                        result.append('\t');
+                    } else {
+                        String displayStr = result.toString();
+                        if (displayStr.length() > 16)
+                            displayStr = displayStr.substring(0, 16) + "...";
+
+                        throw new RuntimeException("The argument beginning with '" + displayStr + "' contains an invalid escape sequence '\\" + tempChar + "'.");
+                    }
+                } else if (tempChar == '"') {
+                    isQuotationOpen = false;
+                    break;
+                } else if (tempChar == '\\') {
+                    isEscape = true;
+                } else {
+                    result.append(tempChar);
+                }
+            } else if (includeWhitespace && Character.isWhitespace(lastChar) && tempChar == '-' && reader.hasNext() && reader.peek() == '-') {
+                reader.setIndex(reader.getIndex() - 1);
+                break;
+            } else if (Character.isWhitespace(tempChar)) {
+                if (result.length() > 0) // If there's whitespace and this is at the start, just skip it.
+                    break;
+            } else {
+                result.append(tempChar);
+            }
+
+            lastChar = tempChar;
+        }
+
+        if (isQuotationOpen) {
+            String displayStr = result.toString();
+            if (displayStr.length() > 16)
+                displayStr = displayStr.substring(0, 16) + "...";
+
+            throw new RuntimeException("The " + Utils.getSimpleName(this) + " beginning with '" + displayStr + "' is never terminated!");
+        }
+
+        if (isQuotationString || !"null".contentEquals(result)) {
+            this.value = result.toString();
+            this.surroundByQuotes = isQuotationString;
+        } else {
+            this.value = null;
+            this.surroundByQuotes = false;
+        }
     }
 }

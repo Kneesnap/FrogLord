@@ -844,6 +844,7 @@ public class Config implements IBinarySerializable {
                     config.orderedKeyValuePairs.add(key);
             } else { // It's raw text.
                 ConfigValueNode newNode = new ConfigValueNode(text, commentText, commentSeparator);
+                newNode.setAsString(text); // Ensure it is not escaped, as escaped text isn't supported here.
                 config.getInternalText().add(newNode);
             }
         }
@@ -937,7 +938,7 @@ public class Config implements IBinarySerializable {
          */
         @SuppressWarnings("MethodDoesntCallSuperMethod")
         public ConfigValueNode clone() {
-            return new ConfigValueNode(this.value, this.comment, this.commentSeparator);
+            return new ConfigValueNode(getAsStringLiteral(), this.comment, this.commentSeparator);
         }
 
         /**
