@@ -32,8 +32,45 @@ Make sure to use a different folder for each level you export scripts for to avo
 While these files have a `.gqs` extension, they are just text files, and can be opened in any text editor.
 For Notepad++, it is recommended to set the language of these files to PowerShell, as its syntax highlighting works well.
 
-When it's time to import your modified script back into the game, you can right-click `scriptdata` again, but this time select "Import Scripts" instead.  
-This method of importing scripts should only be used for development/testing purposes, since [mods must follow this guide instead](modding-guide.md).  
+Even though it would be possible to make changes to these scripts and then re-import them by right-clicking `scriptdata` and selecting "Import Scripts", this is not recommended.  
+Since [mods must follow this guide](modding-guide.md), the recommended method for modifying scripts is by creating **GQS Script Groups**.  
+
+### GQS Script Groups
+GQS Script Group files are designed to organize GQS scripts.  
+They reduce the number of files necessary when making a script by allowing separate resources such as entities, dialog text, script functions, and others to be included in a single file.
+
+```toml
+# The following section contains the text/string resources which can be used as dialog text.
+# The quotes are optional, but help make syntax highlighters display this file more cleanly.
+[Dialog]
+FFM_DIALOG_001="This is an example, which could be displayed in-game as dialog." # Shown in-game with 'ShowDialog "FFM_DIALOG_001"'.
+
+# The following section will contain entities to add (or replace).
+[Entities]
+
+# The config section named 'FrogmotherInst001' has two "layers" of [square brackets].
+# The number of layers matters, as it indicates what config section the new section belongs to.
+# In this case, since there are two layer, it will attach to the last section with one layer, so [Entities].
+[[FrogmotherInst001]]
+# ... The data which goes here is exactly the same as a regular entity definition.
+# ... For the purpose of the example it has been omitted.
+
+# Note how there's only one layer of square braces here.
+# This is because we do not want this data to be linked to [Entities], thus being treated as an entity.
+[EntityDefinitions]
+# Entity definition data can also be placed here, similarly to how it works for entities, with a new section for each definition.
+
+[Scripts]
+# This section contains scripts.
+# The scripts are added to existing entity scripts, meaning if an entity can have parts of its script spread across different GQS Script groups.
+
+[[FrogMotherInst001]] # The name of the entity to add script functions to.
+[[[Function]]] # Define a new function for Fairy FrogMotherInst001. (Note the 3 square brackets).
+cause=OnPlayer INTERACT # When the player interacts with Fairy Frogmother.
+ShowDialog "FFM_DIALOG_001" # Shows the dialog defined earlier to the player.
+```
+
+#### How to use GQS Script Groups in Noodle?
 TODO: Include some information on how to manage scripts with Noodle.
 
 ## Design Quirks
@@ -79,12 +116,12 @@ The following documents all causes found within the game, and how they work.
 ### OnLevel
 **Summary:** Executes when the level starts & ends.  
 **Supported Entity Types:** All  
-**Calling Functions:** `EvLevelBegin, EvLevelEnd`  
+**Ghidra Reference (For Coders):** `EvLevelBegin, EvLevelEnd`  
 **Usage:** `OnLevel <BEGIN|END>`  
 
 ### OnPlayer
 **Summary:** Executes when the player has an interaction with the script entity.  
-**Supported Entity Types:** kcCActorBase+  
+**Supported Entity Types:** Base Actors  
 **Usage:** `OnPlayer <INTERACT|BUMPS|ATTACK|PICKUP_ITEM>`  
 **Actions:**  
 ```properties
@@ -96,7 +133,7 @@ PICKUP_ITEM # The player picks up the script entity as an item. Script entity mu
 
 ### OnActor
 **Summary:** Executes when one of the following actions happens to the script entity.  
-**Supported Entity Types:** kcCActorBase+  
+**Supported Entity Types:** Base Actors  
 **Usage:** `OnActor <BUMPS|TAKE_DAMAGE|DEATH>`  
 **Actions:**  
 ```properties
@@ -107,9 +144,9 @@ DEATH # The script entity dies. Code: Script entity must be at least a kcCActor.
 
 ### OnDamage
 **Summary:** Executes when the script entity takes a certain type of damage.  
-**Supported Entity Types:** kcCActorBase+  
-**Calling Function(s):** `kcCActorBase::OnDamage`  
-**Usage:** `OnDamage <DamageType damageType>`  
+**Supported Entity Types:** Base Actors  
+**Ghidra Reference (For Coders):** `kcCActorBase::OnDamage`  
+**Usage:** `OnDamage <damageType>`  
 ```properties
 # Damage dealt can have any number of damage types.
 # These damage types are directly compared against the entity's configured "immune mask".
@@ -126,63 +163,70 @@ UNNAMED_TYPE_XX # Where XX is a number between 0 and 31 and is not one of the nu
 ```
 
 ### OnAlarm
-**Summary:** Executes when the specified alarm expires.  
+**Summary:** Executes when the specified alarm (timer) expires.  
 **Supported Entity Types:** All  
-**Calling Function(s):** `kcCEntity::AlarmCallback`  
-**Supported Entity Types:** kcCActorBase+  
-**Usage:** `OnAlarm <IN_PROGRESS|FINISHED> <int alarmId>`  
+**Ghidra Reference (For Coders):** `kcCEntity::AlarmCallback`  
+**Supported Entity Types:** Base Actors  
+**Usage:** `OnAlarm <IN_PROGRESS|FINISHED> <alarmId>`  
+Any whole number between 0 and 31 can be used as an alarm ID.  
+To use `OnAlarm`, the alarm must first be activated using `SetAlarm`.
 
 ### OnPrompt (Unsupported)
 **Summary:** Does not work correctly.  
-**Calling Function(s):** `kcCActorBase::OnCommand[PROMPT]`  
-**Usage:** `OnPrompt <unused>`
+**Ghidra Reference (For Coders):** `kcCActorBase::OnCommand[PROMPT]`  
+**Usage:** `OnPrompt <promptName>`
 
 ### OnEventTrigger (Unsupported)
 **Summary:** Supposed to execute when the specified event triggers, but it actually fires when ANY event triggers.  
-**Calling Function(s):** `kcCEventMgr::Trigger`  
-**Usage:** `OnEventTrigger <String eventName>`  
+**Ghidra Reference (For Coders):** `kcCEventMgr::Trigger`  
+**Usage:** `OnEventTrigger <eventName>`  
 
 ### OnDialog
 **Summary:** Executes when the given dialog text begins or is advanced.  
-**Supported Entity Types:** kcCActorBase+  
-**Calling Function(s):** `EvDialogBegin, EvDialogAdvance`  
-**Usage:** `OnDialog <BEGIN|ADVANCE> <String dialogStrName>`  
+**Supported Entity Types:** Base Actors  
+**Ghidra Reference (For Coders):** `EvDialogBegin, EvDialogAdvance`  
+**Usage:** `OnDialog <BEGIN|ADVANCE> <dialogStrName>`  
 This event is not global, so it will only work if the entity defining this script cause is also the entity to show the dialog.  
+The `dialogStrName` should be the name of the text resource containing the dialog text.  
+See `ShowDialog` for more details.  
 
 ### OnNumber
 **Summary:** Executes when a number is received equal to the specified number.  
 **Supported Entity Types:** All  
-**Calling Function(s):** `kcCEntity::OnNumber`  
-**Usage:** `OnNumber <int number>`  
-This will only execute when the number is broadcasted by the script entity.
-However, when `--AsEntity` is used, it will allow the calling script's entity to provide its own variable.
+**Ghidra Reference (For Coders):** `kcCEntity::OnNumber`  
+**Usage:** `OnNumber <number>`  
+This will only execute when the expected number is broadcast by the script entity using the `BroadcastNumber` effect.  
+Only whole numbers (integers) are supported by this cause.  
 
 ### OnPlayerHasItem
 **Summary:** When it is broadcast whether the player has an item (via `BroadcastIfPlayerHasItem`), and whether they have the item matches the expected value.  
-**Supported Entity Types:** CProp or CCharacter  
-**Calling Function(s):** `CCharacter::OnWithItem, CProp::OnWithItem`  
-**Usage:** `OnPlayerHasItem <bool shouldHaveItem>`  
-It is not possible to specify which item to listen for, this will execute regardless of which item was given to `BroadcastIfPlayerHasItem`.  
-This will only work when there is a `BroadcastIfPlayerHasItem` effect executed by the script entity.
+**Supported Entity Types:** Props & Characters  
+**Ghidra Reference (For Coders):** `CCharacter::OnWithItem, CProp::OnWithItem`  
+**Usage:** `OnPlayerHasItem <true|false>`  
+When the `BroadcastIfPlayerHasItem` effect is used, the `OnPlayerHasItem` cause will run, based on whether the player had the item or not.  
+If the player did have the item, then the cause `OnPlayerHasItem true` will occur, otherwise `OnPlayerHasItem false` will occur.  
+Note that there is no way to make `OnPlayerHasItem` restrict which items it will activate for.  
+Thus it would be necessary to use multiple entities (each testing for one item) in order to test for multiple items.  
 
 ### OnEntity
 **Summary:** Executes when the script entity interacts with a waypoint.  
-**Supported Entity Types:** kcCEntity3D+  
-**Calling Function(s):** `kcCEntity3D::Notify, sSendWaypointStatus`  
+**Supported Entity Types:** All 3D Entities  
+**Ghidra Reference (For Coders):** `kcCEntity3D::Notify, sSendWaypointStatus`  
 **Usage:**  
 ```php
-OnEntity ENTERS_WAYPOINT_AREA <kcCWaypoint waypointEntityName> # Executes when the script entity enters the area of the waypoint entity specified as an argument.
-OnEntity LEAVES_WAYPOINT_AREA <kcCWaypoint waypointEntityName> # Executes when the script entity leaves the area of the waypoint entity specified as an argument.
-OnEntity ENTERS_TARGET_WAYPOINT_AREA # Executes when the script entity enters a waypoint's area which appears to be the entity's target entity.
-OnEntity LEAVES_TARGET_WAYPOINT_AREA # Executes when the script entity leaves a waypoint's area which appears to be the entity's target entity.
+OnEntity ENTERS_WAYPOINT_AREA <waypointEntityName> # Executes when the script entity enters the area of the specified waypoint.
+OnEntity LEAVES_WAYPOINT_AREA <waypointEntityName> # Executes when the script entity leaves the area of the specified waypoint.
+
+# The following are usable ONLY when the target entity is a Waypoint.
+OnEntity ENTERS_TARGET_WAYPOINT_AREA # Executes when the script entity enters its target waypoint's area.
+OnEntity LEAVES_TARGET_WAYPOINT_AREA # Executes when the script entity leaves its target waypoint's area.
 ```
 
 ### OnWaypoint
 **Summary:** Executes when an entity enters/leaves the waypoint script entity's area.  
-**Supported Entity Types:** kcCWaypoint  
-**Calling Function(s):** `sSendWaypointStatus`  
-**Usage:** `OnWaypoint <ENTITY_ENTERS|ENTITY_LEAVES> <kcCEntity entityName>`  
-
+**Supported Entity Types:** Waypoints  
+**Ghidra Reference (For Coders):** `sSendWaypointStatus`  
+**Usage:** `OnWaypoint <ENTITY_ENTERS|ENTITY_LEAVES> <entityName>`
 
 ## Available Effects
 The following documentation explains all script effects/actions found within the game, and how they work.
@@ -190,40 +234,45 @@ Some of these may only work in scripts, others only in action sequences.
 
 ### DoNothing (Unsupported)
 **Summary:** Does nothing, likely a test command.  
-**Original Implementations:** `kcCEntity::OnCommand`  
+**Ghidra Reference (For Coders):** `kcCEntity::OnCommand`  
 **Usage:** `Do not use.`  
 Not used in the vanilla game.
 
 ### EndScript (Unsupported)
 **Summary:** Stops running an action sequence. Completely optional/unnecessary.  
-**Original Implementations:** `kcCActorBase::ProcessAction`  
+**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction`  
 **Usage:** `Do not use.`  
 Not used in the vanilla game.
 
 ### SetActive (Script Only)
-**Summary:** Set whether the entity is active/visible/has collision.  
-**Supported Entity Types:** kcCEntity+  
-**Original Implementations:** `kcCEntity::OnCommand -> kcCEntity::ActivateAndUnhide`  
-**Usage:** `SetActive <bool markAsActive>`  
-**Aliases:** `Entity.Activate, Entity.Deactivate`  
+**Summary:** Set whether the entity is active. (An inactive entity will be invisible and lack collision)  
+**Supported Entity Types:** All  
+**Ghidra Reference (For Coders):** `kcCEntity::OnCommand -> kcCEntity::ActivateAndUnhide`  
+**Usage:** `SetActive <true|false>`  
+**Aliases:**  
+```properties
+Entity.Activate # Alias for 'SetActive true'
+Entity.Deactivate # Alias for 'SetActive false'
+```
+Waypoints are capable of activating invisible parts of the map when this is used. (See `SetWorldActive` for more info.)  
 
 ### SetEnable (Unsupported)
 **Summary:** Does nothing.  
-**Supported Entity Types:** kcCEntity+  
-**Original Implementations:** `kcCEntity::OnCommand`  
+**Supported Entity Types:** All  
+**Ghidra Reference (For Coders):** `kcCEntity::OnCommand`  
 **Usage:** `Do not use.`  
 Not used in the vanilla game.
 
 ### TerminateEntity (Both)
 **Summary:** Remove the entity from existence.  
-**Supported Entity Types:** kcCEntity+  
-**Original Implementations:** `kcCActorBase::ProcessAction, kcCEntity::OnCommand -> kcCEntity::OnTerminate`  
+**Supported Entity Types:** All  
+**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCEntity::OnCommand -> kcCEntity::OnTerminate`  
 **Usage:** `TerminateEntity`  
 
 ### InitFlags (Both)
 **Summary:** Resets instance entity flags, and then sets the flags provided.  
-**Supported Entity Types:** kcCEntity+  
-**Original Implementations:** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity::OnCommand`  
+**Supported Entity Types:** All  
+**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity::OnCommand`  
 **Usage:** `InitFlags [Entity Flags]`  
 ```properties
 # There are multiple targeting kcEntityFlag.HIDE because the INIT_FLAGS action will reset this flag at each inheritance level, so each flag is here to allow keeping such a thing.
@@ -254,124 +303,126 @@ Not used in the vanilla game.
 
 ### SetFlags (Both)
 **Summary:** Applies the provided entity flags to the entity.  
-**Supported Entity Types:** kcCEntity+  
-**Original Implementations:** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity::OnCommand`  
+**Supported Entity Types:** All  
+**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity::OnCommand`  
 **Usage:** `SetFlags [Entity Flags]`  
 See `InitFlags` above for a list of flags.  
 
 ### ClearFlags (Both)
 **Summary:** Removes the provided entity flags from the entity.  
-**Supported Entity Types:** kcCEntity+  
-**Original Implementations:** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity::OnCommand`  
+**Supported Entity Types:** All  
+**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity::OnCommand`  
 **Usage:** `ClearFlags [Entity Flags]`  
 See `InitFlags` above for a list of flags.  
 
 ### SetState (Unsupported)
 **Summary:** Unimplemented, does nothing.  
-**Original Implementations:** `kcCActorBase::OnCommand/kcCActor::OnCommand`  
+**Ghidra Reference (For Coders):** `kcCActorBase::OnCommand/kcCActor::OnCommand`  
 **Usage:** `Do not use.`  
 Not used in the vanilla game.
 
 ### SetTarget (Script Only)
 **Summary:** Change the current entities target entity.  
-**Supported Entity Types:** kcCEntity+  
-**Original Implementations:** `kcCEntity::OnCommand`  
+**Supported Entity Types:** All  
+**Ghidra Reference (For Coders):** `kcCEntity::OnCommand`  
 **Usage:** `SetTarget <kcCResourceEntityInst targetEntity>`  
 A target entity is used for AI-related operations.  
 For example, most enemies have `"FrogInst001"` as their target, so they attack Frogger.  
-Or another example could be Fairy Frogmother, always faces Frogger because her target is `"FrogInst001"`.  
+Others, such as Fairy Frogmother face the player by setting their target as `FrogInst001`.  
 
 ### SetAnimationSpeed (Both)
 **Summary:** Sets the animation speed for the entity. (Default: 1.0?)  
-**Supported Entity Types:** kcCActorBase+  
-**Original Implementations:** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand`  
+**Supported Entity Types:** Base Actors  
+**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand`  
 **Usage:** `SetAnimationSpeed <float speed>`  
 Not used in the vanilla game.
 
 ### SetPositionOnAxis (Script Only)
 **Summary:** Sets the entities positional coordinate on the given axis.  
-**Supported Entity Types:** kcCEntity3D+  
-**Original Implementations:** `kcCEntity3D::OnCommand`  
-**Usage:** `SetPositionOnAxis <Axis axis> <float coordinate>`  
+**Supported Entity Types:** All 3D Entities  
+**Ghidra Reference (For Coders):** `kcCEntity3D::OnCommand`  
+**Usage:** `SetPositionOnAxis <X|Y|Z> <coordinate>`  
+**Example:** `SetPositionOnAxis X 22.5`  
 Not used in the vanilla game.
 
 ### SetPosition (Script Only)
 **Summary:** Sets the entity position.  
-**Supported Entity Types:** kcCEntity3D+  
-**Original Implementations:** `kcCEntity3D::OnCommand`  
-**Usage:** `SetPosition <float x> <float y> <float z>`  
+**Supported Entity Types:** All 3D Entities  
+**Ghidra Reference (For Coders):** `kcCEntity3D::OnCommand`  
+**Usage:** `SetPosition <x> <y> <z>`  
 
 ### AddPositionOnAxis (Script Only)
 **Summary:** Offsets the enttiy position by the given value on the specified axis.  
-**Supported Entity Types:** kcCEntity3D+  
-**Original Implementations:** `kcCEntity3D::OnCommand`  
-**Usage:** `AddPositionOnAxis <Axis axis> <float displacement>`  
+**Supported Entity Types:** All 3D Entities  
+**Ghidra Reference (For Coders):** `kcCEntity3D::OnCommand`  
+**Usage:** `AddPositionOnAxis <X|Y|Z> <amount>`  
 Not used in the vanilla game.
 
 ### AddPosition (Script Only)
 **Summary:** Adds values to the entities current position.  
-**Supported Entity Types:** kcCEntity3D+  
-**Original Implementations:** `kcCEntity3D::OnCommand`  
-**Usage:** `AddPosition <float x> <float y> <float z>`  
+**Supported Entity Types:** All 3D Entities  
+**Ghidra Reference (For Coders):** `kcCEntity3D::OnCommand`  
+**Usage:** `AddPosition <x> <y> <z>`  
 
 ### SetRotationOnAxis (Script Only)
 **Summary:** Sets a rotation value on the specified axis.  
-**Supported Entity Types:** kcCEntity3D+  
-**Original Implementations:** `kcCEntity3D::OnCommand`  
-**Usage:** `SetRotationOnAxis <Axis axis> <float angleInDegrees>`  
+**Supported Entity Types:** All 3D Entities  
+**Ghidra Reference (For Coders):** `kcCEntity3D::OnCommand`  
+**Usage:** `SetRotationOnAxis <X|Y|Z> <angleInDegrees>`  
 Not used in the vanilla game.
 
 ### SetRotation (Script Only)
 **Summary:** Sets the entity rotation.  
-**Supported Entity Types:** kcCEntity3D+  
-**Original Implementations:** `kcCEntity3D::OnCommand`  
-**Usage:** `SetRotation <float xAngleInDegrees> <float yAngleInDegrees> <float zAngleInDegrees>`  
+**Supported Entity Types:** All 3D Entities  
+**Ghidra Reference (For Coders):** `kcCEntity3D::OnCommand`  
+**Usage:** `SetRotation <xAngleInDegrees> <yAngleInDegrees> <zAngleInDegrees>`  
 Not used in the vanilla game.
 
 ### AddRotationOnAxis (Both)
 **Summary:** Adds a rotation value on the specified axis.  
-**Supported Entity Types:** kcCEntity3D+  
-**Original Implementations:** `kcCActorBase::ProcessAction, kcCEntity3D::OnCommand`  
-**Usage:** `AddRotationOnAxis <Axis axis> <float angleInDegrees>`  
+**Supported Entity Types:** All 3D Entities  
+**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCEntity3D::OnCommand`  
+**Usage:** `AddRotationOnAxis <X|Y|Z> <angleInDegrees>`  
 Not used in the vanilla game.
 
 ### AddRotation (Both)
 **Summary:** Adds rotation values to the existing rotation.  
-**Supported Entity Types:** kcCEntity3D+  
-**Original Implementations:** `kcCActorBase::ProcessAction, kcCEntity3D::OnCommand`  
-**Usage:** `AddRotation <float xAngleInDegrees> <float yAngleInDegrees> <float zAngleInDegrees>`  
+**Supported Entity Types:** All 3D Entities  
+**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCEntity3D::OnCommand`  
+**Usage:** `AddRotation <xAngleInDegrees> <yAngleInDegrees> <zAngleInDegrees>`  
 Not used in the vanilla game.
 
 ### RotateRight (Both)
 **Summary:** Rotates the entity to look right.  
-**Supported Entity Types:** kcCEntity3D+  
-**Original Implementations:** `kcCActorBase::ProcessAction, kcCEntity3D::OnCommand`  
-**Usage:** `RotateRight <float angleInDegrees>`  
+**Supported Entity Types:** All 3D Entities  
+**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCEntity3D::OnCommand`  
+**Usage:** `RotateRight <angleInDegrees>`  
 
 ### RotateLeft (Both)
 **Summary:** Rotates the entity to look left.  
-**Supported Entity Types:** kcCEntity3D+  
-**Original Implementations:** `kcCActorBase::ProcessAction, kcCEntity3D::OnCommand`  
-**Usage:** `RotateLeft <float angleInDegrees>`  
+**Supported Entity Types:** All 3D Entities  
+**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCEntity3D::OnCommand`  
+**Usage:** `RotateLeft <angleInDegrees>`  
 
 ### LookAtTargetEntity (Both)
 **Summary:** Make the execution entity face its target entity.  
-**Supported Entity Types:** kcCEntity3D+  
-**Original Implementations:** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity3D::OnCommand`  
+**Supported Entity Types:** All 3D Entities  
+**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity3D::OnCommand`  
 **Usage:** `LookAtTargetEntity`  
 Not used in the vanilla game.
 
 ### SetAnimation (Both)
 **Summary:** Changes the animation currently performed.  
-**Supported Entity Types:** kcCActorBase+  
-**Original Implementations:** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand`  
-**Usage:** `SetAnimation <kcCResourceTrack animationFileName> [--Repeat] [--FirstAnimationInSequence] [--StartTime <float startTimeInSeconds>]`  
+**Supported Entity Types:** Base Actors  
+**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand`  
+**Usage:** `SetAnimation <animationFileName> [--Repeat] [--FirstAnimationInSequence] [--StartTime <startTimeInSeconds>]`  
+While this effect appears to work outside an action sequence, the game scripts always use `SetSequence` instead of directly calling `SetAnimation`.  
 
 ### SetSequence (Script Only)
 **Summary:** Sets the active action sequence for the entity.  
-**Supported Entity Types:** kcCActorBase+  
-**Original Implementations:** `kcCActorBase::OnCommand/kcCActor::OnCommand`  
-**Usage:** `SetSequence <kcCActionSequence sequenceName> [--IgnoreIfAlreadyActive] [--OpenBoneChannel]`  
+**Supported Entity Types:** Base Actors  
+**Ghidra Reference (For Coders):** `kcCActorBase::OnCommand/kcCActor::OnCommand`  
+**Usage:** `SetSequence <actionSequenceName> [--IgnoreIfAlreadyActive] [--OpenBoneChannel]`  
 ```properties
 --IgnoreIfAlreadyActive
 # If this is set, and the sequence we'd like to apply is already the current sequence,
@@ -386,64 +437,73 @@ Not used in the vanilla game.
 
 ### Wait (Action Sequence Only)
 **Summary:** Wait a given amount of time before continuing the action sequence.  
-**Original Implementations:** `kcCActorBase::ProcessAction`  
-**Usage:** `Wait <float timeInSeconds>`  
+**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction`  
+**Usage:** `Wait <timeInSeconds>`  
 Not used in the vanilla game.
 
 ### WaitForAxisRotation (Action Sequence Only)
 **Summary:** Waits for an axis rotation to complete before continuing the action sequence.  
-**Original Implementations:** `kcCActorBase::ProcessAction`  
-**Usage:** `WaitForAxisRotation <Axis axis>`  
+**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction`  
+**Usage:** `WaitForAxisRotation <X|Y|Z>`  
 Not used in the vanilla game.
 
 ### WaitForFullRotation (Action Sequence Only)
 **Summary:** Waits for all rotations to complete before continuing the action sequence.  
-**Original Implementations:** `kcCActorBase::ProcessAction`  
+**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction`  
 **Usage:** `WaitForFullRotation`  
 Not used in the vanilla game.
 
 ### WaitForAnimation (Action Sequence Only)
 **Summary:** Waits for the active animation to complete before continuing the action sequence.  
-**Original Implementations:** `kcCActorBase::ProcessAction`  
+**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction`  
 **Usage:** `WaitForAnimation`  
 
 ### Loop (Action Sequence Only)
 **Summary:** The action sequence will restart the number of times specified.  
-**Original Implementations:** `kcCActorBase::ProcessAction`  
-**Usage:** `Loop <int loopCount>`  
+**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction`  
+**Usage:** `Loop <numberOfTimesToLoop>`  
 
 ### ApplyMotionImpulse (Both)
 **Summary:** Applies a motion "impulse" to the entity.  
-**Supported Entity Types:** kcCActorBase+  
-**Original Implementations:** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand`  
-**Usage:** `ApplyMotionImpulse <float x> <float y> <float z>`  
+**Supported Entity Types:** Base Actors  
+**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand`  
+**Usage:** `ApplyMotionImpulse <x> <y> <z>`
+This will only work if the `--EnablePhysics` flag is applied to the entity.  
 
 ### Prompt (Unsupported)
 **Summary:** This was never fully supported by the game, but it looks like it was supposed to allow the player to make choices within dialog text-boxes.  
-**Original Implementations:** `kcCActorBase::OnCommand/kcCActor::OnCommand`  
-**Usage:** `Prompt <Hash promptResourceName>`  
+**Ghidra Reference (For Coders):** `kcCActorBase::OnCommand/kcCActor::OnCommand`  
+**Usage:** `Prompt <promptName>`  
 Not used in the vanilla game.
 
 ### ShowDialog (Script Only)
 **Summary:** Creates a dialog box with text for the player.  
-**Supported Entity Types:** kcCActorBase+  
-**Original Implementations:** `kcCActorBase::OnCommand/kcCActor::OnCommand`  
-**Usage:** `ShowDialog <String dialogResourceName>`  
-The string here is the name of a generic resource string.
-In other words, the actual text to display is kept in another file, and this command needs to be given the name of the file.
+**Supported Entity Types:** Base Actors  
+**Ghidra Reference (For Coders):** `kcCActorBase::OnCommand/kcCActor::OnCommand`  
+**Usage:** `ShowDialog <dialogResourceName>`  
+IMPORTANT! This command is more complicated than it would initially seem.  
+It would seem intuitive to use it like `ShowDialog "Bruiser: You got my honey yet?"`.  
+However, this will not work. In-game this would show a dialog box with the text "not found".  
+This is because `ShowDialog` is expecting the name of a text resource containing the dialog text, and not the dialog text itself.  
+So, `ShowDialog "DIALOG_004"` would work if there is a text resource named `DIALOG_004` in the level.  
+This allowed the original team to translate the game into multiple languages without having to copy the scripts for every single language.  
+Instructions for adding text/string resources are in the `GQS Script Group` documentation near the start of this file.  
 
 ### SetAlarm (Both)
 **Summary:** Sets an alarm to ring (Script Cause: `OnAlarm`) after a delay.  
-**Supported Entity Types:** kcCEntity+  
-**Original Implementations:** `kcCActorBase::ProcessAction, kcCEntity::OnCommand`  
-**Usage:** `SetAlarm <AlarmId alarmId> <float durationInSeconds> [--Repeat <int repeatCount>]`  
-Any number between 0 and 31 is a valid alarm ID.
-A repeat count of zero will cause the alarm to ring once.
+**Supported Entity Types:** All  
+**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCEntity::OnCommand`  
+**Usage:** `SetAlarm <alarmId> <durationInSeconds> [--Repeat <numberOfTimesToRepeat>]`  
+Any number between 0 and 31 is a valid alarm ID.  
+The duration of the alarm can be a decimal number.  
+The timer will start counting down from the number of seconds given.
+Once the timer reaches 0, it will broadcast `OnAlarm` with the alarm ID provided.  
+The main purpose of this feature is to run script effects after a delay.  
 
 ### TriggerEvent (Both)
 **Summary:** Triggers a named event.  
-**Supported Entity Types:** kcCEntity+  
-**Original Implementations:** `kcCActorBase::ProcessAction, kcCEntity::OnCommand`  
+**Supported Entity Types:** All  
+**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCEntity::OnCommand`  
 **Usage:** `TriggerEvent <String eventName>`  
 
 **Valid Events:**  
@@ -489,79 +549,85 @@ A repeat count of zero will cause the alarm to ring once.
 
 ### PlaySound (Script Only)
 **Summary:** Plays (or stops) a sound effect.  
-**Supported Entity Types:** kcCEntity+  
-**Original Implementations:** `kcCEntity::OnCommand, kcCEntity3D::OnCommand`  
-**Usage:** `PlaySound <String soundFilePath> [--StopSound]`  
+**Supported Entity Types:** All  
+**Ghidra Reference (For Coders):** `kcCEntity::OnCommand, kcCEntity3D::OnCommand`  
+**Usage:** `PlaySound <soundFilePath> [--StopSound]`  
+A sound file path can be obtained by right-clicking a sound in the FrogLord sound list, and clicking "Copy file path".
 
 ### SetVariable (Script Only)
 **Summary:** Sets an entity variable by its ID.  
-**Supported Entity Types:** kcCEntity+  
-**Original Implementations:** `kcCEntity::OnCommand`  
-**Usage:** `SetVariable <VariableId variableId> <int value>`  
-Valid variable IDs are between 0 and 7.
+**Supported Entity Types:** All  
+**Ghidra Reference (For Coders):** `kcCEntity::OnCommand`  
+**Usage:** `SetVariable <variableId> <value>`  
+Stores the value into the variable ID/slot given.  
+Valid variable IDs are between 0 and 7.  
+The provided value must be a whole number.
 
 ### AddToVariable (Script Only)
 **Summary:** Adds to an existing entity variable by its ID.  
-**Supported Entity Types:** kcCEntity+  
-**Original Implementations:** `kcCEntity::OnCommand`  
-**Usage:** `AddToVariable <VariableId variableId> <int value>`  
-Valid variable IDs are between 0 and 7.
+**Supported Entity Types:** All  
+**Ghidra Reference (For Coders):** `kcCEntity::OnCommand`  
+**Usage:** `AddToVariable <variableId> <value>`  
+Adds the value into the variable ID/slot.  
+Valid variable IDs are between 0 and 7.  
+The provided value must be a whole number.  
 
 ### BroadcastNumberCause (Script Only)
 **Summary:** Broadcasts a script cause (`OnNumber`) using a number.
-**Supported Entity Types:** kcCEntity+  
-**Original Implementations:** `kcCEntity::OnCommand`  
-**Usage:** `BroadcastNumberCause <LITERAL_NUMBER|ENTITY_VARIABLE|RANDOM> <int number>`  
-This action has special behavior (applied in `kcCScriptMgr::FireActorEvent`) when the `--AsEntity` setting is used with `ENTITY_VARIABLE`.
-Unlike most cases where the effect is run entirely as the override entity, the variable value will always be obtained from the script entity.
-This effectively allows for calling functions in an entity based on the variables of another entity.
-
+**Supported Entity Types:** All  
+**Ghidra Reference (For Coders):** `kcCEntity::OnCommand`  
+**Usage:** `BroadcastNumberCause <LITERAL_NUMBER|ENTITY_VARIABLE|RANDOM> <number>`  
 ```properties
-# NumberOperation Values:
-LITERAL_NUMBER # The number broadcasted will be the number provided as an argument.
-ENTITY_VARIABLE # The number broadcasted will be the value of the entity variable at the provided ID.
-RANDOM # The number broadcasted will be a random number between 0 and the number provided.
+LITERAL_NUMBER # The number broadcast will be the number provided as an argument.
+ENTITY_VARIABLE # The number broadcast will be the value of the entity variable at the provided ID.
+RANDOM # The number broadcast will be a random number between 0 and the number provided.
 ```
+
+When the `--AsEntity` option is used in conjunction with the `ENTITY_VARIABLE` operation, the number will broadcast to the `--AsEntity` target.  
+However the number broadcast will be the variable value from the script owner, instead of from the `--AsEntity` target.  
 
 ### SpawnParticleEffect (Script Only)
 **Summary:** Sets up a particle emitter for the entity.  
-**Supported Entity Types:** kcCActorBase+  
-**Original Implementations:** `kcCActorBase::OnCommand/kcCActor::OnCommand -> kcCParticleMgr::SpawnEffect`  
-**Usage:** `SpawnParticleEffect <kcParticleEmitterParam particleEmitterDataName>`  
+**Supported Entity Types:** Base Actors  
+**Ghidra Reference (For Coders):** `kcCActorBase::OnCommand/kcCActor::OnCommand -> kcCParticleMgr::SpawnEffect`  
+**Usage:** `SpawnParticleEffect <particleEmitterDataName>`  
 Not used in the vanilla game.
 
 ### KillParticleEffect (Script Only)
 **Summary:** Disables particle effect(s) spawned by the current entity.  
-**Supported Entity Types:** kcCActorBase+  
-**Original Implementations:** `kcCActorBase::OnCommand/kcCActor::OnCommand`  
+**Supported Entity Types:** Base Actors  
+**Ghidra Reference (For Coders):** `kcCActorBase::OnCommand/kcCActor::OnCommand`  
 **Usage:** `KillParticleEffect`  
 Not used in the vanilla game.
 
 ### Launcher (Unsupported)
 **Summary:** Opens up a dialog box saying it is no longer supported.  
-**Original Implementations:** `CCharacter::OnCommand`  
+**Ghidra Reference (For Coders):** `CCharacter::OnCommand`  
 **Usage:** `Do not use.`  
 Not used in the vanilla game.
 
 ### BroadcastIfPlayerHasItem (Script Only)
 **Summary:** Test if the player has the given item, then broadcast a script cause (`OnPlayerHasItem`) with the result.  
-**Supported Entity Types:** CCharacter or CProp  
-**Original Implementations:** `CCharacter::OnCommand, CProp::OnCommand`  
-**Usage:** `BroadcastIfPlayerHasItem <InventoryItem item>`  
+**Supported Entity Types:** Character or Prop  
+**Ghidra Reference (For Coders):** `CCharacter::OnCommand, CProp::OnCommand`  
+**Usage:** `BroadcastIfPlayerHasItem <inventoryItem>`  
 Click [here](../../../../src/net/highwayfrogs/editor/games/konami/greatquest/generic/InventoryItem.java) to see a list of InventoryItem values.
 
 ### SetPlayerHasItem (Script Only)
-**Summary:** Give or take an inventory item to/from the player.  
-**Supported Entity Types:** CCharacter or CProp  
-**Original Implementations:** `CCharacter::OnCommand, CProp::OnCommand`  
-**Usage:** `SetPlayerHasItem <InventoryItem item> <bool shouldGiveItem>`  
+**Summary:** Add or remove an inventory item in the player's inventory.  
+**Supported Entity Types:** Character or Prop  
+**Ghidra Reference (For Coders):** `CCharacter::OnCommand, CProp::OnCommand`  
+**Usage:** `SetPlayerHasItem <inventoryItem> <true|false>`  
 Click [here](../../../../src/net/highwayfrogs/editor/games/konami/greatquest/generic/InventoryItem.java) to see a list of InventoryItem values.
 
 ### TakeDamage (Script Only)
-**Summary:** Causes the entity to take damage.  
-**Supported Entity Types:** kcCActorBase+  
-**Original Implementations:** `kcCScriptMgr::FireActorEffect[Remap] -> kcCActorBase::OnCommand/kcCActor::OnCommand`  
-**Usage:** `TakeDamage <int attackStrength> [Damage Flags]`
+**Summary:** The script entity takes damage (loses health).  
+**Supported Entity Types:** Base Actors  
+**Ghidra Reference (For Coders):** `kcCScriptMgr::FireActorEffect[Remap] -> kcCActorBase::OnCommand/kcCActor::OnCommand`  
+**Usage:** `TakeDamage <attackStrength> [Damage Flags]`  
+The attack strength is a whole number indicating how much damage to take.  
+A negative number will heal the entity.  
+
 ```properties
 # Damage dealt can have any number of damage types.
 # These damage types are directly compared against the entity's configured "immune mask".
@@ -579,84 +645,92 @@ Click [here](../../../../src/net/highwayfrogs/editor/games/konami/greatquest/gen
 ### SetSavePoint (Script Only)
 **Summary:** Sets the player's respawn point.  
 **Supported Entity Types:** CCharacter  
-**Original Implementations:** `CCharacter::OnCommand`  
-**Usage:** `SetSavePoint <int savePointNumber> <float x> <float y> <float z>`  
-`savePointNumber` will be used to find the entity named `"Save pointInstXXX"` where `XXX` is the `savePointNumber`.  
-Particles will be played at the position of that save point, if found.  
+**Ghidra Reference (For Coders):** `CCharacter::OnCommand`  
+**Usage:** `SetSavePoint <savePointId> <x> <y> <z>`  
+The player's respawn position will be set to the new coordinates.  
+Also, the game will find an entity named `"Save pointInstXXX"` where `XXX` is the `savePointId`.  
+If such an entity is found, particles will be played at the position of that entity.  
 
 ### SetUpdatesEnabled (Script Only)
 **Summary:** Sets whether updates are enabled for the entity.  
-**Supported Entity Types:** kcCEntity+  
-**Original Implementations:** `kcCEntity::OnCommand`  
-**Usage:** `SetUpdatesEnabled <bool shouldEnable>`  
-**Aliases:**  `Entity.EnableUpdates, Entity.DisableUpdates`  
-Used once in the vanilla game for a Ruby in Joy Towers. So it's basically unused.  
+**Supported Entity Types:** All  
+**Ghidra Reference (For Coders):** `kcCEntity::OnCommand`  
+**Usage:** `SetUpdatesEnabled <true|false>`  
+**Aliases:**
+```properties
+Entity.EnableUpdates # Equivalent to 'SetUpdatesEnabled true'
+Entity.DisableUpdates # Equivalent to 'SetUpdatesEnabled false'
+```
+
+It would be unused in the vanilla game if not for one Ruby found in Joy Towers.  
 This command is almost the same as `SetActive`, except it doesn't touch collision/activation state.
 
 ### SetAIGoal (Script Only)
 **Summary:** Sets the current entity AI goal.  
 **Supported Entity Types:** CCharacter  
-**Original Implementations:** `CCharacter::OnCommand`  
-**Usage:** `SetAIGoal <AiGoalType goal>`  
-**Alias:** `AI.SetGoal`
+**Ghidra Reference (For Coders):** `CCharacter::OnCommand`  
+**Usage:** `SetAIGoal <goalType>`  
+**Aliases:**
+```
+AI.SetGoal <FIND|FLEE|WANDER|GUARD|DEAD|SLEEP>
+```
 
 ```properties
-# AiGoalType Values:
-SCRIPT # I don't think this is implemented/does anything. But at some point this should be tested.
-STATIC # I don't think this is implemented/does anything. But at some point this should be tested.
-FIND # Implemented as MonsterClass::Do_Find(), Attempts to run towards the target, and attack if possible. Will attempt to wander sometimes if it gets stuck.
-FLEE # Implemented as MonsterClass::TransitionTo() "Run00" -> Starts running. -> MonsterClass:Anim_Checks will be skipped when this is set.
-WANDER # Implemented as MonsterClass::Do_Wander(). Picks a random "wander point" up to 15x15 units away in a square, and "Walk00" -> Walks (sometimes aggressively) towards it?
-GUARD # Implemented as MonsterClass::Do_Guard(). Seems to try to walk to walk along a waypoint path back and forth until it has an actor target, where it will attempt to chase them. So, if we set the target as a waypoint, it will just keep walking across the path. -> How is this different from when we set waypoint goals?
-DEAD # I don't think this is implemented/does anything. But at some point this should be tested.
-SLEEP # I don't think this is implemented/does anything. But at some point this should be tested.
-UNKNOWN # I don't think this is implemented/does anything. This name was not in GoalNames[] either.
+# Notable Goal Types:
+FIND # Attempts to run towards the target, and attack if possible. Will attempt to wander sometimes if it gets stuck.
+FLEE # Starts fleeing its current position. This is what happens when enemies run away from the player.
+WANDER # Picks a random "wander point" up to 15x15 units away in a square, and "Walk00" -> Walks (sometimes aggressively) towards it?
+GUARD # Seems to try to walk along a waypoint path back and forth until it has an actor target, where it will attempt to chase them. So, if we set the target as a waypoint, it will just keep walking across the path. -> How is this different from when we set waypoint goals?
+DEAD # Applies the entity death animation.
+SLEEP # Applies the entity sleep animation.
 ```
 
 ### AttachSensor / Attach (Script Only)
 **Summary:** Attaches a sensor to the entity.  
 **Supported Entity Types:** CCharacter  
-**Original Implementations:** `CCharacter::OnCommand`  
-**Aliases:** `AttachSensor`  
+**Ghidra Reference (For Coders):** `CCharacter::OnCommand`
 **Usage:**
 ```ruby
-# Enables the entity to deal damage with the bone selected.
-# For most entities this is an arm, but for others this will be something like a sword.
-# The purpose is to make it so the damage is dealt at the exact moment dangerous stuff touches.
-Attach ATTACK_SENSOR <BoneTag boneNameOrId> <float radius> <int focus>
+# Makes the given 3D model bone deal damage when a bounding sphere surrounding the bone intersects with another entity.
+# In other words, it makes a part of the entity's 3D model deal damage to any entity it touches.
+# The bone will usually be an arm, but some entities will use bones such as part of a sword.
+# This makes combat appear more fluid, as the player will only react to getting hit the moment they are hit.
+# The 'radius' value is a decimal number representing the collision/bounding sphere's radius.
+# The 'focus' value is a whole number with a currently unknown purpose.
+Attach ATTACK_SENSOR <boneNameOrId> <radius> <focus>
+AttachSensor <boneNameOrId> <radius> <focus>
 
 # Enables a listener to allow collision script events to fire
 # Without doing this, I don't believe entities will fire collision events.
-# Not sure yet what focus is yet.
-Attach BUMP_SENSOR <BoneTag boneNameOrId> <float radius> <int focus>
+# The 'radius' value is a decimal number representing the collision/bounding sphere's radius.
+# The 'focus' value is a whole number with a currently unknown purpose.
+Attach BUMP_SENSOR <boneNameOrId> <radius> <focus>
 
 # Enables a projectile launcher.
 # I'm not sure yet if this means to launch a projectile or just to enable it.
-Attach LAUNCHER <BoneTag boneNameOrId> <LauncherParams launcherData>
+Attach LAUNCHER <boneNameOrId> <launcherParamName>
 
 # Creates a particle emitter, attached to a bone in the script entity.
-Attach PARTICLE_EMITTER <BoneTag boneNameOrId> <kcParticleEmitterParam emitterData>
+Attach PARTICLE_EMITTER <boneNameOrId> <particleEmitterParamName>
 ```
 
-### DetachSensor / Detach (Script Only)
+### Detach (Script Only)
 **Summary:** Detaches a previously attached PARTICLE_EMITTER.  
 **Supported Entity Types:** CCharacter  
-**Original Implementations:** `CCharacter::OnCommand`  
-**Usage:** `Detach PARTICLE_EMITTER <BoneTag boneNameOrId>`  
-**Aliases:** `DetachSensor`  
+**Ghidra Reference (For Coders):** `CCharacter::OnCommand`  
+**Usage:** `Detach PARTICLE_EMITTER <boneNameOrId>`
 
 ### SetWorldActive
-**Summary:** Allows changing whether entities/terrain in certain parts of the world is enabled.  
-**Supported Entity Types:** kcCEntity+  
-**Original Implementations:** `kcCEntity::OnCommand`  
-**Usage:** `SetWorldActive <kcSpecialActivationMode activationMode> <bool shouldActivate>`  
-**Aliases:**  `Entity.ActivateSpecial`  
-Not used in the vanilla game, at least not directly. Can only run as a Waypoint entity.  
-The world is broken up into segments (for those who know what this is-- an OctTree).  
-This command will control if the segments a waypoint resides within are active or not.  
-For example, on The Goblin Trail, if we get to the end of the map via glitches, it is invisible.  
-The one problem with this theory is that this action doesn't ever appear to be used.  
-I suspect that same function is called by the game code, instead of by a script instead, so the functionality is used even if it's not by the scripting system.  
+**Summary:** Set whether entities/terrain are enabled in the world area covered by the waypoint.  
+**Supported Entity Types:** Waypoint  
+**Ghidra Reference (For Coders):** `kcCEntity::OnCommand`  
+**Usage:** `SetWorldActive <ENTITIES|TERRAIN|BOTH> <true|false>`  
+**Alias:**  `Entity.ActivateSpecial <ENTITIES|TERRAIN|BOTH> <true|false>`  
+Not used in the vanilla game.  
+This command will control if the world segments (OctTree nodes) the waypoint resides within are active.  
+In large levels such as The Goblin Trail or Joy Castle, if the player uses glitches to skip ahead, parts of the map are invisible.
+When the player reaches certain points in the map, the vanilla game will make those areas visible by running `SetActive` on waypoints covering the invisible area.  
+Unlike `SetActive`, `SetWorldActive` is able to disable parts of the map as well, and can be used more than once.  
 
 ```properties
 # kcSpecialActivationMode Options:
@@ -667,36 +741,39 @@ BOTH # Controls both entity visibility and terrain visibility.
 ```
 
 ### ActivateCamera (Script Only)
-**Summary:** Activates a new camera and switches to it.  
+**Summary:** Activates a new camera, causing the game to switch to it.  
 **Supported Entity Types:** All  
-**Original Implementations:** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnActivatePivotCamera`  
-**Usage:** `ActivateCamera <float transitionInSeconds>`
+**Ghidra Reference (For Coders):** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnActivatePivotCamera`  
+**Usage:** `ActivateCamera <transitionInSeconds>`
+`transitionInSeconds` is a decimal number indicating how long it will take (in seconds) to switch to the new camera.
 
 ### DeactivateCamera (Script Only)
 **Summary:** Deactivates the current camera, reverting to the previous camera.  
 **Supported Entity Types:** All  
-**Original Implementations:** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnDeactivatePivotCamera`  
-**Usage:** `DeactivateCamera <float transitionInSeconds>`
+**Ghidra Reference (For Coders):** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnDeactivatePivotCamera`  
+**Usage:** `DeactivateCamera <float transitionInSeconds>`  
+`transitionInSeconds` is a decimal number indicating how long it will take (in seconds) to switch to the previous camera.
 
 ### SetCameraTarget (Script Only)
-**Summary:** Sets the entity which active camera focuses on.  
+**Summary:** Sets the entity which the current camera focuses on.  
 **Supported Entity Types:** All  
-**Original Implementations:** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnSetTarget`  
-**Usage:** `SetCameraTarget <kcCResourceEntityInst entityName>`
+**Ghidra Reference (For Coders):** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnSetTarget`  
+**Usage:** `SetCameraTarget <entityName>`
 
 ### SetCameraPivot (Script Only)
-**Summary:** Set the rotational pivot entity for the active camera.
+**Summary:** Set the rotational pivot entity for the current camera.
 **Supported Entity Types:** All  
-**Original Implementations:** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnSetPivot`  
-**Usage:** `SetCameraPivot <kcCResourceEntityInst entityName>`  
-The pivot entity is an entity who sits between the camera and its target.
+**Ghidra Reference (For Coders):** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnSetPivot`  
+**Usage:** `SetCameraPivot <entityName>`  
+The pivot entity is an entity which the camera will calculate where to be in the world by finding a position that puts the pivot entity between the camera and the camera's target entity.  
 In other words, the position/rotation of the camera is calculated by facing the target entity in a manner that also makes the camera directly face the pivot entity.
 
 ### SetCameraParam (Script Only)
-**Summary:** Set camera settings for the active camera.  
+**Summary:** Change the current camera's settings.  
 **Supported Entity Types:** All  
-**Original Implementations:** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnSetParam`  
-**Usage:** `SetCameraParam <kcCameraPivotParam cameraParam> <float value>`
+**Ghidra Reference (For Coders):** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnSetParam`  
+**Usage:** `SetCameraParam <cameraParam> <value>`
+The value is a decimal number.
 
 ```properties
 # kcCameraPivotParam Values:
