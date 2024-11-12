@@ -76,7 +76,7 @@ public class kcEntity3DInst extends kcEntityInst {
         grid.addEnumSelector("Billboard Axis", this.billboardAxis, kcAxisType.values(), false, this::setBillboardAxis);
 
         // Position Editor
-        grid.addPositionEditor(manager.getController(), GIZMO_ID, "Position", this.position.getX(), this.position.getY(), this.position.getZ(), (meshView, oldX, oldY, oldZ, newX, newY, newZ, flags) -> {
+        grid.addPositionEditor(manager.getController(), GIZMO_ID, "Position", this.position.getX(), this.position.getY(), this.position.getZ(), .02, (meshView, oldX, oldY, oldZ, newX, newY, newZ, flags) -> {
             this.position.setX((float) newX);
             this.position.setY((float) newY);
             this.position.setZ((float) newZ);
@@ -84,7 +84,7 @@ public class kcEntity3DInst extends kcEntityInst {
         });
 
         // Scale Editor TODO: I think we want to make these gizmos managed by the entity editor for maximum flexibility.
-        grid.addScaleEditor(manager.getController(), GIZMO_ID, "Scale", this.position.getX(), this.position.getY(), this.position.getZ(), this.scale.getX(), this.scale.getY(), this.scale.getZ(), (meshView, oldX, oldY, oldZ, newX, newY, newZ) -> {
+        grid.addScaleEditor(manager.getController(), GIZMO_ID, "Scale", this.position.getX(), this.position.getY(), this.position.getZ(), this.scale.getX(), this.scale.getY(), this.scale.getZ(), .02, (meshView, oldX, oldY, oldZ, newX, newY, newZ) -> {
             this.scale.setX((float) newX);
             this.scale.setY((float) newY);
             this.scale.setZ((float) newZ);

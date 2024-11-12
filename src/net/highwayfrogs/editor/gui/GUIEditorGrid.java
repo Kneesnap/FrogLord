@@ -1124,6 +1124,21 @@ public class GUIEditorGrid {
      * @param listener the listener which handles a new positional update
      */
     public AtomicReference<MeshView> addPositionEditor(MeshViewController<?> controller, UUID identifier, String text, double x, double y, double z, IPositionChangeListener listener) {
+        return addPositionEditor(controller, identifier, text, x, y, z, 1, listener);
+    }
+
+    /**
+     * Creates a position editor.
+     * @param controller the UI controller responsible for gizmo management
+     * @param identifier the UUID identifying the gizmo mesh view display
+     * @param text the text representing the position
+     * @param x the x world position
+     * @param y the y world position
+     * @param z the z world position
+     * @param scale the scale of the gizmo
+     * @param listener the listener which handles a new positional update
+     */
+    public AtomicReference<MeshView> addPositionEditor(MeshViewController<?> controller, UUID identifier, String text, double x, double y, double z, double scale, IPositionChangeListener listener) {
         TextField[] textFields = new TextField[3];
         double[] positionCache = new double[]{x, y, z};
 
@@ -1152,7 +1167,7 @@ public class GUIEditorGrid {
         AtomicReference<MeshView> meshViewRef = new AtomicReference<>(controller.getMarkerManager().updateGizmo(identifier, x, y, z, ourListener));
         if (controller != null) {
             addBoldLabelButton(text + ":", "Toggle Display", 25,
-                    () -> meshViewRef.set(controller.getMarkerManager().toggleGizmo(identifier, x, y, z, ourListener)));
+                    () -> meshViewRef.set(controller.getMarkerManager().toggleGizmo(identifier, x, y, z, scale, ourListener)));
         }
 
         GridPane vecPane = new GridPane();
@@ -1269,6 +1284,24 @@ public class GUIEditorGrid {
      * @param listener the listener which handles a new positional update
      */
     public AtomicReference<MeshView> addScaleEditor(MeshViewController<?> controller, UUID identifier, String text, double x, double y, double z, double scaleX, double scaleY, double scaleZ, IScaleChangeListener listener) {
+        return addScaleEditor(controller,  identifier, text, x, y, z, scaleX, scaleY, scaleZ, 1, listener);
+    }
+
+    /**
+     * Creates a position editor.
+     * @param controller the UI controller responsible for gizmo management
+     * @param identifier the UUID identifying the gizmo mesh view display
+     * @param text the text representing the position
+     * @param x the x world position
+     * @param y the y world position
+     * @param z the z world position
+     * @param scaleX the x scale
+     * @param scaleY the y scale
+     * @param scaleZ the z scale
+     * @param scale the gizmo scale
+     * @param listener the listener which handles a new positional update
+     */
+    public AtomicReference<MeshView> addScaleEditor(MeshViewController<?> controller, UUID identifier, String text, double x, double y, double z, double scaleX, double scaleY, double scaleZ, double scale, IScaleChangeListener listener) {
         TextField[] textFields = new TextField[3];
         double[] scaleCache = new double[]{scaleX, scaleY, scaleZ};
 
@@ -1297,7 +1330,7 @@ public class GUIEditorGrid {
         AtomicReference<MeshView> meshViewRef = new AtomicReference<>(controller.getMarkerManager().updateGizmo(identifier, x, y, z, scaleX, scaleY, scaleZ, ourListener));
         if (controller != null) {
             addBoldLabelButton(text + ":", "Toggle Display", 25,
-                    () -> meshViewRef.set(controller.getMarkerManager().toggleGizmo(identifier, x, y, z, scaleX, scaleY, scaleZ, ourListener)));
+                    () -> meshViewRef.set(controller.getMarkerManager().toggleGizmo(identifier, x, y, z, scaleX, scaleY, scaleZ, scale, ourListener)));
         }
 
         GridPane vecPane = new GridPane();

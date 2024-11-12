@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.gui.editor;
 
+import javafx.scene.DepthTest;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
@@ -116,16 +117,19 @@ public class MeshUIMarkerManager<TMesh extends DynamicMesh> extends MeshUIManage
      * @param x the x world position to place the gizmo at
      * @param y the y world position to place the gizmo at
      * @param z the z world position to place the gizmo at
+     * @param scale the scale of the gizmo
      * @param listener the listener for position changes
      */
-    public MeshView toggleGizmo(UUID identifier, double x, double y, double z, IPositionChangeListener listener) {
+    public MeshView toggleGizmo(UUID identifier, double x, double y, double z, double scale, IPositionChangeListener listener) {
         if (removeGizmo(identifier) != null)
             return null;
 
         MeshView newView = new MeshView();
+        newView.setDepthTest(DepthTest.DISABLE);
         TranslationGizmo newGizmo = new TranslationGizmo();
         newGizmo.addView(newView, getController(), listener);
         newGizmo.setPosition(newView, x, y, z, false);
+        Scene3DUtils.setNodeScale(newView, scale, scale, scale);
         getController().getMainLight().getScope().add(newView);
         this.gizmoMeshViews.add(newView);
         this.translationGizmoViews.put(identifier, newView);
@@ -138,16 +142,19 @@ public class MeshUIMarkerManager<TMesh extends DynamicMesh> extends MeshUIManage
      * @param x the x world position to place the gizmo at
      * @param y the y world position to place the gizmo at
      * @param z the z world position to place the gizmo at
+     * @param scale the scale of the gizmo
      * @param listener the listener for position changes
      */
-    public MeshView toggleGizmo(UUID identifier, double x, double y, double z, double scaleX, double scaleY, double scaleZ, IScaleChangeListener listener) {
+    public MeshView toggleGizmo(UUID identifier, double x, double y, double z, double scaleX, double scaleY, double scaleZ, double scale, IScaleChangeListener listener) {
         if (removeGizmo(identifier) != null)
             return null;
 
         MeshView newView = new MeshView();
+        newView.setDepthTest(DepthTest.DISABLE);
         ScaleGizmo newGizmo = new ScaleGizmo();
         newGizmo.addView(newView, getController().getFirstPersonCamera(), listener);
         Scene3DUtils.setNodePosition(newView, x, y, z);
+        Scene3DUtils.setNodeScale(newView, scale, scale, scale);
         newGizmo.setScaleX(scaleX, false);
         newGizmo.setScaleY(scaleY, false);
         newGizmo.setScaleZ(scaleZ, false);
