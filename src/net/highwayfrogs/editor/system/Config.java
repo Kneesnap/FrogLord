@@ -907,6 +907,7 @@ public class Config implements IBinarySerializable {
         public void loadFromReader(DataReader reader, ConfigSettings configSettings) {
             int valueLength = reader.readUnsignedShortAsInt();
             this.value = reader.readTerminatedString(valueLength);
+            this.surroundByQuotes = reader.readByte() == 1;
             if (configSettings.isReadingCommentsEnabled()) {
                 int commentLength = reader.readUnsignedShortAsInt();
                 this.comment = reader.readTerminatedString(commentLength);
@@ -923,6 +924,9 @@ public class Config implements IBinarySerializable {
             writer.writeUnsignedShort(this.value != null ? this.value.length() : 0);
             if (this.value != null)
                 writer.writeStringBytes(this.value);
+
+            // Write surrounded by quotes.
+            writer.writeByte(this.surroundByQuotes ? (byte) 1 : (byte) 0);
 
             // Write comment.
             if (configSettings.isReadingCommentsEnabled()) {

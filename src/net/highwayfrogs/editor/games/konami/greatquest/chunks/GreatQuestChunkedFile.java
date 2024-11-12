@@ -473,7 +473,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             if (entityInst.getInstance() == null)
                 entityInst.setInstance(new kcEntity3DInst(entityInst));
 
-            entityInst.getInstance().fromConfig(entityCfg);
+            entityInst.getInstance().fromConfigIncludeScripts(entityCfg);
         }
 
         getLogger().info("Imported " + importConfigs.size() + " entity instances.");

@@ -205,21 +205,11 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
     private static final String CONFIG_KEY_ENTITY_DESC = "description";
     private static final String CONFIG_KEY_PRIORITY = "priority";
     private static final String CONFIG_KEY_TARGET_ENTITY = "targetEntity";
-    private static final String CONFIG_SECTION_SCRIPT = "Script";
+    public static final String CONFIG_SECTION_SCRIPT = "Script";
 
 
     @Override
     public void fromConfig(Config input) {
-        fromConfig(input, true);
-    }
-
-    /**
-     * Loads from the config.
-     * @param input the input config to read from
-     * @param loadScriptsNow whether scripts will be read right now
-     * @return scriptCfg
-     */
-    public Config fromConfig(Config input, boolean loadScriptsNow) {
         if (this.resource == null)
             throw new NullPointerException("this.resource");
 
@@ -234,13 +224,23 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
 
         int targetEntityHash = GreatQuestUtils.getAsHash(input.getKeyValueNodeOrError(CONFIG_KEY_TARGET_ENTITY), -1);
         GreatQuestUtils.resolveResourceHash(kcCResourceEntityInst.class, chunkedFile, this.resource, this.targetEntityRef, targetEntityHash, true);
+    }
+
+    /**
+     * Loads from the config, and loads the script now.
+     * @param input the input config to read from
+     */
+    public final void fromConfigIncludeScripts(Config input) {
+        GreatQuestChunkedFile chunkedFile = this.resource.getParentFile();
+        if (chunkedFile == null)
+            throw new NullPointerException("chunkedFile");
+
+        fromConfig(input);
 
         // Read scripts.
         Config scriptCfg = input.getChildConfigByName(CONFIG_SECTION_SCRIPT);
-        if (scriptCfg != null && loadScriptsNow)
+        if (scriptCfg != null)
             addScriptFunctions(chunkedFile.getScriptList(), scriptCfg, scriptCfg.getRootNode().getSectionName(), true);
-
-        return scriptCfg;
     }
 
     @Override

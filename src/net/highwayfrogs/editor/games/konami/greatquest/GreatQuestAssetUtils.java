@@ -113,8 +113,10 @@ public class GreatQuestAssetUtils {
                 if (entityInst == null)
                     throw new RuntimeException("The entity instance for '" + entityInstName + "' was null, so we couldn't modify its script.");
 
+                entityInst.fromConfig(entityInstanceCfg);
+
                 // Scripts should load AFTER core entity data.
-                Config scriptCfg = entityInst.fromConfig(entityInstanceCfg, false);
+                Config scriptCfg = entityInstanceCfg.getChildConfigByName(kcEntityInst.CONFIG_SECTION_SCRIPT);
                 if (scriptCfg != null)
                     scriptCfgsPerEntity.put(entityInst, scriptCfg);
             }
