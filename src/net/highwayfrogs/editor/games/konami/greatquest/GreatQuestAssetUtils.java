@@ -42,7 +42,7 @@ import java.util.logging.Logger;
 public class GreatQuestAssetUtils {
     private static final String CONFIG_SECTION_MODELS = "Models";
     private static final String CONFIG_SECTION_SOUND_EFFECTS = "SoundEffects";
-    private static final String CONFIG_SECTION_COPY_RESOURCES = "-";
+    private static final String CONFIG_SECTION_COPY_RESOURCES = "CopyResources";
     private static final String CONFIG_SECTION_DIALOG = "Dialog";
     private static final String CONFIG_SECTION_ENTITY_DESCRIPTIONS = "EntityDescriptions";
     private static final String CONFIG_SECTION_ENTITIES = "Entities";
