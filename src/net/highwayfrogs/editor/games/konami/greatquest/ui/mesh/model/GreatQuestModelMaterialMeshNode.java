@@ -14,13 +14,9 @@ import java.util.List;
  * Created by Kneesnap on 4/15/2024.
  */
 public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcModelPrim> {
-    private static final double PS2_SCALE = .006666667; // kcModelRender() -> Calls kcGraphicsSetRenderState(KCRS_COMPVERTSCALE, 0.006666667), then afterward it gets set back to 1.0. So this is for sure real. However, some models (Such as the bell doors in Slick Willy's ship) must NOT have this applied, as they are already scaled down. I have not yet determined the criteria for this.
     private final Vector3f tempVertex = new Vector3f();
     private final Vector3f tempWeighedVertex = new Vector3f();
     private final Vector3f tempTransformedVertex = new Vector3f();
-
-    // TODO: THE BIG BELL DOOR HIDDEN IN SLICK WILLY'S LEVEL IS INVISIBLE. [It's been scaled down near zero by our scaling]
-    //  -> I'm not sure what causes it to render at full-size yet.
 
     public GreatQuestModelMaterialMeshNode(GreatQuestModelMaterialMesh mesh) {
         super(mesh);
@@ -135,20 +131,10 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
         return getMesh().getModel();
     }
 
-    /**
-     * Returns the vertex scaling multiplier
-     */
-    public double getVertexScalingMultiplier() {
-        if (getModel().getGameInstance().isPS2() && !(getMesh().getFullMesh() != null && getMesh().getFullMesh().isEnvironmentalMesh()))
-            return PS2_SCALE;
-
-        return 1;
-    }
-
 
     private Vector3f calculateVertexPos(kcModelPrim modelPrim, int localVertexIndex) {
         kcVertex vertex = modelPrim.getVertices().get(localVertexIndex);
-        Vector3f localPos = this.tempVertex.setXYZ(vertex.getX(), vertex.getY(), vertex.getZ()).multiplyScalar((float) getVertexScalingMultiplier()); // Scaling must happen first for animations to apply at the right pivot points.
+        Vector3f localPos = this.tempVertex.setXYZ(vertex.getX(), vertex.getY(), vertex.getZ()); // Scaling must happen first for animations to apply at the right pivot points.
 
         Vector3f result = this.tempTransformedVertex.setXYZ(localPos);
         kcCResourceSkeleton skeleton = getSkeleton();
@@ -169,8 +155,10 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
 
             if (modelPrim.getBoneIds() != null && modelPrim.getBoneIds().length > 0) {
                 short boneId = modelPrim.getBoneIds()[0];
-                Matrix4x4f tempMatrix = fullMesh.getFinalBoneTransform(boneId);
-                result.add(kcMatrix.kcMatrixMulVector(tempMatrix, localPos, tmpWeightedVtx).multiplyScalar(weight1));
+                if (boneId != 0) { // kcModelTransformRender()
+                    Matrix4x4f tempMatrix = fullMesh.getFinalBoneTransform(boneId);
+                    result.add(kcMatrix.kcMatrixMulVector(tempMatrix, localPos, tmpWeightedVtx).multiplyScalar(weight1));
+                }
             }
         }
 

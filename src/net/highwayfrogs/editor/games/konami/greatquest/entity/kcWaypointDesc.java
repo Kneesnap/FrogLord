@@ -87,7 +87,7 @@ public class kcWaypointDesc extends kcEntity3DDesc {
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         super.writeMultiLineInfo(builder, padding);
         builder.append(padding).append("Type: ").append(this.type).append(Constants.NEWLINE);
-        writeAssetLine(builder, padding, "Previous", this.previousWaypointEntityRef).append(Constants.NEWLINE);
+        writeAssetLine(builder, padding, "Previous", this.previousWaypointEntityRef);
         writeAssetLine(builder, padding, "Next", this.nextWaypointEntityRef);
         if (this.type == kcWaypointType.BOUNDING_BOX || this.boundingBoxDimensions.getX() != 0 || this.boundingBoxDimensions.getY() != 0 || this.boundingBoxDimensions.getZ() != 0)
             this.boundingBoxDimensions.writePrefixedInfoLine(builder, "Bounding Box Dimensions", padding);

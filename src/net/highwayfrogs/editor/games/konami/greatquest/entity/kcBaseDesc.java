@@ -136,7 +136,7 @@ public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements
             throw new NullPointerException("hashObj");
 
         builder.append(padding).append(prefix).append(": ");
-        return builder.append(hashObj.getDisplayString(false));
+        return builder.append(hashObj.getDisplayString(false)).append(Constants.NEWLINE);
     }
 
     /**

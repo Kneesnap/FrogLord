@@ -45,7 +45,7 @@ public class kcMaterial implements IMultiLineInfoWriter, IBinarySerializable {
     private static final int FILENAME_SIZE = 32;
 
     private static final int MATERIAL_FLAG_TEXTURED = Constants.BIT_FLAG_0; // 0x01: kcImportMaterialTexture(_kcMaterial*) will remove this flag if the texture is not found.
-    private static final int MATERIAL_FLAG_ENABLE_ALPHA_BLEND = Constants.BIT_FLAG_3; // 0x08, Confirmed via SetMaterial(_kcMaterial*). Ignored in maps, and also in kcModel if blendMode != KCBLEND_DISABLE.
+    private static final int MATERIAL_FLAG_ENABLE_ALPHA_BLEND = Constants.BIT_FLAG_3; // 0x08, Confirmed via SetMaterial(_kcMaterial*). Ignored in maps, and also in kcModel if blendMode != KCBLEND_DISABLE. Used by kcOTARenderCallbackBuffer::AddVtxBuffer to determine if there is transparency/if it should render later.
 
     /**
      * Tests if there is a texture assigned to this material.

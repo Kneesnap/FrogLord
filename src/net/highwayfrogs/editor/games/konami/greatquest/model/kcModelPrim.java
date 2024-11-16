@@ -75,7 +75,7 @@ public class kcModelPrim extends GameData<GreatQuestInstance> {
 
         for (int i = 0; i < this.loadedVertexCount; i++) {
             kcVertex vertex = new kcVertex();
-            vertex.load(reader, this.model.getComponents(), this.model.getFvf());
+            vertex.load(reader, this.model.getComponents(), this.model.getFvf(), true);
             this.vertices.add(vertex);
         }
 
@@ -89,6 +89,6 @@ public class kcModelPrim extends GameData<GreatQuestInstance> {
      */
     public void saveVertices(DataWriter writer) {
         for (int i = 0; i < this.vertices.size(); i++)
-            this.vertices.get(i).save(writer, this.model.getComponents(), this.model.getFvf());
+            this.vertices.get(i).save(writer, this.model.getComponents(), this.model.getFvf(), true);
     }
 }

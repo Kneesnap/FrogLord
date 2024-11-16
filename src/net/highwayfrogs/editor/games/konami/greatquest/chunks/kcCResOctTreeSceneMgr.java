@@ -310,7 +310,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
 
             for (int i = 0; i < numOfVertices; i++) {
                 kcVertex vertex = new kcVertex();
-                vertex.load(reader, this.components, this.fvf);
+                vertex.load(reader, this.components, this.fvf, false);
                 this.vertices.add(vertex);
             }
         }
@@ -340,7 +340,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
             // Write vertices.
             for (int i = 0; i < this.vertices.size(); i++) {
                 int vertexWriteStartIndex = writer.getIndex();
-                this.vertices.get(i).save(writer, this.components, this.fvf);
+                this.vertices.get(i).save(writer, this.components, this.fvf, false);
                 int vertexBytesWritten = writer.getIndex() - vertexWriteStartIndex;
                 if (vertexBytesWritten != this.fvfStride)
                     throw new RuntimeException("The fvfStride expected us to write " + this.fvfStride + " per vertex, but we actually wrote " + vertexBytesWritten + ".");
