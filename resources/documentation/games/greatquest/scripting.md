@@ -24,6 +24,8 @@ Because scripts belong to individual entities, they are considered to execute/ru
 For example, if you use the `SetSequence` effect to cause an entity to animate, by default it will apply the animation to the entity which the script is written for.
 In order to specify you'd like to run it on a different entity, supply an extra flag `--AsEntity <String: entityName>`.
 For example, `SetSequence "NrmIdle01" --AsEntity "FrogInst001"` will run `SetSequence` as the player character, instead of the script owner.
+Up until this point, the term "script owner" has meant the entity which the script runs as/was written for.  
+But with the addition of `--AsEntity`, the term "script owner" now may instead refer to the `--AsEntity` entity (if `--AsEntity` is used) unless otherwise indicated.  
 
 ## Getting started by creating/modifying scripts
 The easiest way to get started is by looking at examples. To export scripts from the original game, select a level in FrogLord, and find the chunk named `scriptdata`.
@@ -116,7 +118,7 @@ The following documents all causes found within the game, and how they work.
 ### OnLevel
 **Summary:** Executes when the level starts & ends.  
 **Supported Entity Types:** All  
-**Ghidra Reference (For Coders):** `EvLevelBegin, EvLevelEnd`  
+**Ghidra Reference (Ignore):** `EvLevelBegin, EvLevelEnd`  
 **Usage:** `OnLevel <BEGIN|END>`  
 
 ### OnPlayer
@@ -145,7 +147,7 @@ DEATH # The script owner dies. Code: script owner must be at least a kcCActor. k
 ### OnDamage
 **Summary:** Executes when the script owner takes a certain type of damage.  
 **Supported Entity Types:** Base Actors  
-**Ghidra Reference (For Coders):** `kcCActorBase::OnDamage`  
+**Ghidra Reference (Ignore):** `kcCActorBase::OnDamage`  
 **Usage:** `OnDamage <damageType>`  
 ```properties
 # Damage dealt can have any number of damage types.
@@ -168,7 +170,7 @@ UNNAMED_TYPE_XX # Where XX is a number between 0 and 31 and is not one of the nu
 ### OnAlarm
 **Summary:** Executes when the specified alarm (timer) expires.  
 **Supported Entity Types:** All  
-**Ghidra Reference (For Coders):** `kcCEntity::AlarmCallback`  
+**Ghidra Reference (Ignore):** `kcCEntity::AlarmCallback`  
 **Supported Entity Types:** Base Actors  
 **Usage:** `OnAlarm FINISHED <alarmId>`  
 Any whole number between 0 and 31 can be used as an alarm ID.  
@@ -177,18 +179,18 @@ Note that other options such as `IN_PROGRESS` may work in-place of `FINISHED`, b
 
 ### OnPrompt (Unsupported)
 **Summary:** Does not work correctly.  
-**Ghidra Reference (For Coders):** `kcCActorBase::OnCommand[PROMPT]`  
+**Ghidra Reference (Ignore):** `kcCActorBase::OnCommand[PROMPT]`  
 **Usage:** `OnPrompt <promptName>`
 
 ### OnEventTrigger (Unsupported)
 **Summary:** Supposed to execute when the specified event triggers, but it actually fires when ANY event triggers.  
-**Ghidra Reference (For Coders):** `kcCEventMgr::Trigger`  
+**Ghidra Reference (Ignore):** `kcCEventMgr::Trigger`  
 **Usage:** `OnEventTrigger <eventName>`  
 
 ### OnDialog
 **Summary:** Executes when the given dialog text begins or is advanced.  
 **Supported Entity Types:** Base Actors  
-**Ghidra Reference (For Coders):** `EvDialogBegin, EvDialogAdvance`  
+**Ghidra Reference (Ignore):** `EvDialogBegin, EvDialogAdvance`  
 **Usage:** `OnDialog <BEGIN|ADVANCE> <dialogStrName>`  
 This event is not global, so it will only work if the entity defining this script cause is also the entity to show the dialog.  
 The `dialogStrName` should be the name of the text resource containing the dialog text.  
@@ -197,7 +199,7 @@ See `ShowDialog` for more details.
 ### OnReceiveNumber
 **Summary:** Executes when a number is received matching the given criteria.  
 **Supported Entity Types:** All  
-**Ghidra Reference (For Coders):** `kcCEntity::OnNumber`  
+**Ghidra Reference (Ignore):** `kcCEntity::OnNumber`  
 **Usage:** `OnReceiveNumber <operation> <number>`  
 This will only execute when a number matching the specified criteria is sent to the script owner using the `SendNumber` effect.  
 The most common operation will be `EQUAL_TO`, which will allow specifying behavior upon receiving a specific number.  
@@ -214,14 +216,14 @@ GREATER_THAN_OR_EQUAL # Received number >= <number>
 ```
 
 ### OnReceivePlayerHasItem
-**Summary:** When the script owner receives whether the player has an item (from `SendPlayerHasItem`).  
+**Summary:** Executes when the script owner receives the value from `SendPlayerHasItem`.  
 **Supported Entity Types:** Props & Characters  
-**Ghidra Reference (For Coders):** `CCharacter::OnWithItem, CProp::OnWithItem`  
+**Ghidra Reference (Ignore):** `CCharacter::OnWithItem, CProp::OnWithItem`  
 **Usage:** `OnReceivePlayerHasItem <true|false>`  
 
 When `SendPlayerHasItem <inventoryItem>` is used:  
- - If the player did have the item, then the cause `OnReceivePlayerHasItem true` will execute.
- - Otherwise `OnReceivePlayerHasItem false` will execute.
+ - If the player did have the item, then functions with the cause `OnReceivePlayerHasItem true` will execute.
+ - Otherwise, any function with the cause `OnReceivePlayerHasItem false` will execute.
 
 Note that there is no way to make `OnReceivePlayerHasItem` restrict which items it will listen for.  
 The `SendPlayerHasItem <inventoryItem>` effect is what actually checks for the item, and it only shares whether the player had the item (true/false).  
@@ -230,21 +232,22 @@ Thus in order to test for multiple items it would be necessary to use multiple e
 ### OnEntity
 **Summary:** Executes when the script owner interacts with a waypoint.  
 **Supported Entity Types:** All 3D Entities  
-**Ghidra Reference (For Coders):** `kcCEntity3D::Notify, sSendWaypointStatus`  
+**Ghidra Reference (Ignore):** `kcCEntity3D::Notify, sSendWaypointStatus`  
 **Usage:**  
 ```php
 OnEntity ENTERS_WAYPOINT_AREA <waypointEntityName> # Executes when the script owner enters the area of the specified waypoint.
 OnEntity LEAVES_WAYPOINT_AREA <waypointEntityName> # Executes when the script owner leaves the area of the specified waypoint.
 
-# The following are usable ONLY when the target entity is a Waypoint.
-OnEntity ENTERS_TARGET_WAYPOINT_AREA # Executes when the script owner enters its target waypoint's area.
-OnEntity LEAVES_TARGET_WAYPOINT_AREA # Executes when the script owner leaves its target waypoint's area.
+# The following is used when the script owner is pathfinding towards a Waypoint.
+# Or more accurately, when the script owner's target entity is a waypoint.
+OnEntity ENTERS_TARGET_WAYPOINT_AREA # Executes when the script owner enters the area of its target waypoint.
+OnEntity LEAVES_TARGET_WAYPOINT_AREA # Executes when the script owner leaves the area of its target waypoint.
 ```
 
 ### OnWaypoint
-**Summary:** Executes when an entity enters/leaves the waypoint script owner's area.  
+**Summary:** Executes when an entity enters/leaves the script owner (who must be a waypoint)'s area.  
 **Supported Entity Types:** Waypoints  
-**Ghidra Reference (For Coders):** `sSendWaypointStatus`  
+**Ghidra Reference (Ignore):** `sSendWaypointStatus`  
 **Usage:** `OnWaypoint <ENTITY_ENTERS|ENTITY_LEAVES> <entityName>`
 
 ## Available Effects
@@ -253,20 +256,20 @@ Some of these may only work in scripts, others only in action sequences.
 
 ### DoNothing (Unsupported)
 **Summary:** Does nothing, likely a test command.  
-**Ghidra Reference (For Coders):** `kcCEntity::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCEntity::OnCommand`  
 **Usage:** `Do not use.`  
 Not used in the vanilla game.
 
 ### EndScript (Unsupported)
 **Summary:** Stops running an action sequence. Completely optional/unnecessary.  
-**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction`  
+**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction`  
 **Usage:** `Do not use.`  
 Not used in the vanilla game.
 
 ### SetActive (Script Only)
-**Summary:** Set whether the entity is active. (An inactive entity will be invisible and lack collision)  
+**Summary:** Set whether the script owner is active. (An inactive entity will be invisible and lack collision)  
 **Supported Entity Types:** All  
-**Ghidra Reference (For Coders):** `kcCEntity::OnCommand -> kcCEntity::ActivateAndUnhide`  
+**Ghidra Reference (Ignore):** `kcCEntity::OnCommand -> kcCEntity::ActivateAndUnhide`  
 **Usage:** `SetActive <true|false>`  
 **Aliases:**  
 ```properties
@@ -278,34 +281,33 @@ Waypoints are capable of activating invisible parts of the map when this is used
 ### SetEnable (Unsupported)
 **Summary:** Does nothing.  
 **Supported Entity Types:** All  
-**Ghidra Reference (For Coders):** `kcCEntity::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCEntity::OnCommand`  
 **Usage:** `Do not use.`  
 Not used in the vanilla game.
 
-### TerminateEntity (Both)
-**Summary:** Remove the entity from existence.  
+### TerminateEntity (Both Action Sequences & Scripts)
+**Summary:** Remove the script owner from the level.  
 **Supported Entity Types:** All  
-**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCEntity::OnCommand -> kcCEntity::OnTerminate`  
-**Usage:** `TerminateEntity`  
+**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCEntity::OnCommand -> kcCEntity::OnTerminate`  
+**Usage:** `TerminateEntity`
 
-### InitFlags (Both)
-**Summary:** Resets instance entity flags, and then sets the flags provided.  
+### SetFlags (Both)
+**Summary:** Applies the provided entity flags to the script owner.  
 **Supported Entity Types:** All  
-**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity::OnCommand`  
-**Usage:** `InitFlags [Entity Flags]`  
+**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity::OnCommand`  
+**Usage:** `SetFlags [Entity Flags]`  
 ```properties
-# There are multiple targeting kcEntityFlag.HIDE because the INIT_FLAGS action will reset this flag at each inheritance level, so each flag is here to allow keeping such a thing.
-# kcCEntity Flags:
+# Entity Flags:
 --Hide # Marks the entity to not be drawn. When set, it will also activate/deactivate the entity, along with collision. However, these can then be undone afterward.
 --UnusedBitFlag01 # Couldn't find any behavior tied to this flag, and it is never used by the game.
 --ForceStayActive # The entity should stay active even when the player is outside the normal range.
 
-# kcCEntity3D Flags:
+# Entity 3D Flags:
 --FaceTargetEntity # Causes the entity to constantly rotate to face its target entity.
 --HideShadow # Hides the entity shadow. The shadow will also be hidden if --Hide is set.
 --AllowWaypointInteraction # Marks an entity as needing to be registered to trigger waypoint events. This will only work if Reset() is called first, so it's best to keep this on the entity instance, and not via scripts.
 
-# kcCActorBase Flags:
+# Actor Base Flags:
 --Active # Whether the entity is active.
 --EnableTerrainTracking # Makes the entity try to rotate to appear standing on the terrain (I think).
 --DisableAI # Disables AI updates, so attempting to attack the player, wandering, will not occur while this flag is set.
@@ -320,127 +322,130 @@ Not used in the vanilla game.
 --PreventDeath # Makes it impossible for an entity to die, regardless of if it is capable of taking damage.
 ```
 
-### SetFlags (Both)
-**Summary:** Applies the provided entity flags to the entity.  
-**Supported Entity Types:** All  
-**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity::OnCommand`  
-**Usage:** `SetFlags [Entity Flags]`  
-See `InitFlags` above for a list of flags.  
-
 ### ClearFlags (Both)
-**Summary:** Removes the provided entity flags from the entity.  
+**Summary:** Removes the provided entity flags from the script owner.  
 **Supported Entity Types:** All  
-**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity::OnCommand`  
 **Usage:** `ClearFlags [Entity Flags]`  
-See `InitFlags` above for a list of flags.  
+See `SetFlags` above for a list of flags.  
+
+### InitFlags (Both)
+**Summary:** Clears instance entity flags, then applies the given entity instance flags.  
+**Supported Entity Types:** All  
+**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity::OnCommand`  
+**Usage:** `InitFlags [Entity Flags]`
+See `SetFlags` above for a list of flags.  
+This can be thought of as a combination of the previous two effects: `ClearFlags` and `SetFlags`.  
+Firstly, `InitFlags` will clear (almost) all entity instance flags. Unlike `ClearFlags` these are hardcoded and not the flags provided to `InitFlags` by the user.  
+Then, then it will apply the specified flags as if it were `SetFlags`.  
 
 ### SetState (Unsupported)
 **Summary:** Unimplemented, does nothing.  
-**Ghidra Reference (For Coders):** `kcCActorBase::OnCommand/kcCActor::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCActorBase::OnCommand/kcCActor::OnCommand`  
 **Usage:** `Do not use.`  
 Not used in the vanilla game.
 
 ### SetTarget (Script Only)
-**Summary:** Change the current entities target entity.  
+**Summary:** Change the script owner's target entity.  
 **Supported Entity Types:** All  
-**Ghidra Reference (For Coders):** `kcCEntity::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCEntity::OnCommand`  
 **Usage:** `SetTarget <kcCResourceEntityInst targetEntity>`  
 A target entity is used for AI-related operations.  
 For example, most enemies have `"FrogInst001"` as their target, so they attack Frogger.  
 Others, such as Fairy Frogmother face the player by setting their target as `FrogInst001`.  
 
 ### SetAnimationSpeed (Both)
-**Summary:** Sets the animation speed for the entity. (Default: 1.0?)  
+**Summary:** Sets the animation speed for the script owner. (Default: 1.0?)  
 **Supported Entity Types:** Base Actors  
-**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand`  
 **Usage:** `SetAnimationSpeed <float speed>`  
 Not used in the vanilla game.
 
 ### SetPositionOnAxis (Script Only)
-**Summary:** Sets the entities positional coordinate on the given axis.  
+**Summary:** Sets the script owner's positional coordinate on the given axis.  
 **Supported Entity Types:** All 3D Entities  
-**Ghidra Reference (For Coders):** `kcCEntity3D::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCEntity3D::OnCommand`  
 **Usage:** `SetPositionOnAxis <X|Y|Z> <coordinate>`  
 **Example:** `SetPositionOnAxis X 22.5`  
 Not used in the vanilla game.
 
 ### SetPosition (Script Only)
-**Summary:** Sets the entity position.  
+**Summary:** Sets the script owner's position.  
 **Supported Entity Types:** All 3D Entities  
-**Ghidra Reference (For Coders):** `kcCEntity3D::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCEntity3D::OnCommand`  
 **Usage:** `SetPosition <x> <y> <z>`  
 
 ### AddPositionOnAxis (Script Only)
 **Summary:** Offsets the enttiy position by the given value on the specified axis.  
 **Supported Entity Types:** All 3D Entities  
-**Ghidra Reference (For Coders):** `kcCEntity3D::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCEntity3D::OnCommand`  
 **Usage:** `AddPositionOnAxis <X|Y|Z> <amount>`  
 Not used in the vanilla game.
 
 ### AddPosition (Script Only)
-**Summary:** Adds values to the entities current position.  
+**Summary:** Adds values to the script owner's current position.  
 **Supported Entity Types:** All 3D Entities  
-**Ghidra Reference (For Coders):** `kcCEntity3D::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCEntity3D::OnCommand`  
 **Usage:** `AddPosition <x> <y> <z>`  
 
 ### SetRotationOnAxis (Script Only)
 **Summary:** Sets a rotation value on the specified axis.  
 **Supported Entity Types:** All 3D Entities  
-**Ghidra Reference (For Coders):** `kcCEntity3D::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCEntity3D::OnCommand`  
 **Usage:** `SetRotationOnAxis <X|Y|Z> <angleInDegrees>`  
 Not used in the vanilla game.
 
 ### SetRotation (Script Only)
-**Summary:** Sets the entity rotation.  
+**Summary:** Sets the script owner's rotation.  
 **Supported Entity Types:** All 3D Entities  
-**Ghidra Reference (For Coders):** `kcCEntity3D::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCEntity3D::OnCommand`  
 **Usage:** `SetRotation <xAngleInDegrees> <yAngleInDegrees> <zAngleInDegrees>`  
 Not used in the vanilla game.
 
 ### AddRotationOnAxis (Both)
 **Summary:** Adds a rotation value on the specified axis.  
 **Supported Entity Types:** All 3D Entities  
-**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCEntity3D::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCEntity3D::OnCommand`  
 **Usage:** `AddRotationOnAxis <X|Y|Z> <angleInDegrees>`  
 Not used in the vanilla game.
 
 ### AddRotation (Both)
 **Summary:** Adds rotation values to the existing rotation.  
 **Supported Entity Types:** All 3D Entities  
-**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCEntity3D::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCEntity3D::OnCommand`  
 **Usage:** `AddRotation <xAngleInDegrees> <yAngleInDegrees> <zAngleInDegrees>`  
 Not used in the vanilla game.
 
 ### RotateRight (Both)
-**Summary:** Rotates the entity to look right.  
+**Summary:** Rotates the script owner to look right.  
 **Supported Entity Types:** All 3D Entities  
-**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCEntity3D::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCEntity3D::OnCommand`  
 **Usage:** `RotateRight <angleInDegrees>`  
 
 ### RotateLeft (Both)
-**Summary:** Rotates the entity to look left.  
+**Summary:** Rotates the script owner to look left.  
 **Supported Entity Types:** All 3D Entities  
-**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCEntity3D::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCEntity3D::OnCommand`  
 **Usage:** `RotateLeft <angleInDegrees>`  
 
 ### LookAtTargetEntity (Both)
-**Summary:** Make the execution entity face its target entity.  
+**Summary:** Make the script owner face its target entity.  
 **Supported Entity Types:** All 3D Entities  
-**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity3D::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity3D::OnCommand`  
 **Usage:** `LookAtTargetEntity`  
 Not used in the vanilla game.
 
 ### SetAnimation (Both)
 **Summary:** Changes the animation currently performed.  
 **Supported Entity Types:** Base Actors  
-**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand`  
 **Usage:** `SetAnimation <animationFileName> [--Repeat] [--FirstAnimationInSequence] [--StartTime <startTimeInSeconds>]`  
 While this effect appears to work outside an action sequence, the game scripts always use `SetSequence` instead of directly calling `SetAnimation`.  
 
 ### SetSequence (Script Only)
-**Summary:** Sets the active action sequence for the entity.  
+**Summary:** Sets the active action sequence for the script owner.  
 **Supported Entity Types:** Base Actors  
-**Ghidra Reference (For Coders):** `kcCActorBase::OnCommand/kcCActor::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCActorBase::OnCommand/kcCActor::OnCommand`  
 **Usage:** `SetSequence <actionSequenceName> [--IgnoreIfAlreadyActive] [--OpenBoneChannel]`  
 ```properties
 --IgnoreIfAlreadyActive
@@ -456,49 +461,49 @@ While this effect appears to work outside an action sequence, the game scripts a
 
 ### Wait (Action Sequence Only)
 **Summary:** Wait a given amount of time before continuing the action sequence.  
-**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction`  
+**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction`  
 **Usage:** `Wait <timeInSeconds>`  
 Not used in the vanilla game.
 
 ### WaitForAxisRotation (Action Sequence Only)
 **Summary:** Waits for an axis rotation to complete before continuing the action sequence.  
-**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction`  
+**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction`  
 **Usage:** `WaitForAxisRotation <X|Y|Z>`  
 Not used in the vanilla game.
 
 ### WaitForFullRotation (Action Sequence Only)
 **Summary:** Waits for all rotations to complete before continuing the action sequence.  
-**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction`  
+**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction`  
 **Usage:** `WaitForFullRotation`  
 Not used in the vanilla game.
 
 ### WaitForAnimation (Action Sequence Only)
 **Summary:** Waits for the active animation to complete before continuing the action sequence.  
-**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction`  
+**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction`  
 **Usage:** `WaitForAnimation`  
 
 ### Loop (Action Sequence Only)
 **Summary:** The action sequence will restart the number of times specified.  
-**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction`  
+**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction`  
 **Usage:** `Loop <numberOfTimesToLoop>`  
 
 ### ApplyMotionImpulse (Both)
-**Summary:** Applies a motion "impulse" to the entity.  
+**Summary:** Applies a motion "impulse" to the script owner.  
 **Supported Entity Types:** Base Actors  
-**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand`  
 **Usage:** `ApplyMotionImpulse <x> <y> <z>`
-This will only work if the `--EnablePhysics` flag is applied to the entity.  
+This will only work if the `--EnablePhysics` flag is applied to the script owner.  
 
 ### Prompt (Unsupported)
 **Summary:** This was never fully supported by the game, but it looks like it was supposed to allow the player to make choices within dialog text-boxes.  
-**Ghidra Reference (For Coders):** `kcCActorBase::OnCommand/kcCActor::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCActorBase::OnCommand/kcCActor::OnCommand`  
 **Usage:** `Prompt <promptName>`  
 Not used in the vanilla game.
 
 ### ShowDialog (Script Only)
 **Summary:** Creates a dialog box with text for the player.  
 **Supported Entity Types:** Base Actors  
-**Ghidra Reference (For Coders):** `kcCActorBase::OnCommand/kcCActor::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCActorBase::OnCommand/kcCActor::OnCommand`  
 **Usage:** `ShowDialog <dialogResourceName>`  
 IMPORTANT! This command is more complicated than it would initially seem.  
 It would seem intuitive to use it like `ShowDialog "Bruiser: You got my honey yet?"`.  
@@ -511,7 +516,7 @@ Instructions for adding text/string resources are in the `GQS Script Group` docu
 ### SetAlarm (Both)
 **Summary:** Sets an alarm to ring (Script Cause: `OnAlarm`) after a delay.  
 **Supported Entity Types:** All  
-**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCEntity::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCEntity::OnCommand`  
 **Usage:** `SetAlarm <alarmId> <durationInSeconds> [--Repeat <numberOfTimesToRepeat>]`  
 Any number between 0 and 31 is a valid alarm ID.  
 The duration of the alarm can be a decimal number.  
@@ -522,7 +527,7 @@ The main purpose of this feature is to run script effects after a delay.
 ### TriggerEvent (Both)
 **Summary:** Triggers a named event.  
 **Supported Entity Types:** All  
-**Ghidra Reference (For Coders):** `kcCActorBase::ProcessAction, kcCEntity::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCEntity::OnCommand`  
 **Usage:** `TriggerEvent <String eventName>`  
 
 **Valid Events:**  
@@ -569,23 +574,23 @@ The main purpose of this feature is to run script effects after a delay.
 ### PlaySound (Script Only)
 **Summary:** Plays (or stops) a sound effect.  
 **Supported Entity Types:** All  
-**Ghidra Reference (For Coders):** `kcCEntity::OnCommand, kcCEntity3D::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCEntity::OnCommand, kcCEntity3D::OnCommand`  
 **Usage:** `PlaySound <soundFilePath> [--StopSound]`  
 A sound file path can be obtained by right-clicking a sound in the FrogLord sound list, and clicking "Copy file path".
 
 ### SetVariable (Script Only)
-**Summary:** Sets an entity variable by its ID.  
+**Summary:** Sets one of the script owner's entity variables by its ID.  
 **Supported Entity Types:** All  
-**Ghidra Reference (For Coders):** `kcCEntity::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCEntity::OnCommand`  
 **Usage:** `SetVariable <variableId> <value>`  
 Stores the value into the variable ID/slot given.  
 Valid variable IDs are between 0 and 7.  
 The provided value must be a whole number.
 
 ### AddToVariable (Script Only)
-**Summary:** Adds to an existing entity variable by its ID.  
+**Summary:** Adds a value to one of the script owner's entity variables by its ID.  
 **Supported Entity Types:** All  
-**Ghidra Reference (For Coders):** `kcCEntity::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCEntity::OnCommand`  
 **Usage:** `AddToVariable <variableId> <value>`  
 Adds the value into the variable ID/slot.  
 Valid variable IDs are between 0 and 7.  
@@ -594,7 +599,7 @@ The provided value must be a whole number.
 ### SendNumber (Script Only)
 **Summary:** Sends a number, which will cause the `OnReceiveNumber` script cause.
 **Supported Entity Types:** All  
-**Ghidra Reference (For Coders):** `kcCEntity::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCEntity::OnCommand`  
 **Usage:** `SendNumber <LITERAL_NUMBER|ENTITY_VARIABLE|RANDOM> <number>`  
 ```properties
 LITERAL_NUMBER # The number sent will be the number provided as an argument.
@@ -606,29 +611,29 @@ If the `--AsEntity` flag is included, the number will be sent to the `--AsEntity
 When sending an `ENTITY_VARIABLE` the number sent will be the value of the variable obtained from the script owner, instead of from the `--AsEntity` target.  
 
 ### SpawnParticleEffect (Script Only)
-**Summary:** Sets up a particle emitter for the entity.  
+**Summary:** Sets up a particle emitter for the script owner.  
 **Supported Entity Types:** Base Actors  
-**Ghidra Reference (For Coders):** `kcCActorBase::OnCommand/kcCActor::OnCommand -> kcCParticleMgr::SpawnEffect`  
+**Ghidra Reference (Ignore):** `kcCActorBase::OnCommand/kcCActor::OnCommand -> kcCParticleMgr::SpawnEffect`  
 **Usage:** `SpawnParticleEffect <particleEmitterDataName>`  
 Not used in the vanilla game.
 
 ### KillParticleEffect (Script Only)
-**Summary:** Disables particle effect(s) spawned by the current entity.  
+**Summary:** Disables particle effect(s) spawned by the script owner.  
 **Supported Entity Types:** Base Actors  
-**Ghidra Reference (For Coders):** `kcCActorBase::OnCommand/kcCActor::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCActorBase::OnCommand/kcCActor::OnCommand`  
 **Usage:** `KillParticleEffect`  
 Not used in the vanilla game.
 
 ### Launcher (Unsupported)
 **Summary:** Opens up a dialog box saying it is no longer supported.  
-**Ghidra Reference (For Coders):** `CCharacter::OnCommand`  
+**Ghidra Reference (Ignore):** `CCharacter::OnCommand`  
 **Usage:** `Do not use.`  
 Not used in the vanilla game.
 
 ### SendPlayerHasItem (Script Only)
 **Summary:** Send whether the player has the given item, thus causing `OnReceivePlayerHasItem`.  
 **Supported Entity Types:** Character or Prop  
-**Ghidra Reference (For Coders):** `CCharacter::OnCommand, CProp::OnCommand`  
+**Ghidra Reference (Ignore):** `CCharacter::OnCommand, CProp::OnCommand`  
 **Usage:** `SendPlayerHasItem <inventoryItem>`  
 Click [here](../../../../src/net/highwayfrogs/editor/games/konami/greatquest/generic/InventoryItem.java) to see a list of InventoryItem values.  
 When the `--AsEntity` flag is included, the number will be sent to the `--AsEntity` target instead of the script owner.  
@@ -636,14 +641,14 @@ When the `--AsEntity` flag is included, the number will be sent to the `--AsEnti
 ### SetPlayerHasItem (Script Only)
 **Summary:** Add or remove an inventory item in the player's inventory.  
 **Supported Entity Types:** Character or Prop  
-**Ghidra Reference (For Coders):** `CCharacter::OnCommand, CProp::OnCommand`  
+**Ghidra Reference (Ignore):** `CCharacter::OnCommand, CProp::OnCommand`  
 **Usage:** `SetPlayerHasItem <inventoryItem> <true|false>`  
 Click [here](../../../../src/net/highwayfrogs/editor/games/konami/greatquest/generic/InventoryItem.java) to see a list of InventoryItem values.
 
 ### TakeDamage (Script Only)
 **Summary:** The script owner takes damage (loses health).  
 **Supported Entity Types:** Base Actors  
-**Ghidra Reference (For Coders):** `kcCScriptMgr::FireActorEffect[Remap] -> kcCActorBase::OnCommand/kcCActor::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCScriptMgr::FireActorEffect[Remap] -> kcCActorBase::OnCommand/kcCActor::OnCommand`  
 **Usage:** `TakeDamage <attackStrength> [Damage Flags]`  
 The attack strength is a whole number indicating how much damage to take.  
 A negative number will heal the entity.  
@@ -665,16 +670,16 @@ A negative number will heal the entity.
 ### SetSavePoint (Script Only)
 **Summary:** Sets the player's respawn point.  
 **Supported Entity Types:** CCharacter  
-**Ghidra Reference (For Coders):** `CCharacter::OnCommand`  
+**Ghidra Reference (Ignore):** `CCharacter::OnCommand`  
 **Usage:** `SetSavePoint <savePointId> <x> <y> <z>`  
 The player's respawn position will be set to the new coordinates.  
 Also, the game will find an entity named `"Save pointInstXXX"` where `XXX` is the `savePointId`.  
 If such an entity is found, particles will be played at the position of that entity.  
 
 ### SetUpdatesEnabled (Script Only)
-**Summary:** Sets whether updates are enabled for the entity.  
+**Summary:** Sets whether updates are enabled for the script owner.  
 **Supported Entity Types:** All  
-**Ghidra Reference (For Coders):** `kcCEntity::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCEntity::OnCommand`  
 **Usage:** `SetUpdatesEnabled <true|false>`  
 **Aliases:**
 ```properties
@@ -686,9 +691,9 @@ It would be unused in the vanilla game if not for one Ruby found in Joy Towers.
 This command is almost the same as `SetActive`, except it doesn't touch collision/activation state.
 
 ### SetAIGoal (Script Only)
-**Summary:** Sets the current entity AI goal.  
+**Summary:** Sets the script owner's AI goal.  
 **Supported Entity Types:** CCharacter  
-**Ghidra Reference (For Coders):** `CCharacter::OnCommand`  
+**Ghidra Reference (Ignore):** `CCharacter::OnCommand`  
 **Usage:** `SetAIGoal <goalType>`  
 **Aliases:**
 ```
@@ -706,13 +711,13 @@ SLEEP # Applies the entity sleep animation.
 ```
 
 ### AttachSensor / Attach (Script Only)
-**Summary:** Attaches a sensor to the entity.  
+**Summary:** Attaches a sensor to the script owner.  
 **Supported Entity Types:** CCharacter  
-**Ghidra Reference (For Coders):** `CCharacter::OnCommand`
+**Ghidra Reference (Ignore):** `CCharacter::OnCommand`
 **Usage:**
 ```ruby
 # Makes the given 3D model bone deal damage when a bounding sphere surrounding the bone intersects with another entity.
-# In other words, it makes a part of the entity's 3D model deal damage to any entity it touches.
+# In other words, it makes a part of the script owner's 3D model deal damage to any entity it touches.
 # The bone will usually be an arm, but some entities will use bones such as part of a sword.
 # This makes combat appear more fluid, as the player will only react to getting hit the moment they are hit.
 # The 'radius' value is a decimal number representing the collision/bounding sphere's radius.
@@ -737,13 +742,13 @@ Attach PARTICLE_EMITTER <boneNameOrId> <particleEmitterParamName>
 ### Detach (Script Only)
 **Summary:** Detaches a previously attached PARTICLE_EMITTER.  
 **Supported Entity Types:** CCharacter  
-**Ghidra Reference (For Coders):** `CCharacter::OnCommand`  
+**Ghidra Reference (Ignore):** `CCharacter::OnCommand`  
 **Usage:** `Detach PARTICLE_EMITTER <boneNameOrId>`
 
 ### SetWorldActive
 **Summary:** Set whether entities/terrain are enabled in the world area covered by the waypoint.  
 **Supported Entity Types:** Waypoint  
-**Ghidra Reference (For Coders):** `kcCEntity::OnCommand`  
+**Ghidra Reference (Ignore):** `kcCEntity::OnCommand`  
 **Usage:** `SetWorldActive <ENTITIES|TERRAIN|BOTH> <true|false>`  
 **Alias:**  `Entity.ActivateSpecial <ENTITIES|TERRAIN|BOTH> <true|false>`  
 Not used in the vanilla game.  
@@ -763,27 +768,27 @@ BOTH # Controls both entity visibility and terrain visibility.
 ### ActivateCamera (Script Only)
 **Summary:** Activates a new camera, causing the game to switch to it.  
 **Supported Entity Types:** All  
-**Ghidra Reference (For Coders):** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnActivatePivotCamera`  
+**Ghidra Reference (Ignore):** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnActivatePivotCamera`  
 **Usage:** `ActivateCamera <transitionInSeconds>`
 `transitionInSeconds` is a decimal number indicating how long it will take (in seconds) to switch to the new camera.
 
 ### DeactivateCamera (Script Only)
 **Summary:** Deactivates the current camera, reverting to the previous camera.  
 **Supported Entity Types:** All  
-**Ghidra Reference (For Coders):** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnDeactivatePivotCamera`  
+**Ghidra Reference (Ignore):** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnDeactivatePivotCamera`  
 **Usage:** `DeactivateCamera <float transitionInSeconds>`  
 `transitionInSeconds` is a decimal number indicating how long it will take (in seconds) to switch to the previous camera.
 
 ### SetCameraTarget (Script Only)
 **Summary:** Sets the entity which the current camera focuses on.  
 **Supported Entity Types:** All  
-**Ghidra Reference (For Coders):** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnSetTarget`  
+**Ghidra Reference (Ignore):** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnSetTarget`  
 **Usage:** `SetCameraTarget <entityName>`
 
 ### SetCameraPivot (Script Only)
 **Summary:** Set the rotational pivot entity for the current camera.
 **Supported Entity Types:** All  
-**Ghidra Reference (For Coders):** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnSetPivot`  
+**Ghidra Reference (Ignore):** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnSetPivot`  
 **Usage:** `SetCameraPivot <entityName>`  
 The pivot entity is an entity which the camera will calculate where to be in the world by finding a position that puts the pivot entity between the camera and the camera's target entity.  
 In other words, the position/rotation of the camera is calculated by facing the target entity in a manner that also makes the camera directly face the pivot entity.
@@ -791,7 +796,7 @@ In other words, the position/rotation of the camera is calculated by facing the 
 ### SetCameraParam (Script Only)
 **Summary:** Change the current camera's settings.  
 **Supported Entity Types:** All  
-**Ghidra Reference (For Coders):** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnSetParam`  
+**Ghidra Reference (Ignore):** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnSetParam`  
 **Usage:** `SetCameraParam <cameraParam> <value>`
 The value is a decimal number.
 

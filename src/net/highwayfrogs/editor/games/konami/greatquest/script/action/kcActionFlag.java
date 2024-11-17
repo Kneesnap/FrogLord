@@ -60,5 +60,10 @@ public class kcActionFlag extends kcAction {
         for (kcEntityInstanceFlag flag : kcEntityInstanceFlag.values())
             if ((this.flagMask & flag.getInstanceBitFlagMask()) == flag.getInstanceBitFlagMask())
                 flag.getFlagType().getInheritanceGroup().logEntityTypeWarnings(logger, this, flag.getDisplayName());
+
+        // INIT_FLAGS shouldn't warn if no flags are specified since it will still do something (reset flags).
+        // But the others will do nothing since there are no flags given.
+        if (this.flagMask == 0 && getActionID() != kcActionID.INIT_FLAGS)
+            printWarning(logger, "it does not specify any entity flags.");
     }
 }
