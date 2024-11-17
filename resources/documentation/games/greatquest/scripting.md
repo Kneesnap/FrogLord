@@ -213,15 +213,19 @@ LESS_THAN_OR_EQUAL # Received number <= <number>
 GREATER_THAN_OR_EQUAL # Received number >= <number>
 ```
 
-### OnReceiveWhetherPlayerHasItem
+### OnReceivePlayerHasItem
 **Summary:** When the script owner receives whether the player has an item (from `SendWhetherPlayerHasItem`).  
 **Supported Entity Types:** Props & Characters  
 **Ghidra Reference (For Coders):** `CCharacter::OnWithItem, CProp::OnWithItem`  
-**Usage:** `OnReceiveWhetherPlayerHasItem <true|false>`  
-When the `SendWhetherPlayerHasItem` effect is used, the `OnReceiveWhetherPlayerHasItem` cause will run, based on whether the player had the item or not.  
-If the player did have the item, then the cause `OnReceiveWhetherPlayerHasItem true` will execute, otherwise `OnReceiveIfPlayerHasItem false` will execute.  
-Note that there is no way to make `OnReceiveWhetherPlayerHasItem` restrict which items it will activate for.  
-Thus it would be necessary to use multiple entities (each testing for one item) in order to test for multiple items.  
+**Usage:** `OnReceivePlayerHasItem <true|false>`  
+
+When `SendPlayerHasItem <inventoryItem>` is used:  
+ - If the player did have the item, then the cause `OnReceivePlayerHasItem true` will execute.
+ - Otherwise `OnReceivePlayerHasItem false` will execute.
+
+Note that there is no way to make `OnReceivePlayerHasItem` restrict which items it will listen for.  
+The `SendPlayerHasItem <inventoryItem>` effect is what actually checks for the item, and it only shares whether the player had the item (true/false).  
+Thus in order to test for multiple items it would be necessary to use multiple entities, each testing for a different item and having its own `OnReceivePlayerHasItem` listener.  
 
 ### OnEntity
 **Summary:** Executes when the script owner interacts with a waypoint.  

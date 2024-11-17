@@ -27,7 +27,7 @@ public enum kcScriptCauseType {
     EVENT(Constants.BIT_FLAG_11, "OnEventTrigger", kcEntityInheritanceGroup.ENTITY, kcScriptCauseEvent::new), // 2048|0x800, Global Trigger: kcCEventMgr::Trigger
     DIALOG(Constants.BIT_FLAG_12, "OnDialog", kcEntityInheritanceGroup.ACTOR_BASE, kcScriptCauseDialog::new), // 4096|0x1000, Target Triggers: EvDialogBegin, EvDialogAdvance, EvDialogEnd (I don't believe EvDialogEnd is possible to trigger). This requires ACTOR_BASE since only ACTOR_BASE is capable of showing dialog.
     NUMBER(Constants.BIT_FLAG_13, "OnReceiveNumber", kcEntityInheritanceGroup.ENTITY, kcScriptCauseNumber::new), // 8192|0x2000, Target Trigger: kcCEntity::OnNumber
-    WHEN_ITEM(Constants.BIT_FLAG_14, "OnReceiveWhetherPlayerHasItem", kcEntityInheritanceGroup.PROP_OR_CHARACTER, kcScriptCauseWhenItem::new), // 16384|0x4000, Target Triggers: CCharacter::OnWithItem, CProp::OnWithItem
+    WHEN_ITEM(Constants.BIT_FLAG_14, "OnReceivePlayerHasItem", kcEntityInheritanceGroup.PROP_OR_CHARACTER, kcScriptCauseWhenItem::new), // 16384|0x4000, Target Triggers: CCharacter::OnWithItem, CProp::OnWithItem
     ENTITY_3D(Constants.BIT_FLAG_15, "OnEntity", kcEntityInheritanceGroup.ENTITY3D, kcScriptCauseEntity3D::new), // 32768|0x8000, Target Triggers: kcCEntity3D::Notify, sSendWaypointStatus triggers for the non-waypoint entity AND it also calls kcCEntity3D::Notify.
     WAYPOINT(Constants.BIT_FLAG_19, "OnWaypoint", kcEntityInheritanceGroup.WAYPOINT, kcScriptCauseWaypoint::new); // 524288|0x80000, Target Trigger: sSendWaypointStatus triggers for the waypoint itself
 
