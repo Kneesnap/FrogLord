@@ -85,11 +85,11 @@ For example:
 
 ```PowerShell
 [Function]
-cause=OnNumber EQUALS 1
+cause=OnReceiveNumber EQUALS 1
 ShowDialog "DialogOne"
 
 [Function]
-cause=OnNumber EQUALS 2
+cause=OnReceiveNumber EQUALS 2
 ShowDialog "DialogTwo"
 
 [Function]
@@ -194,11 +194,11 @@ This event is not global, so it will only work if the entity defining this scrip
 The `dialogStrName` should be the name of the text resource containing the dialog text.  
 See `ShowDialog` for more details.  
 
-### OnNumber
+### OnReceiveNumber
 **Summary:** Executes when a number is received matching the given criteria.  
 **Supported Entity Types:** All  
 **Ghidra Reference (For Coders):** `kcCEntity::OnNumber`  
-**Usage:** `OnNumber <operation> <number>`  
+**Usage:** `OnReceiveNumber <operation> <number>`  
 This will only execute when a number matching the specified criteria is sent to the script owner using the `SendNumber` effect.  
 The most common operation will be `EQUAL_TO`, which will allow specifying behavior upon receiving a specific number.  
 Only whole numbers (integers) are supported by this cause.  
@@ -213,14 +213,14 @@ LESS_THAN_OR_EQUAL # Received number <= <number>
 GREATER_THAN_OR_EQUAL # Received number >= <number>
 ```
 
-### OnPlayerHasItem
+### OnReceiveWhetherPlayerHasItem
 **Summary:** When the script owner receives whether the player has an item (from `SendWhetherPlayerHasItem`).  
 **Supported Entity Types:** Props & Characters  
 **Ghidra Reference (For Coders):** `CCharacter::OnWithItem, CProp::OnWithItem`  
-**Usage:** `OnPlayerHasItem <true|false>`  
-When the `SendWhetherPlayerHasItem` effect is used, the `OnPlayerHasItem` cause will run, based on whether the player had the item or not.  
-If the player did have the item, then the cause `OnPlayerHasItem true` will execute, otherwise `OnPlayerHasItem false` will execute.  
-Note that there is no way to make `OnPlayerHasItem` restrict which items it will activate for.  
+**Usage:** `OnReceiveWhetherPlayerHasItem <true|false>`  
+When the `SendWhetherPlayerHasItem` effect is used, the `OnReceiveWhetherPlayerHasItem` cause will run, based on whether the player had the item or not.  
+If the player did have the item, then the cause `OnReceiveWhetherPlayerHasItem true` will execute, otherwise `OnReceiveIfPlayerHasItem false` will execute.  
+Note that there is no way to make `OnReceiveWhetherPlayerHasItem` restrict which items it will activate for.  
 Thus it would be necessary to use multiple entities (each testing for one item) in order to test for multiple items.  
 
 ### OnEntity
@@ -588,7 +588,7 @@ Valid variable IDs are between 0 and 7.
 The provided value must be a whole number.  
 
 ### SendNumber (Script Only)
-**Summary:** Sends an `OnNumber` script cause with a number.
+**Summary:** Sends a number, which will cause the `OnReceiveNumber` script cause.
 **Supported Entity Types:** All  
 **Ghidra Reference (For Coders):** `kcCEntity::OnCommand`  
 **Usage:** `SendNumber <LITERAL_NUMBER|ENTITY_VARIABLE|RANDOM> <number>`  
@@ -598,8 +598,8 @@ ENTITY_VARIABLE # The number sent will be the value of the entity variable at th
 RANDOM # The number sent will be a random number between 0 and the number provided.
 ```
 
-When the `--AsEntity` option is used in conjunction with the `ENTITY_VARIABLE` operation, the number will be sent to the `--AsEntity` target.  
-However the number sent will be the variable value from the script owner, instead of from the `--AsEntity` target.  
+If the `--AsEntity` flag is included, the number will be sent to the `--AsEntity` target instead of the script owner.  
+When sending an `ENTITY_VARIABLE` the number sent will be the value of the variable obtained from the script owner, instead of from the `--AsEntity` target.  
 
 ### SpawnParticleEffect (Script Only)
 **Summary:** Sets up a particle emitter for the entity.  
@@ -622,11 +622,12 @@ Not used in the vanilla game.
 Not used in the vanilla game.
 
 ### SendWhetherPlayerHasItem (Script Only)
-**Summary:** Test if the player has the given item, then send `OnPlayerHasItem` with the result.  
+**Summary:** Send whether the player has the given item, thus causing `OnReceiveWhetherPlayerHasItem`.  
 **Supported Entity Types:** Character or Prop  
 **Ghidra Reference (For Coders):** `CCharacter::OnCommand, CProp::OnCommand`  
 **Usage:** `SendWhetherPlayerHasItem <inventoryItem>`  
-Click [here](../../../../src/net/highwayfrogs/editor/games/konami/greatquest/generic/InventoryItem.java) to see a list of InventoryItem values.
+Click [here](../../../../src/net/highwayfrogs/editor/games/konami/greatquest/generic/InventoryItem.java) to see a list of InventoryItem values.  
+When the `--AsEntity` flag is included, the number will be sent to the `--AsEntity` target instead of the script owner.  
 
 ### SetPlayerHasItem (Script Only)
 **Summary:** Add or remove an inventory item in the player's inventory.  
