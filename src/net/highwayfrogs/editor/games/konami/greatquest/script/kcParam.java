@@ -159,6 +159,82 @@ public class kcParam {
     }
 
     /**
+     * Write the parameter to a config value node.
+     * @param executor the action executor
+     * @param paramType The parameter type to write the value as.
+     */
+    public String getInvalidValueWarning(kcActionExecutor executor, kcParamType paramType) {
+        int intValue = getAsInteger();
+        float floatValue = getAsFloat();
+        GreatQuestInstance instance = executor != null ? executor.getGameInstance() : null;
+
+        switch (paramType) {
+            case BOOLEAN:
+            case INVERTED_BOOLEAN:
+                if (intValue != 0 && intValue != 1)
+                    return intValue + " cannot be represented as a boolean.";
+                break;
+            case FLOAT:
+            case ANGLE:
+            case TIMESTAMP_TICK:
+                if (!Float.isFinite(floatValue))
+                    return floatValue + " cannot be represented as a floating point value.";
+                break;
+            case AXIS:
+                return getEnumWarning(kcRotationAxis.values());
+            case INVENTORY_ITEM:
+                return getEnumWarning(InventoryItem.values());
+            case AI_GOAL_TYPE:
+                return getEnumWarning(kcAISystemGoalType.values());
+            case NUMBER_OPERATION:
+                return getEnumWarning(NumberOperation.values());
+            case CAMERA_PIVOT_PARAM:
+                return getEnumWarning(kcCameraPivotParam.values());
+            case ATTACH_ID:
+                return getEnumWarning(kcAttachID.values());
+            case SPECIAL_ACTIVATION_BIT_MASK:
+                return getEnumWarning(kcSpecialActivationMask.values());
+            case SOUND:
+                if (intValue < 0 || instance == null || intValue >= instance.getNextFreeSoundId() || !instance.hasFullSoundPathFor(intValue))
+                    return intValue + " does not appear to correspond to any named sound effects.";
+                break;
+            case MILLISECONDS:
+                if (intValue < 0)
+                    return intValue + " would indicate a time in the past. (Timestamps must be positive)";
+                break;
+            case ANIMATION_TICK:
+                if (intValue != kcActionSetAnimation.DEFAULT_START_TIME && !Float.isFinite(floatValue))
+                    return floatValue + " cannot be represented as an animation tick value.";
+                break;
+            case ALARM_ID:
+                if (intValue < 0 || intValue >= Constants.BITS_PER_INTEGER)
+                    return intValue + " is not a valid alarm ID.";
+                break;
+            case VARIABLE_ID:
+                int variableId = getAsInteger();
+                if (variableId < 0 || variableId >= 8)
+                    return variableId + " is not a valid variable ID.";
+
+                break;
+            case BONE_TAG:
+                kcActorBaseDesc actorDesc = executor != null ? executor.getExecutingActorBaseDescription() : null;
+                kcCResourceSkeleton skeleton = actorDesc != null ? actorDesc.getSkeleton() : null;
+                if (skeleton != null) {
+                    kcNode bone = skeleton.getNodeByTag(intValue);
+                    if (bone == null)
+                        return intValue + " is not a valid bone tag for the skeleton '" + skeleton.getName() + "'.";
+                } else if (intValue != 0) {
+                    return intValue + " is not a valid bone tag when the entity (" + (actorDesc != null ? actorDesc.getResource().getName() : "null") + ") has no skeleton!";
+                }
+
+                break;
+        }
+
+        // No warning.
+        return null;
+    }
+
+    /**
      * Reads the parameter value from a config value node.
      * @param instance the game instance which the script belongs to
      * @param node The node to load the value from.
@@ -182,6 +258,8 @@ public class kcParam {
                 setValue(node.getAsUnsignedInteger());
                 break;
             case INT:
+            case ALARM_ID:
+            case VARIABLE_ID:
                 setValue(node.getAsInteger());
                 break;
             case BOOLEAN:
@@ -216,9 +294,6 @@ public class kcParam {
                 break;
             case SOUND:
                 int sfxId = instance.getSfxIdFromFullSoundPath(node.getAsString());
-                if (sfxId < 0)
-                    instance.getLogger().warning("Could not resolve the sound path '" + node.getAsString() + "'.");
-
                 setValue(sfxId);
                 break;
             case MILLISECONDS:
@@ -236,20 +311,6 @@ public class kcParam {
                 break;
             case ANGLE:
                 setValue((float) Math.toRadians(node.getAsFloat()));
-                break;
-            case ALARM_ID:
-                int alarmId = node.getAsInteger();
-                if (alarmId < 0 || alarmId >= Constants.BITS_PER_INTEGER)
-                    instance.getLogger().warning("The script references alarm ID " + alarmId + ", which is not a valid alarm ID.");
-
-                setValue(alarmId);
-                break;
-            case VARIABLE_ID:
-                int variableId = node.getAsInteger();
-                if (variableId < 0 || variableId >= 8)
-                    instance.getLogger().warning("The script references variable ID " + variableId + ", which is not a valid variable ID.");
-
-                setValue(variableId);
                 break;
             case BONE_TAG:
                 kcActorBaseDesc actorDesc = executor != null ? executor.getExecutingActorBaseDescription() : null;
@@ -299,6 +360,8 @@ public class kcParam {
                 node.setAsUnsignedInteger(getAsInteger());
                 break;
             case INT:
+            case ALARM_ID:
+            case VARIABLE_ID:
                 node.setAsInteger(getAsInteger());
                 break;
             case BOOLEAN:
@@ -351,20 +414,6 @@ public class kcParam {
             case ANGLE:
                 node.setAsFloat(getAsAngleInDegrees());
                 break;
-            case ALARM_ID:
-                int alarmId = getAsInteger();
-                if (alarmId < 0 || alarmId >= Constants.BITS_PER_INTEGER)
-                    settings.getLogger().warning("The script references alarm ID " + alarmId + ", which is not a valid alarm ID.");
-
-                node.setAsInteger(alarmId);
-                break;
-            case VARIABLE_ID:
-                int variableId = getAsInteger();
-                if (variableId < 0 || variableId >= 8)
-                    settings.getLogger().warning("The script references variable ID " + variableId + ", which is not a valid variable ID.");
-
-                node.setAsInteger(variableId);
-                break;
             case BONE_TAG:
                 kcActorBaseDesc actorDesc = executor != null ? executor.getExecutingActorBaseDescription() : null;
                 kcCResourceSkeleton skeleton = actorDesc != null ? actorDesc.getSkeleton() : null;
@@ -386,6 +435,19 @@ public class kcParam {
             default:
                 throw new RuntimeException("Could not convert kcParamType " + paramType + " toString for value " + DataUtils.toByteString(this.bytes) + ".");
         }
+    }
+
+    private <E extends Enum<E>> String getEnumWarning(E[] values) {
+        int value = getAsInteger();
+
+        if (values == null || value < 0 || value >= values.length) {
+            String enumTypeName = (values != null && values.length > 0 && values[0] != null)
+                    ? values[0].getClass().getSimpleName() : "Enum";
+
+            return value + " is not representable as a(n) " + enumTypeName + ".";
+        }
+
+        return null;
     }
 
     private <E extends Enum<E>> void setNodeToEnumName(StringNode node, E[] values) {

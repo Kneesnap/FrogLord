@@ -28,13 +28,13 @@ public enum kcActionID {
     SET_STATE((byte) 0x08, "SetState_DoNothing", kcEntityInheritanceGroup.ACTOR_BASE, false), // kcCActorBase::OnCommand/kcCActor::OnCommand NOTE: This is unused, and while the name suggests it should have parameters, none appear implemented.
     SET_TARGET((byte) 0x09, "SetTarget", kcEntityInheritanceGroup.ENTITY, false, kcActionSetTarget::new), // kcCEntity::OnCommand
     SET_SPEED((byte) 0x0A, "SetAnimationSpeed", kcEntityInheritanceGroup.ACTOR_BASE, true, kcActionSetSpeed::new), // kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand
-    SET_POSITION((byte) 0x0B, "SetPositionOnAxis", kcEntityInheritanceGroup.ENTITY3D, false, kcActionSetPosition::new), // kcCEntity3D::OnCommand
+    SET_POSITION((byte) 0x0B, "SetAxisPosition", kcEntityInheritanceGroup.ENTITY3D, false, kcActionSetPosition::new), // kcCEntity3D::OnCommand
     SET_POSITION_XYZ((byte) 0x0C, "SetPosition", kcEntityInheritanceGroup.ENTITY3D, false, kcActionSetPositionXyz::new), // kcCEntity3D::OnCommand
-    ADD_POSITION((byte) 0x0D, "AddPositionOnAxis", kcEntityInheritanceGroup.ENTITY3D, false, kcActionLazyTemplate.ADD_POSITION_ARGUMENTS), // kcCEntity3D::OnCommand
+    ADD_POSITION((byte) 0x0D, "AddToAxisPosition", kcEntityInheritanceGroup.ENTITY3D, false, kcActionLazyTemplate.ADD_POSITION_ARGUMENTS), // kcCEntity3D::OnCommand
     ADD_POSITION_XYZ((byte) 0x0E, "AddPosition", kcEntityInheritanceGroup.ENTITY3D, false, kcActionLazyTemplate.ADD_POSITION_XYZ_ARGUMENTS), // kcCEntity3D::OnCommand
-    SET_ROTATION((byte) 0x0F, "SetRotationOnAxis", kcEntityInheritanceGroup.ENTITY3D, false, kcActionLazyTemplate.SET_ROTATION_ARGUMENTS), // kcCEntity3D::OnCommand
+    SET_ROTATION((byte) 0x0F, "SetAxisRotation", kcEntityInheritanceGroup.ENTITY3D, false, kcActionLazyTemplate.SET_ROTATION_ARGUMENTS), // kcCEntity3D::OnCommand
     SET_ROTATION_XYZ((byte) 0x10, "SetRotation", kcEntityInheritanceGroup.ENTITY3D, false, kcActionLazyTemplate.SET_ROTATION_XYZ_ARGUMENTS), // kcCEntity3D::OnCommand
-    ADD_ROTATION((byte) 0x11, "AddRotationOnAxis", kcEntityInheritanceGroup.ENTITY3D, true, kcActionLazyTemplate.ADD_ROTATION_ARGUMENTS), // kcCActorBase::ProcessAction, kcCEntity3D::OnCommand
+    ADD_ROTATION((byte) 0x11, "AddToAxisRotation", kcEntityInheritanceGroup.ENTITY3D, true, kcActionLazyTemplate.ADD_ROTATION_ARGUMENTS), // kcCActorBase::ProcessAction, kcCEntity3D::OnCommand
     ADD_ROTATION_XYZ((byte) 0x12, "AddRotation", kcEntityInheritanceGroup.ENTITY3D, true, kcActionLazyTemplate.ADD_ROTATION_XYZ_ARGUMENTS), // kcCActorBase::ProcessAction, kcCEntity3D::OnCommand
     ROTATE_RIGHT((byte) 0x13, "RotateRight", kcEntityInheritanceGroup.ENTITY3D, true, kcActionLazyTemplate.ROTATE_RIGHT_ARGUMENTS), // kcCActorBase::ProcessAction, kcCEntity3D::OnCommand
     ROTATE_LEFT((byte) 0x14, "RotateLeft", kcEntityInheritanceGroup.ENTITY3D, true, kcActionLazyTemplate.ROTATE_LEFT_ARGUMENTS), // kcCActorBase::ProcessAction, kcCEntity3D::OnCommand
@@ -46,7 +46,7 @@ public enum kcActionID {
     WAIT_ROTATE_XYZ((byte) 0x1A, "WaitForFullRotation", null, true, kcActionEmptyTemplate::new), // kcCActorBase::ProcessAction, Seems unused.
     WAIT_ANIMATION((byte) 0x1B, "WaitForAnimation", null, true, kcActionEmptyTemplate::new), // kcCActorBase::ProcessAction
     LOOP((byte) 0x1D, "Loop", null, true, kcActionLazyTemplate.LOOP_ARGUMENTS), // kcCActorBase::ProcessAction. Marks the sequence to be restarted a given number of times. This will not cause it to restart during subsequent executions.
-    IMPULSE((byte) 0x1E, "ApplyMotionImpulse", kcEntityInheritanceGroup.ACTOR_BASE, true, kcActionLazyTemplate.IMPULSE_ARGUMENTS), // kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand
+    IMPULSE((byte) 0x1E, "ApplyImpulse", kcEntityInheritanceGroup.ACTOR_BASE, true, kcActionLazyTemplate.IMPULSE_ARGUMENTS), // kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand
     DAMAGE((byte) 0x1F, "Damage_REMAPPED", kcEntityInheritanceGroup.ACTOR_BASE, false, kcActionGiveDamage::new), // kcCActorBase::OnCommand/kcCActor::OnCommand. This isn't called directly, but GIVE_DAMAGE is automatically remapped to this command.
     PROMPT((byte) 0x2F, "Prompt", kcEntityInheritanceGroup.ACTOR_BASE, false, kcActionLazyTemplate.PROMPT_ARGUMENTS), // kcCActorBase::OnCommand/kcCActor::OnCommand NOTE: This seems unused, and we don't know for certain the argument is labelled correctly. It is implemented though. This feature can be useful to reduce code duplication however, so it makes sense to use it.
     DIALOG((byte) 0x30, "ShowDialog", kcEntityInheritanceGroup.ACTOR_BASE, false, kcActionDialog::new), // kcCActorBase::OnCommand/kcCActor::OnCommand

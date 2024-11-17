@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.utils.objects.StringNode;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * A basic template kcAction.
@@ -37,6 +38,22 @@ public abstract class kcActionTemplate extends kcAction {
     public void save(kcParamWriter writer) {
         for (int i = 0; i < this.arguments.size(); i++)
             writer.write(this.arguments.get(i));
+    }
+
+    @Override
+    public void printWarnings(Logger logger) {
+        super.printWarnings(logger);
+
+        // Print argument warnings.
+        kcParam[] params = this.arguments.toArray(new kcParam[0]);
+        kcArgument[] argumentTemplates = getArgumentTemplate(params);
+        for (int i = 0; i < this.arguments.size(); i++) {
+            kcParam argument = this.arguments.get(i);
+            kcArgument argumentTemplate = argumentTemplates[i];
+            String warning = argument.getInvalidValueWarning(getExecutor(), argumentTemplate.getType());
+            if (warning != null)
+                printWarning(logger, warning + " (kcParamType: " + argumentTemplate.getType() + ")");
+        }
     }
 
     /**

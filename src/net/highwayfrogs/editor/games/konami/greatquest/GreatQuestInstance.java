@@ -48,10 +48,7 @@ import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
-import net.highwayfrogs.editor.utils.DataUtils;
-import net.highwayfrogs.editor.utils.FileUtils;
-import net.highwayfrogs.editor.utils.NumberUtils;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -386,6 +383,15 @@ public class GreatQuestInstance extends GameInstance {
             return soundPath.substring(lastSlashFound + 1);
 
         return (includeId ? "[" + NumberUtils.padNumberString(soundId, 4) + "] " : "") + soundPath;
+    }
+
+    /**
+     * Returns true if there is a sound path linked for the given SFX ID.
+     * @param sfxId the SFX id to lookup
+     * @return true iff there is a corresponding sound path.
+     */
+    public boolean hasFullSoundPathFor(int sfxId) {
+        return !StringUtils.isNullOrWhiteSpace(this.soundPathsById.get(sfxId));
     }
 
     /**

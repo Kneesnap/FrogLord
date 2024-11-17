@@ -330,10 +330,10 @@ Not used in the vanilla game.
 See `SetFlags` above for a list of flags.  
 
 ### InitFlags (Both)
-**Summary:** Clears instance entity flags, then applies the given entity instance flags.  
+**Summary:** Clears instance entity flags, then applies the provided entity instance flags.  
 **Supported Entity Types:** All  
 **Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity::OnCommand`  
-**Usage:** `InitFlags [Entity Flags]`
+**Usage:** `InitFlags [Entity Flags]`  
 See `SetFlags` above for a list of flags.  
 This can be thought of as a combination of the previous two effects: `ClearFlags` and `SetFlags`.  
 Firstly, `InitFlags` will clear (almost) all entity instance flags. Unlike `ClearFlags` these are hardcoded and not the flags provided to `InitFlags` by the user.  
@@ -349,19 +349,20 @@ Not used in the vanilla game.
 **Summary:** Change the script owner's target entity.  
 **Supported Entity Types:** All  
 **Ghidra Reference (Ignore):** `kcCEntity::OnCommand`  
-**Usage:** `SetTarget <kcCResourceEntityInst targetEntity>`  
+**Usage:** `SetTarget <targetEntityName>`  
 A target entity is used for AI-related operations.  
 For example, most enemies have `"FrogInst001"` as their target, so they attack Frogger.  
 Others, such as Fairy Frogmother face the player by setting their target as `FrogInst001`.  
 
 ### SetAnimationSpeed (Both)
-**Summary:** Sets the animation speed for the script owner. (Default: 1.0?)  
+**Summary:** Sets the animation speed for the script owner.  
 **Supported Entity Types:** Base Actors  
 **Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand`  
-**Usage:** `SetAnimationSpeed <float speed>`  
+**Usage:** `SetAnimationSpeed <speed>`  
+Speed is a decimal number, likely multiplicative, so 1.0 would be 1x speed, 2.5 is 2.5x speed, etc.  
 Not used in the vanilla game.
 
-### SetPositionOnAxis (Script Only)
+### SetAxisPosition (Script Only)
 **Summary:** Sets the script owner's positional coordinate on the given axis.  
 **Supported Entity Types:** All 3D Entities  
 **Ghidra Reference (Ignore):** `kcCEntity3D::OnCommand`  
@@ -375,24 +376,24 @@ Not used in the vanilla game.
 **Ghidra Reference (Ignore):** `kcCEntity3D::OnCommand`  
 **Usage:** `SetPosition <x> <y> <z>`  
 
-### AddPositionOnAxis (Script Only)
-**Summary:** Offsets the enttiy position by the given value on the specified axis.  
+### AddToAxisPosition (Script Only)
+**Summary:** Offsets the script owner's current position by the given value on the specified axis.  
 **Supported Entity Types:** All 3D Entities  
 **Ghidra Reference (Ignore):** `kcCEntity3D::OnCommand`  
-**Usage:** `AddPositionOnAxis <X|Y|Z> <amount>`  
+**Usage:** `AddToAxisPosition <X|Y|Z> <amount>`  
 Not used in the vanilla game.
 
 ### AddPosition (Script Only)
-**Summary:** Adds values to the script owner's current position.  
+**Summary:** Adds an offset to the script owner's current position.  
 **Supported Entity Types:** All 3D Entities  
 **Ghidra Reference (Ignore):** `kcCEntity3D::OnCommand`  
-**Usage:** `AddPosition <x> <y> <z>`  
+**Usage:** `OffsetPosition <x> <y> <z>`  
 
-### SetRotationOnAxis (Script Only)
+### SetAxisRotation (Script Only)
 **Summary:** Sets a rotation value on the specified axis.  
 **Supported Entity Types:** All 3D Entities  
 **Ghidra Reference (Ignore):** `kcCEntity3D::OnCommand`  
-**Usage:** `SetRotationOnAxis <X|Y|Z> <angleInDegrees>`  
+**Usage:** `SetAxisRotation <X|Y|Z> <angleInDegrees>`  
 Not used in the vanilla game.
 
 ### SetRotation (Script Only)
@@ -402,11 +403,11 @@ Not used in the vanilla game.
 **Usage:** `SetRotation <xAngleInDegrees> <yAngleInDegrees> <zAngleInDegrees>`  
 Not used in the vanilla game.
 
-### AddRotationOnAxis (Both)
+### AddToAxisRotation (Both)
 **Summary:** Adds a rotation value on the specified axis.  
 **Supported Entity Types:** All 3D Entities  
 **Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCEntity3D::OnCommand`  
-**Usage:** `AddRotationOnAxis <X|Y|Z> <angleInDegrees>`  
+**Usage:** `AddToAxisRotation <X|Y|Z> <angleInDegrees>`  
 Not used in the vanilla game.
 
 ### AddRotation (Both)
@@ -417,13 +418,13 @@ Not used in the vanilla game.
 Not used in the vanilla game.
 
 ### RotateRight (Both)
-**Summary:** Rotates the script owner to look right.  
+**Summary:** Rotates the script owner to their right.  
 **Supported Entity Types:** All 3D Entities  
 **Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCEntity3D::OnCommand`  
 **Usage:** `RotateRight <angleInDegrees>`  
 
 ### RotateLeft (Both)
-**Summary:** Rotates the script owner to look left.  
+**Summary:** Rotates the script owner to their left.  
 **Supported Entity Types:** All 3D Entities  
 **Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCEntity3D::OnCommand`  
 **Usage:** `RotateLeft <angleInDegrees>`  
@@ -441,9 +442,12 @@ Not used in the vanilla game.
 **Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand`  
 **Usage:** `SetAnimation <animationFileName> [--Repeat] [--FirstAnimationInSequence] [--StartTime <startTimeInSeconds>]`  
 While this effect appears to work outside an action sequence, the game scripts always use `SetSequence` instead of directly calling `SetAnimation`.  
+In other words, this command should mainly be called from action sequences, and not scripts.  
+Scripts should instead use `SetSequence` to apply the sequence which then in-turn calls `SetAnimation`.  
+It has been done this way so that the AI system can also activate sequences without causing major visual issues depending on what the script is doing.  
 
 ### SetSequence (Script Only)
-**Summary:** Sets the active action sequence for the script owner.  
+**Summary:** Sets the script owner's active action sequence.  
 **Supported Entity Types:** Base Actors  
 **Ghidra Reference (Ignore):** `kcCActorBase::OnCommand/kcCActor::OnCommand`  
 **Usage:** `SetSequence <actionSequenceName> [--IgnoreIfAlreadyActive] [--OpenBoneChannel]`  
@@ -455,7 +459,7 @@ While this effect appears to work outside an action sequence, the game scripts a
 
 --OpenBoneChannel
 # Appears unused in the vanilla game.
-# This seems to combine the new sequence with the existing one (I think?)
+# This seems to combine the current animation with any new ones
 # Eg: Only the bones which aren't animated on the existing sequence will be animated from the new one.
 ```
 
@@ -487,12 +491,15 @@ Not used in the vanilla game.
 **Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction`  
 **Usage:** `Loop <numberOfTimesToLoop>`  
 
-### ApplyMotionImpulse (Both)
-**Summary:** Applies a motion "impulse" to the script owner.  
+### ApplyImpulse (Both)
+**Summary:** Applies a physics-based motion "impulse" (instantaneous force) to the script owner.  
 **Supported Entity Types:** Base Actors  
 **Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand`  
-**Usage:** `ApplyMotionImpulse <x> <y> <z>`
+**Usage:** `ApplyImpulse <x> <y> <z>`  
 This will only work if the `--EnablePhysics` flag is applied to the script owner.  
+The physics system in the game is not currently reverse engineered, but this is most likely for impulse-based dynamics (physics simulation).  
+That would mean that "impulse" means "the change in momentum of an object".  
+So in other words, `ApplyImpulse` changes the momentum of the entity.  
 
 ### Prompt (Unsupported)
 **Summary:** This was never fully supported by the game, but it looks like it was supposed to allow the player to make choices within dialog text-boxes.  
@@ -528,7 +535,7 @@ The main purpose of this feature is to run script effects after a delay.
 **Summary:** Triggers a named event.  
 **Supported Entity Types:** All  
 **Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCEntity::OnCommand`  
-**Usage:** `TriggerEvent <String eventName>`  
+**Usage:** `TriggerEvent <eventName>`  
 
 **Valid Events:**  
 ```properties
@@ -585,7 +592,8 @@ A sound file path can be obtained by right-clicking a sound in the FrogLord soun
 **Usage:** `SetVariable <variableId> <value>`  
 Stores the value into the variable ID/slot given.  
 Valid variable IDs are between 0 and 7.  
-The provided value must be a whole number.
+The provided value must be a whole number.  
+The only way to use a variable is with the `SendNumber` effect.  
 
 ### AddToVariable (Script Only)
 **Summary:** Adds a value to one of the script owner's entity variables by its ID.  
@@ -595,9 +603,10 @@ The provided value must be a whole number.
 Adds the value into the variable ID/slot.  
 Valid variable IDs are between 0 and 7.  
 The provided value must be a whole number.  
+The only way to use a variable is with the `SendNumber` effect.
 
 ### SendNumber (Script Only)
-**Summary:** Sends a number, which will cause the `OnReceiveNumber` script cause.
+**Summary:** Sends a number, which will cause the `OnReceiveNumber` script cause.  
 **Supported Entity Types:** All  
 **Ghidra Reference (Ignore):** `kcCEntity::OnCommand`  
 **Usage:** `SendNumber <LITERAL_NUMBER|ENTITY_VARIABLE|RANDOM> <number>`  
@@ -605,6 +614,7 @@ The provided value must be a whole number.
 LITERAL_NUMBER # The number sent will be the number provided as an argument.
 ENTITY_VARIABLE # The number sent will be the value of the entity variable at the provided ID.
 RANDOM # The number sent will be a random number between 0 and the number provided.
+# When using RANDOM, the number provided is exclusive, so if 'RANDOM 5' is provided, the random numbers generated are between 0 and 4.
 ```
 
 If the `--AsEntity` flag is included, the number will be sent to the `--AsEntity` target instead of the script owner.  
@@ -721,14 +731,14 @@ SLEEP # Applies the entity sleep animation.
 # The bone will usually be an arm, but some entities will use bones such as part of a sword.
 # This makes combat appear more fluid, as the player will only react to getting hit the moment they are hit.
 # The 'radius' value is a decimal number representing the collision/bounding sphere's radius.
-# The 'focus' value is a whole number with a currently unknown purpose.
+# The 'focus' value is a whole number with a currently unknown purpose. It is either 0 or 2.
 Attach ATTACK_SENSOR <boneNameOrId> <radius> <focus>
 AttachSensor <boneNameOrId> <radius> <focus>
 
 # Enables a listener to allow collision script events to fire
 # Without doing this, I don't believe entities will fire collision events.
 # The 'radius' value is a decimal number representing the collision/bounding sphere's radius.
-# The 'focus' value is a whole number with a currently unknown purpose.
+# The 'focus' value is a whole number with a currently unknown purpose. It is either 0 or 2.
 Attach BUMP_SENSOR <boneNameOrId> <radius> <focus>
 
 # Enables a projectile launcher.
@@ -740,7 +750,7 @@ Attach PARTICLE_EMITTER <boneNameOrId> <particleEmitterParamName>
 ```
 
 ### Detach (Script Only)
-**Summary:** Detaches a previously attached PARTICLE_EMITTER.  
+**Summary:** Detaches a previously attached PARTICLE_EMITTER from a bone on the script owner.  
 **Supported Entity Types:** CCharacter  
 **Ghidra Reference (Ignore):** `CCharacter::OnCommand`  
 **Usage:** `Detach PARTICLE_EMITTER <boneNameOrId>`
@@ -769,7 +779,7 @@ BOTH # Controls both entity visibility and terrain visibility.
 **Summary:** Activates a new camera, causing the game to switch to it.  
 **Supported Entity Types:** All  
 **Ghidra Reference (Ignore):** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnActivatePivotCamera`  
-**Usage:** `ActivateCamera <transitionInSeconds>`
+**Usage:** `ActivateCamera <transitionInSeconds>`  
 `transitionInSeconds` is a decimal number indicating how long it will take (in seconds) to switch to the new camera.
 
 ### DeactivateCamera (Script Only)
@@ -790,7 +800,7 @@ BOTH # Controls both entity visibility and terrain visibility.
 **Supported Entity Types:** All  
 **Ghidra Reference (Ignore):** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnSetPivot`  
 **Usage:** `SetCameraPivot <entityName>`  
-The pivot entity is an entity which the camera will calculate where to be in the world by finding a position that puts the pivot entity between the camera and the camera's target entity.  
+The pivot entity is an entity which the camera will use to calculate where to be in the world by finding a position that puts the pivot entity between the camera and the camera's target entity.  
 In other words, the position/rotation of the camera is calculated by facing the target entity in a manner that also makes the camera directly face the pivot entity.
 
 ### SetCameraParam (Script Only)
@@ -803,12 +813,12 @@ The value is a decimal number.
 ```properties
 # kcCameraPivotParam Values:
 PIVOT_DISTANCE # How much distance to put between the camera and the pivot entity.
-TARGET_OFFSET_X # An offset to the position of the target entity.
-TARGET_OFFSET_Y # An offset to the position of the target entity.
-TARGET_OFFSET_Z # An offset to the position of the target entity.
-PIVOT_OFFSET_X # An offset to the position of the pivot entity.
-PIVOT_OFFSET_Y # An offset to the position of the pivot entity.
-PIVOT_OFFSET_Z # An offset to the position of the pivot entity.
+TARGET_OFFSET_X # An offset to the position of the target entity which the camera will look at.
+TARGET_OFFSET_Y # An offset to the position of the target entity which the camera will look at.
+TARGET_OFFSET_Z # An offset to the position of the target entity which the camera will look at.
+PIVOT_OFFSET_X # An offset between the camera and the position of the pivot entity.
+PIVOT_OFFSET_Y # An offset between the camera and the position of the pivot entity.
+PIVOT_OFFSET_Z # An offset between the camera and the position of the pivot entity.
 TRANSITION_DURATION # How long the camera transition should take.
-CAMERA_BASE_FLAGS # The flags to apply to the camera entity.
+CAMERA_BASE_FLAGS # The flags to apply to the camera entity. (Currently undocumented/unknown)
 ```
