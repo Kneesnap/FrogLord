@@ -39,7 +39,7 @@ Since [mods must follow this guide](modding-guide.md), the recommended method fo
 GQS Script Group files are designed to organize GQS scripts.  
 They reduce the number of files necessary when making a script by allowing separate resources such as entities, dialog text, script functions, and others to be included in a single file.
 
-```toml
+```PowerShell
 # The following section contains the text/string resources which can be used as dialog text.
 # The quotes are optional, but help make syntax highlighters display this file more cleanly.
 [Dialog]
@@ -64,7 +64,7 @@ FFM_DIALOG_001="This is an example, which could be displayed in-game as dialog."
 # This section contains scripts.
 # The scripts are added to existing entity scripts, meaning if an entity can have parts of its script spread across different GQS Script groups.
 
-[[FrogMotherInst001]] # The name of the entity to add script functions to.
+[[FrogmotherInst001]] # The name of the entity to add script functions to.
 [[[Function]]] # Define a new function for Fairy FrogMotherInst001. (Note the 3 square brackets).
 cause=OnPlayer INTERACT # When the player interacts with Fairy Frogmother.
 ShowDialog "FFM_DIALOG_001" # Shows the dialog defined earlier to the player.
@@ -195,7 +195,7 @@ The `dialogStrName` should be the name of the text resource containing the dialo
 See `ShowDialog` for more details.  
 
 ### OnNumber
-**Summary:** Executes when a number is received equal to the specified number.  
+**Summary:** Executes when a number is received matching the given criteria.  
 **Supported Entity Types:** All  
 **Ghidra Reference (For Coders):** `kcCEntity::OnNumber`  
 **Usage:** `OnNumber <operation> <number>`  
