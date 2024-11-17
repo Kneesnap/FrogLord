@@ -5,7 +5,8 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
+import net.highwayfrogs.editor.games.generic.data.GameData;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestImageFile;
 import net.highwayfrogs.editor.utils.FileUtils;
@@ -17,10 +18,10 @@ import net.highwayfrogs.editor.utils.NumberUtils;
  */
 @Getter
 @Setter
-public class kcMaterial implements IMultiLineInfoWriter, IBinarySerializable {
+public class kcMaterial extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
     private String materialName;
     private String textureFileName;
-    private int flags; // TODO: Let's document the different flags.
+    private int flags;
     private float xpVal = 0F;
     private float diffuseRed = 1F;
     private float diffuseGreen = 1F;
@@ -44,8 +45,14 @@ public class kcMaterial implements IMultiLineInfoWriter, IBinarySerializable {
     private static final int NAME_SIZE = 32;
     private static final int FILENAME_SIZE = 32;
 
-    private static final int MATERIAL_FLAG_TEXTURED = Constants.BIT_FLAG_0; // 0x01: kcImportMaterialTexture(_kcMaterial*) will remove this flag if the texture is not found.
+    private static final int MATERIAL_FLAG_TEXTURED = Constants.BIT_FLAG_0; // 0x01: kcImportMaterialTexture(_kcMaterial*) will remove this flag if the texture is not found. Used by kcOTARenderCallbackBuffer::FlushBuffer
     private static final int MATERIAL_FLAG_ENABLE_ALPHA_BLEND = Constants.BIT_FLAG_3; // 0x08, Confirmed via SetMaterial(_kcMaterial*). Ignored in maps, and also in kcModel if blendMode != KCBLEND_DISABLE. Used by kcOTARenderCallbackBuffer::AddVtxBuffer to determine if there is transparency/if it should render later.
+    private static final int MATERIAL_FLAG_UNKNOWN = Constants.BIT_FLAG_4; // 0x10, seen on materials named "water", likely indicating something such as UV scrolling, transparency, or just that something is in fact, water. I have not yet found where this flag is checked, if it is checked. Maybe on the GPU it will indicate texture transform? Not sure! We should try removing this flag to see if it changes anything.
+    private static final int FLAG_VALIDATION_MASK = MATERIAL_FLAG_UNKNOWN | MATERIAL_FLAG_ENABLE_ALPHA_BLEND | MATERIAL_FLAG_TEXTURED;
+
+    public kcMaterial(GreatQuestInstance instance) {
+        super(instance);
+    }
 
     /**
      * Tests if there is a texture assigned to this material.
@@ -87,6 +94,7 @@ public class kcMaterial implements IMultiLineInfoWriter, IBinarySerializable {
         // kcCResourceModel::Load(char*) sets the texture path to be the folder containing the .vtx file, enabling textures to be resolved by their filename instead of this.
         // The value is overwritten when kcImportMaterialTexture is called (Specifically, the call to kcImportTexture will overwrite the existing value, if it exists), which occurs when loading maps + models.
         reader.skipInt();
+        warnAboutInvalidBitFlags(this.flags, FLAG_VALIDATION_MASK, "kcMaterial['" + this.materialName + "']");
     }
 
     /**

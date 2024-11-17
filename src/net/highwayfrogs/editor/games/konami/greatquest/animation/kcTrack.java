@@ -126,7 +126,7 @@ public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineI
             getLogger().warning("Encountered a kcTrack which had the IS_PACKED flag set! (This has never been observed before)");
 
         int mode = getTrackMode();
-        if (mode != 0 && mode != 1 && mode != 2)
+        if (mode != 0 && mode != 1 && mode != 2) // 17 is seen in the PS2 NTSC prototype.
             getLogger().severe("Encountered unexpected track mode of: " + mode);
     }
 

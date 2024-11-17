@@ -19,7 +19,7 @@ import net.highwayfrogs.editor.system.Config;
 @Setter
 public class kcActorDesc extends kcActorBaseDesc {
     private final kcHealthDesc health;
-    private int invincibleDurationLimitMs = 2000; // TODO: May not be used?
+    private int invincibleDurationLimitMs = 2000; // May not be used?
     private static final int PADDING_VALUES = 3;
 
     public kcActorDesc(@NonNull kcCResourceGeneric resource, kcEntityDescType entityDescType) {

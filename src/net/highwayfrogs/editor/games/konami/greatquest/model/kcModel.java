@@ -43,7 +43,7 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
     // PS2 FVF Flags:
     public static final int FVF_FLAG_PS2_NORMALS_HAVE_W = Constants.BIT_FLAG_4; // 0x10
     public static final int FVF_FLAG_PS2_POSITIONS_HAVE_SIZE = Constants.BIT_FLAG_5; // 0x20
-    public static final int FVF_FLAG_PS2_DIFFUSE_RGBA255 = Constants.BIT_FLAG_6; // 0x40
+    public static final int FVF_FLAG_PS2_DIFFUSE_RGBA255 = Constants.BIT_FLAG_6; // 0x40 -> Doesn't seem to always be correct.
     public static final int FVF_FLAG_PS2_HAS_MATRIX = Constants.BIT_FLAG_12; // 0x1000, Also disables blend?
 
     // PC FVF Flags:
@@ -92,7 +92,7 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
         // 3. Read Materials.
         this.materials.clear();
         for (int i = 0; i < materialCount; i++) {
-            kcMaterial newMaterial = new kcMaterial();
+            kcMaterial newMaterial = new kcMaterial(getGameInstance());
             newMaterial.load(reader);
             newMaterial.applyModelMaterialInfo(); // Some of the data should be destroyed / overwritten.
             this.materials.add(newMaterial);

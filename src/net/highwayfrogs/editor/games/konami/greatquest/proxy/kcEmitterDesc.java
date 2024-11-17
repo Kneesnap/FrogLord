@@ -20,12 +20,13 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 @Getter
 @Setter
 public class kcEmitterDesc extends kcProxyCapsuleDesc {
-    private int triggerType;
-    private int frequency;
-    private int lifeTime;
-    private int spawnLimit;
-    private int maxSpawn;
-    private float spawnRange;
+    // The following default data has been pulled from 'TEST' in mushroom valley, which as mentioned before, is likely unused.
+    private int triggerType = 2;
+    private int frequency = 10000;
+    private int lifeTime = -1;
+    private int spawnLimit = 1;
+    private int maxSpawn = 5;
+    private float spawnRange = 2F;
     private final GreatQuestHash<kcCResourceGeneric> entityDescRef;
 
     public kcEmitterDesc(kcCResourceGeneric resource) {
@@ -72,7 +73,7 @@ public class kcEmitterDesc extends kcProxyCapsuleDesc {
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         super.writeMultiLineInfo(builder, padding);
-        builder.append("Trigger: ").append(this.triggerType).append(Constants.NEWLINE); // TODO: ENUM?
+        builder.append("Trigger: ").append(this.triggerType).append(Constants.NEWLINE);
         builder.append("Frequency: ").append(this.frequency).append(Constants.NEWLINE);
         builder.append("Life Time: ").append(this.lifeTime).append(Constants.NEWLINE);
         builder.append("Spawn Limit: ").append(this.spawnLimit).append(Constants.NEWLINE);

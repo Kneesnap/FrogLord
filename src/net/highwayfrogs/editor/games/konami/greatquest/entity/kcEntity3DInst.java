@@ -83,7 +83,7 @@ public class kcEntity3DInst extends kcEntityInst {
             entityDisplay.setPosition(newX, newY, newZ);
         });
 
-        // Scale Editor TODO: I think we want to make these gizmos managed by the entity editor for maximum flexibility.
+        // Scale Editor
         grid.addScaleEditor(manager.getController(), GIZMO_ID, "Scale", this.position.getX(), this.position.getY(), this.position.getZ(), this.scale.getX(), this.scale.getY(), this.scale.getZ(), .02, (meshView, oldX, oldY, oldZ, newX, newY, newZ) -> {
             this.scale.setX((float) newX);
             this.scale.setY((float) newY);

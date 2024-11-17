@@ -103,7 +103,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
 
         // Read materials.
         for (int i = 0; i < materialCount; i++) {
-            kcMaterial newMaterial = new kcMaterial();
+            kcMaterial newMaterial = new kcMaterial(getGameInstance());
             newMaterial.load(reader);
             this.materials.add(newMaterial);
         }
