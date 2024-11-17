@@ -214,7 +214,7 @@ GREATER_THAN_OR_EQUAL # Received number >= <number>
 ```
 
 ### OnReceivePlayerHasItem
-**Summary:** When the script owner receives whether the player has an item (from `SendWhetherPlayerHasItem`).  
+**Summary:** When the script owner receives whether the player has an item (from `SendPlayerHasItem`).  
 **Supported Entity Types:** Props & Characters  
 **Ghidra Reference (For Coders):** `CCharacter::OnWithItem, CProp::OnWithItem`  
 **Usage:** `OnReceivePlayerHasItem <true|false>`  
@@ -625,11 +625,11 @@ Not used in the vanilla game.
 **Usage:** `Do not use.`  
 Not used in the vanilla game.
 
-### SendWhetherPlayerHasItem (Script Only)
-**Summary:** Send whether the player has the given item, thus causing `OnReceiveWhetherPlayerHasItem`.  
+### SendPlayerHasItem (Script Only)
+**Summary:** Send whether the player has the given item, thus causing `OnReceivePlayerHasItem`.  
 **Supported Entity Types:** Character or Prop  
 **Ghidra Reference (For Coders):** `CCharacter::OnCommand, CProp::OnCommand`  
-**Usage:** `SendWhetherPlayerHasItem <inventoryItem>`  
+**Usage:** `SendPlayerHasItem <inventoryItem>`  
 Click [here](../../../../src/net/highwayfrogs/editor/games/konami/greatquest/generic/InventoryItem.java) to see a list of InventoryItem values.  
 When the `--AsEntity` flag is included, the number will be sent to the `--AsEntity` target instead of the script owner.  
 
