@@ -18,14 +18,14 @@ public enum kcScriptCauseEntityAction {
     PICKUP_ITEM(7, "When the player picks up the script entity", true, false, kcEntityInheritanceGroup.ITEM), // Target Trigger: CCharacter::PickupCallback
     TAKE_DAMAGE(8, "When the script entity takes damage", false, true, kcEntityInheritanceGroup.ACTOR), // Target Trigger: kcCActor::OnDamage
     UNKNOWN_9(9, "Never", false, false, kcEntityInheritanceGroup.ENTITY), // Bog Town - Plays Random Frogger Hurt Noise
-    DEATH(10, "When the script entity dies", false, true, kcEntityInheritanceGroup.ACTOR), // Target Trigger: kcCActor::OnDamage, Player deaths are also broadcast from the actor cause, but not from the player cause.
+    DEATH(10, "When the script entity dies", false, true, kcEntityInheritanceGroup.ACTOR), // Target Trigger: kcCActor::OnDamage, Player deaths are also sent from the actor cause, but not from the player cause.
     UNKNOWN_13(13, "Never", false, false, kcEntityInheritanceGroup.ENTITY); // Rolling Rapids Creek - Starts unused copy of tutorial sequence from after opening the locked door.
 
     private final int value;
     private final String playerDescription;
     private final String actorDescription;
-    private final boolean implementedForPlayer; // If this message is broadcast by an unmodified copy of the game for players.
-    private final boolean implementedForActor; // If this message is broadcast by an unmodified copy of the game for actors.
+    private final boolean implementedForPlayer; // If this cause is sent by an unmodified copy of the game for players.
+    private final boolean implementedForActor; // If this cause is sent by an unmodified copy of the game for actors.
     private final kcEntityInheritanceGroup entityGroup;
 
     kcScriptCauseEntityAction(int value, String description, boolean implementedForPlayer, boolean implementedForActor, kcEntityInheritanceGroup category) {

@@ -41,7 +41,7 @@ import java.util.logging.Logger;
  *   - 5/0x1C - Script Cause Argument 0 (Optional)
  *   - 6/0x20 - Script Cause Argument 1 (Optional)
  *
- *  -> If it receives a message targeting 'kcCScriptMgr' (44EDFE47), it will broadcast the event globally to all entities listening.
+ *  -> If it receives a message targeting 'kcCScriptMgr' (44EDFE47), it will send/broadcast the event globally to all entities listening.
  *   -> This is done by executing kcCScriptMgr::ProcessGlobalScript.
  *   -> That function will go through all scripts, skipping any which do not report having the provided cause type, via a bit mask check.
  *   -> Then, for each script cause in each script, it will check that the cause type & sub cause type match the expected values.

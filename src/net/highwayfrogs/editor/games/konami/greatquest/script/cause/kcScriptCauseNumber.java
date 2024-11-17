@@ -72,12 +72,12 @@ public class kcScriptCauseNumber extends kcScriptCause {
     @Getter
     @AllArgsConstructor
     public enum kcScriptCauseNumberOperation { // the provided number <...> <value>
-        DOES_NOT_EQUAL("does not equal"),
-        EQUALS("is equal to"),
+        NOT_EQUAL_TO("does not equal"),
+        EQUAL_TO("is equal to"),
         LESS_THAN("is less than"),
         GREATER_THAN("is greater than"),
-        LESS_THAN_OR_EQUAL("is less than or equal to"),
-        GREATER_THAN_OR_EQUAL("is greater than or equal to");
+        LESS_THAN_OR_EQUAL_TO("is less than or equal to"),
+        GREATER_THAN_OR_EQUAL_TO("is greater than or equal to");
 
         private final String displayAction;
 

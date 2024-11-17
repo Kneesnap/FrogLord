@@ -23,7 +23,7 @@ PlaySound "sfx/level_start_sfx"
 Because scripts belong to individual entities, they are considered to execute/run "as" that entity.
 For example, if you use the `SetSequence` effect to cause an entity to animate, by default it will apply the animation to the entity which the script is written for.
 In order to specify you'd like to run it on a different entity, supply an extra flag `--AsEntity <String: entityName>`.
-For example, `SetSequence "NrmIdle01" --AsEntity "FrogInst001"` will run `SetSequence` as the player character, instead of the script entity.
+For example, `SetSequence "NrmIdle01" --AsEntity "FrogInst001"` will run `SetSequence` as the player character, instead of the script owner.
 
 ## Getting started by creating/modifying scripts
 The easiest way to get started is by looking at examples. To export scripts from the original game, select a level in FrogLord, and find the chunk named `scriptdata`.
@@ -80,7 +80,7 @@ Instead, any code which should only run conditionally should be split into multi
 ### Entity Variables
 Each entity has 8 variables available (accessible via IDs 0 through 7).
 These variables can be set to any whole number.
-They can be used as a way to control which code gets run, as the `BroadcastNumberCause` can broadcast an entity variable.  
+They can be used as a way to control which code gets run, as the `SendNumber` command can send an entity variable.  
 For example:
 
 ```PowerShell
@@ -98,10 +98,10 @@ cause=... # This function's cause doesn't matter for the purpose of this example
 #SetVariable 0 1 # This would set Variable #0 to equal 1
 #SetVariable 0 2 # This would set Variable #0 to equal 2
 
-# This will broadcast a number cause with the number that is currently in Variable #0.
+# This will send a number cause with the number that is currently in Variable #0.
 # By having two separate functions which listen for different numbers, we can control which function runs based on the variable.
 # This can be used to recreate the conceptual behavior of "If X, do Y, otherwise, do Z.".
-BroadcastNumberCause ENTITY_VARIABLE 0 
+SendNumber ENTITY_VARIABLE 0 
 ```
 
 ### Action Sequences
@@ -120,30 +120,30 @@ The following documents all causes found within the game, and how they work.
 **Usage:** `OnLevel <BEGIN|END>`  
 
 ### OnPlayer
-**Summary:** Executes when the player has an interaction with the script entity.  
+**Summary:** Executes when the player has an interaction with the script owner.  
 **Supported Entity Types:** Base Actors  
 **Usage:** `OnPlayer <INTERACT|BUMPS|ATTACK|PICKUP_ITEM>`  
 **Actions:**  
 ```properties
-INTERACT # The player interacts with the script entity. Script entity must be at least a kcCActorBase. Code: CFrogCtl::OnBeginAction, CFrogCtl::CheckForHealthBug
-BUMPS # The player collides/bumps with the script entity. Script entity must be a CProp or a CCharacter. Code: CProp::TriggerHitCallback, CCharacter::BumpCallback
-ATTACK # The player attacks the script entity. Script entity must be kcCActorBase. Code: CFrogCtl::Spit, CFrogCtl::OnBeginMissile, CFrogCtl::OnBeginMagicStone, and, CFrogCtl::OnBeginMelee
-PICKUP_ITEM # The player picks up the script entity as an item. Script entity must be CItemDesc. Code: CCharacter::PickupCallback
+INTERACT # The player interacts with the script owner. script owner must be at least a kcCActorBase. Code: CFrogCtl::OnBeginAction, CFrogCtl::CheckForHealthBug
+BUMPS # The player collides/bumps with the script owner. script owner must be a CProp or a CCharacter. Code: CProp::TriggerHitCallback, CCharacter::BumpCallback
+ATTACK # The player attacks the script owner. script owner must be kcCActorBase. Code: CFrogCtl::Spit, CFrogCtl::OnBeginMissile, CFrogCtl::OnBeginMagicStone, and, CFrogCtl::OnBeginMelee
+PICKUP_ITEM # The player picks up the script owner as an item. script owner must be CItemDesc. Code: CCharacter::PickupCallback
 ```
 
 ### OnActor
-**Summary:** Executes when one of the following actions happens to the script entity.  
+**Summary:** Executes when one of the following actions happens to the script owner.  
 **Supported Entity Types:** Base Actors  
 **Usage:** `OnActor <BUMPS|TAKE_DAMAGE|DEATH>`  
 **Actions:**  
 ```properties
-BUMPS # Another actor bumps into the script entity. Script entity must be a CProp or a CCharacter. Code: CProp::TriggerHitCallback, CCharacter::BumpCallback
-TAKE_DAMAGE # The script entity takes damage. Code: Script entity must be at least a kcCActor. kcCActor::OnDamage
-DEATH # The script entity dies. Code: Script entity must be at least a kcCActor. kcCActor::OnDamage
+BUMPS # Another actor bumps into the script owner. script owner must be a CProp or a CCharacter. Code: CProp::TriggerHitCallback, CCharacter::BumpCallback
+TAKE_DAMAGE # The script owner takes damage. Code: script owner must be at least a kcCActor. kcCActor::OnDamage
+DEATH # The script owner dies. Code: script owner must be at least a kcCActor. kcCActor::OnDamage
 ```
 
 ### OnDamage
-**Summary:** Executes when the script entity takes a certain type of damage.  
+**Summary:** Executes when the script owner takes a certain type of damage.  
 **Supported Entity Types:** Base Actors  
 **Ghidra Reference (For Coders):** `kcCActorBase::OnDamage`  
 **Usage:** `OnDamage <damageType>`  
@@ -159,7 +159,10 @@ ICE # 1
 MELEE # 3
 RANGED # 4
 FALL # 12
-UNNAMED_TYPE_XX # Where XX is a number between 0 and 31 and is not one of the numbers listed above.
+# There are a ton more possible damage types than the ones listed above, but most are unused.
+# Thus, they are free to be used for whatever kind of damage the mod-creator likes.
+# To specify one of the unused damage types, use the following:
+UNNAMED_TYPE_XX # Where XX is a number between 0 and 31 and is not one of the numbers listed above. For example: UNNAMED_TYPE_16
 ```
 
 ### OnAlarm
@@ -167,9 +170,10 @@ UNNAMED_TYPE_XX # Where XX is a number between 0 and 31 and is not one of the nu
 **Supported Entity Types:** All  
 **Ghidra Reference (For Coders):** `kcCEntity::AlarmCallback`  
 **Supported Entity Types:** Base Actors  
-**Usage:** `OnAlarm <IN_PROGRESS|FINISHED> <alarmId>`  
+**Usage:** `OnAlarm FINISHED <alarmId>`  
 Any whole number between 0 and 31 can be used as an alarm ID.  
 To use `OnAlarm`, the alarm must first be activated using `SetAlarm`.
+Note that other options such as `IN_PROGRESS` may work in-place of `FINISHED`, but are not currently used/understood.  
 
 ### OnPrompt (Unsupported)
 **Summary:** Does not work correctly.  
@@ -194,36 +198,47 @@ See `ShowDialog` for more details.
 **Summary:** Executes when a number is received equal to the specified number.  
 **Supported Entity Types:** All  
 **Ghidra Reference (For Coders):** `kcCEntity::OnNumber`  
-**Usage:** `OnNumber <number>`  
-This will only execute when the expected number is broadcast by the script entity using the `BroadcastNumber` effect.  
+**Usage:** `OnNumber <operation> <number>`  
+This will only execute when a number matching the specified criteria is sent to the script owner using the `SendNumber` effect.  
+The most common operation will be `EQUAL_TO`, which will allow specifying behavior upon receiving a specific number.  
 Only whole numbers (integers) are supported by this cause.  
 
+**Valid Operations:**  
+```properties
+EQUAL_TO # The received number is equal to <number>
+NOT_EQUAL_TO # The received number is not equal to <number>
+LESS_THAN # Received number < <number>
+GREATER_THAN # Received number > <number>
+LESS_THAN_OR_EQUAL # Received number <= <number>
+GREATER_THAN_OR_EQUAL # Received number >= <number>
+```
+
 ### OnPlayerHasItem
-**Summary:** When it is broadcast whether the player has an item (via `BroadcastIfPlayerHasItem`), and whether they have the item matches the expected value.  
+**Summary:** When the script owner receives whether the player has an item (from `SendWhetherPlayerHasItem`).  
 **Supported Entity Types:** Props & Characters  
 **Ghidra Reference (For Coders):** `CCharacter::OnWithItem, CProp::OnWithItem`  
 **Usage:** `OnPlayerHasItem <true|false>`  
-When the `BroadcastIfPlayerHasItem` effect is used, the `OnPlayerHasItem` cause will run, based on whether the player had the item or not.  
-If the player did have the item, then the cause `OnPlayerHasItem true` will occur, otherwise `OnPlayerHasItem false` will occur.  
+When the `SendWhetherPlayerHasItem` effect is used, the `OnPlayerHasItem` cause will run, based on whether the player had the item or not.  
+If the player did have the item, then the cause `OnPlayerHasItem true` will execute, otherwise `OnPlayerHasItem false` will execute.  
 Note that there is no way to make `OnPlayerHasItem` restrict which items it will activate for.  
 Thus it would be necessary to use multiple entities (each testing for one item) in order to test for multiple items.  
 
 ### OnEntity
-**Summary:** Executes when the script entity interacts with a waypoint.  
+**Summary:** Executes when the script owner interacts with a waypoint.  
 **Supported Entity Types:** All 3D Entities  
 **Ghidra Reference (For Coders):** `kcCEntity3D::Notify, sSendWaypointStatus`  
 **Usage:**  
 ```php
-OnEntity ENTERS_WAYPOINT_AREA <waypointEntityName> # Executes when the script entity enters the area of the specified waypoint.
-OnEntity LEAVES_WAYPOINT_AREA <waypointEntityName> # Executes when the script entity leaves the area of the specified waypoint.
+OnEntity ENTERS_WAYPOINT_AREA <waypointEntityName> # Executes when the script owner enters the area of the specified waypoint.
+OnEntity LEAVES_WAYPOINT_AREA <waypointEntityName> # Executes when the script owner leaves the area of the specified waypoint.
 
 # The following are usable ONLY when the target entity is a Waypoint.
-OnEntity ENTERS_TARGET_WAYPOINT_AREA # Executes when the script entity enters its target waypoint's area.
-OnEntity LEAVES_TARGET_WAYPOINT_AREA # Executes when the script entity leaves its target waypoint's area.
+OnEntity ENTERS_TARGET_WAYPOINT_AREA # Executes when the script owner enters its target waypoint's area.
+OnEntity LEAVES_TARGET_WAYPOINT_AREA # Executes when the script owner leaves its target waypoint's area.
 ```
 
 ### OnWaypoint
-**Summary:** Executes when an entity enters/leaves the waypoint script entity's area.  
+**Summary:** Executes when an entity enters/leaves the waypoint script owner's area.  
 **Supported Entity Types:** Waypoints  
 **Ghidra Reference (For Coders):** `sSendWaypointStatus`  
 **Usage:** `OnWaypoint <ENTITY_ENTERS|ENTITY_LEAVES> <entityName>`
@@ -497,7 +512,7 @@ Instructions for adding text/string resources are in the `GQS Script Group` docu
 Any number between 0 and 31 is a valid alarm ID.  
 The duration of the alarm can be a decimal number.  
 The timer will start counting down from the number of seconds given.
-Once the timer reaches 0, it will broadcast `OnAlarm` with the alarm ID provided.  
+Once the timer reaches 0, it will send `OnAlarm` with the alarm ID provided.  
 The main purpose of this feature is to run script effects after a delay.  
 
 ### TriggerEvent (Both)
@@ -511,7 +526,7 @@ The main purpose of this feature is to run script effects after a delay.
 "LevelLoadComplete" # The game will load the sky box, water, setup lighting, and setup environment render states from kcEnvironment. Usually called by ExecuteLoad() completing.
 "LevelBegin" # Sets up default data like coin pickup particles, the AI system, adds the system entities. Called when the level start FMV ends.
 "LevelCompleted" # Destroys all active cameras, and sets a flag for completing the level. Triggered by in-game scripts.
-"LevelEnd" # Stops all sound effects and broadcasts the script cause (OnLevel) for completing the level. -> Not sure what triggers this event.
+"LevelEnd" # Stops all sound effects and sends the OnLevel script cause for completing the level. -> Not sure what triggers this event.
 "LevelUnload" # Cleanup/remove water & sky dome, stop all sounds, hide the HID, unload main menu/interface resources. Called by exiting the pause menu requesting to quit the game (PauseEndCase) or the level stops. (PlayEndCase).
 "BeginScreenFade" # Causes the screen to fade to black. Called by a lot of things.
 "EndScreenFade" # Unfades/unhides the contents of the screen. Called by a lot of things.
@@ -520,9 +535,9 @@ The main purpose of this feature is to run script effects after a delay.
 "MovieContinueGame", # Seems to setup the game to continue playback. Registered in PlayMovieUpdate(). I don't think this is ever called.
 "LockPlayerControl" # Disables controller/keyboard input from influencing the player character. Exclusively called from scripts. NOTE: This will be automatically be enabled when a dialog box opens, and disabled when closed.
 "UnlockPlayerControl" # Re-enables controller/keyboard input for the player character. Exclusively called from scripts.
-"DialogBegin" # Displays the dialog text box, and broadcasts the script cause `OnDialog BEGIN`. Called by the handler for the script command 'ShowDialog' (kcCActorBase::OnCommand).
-"DialogAdvance" # Hides the dialog text box, and broadcasts the script cause `OnDialog ADVANCE`. Called by the dialog update logic (kcCDialog::Update).
-"DialogEnd" # Never called, but if it were it would hide the dialog text box and broadcast the script cause `OnDialog END`. Re-enables player input.
+"DialogBegin" # Displays the dialog text box, and sends the script cause `OnDialog BEGIN`. Called by the handler for the script command 'ShowDialog' (kcCActorBase::OnCommand).
+"DialogAdvance" # Hides the dialog text box, and sends the script cause `OnDialog ADVANCE`. Called by the dialog update logic (kcCDialog::Update).
+"DialogEnd" # Never called, but if it were it would hide the dialog text box and sends the script cause `OnDialog END`. Re-enables player input.
 "ShakeCameraRand" # Shakes the camera randomly. Exclusively used by scripts.
 "PlayMidMovie01" # Plays the FMV "OMOVIES/MDRAGONF.PSS"/"mid_catdragon_fire.fpc" (This file does not exist in the vanilla game.) Description: "Play Dragon Fire Movie"
 "PlayMidMovie02" # Plays the FMV "OMOVIES/MWITCH.PSS"/"mid_catdragon_fire.fpc" (Introduction of Big Bertha.), Description: "Play Witch Movie"
@@ -572,19 +587,19 @@ Adds the value into the variable ID/slot.
 Valid variable IDs are between 0 and 7.  
 The provided value must be a whole number.  
 
-### BroadcastNumberCause (Script Only)
-**Summary:** Broadcasts a script cause (`OnNumber`) using a number.
+### SendNumber (Script Only)
+**Summary:** Sends an `OnNumber` script cause with a number.
 **Supported Entity Types:** All  
 **Ghidra Reference (For Coders):** `kcCEntity::OnCommand`  
-**Usage:** `BroadcastNumberCause <LITERAL_NUMBER|ENTITY_VARIABLE|RANDOM> <number>`  
+**Usage:** `SendNumber <LITERAL_NUMBER|ENTITY_VARIABLE|RANDOM> <number>`  
 ```properties
-LITERAL_NUMBER # The number broadcast will be the number provided as an argument.
-ENTITY_VARIABLE # The number broadcast will be the value of the entity variable at the provided ID.
-RANDOM # The number broadcast will be a random number between 0 and the number provided.
+LITERAL_NUMBER # The number sent will be the number provided as an argument.
+ENTITY_VARIABLE # The number sent will be the value of the entity variable at the provided ID.
+RANDOM # The number sent will be a random number between 0 and the number provided.
 ```
 
-When the `--AsEntity` option is used in conjunction with the `ENTITY_VARIABLE` operation, the number will broadcast to the `--AsEntity` target.  
-However the number broadcast will be the variable value from the script owner, instead of from the `--AsEntity` target.  
+When the `--AsEntity` option is used in conjunction with the `ENTITY_VARIABLE` operation, the number will be sent to the `--AsEntity` target.  
+However the number sent will be the variable value from the script owner, instead of from the `--AsEntity` target.  
 
 ### SpawnParticleEffect (Script Only)
 **Summary:** Sets up a particle emitter for the entity.  
@@ -606,11 +621,11 @@ Not used in the vanilla game.
 **Usage:** `Do not use.`  
 Not used in the vanilla game.
 
-### BroadcastIfPlayerHasItem (Script Only)
-**Summary:** Test if the player has the given item, then broadcast a script cause (`OnPlayerHasItem`) with the result.  
+### SendWhetherPlayerHasItem (Script Only)
+**Summary:** Test if the player has the given item, then send `OnPlayerHasItem` with the result.  
 **Supported Entity Types:** Character or Prop  
 **Ghidra Reference (For Coders):** `CCharacter::OnCommand, CProp::OnCommand`  
-**Usage:** `BroadcastIfPlayerHasItem <inventoryItem>`  
+**Usage:** `SendWhetherPlayerHasItem <inventoryItem>`  
 Click [here](../../../../src/net/highwayfrogs/editor/games/konami/greatquest/generic/InventoryItem.java) to see a list of InventoryItem values.
 
 ### SetPlayerHasItem (Script Only)
@@ -621,7 +636,7 @@ Click [here](../../../../src/net/highwayfrogs/editor/games/konami/greatquest/gen
 Click [here](../../../../src/net/highwayfrogs/editor/games/konami/greatquest/generic/InventoryItem.java) to see a list of InventoryItem values.
 
 ### TakeDamage (Script Only)
-**Summary:** The script entity takes damage (loses health).  
+**Summary:** The script owner takes damage (loses health).  
 **Supported Entity Types:** Base Actors  
 **Ghidra Reference (For Coders):** `kcCScriptMgr::FireActorEffect[Remap] -> kcCActorBase::OnCommand/kcCActor::OnCommand`  
 **Usage:** `TakeDamage <attackStrength> [Damage Flags]`  
@@ -710,7 +725,7 @@ Attach BUMP_SENSOR <boneNameOrId> <radius> <focus>
 # I'm not sure yet if this means to launch a projectile or just to enable it.
 Attach LAUNCHER <boneNameOrId> <launcherParamName>
 
-# Creates a particle emitter, attached to a bone in the script entity.
+# Creates a particle emitter, attached to a bone in the script owner.
 Attach PARTICLE_EMITTER <boneNameOrId> <particleEmitterParamName>
 ```
 

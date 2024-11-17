@@ -55,11 +55,11 @@ public enum kcActionID {
     PLAY_SFX((byte) 0x34, "PlaySound", kcEntityInheritanceGroup.ENTITY, false, kcActionPlaySound::new), // kcCEntity::OnCommand, kcCEntity3D::OnCommand (If kcCEntity3D, then it will be positional audio at the position of the entity, otherwise it will be played directly.)
     VARIABLE_SET((byte) 0x35, "SetVariable", kcEntityInheritanceGroup.ENTITY, false, kcActionLazyTemplate.VARIABLE_SET_ARGUMENTS), // kcCEntity::OnCommand
     VARIABLE_ADD((byte) 0x36, "AddToVariable", kcEntityInheritanceGroup.ENTITY, false, kcActionLazyTemplate.VARIABLE_ADD_ARGUMENTS), // kcCEntity::OnCommand
-    NUMBER((byte) 0x37, "BroadcastNumberCause", kcEntityInheritanceGroup.ENTITY, false, kcActionNumber::new), // kcCEntity::OnCommand
+    NUMBER((byte) 0x37, "SendNumber", kcEntityInheritanceGroup.ENTITY, false, kcActionNumber::new), // kcCEntity::OnCommand
     PARTICLE((byte) 0x38, "SpawnParticleEffect", kcEntityInheritanceGroup.ACTOR_BASE, false, kcActionSpawnParticleEffect::new), // kcCActorBase::OnCommand/kcCActor::OnCommand
     KILL_PARTICLE((byte) 0x39, "KillParticleEffect", kcEntityInheritanceGroup.ACTOR_BASE, false, kcActionEmptyTemplate::new), // kcCActorBase::OnCommand/kcCActor::OnCommand Kills particle effect(s) spawned by the current entity. (The entity which calls SpawnParticleEffect is the entity to kill it too.)
     LAUNCHER((byte) 0x3A, "Launcher_UNUSED", kcEntityInheritanceGroup.CHARACTER, false, kcActionEmptyTemplate::new), // CCharacter::OnCommand, This opens a dialog message indicating that the Launcher command has been removed.
-    WITH_ITEM((byte) 0x3B, "BroadcastIfPlayerHasItem", kcEntityInheritanceGroup.PROP_OR_CHARACTER, false, kcActionLazyTemplate.WITH_ITEM_ARGUMENTS), // CCharacter::OnCommand, CProp::OnCommand
+    WITH_ITEM((byte) 0x3B, "SendWhetherPlayerHasItem", kcEntityInheritanceGroup.PROP_OR_CHARACTER, false, kcActionLazyTemplate.WITH_ITEM_ARGUMENTS), // CCharacter::OnCommand, CProp::OnCommand
     GIVE_TAKE_ITEM((byte) 0x3C, "SetPlayerHasItem", kcEntityInheritanceGroup.PROP_OR_CHARACTER, false, kcActionSetPlayerHasItem::new), // CCharacter::OnCommand, CProp::OnCommand
     GIVE_DAMAGE((byte) 0x3D, "TakeDamage", kcEntityInheritanceGroup.ACTOR_BASE, false, kcActionGiveDamage::new), // kcCScriptMgr::FireActorEffect converts this to the 'DAMAGE' command at 0x1F and flips the arguments.
     SAVEPOINT((byte) 0x3E, "SetSavePoint", kcEntityInheritanceGroup.CHARACTER, false, kcActionLazyTemplate.SAVEPOINT_ARGUMENTS), // CCharacter::OnCommand
