@@ -76,6 +76,8 @@ public class kcModelObjWriter {
     public static void writeMapToObj(File outputFolder, String fileName, kcCResOctTreeSceneMgr mapMesh) throws IOException {
         File objFile = new File(outputFolder, fileName + ".obj");
         File mtlFile = new File(outputFolder, fileName + ".mtl");
+        if (objFile.exists() && mtlFile.exists())
+            return;
 
         StringBuilder objWriter = new StringBuilder();
         StringBuilder mtlWriter = new StringBuilder();

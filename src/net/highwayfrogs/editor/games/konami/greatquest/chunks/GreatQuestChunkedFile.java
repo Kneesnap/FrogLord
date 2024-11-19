@@ -515,8 +515,6 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     public void exportEntities(File folder, kcScriptList scriptList, kcScriptDisplaySettings settings) {
         if (folder == null)
             throw new NullPointerException("folder");
-        if (scriptList == null)
-            throw new NullPointerException("scriptList");
 
         int entityCount = 0;
         for (kcCResource testChunk : this.chunks) {
@@ -684,7 +682,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             }
         }
 
-        getLogger().info("Imported " + exportCount + " entity descriptions.");
+        getLogger().info("Exported " + exportCount + " entity descriptions.");
     }
 
     /**
