@@ -366,8 +366,8 @@ Not used in the vanilla game.
 **Summary:** Sets the script owner's positional coordinate on the given axis.  
 **Supported Entity Types:** All 3D Entities  
 **Ghidra Reference (Ignore):** `kcCEntity3D::OnCommand`  
-**Usage:** `SetPositionOnAxis <X|Y|Z> <coordinate>`  
-**Example:** `SetPositionOnAxis X 22.5`  
+**Usage:** `SetAxisPosition <X|Y|Z> <coordinate>`  
+**Example:** `SetAxisPosition X 22.5`  
 Not used in the vanilla game.
 
 ### SetPosition (Script Only)
@@ -387,7 +387,7 @@ Not used in the vanilla game.
 **Summary:** Adds an offset to the script owner's current position.  
 **Supported Entity Types:** All 3D Entities  
 **Ghidra Reference (Ignore):** `kcCEntity3D::OnCommand`  
-**Usage:** `OffsetPosition <x> <y> <z>`  
+**Usage:** `AddPosition <x> <y> <z>`  
 
 ### SetAxisRotation (Script Only)
 **Summary:** Sets a rotation value on the specified axis.  
