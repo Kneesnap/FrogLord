@@ -30,10 +30,10 @@ import net.highwayfrogs.editor.games.konami.greatquest.file.*;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourcePath;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceString;
-import net.highwayfrogs.editor.games.konami.greatquest.generic.kcOctTree;
-import net.highwayfrogs.editor.games.konami.greatquest.generic.kcOctTree.kcOctBranch;
-import net.highwayfrogs.editor.games.konami.greatquest.generic.kcOctTree.kcOctLeaf;
 import net.highwayfrogs.editor.games.konami.greatquest.map.*;
+import net.highwayfrogs.editor.games.konami.greatquest.map.octree.kcOctBranch;
+import net.highwayfrogs.editor.games.konami.greatquest.map.octree.kcOctLeaf;
+import net.highwayfrogs.editor.games.konami.greatquest.map.octree.kcOctTree;
 import net.highwayfrogs.editor.games.konami.greatquest.math.*;
 import net.highwayfrogs.editor.games.konami.greatquest.model.*;
 import net.highwayfrogs.editor.games.konami.greatquest.noodle.GreatQuestInstanceNoodleTemplate;
@@ -79,6 +79,7 @@ import java.util.Map.Entry;
  *  -> Manage Model Refs [Before world + entities]
  *  -> Import/Export Models/Animations/Animation Sets/Skeletons/Collision Meshes/OctTree building [PROXY_CAPSULE_DESCRIPTION, PROXY_TRI_MESH_DESCRIPTION]
  *  -> Go over TODOs in the tutorial gqs script example.
+ *  -> Fix hitbox previews. (CItemDesc, kcProxyDesc)
  *
  * TODO Future:
  *  -> Support previewing action sequences in-editor.

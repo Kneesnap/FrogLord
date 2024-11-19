@@ -9,10 +9,12 @@ import javafx.scene.shape.Mesh;
 import javafx.scene.shape.MeshView;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResOctTreeSceneMgr;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestMapCollisionManager;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestMapEnvironmentEditor;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestMapSceneManager;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshCollection.MeshViewCollection;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
@@ -80,7 +82,10 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
         addManager(new GreatQuestMapEnvironmentEditor(this));
         addManager(new GreatQuestEntityManager(this));
         addManager(new GreatQuestMapCollisionManager(this));
-        // TODO: Setup managers.
+
+        kcCResOctTreeSceneMgr manager = getMesh().getMap().getSceneManager();
+        if (manager != null)
+            addManager(new GreatQuestMapSceneManager(this, manager));
     }
 
     @Override

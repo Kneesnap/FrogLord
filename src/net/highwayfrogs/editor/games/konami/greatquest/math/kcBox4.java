@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
+import net.highwayfrogs.editor.system.math.Vector3f;
 
 /**
  * This represents the '_kcBox4' struct in kcMath3D.h
@@ -32,5 +33,31 @@ public class kcBox4 implements IMultiLineInfoWriter, IBinarySerializable {
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         this.min.writePrefixedInfoLine(builder, "Box Min", padding);
         this.max.writePrefixedInfoLine(builder, "Box Max", padding);
+    }
+
+    /**
+     * Performs an inclusive contains check to determine if the given position is inside the box.
+     * @param position the position to test
+     * @return true iff the position is contained within the box
+     */
+    public boolean contains(Vector3f position) {
+        if (position == null)
+            throw new NullPointerException("position");
+
+        return this.contains(position.getX(), position.getY(), position.getZ());
+    }
+
+    /**
+     * Performs an inclusive contains check to determine if the given position is inside the box.
+     * @param posX the x positional coordinate to test
+     * @param posY the y positional coordinate to test
+     * @param posZ the z positional coordinate to test
+     * @return true iff the position is contained within the box
+     */
+    public boolean contains(float posX, float posY, float posZ) {
+        // As implemented in sActionCallbackUniqueAtoms
+        return this.max.getX() >= posX && posX >= this.min.getX()
+                && this.max.getY() >= posY && posY >= this.min.getY()
+                && this.max.getZ() >= posZ && posZ >= this.min.getZ();
     }
 }

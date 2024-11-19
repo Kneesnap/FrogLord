@@ -2053,17 +2053,21 @@ public class GUIEditorGrid {
         addLabel(sliderName);
         Slider slider = setupSecondNode(new Slider(minValue, maxValue, currentValue), false);
         slider.setDisable(setter == null);
-        if (onRelease) {
-            slider.valueChangingProperty().addListener(((observable, wasChanging, changing) -> {
-                if (setter != null && !changing)
-                    setter.accept(slider.getValue());
-            }));
+        if (setter != null) {
+            if (onRelease) {
+                slider.valueChangingProperty().addListener(((observable, wasChanging, changing) -> {
+                    if (!changing)
+                        setter.accept(slider.getValue());
+                }));
+            }
         }
+
         slider.valueProperty().addListener(((observable, oldValue, newValue) -> {
             if (setter != null && !onRelease)
                 setter.accept(newValue.doubleValue());
             onChange();
         }));
+
         slider.setMajorTickUnit((maxValue - minValue) / 4);
         slider.setShowTickLabels(true);
         slider.setShowTickMarks(true);

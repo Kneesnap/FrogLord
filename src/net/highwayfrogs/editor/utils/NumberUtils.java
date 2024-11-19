@@ -1,10 +1,14 @@
 package net.highwayfrogs.editor.utils;
 
+import net.highwayfrogs.editor.Constants;
+
 /**
  * Contains static utilities for working with numbers.
  * Created by Kneesnap on 10/25/2024.
  */
 public class NumberUtils {
+    private static final double BASE_16_LOGARITHM_CONVERTER = Math.log10(16);
+
     /**
      * Test if a string is an integer.
      * @param str The string to test.
@@ -145,8 +149,26 @@ public class NumberUtils {
      * @param value The value to get as a hex string.
      * @return hexString
      */
+    public static String to0PrefixedHexString(short value) {
+        return StringUtils.padStringLeft(Integer.toHexString(value & 0xFFFF).toUpperCase(), Constants.SHORT_SIZE * 2, '0');
+    }
+
+    /**
+     * Returns a value as a hex string with leading 0s included.
+     * @param value The value to get as a hex string.
+     * @return hexString
+     */
     public static String to0PrefixedHexString(int value) {
         return StringUtils.padStringLeft(Integer.toHexString(value).toUpperCase(), 8, '0');
+    }
+
+    /**
+     * Returns a value as a hex string with leading 0s included.
+     * @param value The value to get as a hex string.
+     * @return hexString
+     */
+    public static String to0PrefixedHexString(int value, int digitCount) {
+        return StringUtils.padStringLeft(Integer.toHexString(value).toUpperCase(), digitCount, '0');
     }
 
     /**
@@ -177,5 +199,14 @@ public class NumberUtils {
      */
     public static int getDigitCount(int number) {
         return (int) Math.max(Math.log10(number), 0) + 1;
+    }
+
+    /**
+     * Gets the number of digits for a number.
+     * @param number The number to get digits for.
+     * @return digitCount
+     */
+    public static int getHexDigitCount(int number) {
+        return (int) Math.max(Math.log10(number) / BASE_16_LOGARITHM_CONVERTER, 0) + 1;
     }
 }

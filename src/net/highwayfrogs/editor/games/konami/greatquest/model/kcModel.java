@@ -40,6 +40,20 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
     // Bit 0|0x1 = ? (kcGraphicsSetVertexShader)
     // Bit 12|0x1000 = Disable Blend
 
+    // Rendering flow:
+    // kcCSceneMgr::Render is a scheduled task.
+    // The kcCSceneMgr is a(n) kcCOctTreeSceneMgr.
+    // The OctTree will traverse the Visual OctTree to first render entities (first opaque draw calls then translucent), then terrain (first opaque draw calls then translucent). Water is rendered separately by its own render function.
+    // The resulting lists appear to be sorted as well, by something unknown, probably distance.
+    // When the scene elements are drawn, their OTAPrim->Render method is called
+    // For terrain, this is kcCOTAPrim::Render which will skip if flag 0x80 set, or if what appears to be a backface culling check fails?
+    //  If it does decide to render, it adds a single vertex buffer.
+    // For entities, kcCEntity3D::Render() is called, which for most things will eventually boil down to kcCModel::Render()
+    // kcCModel::Render() when called outside of the scene rendering logic will render very inefficiently, but I'm not sure that ever happens.
+    // During this flow, it will try and group as many vertex buffers and draw calls as possible together.
+    // It's hard to tell how well optimized this is, because it appears to have a draw call for every single kcModel node (vertex buffer).
+    // On PC, this definitely appears to be an issue, but on PS2 it does appear to try to combine them. It is unclear if this also hits performance, but I strongly suspect it does.
+
     // PS2 FVF Flags:
     public static final int FVF_FLAG_PS2_NORMALS_HAVE_W = Constants.BIT_FLAG_4; // 0x10
     public static final int FVF_FLAG_PS2_POSITIONS_HAVE_SIZE = Constants.BIT_FLAG_5; // 0x20

@@ -30,8 +30,12 @@ public class IntList {
         return indexOf(value) != -1;
     }
 
+    public boolean isArrayFull() {
+        return this.size >= this.array.length;
+    }
+
     public boolean add(int value) {
-        if (this.size == this.array.length - 1)
+        if (isArrayFull())
             resize(this.array.length * 2);
 
         this.array[this.size++] = value;
@@ -39,7 +43,7 @@ public class IntList {
     }
 
     public boolean add(int index, int value) {
-        if (this.size == this.array.length - 1)
+        if (isArrayFull())
             resize(this.array.length * 2);
 
         if (this.size == index) {

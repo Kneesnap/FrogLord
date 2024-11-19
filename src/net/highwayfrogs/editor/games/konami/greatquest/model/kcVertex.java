@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.Arrays;
 
@@ -20,8 +21,7 @@ public class kcVertex implements IInfoWriter {
     private float normalX;
     private float normalY;
     private float normalZ;
-    private long diffuse;
-    private long specular;
+    private int diffuse;
     private float u0;
     private float v0;
     private float u1;
@@ -109,17 +109,17 @@ public class kcVertex implements IInfoWriter {
                 green = reader.readFloat();
                 blue = reader.readFloat();
                 float alpha = reader.readFloat();
-                this.diffuse = (((long) (alpha * 255F)) << 24) | (((long) (red * 255F)) << 16) | (((long) (green * 255F)) << 8) | (long) (blue * 255F);
+                this.diffuse = (((int) (alpha * 255F)) << 24) | (((int) (red * 255F)) << 16) | (((int) (green * 255F)) << 8) | (int) (blue * 255F);
                 break;
             case DIFFUSE_RGBAI: // 4
-                this.diffuse = reader.readUnsignedIntAsLong();
+                this.diffuse = reader.readInt();
                 break;
             case DIFFUSE_RGBA255F: // 16
                 red = reader.readFloat();
                 green = reader.readFloat();
                 blue = reader.readFloat();
                 alpha = reader.readFloat();
-                this.diffuse = ((((long) alpha) & 0xFF) << 24) | ((((long) red) & 0xFF) << 16) | ((((long) green) & 0xFF) << 8) | (((long) blue) & 0xFF);
+                this.diffuse = ((((int) alpha) & 0xFF) << 24) | ((((int) red) & 0xFF) << 16) | ((((int) green) & 0xFF) << 8) | (((int) blue) & 0xFF);
                 break;
             case SPECULAR_RGBF: // 12
             case SPECULAR_RGBAF: // 16
@@ -252,7 +252,7 @@ public class kcVertex implements IInfoWriter {
                 green = (short) (reader.readShort() & 0xFF);
                 blue = (short) (reader.readShort() & 0xFF);
                 alpha = (short) (reader.readShort() & 0xFF);
-                this.diffuse = (((long) alpha) << 24) | (((long) red) << 16) | (((long) green) << 8) | ((long) blue);
+                this.diffuse = (((int) alpha) << 24) | (((int) red) << 16) | (((int) green) << 8) | ((int) blue);
                 break;
             case DIFFUSE_RGBF: // 6
             case DIFFUSE_RGBAI: // 4
@@ -401,7 +401,7 @@ public class kcVertex implements IInfoWriter {
                 writer.writeFloat(getDiffuseAlpha());
                 break;
             case DIFFUSE_RGBAI: // 4
-                writer.writeUnsignedInt(this.diffuse);
+                writer.writeInt(this.diffuse);
                 break;
             case DIFFUSE_RGBA255F: // 16
                 writer.writeFloat(getDiffuseRed255F());
@@ -653,7 +653,7 @@ public class kcVertex implements IInfoWriter {
     public void writeInfo(StringBuilder builder) {
         builder.append("kcVertex{pos=[").append(this.x).append(",").append(this.y).append(",").append(this.z);
         builder.append("},normal={").append(this.normalX).append(",").append(this.normalY).append(",").append(this.normalZ);
-        builder.append("},diffuse=").append(this.diffuse).append(",specular=").append(this.specular);
+        builder.append("},diffuse=").append(NumberUtils.to0PrefixedHexString(this.diffuse));
         builder.append(",uv0=[").append(this.u0).append(",").append(this.v0);
         builder.append("],uv1=[").append(this.u1).append(",").append(this.v1);
         builder.append("],weight=").append(Arrays.toString(this.weight)).append(",w=").append(this.w).append(",pointSize=").append(this.pointSize);

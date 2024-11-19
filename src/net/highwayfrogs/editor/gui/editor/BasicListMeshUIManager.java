@@ -16,10 +16,8 @@ import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * A basic mesh UI manager which allows displaying one or more contents of a list in 3D space for editing.
@@ -38,6 +36,7 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
     private ComboBox<TValue> valueSelectionBox;
     private Button addValueButton;
     private Button removeValueButton;
+    protected boolean disableRemoveButton;
 
     private static final PhongMaterial MATERIAL_WHITE = Scene3DUtils.makeUnlitSharpMaterial(Color.WHITE);
     private static final PhongMaterial MATERIAL_YELLOW = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
@@ -203,7 +202,7 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
         // Display Settings Checkbox.
         this.valueDisplaySetting = this.mainGrid.addEnumSelector("Value(s) Displayed", ListDisplayType.SELECTED, ListDisplayType.values(), false, newValue -> {
             if (newValue == ListDisplayType.ALL) {
-                setValuesVisible(true);
+                updateValueVisibility(); // Sometimes 'ALL' won't actually show everything.
             } else if (newValue == ListDisplayType.SELECTED) {
                 setValuesVisible(false);
 
@@ -319,7 +318,7 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
         // Setup basics.
         this.editorGrid.clearEditor();
         TValue selectedValue = this.valueSelectionBox.getValue();
-        this.removeValueButton.setDisable(selectedValue == null);
+        this.removeValueButton.setDisable(selectedValue == null || this.disableRemoveButton);
         if (selectedValue != null) {
             try {
                 updateEditor(selectedValue);
@@ -353,6 +352,36 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
      */
     protected boolean tryRemoveValue(TValue value) {
         return value != null && getValues().remove(value);
+    }
+
+    /**
+     * Refreshes the underlying list of values. (Used when the list is swapped/changed.)
+     */
+    protected void refreshList() {
+        List<TValue> newValues = getValues();
+        Set<TValue> newValueSet = newValues != null && newValues.size() > 0 ? new HashSet<>(newValues) : Collections.emptySet();
+
+        // Remove old values.
+        Iterator<Entry<TValue, T3DDelegate>> iterator = this.delegatesByValue.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Entry<TValue, T3DDelegate> entry = iterator.next();
+            if (!newValueSet.contains(entry.getKey())) {
+                iterator.remove();
+                onValueRemoved(entry.getKey(), entry.getValue());
+            }
+        }
+
+        // Create entries for the new values.
+        if (newValues != null) {
+            for (int i = 0; i < newValues.size(); i++) {
+                TValue newValue = newValues.get(i);
+                if (!this.delegatesByValue.containsKey(newValue))
+                    createDisplay(newValue);
+            }
+        }
+
+        updateValuesInUI();
+        updateValueVisibility();
     }
 
     /**

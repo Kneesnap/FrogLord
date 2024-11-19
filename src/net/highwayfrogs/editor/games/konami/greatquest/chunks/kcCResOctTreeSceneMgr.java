@@ -9,8 +9,8 @@ import net.highwayfrogs.editor.games.generic.GamePlatform;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTriMesh.kcCTriMesh;
-import net.highwayfrogs.editor.games.konami.greatquest.generic.kcOctTree;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
+import net.highwayfrogs.editor.games.konami.greatquest.map.octree.kcOctTree;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcBox4;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.games.konami.greatquest.model.*;
@@ -32,9 +32,9 @@ import java.util.List;
  */
 @Getter
 public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfoWriter {
-    private final List<kcVtxBufFileStruct> vertexBuffers = new ArrayList<>();
+    private final List<kcVtxBufFileStruct> vertexBuffers = new ArrayList<>(); // Automatically added to the kcCOctTree in-game on load via kcCOctTreeAtom::SetBoundingBox, called from kcCResOctTreeSceneMgr::Load.
     private final List<kcMaterial> materials = new ArrayList<>();
-    private final List<kcCTriMesh> collisionMeshes = new ArrayList<>();
+    private final List<kcCTriMesh> collisionMeshes = new ArrayList<>(); // Automatically added to the kcCOctTree in-game on load via kcCOctTreeAtom::SetBoundingBox, called from kcCResOctTreeSceneMgr::Load.
     private final kcOctTree entityTree;
     private final kcOctTree visualTree;
 
@@ -46,8 +46,9 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
 
     public kcCResOctTreeSceneMgr(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.OCTTREESCENEMGR);
-        this.entityTree = new kcOctTree(getGameInstance());
-        this.visualTree = new kcOctTree(getGameInstance());
+        // All the levels seem to use these for their oct trees.
+        this.entityTree = new kcOctTree(getGameInstance(), 14, 14);
+        this.visualTree = new kcOctTree(getGameInstance(), 14, 10);
     }
 
     /**
@@ -228,16 +229,20 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
         propertyList.add("Vertex Buffers", this.vertexBuffers.size());
         propertyList.add("Materials", this.materials.size());
         propertyList.add("Collision Meshes", this.collisionMeshes.size());
+        propertyList.add("Entity Tree", "");
+        propertyList = this.entityTree.addToPropertyList(propertyList);
+        propertyList.add("Visual Tree", "");
+        propertyList = this.visualTree.addToPropertyList(propertyList);
         return propertyList;
     }
 
     @Getter
     public static class kcVtxBufFileStruct implements IMultiLineInfoWriter {
-        // _OTAPrimHeader
-        @Setter private int materialId;
-        @Setter private float normalTolerance;
-        private final kcVector4 normalAverage = new kcVector4();
-        private final kcBox4 boundingBox = new kcBox4();
+        // _OTAPrimHeader (Applied to kcCOTAPrim in kcCOTAPrim::Init)
+        @Setter private int materialId; // kcCOTAPrim::__ct()
+        @Setter private float normalTolerance = 2F; // kcCOTAPrim::__ct()
+        private final kcVector4 normalAverage = new kcVector4(0, 0, 1, 0); // kcCOTAPrim::__ct()
+        private final kcBox4 boundingBox = new kcBox4(); // Generates the box bounding sphere from this, as well as oct tree collision.
 
         // kcVtxBufFileStruct
         private long fvf;
@@ -279,7 +284,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
             int otaZero = reader.readInt();
             this.normalAverage.load(reader);
             this.boundingBox.load(reader);
-            if (otaZero != 0)
+            if (otaZero != 0) // Written as zero by kcCOTAPrim::Store()
                 throw new RuntimeException("The reserved field in the _OTAPrimHeader was supposed to be zero, but actually was " + otaZero + ".");
 
             // _kcVtxBufFileStruct
