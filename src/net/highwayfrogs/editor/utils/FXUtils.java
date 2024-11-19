@@ -292,7 +292,12 @@ public class FXUtils {
         double x = oldWindow.getX();
         double y = oldWindow.getY();
 
-        stage.setScene(newScene); // Exit the viewer.
+        stage.setScene(newScene);
+
+        // This function worked without the following on my machines, but other machines (whether it be system settings, differing FX versions, etc) would not resize the scene properly.
+        // The following appears to fix it.
+        stage.hide();
+        stage.show();
 
         // Maintain the position the viewer Scene was at when it was closed.
         Window newWindow = newScene.getWindow();
