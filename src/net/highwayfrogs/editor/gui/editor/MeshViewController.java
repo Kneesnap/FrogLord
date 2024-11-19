@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.gui.editor;
 
 import javafx.application.ConditionalFeature;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -57,6 +58,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     private SubScene subScene;
     private Group subScene2DElements;
     private Logger cachedLogger;
+    private final Map<MeshView, ChangeListener<DrawMode>> meshViewDrawModeListeners = new HashMap<>();
 
     // Baseline UI components
     @FXML private AnchorPane anchorPaneUIRoot;
@@ -618,6 +620,16 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         controller.getCheckBoxShowMesh().selectedProperty().bindBidirectional(meshView.visibleProperty());
         controller.getComboBoxMeshDrawMode().valueProperty().bindBidirectional(meshView.drawModeProperty());
         controller.getComboBoxMeshCullFace().valueProperty().bindBidirectional(meshView.cullFaceProperty());
+
+        if (!meshView.isMouseTransparent()) {
+            ChangeListener<DrawMode> drawModeChangeListener =
+                    (observable, oldMode, newMode) -> meshView.setMouseTransparent(newMode != DrawMode.FILL);
+
+            if (controller.meshViewDrawModeListeners.put(meshView, drawModeChangeListener) != null)
+                controller.getLogger().warning("drawModeChangeListener is already set!");
+
+            meshView.drawModeProperty().addListener(drawModeChangeListener);
+        }
     }
 
     /**
@@ -629,6 +641,10 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         controller.getCheckBoxShowMesh().selectedProperty().unbindBidirectional(meshView.visibleProperty());
         controller.getComboBoxMeshDrawMode().valueProperty().unbindBidirectional(meshView.drawModeProperty());
         controller.getComboBoxMeshCullFace().valueProperty().unbindBidirectional(meshView.cullFaceProperty());
+
+        ChangeListener<DrawMode> drawModeChangeListener = controller.meshViewDrawModeListeners.remove(meshView);
+        if (drawModeChangeListener != null)
+            meshView.drawModeProperty().removeListener(drawModeChangeListener);
     }
 
     /**
