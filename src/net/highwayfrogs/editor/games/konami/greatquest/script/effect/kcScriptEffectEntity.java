@@ -33,17 +33,13 @@ public class kcScriptEffectEntity extends kcScriptEffectAction {
 
         switch (getEntityEffect()) {
             case ACTIVATE_ENTITY:
-                kcActionActivate activate = new kcActionActivate(this);
-                activate.setNewState(true);
-                return this.action = activate;
+                return this.action = new kcActionActivate(this, true);
             case DEACTIVATE_ENTITY:
-                return this.action = new kcActionActivate(this);
+                return this.action = new kcActionActivate(this, false);
             case ENABLE_ENTITY_UPDATES:
-                kcActionEnableUpdate enableUpdate = new kcActionEnableUpdate(this);
-                enableUpdate.setNewState(true);
-                return this.action = enableUpdate;
+                return this.action = new kcActionEnableUpdate(this, true);
             case DISABLE_ENTITY_UPDATES:
-                return this.action = new kcActionEnableUpdate(this);
+                return this.action = new kcActionEnableUpdate(this, false);
             case ACTIVATE_SPECIAL:
                 return this.action = new kcActionActivateSpecial(this);
             default:

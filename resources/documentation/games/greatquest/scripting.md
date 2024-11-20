@@ -270,13 +270,9 @@ Not used in the vanilla game.
 **Summary:** Set whether the script owner is active. (An inactive entity will be invisible and lack collision)  
 **Supported Entity Types:** All  
 **Ghidra Reference (Ignore):** `kcCEntity::OnCommand -> kcCEntity::ActivateAndUnhide`  
-**Usage:** `SetActive <true|false>`  
-**Aliases:**  
-```properties
-Entity.Activate # Alias for 'SetActive true'
-Entity.Deactivate # Alias for 'SetActive false'
-```
-Waypoints are capable of activating invisible parts of the map when this is used. (See `SetWorldActive` for more info.)  
+**Usage:** `Entity.Activate` and `Entity.Deactivate`  
+**Alias:** `SetActive <true|false>` (DOES NOT WORK)  
+Waypoints are capable of activating invisible parts of the map when this is used. 
 
 ### SetEnable (Unsupported)
 **Summary:** Does nothing.  
@@ -375,6 +371,16 @@ Not used in the vanilla game.
 **Supported Entity Types:** All 3D Entities  
 **Ghidra Reference (Ignore):** `kcCEntity3D::OnCommand`  
 **Usage:** `SetPosition <x> <y> <z>`  
+**Warning:**  
+```
+This command does not work properly when used on the player if collision is in the way.
+If collision is disabled for the player, the teleport will work up until the moment collision is re-enabled, when the player will be snapped back.
+
+It is recommended to fade the screen out, and perform a series of teleports (With at least one frame of delay between each) to get the player to the destination without going through any collision.
+The other alternative is to set the player's respawn point and kill the player which is faster for testing, but not great for player experience.
+
+Further research/debugging is necessary to determine what causes this issue.
+```
 
 ### AddToAxisPosition (Script Only)
 **Summary:** Offsets the script owner's current position by the given value on the specified axis.  
@@ -582,8 +588,10 @@ The main purpose of this feature is to run script effects after a delay.
 **Summary:** Plays (or stops) a sound effect.  
 **Supported Entity Types:** All  
 **Ghidra Reference (Ignore):** `kcCEntity::OnCommand, kcCEntity3D::OnCommand`  
-**Usage:** `PlaySound <soundFilePath> [--StopSound]`  
-A sound file path can be obtained by right-clicking a sound in the FrogLord sound list, and clicking "Copy file path".
+**Usage:** `PlaySound <soundFilePath>`  
+A sound file path can be obtained by right-clicking a sound in the FrogLord sound list, and clicking "Copy file path".  
+To stop all sounds, run `TriggerEvent "LevelEnd"`.  
+This is safe to do even when the level isn't over, but it will still trigger the cause `OnLevel END` after stopping sounds.  
 
 ### SetVariable (Script Only)
 **Summary:** Sets one of the script owner's entity variables by its ID.  
@@ -690,26 +698,15 @@ If such an entity is found, particles will be played at the position of that ent
 **Summary:** Sets whether updates are enabled for the script owner.  
 **Supported Entity Types:** All  
 **Ghidra Reference (Ignore):** `kcCEntity::OnCommand`  
-**Usage:** `SetUpdatesEnabled <true|false>`  
-**Aliases:**
-```properties
-Entity.EnableUpdates # Equivalent to 'SetUpdatesEnabled true'
-Entity.DisableUpdates # Equivalent to 'SetUpdatesEnabled false'
-```
-
-It would be unused in the vanilla game if not for one Ruby found in Joy Towers.  
-This command is almost the same as `SetActive`, except it doesn't touch collision/activation state.
+**Usage:** `Entity.EnableUpdates` and `Entity.DisableUpdates`  
+**Alias:** `SetUpdatesEnabled <true|false>` (DOES NOT WORK)  
+See the documentation for "entity updates" below for an explanation.  
 
 ### SetAIGoal (Script Only)
 **Summary:** Sets the script owner's AI goal.  
 **Supported Entity Types:** CCharacter  
 **Ghidra Reference (Ignore):** `CCharacter::OnCommand`  
-**Usage:** `SetAIGoal <goalType>`  
-**Aliases:**
-```
-AI.SetGoal <FIND|FLEE|WANDER|GUARD|DEAD|SLEEP>
-```
-
+**Usage:** `SetAIGoal <FIND|FLEE|WANDER|GUARD|DEAD|SLEEP>`  
 ```properties
 # Notable Goal Types:
 FIND # Attempts to run towards the target, and attack if possible. Will attempt to wander sometimes if it gets stuck.
@@ -759,13 +756,13 @@ Attach PARTICLE_EMITTER <boneNameOrId> <particleEmitterParamName>
 **Summary:** Set whether entities/terrain are enabled in the world area covered by the waypoint.  
 **Supported Entity Types:** Waypoint  
 **Ghidra Reference (Ignore):** `kcCEntity::OnCommand`  
-**Usage:** `SetWorldActive <ENTITIES|TERRAIN|BOTH> <true|false>`  
-**Alias:**  `Entity.ActivateSpecial <ENTITIES|TERRAIN|BOTH> <true|false>`  
+**Usage:** `Entity.ActivateSpecial <ENTITIES|TERRAIN|BOTH> <true|false>`  
+**Alias:**  `SetWorldActive <ENTITIES|TERRAIN|BOTH> <true|false>` (DOES NOT WORK)  
 Not used in the vanilla game.  
 This command will control if the world segments (OctTree nodes) the waypoint resides within are active.  
 In large levels such as The Goblin Trail or Joy Castle, if the player uses glitches to skip ahead, parts of the map are invisible.
-When the player reaches certain points in the map, the vanilla game will make those areas visible by running `SetActive` on waypoints covering the invisible area.  
-Unlike `SetActive`, `SetWorldActive` is able to disable parts of the map as well, and can be used more than once.  
+When the player reaches certain points in the map, the vanilla game will make those areas visible by running `Entity.Activate` on waypoints covering the invisible area.  
+Unlike `SetActive`, `Entity.ActivateSpecial` is able to specify entities separately from terrain.  
 
 ```properties
 # kcSpecialActivationMode Options:
@@ -822,3 +819,76 @@ PIVOT_OFFSET_Z # An offset between the camera and the position of the pivot enti
 TRANSITION_DURATION # How long the camera transition should take.
 CAMERA_BASE_FLAGS # The flags to apply to the camera entity. (Currently undocumented/unknown)
 ```
+
+## Extra Documentation
+This section contains extra documentation for how certain parts of the game work.
+
+### Entity Activation
+What does it mean for an entity to be active/inactive, such as when set with `SetActive`?
+
+**While the entity is active:**
+- Its shadow is capable of rendering. (Ghidra: `sRenderGrouped`)
+- Entity updates are most likely enabled. (See below)
+- Entity will most likely be visible. (Script effects which set the active flag inadvertently set the hidden flag.)
+
+**While an entity is not active:**
+- It becomes active if the entity is not hidden, on-screen, and less than 15 world units away from the camera. (Ghidra: `sRenderGrouped`)
+- Entity updates are most likely disabled. (See below)
+- Entity will most likely be hidden. (Script effects which set the active flag inadvertently set the hidden flag.)
+
+**Features independent of the entity being active:**
+- Entity Scripts
+
+**Ways to activate:**
+```properties
+# Script Effect
+# This will directly set if the entity is active or not.
+SetActive
+
+# Script Effects
+# These will set the activation state based on the state of the 'Hidden' flag.
+# Ie: If hidden flag is set, deactivate, otherwise activate.
+# The update occurs regardless of if the hidden flag changed.
+SetFlags
+InitFlags
+ClearFlags
+
+# Entities which are on-screen (in the view frustrum), and less than 15 (sqrt kcCOctTreeSceneMgr::msTouchRangeSquared)
+# world units away from the camera will be set active/inactive based on if they are not hidden every frame.
+sRenderGrouped # Ghidra Reference
+
+# If an entity resets, the activation state will update.
+kcCEntity::Reset # Ghidra Reference.
+```
+
+#### Entity Updates
+When an entity is activated/deactivated, entity updates will be enabled/disabled based on the activation state.  
+However, it is possible to modify independently of the activation state with the `SetUpdatesEnabled` script effect.  
+
+When the level starts (after data is applied, but before the level begin script cause triggers), all entities (except the player) have their updates disabled.  
+Any entities set active/inactive by scripts will have their updates set.
+
+Every frame, all entities who have updates enabled call their update method.
+- Tick Animations (`kcCActorBase`)
+- Update Animation Sequence (`kcCActorBase`)
+- Entity Collision (`kcCActorBase`)
+- Terrain Tracking & Physics (`kcCActorBase`)
+- Update Entity AI (`CCharacter`)
+- Rotate Item (`CItem`)
+- Update Health (`kcCActor`)
+
+**Afterward, if it has been at least 60 frames since either the entity was in the view frustum OR the player was not within the touch distance of 15 world units, updates are disabled.**  
+This check can be bypassed with the `--ForceStayActive` flag.
+
+Then, when entities are rendered, if the entity is within the view frustum (scheduled for rendering) and is within the touch range of 15 world units, they will be forced inactive if hidden, and forced active if visible.  
+Thus, the entity updates flag is only possible to control when the entity is far away from the player.  
+This functionality is not impacted by the `--ForceStayActive` flag.  
+
+### Waypoints (World Visibility)
+Waypoint entities have special behavior applied to them.  
+When a waypoint entity is activated/deactivated, all entities & terrain buffers which had collision intersecting the waypoint will be activated/deactivated as well.
+Waypoints do not appear to automatically activate/deactivate based on player position like the rest, presumably because they are not rendered.  
+NOTE: Bounding boxes must ALSO have bounding spheres set which cover the same area too, otherwise the game will skip certain parts of the world. (`sTestWaypointIntersection`)
+
+## Entity Descriptions
+TODO: Document Entity descriptions.

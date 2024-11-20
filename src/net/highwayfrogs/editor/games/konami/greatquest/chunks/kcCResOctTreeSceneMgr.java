@@ -117,9 +117,9 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
             this.collisionMeshes.add(newMesh);
         }
 
-        // There IS code in the final game which can read these.
-        // However, this feature is not actually used in any of the retail maps.
-        // I think this feature is capable of loading meshes (collision & visual) from other parts of the game.
+        // There is code in the final game which can acknowledge these, although it doesn't do anything with this data.
+        // This feature is also not actually used in any of the retail maps.
+        // I think this feature was supposed to be for loading meshes (collision & visual) from other parts of the game.
         // However, I'm not really sure why we'd ever want this, since collision meshes aren't generally going to be shared.
         // So, we'll leave this unimplemented unless we see it actually used.
         if (sourcePathMeshCount != 0 || sourcePathVisualCount != 0)

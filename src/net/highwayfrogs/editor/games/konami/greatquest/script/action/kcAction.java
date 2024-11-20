@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffectActor;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
@@ -196,6 +197,8 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
      */
     public void printWarnings(Logger logger) {
         this.actionID.getActionTargetType().logEntityTypeWarnings(logger, this, this.actionID.getFrogLordName());
+        if (getExecutor() instanceof kcScriptEffectActor && this.actionID.isScriptMappingMissing())
+            printWarning(logger, "'" + this.actionID.getFrogLordName() + "' is not mapped by the kcCScriptMgr. (There's probably an alias which should be used instead)");
     }
 
     /**

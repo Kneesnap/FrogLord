@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.effect;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionAISetGoal;
+import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionID;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
@@ -17,7 +18,7 @@ import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 public class kcScriptEffectAI extends kcScriptEffectAction {
     private final kcActionAISetGoal action = new kcActionAISetGoal(this);;
 
-    public static final String EFFECT_COMMAND = "AI.SetGoal";
+    public static final String EFFECT_COMMAND = kcActionID.AI_SETGOAL.getFrogLordName();
 
     public kcScriptEffectAI(kcScriptFunction parentFunction) {
         this(parentFunction, 0); // An effect ID of 0 has been seen in

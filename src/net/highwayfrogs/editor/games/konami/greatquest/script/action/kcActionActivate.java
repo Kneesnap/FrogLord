@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
-import lombok.Setter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
@@ -10,13 +9,17 @@ import net.highwayfrogs.editor.utils.objects.OptionalArguments;
  * Represents the 'ACTIVATE' kcAction command.
  * Created by Kneesnap on 8/24/2023.
  */
-@Setter
 public class kcActionActivate extends kcAction {
-    private static final kcArgument[] ARGUMENTS = kcArgument.make(kcParamType.BOOLEAN, "markAsActive");
-    private boolean newState;
+    private static final kcArgument[] ARGUMENTS = kcArgument.make(kcParamType.BOOLEAN, "makeActive");
+    private boolean makeActive;
 
     public kcActionActivate(kcActionExecutor executor) {
         super(executor, kcActionID.ACTIVATE);
+    }
+
+    public kcActionActivate(kcActionExecutor executor, boolean makeActive) {
+        this(executor);
+        this.makeActive = makeActive;
     }
 
     @Override
@@ -26,21 +29,21 @@ public class kcActionActivate extends kcAction {
 
     @Override
     public void load(kcParamReader reader) {
-        this.newState = reader.next().getAsBoolean();
+        this.makeActive = reader.next().getAsBoolean();
     }
 
     @Override
     public void save(kcParamWriter writer) {
-        writer.write(this.newState);
+        writer.write(this.makeActive);
     }
 
     @Override
     protected void loadArguments(OptionalArguments arguments) {
-        this.newState = arguments.useNext().getAsBoolean();
+        this.makeActive = arguments.useNext().getAsBoolean();
     }
 
     @Override
     protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
-        arguments.createNext().setAsBoolean(this.newState);
+        arguments.createNext().setAsBoolean(this.makeActive);
     }
 }

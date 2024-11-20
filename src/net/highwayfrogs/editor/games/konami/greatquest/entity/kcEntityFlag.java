@@ -21,10 +21,14 @@ public enum kcEntityFlag {
     // kcCActorBase Default Flags: 0x242000
     // There are different flag values
 
+    // 0x1E8 flag offset -> flag value: 1.
     // This flag is forcibly removed in kcCEmitter::Spawn, presumably to make it only spawn once.
+
+    // 0x208 (actor base) -> flag value: 1
+    // kcCActorBase::Update verifies this be 1 on an entity in order to resolve collision.
+
     // If this is not set, it will not render the shadow in sRenderGrouped
     // kcCEntity::OnActivate sets this to match the activation state. Eg: If activated, this flag is present.
-    // kcCActorBase::Update verifies this be 1 on an entity in order to resolve collision.
     // While inactive, the entity is not displayed, and is presumably not ticked either.
     // It appears that sRenderGrouped() is responsible for enabling entities once they get inside kcCOctTreeSceneMgr::msTouchRangeSquared.
     ACTIVE(kcEntityFlagType.ENTITY, Constants.BIT_FLAG_0), // 0x1
@@ -130,16 +134,19 @@ public enum kcEntityFlag {
     // I think this will prevent animations from changing the root position of the entity.
     PREVENT_ANIMATIONS_FROM_CHANGING_POSITION(kcEntityFlagType.ACTOR_BASE, Constants.BIT_FLAG_15), // 0x8000
 
+    // kcCEntity::OnActivate shows this flag is set TRUE when deactivated, and FALSE when activated, or rather that it's enabling / disabling collision.
+    // kcCScriptMgr::OnActivate() also does this as it is a stub to kcCEntity::OnActivate.
+    // This flag must NOT be set for sRenderGrouped to queue the entity shadow.
+    UNKNOWN_FLAG_16(kcEntityFlagType.ENTITY, Constants.BIT_FLAG_16), // 0x10000
+
     // kcCEntity::OnHide will set both this flag and the HIDE flag to either true or false together, so these are likely related.
     // If this is set, it will not render the shadow in sRenderGrouped
     // Setting this flag causes kcCActorBase::Render to call RenderDebug() for the entity.
     // Setting this flag appears to cause CProp::Render() to not occur, unless there's no attached matrix. (There's never an attached matrix unless it's a prop connected to a parent model.)
-    // kcCScriptMgr::OnActivate() keeps this flag & ACTIVE inverted.
-    // kcCEntity::OnActivate shows this flag is set TRUE when deactivated, and FALSE when activated, or rather that it's enabling / disabling collision.
     // If this is set true, the entity collision will be active. Reference: kcCActorBase::ProcessAction or kcCActorBase::Reset
-    // I believe this is correct since barrels remove this flag when they get destroyed.
+    // Barrels remove this flag when they get destroyed.
     // Confirmed via in-game testing.
-    COLLISION_ENABLED(kcEntityFlagType.ENTITY, Constants.BIT_FLAG_16), // 0x10000
+    COLLISION_ENABLED(kcEntityFlagType.ACTOR_BASE, Constants.BIT_FLAG_16), // 0x10000
 
     // This is checked by kcCActorBase::UpdateMotion.
     // It will force the update PROCESS_REGISTERED flag for the motion (flag 30/40000000) to be the inverse of this state. So if this flag is set, that other flag will become unset.

@@ -25,7 +25,6 @@ import java.util.function.BiFunction;
  * The octree leaves (kcOctLeaf) represent nodes which are not broken down further.
  * The quad branches (kcQuadBranch) represents quad tree links as a replacement for the oct tree branches. (Presumably for vertically finding stuff such as terrain.)
  * TODO:
- *  -> Reverse Engineer & Document Hiding Terrain
  *  -> Automatic Generation
  *  -> Remove OctTree traversal maybe? Not sure, it's good for understanding how this works.
  * Created by Kneesnap on 4/20/2024.
@@ -36,7 +35,7 @@ public class kcOctTree extends GameData<GreatQuestInstance> implements IMultiLin
     private int smallestNodeDepth; // This is the maximum depth for any particular node.
     private final kcVector3 offset = new kcVector3(-8197.429F, -8203.538F, -8195.479F); // Seems to be the same across all levels.
     private final List<kcOctBranch> branches = new ArrayList<>(); // This can have as many or as few entries as necessary.
-    private final List<kcOctLeaf> leaves = new ArrayList<>();
+    private final List<kcOctLeaf> leaves = new ArrayList<>(); // The first leaf is empty.
     private final List<kcQuadBranch> quadBranches = new ArrayList<>();
 
     private static final int DEFAULT_ROOT_BRANCH = 1; // Zero is null, so we want the first branch to be one.

@@ -19,7 +19,7 @@ import java.util.function.Function;
 public enum kcActionID {
     NONE((byte) 0x00, "DoNothing", kcEntityInheritanceGroup.ENTITY, false, kcActionEmptyTemplate::new), // kcCEntity::OnCommand
     STOP((byte) 0x01, "EndScript", null, true, kcActionEmptyTemplate::new), // kcCActorBase::ProcessAction
-    ACTIVATE((byte) 0x02, "SetActive", kcEntityInheritanceGroup.ENTITY, false, kcActionActivate::new), // kcCEntity::OnCommand
+    ACTIVATE((byte) 0x02, "SetActive", kcEntityInheritanceGroup.ENTITY, false, (Function<kcActionExecutor, kcAction>) kcActionActivate::new), // kcCEntity::OnCommand
     ENABLE((byte) 0x03, "SetEnable_UNIMPLEMENTED", kcEntityInheritanceGroup.ENTITY, false), // I was unable to actually find where this is implemented, though kcCEntity::OnCommand does check that it's NOT this action.
     TERMINATE((byte) 0x04, "TerminateEntity", kcEntityInheritanceGroup.ENTITY, true, kcActionEmptyTemplate::new), // kcCActorBase::ProcessAction, kcCEntity::OnCommand
     INIT_FLAGS((byte) 0x05, "InitFlags", kcEntityInheritanceGroup.ENTITY, true, kcActionFlag::new), // kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand kcCEntity::OnCommand
@@ -47,7 +47,7 @@ public enum kcActionID {
     WAIT_ANIMATION((byte) 0x1B, "WaitForAnimation", null, true, kcActionEmptyTemplate::new), // kcCActorBase::ProcessAction
     LOOP((byte) 0x1D, "Loop", null, true, kcActionLazyTemplate.LOOP_ARGUMENTS), // kcCActorBase::ProcessAction. Marks the sequence to be restarted a given number of times. This will not cause it to restart during subsequent executions.
     IMPULSE((byte) 0x1E, "ApplyImpulse", kcEntityInheritanceGroup.ACTOR_BASE, true, kcActionLazyTemplate.IMPULSE_ARGUMENTS), // kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand
-    DAMAGE((byte) 0x1F, "Damage_REMAPPED", kcEntityInheritanceGroup.ACTOR_BASE, false, kcActionGiveDamage::new), // kcCActorBase::OnCommand/kcCActor::OnCommand. This isn't called directly, but GIVE_DAMAGE is automatically remapped to this command.
+    DAMAGE((byte) 0x1F, "Damage", kcEntityInheritanceGroup.ACTOR_BASE, false, kcActionGiveDamage::new), // kcCActorBase::OnCommand/kcCActor::OnCommand. This isn't called directly, but GIVE_DAMAGE is automatically remapped to this command.
     PROMPT((byte) 0x2F, "Prompt", kcEntityInheritanceGroup.ACTOR_BASE, false, kcActionLazyTemplate.PROMPT_ARGUMENTS), // kcCActorBase::OnCommand/kcCActor::OnCommand NOTE: This seems unused, and we don't know for certain the argument is labelled correctly. It is implemented though. This feature can be useful to reduce code duplication however, so it makes sense to use it.
     DIALOG((byte) 0x30, "ShowDialog", kcEntityInheritanceGroup.ACTOR_BASE, false, kcActionDialog::new), // kcCActorBase::OnCommand/kcCActor::OnCommand
     SET_ALARM((byte) 0x32, "SetAlarm", kcEntityInheritanceGroup.ENTITY, true, kcActionSetAlarm::new), // kcCActorBase::ProcessAction, kcCEntity::OnCommand
@@ -63,7 +63,7 @@ public enum kcActionID {
     GIVE_TAKE_ITEM((byte) 0x3C, "SetPlayerHasItem", kcEntityInheritanceGroup.PROP_OR_CHARACTER, false, kcActionSetPlayerHasItem::new), // CCharacter::OnCommand, CProp::OnCommand
     GIVE_DAMAGE((byte) 0x3D, "TakeDamage", kcEntityInheritanceGroup.ACTOR_BASE, false, kcActionGiveDamage::new), // kcCScriptMgr::FireActorEffect converts this to the 'DAMAGE' command at 0x1F and flips the arguments.
     SAVEPOINT((byte) 0x3E, "SetSavePoint", kcEntityInheritanceGroup.CHARACTER, false, kcActionLazyTemplate.SAVEPOINT_ARGUMENTS), // CCharacter::OnCommand
-    ENABLE_UPDATE((byte) 0x3F, "SetUpdatesEnabled", kcEntityInheritanceGroup.ENTITY, false, kcActionEnableUpdate::new), // kcCEntity::OnCommand
+    ENABLE_UPDATE((byte) 0x3F, "SetUpdatesEnabled", kcEntityInheritanceGroup.ENTITY, false, (Function<kcActionExecutor, kcAction>) kcActionEnableUpdate::new), // kcCEntity::OnCommand
     AI_SETGOAL((byte) 0x40, "SetAIGoal", kcEntityInheritanceGroup.CHARACTER, false, kcActionAISetGoal::new), // CCharacter::OnCommand
     ATTACH_SENSOR((byte) 0x41, "AttachSensor", kcEntityInheritanceGroup.CHARACTER, false, kcActionAttachSensor::new), // CCharacter::OnCommand
     DETACH_SENSOR((byte) 0x42, "DetachSensor", kcEntityInheritanceGroup.CHARACTER, false, kcActionDetachSensor::new), // CCharacter::OnCommand
@@ -131,6 +131,15 @@ public enum kcActionID {
 
     kcActionID(byte opcode, String frogLordName, kcEntityInheritanceGroup actionTargetType, boolean enableForActionSequences, kcArgument[] arguments) {
         this(opcode, frogLordName, actionTargetType, enableForActionSequences, (executor, actionID) -> new kcActionLazyTemplate(executor, actionID, arguments));
+    }
+
+    /**
+     * Returns true if the script mapping is missing for this action. (kcCScriptMgr::FireActorEffect does not map the script message to the entity.)
+     * This will return false when the action is not usable in a script.
+     */
+    public boolean isScriptMappingMissing() {
+        return this == ACTIVATE || this == ACTIVATE_SPECIAL || this == ENABLE_UPDATE || this == AI_SETGOAL
+                || this == NONE || this == ENABLE || this == DAMAGE;
     }
 
     /**
