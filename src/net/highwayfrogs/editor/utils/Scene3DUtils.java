@@ -539,6 +539,22 @@ public class Scene3DUtils {
     }
 
     /**
+     * Creates a highlighted material from another material.
+     * @param material the material to create the highlighted material from
+     * @return highlightedMaterial
+     */
+    public static PhongMaterial createHighlightMaterial(PhongMaterial material) {
+        if (material == null)
+            throw new NullPointerException("material");
+
+        Image diffuseMap = material.getDiffuseMap();
+        if (diffuseMap == null)
+            throw new IllegalArgumentException("Cannot apply highlighting to a null diffuse map.");
+
+        return updateHighlightMaterial(null, SwingFXUtils.fromFXImage(diffuseMap, null));
+    }
+
+    /**
      * Updates a highlighted material
      * @param material the material to update
      * @param rawTexture the image to apply highlighting to

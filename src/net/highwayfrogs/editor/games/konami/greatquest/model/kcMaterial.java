@@ -61,6 +61,13 @@ public class kcMaterial extends GameData<GreatQuestInstance> implements IMultiLi
         return (this.flags & MATERIAL_FLAG_TEXTURED) == MATERIAL_FLAG_TEXTURED;
     }
 
+    /**
+     * Tests if alpha blend should be enabled for the material.
+     */
+    public boolean hasAlphaBlend() {
+        return (this.flags & MATERIAL_FLAG_ENABLE_ALPHA_BLEND) == MATERIAL_FLAG_ENABLE_ALPHA_BLEND;
+    }
+
     @Override
     public void load(DataReader reader) {
         this.materialName = reader.readNullTerminatedFixedSizeString(NAME_SIZE, Constants.NULL_BYTE);

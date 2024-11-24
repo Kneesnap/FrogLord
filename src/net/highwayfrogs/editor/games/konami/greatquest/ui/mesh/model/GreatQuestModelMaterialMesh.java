@@ -39,9 +39,9 @@ public class GreatQuestModelMaterialMesh extends DynamicMesh {
         this.gameMaterial = material;
 
         // Add textures.
-        GreatQuestImageFile imageFile = material != null ? material.getTexture() : null;
+        GreatQuestImageFile imageFile = model != null && material != null ? material.getTexture() : null;
         updateMaterial(imageFile != null ? imageFile.getImage() : UnknownTextureSource.MAGENTA_INSTANCE.makeImage());
-        // TODO: Apply specular, diffuse, etc stuff from material!
+        // TODO: Apply specular, diffuse, etc stuff from material! (Maybe)
 
         // Setup main node.
         // Setup actual mesh.
@@ -51,16 +51,27 @@ public class GreatQuestModelMaterialMesh extends DynamicMesh {
         } else {
             // Setup placeholder.
             this.mainNode = null;
-            updateMaterial(UnknownTextureSource.MAGENTA_INSTANCE.makeImage());
             addNode(new BoxMeshNode(this, .5F, .5F, .5F));
         }
     }
 
     @Override
     protected PhongMaterial updateMaterial(BufferedImage newImage) {
-        newImage = GreatQuestUtils.fillEmptyAlpha(newImage);
+        if (this.gameMaterial != null && this.gameMaterial.hasAlphaBlend())
+            newImage = GreatQuestUtils.fillEmptyAlpha(newImage);
         PhongMaterial parentMaterial = super.updateMaterial(newImage);
-        this.highlightedMaterial = Scene3DUtils.updateHighlightMaterial(this.highlightedMaterial, newImage);
+        if (this.highlightedMaterial != null)
+            this.highlightedMaterial = Scene3DUtils.updateHighlightMaterial(this.highlightedMaterial, newImage);
         return parentMaterial;
+    }
+
+    /**
+     * Gets or creates the highlighted material.
+     */
+    public PhongMaterial getHighlightedMaterial() {
+        if (this.highlightedMaterial == null)
+            this.highlightedMaterial = Scene3DUtils.createHighlightMaterial(getMaterial());
+
+        return this.highlightedMaterial;
     }
 }

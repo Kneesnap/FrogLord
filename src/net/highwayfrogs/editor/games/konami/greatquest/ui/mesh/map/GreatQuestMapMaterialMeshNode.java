@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResOctTreeSceneMgr;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResOctTreeSceneMgr.kcVtxBufFileStruct;
-import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcVertex;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
 
@@ -29,13 +28,9 @@ public class GreatQuestMapMaterialMeshNode extends DynamicMeshAdapterNode<kcVtxB
 
         // Setup vertex buffers matching this material.
         kcCResOctTreeSceneMgr sceneMgr = getMap().getSceneManager();
-        List<kcMaterial> materials = sceneMgr.getMaterials();
-        for (kcVtxBufFileStruct vertexBuffer : sceneMgr.getVertexBuffers()) {
-            int materialId = vertexBuffer.getMaterialId();
-            kcMaterial material = materialId >= 0 && materials.size() > materialId ? materials.get(materialId) : null;
-            if (material == getMesh().getMapMaterial())
-                this.add(vertexBuffer);
-        }
+        List<kcVtxBufFileStruct> vertexBuffers = sceneMgr.getVertexBuffersForMaterial(getMesh().getMapMaterial());
+        if (vertexBuffers != null)
+            vertexBuffers.forEach(this::add);
     }
 
     @Override

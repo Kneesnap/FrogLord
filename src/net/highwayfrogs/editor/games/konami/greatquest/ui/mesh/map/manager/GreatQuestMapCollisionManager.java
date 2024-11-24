@@ -19,6 +19,7 @@ import net.highwayfrogs.editor.gui.editor.UISidePanel;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
+import net.highwayfrogs.editor.gui.mesh.DynamicMeshUnmanagedNode;
 import net.highwayfrogs.editor.gui.texture.atlas.AtlasTexture;
 import net.highwayfrogs.editor.gui.texture.atlas.SequentialTextureAtlas;
 import net.highwayfrogs.editor.gui.texture.atlas.TextureAtlas;
@@ -32,7 +33,7 @@ import java.util.List;
 
 /**
  * Manages map collision displays in 3D space.
- * TODO: I think we should switch to using flat colored textures for collision, BUT, using lighting to highlight geometry. (Parallel light approximation / real directional light in later FX)
+ * TODO: I think we should switch to using flat colored textures for collision (Perhaps with outlines?), BUT, using lighting to highlight geometry. (Parallel light approximation / real directional light in later FX)
  * Created by Kneesnap on 4/17/2024.
  */
 public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCResourceTriMesh, MeshView> {
@@ -145,11 +146,17 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
     public static class GreatQuestMapCollisionMesh extends DynamicMesh {
         private final GreatQuestMapCollisionManager manager;
         private final List<kcCTriMesh> triMeshes;
+        private final DynamicMeshDataEntry texCoordEntry;
         private final AtlasTexture defaultTexture;
         private final AtlasTexture cameraWireframeRenderDebugTexture;
         private final AtlasTexture cameraRaycastSkipTexture;
         private final AtlasTexture climbableTexture;
         private final AtlasTexture slippyTexture; // This is not actually a flag, but still viewable. Slippy faces are ones Frogger slips off, and cannot jump from.
+        private final int defaultTextureIndex;
+        private final int cameraWireframeRenderDebugTextureIndex;
+        private final int cameraRaycastSkipTextureIndex;
+        private final int climbableTextureIndex;
+        private final int slippyTextureIndex;
         private PhongMaterial highlightedMaterial;
 
         public GreatQuestMapCollisionMesh(GreatQuestMapCollisionManager manager, kcCResourceTriMesh triMesh) {
@@ -157,7 +164,7 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
         }
 
         public GreatQuestMapCollisionMesh(GreatQuestMapCollisionManager manager, List<kcCTriMesh> triMeshes, String name) {
-            super(new SequentialTextureAtlas(32, 32, true), DynamicMeshTextureQuality.LIT_BLURRY, name);
+            super(new SequentialTextureAtlas(64, 64, true), DynamicMeshTextureQuality.LIT_BLURRY, name);
             this.manager = manager;
             this.triMeshes = triMeshes;
             getTextureAtlas().startBulkOperations();
@@ -169,16 +176,40 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
             getTextureAtlas().setFallbackTexture(UnknownTextureSource.MAGENTA_INSTANCE);
             getTextureAtlas().endBulkOperations();
 
+            pushBatchOperations();
+            DynamicMeshUnmanagedNode textureNode = new DynamicMeshUnmanagedNode(this);
+            addNode(textureNode);
+            this.texCoordEntry = new DynamicMeshDataEntry(this);
+            this.defaultTextureIndex = addTexture(this.defaultTexture);
+            this.climbableTextureIndex = addTexture(this.climbableTexture);
+            this.cameraRaycastSkipTextureIndex = addTexture(this.cameraRaycastSkipTexture);
+            this.cameraWireframeRenderDebugTextureIndex = addTexture(this.cameraWireframeRenderDebugTexture);
+            this.slippyTextureIndex = addTexture(this.slippyTexture);
+            textureNode.addEntry(this.texCoordEntry);
+
             for (int i = 0; i < triMeshes.size(); i++) {
                 GreatQuestMapCollisionMeshNode newNode = new GreatQuestMapCollisionMeshNode(this, triMeshes.get(i));
                 addNode(newNode);
             }
+
+            popBatchOperations();
+        }
+
+        private int addTexture(AtlasTexture texture) {
+            // Add texture UVs.
+            TextureAtlas textureAtlas = getTextureAtlas();
+            int texCoordGroupStartIndex = this.texCoordEntry.addTexCoordValue(textureAtlas.getUV(texture, Vector2f.ZERO)); // uvTopLeft, 0F, 0F
+            this.texCoordEntry.addTexCoordValue(textureAtlas.getUV(texture, Vector2f.UNIT_X)); // uvTopRight, 1F, 0F
+            this.texCoordEntry.addTexCoordValue(textureAtlas.getUV(texture, Vector2f.UNIT_Y)); // uvBottomLeft, 0F, 1F
+            this.texCoordEntry.addTexCoordValue(textureAtlas.getUV(texture, Vector2f.ONE)); // uvBottomRight, 1F, 1F
+            return texCoordGroupStartIndex;
         }
 
         @Override
         protected PhongMaterial updateMaterial(BufferedImage newImage) {
             PhongMaterial parentMaterial = super.updateMaterial(newImage);
-            this.highlightedMaterial = Scene3DUtils.updateHighlightMaterial(this.highlightedMaterial, newImage);
+            if (this.highlightedMaterial != null)
+                this.highlightedMaterial = Scene3DUtils.updateHighlightMaterial(this.highlightedMaterial, newImage);
             return parentMaterial;
         }
 
@@ -187,6 +218,16 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
          */
         public boolean shouldHighlightSlippyFaces() {
             return this.manager != null && this.manager.highlightSlippyPolygons;
+        }
+
+        /**
+         * Gets or creates the highlighted material.
+         */
+        public PhongMaterial getHighlightedMaterial() {
+            if (this.highlightedMaterial == null)
+                this.highlightedMaterial = Scene3DUtils.createHighlightMaterial(getMaterial());
+
+            return this.highlightedMaterial;
         }
     }
 
@@ -209,16 +250,6 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
             super.onAddedToMesh();
             // Setup vertices.
             this.vertexEntry = new DynamicMeshDataEntry(getMesh());
-
-            // Add texture UVs.
-            TextureAtlas textureAtlas = getMesh().getTextureAtlas();
-            for (AtlasTexture texture : textureAtlas.getSortedTextureList()) {
-                this.vertexEntry.addTexCoordValue(textureAtlas.getUV(texture, Vector2f.ZERO)); // uvTopLeft, 0F, 0F
-                this.vertexEntry.addTexCoordValue(textureAtlas.getUV(texture, Vector2f.UNIT_X)); // uvTopRight, 1F, 0F
-                this.vertexEntry.addTexCoordValue(textureAtlas.getUV(texture, Vector2f.UNIT_Y)); // uvBottomLeft, 0F, 1F
-                this.vertexEntry.addTexCoordValue(textureAtlas.getUV(texture, Vector2f.ONE)); // uvBottomRight, 1F, 1F
-            }
-
             List<kcVector4> vertices = this.triMesh.getVertices();
             for (int i = 0; i < vertices.size(); i++) {
                 kcVector4 vertex = vertices.get(i);
@@ -263,21 +294,18 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
         }
 
         private int getBaseTextureCoordinateIndex(GreatQuestMapCollisionMesh mesh, kcCFace face) {
-            AtlasTexture texture;
             if ((face.getFlags() & kcCFace.FLAG_CLIMBABLE) != 0) {
-                texture = mesh.getClimbableTexture();
+                return mesh.getClimbableTextureIndex();
             } else if (face.getNormal().getY() < GreatQuestInstance.JUMP_SLOPE_THRESHOLD && getMesh().shouldHighlightSlippyFaces()) {
                 // This goes here since climbable surfaces override slippy behavior.
-                texture = mesh.getSlippyTexture();
+                return mesh.getSlippyTextureIndex();
             } else if ((face.getFlags() & kcCFace.FLAG_SKIP_CAMERA_RAYCAST) != 0) {
-                texture = mesh.getCameraRaycastSkipTexture();
+                return mesh.getCameraRaycastSkipTextureIndex();
             } else if ((face.getFlags() & kcCFace.FLAG_DEBUG_USE_OFFSET_WHEN_DRAWING_WIREFRAME) != 0) {
-                texture = mesh.getCameraWireframeRenderDebugTexture();
+                return mesh.getCameraWireframeRenderDebugTextureIndex();
             } else {
-                texture = mesh.getDefaultTexture();
+                return mesh.getDefaultTextureIndex();
             }
-
-            return (4 * mesh.getTextureAtlas().getSortedTextureList().indexOf(texture));
         }
     }
 }

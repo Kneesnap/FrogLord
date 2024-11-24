@@ -19,9 +19,7 @@ import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Handles the OTT chunk.
@@ -30,15 +28,17 @@ import java.util.List;
  * - <a href="https://github.com/Kneesnap/frogger-tgq-decomp/blob/main/export/projects/Frogger-PAL/kcTechGroup/KcLib/Src/kcMath/kcMath3D.h">kcMath3D.h</a>
  * Created by Kneesnap on 8/25/2019.
  */
-@Getter
 public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfoWriter {
     private final List<kcVtxBufFileStruct> vertexBuffers = new ArrayList<>(); // Automatically added to the kcCOctTree in-game on load via kcCOctTreeAtom::SetBoundingBox, called from kcCResOctTreeSceneMgr::Load.
+    private final List<kcVtxBufFileStruct> immutableVertexBuffers = Collections.unmodifiableList(this.vertexBuffers);
     private final List<kcMaterial> materials = new ArrayList<>();
+    private final List<kcMaterial> immutableMaterials = Collections.unmodifiableList(this.materials);
     private final List<kcCTriMesh> collisionMeshes = new ArrayList<>(); // Automatically added to the kcCOctTree in-game on load via kcCOctTreeAtom::SetBoundingBox, called from kcCResOctTreeSceneMgr::Load.
-    private final kcOctTree entityTree;
-    private final kcOctTree visualTree;
+    private final List<kcCTriMesh> immutableCollisionMeshes = Collections.unmodifiableList(this.collisionMeshes);
+    @Getter private final kcOctTree entityTree;
+    @Getter private final kcOctTree visualTree;
+    private final transient Map<kcMaterial, List<kcVtxBufFileStruct>> buffersPerMaterial = new HashMap<>(); // TODO: Update when the underlying materials/vertexBuffers lists change.
 
-    public static final int NAME_SIZE = 32;
     private static final int SUPPORTED_VERSION = 1;
     private static final int RESERVED_HEADER_FIELDS = 7;
     private static final int RESERVED_PRIM_HEADER_FIELDS = 3;
@@ -49,6 +49,36 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
         // All the levels seem to use these for their oct trees.
         this.entityTree = new kcOctTree(getGameInstance(), 14, 14);
         this.visualTree = new kcOctTree(getGameInstance(), 14, 10);
+    }
+
+    /**
+     * Gets an immutable list containing vertex buffers.
+     */
+    public List<kcVtxBufFileStruct> getVertexBuffers() {
+        return this.immutableVertexBuffers;
+    }
+
+    /**
+     * Gets an immutable list containing materials.
+     */
+    public List<kcMaterial> getMaterials() {
+        return this.immutableMaterials;
+    }
+
+    /**
+     * Gets an immutable list containing collision meshes.
+     */
+    public List<kcCTriMesh> getCollisionMeshes() {
+        return this.immutableCollisionMeshes;
+    }
+
+    /**
+     * Gets vertex buffers used for the material
+     * @param material the material provided
+     * @return vertexBufferList
+     */
+    public List<kcVtxBufFileStruct> getVertexBuffersForMaterial(kcMaterial material) {
+        return this.buffersPerMaterial.get(material);
     }
 
     /**
@@ -109,6 +139,9 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
             this.materials.add(newMaterial);
         }
 
+        // Create cache.
+        updateMaterialVertexBufferListCache();
+
         // Read collision meshes.
         this.collisionMeshes.clear();
         for (int i = 0; i < meshCount; i++) {
@@ -124,6 +157,16 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
         // So, we'll leave this unimplemented unless we see it actually used.
         if (sourcePathMeshCount != 0 || sourcePathVisualCount != 0)
             getLogger().severe("The sourcePath counts were not zero!! This feature was not added since it was not seen in any versions at the time of writing! (Source Path Mesh Count: " + sourcePathMeshCount + ", Source Path Visual Count: " + sourcePathVisualCount + ")");
+    }
+
+    private void updateMaterialVertexBufferListCache() {
+        this.buffersPerMaterial.clear();
+        for (int i = 0; i < this.vertexBuffers.size(); i++) {
+            kcVtxBufFileStruct vtxBuf = this.vertexBuffers.get(i);
+            int materialId = vtxBuf.getMaterialId();
+            kcMaterial material = materialId >= 0 && this.materials.size() > materialId ? this.materials.get(materialId) : null;
+            this.buffersPerMaterial.computeIfAbsent(material, key -> new ArrayList<>()).add(vtxBuf);
+        }
     }
 
     @Override
