@@ -163,7 +163,7 @@ public class DataReader {
     public short readShort() {
         short value = 0;
         for (int i = 0; i < Constants.SHORT_SIZE; i++)
-            value += ((long) readByte() & 0xFFL) << (Constants.BITS_PER_BYTE * i);
+            value += (short) ((readByte() & 0xFF) << (Constants.BITS_PER_BYTE * i));
         return value;
     }
 
@@ -175,7 +175,7 @@ public class DataReader {
     public int readInt(int bytes) {
         int value = 0;
         for (int i = 0; i < bytes; i++)
-            value += ((long) readByte() & 0xFFL) << (Constants.BITS_PER_BYTE * i);
+            value += (readByte() & 0xFF) << (Constants.BITS_PER_BYTE * i);
         return value;
     }
 
@@ -328,9 +328,31 @@ public class DataReader {
      * Read bytes from the source, respecting endian.
      * @return readBytes
      */
+    public byte[] readBytes(byte[] destination, int offset, int amount) {
+        try {
+            int bytesRead = this.source.readBytes(destination, offset, amount);
+            if (bytesRead != amount)
+                throw new RuntimeException("Failed to read " + amount + " bytes, as only " + bytesRead + " were actually read.");
+        } catch (Exception ex) {
+            throw new RuntimeException("Error while reading " + amount + " bytes. (Remaining: " + getRemaining() + ")", ex);
+        }
+
+        return destination;
+    }
+
+    /**
+     * Read bytes from the source, respecting endian.
+     * @return readBytes
+     */
     public byte[] readBytes(byte[] destination) {
-        for (int i = 0; i < destination.length; i++)
-            destination[i] = readByte();
+        try {
+            int bytesRead = this.source.readBytes(destination, 0, destination.length);
+            if (bytesRead != destination.length)
+                throw new RuntimeException("Failed to read " + destination.length + " bytes, as only " + bytesRead + " were actually read.");
+        } catch (Exception ex) {
+            throw new RuntimeException("Error while reading " + destination.length + " bytes. (Remaining: " + getRemaining() + ")", ex);
+        }
+
         return destination;
     }
 
@@ -341,7 +363,7 @@ public class DataReader {
      */
     public byte[] readBytes(int amount) {
         try {
-            return source.readBytes(amount);
+            return this.source.readBytes(amount);
         } catch (Exception ex) {
             throw new RuntimeException("Error while reading " + amount + " bytes. (Remaining: " + getRemaining() + ")", ex);
         }
@@ -353,7 +375,7 @@ public class DataReader {
      */
     public void skipBytes(int amount) {
         try {
-            source.skip(amount);
+            this.source.skip(amount);
         } catch (Exception ex) {
             throw new RuntimeException("Error while skipping " + amount + " bytes. (Remaining: " + getRemaining() + ")", ex);
         }

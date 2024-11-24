@@ -26,8 +26,7 @@ public class DataWriter {
     private final Stack<Integer> anchorPoints = new Stack<>();
     private int currentAnchorPoint;
 
-    private static final ByteBuffer INT_BUFFER = ByteBuffer.allocate(Constants.INTEGER_SIZE);
-    private static final ByteBuffer SHORT_BUFFER = ByteBuffer.allocate(Constants.SHORT_SIZE);
+    private static final ByteBuffer FLOAT_BUFFER = ByteBuffer.allocate(Constants.INTEGER_SIZE);
 
     public DataWriter(DataReceiver output) {
         this.output = output;
@@ -224,8 +223,8 @@ public class DataWriter {
      * @param value The integer to write.
      */
     public void writeFloat(float value) {
-        INT_BUFFER.clear();
-        writeBytes(INT_BUFFER.order(getEndian()).putFloat(value).array());
+        FLOAT_BUFFER.clear();
+        writeBytes(FLOAT_BUFFER.order(getEndian()).putFloat(value).array());
     }
 
     /**
@@ -233,8 +232,17 @@ public class DataWriter {
      * @param value The integer to write.
      */
     public void writeInt(int value) {
-        INT_BUFFER.clear();
-        writeBytes(INT_BUFFER.order(getEndian()).putInt(value).array());
+        if (this.endian == ByteOrder.BIG_ENDIAN) {
+            writeByte((byte) ((value >> 24) & 0xFF));
+            writeByte((byte) ((value >> 16) & 0xFF));
+            writeByte((byte) ((value >> 8) & 0xFF));
+            writeByte((byte) value);
+        } else {
+            writeByte((byte) value);
+            writeByte((byte) ((value >> 8) & 0xFF));
+            writeByte((byte) ((value >> 16) & 0xFF));
+            writeByte((byte) ((value >> 24) & 0xFF));
+        }
     }
 
     /**
@@ -252,8 +260,13 @@ public class DataWriter {
      * @param value The short to write.
      */
     public void writeShort(short value) {
-        SHORT_BUFFER.clear();
-        writeBytes(SHORT_BUFFER.order(getEndian()).putShort(value).array());
+        if (this.endian == ByteOrder.BIG_ENDIAN) {
+            writeByte((byte) ((value >> 8) & 0xFF));
+            writeByte((byte) value);
+        } else {
+            writeByte((byte) value);
+            writeByte((byte) ((value >> 8) & 0xFF));
+        }
     }
 
     /**

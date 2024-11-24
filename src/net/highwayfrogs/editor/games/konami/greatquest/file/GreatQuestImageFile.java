@@ -259,24 +259,26 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
 
         switch (format) {
             case A8R8G8B8:
+                int[] rawPixelBufferArgb = ImageWorkHorse.getPixelIntegerArray(this.image);
                 for (int y = 0; y < height; y++)
                     for (int x = 0; x < width; x++)
-                        this.image.setRGB(x, height - y - 1, reader.hasMore() ? reader.readInt() : 0);
+                        rawPixelBufferArgb[((height - y - 1) * width) + x] = reader.hasMore() ? reader.readInt() : 0; // Faster version of this.image.setRGB(x, height - y - 1,  ...)
                 break;
             case R8G8B8:
+                int[] rawPixelBufferRgb = ImageWorkHorse.getPixelIntegerArray(this.image);
                 for (int y = 0; y < height; y++) {
                     for (int x = 0; x < width; x++) {
                         byte red = reader.readByte();
                         byte green = reader.readByte();
                         byte blue = reader.readByte();
-                        this.image.setRGB(x, height - y - 1, ColorUtils.toRGB(red, green, blue));
+                        rawPixelBufferRgb[((height - y - 1) * width) + x] = ColorUtils.toRGB(red, green, blue); // Faster version of this.image.setRGB(x, height - y - 1, ...)
                     }
                 }
                 break;
             case INDEXED8:
+                byte[] pixelBufferIndex8 = new byte[width];
                 for (int y = 0; y < height; y++)
-                    for (int x = 0; x < width; x++)
-                        this.image.setRGB(x, height - y - 1, colorModel.getRGB(reader.readUnsignedByte()));
+                    this.image.getRaster().setDataElements(0, height - y - 1, width, 1, reader.readBytes(pixelBufferIndex8)); // Faster version of this.image.setRGB(x, height - y - 1, colorModel.getRGB(reader.readUnsignedByte()) (Order of magnitude faster)
                 break;
             default:
                 throw new RuntimeException("Cannot load unsupported from image format " + format + ".");
@@ -380,14 +382,16 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
         int height = this.image.getHeight();
         switch (format) {
             case A8R8G8B8:
+                int[] rawImageDataArgb = ImageWorkHorse.getReadOnlyPixelIntegerArray(this.image);
                 for (int y = 0; y < height; y++)
                     for (int x = 0; x < width; x++)
-                        writer.writeInt(this.image.getRGB(x, height - y - 1));
+                        writer.writeInt(rawImageDataArgb[((height - y - 1) * width) + x]); // Faster version of this.image.getRGB(x, height - y - 1)
                 break;
             case R8G8B8:
+                int[] rawImageDataRgb = ImageWorkHorse.getReadOnlyPixelIntegerArray(this.image);
                 for (int y = 0; y < height; y++) {
                     for (int x = 0; x < width; x++) {
-                        int rgb = this.image.getRGB(x, height - y - 1);
+                        int rgb = rawImageDataRgb[((height - y - 1) * width) + x]; // Faster version of this.image.getRGB(x, height - y - 1);
                         writer.writeByte(ColorUtils.getRed(rgb));
                         writer.writeByte(ColorUtils.getGreen(rgb));
                         writer.writeByte(ColorUtils.getBlue(rgb));
@@ -395,9 +399,9 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
                 }
                 break;
             case INDEXED8:
+                byte[] scanlineBufferIndex8 = new byte[width];
                 for (int y = 0; y < height; y++)
-                    for (int x = 0; x < width; x++)
-                        writer.writeByte(((byte[]) this.image.getRaster().getDataElements(x, height - y - 1, null))[0]);
+                    writer.writeBytes((byte[]) this.image.getRaster().getDataElements(0, height - y - 1, width, 1, scanlineBufferIndex8)); // Faster version of: writer.writeByte(((byte[]) this.image.getRaster().getDataElements(x, height - y - 1, null))[0]);
                 break;
             default:
                 throw new RuntimeException("Cannot save unsupported from image format " + format + ".");
