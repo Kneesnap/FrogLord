@@ -31,8 +31,9 @@ But with the addition of `--AsEntity`, the term "script owner" now may instead r
 The easiest way to get started is by looking at examples. To export scripts from the original game, select a level in FrogLord, and find the chunk named `scriptdata`.
 By right-clicking it and selecting "Export Scripts" you'll be able to specify a folder to save the scripts to.
 Make sure to use a different folder for each level you export scripts for to avoid confusion and overriding files with the same name.
-While these files have a `.gqs` extension, they are just text files, and can be opened in any text editor.
-For Notepad++, it is recommended to set the language of these files to PowerShell, as its syntax highlighting works well.
+While these files have a `.gqs` extension, they are just text files, and can be opened in any text editor.  
+The recommended editor is Visual Studio Code, with the "Shell" syntax highlighting.  
+Other text editors such as Notepad++ can be used, for which we recommend using either "Shell" or "PowerShell" syntax highlighting.  
 
 Even though it would be possible to make changes to these scripts and then re-import them by right-clicking `scriptdata` and selecting "Import Scripts", this is not recommended.  
 Since [mods must follow this guide](modding-guide.md), the recommended method for modifying scripts is by creating **GQS Script Groups**.  
@@ -87,11 +88,11 @@ For example:
 
 ```PowerShell
 [Function]
-cause=OnReceiveNumber EQUALS 1
+cause=OnReceiveNumber EQUAL_TO 1
 ShowDialog "DialogOne"
 
 [Function]
-cause=OnReceiveNumber EQUALS 2
+cause=OnReceiveNumber EQUAL_TO 2
 ShowDialog "DialogTwo"
 
 [Function]
