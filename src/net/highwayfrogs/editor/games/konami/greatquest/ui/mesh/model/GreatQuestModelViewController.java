@@ -175,7 +175,7 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
     @Override
     protected void setDefaultCameraPosition() {
         getFirstPersonCamera().setInvertY(true);
-        getFirstPersonCamera().setPos(0, 0, 3);
+        getFirstPersonCamera().setPos(0, 1, 3);
         getFirstPersonCamera().setPitchAndYaw(180, 0);
     }
 

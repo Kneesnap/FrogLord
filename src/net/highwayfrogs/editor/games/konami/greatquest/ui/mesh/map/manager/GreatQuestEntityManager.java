@@ -315,8 +315,7 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
      */
     public void setCollisionProxyVisible(boolean visible) {
         for (GreatQuestMapEditorEntityDisplay display : getDelegatesByValue().values())
-            if (display.getCollisionPreview() != null)
-                display.getCollisionPreview().setVisible(visible && isValueVisibleByUI(display.getEntityInstance()));
+            display.setCollisionProxyVisible(visible && isValueVisibleByUI(display.getEntityInstance()));
     }
 
     /**

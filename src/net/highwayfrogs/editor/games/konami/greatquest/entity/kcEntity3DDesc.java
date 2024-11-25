@@ -22,7 +22,6 @@ import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
-import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.io.File;
@@ -36,6 +35,8 @@ import java.io.File;
 public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericResourceData, IConfigData {
     @NonNull private final kcEntityDescType entityDescriptionType;
     private int instanceFlags; // This doesn't appear to be used, it seems to be the default flags value for which kcEntity3DInst will pull its default value from.
+    // This is NOT the collision proxy, but instead a bounding sphere to easily eliminate most collision candidates. kcCProxyCapsule::Intersect does the sphere check before doing the more expensive proxy tests.
+    // NOTE: Waypoints with bounding boxes appear to ignore the bounding sphere, as massive bounding boxes such as the ones in Joy Towers have a radius of one.
     private final kcSphere boundingSphere = new kcSphere(0, 0, 0, 1F); // Positioned relative to entity position.
     private static final int PADDING_VALUES = 3;
     private static final int PADDING_VALUES_3D = 4;
@@ -77,7 +78,7 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
 
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        builder.append(padding).append("Flags: ").append(NumberUtils.toHexString(this.instanceFlags)).append(Constants.NEWLINE);
+        builder.append(padding).append("Flags: ").append(kcEntityInstanceFlag.getAsOptionalArguments(this.instanceFlags).getNamedArgumentsAsCommaSeparatedString()).append(Constants.NEWLINE);
         this.boundingSphere.writePrefixedMultiLineInfo(builder, "Bounding Sphere", padding);
     }
 

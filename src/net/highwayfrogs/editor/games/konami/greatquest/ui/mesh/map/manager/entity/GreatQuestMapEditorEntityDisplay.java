@@ -28,7 +28,6 @@ import java.util.Comparator;
 
 /**
  * Represents a Great Quest entity displayed in the editor, and any additional 3D data with its representation.
- * TODO: Sort collision representations by area.
  * Created by Kneesnap on 4/18/2024.
  */
 @Getter
@@ -41,12 +40,14 @@ public class GreatQuestMapEditorEntityDisplay {
     private final GreatQuestActionSequencePlayback sequencePlayback;
     private Node collisionPreview;
     private Shape3D boundingSpherePreview;
+    private Sphere capsulePreviewTopSphere;
+    private Sphere capsulePreviewBottomSphere;
 
     private static final PhongMaterial BOUNDING_OBB_MATERIAL = Scene3DUtils.makeHighlightOverlayMaterial(Color.RED);
     private static final PhongMaterial BOUNDING_SPHERE_MATERIAL = Scene3DUtils.makeHighlightOverlayMaterial(Color.BLUE);
     private static final PhongMaterial WAYPOINT_BOUNDING_SPHERE_MATERIAL = Scene3DUtils.makeHighlightOverlayMaterial(Color.YELLOW);
     private static final PhongMaterial WAYPOINT_ALTERNATE_BOUNDING_SPHERE_MATERIAL = Scene3DUtils.makeHighlightOverlayMaterial(Color.PURPLE);
-    private static final PhongMaterial PROXY_SPHERE_MATERIAL = Scene3DUtils.makeHighlightOverlayMaterial(Color.LIMEGREEN);
+    private static final PhongMaterial PROXY_CAPSULE_MATERIAL = Scene3DUtils.makeHighlightOverlayMaterial(Color.LIMEGREEN);
 
     private static final Comparator<? super Node> SORT_BY_VOLUME = Comparator.comparingDouble(FXUtils::calculateVolume);
 
@@ -61,12 +62,24 @@ public class GreatQuestMapEditorEntityDisplay {
     }
 
     /**
+     * Controls the visibility of the collision proxy preview.
+     * @param visible whether the proxy display should be visible
+     */
+    public void setCollisionProxyVisible(boolean visible) {
+        if (this.collisionPreview != null)
+            this.collisionPreview.setVisible(visible);
+        if (this.capsulePreviewTopSphere != null)
+            this.capsulePreviewTopSphere.setVisible(visible);
+        if (this.capsulePreviewBottomSphere != null)
+            this.capsulePreviewBottomSphere.setVisible(visible);
+    }
+
+    /**
      * Set whether the display is visible.
      * @param visible the desired visibility state
      */
     public void setVisible(boolean visible) {
-        if (this.collisionPreview != null)
-            this.collisionPreview.setVisible(visible && this.entityManager.getShowCollisionCheckBox().isSelected());
+        setCollisionProxyVisible(visible && this.entityManager.getShowCollisionCheckBox().isSelected());
         if (this.boundingSpherePreview != null) {
             if (hasWaypointBoundingBox()) {
                 boolean isSelectedEntity = this.entityManager.getSelectedValue() == this.entityInstance;
@@ -126,7 +139,7 @@ public class GreatQuestMapEditorEntityDisplay {
 
         Shape3D newShape;
         kcWaypointType type = entity3DDesc instanceof kcWaypointDesc ? ((kcWaypointDesc) entity3DDesc).getType() : null;
-        if (type == kcWaypointType.BOUNDING_BOX) {
+        if (type == kcWaypointType.BOUNDING_BOX) { // Waypoints with bounding boxes appear to work even when their sphere radius is very small.
             kcWaypointDesc waypointDesc = ((kcWaypointDesc) entity3DDesc);
             // Leave it up to the Great Quest to store collision data in a field named & typed as a color. Sigh.
             // Reference: kcCWaypoint::Init, kcCWaypoint::UpdateRectangularParameters, kcCWaypoint::Intersects
@@ -174,11 +187,13 @@ public class GreatQuestMapEditorEntityDisplay {
         removeCollisionPreview();
 
         Node result = null;
+        kcProxyCapsuleDesc proxyCapsuleDesc = null;
         kcProxyDesc proxyDesc = getCollisionProxyDescription();
-        if (proxyDesc instanceof kcProxyCapsuleDesc) { // TODO: VERIFY LOOKS GOOD
-            kcProxyCapsuleDesc proxyCapsuleDesc = (kcProxyCapsuleDesc) proxyDesc;
-            Cylinder cylinder = new Cylinder(proxyCapsuleDesc.getProcessedRadius(), proxyCapsuleDesc.getProcessedRadius() * 2);
-            cylinder.setMaterial(PROXY_SPHERE_MATERIAL);
+        if (proxyDesc instanceof kcProxyCapsuleDesc) {
+            proxyCapsuleDesc = (kcProxyCapsuleDesc) proxyDesc;
+
+            Cylinder cylinder = new Cylinder(proxyCapsuleDesc.getProcessedRadius(), proxyCapsuleDesc.getLength());
+            cylinder.setMaterial(PROXY_CAPSULE_MATERIAL);
             cylinder.setMouseTransparent(true);
             result = cylinder;
         } else if (proxyDesc instanceof kcProxyTriMeshDesc) {
@@ -196,8 +211,24 @@ public class GreatQuestMapEditorEntityDisplay {
             this.entityManager.getController().getMainLight().getScope().add(result);
             this.entityManager.getCollisionPreviewDisplayList().add(result);
             this.collisionPreview = result; // Do before calling setupNode()
-            setupNode(result);
         }
+
+        // Add these after the cylinder, so the cylinder doesn't blend with these spheres.
+        if (proxyCapsuleDesc != null) {
+            float radius = proxyCapsuleDesc.getProcessedRadius();
+            this.capsulePreviewTopSphere = new Sphere(radius);
+            this.capsulePreviewTopSphere.setMaterial(PROXY_CAPSULE_MATERIAL);
+            this.capsulePreviewTopSphere.setMouseTransparent(true);
+            this.entityManager.getCollisionPreviewDisplayList().add(this.capsulePreviewTopSphere);
+            this.capsulePreviewBottomSphere = new Sphere(radius);
+            this.capsulePreviewBottomSphere.setMaterial(PROXY_CAPSULE_MATERIAL);
+            this.capsulePreviewBottomSphere.setMouseTransparent(true);
+            this.entityManager.getCollisionPreviewDisplayList().add(this.capsulePreviewBottomSphere);
+        }
+
+        // The last thing to occur is node setup. (Must run after any accompanying nodes have been created.)
+        if (result != null)
+            setupNode(result);
 
         return result;
     }
@@ -218,6 +249,16 @@ public class GreatQuestMapEditorEntityDisplay {
 
         this.entityManager.getCollisionPreviewDisplayList().remove(this.collisionPreview);
         this.collisionPreview = null;
+
+        if (this.capsulePreviewTopSphere != null) {
+            this.entityManager.getCollisionPreviewDisplayList().remove(this.capsulePreviewTopSphere);
+            this.capsulePreviewTopSphere = null;
+        }
+
+        if (this.capsulePreviewBottomSphere != null) {
+            this.entityManager.getCollisionPreviewDisplayList().remove(this.capsulePreviewBottomSphere);
+            this.capsulePreviewBottomSphere = null;
+        }
     }
 
     /**
@@ -248,9 +289,13 @@ public class GreatQuestMapEditorEntityDisplay {
             if (proxyDesc instanceof kcProxyCapsuleDesc) {
                 // This is a proxy capsule, so we apply the offset.
                 Scene3DUtils.setNodeRotationPivot(node, x, y, z);
+                Scene3DUtils.setNodeRotationPivot(this.capsulePreviewTopSphere, x, y, z);
+                Scene3DUtils.setNodeRotationPivot(this.capsulePreviewBottomSphere, x, y, z);
 
                 kcProxyCapsuleDesc capsuleDesc = (kcProxyCapsuleDesc) proxyDesc;
-                y += capsuleDesc.getProcessedRadius() + capsuleDesc.getOffset() + (capsuleDesc.getLength() / 2); // TODO: Not sure if this is right.
+                Scene3DUtils.setNodePosition(this.capsulePreviewBottomSphere, x, y + capsuleDesc.getBottomSphereOffsetY(), z);
+                Scene3DUtils.setNodePosition(this.capsulePreviewTopSphere, x, y + capsuleDesc.getTopSphereOffsetY(), z);
+                y += capsuleDesc.calculateCenterOffsetY();
             }
         } else if (node == this.boundingSpherePreview) {
             // If this is a bounding sphere, apply the bounding sphere offset.
@@ -273,10 +318,7 @@ public class GreatQuestMapEditorEntityDisplay {
      * @param z z scale
      */
     public void setScale(double x, double y, double z) {
-        if (this.collisionPreview != null)
-            setNodeScale(this.collisionPreview, x, y, z);
-        if (this.boundingSpherePreview != null)
-            setNodeScale(this.boundingSpherePreview, x, y, z);
+        // I believe entity scaling only impacts the visual mesh, not the collision.
         if (this.modelViews != null)
             this.modelViews.setScale(x, y, z);
     }
@@ -289,7 +331,8 @@ public class GreatQuestMapEditorEntityDisplay {
      * @param z world z scale
      */
     private void setNodeScale(Node node, double x, double y, double z) {
-        Scene3DUtils.setNodeScale(node, x, y, z);
+        if (node instanceof MeshView && node != this.collisionPreview) // Only the main model mesh is impacted by scaling I think.
+            Scene3DUtils.setNodeScale(node, x, y, z);
     }
 
     /**
@@ -317,8 +360,14 @@ public class GreatQuestMapEditorEntityDisplay {
         boolean isCollisionNode = (node == this.collisionPreview);
         boolean isBoundingSphereNode = (node == this.boundingSpherePreview);
 
-        if (this.collisionPreview != null && (node == null || isCollisionNode)) // NOTE: The behavior of rotations has not been fully understood. Eg: We've not found the exact code cause for this in the original code yet.
+        if (this.collisionPreview != null && (node == null || isCollisionNode)) { // NOTE: The behavior of rotations has not been fully understood. Eg: We've not found the exact code cause for this in the original code yet.
             GreatQuestUtils.setEntityRotation(this.collisionPreview, xRotation, yRotation, zRotation, false);
+            if (this.capsulePreviewTopSphere != null)
+                GreatQuestUtils.setEntityRotation(this.capsulePreviewTopSphere, xRotation, yRotation, zRotation, false);
+            if (this.capsulePreviewBottomSphere != null)
+                GreatQuestUtils.setEntityRotation(this.capsulePreviewBottomSphere, xRotation, yRotation, zRotation, false);
+        }
+
         if (this.boundingSpherePreview != null && (node == null || isBoundingSphereNode))
             GreatQuestUtils.setEntityRotation(this.boundingSpherePreview, xRotation, yRotation, zRotation, false);
 

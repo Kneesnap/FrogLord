@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTriMesh
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
+import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.lambda.Consumer5;
 
@@ -77,6 +78,30 @@ public class kcProxyTriMeshDesc extends kcProxyDesc {
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         super.writeMultiLineInfo(builder, padding);
         writeAssetLine(builder, padding, "Collision Mesh", this.meshRef);
+    }
+
+    private static final String CONFIG_KEY_COLLISION = "collisionMesh";
+
+    @Override
+    public void fromConfig(Config input) {
+        super.fromConfig(input);
+        int meshHash = GreatQuestUtils.getAsHash(input.getKeyValueNodeOrError(CONFIG_KEY_COLLISION), -1);
+        GreatQuestUtils.resolveResourceHash(kcCResourceTriMesh.class, getParentFile(), this, this.meshRef, meshHash, true);
+    }
+
+    @Override
+    public void toConfig(Config output) {
+        super.toConfig(output);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_COLLISION)
+                .setAsString(this.meshRef.getAsGqsString(getParentFile().createScriptDisplaySettings()));
+    }
+
+    @Override
+    public boolean isStatic() {
+        // This feature is technically implemented (kcCProxyTriMesh::Intersect will skip the sphere check),
+        // but it is unclear when this would ever be desired.
+        // The game never uses it either, so this keeps it disabled.
+        return false;
     }
 
     // When the reference to kcCResourceTriMesh changes, update the name listeners.

@@ -893,3 +893,16 @@ NOTE: Bounding boxes must ALSO have bounding spheres set which cover the same ar
 
 ## Entity Descriptions
 TODO: Document Entity descriptions.
+
+## Collision
+TODO: How does collision work? [collideGroup/collideWith, different entities having different collision behavior, etc.]
+When an actor loads, it will create either a "proxy capsule", or a "proxy tri mesh" (Ghidra: `kcCActorBase::Init -> kcCActorBase::CreateCollisionProxy`)  
+A "proxy capsule" is a pill-shaped area (a cylinder with a round top/bottom). These are very fast but not very flexible.  
+A "tri mesh" is a triangle mesh/ a 3D object which can be modelled like normal 3D models. These are more flexible but introduce more lag.  
+
+TODO: Items are special, and are handled in CItem::Init
+TODO: 'focus' is the counterpart to 'group'. EG: It's collideWith vs collisionGroup
+
+TODO:
+kcReactType.HALT is automatically replaced with SLIDE by `kcCActorBase`.  
+

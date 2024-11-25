@@ -6,18 +6,22 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
+import net.highwayfrogs.editor.games.konami.greatquest.proxy.ProxyReact;
+import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyCapsuleDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc.kcCollisionGroup;
 
 /**
  * Represents the 'CItemDesc' struct.
  * Loaded by 'CItem::Init'
- * This has a hardcoded collision proxy, also created in CItem::Init. This explains why the items like the goblet in The Lost Trail Ruins have such small hitboxes.
- * Additionally, it may also explain why coins have weird hitboxes when viewed in editor.
- * TODO: Communicate this in FrogLord.
+ * This has a hardcoded collision proxy, also created in CItem::Init. This explains why the items like the goblet in The Lost Trail Ruins have such small hitboxes, and how coins setup their hitboxes.
  * Created by Kneesnap on 8/21/2023.
  */
 public class CItemDesc extends kcActorBaseDesc {
     private static final int VALUES_ALWAYS_ZERO = 3; // value, properties, attributes
     private static final int PADDING_VALUES = 32;
+
+    // ALL CItem instances are overridden to use this setup.
+    public static final kcProxyCapsuleDesc ITEM_CAPSULE_DESCRIPTION;
 
     public CItemDesc(@NonNull kcCResourceGeneric resource, kcEntityDescType descType) {
         super(resource, descType);
@@ -38,7 +42,23 @@ public class CItemDesc extends kcActorBaseDesc {
     }
 
     @Override
+    public kcProxyCapsuleDesc getCollisionProxyDescription() {
+        return ITEM_CAPSULE_DESCRIPTION; // These may be an item assigned, but this one is hardcoded to be used by the game instead.
+    }
+
+    @Override
     public kcCResourceGenericType getResourceType() {
         return kcCResourceGenericType.ITEM_DESCRIPTION;
+    }
+
+    static {
+        ITEM_CAPSULE_DESCRIPTION = new kcProxyCapsuleDesc(null);
+        // Seen in CItem::Init
+        ITEM_CAPSULE_DESCRIPTION.setReaction(ProxyReact.NOTIFY);
+        ITEM_CAPSULE_DESCRIPTION.setCollisionGroup(kcCollisionGroup.ITEM.getBitMask());
+        ITEM_CAPSULE_DESCRIPTION.setCollideWith(kcCollisionGroup.PLAYER.getBitMask());
+        ITEM_CAPSULE_DESCRIPTION.setRadius(.35F);
+        ITEM_CAPSULE_DESCRIPTION.setLength(0F);
+        ITEM_CAPSULE_DESCRIPTION.setOffset(-.35F);
     }
 }

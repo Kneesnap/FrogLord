@@ -109,6 +109,18 @@ public class kcEntity3DInst extends kcEntityInst {
     }
 
     /**
+     * Test if the entity has a flag set.
+     * @param instanceFlag the flag to test
+     * @return entityFlags
+     */
+    public boolean hasFlag(kcEntityInstanceFlag instanceFlag) {
+        if (instanceFlag == null)
+            throw new NullPointerException("instanceFlag");
+
+        return (this.flags & instanceFlag.getInstanceBitFlagMask()) == instanceFlag.getInstanceBitFlagMask();
+    }
+
+    /**
      * Sets the billboard axis.
      * @param newAxis The axis to apply
      */
@@ -123,7 +135,7 @@ public class kcEntity3DInst extends kcEntityInst {
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         super.writeMultiLineInfo(builder, padding);
-        builder.append(padding).append("Flags: ").append(NumberUtils.toHexString(this.flags)).append(Constants.NEWLINE);
+        builder.append(padding).append("Flags: ").append(kcEntityInstanceFlag.getAsOptionalArguments(this.flags).getNamedArgumentsAsCommaSeparatedString()).append(Constants.NEWLINE);
         builder.append(padding).append("Billboard Axis: ").append(this.billboardAxis).append(Constants.NEWLINE);
         this.position.writePrefixedInfoLine(builder, "Position", padding);
         this.rotation.writePrefixedInfoLine(builder, "Rotation", padding);

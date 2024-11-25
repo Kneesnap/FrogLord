@@ -103,7 +103,11 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         writeAssetLine(builder, padding, "Animation Hierarchy", this.hierarchyRef);
         builder.append(padding).append("Channel Count: ").append(this.channelCount).append(Constants.NEWLINE);
         writeAssetLine(builder, padding, "Anim Set", this.animSetRef);
-        writeAssetLine(builder, padding, "Collision Proxy", this.proxyDescRef);
+        if (this instanceof CItemDesc) {
+            builder.append(padding).append("Collision Proxy: {HARDCODED ITEM PROXY}").append(Constants.NEWLINE);
+        } else {
+            writeAssetLine(builder, padding, "Collision Proxy", this.proxyDescRef);
+        }
         writeAssetLine(builder, padding, "Animation List", this.animationSequencesRef);
     }
 
