@@ -202,6 +202,15 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
     }
 
     /**
+     * Prints warnings about the action which could cause it to behave in undesired ways.
+     * These warnings are "advanced" because they need information about other script actions.
+     * @param data The data to use for warning lookups.
+     */
+    public void printAdvancedWarnings(kcScriptValidationData data) {
+        // By default, there are none.
+    }
+
+    /**
      * Prints a warning.
      * @param logger the logger to print the warning to
      * @param warning the warning to print

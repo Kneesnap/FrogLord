@@ -28,6 +28,7 @@ import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 @Setter
 public abstract class kcProxyDesc extends kcBaseDesc implements kcIGenericResourceData, IConfigData {
     private final GreatQuestHash<kcCResourceGeneric> parentHash; // The hash of this object's parent.
+    private final kcProxyDescType descriptionType; // The hash of this object's parent.
     @NonNull private ProxyReact reaction = ProxyReact.SLIDE; // There is only one occurrence of any ProxyReact assigned to a kcProxyDesc which is not SLIDE. The other options are implemented (or at least I know NOTIFY/PENETRATE is), and probably would work. Default is set in CItem::Init
     private int collisionGroup; // This value is applied to the entity's kcCProxy. If either ((this->collideWith & other.collisionGroup) || (this.collisionGroup & other.collideWith)) have bits (unless it's an octree search), it will perform collision checks.
     private int collideWith; // This value is applied to the entity's kcCProxy.
@@ -39,9 +40,10 @@ public abstract class kcProxyDesc extends kcBaseDesc implements kcIGenericResour
 
     public static final int CLASS_ID = GreatQuestUtils.hash("kcCProxy");
 
-    public kcProxyDesc(kcCResourceGeneric resource) {
+    public kcProxyDesc(kcCResourceGeneric resource, kcProxyDescType descriptionType) {
         super(resource);
         this.parentHash = new GreatQuestHash<>(resource);
+        this.descriptionType = descriptionType;
         this.collisionGroup = (this instanceof kcProxyCapsuleDesc) ? kcCollisionGroup.PLAYER.getBitMask() : 0; // Seen in CItem::Init()
         this.collideWith = (this instanceof kcProxyCapsuleDesc) ? kcCollisionGroup.TRI_MESH.getBitMask() : 0; // Seen in CItem::Init()
     }
@@ -89,12 +91,17 @@ public abstract class kcProxyDesc extends kcBaseDesc implements kcIGenericResour
         return (kcCResourceGeneric) super.getResource();
     }
 
+    public static final String CONFIG_KEY_DESC_TYPE = "type";
     private static final String CONFIG_KEY_REACTION = "reaction";
     private static final String CONFIG_KEY_COLLISION_GROUP = "collisionGroups";
     private static final String CONFIG_KEY_COLLIDE_WITH = "collideWith";
 
     @Override
     public void fromConfig(Config input) {
+        kcProxyDescType descType = input.getKeyValueNodeOrError(CONFIG_KEY_DESC_TYPE).getAsEnumOrError(kcProxyDescType.class);
+        if (descType != getDescriptionType())
+            throw new RuntimeException("The proxy description reported itself as " + descType + ", which is incompatible with " + getDescriptionType() + ".");
+
         this.reaction = input.getKeyValueNodeOrError(CONFIG_KEY_REACTION).getAsEnumOrError(ProxyReact.class);
         if (this.reaction == ProxyReact.HALT)
             getLogger().warning("ProxyReact.HALT is not enabled for proxy descriptions, and will be changed to SLIDE.");
@@ -112,6 +119,7 @@ public abstract class kcProxyDesc extends kcBaseDesc implements kcIGenericResour
 
     @Override
     public void toConfig(Config output) {
+        output.getOrCreateKeyValueNode(CONFIG_KEY_DESC_TYPE).setAsEnum(getDescriptionType());
         output.getOrCreateKeyValueNode(CONFIG_KEY_REACTION).setAsEnum(this.reaction);
         output.getOrCreateKeyValueNode(CONFIG_KEY_COLLISION_GROUP).setAsString(kcCollisionGroup.getAsString(this.collisionGroup));
         output.getOrCreateKeyValueNode(CONFIG_KEY_COLLIDE_WITH).setAsString(kcCollisionGroup.getAsString(this.collideWith));

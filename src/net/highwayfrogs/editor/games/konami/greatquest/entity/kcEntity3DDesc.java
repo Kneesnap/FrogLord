@@ -152,7 +152,7 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
      * @param <TResource> the type of resource to resolve
      */
     protected <TResource extends kcHashedResource> void resolve(ConfigValueNode node, Class<TResource> resourceClass, GreatQuestHash<TResource> hashObj) {
-        int nodeHash = GreatQuestUtils.getAsHash(node, hashObj.isNullZero() ? 0 : -1);
+        int nodeHash = GreatQuestUtils.getAsHash(node, hashObj.isNullZero() ? 0 : -1, hashObj);
         GreatQuestUtils.resolveResourceHash(resourceClass, getParentFile(), getResource(), hashObj, nodeHash, true);
     }
 

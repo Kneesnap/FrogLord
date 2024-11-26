@@ -24,6 +24,7 @@ import net.highwayfrogs.editor.utils.objects.StringNode;
 
 /**
  * Represents a script effect.
+ * TODO: Add the ability to show line numbers in warnings/errors.
  * Created by Kneesnap on 8/23/2023.
  */
 @Getter
@@ -101,9 +102,9 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
      * Resolves the target entity hash.
      * @param hash the hash of the target entity
      */
-    public void setTargetEntityHash(int hash) {
+    public boolean setTargetEntityHash(int hash) {
         GreatQuestChunkedFile chunkedFile = getParentFunction().getScript().getScriptList().getParentFile();
-        GreatQuestUtils.resolveResourceHash(kcCResourceEntityInst.class, chunkedFile, this, this.targetEntityRef, hash, false);
+        return GreatQuestUtils.resolveResourceHash(kcCResourceEntityInst.class, chunkedFile, this, this.targetEntityRef, hash, false);
     }
 
     /**
@@ -113,14 +114,23 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
     public final void loadEffect(OptionalArguments arguments) {
         // Apply the target entity override before loading the arguments to ensure that the action can access the entity while loading. (Happens for kcActionSetSequence, and anything else which wants to get the actor desc)
         StringNode overrideTargetEntity = arguments.use(ARGUMENT_ENTITY_RUNNER);
-        if (overrideTargetEntity != null) {
-            setTargetEntityHash(GreatQuestUtils.getAsHash(overrideTargetEntity, 0));
-        } else {
-            // Restore the default.
-            this.targetEntityRef.setResource(getParentFunction().getScript().getEntity(), false);
-        }
+
+        // Restore the default.
+        boolean resolvedOverrideEntity = false;
+        kcCResourceEntityInst scriptOwner = getParentFunction().getScript().getEntity();
+        this.targetEntityRef.setResource(scriptOwner, false);
+        if (overrideTargetEntity != null && setTargetEntityHash(GreatQuestUtils.getAsHash(overrideTargetEntity, 0, this.targetEntityRef)))
+            resolvedOverrideEntity = true;
 
         loadArguments(arguments);
+
+        // Warn about target entity.
+        if (resolvedOverrideEntity && scriptOwner == this.targetEntityRef.getResource()) {
+            kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
+            getLogger().warning("The effect '" + saveEffect(settings) + "' should not include --" + ARGUMENT_ENTITY_RUNNER + " because it already runs as that entity.");
+        }
+
+        // Print warnings.
         printLoadWarnings(arguments);
     }
 
@@ -133,6 +143,9 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
         if (getTargetEntityRef().getResource() == null) {
             kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
             getLogger().warning("The effect '" + saveEffect(settings) + "' targets an entity which was not found.");
+        } else if (getTargetEntityRef().getResource().getInstance() == null || getTargetEntityRef().getResource().getInstance().getDescription() == null) {
+            kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
+            getLogger().warning("The effect '" + saveEffect(settings) + "' targets an entity (" + getTargetEntityRef().getAsString() + ") who did not have an entity description!");
         } else if (!isActionApplicableToTarget()) {
             kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
             getLogger().warning("The effect '" + saveEffect(settings) + "' targets an entity (" + this.targetEntityRef.getAsGqsString(settings) + ") which is unable to execute the effect.");

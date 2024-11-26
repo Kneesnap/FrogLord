@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityI
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptValidationData;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
@@ -159,6 +160,15 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
      */
     public void printWarnings(Logger logger) {
         this.type.getMinimumEntityGroup().logEntityTypeWarnings(logger, this, this.type.getDisplayName());
+    }
+
+    /**
+     * Prints warnings about the cause which could cause it to behave in undesired ways.
+     * These warnings are "advanced" because they need information about other script actions/causes.
+     * @param data The data to use for warning lookups.
+     */
+    public void printAdvancedWarnings(kcScriptValidationData data) {
+        // By default, there are none.
     }
 
     /**

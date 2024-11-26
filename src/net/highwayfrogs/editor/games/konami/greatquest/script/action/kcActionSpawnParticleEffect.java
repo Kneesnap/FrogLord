@@ -41,7 +41,7 @@ public class kcActionSpawnParticleEffect extends kcAction {
 
     @Override
     protected void loadArguments(OptionalArguments arguments) {
-        setParticleHash(GreatQuestUtils.getAsHash(arguments.useNext(), 0));
+        setParticleHash(GreatQuestUtils.getAsHash(arguments.useNext(), 0, this.particleRef));
     }
 
     @Override

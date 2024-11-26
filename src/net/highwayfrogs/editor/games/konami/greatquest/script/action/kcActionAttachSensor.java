@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc.kcCollisionGroup;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
@@ -20,13 +21,12 @@ public class kcActionAttachSensor extends kcAction {
     private final GreatQuestHash<kcCResourceGeneric> particleEmitterRef = new GreatQuestHash<>(); // kcParticleEmitterParam The hashes should be represented as -1 when not present.
     private final GreatQuestHash<kcCResourceGeneric> launchDataRef = new GreatQuestHash<>(); // LauncherParams The hashes should be represented as -1 when not present.
     private float radius;
-    private int focus;
+    private int collideWith;
 
     private static final kcArgument[] BASE_ARGUMENTS = kcArgument.make(kcParamType.ATTACH_ID, "type", kcParamType.BONE_TAG, "boneId");
     private static final kcArgument[] ATTACH_PARTICLE = kcArgument.make(kcParamType.ATTACH_ID, "type", kcParamType.BONE_TAG, "boneId", kcParamType.HASH, "hEffect");
     private static final kcArgument[] ATTACH_LAUNCHER = kcArgument.make(kcParamType.ATTACH_ID, "type", kcParamType.BONE_TAG, "boneId", kcParamType.HASH, "hLaunchData");
-    private static final kcArgument[] ATTACH_ATTACK_OR_BUMP = kcArgument.make(kcParamType.ATTACH_ID, "type", kcParamType.BONE_TAG, "boneId", kcParamType.FLOAT, "radius", kcParamType.UNSIGNED_INT, "focus"); // TODO: Special flag option for 'focus'?
-    // TODO: What is focus? It's either 0 or 2, and 0 only is seen twice. This is mCollideWith
+    private static final kcArgument[] ATTACH_ATTACK_OR_BUMP = kcArgument.make(kcParamType.ATTACH_ID, "type", kcParamType.BONE_TAG, "boneId", kcParamType.FLOAT, "radius", kcParamType.UNSIGNED_INT, "collideWith");
 
     public kcActionAttachSensor(kcActionExecutor executor, kcActionID action) {
         super(executor, action);
@@ -65,7 +65,7 @@ public class kcActionAttachSensor extends kcAction {
             case ATTACK_SENSOR:
             case BUMP_SENSOR:
                 this.radius = reader.next().getAsFloat();
-                this.focus = reader.next().getAsInteger();
+                this.collideWith = reader.next().getAsInteger();
                 break;
             default:
                 throw new RuntimeException("Unsupported kcAttachID: " + this.attachID);
@@ -86,11 +86,17 @@ public class kcActionAttachSensor extends kcAction {
             case ATTACK_SENSOR:
             case BUMP_SENSOR:
                 writer.write(this.radius);
-                writer.write(this.focus);
+                writer.write(this.collideWith);
                 break;
             default:
                 throw new RuntimeException("Unsupported kcAttachID: " + this.attachID);
         }
+    }
+
+    @Override
+    public int getGqsArgumentCount(kcArgument[] argumentTemplates) {
+        int argumentCount = super.getGqsArgumentCount(argumentTemplates);
+        return (argumentTemplates == ATTACH_ATTACK_OR_BUMP) ? argumentCount - 1 : argumentCount;
     }
 
     @Override
@@ -99,17 +105,17 @@ public class kcActionAttachSensor extends kcAction {
         this.boneId.fromConfigNode(getExecutor(), getGameInstance(), arguments.useNext(), kcParamType.BONE_TAG);
         switch (this.attachID) {
             case PARTICLE_EMITTER:
-                int emitterHash = GreatQuestUtils.getAsHash(arguments.useNext(), -1);
+                int emitterHash = GreatQuestUtils.getAsHash(arguments.useNext(), -1, this.particleEmitterRef);
                 setParticleEmitterHash(emitterHash);
                 break;
             case LAUNCHER:
-                int launcherHash = GreatQuestUtils.getAsHash(arguments.useNext(), -1);
+                int launcherHash = GreatQuestUtils.getAsHash(arguments.useNext(), -1, this.launchDataRef);
                 setLauncherDataHash(launcherHash);
                 break;
             case ATTACK_SENSOR:
             case BUMP_SENSOR:
                 this.radius = arguments.useNext().getAsFloat();
-                this.focus = arguments.useNext().getAsInteger();
+                this.collideWith = kcCollisionGroup.getValueFromArguments(arguments);
                 break;
             default:
                 throw new RuntimeException("Unsupported kcAttachID: " + this.attachID);
@@ -130,7 +136,7 @@ public class kcActionAttachSensor extends kcAction {
             case ATTACK_SENSOR:
             case BUMP_SENSOR:
                 arguments.createNext().setAsFloat(this.radius);
-                arguments.createNext().setAsInteger(this.focus);
+                kcCollisionGroup.addFlags(this.collideWith, arguments);
                 break;
             default:
                 throw new RuntimeException("Unsupported kcAttachID: " + this.attachID);

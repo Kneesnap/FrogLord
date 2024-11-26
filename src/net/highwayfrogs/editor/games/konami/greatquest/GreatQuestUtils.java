@@ -774,22 +774,48 @@ public class GreatQuestUtils {
      * @return hashValue
      */
     public static int getAsHash(StringNode node, int nullValue) {
-        return node != null && node.getAsString() != null ? getAsHash(node.getAsString(), nullValue) : nullValue;
+        return node != null && node.getAsString() != null ? getAsHash(node.getAsString(), nullValue, null) : nullValue;
+    }
+
+    /**
+     * Interprets the given node as a hash
+     * @param node the node to interpret
+     * @param nullValue the value to return if a null or empty string is provided
+     * @return hashValue
+     */
+    public static int getAsHash(StringNode node, int nullValue, GreatQuestHash<?> hashObj) {
+        String originalString;
+        if (node != null && (originalString = node.getAsString()) != null) {
+            return getAsHash(originalString, nullValue, hashObj);
+        } else {
+            if (hashObj != null)
+                hashObj.setHash(nullValue);
+            return nullValue;
+        }
     }
 
     /**
      * Interprets the given string as a hash
      * @param input the string to interpret
      * @param nullValue the value to return if a null or empty string is provided
+     * @param hashObj a hash object to apply the hash to. If null, it is ignored.
      * @return hashValue
      */
-    public static int getAsHash(String input, int nullValue) {
+    public static int getAsHash(String input, int nullValue, GreatQuestHash<?> hashObj) {
         if (input == null || input.isEmpty()) {
+            if (hashObj != null)
+                hashObj.setHash(nullValue);
             return nullValue;
         } else if (NumberUtils.isHexInteger(input)) {
-            return NumberUtils.parseHexInteger(input);
+            int hash = NumberUtils.parseHexInteger(input);
+            if (hashObj != null)
+                hashObj.setHash(hash);
+            return hash;
         } else {
-            return GreatQuestUtils.hash(input);
+            int hash = GreatQuestUtils.hash(input);
+            if (hashObj != null)
+                hashObj.setHash(hash, input, true);
+            return hash;
         }
     }
 

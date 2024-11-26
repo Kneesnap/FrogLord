@@ -5,6 +5,8 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityFlag.kcEntityInstanceFlag;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInheritanceGroup;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
@@ -62,7 +64,7 @@ public class kcScriptCauseEntity3D extends kcScriptCause {
     protected void loadArguments(OptionalArguments arguments) {
         this.status = arguments.useNext().getAsEnumOrError(kcScriptCauseEntity3DStatus.class);
         if (this.status.hasOtherEntityAsParam())
-            setOtherEntityHash(GreatQuestUtils.getAsHash(arguments.useNext(), -1));
+            setOtherEntityHash(GreatQuestUtils.getAsHash(arguments.useNext(), -1, this.otherEntityRef));
     }
 
     @Override
@@ -74,9 +76,21 @@ public class kcScriptCauseEntity3D extends kcScriptCause {
 
     @Override
     public void printWarnings(Logger logger) {
-        super.printWarnings(logger);
-        if (this.status.hasOtherEntityAsParam())
+        // Ensure the entity has the flag.
+        kcCResourceEntityInst entity;
+        String entityName;
+        if (this.status.hasOtherEntityAsParam()) {
             this.status.getOtherEntityGroup().logEntityTypeWarnings(logger, this, this.otherEntityRef, this.status.name());
+            entity = this.otherEntityRef.getResource();
+            entityName = this.otherEntityRef.getAsString();
+        } else {
+            super.printWarnings(logger); // Only log if we're not going to check the entity type ourselves.
+            entity = getScriptEntity();
+            entityName = getScriptEntity().getName();
+        }
+
+        if (!(entity.getInstance() instanceof kcEntity3DInst) || !((kcEntity3DInst) entity.getInstance()).hasFlag(kcEntityInstanceFlag.ALLOW_WAYPOINT_INTERACTION))
+            printWarning(logger, "the other entity (" + entityName + ") did not have the --" + kcEntityInstanceFlag.ALLOW_WAYPOINT_INTERACTION.getDisplayName() + " flag.");
     }
 
     @Override

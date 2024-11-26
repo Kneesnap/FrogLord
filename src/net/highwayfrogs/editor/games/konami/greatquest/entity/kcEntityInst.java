@@ -217,12 +217,12 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
         if (chunkedFile == null)
             throw new NullPointerException("chunkedFile");
 
-        int entityDescHash = GreatQuestUtils.getAsHash(input.getKeyValueNodeOrError(CONFIG_KEY_ENTITY_DESC), -1);
+        int entityDescHash = GreatQuestUtils.getAsHash(input.getKeyValueNodeOrError(CONFIG_KEY_ENTITY_DESC), -1, this.descriptionRef);
         GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, chunkedFile, this.resource, this.descriptionRef, entityDescHash, true);
 
         this.priority = input.getOrDefaultKeyValueNode(CONFIG_KEY_PRIORITY).getAsInteger(1);
 
-        int targetEntityHash = GreatQuestUtils.getAsHash(input.getKeyValueNodeOrError(CONFIG_KEY_TARGET_ENTITY), -1);
+        int targetEntityHash = GreatQuestUtils.getAsHash(input.getKeyValueNodeOrError(CONFIG_KEY_TARGET_ENTITY), -1, this.targetEntityRef);
         GreatQuestUtils.resolveResourceHash(kcCResourceEntityInst.class, chunkedFile, this.resource, this.targetEntityRef, targetEntityHash, true);
     }
 

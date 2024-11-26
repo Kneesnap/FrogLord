@@ -19,6 +19,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneri
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
+import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDescType;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
@@ -44,6 +46,7 @@ public class GreatQuestAssetUtils {
     private static final String CONFIG_SECTION_SOUND_EFFECTS = "SoundEffects";
     private static final String CONFIG_SECTION_COPY_RESOURCES = "CopyResources";
     private static final String CONFIG_SECTION_DIALOG = "Dialog";
+    private static final String CONFIG_SECTION_COLLISION_PROXIES = "Collision";
     private static final String CONFIG_SECTION_ENTITY_DESCRIPTIONS = "EntityDescriptions";
     private static final String CONFIG_SECTION_ENTITIES = "Entities";
     private static final String CONFIG_SECTION_SCRIPTS = "Scripts";
@@ -76,6 +79,7 @@ public class GreatQuestAssetUtils {
 
         // Should occur before resource copying, so that any resources can resolve the model references.
         applyModelReferences(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_MODELS), logger);
+        applyCollisionProxies(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_COLLISION_PROXIES));
         copyResources(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_COPY_RESOURCES), logger);
 
         // This should occur after resource copying to ensure it can resolve resources. Copied resources shouldn't reference entity descriptions since entity instances (a resource which is not expected to be copied) are the only resource to resolve entity descriptions.
@@ -85,6 +89,9 @@ public class GreatQuestAssetUtils {
         // Run before scripts, but after entity descriptions.
         applyEntityInstances(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ENTITIES), scriptList);
         applyScripts(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_SCRIPTS), scriptList);
+
+        // Print advanced warnings after everything is complete.
+        scriptList.printAdvancedWarnings(logger);
     }
 
     private static void applyStringResources(GreatQuestChunkedFile chunkedFile, Config dialogCfg) {
@@ -260,6 +267,27 @@ public class GreatQuestAssetUtils {
             }
 
             arguments.warnAboutUnusedArguments(logger);
+        }
+    }
+
+    private static void applyCollisionProxies(GreatQuestChunkedFile chunkedFile, Config collisionCfg) {
+        if (collisionCfg == null)
+            return;
+
+        for (Config collisionProxyDescCfg : collisionCfg.getChildConfigNodes()) {
+            String collisionProxyDescName = collisionProxyDescCfg.getSectionName();
+            int collisionProxyNameHash = GreatQuestUtils.hash(collisionProxyDescName);
+            kcCResourceGeneric collisionDesc = chunkedFile.getResourceByHash(collisionProxyNameHash);
+            if (collisionDesc == null) {
+                kcProxyDescType descType = collisionProxyDescCfg.getKeyValueNodeOrError(kcProxyDesc.CONFIG_KEY_DESC_TYPE).getAsEnumOrError(kcProxyDescType.class);
+
+                collisionDesc = new kcCResourceGeneric(chunkedFile);
+                collisionDesc.setName(collisionProxyDescName, true);
+                collisionDesc.setResourceData(descType.createNewInstance(collisionDesc));
+                chunkedFile.addResource(collisionDesc);
+            }
+
+            collisionDesc.getAsEntityDescription().fromConfig(collisionProxyDescCfg);
         }
     }
 

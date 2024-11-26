@@ -5,6 +5,8 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityFlag.kcEntityInstanceFlag;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
@@ -41,7 +43,7 @@ public class kcScriptCauseWaypoint extends kcScriptCause {
     @Override
     protected void loadArguments(OptionalArguments arguments) {
         this.status = arguments.useNext().getAsEnumOrError(kcScriptCauseWaypointStatus.class);
-        setOtherEntityHash(GreatQuestUtils.getAsHash(arguments.useNext(), -1));
+        setOtherEntityHash(GreatQuestUtils.getAsHash(arguments.useNext(), -1, this.otherEntityRef));
     }
 
     @Override
@@ -53,8 +55,13 @@ public class kcScriptCauseWaypoint extends kcScriptCause {
     @Override
     public void printWarnings(Logger logger) {
         super.printWarnings(logger);
-        if (this.otherEntityRef.getResource() == null) // The other entity could be a kcCEntity, there is no type-restriction.
-            printWarning(logger, "will never occur because other entity could not be found.");
+
+        kcCResourceEntityInst otherEntity = this.otherEntityRef.getResource();
+        if (otherEntity == null) { // The other entity could be a kcCEntity, there is no type-restriction.
+            printWarning(logger, "the other entity (" + this.otherEntityRef.getAsString() + ") could not be found.");
+        } else if (!(otherEntity.getInstance() instanceof kcEntity3DInst) || !((kcEntity3DInst) otherEntity.getInstance()).hasFlag(kcEntityInstanceFlag.ALLOW_WAYPOINT_INTERACTION)) {
+            printWarning(logger, "the other entity (" + this.otherEntityRef.getAsString() + ") did not have the --" + kcEntityInstanceFlag.ALLOW_WAYPOINT_INTERACTION.getDisplayName() + " flag.");
+        }
     }
 
     @Override

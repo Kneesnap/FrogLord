@@ -63,17 +63,13 @@ public enum kcEntityInheritanceGroup {
      */
     public void logEntityTypeWarnings(Logger logger, kcScriptCause scriptCause, String subCauseDisplayName) {
         kcCResourceEntityInst entity = scriptCause.getScriptEntity();
-        if (entity == null) {
-            scriptCause.printWarning(logger, "will never occur because FrogLord could not find the script entity.");
-            return;
-        }
+        if (entity == null)
+            return; // Don't log, this will already have been logged.
 
         kcEntityInst entityInst = entity.getInstance();
         kcEntity3DDesc entityDesc = entityInst != null ? entityInst.getDescription() : null;
-        if (entityDesc == null) {
-            scriptCause.printWarning(logger, "will never occur because FrogLord could not find the entity description for '" + entity.getName() + "'.");
-            return;
-        }
+        if (entityDesc == null)
+            return; // Don't log, this will already have been logged.
 
         if (!isApplicable(entityDesc))
             scriptCause.printWarning(logger, "will never occur because '" + subCauseDisplayName + "' requires the entity '" + entity.getName() + "' to extend " + this.displayName + ", but the entity was actually a " + Utils.getSimpleName(entityDesc) + ".");
@@ -86,17 +82,13 @@ public enum kcEntityInheritanceGroup {
      */
     public void logEntityTypeWarnings(Logger logger, kcScriptCause scriptCause, GreatQuestHash<kcCResourceEntityInst> otherEntityRef, String subCauseDisplayName) {
         kcCResourceEntityInst entity = otherEntityRef != null ? otherEntityRef.getResource() : null;
-        if (entity == null) {
-            scriptCause.printWarning(logger, "will never occur because FrogLord could not find the entity referenced as an argument.");
+        if (entity == null)
             return;
-        }
 
         kcEntityInst entityInst = entity.getInstance();
         kcEntity3DDesc entityDesc = entityInst != null ? entityInst.getDescription() : null;
-        if (entityDesc == null) {
-            scriptCause.printWarning(logger, "will never occur because FrogLord could not find the entity description for '" + entity.getName() + "'.");
+        if (entityDesc == null)
             return;
-        }
 
         if (!isApplicable(entityDesc))
             scriptCause.printWarning(logger, "will never occur because '" + subCauseDisplayName + "' requires the entity parameter '" + entity.getName() + "' to extend " + this.displayName + ", but the entity was actually a " + Utils.getSimpleName(entityDesc) + ".");
@@ -113,10 +105,8 @@ public enum kcEntityInheritanceGroup {
             throw new NullPointerException("action");
 
         kcEntity3DDesc entityDesc = action.getExecutor().getExecutingEntityDescription();
-        if (entityDesc == null) {
-            action.printWarning(logger, "FrogLord could not find the entity description for the script entity.");
+        if (entityDesc == null)
             return;
-        }
 
         if (!isApplicable(entityDesc))
             action.printWarning(logger, "'" + relevantData + "' requires the entity description '" + entityDesc.getResource().getName() + "' to extend " + this.displayName + ", but the entity was actually a " + Utils.getSimpleName(entityDesc) + ".");

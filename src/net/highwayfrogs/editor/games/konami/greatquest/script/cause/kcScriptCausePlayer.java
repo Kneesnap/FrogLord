@@ -44,7 +44,7 @@ public class kcScriptCausePlayer extends kcScriptCause {
 
     @Override
     public void printWarnings(Logger logger) {
-        super.printWarnings(logger);
+        //super.printWarnings(logger); // Don't call, so we can check the type here!
         kcCResourceEntityInst entity = getScriptEntity();
         if (entity != null && entity.getHash() == kcEntityInst.PLAYER_ENTITY_HASH)
             printWarning(logger, "will never occur because the script entity is the player entity.");

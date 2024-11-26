@@ -1,10 +1,13 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityFlag.kcEntityInstanceFlag;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInheritanceGroup;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.logging.Logger;
@@ -57,9 +60,14 @@ public class kcActionFlag extends kcAction {
         super.printWarnings(logger);
 
         // Warn about incompatible flags.
-        for (kcEntityInstanceFlag flag : kcEntityInstanceFlag.values())
-            if ((this.flagMask & flag.getInstanceBitFlagMask()) == flag.getInstanceBitFlagMask())
-                flag.getFlagType().getInheritanceGroup().logEntityTypeWarnings(logger, this, flag.getDisplayName());
+        kcEntity3DDesc entityDesc = getExecutor() != null ? getExecutor().getExecutingEntityDescription() : null;
+        if (entityDesc != null) {
+            for (kcEntityInstanceFlag flag : kcEntityInstanceFlag.values()) {
+                kcEntityInheritanceGroup group = flag.getFlagType().getInheritanceGroup();
+                if ((this.flagMask & flag.getInstanceBitFlagMask()) == flag.getInstanceBitFlagMask() && !group.isApplicable(entityDesc))
+                    printWarning(logger, "the entity flag '" + flag.getDisplayName() + "' requires the entity description '" + entityDesc.getResource().getName() + "' to extend " + group.getDisplayName() + ", but the entity was actually a " + Utils.getSimpleName(entityDesc) + ".");
+            }
+        }
 
         // INIT_FLAGS shouldn't warn if no flags are specified since it will still do something (reset flags).
         // But the others will do nothing since there are no flags given.

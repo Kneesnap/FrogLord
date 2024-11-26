@@ -30,7 +30,7 @@ public class kcEmitterDesc extends kcProxyCapsuleDesc {
     private final GreatQuestHash<kcCResourceGeneric> entityDescRef;
 
     public kcEmitterDesc(kcCResourceGeneric resource) {
-        super(resource);
+        super(resource, kcProxyDescType.EMITTER);
         this.entityDescRef = new GreatQuestHash<>();
     }
 

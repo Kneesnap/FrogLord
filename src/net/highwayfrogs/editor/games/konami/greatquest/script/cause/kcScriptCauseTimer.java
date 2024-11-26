@@ -3,8 +3,11 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionID;
+import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionSetAlarm;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptValidationData;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
@@ -57,6 +60,18 @@ public class kcScriptCauseTimer extends kcScriptCause {
     }
 
     @Override
+    public void printAdvancedWarnings(kcScriptValidationData data) {
+        super.printAdvancedWarnings(data);
+        if (this.timerState == kcScriptCauseTimerState.REPEAT) {
+            if (!data.anyActionsMatch(kcActionID.SET_ALARM, (kcActionSetAlarm alarm) -> alarm.getAlarmId() == this.alarmId && alarm.getIntervalCount() > 1))
+                printWarning(data.getLogger(), data.getEntityName() + "does not have a " + kcActionID.SET_ALARM.getFrogLordName() + " effect for alarm ID " + this.alarmId + " which repeats.");
+        } else if (this.timerState == kcScriptCauseTimerState.FINISHED) {
+            if (!data.anyActionsMatch(kcActionID.SET_ALARM, (kcActionSetAlarm alarm) -> alarm.getAlarmId() == this.alarmId))
+                printWarning(data.getLogger(), data.getEntityName() + "does not have a " + kcActionID.SET_ALARM.getFrogLordName() + " effect for alarm ID " + this.alarmId + ".");
+        }
+    }
+
+    @Override
     public boolean equals(Object obj) {
         return super.equals(obj) && ((kcScriptCauseTimer) obj).getAlarmId() == this.alarmId
                 && ((kcScriptCauseTimer) obj).getTimerState() == this.timerState;
@@ -73,8 +88,8 @@ public class kcScriptCauseTimer extends kcScriptCause {
             case UNUSED_0:
                 builder.append("Never (Alarm #").append(this.alarmId).append(" was probably supposed to trigger this, but can't)");
                 break;
-            case IN_PROGRESS:
-                builder.append("When alarm #").append(this.alarmId).append(" is in progress");
+            case REPEAT:
+                builder.append("When alarm #").append(this.alarmId).append(" repeats");
                 break;
             case FINISHED:
                 builder.append("When alarm #").append(this.alarmId).append(" expires");
@@ -88,7 +103,7 @@ public class kcScriptCauseTimer extends kcScriptCause {
     @Getter
     @AllArgsConstructor
     public enum kcScriptCauseTimerState {
-        UNUSED_0, IN_PROGRESS, FINISHED;
+        UNUSED_0, REPEAT, FINISHED;
 
         /**
          * Gets the kcScriptCauseTimerState corresponding to the provided value.

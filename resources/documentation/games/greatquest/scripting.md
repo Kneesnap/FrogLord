@@ -125,23 +125,23 @@ The following documents all causes found within the game, and how they work.
 ### OnPlayer
 **Summary:** Executes when the player has an interaction with the script owner.  
 **Supported Entity Types:** Base Actors  
-**Usage:** `OnPlayer <INTERACT|BUMPS|ATTACK|PICKUP_ITEM>`  
+**Usage:** `OnPlayer <INTERACT|BUMPS|TARGET_FOR_ATTACK|PICKUP_ITEM>`  
 **Actions:**  
 ```properties
 INTERACT # The player interacts with the script owner. script owner must be at least a kcCActorBase. Code: CFrogCtl::OnBeginAction, CFrogCtl::CheckForHealthBug
 BUMPS # The player collides/bumps with the script owner. script owner must be a CProp or a CCharacter. Code: CProp::TriggerHitCallback, CCharacter::BumpCallback
-ATTACK # The player attacks the script owner. script owner must be kcCActorBase. Code: CFrogCtl::Spit, CFrogCtl::OnBeginMissile, CFrogCtl::OnBeginMagicStone, and, CFrogCtl::OnBeginMelee
+TARGET_FOR_ATTACK # The player targets the script owner for an attack. script owner must be kcCActorBase. Code: CFrogCtl::Spit, CFrogCtl::OnBeginMissile, CFrogCtl::OnBeginMagicStone, and, CFrogCtl::OnBeginMelee
 PICKUP_ITEM # The player picks up the script owner as an item. script owner must be CItemDesc. Code: CCharacter::PickupCallback
 ```
 
 ### OnActor
 **Summary:** Executes when one of the following actions happens to the script owner.  
 **Supported Entity Types:** Base Actors  
-**Usage:** `OnActor <BUMPS|TAKE_DAMAGE|DEATH>`  
+**Usage:** `OnActor <BUMPS|HEAL|DEATH>`  
 **Actions:**  
 ```properties
 BUMPS # Another actor bumps into the script owner. script owner must be a CProp or a CCharacter. Code: CProp::TriggerHitCallback, CCharacter::BumpCallback
-TAKE_DAMAGE # The script owner takes damage. Code: script owner must be at least a kcCActor. kcCActor::OnDamage
+HEAL # The script owner heals. Code: script owner must be at least a kcCActor. kcCActor::OnDamage
 DEATH # The script owner dies. Code: script owner must be at least a kcCActor. kcCActor::OnDamage
 ```
 
@@ -173,10 +173,11 @@ UNNAMED_TYPE_XX # Where XX is a number between 0 and 31 and is not one of the nu
 **Supported Entity Types:** All  
 **Ghidra Reference (Ignore):** `kcCEntity::AlarmCallback`  
 **Supported Entity Types:** Base Actors  
-**Usage:** `OnAlarm FINISHED <alarmId>`  
+**Usage:** `OnAlarm <REPEAT|FINISHED> <alarmId>`  
 Any whole number between 0 and 31 can be used as an alarm ID.  
-To use `OnAlarm`, the alarm must first be activated using `SetAlarm`.
-Note that other options such as `IN_PROGRESS` may work in-place of `FINISHED`, but are not currently used/understood.  
+To use `OnAlarm`, the alarm must first be activated using `SetAlarm`.  
+If `REPEAT` is specified, the cause will run each time the alarm repeats. (Only occurs for `SetAlarm --Repeat`)  
+If `FINISHED` is specified, the cause will only run once, when the alarm finishes (which is after all repeats).
 
 ### OnPrompt (Unsupported)
 **Summary:** Does not work correctly.  
@@ -365,7 +366,8 @@ Not used in the vanilla game.
 **Ghidra Reference (Ignore):** `kcCEntity3D::OnCommand`  
 **Usage:** `SetAxisPosition <X|Y|Z> <coordinate>`  
 **Example:** `SetAxisPosition X 22.5`  
-Not used in the vanilla game.
+Not used in the vanilla game.  
+See `SetPosition` for any limitations.  
 
 ### SetPosition (Script Only)
 **Summary:** Sets the script owner's position.  
@@ -374,7 +376,7 @@ Not used in the vanilla game.
 **Usage:** `SetPosition <x> <y> <z>`  
 **Warning:**  
 ```
-This command does not work properly when used on the player if collision is in the way.
+This command does not work properly when used on the player if collision sits between the player and the new position.
 If collision is disabled for the player, the teleport will work up until the moment collision is re-enabled, when the player will be snapped back.
 
 It is recommended to fade the screen out, and perform a series of teleports (With at least one frame of delay between each) to get the player to the destination without going through any collision.
@@ -388,13 +390,15 @@ Further research/debugging is necessary to determine what causes this issue.
 **Supported Entity Types:** All 3D Entities  
 **Ghidra Reference (Ignore):** `kcCEntity3D::OnCommand`  
 **Usage:** `AddToAxisPosition <X|Y|Z> <amount>`  
-Not used in the vanilla game.
+Not used in the vanilla game.  
+See `SetPosition` for restrictions.
 
 ### AddPosition (Script Only)
 **Summary:** Adds an offset to the script owner's current position.  
 **Supported Entity Types:** All 3D Entities  
 **Ghidra Reference (Ignore):** `kcCEntity3D::OnCommand`  
 **Usage:** `AddPosition <x> <y> <z>`  
+See `SetPosition` for restrictions.
 
 ### SetAxisRotation (Script Only)
 **Summary:** Sets a rotation value on the specified axis.  
@@ -507,6 +511,7 @@ This will only work if the `--EnablePhysics` flag is applied to the script owner
 The physics system in the game is not currently reverse engineered, but this is most likely for impulse-based dynamics (physics simulation).  
 That would mean that "impulse" means "the change in momentum of an object".  
 So in other words, `ApplyImpulse` changes the momentum of the entity.  
+TODO: Add a warning if the physics flag isn't present, and is never set.
 
 ### Prompt (Unsupported)
 **Summary:** This was never fully supported by the game, but it looks like it was supposed to allow the player to make choices within dialog text-boxes.  
@@ -534,7 +539,7 @@ Instructions for adding text/string resources are in the `GQS Script Group` docu
 **Usage:** `SetAlarm <alarmId> <durationInSeconds> [--Repeat <numberOfTimesToRepeat>]`  
 Any number between 0 and 31 is a valid alarm ID.  
 The duration of the alarm can be a decimal number.  
-The timer will start counting down from the number of seconds given.
+The timer will start counting down from the number of seconds given.  
 Once the timer reaches 0, it will send `OnAlarm` with the alarm ID provided.  
 The main purpose of this feature is to run script effects after a delay.  
 
@@ -656,6 +661,7 @@ Not used in the vanilla game.
 **Usage:** `SendPlayerHasItem <inventoryItem>`  
 Click [here](../../../../src/net/highwayfrogs/editor/games/konami/greatquest/generic/InventoryItem.java) to see a list of InventoryItem values.  
 When the `--AsEntity` flag is included, the number will be sent to the `--AsEntity` target instead of the script owner.  
+TODO: Warn if there is no cause.
 
 ### SetPlayerHasItem (Script Only)
 **Summary:** Add or remove an inventory item in the player's inventory.  
@@ -729,15 +735,17 @@ SLEEP # Applies the entity sleep animation.
 # The bone will usually be an arm, but some entities will use bones such as part of a sword.
 # This makes combat appear more fluid, as the player will only react to getting hit the moment they are hit.
 # The 'radius' value is a decimal number representing the collision/bounding sphere's radius.
-# The 'focus' value is a whole number with a currently unknown purpose. It is either 0 or 2.
-Attach ATTACK_SENSOR <boneNameOrId> <radius> <focus>
-AttachSensor <boneNameOrId> <radius> <focus>
+# Any collision group can be used instead of just --Player, if you'd like to have monsters able to damage each other.
+# See the collision documentation below for a list of valid groups.
+Attach ATTACK_SENSOR <boneNameOrId> <radius> [--Player]
+AttachSensor <boneNameOrId> <radius> [--Player]
 
 # Enables a listener to allow collision script events to fire
 # Without doing this, I don't believe entities will fire collision events.
 # The 'radius' value is a decimal number representing the collision/bounding sphere's radius.
-# The 'focus' value is a whole number with a currently unknown purpose. It is either 0 or 2.
-Attach BUMP_SENSOR <boneNameOrId> <radius> <focus>
+# Any collision group can be used instead of just --Player, if you'd like to have monsters able to bump each other.
+# See the collision documentation below for a list of valid groups.
+Attach BUMP_SENSOR <boneNameOrId> <radius> [--Player]
 
 # Enables a projectile launcher.
 # I'm not sure yet if this means to launch a projectile or just to enable it.
@@ -784,7 +792,7 @@ BOTH # Controls both entity visibility and terrain visibility.
 **Summary:** Deactivates the current camera, reverting to the previous camera.  
 **Supported Entity Types:** All  
 **Ghidra Reference (Ignore):** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnDeactivatePivotCamera`  
-**Usage:** `DeactivateCamera <float transitionInSeconds>`  
+**Usage:** `DeactivateCamera <transitionInSeconds>`  
 `transitionInSeconds` is a decimal number indicating how long it will take (in seconds) to switch to the previous camera.
 
 ### SetCameraTarget (Script Only)
@@ -811,12 +819,12 @@ The value is a decimal number.
 ```properties
 # kcCameraPivotParam Values:
 PIVOT_DISTANCE # How much distance to put between the camera and the pivot entity.
-TARGET_OFFSET_X # An offset to the position of the target entity which the camera will look at.
-TARGET_OFFSET_Y # An offset to the position of the target entity which the camera will look at.
-TARGET_OFFSET_Z # An offset to the position of the target entity which the camera will look at.
-PIVOT_OFFSET_X # An offset between the camera and the position of the pivot entity.
-PIVOT_OFFSET_Y # An offset between the camera and the position of the pivot entity.
-PIVOT_OFFSET_Z # An offset between the camera and the position of the pivot entity.
+TARGET_OFFSET_X # An offset to the position the camera looks at (the target entity).
+TARGET_OFFSET_Y # An offset to the position the camera looks at (the target entity).
+TARGET_OFFSET_Z # An offset to the position the camera looks at (the target entity).
+PIVOT_OFFSET_X # An offset to the pivot position (the pivot entity).
+PIVOT_OFFSET_Y # An offset to the pivot position (the pivot entity).
+PIVOT_OFFSET_Z # An offset to the pivot position (the pivot entity).
 TRANSITION_DURATION # How long the camera transition should take.
 CAMERA_BASE_FLAGS # The flags to apply to the camera entity. (Currently undocumented/unknown)
 ```
@@ -895,14 +903,60 @@ NOTE: Bounding boxes must ALSO have bounding spheres set which cover the same ar
 TODO: Document Entity descriptions.
 
 ## Collision
-TODO: How does collision work? [collideGroup/collideWith, different entities having different collision behavior, etc.]
-When an actor loads, it will create either a "proxy capsule", or a "proxy tri mesh" (Ghidra: `kcCActorBase::Init -> kcCActorBase::CreateCollisionProxy`)  
-A "proxy capsule" is a pill-shaped area (a cylinder with a round top/bottom). These are very fast but not very flexible.  
-A "tri mesh" is a triangle mesh/ a 3D object which can be modelled like normal 3D models. These are more flexible but introduce more lag.  
+Collision happens through what are called "collision proxies", which are stand-ins for objects (terrain, entities, etc.)
+These proxies are 3D shapes which aren't shown in-game, but can be previewed using FrogLord.  
+There are two kinds of proxies, "capsules" and "triangle meshes".
 
-TODO: Items are special, and are handled in CItem::Init
-TODO: 'focus' is the counterpart to 'group'. EG: It's collideWith vs collisionGroup
+**Capsules (kcCProxyCapsule):**  
+A "proxy capsule" is a pill-shaped area (a cylinder with a round top/bottom). These are very fast but not very flexible.
 
-TODO:
-kcReactType.HALT is automatically replaced with SLIDE by `kcCActorBase`.  
+TODO: Creating through configurations.
+TODO: Example image?
 
+**Triangle Meshes (kcCProxyTriMesh):**  
+A "triangle mesh" is a just a normal 3D model, but without any textures.
+These are more flexible than capsules but do not perform very well.  
+Note that these cannot have animations like the models which get displayed in-game can.  
+
+TODO: Creating through configurations.
+TODO: Example image?
+
+### There's more to collision though!
+Before the proxy will be tested, there is a sphere on every actor description.  
+This sphere is a very fast collision test which gets checked BEFORE the proxies are tested.  
+This is because spheres are extremely fast/quick/easy to check, so the sphere can eliminate some of the more heavy collision checks.  
+
+
+### Waypoint Collision
+Waypoints are special, as they do not have collision proxy data.  
+They can either have a `BOUNDING_BOX` or a `SPHERE` shape.
+If a sphere is chosen, the entity sphere described before is used.  
+If a bounding box is selected, the sphere appears to be completely ignored, and the box dimensions are found in the waypoint description data instead of a collision proxy.  
+
+### Items
+Items are also special, because their collision proxy data is hardcoded. (Applied by `CItem::Init`.)  
+Even though it may appear possible to assign custom data to them, it will be overriden on load.  
+
+### Collision Groups
+The game groups together certain similar entities so that collision which should be skipped can be skipped quickly.  
+For example, enemies don't need to collide with coins/gems/etc, but they do need to collide with the player.  
+So each entity description has a "collisionGroup" field to indicate what group(s) it is part of, as well as a "collideWith" field to indicate which collision groups the entity should collide with.  
+The following are the collision groups which can be used:
+```properties
+TriangleMeshes # 00
+Player # 01
+NonHostileEntities # 02
+HostileEntities # 03
+PlayerKicks # 04 (The player's feet while they are kicking)
+PlayerPunches # 05 (The player's hands while they are punching)
+Flyers # 11
+Swimmers # 12
+Sensors # 14 (Attack / Bump Sensors)
+Items # 15
+Terrain # 16
+Climbable # 31, Seems to be set on climbable models such as ladders and vines.
+# There are a ton more possible collision groups than the ones listed above, but most are unused.
+# Thus, they are free to be used for whatever kind of purpose the mod-creator likes.
+# To specify one of the unused collision groups, use the following:
+UnnamedGroupXX # Where XX is a number between 0 and 31 and is not one of the numbers listed above. For example: UnnamedGroup17
+```

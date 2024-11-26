@@ -47,7 +47,7 @@ public class kcScriptCauseActor extends kcScriptCause {
 
     @Override
     public void printWarnings(Logger logger) {
-        super.printWarnings(logger);
+        // super.printWarnings(logger); // Don't call this, since we'll be testing the entity description here too.
         if (!this.action.isImplementedForActor())
             printWarning(logger, "uses action " + this.action + ", which is not supported by the Actor cause type.");
         this.action.getEntityGroup().logEntityTypeWarnings(logger, this, this.action.name());

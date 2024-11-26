@@ -30,7 +30,7 @@ public class kcProxyTriMeshDesc extends kcProxyDesc {
     private static final List<String> RECOGNIZED_INVALID_NAMES = Arrays.asList("Fairy Key A", "Fairy Key B", "Fairy Key C", "clover-2");
 
     public kcProxyTriMeshDesc(@NonNull kcCResourceGeneric resource) {
-        super(resource);
+        super(resource, kcProxyDescType.TRIMESH);
         this.meshRef = new GreatQuestHash<>();
         this.meshRef.getResourceChangeListeners().add(this::onMeshChange);
     }
@@ -85,15 +85,14 @@ public class kcProxyTriMeshDesc extends kcProxyDesc {
     @Override
     public void fromConfig(Config input) {
         super.fromConfig(input);
-        int meshHash = GreatQuestUtils.getAsHash(input.getKeyValueNodeOrError(CONFIG_KEY_COLLISION), -1);
+        int meshHash = GreatQuestUtils.getAsHash(input.getKeyValueNodeOrError(CONFIG_KEY_COLLISION), -1, this.meshRef);
         GreatQuestUtils.resolveResourceHash(kcCResourceTriMesh.class, getParentFile(), this, this.meshRef, meshHash, true);
     }
 
     @Override
     public void toConfig(Config output) {
         super.toConfig(output);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_COLLISION)
-                .setAsString(this.meshRef.getAsGqsString(getParentFile().createScriptDisplaySettings()));
+        output.getOrCreateKeyValueNode(CONFIG_KEY_COLLISION).setAsString(this.meshRef.getAsString());
     }
 
     @Override

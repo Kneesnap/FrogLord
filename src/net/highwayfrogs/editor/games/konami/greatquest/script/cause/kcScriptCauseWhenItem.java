@@ -2,8 +2,10 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionID;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptValidationData;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
@@ -12,7 +14,7 @@ import java.util.List;
  * The scripting system has no support for conditional statements.
  * For instance, you can't say "If player has item, do X"
  * This is how they got around this.
- * The script action 'SendWhetherPlayerHasItem {itemType}' will fire functions with this cause.
+ * The script action 'SendPlayerHasItem {itemType}' will fire functions with this cause.
  * This can specify whether it should run if the item is found or if it is not found.
  * This way, you can for example, handle planting a seed but only if they have a seed to plant.
  * Or alternatively, show a message if a player is trying to open a door they need a key for.
@@ -62,8 +64,15 @@ public class kcScriptCauseWhenItem extends kcScriptCause {
     }
 
     @Override
+    public void printAdvancedWarnings(kcScriptValidationData data) {
+        super.printAdvancedWarnings(data);
+        if (data.anyActionsMatch(kcActionID.WITH_ITEM))
+            printWarning(data.getLogger(), data.getEntityName() + " never executes " + kcActionID.WITH_ITEM.getFrogLordName() + ".");
+    }
+
+    @Override
     public void toString(StringBuilder builder, kcScriptDisplaySettings settings) {
-        builder.append("When 'SendWhetherPlayerHasItem' checks the player's inventory for an item and they ");
+        builder.append("When 'SendPlayerHasItem' checks the player's inventory for an item and they ");
         builder.append(this.playerShouldHaveItem ? "have" : "do not have");
         builder.append(" it");
     }

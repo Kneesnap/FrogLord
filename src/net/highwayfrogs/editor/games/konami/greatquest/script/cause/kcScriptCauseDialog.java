@@ -5,8 +5,11 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionDialog;
+import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionID;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptValidationData;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
@@ -42,7 +45,7 @@ public class kcScriptCauseDialog extends kcScriptCause {
     @Override
     protected void loadArguments(OptionalArguments arguments) {
         this.stage = arguments.useNext().getAsEnum(kcScriptDialogStage.class);
-        setDialogHash(GreatQuestUtils.getAsHash(arguments.useNext(), 0));
+        setDialogHash(GreatQuestUtils.getAsHash(arguments.useNext(), 0, this.dialogRef));
     }
 
     @Override
@@ -59,9 +62,14 @@ public class kcScriptCauseDialog extends kcScriptCause {
         if (this.dialogRef.getResource() == null)
             printWarning(logger, "will never occur because FrogLord cannot resolve the dialog string reference.");
 
-        // TODO: We should have another warning method which runs after all scripts have loaded. For this one it can test if ShowDialog ever shows the correct dialog, since others might be confused by this.
     }
 
+    @Override
+    public void printAdvancedWarnings(kcScriptValidationData data) {
+        super.printAdvancedWarnings(data);
+        if (!data.anyActionsMatch(kcActionID.DIALOG, (kcActionDialog action) -> action.getDialogRef().equals(this.dialogRef)))
+            printWarning(data.getLogger(), data.getEntityName() + " never shows " + this.dialogRef.getAsString() + ".");
+    }
 
     @Override
     public int hashCode() {

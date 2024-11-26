@@ -200,6 +200,20 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
     }
 
     /**
+     * Get an entry by its ID, if it is registered.
+     * @param sfxId the sound effect ID to lookup
+     */
+    public SfxEntry getEntryByID(int sfxId) {
+        for (int i = 0; i < this.soundEffects.size(); i++) {
+            SfxEntry entry = this.soundEffects.get(i);
+            if (entry != null && entry.getSfxId() == sfxId)
+                return entry;
+        }
+
+        return null;
+    }
+
+    /**
      * Ensure all waves have correct IDs.
      * @return true iff the UI should be refreshed.
      */

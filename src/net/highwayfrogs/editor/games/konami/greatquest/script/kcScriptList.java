@@ -13,6 +13,9 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.KCResourceID;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
+import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffect;
+import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffectAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcInterimScriptEffect;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcScriptListInterim;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcScriptTOC;
@@ -29,6 +32,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * Represents a list of scripts.
@@ -238,5 +242,77 @@ public class kcScriptList extends kcCResource {
             this.scripts.get(i).toString(level, builder, settings);
             builder.append('\n');
         }
+    }
+
+    /**
+     * Prints advanced script warnings to the logger.
+     * @param logger the logger to print the warnings to
+     */
+    public void printAdvancedWarnings(Logger logger) {
+        Map<kcCResourceEntityInst, kcScriptValidationData> dataMap = new HashMap<>();
+        for (int i = 0; i < this.scripts.size(); i++) {
+            kcScript script = this.scripts.get(i);
+            if (script.getEntity() == null)
+                throw new RuntimeException("Cannot print warnings, there's a script which doesn't have an entity linked!");
+
+            kcScriptValidationData functionData = getOrCreateValidationData(logger, dataMap, script.getEntity());
+            for (int j = 0; j < script.getFunctions().size(); j++) {
+                kcScriptFunction function = script.getFunctions().get(j);
+
+                // Add cause.
+                if (functionData != null)
+                    functionData.getCausesByType().computeIfAbsent(function.getCause().getType(), key -> new ArrayList<>()).add(function.getCause());
+
+                // Add effects.
+                for (int k = 0; k < function.getEffects().size(); k++) {
+                    kcScriptEffect effect = function.getEffects().get(k);
+                    kcAction action = (effect instanceof kcScriptEffectAction) ? ((kcScriptEffectAction) effect).getAction() : null;
+                    if (action == null)
+                        continue;
+
+                    // Apply it to the target entity, not to the attached script entity.
+                    kcScriptValidationData validationData = getOrCreateValidationData(logger, dataMap, effect.getTargetEntityRef().getResource());
+                    if (validationData != null)
+                        validationData.getActionsByType().computeIfAbsent(action.getActionID(), key -> new ArrayList<>()).add(action);
+                }
+            }
+        }
+
+        // Print the warnings in order.
+        for (int i = 0; i < this.scripts.size(); i++) {
+            kcScript script = this.scripts.get(i);
+            kcScriptValidationData functionCauseData = getOrCreateValidationData(logger, dataMap, script.getEntity());
+
+            for (int j = 0; j < script.getFunctions().size(); j++) {
+                kcScriptFunction function = script.getFunctions().get(j);
+
+                // Add cause.
+                if (functionCauseData != null && function.getCause() != null)
+                    function.getCause().printAdvancedWarnings(functionCauseData);
+
+                // Process effects.
+                for (int k = 0; k < function.getEffects().size(); k++) {
+                    kcScriptEffect effect = function.getEffects().get(k);
+                    kcAction action = (effect instanceof kcScriptEffectAction) ? ((kcScriptEffectAction) effect).getAction() : null;
+                    if (action == null)
+                        continue;
+
+                    kcScriptValidationData actionData = getOrCreateValidationData(logger, dataMap, effect.getTargetEntityRef().getResource());
+                    if (actionData != null)
+                        action.printAdvancedWarnings(actionData);
+                }
+            }
+        }
+    }
+
+    private static kcScriptValidationData getOrCreateValidationData(Logger logger, Map<kcCResourceEntityInst, kcScriptValidationData> dataMap, kcCResourceEntityInst entity) {
+        if (entity == null)
+            return null;
+
+        kcScriptValidationData validationData = dataMap.get(entity);
+        if (validationData == null)
+            dataMap.put(entity, validationData = new kcScriptValidationData(entity, logger));
+
+        return validationData;
     }
 }

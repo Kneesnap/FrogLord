@@ -2,12 +2,16 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcActorDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcHealthDesc.kcDamageType;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Called when an entity takes damage.
@@ -43,6 +47,16 @@ public class kcScriptCauseDamage extends kcScriptCause {
         arguments.createNext().setAsEnum(this.damageType);
     }
 
+    @Override
+    public void printWarnings(Logger logger) {
+        super.printWarnings(logger);
+
+        kcCResourceEntityInst targetEntity = getScriptEntity();
+        kcEntityInst entity = targetEntity != null ? targetEntity.getInstance() : null;
+        kcEntity3DDesc entityDescription = entity != null ? entity.getDescription() : null;
+        if (entityDescription instanceof kcActorDesc && (((kcActorDesc) entityDescription).getHealth().getImmuneMask() & this.damageType.getMask()) == this.damageType.getMask())
+            printWarning(logger, targetEntity.getName() + " is immune to the " + this.damageType + " damage type.");
+    }
 
     @Override
     public int hashCode() {

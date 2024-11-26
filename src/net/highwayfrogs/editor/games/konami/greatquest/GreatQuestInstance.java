@@ -73,16 +73,18 @@ import java.util.Map.Entry;
  *   -> throw "" keyword.
  *   -> I believe config is not properly handling escapes, either that or NoodleCompiler isn't properly handling escapes in strings.
  *   -> Are for loops actually evaluating the condition each time?
- *  -> Generic RESOURCE_PATH, STRING_RESOURCE
- *  -> Generic EMITTER_DESCRIPTION, MODEL_DESCRIPTION
- *  -> Manage Texture Refs [Before world + models]
- *  -> Manage Model Refs [Before world + entities]
- *  -> Import/Export Models/Animations/Animation Sets/Skeletons/Collision Meshes/OctTree building [PROXY_CAPSULE_DESCRIPTION, PROXY_TRI_MESH_DESCRIPTION]
+ *  -> Import/Export Models/Animations/Animation Sets/Skeletons/Collision Meshes/OctTree building
+ *  -> GQS:
+ *   -> Documentation of the non-script GQS portion.
+ *   -> Action Sequence Support
+ *   -> Collision Proxy Support
+ *   -> I think it'd be a good idea to consider if we want to allow partial-configs, for just applying changes to existing things. Eg: CharacterParams has a lot of stuff.
+ *   -> Better script warnings. [Go over all actions]
+ *   ->
+ *  -> Transparent stuff has been broken again.
  *  -> Go over TODOs in the tutorial gqs script example.
- *  -> Fix hitbox previews. (CItemDesc, kcProxyDesc)
  *
  * TODO Future:
- *  -> Support previewing action sequences in-editor.
  *  -> Flesh out the PropertyList behavior. (Nesting!)
  *  -> Further support previewing & editing generic data.
  *  -> Preview texture references in chunk file viewer.

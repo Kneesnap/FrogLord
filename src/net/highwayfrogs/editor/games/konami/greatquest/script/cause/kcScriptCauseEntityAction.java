@@ -14,11 +14,11 @@ public enum kcScriptCauseEntityAction {
     UNKNOWN_0(0, "Never", false, false, kcEntityInheritanceGroup.ENTITY), // Rolling Rapids Creek - Hides a bug. (Separate from the script to hide the bug in the tutorial.)
     INTERACT(1, "When the player interacts with the script entity", true, false, kcEntityInheritanceGroup.ACTOR_BASE), // Target Triggers: CFrogCtl::OnBeginAction, CFrogCtl::CheckForHealthBug
     BUMPS(2, "When another entity/player collides/bumps into the script entity", true, true, kcEntityInheritanceGroup.PROP_OR_CHARACTER), // Target Triggers: CProp::TriggerHitCallback, CCharacter::BumpCallback
-    ATTACK(5, "When the player targets the script entity for an attack", true, false, kcEntityInheritanceGroup.ACTOR_BASE), // Target Triggers: CFrogCtl::Spit, CFrogCtl::OnBeginMissile, CFrogCtl::OnBeginMagicStone, and, CFrogCtl::OnBeginMelee
+    TARGET_FOR_ATTACK(5, "When the player targets the script entity for an attack", true, false, kcEntityInheritanceGroup.ACTOR_BASE), // Target Triggers: CFrogCtl::Spit, CFrogCtl::OnBeginMissile, CFrogCtl::OnBeginMagicStone, and, CFrogCtl::OnBeginMelee
     PICKUP_ITEM(7, "When the player picks up the script entity", true, false, kcEntityInheritanceGroup.ITEM), // Target Trigger: CCharacter::PickupCallback
-    TAKE_DAMAGE(8, "When the script entity takes damage", false, true, kcEntityInheritanceGroup.ACTOR), // Target Trigger: kcCActor::OnDamage
+    HEAL(8, "When the script entity heals", false, true, kcEntityInheritanceGroup.ACTOR), // Target Trigger: kcCActor::OnDamage
     UNKNOWN_9(9, "Never", false, false, kcEntityInheritanceGroup.ENTITY), // Bog Town - Plays Random Frogger Hurt Noise
-    DEATH(10, "When the script entity dies", false, true, kcEntityInheritanceGroup.ACTOR), // Target Trigger: kcCActor::OnDamage, Player deaths are also sent from the actor cause, but not from the player cause.
+    DEATH(10, "When the script entity dies", false, true, kcEntityInheritanceGroup.ACTOR), // Target Trigger: kcCActor::OnDamage, NOTE: If the --PreventDeath flag is set, it looks like this trigger can still occur, as it's only the animation which doesn't occur, the health still reaches 0.
     UNKNOWN_13(13, "Never", false, false, kcEntityInheritanceGroup.ENTITY); // Rolling Rapids Creek - Starts unused copy of tutorial sequence from after opening the locked door.
 
     private final int value;

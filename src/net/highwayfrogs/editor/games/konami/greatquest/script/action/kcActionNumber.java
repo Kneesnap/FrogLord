@@ -1,11 +1,15 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCauseNumber;
+import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCauseType;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
+
+import java.util.logging.Logger;
 
 /**
  * Represents the 'NUMBER' (send number) kcAction.
@@ -69,6 +73,29 @@ public class kcActionNumber extends kcAction {
     protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
         arguments.createNext().setAsEnum(this.operation);
         arguments.createNext().setAsInteger(this.number);
+    }
+
+    @Override
+    public void printWarnings(Logger logger) {
+        super.printWarnings(logger);
+        if (this.operation == NumberOperation.RANDOM && this.number < 1)
+            printWarning(logger, "the RANDOM operation requires a number greater than zero!");
+        if (this.operation == NumberOperation.ENTITY_VARIABLE && this.number < 0 || this.number > 7)
+            printWarning(logger, this.number + " is not a valid entity variable id!");
+    }
+
+    @Override
+    public void printAdvancedWarnings(kcScriptValidationData data) {
+        super.printAdvancedWarnings(data);
+
+        // Ensure there is a cause listening for this number.
+        if (this.operation == NumberOperation.LITERAL_NUMBER) {
+            if (!data.anyCausesMatch(kcScriptCauseType.NUMBER, (kcScriptCauseNumber cause) -> cause.doesValueMatch(this.number)))
+                printWarning(data.getLogger(), data.getEntityName() + " does not have an " + kcScriptCauseType.NUMBER.getDisplayName() + " script cause handling number " + this.number + ".");
+        } else if (this.operation == NumberOperation.RANDOM) {
+            if (!data.anyCausesMatch(kcScriptCauseType.NUMBER, (kcScriptCauseNumber cause) -> cause.couldRandomValueMatch(this.number)))
+                printWarning(data.getLogger(), data.getEntityName() + " does not have an " + kcScriptCauseType.NUMBER.getDisplayName() + " script cause handling any of the numbers between 0 and " + this.number + ".");
+        }
     }
 
     public enum NumberOperation {

@@ -22,7 +22,11 @@ public class kcProxyCapsuleDesc extends kcProxyDesc {
     private float offset = .5F;
 
     public kcProxyCapsuleDesc(kcCResourceGeneric resource) {
-        super(resource);
+        this(resource, kcProxyDescType.CAPSULE);
+    }
+
+    protected kcProxyCapsuleDesc(kcCResourceGeneric resource, kcProxyDescType descType) {
+        super(resource, descType);
     }
 
     @Override

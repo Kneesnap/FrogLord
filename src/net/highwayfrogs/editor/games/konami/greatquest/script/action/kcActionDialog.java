@@ -42,7 +42,7 @@ public class kcActionDialog extends kcAction {
 
     @Override
     protected void loadArguments(OptionalArguments arguments) {
-        setDialogHash(GreatQuestUtils.getAsHash(arguments.useNext(), 0));
+        setDialogHash(GreatQuestUtils.getAsHash(arguments.useNext(), 0, this.dialogRef));
     }
 
     @Override
