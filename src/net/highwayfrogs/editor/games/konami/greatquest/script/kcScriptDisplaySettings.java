@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.script;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.data.GameObject;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
@@ -142,6 +143,22 @@ public class kcScriptDisplaySettings extends GameObject<GreatQuestInstance> {
             settings.applyGqsHashDisplay(node, hash);
         } else {
             node.setAsString("0x" + NumberUtils.to0PrefixedHexString(hash), false);
+        }
+    }
+
+    /**
+     * Apply the hash number provided in the FrogLord GreatQuest script syntax.
+     * @param hashObj The hash to get a display string from.
+     */
+    public static void applyGqsSyntaxHashDisplay(StringNode node, kcScriptDisplaySettings settings, GreatQuestHash<?> hashObj) {
+        if (hashObj == null || hashObj.getHashNumber() == 0 || hashObj.getHashNumber() == -1) {
+            node.setNull();
+        } else if (hashObj.getOriginalString() != null) {
+            node.setAsString(hashObj.getAsString(), true);
+        } else if (settings != null) {
+            settings.applyGqsHashDisplay(node, hashObj.getHashNumber());
+        } else {
+            node.setAsString("0x" + NumberUtils.to0PrefixedHexString(hashObj.getHashNumber()), false);
         }
     }
 

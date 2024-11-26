@@ -127,7 +127,9 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
         // Warn about target entity.
         if (resolvedOverrideEntity && scriptOwner == this.targetEntityRef.getResource()) {
             kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
-            getLogger().warning("The effect '" + saveEffect(settings) + "' should not include --" + ARGUMENT_ENTITY_RUNNER + " because it already runs as that entity.");
+            OptionalArguments savedEffect = saveEffect(settings);
+            kcScriptDisplaySettings.applyGqsSyntaxHashDisplay(savedEffect.getOrCreate(ARGUMENT_ENTITY_RUNNER), settings, this.targetEntityRef);
+            getLogger().warning("The effect '" + savedEffect + "' should not include --" + ARGUMENT_ENTITY_RUNNER + " because it already runs as that entity.");
         }
 
         // Print warnings.
@@ -177,7 +179,7 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
 
         // Include the target entity hash if it's not implied.
         if (this.targetEntityRef.getResource() == null || getParentFunction().getScript().getEntity() != this.targetEntityRef.getResource())
-            kcScriptDisplaySettings.applyGqsSyntaxHashDisplay(arguments.getOrCreate(ARGUMENT_ENTITY_RUNNER), settings, this.targetEntityRef.getHashNumber());
+            kcScriptDisplaySettings.applyGqsSyntaxHashDisplay(arguments.getOrCreate(ARGUMENT_ENTITY_RUNNER), settings, this.targetEntityRef);
     }
 
     /**

@@ -80,7 +80,7 @@ public class kcActionNumber extends kcAction {
         super.printWarnings(logger);
         if (this.operation == NumberOperation.RANDOM && this.number < 1)
             printWarning(logger, "the RANDOM operation requires a number greater than zero!");
-        if (this.operation == NumberOperation.ENTITY_VARIABLE && this.number < 0 || this.number > 7)
+        if (this.operation == NumberOperation.ENTITY_VARIABLE && (this.number < 0 || this.number > 7))
             printWarning(logger, this.number + " is not a valid entity variable id!");
     }
 

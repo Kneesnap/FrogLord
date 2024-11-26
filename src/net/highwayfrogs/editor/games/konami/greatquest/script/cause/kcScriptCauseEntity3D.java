@@ -76,21 +76,15 @@ public class kcScriptCauseEntity3D extends kcScriptCause {
 
     @Override
     public void printWarnings(Logger logger) {
-        // Ensure the entity has the flag.
-        kcCResourceEntityInst entity;
-        String entityName;
         if (this.status.hasOtherEntityAsParam()) {
             this.status.getOtherEntityGroup().logEntityTypeWarnings(logger, this, this.otherEntityRef, this.status.name());
-            entity = this.otherEntityRef.getResource();
-            entityName = this.otherEntityRef.getAsString();
         } else {
             super.printWarnings(logger); // Only log if we're not going to check the entity type ourselves.
-            entity = getScriptEntity();
-            entityName = getScriptEntity().getName();
         }
 
+        kcCResourceEntityInst entity = getScriptEntity(); // Ensure the entity has the flag.
         if (!(entity.getInstance() instanceof kcEntity3DInst) || !((kcEntity3DInst) entity.getInstance()).hasFlag(kcEntityInstanceFlag.ALLOW_WAYPOINT_INTERACTION))
-            printWarning(logger, "the other entity (" + entityName + ") did not have the --" + kcEntityInstanceFlag.ALLOW_WAYPOINT_INTERACTION.getDisplayName() + " flag.");
+            printWarning(logger, "the other entity (" + entity.getName() + ") did not have the --" + kcEntityInstanceFlag.ALLOW_WAYPOINT_INTERACTION.getDisplayName() + " flag.");
     }
 
     @Override

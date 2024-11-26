@@ -287,7 +287,7 @@ public class GreatQuestAssetUtils {
                 chunkedFile.addResource(collisionDesc);
             }
 
-            collisionDesc.getAsEntityDescription().fromConfig(collisionProxyDescCfg);
+            collisionDesc.getAsProxyDescription().fromConfig(collisionProxyDescCfg);
         }
     }
 

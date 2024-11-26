@@ -322,8 +322,10 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
             if (realHash != newHash)
                 throw new IllegalArgumentException("The string provided ('" + newString + "') had a hash of " + NumberUtils.to0PrefixedHexString(realHash) + ", but it did not match the provided hash of " + NumberUtils.to0PrefixedHexString(newHash) + ".");
 
-            setOriginalString(newString);
-            return;
+             if (this.hashNumber == newHash) {
+                 setOriginalString(newString);
+                 return;
+             }
         }
 
         // Fire events.

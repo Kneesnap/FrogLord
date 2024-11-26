@@ -64,10 +64,10 @@ public class kcScriptCauseTimer extends kcScriptCause {
         super.printAdvancedWarnings(data);
         if (this.timerState == kcScriptCauseTimerState.REPEAT) {
             if (!data.anyActionsMatch(kcActionID.SET_ALARM, (kcActionSetAlarm alarm) -> alarm.getAlarmId() == this.alarmId && alarm.getIntervalCount() > 1))
-                printWarning(data.getLogger(), data.getEntityName() + "does not have a " + kcActionID.SET_ALARM.getFrogLordName() + " effect for alarm ID " + this.alarmId + " which repeats.");
+                printWarning(data.getLogger(), data.getEntityName() + " does not have a " + kcActionID.SET_ALARM.getFrogLordName() + " effect for alarm ID " + this.alarmId + " which repeats.");
         } else if (this.timerState == kcScriptCauseTimerState.FINISHED) {
             if (!data.anyActionsMatch(kcActionID.SET_ALARM, (kcActionSetAlarm alarm) -> alarm.getAlarmId() == this.alarmId))
-                printWarning(data.getLogger(), data.getEntityName() + "does not have a " + kcActionID.SET_ALARM.getFrogLordName() + " effect for alarm ID " + this.alarmId + ".");
+                printWarning(data.getLogger(), data.getEntityName() + " does not have a " + kcActionID.SET_ALARM.getFrogLordName() + " effect for alarm ID " + this.alarmId + ".");
         }
     }
 
