@@ -27,6 +27,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.map.kcEnvironment;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDescType;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
@@ -250,7 +251,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         saveAnimationTracks(new File(folder, "animation-tracks.txt"));
         exportEntities(new File(folder, "entities"), scriptList, settings);
         exportEntityDescriptions(new File(folder, "entity-descriptions"));
-        saveGenericProxyInfo(new File(folder, "proxy-descriptions.txt"));
+        exportCollisionProxies(new File(folder, "proxy-descriptions.txt"));
         saveGenericEmitterInfo(new File(folder, "emitters.txt"));
         saveGenericLauncherInfo(new File(folder, "launchers.txt"));
         saveGenericResourcePaths(new File(folder, "resource-paths.txt"));
@@ -686,25 +687,63 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     }
 
     /**
-     * Saves proxy information found in generic chunks to a text file.
-     * @param file The file to save the info to.
+     * Import collision proxies from a folder.
+     * @param folder The folder to import proxy data from
      */
-    public void saveGenericProxyInfo(File file) {
-        StringBuilder builder = new StringBuilder();
+    public void importCollisionProxies(File folder) {
+        if (folder == null)
+            throw new NullPointerException("folder");
+
+        int importCount = 0;
+        for (File file : FileUtils.listFiles(folder)) {
+            if (!file.isFile() || !file.getName().endsWith(Config.DEFAULT_EXTENSION))
+                continue;
+
+            Config proxyDescCfg = Config.loadConfigFromTextFile(file, false);
+            kcProxyDescType descType = proxyDescCfg.getKeyValueNodeOrError(kcProxyDesc.CONFIG_KEY_DESC_TYPE).getAsEnumOrError(kcProxyDescType.class);
+
+            String proxyDescName = proxyDescCfg.getSectionName();
+            kcCResourceGeneric generic = getResourceByHash(GreatQuestUtils.hash(proxyDescName));
+            if (generic == null) {
+                generic = new kcCResourceGeneric(this);
+                generic.setName(proxyDescName, true);
+                addResource(generic);
+            }
+
+            kcProxyDesc proxyDesc = generic.getAsProxyDescription();
+            if (proxyDesc == null)
+                generic.setResourceData(proxyDesc = descType.createNewInstance(generic));
+
+            proxyDesc.fromConfig(proxyDescCfg);
+            importCount++;
+        }
+
+        getLogger().info("Imported " + importCount + " collision proxies.");
+    }
+
+
+    /**
+     * Saves collision proxies found in generic chunks to text files.
+     * @param folder The folder to save the descriptions to.
+     */
+    public void exportCollisionProxies(File folder) {
+        int exportCount = 0;
         for (kcCResource chunk : this.chunks) {
             if (!(chunk instanceof kcCResourceGeneric))
                 continue;
 
             kcCResourceGeneric generic = (kcCResourceGeneric) chunk;
             kcProxyDesc proxyDesc = generic.getAsProxyDescription();
-            if (proxyDesc == null)
-                continue; // Not a proxy description.
-
-            writeData(builder, chunk, proxyDesc);
-            builder.append(Constants.NEWLINE);
+            if (proxyDesc != null) {
+                Config outputCfg = new Config(generic.getName());
+                proxyDesc.toConfig(outputCfg);
+                FileUtils.makeDirectory(folder);
+                outputCfg.saveTextFile(new File(folder, generic.getName() + "." + Config.DEFAULT_EXTENSION));
+                exportCount++;
+            }
         }
 
-        saveExport(file, builder);
+        getLogger().info("Exported " + exportCount + " collision proxies.");
     }
 
     /**
@@ -1096,6 +1135,22 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             File inputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), RESOURCE_IMPORT_PATH);
             if (inputFolder != null)
                 importEntityDescriptions(inputFolder);
+        });
+
+        MenuItem exportProxyDescriptionsItem = new MenuItem("Export Collision Proxies");
+        contextMenu.getItems().add(exportProxyDescriptionsItem);
+        exportProxyDescriptionsItem.setOnAction(event -> {
+            File outputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), RESOURCE_EXPORT_PATH);
+            if (outputFolder != null)
+                exportCollisionProxies(outputFolder);
+        });
+
+        MenuItem importProxyDescriptionsItem = new MenuItem("Import Collision Proxies");
+        contextMenu.getItems().add(importProxyDescriptionsItem);
+        importProxyDescriptionsItem.setOnAction(event -> {
+            File inputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), RESOURCE_IMPORT_PATH);
+            if (inputFolder != null)
+                importCollisionProxies(inputFolder);
         });
     }
 
