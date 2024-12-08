@@ -134,8 +134,21 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
 
     @Override
     protected void setDefaultCameraPosition() {
-        setupDefaultInverseCamera();
-        // TODO: Come up with default camera position.
+        kcCResourceEntityInst playerEntity = getMap().getResourceByHash(kcEntityInst.PLAYER_ENTITY_HASH);
+        if (playerEntity != null && playerEntity.getInstance() instanceof kcEntity3DInst) {
+            kcEntity3DInst playerEntity3D = (kcEntity3DInst) playerEntity.getInstance();
+            Vector3f position = new Vector3f(playerEntity3D.getPosition().getX(), playerEntity3D.getPosition().getY(), playerEntity3D.getPosition().getZ());
+
+            getFirstPersonCamera().setInvertY(true);
+            Vector3f cameraOffset = new Vector3f(0, 0, 3);
+            Matrix4x4f.createFromQuaternion(Quaternion.fromAxisAngle(Vector3f.UNIT_Y, playerEntity3D.getRotation().getY()))
+                    .multiply(cameraOffset, cameraOffset); // Apply Y rotation.
+
+            getFirstPersonCamera().setPos(position.getX() + cameraOffset.getX(), position.getY() + cameraOffset.getY() + 2, position.getZ() + cameraOffset.getZ());
+            getFirstPersonCamera().setCameraLookAt(position.getX(), position.getY(), position.getZ());
+        } else {
+            setupDefaultInverseCamera();
+        }
     }
 
     @Override
