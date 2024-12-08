@@ -14,6 +14,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -160,7 +161,11 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         if (progressBar != null)
             progressBar.setStatusMessage("Reading '" + file.getExportName() + "'");
 
-        file.loadFileFromBytes(file.getRawData());
+        try {
+            file.loadFileFromBytes(file.getRawData());
+        } catch (Throwable th) {
+            Utils.handleError(getLogger(), th, false);
+        }
 
         if (progressBar != null)
             progressBar.addCompletedProgress(1);
