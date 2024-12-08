@@ -108,7 +108,6 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
         for (int i = 0; i < materialCount; i++) {
             kcMaterial newMaterial = new kcMaterial(getGameInstance());
             newMaterial.load(reader);
-            newMaterial.applyModelMaterialInfo(); // Some of the data should be destroyed / overwritten.
             this.materials.add(newMaterial);
         }
 
@@ -152,17 +151,17 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
         int realStride = (reader.getRemaining() / vertexCount);
 
         if (realStrideRemainder != 0 || realStride != configuredStride) {
-            getLogger().warning("3D model had " + vertexCount + " vertices with a stride calculated to be " + configuredStride + ", but the actual stride of remaining data was " + realStride + ". (Remainder: " + realStrideRemainder + ")");
+            getLogger().warning("Found a 3D model which had a stride calculated to be " + configuredStride + ", but the actual stride of remaining data was " + realStride + ". (Will fix it if possible)");
 
             if (this.components[this.components.length - 1] == kcVertexFormatComponent.WEIGHT1F && realStride == 24 && configuredStride == 26) {
                 // An example of an afflicted file, file 3594 on the PS2 PAL release.
                 // The current hypothesis for these files is that the game itself wouldn't even load them properly.
-                // TODO: This fix doesn't seem to give proper UV values. Investigate that once we fix PS2 texture exporting.
+                // These models appear to exist in the PC port without any issue.
+                // As such, even though this fix doesn't load 100% properly, it loads well enough to get a sense of what the model is. I don't see a reason to fix it further atm.
 
                 kcVertexFormatComponent[] newComponents = new kcVertexFormatComponent[this.components.length - 1];
                 System.arraycopy(this.components, 0, newComponents, 0, newComponents.length);
                 this.components = newComponents;
-                getLogger().warning(" - However, a hack was applied to fix the model.");
             } else {
                 reader.skipBytes(reader.getRemaining());
                 return;

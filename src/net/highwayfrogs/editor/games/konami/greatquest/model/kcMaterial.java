@@ -22,6 +22,7 @@ public class kcMaterial extends GameData<GreatQuestInstance> implements IMultiLi
     private String materialName;
     private String textureFileName;
     private int flags;
+    // The following values appear unused in the PS2 PAL version, as kcGraphicsSetMaterial() only copies these the first time the function is executed (which is likely long before any custom materials are loaded).
     private float xpVal = 0F;
     private float diffuseRed = 1F;
     private float diffuseGreen = 1F;
@@ -92,8 +93,6 @@ public class kcMaterial extends GameData<GreatQuestInstance> implements IMultiLi
         this.emissiveAlpha = reader.readFloat();
         this.power = reader.readFloat();
 
-        // TODO: kcImportTextures(kcModel*) overwrites the material colors & power.
-
         // The last value is a 32-bit integer: pTexture.
         // I suspect that this value is a pointer into malloc'd data for the texture.
         // In other words, this value only meant something to the program which wrote it.
@@ -106,8 +105,10 @@ public class kcMaterial extends GameData<GreatQuestInstance> implements IMultiLi
 
     /**
      * For some reason, any materials on a kcModel* passed to kcImportTextures() will have a lot of their values overwritten.
+     * Considering these values appear to never be used, most likely these values were garbage to begin with. (At least for kcModel)
      * This function replicates that behavior.
      */
+    @SuppressWarnings("unused")
     public void applyModelMaterialInfo() {
         // Apply default ambient color data.
         this.ambientRed = 1F;
