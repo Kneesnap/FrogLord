@@ -54,4 +54,14 @@ public class kcQuadBranch extends GameData<GreatQuestInstance> implements IInfoW
         kcOctLeaf.appendIds(builder, this.childNodes);
         builder.append(']');
     }
+
+    /**
+     * Returns true iff the branch is empty and is the default state/has no data.
+     */
+    public boolean isEmpty() {
+        for (int i = 0; i < this.childNodes.length; i++)
+            if (this.childNodes[i] != 0)
+                return false;
+        return true;
+    }
 }

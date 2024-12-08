@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInf
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTriMesh.kcCTriMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.map.octree.kcOctTree;
+import net.highwayfrogs.editor.games.konami.greatquest.map.octree.kcOctTreeType;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcBox4;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.games.konami.greatquest.model.*;
@@ -47,8 +48,8 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
     public kcCResOctTreeSceneMgr(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.OCTTREESCENEMGR);
         // All the levels seem to use these for their oct trees.
-        this.entityTree = new kcOctTree(getGameInstance(), 14, 14);
-        this.visualTree = new kcOctTree(getGameInstance(), 14, 10);
+        this.visualTree = new kcOctTree(getGameInstance(), kcOctTreeType.VISUAL, 14, 10);
+        this.entityTree = new kcOctTree(getGameInstance(), kcOctTreeType.COLLISION, 14, 14);
     }
 
     /**
@@ -295,7 +296,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
         @Setter private int materialId; // kcCOTAPrim::__ct()
         @Setter private float normalTolerance = 2F; // kcCOTAPrim::__ct()
         private final kcVector4 normalAverage = new kcVector4(0, 0, 1, 0); // kcCOTAPrim::__ct()
-        private final kcBox4 boundingBox = new kcBox4(); // Generates the box bounding sphere from this, as well as oct tree collision.
+        private final kcBox4 boundingBox = new kcBox4(); // This is the smallest box which contains all vertices. Generates the box bounding sphere from this, as well as oct tree collision.
 
         // kcVtxBufFileStruct
         private long fvf;

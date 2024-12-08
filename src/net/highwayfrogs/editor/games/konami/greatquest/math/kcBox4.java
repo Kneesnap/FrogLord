@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
+import net.highwayfrogs.editor.system.math.Box;
 import net.highwayfrogs.editor.system.math.Vector3f;
 
 /**
@@ -59,5 +60,17 @@ public class kcBox4 implements IMultiLineInfoWriter, IBinarySerializable {
         return this.max.getX() >= posX && posX >= this.min.getX()
                 && this.max.getY() >= posY && posY >= this.min.getY()
                 && this.max.getZ() >= posZ && posZ >= this.min.getZ();
+    }
+
+    /**
+     * Gets this kcBox4 as a generic FrogLord box representation.
+     * @param output the output storage for the box
+     * @return box
+     */
+    public Box getBox(Box output) {
+        if (output == null)
+            output = new Box();
+
+        return output.set(this.min.getX(), this.min.getY(), this.min.getZ(), this.max.getX(), this.max.getY(), this.max.getZ());
     }
 }

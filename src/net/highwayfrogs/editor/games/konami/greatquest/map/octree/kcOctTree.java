@@ -31,10 +31,11 @@ import java.util.function.BiFunction;
  */
 @Getter
 public class kcOctTree extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter, IPropertyListCreator {
+    private final kcOctTreeType treeType;
     private int treeDepth; // maxDimensionE, seems unused by the raw game, but maxDimension = (1 << this).
     private int smallestNodeDepth; // This is the maximum depth for any particular node.
     private final kcVector3 offset = new kcVector3(-8197.429F, -8203.538F, -8195.479F); // Seems to be the same across all levels.
-    private final List<kcOctBranch> branches = new ArrayList<>(); // This can have as many or as few entries as necessary.
+    private final List<kcOctBranch> branches = new ArrayList<>(); // This can have as many or as few entries as necessary. Ordering appears to include child branches immediately, not queued, sorted by index.
     private final List<kcOctLeaf> leaves = new ArrayList<>(); // The first leaf is empty.
     private final List<kcQuadBranch> quadBranches = new ArrayList<>();
 
@@ -43,8 +44,9 @@ public class kcOctTree extends GameData<GreatQuestInstance> implements IMultiLin
     public static final short FLAG_IS_LEAF = (short) Constants.BIT_FLAG_15; // 0x8000
     public static final short NULL_LEAF_ID = FLAG_IS_LEAF; // 0x8000, 0x8001 is the first real leaf.
 
-    public kcOctTree(GreatQuestInstance instance, int treeDepth, int smallestNodeDepth) {
+    public kcOctTree(GreatQuestInstance instance, kcOctTreeType treeType, int treeDepth, int smallestNodeDepth) {
         super(instance);
+        this.treeType = treeType;
         this.treeDepth = treeDepth;
         this.smallestNodeDepth = smallestNodeDepth;
     }
@@ -166,13 +168,19 @@ public class kcOctTree extends GameData<GreatQuestInstance> implements IMultiLin
 
         int leafDigitCount = NumberUtils.getHexDigitCount(this.leaves.size());
         builder.append(padding).append("Leaves [").append(this.leaves.size()).append("]:").append(Constants.NEWLINE);
-        for (int i = 0; i < this.leaves.size(); i++)
-            this.leaves.get(i).writePrefixedInfoLine(builder, NumberUtils.to0PrefixedHexString(i, leafDigitCount), newPadding);
+        for (int i = 0; i < this.leaves.size(); i++) {
+            kcOctLeaf leaf = this.leaves.get(i);
+            if (i == 0 || !leaf.isEmpty())
+                leaf.writePrefixedInfoLine(builder, NumberUtils.to0PrefixedHexString(i, leafDigitCount), newPadding);
+        }
 
         int quadBranchDigitCount = NumberUtils.getHexDigitCount(this.quadBranches.size());
         builder.append(padding).append("Quad Branches [").append(this.quadBranches.size()).append("]:").append(Constants.NEWLINE);
-        for (int i = 0; i < this.quadBranches.size(); i++)
-            this.quadBranches.get(i).writePrefixedInfoLine(builder, NumberUtils.to0PrefixedHexString(i, quadBranchDigitCount), newPadding);
+        for (int i = 0; i < this.quadBranches.size(); i++) {
+            kcQuadBranch branch = this.quadBranches.get(i);
+            if (!branch.isEmpty())
+                branch.writePrefixedInfoLine(builder, NumberUtils.to0PrefixedHexString(i, quadBranchDigitCount), newPadding);
+        }
     }
 
     @Override
@@ -189,6 +197,7 @@ public class kcOctTree extends GameData<GreatQuestInstance> implements IMultiLin
     /**
      * Gets the dimensions (length/width/height) of a cubic representation of the Octree itself/its root node.
      * By the definition of a cube, all sides are the same length, so a single value is returned representing the length of all sides.
+     * Referred to as 'maxDimension' in the original debug symbols.
      */
     public int getTreeSize() {
         return 1 << this.treeDepth;
@@ -220,6 +229,7 @@ public class kcOctTree extends GameData<GreatQuestInstance> implements IMultiLin
     /**
      * Gets the dimensions of the smallest node/cube representable by this Octree.
      * By the definition of a cube, all sides are the same length, so a single value is returned representing the length of all sides.
+     * Referred to as 'maxResolution' in the original debug symbols.
      */
     public int getSmallestNodeSize() {
         return 1 << (this.treeDepth - this.smallestNodeDepth);

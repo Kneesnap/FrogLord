@@ -1,15 +1,19 @@
 package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map;
 
 import javafx.scene.SubScene;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.CullFace;
-import javafx.scene.shape.Mesh;
-import javafx.scene.shape.MeshView;
+import javafx.scene.shape.*;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResOctTreeSceneMgr;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResOctTreeSceneMgr.kcVtxBufFileStruct;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.math.kcBox4;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestMapCollisionManager;
@@ -17,8 +21,12 @@ import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.Great
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestMapSceneManager;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshCollection.MeshViewCollection;
-import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
+import net.highwayfrogs.editor.system.math.Matrix4x4f;
+import net.highwayfrogs.editor.system.math.Quaternion;
+import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
+
+import java.util.List;
 
 /**
  * Controls the map mesh for Great Quest.
@@ -27,12 +35,14 @@ import net.highwayfrogs.editor.utils.Scene3DUtils;
 @Getter
 public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMapMesh> {
     private GreatQuestMapMeshCollection meshViewCollection;
+    private kcVtxBufFileStruct selectedVertexBuffer;
+    private GreatQuestMapMaterialMesh highlightedVertexBufferMesh;
+    private final Box selectedVertexBufferBoundingBox = new Box();
     private static final double DEFAULT_FAR_CLIP = 1000; // Far enough away to see the skybox.
     private static final double DEFAULT_NEAR_CLIP = .1; // Great Quest needs a fairly small near clip as the map geometry is shown at a small scale.
     private static final double DEFAULT_MOVEMENT_SPEED = 25;
 
-    private static final PhongMaterial VERTEX_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
-    private static final PhongMaterial CONNECTION_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.LIMEGREEN);
+    private static final PhongMaterial BOUNDING_BOX_OUTLINE = Scene3DUtils.makeUnlitSharpMaterial(Color.RED);
 
     @Override
     public void setupBindings(SubScene subScene3D, MeshView meshView) {
@@ -47,9 +57,9 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
         getComboBoxMeshCullFace().setValue(CullFace.NONE); // Great Quest has no back-face culling.
 
         // Add mesh click listener.
-        getMeshScene().setOnMouseClicked(evt -> {
-            PickResult result = evt.getPickResult();
-            if (result == null || !(result.getIntersectedNode() instanceof MeshView))
+        getInputManager().addMouseListener(MouseEvent.MOUSE_CLICKED, (manager, event, deltaX, deltaY) -> {
+            PickResult result = event.getPickResult();
+            if (result == null || !(result.getIntersectedNode() instanceof MeshView) || manager.isSignificantMouseDragRecorded())
                 return; // No pick result, or the thing that was clicked was not the main mesh.
 
             Mesh mesh = ((MeshView) result.getIntersectedNode()).getMesh();
@@ -58,23 +68,52 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
 
             GreatQuestMapMaterialMesh materialMesh = (GreatQuestMapMaterialMesh) mesh;
             kcMaterial material = materialMesh.getMapMaterial();
-            getLogger().info("Clicked on " + (material != null ? "'" + material.getMaterialName() + "'/'" + material.getTextureFileName() + "'" : "NULL"));
-            DynamicMeshDataEntry entry = materialMesh.getMainNode().getDataEntryByFaceIndex(evt.getPickResult().getIntersectedFace());
-            if (entry == null)
+            if (material != null) {
+                List<?> vertexBuffers = getMap().getSceneManager().getVertexBuffersForMaterial(material);
+                getLogger().info("Clicked on " + "'" + material.getMaterialName() + "'/'" + material.getTextureFileName() + "' (" + (vertexBuffers != null ? vertexBuffers.size() : 0) + " buffers)");
+            }
+
+            kcVtxBufFileStruct vtxBuf = materialMesh.getMainNode().getDataSourceByFaceIndex(result.getIntersectedFace());
+            if (vtxBuf == null)
                 return;
 
-            int faceStartIndex = entry.getFaceMeshArrayIndex(evt.getPickResult().getIntersectedFace() - entry.getFaceStartIndex());
-            float texCoord1U = materialMesh.getTexCoords().get(materialMesh.getFaces().get(faceStartIndex + 1));
-            float texCoord1V = materialMesh.getTexCoords().get(materialMesh.getFaces().get(faceStartIndex + 1) + 1);
-            float texCoord2U = materialMesh.getTexCoords().get(materialMesh.getFaces().get(faceStartIndex + 3));
-            float texCoord2V = materialMesh.getTexCoords().get(materialMesh.getFaces().get(faceStartIndex + 3) + 1);
-            float texCoord3U = materialMesh.getTexCoords().get(materialMesh.getFaces().get(faceStartIndex + 5));
-            float texCoord3V = materialMesh.getTexCoords().get(materialMesh.getFaces().get(faceStartIndex + 5) + 1);
-            getLogger().info(" - UV0: [" + texCoord1U + ", " + texCoord1V + "]");
-            getLogger().info(" - UV1: [" + texCoord2U + ", " + texCoord2V + "]");
-            getLogger().info(" - UV2: [" + texCoord3U + ", " + texCoord3V + "]");
+            boolean clickedSelected = (vtxBuf == this.selectedVertexBuffer);
+            if (this.selectedVertexBuffer != null) {
+                getMesh().getActualMesh().removeMesh(this.highlightedVertexBufferMesh);
+                this.selectedVertexBufferBoundingBox.setVisible(false);
+                this.selectedVertexBuffer = null;
+                this.highlightedVertexBufferMesh = null;
+            }
+
+            if (!clickedSelected) {
+                this.highlightedVertexBufferMesh = new GreatQuestMapMaterialMesh(getMap(), vtxBuf);
+                getMesh().getActualMesh().addMesh(this.highlightedVertexBufferMesh);
+                this.selectedVertexBuffer = vtxBuf;
+
+                // Update bounding box.
+                kcBox4 boundingBox = vtxBuf.getBoundingBox();
+                float boxX = (boundingBox.getMax().getX() + boundingBox.getMin().getX()) * .5F;
+                float boxY = (boundingBox.getMax().getY() + boundingBox.getMin().getY()) * .5F;
+                float boxZ = (boundingBox.getMax().getZ() + boundingBox.getMin().getZ()) * .5F;
+                float boxWidth = Math.abs(boundingBox.getMax().getX() - boundingBox.getMin().getX());
+                float boxHeight = Math.abs(boundingBox.getMax().getY() - boundingBox.getMin().getY());
+                float boxDepth = Math.abs(boundingBox.getMax().getZ() - boundingBox.getMin().getZ());
+
+                Scene3DUtils.setNodePosition(this.selectedVertexBufferBoundingBox, boxX, boxY, boxZ);
+                this.selectedVertexBufferBoundingBox.setWidth(boxWidth);
+                this.selectedVertexBufferBoundingBox.setHeight(boxHeight);
+                this.selectedVertexBufferBoundingBox.setDepth(boxDepth);
+                this.selectedVertexBufferBoundingBox.setVisible(true);
+            }
         });
 
+        // Setup bounding box.
+        this.selectedVertexBufferBoundingBox.setMaterial(BOUNDING_BOX_OUTLINE);
+        this.selectedVertexBufferBoundingBox.setMouseTransparent(true);
+        this.selectedVertexBufferBoundingBox.setDrawMode(DrawMode.LINE);
+        this.selectedVertexBufferBoundingBox.setCullFace(CullFace.NONE);
+        this.selectedVertexBufferBoundingBox.setVisible(false);
+        getRenderManager().getRoot().getChildren().add(this.selectedVertexBufferBoundingBox);
     }
 
     @Override

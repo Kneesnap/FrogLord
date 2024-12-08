@@ -1,7 +1,10 @@
 package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager;
 
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.PickResult;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.CullFace;
+import javafx.scene.shape.Mesh;
 import javafx.scene.shape.MeshView;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
@@ -40,11 +43,37 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
     private final DisplayList meshViewList;
     private GreatQuestMapCollisionMesh mapCollisionMesh;
     private boolean highlightSlippyPolygons;
+    private kcCTriMesh selectedMesh;
 
     public GreatQuestMapCollisionManager(MeshViewController<GreatQuestMapMesh> controller) {
         super(controller);
         this.meshViewList = getRenderManager().createDisplayListWithNewGroup(); // Creating a group allows all nodes to be part of a node before transparent stuff is added.
     }
+
+    @Override
+    public void onSetup() {
+        super.onSetup();
+
+        // Enable selecting individual parts of the map collision mesh.
+        // Add mesh click listener.
+        getController().getInputManager().addMouseListener(MouseEvent.MOUSE_CLICKED, (manager, event, deltaX, deltaY) -> {
+            PickResult result = event.getPickResult();
+            if (result == null || !(result.getIntersectedNode() instanceof MeshView) || manager.isSignificantMouseDragRecorded())
+                return; // No pick result, or the thing that was clicked was not the main mesh.
+
+            Mesh mesh = ((MeshView) result.getIntersectedNode()).getMesh();
+            if (!(mesh instanceof GreatQuestMapCollisionMesh) || mesh != this.mapCollisionMesh)
+                return;
+
+            GreatQuestMapCollisionMesh collisionMesh = (GreatQuestMapCollisionMesh) mesh;
+            kcCTriMesh triMesh = collisionMesh.getMainNode().getDataSourceByFaceIndex(result.getIntersectedFace());
+            if (triMesh != null) {
+                event.consume();
+                setSelectedMesh((triMesh != this.selectedMesh) ? triMesh : null);
+            }
+        });
+    }
+
 
     @Override
     public void setupMainGridEditor(UISidePanel sidePanel) {
@@ -142,21 +171,36 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
         this.mapCollisionMesh.updateFaces(); // Update the texCoords used by each face.
     }
 
+    /**
+     * Set the mesh which is selected.
+     * @param triMesh the mesh to select
+     */
+    public void setSelectedMesh(kcCTriMesh triMesh) {
+        if (triMesh == this.selectedMesh)
+            return;
+
+        this.selectedMesh = triMesh;
+        this.mapCollisionMesh.updateFaces();
+    }
+
     @Getter
     public static class GreatQuestMapCollisionMesh extends DynamicMesh {
         private final GreatQuestMapCollisionManager manager;
         private final List<kcCTriMesh> triMeshes;
         private final DynamicMeshDataEntry texCoordEntry;
+        private final GreatQuestMapCollisionMeshNode mainNode;
         private final AtlasTexture defaultTexture;
         private final AtlasTexture cameraWireframeRenderDebugTexture;
         private final AtlasTexture cameraRaycastSkipTexture;
         private final AtlasTexture climbableTexture;
         private final AtlasTexture slippyTexture; // This is not actually a flag, but still viewable. Slippy faces are ones Frogger slips off, and cannot jump from.
+        private final AtlasTexture selectedTexture;
         private final int defaultTextureIndex;
         private final int cameraWireframeRenderDebugTextureIndex;
         private final int cameraRaycastSkipTextureIndex;
         private final int climbableTextureIndex;
         private final int slippyTextureIndex;
+        private final int selectedTextureIndex;
         private PhongMaterial highlightedMaterial;
 
         public GreatQuestMapCollisionMesh(GreatQuestMapCollisionManager manager, kcCResourceTriMesh triMesh) {
@@ -170,9 +214,10 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
             getTextureAtlas().startBulkOperations();
             this.defaultTexture = getTextureAtlas().addTexture(UnknownTextureSource.GREEN_INSTANCE);
             this.climbableTexture = getTextureAtlas().addTexture(UnknownTextureSource.BROWN_INSTANCE);
-            this.cameraRaycastSkipTexture = getTextureAtlas().addTexture(UnknownTextureSource.YELLOW_INSTANCE);
-            this.cameraWireframeRenderDebugTexture = getTextureAtlas().addTexture(UnknownTextureSource.GRAY_INSTANCE);
+            this.cameraRaycastSkipTexture = getTextureAtlas().addTexture(UnknownTextureSource.GRAY_INSTANCE);
+            this.cameraWireframeRenderDebugTexture = getTextureAtlas().addTexture(UnknownTextureSource.RED_INSTANCE);
             this.slippyTexture = getTextureAtlas().addTexture(UnknownTextureSource.CYAN_INSTANCE);
+            this.selectedTexture = getTextureAtlas().addTexture(UnknownTextureSource.YELLOW_INSTANCE);
             getTextureAtlas().setFallbackTexture(UnknownTextureSource.MAGENTA_INSTANCE);
             getTextureAtlas().endBulkOperations();
 
@@ -185,13 +230,11 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
             this.cameraRaycastSkipTextureIndex = addTexture(this.cameraRaycastSkipTexture);
             this.cameraWireframeRenderDebugTextureIndex = addTexture(this.cameraWireframeRenderDebugTexture);
             this.slippyTextureIndex = addTexture(this.slippyTexture);
+            this.selectedTextureIndex = addTexture(this.selectedTexture);
             textureNode.addEntry(this.texCoordEntry);
 
-            for (int i = 0; i < triMeshes.size(); i++) {
-                GreatQuestMapCollisionMeshNode newNode = new GreatQuestMapCollisionMeshNode(this, triMeshes.get(i));
-                addNode(newNode);
-            }
-
+            this.mainNode = new GreatQuestMapCollisionMeshNode(this);
+            addNode(this.mainNode);
             popBatchOperations();
         }
 
@@ -231,13 +274,10 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
         }
     }
 
-    public static class GreatQuestMapCollisionMeshNode extends DynamicMeshAdapterNode<kcCFace> {
-        private DynamicMeshDataEntry vertexEntry;
-        private final kcCTriMesh triMesh;
+    public static class GreatQuestMapCollisionMeshNode extends DynamicMeshAdapterNode<kcCTriMesh> {
 
-        public GreatQuestMapCollisionMeshNode(GreatQuestMapCollisionMesh mesh, kcCTriMesh triMesh) {
+        public GreatQuestMapCollisionMeshNode(GreatQuestMapCollisionMesh mesh) {
             super(mesh);
-            this.triMesh = triMesh;
         }
 
         @Override
@@ -248,53 +288,56 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
         @Override
         protected void onAddedToMesh() {
             super.onAddedToMesh();
-            // Setup vertices.
-            this.vertexEntry = new DynamicMeshDataEntry(getMesh());
-            List<kcVector4> vertices = this.triMesh.getVertices();
+            getMesh().getTriMeshes().forEach(this::add);
+        }
+
+        @Override
+        protected DynamicMeshAdapterNode<kcCTriMesh>.DynamicMeshTypedDataEntry writeValuesToArrayAndCreateEntry(kcCTriMesh triMesh) {
+            DynamicMeshTypedDataEntry newEntry = new DynamicMeshTypedDataEntry(getMesh(), triMesh);
+
+            List<kcVector4> vertices = triMesh.getVertices();
             for (int i = 0; i < vertices.size(); i++) {
                 kcVector4 vertex = vertices.get(i);
-                this.vertexEntry.addVertexValue(vertex.getX(), vertex.getY(), vertex.getZ());
+                newEntry.addVertexValue(vertex.getX(), vertex.getY(), vertex.getZ());
             }
-            addUnlinkedEntry(this.vertexEntry);
-
-            // Setup polygons.
-            this.triMesh.getFaces().forEach(this::add);
-        }
-
-        @Override
-        protected DynamicMeshAdapterNode<kcCFace>.DynamicMeshTypedDataEntry writeValuesToArrayAndCreateEntry(kcCFace face) {
-            DynamicMeshTypedDataEntry entry = new DynamicMeshTypedDataEntry(getMesh(), face);
 
             // Vertice IDs are the same IDs seen in the map data.
-            int baseTexCoordIndex = getBaseTextureCoordinateIndex(getMesh(), face);
-            int vtxIndex1 = this.vertexEntry.getVertexStartIndex() + face.getVertices()[0];
-            int vtxIndex2 = this.vertexEntry.getVertexStartIndex() + face.getVertices()[1];
-            int vtxIndex3 = this.vertexEntry.getVertexStartIndex() + face.getVertices()[2];
+            int vertexStartIndex = newEntry.getVertexStartIndex();
+            for (int i = 0; i < triMesh.getFaces().size(); i++) {
+                kcCFace face = triMesh.getFaces().get(i);
+                int baseTexCoordIndex = getBaseTextureCoordinateIndex(getMesh(), triMesh, face);
+                int vtxIndex1 = vertexStartIndex + face.getVertices()[0];
+                int vtxIndex2 = vertexStartIndex + face.getVertices()[1];
+                int vtxIndex3 = vertexStartIndex + face.getVertices()[2];
 
-            // JavaFX uses counter-clockwise winding order.
-            entry.addFace(vtxIndex3, baseTexCoordIndex + 2, vtxIndex2, baseTexCoordIndex + 1, vtxIndex1, baseTexCoordIndex);
-            return entry;
+                // JavaFX uses counter-clockwise winding order.
+                newEntry.addFace(vtxIndex3, baseTexCoordIndex + 2, vtxIndex2, baseTexCoordIndex + 1, vtxIndex1, baseTexCoordIndex);
+            }
+
+            return newEntry;
         }
 
         @Override
-        public void updateTexCoord(DynamicMeshAdapterNode<kcCFace>.DynamicMeshTypedDataEntry entry, int localTexCoordIndex) {
+        public void updateTexCoord(DynamicMeshAdapterNode<kcCTriMesh>.DynamicMeshTypedDataEntry entry, int localTexCoordIndex) {
             // Do nothing.
         }
 
         @Override
-        public void updateVertex(DynamicMeshAdapterNode<kcCFace>.DynamicMeshTypedDataEntry entry, int localVertexIndex) {
-            kcVector4 vertex = this.triMesh.getVertices().get(localVertexIndex);
-            this.vertexEntry.writeVertexXYZ(localVertexIndex, vertex.getX(), vertex.getY(), vertex.getZ());
+        public void updateVertex(DynamicMeshAdapterNode<kcCTriMesh>.DynamicMeshTypedDataEntry entry, int localVertexIndex) {
+            kcVector4 vertex = entry.getDataSource().getVertices().get(localVertexIndex);
+            entry.writeVertexXYZ(localVertexIndex, vertex.getX(), vertex.getY(), vertex.getZ());
         }
 
         @Override
-        public void updateFace(DynamicMeshAdapterNode<kcCFace>.DynamicMeshTypedDataEntry entry, int localFaceIndex) {
-            int baseTexCoordIndex = getBaseTextureCoordinateIndex(getMesh(), entry.getDataSource());
+        public void updateFace(DynamicMeshAdapterNode<kcCTriMesh>.DynamicMeshTypedDataEntry entry, int localFaceIndex) {
+            int baseTexCoordIndex = getBaseTextureCoordinateIndex(getMesh(), entry.getDataSource(), entry.getDataSource().getFaces().get(localFaceIndex));
             entry.writeFace(localFaceIndex, Integer.MIN_VALUE, baseTexCoordIndex + 2, Integer.MIN_VALUE, baseTexCoordIndex + 1, Integer.MIN_VALUE, baseTexCoordIndex);
         }
 
-        private int getBaseTextureCoordinateIndex(GreatQuestMapCollisionMesh mesh, kcCFace face) {
-            if ((face.getFlags() & kcCFace.FLAG_CLIMBABLE) != 0) {
+        private int getBaseTextureCoordinateIndex(GreatQuestMapCollisionMesh mesh, kcCTriMesh triMesh, kcCFace face) {
+            if (mesh.getManager() != null && triMesh == mesh.getManager().selectedMesh) {
+                return mesh.getSelectedTextureIndex();
+            } else if ((face.getFlags() & kcCFace.FLAG_CLIMBABLE) != 0) {
                 return mesh.getClimbableTextureIndex();
             } else if (face.getNormal().getY() < GreatQuestInstance.JUMP_SLOPE_THRESHOLD && getMesh().shouldHighlightSlippyFaces()) {
                 // This goes here since climbable surfaces override slippy behavior.

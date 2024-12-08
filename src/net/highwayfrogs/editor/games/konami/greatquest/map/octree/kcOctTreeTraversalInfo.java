@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.games.konami.greatquest.map.octree.kcOctTree.kcOctTreeStatus;
 import net.highwayfrogs.editor.system.IntList;
+import net.highwayfrogs.editor.system.math.Box;
 import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.NumberUtils;
 
@@ -25,6 +26,7 @@ public class kcOctTreeTraversalInfo<TContext> {
     private final BiFunction<kcOctTreeTraversalInfo<TContext>, Integer, kcOctTreeStatus> testCallback;
     private final BiConsumer<TContext, kcOctLeaf> actionCallback;
     private final IntList nodeIds = new IntList(16);
+    private final Box collisionBox = new Box();
 
     public kcOctTreeTraversalInfo(kcOctTree tree, BiFunction<kcOctTreeTraversalInfo<TContext>, Integer, kcOctTreeStatus> testCallback, BiConsumer<TContext, kcOctLeaf> actionCallback, TContext context) {
         if (tree == null)
@@ -40,6 +42,18 @@ public class kcOctTreeTraversalInfo<TContext> {
         this.nodeOrigin = tree.getOffset().clone();
         this.testCallback = testCallback;
         this.actionCallback = actionCallback;
+        this.nodeDimension = tree.getTreeSize();
+        this.nodeOrigin.setXYZ(tree.getOffset());
+    }
+
+    /**
+     * Gets the collision box
+     */
+    public Box getCollisionBox() {
+        float halfNodeSize = this.nodeDimension * .5F;
+        return this.collisionBox.setCenterPositionAndDimensions(
+                this.nodeOrigin.getX() + halfNodeSize, this.nodeOrigin.getY() + halfNodeSize, this.nodeOrigin.getZ() + halfNodeSize,
+                this.nodeDimension, this.nodeDimension, this.nodeDimension);
     }
 
     /**
@@ -61,7 +75,7 @@ public class kcOctTreeTraversalInfo<TContext> {
     public void runActionCallbacks() {
         for (int i = 0; i < this.nodeIds.size(); i++) {
             int leafId = this.nodeIds.get(i);
-            kcOctLeaf leaf = this.tree.getLeaves().get(leafId);
+            kcOctLeaf leaf = this.tree.getLeaves().get((leafId & ~kcOctTree.FLAG_IS_LEAF));
             this.actionCallback.accept(this.context, leaf);
         }
         this.nodeIds.clear();
