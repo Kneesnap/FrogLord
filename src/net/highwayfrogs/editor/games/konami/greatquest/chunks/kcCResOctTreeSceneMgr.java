@@ -125,7 +125,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
 
         // Read primitives.
         this.vertexBuffers.clear();
-        GamePlatform platform = getGameInstance().getPlatform();
+        GamePlatform platform = getLoadPlatform();
         for (int i = 0; i < primCount; i++) {
             kcVtxBufFileStruct vtxBuf = new kcVtxBufFileStruct();
             vtxBuf.load(reader, platform);
@@ -157,6 +157,16 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
         // So, we'll leave this unimplemented unless we see it actually used.
         if (sourcePathMeshCount != 0 || sourcePathVisualCount != 0)
             getLogger().severe("The sourcePath counts were not zero!! This feature was not added since it was not seen in any versions at the time of writing! (Source Path Mesh Count: " + sourcePathMeshCount + ", Source Path Visual Count: " + sourcePathVisualCount + ")");
+    }
+
+    private GamePlatform getLoadPlatform() {
+        GamePlatform platform = getGameInstance().getPlatform();
+
+        // River Town is in PC format in the prototype build even though it shouldn't be.
+        if (platform == GamePlatform.PLAYSTATION_2 && getGameInstance().isPrototype() && "\\GameData\\Level04RiverTown\\Level\\PS2_Level04.dat".equalsIgnoreCase(getParentFile().getFilePath()))
+            platform = GamePlatform.WINDOWS;
+
+        return platform;
     }
 
     private void updateMaterialVertexBufferListCache() {
@@ -334,7 +344,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
             setFVF(reader.readUnsignedIntAsLong(), platform);
             int fvfStride = reader.readInt();
             if (this.fvfStride != fvfStride)
-                throw new RuntimeException("The calculated fvfStride did not match the fvfStride provided in the vtxBuf! (FVF: " + this.fvf + ", Read: " + fvfStride + ", Calculated: " + this.fvfStride + ")");
+                throw new RuntimeException("The calculated fvfStride did not match the fvfStride provided in the vtxBuf! (FVF: " + this.fvf + ", Components: " + Arrays.toString(this.components) + ", Read Stride: " + fvfStride + ", Calculated Stride: " + this.fvfStride + ")");
 
             this.primitiveType = kcPrimitiveType.values()[reader.readInt()];
             int primCount = reader.readInt();

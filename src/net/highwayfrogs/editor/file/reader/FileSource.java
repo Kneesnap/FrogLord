@@ -33,7 +33,7 @@ public class FileSource implements DataSource {
 
     @Override
     public int readBytes(byte[] output, int offset, int amount) throws IOException {
-        amount = Math.max(0, Math.min(amount, this.fileData.length - this.index - 1));
+        amount = Math.max(0, Math.min(amount, this.fileData.length - this.index));
         if (amount == 0)
             return 0;
 

@@ -426,4 +426,11 @@ public class GreatQuestInstance extends GameInstance {
     public int useNextFreeSoundIdSlot() {
         return this.nextFreeSoundId++;
     }
+
+    /**
+     * Returns true iff this version is the prototype build.
+     */
+    public boolean isPrototype() {
+        return "ps2-prototype".equals(getVersionConfig().getInternalName());
+    }
 }

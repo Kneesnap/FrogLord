@@ -330,11 +330,20 @@ public class DataReader {
      */
     public byte[] readBytes(byte[] destination, int offset, int amount) {
         try {
-            int bytesRead = this.source.readBytes(destination, offset, amount);
+            int bytesRead = 0;
+            int lastReadAmount;
+            while (amount > bytesRead && (lastReadAmount = this.source.readBytes(destination, offset + bytesRead, amount - bytesRead)) > 0)
+                bytesRead += lastReadAmount;
+
             if (bytesRead != amount)
-                throw new RuntimeException("Failed to read " + amount + " bytes, as only " + bytesRead + " were actually read.");
+                throw new RuntimeException("Failed to read " + amount + " bytes, as only " + bytesRead + " bytes were actually available to read.");
         } catch (Exception ex) {
-            throw new RuntimeException("Error while reading " + amount + " bytes. (Remaining: " + getRemaining() + ")", ex);
+            int remainingBytes = getRemaining();
+            if (remainingBytes > 0) {
+                throw new RuntimeException("Error while reading " + amount + " bytes. (It seems there is an issue with " + Utils.getSimpleName(this.source) + ", because it still reports having " + remainingBytes + " bytes available)", ex);
+            } else {
+                throw new RuntimeException("Error while reading " + amount + " bytes. (Bytes Remaining: " + remainingBytes + ")", ex);
+            }
         }
 
         return destination;
@@ -345,15 +354,7 @@ public class DataReader {
      * @return readBytes
      */
     public byte[] readBytes(byte[] destination) {
-        try {
-            int bytesRead = this.source.readBytes(destination, 0, destination.length);
-            if (bytesRead != destination.length)
-                throw new RuntimeException("Failed to read " + destination.length + " bytes, as only " + bytesRead + " were actually read.");
-        } catch (Exception ex) {
-            throw new RuntimeException("Error while reading " + destination.length + " bytes. (Remaining: " + getRemaining() + ")", ex);
-        }
-
-        return destination;
+        return readBytes(destination, 0, destination.length);
     }
 
     /**
