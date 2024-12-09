@@ -6,10 +6,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxAttributes;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxEntryStreamAttributes;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceModel;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityDescType;
@@ -45,6 +42,7 @@ public class GreatQuestAssetUtils {
     private static final String CONFIG_SECTION_MODELS = "Models";
     private static final String CONFIG_SECTION_SOUND_EFFECTS = "SoundEffects";
     private static final String CONFIG_SECTION_COPY_RESOURCES = "CopyResources";
+    private static final String CONFIG_SECTION_ACTION_SEQUENCES = "Sequences";
     private static final String CONFIG_SECTION_DIALOG = "Dialog";
     private static final String CONFIG_SECTION_COLLISION_PROXIES = "Collision";
     private static final String CONFIG_SECTION_ENTITY_DESCRIPTIONS = "EntityDescriptions";
@@ -77,10 +75,11 @@ public class GreatQuestAssetUtils {
         // Should apply before scripts/entities.
         applySoundEffects(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_SOUND_EFFECTS), logger);
 
-        // Should occur before resource copying, so that any resources can resolve the model references.
+        // Should occur before resource copying, so that any resources can resolve the model/collision references.
         applyModelReferences(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_MODELS), logger);
         applyCollisionProxies(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_COLLISION_PROXIES));
         copyResources(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_COPY_RESOURCES), logger);
+        applyActionSequences(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ACTION_SEQUENCES));
 
         // This should occur after resource copying to ensure it can resolve resources. Copied resources shouldn't reference entity descriptions since entity instances (a resource which is not expected to be copied) are the only resource to resolve entity descriptions.
         // This should also happen before entity instances are applied.
@@ -288,6 +287,25 @@ public class GreatQuestAssetUtils {
             }
 
             collisionDesc.getAsProxyDescription().fromConfig(collisionProxyDescCfg);
+        }
+    }
+
+    private static void applyActionSequences(GreatQuestChunkedFile chunkedFile, Config resourceHashTableCfg) {
+        if (resourceHashTableCfg == null)
+            return;
+
+        for (Config hashTableCfg : resourceHashTableCfg.getChildConfigNodes()) {
+            String hashTableName = hashTableCfg.getSectionName() + kcCResourceNamedHash.NAME_SUFFIX;
+
+            int hashTableNameHash = GreatQuestUtils.hash(hashTableName);
+            kcCResourceNamedHash namedHashTable = chunkedFile.getResourceByHash(hashTableNameHash);
+            if (namedHashTable == null) {
+                namedHashTable = new kcCResourceNamedHash(chunkedFile);
+                namedHashTable.setName(hashTableName, true);
+                chunkedFile.addResource(namedHashTable);
+            }
+
+            namedHashTable.addSequencesFromConfigNode(hashTableCfg);
         }
     }
 

@@ -72,15 +72,13 @@ import java.util.Map.Entry;
  *   -> Fix interfaces.
  *   -> throw "" keyword.
  *   -> I believe config is not properly handling escapes, either that or NoodleCompiler isn't properly handling escapes in strings.
- *   -> Are for loops actually evaluating the condition each time?
  *  -> Import/Export Models/Animations/Animation Sets/Skeletons/Collision Meshes/OctTree building
  *  -> GQS:
- *   -> Documentation of the non-script GQS portion.
- *   -> Action Sequence Support
- *   -> Collision Proxy Support
  *   -> I think it'd be a good idea to consider if we want to allow partial-configs, for just applying changes to existing things. Eg: CharacterParams has a lot of stuff.
- *   -> Better script warnings. [Go over all actions]
- *   ->
+ *   -> Improve script warning system.
+ *    -> Popup instead of console.
+ *    -> Prevent warnings on existing scripts.
+ *  -> Documentation of the non-script GQS portion.
  *  -> Transparent stuff has been broken again.
  *  -> Go over TODOs in the tutorial gqs script example.
  *
