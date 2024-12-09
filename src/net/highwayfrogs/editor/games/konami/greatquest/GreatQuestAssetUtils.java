@@ -42,6 +42,7 @@ public class GreatQuestAssetUtils {
     private static final String CONFIG_SECTION_MODELS = "Models";
     private static final String CONFIG_SECTION_SOUND_EFFECTS = "SoundEffects";
     private static final String CONFIG_SECTION_COPY_RESOURCES = "CopyResources";
+    private static final String CONFIG_SECTION_DELETE_RESOURCES = "DeleteResources";
     private static final String CONFIG_SECTION_ACTION_SEQUENCES = "Sequences";
     private static final String CONFIG_SECTION_DIALOG = "Dialog";
     private static final String CONFIG_SECTION_COLLISION_PROXIES = "Collision";
@@ -79,6 +80,7 @@ public class GreatQuestAssetUtils {
         applyModelReferences(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_MODELS), logger);
         applyCollisionProxies(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_COLLISION_PROXIES));
         copyResources(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_COPY_RESOURCES), logger);
+        deleteResources(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_DELETE_RESOURCES), logger);
         applyActionSequences(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ACTION_SEQUENCES));
 
         // This should occur after resource copying to ensure it can resolve resources. Copied resources shouldn't reference entity descriptions since entity instances (a resource which is not expected to be copied) are the only resource to resolve entity descriptions.
@@ -222,6 +224,36 @@ public class GreatQuestAssetUtils {
         for (Tuple2<kcCResource, byte[]> pair : queuedResources)
             pair.getA().loadFromRawBytes(pair.getB());
     }
+
+    private static void deleteResources(GreatQuestChunkedFile chunkedFile, Config deleteResourceCfg, Logger logger) {
+        if (deleteResourceCfg == null)
+            return;
+
+        String sourceName = deleteResourceCfg.getRootNode().getSectionName();
+        for (Config resourceList : deleteResourceCfg.getChildConfigNodes()) {
+            int resourceHash;
+            String resourceName = resourceList.getSectionName();
+            if (NumberUtils.isHexInteger(resourceName)) {
+                resourceHash = NumberUtils.parseHexInteger(resourceName);
+            } else {
+                resourceHash = GreatQuestUtils.hash(resourceName);
+            }
+
+            kcCResource resource = chunkedFile.getResourceByHash(resourceHash);
+            if (resource == null) {
+                // Don't warn since gqs scripts are often applied multiple times.
+                // logger.warning("Skipping resource deletion for " + NumberUtils.toHexString(resourceHash) + "/'" + resourceName + "' in " + sourceName + ", as the chunked file could not be found.");
+                continue;
+            }
+
+            try {
+                chunkedFile.removeResource(resource);
+            } catch (Throwable th) {
+                Utils.handleError(logger, th, false, "Failed to remove resource %s/'%s' in %s.", NumberUtils.toHexString(resourceHash), resourceName, sourceName);
+            }
+        }
+    }
+
 
     private static void applyModelReferences(GreatQuestChunkedFile chunkedFile, Config modelCfg, Logger logger) {
         if (modelCfg == null)

@@ -384,6 +384,10 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
      * Called when this resource is removed from the chunked file.
      */
     protected void onRemovedFromChunkFile() {
+        int linkedUsages = getSelfHash().getLinkedHashes().size();
+        if (linkedUsages > 0)
+            getLogger().warning("Resource removed from chunk file despite " + linkedUsages + " remaining usage" + (linkedUsages != 1 ? "s." : "."));
+
         getSelfHash().invalidate(); // Anything references to this hash should be unlinked.
     }
 }
