@@ -23,6 +23,7 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
     private final kcActionExecutor executor;
     private final kcActionID actionID;
     private kcParam[] unhandledArguments;
+    private boolean loadedFromGame; // Reports whether the action was loaded from the game.
 
     public static final int MAX_ARGUMENT_COUNT = 4;
 
@@ -48,6 +49,7 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
 
     @Override
     public void load(DataReader reader) {
+        this.loadedFromGame = true;
         kcParam[] arguments = new kcParam[MAX_ARGUMENT_COUNT];
         for (int i = 0; i < arguments.length; i++)
             arguments[i] = kcParam.readParam(reader);
@@ -125,6 +127,7 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
         if (expectedArgumentCount > arguments.getRemainingArgumentCount())
             throw new RuntimeException("Could not load '" + arguments + "' as kcAction[" + getActionID() + "], as it did not have " + expectedArgumentCount + " arguments.");
 
+        this.loadedFromGame = false; // User-supplied.
         loadArguments(arguments);
     }
 
@@ -216,7 +219,8 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
      * @param warning the warning to print
      */
     public void printWarning(Logger logger, String warning) {
-        logger.warning("The action '" + getAsGqsStatement() + "' will be skipped by the game, since " + warning);
+        if (!this.loadedFromGame)
+            logger.warning("The action '" + getAsGqsStatement() + "' will be skipped by the game, since " + warning);
     }
 
     /**

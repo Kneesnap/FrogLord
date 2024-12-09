@@ -29,6 +29,7 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
     private final int minimumArguments;
     private final int gqsArgumentCount;
     @Setter(AccessLevel.PACKAGE) private kcScriptFunction parentFunction;
+    @Setter private boolean loadedFromGame; // True if the cause was loaded from the game, and was not loaded by the user.
 
     public kcScriptCause(@NonNull kcScript script, kcScriptCauseType type, int minimumArguments, int gqsArgumentCount) {
         super(script.getGameInstance());
@@ -59,6 +60,7 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
         if (!validateGqsArgumentCount(arguments.getRemainingArgumentCount()))
             throw new RuntimeException("Cannot load " + Utils.getSimpleName(this) + "[" + getType() + "] from '" + arguments + "' since " + getGqsArgumentCount() + " arguments were expected, but " + arguments.getRemainingArgumentCount() + " were found.");
 
+        this.loadedFromGame = false;
         loadArguments(arguments);
         arguments.warnAboutUnusedArguments(getLogger());
         printWarnings(getLogger());
@@ -177,7 +179,8 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
      * @param warning the warning to print
      */
     public final void printWarning(Logger logger, String warning) {
-        logger.warning("The cause '" + getAsGqsStatement() + "' will never occur because " + warning);
+        if (!this.loadedFromGame)
+            logger.warning("The cause '" + getAsGqsStatement() + "' will never occur because " + warning);
     }
 
     private kcScriptDisplaySettings createDisplaySettings() {

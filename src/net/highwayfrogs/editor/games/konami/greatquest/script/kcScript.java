@@ -288,6 +288,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
         if (!cause.validateArgumentCount(optionalArgumentCount))
             throw new RuntimeException("kcScriptCauseType " + causeType + " cannot accept " + optionalArgumentCount + " optional arguments.");
 
+        cause.setLoadedFromGame(true);
         cause.load(subCauseTypeNumber, unhandledData);
         return cause;
     }

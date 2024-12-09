@@ -287,7 +287,7 @@ public class kcScriptList extends kcCResource {
                 kcScriptFunction function = script.getFunctions().get(j);
 
                 // Add cause.
-                if (functionCauseData != null && function.getCause() != null)
+                if (functionCauseData != null && function.getCause() != null && !function.getCause().isLoadedFromGame())
                     function.getCause().printAdvancedWarnings(functionCauseData);
 
                 // Process effects.
@@ -298,7 +298,7 @@ public class kcScriptList extends kcCResource {
                         continue;
 
                     kcScriptValidationData actionData = getOrCreateValidationData(logger, dataMap, effect.getTargetEntityRef().getResource());
-                    if (actionData != null)
+                    if (actionData != null && !action.isLoadedFromGame())
                         action.printAdvancedWarnings(actionData);
                 }
             }
