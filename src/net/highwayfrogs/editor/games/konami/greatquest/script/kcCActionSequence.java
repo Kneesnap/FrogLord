@@ -166,8 +166,6 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
             }
 
             newAction.printWarnings(getLogger());
-            if (!actionID.isEnableForActionSequences())
-                getLogger().warning("The action '" + line + "' is not usable in an action sequence, and will be skipped by the game.");
 
             this.actions.add(newAction);
         }

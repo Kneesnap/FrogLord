@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInheritanceGroup;
 import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffectActor;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
@@ -199,9 +200,16 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
      * @param logger The logger to print the warnings to.
      */
     public void printWarnings(Logger logger) {
-        this.actionID.getActionTargetType().logEntityTypeWarnings(logger, this, this.actionID.getFrogLordName());
-        if (getExecutor() instanceof kcScriptEffectActor && this.actionID.isScriptMappingMissing())
+        kcEntityInheritanceGroup targetType = this.actionID.getActionTargetType();
+        if (targetType != null)
+            targetType.logEntityTypeWarnings(logger, this, this.actionID.getFrogLordName());
+        if (targetType == null && this.actionID.isEnableForActionSequences() && !(getExecutor() instanceof kcCActionSequence)) {
+            printWarning(logger, "'" + this.actionID + "' is only usable in an action sequence.");
+        } else if (getExecutor() instanceof kcCActionSequence && !this.actionID.isEnableForActionSequences()) {
+            printWarning(logger, "'" + this.actionID.getFrogLordName() + "' cannot be used in an action sequence.");
+        } else if (getExecutor() instanceof kcScriptEffectActor && this.actionID.isScriptMappingMissing()) {
             printWarning(logger, "'" + this.actionID.getFrogLordName() + "' is not mapped by the kcCScriptMgr. (There's probably an alias which should be used instead)");
+        }
     }
 
     /**
