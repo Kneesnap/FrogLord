@@ -274,7 +274,7 @@ public class GreatQuestAssetUtils {
             }
 
             String fileName = foundFile.getFileName();
-            kcCResourceModel modelRef = chunkedFile.getResourceByHash(GreatQuestUtils.hash(fileName));
+            kcCResourceModel modelRef = GreatQuestUtils.findResourceByHash(chunkedFile, chunkedFile.getGameInstance(), GreatQuestUtils.hash(fileName));
             if (modelRef == null) {
                 modelRef = new kcCResourceModel(chunkedFile);
                 modelRef.setName(fileName, true);
@@ -286,7 +286,7 @@ public class GreatQuestAssetUtils {
             StringNode modelDescNameNode = arguments.use(CONFIG_OPTION_CREATE_MODEL_DESC);
             if (modelDescNameNode != null) {
                 String modelDescName = modelDescNameNode.getAsString();
-                kcCResourceGeneric genericResource = chunkedFile.getResourceByHash(GreatQuestUtils.hash(modelDescName));
+                kcCResourceGeneric genericResource = GreatQuestUtils.findResourceByHash(chunkedFile, chunkedFile.getGameInstance(), GreatQuestUtils.hash(modelDescName));
                 if (genericResource == null) {
                     genericResource = new kcCResourceGeneric(chunkedFile);
                     genericResource.setName(modelDescName, true);
@@ -308,7 +308,7 @@ public class GreatQuestAssetUtils {
         for (Config collisionProxyDescCfg : collisionCfg.getChildConfigNodes()) {
             String collisionProxyDescName = collisionProxyDescCfg.getSectionName();
             int collisionProxyNameHash = GreatQuestUtils.hash(collisionProxyDescName);
-            kcCResourceGeneric collisionDesc = chunkedFile.getResourceByHash(collisionProxyNameHash);
+            kcCResourceGeneric collisionDesc = GreatQuestUtils.findResourceByHash(chunkedFile, chunkedFile.getGameInstance(), collisionProxyNameHash);
             if (collisionDesc == null) {
                 kcProxyDescType descType = collisionProxyDescCfg.getKeyValueNodeOrError(kcProxyDesc.CONFIG_KEY_DESC_TYPE).getAsEnumOrError(kcProxyDescType.class);
 
@@ -330,7 +330,7 @@ public class GreatQuestAssetUtils {
             String hashTableName = hashTableCfg.getSectionName() + kcCResourceNamedHash.NAME_SUFFIX;
 
             int hashTableNameHash = GreatQuestUtils.hash(hashTableName);
-            kcCResourceNamedHash namedHashTable = chunkedFile.getResourceByHash(hashTableNameHash);
+            kcCResourceNamedHash namedHashTable = GreatQuestUtils.findResourceByHash(chunkedFile, chunkedFile.getGameInstance(), hashTableNameHash);
             if (namedHashTable == null) {
                 namedHashTable = new kcCResourceNamedHash(chunkedFile);
                 namedHashTable.setName(hashTableName, true);
@@ -348,7 +348,7 @@ public class GreatQuestAssetUtils {
         for (Config entityDescCfg : entityDescriptionsCfg.getChildConfigNodes()) {
             String entityDescName = entityDescCfg.getSectionName();
             int entityDescNameHash = GreatQuestUtils.hash(entityDescName);
-            kcCResourceGeneric entityDesc = chunkedFile.getResourceByHash(entityDescNameHash);
+            kcCResourceGeneric entityDesc = GreatQuestUtils.findResourceByHash(chunkedFile, chunkedFile.getGameInstance(), entityDescNameHash);
             if (entityDesc == null) {
                 kcEntityDescType descType = entityDescCfg.getKeyValueNodeOrError(kcEntity3DDesc.CONFIG_KEY_DESC_TYPE).getAsEnumOrError(kcEntityDescType.class);
 
