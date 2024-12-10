@@ -45,7 +45,7 @@ public class kcScriptDisplaySettings extends GameObject<GreatQuestInstance> {
         }
 
         // Search main game file.
-        kcCResource resource = GreatQuestUtils.findResourceByHash(this.chunkedFile, getGameInstance(), hash);
+        kcCResource resource = GreatQuestUtils.findResourceByHashGlobal(this.chunkedFile, getGameInstance(), hash);
         if (resource != null && resource.getName() != null)
             return "\"" + resource.getName().replace("\"", "\\\"") + "\"";
 
@@ -71,7 +71,7 @@ public class kcScriptDisplaySettings extends GameObject<GreatQuestInstance> {
         }
 
         // Search main game file.
-        kcCResource resource = GreatQuestUtils.findResourceByHash(this.chunkedFile, getGameInstance(), hash);
+        kcCResource resource = GreatQuestUtils.findResourceByHashGlobal(this.chunkedFile, getGameInstance(), hash);
         if (resource != null && resource.getName() != null)
             return resource.getName();
 
@@ -94,7 +94,7 @@ public class kcScriptDisplaySettings extends GameObject<GreatQuestInstance> {
         }
 
         // Search main game file.
-        kcCResource resource = GreatQuestUtils.findResourceByHash(this.chunkedFile, getGameInstance(), hash);
+        kcCResource resource = GreatQuestUtils.findResourceByHashGlobal(this.chunkedFile, getGameInstance(), hash);
         if (resource != null && resource.getName() != null) {
             node.setAsString(resource.getName(), true);
         } else {

@@ -1057,7 +1057,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     public static <TResource extends kcCResource> StringBuilder writeAssetInfo(GreatQuestChunkedFile file, StringBuilder builder, String padding, String prefix, int resourceHash, Function<TResource, String> getter) {
         builder.append(padding).append(prefix).append(": ");
 
-        TResource resource = GreatQuestUtils.findResourceByHash(file, file != null ? file.getGameInstance() : null, resourceHash);
+        TResource resource = GreatQuestUtils.findResourceByHashGlobal(file, file != null ? file.getGameInstance() : null, resourceHash);
         if (resource != null) {
             builder.append(getter.apply(resource));
         } else if (resourceHash != 0 && resourceHash != -1) {
@@ -1090,7 +1090,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
      */
     public static <TResource extends kcCResource> Label writeAssetInfo(GUIEditorGrid grid, GreatQuestChunkedFile file, String label, int resourceHash, Function<TResource, String> getter) {
         String resourceName = null;
-        TResource resource = GreatQuestUtils.findResourceByHash(file, file != null ? file.getGameInstance() : null, resourceHash);
+        TResource resource = GreatQuestUtils.findResourceByHashGlobal(file, file != null ? file.getGameInstance() : null, resourceHash);
         if (resource != null)
             resourceName = getter.apply(resource);
 

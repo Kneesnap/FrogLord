@@ -500,7 +500,7 @@ public class GreatQuestUtils {
         hashObj.setHash(hash);
 
         // Resolve the resource.
-        kcCResource resource = GreatQuestUtils.findResourceByHash(parentFile, (GreatQuestInstance) gameObj.getGameInstance(), hash);
+        kcCResource resource = GreatQuestUtils.findLevelResourceByHash(parentFile, hash);
         if (resource != null) {
             if (!resourceClass.isInstance(resource))
                 throw new ClassCastException("Resolved hash " + hashObj.getHashNumberAsString() + " to a " + Utils.getSimpleName(resource) + " named '" + resource.getName() + "', but a " + resourceClass.getName() + " was expected instead!");
@@ -523,7 +523,7 @@ public class GreatQuestUtils {
      * @return resourceOrNull
      * @param <TResult> the type of result to return
      */
-    public static <TResult extends kcCResource> TResult findResourceByHash(GreatQuestChunkedFile parentFile, GreatQuestInstance mainInstance, int resourceHash) {
+    public static <TResult extends kcCResource> TResult findResourceByHashGlobal(GreatQuestChunkedFile parentFile, GreatQuestInstance mainInstance, int resourceHash) {
         TResult foundResult = parentFile != null ? parentFile.getResourceByHash(resourceHash) : null;
         if (foundResult != null)
             return foundResult;
@@ -531,6 +531,36 @@ public class GreatQuestUtils {
         // Global search.
         for (GreatQuestArchiveFile file : mainInstance.getMainArchive().getFiles()) {
             if (!(file instanceof GreatQuestChunkedFile) || (parentFile == file))
+                continue;
+
+            GreatQuestChunkedFile chunkedFile = (GreatQuestChunkedFile) file;
+            foundResult = chunkedFile.getResourceByHash(resourceHash);
+            if (foundResult != null)
+                return foundResult;
+        }
+
+        return null;
+    }
+
+    /**
+     * Find a resource available to the given level by the resource hash
+     * @param parentFile the parent file, searched first. If not found, other chunked files loaded will be searched.
+     * @param resourceHash the resource hash to lookup
+     * @return resourceOrNull
+     * @param <TResult> the type of result to return
+     */
+    public static <TResult extends kcCResource> TResult findLevelResourceByHash(GreatQuestChunkedFile parentFile, int resourceHash) {
+        if (parentFile == null)
+            throw new NullPointerException("parentFile");
+
+        TResult foundResult = parentFile.getResourceByHash(resourceHash);
+        if (foundResult != null)
+            return foundResult;
+
+        // Global search.
+        GreatQuestInstance mainInstance = parentFile.getGameInstance();
+        for (GreatQuestArchiveFile file : mainInstance.getMainArchive().getFiles()) {
+            if (!(file instanceof GreatQuestChunkedFile) || (parentFile == file) || !"00.dat".equalsIgnoreCase(file.getFileName()))
                 continue;
 
             GreatQuestChunkedFile chunkedFile = (GreatQuestChunkedFile) file;

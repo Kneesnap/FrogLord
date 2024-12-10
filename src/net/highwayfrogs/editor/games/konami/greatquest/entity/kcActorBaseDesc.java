@@ -82,7 +82,8 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         super.saveData(writer);
 
         // Unless the hash number is -1, it seems this is ALWAYS the resource name + "{seqs}", so ensure we save it like that.
-        if (getResource() != null && getResource().getResourceName() != null && this.animationSequencesRef.getHashNumber() != -1)
+        // But we'll only do that if there's no resource resolved, since we don't want to overwrite that.
+        if (getResource() != null && getResource().getResourceName() != null && this.animationSequencesRef.getHashNumber() != -1 && this.animationSequencesRef.getResource() == null)
             this.animationSequencesRef.setHash(getResource().getName() + kcCResourceNamedHash.NAME_SUFFIX);
 
         writer.writeInt(this.parentHash.getHashNumber());

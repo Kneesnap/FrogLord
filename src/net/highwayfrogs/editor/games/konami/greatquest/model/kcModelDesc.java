@@ -79,7 +79,7 @@ public class kcModelDesc extends kcBaseDesc implements IInfoWriter, kcIGenericRe
 
     @Override
     public void writeInfo(StringBuilder builder) {
-        writeAssetInfo(builder, ", ", "Model", this.modelRef.getHashNumber(), kcCResourceModel::getFileName);
+        writeAssetLine(builder, ", ", "Model", this.modelRef, kcCResourceModel::getFileName);
     }
 
     @Override
