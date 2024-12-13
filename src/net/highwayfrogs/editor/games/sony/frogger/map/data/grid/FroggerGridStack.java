@@ -13,10 +13,11 @@ import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Represents the GRID_STACK struct.
@@ -103,8 +104,8 @@ public class FroggerGridStack extends SCGameObject<FroggerGameInstance> {
     }
 
     @Override
-    public Logger getLogger() {
-        return Logger.getLogger(getLoggerInfo());
+    public ILogger getLogger() {
+        return new LazyInstanceLogger(getGameInstance(), FroggerGridStack::getLoggerInfo, this);
     }
 
     /**

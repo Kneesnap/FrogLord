@@ -13,6 +13,7 @@ import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -24,7 +25,6 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.function.BiPredicate;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -530,7 +530,7 @@ public class FileUtils {
      * @param showPopupOnError If true and an error occurs, a popup will be displayed.
      * @return true iff the file was successfully written
      */
-    public static boolean writeBytesToFile(Logger logger, File outputFile, byte[] bytes, boolean showPopupOnError) {
+    public static boolean writeBytesToFile(ILogger logger, File outputFile, byte[] bytes, boolean showPopupOnError) {
         if (outputFile == null)
             throw new NullPointerException("outputFile");
         if (bytes == null)
@@ -697,7 +697,7 @@ public class FileUtils {
      * @param instance The game instance to save the image path to.
      * @return image, if successfully loaded
      */
-    public static BufferedImage askUserToOpenImageFile(Logger logger, GameInstance instance) {
+    public static BufferedImage askUserToOpenImageFile(ILogger logger, GameInstance instance) {
         File selectedFile = askUserToOpenFile(instance, IMPORT_SINGLE_IMAGE_PATH);
         if (selectedFile == null)
             return null;
@@ -768,7 +768,7 @@ public class FileUtils {
      * @param overrideLastFileName Whether the suggested file name has priority over the previous file name.
      * @return file, if successfully saved
      */
-    public static File askUserToSaveImageFile(Logger logger, GameInstance instance, BufferedImage image, String suggestedFileName, boolean overrideLastFileName) {
+    public static File askUserToSaveImageFile(ILogger logger, GameInstance instance, BufferedImage image, String suggestedFileName, boolean overrideLastFileName) {
         File selectedFile = askUserToSaveFile(instance, EXPORT_SINGLE_IMAGE_PATH, suggestedFileName, true);
         if (selectedFile == null)
             return null;

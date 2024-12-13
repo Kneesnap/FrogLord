@@ -182,7 +182,8 @@ public class OldFroggerEntityManager extends OldFroggerMapListManager<OldFrogger
 
     @Override
     protected void setVisible(OldFroggerMapEntity oldFroggerMapEntity, MeshView meshView, boolean visible) {
-        meshView.setVisible(visible);
+        if (meshView != null)
+            meshView.setVisible(visible);
     }
 
     @Override

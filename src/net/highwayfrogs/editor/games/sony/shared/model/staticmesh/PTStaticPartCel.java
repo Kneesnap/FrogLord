@@ -13,10 +13,11 @@ import net.highwayfrogs.editor.games.sony.shared.model.primitive.PTPrimitiveCont
 import net.highwayfrogs.editor.games.sony.shared.model.primitive.PTPrimitiveType;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Represents an animation partcel
@@ -271,8 +272,8 @@ public class PTStaticPartCel extends SCSharedGameData {
     }
 
     @Override
-    public Logger getLogger() {
-        return Logger.getLogger(getLoggerInfo());
+    public ILogger getLogger() {
+        return new LazyInstanceLogger(getGameInstance(), PTStaticPartCel::getLoggerInfo, this);
     }
 
     /**

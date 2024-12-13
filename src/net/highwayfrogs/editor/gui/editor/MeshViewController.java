@@ -32,6 +32,8 @@ import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.fx.wrapper.FXFixedMouseSplitPaneSkin;
+import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -40,7 +42,6 @@ import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.logging.Logger;
 
 /**
  * Manages the UI which is displayed when a mesh is viewed.
@@ -111,8 +112,8 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     private final RenderListManager renderManager = new RenderListManager();
     private final RenderListManager transparentRenderManager = new RenderListManager();
     private final MeshViewFrameTimer frameTimer = new MeshViewFrameTimer(this);
-    private final InputManager inputManager = new InputManager();
-    private final FirstPersonCamera firstPersonCamera = new FirstPersonCamera(this.inputManager);
+    private final InputManager inputManager;
+    private final FirstPersonCamera firstPersonCamera;
 
     // Instance Data:
     private TMesh mesh;
@@ -136,6 +137,8 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
 
     protected MeshViewController(GameInstance instance) {
         this.gameInstance = instance;
+        this.inputManager = new InputManager(instance);
+        this.firstPersonCamera = new FirstPersonCamera(this.inputManager);
     }
 
     @Override
@@ -146,11 +149,8 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     /**
      * Get the logger for this controller.
      */
-    public Logger getLogger() {
-        if (this.cachedLogger != null)
-            return this.cachedLogger;
-
-        return this.cachedLogger = Logger.getLogger(Utils.getSimpleName(this));
+    public ILogger getLogger() {
+        return ClassNameLogger.getLogger(getGameInstance(), getClass());
     }
 
     /**

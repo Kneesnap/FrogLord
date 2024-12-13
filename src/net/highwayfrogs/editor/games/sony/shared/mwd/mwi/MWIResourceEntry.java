@@ -11,9 +11,10 @@ import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerVersionComparison;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.util.Locale;
-import java.util.logging.Logger;
 
 /**
  * Represents an entry in the MWI.
@@ -30,7 +31,7 @@ public class MWIResourceEntry extends SCSharedGameData implements ISCFileDefinit
     @Getter @Setter private int checksum;
     @Getter private String filePath;
     @Getter private String sha1Hash;
-    private transient Logger logger;
+    private transient ILogger logger;
     transient int filePathPointerAddress = NO_FILE_NAME_MARKER;
 
     // This flag set seems to be consistent.
@@ -181,11 +182,11 @@ public class MWIResourceEntry extends SCSharedGameData implements ISCFileDefinit
     }
 
     @Override
-    public Logger getLogger() {
+    public ILogger getLogger() {
         if (this.logger != null)
             return this.logger;
 
-        return this.logger = Logger.getLogger(getLoggerString());
+        return this.logger = new LazyInstanceLogger(getGameInstance(), MWIResourceEntry::getLoggerString, this);
     }
 
     @Override

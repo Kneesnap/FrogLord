@@ -20,9 +20,10 @@ import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.util.Arrays;
-import java.util.logging.Logger;
 
 /**
  * Represents a map polygon seen in Frogger.
@@ -77,8 +78,15 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
     }
 
     @Override
-    public Logger getLogger() {
-        return Logger.getLogger((this.mapFile != null ? this.mapFile.getFileDisplayName() + "|" : "") + "FroggerMapPolygon{" + this.polygonType + "," + NumberUtils.toHexString(this.lastReadAddress) + "}");
+    public ILogger getLogger() {
+        return new LazyInstanceLogger(getGameInstance(), FroggerMapPolygon::getLoggerInfo, this);
+    }
+
+    /**
+     * Gets logger information for the polygon.
+     */
+    public String getLoggerInfo() {
+        return (this.mapFile != null ? this.mapFile.getFileDisplayName() + "|" : "") + "FroggerMapPolygon{" + this.polygonType + "," + NumberUtils.toHexString(this.lastReadAddress) + "}";
     }
 
     @Override

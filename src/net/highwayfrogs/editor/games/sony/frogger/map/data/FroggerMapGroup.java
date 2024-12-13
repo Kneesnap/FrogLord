@@ -15,11 +15,12 @@ import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePack
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Represents the "MAP_GROUP" struct, which is used to determine which parts of the world need to be rendered, and which don't.
@@ -227,7 +228,7 @@ public class FroggerMapGroup extends SCGameData<FroggerGameInstance> {
     }
 
     @Override
-    public Logger getLogger() {
-        return Logger.getLogger(getLoggerInfo());
+    public ILogger getLogger() {
+        return new LazyInstanceLogger(getGameInstance(), FroggerMapGroup::getLoggerInfo, this);
     }
 }

@@ -4,9 +4,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.entity.kcActorBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcActorDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcHealthDesc.kcDamageType;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
-
-import java.util.logging.Logger;
 
 /**
  * Gives damage to the actor.
@@ -53,7 +52,7 @@ public class kcActionGiveDamage extends kcActionTemplate {
     }
 
     @Override
-    public void printWarnings(Logger logger) {
+    public void printWarnings(ILogger logger) {
         super.printWarnings(logger);
         int attackStrength = getAttackStrength().getAsInteger();
         int weaponMask = getWeaponMask().getAsInteger();

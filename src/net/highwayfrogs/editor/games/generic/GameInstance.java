@@ -12,11 +12,11 @@ import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.MainGameInstanceLogger;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * Represents an instance of a game. For example, a folder containing the files for a single version of a game.
@@ -29,7 +29,7 @@ public abstract class GameInstance implements IGameInstance {
     @Getter private net.highwayfrogs.editor.system.Config config; // This contains user/instance configuration data. It is automatically saved on shutdown, and differs on a per-game-config basis.
     @Getter private GameConfig versionConfig;
     @Getter private MainMenuController<?, ?> mainMenuController;
-    private Logger cachedLogger;
+    @Getter private final MainGameInstanceLogger logger;
     private StringBuilder cachedLogging;
 
     static final Map<IGameType, Map<String, FXMLLoader>> knownResourcePaths = new HashMap<>();
@@ -39,6 +39,7 @@ public abstract class GameInstance implements IGameInstance {
             throw new NullPointerException("gameType");
 
         this.gameType = gameType;
+        this.logger = new MainGameInstanceLogger(this);
     }
 
     /**
@@ -91,16 +92,6 @@ public abstract class GameInstance implements IGameInstance {
      * Creates a new main menu controller.
      */
     protected abstract MainMenuController<?, ?> makeMainMenuController();
-
-    /**
-     * Gets the logger for this game instance.
-     */
-    public Logger getLogger() {
-        if (this.cachedLogger != null)
-            return this.cachedLogger;
-
-        return this.cachedLogger = Logger.getLogger(Utils.getSimpleName(this));
-    }
 
     /**
      * Gets the main menu stage available for this game instance.

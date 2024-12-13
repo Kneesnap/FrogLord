@@ -6,11 +6,12 @@ import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.OldFroggerEntityData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.OldFroggerEntityData.OldFroggerEntityDataFactory;
+import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.logging.Logger;
 
 /**
  * Holds configuration data about form entries.
@@ -107,8 +108,8 @@ public class OldFroggerFormConfig {
             return new OldFroggerFormConfigEntry(formType, displayName, entityDataFactory);
         }
 
-        private static Logger getLogger() {
-            return Logger.getLogger("OldFroggerFormConfigEntry");
+        private static ILogger getLogger() {
+            return ClassNameLogger.getLogger(null, OldFroggerFormConfigEntry.class);
         }
     }
 }

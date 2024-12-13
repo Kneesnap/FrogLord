@@ -4,11 +4,11 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.utils.TimeUtils;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.time.temporal.TemporalAccessor;
 import java.util.function.BiFunction;
-import java.util.logging.Logger;
 
 /**
  * Represents configuration data for a particular version of a game.
@@ -78,7 +78,7 @@ public class GameConfig {
     /**
      * Gets the logger for this config.
      */
-    public Logger getLogger() {
-        return Logger.getLogger(Utils.getSimpleName(this));
+    public ILogger getLogger() {
+        return ClassNameLogger.getLogger(null, getClass());
     }
 }

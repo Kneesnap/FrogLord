@@ -18,10 +18,10 @@ import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.*;
-import java.util.logging.Logger;
 
 /**
  * Represents a single script.
@@ -190,7 +190,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
             try {
                 newFunction.loadFromConfigNode(nestedFunction);
             } catch (Throwable th) {
-                Logger logger = getEntity() != null ? getEntity().getLogger() : getLogger();
+                ILogger logger = getEntity() != null ? getEntity().getLogger() : getLogger();
                 String entityName = getEntity() != null ? "'" + getEntity().getName() + "'" : "null";
                 Utils.handleError(logger, th, false, "Failed to load script function for entity %s from '%s'.", entityName, sourceName);
                 continue; // Skip registration.

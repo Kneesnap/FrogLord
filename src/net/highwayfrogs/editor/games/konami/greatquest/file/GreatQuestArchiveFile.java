@@ -18,12 +18,13 @@ import net.highwayfrogs.editor.utils.DataSizeUnit;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.logging.Logger;
 
 /**
  * A base TGQ file.
@@ -36,7 +37,7 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
     @Getter private String filePath;
     @Getter private boolean collision; // This is true iff there are multiple files that share the hash.
     @Getter @Setter private boolean compressed;
-    private Logger cachedLogger;
+    private ILogger cachedLogger;
 
     public GreatQuestArchiveFile(GreatQuestInstance instance) {
         super(instance);
@@ -49,9 +50,9 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
     }
 
     @Override
-    public Logger getLogger() {
+    public ILogger getLogger() {
         if (this.cachedLogger == null)
-            this.cachedLogger = Logger.getLogger(getExportName());
+            this.cachedLogger = new LazyInstanceLogger(getGameInstance(), GreatQuestArchiveFile::getExportName, this);
 
         return this.cachedLogger;
     }

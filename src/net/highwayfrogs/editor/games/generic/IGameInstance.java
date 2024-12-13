@@ -4,12 +4,12 @@ import javafx.fxml.FXMLLoader;
 import javafx.stage.Stage;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.gui.MainMenuController;
+import net.highwayfrogs.editor.utils.logging.MainGameInstanceLogger;
 
 import java.io.File;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * Represents the definition of a game instance.
@@ -50,7 +50,7 @@ public interface IGameInstance {
     /**
      * Gets the logger for this game instance.
      */
-    Logger getLogger();
+    MainGameInstanceLogger getLogger();
 
     /**
      * Gets the main menu stage available for this game instance.

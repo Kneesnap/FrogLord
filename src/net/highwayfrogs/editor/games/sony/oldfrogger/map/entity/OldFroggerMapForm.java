@@ -21,12 +21,12 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Represents a form definition in an old Frogger map.
@@ -50,7 +50,7 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
     }
 
     @Override
-    public Logger getLogger() {
+    public ILogger getLogger() {
         return this.map.getFormInstancePacket().getLogger();
     }
 

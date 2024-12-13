@@ -3,17 +3,18 @@ package net.highwayfrogs.editor.games.konami.greatquest.model;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResOctTreeSceneMgr;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResOctTreeSceneMgr.kcVtxBufFileStruct;
 import net.highwayfrogs.editor.utils.FileUtils;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * A utility for converting kcModel objects into wavefront .obj text data.
@@ -410,12 +411,12 @@ public class kcModelObjWriter {
     }
 
     @RequiredArgsConstructor
-    public static class ObjWriterContext {
+    public abstract static class ObjWriterContext {
         @Getter private final File outputFolder;
         @Getter private final String fileName;
         @Getter private final StringBuilder objWriter;
         @Getter private final StringBuilder mtlWriter;
-        private Logger cachedLogger;
+        private ILogger cachedLogger;
         public boolean hasNormals;
         public boolean hasTexCoords;
         public int baseVertex = 1;
@@ -425,29 +426,46 @@ public class kcModelObjWriter {
         /**
          * Gets the logger.
          */
-        public Logger getLogger() {
+        public ILogger getLogger() {
             if (this.cachedLogger == null)
-                this.cachedLogger = Logger.getLogger(Utils.getSimpleName(this));
+                this.cachedLogger = ClassNameLogger.getLogger(getInstance(), getClass());
 
             return this.cachedLogger;
         }
+
+        /**
+         * Obtains the game instance, if known.
+         */
+        public abstract GameInstance getInstance();
     }
 
+    @Getter
     private static class ModelObjContext extends ObjWriterContext {
-        @Getter private final kcModel model;
+        private final kcModel model;
 
         public ModelObjContext(kcModel model, File outputFolder, String fileName, StringBuilder objWriter, StringBuilder mtlWriter) {
             super(outputFolder, fileName, objWriter, mtlWriter);
             this.model = model;
         }
+
+        @Override
+        public GameInstance getInstance() {
+            return this.model != null ? this.model.getGameInstance() : null;
+        }
     }
 
+    @Getter
     private static class MapObjContext extends ObjWriterContext {
-        @Getter private final kcCResOctTreeSceneMgr map;
+        private final kcCResOctTreeSceneMgr map;
 
         public MapObjContext(kcCResOctTreeSceneMgr map, File outputFolder, String fileName, StringBuilder objWriter, StringBuilder mtlWriter) {
             super(outputFolder, fileName, objWriter, mtlWriter);
             this.map = map;
+        }
+
+        @Override
+        public GameInstance getInstance() {
+            return this.map != null ? this.map.getGameInstance() : null;
         }
     }
 }

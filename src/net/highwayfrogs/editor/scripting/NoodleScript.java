@@ -9,10 +9,10 @@ import net.highwayfrogs.editor.scripting.tracking.NoodleRuntimeCodeSource;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.io.File;
 import java.util.*;
-import java.util.logging.Logger;
 
 /**
  * Represents a noodle script.
@@ -39,7 +39,7 @@ public class NoodleScript {
      * Prints the disassembled script to the console.
      */
     @SuppressWarnings("unused")
-    public void printDisassembly(Logger logger) {
+    public void printDisassembly(ILogger logger) {
         StringBuilder builder = new StringBuilder();
         disassemble(builder, true);
         logger.info(String.format("Script '%s':%n%s", getName(), builder));

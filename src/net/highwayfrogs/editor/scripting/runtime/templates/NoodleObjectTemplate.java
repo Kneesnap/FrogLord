@@ -12,12 +12,13 @@ import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.lambda.Consumer3;
 import net.highwayfrogs.editor.utils.lambda.Function3;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiFunction;
-import java.util.logging.Logger;
 
 /**
  * An object template is effectively Noodle's concept of a class.
@@ -50,8 +51,25 @@ public abstract class NoodleObjectTemplate<TType> {
         getLogger().info(StringUtils.formatStringSafely(template, args));
     }
 
-    private Logger getLogger() {
-        return Logger.getLogger(getClass().getSimpleName() + "[" + getName() + "]");
+    /**
+     * Gets a logger for the particular object template.
+     */
+    public ILogger getLogger() {
+        return new LazyInstanceLogger(null, NoodleObjectTemplate::getLoggerInfo, this);
+    }
+
+    /**
+     * Get the logger display string.
+     */
+    public String getLoggerInfo() {
+        return getClass().getSimpleName() + "[" + getExtraLoggerInfo() + "]";
+    }
+
+    /**
+     * Get extra logger info to display.
+     */
+    public String getExtraLoggerInfo() {
+        return getName();
     }
 
     /**

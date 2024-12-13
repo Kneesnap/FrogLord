@@ -33,11 +33,12 @@ import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
-import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Objects;
-import java.util.logging.Logger;
 
 /**
  * Represents the "ENTITY" struct.
@@ -53,7 +54,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
     @Getter private FroggerEntityScriptData scriptData;
     @Getter @Setter private transient byte[] rawData;
     @Getter @Setter private transient boolean invalid; // This is set if we know that the entity data we loaded was not the proper size.
-    private SoftReference<Logger> logger;
+    private WeakReference<ILogger> logger;
 
     private static final int RUNTIME_POINTERS = 4;
 
@@ -152,14 +153,19 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
     }
 
     @Override
-    public Logger getLogger() {
-        Logger logger = this.logger != null ? this.logger.get() : null;
-        if (logger == null) {
-            logger = Logger.getLogger(this.mapFile.getFileDisplayName() + "|Entity " + this.uniqueId + "|" + getTypeName());
-            this.logger = new SoftReference<>(logger);
-        }
+    public ILogger getLogger() {
+        ILogger logger = this.logger != null ? this.logger.get() : null;
+        if (logger == null)
+            this.logger = new WeakReference<>(logger = new LazyInstanceLogger(getGameInstance(), FroggerMapEntity::getLoggerInfo, this));
 
         return logger;
+    }
+
+    /**
+     * Gets logger information to display when the logger is used.
+     */
+    public String getLoggerInfo() {
+        return this.mapFile.getFileDisplayName() + "|Entity " + this.uniqueId + "|" + getTypeName();
     }
 
     /**

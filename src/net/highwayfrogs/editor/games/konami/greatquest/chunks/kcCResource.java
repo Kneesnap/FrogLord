@@ -28,12 +28,13 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.Proper
 import net.highwayfrogs.editor.utils.*;
 import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.logging.Logger;
 
 /**
  * Represents a resource in a TGQ file.
@@ -46,7 +47,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
     @Getter private final ObjectProperty<String> nameProperty = new SimpleObjectProperty<>(); // Usually this is what the hash is based on, but not always.
     @Getter protected boolean hashBasedOnName;
     @Getter @Setter private GreatQuestChunkedFile parentFile;
-    private Logger cachedLogger;
+    private ILogger cachedLogger;
 
     private static final int NAME_SIZE = 32;
     public static final String DEFAULT_RESOURCE_NAME = "unnamed";
@@ -62,11 +63,19 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
     }
 
     @Override
-    public Logger getLogger() {
+    public ILogger getLogger() {
         if (this.cachedLogger == null)
-            this.cachedLogger = Logger.getLogger((this.chunkType != null ? StringUtils.stripAlphanumeric(this.chunkType.getSignature()) : "????") + "|" + getName() + (this.parentFile != null ? "@" + this.parentFile.getExportName() : "") + getExtraLoggerInfo());
+            this.cachedLogger = new LazyInstanceLogger(getGameInstance(), kcCResource::getLoggerInfo, this);
 
         return this.cachedLogger;
+    }
+
+    /**
+     * Gets logger
+     * @return
+     */
+    public final String getLoggerInfo() {
+        return (this.chunkType != null ? StringUtils.stripAlphanumeric(this.chunkType.getSignature()) : "????") + "|" + getName() + (this.parentFile != null ? "@" + this.parentFile.getExportName() : "") + getExtraLoggerInfo();
     }
 
     /**

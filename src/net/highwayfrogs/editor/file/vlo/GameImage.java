@@ -19,6 +19,7 @@ import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -28,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.logging.Logger;
 
 /**
  * A singular game image. MR_TXSETUP struct.
@@ -179,7 +179,7 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
     }
 
     @Override
-    public Logger getLogger() {
+    public ILogger getLogger() {
         return this.parent != null ? this.parent.getLogger() : super.getLogger();
     }
 

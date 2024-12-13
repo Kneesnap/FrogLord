@@ -13,12 +13,13 @@ import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.fx.wrapper.FXIntArray;
 import net.highwayfrogs.editor.utils.fx.wrapper.FXIntArrayBatcher;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Logger;
 
 /**
  * This represents a triangle mesh which has functionality to dynamically create, update, and change mesh data.
@@ -36,7 +37,7 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
     @Getter private final List<MeshView> meshViews = new ArrayList<>(); // Tracks all views which are viewing this mesh.
     @Getter private Image materialFxImage;
     @Getter private PhongMaterial material;
-    private Logger cachedLogger;
+    private ILogger cachedLogger;
 
     // It's possible to disable smoothing, using a non-empty array where the first element is zero.
     // This feature was not documented anywhere I could find, but I found the code responsible at com.sun.prism.impl.BaseMesh.checkSmoothingGroup()
@@ -72,11 +73,18 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
     /**
      * Gets the logger used for this mesh.
      */
-    public Logger getLogger() {
+    public ILogger getLogger() {
         if (this.cachedLogger != null)
             return this.cachedLogger;
 
-        return this.cachedLogger = Logger.getLogger(Utils.getSimpleName(this) + ".Name='" + getMeshName() + "'");
+        return this.cachedLogger = new LazyInstanceLogger(null, DynamicMesh::getLoggerInfo, this);
+    }
+
+    /**
+     * Gets the logger info.
+     */
+    public String getLoggerInfo() {
+        return Utils.getSimpleName(this) + ".Name='" + getMeshName() + "'";
     }
 
     /**
@@ -360,7 +368,7 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
      */
     @SuppressWarnings("CommentedOutCode")
     public void printDebugMeshInfo() {
-        Logger logger = getLogger();
+        ILogger logger = getLogger();
         logger.info("Mesh Information" + (this.meshName != null ? "[" + this.meshName + "]:" : ":"));
         logger.info(" Texture Atlas: " + (this.textureAtlas != null ? this.textureAtlas.getAtlasWidth() + "x" + this.textureAtlas.getAtlasHeight() + " (" + this.textureAtlas.getSortedTextureList().size() + " entries)" : "None"));
         logger.info(" Vertices[EditableSize=" + this.editableVertices.size() + ",EditablePendingSize=" + this.editableVertices.pendingSize() + ",FxArraySize=" + getPoints().size() + "]");

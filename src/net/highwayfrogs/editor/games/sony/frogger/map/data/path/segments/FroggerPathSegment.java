@@ -17,9 +17,10 @@ import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerU
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * A single part of the path. When saved, this is broken up by <type,offset> -> segment data
@@ -82,8 +83,8 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
     }
 
     @Override
-    public Logger getLogger() {
-        return Logger.getLogger(getLoggerInfo());
+    public ILogger getLogger() {
+        return new LazyInstanceLogger(getGameInstance(), FroggerPathSegment::getLoggerInfo, this);
     }
 
     /**

@@ -13,10 +13,10 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptF
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptValidationData;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Represents a "cause", or a condition which causes a script to run.
@@ -160,7 +160,7 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
      * Prints warnings about this script cause to the logger.
      * @param logger the logger to print warnings to
      */
-    public void printWarnings(Logger logger) {
+    public void printWarnings(ILogger logger) {
         this.type.getMinimumEntityGroup().logEntityTypeWarnings(logger, this, this.type.getDisplayName());
     }
 
@@ -178,7 +178,7 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
      * @param logger the logger to print the warning to
      * @param warning the warning to print
      */
-    public final void printWarning(Logger logger, String warning) {
+    public final void printWarning(ILogger logger, String warning) {
         if (!this.loadedFromGame)
             logger.warning("The cause '" + getAsGqsStatement() + "' will never occur because " + warning);
     }

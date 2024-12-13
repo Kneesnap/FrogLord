@@ -4,13 +4,13 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Stack;
-import java.util.logging.Logger;
 
 /**
  * A tool for reading information from a data source.
@@ -212,7 +212,7 @@ public class DataReader {
      * @param desiredIndex the index to require.
      * @param messagePrefix The message to print for a warning.
      */
-    public void requireIndex(Logger logger, int desiredIndex, String messagePrefix) {
+    public void requireIndex(ILogger logger, int desiredIndex, String messagePrefix) {
         if (getIndex() != desiredIndex) {
             logger.warning(messagePrefix + " at " + NumberUtils.toHexString(getIndex()) + ", but it actually started at " + NumberUtils.toHexString(desiredIndex) + ".");
             setIndex(desiredIndex);

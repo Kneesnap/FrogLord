@@ -18,26 +18,30 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPrope
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.logging.Logger;
+import java.util.function.Function;
 
 /**
  * Represents a game file in Frogger: The Great Quest.
  * Created by Kneesnap on 9/9/2024.
  */
 public abstract class GreatQuestGameFile extends GameData<GreatQuestInstance> implements ICollectionViewEntry, IPropertyListCreator {
-    private Logger cachedLogger;
+    private ILogger cachedLogger;
+
+    private static final Function<GreatQuestGameFile, String> LOGGER_NAME_GETTER = file -> Utils.getSimpleName(file) + "{" + file.getFileName() + "}";
 
     public GreatQuestGameFile(GreatQuestInstance instance) {
         super(instance);
     }
 
     @Override
-    public Logger getLogger() {
+    public ILogger getLogger() {
         if (this.cachedLogger == null)
-            this.cachedLogger = Logger.getLogger(getClass().getSimpleName() + "{" + getFileName() + "}");
+            this.cachedLogger = new LazyInstanceLogger(getGameInstance(), LOGGER_NAME_GETTER, this);
 
         return this.cachedLogger;
     }

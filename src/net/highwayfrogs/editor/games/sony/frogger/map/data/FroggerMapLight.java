@@ -16,8 +16,8 @@ import net.highwayfrogs.editor.games.sony.shared.misc.MRLightType;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.Utils;
-
-import java.util.logging.Logger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 /**
  * Holds lighting data, or the "LIGHT" struct in mapdisp.H
@@ -143,8 +143,8 @@ public class FroggerMapLight extends SCGameData<FroggerGameInstance> {
     }
 
     @Override
-    public Logger getLogger() {
-        return Logger.getLogger(getLoggerInfo());
+    public ILogger getLogger() {
+        return new LazyInstanceLogger(getGameInstance(), FroggerMapLight::getLoggerInfo, this);
     }
 
     /**

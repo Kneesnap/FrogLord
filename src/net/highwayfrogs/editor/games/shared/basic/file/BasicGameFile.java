@@ -13,19 +13,19 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.Proper
 import net.highwayfrogs.editor.utils.DataSizeUnit;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.io.File;
-import java.util.logging.Logger;
 
 /**
  * Represents a file as used in a basic game instance.
  * Created by Kneesnap on 8/12/2024.
  */
+@Getter
 public abstract class BasicGameFile<TGameInstance extends BasicGameInstance> extends GameData<TGameInstance> implements IBasicGameFile {
-    @Getter private final IGameFileDefinition fileDefinition;
-    @Getter @Setter private byte[] rawData;
-    private Logger cachedLogger;
-
+    private final IGameFileDefinition fileDefinition;
+    @Setter private byte[] rawData;
 
     @SuppressWarnings("unchecked")
     public BasicGameFile(IGameFileDefinition fileDefinition) {
@@ -34,11 +34,8 @@ public abstract class BasicGameFile<TGameInstance extends BasicGameInstance> ext
     }
 
     @Override
-    public Logger getLogger() {
-        if (this.cachedLogger == null)
-            this.cachedLogger = Logger.getLogger(getLoggerString());
-
-        return this.cachedLogger;
+    public ILogger getLogger() {
+        return new LazyInstanceLogger(getGameInstance(), BasicGameFile::getLoggerString, this);
     }
 
     /**

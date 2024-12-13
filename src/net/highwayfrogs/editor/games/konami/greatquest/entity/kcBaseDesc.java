@@ -12,9 +12,9 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedF
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.function.Function;
-import java.util.logging.Logger;
 
 /**
  * Implements the 'kcBaseDesc' struct.
@@ -49,7 +49,7 @@ public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements
     }
 
     @Override
-    public Logger getLogger() {
+    public ILogger getLogger() {
         if (this.resource != null)
             return this.resource.getLogger();
 

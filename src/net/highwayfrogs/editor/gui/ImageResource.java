@@ -6,12 +6,13 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
-import java.util.logging.Logger;
 
 /**
  * A registry of all static images included in a FrogLord build.
@@ -248,7 +249,7 @@ public enum ImageResource {
         return this.fxImage = SwingFXUtils.toFXImage(awtImage, null);
     }
 
-    private static Logger getLogger() {
-        return Logger.getLogger(ImageResource.class.getSimpleName());
+    private static ILogger getLogger() {
+        return ClassNameLogger.getLogger(null, ImageResource.class);
     }
 }

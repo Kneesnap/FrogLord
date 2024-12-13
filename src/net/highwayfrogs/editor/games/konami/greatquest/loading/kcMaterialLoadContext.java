@@ -9,10 +9,10 @@ import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestImageFile;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.StringUtils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 /**
@@ -33,7 +33,7 @@ public class kcMaterialLoadContext {
     /**
      * Gets the logger
      */
-    public Logger getLogger() {
+    public ILogger getLogger() {
         return this.mainArchive.getLogger();
     }
 

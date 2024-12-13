@@ -9,10 +9,10 @@ import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityFlag.kcEntityInstanceFlag;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Called when the specified entity comes within range of the kcCEntity3D the script is attached to.
@@ -53,7 +53,7 @@ public class kcScriptCauseWaypoint extends kcScriptCause {
     }
 
     @Override
-    public void printWarnings(Logger logger) {
+    public void printWarnings(ILogger logger) {
         super.printWarnings(logger);
 
         kcCResourceEntityInst otherEntity = this.otherEntityRef.getResource();

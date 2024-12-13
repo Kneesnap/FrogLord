@@ -7,8 +7,8 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.utils.Utils;
-
-import java.util.logging.Logger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 /**
  * Represents a skeleton bone.
@@ -102,7 +102,7 @@ public class PTSkeletonBone extends SCSharedGameData {
     }
 
     @Override
-    public Logger getLogger() {
-        return Logger.getLogger(getLoggerInfo());
+    public ILogger getLogger() {
+        return new LazyInstanceLogger(getGameInstance(), PTSkeletonBone::getLoggerInfo, this);
     }
 }

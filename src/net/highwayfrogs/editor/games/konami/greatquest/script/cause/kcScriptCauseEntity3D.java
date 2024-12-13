@@ -11,10 +11,10 @@ import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInheritanc
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.utils.StringUtils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Caused when a kcCEntity3D enters or leaves the range of another.
@@ -75,7 +75,7 @@ public class kcScriptCauseEntity3D extends kcScriptCause {
     }
 
     @Override
-    public void printWarnings(Logger logger) {
+    public void printWarnings(ILogger logger) {
         if (this.status.hasOtherEntityAsParam()) {
             this.status.getOtherEntityGroup().logEntityTypeWarnings(logger, this, this.otherEntityRef, this.status.name());
         } else {

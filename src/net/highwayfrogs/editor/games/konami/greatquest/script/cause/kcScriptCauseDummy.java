@@ -4,12 +4,12 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.logging.Logger;
 
 /**
  * Implements a basic "dumb" script cause that can be used as a replacement for another script.
@@ -98,7 +98,7 @@ public class kcScriptCauseDummy extends kcScriptCause {
     }
 
     @Override
-    public void printWarnings(Logger logger) {
+    public void printWarnings(ILogger logger) {
         super.printWarnings(logger);
         printWarning(logger, "is a dummy cause, which isn't supposed to happen!");
     }

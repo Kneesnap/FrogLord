@@ -8,10 +8,10 @@ import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcHealthDesc.kcDamageType;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Called when an entity takes damage.
@@ -48,7 +48,7 @@ public class kcScriptCauseDamage extends kcScriptCause {
     }
 
     @Override
-    public void printWarnings(Logger logger) {
+    public void printWarnings(ILogger logger) {
         super.printWarnings(logger);
 
         kcCResourceEntityInst targetEntity = getScriptEntity();

@@ -20,12 +20,13 @@ import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.*;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.io.File;
-import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Represents a Renderware stream chunk.
@@ -44,7 +45,7 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
     @Getter protected final List<IRwStreamChunkUIEntry> childUISections = new ArrayList<>();
     @Getter private ChunkReadResult readResult = ChunkReadResult.READ_HAS_NOT_OCCURRED;
     private RwExtensionChunk extension;
-    private transient SoftReference<Logger> logger;
+    private transient WeakReference<ILogger> logger;
 
     public RwStreamChunk(RwStreamFile streamFile, @NonNull IRwStreamChunkType chunkType, int version, RwStreamChunk parentChunk) {
         super(streamFile != null ? streamFile.getGameInstance() : null);
@@ -455,13 +456,13 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
     }
 
     @Override
-    public Logger getLogger() {
-        Logger cachedLogger = this.logger != null ? this.logger.get() : null;
+    public ILogger getLogger() {
+        ILogger cachedLogger = this.logger != null ? this.logger.get() : null;
         if (cachedLogger != null)
             return cachedLogger;
 
-        cachedLogger = Logger.getLogger(toString());
-        this.logger = new SoftReference<>(cachedLogger);
+        cachedLogger = new LazyInstanceLogger(getGameInstance(), RwStreamChunk::getLoggerInfo, this);
+        this.logger = new WeakReference<>(cachedLogger);
         return cachedLogger;
     }
 

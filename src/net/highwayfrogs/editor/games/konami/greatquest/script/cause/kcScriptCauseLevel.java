@@ -4,10 +4,10 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * A cause relating to levels.
@@ -43,7 +43,7 @@ public class kcScriptCauseLevel extends kcScriptCause {
     }
 
     @Override
-    public void printWarnings(Logger logger) {
+    public void printWarnings(ILogger logger) {
         super.printWarnings(logger);
         if (this.subType == kcScriptCauseLevelSubType.END)
             printWarning(logger, "uses kcScriptCauseLevelSubType " + this.subType + ", which is not properly supported by the game.");

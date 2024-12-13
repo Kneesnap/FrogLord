@@ -26,13 +26,13 @@ import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * Represents a list of scripts.
@@ -248,7 +248,7 @@ public class kcScriptList extends kcCResource {
      * Prints advanced script warnings to the logger.
      * @param logger the logger to print the warnings to
      */
-    public void printAdvancedWarnings(Logger logger) {
+    public void printAdvancedWarnings(ILogger logger) {
         Map<kcCResourceEntityInst, kcScriptValidationData> dataMap = new HashMap<>();
         for (int i = 0; i < this.scripts.size(); i++) {
             kcScript script = this.scripts.get(i);
@@ -305,7 +305,7 @@ public class kcScriptList extends kcCResource {
         }
     }
 
-    private static kcScriptValidationData getOrCreateValidationData(Logger logger, Map<kcCResourceEntityInst, kcScriptValidationData> dataMap, kcCResourceEntityInst entity) {
+    private static kcScriptValidationData getOrCreateValidationData(ILogger logger, Map<kcCResourceEntityInst, kcScriptValidationData> dataMap, kcCResourceEntityInst entity) {
         if (entity == null)
             return null;
 

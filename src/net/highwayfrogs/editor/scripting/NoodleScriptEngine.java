@@ -17,11 +17,12 @@ import net.highwayfrogs.editor.scripting.runtime.templates.utils.NoodleStringTem
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.math.*;
 import net.highwayfrogs.editor.utils.*;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.io.File;
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.logging.Logger;
 
 /**
  * Represents a runtime for running scripts.
@@ -38,7 +39,7 @@ public class NoodleScriptEngine extends SharedGameObject {
     private final Map<String, NoodleFunction> functionMap = new HashMap<>(); // <label, function>
     private final Map<String, NoodlePrimitive> constantMap = new HashMap<>(); // <name, constant>
     @Getter private boolean sealed; // No longer ready for changes.
-    private Logger logger;
+    private ILogger logger;
 
     public NoodleScriptEngine(GameInstance instance, String name) {
         super(instance);
@@ -46,11 +47,23 @@ public class NoodleScriptEngine extends SharedGameObject {
     }
 
     @Override
-    public Logger getLogger() {
-        if (this.logger == null)
-            this.logger = this.name != null && this.name.trim().length() > 0 ? Logger.getLogger("NoodleScriptEngine[" + this.name + "]") : super.getLogger();
+    public ILogger getLogger() {
+        if (this.logger == null) {
+            if (this.name != null && this.name.trim().length() > 0) {
+                this.logger = new LazyInstanceLogger(getGameInstance(), NoodleScriptEngine::getLoggerInfo, this);
+            } else {
+                return super.getLogger();
+            }
+        }
 
         return this.logger;
+    }
+
+    /**
+     * Gets info about the logger.
+     */
+    public String getLoggerInfo() {
+        return Utils.getSimpleName(this) + "[" + this.name + "]";
     }
     
     /**

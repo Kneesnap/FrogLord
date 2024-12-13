@@ -4,10 +4,10 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Allows a script event to trigger for an event.
@@ -51,7 +51,7 @@ public class kcScriptCauseEvent extends kcScriptCause {
     }
 
     @Override
-    public void printWarnings(Logger logger) {
+    public void printWarnings(ILogger logger) {
         super.printWarnings(logger);
         printWarning(logger, "is not supported by the game.");
     }

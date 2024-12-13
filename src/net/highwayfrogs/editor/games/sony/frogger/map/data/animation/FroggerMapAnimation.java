@@ -24,13 +24,14 @@ import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.MathUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.logging.Logger;
 
 /**
  * Represents a map animation in Frogger.
@@ -212,8 +213,8 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
     }
 
     @Override
-    public Logger getLogger() {
-        return Logger.getLogger(getLoggerInfo());
+    public ILogger getLogger() {
+        return new LazyInstanceLogger(getGameInstance(), FroggerMapAnimation::getLoggerInfo, this);
     }
 
     /**

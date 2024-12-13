@@ -8,10 +8,10 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionSet
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptValidationData;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Runs when an alarm rings. (When a certain amount of time passes since the timer started)
@@ -51,7 +51,7 @@ public class kcScriptCauseTimer extends kcScriptCause {
     }
 
     @Override
-    public void printWarnings(Logger logger) {
+    public void printWarnings(ILogger logger) {
         super.printWarnings(logger);
         if (this.timerState == null || this.timerState == kcScriptCauseTimerState.UNUSED_0)
             printWarning(logger, "uses timer state " + this.timerState + ", which is unsupported by the game!");

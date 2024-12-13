@@ -18,6 +18,8 @@ import net.highwayfrogs.editor.gui.components.CollectionTreeViewComponent.Collec
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,7 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
 
 /**
  * Represents the HFS file format.
@@ -258,8 +259,11 @@ public class HFSFile extends HudsonGameFile implements IVirtualFileSystem {
         }
 
         @Override
-        public Logger getLogger() {
-            return this.parent != null ? Logger.getLogger(getLoggerString()) : super.getLogger();
+        public ILogger getLogger() {
+            if (this.parent == null)
+                return super.getLogger();
+
+            return new LazyInstanceLogger(getGameInstance(), HFSHeader::getLoggerString, this);
         }
     }
 
@@ -282,8 +286,11 @@ public class HFSFile extends HudsonGameFile implements IVirtualFileSystem {
         }
 
         @Override
-        public Logger getLogger() {
-            return this.parent != null ? Logger.getLogger(getLoggerString()) : super.getLogger();
+        public ILogger getLogger() {
+            if (this.parent == null)
+                return super.getLogger();
+
+            return new LazyInstanceLogger(getGameInstance(), HFSHeaderFileEntry::getLoggerString, this);
         }
     }
 

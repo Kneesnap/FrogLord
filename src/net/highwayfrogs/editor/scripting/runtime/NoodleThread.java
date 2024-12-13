@@ -16,11 +16,12 @@ import net.highwayfrogs.editor.scripting.instructions.NoodleInstructionCallInsta
 import net.highwayfrogs.editor.scripting.instructions.NoodleInstructionCallStatic;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleObjectTemplate;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
-import java.util.logging.Logger;
 
 /**
  * An instance of a running script.
@@ -29,7 +30,7 @@ import java.util.logging.Logger;
 @Getter
 public class NoodleThread<T extends NoodleScript> extends SharedGameObject {
     private transient final T script;
-    private transient Logger logger;
+    private transient ILogger logger;
 
     // Main State:
     private final transient NoodleStack stack;
@@ -53,11 +54,18 @@ public class NoodleThread<T extends NoodleScript> extends SharedGameObject {
     }
 
     @Override
-    public Logger getLogger() {
+    public ILogger getLogger() {
         if (this.logger == null)
-            this.logger = Logger.getLogger("NoodleThread['" + this.script.getName() + "'," + Integer.toHexString(System.identityHashCode(this)) + "]");
+            this.logger = new LazyInstanceLogger(getGameInstance(), NoodleThread::getLoggerInfo, this);
 
         return this.logger;
+    }
+
+    /**
+     * Gets the logger info string.
+     */
+    public String getLoggerInfo() {
+        return "NoodleThread['" + this.script.getName() + "'," + Integer.toHexString(System.identityHashCode(this)) + "]";
     }
 
     /**

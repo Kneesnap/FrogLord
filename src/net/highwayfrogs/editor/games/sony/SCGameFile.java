@@ -21,17 +21,18 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPrope
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
-
-import java.util.logging.Logger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 /**
  * Represents a file (data corresponding to MWI entry or contents of a filesystem entity).
  * @param <TGameInstance> The type of game instance this file can be used in.
  * Created by Kneesnap on 9/8/2023.
  */
+@Setter
+@Getter
 public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends SCGameData<TGameInstance> implements ICollectionViewEntry, IPropertyListCreator {
-    @Getter @Setter private byte[] rawFileData;
-    @Getter @Setter private ISCFileDefinition fileDefinition;
+    private byte[] rawFileData;
+    private ISCFileDefinition fileDefinition;
 
     public SCGameFile(TGameInstance instance) {
         super(instance);
@@ -45,7 +46,7 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
     }
 
     @Override
-    public Logger getLogger() {
+    public ILogger getLogger() {
         return getFileDefinition().getLogger();
     }
 

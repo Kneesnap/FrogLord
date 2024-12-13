@@ -119,7 +119,7 @@ public class AudioUtils {
             audioInputStream = AudioSystem.getAudioInputStream(inputStream);
             return audioInputStream.getFormat();
         } catch (UnsupportedAudioFileException | IOException ex) {
-            Utils.handleError(Utils.getLogger(), ex, true, "Couldn't read the audio data.");
+            Utils.handleError(null, ex, true, "Couldn't read the audio data.");
             return null;
         } finally {
             try {
@@ -176,13 +176,13 @@ public class AudioUtils {
             clip.open(audioInputStream);
             return clip;
         } catch (UnsupportedAudioFileException ex) {
-            Utils.handleError(Utils.getLogger(), ex, showErrorWindow, "The audio file format appears to be unsupported.\nThe file may only be playable using an external audio player such as VLC.");
+            Utils.handleError(null, ex, showErrorWindow, "The audio file format appears to be unsupported.\nThe file may only be playable using an external audio player such as VLC.");
             return null;
         } catch (IOException ex) {
-            Utils.handleError(Utils.getLogger(), ex, showErrorWindow, "Problems with IO when reading the audio data.");
+            Utils.handleError(null, ex, showErrorWindow, "Problems with IO when reading the audio data.");
             return null;
         } catch (LineUnavailableException ex) {
-            Utils.handleError(Utils.getLogger(), ex, showErrorWindow, "Couldn't get an audio line.");
+            Utils.handleError(null, ex, showErrorWindow, "Couldn't get an audio line.");
             return null;
         } finally {
             try {
@@ -225,7 +225,7 @@ public class AudioUtils {
             convertedInputStream = AudioSystem.getAudioInputStream(targetFormat, audioInputStream);
             audioInputStream.close();
         } catch (UnsupportedAudioFileException | IOException ex) {
-            Utils.handleError(Utils.getLogger(), ex, true, "Couldn't read the audio data. The audio will still play, but it will have a pop.");
+            Utils.handleError(null, ex, true, "Couldn't read the audio data. The audio will still play, but it will have a pop.");
             return wavFileContents;
         }
 

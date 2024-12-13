@@ -6,9 +6,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.entity.kcWaypointDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
-
-import java.util.logging.Logger;
 
 /**
  * Represents the 'ACTIVATE_SPECIAL' kcAction.
@@ -55,7 +54,7 @@ public class kcActionActivateSpecial extends kcAction {
     }
 
     @Override
-    public void printWarnings(Logger logger) {
+    public void printWarnings(ILogger logger) {
         super.printWarnings(logger);
         if (getExecutor() != null && !(getExecutor().getExecutingEntityDescription() instanceof kcWaypointDesc))
             printWarning(logger, "it only works when run as a waypoint entity.");

@@ -3,9 +3,8 @@ package net.highwayfrogs.editor.games.generic.data;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.GameConfig;
 import net.highwayfrogs.editor.games.generic.GameInstance;
-import net.highwayfrogs.editor.utils.Utils;
-
-import java.util.logging.Logger;
+import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 /**
  * Represents an object used by a game supported by FrogLord.
@@ -31,8 +30,8 @@ public abstract class GameObject<TGameInstance extends GameInstance> implements 
     /**
      * Gets the logger for this class type.
      */
-    public Logger getLogger() {
-        return Logger.getLogger(Utils.getSimpleName(this));
+    public ILogger getLogger() {
+        return ClassNameLogger.getLogger(this.gameInstance, getClass());
     }
 
     /**

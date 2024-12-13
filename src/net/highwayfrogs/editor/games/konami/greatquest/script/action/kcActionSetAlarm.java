@@ -6,10 +6,9 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCaus
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 import net.highwayfrogs.editor.utils.objects.StringNode;
-
-import java.util.logging.Logger;
 
 /**
  * Represents an action for setting an alarm.
@@ -69,7 +68,7 @@ public class kcActionSetAlarm extends kcAction {
     }
 
     @Override
-    public void printWarnings(Logger logger) {
+    public void printWarnings(ILogger logger) {
         super.printWarnings(logger);
         if (this.intervalCount < 0)
             printWarning(logger, "an invalid repeatCount was provided! (" + (this.intervalCount - 1) + ")");

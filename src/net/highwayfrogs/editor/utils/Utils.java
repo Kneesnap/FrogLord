@@ -2,6 +2,8 @@ package net.highwayfrogs.editor.utils;
 
 import javafx.application.Platform;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.WrapperLogger;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -24,6 +26,7 @@ import java.util.logging.Logger;
 public class Utils {
     private static final Map<Integer, List<Integer>> integerLists = new HashMap<>();
     private static Logger logger;
+    private static ILogger instanceLogger;
 
     /**
      * Gets a logger usable in a static context.
@@ -34,6 +37,17 @@ public class Utils {
             return logger;
         
         return logger = Logger.getLogger(Utils.class.getSimpleName());
+    }
+
+    /**
+     * Gets a logger usable in a static context.
+     * This is reported as "Utils", so it's recommended to not use this, but this can be helpful for debugging.
+     */
+    public static ILogger getInstanceLogger() {
+        if (instanceLogger != null)
+            return instanceLogger;
+
+        return instanceLogger = new WrapperLogger(getLogger());
     }
 
     /**
@@ -162,7 +176,7 @@ public class Utils {
      * @param th the exception to log
      * @param showWindow if true, a popup window will display the error
      */
-    public static void handleError(Logger logger, Throwable th, boolean showWindow) {
+    public static void handleError(ILogger logger, Throwable th, boolean showWindow) {
         handleError(logger, th, showWindow, 2);
     }
 
@@ -174,7 +188,7 @@ public class Utils {
      * @param skipCount the number of methods to search back.
      */
     @SuppressWarnings("CallToPrintStackTrace")
-    public static void handleError(Logger logger, Throwable th, boolean showWindow, int skipCount) {
+    public static void handleError(ILogger logger, Throwable th, boolean showWindow, int skipCount) {
         // TODO: Should generalize? Probably?
         // TODO: JAva 9 -> StackWalker.getCallerClass()
         // TODO: return StackWalker.
@@ -195,7 +209,7 @@ public class Utils {
 
         // Use the utils logger if we weren't given one.
         if (logger == null)
-            logger = getLogger();
+            logger = getInstanceLogger();
 
         // Print stage trace.
         if (logger != null) {
@@ -222,7 +236,7 @@ public class Utils {
      * @param message the message to accompany the exception
      * @param arguments format string arguments to the message
      */
-    public static void handleError(Logger logger, Throwable th, boolean showWindow, String message, Object... arguments) {
+    public static void handleError(ILogger logger, Throwable th, boolean showWindow, String message, Object... arguments) {
         handleError(logger, th, showWindow, 2, message, arguments);
     }
 
@@ -236,7 +250,7 @@ public class Utils {
      * @param arguments format string arguments to the message
      */
     @SuppressWarnings("CallToPrintStackTrace")
-    public static void handleError(Logger logger, Throwable th, boolean showWindow, int skipCount, String message, Object... arguments) {
+    public static void handleError(ILogger logger, Throwable th, boolean showWindow, int skipCount, String message, Object... arguments) {
         // TODO: Should generalize? Probably?
         // TODO: JAva 9 -> StackWalker.getCallerClass()
         // TODO: return StackWalker.
@@ -265,7 +279,7 @@ public class Utils {
 
         // Use the utils logger if we weren't given one.
         if (logger == null)
-            logger = getLogger();
+            logger = getInstanceLogger();
 
         // JavaFX has an error which was fixed beyond Java 8, but it throws an exception in earlier versions with using null in ComboBoxes.
         // We do NOT want to open a popup for this error, as it will for sure confuse the user into thinking something went wrong.

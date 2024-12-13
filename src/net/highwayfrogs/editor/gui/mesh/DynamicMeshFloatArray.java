@@ -6,9 +6,8 @@ import net.highwayfrogs.editor.utils.fx.wrapper.FXFloatArray;
 import net.highwayfrogs.editor.utils.fx.wrapper.FXFloatArrayBatcher;
 import net.highwayfrogs.editor.utils.fx.wrapper.FXIntArray;
 import net.highwayfrogs.editor.utils.fx.wrapper.FXIntArrayBatcher;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.IndexBitArray;
-
-import java.util.logging.Logger;
 
 /**
  * Represents an array of mesh data.
@@ -38,7 +37,7 @@ public class DynamicMeshFloatArray extends FXFloatArrayBatcher {
     /**
      * Gets the logger used by this class.
      */
-    public Logger getLogger() {
+    public ILogger getLogger() {
         return this.mesh.getLogger();
     }
 

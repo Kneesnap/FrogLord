@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -19,7 +20,6 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Converts a Beast Wars map to a .obj file.
@@ -43,7 +43,7 @@ public class BeastWarsMapObjConverter {
      */
     @SuppressWarnings("unchecked")
     public static void exportMapToObj(File folder, String exportName, BeastWarsMapFile map) {
-        Logger logger = map.getLogger();
+        ILogger logger = map.getLogger();
 
         // Find the corresponding texture file.
         BeastWarsTexFile texFile = map.getTextureFile();

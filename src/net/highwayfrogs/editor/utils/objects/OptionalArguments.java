@@ -3,12 +3,12 @@ package net.highwayfrogs.editor.utils.objects;
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * A representation of a single string parsed command-line style.
@@ -266,7 +266,7 @@ public class OptionalArguments {
      * Logs warnings for each optional argument
      * @param logger The logger to print the warnings to.
      */
-    public void warnAboutUnusedArguments(Logger logger) {
+    public void warnAboutUnusedArguments(ILogger logger) {
         String fullLineStr = null;
         for (int i = this.orderedArgumentReaderIndex; i < this.orderedArguments.size(); i++) {
             StringNode value = this.orderedArguments.get(i);

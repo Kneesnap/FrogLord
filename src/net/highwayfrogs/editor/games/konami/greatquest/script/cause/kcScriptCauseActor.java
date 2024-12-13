@@ -8,10 +8,10 @@ import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Represents a cause of an actor action.
@@ -46,7 +46,7 @@ public class kcScriptCauseActor extends kcScriptCause {
     }
 
     @Override
-    public void printWarnings(Logger logger) {
+    public void printWarnings(ILogger logger) {
         // super.printWarnings(logger); // Don't call this, since we'll be testing the entity description here too.
         if (!this.action.isImplementedForActor())
             printWarning(logger, "uses action " + this.action + ", which is not supported by the Actor cause type.");

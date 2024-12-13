@@ -7,10 +7,10 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityI
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCause;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.Objects;
 import java.util.function.Predicate;
-import java.util.logging.Logger;
 
 /**
  * Represents different inheritance groups of kcEntity types.
@@ -61,7 +61,7 @@ public enum kcEntityInheritanceGroup {
      * @param logger the logger to log the warning to
      * @param scriptCause the script cause to print warnings for
      */
-    public void logEntityTypeWarnings(Logger logger, kcScriptCause scriptCause, String subCauseDisplayName) {
+    public void logEntityTypeWarnings(ILogger logger, kcScriptCause scriptCause, String subCauseDisplayName) {
         kcCResourceEntityInst entity = scriptCause.getScriptEntity();
         if (entity == null)
             return; // Don't log, this will already have been logged.
@@ -80,7 +80,7 @@ public enum kcEntityInheritanceGroup {
      * @param logger the logger to log the warning to
      * @param scriptCause the script cause to print warnings for
      */
-    public void logEntityTypeWarnings(Logger logger, kcScriptCause scriptCause, GreatQuestHash<kcCResourceEntityInst> otherEntityRef, String subCauseDisplayName) {
+    public void logEntityTypeWarnings(ILogger logger, kcScriptCause scriptCause, GreatQuestHash<kcCResourceEntityInst> otherEntityRef, String subCauseDisplayName) {
         kcCResourceEntityInst entity = otherEntityRef != null ? otherEntityRef.getResource() : null;
         if (entity == null)
             return;
@@ -100,7 +100,7 @@ public enum kcEntityInheritanceGroup {
      * @param action the action to print warnings for
      * @param relevantData a string to show as relevant to the reason it was skipped.
      */
-    public void logEntityTypeWarnings(Logger logger, kcAction action, String relevantData) {
+    public void logEntityTypeWarnings(ILogger logger, kcAction action, String relevantData) {
         if (action == null)
             throw new NullPointerException("action");
 

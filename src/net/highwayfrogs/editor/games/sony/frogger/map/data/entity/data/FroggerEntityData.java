@@ -33,13 +33,13 @@ import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerU
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * Represents game-data.
@@ -71,7 +71,7 @@ public abstract class FroggerEntityData extends SCGameData<FroggerGameInstance> 
     }
 
     @Override
-    public Logger getLogger() {
+    public ILogger getLogger() {
         return this.parentEntity != null ? this.parentEntity.getLogger() : super.getLogger();
     }
 

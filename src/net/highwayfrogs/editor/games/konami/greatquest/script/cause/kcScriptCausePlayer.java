@@ -5,10 +5,10 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityI
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Represents a cause of a player action.
@@ -43,7 +43,7 @@ public class kcScriptCausePlayer extends kcScriptCause {
     }
 
     @Override
-    public void printWarnings(Logger logger) {
+    public void printWarnings(ILogger logger) {
         //super.printWarnings(logger); // Don't call, so we can check the type here!
         kcCResourceEntityInst entity = getScriptEntity();
         if (entity != null && entity.getHash() == kcEntityInst.PLAYER_ENTITY_HASH)

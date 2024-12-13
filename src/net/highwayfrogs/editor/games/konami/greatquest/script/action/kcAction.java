@@ -11,9 +11,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEff
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
-
-import java.util.logging.Logger;
 
 /**
  * Represents an action.
@@ -199,7 +198,7 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
      * Prints warnings about the action which could cause it to behave in undesired ways.
      * @param logger The logger to print the warnings to.
      */
-    public void printWarnings(Logger logger) {
+    public void printWarnings(ILogger logger) {
         kcEntityInheritanceGroup targetType = this.actionID.getActionTargetType();
         if (targetType != null)
             targetType.logEntityTypeWarnings(logger, this, this.actionID.getFrogLordName());
@@ -226,7 +225,7 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
      * @param logger the logger to print the warning to
      * @param warning the warning to print
      */
-    public void printWarning(Logger logger, String warning) {
+    public void printWarning(ILogger logger, String warning) {
         if (!this.loadedFromGame)
             logger.warning("The action '" + getAsGqsStatement() + "' will be skipped by the game, since " + warning);
     }

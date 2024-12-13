@@ -24,6 +24,7 @@ import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 import net.highwayfrogs.editor.utils.objects.StringNode;
 
@@ -32,7 +33,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.logging.Logger;
 
 /**
  * Contains static utility functions which make exporting/importing Frogger: The Great Quest assets easier.
@@ -65,7 +65,7 @@ public class GreatQuestAssetUtils {
         if (gqsScriptGroup == null)
             throw new NullPointerException("gqsScriptGroup");
 
-        Logger logger = chunkedFile.getLogger();
+        ILogger logger = chunkedFile.getLogger();
         String sourceName = gqsScriptGroup.getSectionName();
         kcScriptList scriptList = chunkedFile.getScriptList();
         if (scriptList == null)
@@ -115,7 +115,7 @@ public class GreatQuestAssetUtils {
         }
     }
 
-    private static void applySoundEffects(GreatQuestChunkedFile chunkedFile, Config soundEffectsCfg, Logger logger) {
+    private static void applySoundEffects(GreatQuestChunkedFile chunkedFile, Config soundEffectsCfg, ILogger logger) {
         if (soundEffectsCfg == null)
             return;
 
@@ -162,7 +162,7 @@ public class GreatQuestAssetUtils {
         }
     }
 
-    private static void copyResources(GreatQuestChunkedFile chunkedFile, Config copyResourceCfg, Logger logger) {
+    private static void copyResources(GreatQuestChunkedFile chunkedFile, Config copyResourceCfg, ILogger logger) {
         if (copyResourceCfg == null)
             return;
 
@@ -225,7 +225,7 @@ public class GreatQuestAssetUtils {
             pair.getA().loadFromRawBytes(pair.getB());
     }
 
-    private static void deleteResources(GreatQuestChunkedFile chunkedFile, Config deleteResourceCfg, Logger logger) {
+    private static void deleteResources(GreatQuestChunkedFile chunkedFile, Config deleteResourceCfg, ILogger logger) {
         if (deleteResourceCfg == null)
             return;
 
@@ -255,7 +255,7 @@ public class GreatQuestAssetUtils {
     }
 
 
-    private static void applyModelReferences(GreatQuestChunkedFile chunkedFile, Config modelCfg, Logger logger) {
+    private static void applyModelReferences(GreatQuestChunkedFile chunkedFile, Config modelCfg, ILogger logger) {
         if (modelCfg == null)
             return;
 

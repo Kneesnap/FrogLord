@@ -5,10 +5,11 @@ import lombok.Getter;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Represents a collection of dynamic meshes
@@ -91,9 +92,16 @@ public class DynamicMeshCollection<TMesh extends DynamicMesh> {
         /**
          * Gets the logger for this collection view.
          */
-        public Logger getLogger() {
-            return Logger.getLogger(Utils.getSimpleName(this) + "{currentMeshCollection="
-                    + (this.meshCollection != null ? "'" + this.meshCollection.getMeshName() + "'" : "null") + "}");
+        public ILogger getLogger() {
+            return new LazyInstanceLogger(null, MeshViewCollection::getLoggerInfo, this);
+        }
+
+        /**
+         * Gets the logger info string
+         */
+        public String getLoggerInfo() {
+            return Utils.getSimpleName(this) + "{currentMeshCollection="
+                    + (this.meshCollection != null ? "'" + this.meshCollection.getMeshName() + "'" : "null") + "}";
         }
 
         /**

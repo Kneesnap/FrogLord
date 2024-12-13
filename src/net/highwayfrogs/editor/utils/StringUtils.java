@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.utils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.IllegalFormatException;
 import java.util.List;
 
@@ -23,20 +24,25 @@ public class StringUtils {
     }
 
     /**
-     * Format a string safely, not throwing an exception if there is an issue.
-     * @param str  The string to format.
+     * Format a string safely. If the string is unable to be formatted, an exception will be printed, but not thrown, and the original template returned (with arguments shown separately.)
+     * @param template The string to format.
      * @param args The arguments to format it with.
      * @return formattedString
      */
-    public static String formatStringSafely(String str, Object... args) {
-        if (args.length == 0)
-            return str;
+    public static String formatStringSafely(String template, Object... args) {
+        if (args == null || args.length == 0)
+            return template;
 
         try {
-            return String.format(str, args);
+            return String.format(template, args);
         } catch (IllegalFormatException ife) {
-            Utils.handleError(null, ife, false, "There was an issue formatting the string '%s'.", str);
-            return str + " (FORMATTING ERROR)";
+            Utils.handleError(null, ife, false, "Could not format the string/message template '%s'.", template);
+
+            try {
+                return template + " (FORMATTING ERROR FOR: [" + Arrays.toString(args) + "])";
+            } catch (Throwable th) {
+                return template + " (FORMATTING ERROR)";
+            }
         }
     }
 

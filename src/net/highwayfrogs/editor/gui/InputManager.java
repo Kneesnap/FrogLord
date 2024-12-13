@@ -11,20 +11,25 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
 import javafx.stage.Stage;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.system.math.Vector3f;
+import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * This tracks keyboard and mouse input for usage primarily in 3D environments.
  * Created by Kneesnap on 1/2/2024.
  */
+@RequiredArgsConstructor
 public class InputManager {
+    private final GameInstance gameInstance;
     private final Map<KeyCode, List<KeyHandler>> keySpecificHandlers = new HashMap<>();
     private final ChangeListener<? super Boolean> stageInputListener = this::onStageFocusChange;
     private final List<KeyHandler> keyHandlers = new ArrayList<>();
@@ -38,7 +43,6 @@ public class InputManager {
     @Getter private final MouseInputState lastMouseState = new MouseInputState();
     @Getter private final MouseInputState mouseState = new MouseInputState();
     @Getter private boolean significantMouseDragRecorded;
-    private Logger cachedLogger;
 
     public interface KeyHandler {
         void accept(InputManager manager, KeyEvent event);
@@ -333,11 +337,8 @@ public class InputManager {
     /**
      * Gets the logger for this class.
      */
-    private Logger getLogger() {
-        if (this.cachedLogger != null)
-            return this.cachedLogger;
-
-        return this.cachedLogger = Logger.getLogger("InputManager");
+    private ILogger getLogger() {
+        return ClassNameLogger.getLogger(this.gameInstance, getClass());
     }
 
     /**

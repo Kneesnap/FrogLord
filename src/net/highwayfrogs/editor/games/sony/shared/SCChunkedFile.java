@@ -12,12 +12,13 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPrope
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * Represents a Sony Cambridge game file which is chunked with 4-byte magic headers.
@@ -245,7 +246,7 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
         private int lastValidWriteHeaderAddress = -1;
         private int lastValidWriteBodyAddress = -1;
         private int lastValidWriteSize = -1;
-        private Logger cachedLogger;
+        private ILogger cachedLogger;
         private boolean active;
         private boolean loading;
         private boolean saving;
@@ -266,13 +267,20 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
         }
 
         /**
+         * Gets the logger info.
+         */
+        public String getLoggerInfo() {
+            return this.parentFile.getFileDisplayName() + "|" + this.identifierString;
+        }
+
+        /**
          * Gets the logger used for this chunked file packet.
          */
-        public Logger getLogger() {
+        public ILogger getLogger() {
             if (this.cachedLogger != null)
                 return this.cachedLogger;
 
-            return this.cachedLogger = Logger.getLogger(this.parentFile.getFileDisplayName() + "|" + this.identifierString);
+            return this.cachedLogger = new LazyInstanceLogger(this.parentFile.getGameInstance(), SCFilePacket::getLoggerInfo, this);
         }
 
         /**

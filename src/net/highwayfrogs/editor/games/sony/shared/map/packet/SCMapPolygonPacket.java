@@ -13,10 +13,10 @@ import net.highwayfrogs.editor.games.sony.shared.map.SCMapFilePacket;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Represents polygon data for an SC game.
@@ -211,7 +211,7 @@ public class SCMapPolygonPacket<TGameInstance extends SCGameInstance> extends SC
      * @param mapFile The map file to get the dimensions for.
      * @return vertexGridimensions
      */
-    private static int getVertexGridDimensions(SCMapFile<? extends SCGameInstance> mapFile, Logger logger) {
+    private static int getVertexGridDimensions(SCMapFile<? extends SCGameInstance> mapFile, ILogger logger) {
         switch (mapFile.getGameInstance().getGameType()) {
             case MOONWARRIOR:
                 return 32;

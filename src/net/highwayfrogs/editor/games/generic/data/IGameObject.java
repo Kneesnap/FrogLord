@@ -3,8 +3,7 @@ package net.highwayfrogs.editor.games.generic.data;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.utils.NumberUtils;
-
-import java.util.logging.Logger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 /**
  * Represents functionality seen in GameObject.
@@ -20,7 +19,7 @@ public interface IGameObject {
     /**
      * Gets the logger used for logging data relating to the game object.
      */
-    Logger getLogger();
+    ILogger getLogger();
 
     /**
      * Tests a value for bits outside the supplied mask, warning if found.

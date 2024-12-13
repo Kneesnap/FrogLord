@@ -10,13 +10,14 @@ import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.StringUtils;
+import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.StringNode;
 
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.logging.Logger;
 
 /**
  * Configuration implementation converted from ModToolFramework.
@@ -1021,7 +1022,7 @@ public class Config implements IBinarySerializable {
         }
     }
 
-    private static Logger getLogger() {
-        return Logger.getLogger(Config.class.getSimpleName());
+    private static ILogger getLogger() {
+        return ClassNameLogger.getLogger(null, Config.class);
     }
 }

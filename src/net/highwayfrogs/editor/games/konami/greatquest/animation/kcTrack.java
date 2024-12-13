@@ -10,10 +10,10 @@ import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInf
 import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcTrackKey;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTrack;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Represents an animation track.
@@ -61,7 +61,7 @@ public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineI
     }
 
     @Override
-    public Logger getLogger() {
+    public ILogger getLogger() {
         return this.parentResource != null ? this.parentResource.getLogger() : super.getLogger();
     }
 

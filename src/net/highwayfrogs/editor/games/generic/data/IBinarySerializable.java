@@ -7,10 +7,10 @@ import net.highwayfrogs.editor.file.writer.ArrayReceiver;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.logging.Logger;
 
 /**
  * Represents an object that can be saved / loaded from a binary reader/writer without any additional parameters.
@@ -39,7 +39,7 @@ public interface IBinarySerializable {
      * @param showPopupOnError Whether to show the popup on error.
      * @return true iff the import occurs successfully.
      */
-    default boolean importDataFromFile(Logger logger, File inputFile, boolean showPopupOnError) {
+    default boolean importDataFromFile(ILogger logger, File inputFile, boolean showPopupOnError) {
         if (inputFile == null)
             throw new NullPointerException("inputFile");
 
@@ -67,7 +67,7 @@ public interface IBinarySerializable {
      * @param showPopupOnError Whether to show the popup on error.
      * @return true iff the import occurs successfully.
      */
-    default boolean importDataFromReader(Logger logger, DataReader reader, boolean showPopupOnError) {
+    default boolean importDataFromReader(ILogger logger, DataReader reader, boolean showPopupOnError) {
         if (reader == null)
             throw new NullPointerException("reader");
 
@@ -109,7 +109,7 @@ public interface IBinarySerializable {
      * @param outputFile the file to write the data to
      * @param showPopupOnError when an error occurs, this allows specifying if a popup should be shown
      */
-    default boolean writeDataToFile(Logger logger, File outputFile, boolean showPopupOnError) {
+    default boolean writeDataToFile(ILogger logger, File outputFile, boolean showPopupOnError) {
         if (outputFile == null)
             throw new NullPointerException("outputFile");
 

@@ -4,8 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.system.math.Vector2f;
 import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.Utils;
-
-import java.util.logging.Logger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 /**
  * This represents a unit of vertex positions, texture coordinate values, and face values which are conceptually grouped together.
@@ -695,7 +694,7 @@ public class DynamicMeshDataEntry {
      */
     @SuppressWarnings("unused")
     public void printDebugInformation() {
-        Logger logger = this.mesh.getLogger();
+        ILogger logger = this.mesh.getLogger();
         logger.info("Mesh Entry (" + Utils.getSimpleName(this) + " for " + Utils.getSimpleName(this.mesh) + "):");
         logger.info(" - Faces [Start: " + this.faceStartIndex + ", Written: " + this.writtenFaceCount + ", Pending: " + this.pendingFaceCount
                 + ", Array Size: " + this.mesh.getEditableFaces().size() + "/" + this.mesh.getEditableFaces().pendingSize() + "/" + this.mesh.getFaces().size() + "]");

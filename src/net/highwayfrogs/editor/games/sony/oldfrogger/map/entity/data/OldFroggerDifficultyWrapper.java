@@ -9,10 +9,10 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapEnt
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.OldFroggerDifficultyWrapper.OldFroggerDifficultyData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.Arrays;
 import java.util.function.Function;
-import java.util.logging.Logger;
 
 /**
  * This is a wrapper around entity data which can be different depending on the difficulty configuration.
@@ -59,7 +59,7 @@ public class OldFroggerDifficultyWrapper<TDifficultyData extends OldFroggerDiffi
     }
 
     @Override
-    public Logger getLogger() {
+    public ILogger getLogger() {
         return this.entity != null ? this.entity.getLogger() : super.getLogger();
     }
 
@@ -113,7 +113,7 @@ public class OldFroggerDifficultyWrapper<TDifficultyData extends OldFroggerDiffi
         }
 
         @Override
-        public Logger getLogger() {
+        public ILogger getLogger() {
             return this.entity != null ? this.entity.getLogger() : super.getLogger();
         }
 

@@ -8,13 +8,14 @@ import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.games.psx.shading.IPSXShadedMesh;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.lambda.TriConsumer;
+import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.logging.Logger;
 
 /**
  * Represents an animation timer which runs every frame.
@@ -185,7 +186,7 @@ public class MeshViewFrameTimer extends AnimationTimer {
                 this.task.accept(this.taskParam, this, deltaTime);
             } catch (Throwable th) {
                 cancel();
-                Logger logger = this.parent.getLogger();
+                ILogger logger = this.parent.getLogger();
                 Utils.handleError(logger, th, false, "Task %d (%s/%s) in perFrameTasks threw an error while executing, so it has been cancelled!", taskId, this.task, this.taskParam);
             }
         }
@@ -315,8 +316,8 @@ public class MeshViewFrameTimer extends AnimationTimer {
     /**
      * Gets the logger to write debug information with.
      */
-    public Logger getLogger() {
-        return this.controller != null ? this.controller.getLogger() : Logger.getLogger(getClass().getSimpleName());
+    public ILogger getLogger() {
+        return this.controller != null ? this.controller.getLogger() : ClassNameLogger.getLogger(null, getClass());
     }
 
     @Getter
@@ -348,7 +349,7 @@ public class MeshViewFrameTimer extends AnimationTimer {
                 this.task.accept(this.taskParam, this);
             } catch (Throwable th) {
                 cancel();
-                Logger logger = this.fixedFrameRateTimer.getFrameTimer().getLogger();
+                ILogger logger = this.fixedFrameRateTimer.getFrameTimer().getLogger();
                 Utils.handleError(logger, th, false, "Task %d (%s/%s) in TaskList[fps=%d] threw an error while executing, so it has been cancelled!", taskId, this.task, this.taskParam, this.fixedFrameRateTimer.getFramesPerSecond());
             }
         }

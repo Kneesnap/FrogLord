@@ -8,12 +8,12 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionID;
 import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCause;
 import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCauseType;
 import net.highwayfrogs.editor.utils.StringUtils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
-import java.util.logging.Logger;
 
 /**
  * Contains information used to validate script data.
@@ -23,7 +23,7 @@ import java.util.logging.Logger;
 @RequiredArgsConstructor
 public class kcScriptValidationData {
     private final kcCResourceEntityInst entity;
-    private final Logger logger;
+    private final ILogger logger;
     private final Map<kcActionID, List<kcAction>> actionsByType = new HashMap<>();
     private final Map<kcScriptCauseType, List<kcScriptCause>> causesByType = new HashMap<>();
 

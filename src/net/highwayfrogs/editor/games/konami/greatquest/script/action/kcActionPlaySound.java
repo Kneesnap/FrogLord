@@ -4,9 +4,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
-
-import java.util.logging.Logger;
 
 /**
  * Implements the play sound command.
@@ -51,7 +50,7 @@ public class kcActionPlaySound extends kcActionTemplate {
     }
 
     @Override
-    public void printWarnings(Logger logger) {
+    public void printWarnings(ILogger logger) {
         super.printWarnings(logger);
 
         GreatQuestChunkedFile chunkedFile = getExecutor() != null ? getExecutor().getChunkedFile() : null;

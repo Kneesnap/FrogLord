@@ -8,9 +8,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamRea
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
-
-import java.util.logging.Logger;
 
 /**
  * Represents kcActions which run commands on flags.
@@ -56,7 +55,7 @@ public class kcActionFlag extends kcAction {
     }
 
     @Override
-    public void printWarnings(Logger logger) {
+    public void printWarnings(ILogger logger) {
         super.printWarnings(logger);
 
         // Warn about incompatible flags.

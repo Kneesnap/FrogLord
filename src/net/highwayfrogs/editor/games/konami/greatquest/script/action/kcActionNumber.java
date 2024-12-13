@@ -7,9 +7,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamRea
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
-
-import java.util.logging.Logger;
 
 /**
  * Represents the 'NUMBER' (send number) kcAction.
@@ -76,7 +75,7 @@ public class kcActionNumber extends kcAction {
     }
 
     @Override
-    public void printWarnings(Logger logger) {
+    public void printWarnings(ILogger logger) {
         super.printWarnings(logger);
         if (this.operation == NumberOperation.RANDOM && this.number < 1)
             printWarning(logger, "the RANDOM operation requires a number greater than zero!");

@@ -8,10 +8,11 @@ import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketZone;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Map zones are collections of rectangles which apply to the collision grid.
@@ -89,8 +90,8 @@ public abstract class FroggerMapZone extends SCGameData<FroggerGameInstance> {
     }
 
     @Override
-    public Logger getLogger() {
-        return Logger.getLogger(getLoggerInfo());
+    public ILogger getLogger() {
+        return new LazyInstanceLogger(getGameInstance(), FroggerMapZone::getLoggerInfo, this);
     }
 
     /**

@@ -16,6 +16,8 @@ import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -24,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
 
 /**
  * Represents a RWS (Renderware Stream) file. Can have different extensions such as: rws, dff, bin, etc.
@@ -43,7 +44,7 @@ public class RwStreamFile extends SharedGameData {
     @Getter @NonNull private final RwStreamChunkTypeRegistry chunkTypeRegistry;
     @Getter private final List<RwStreamChunk> chunks = new ArrayList<>();
     @Getter private final String locationName;
-    private Logger cachedLogger;
+    private ILogger cachedLogger;
 
     public static final int HEADER_SIZE_IN_BYTES = 3 * Constants.INTEGER_SIZE;
 
@@ -58,12 +59,12 @@ public class RwStreamFile extends SharedGameData {
     }
 
     @Override
-    public Logger getLogger() {
+    public ILogger getLogger() {
         if (this.locationName == null)
             return super.getLogger();
 
         if (this.cachedLogger == null)
-            this.cachedLogger = Logger.getLogger("RwStreamFile{" + this.locationName + "}");
+            this.cachedLogger = new LazyInstanceLogger(getGameInstance(), RwStreamFile::getLoggerInfo, this);
 
         return this.cachedLogger;
     }
@@ -79,6 +80,20 @@ public class RwStreamFile extends SharedGameData {
     public void save(DataWriter writer) {
         for (RwStreamChunk chunk : this.chunks)
             chunk.save(writer);
+    }
+
+    /**
+     * The logger string.
+     */
+    public final String getLoggerInfo() {
+        return Utils.getSimpleName(this) + "{" + getExtraLoggerInfo() + "}";
+    }
+
+    /**
+     * Gets extra info to include in the logger string.
+     */
+    public String getExtraLoggerInfo() {
+        return this.locationName;
     }
 
     /**

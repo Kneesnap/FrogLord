@@ -7,12 +7,12 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcActionExecutor;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcArgument;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcParam;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 import net.highwayfrogs.editor.utils.objects.StringNode;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * A basic template kcAction.
@@ -41,7 +41,7 @@ public abstract class kcActionTemplate extends kcAction {
     }
 
     @Override
-    public void printWarnings(Logger logger) {
+    public void printWarnings(ILogger logger) {
         super.printWarnings(logger);
 
         // Print argument warnings.

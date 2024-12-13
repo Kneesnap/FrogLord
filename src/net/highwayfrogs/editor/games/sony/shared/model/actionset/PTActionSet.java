@@ -8,10 +8,11 @@ import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.shared.math.PTQuaternion;
 import net.highwayfrogs.editor.games.sony.shared.math.PTQuaternionTranslation;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Represents an action set.
@@ -208,7 +209,7 @@ public class PTActionSet extends SCSharedGameData {
     }
 
     @Override
-    public Logger getLogger() {
-        return Logger.getLogger(getLoggerInfo());
+    public ILogger getLogger() {
+        return new LazyInstanceLogger(getGameInstance(), PTActionSet::getLoggerInfo, this);
     }
 }

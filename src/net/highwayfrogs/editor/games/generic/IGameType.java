@@ -8,13 +8,14 @@ import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.TimeUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Represents a unique game.
@@ -89,7 +90,7 @@ public interface IGameType {
 
         // Load configs.
         versionConfigs = new ArrayList<>();
-        Logger logger = Logger.getLogger(getClass().getSimpleName());
+        ILogger logger = ClassNameLogger.getLogger(null, getClass());
         List<URL> versionConfigFiles = FileUtils.getInternalResourceFilesInDirectory(getEmbeddedResourceURL("versions"), true);
         if (versionConfigFiles.isEmpty())
             logger.severe("Did not find any version configs for the game type " + getIdentifier() + "/'" + getDisplayName() + "'. This seems like a bug.");
