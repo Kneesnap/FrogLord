@@ -65,9 +65,9 @@ public class kcScriptEffectEntity extends kcScriptEffectAction {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(OptionalArguments arguments, int lineNumber, String fileName) {
         if (getAction().getActionID() == kcActionID.ACTIVATE_SPECIAL)
-            getAction().load(arguments);
+            getAction().load(arguments, lineNumber, fileName);
     }
 
     @Override

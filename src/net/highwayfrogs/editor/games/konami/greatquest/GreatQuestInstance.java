@@ -149,7 +149,7 @@ public class GreatQuestInstance extends GameInstance {
     }
 
     private void loadSoundFilePaths() {
-        Config config = Config.loadTextConfigFromInputStream(getGameType().getEmbeddedResourceStream("sound-list.cfg"), "sound-list");
+        Config config = getGameType().loadConfigFromEmbeddedResourcePath("sound-list.cfg", false);
 
         this.soundIdsByPath.clear();
         this.soundPathsById.clear();

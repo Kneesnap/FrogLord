@@ -24,7 +24,6 @@ import net.highwayfrogs.editor.utils.objects.StringNode;
 
 /**
  * Represents a script effect.
- * TODO: Add the ability to show line numbers in warnings/errors.
  * Created by Kneesnap on 8/23/2023.
  */
 @Getter
@@ -83,7 +82,7 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
      * Loads the action arguments from the arguments provided.
      * @param arguments the arguments to load from
      */
-    protected abstract void loadArguments(OptionalArguments arguments);
+    protected abstract void loadArguments(OptionalArguments arguments, int lineNumber, String fileName);
 
     /**
      * Save the arguments of the action to the object.
@@ -111,7 +110,7 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
      * Loads the action arguments from the arguments provided.
      * @param arguments the arguments to load from
      */
-    public final void loadEffect(OptionalArguments arguments) {
+    public final void loadEffect(OptionalArguments arguments, int lineNumber, String fileName) {
         // Apply the target entity override before loading the arguments to ensure that the action can access the entity while loading. (Happens for kcActionSetSequence, and anything else which wants to get the actor desc)
         StringNode overrideTargetEntity = arguments.use(ARGUMENT_ENTITY_RUNNER);
 
@@ -122,7 +121,7 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
         if (overrideTargetEntity != null && setTargetEntityHash(GreatQuestUtils.getAsHash(overrideTargetEntity, 0, this.targetEntityRef)))
             resolvedOverrideEntity = true;
 
-        loadArguments(arguments);
+        loadArguments(arguments, lineNumber, fileName);
 
         // Warn about target entity.
         if (resolvedOverrideEntity && scriptOwner == this.targetEntityRef.getResource()) {
@@ -214,7 +213,7 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
      * @param line The line of text to parse
      * @return the parsed script effect
      */
-    public static kcScriptEffect parseScriptEffect(kcScriptFunction function, String line) {
+    public static kcScriptEffect parseScriptEffect(kcScriptFunction function, String line, int lineNumber, String fileName) {
         if (function == null)
             throw new NullPointerException("function");
         if (line == null)
@@ -229,9 +228,9 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
             throw new RuntimeException("The command name '" + commandName + "' seems invalid, no kcScriptEffect could be created for it.");
 
         try {
-            newEffect.loadEffect(arguments);
+            newEffect.loadEffect(arguments, lineNumber, fileName);
         } catch (Throwable th) {
-            throw new RuntimeException("Failed to parse '" + line + "' as a script effect.", th);
+            throw new RuntimeException("Failed to parse '" + line + "' in '" + fileName + "' on line " + lineNumber + " as a script effect.", th);
         }
 
         return newEffect;

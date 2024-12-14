@@ -67,8 +67,17 @@ public interface IGameType {
      * @param localPath the local path of the file to load
      * @return embeddedResourceStream
      */
+    default String getEmbeddedResourcePath(String localPath) {
+        return "games/" + getIdentifier() + "/" + localPath;
+    }
+
+    /**
+     * Gets an InputStream to files included for this specific game.
+     * @param localPath the local path of the file to load
+     * @return embeddedResourceStream
+     */
     default InputStream getEmbeddedResourceStream(String localPath) {
-        return FileUtils.getResourceStream("games/" + getIdentifier() + "/" + localPath);
+        return FileUtils.getResourceStream(getEmbeddedResourcePath(localPath));
     }
 
     /**
@@ -77,7 +86,29 @@ public interface IGameType {
      * @return embeddedResourceURL
      */
     default URL getEmbeddedResourceURL(String localPath) {
-        return FileUtils.getResourceURL("games/" + getIdentifier() + "/" + localPath);
+        return FileUtils.getResourceURL(getEmbeddedResourcePath(localPath));
+    }
+
+    /**
+     * Load a config file from a resource path.
+     * @param localPath the local resource path to load the config from
+     * @return loadedConfig
+     */
+    default Config loadConfigFromEmbeddedResourcePath(String localPath, boolean allowNull) {
+        String embeddedResourcePath = getEmbeddedResourcePath(localPath);
+        InputStream inputStream = getEmbeddedResourceStream(localPath);
+        if (inputStream == null) {
+            if (allowNull)
+                return null;
+
+            throw new IllegalArgumentException("Local resource path '" + localPath + "' (" + embeddedResourcePath + ") could not be resolved to a config file.");
+        }
+
+        try {
+            return Config.loadTextConfigFromInputStream(inputStream, embeddedResourcePath);
+        } catch (Throwable th) {
+            throw new RuntimeException("Failed to read config file resource '" + embeddedResourcePath + "'.", th);
+        }
     }
 
     /**

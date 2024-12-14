@@ -30,6 +30,8 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
     private final int gqsArgumentCount;
     @Setter(AccessLevel.PACKAGE) private kcScriptFunction parentFunction;
     @Setter private boolean loadedFromGame; // True if the cause was loaded from the game, and was not loaded by the user.
+    private int userLineNumber = -1; // The line number as imported by the user.
+    private String userImportSource;
 
     public kcScriptCause(@NonNull kcScript script, kcScriptCauseType type, int minimumArguments, int gqsArgumentCount) {
         super(script.getGameInstance());
@@ -56,11 +58,13 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
      * Loads the cause data from the arguments.
      * @param arguments the arguments to read from
      */
-    public final void load(OptionalArguments arguments) {
+    public final void load(OptionalArguments arguments, int lineNumber, String fileName) {
         if (!validateGqsArgumentCount(arguments.getRemainingArgumentCount()))
             throw new RuntimeException("Cannot load " + Utils.getSimpleName(this) + "[" + getType() + "] from '" + arguments + "' since " + getGqsArgumentCount() + " arguments were expected, but " + arguments.getRemainingArgumentCount() + " were found.");
 
         this.loadedFromGame = false;
+        this.userLineNumber = lineNumber;
+        this.userImportSource = fileName;
         loadArguments(arguments);
         arguments.warnAboutUnusedArguments(getLogger());
         printWarnings(getLogger());
@@ -81,6 +85,15 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
         int argumentCount = (arguments.getOrderedArgumentCount() - oldCount);
         if (!validateGqsArgumentCount(argumentCount))
             throw new RuntimeException("Expected '" + arguments + "' to have " + getGqsArgumentCount() + " arguments, but it actually had " + argumentCount + ".");
+    }
+
+    /**
+     * Called when the cause is read from the game files.
+     */
+    public void onRead() {
+        this.loadedFromGame = true;
+        this.userLineNumber = -1;
+        this.userImportSource = null;
     }
 
     /**
@@ -180,7 +193,11 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
      */
     public final void printWarning(ILogger logger, String warning) {
         if (!this.loadedFromGame)
-            logger.warning("The cause '" + getAsGqsStatement() + "' will never occur because " + warning);
+            logger.warning("The cause '" + getAsGqsStatement() + "' "
+                    + (this.userImportSource != null ? "in '" + this.userImportSource + "' " : "")
+                    + (this.userLineNumber > 0 ? "on line " + this.userLineNumber + " " : "")
+                    + "will never occur because " + warning
+                    + (warning.endsWith(".") || warning.endsWith("!") || warning.endsWith(")") ? "" : "."));
     }
 
     private kcScriptDisplaySettings createDisplaySettings() {
@@ -232,7 +249,7 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
      * @param line The line of text to parse
      * @return the parsed script effect
      */
-    public static kcScriptCause parseScriptCause(kcScript script, String line) {
+    public static kcScriptCause parseScriptCause(kcScript script, String line, int lineNumber, String fileName) {
         if (script == null)
             throw new NullPointerException("script");
         if (line == null)
@@ -249,9 +266,9 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
         kcScriptCause newCause = causeType.createNew(script);
 
         try {
-            newCause.load(arguments);
+            newCause.load(arguments, lineNumber, fileName);
         } catch (Throwable th) {
-            throw new RuntimeException("Failed to parse '" + line + "' as a script effect.", th);
+            throw new RuntimeException("Failed to parse '" + line + "' in '" + fileName + "' on line " + lineNumber + " as a script effect.", th);
         }
 
         return newCause;

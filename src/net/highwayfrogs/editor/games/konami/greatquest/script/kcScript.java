@@ -17,6 +17,7 @@ import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
@@ -288,7 +289,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
         if (!cause.validateArgumentCount(optionalArgumentCount))
             throw new RuntimeException("kcScriptCauseType " + causeType + " cannot accept " + optionalArgumentCount + " optional arguments.");
 
-        cause.setLoadedFromGame(true);
+        cause.onRead();
         cause.load(subCauseTypeNumber, unhandledData);
         return cause;
     }
@@ -392,12 +393,18 @@ public class kcScript extends GameObject<GreatQuestInstance> {
 
             // Set cause.
             String rawScriptCause = config.getKeyValueNodeOrError(CONFIG_FIELD_SCRIPT_CAUSE).getAsString();
-            this.cause = kcScriptCause.parseScriptCause(this.script, rawScriptCause);
+            this.cause = kcScriptCause.parseScriptCause(this.script, rawScriptCause, config.getOriginalLineNumber(), config.getRootNode().getSectionName());
 
             // Add script effects.
             this.effects.clear();
-            for (String line : config.getTextWithoutComments())
-                this.effects.add(kcScriptEffect.parseScriptEffect(this, line));
+
+            String fileName = config.getRootNode().getSectionName();
+            for (int i = 0; i < config.getInternalText().size(); i++) {
+                ConfigValueNode node = config.getInternalText().get(i);
+                String textLine = node != null ? node.getAsStringLiteral() : null;
+                if (!StringUtils.isNullOrWhiteSpace(textLine))
+                    this.effects.add(kcScriptEffect.parseScriptEffect(this, textLine, config.getOriginalLineNumber() + i, fileName));
+            }
         }
 
         /**

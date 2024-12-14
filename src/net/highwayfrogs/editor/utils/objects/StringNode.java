@@ -124,7 +124,7 @@ public class StringNode {
                 || "0".equalsIgnoreCase(this.value))
             return false;
 
-        throw new IllegalConfigSyntaxException("Don't know how to interpret '" + this.value + "' as a boolean.");
+        throw new IllegalConfigSyntaxException("Don't know how to interpret '" + this.value + "' as a boolean." + getExtraDebugErrorInfo());
     }
 
     /**
@@ -146,11 +146,11 @@ public class StringNode {
             try {
                 return NumberUtils.isHexInteger(this.value) ? NumberUtils.parseHexInteger(this.value) : Integer.parseInt(this.value);
             } catch (NumberFormatException nfe) {
-                throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid integer.", nfe);
+                throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid integer." + getExtraDebugErrorInfo(), nfe);
             }
         }
 
-        throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid integer.");
+        throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid integer." + getExtraDebugErrorInfo());
     }
 
     /**
@@ -164,7 +164,7 @@ public class StringNode {
             try {
                 return NumberUtils.isHexInteger(this.value) ? NumberUtils.parseHexInteger(this.value) : Integer.parseInt(this.value);
             } catch (NumberFormatException nfe) {
-                throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid integer.", nfe);
+                throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid integer." + getExtraDebugErrorInfo(), nfe);
             }
         }
 
@@ -194,7 +194,7 @@ public class StringNode {
             }
         }
 
-        throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid integer.");
+        throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid integer." + getExtraDebugErrorInfo());
     }
 
     /**
@@ -208,7 +208,7 @@ public class StringNode {
             try {
                 return NumberUtils.isHexInteger(this.value) ? NumberUtils.parseHexInteger(this.value) : (int) Long.parseLong(this.value);
             } catch (NumberFormatException nfe) {
-                throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid integer.", nfe);
+                throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid integer." + getExtraDebugErrorInfo(), nfe);
             }
         }
 
@@ -234,11 +234,11 @@ public class StringNode {
             try {
                 return Float.parseFloat(this.value);
             } catch (NumberFormatException nfe) {
-                throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid number.", nfe);
+                throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid number." + getExtraDebugErrorInfo(), nfe);
             }
         }
 
-        throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid number.");
+        throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid number." + getExtraDebugErrorInfo());
     }
 
     /**
@@ -252,7 +252,7 @@ public class StringNode {
             try {
                 return Float.parseFloat(this.value);
             } catch (NumberFormatException nfe) {
-                throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid number.", nfe);
+                throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid number." + getExtraDebugErrorInfo(), nfe);
             }
         }
 
@@ -278,11 +278,11 @@ public class StringNode {
             try {
                 return Double.parseDouble(this.value);
             } catch (NumberFormatException nfe) {
-                throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid number.", nfe);
+                throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid number." + getExtraDebugErrorInfo(), nfe);
             }
         }
 
-        throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid number.");
+        throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid number." + getExtraDebugErrorInfo());
     }
 
     /**
@@ -296,7 +296,7 @@ public class StringNode {
             try {
                 return Double.parseDouble(this.value);
             } catch (NumberFormatException nfe) {
-                throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid number.", nfe);
+                throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid number." + getExtraDebugErrorInfo(), nfe);
             }
         }
 
@@ -329,7 +329,7 @@ public class StringNode {
         try {
             return Enum.valueOf(enumClass, this.value);
         } catch (Exception e) {
-            throw new IllegalConfigSyntaxException("The value '" + this.value + "' could not be interpreted as an enum value from " + enumClass.getSimpleName() + ".", e);
+            throw new IllegalConfigSyntaxException("The value '" + this.value + "' could not be interpreted as an enum value from " + enumClass.getSimpleName() + "." + getExtraDebugErrorInfo(), e);
         }
     }
 
@@ -341,7 +341,7 @@ public class StringNode {
     public <TEnum extends Enum<TEnum>> TEnum getAsEnumOrError(Class<TEnum> enumClass) {
         TEnum value = getAsEnum(enumClass);
         if (value == null)
-            throw new IllegalConfigSyntaxException("The value '" + this.value + "' could not be interpretted as an enum value from " + enumClass.getSimpleName() + ".");
+            throw new IllegalConfigSyntaxException("The value '" + this.value + "' could not be interpretted as an enum value from " + enumClass.getSimpleName() + "." + getExtraDebugErrorInfo());
 
         return value;
     }
@@ -365,7 +365,7 @@ public class StringNode {
             try {
                 return Enum.valueOf(defaultEnum.getDeclaringClass(), this.value);
             } catch (Exception e) {
-                throw new IllegalConfigSyntaxException("The value '" + this.value + "' could not be interpreted as an enum value from " + defaultEnum.getDeclaringClass().getSimpleName() + ".", e);
+                throw new IllegalConfigSyntaxException("The value '" + this.value + "' could not be interpreted as an enum value from " + defaultEnum.getDeclaringClass().getSimpleName() + "." + getExtraDebugErrorInfo(), e);
             }
         }
 
@@ -393,6 +393,13 @@ public class StringNode {
      */
     public void parseStringLiteral(String input) {
         parseStringLiteral(new SequentialStringReader(input), new StringBuilder(), true);
+    }
+
+    /**
+     * Returns extra info for debugging, such as line numbers.
+     */
+    protected String getExtraDebugErrorInfo() {
+        return "";
     }
 
     /**

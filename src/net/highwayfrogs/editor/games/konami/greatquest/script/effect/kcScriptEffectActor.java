@@ -47,8 +47,8 @@ public class kcScriptEffectActor extends kcScriptEffectAction {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
-        this.action.load(arguments);
+    protected void loadArguments(OptionalArguments arguments, int lineNumber, String fileName) {
+        this.action.load(arguments, lineNumber, fileName);
     }
 
     @Override

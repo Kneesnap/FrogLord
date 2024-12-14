@@ -24,6 +24,8 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
     private final kcActionID actionID;
     private kcParam[] unhandledArguments;
     private boolean loadedFromGame; // Reports whether the action was loaded from the game.
+    private int userLineNumber = -1; // The line number as imported by the user.
+    private String userImportSource;
 
     public static final int MAX_ARGUMENT_COUNT = 4;
 
@@ -50,6 +52,8 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
     @Override
     public void load(DataReader reader) {
         this.loadedFromGame = true;
+        this.userLineNumber = -1;
+        this.userImportSource = null;
         kcParam[] arguments = new kcParam[MAX_ARGUMENT_COUNT];
         for (int i = 0; i < arguments.length; i++)
             arguments[i] = kcParam.readParam(reader);
@@ -121,13 +125,15 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
      * Loads this kcAction data from an OptionalArguments object.
      * @param arguments The arguments to load the data from
      */
-    public final void load(OptionalArguments arguments) {
+    public final void load(OptionalArguments arguments, int lineNumber, String fileName) {
         kcArgument[] argumentTemplates = getArgumentTemplate(null);
         int expectedArgumentCount = getGqsArgumentCount(argumentTemplates);
         if (expectedArgumentCount > arguments.getRemainingArgumentCount())
             throw new RuntimeException("Could not load '" + arguments + "' as kcAction[" + getActionID() + "], as it did not have " + expectedArgumentCount + " arguments.");
 
         this.loadedFromGame = false; // User-supplied.
+        this.userLineNumber = lineNumber;
+        this.userImportSource = fileName;
         loadArguments(arguments);
     }
 
@@ -227,7 +233,11 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
      */
     public void printWarning(ILogger logger, String warning) {
         if (!this.loadedFromGame)
-            logger.warning("The action '" + getAsGqsStatement() + "' will be skipped by the game, since " + warning);
+            logger.warning("The action '" + getAsGqsStatement() + "' "
+                    + (this.userImportSource != null ? "in '" + this.userImportSource + "' " : "")
+                    + (this.userLineNumber > 0 ? "on line " + this.userLineNumber + " " : "")
+                    + "will be skipped by the game, since " + warning
+                    + (warning.endsWith(".") || warning.endsWith("!") || warning.endsWith(")") ? "" : "."));
     }
 
     /**

@@ -18,6 +18,7 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.Proper
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.system.Config.IllegalConfigSyntaxException;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.ArrayList;
@@ -148,8 +149,15 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
 
         this.actions.clear();
         getSelfHash().setHash(config.getKeyValueNodeOrError(HASH_CONFIG_FIELD).getAsInteger());
-        for (String line : config.getTextWithoutComments()) {
-            OptionalArguments arguments = OptionalArguments.parse(line);
+        int lineNumber = 0;
+        String fileName = config.getRootNode().getSectionName();
+        for (ConfigValueNode line : config.getInternalText()) {
+            lineNumber++;
+            String textLine = line.getAsStringLiteral();
+            if (StringUtils.isNullOrWhiteSpace(textLine))
+                continue;
+
+            OptionalArguments arguments = OptionalArguments.parse(textLine);
 
             String commandName = arguments.useNext().getAsString();
 
@@ -160,7 +168,7 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
 
             kcAction newAction = actionID.newInstance(this);
             try {
-                newAction.load(arguments);
+                newAction.load(arguments, lineNumber, fileName);
             } catch (Throwable th) {
                 throw new IllegalConfigSyntaxException("Could not parse the action '" + line + "' when importing sequence " + getName() + ".", th);
             }

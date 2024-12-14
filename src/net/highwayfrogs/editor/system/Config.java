@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.system;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -223,12 +224,13 @@ public class Config implements IBinarySerializable {
         this.originalLineNumber = reader.readInt();
 
         // Read key value pairs.
+        String rootName = getRootNode().getSectionName();
         int keyValueCount = reader.readInt();
         for (int i = 0; i < keyValueCount; i++) {
             short keyLength = reader.readUnsignedByteAsShort();
             String key = reader.readTerminatedString(keyLength);
             ConfigValueNode node = new ConfigValueNode();
-            node.loadFromReader(reader, loadSettings);
+            node.loadFromReader(reader, loadSettings, rootName);
             if (this.keyValuePairs.put(key, node) == null)
                 this.orderedKeyValuePairs.add(key);
         }
@@ -237,16 +239,16 @@ public class Config implements IBinarySerializable {
         int textEntries = reader.readInt();
         for (int i = 0; i < textEntries; i++) {
             ConfigValueNode node = new ConfigValueNode();
-            node.loadFromReader(reader, loadSettings);
             this.internalText.add(node);
+            node.loadFromReader(reader, loadSettings, rootName);
         }
 
         // Read child configs.
         int childCount = reader.readInt();
         for (int i = 0; i < childCount; i++) {
             Config childConfig = new Config("$UnknownChildConfigNode");
-            childConfig.loadFromReader(reader, this, loadSettings);
             addChildConfig(childConfig);
+            childConfig.loadFromReader(reader, this, loadSettings);
         }
     }
 
@@ -416,7 +418,8 @@ public class Config implements IBinarySerializable {
     public ConfigValueNode getKeyValueNodeOrError(String keyName) {
         ConfigValueNode valueNode = this.keyValuePairs.get(keyName);
         if (valueNode == null)
-            throw new IllegalStateException("'" + keyName + "' was not found in the config.");
+            throw new IllegalStateException("'" + keyName + "' was expected to be attached to '" + this.sectionName + "'"
+                    + (this.originalLineNumber >= 0 ? " near line " + this.originalLineNumber + ", but it was not found." : "."));
 
         return valueNode;
     }
@@ -729,11 +732,11 @@ public class Config implements IBinarySerializable {
      */
     public static Config loadConfigFromString(String configString, String configFileName) {
         try (BadStringReader reader = new BadStringReader(new StringReader(configString))) {
-            return loadConfigFromString(reader, 0, configFileName, null);
+            return loadConfigFromString(reader, 0, configFileName, configFileName, null);
         }
     }
 
-    private static Config loadConfigFromString(BadStringReader stringReader, int layer, String sectionName, String sectionComment) {
+    private static Config loadConfigFromString(BadStringReader stringReader, int layer, String fileName, String sectionName, String sectionComment) {
         Config config = new Config(sectionName);
         config.setOriginalLineNumber(stringReader.getLineNumber());
         config.setSectionComment(sectionComment);
@@ -807,7 +810,7 @@ public class Config implements IBinarySerializable {
                 // Create child config.
                 if (sectionLayer == layer + 1) {
                     // Read for this config.
-                    Config loadedChildConfig = loadConfigFromString(stringReader, sectionLayer, newSectionName, comment);
+                    Config loadedChildConfig = loadConfigFromString(stringReader, sectionLayer, fileName, newSectionName, comment);
                     config.addChildConfig(loadedChildConfig);
                 } else {
                     // Some other config earlier in the hierarchy (earlier layer) owns this.
@@ -864,16 +867,21 @@ public class Config implements IBinarySerializable {
             }
 
             // Parse/store the values.
+            ConfigValueNode newNode;
             if (splitAt != -1) { // It's a key-value pair.
                 String key = unescapeKey(text.substring(0, splitAt));
                 String value = unescapeValue(text.substring(splitAt + 1));
-                if (config.keyValuePairs.put(key, new ConfigValueNode(value, commentText, commentSeparator)) == null)
+                if (config.keyValuePairs.put(key, newNode = new ConfigValueNode(value, commentText, commentSeparator)) == null)
                     config.orderedKeyValuePairs.add(key);
             } else { // It's raw text.
-                ConfigValueNode newNode = new ConfigValueNode(text, commentText, commentSeparator);
+                newNode = new ConfigValueNode(text, commentText, commentSeparator);
                 newNode.setAsString(text); // Ensure it is not escaped, as escaped text isn't supported here.
                 config.getInternalText().add(newNode);
             }
+
+            // Setup the new node.
+            newNode.setOriginalLineNumber(stringReader.getLineNumber());
+            newNode.setOriginalFileName(fileName);
         }
     }
 
@@ -910,9 +918,15 @@ public class Config implements IBinarySerializable {
          * The index (one-indexed) line number which the value was originally loaded from.
          */
         @Getter
-        @Setter
+        @Setter(AccessLevel.PRIVATE)
         private int originalLineNumber = -1;
 
+        /**
+         * The index (one-indexed) line number which the value was originally loaded from.
+         */
+        @Getter
+        @Setter(AccessLevel.PRIVATE)
+        private String originalFileName;
 
         public static final String DEFAULT_COMMENT_SEPARATOR = " " + COMMENT_CHARACTER + " ";
 
@@ -939,10 +953,11 @@ public class Config implements IBinarySerializable {
          * @param reader the reader to read data from
          * @param configSettings the settings to load with
          */
-        public void loadFromReader(DataReader reader, ConfigSettings configSettings) {
+        public void loadFromReader(DataReader reader, ConfigSettings configSettings, String rootName) {
             int valueLength = reader.readUnsignedShortAsInt();
             this.value = reader.readTerminatedString(valueLength);
             this.originalLineNumber = reader.readInt();
+            this.originalFileName = rootName;
             this.surroundByQuotes = reader.readByte() == 1;
             if (configSettings.isReadingCommentsEnabled()) {
                 int commentLength = reader.readUnsignedShortAsInt();
@@ -978,7 +993,10 @@ public class Config implements IBinarySerializable {
          */
         @SuppressWarnings("MethodDoesntCallSuperMethod")
         public ConfigValueNode clone() {
-            return new ConfigValueNode(getAsStringLiteral(), this.comment, this.commentSeparator);
+            ConfigValueNode newNode = new ConfigValueNode(getAsStringLiteral(), this.comment, this.commentSeparator);
+            newNode.originalLineNumber = this.originalLineNumber;
+            newNode.originalFileName = this.originalFileName;
+            return newNode;
         }
 
         /**
@@ -1007,6 +1025,16 @@ public class Config implements IBinarySerializable {
         public ConfigValueNode setComment(String comment) {
             this.comment = comment;
             return this;
+        }
+
+        @Override
+        protected String getExtraDebugErrorInfo() {
+            if (this.originalLineNumber <= 0 && StringUtils.isNullOrWhiteSpace(this.originalFileName))
+                return super.getExtraDebugErrorInfo();
+
+            return super.getExtraDebugErrorInfo()
+                    + (!StringUtils.isNullOrWhiteSpace(this.originalFileName) ? " File: " + this.originalFileName : "")
+                    + (this.originalLineNumber > 0 ? " Line: " + this.originalLineNumber : "");
         }
     }
 

@@ -66,7 +66,7 @@ public class kcScriptEffectCamera extends kcScriptEffect {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(OptionalArguments arguments, int lineNumber, String fileName) {
         this.arguments = new kcParam[this.cameraEffect.getArguments().length];
         for (int i = 0; i < this.arguments.length; i++) {
             StringNode node = arguments.useNext();
