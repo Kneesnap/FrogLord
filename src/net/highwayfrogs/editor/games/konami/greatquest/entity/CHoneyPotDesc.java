@@ -1,10 +1,10 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
+import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
-import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 
 /**
  * Represents the 'CHoneyPotDesc' struct.
@@ -14,13 +14,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 public class CHoneyPotDesc extends CItemDesc {
     private static final int PADDING_VALUES = 8;
 
-    public CHoneyPotDesc(GreatQuestInstance instance) {
-        super(instance);
-    }
-
-    @Override
-    protected int getTargetClassID() {
-        return kcClassID.HONEY_POT.getClassId();
+    public CHoneyPotDesc(@NonNull kcCResourceGeneric resource) {
+        super(resource, kcEntityDescType.HONEY_POT);
     }
 
     @Override

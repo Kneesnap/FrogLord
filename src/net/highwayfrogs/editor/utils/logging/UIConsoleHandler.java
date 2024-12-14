@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.utils.logging;
 
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.GameInstanceLogRecord;
 
 import java.util.logging.ErrorManager;
 import java.util.logging.LogRecord;
@@ -33,7 +34,12 @@ public class UIConsoleHandler extends StreamHandler {
         }
 
         // Add to UI.
-        logMessage(msg);
+        GameInstance instance;
+        if (record instanceof GameInstanceLogRecord && (instance = ((GameInstanceLogRecord) record).getInstance()) != null) {
+            instance.addConsoleLogEntry(msg);
+        } else {
+            logMessage(msg);
+        }
     }
 
     @Override

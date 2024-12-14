@@ -96,7 +96,7 @@ public class MOFPartcel extends GameObject {
             writer.writeAddressTo(this.tempBboxPointer);
             parent.makeBoundingBox().save(writer);
         } else {
-            writer.writeAddressAt(this.tempBboxPointer, parent.getSaveBboxPointer());
+            writer.writeIntAtPos(this.tempBboxPointer, parent.getSaveBboxPointer());
         }
 
         this.tempBboxPointer = 0;

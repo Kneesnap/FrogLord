@@ -9,7 +9,8 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapEnt
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapForm;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -40,7 +41,7 @@ public class OldFroggerMapEntityMarkerPacket extends OldFroggerMapPacket {
     public OldFroggerMapEntity getEntityByFileOffset(int fileOffset) {
         OldFroggerMapEntity entity = this.entitiesByFileOffsets.get(fileOffset);
         if (entity == null)
-            getLogger().warning("Couldn't find map entity at " + Utils.toHexString(fileOffset) + " in " + getParentFile().getFileDisplayName() + ".");
+            getLogger().warning("Couldn't find map entity at " + NumberUtils.toHexString(fileOffset) + " in " + getParentFile().getFileDisplayName() + ".");
         return entity;
     }
 
@@ -173,7 +174,7 @@ public class OldFroggerMapEntityMarkerPacket extends OldFroggerMapPacket {
                     builder.append(',');
                 }
 
-                builder.append(Utils.stripExtension(resourceEntry.getDisplayName()));
+                builder.append(FileUtils.stripExtension(resourceEntry.getDisplayName()));
             }
 
             System.out.println(builder);

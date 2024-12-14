@@ -1,14 +1,19 @@
 package net.highwayfrogs.editor.games.konami.greatquest.model;
 
 import lombok.Getter;
-import lombok.Setter;
-import net.highwayfrogs.editor.Constants;
+import lombok.NonNull;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.*;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceModel;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcBaseDesc;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceModel;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcIGenericResourceData;
+import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Represents the kcModelDesc struct.
@@ -16,14 +21,40 @@ import net.highwayfrogs.editor.utils.Utils;
  * Created by Kneesnap on 8/21/2023.
  */
 @Getter
-@Setter
-public class kcModelDesc extends kcBaseDesc implements IInfoWriter {
-    private int hashOfChunkContainingThis; // The hash of the generic resource chunk containing this object. TODO: Unused.
-    private int modelChunkHash; // The hash of the chunk which is a reference to a model file.
-    private int materialHash = -1; // Seems to be -1. TODO: Unused.
+public class kcModelDesc extends kcBaseDesc implements IInfoWriter, kcIGenericResourceData {
+    private final GreatQuestHash<kcCResourceGeneric> parentHash; // The hash of this object's parent. Unused.
+    private final GreatQuestHash<kcCResourceModel> modelRef; // Resolved by kcCModel::Init()
 
-    public kcModelDesc(GreatQuestInstance instance) {
-        super(instance);
+    private static final int EXPECTED_MATERIAL_HASH = -1; // Never used.
+
+    public kcModelDesc(@NonNull kcCResourceGeneric resource) {
+        super(resource);
+        this.parentHash = new GreatQuestHash<>(resource);
+        this.modelRef = new GreatQuestHash<>();
+    }
+
+    @Override
+    public void load(DataReader reader) {
+        super.load(reader);
+        int hThis = reader.readInt();
+        int modelHash = reader.readInt();
+        int materialHash = reader.readInt();
+
+        // Resolve the model.
+        GreatQuestUtils.resolveResourceHash(kcCResourceModel.class, this, this.modelRef, modelHash, false); // There are quite a few models which have been removed but still have their model descriptions.
+
+        // Warn if things look wrong.
+        if (materialHash != EXPECTED_MATERIAL_HASH)
+            getLogger().warning("Expected material hash to be " + EXPECTED_MATERIAL_HASH + ", but was actually " + NumberUtils.to0PrefixedHexString(materialHash));
+        if (hThis != this.parentHash.getHashNumber())
+            throw new RuntimeException("The kcModelDesc reported the parent chunk as " + NumberUtils.to0PrefixedHexString(hThis) + ", but it was expected to be " + this.parentHash.getHashNumberAsString() + ".");
+    }
+
+    @Override
+    public void saveData(DataWriter writer) {
+        writer.writeInt(this.parentHash.getHashNumber());
+        writer.writeInt(this.modelRef.getHashNumber());
+        writer.writeInt(EXPECTED_MATERIAL_HASH);
     }
 
     @Override
@@ -37,40 +68,29 @@ public class kcModelDesc extends kcBaseDesc implements IInfoWriter {
     }
 
     @Override
-    public void load(DataReader reader) {
-        super.load(reader);
-        this.hashOfChunkContainingThis = reader.readInt();
-        this.modelChunkHash = reader.readInt();
-        this.materialHash = reader.readInt();
+    public kcCResourceGeneric getResource() {
+        return (kcCResourceGeneric) super.getResource();
     }
 
     @Override
-    public void saveData(DataWriter writer) {
-        writer.writeInt(this.hashOfChunkContainingThis);
-        writer.writeInt(this.modelChunkHash);
-        writer.writeInt(this.materialHash);
+    public kcCResourceGenericType getResourceType() {
+        return kcCResourceGenericType.MODEL_DESCRIPTION;
     }
 
     @Override
     public void writeInfo(StringBuilder builder) {
-        builder.append("kcModelDesc Hash: ").append(Utils.to0PrefixedHexString(this.hashOfChunkContainingThis));
-        writeAssetInfo(builder, ", ", "Model", this.modelChunkHash, kcCResourceModel::getFileName);
-        writeAssetInfo(builder, ", ", "Material", this.materialHash, kcCResourceModel::getName);
+        writeAssetLine(builder, ", ", "Model", this.modelRef, kcCResourceModel::getFileName);
     }
 
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        builder.append(padding).append("kcModelDesc Hash: ").append(Utils.to0PrefixedHexString(this.hashOfChunkContainingThis)).append(Constants.NEWLINE);
-        writeAssetLine(builder, padding, "Model", this.modelChunkHash);
-        writeAssetLine(builder, padding, "Material", this.materialHash);
+        writeAssetLine(builder, padding, "Model", this.modelRef);
     }
 
     /**
-     * Gets the model resource.
-     * @param chunkedFile the file to search first
-     * @return modelResource, or null
+     * Gets the referenced model.
      */
-    public kcCResourceModel getModelResource(GreatQuestChunkedFile chunkedFile) {
-        return GreatQuestUtils.findResourceByHash(chunkedFile, getGameInstance(), this.modelChunkHash);
+    public kcCResourceModel getModel() {
+        return this.modelRef.getResource();
     }
 }

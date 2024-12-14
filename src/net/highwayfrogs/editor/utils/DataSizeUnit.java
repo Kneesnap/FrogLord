@@ -22,7 +22,7 @@ public enum DataSizeUnit {
 
     DataSizeUnit(String display) {
         this.unitDisplay = display;
-        this.increment = Utils.power(1024, ordinal());
+        this.increment = MathUtils.power(1024, ordinal());
     }
 
     /**

@@ -26,8 +26,8 @@ import net.highwayfrogs.editor.gui.fxobject.SelectionRectangle;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo.IPositionChangeListener;
 import net.highwayfrogs.editor.system.math.Vector3f;
+import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
-import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -233,7 +233,7 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
         averageHeight /= this.selectedVertices.size();
         this.editorGrid.addNormalLabel(String.format("Average Height: %.4f", averageHeight));
         this.editorGrid.addDoubleField("Set Height", averageHeight, newHeight -> {
-            short fixedNewHeight = Utils.floatToFixedPointShort4Bit((float) (double) newHeight);
+            short fixedNewHeight = DataUtils.floatToFixedPointShort4Bit((float) (double) newHeight);
 
             // Apply height to all selected vertices.
             for (int i = 0; i < this.selectedVertices.size(); i++) {
@@ -255,7 +255,7 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
             return; // Couldn't find the vertex.
 
         short fixedOldHeight = getPacket().getHeightMap()[selectedVertex.getZ()][selectedVertex.getX()];
-        short fixedNewHeight = Utils.floatToFixedPointShort4Bit((float) newY);
+        short fixedNewHeight = DataUtils.floatToFixedPointShort4Bit((float) newY);
         if (fixedOldHeight == fixedNewHeight)
             return;
 

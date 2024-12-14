@@ -18,7 +18,7 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.io.File;
 import java.util.*;
@@ -53,14 +53,14 @@ public class OldFroggerGameInstance extends SCGameInstance {
     }
 
     @Override
-    public void loadGame(String versionConfigName, File mwdFile, File exeFile, ProgressBarComponent progressBar) {
-        super.loadGame(versionConfigName, mwdFile, exeFile, progressBar);
+    public void loadGame(String versionConfigName, net.highwayfrogs.editor.system.Config instanceConfig, File mwdFile, File exeFile, ProgressBarComponent progressBar) {
+        super.loadGame(versionConfigName, instanceConfig, mwdFile, exeFile, progressBar);
         OldFroggerMapEntityMarkerPacket.showFormGenerationOutput();
     }
 
     @Override
-    public OldFroggerConfig getConfig() {
-        return (OldFroggerConfig) super.getConfig();
+    public OldFroggerConfig getVersionConfig() {
+        return (OldFroggerConfig) super.getVersionConfig();
     }
 
     @Override
@@ -81,7 +81,7 @@ public class OldFroggerGameInstance extends SCGameInstance {
     @Override
     protected void setupTextureRemaps(DataReader exeReader, MillenniumWadIndex wadIndex) {
         this.textureRemapsByLevelId.clear();
-        if (getConfig().getRemapTableCount() <= 0 || getConfig().getRemapTableAddress() <= 0)
+        if (this.getVersionConfig().getRemapTableCount() <= 0 || this.getVersionConfig().getRemapTableAddress() <= 0)
             return; // No remaps.
 
         // Find a list of all the maps.
@@ -94,9 +94,9 @@ public class OldFroggerGameInstance extends SCGameInstance {
 
         // Find remaps.
         int unknownMapCount = 0;
-        exeReader.setIndex(getConfig().getRemapTableAddress());
+        exeReader.setIndex(this.getVersionConfig().getRemapTableAddress());
         Map<Long, TextureRemapArray> remapsByPointer = new HashMap<>();
-        for (int i = 0; i < getConfig().getRemapTableCount(); i++) {
+        for (int i = 0; i < this.getVersionConfig().getRemapTableCount(); i++) {
             long remapPointer = exeReader.readUnsignedIntAsLong();
 
             // Find remap which has already been read.
@@ -110,7 +110,7 @@ public class OldFroggerGameInstance extends SCGameInstance {
             if (i >= mapFileEntries.size()) {
                 remapNameSuffix = "unknown" + (++unknownMapCount);
             } else {
-                remapNameSuffix = Utils.stripExtension(mapFileEntries.get(i).getDisplayName()).toLowerCase(Locale.ROOT);
+                remapNameSuffix = FileUtils.stripExtension(mapFileEntries.get(i).getDisplayName()).toLowerCase(Locale.ROOT);
             }
 
             // Create new remap.
@@ -131,7 +131,7 @@ public class OldFroggerGameInstance extends SCGameInstance {
     public void onConfigLoad(Config config) {
         super.onConfigLoad(config);
         DataReader exeReader = getExecutableReader();
-        OldFroggerConfig gameConfig = getConfig();
+        OldFroggerConfig gameConfig = this.getVersionConfig();
         readLevelTable(exeReader, gameConfig);
     }
 

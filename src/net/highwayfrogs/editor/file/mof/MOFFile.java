@@ -8,7 +8,7 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.games.sony.SCUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,8 +49,8 @@ public class MOFFile extends MOFBase {
             this.bytes = reader.readBytes(reader.getRemaining());
             reader.jumpReturn();
 
-            String oldName = Utils.stripExtensionWin95(getHolder().getCompleteMOF().getFileDisplayName());
-            String newName = Utils.stripExtensionWin95(getFileDisplayName());
+            String oldName = SCUtils.stripExtensionWin95(getHolder().getCompleteMOF().getFileDisplayName());
+            String newName = SCUtils.stripExtensionWin95(getFileDisplayName());
             getConfig().getAnimationBank().linkChildBank(oldName, newName); // Link animation names.
         }
 

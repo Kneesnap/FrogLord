@@ -21,6 +21,9 @@ import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.*;
@@ -48,6 +51,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
     @FXML private Button loadButton;
     @FXML private Button cancelButton;
 
+    public static final String CONFIG_GAME_INSTANCE_DATA = "InstanceData";
     public static final String CONFIG_ROOT_LAST_SELECTED_GAME_TYPE = "lastSelectedGame";
     public static final String CONFIG_GAME_LAST_SELECTED_VERSION = "lastSelectedVersion";
     public static final String CONFIG_GAME_TYPE = "gameType";
@@ -66,7 +70,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
             "Those games will need to be extracted first with other software such as ISOBuster, PowerISO, etc.",
             "Once all the information is ready, press the 'Load' button to load the game data.");
 
-    private static final URL FXML_TEMPLATE_URL = Utils.getResourceURL("fxml/window-load-game.fxml");
+    private static final URL FXML_TEMPLATE_URL = FileUtils.getResourceURL("fxml/window-load-game.fxml");
     private static final FXMLLoader FXML_TEMPLATE_LOADER = new FXMLLoader(FXML_TEMPLATE_URL);
 
     public GameConfigController(Config gameConfigRoot) {
@@ -88,7 +92,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
         // Load previously active gameType.
         ConfigValueNode gameTypeNode = this.gameConfigRoot.getOptionalKeyValueNode(CONFIG_ROOT_LAST_SELECTED_GAME_TYPE);
         String gameTypeIdentifier = gameTypeNode != null ? gameTypeNode.getAsString() : null;
-        if (!Utils.isNullOrWhiteSpace(gameTypeIdentifier)) {
+        if (!StringUtils.isNullOrWhiteSpace(gameTypeIdentifier)) {
             for (int i = 0; i < Constants.getGameTypes().size(); i++) {
                 IGameType gameType = Constants.getGameTypes().get(i);
                 if (Objects.equals(gameTypeIdentifier, gameType.getIdentifier())) {
@@ -120,8 +124,8 @@ public class GameConfigController extends GameUIController<GameInstance> {
         String gameVersion = this.selectedVersionConfigName;
 
         // Failsafe.
-        if (gameType == null || Utils.isNullOrWhiteSpace(gameVersion) || this.activeConfigController == null || this.activeConfigController.isLoadButtonDisabled()) {
-            Utils.makePopUp("Cannot load game without being fully configured!", AlertType.ERROR);
+        if (gameType == null || StringUtils.isNullOrWhiteSpace(gameVersion) || this.activeConfigController == null || this.activeConfigController.isLoadButtonDisabled()) {
+            FXUtils.makePopUp("Cannot load game without being fully configured!", AlertType.ERROR);
             return;
         }
 
@@ -133,7 +137,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
         GameInstance newInstance = gameType.createGameInstance();
         ProgressBarComponent.openProgressBarWindow(newInstance, "Loading Game Data...", progressBar -> {
             try {
-                gameType.loadGameInstance(newInstance, gameVersion, getOrCreateGameConfig(), progressBar);
+                gameType.loadGameInstance(newInstance, gameVersion, getOrCreateGameConfig(), getOrCreateInstanceConfig(), progressBar);
             } catch (Throwable th) {
                 // Eat the error, we still want to boot into the main menu if an error occurs.
                 Utils.handleError(newInstance.getLogger(), th, true, "Failed to load the game data.");
@@ -154,7 +158,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
 
         // Set last selected game type.
         if (this.gameConfigRoot != null && newGameType != null)
-            this.gameConfigRoot.getOrCreateKeyValueNode(CONFIG_ROOT_LAST_SELECTED_GAME_TYPE).setValue(newGameType.getIdentifier());
+            this.gameConfigRoot.getOrCreateKeyValueNode(CONFIG_ROOT_LAST_SELECTED_GAME_TYPE).setAsString(newGameType.getIdentifier());
 
         // Update the game version UI.
         if (newGameType != null) {
@@ -167,7 +171,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
             // Select the last seen version.
             Config gameConfig = this.gameConfigRoot != null ? this.gameConfigRoot.getChildConfigByName(newGameType.getIdentifier()) : null;
             ConfigValueNode versionConfigNameNode = gameConfig != null ? gameConfig.getOptionalKeyValueNode(CONFIG_GAME_LAST_SELECTED_VERSION) : null;
-            String versionConfigName = versionConfigNameNode != null ? versionConfigNameNode.getValue() : null;
+            String versionConfigName = versionConfigNameNode != null ? versionConfigNameNode.getAsString() : null;
 
             for (int i = 0; i < versionConfigs.size(); i++) {
                 GameConfig testGameConfig = versionConfigs.get(i);
@@ -202,13 +206,13 @@ public class GameConfigController extends GameUIController<GameInstance> {
         // Store the last selected option.
         Config gameConfig = this.gameConfigRoot.getOrCreateChildConfigByName(newVersionConfig.getGameType().getIdentifier());
         ConfigValueNode lastVersionNode = gameConfig.getOrCreateKeyValueNode(CONFIG_GAME_LAST_SELECTED_VERSION);
-        lastVersionNode.setValue(newVersionConfig.getInternalName());
+        lastVersionNode.setAsString(newVersionConfig.getInternalName());
 
         // Apply last working directory, if there's one configured.
         Config lastVersionConfig = gameConfig.getChildConfigByName(newVersionConfig.getInternalName());
         ConfigValueNode lastFolderPathAccessedNode = lastVersionConfig != null ? lastVersionConfig.getOptionalKeyValueNode(CONFIG_GAME_LAST_FOLDER) : null;
         String lastFolderPathAccessed = lastFolderPathAccessedNode != null ? lastFolderPathAccessedNode.getAsString() : null;
-        if (!Utils.isNullOrWhiteSpace(lastFolderPathAccessed)) {
+        if (!StringUtils.isNullOrWhiteSpace(lastFolderPathAccessed)) {
             File testFolder = new File(lastFolderPathAccessed);
             if (testFolder.isDirectory())
                 GUIMain.setWorkingDirectory(testFolder);
@@ -284,10 +288,18 @@ public class GameConfigController extends GameUIController<GameInstance> {
         // Load the last selected version of a game, if there is one.
         ConfigValueNode lastVersionNode = perGameConfig.getOptionalKeyValueNode(CONFIG_GAME_LAST_SELECTED_VERSION);
         String lastVersion = lastVersionNode != null ? lastVersionNode.getAsString() : null;
-        if (Utils.isNullOrWhiteSpace(lastVersion))
+        if (StringUtils.isNullOrWhiteSpace(lastVersion))
             return this.unknownGameConfig; // Don't know the version yet!
 
         return perGameConfig.getOrCreateChildConfigByName(lastVersion);
+    }
+
+    /**
+     * Gets or creates the configuration for the instance which would be loaded for the active selection.
+     * @return instanceConfig
+     */
+    public Config getOrCreateInstanceConfig() {
+        return getOrCreateGameConfig().getOrCreateChildConfigByName(CONFIG_GAME_INSTANCE_DATA);
     }
 
     /**

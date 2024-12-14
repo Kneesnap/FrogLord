@@ -5,9 +5,9 @@ package net.highwayfrogs.editor.games.konami.greatquest.proxy;
  * Created by Kneesnap on 8/24/2023.
  */
 public enum ProxyReact {
-    NOTIFY, // There is another entry "PENETRATE" with value 0.
-    HALT,
-    SLIDE;
+    NOTIFY, // This is sometimes called 'PENETRATE', as it lets the user through.
+    HALT, // 'HALT' presumably presents the user from moving.
+    SLIDE; // Causes the player to slide off the surface.
 
     /**
      * Gets the ProxyReact corresponding to the provided value.

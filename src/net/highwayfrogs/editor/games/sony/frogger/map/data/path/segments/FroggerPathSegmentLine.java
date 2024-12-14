@@ -11,7 +11,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathResul
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathSegmentType;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapPathManager.FroggerPathPreview;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.MathUtils;
 
 /**
  * Represents PATH_LINE.
@@ -78,7 +78,7 @@ public class FroggerPathSegmentLine extends FroggerPathSegment {
         int deltaX = this.end.getX() - this.start.getX();
         int deltaY = this.end.getY() - this.start.getY();
         int deltaZ = this.end.getZ() - this.start.getZ();
-        return Utils.fixedSqrt((deltaX * deltaX) + (deltaY * deltaY) + (deltaZ * deltaZ));
+        return MathUtils.fixedSqrt((deltaX * deltaX) + (deltaY * deltaY) + (deltaZ * deltaZ));
     }
 
     @Override

@@ -3,9 +3,9 @@ package net.highwayfrogs.editor.games.konami.greatquest.math;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 
@@ -15,7 +15,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInf
  */
 @Getter
 @Setter
-public class kcSphere extends GameObject implements IInfoWriter, IMultiLineInfoWriter {
+public class kcSphere implements IInfoWriter, IMultiLineInfoWriter, IBinarySerializable {
     private final kcVector3 position;
     private float radius;
 

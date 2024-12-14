@@ -28,7 +28,7 @@ public class PTModelMesh extends PSXShadedDynamicMesh<PTPolygon, PTModelShadedTe
     private AtlasTexture gouraudPlaceholderTexture;
 
     public PTModelMesh(PTModel model) {
-        super(new TreeTextureAtlas(64, 64, true), false);
+        super(new TreeTextureAtlas(64, 64, true), DynamicMeshTextureQuality.UNLIT_SHARP, false);
         this.model = model;
 
         // Add textures.

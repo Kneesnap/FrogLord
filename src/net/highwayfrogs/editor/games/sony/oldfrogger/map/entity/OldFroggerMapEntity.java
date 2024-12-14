@@ -15,10 +15,12 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEditorUtil
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEntityManager;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
-import java.lang.ref.SoftReference;
-import java.util.logging.Logger;
+import java.lang.ref.WeakReference;
 
 /**
  * Represents an entity on an old Frogger map.
@@ -31,7 +33,7 @@ public class OldFroggerMapEntity extends SCGameData<OldFroggerGameInstance> {
     private int difficulty;
     private short entityId;
     private OldFroggerEntityData<?> entityData;
-    private SoftReference<Logger> logger;
+    private WeakReference<ILogger> logger;
 
     public OldFroggerMapEntity(OldFroggerMapFile map) {
         super(map.getGameInstance());
@@ -56,7 +58,7 @@ public class OldFroggerMapEntity extends SCGameData<OldFroggerGameInstance> {
                 try {
                     this.entityData.load(reader);
                 } catch (Throwable th) {
-                    String errorMessage = "Failed to load " + entityDataFactory.getName() + " for " + getDebugName() + " at " + Utils.toHexString(entityDataStartIndex);
+                    String errorMessage = "Failed to load " + entityDataFactory.getName() + " for " + getDebugName() + " at " + NumberUtils.toHexString(entityDataStartIndex);
                     getLogger().throwing("OldFroggerMapEntity", "load", new RuntimeException(errorMessage, th));
                     // Don't throw an exception, there's a pointer table so the next entity will read from the right spot.
                 }
@@ -80,14 +82,19 @@ public class OldFroggerMapEntity extends SCGameData<OldFroggerGameInstance> {
     }
 
     @Override
-    public Logger getLogger() {
-        Logger logger = this.logger != null ? this.logger.get() : null;
-        if (logger == null) {
-            logger = Logger.getLogger(getMap().getFileDisplayName() + "|Entity " + this.entityId + "|" + getDebugName());
-            this.logger = new SoftReference<>(logger);
-        }
+    public ILogger getLogger() {
+        ILogger logger = this.logger != null ? this.logger.get() : null;
+        if (logger == null)
+            this.logger = new WeakReference<>(logger = new LazyInstanceLogger(getGameInstance(), OldFroggerMapEntity::getLoggerInfo, this));
 
         return logger;
+    }
+
+    /**
+     * Gets logger information to display when the logger is used.
+     */
+    public String getLoggerInfo() {
+        return getMap().getFileDisplayName() + "|Entity " + this.entityId + "|" + getDebugName();
     }
 
     /**
@@ -165,7 +172,7 @@ public class OldFroggerMapEntity extends SCGameData<OldFroggerGameInstance> {
         if (form != null) {
             WADEntry mofEntry = form.getMofFileEntry();
             if (mofEntry != null)
-                return Utils.stripExtension(mofEntry.getDisplayName());
+                return FileUtils.stripExtension(mofEntry.getDisplayName());
         }
 
         return "Entity #" + this.entityId;

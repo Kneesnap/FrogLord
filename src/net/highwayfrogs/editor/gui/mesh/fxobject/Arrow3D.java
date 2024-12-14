@@ -13,7 +13,7 @@ import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
 import lombok.Getter;
 import net.highwayfrogs.editor.system.math.Vector3f;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 /**
  * Represents a 3D arrow.
@@ -28,7 +28,7 @@ public class Arrow3D extends Group {
     private final Cylinder line;
 
     private static final double DEFAULT_THICKNESS = 1;
-    private static final PhongMaterial DEFAULT_MATERIAL = Utils.makeUnlitSharpMaterial(Color.RED);
+    private static final PhongMaterial DEFAULT_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.RED);
     private static final Point3D Y_AXIS = new Point3D(0f, 1f, 0f);
 
     public Arrow3D() {

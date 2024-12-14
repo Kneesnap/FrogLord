@@ -4,10 +4,11 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -142,7 +143,7 @@ public class kcScriptListInterim extends GameData<GreatQuestInstance> {
             builder.append("// Objects [").append(this.entries.size()).append("]:\n");
             for (int i = 0; i < this.entries.size(); i++) {
                 kcScriptTOC toc = this.entries.get(i);
-                builder.append("// Cause Types: ").append(Utils.toHexString(toc.getCauseTypes()))
+                builder.append("// Cause Types: ").append(NumberUtils.toHexString(toc.getCauseTypes()))
                         .append(", ObjectCauseIndex: ").append(toc.getCauseStartIndex())
                         .append(", NumObjectCause: ").append(toc.getCauseCount())
                         .append(", NumObjectEffect: ").append(toc.getEffectCount())
@@ -158,7 +159,7 @@ public class kcScriptListInterim extends GameData<GreatQuestInstance> {
             for (int i = 0; i < this.causeData.length; i++) {
                 if ((i % 12) == 0 && i > 0)
                     builder.append(this.causeData.length > i + 1 ? "\n//" : "\n");
-                builder.append(' ').append(Utils.toHexString(this.causeData[i]));
+                builder.append(' ').append(NumberUtils.toHexString(this.causeData[i]));
             }
 
             builder.append('\n');

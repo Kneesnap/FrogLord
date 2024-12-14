@@ -51,10 +51,10 @@ public class MMWeightedInfluencesBlock extends MMDataBlockBody {
      * Sets the weight of this influence.
      * @param newWeight The new weight to use. Must be within [0,100].
      */
-    public void setInfluenceWeight(byte newWeight) {
+    public void setInfluenceWeight(int newWeight) {
         if (newWeight < 0 || newWeight > MAX_INFLUENCE_WEIGHT)
             throw new RuntimeException("The specified weight (" + newWeight + "), was not in the range [0, " + MAX_INFLUENCE_WEIGHT + "]!");
-        this.influenceWeight = newWeight;
+        this.influenceWeight = (byte) newWeight;
     }
 
     @Getter

@@ -9,12 +9,14 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.file.writer.FileReceiver;
-import net.highwayfrogs.editor.games.konami.FroggerBeyondUtil;
-import net.highwayfrogs.editor.games.konami.FroggerBeyondUtil.FroggerBeyondPlatform;
+import net.highwayfrogs.editor.games.konami.beyond.FroggerBeyondUtil;
+import net.highwayfrogs.editor.games.konami.beyond.FroggerBeyondUtil.FroggerBeyondPlatform;
 import net.highwayfrogs.editor.games.konami.hudson.PRS1Unpacker;
 import net.highwayfrogs.editor.games.sony.shared.mwd.DummyFile;
 import net.highwayfrogs.editor.gui.GUIMain;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -84,7 +86,7 @@ public class XboxShadowFileMain {
 
         File outputDir = new File("AncientShadowOutput/");
         if (!outputDir.exists())
-            Utils.makeDirectory(outputDir);
+            FileUtils.makeDirectory(outputDir);
 
         byte[] readData = Files.readAllBytes(tableFile.toPath());
         int sectionCount = readData.length / 0x810;
@@ -98,7 +100,7 @@ public class XboxShadowFileMain {
 
             boolean found = false;
             for (int i = 0; i < sectionCount; i++) {
-                if (Utils.testSignature(readData, 0x810 * i, headerBytes)) {
+                if (DataUtils.testSignature(readData, 0x810 * i, headerBytes)) {
                     found = true;
                     System.out.println(testFile.getName() + " found at [" + i + "].");
                 }
@@ -209,7 +211,7 @@ public class XboxShadowFileMain {
 
     private static void dumpHfsData(File outputDir, HFSFile hfsFile) throws Exception {
         for (int i = 0; i < hfsFile.getHfsFiles().size(); i++) {
-            File outputFileHfs = new File(outputDir, "A-" + Utils.padNumberString(i, 2) + ".hfs");
+            File outputFileHfs = new File(outputDir, "A-" + NumberUtils.padNumberString(i, 2) + ".hfs");
             HFSFile.saveToFile(outputFileHfs, hfsFile.getHfsFiles().get(i));
 
             for (int j = 0; j < hfsFile.getHfsFiles().get(i).size(); j++) {
@@ -273,7 +275,7 @@ public class XboxShadowFileMain {
             for (int j = 0; j < files.size(); j++) {
                 DummyFile file = files.get(j);
                 byte[] data = PRS1Unpacker.isCompressedPRS1(file.getArray()) ? PRS1Unpacker.decompressPRS1(file.getArray()) : file.getArray();
-                long crc32 = Utils.getCRC32(data);
+                long crc32 = DataUtils.getCRC32(data);
                 if (hashedMap.containsKey(crc32))
                     System.out.println("MATCHING FILES!!! [" + hashedMap.get(crc32) + "/" + j + "]");
                 hashedMap.put(crc32, "FILE-" + i + "-" + j + " (" + file.getLength() + ")");
@@ -286,7 +288,7 @@ public class XboxShadowFileMain {
             for (int j = 0; j < files.size(); j++) {
                 DummyFile file = files.get(j);
                 byte[] data = PRS1Unpacker.isCompressedPRS1(file.getArray()) ? PRS1Unpacker.decompressPRS1(file.getArray()) : file.getArray();
-                String match = hashedMap.get(Utils.getCRC32(data));
+                String match = hashedMap.get(DataUtils.getCRC32(data));
                 if (match != null)
                     System.out.println("MATCH FOUND [HFS " + match + "] [GameData FILE-" + i + "-" + j + "] (" + file.getLength() + ")");
                 else
@@ -361,10 +363,10 @@ public class XboxShadowFileMain {
                     cdSector += (writtenBytes / Constants.CD_SECTOR_SIZE) + ((writtenBytes % Constants.CD_SECTOR_SIZE) != 0 ? 1 : 0);
                     writer.writeTo(cdSector * Constants.CD_SECTOR_SIZE);
                     writer.jumpReturn();
-                    writer.writeAddressAt(dataSizePtr, writtenBytes);
+                    writer.writeIntAtPos(dataSizePtr, writtenBytes);
                 }
 
-                writer.writeAddressAt(fullFileSizePtr, cdSector * Constants.CD_SECTOR_SIZE);
+                writer.writeIntAtPos(fullFileSizePtr, cdSector * Constants.CD_SECTOR_SIZE);
             }
         }
 
@@ -389,10 +391,10 @@ public class XboxShadowFileMain {
                 cdSector += (writtenBytes / Constants.CD_SECTOR_SIZE) + ((writtenBytes % Constants.CD_SECTOR_SIZE) != 0 ? 1 : 0);
                 writer.writeTo(cdSector * Constants.CD_SECTOR_SIZE);
                 writer.jumpReturn();
-                writer.writeAddressAt(dataSizePtr, writtenBytes);
+                writer.writeIntAtPos(dataSizePtr, writtenBytes);
             }
 
-            writer.writeAddressAt(fullFileSizePtr, cdSector * Constants.CD_SECTOR_SIZE);
+            writer.writeIntAtPos(fullFileSizePtr, cdSector * Constants.CD_SECTOR_SIZE);
             writer.closeReceiver();
         }
 

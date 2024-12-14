@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.renderware.IRwStreamSectionType;
+import net.highwayfrogs.editor.games.renderware.IRwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.gui.ImageResource;
@@ -31,11 +31,12 @@ public class RwUnsupportedChunk extends RwStreamChunk {
 
     @Override
     protected String getLoggerInfo() {
-        return "id=" + Integer.toHexString(getSectionType().getTypeId()).toUpperCase() + "," + super.getLoggerInfo();
+        return "id=" + Integer.toHexString(getChunkType().getTypeId()).toUpperCase() + "," + super.getLoggerInfo();
     }
+
     @Getter
     @RequiredArgsConstructor
-    private static class RwUnsupportedChunkType implements IRwStreamSectionType {
+    private static class RwUnsupportedChunkType implements IRwStreamChunkType {
         private final int typeId;
 
         @Override
@@ -45,7 +46,12 @@ public class RwUnsupportedChunk extends RwStreamChunk {
 
         @Override
         public ImageResource getIcon() {
-            return ImageResource.QUESTION_MARK_15;
+            return ImageResource.QUESTION_MARK_16;
+        }
+
+        @Override
+        public RwStreamChunkTypeDisplayImportance getDisplayImportance() {
+            return null;
         }
     }
 }

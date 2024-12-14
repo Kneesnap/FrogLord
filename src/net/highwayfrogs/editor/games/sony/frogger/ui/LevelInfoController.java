@@ -14,7 +14,8 @@ import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.gui.GameUIController;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,9 +65,9 @@ public class LevelInfoController extends GameUIController<FroggerGameInstance> {
         themeSelector.valueProperty().addListener((observable, oldValue, newValue) -> getSelectedLevel().setTheme(newValue));
         musicSelector.valueProperty().addListener((observable, oldValue, newValue) -> getGameInstance().getMusicTracks().set(getSelectedLevel().getLevel().ordinal(), newValue));
 
-        Utils.setHandleTestKeyPress(stackPosField, Utils::isInteger, newValue -> getSelectedLevel().setStackPosition(Integer.parseInt(newValue)));
-        Utils.setHandleTestKeyPress(localLevelField, Utils::isInteger, newValue -> getSelectedLevel().setLocalLevelId(Integer.parseInt(newValue)));
-        Utils.setHandleTestKeyPress(worldLevelField, Utils::isInteger, newValue -> getSelectedLevel().setLevelsInWorld(Integer.parseInt(newValue)));
+        FXUtils.setHandleTestKeyPress(stackPosField, NumberUtils::isInteger, newValue -> getSelectedLevel().setStackPosition(Integer.parseInt(newValue)));
+        FXUtils.setHandleTestKeyPress(localLevelField, NumberUtils::isInteger, newValue -> getSelectedLevel().setLocalLevelId(Integer.parseInt(newValue)));
+        FXUtils.setHandleTestKeyPress(worldLevelField, NumberUtils::isInteger, newValue -> getSelectedLevel().setLevelsInWorld(Integer.parseInt(newValue)));
 
         levelSelector.getSelectionModel().select(0);
     }
@@ -105,6 +106,6 @@ public class LevelInfoController extends GameUIController<FroggerGameInstance> {
      * Open the level info controller.
      */
     public static void openEditor(FroggerGameInstance instance) {
-        Utils.createWindowFromFXMLTemplate("edit-hardcoded-level-info", new LevelInfoController(instance), "Level Stack Editor", true);
+        FXUtils.createWindowFromFXMLTemplate("edit-hardcoded-level-info", new LevelInfoController(instance), "Level Stack Editor", true);
     }
 }

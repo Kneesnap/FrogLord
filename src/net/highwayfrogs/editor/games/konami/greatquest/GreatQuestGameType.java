@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.gui.GameConfigController.GameConfigUIController;
 import net.highwayfrogs.editor.gui.components.FileOpenBrowseComponent.GameConfigFileOpenBrowseComponent;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -20,7 +21,6 @@ import java.io.File;
 public class GreatQuestGameType implements IGameType {
     public static final GreatQuestGameType INSTANCE = new GreatQuestGameType();
     private static final String CONFIG_BIN_PATH = "binFilePath";
-
     @Override
     public String getDisplayName() {
         return "Frogger: The Great Quest";
@@ -37,16 +37,16 @@ public class GreatQuestGameType implements IGameType {
     }
 
     @Override
-    public void loadGameInstance(GameInstance instance, String gameVersionConfigName, Config gameSetupConfig, ProgressBarComponent progressBar) {
+    public void loadGameInstance(GameInstance instance, String gameVersionConfigName, Config gameSetupConfig, Config instanceConfig, ProgressBarComponent progressBar) {
         if (!(instance instanceof GreatQuestInstance))
             throw new ClassCastException("The provided instance was " + Utils.getSimpleName(instance) + ", when " + GreatQuestInstance.class.getSimpleName() + " was required.");
 
         String binFilePath = gameSetupConfig.getKeyValueNodeOrError(CONFIG_BIN_PATH).getAsString();
-        if (Utils.isNullOrWhiteSpace(binFilePath))
+        if (StringUtils.isNullOrWhiteSpace(binFilePath))
             throw new IllegalArgumentException("Invalid binFilePath.");
 
         File binFile = new File(binFilePath);
-        ((GreatQuestInstance) instance).loadGame(gameVersionConfigName, binFile, progressBar);
+        ((GreatQuestInstance) instance).loadGame(gameVersionConfigName, instanceConfig, binFile, progressBar);
     }
 
     @Override
@@ -73,7 +73,7 @@ public class GreatQuestGameType implements IGameType {
 
         @Override
         public boolean isLoadButtonDisabled() {
-            return Utils.isNullOrWhiteSpace(this.binFileBrowseComponent.getCurrentFilePath());
+            return StringUtils.isNullOrWhiteSpace(this.binFileBrowseComponent.getCurrentFilePath());
         }
 
         @Override

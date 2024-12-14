@@ -1,11 +1,11 @@
 package net.highwayfrogs.editor.gui.mesh;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * This represents a basic component in a mesh.
@@ -15,7 +15,7 @@ import java.util.logging.Logger;
 public abstract class DynamicMeshNode implements IDynamicMeshHelper {
     @Getter private final DynamicMesh mesh;
     @Getter private final List<DynamicMeshDataEntry> dataEntries = new ArrayList<>();
-    private Logger cachedLogger;
+    private ILogger cachedLogger;
 
     protected DynamicMeshNode(DynamicMesh mesh) {
         this.mesh = mesh;
@@ -24,9 +24,9 @@ public abstract class DynamicMeshNode implements IDynamicMeshHelper {
     /**
      * Gets the logger available to this mesh node.
      */
-    public Logger getLogger() {
+    public ILogger getLogger() {
         if (this.mesh != null) {
-            Logger logger = this.mesh.getLogger();
+            ILogger logger = this.mesh.getLogger();
             if (logger != null)
                 return logger;
         }
@@ -34,7 +34,7 @@ public abstract class DynamicMeshNode implements IDynamicMeshHelper {
         if (this.cachedLogger != null)
             return this.cachedLogger;
 
-        return this.cachedLogger = Logger.getLogger(Utils.getSimpleName(this));
+        return this.cachedLogger = ClassNameLogger.getLogger(null, getClass());
     }
 
     /**

@@ -14,7 +14,8 @@ import net.highwayfrogs.editor.file.DemoFile.DemoFrame;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -45,8 +46,8 @@ public class DemoController extends SCFileEditorUIController<FroggerGameInstance
         super.setTargetFile(file);
 
         xField.setText(String.valueOf(file.getStartX()));
-        Utils.setHandleKeyPress(xField, newText -> {
-            if (!Utils.isInteger(newText))
+        FXUtils.setHandleKeyPress(xField, newText -> {
+            if (!NumberUtils.isInteger(newText))
                 return false;
 
             getFile().setStartX(Integer.parseInt(newText));
@@ -54,8 +55,8 @@ public class DemoController extends SCFileEditorUIController<FroggerGameInstance
         }, null);
 
         zField.setText(String.valueOf(file.getStartZ()));
-        Utils.setHandleKeyPress(zField, newText -> {
-            if (!Utils.isInteger(newText))
+        FXUtils.setHandleKeyPress(zField, newText -> {
+            if (!NumberUtils.isInteger(newText))
                 return false;
 
             getFile().setStartZ(Integer.parseInt(newText));
@@ -63,8 +64,8 @@ public class DemoController extends SCFileEditorUIController<FroggerGameInstance
         }, null);
 
         frameField.setText(String.valueOf(file.getFrameCount()));
-        Utils.setHandleKeyPress(frameField, newText -> {
-            if (!Utils.isInteger(newText))
+        FXUtils.setHandleKeyPress(frameField, newText -> {
+            if (!NumberUtils.isInteger(newText))
                 return false;
 
             getFile().setFrameCount(Integer.parseInt(newText));

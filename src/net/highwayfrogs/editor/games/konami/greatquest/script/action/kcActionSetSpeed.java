@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcActionExecutor;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcArgument;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcParam;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcParamType;
@@ -12,8 +12,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcParamType;
 public class kcActionSetSpeed extends kcActionTemplate {
     private static final kcArgument[] ARGUMENTS = kcArgument.make(kcParamType.FLOAT, "speed");
 
-    public kcActionSetSpeed(GreatQuestChunkedFile chunkedFile) {
-        super(chunkedFile, kcActionID.SET_SPEED);
+    public kcActionSetSpeed(kcActionExecutor executor) {
+        super(executor, kcActionID.SET_SPEED);
     }
 
     @Override

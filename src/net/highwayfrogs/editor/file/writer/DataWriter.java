@@ -3,11 +3,14 @@ package net.highwayfrogs.editor.file.writer;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Stack;
 
@@ -16,14 +19,14 @@ import java.util.Stack;
  * TODO: Go over this and error when we write stuff outside of the expected values.
  * Created by Kneesnap on 8/10/2018.
  */
-@Getter
 public class DataWriter {
-    @Setter private ByteOrder endian = ByteOrder.LITTLE_ENDIAN;
-    private final DataReceiver output;
+    @Getter @Setter private ByteOrder endian = ByteOrder.LITTLE_ENDIAN;
+    @Getter private final DataReceiver output;
     private final Stack<Integer> jumpStack = new Stack<>();
+    private final Stack<Integer> anchorPoints = new Stack<>();
+    private int currentAnchorPoint;
 
-    private static final ByteBuffer INT_BUFFER = ByteBuffer.allocate(Constants.INTEGER_SIZE);
-    private static final ByteBuffer SHORT_BUFFER = ByteBuffer.allocate(Constants.SHORT_SIZE);
+    private static final ByteBuffer FLOAT_BUFFER = ByteBuffer.allocate(Constants.INTEGER_SIZE);
 
     public DataWriter(DataReceiver output) {
         this.output = output;
@@ -45,13 +48,13 @@ public class DataWriter {
     public void writeByte(byte value, int amount) {
         int startIndex = getIndex();
         if (amount < 0)
-            throw new RuntimeException("Cannot write a byte (" + Utils.toByteString(value) + ") " + amount + " times to " + Utils.toHexString(startIndex) + ".");
+            throw new RuntimeException("Cannot write a byte (" + DataUtils.toByteString(value) + ") " + amount + " times to " + NumberUtils.toHexString(startIndex) + ".");
 
         try {
             for (int i = 0; i < amount; i++)
                 this.output.writeByte(value);
         } catch (IOException ex) {
-            throw new RuntimeException("Failed to write byte (" + Utils.toByteString(value) + ") " + amount + " times to " + Utils.toHexString(startIndex) + ".");
+            throw new RuntimeException("Failed to write byte (" + DataUtils.toByteString(value) + ") " + amount + " times to " + NumberUtils.toHexString(startIndex) + ".");
         }
     }
 
@@ -122,7 +125,7 @@ public class DataWriter {
      */
     public void setIndex(int newIndex) {
         try {
-            output.setIndex(newIndex);
+            this.output.setIndex(newIndex + this.currentAnchorPoint);
         } catch (IOException ex) {
             throw new RuntimeException("Failed to set writer index.", ex);
         }
@@ -140,7 +143,7 @@ public class DataWriter {
      * Close the DataReceiver from receiving more data. In-case of streams, this safely closes the stream.
      */
     public void closeReceiver() {
-        output.close();
+        this.output.close();
     }
 
     /**
@@ -149,7 +152,7 @@ public class DataWriter {
      */
     public int getIndex() {
         try {
-            return output.getIndex();
+            return this.output.getIndex() - this.currentAnchorPoint;
         } catch (IOException ex) {
             throw new RuntimeException("Failed to get writer index.", ex);
         }
@@ -161,7 +164,7 @@ public class DataWriter {
      */
     public void writeByte(byte value) {
         try {
-            output.writeByte(value);
+            this.output.writeByte(value);
         } catch (IOException ex) {
             throw new RuntimeException("Failed to write a byte to the receiver.", ex);
         }
@@ -173,7 +176,7 @@ public class DataWriter {
      */
     public void writeBytes(byte... bytes) {
         try {
-            output.writeBytes(bytes);
+            this.output.writeBytes(bytes);
         } catch (IOException ex) {
             throw new RuntimeException("Failed to write a byte-array to the receiver.", ex);
         }
@@ -185,7 +188,7 @@ public class DataWriter {
      */
     public void writeBytes(byte[] array, int offset, int amount) {
         try {
-            output.writeBytes(array, offset, amount);
+            this.output.writeBytes(array, offset, amount);
         } catch (IOException ex) {
             throw new RuntimeException("Failed to write a byte-array to the receiver.", ex);
         }
@@ -196,7 +199,7 @@ public class DataWriter {
      * @param value the short to write.
      */
     public void writeUnsignedByte(short value) {
-        writeByte(Utils.unsignedShortToByte(value));
+        writeByte(DataUtils.unsignedShortToByte(value));
     }
 
     /**
@@ -204,7 +207,7 @@ public class DataWriter {
      * @param value The int to write.
      */
     public void writeUnsignedShort(int value) {
-        writeShort(Utils.unsignedIntToShort(value));
+        writeShort(DataUtils.unsignedIntToShort(value));
     }
 
     /**
@@ -212,7 +215,7 @@ public class DataWriter {
      * @param value The long to write.
      */
     public void writeUnsignedInt(long value) {
-        writeInt(Utils.unsignedLongToInt(value));
+        writeInt(DataUtils.unsignedLongToInt(value));
     }
 
     /**
@@ -220,8 +223,8 @@ public class DataWriter {
      * @param value The integer to write.
      */
     public void writeFloat(float value) {
-        INT_BUFFER.clear();
-        writeBytes(INT_BUFFER.order(getEndian()).putFloat(value).array());
+        FLOAT_BUFFER.clear();
+        writeBytes(FLOAT_BUFFER.order(getEndian()).putFloat(value).array());
     }
 
     /**
@@ -229,8 +232,17 @@ public class DataWriter {
      * @param value The integer to write.
      */
     public void writeInt(int value) {
-        INT_BUFFER.clear();
-        writeBytes(INT_BUFFER.order(getEndian()).putInt(value).array());
+        if (this.endian == ByteOrder.BIG_ENDIAN) {
+            writeByte((byte) ((value >> 24) & 0xFF));
+            writeByte((byte) ((value >> 16) & 0xFF));
+            writeByte((byte) ((value >> 8) & 0xFF));
+            writeByte((byte) value);
+        } else {
+            writeByte((byte) value);
+            writeByte((byte) ((value >> 8) & 0xFF));
+            writeByte((byte) ((value >> 16) & 0xFF));
+            writeByte((byte) ((value >> 24) & 0xFF));
+        }
     }
 
     /**
@@ -248,8 +260,13 @@ public class DataWriter {
      * @param value The short to write.
      */
     public void writeShort(short value) {
-        SHORT_BUFFER.clear();
-        writeBytes(SHORT_BUFFER.order(getEndian()).putShort(value).array());
+        if (this.endian == ByteOrder.BIG_ENDIAN) {
+            writeByte((byte) ((value >> 8) & 0xFF));
+            writeByte((byte) value);
+        } else {
+            writeByte((byte) value);
+            writeByte((byte) ((value >> 8) & 0xFF));
+        }
     }
 
     /**
@@ -276,7 +293,17 @@ public class DataWriter {
      * @return byteCount
      */
     public int writeStringBytes(String str) {
-        byte[] bytes = str.getBytes();
+        return writeStringBytes(str, StandardCharsets.US_ASCII);
+    }
+
+    /**
+     * Write the bytes to a string, then return the amount of bytes written.
+     * WARNING: This has no terminator or length, so only use this if you know what you're doing.
+     * @param str The string to write.
+     * @return byteCount
+     */
+    public int writeStringBytes(String str, Charset charset) {
+        byte[] bytes = str.getBytes(charset);
         writeBytes(bytes);
         return bytes.length;
     }
@@ -285,8 +312,16 @@ public class DataWriter {
      * Writes a string to the receiver, terminated with a null byte.
      * @param str The string to write.
      */
-    public void writeTerminatorString(String str) {
+    public void writeNullTerminatedString(String str) {
         writeTerminatorString(str, Constants.NULL_BYTE);
+    }
+
+    /**
+     * Writes a string to the receiver, terminated with a null byte.
+     * @param str The string to write.
+     */
+    public void writeNullTerminatedString(String str, Charset charset) {
+        writeTerminatorString(str, Constants.NULL_BYTE, charset);
     }
 
     /**
@@ -295,8 +330,21 @@ public class DataWriter {
      * @param terminator The terminator. Usually a null byte.
      */
     public void writeTerminatorString(String str, byte terminator) {
-        writeBytes(str.getBytes());
-        writeByte(terminator);
+        writeTerminatorString(str, terminator, StandardCharsets.US_ASCII);
+    }
+
+    /**
+     * Writes a string to the receiver, using a byte as the terminator.
+     * @param str        The string to write.
+     * @param terminator The terminator. Usually a null byte.
+     */
+    public void writeTerminatorString(String str, byte terminator, Charset charset) {
+        if (charset == null)
+            throw new NullPointerException("charset");
+
+        if (str != null)
+            writeBytes(str.getBytes(charset));
+        writeByte(terminator); // Terminator Byte
     }
 
     /**
@@ -304,7 +352,7 @@ public class DataWriter {
      * @param writeTo The old address to write the current address to.
      */
     public void writeAddressTo(int writeTo) {
-        writeAddressAt(writeTo, getIndex());
+        writeIntAtPos(writeTo, getIndex());
     }
 
     /**
@@ -312,30 +360,97 @@ public class DataWriter {
      * @param addressLocation The old address to write the value to.
      * @param pointerValue    The value to write at that location.
      */
-    public void writeAddressAt(int addressLocation, int pointerValue) {
+    public void writeIntAtPos(int addressLocation, int pointerValue) {
         jumpTemp(addressLocation);
         writeInt(pointerValue);
         jumpReturn();
     }
 
     /**
-     * Writes a terminated string of a given length.
+     * Writes a null-terminated string to a fixed-length buffer with US_ASCII encoding and null-bytes used as padding
      * @param stringToWrite The string to write
-     * @param byteSize      The string fixed size.
+     * @param fixedLength The string buffer fixed size in bytes.
      */
-    public void writeTerminatedStringOfLength(String stringToWrite, int byteSize) {
-        writeTerminatedStringOfLength(stringToWrite, byteSize, Constants.NULL_BYTE);
+    public void writeNullTerminatedFixedSizeString(String stringToWrite, int fixedLength) {
+        writeNullTerminatedFixedSizeString(stringToWrite, StandardCharsets.US_ASCII, fixedLength, Constants.NULL_BYTE);
     }
 
     /**
-     * Writes a terminated string of a given length.
+     * Writes a null-terminated string to a fixed-length buffer.
      * @param stringToWrite The string to write
-     * @param byteSize      The string fixed size.
+     * @param fixedLength The string buffer fixed size in bytes.
+     * @param padding The padding byte used to pad empty string data. Generally 0x00.
      */
-    public void writeTerminatedStringOfLength(String stringToWrite, int byteSize, byte terminator) {
-        int pathEndIndex = (getIndex() + byteSize);
-        writeTerminatorString(stringToWrite, terminator); // Include the null byte after the string data before using 0xCD.
-        if (pathEndIndex != getIndex() - 1) // If the string reaches the end, it should be considered cut off because it was too long.
-            writeTo(pathEndIndex, terminator);
+    public void writeNullTerminatedFixedSizeString(String stringToWrite, int fixedLength, byte padding) {
+        writeNullTerminatedFixedSizeString(stringToWrite, StandardCharsets.US_ASCII, fixedLength, padding);
+    }
+
+    /**
+     * Writes a null-terminated string to a fixed-length buffer.
+     * @param stringToWrite The string to write
+     * @param charset the charset to encode the string to a byte array with
+     * @param fixedLength The string buffer fixed size in bytes.
+     */
+    public void writeNullTerminatedFixedSizeString(String stringToWrite, Charset charset, int fixedLength) {
+        writeNullTerminatedFixedSizeString(stringToWrite, charset, fixedLength, Constants.NULL_BYTE);
+    }
+
+    /**
+     * Writes a null-terminated string to a fixed-length buffer.
+     * @param stringToWrite The string to write. If null is provided, this function will behave as if an empty string had been provided.
+     * @param charset the charset to encode the string to a byte array with. This will pretty much always be US_ASCII, as there aren't many other encodings which are null-terminated.
+     * @param fixedLength The string buffer fixed size in bytes.
+     * @param padding The padding byte used to pad empty string data. Generally 0x00.
+     */
+    public void writeNullTerminatedFixedSizeString(String stringToWrite, Charset charset, int fixedLength, byte padding) {
+        if (charset == null)
+            throw new NullPointerException("charset");
+
+        int pathEndIndex = (getIndex() + fixedLength);
+        if (stringToWrite != null) {
+            byte[] stringBytes = stringToWrite.getBytes(charset);
+            if (stringBytes.length > fixedLength)
+                throw new RuntimeException("The string '" + stringToWrite + "' is too large to be written. (Allowed: " + fixedLength + " bytes, Actual Size: " + stringBytes.length + " bytes)");
+
+            writeBytes(stringBytes);
+        }
+
+        if (pathEndIndex != getIndex()) { // If the string reaches the end, it should be considered cut off because it was too long.
+            writeByte(Constants.NULL_BYTE); // Terminator Byte
+            writeTo(pathEndIndex, padding);
+        }
+    }
+
+    /**
+     * Push a new anchor point onto the stack.
+     * An anchor point is a position relative to the parent anchor point, which when pushed, becomes the new origin (0x00000000) of the data.
+     * This helps align data properly, and do pointer math properly.
+     */
+    public void pushAnchorPoint() {
+        pushAnchorPoint(getIndex());
+    }
+
+    /**
+     * Push a new anchor point onto the stack.
+     * An anchor point is a position relative to the parent anchor point, which when pushed, becomes the new origin (0x00000000) of the data.
+     * This helps align data properly, and do pointer math properly.
+     * @param localIndex the index to push the anchor point for
+     */
+    public void pushAnchorPoint(int localIndex) {
+        int absoluteIndex = this.currentAnchorPoint + localIndex;
+        this.anchorPoints.push(this.currentAnchorPoint);
+        this.currentAnchorPoint = absoluteIndex;
+    }
+
+    /**
+     * Pops the most recent anchor point from the stack.
+     * An anchor point is a position relative to the parent anchor point, which when pushed, becomes the new origin (0x00000000) of the data.
+     * This helps align data properly, and do pointer math properly.
+     */
+    public void popAnchorPoint() {
+        if (this.anchorPoints.isEmpty())
+            throw new IllegalStateException("Cannot pop an anchor point when there are none on the stack!");
+
+        this.currentAnchorPoint = this.anchorPoints.pop();
     }
 }

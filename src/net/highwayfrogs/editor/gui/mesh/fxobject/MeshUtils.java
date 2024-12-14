@@ -26,7 +26,7 @@ public class MeshUtils {
      * @param pyramidTipVtx      the vertex id representing the tip of the pyramid
      * @param uvIndex            the index of the texCoord to apply to all faces.
      */
-    private static void addPyramidFaces(DynamicMeshDataEntry entry, boolean invertWinding, int baseTopLeftVtx, int baseTopRightVtx, int baseBottomLeftVtx, int baseBottomRightVtx, int pyramidTipVtx, int uvIndex) {
+    public static void addPyramidFaces(DynamicMeshDataEntry entry, boolean invertWinding, int baseTopLeftVtx, int baseTopRightVtx, int baseBottomLeftVtx, int baseBottomRightVtx, int pyramidTipVtx, int uvIndex) {
         // If the pyramid has height less than zero, the pyramid is facing the inverse direction.
         // And as such, the winding order should be inverted.
         // JavaFX uses counter-clockwise winding order.

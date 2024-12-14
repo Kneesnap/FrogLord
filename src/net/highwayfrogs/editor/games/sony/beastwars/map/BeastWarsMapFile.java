@@ -18,6 +18,8 @@ import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -91,7 +93,7 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
     private static final int SIGNATURE_COLP = 0x504C4F43; // 'COLP' - Collision Primitives
     private static final int SIGNATURE_LIGHTS = 0x5447494C; // 'LIGT' TODO: Unimplemented.
 
-    public static final String FILE_SIGNATURE = Utils.toMagicString(SIGNATURE_MAIN); // 'BMW0'
+    public static final String FILE_SIGNATURE = Utils.toIdentifierString(SIGNATURE_MAIN); // 'BMW0'
 
     public BeastWarsMapFile(BeastWarsInstance instance) {
         super(instance);
@@ -123,7 +125,7 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
         BeastWarsInstance instance = getGameInstance();
 
         // Search for a texture file with the same file name.
-        MWIResourceEntry texResourceEntry = instance.getResourceEntryByName(Utils.stripExtension(getFileDisplayName()) + ".TEX");
+        MWIResourceEntry texResourceEntry = instance.getResourceEntryByName(FileUtils.stripExtension(getFileDisplayName()) + ".TEX");
         BeastWarsTexFile texFile = instance.getGameFile(texResourceEntry);
         if (texFile != null)
             return texFile;
@@ -180,13 +182,13 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
             } else if (signature == SIGNATURE_COLP) { // 'COLP' - Collision Primitives
                 readCollisionPrimitives(reader, size);
             } else {
-                getLogger().warning("Skipping unsupported section '" + Utils.toMagicString(signature) + "' (" + size + " bytes).");
+                getLogger().warning("Skipping unsupported section '" + Utils.toIdentifierString(signature) + "' (" + size + " bytes).");
                 reader.skipBytes(size);
             }
 
             reader.align(4); // Automatically align to the next section.
             if (endPos != reader.getIndex()) {
-                getLogger().warning("Didn't end at the right position for '" + Utils.toMagicString(signature) + "'. (Expected: " + Utils.toHexString(endPos) + ", Actual: " + Utils.toHexString(reader.getIndex()) + ")");
+                getLogger().warning("Didn't end at the right position for '" + Utils.toIdentifierString(signature) + "'. (Expected: " + NumberUtils.toHexString(endPos) + ", Actual: " + NumberUtils.toHexString(reader.getIndex()) + ")");
                 reader.setIndex(endPos);
             }
         }
@@ -219,7 +221,7 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
 
     private void readEmptySection(int signature, int size) {
         if (size != 0)
-            getLogger().warning("Section '" + Utils.toMagicString(signature) + "' was expected to be empty, but reporting having " + size + " bytes.");
+            getLogger().warning("Section '" + Utils.toIdentifierString(signature) + "' was expected to be empty, but reporting having " + size + " bytes.");
     }
 
     private void readInfoSection(DataReader reader) {

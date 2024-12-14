@@ -1,42 +1,23 @@
 package net.highwayfrogs.editor.games.konami.greatquest.math;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter;
+import net.highwayfrogs.editor.system.math.Vector4f;
 
 /**
  * Represents the 'kcVector4' struct as defined in kcMath3D.h.
  * Created by Kneesnap on 7/12/2023.
  */
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class kcVector4 extends GameObject implements IInfoWriter {
-    private float x;
-    private float y;
-    private float z;
-    private float w;
-
-    @Override
-    public void load(DataReader reader) {
-        this.x = reader.readFloat();
-        this.y = reader.readFloat();
-        this.z = reader.readFloat();
-        this.w = reader.readFloat();
+public class kcVector4 extends Vector4f implements IInfoWriter {
+    public kcVector4() {
+        super();
     }
 
-    @Override
-    public void save(DataWriter writer) {
-        writer.writeFloat(this.x);
-        writer.writeFloat(this.y);
-        writer.writeFloat(this.z);
-        writer.writeFloat(this.w);
+    public kcVector4(float x, float y, float z, float w) {
+        super(x, y, z, w);
+    }
+
+    public kcVector4(Vector4f vec) {
+        super(vec);
     }
 
     @Override

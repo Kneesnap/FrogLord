@@ -21,6 +21,7 @@ import net.highwayfrogs.editor.gui.GameConfigController.GameConfigUIController;
 import net.highwayfrogs.editor.gui.components.FileOpenBrowseComponent.GameConfigFileOpenBrowseComponent;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -103,21 +104,21 @@ public enum SCGameType implements IGameType {
     }
 
     @Override
-    public void loadGameInstance(GameInstance instance, String gameVersionConfigName, Config gameSetupConfig, ProgressBarComponent progressBar) {
+    public void loadGameInstance(GameInstance instance, String gameVersionConfigName, Config gameSetupConfig, Config instanceConfig, ProgressBarComponent progressBar) {
         if (!(instance instanceof SCGameInstance))
             throw new ClassCastException("The provided instance was " + Utils.getSimpleName(instance) + ", which was not " + SCGameInstance.class.getSimpleName() + ".");
 
-        String exeFilePath = gameSetupConfig.getKeyValueNodeOrError(CONFIG_EXE_PATH).getValue();
-        if (Utils.isNullOrWhiteSpace(exeFilePath))
+        String exeFilePath = gameSetupConfig.getKeyValueNodeOrError(CONFIG_EXE_PATH).getAsString();
+        if (StringUtils.isNullOrWhiteSpace(exeFilePath))
             throw new RuntimeException("Invalid exeFilePath.");
 
-        String mwdFilePath = gameSetupConfig.hasKeyValueNode(CONFIG_MWD_PATH) ? gameSetupConfig.getKeyValueNodeOrError(CONFIG_MWD_PATH).getValue() : null;
+        String mwdFilePath = gameSetupConfig.hasKeyValueNode(CONFIG_MWD_PATH) ? gameSetupConfig.getKeyValueNodeOrError(CONFIG_MWD_PATH).getAsString() : null;
         File mwdFile = mwdFilePath != null && mwdFilePath.length() > 0 ? new File(mwdFilePath) : null;
         if (mwdFile != null && (!mwdFile.exists() || !mwdFile.isFile()))
             throw new RuntimeException("Invalid mwdFilePath.");
 
         File exeFile = new File(exeFilePath);
-        ((SCGameInstance) instance).loadGame(gameVersionConfigName, mwdFile, exeFile, progressBar);
+        ((SCGameInstance) instance).loadGame(gameVersionConfigName, instanceConfig, mwdFile, exeFile, progressBar);
     }
 
     @Override
@@ -159,8 +160,8 @@ public enum SCGameType implements IGameType {
 
         @Override
         public boolean isLoadButtonDisabled() {
-            return (Utils.isNullOrWhiteSpace(this.mwdFileBrowseComponent.getCurrentFilePath()) && (getGameConfig() == null || !getGameConfig().isMwdLooseFiles()))
-                    || Utils.isNullOrWhiteSpace(this.exeFileBrowseComponent.getCurrentFilePath());
+            return (StringUtils.isNullOrWhiteSpace(this.mwdFileBrowseComponent.getCurrentFilePath()) && (getGameConfig() == null || !getGameConfig().isMwdLooseFiles()))
+                    || StringUtils.isNullOrWhiteSpace(this.exeFileBrowseComponent.getCurrentFilePath());
         }
 
         @Override

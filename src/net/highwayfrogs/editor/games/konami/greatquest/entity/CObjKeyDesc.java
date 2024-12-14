@@ -1,27 +1,26 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
+import lombok.Getter;
+import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
-import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.system.Config;
 
 /**
  * Represents the 'CObjKeyDesc' struct.
  * Loaded by CObjKey::Init.
  * Created by Kneesnap on 8/22/2023.
  */
+@Getter
 public class CObjKeyDesc extends CItemDesc {
     private KeyType type = KeyType.NONE;
     private static final int PADDING_VALUES = 8;
 
-    public CObjKeyDesc(GreatQuestInstance instance) {
-        super(instance);
-    }
-
-    @Override
-    protected int getTargetClassID() {
-        return kcClassID.OBJ_KEY.getClassId();
+    public CObjKeyDesc(@NonNull kcCResourceGeneric resource) {
+        super(resource, kcEntityDescType.OBJ_KEY);
     }
 
     @Override
@@ -42,6 +41,30 @@ public class CObjKeyDesc extends CItemDesc {
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         super.writeMultiLineInfo(builder, padding);
         builder.append(padding).append("Key Type: ").append(this.type).append(Constants.NEWLINE);
+    }
+
+    @Override
+    public void fromConfig(Config input) {
+        super.fromConfig(input);
+        this.type = input.getKeyValueNodeOrError("keyType").getAsEnumOrError(KeyType.class);
+    }
+
+    @Override
+    public void toConfig(Config output, kcScriptDisplaySettings settings) {
+        super.toConfig(output, settings);
+        output.getOrCreateKeyValueNode("keyType").setAsEnum(this.type);
+    }
+
+    /**
+     * Sets the key type.
+     * @param newType The key type to apply
+     */
+    @SuppressWarnings("unused") // Available to Noodle scripts.
+    public void setType(KeyType newType) {
+        if (newType == null)
+            throw new NullPointerException("newType");
+
+        this.type = newType;
     }
 
     public enum KeyType {

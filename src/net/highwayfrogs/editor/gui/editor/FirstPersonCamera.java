@@ -16,6 +16,7 @@ import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.utils.MathUtils;
 
@@ -31,6 +32,7 @@ public class FirstPersonCamera extends Parent {
     private double currFrameUpdate;
     private double frameDeltaInSecs = 0.0;
     private final double updatePeriod = 2.0;
+    @Setter @Getter private boolean invertY;
 
     private double defaultMoveSpeed = 100.0;
     @Getter private final DoubleProperty camMoveSpeedProperty = new SimpleDoubleProperty(this.defaultMoveSpeed);
@@ -46,8 +48,8 @@ public class FirstPersonCamera extends Parent {
 
     private static final double CAM_MIN_YAW_ANGLE_DEGREES = -360.0;
     private static final double CAM_MAX_YAW_ANGLE_DEGREES = 360.0;
-    private static final double CAM_MIN_PITCH_ANGLE_DEGREES = -85.0;
-    private static final double CAM_MAX_PITCH_ANGLE_DEGREES = 85.0;
+    private static final double CAM_MIN_PITCH_ANGLE_DEGREES = -90.0;
+    private static final double CAM_MAX_PITCH_ANGLE_DEGREES = 90.0;
 
     // Camera processing thread
     AnimationTimer camUpdateThread;
@@ -230,12 +232,12 @@ public class FirstPersonCamera extends Parent {
         this.affineXform.setToIdentity();
 
         // Calculate yaw, pitch angles
-        if (this.rotatePitch.getAngle() <= CAM_MIN_PITCH_ANGLE_DEGREES || this.rotatePitch.getAngle() >= CAM_MAX_PITCH_ANGLE_DEGREES)
-            mouseDeltaX *= -1; // TODO: TEMP
+        if (this.invertY && (this.rotatePitch.getAngle() <= CAM_MIN_PITCH_ANGLE_DEGREES || this.rotatePitch.getAngle() >= CAM_MAX_PITCH_ANGLE_DEGREES))
+            mouseDeltaX *= -1; // Invert mouse X when upside down.
 
-        this.rotateYaw.setAngle(MathUtils.clamp(((this.rotateYaw.getAngle() + (mouseDeltaX * this.camMouseSpeedProperty.get())) % 360 + 540) % 360 - 180, CAM_MIN_YAW_ANGLE_DEGREES, CAM_MAX_YAW_ANGLE_DEGREES));
-        //this.rotatePitch.setAngle(MathUtils.clamp(this.rotatePitch.getAngle() - (yInvert * mouseDeltaY * this.camMouseSpeedProperty.get()), CAM_MIN_PITCH_ANGLE_DEGREES, CAM_MAX_PITCH_ANGLE_DEGREES));
-        this.rotatePitch.setAngle(this.rotatePitch.getAngle() - (yInvert * mouseDeltaY * this.camMouseSpeedProperty.get()));
+        setYaw(this.rotateYaw.getAngle() + (mouseDeltaX * this.camMouseSpeedProperty.get()));
+        setPitch(this.rotatePitch.getAngle() - (yInvert * mouseDeltaY * this.camMouseSpeedProperty.get()));
+        // this.rotatePitch.setAngle(this.rotatePitch.getAngle() - (yInvert * mouseDeltaY * this.camMouseSpeedProperty.get()));
 
         // Dynamically generate the affine transform from the concatenated translation and rotation components
         this.affineXform.prepend(this.translate.createConcatenation(this.rotateYaw.createConcatenation(this.rotatePitch)));
@@ -329,7 +331,8 @@ public class FirstPersonCamera extends Parent {
      */
     public void setCameraLookAt(Point3D target) {
         // Calculate the camera's reference frame in terms of look, right and up vectors
-        Point3D zVec = target.subtract(getPos()).normalize();
+        Point3D deltaPos = target.subtract(getPos()); // (eye - target) = right-handed matrix... Don't we need to convert this to a left-handed matrix?
+        Point3D zVec = deltaPos.normalize();
         Point3D xVec = new Point3D(0, 1, 0).normalize().crossProduct(zVec).normalize();
         Point3D yVec = zVec.crossProduct(xVec).normalize();
 
@@ -339,11 +342,16 @@ public class FirstPersonCamera extends Parent {
                 xVec.getZ(), yVec.getZ(), zVec.getZ(), getPos().getZ());
 
         // Extract camera orientation angles from the affine transformation into the camera's internal yaw, pitch, roll (not currently used).
-        double yaw = Math.toDegrees(Math.atan2(-this.affineXform.getMzx(), this.affineXform.getMzz()));
-        double pitch = Math.toDegrees(Math.asin(this.affineXform.getMzy()));
+        double yaw, pitch;
+        if (this.invertY) {
+            yaw = Math.toDegrees(Math.atan2(this.affineXform.getMzx(), -this.affineXform.getMzz()));
+            pitch = Math.toDegrees(Math.atan2(Math.sqrt(deltaPos.getX() * deltaPos.getX() + deltaPos.getZ() * deltaPos.getZ()), -deltaPos.getY()) + (Math.PI / 2));
+        } else {
+            yaw = Math.toDegrees(Math.atan2(-this.affineXform.getMzx(), this.affineXform.getMzz()));
+            pitch = Math.toDegrees(-Math.atan2(zVec.getY(), Math.sqrt(zVec.getX() * zVec.getX() + zVec.getZ() * zVec.getZ())));
+        }
 
-        this.rotateYaw.setAngle(MathUtils.clamp(yaw, CAM_MIN_YAW_ANGLE_DEGREES, CAM_MAX_YAW_ANGLE_DEGREES));
-        this.rotatePitch.setAngle(MathUtils.clamp(pitch, CAM_MIN_PITCH_ANGLE_DEGREES, CAM_MAX_PITCH_ANGLE_DEGREES));
+        setPitchAndYaw(pitch, yaw);
     }
 
     /**
@@ -373,11 +381,33 @@ public class FirstPersonCamera extends Parent {
     }
 
     /**
+     * Applies a new pitch & yaw value.
+     * @param pitch the pitch value to apply
+     * @param yaw the yaw value to apply
+     */
+    public void setPitchAndYaw(double pitch, double yaw) {
+        // Set translation component (direct from camera's transformation matrix)
+        this.translate.setX(getPos().getX());
+        this.translate.setY(getPos().getY());
+        this.translate.setZ(getPos().getZ());
+
+        // Reset affine transform to identity each time!
+        this.affineXform.setToIdentity();
+
+        setPitch(pitch);
+        setYaw(yaw);
+
+        // Generate the affine transform from the concatenated translation and rotation components
+        this.affineXform.prepend(this.translate.createConcatenation(this.rotateYaw.createConcatenation(this.rotatePitch)));
+    }
+
+    /**
      * Set the camera's yaw rotation by directly manipulating the rotation components.
      * @param angle The desired yaw.
      */
     public void setYaw(double angle) {
-        this.rotateYaw.setAngle(MathUtils.clamp(angle, CAM_MIN_YAW_ANGLE_DEGREES, CAM_MAX_YAW_ANGLE_DEGREES));
+        double newYaw = ((angle % 360F) + 540F) % 360F - 180F;
+        this.rotateYaw.setAngle(MathUtils.clamp(newYaw, CAM_MIN_YAW_ANGLE_DEGREES, CAM_MAX_YAW_ANGLE_DEGREES));
         // TODO: figure out how to update affine transform here without performing forced update
     }
 
@@ -386,7 +416,21 @@ public class FirstPersonCamera extends Parent {
      * @param angle The desired pitch.
      */
     public void setPitch(double angle) {
-        this.rotatePitch.setAngle(MathUtils.clamp(angle, CAM_MIN_PITCH_ANGLE_DEGREES, CAM_MAX_PITCH_ANGLE_DEGREES));
+        double newPitch;
+        if (this.invertY) {
+            newPitch = (((angle % 360F) + 540F) % 360F) - 180F;
+            if (newPitch > CAM_MIN_PITCH_ANGLE_DEGREES && newPitch < CAM_MAX_PITCH_ANGLE_DEGREES) {
+                if (Math.abs(newPitch - CAM_MIN_PITCH_ANGLE_DEGREES) <= Math.abs(newPitch - CAM_MAX_PITCH_ANGLE_DEGREES)) {
+                    newPitch = CAM_MIN_PITCH_ANGLE_DEGREES;
+                } else {
+                    newPitch = CAM_MAX_PITCH_ANGLE_DEGREES;
+                }
+            }
+        } else {
+            newPitch = MathUtils.clamp(angle, CAM_MIN_PITCH_ANGLE_DEGREES, CAM_MAX_PITCH_ANGLE_DEGREES);
+        }
+
+        this.rotatePitch.setAngle(newPitch);
         // TODO: figure out how to update affine transform here without performing forced update
     }
 
@@ -405,18 +449,18 @@ public class FirstPersonCamera extends Parent {
     public double getSpeedModifier(double defaultValue) {
         boolean isControlDown = this.inputManager.isKeyPressed(KeyCode.CONTROL);
         boolean isAltDown = this.inputManager.isKeyPressed(KeyCode.ALT);
-        return getSpeedModifier(isControlDown, isAltDown, defaultValue);
+        return getSpeedModifier(isAltDown, isControlDown, defaultValue);
     }
 
     /**
      * Utility function affording the user different levels of speed control through multipliers.
      */
-    public double getSpeedModifier(boolean isCtrlDown, boolean isAltDown, double defaultValue) {
+    public double getSpeedModifier(boolean isAltDown, boolean isCtrlDown, double defaultValue) {
         double multiplier = 1;
 
         if (isCtrlDown) {
             multiplier = this.camSpeedDownMultiplierProperty.get();
-        } else if (isAltDown) {
+        } else if (isAltDown) { // This beeps on Java 8, but the beeping is fixed in JavaFX 11+
             multiplier = this.camSpeedUpMultiplierProperty.get();
         }
 

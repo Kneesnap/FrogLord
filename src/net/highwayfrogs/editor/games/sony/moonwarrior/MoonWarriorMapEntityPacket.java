@@ -8,7 +8,7 @@ import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.shared.map.SCMapFilePacket;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +33,7 @@ public class MoonWarriorMapEntityPacket extends SCMapFilePacket<MoonWarriorMap, 
         reader.skipBytesRequireEmpty(Constants.SHORT_SIZE);
         int entityDataStartPointer = reader.readInt();
         if (reader.getIndex() != entityDataStartPointer)
-            throw new RuntimeException("Couldn't start reading entity data, since we expected it to start at " + Utils.toHexString(entityDataStartPointer) + ", but it was actually at " + Utils.toHexString(reader.getIndex()));
+            throw new RuntimeException("Couldn't start reading entity data, since we expected it to start at " + NumberUtils.toHexString(entityDataStartPointer) + ", but it was actually at " + NumberUtils.toHexString(reader.getIndex()));
 
         // Read entities.
         this.entities.clear();

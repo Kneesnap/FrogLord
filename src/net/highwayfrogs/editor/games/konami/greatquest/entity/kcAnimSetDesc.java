@@ -1,51 +1,66 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
+import lombok.Getter;
+import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceAnimSet;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.NumberUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Contains animation set data.
  * Created by Kneesnap on 4/16/2024.
  */
-public class kcAnimSetDesc extends kcBaseDesc {
-    private int selfHash;
-    private int[] hashes = EMPTY_HASHES;
+@Getter
+public class kcAnimSetDesc extends kcBaseDesc implements IPropertyListCreator {
+    private final GreatQuestHash<kcCResourceAnimSet> parentHash;
+    private final List<GreatQuestHash<kcCResourceTrack>> animationRefs = new ArrayList<>();
 
-    private static final int[] EMPTY_HASHES = new int[1];
-
-    public kcAnimSetDesc(GreatQuestInstance instance) {
-        super(instance);
+    public kcAnimSetDesc(@NonNull kcCResourceAnimSet resource) {
+        super(resource);
+        this.parentHash = new GreatQuestHash<>(resource);
     }
 
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.selfHash = reader.readInt();
-        int handleCount = reader.readInt();
-        this.hashes = new int[handleCount + 1];
-        for (int i = 0; i < this.hashes.length; i++)
-            this.hashes[i] = reader.readInt();
+        int selfHash = reader.readInt();
+        if (selfHash != this.parentHash.getHashNumber())
+            throw new RuntimeException("The kcAnimSetDesc reported the parent chunk as " + NumberUtils.to0PrefixedHexString(selfHash) + ", but it was expected to be " + this.parentHash.getHashNumberAsString() + ".");
+
+        this.animationRefs.clear();
+        int animationCount = reader.readInt() + 1;
+        for (int i = 0; i < animationCount; i++) {
+            int hash = reader.readInt();
+            GreatQuestHash<kcCResourceTrack> animation = new GreatQuestHash<>(hash);
+            GreatQuestUtils.resolveResourceHash(kcCResourceTrack.class, this, animation, hash, false); // It is common for these to not resolve, so don't warn about it.
+            this.animationRefs.add(animation);
+        }
     }
 
     @Override
     protected void saveData(DataWriter writer) {
-        writer.writeInt(this.selfHash);
-        writer.writeInt(this.hashes.length - 1);
-        for (int i = 0; i < this.hashes.length; i++)
-            writer.writeInt(this.hashes[i]);
+        writer.writeInt(this.parentHash.getHashNumber());
+        writer.writeInt(this.animationRefs.size() - 1);
+        for (int i = 0; i < this.animationRefs.size(); i++)
+            writer.writeInt(this.animationRefs.get(i).getHashNumber());
     }
 
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        builder.append(padding).append("Self Hash[").append(Utils.to0PrefixedHexString(this.selfHash)).append("]:").append(Constants.NEWLINE);
-
-        for (int i = 0; i < this.hashes.length; i++) {
-            builder.append(padding).append(" - ");
-            writeAssetLine(builder, padding, "kcAnimSetDesc Entry", this.hashes[i]);
+        for (int i = 0; i < this.animationRefs.size(); i++) {
+            builder.append(padding).append("-");
+            writeAssetLine(builder, padding, "kcAnimSetDesc Entry", this.animationRefs.get(i));
         }
 
         builder.append(Constants.NEWLINE);
@@ -54,5 +69,28 @@ public class kcAnimSetDesc extends kcBaseDesc {
     @Override
     protected int getTargetClassID() {
         return kcClassID.ANIM_SET.getClassId();
+    }
+
+    /**
+     * Get a list containing all resolved animations.
+     */
+    public List<kcCResourceTrack> getAnimations() {
+        List<kcCResourceTrack> animations = new ArrayList<>();
+        for (int i = 0; i < this.animationRefs.size(); i++) {
+            GreatQuestHash<kcCResourceTrack> animationRef = this.animationRefs.get(i);
+            kcCResourceTrack track = animationRef.getResource();
+            if (track != null && !animations.contains(track))
+                animations.add(track);
+        }
+
+        return animations;
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList.add("Animation References", this.animationRefs.size());
+        for (int i = 0; i < this.animationRefs.size(); i++)
+            propertyList.add("Animation Ref " + i, this.animationRefs.get(i).getDisplayString(false));
+        return propertyList;
     }
 }

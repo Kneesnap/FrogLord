@@ -42,7 +42,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
     @Getter private final int textureScaleY;
 
     public static final int UNTEXTURED_FLAT_SIZE = 4;
-    public static final int UNTEXTURED_GOURAUD_SIZE = 16; // 8 looked mostly good, but it was visually noticeable, and made certain Frogger levels render with less continuous shading.
+    public static final int UNTEXTURED_GOURAUD_SIZE = 32; // 8 looked mostly good, but it was visually noticeable, and made certain Frogger levels render with less continuous shading. 16 was the desired amount BEFORE we added UNLIT_SHARP texture options for maps, but once it got sharp we had to double it to 32.
     public static final int UNTEXTURED_PADDING_SIZE = 1;
     public static final int GOURAUD_TEXTURE_MINIMUM_SIZE = UNTEXTURED_GOURAUD_SIZE - (2 * UNTEXTURED_PADDING_SIZE);
 
@@ -138,8 +138,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
 
     @Override
     public int hashCode() {
-        int hash = 1;
-        hash = (31 * hash) + getPolygonType().ordinal();
+        int hash = getPolygonType().ordinal();
 
         // Add colors.
         if (this.colors != null)

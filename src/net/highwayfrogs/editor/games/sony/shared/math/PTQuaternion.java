@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.MathUtils;
 
 /**
  * Represents the PT Quaternion struct. Seems to match MR_QUAT.
@@ -62,7 +62,7 @@ public class PTQuaternion extends SCSharedGameData {
     public void fromMatrix(PSXMatrix matrix) {
         int trace = matrix.getMatrix()[0][0] + matrix.getMatrix()[1][1] + matrix.getMatrix()[2][2];
         if (trace > 0) {
-            int s = Utils.fixedSqrt((trace + 0x1000) << 12);
+            int s = MathUtils.fixedSqrt((trace + 0x1000) << 12);
             this.c = (short) (s >> 1);
             s = ((0x800 << 12) / s);
             this.x = (short) (((matrix.getMatrix()[1][2] - matrix.getMatrix()[2][1]) * s) >> 12);
@@ -77,7 +77,7 @@ public class PTQuaternion extends SCSharedGameData {
 
             int j = (i + 1) % 3; // 1, 2, 0
             int k = (j + 1) % 3; // 1, 2, 0
-            int s = Utils.fixedSqrt(((matrix.getMatrix()[i][i] - (matrix.getMatrix()[j][j] + matrix.getMatrix()[k][k])) + 0x1000) << 12);
+            int s = MathUtils.fixedSqrt(((matrix.getMatrix()[i][i] - (matrix.getMatrix()[j][j] + matrix.getMatrix()[k][k])) + 0x1000) << 12);
             setComponent(i + 1, (short) (s >> 1));
             s = (0x800 << 12) / s;
             this.c = (short) (((matrix.getMatrix()[j][k] - matrix.getMatrix()[k][j]) * s) >> 12);

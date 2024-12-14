@@ -10,7 +10,7 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
 
 /**
  * Represents a loaded instance of the Beast Wars: Transformers game files.
@@ -37,9 +37,9 @@ public class BeastWarsInstance extends SCGameInstance {
 
     @Override
     public SCGameFile<?> createFile(MWIResourceEntry resourceEntry, byte[] fileData) {
-        if (resourceEntry.getTypeId() == FILE_TYPE_MAP || Utils.testSignature(fileData, BeastWarsMapFile.FILE_SIGNATURE))
+        if (resourceEntry.getTypeId() == FILE_TYPE_MAP || DataUtils.testSignature(fileData, BeastWarsMapFile.FILE_SIGNATURE))
             return new BeastWarsMapFile(this);
-        if (resourceEntry.getTypeId() == FILE_TYPE_TEX || Utils.testSignature(fileData, BeastWarsTexFile.SIGNATURE))
+        if (resourceEntry.getTypeId() == FILE_TYPE_TEX || DataUtils.testSignature(fileData, BeastWarsTexFile.SIGNATURE))
             return new BeastWarsTexFile(this);
         if (resourceEntry.getTypeId() == FILE_TYPE_PLT || resourceEntry.hasExtension("plt"))
             return new PLTFile(this);

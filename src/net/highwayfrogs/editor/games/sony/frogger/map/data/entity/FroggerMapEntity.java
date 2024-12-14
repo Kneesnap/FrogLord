@@ -30,12 +30,15 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
-import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Objects;
-import java.util.logging.Logger;
 
 /**
  * Represents the "ENTITY" struct.
@@ -51,7 +54,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
     @Getter private FroggerEntityScriptData scriptData;
     @Getter @Setter private transient byte[] rawData;
     @Getter @Setter private transient boolean invalid; // This is set if we know that the entity data we loaded was not the proper size.
-    private SoftReference<Logger> logger;
+    private WeakReference<ILogger> logger;
 
     private static final int RUNTIME_POINTERS = 4;
 
@@ -150,14 +153,19 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
     }
 
     @Override
-    public Logger getLogger() {
-        Logger logger = this.logger != null ? this.logger.get() : null;
-        if (logger == null) {
-            logger = Logger.getLogger(this.mapFile.getFileDisplayName() + "|Entity " + this.uniqueId + "|" + getTypeName());
-            this.logger = new SoftReference<>(logger);
-        }
+    public ILogger getLogger() {
+        ILogger logger = this.logger != null ? this.logger.get() : null;
+        if (logger == null)
+            this.logger = new WeakReference<>(logger = new LazyInstanceLogger(getGameInstance(), FroggerMapEntity::getLoggerInfo, this));
 
         return logger;
+    }
+
+    /**
+     * Gets logger information to display when the logger is used.
+     */
+    public String getLoggerInfo() {
+        return this.mapFile.getFileDisplayName() + "|Entity " + this.uniqueId + "|" + getTypeName();
     }
 
     /**
@@ -204,7 +212,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
         List<FroggerMapForm> forms = this.mapFile.getFormPacket().getForms();
         if (this.mapFile.getMapConfig().isOldFormFormat() && this.formGridId >= 0 && oldForms != null && oldForms.size() > this.formGridId) {
             editor.addSelectionBox("Form Grid", oldForms.get(this.formGridId), oldForms, newForm -> this.formGridId = oldForms.indexOf(newForm))
-                    .setConverter(new AbstractIndexStringConverter<>(oldForms, (index, form) -> "Form #" + index + " (" + Utils.fixedPointShortToFloat4Bit(form.getXMin()) + "," + Utils.fixedPointShortToFloat4Bit(form.getYMin()) + "," + Utils.fixedPointShortToFloat4Bit(form.getZMin()) + ")"));
+                    .setConverter(new AbstractIndexStringConverter<>(oldForms, (index, form) -> "Form #" + index + " (" + DataUtils.fixedPointShortToFloat4Bit(form.getXMin()) + "," + DataUtils.fixedPointShortToFloat4Bit(form.getYMin()) + "," + DataUtils.fixedPointShortToFloat4Bit(form.getZMin()) + ")"));
         } else if (!this.mapFile.getMapConfig().isOldFormFormat() && this.formGridId >= 0 && forms.size() > this.formGridId) {
             editor.addSelectionBox("Form Grid", forms.get(this.formGridId), forms, newForm -> this.formGridId = newForm.getFormIndex())
                     .setConverter(new AbstractIndexStringConverter<>(forms, (index, form) -> "Form #" + index + " (" + form.getXGridSquareCount() + "," + form.getZGridSquareCount() + ")"));
@@ -214,7 +222,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
 
         editor.addBoldLabel("Flags:");
         for (FroggerMapEntityEntityFlag flag : FroggerMapEntityEntityFlag.values())
-            editor.addCheckBox(Utils.capitalize(flag.name()), testFlag(flag), newState -> {
+            editor.addCheckBox(StringUtils.capitalize(flag.name()), testFlag(flag), newState -> {
                 setFlag(flag, newState);
                 manager.updateEntityPositionRotation(this);
             }).setTooltip(new Tooltip(flag.getDescription()));
@@ -247,7 +255,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
 
         // Add raw data.
         if (this.rawData != null)
-            editor.addTextField("Raw Data", Utils.toByteString(this.rawData));
+            editor.addTextField("Raw Data", DataUtils.toByteString(this.rawData));
     }
 
     /**

@@ -10,7 +10,6 @@ import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.system.mm3d.OffsetType;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 /**
  * Represents the joints block.
@@ -19,7 +18,7 @@ import java.util.Arrays;
 @Getter
 public class MMJointsBlock extends MMDataBlockBody {
     @Setter private short flags;
-    private byte[] name = new byte[NAME_BYTE_LENGTH];
+    private String name = "";
     @Setter private int parentJointIndex = -1; // -1 = Not attached.
     @Setter private float xRotation;
     @Setter private float yRotation;
@@ -39,7 +38,7 @@ public class MMJointsBlock extends MMDataBlockBody {
     @Override
     public void load(DataReader reader) {
         this.flags = reader.readShort();
-        reader.readBytes(this.name);
+        this.name = reader.readNullTerminatedFixedSizeString(NAME_BYTE_LENGTH);
         this.parentJointIndex = reader.readInt();
         this.xRotation = reader.readFloat();
         this.yRotation = reader.readFloat();
@@ -52,7 +51,7 @@ public class MMJointsBlock extends MMDataBlockBody {
     @Override
     public void save(DataWriter writer) {
         writer.writeShort(this.flags);
-        writer.writeBytes(this.name);
+        writer.writeNullTerminatedFixedSizeString(this.name, NAME_BYTE_LENGTH);
         writer.writeInt(this.parentJointIndex);
         writer.writeFloat(this.xRotation);
         writer.writeFloat(this.yRotation);
@@ -65,29 +64,13 @@ public class MMJointsBlock extends MMDataBlockBody {
     /**
      * Sets the name of this joint.
      * If a byte length of more than 40 is specified, an error will be thrown.
-     * @param name The new name for this joint.
+     * @param newName The new name for this joint.
      */
-    public void setName(String name) {
-        byte[] newBytes = name.getBytes(StandardCharsets.US_ASCII);
+    public void setName(String newName) {
+        byte[] newBytes = newName.getBytes(StandardCharsets.US_ASCII);
         if (newBytes.length > NAME_BYTE_LENGTH)
             throw new RuntimeException("Joint names cannot exceed a length of " + NAME_BYTE_LENGTH + " bytes.");
 
-        Arrays.fill(this.name, Constants.NULL_BYTE);
-        System.arraycopy(newBytes, 0, this.name, 0, newBytes.length);
-    }
-
-    /**
-     * Gets the name of this joint.
-     */
-    public String getName() {
-        int findIndex = -1;
-        for (int i = 0; i < this.name.length; i++) {
-            if (this.name[i] == Constants.NULL_BYTE) {
-                findIndex = i;
-                break;
-            }
-        }
-
-        return findIndex != -1 ? new String(Arrays.copyOfRange(this.name, 0, findIndex)) : new String(this.name);
+        this.name = newName;
     }
 }

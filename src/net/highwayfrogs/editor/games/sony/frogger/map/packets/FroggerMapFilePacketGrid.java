@@ -6,7 +6,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
 
 /**
  * Represents a Frogger map's collision grid.
@@ -116,14 +116,14 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
      * Gets the grid square/rectangle X size as a floating point number.
      */
     public float getGridXSizeAsFloat() {
-        return Utils.fixedPointIntToFloatNBits(this.gridXSize, 8);
+        return DataUtils.fixedPointIntToFloatNBits(this.gridXSize, 8);
     }
 
     /**
      * Gets the grid square/rectangle Z size as a floating point number.
      */
     public float getGridZSizeAsFloat() {
-        return Utils.fixedPointIntToFloatNBits(this.gridZSize, 8);
+        return DataUtils.fixedPointIntToFloatNBits(this.gridZSize, 8);
     }
 
     /**

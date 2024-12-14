@@ -3,22 +3,26 @@ package net.highwayfrogs.editor.games.konami.greatquest.model;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestImageFile;
+import net.highwayfrogs.editor.games.generic.data.GameData;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestImageFile;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Represents a material.
  * Created by Kneesnap on 6/22/2023.
  */
 @Getter
-public class kcMaterial extends GameObject implements IMultiLineInfoWriter {
+@Setter
+public class kcMaterial extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
     private String materialName;
     private String textureFileName;
-    private int flags; // TODO: Let's document the different flags.
+    private int flags;
+    // The following values appear unused in the PS2 PAL version, as kcGraphicsSetMaterial() only copies these the first time the function is executed (which is likely long before any custom materials are loaded).
     private float xpVal = 0F;
     private float diffuseRed = 1F;
     private float diffuseGreen = 1F;
@@ -37,13 +41,19 @@ public class kcMaterial extends GameObject implements IMultiLineInfoWriter {
     private float emissiveBlue;
     private float emissiveAlpha = 1F;
     private float power = 1F;
-    @Setter private transient GreatQuestImageFile texture;
+    private transient GreatQuestImageFile texture;
 
     private static final int NAME_SIZE = 32;
     private static final int FILENAME_SIZE = 32;
 
-    private static final int MATERIAL_FLAG_TEXTURED = Constants.BIT_FLAG_0; // 0x01: kcImportMaterialTexture(_kcMaterial*) will remove this flag if the texture is not found.
-    private static final int MATERIAL_FLAG_ENABLE_ALPHA_BLEND = Constants.BIT_FLAG_3; // 0x08, Confirmed via SetMaterial(_kcMaterial*). Ignored in maps, and also in kcModel if blendMode != KCBLEND_DISABLE.
+    private static final int MATERIAL_FLAG_TEXTURED = Constants.BIT_FLAG_0; // 0x01: kcImportMaterialTexture(_kcMaterial*) will remove this flag if the texture is not found. Used by kcOTARenderCallbackBuffer::FlushBuffer
+    private static final int MATERIAL_FLAG_ENABLE_ALPHA_BLEND = Constants.BIT_FLAG_3; // 0x08, Confirmed via SetMaterial(_kcMaterial*). Ignored in maps, and also in kcModel if blendMode != KCBLEND_DISABLE. Used by kcOTARenderCallbackBuffer::AddVtxBuffer to determine if there is transparency/if it should render later.
+    private static final int MATERIAL_FLAG_UNKNOWN = Constants.BIT_FLAG_4; // 0x10, seen on materials named "water", likely indicating something such as UV scrolling, transparency, or just that something is in fact, water. I have not yet found where this flag is checked, if it is checked. Maybe on the GPU it will indicate texture transform? Not sure! We should try removing this flag to see if it changes anything.
+    private static final int FLAG_VALIDATION_MASK = MATERIAL_FLAG_UNKNOWN | MATERIAL_FLAG_ENABLE_ALPHA_BLEND | MATERIAL_FLAG_TEXTURED;
+
+    public kcMaterial(GreatQuestInstance instance) {
+        super(instance);
+    }
 
     /**
      * Tests if there is a texture assigned to this material.
@@ -52,10 +62,17 @@ public class kcMaterial extends GameObject implements IMultiLineInfoWriter {
         return (this.flags & MATERIAL_FLAG_TEXTURED) == MATERIAL_FLAG_TEXTURED;
     }
 
+    /**
+     * Tests if alpha blend should be enabled for the material.
+     */
+    public boolean hasAlphaBlend() {
+        return (this.flags & MATERIAL_FLAG_ENABLE_ALPHA_BLEND) == MATERIAL_FLAG_ENABLE_ALPHA_BLEND;
+    }
+
     @Override
     public void load(DataReader reader) {
-        this.materialName = reader.readTerminatedStringOfLength(NAME_SIZE);
-        this.textureFileName = reader.readTerminatedStringOfLength(FILENAME_SIZE);
+        this.materialName = reader.readNullTerminatedFixedSizeString(NAME_SIZE, Constants.NULL_BYTE);
+        this.textureFileName = reader.readNullTerminatedFixedSizeString(FILENAME_SIZE, Constants.NULL_BYTE);
         this.flags = reader.readInt();
         this.xpVal = reader.readFloat();
         this.diffuseRed = reader.readFloat();
@@ -76,8 +93,6 @@ public class kcMaterial extends GameObject implements IMultiLineInfoWriter {
         this.emissiveAlpha = reader.readFloat();
         this.power = reader.readFloat();
 
-        // TODO: kcImportTextures(kcModel*) overwrites the material colors & power.
-
         // The last value is a 32-bit integer: pTexture.
         // I suspect that this value is a pointer into malloc'd data for the texture.
         // In other words, this value only meant something to the program which wrote it.
@@ -85,12 +100,15 @@ public class kcMaterial extends GameObject implements IMultiLineInfoWriter {
         // kcCResourceModel::Load(char*) sets the texture path to be the folder containing the .vtx file, enabling textures to be resolved by their filename instead of this.
         // The value is overwritten when kcImportMaterialTexture is called (Specifically, the call to kcImportTexture will overwrite the existing value, if it exists), which occurs when loading maps + models.
         reader.skipInt();
+        warnAboutInvalidBitFlags(this.flags, FLAG_VALIDATION_MASK, "kcMaterial['" + this.materialName + "']");
     }
 
     /**
      * For some reason, any materials on a kcModel* passed to kcImportTextures() will have a lot of their values overwritten.
+     * Considering these values appear to never be used, most likely these values were garbage to begin with. (At least for kcModel)
      * This function replicates that behavior.
      */
+    @SuppressWarnings("unused")
     public void applyModelMaterialInfo() {
         // Apply default ambient color data.
         this.ambientRed = 1F;
@@ -122,8 +140,8 @@ public class kcMaterial extends GameObject implements IMultiLineInfoWriter {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeTerminatedStringOfLength(this.materialName, NAME_SIZE);
-        writer.writeTerminatedStringOfLength(this.textureFileName, FILENAME_SIZE);
+        writer.writeNullTerminatedFixedSizeString(this.materialName, NAME_SIZE);
+        writer.writeNullTerminatedFixedSizeString(this.textureFileName, FILENAME_SIZE);
         writer.writeInt(this.flags);
         writer.writeFloat(this.xpVal);
         writer.writeFloat(this.diffuseRed);
@@ -178,7 +196,7 @@ public class kcMaterial extends GameObject implements IMultiLineInfoWriter {
         if (textureFilePrefix != null)
             builder.append(textureFilePrefix);
         if (this.textureFileName != null)
-            builder.append(Utils.stripExtension(this.textureFileName));
+            builder.append(FileUtils.stripExtension(this.textureFileName));
         builder.append(".png").append(Constants.NEWLINE);
     }
 
@@ -186,7 +204,7 @@ public class kcMaterial extends GameObject implements IMultiLineInfoWriter {
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         builder.append(padding).append("kcMaterial[Name='").append(this.materialName).append("',Texture='").append(this.textureFileName).append("']:").append(Constants.NEWLINE);
         String newPadding = padding + " ";
-        builder.append(newPadding).append("Flags: ").append(Utils.toHexString(this.flags)).append(Constants.NEWLINE);
+        builder.append(newPadding).append("Flags: ").append(NumberUtils.toHexString(this.flags)).append(Constants.NEWLINE);
         builder.append(newPadding).append("xpVal: ").append(this.xpVal).append(Constants.NEWLINE);
         builder.append(newPadding).append("Diffuse: [Red=").append(this.diffuseRed).append(",Green=").append(this.diffuseGreen).append(",Blue=").append(this.diffuseBlue).append(",Alpha=").append(this.diffuseAlpha).append("]").append(Constants.NEWLINE);
         builder.append(newPadding).append("Ambient: [Red=").append(this.ambientRed).append(",Green=").append(this.ambientGreen).append(",Blue=").append(this.ambientBlue).append(",Alpha=").append(this.ambientAlpha).append("]").append(Constants.NEWLINE);

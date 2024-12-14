@@ -28,7 +28,13 @@ public class SCGameFileGroupedListViewComponent<TGameInstance extends SCGameInst
 
     @Override
     protected void onSelect(SCGameFile<?> file) {
-        getGameInstance().getMainMenuController().showEditor(file);
+        if (file != null)
+            getGameInstance().getMainMenuController().showEditor(file);
+    }
+
+    @Override
+    protected void onDoubleClick(SCGameFile<?> file) {
+        file.handleWadEdit(null);
     }
 
     @Override

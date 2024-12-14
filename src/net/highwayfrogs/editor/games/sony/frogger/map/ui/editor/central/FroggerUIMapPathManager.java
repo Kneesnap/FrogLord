@@ -31,8 +31,9 @@ import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.SelectionPromptTracker;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
-import net.highwayfrogs.editor.utils.TriConsumer;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
+import net.highwayfrogs.editor.utils.lambda.TriConsumer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,12 +53,12 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
     private DisplayList pathDisplayList;
     @Getter private TextField fullPathLengthField;
 
-    private static final PhongMaterial MATERIAL_WHITE = Utils.makeUnlitSharpMaterial(Color.WHITE);
-    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeUnlitSharpMaterial(Color.YELLOW);
-    private static final PhongMaterial MATERIAL_LIGHT_GREEN = Utils.makeUnlitSharpMaterial(Color.LIGHTGREEN);
-    private static final PhongMaterial MATERIAL_BLUE = Utils.makeUnlitSharpMaterial(Color.BLUE);
-    private static final PhongMaterial MATERIAL_GREEN = Utils.makeUnlitSharpMaterial(Color.GREEN);
-    private static final PhongMaterial MATERIAL_PURPLE = Utils.makeUnlitSharpMaterial(Color.PURPLE);
+    private static final PhongMaterial MATERIAL_WHITE = Scene3DUtils.makeUnlitSharpMaterial(Color.WHITE);
+    private static final PhongMaterial MATERIAL_YELLOW = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
+    private static final PhongMaterial MATERIAL_LIGHT_GREEN = Scene3DUtils.makeUnlitSharpMaterial(Color.LIGHTGREEN);
+    private static final PhongMaterial MATERIAL_BLUE = Scene3DUtils.makeUnlitSharpMaterial(Color.BLUE);
+    private static final PhongMaterial MATERIAL_GREEN = Scene3DUtils.makeUnlitSharpMaterial(Color.GREEN);
+    private static final PhongMaterial MATERIAL_PURPLE = Scene3DUtils.makeUnlitSharpMaterial(Color.PURPLE);
 
     public FroggerUIMapPathManager(MeshViewController<FroggerMapMesh> controller) {
         super(controller);
@@ -102,7 +103,7 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
                 pathEntityCount++;
 
         if (pathEntityCount > 0) {
-            Utils.makePopUp(pathEntityCount + (pathEntityCount == 1 ? " entity was" : " entities were") + " using the path, so it cannot be removed.", AlertType.WARNING);
+            FXUtils.makePopUp(pathEntityCount + (pathEntityCount == 1 ? " entity was" : " entities were") + " using the path, so it cannot be removed.", AlertType.WARNING);
             return false;
         }
 

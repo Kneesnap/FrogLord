@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.gui.GameConfigController.GameConfigUIController;
 import net.highwayfrogs.editor.gui.components.FolderBrowseComponent.GameConfigFolderBrowseComponent;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -37,16 +38,16 @@ public class FroggerRescueGameType implements IGameType {
     }
 
     @Override
-    public void loadGameInstance(GameInstance instance, String gameVersionConfigName, Config gameSetupConfig, ProgressBarComponent progressBar) {
+    public void loadGameInstance(GameInstance instance, String gameVersionConfigName, Config gameSetupConfig, Config instanceConfig, ProgressBarComponent progressBar) {
         if (!(instance instanceof FroggerRescueInstance))
             throw new ClassCastException("The provided instance was " + Utils.getSimpleName(instance) + ", when " + FroggerRescueInstance.class.getSimpleName() + " was required.");
 
         String mainFilePath = gameSetupConfig.getKeyValueNodeOrError(CONFIG_MAIN_FOLDER_PATH).getAsString();
-        if (Utils.isNullOrWhiteSpace(mainFilePath))
+        if (StringUtils.isNullOrWhiteSpace(mainFilePath))
             throw new IllegalArgumentException("Invalid mainFolderPath.");
 
         File mainFile = new File(mainFilePath);
-        ((FroggerRescueInstance) instance).loadGame(gameVersionConfigName, mainFile, progressBar);
+        ((FroggerRescueInstance) instance).loadGame(gameVersionConfigName, instanceConfig, mainFile, progressBar);
     }
 
     @Override
@@ -67,13 +68,13 @@ public class FroggerRescueGameType implements IGameType {
 
         public FroggerRescueGameConfigUI(GameConfigController controller, GameConfig gameConfig, Config config) {
             super(controller, gameConfig);
-            this.binFileBrowseComponent = new GameConfigFolderBrowseComponent(this, config, CONFIG_MAIN_FOLDER_PATH, "Game Data Folder", "Please locate and open the folder containing game data", false);
+            this.binFileBrowseComponent = new GameConfigFolderBrowseComponent(this, config, CONFIG_MAIN_FOLDER_PATH, "Game Data Folder", "Please locate the folder containing game data", false);
             loadController(null);
         }
 
         @Override
         public boolean isLoadButtonDisabled() {
-            return Utils.isNullOrWhiteSpace(this.binFileBrowseComponent.getCurrentFolderPath());
+            return StringUtils.isNullOrWhiteSpace(this.binFileBrowseComponent.getCurrentFolderPath());
         }
 
         @Override

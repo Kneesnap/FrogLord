@@ -107,9 +107,9 @@ public class FroggerEntityDataPathInfo extends FroggerEntityData {
         IVector.MROuterProduct12(vecZ, vecX, vecY);
         PSXMatrix matrix = PSXMatrix.WriteAxesAsMatrix(new PSXMatrix(), vecX, vecY, vecZ);
 
-        position[3] = (float) matrix.getRollAngle();
-        position[4] = (float) matrix.getPitchAngle();
-        position[5] = (float) matrix.getYawAngle();
+        position[3] = (float) matrix.getPitchAngle();
+        position[4] = (float) matrix.getYawAngle();
+        position[5] = (float) matrix.getRollAngle();
         return position;
     }
 

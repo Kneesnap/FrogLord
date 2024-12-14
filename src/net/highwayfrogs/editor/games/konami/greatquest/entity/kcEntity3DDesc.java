@@ -1,14 +1,30 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.IConfigData;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedResource;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityFlag.kcEntityInstanceFlag;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcIGenericResourceData;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcSphere;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.system.Config.ConfigValueNode;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
+import net.highwayfrogs.editor.utils.objects.OptionalArguments;
+
+import java.io.File;
 
 /**
  * Represents the 'kcEntity3DDesc' struct.
@@ -16,63 +32,28 @@ import net.highwayfrogs.editor.utils.Utils;
  */
 @Getter
 @Setter
-public class kcEntity3DDesc extends kcBaseDesc {
-    private int instanceFlags; // TODO: These seem to be just the mapped flags.
+public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericResourceData, IConfigData {
+    @NonNull private final kcEntityDescType entityDescriptionType;
+    private int instanceFlags; // This doesn't appear to be used, it seems to be the default flags value for which kcEntity3DInst will pull its default value from.
+    // This is NOT the collision proxy, but instead a bounding sphere to easily eliminate most collision candidates. kcCProxyCapsule::Intersect does the sphere check before doing the more expensive proxy tests.
+    // NOTE: Waypoints with bounding boxes appear to ignore the bounding sphere, as massive bounding boxes such as the ones in Joy Towers have a radius of one.
     private final kcSphere boundingSphere = new kcSphere(0, 0, 0, 1F); // Positioned relative to entity position.
     private static final int PADDING_VALUES = 3;
     private static final int PADDING_VALUES_3D = 4;
-    // TODO: Go over all usages of cached resource too.
-
-    // kcCHud: Seems to have independent hud flags.
-    // I'm not sure the instanceFlags are even applied to most entities.
-    // Wait hmm. Are these even used? I'm not convinced they are.
-
-    // mFlags:
-    // 00 00000001 (kcCActorBase) Enable kcProxyCapsule (kcCActorBase::Update)
-    //  - Enable kcCHudMgr::HudMgrUpdate, kcCHud::HudDestroy
-    // 01 00000002 (kcCWaypoint) (RESIDES ON WAYPOINT) -> Enable interactions with waypoint
-    //  - Seems to indicate if collision is enabled.
-    //  - For waypoints it seems to exist on the waypoint.
-    //  - For collision proxies, it seems to be used to indicate if the collision proxy is activated or not. (See: kcCActorBase::SetCollideable)
-    // 02 00000004 (kcCActorBase) Enable TerrainTrack() (kcCActorBase::Update)
-    //  - static kcCDialog::mbActive = true or false (not sure which) based on this bit when kcCDialog::Update runs.
-    //  - kcCActorBase::SetCollideable (and others) will deactivate collision if this bit is set. They also won't activate collision if it is set too.
-    //  - Controls if the HUD is visible for kcCHud::HudVisible
-    // 03 00000008 (kcCActorBase) == ??? (Cleared by kcCActorBase::EvaluateTransform)
-    // 04 00000010 (kcCActorBase) == ??? (Set kcCActorBase::Update to whether an FSM exists or not AND if bit 31 is not set.)
-    // 05 00000020 (CCharacter) == 1 -> TargetIsNotNegativeOne MonsterClass::Do_Guard (kcCCameraBase::ResetInt sets this bit too?) This does seem to just indicate, is mhTarget != -1.
-    // 07 00000080 (kcCActorBase) == Disable kcCEntity::onEntityEnable() (What is this even?) kcCActorBase::Update
-    // 11 00000800 (CCharacter) == 0 -> ScriptControl (Controlled by script? Not sure.), aisystem.cpp/MonsterClass::Set_States
-    // 12 00001000 (kcCActorBase) == Must be set for the impulse to go through. (kcCActorBase::OnImpulse)
-    // 15 00008000 (kcCActorBase) If the bit is set, kcCActorBase::Animate will return without doing anything.
-    // 16 00010000 (kcCActorBase) Enables Entity RenderDebug(). kcCActorBase::Render, Disables kcCDialog::Render
-    //  - Could also be related to collision. This bit must be true for collision to activate, and being false will often deactivate it.
-    // 18 00040000 (kcCActorBase) Enables the entity taking damage from scripts. (kcCActorBase::OnCommand)
-    // 26 04000000 (kcCMotionAgent) Enables gravity (kcCMotionAgent::Update)
-    // 30 40000000 (kcCEntity) All entities seem to have this bit set when registered in the entity tracker. When removed, this bit is also removed. Probably means "entity is registered"
-    // 31 80000000 (kcCActorBase) If the bit is set, kcCActorBase::Update will apply bit 4 based on if there is an FSM or not. If this is not set, bit 4 is always 0.
-    //  - Also disables kcProxyCapsule interactions in kcCActorBase::Update
-    //  - Also disables TerrainTrack interactions in kcCActorBase::Update
-    //  - Also disables kcCEntity::OnEnableUpdate interactions in kcCActorBase::Update
-    //  - Skips rendering an entity if debug rendering is enabled and this is NOT enabled.
-
-    // mFlagsEntity3D:
-    // ?? ???
-
-    // Default kcCActorBase Flags: 0x242000 (kcCActorBase::__ct)
-    // mFlagsActor:
-    // 03 008 (CCharacter) -> == 1 Probably BeenDamaged?
-
     private static final int CLASS_ID = GreatQuestUtils.hash("kcCEntity3D");
+    private static final String ENTITY_DESC_FILE_PATH_KEY = "entityDescCfgFilePath";
+    private static final SavedFilePath ENTITY_DESC_EXPORT_PATH = new SavedFilePath(ENTITY_DESC_FILE_PATH_KEY, "Select the directory to export the entity description to", Config.DEFAULT_FILE_TYPE);
+    private static final SavedFilePath ENTITY_DESC_IMPORT_PATH = new SavedFilePath(ENTITY_DESC_FILE_PATH_KEY, "Select the directory to import entity description from", Config.DEFAULT_FILE_TYPE);
 
-    public kcEntity3DDesc(GreatQuestInstance instance) {
-        super(instance);
+    protected kcEntity3DDesc(@NonNull kcCResourceGeneric resource, @NonNull kcEntityDescType descriptionType) {
+        super(resource);
+        this.entityDescriptionType = descriptionType;
         this.boundingSphere.setRadius(1F); // Default radius is 1.
     }
 
     @Override
     protected int getTargetClassID() {
-        return CLASS_ID;
+        return getEntityDescriptionType().getClassId().getClassId();
     }
 
     @Override
@@ -97,7 +78,94 @@ public class kcEntity3DDesc extends kcBaseDesc {
 
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        builder.append(padding).append("Flags: ").append(Utils.toHexString(this.instanceFlags)).append(Constants.NEWLINE);
+        builder.append(padding).append("Flags: ").append(kcEntityInstanceFlag.getAsOptionalArguments(this.instanceFlags).getNamedArgumentsAsCommaSeparatedString()).append(Constants.NEWLINE);
         this.boundingSphere.writePrefixedMultiLineInfo(builder, "Bounding Sphere", padding);
+    }
+
+    @Override
+    public kcCResourceGeneric getResource() {
+        return (kcCResourceGeneric) super.getResource();
+    }
+
+    @Override
+    public abstract kcCResourceGenericType getResourceType();
+
+    @Override
+    public void handleDoubleClick() {
+        // Do nothing by default.
+    }
+
+    @Override
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        MenuItem exportEntityItem = new MenuItem("Export Entity Description");
+        contextMenu.getItems().add(exportEntityItem);
+        exportEntityItem.setOnAction(event -> {
+            File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), ENTITY_DESC_EXPORT_PATH, getResource().getName() + "." + Config.DEFAULT_EXTENSION, true);
+            if (outputFile != null) {
+                toConfig().saveTextFile(outputFile);
+                getLogger().info("Saved '" + getResource().getName() + "' as '" + outputFile.getName() + "'.");
+            }
+        });
+
+        MenuItem importEntityItem = new MenuItem("Import Entity Description");
+        contextMenu.getItems().add(importEntityItem);
+        importEntityItem.setOnAction(event -> {
+            File inputFile = FileUtils.askUserToOpenFile(getGameInstance(), ENTITY_DESC_IMPORT_PATH);
+            if (inputFile == null)
+                return;
+
+            Config entityCfg = Config.loadConfigFromTextFile(inputFile, false);
+            this.fromConfig(entityCfg);
+            getLogger().info("Loaded '" + getResource().getName() + "' from '" + inputFile.getName() + "'.");
+        });
+    }
+
+    @Override
+    public final void toConfig(Config output) {
+        toConfig(output, getParentFile().createScriptDisplaySettings());
+    }
+
+    public static final String CONFIG_KEY_DESC_TYPE = "type";
+    private static final String CONFIG_KEY_FLAGS = "flags";
+    private static final String CONFIG_KEY_BOUNDING_SPHERE_POS = "boundingSpherePos";
+    private static final String CONFIG_KEY_BOUNDING_SPHERE_RADIUS = "boundingSphereRadius";
+
+    @Override
+    public void fromConfig(Config input) {
+        kcEntityDescType descType = input.getKeyValueNodeOrError(CONFIG_KEY_DESC_TYPE).getAsEnumOrError(kcEntityDescType.class);
+        if (descType != getEntityDescriptionType())
+            throw new RuntimeException("The entity description reported itself as " + descType + ", which is incompatible with " + getEntityDescriptionType() + ".");
+
+        OptionalArguments arguments = OptionalArguments.parseCommaSeparatedNamedArguments(input.getKeyValueNodeOrError(CONFIG_KEY_FLAGS).getAsString());
+        this.instanceFlags = kcEntityInstanceFlag.getValueFromArguments(arguments);
+        arguments.warnAboutUnusedArguments(getResource().getLogger());
+
+        this.boundingSphere.getPosition().parse(input.getKeyValueNodeOrError(CONFIG_KEY_BOUNDING_SPHERE_POS).getAsString());
+        this.boundingSphere.setRadius(input.getKeyValueNodeOrError(CONFIG_KEY_BOUNDING_SPHERE_RADIUS).getAsFloat());
+    }
+
+    /**
+     * Resolves a resource from a config node.
+     * @param node the node to resolve the resource from
+     * @param resourceClass the type of resource to resolve
+     * @param hashObj the hash object to apply the result to
+     * @param <TResource> the type of resource to resolve
+     */
+    protected <TResource extends kcHashedResource> void resolve(ConfigValueNode node, Class<TResource> resourceClass, GreatQuestHash<TResource> hashObj) {
+        int nodeHash = GreatQuestUtils.getAsHash(node, hashObj.isNullZero() ? 0 : -1, hashObj);
+        GreatQuestUtils.resolveResourceHash(resourceClass, getParentFile(), getResource(), hashObj, nodeHash, true);
+    }
+
+    /**
+     * Saves entity description information to a config node.
+     * @param output the config node to save the data to
+     * @param settings the settings to save with
+     */
+    public void toConfig(Config output, kcScriptDisplaySettings settings) {
+        output.getOrCreateKeyValueNode(CONFIG_KEY_DESC_TYPE).setAsEnum(getEntityDescriptionType());
+        output.getOrCreateKeyValueNode(CONFIG_KEY_FLAGS).setAsString(kcEntityInstanceFlag.getAsOptionalArguments(this.instanceFlags).getNamedArgumentsAsCommaSeparatedString());
+
+        output.getOrCreateKeyValueNode(CONFIG_KEY_BOUNDING_SPHERE_POS).setAsString(this.boundingSphere.getPosition().toParseableString());
+        output.getOrCreateKeyValueNode(CONFIG_KEY_BOUNDING_SPHERE_RADIUS).setAsFloat(this.boundingSphere.getRadius());
     }
 }

@@ -3,15 +3,16 @@ package net.highwayfrogs.editor.games.konami.rescue;
 
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.games.konami.hudson.HudsonFileUserFSDefinition;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkTypeRegistry;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk;
-import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk.RwPlatformIndependentTextureEntry;
+import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk.IRwPlatformIndependentTexturePrefix;
+import net.highwayfrogs.editor.games.shared.basic.file.definition.PhysicalFileDefinition;
 import net.highwayfrogs.editor.gui.GUIMain;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -50,8 +51,8 @@ public class FroggerRescueMain {
             if (!dirFile.isFile() || dirFile.getName().contains("dummy"))
                 continue;
 
-            File outputFolder = new File(GUIMain.getMainApplicationFolder(), "RescueOutput/" + Utils.stripExtension(dirFile.getName()) + "/");
-            Utils.makeDirectory(outputFolder);
+            File outputFolder = new File(GUIMain.getMainApplicationFolder(), "RescueOutput/" + FileUtils.stripExtension(dirFile.getName()) + "/");
+            FileUtils.makeDirectory(outputFolder);
 
             HFSFile hfsFile = loadHfsFile(dirFile);
             extractHfsFile(outputFolder, hfsFile);
@@ -68,14 +69,14 @@ public class FroggerRescueMain {
 
     private static HFSFile loadHfsFile(File file) throws IOException {
         byte[] packed = Files.readAllBytes(file.toPath());
-        HFSFile hfsFile = new HFSFile(new HudsonFileUserFSDefinition(null, file));
+        HFSFile hfsFile = new HFSFile(new PhysicalFileDefinition(null, file));
         hfsFile.load(new DataReader(new ArraySource(packed)));
         return hfsFile;
     }
 
     private static void extractHfsFile(File outputFolder, HFSFile hfsFile) throws IOException {
         File extractFolder = new File(outputFolder, "RawExtracts/");
-        Utils.makeDirectory(extractFolder);
+        FileUtils.makeDirectory(extractFolder);
 
         int id = 0;
         for (HudsonGameFile dummyFile : hfsFile.getHfsFiles()) {
@@ -86,7 +87,7 @@ public class FroggerRescueMain {
 
     private static void extractTextures(File outputFolder, HFSFile hfsFile) throws IOException {
         File textureFolder = new File(outputFolder, "Textures/");
-        Utils.makeDirectory(textureFolder);
+        FileUtils.makeDirectory(textureFolder);
 
         System.out.println("Extracting textures for file: " + outputFolder.getName());
 
@@ -163,13 +164,13 @@ public class FroggerRescueMain {
                 continue;
 
             RwPlatformIndependentTextureDictionaryChunk textureDictionaryChunk = (RwPlatformIndependentTextureDictionaryChunk) chunk;
-            for (RwPlatformIndependentTextureEntry entry : textureDictionaryChunk.getEntries()) {
-                for (int i = 0; i < entry.getMipLevelImages().size(); i++) {
+            for (IRwPlatformIndependentTexturePrefix entry : textureDictionaryChunk.getEntries()) {
+                for (int i = 0; i < entry.getMipMapImages().size(); i++) {
                     String baseName = entry.makeFileName(i);
                     int num = fileNames.computeIfAbsent(baseName, key -> new AtomicInteger()).getAndIncrement();
 
-                    File imageOutputFile = new File(textureFolder, baseName + "_" + Utils.padNumberString(num, 2) + ".png");
-                    ImageIO.write(entry.getMipLevelImages().get(i).getImage(), "png", imageOutputFile);
+                    File imageOutputFile = new File(textureFolder, baseName + "_" + NumberUtils.padNumberString(num, 2) + ".png");
+                    ImageIO.write(entry.getMipMapImages().get(i).getImage(), "png", imageOutputFile);
                 }
             }
         }

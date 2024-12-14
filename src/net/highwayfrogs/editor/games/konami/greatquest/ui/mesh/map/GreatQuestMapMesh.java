@@ -1,10 +1,13 @@
 package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResOctTreeSceneMgr;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshCollection;
+
+import java.util.List;
 
 /**
  * Represents a map mesh for Frogger The Great Quest.
@@ -17,13 +20,20 @@ public class GreatQuestMapMesh extends DynamicMesh {
     private final DynamicMeshCollection<GreatQuestMapMaterialMesh> actualMesh;
 
     public GreatQuestMapMesh(GreatQuestChunkedFile mapFile) {
-        super(null, mapFile.getExportName());
+        super(null, DynamicMeshTextureQuality.LIT_BLURRY, mapFile.getExportName());
         this.map = mapFile;
         this.actualMesh = new DynamicMeshCollection<>(getMeshName());
 
         // Build the actual mesh.
-        this.actualMesh.addMesh(new GreatQuestMapMaterialMesh(getMap(), null)); // Unknown texture.
-        for (kcMaterial material : getMap().getSceneManager().getMaterials())
-            this.actualMesh.addMesh(new GreatQuestMapMaterialMesh(getMap(), material));
+        kcCResOctTreeSceneMgr sceneManager = this.map.getSceneManager();
+        addMeshForMaterial(sceneManager, null); // Vertex buffers using an unknown material.
+        for (kcMaterial material : sceneManager.getMaterials())
+            addMeshForMaterial(sceneManager, material);
+    }
+
+    private void addMeshForMaterial(kcCResOctTreeSceneMgr sceneManager, kcMaterial material) {
+        List<?> vertexBuffers = sceneManager.getVertexBuffersForMaterial(material);
+        if (vertexBuffers != null && vertexBuffers.size() > 0)
+            this.actualMesh.addMesh(new GreatQuestMapMaterialMesh(this.map, material));
     }
 }

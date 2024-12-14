@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.games.sony;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.games.generic.GameObject;
+import net.highwayfrogs.editor.games.generic.data.GameObject;
 import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
 
 /**
@@ -25,7 +25,7 @@ public abstract class SCGameObject<TGameInstance extends SCGameInstance> extends
 
     @Override
     public SCGameConfig getConfig() {
-        return getGameInstance().getConfig();
+        return getGameInstance().getVersionConfig();
     }
 
     /**

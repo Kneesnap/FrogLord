@@ -14,6 +14,9 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -29,7 +32,7 @@ public class PTActionSetFile extends SCSharedGameFile {
     private final List<PTActionSet> actionSets = new ArrayList<>();
 
     public static final int IDENTIFIER = 0x33305341;
-    public static final String IDENTIFIER_STRING = Utils.toMagicString(IDENTIFIER); // 'AS03'
+    public static final String IDENTIFIER_STRING = Utils.toIdentifierString(IDENTIFIER); // 'AS03'
 
     public PTActionSetFile(SCGameInstance instance) {
         super(instance);
@@ -111,7 +114,7 @@ public class PTActionSetFile extends SCSharedGameFile {
     @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {
         propertyList = super.addToPropertyList(propertyList);
-        propertyList.add("Flags", Utils.toHexString(this.flags));
+        propertyList.add("Flags", NumberUtils.toHexString(this.flags));
         propertyList.add("Action Sets", this.actionSets.size());
 
         int actionCount = 0;
@@ -137,11 +140,11 @@ public class PTActionSetFile extends SCSharedGameFile {
 
     @Override
     public void handleWadEdit(WADFile parent) {
-        PTStaticFile staticFile = getGameInstance().getMainArchive().getFileByName(Utils.stripExtension(getFileDisplayName()) + ".STAT");
+        PTStaticFile staticFile = getGameInstance().getMainArchive().getFileByName(FileUtils.stripExtension(getFileDisplayName()) + ".STAT");
         if (staticFile != null) {
             staticFile.handleWadEdit(parent);
         } else {
-            Utils.makePopUp("Couldn't find static mesh for file '" + getFileDisplayName() + "'!", AlertType.ERROR);
+            FXUtils.makePopUp("Couldn't find static mesh for file '" + getFileDisplayName() + "'!", AlertType.ERROR);
         }
     }
 

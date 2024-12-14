@@ -99,7 +99,7 @@ public class TranslationGizmo extends DynamicMesh {
     }
 
     public TranslationGizmo(boolean xAxisEnabled, boolean yAxisEnabled, boolean zAxisEnabled) {
-        super(new SequentialTextureAtlas(32, 32, false));
+        super(new SequentialTextureAtlas(32, 32, false), DynamicMeshTextureQuality.LIT_BLURRY);
         this.xAxisEnabled = xAxisEnabled;
         this.yAxisEnabled = yAxisEnabled;
         this.zAxisEnabled = zAxisEnabled;
@@ -542,6 +542,7 @@ public class TranslationGizmo extends DynamicMesh {
         Point3D newWorldPos = result.getIntersectedNode().localToScene(mouseOffset);
 
         // Get old position.
+        Scale gizmoScale = Scene3DUtils.getOptional3DScale(meshView);
         Translate gizmoTranslate = Scene3DUtils.get3DTranslation(meshView);
         Translate planeTranslate = Scene3DUtils.get3DTranslation(this.axisPlane);
         double oldX = gizmoTranslate.getX();
@@ -551,7 +552,8 @@ public class TranslationGizmo extends DynamicMesh {
         // Update positions.
         if (this.movementAxis == Rotate.X_AXIS) {
             double newX = newWorldPos.getX();
-            if (Math.abs(newX - this.originalPosition) <= SNAPPING_THRESHOLD)
+            double meshViewScaleX = gizmoScale != null ? gizmoScale.getX() : 1D;
+            if (Math.abs(newX - this.originalPosition) <= SNAPPING_THRESHOLD * meshViewScaleX)
                 newX = this.originalPosition; // Snap positions near the start position to the start position.
 
             // Update positions & fire event.
@@ -561,7 +563,8 @@ public class TranslationGizmo extends DynamicMesh {
                 state.getChangeListener().handle(meshView, oldX, oldY, oldZ, newX, oldY, oldZ, X_CHANGED_FLAG);
         } else if (this.movementAxis == Rotate.Y_AXIS) {
             double newY = newWorldPos.getY();
-            if (Math.abs(newY - this.originalPosition) <= SNAPPING_THRESHOLD)
+            double meshViewScaleY = gizmoScale != null ? gizmoScale.getY() : 1D;
+            if (Math.abs(newY - this.originalPosition) <= SNAPPING_THRESHOLD * meshViewScaleY)
                 newY = this.originalPosition; // Snap positions near the start position to the start position.
 
             // Update positions & fire event.
@@ -571,7 +574,8 @@ public class TranslationGizmo extends DynamicMesh {
                 state.getChangeListener().handle(meshView, oldX, oldY, oldZ, oldX, newY, oldZ, Y_CHANGED_FLAG);
         } else if (this.movementAxis == Rotate.Z_AXIS) {
             double newZ = newWorldPos.getZ();
-            if (Math.abs(newZ - this.originalPosition) <= SNAPPING_THRESHOLD)
+            double meshViewScaleZ = gizmoScale != null ? gizmoScale.getZ() : 1D;
+            if (Math.abs(newZ - this.originalPosition) <= SNAPPING_THRESHOLD * meshViewScaleZ)
                 newZ = this.originalPosition; // Snap positions near the start position to the start position.
 
             // Update positions & fire event.

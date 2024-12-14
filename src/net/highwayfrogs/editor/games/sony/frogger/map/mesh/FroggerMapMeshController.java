@@ -7,13 +7,14 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.zone.FroggerMapCameraZone;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGeneral;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGrid;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.baked.FroggerUIGeometryManager;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.baked.FroggerUIMapAnimationManager;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.*;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
 
 /**
  * Controls a Frogger map mesh.
@@ -66,20 +67,24 @@ public class FroggerMapMeshController extends MeshViewController<FroggerMapMesh>
         FroggerMapFile map = getMapFile();
         FroggerMapFilePacketGeneral generalPacket = map.getGeneralPacket();
         FroggerMapFilePacketGrid gridPacket = map.getGridPacket();
-        SVector startPos = generalPacket.getDefaultCameraSourceOffset();
+
+        // The zone is used.
+        FroggerMapCameraZone zone = map.getZonePacket().getCameraZone(generalPacket.getStartGridCoordX(), generalPacket.getStartGridCoordZ());
+        SVector sourceOffset = zone != null ? zone.getNorthSourceOffset() : generalPacket.getDefaultCameraSourceOffset();
+        SVector targetOffset = zone != null ? zone.getNorthTargetOffset() : generalPacket.getDefaultCameraTargetOffset();
 
         FroggerGridStack startStack = gridPacket.getGridStack(generalPacket.getStartGridCoordX(), generalPacket.getStartGridCoordZ());
-        float gridX = Utils.fixedPointIntToFloat4Bit(gridPacket.getWorldXFromGridX(generalPacket.getStartGridCoordX(), true));
+        float gridX = DataUtils.fixedPointIntToFloat4Bit(gridPacket.getWorldXFromGridX(generalPacket.getStartGridCoordX(), true));
         float baseY = startStack != null ? startStack.getHighestGridSquareYAsFloat() : 0;
-        float gridZ = Utils.fixedPointIntToFloat4Bit(gridPacket.getWorldZFromGridZ(generalPacket.getStartGridCoordZ(), true));
+        float gridZ = DataUtils.fixedPointIntToFloat4Bit(gridPacket.getWorldZFromGridZ(generalPacket.getStartGridCoordZ(), true));
 
         // Make sure the start position is off the ground.
-        float yOffset = startPos.getFloatY();
+        float yOffset = sourceOffset.getFloatY();
         if (Math.abs(yOffset) <= .0001)
             yOffset = -100f;
 
-        getFirstPersonCamera().setPos(gridX + startPos.getFloatX(), baseY + yOffset, gridZ + startPos.getFloatZ());
-        getFirstPersonCamera().setCameraLookAt(gridX, baseY, gridZ + 1); // Set the camera to look at the start position, too. The -1 is necessary to fix some near-zero math. It fixes it for QB.MAP for example.
+        getFirstPersonCamera().setPos(gridX + sourceOffset.getFloatX(), baseY + yOffset, gridZ + sourceOffset.getFloatZ());
+        getFirstPersonCamera().setCameraLookAt(gridX + targetOffset.getFloatX(), baseY + targetOffset.getFloatY(), gridZ + targetOffset.getFloatZ()); // Set the camera to look at the start position, too. The -1 is necessary to fix some near-zero math. It fixes it for QB.MAP for example.
     }
 
     /**

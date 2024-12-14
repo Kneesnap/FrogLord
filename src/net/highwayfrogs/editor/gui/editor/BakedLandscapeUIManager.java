@@ -19,7 +19,6 @@ import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode.OverlayTarget;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo.IPositionChangeListener;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
-import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -43,10 +42,10 @@ public abstract class BakedLandscapeUIManager<TMesh extends DynamicMesh, TPolygo
     @Getter private AtomicReference<MeshView>[] vertexGizmos;
     @Getter private Sphere[] vertexSpheres;
 
-    private static final PhongMaterial MATERIAL_GREEN = Utils.makeUnlitSharpMaterial(Color.LIME);
-    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeUnlitSharpMaterial(Color.YELLOW);
-    private static final PhongMaterial MATERIAL_RED = Utils.makeUnlitSharpMaterial(Color.RED);
-    private static final PhongMaterial MATERIAL_BLUE = Utils.makeUnlitSharpMaterial(Color.BLUE);
+    private static final PhongMaterial MATERIAL_GREEN = Scene3DUtils.makeUnlitSharpMaterial(Color.LIME);
+    private static final PhongMaterial MATERIAL_YELLOW = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
+    private static final PhongMaterial MATERIAL_RED = Scene3DUtils.makeUnlitSharpMaterial(Color.RED);
+    private static final PhongMaterial MATERIAL_BLUE = Scene3DUtils.makeUnlitSharpMaterial(Color.BLUE);
     public static final PhongMaterial[] VERTEX_MATERIALS = {MATERIAL_YELLOW, MATERIAL_GREEN, MATERIAL_RED, MATERIAL_BLUE};
 
     public static final UUID VERTEX_POSITION_EDITOR_ID = UUID.randomUUID();

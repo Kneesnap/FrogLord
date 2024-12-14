@@ -10,10 +10,7 @@ import javafx.scene.transform.Translate;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Represents a list of JavaFX nodes which are grouped together.
@@ -21,19 +18,13 @@ import java.util.Set;
  */
 @Getter
 public class DisplayList {
-    private Group root;
+    private final Group root;
+    private final boolean uniqueGroup;
     private final List<Node> nodes = new ArrayList<>();
 
-    private DisplayList(Group root) {
+    private DisplayList(Group root, boolean uniqueGroup) {
         this.root = root;
-    }
-
-    /**
-     * Sets the root node which nodes added to this display list should belong to.
-     * @param root The root node.
-     */
-    public void setRoot(Group root) {
-        this.root = root;
+        this.uniqueGroup = uniqueGroup;
     }
 
     /**
@@ -98,6 +89,27 @@ public class DisplayList {
 
         this.nodes.add(node);
         this.root.getChildren().add(node);
+    }
+
+    /**
+     * Adds a node to the display list using a binary search algorithm.
+     * @param node The node to add.
+     */
+    public void add(Node node, Comparator<? super Node> comparator) {
+        if (node == null)
+            throw new NullPointerException("node");
+        if (comparator == null)
+            throw new NullPointerException("comparator");
+        if (!this.uniqueGroup)
+            throw new UnsupportedOperationException("Cannot add node via binary-search when this is not a unique group.");
+
+        int nodeIndex = Collections.binarySearch(this.root.getChildren(), node, comparator);
+        if (this.nodes.contains(node)) // Binary search can often return duplicate indices, such as if sorting by area.
+            throw new RuntimeException("The node already exists in the display list.");
+
+        this.nodes.add(node);
+        int insertionIndex = nodeIndex >= 0 ? nodeIndex : -(nodeIndex + 1);
+        this.root.getChildren().add(insertionIndex, node);
     }
 
     /**
@@ -245,7 +257,7 @@ public class DisplayList {
      * @return The newly created/added cylinder
      */
     public Cylinder addCylinder(double x, double y, double z, double radius, double height, PhongMaterial material, boolean useWireframe) {
-        Cylinder cylinder = new Cylinder(radius, height);
+        Cylinder cylinder = new Cylinder(radius, height); // TODO: Replace lines with FXyz3D's PolyLines3D or maybe even TexturedMeshes/BezierMeshes
         cylinder.setMaterial(material);
         cylinder.setDrawMode(useWireframe ? DrawMode.LINE : DrawMode.FILL);
         cylinder.setCullFace(CullFace.BACK);
@@ -275,7 +287,7 @@ public class DisplayList {
          * Adds a new display list using the root node.
          */
         public DisplayList createDisplayList() {
-            DisplayList newDisplayList = new DisplayList(this.root);
+            DisplayList newDisplayList = new DisplayList(this.root, false);
             this.displayListCache.add(newDisplayList);
             return newDisplayList;
         }
@@ -287,7 +299,7 @@ public class DisplayList {
             Group newGroup = new Group();
             this.root.getChildren().add(newGroup);
 
-            DisplayList newDisplayList = new DisplayList(newGroup);
+            DisplayList newDisplayList = new DisplayList(newGroup, true);
             this.displayListCache.add(newDisplayList);
             return newDisplayList;
         }

@@ -1,57 +1,64 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
+import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
-import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
+import net.highwayfrogs.editor.games.konami.greatquest.proxy.ProxyReact;
+import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyCapsuleDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc.kcCollisionGroup;
 
 /**
  * Represents the 'CItemDesc' struct.
  * Loaded by 'CItem::Init'
- * This has a hardcoded collision proxy, also created in CItem::Init. This explains why the items like the goblet in The Lost Trail Ruins have such small hitboxes.
- * Additionally, it may also explain why coins have weird hitboxes when viewed in editor.
- * TODO: Communicate this in FrogLord.
+ * This has a hardcoded collision proxy, also created in CItem::Init. This explains why the items like the goblet in The Lost Trail Ruins have such small hitboxes, and how coins setup their hitboxes.
  * Created by Kneesnap on 8/21/2023.
  */
 public class CItemDesc extends kcActorBaseDesc {
-    private int value;
-    private int properties;
-    private int attributes;
+    private static final int VALUES_ALWAYS_ZERO = 3; // value, properties, attributes
     private static final int PADDING_VALUES = 32;
 
-    public CItemDesc(GreatQuestInstance instance) {
-        super(instance);
-    }
+    // ALL CItem instances are overridden to use this setup.
+    public static final kcProxyCapsuleDesc ITEM_CAPSULE_DESCRIPTION;
 
-    @Override
-    protected int getTargetClassID() {
-        return kcClassID.ITEM.getClassId();
+    public CItemDesc(@NonNull kcCResourceGeneric resource, kcEntityDescType descType) {
+        super(resource, descType);
     }
 
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.value = reader.readInt();
-        this.properties = reader.readInt();
-        this.attributes = reader.readInt();
+        reader.skipBytesRequireEmpty(VALUES_ALWAYS_ZERO * Constants.INTEGER_SIZE);
         reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override
     public void saveData(DataWriter writer) {
         super.saveData(writer);
-        writer.writeInt(this.value);
-        writer.writeInt(this.properties);
-        writer.writeInt(this.attributes);
+        writer.writeNull(VALUES_ALWAYS_ZERO * Constants.INTEGER_SIZE);
         writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        super.writeMultiLineInfo(builder, padding);
-        builder.append(padding).append("Item Value: ").append(this.value).append(Constants.NEWLINE);
-        builder.append(padding).append("Item Properties: ").append(this.properties).append(Constants.NEWLINE);
-        builder.append(padding).append("Item Attributes: ").append(this.attributes).append(Constants.NEWLINE);
+    public kcProxyCapsuleDesc getCollisionProxyDescription() {
+        return ITEM_CAPSULE_DESCRIPTION; // These may be an item assigned, but this one is hardcoded to be used by the game instead.
+    }
+
+    @Override
+    public kcCResourceGenericType getResourceType() {
+        return kcCResourceGenericType.ITEM_DESCRIPTION;
+    }
+
+    static {
+        ITEM_CAPSULE_DESCRIPTION = new kcProxyCapsuleDesc(null);
+        // Seen in CItem::Init
+        ITEM_CAPSULE_DESCRIPTION.setReaction(ProxyReact.NOTIFY);
+        ITEM_CAPSULE_DESCRIPTION.setCollisionGroup(kcCollisionGroup.ITEM.getBitMask());
+        ITEM_CAPSULE_DESCRIPTION.setCollideWith(kcCollisionGroup.PLAYER.getBitMask());
+        ITEM_CAPSULE_DESCRIPTION.setRadius(.35F);
+        ITEM_CAPSULE_DESCRIPTION.setLength(0F);
+        ITEM_CAPSULE_DESCRIPTION.setOffset(-.35F);
     }
 }

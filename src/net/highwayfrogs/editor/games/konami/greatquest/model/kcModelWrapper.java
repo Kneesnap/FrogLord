@@ -5,15 +5,18 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IFileExport;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelInfoController;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelMesh;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelViewController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.editor.MeshViewController;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,7 +45,7 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
         reader.verifyString(SIGNATURE_STR);
         int size = reader.readInt();
 
-        if (size != reader.getRemaining())
+        if (size != reader.getRemaining()) // TODO: This being 4 too low indicates it's using the old (broken) format.
             getLogger().warning("The model '" + getDebugName() + "' was supposed to have " + size + " bytes, but actually has " + reader.getRemaining() + " bytes.");
 
         this.model.load(reader);
@@ -55,17 +58,22 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
         writer.writeStringBytes(SIGNATURE_STR);
         int sizePos = writer.writeNullPointer();
         this.model.save(writer);
-        writer.writeAddressAt(sizePos, writer.getIndex() - sizePos - Constants.INTEGER_SIZE);
+        writer.writeIntAtPos(sizePos, writer.getIndex() - sizePos - Constants.INTEGER_SIZE);
     }
 
     @Override
     public Image getCollectionViewIcon() {
-        return ImageResource.GEOMETRIC_SHAPES_15.getFxImage();
+        return ImageResource.GEOMETRIC_SHAPES_16.getFxImage();
     }
 
     @Override
     public GameUIController<?> makeEditorUI() {
-        return loadEditor(getGameInstance(), "edit-file-vtx", new GreatQuestModelInfoController(getGameInstance()), this);
+        return loadEditor(getGameInstance(), new GreatQuestModelInfoController(getGameInstance()), this);
+    }
+
+    @Override
+    public void handleDoubleClick() {
+        openMeshViewer();
     }
 
     @Override
@@ -105,5 +113,12 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
             this.model.addToPropertyList(propertyList);
 
         return propertyList;
+    }
+
+    /**
+     * Opens the mesh viewer for the wrapped model.
+     */
+    public void openMeshViewer() {
+        MeshViewController.setupMeshViewer(getGameInstance(), new GreatQuestModelViewController(), new GreatQuestModelMesh(this, true));
     }
 }

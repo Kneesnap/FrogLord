@@ -9,12 +9,14 @@ import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Represents the GRID_SQUARE struct.
@@ -52,7 +54,7 @@ public class FroggerGridSquare extends SCGameData<FroggerGameInstance> {
         List<FroggerMapPolygon> polygons = getMapFile().getPolygonPacket().getPolygons();
         int polygonIndex = Utils.binarySearch(polygons, polygonPointer, FroggerMapPolygon::getLastReadAddress);
         if (polygonIndex < 0)
-            throw new RuntimeException("FroggerGridSquare's Polygon Pointer does not point to a valid polygon! (" + Utils.toHexString(polygonPointer) + ")");
+            throw new RuntimeException("FroggerGridSquare's Polygon Pointer does not point to a valid polygon! (" + NumberUtils.toHexString(polygonPointer) + ")");
 
         this.polygon = polygons.get(polygonIndex);
     }
@@ -77,8 +79,8 @@ public class FroggerGridSquare extends SCGameData<FroggerGameInstance> {
     }
 
     @Override
-    public Logger getLogger() {
-        return Logger.getLogger(getLoggerInfo());
+    public ILogger getLogger() {
+        return new LazyInstanceLogger(getGameInstance(), FroggerGridSquare::getLoggerInfo, this);
     }
 
     /**

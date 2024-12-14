@@ -12,13 +12,14 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
-import net.highwayfrogs.editor.games.generic.GameObject;
+import net.highwayfrogs.editor.games.generic.data.GameObject;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Represents an entity capable of managing a user interface.
@@ -214,6 +215,15 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
     }
 
     /**
+     * Attempts to set the target file to the given game object, returning true if successful, false if not.
+     * @param file the file to set
+     * @return successfully applied
+     */
+    public boolean trySetTargetFile(GameObject<?> file) {
+        return false;
+    }
+
+    /**
      * Loads a UI controller from the provided fxml template
      * @param instance the game instance to create the ui template from
      * @param fxmlLoader the fxml template loader, caching is recommended for performance
@@ -233,7 +243,7 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
             fxmlLoader.setController(controller);
             rootNode = fxmlLoader.load();
         } catch (IOException ex) {
-            Logger logger = instance != null ? instance.getLogger() : Logger.getLogger(GameUIController.class.getSimpleName());
+            ILogger logger = instance != null ? instance.getLogger() : ClassNameLogger.getLogger(null, GameUIController.class);
             Utils.handleError(logger, ex, true, "Failed to load FXML template '%s'.", fxmlLoader.getLocation());
             return null;
         } finally {

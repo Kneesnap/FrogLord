@@ -20,15 +20,18 @@ import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.baked.FroggerUIM
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.MathUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.logging.Logger;
 
 /**
  * Represents a map animation in Frogger.
@@ -99,7 +102,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
         }
 
         if (this.textureIdListPointerAddress <= 0)
-            throw new RuntimeException("Cannot read texture id list, the pointer " + Utils.toHexString(this.textureIdListPointerAddress) + " is invalid.");
+            throw new RuntimeException("Cannot read texture id list, the pointer " + NumberUtils.toHexString(this.textureIdListPointerAddress) + " is invalid.");
 
         // Read up to the desired texture id list.
         while (this.textureIdListPointerAddress > reader.getIndex())
@@ -130,7 +133,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
         }
 
         if (this.targetPolygonListPointerAddress <= 0)
-            throw new RuntimeException("Cannot target polygon list, the pointer " + Utils.toHexString(this.targetPolygonListPointerAddress) + " is invalid.");
+            throw new RuntimeException("Cannot target polygon list, the pointer " + NumberUtils.toHexString(this.targetPolygonListPointerAddress) + " is invalid.");
 
         reader.requireIndex(getLogger(), this.targetPolygonListPointerAddress, "Expected target polygon list");
         for (int i = 0; i < this.targetPolygons.size(); i++)
@@ -167,7 +170,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
         }
 
         if (this.textureIdListPointerAddress <= 0)
-            throw new RuntimeException("Cannot write texture id list, the pointer " + Utils.toHexString(this.textureIdListPointerAddress) + " is invalid.");
+            throw new RuntimeException("Cannot write texture id list, the pointer " + NumberUtils.toHexString(this.textureIdListPointerAddress) + " is invalid.");
 
         // Write texture IDs.
         writer.writeAddressTo(this.textureIdListPointerAddress);
@@ -185,7 +188,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
      */
     public void writeTargetPolygonList(DataWriter writer) {
         if (this.targetPolygonListPointerAddress <= 0)
-            throw new RuntimeException("Cannot write target polygon list, the pointer " + Utils.toHexString(this.targetPolygonListPointerAddress) + " is invalid.");
+            throw new RuntimeException("Cannot write target polygon list, the pointer " + NumberUtils.toHexString(this.targetPolygonListPointerAddress) + " is invalid.");
 
         // Write target polygons.
         writer.writeAddressTo(this.targetPolygonListPointerAddress);
@@ -210,8 +213,8 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
     }
 
     @Override
-    public Logger getLogger() {
-        return Logger.getLogger(getLoggerInfo());
+    public ILogger getLogger() {
+        return new LazyInstanceLogger(getGameInstance(), FroggerMapAnimation::getLoggerInfo, this);
     }
 
     /**
@@ -425,7 +428,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
                 short textureId = this.textureIds.get(i);
                 GameImage image = getImageByLocalID(textureId);
 
-                Image scaledImage = Utils.toFXImage(image != null ? image.toBufferedImage(VLOArchive.ICON_EXPORT) : UnknownTextureSource.MAGENTA_INSTANCE.makeImage(), false);
+                Image scaledImage = FXUtils.toFXImage(image != null ? image.toBufferedImage(VLOArchive.ICON_EXPORT) : UnknownTextureSource.MAGENTA_INSTANCE.makeImage(), false);
                 ImageView view = editor.setupNode(new ImageView(scaledImage));
                 view.setFitWidth(20);
                 view.setFitHeight(20);
@@ -433,12 +436,12 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
                 view.setOnMouseClicked(evt -> vlo.promptImageSelection(newImage -> {
                     int newIndex = remap.getRemapIndex(newImage.getTextureId());
                     if (newIndex < 0) {
-                        Utils.makePopUp("The selected image is not part of the map's texture remap! (" + newImage.getTextureId() + ")", AlertType.ERROR);
+                        FXUtils.makePopUp("The selected image is not part of the map's texture remap! (" + newImage.getTextureId() + ")", AlertType.ERROR);
                         return;
                     }
 
                     this.textureIds.set(tempIndex, (short) newIndex);
-                    view.setImage(Utils.toFXImage(newImage.toBufferedImage(VLOArchive.ICON_EXPORT), false)); // Update the texture displayed in the UI.
+                    view.setImage(FXUtils.toFXImage(newImage.toBufferedImage(VLOArchive.ICON_EXPORT), false)); // Update the texture displayed in the UI.
                     manager.updatePreviewImage(); // Update the animation preview.
                 }, false));
 
@@ -455,7 +458,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
                 vlo.promptImageSelection(newImage -> {
                     int newIndex = remap.getRemapIndex(newImage.getTextureId());
                     if (newIndex < 0) {
-                        Utils.makePopUp("The selected image is not part of the map's texture remap! (" + newImage.getTextureId() + ")", AlertType.ERROR);
+                        FXUtils.makePopUp("The selected image is not part of the map's texture remap! (" + newImage.getTextureId() + ")", AlertType.ERROR);
                         return;
                     }
 
@@ -470,7 +473,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
                 vlo.promptImageSelection(newImage -> {
                     int newIndex = remap.getRemapIndex(newImage.getTextureId());
                     if (newIndex < 0) {
-                        Utils.makePopUp("The selected image is not part of the map's texture remap! (" + newImage.getTextureId() + ")", AlertType.ERROR);
+                        FXUtils.makePopUp("The selected image is not part of the map's texture remap! (" + newImage.getTextureId() + ")", AlertType.ERROR);
                         return;
                     }
 

@@ -3,8 +3,8 @@ package net.highwayfrogs.editor.games.shared.coupled;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData.SharedGameData;
 import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.games.generic.data.GameData.SharedGameData;
 
 /**
  * Represents a coupled data entry.

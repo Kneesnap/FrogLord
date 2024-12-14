@@ -24,7 +24,8 @@ import net.highwayfrogs.editor.games.generic.IGameType;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.io.File;
 import java.net.URL;
@@ -84,14 +85,14 @@ public class PatchController extends GameUIController<FroggerGameInstance> {
         doneButton.setOnAction(evt -> closeWindow());
 
         this.loadExternalButton.setOnAction(evt -> { // Load an external file as a patch.
-            File patchFile = Utils.promptFileOpen(getGameInstance(), "Select the patch to load...", "Patch Files", "patch");
+            File patchFile = FXUtils.promptFileOpen(getGameInstance(), "Select the patch to load...", "Patch Files", "patch");
             if (patchFile == null)
                 return;
 
             this.patchSelector.getSelectionModel().clearSelection();
 
             GamePatch loadPatch = new GamePatch();
-            loadPatch.loadPatchFromConfig(new Config(Utils.readLinesFromFile(patchFile)));
+            loadPatch.loadPatchFromConfig(new Config(FileUtils.readLinesFromFile(patchFile)));
             this.selectedPatchRuntime = new PatchRuntime(getGameInstance(), loadPatch);
             if (this.selectedPatchRuntime.runSetup()) { // Setup success.
                 updatePatchDisplay();
@@ -105,7 +106,7 @@ public class PatchController extends GameUIController<FroggerGameInstance> {
             if (this.selectedPatchRuntime != null) {
                 this.selectedPatchRuntime.run();
                 if (!this.selectedPatchRuntime.isHadError())
-                    Utils.makePopUp("Patch has been applied.", AlertType.INFORMATION);
+                    FXUtils.makePopUp("Patch has been applied.", AlertType.INFORMATION);
 
                 // Reset the patch.
                 this.selectedPatchRuntime.runSetup();
@@ -117,9 +118,9 @@ public class PatchController extends GameUIController<FroggerGameInstance> {
     @Override
     public void onSceneAdd(Scene newScene) {
         super.onSceneAdd(newScene);
-        Utils.closeOnEscapeKey((Stage) newScene.getWindow(), null);
+        FXUtils.closeOnEscapeKey((Stage) newScene.getWindow(), null);
         if (this.patchSelector.getItems() == null || this.patchSelector.getItems().isEmpty()) {
-            Utils.makePopUp("There are no patches available for this version.", AlertType.ERROR);
+            FXUtils.makePopUp("There are no patches available for this version.", AlertType.ERROR);
             closeWindow();
         } else {
             updatePatchDisplay();
@@ -203,7 +204,7 @@ public class PatchController extends GameUIController<FroggerGameInstance> {
         if (getPatches().isEmpty())
             loadPatches(instance.getGameType());
 
-        Utils.createWindowFromFXMLTemplate("window-patch-menu", new PatchController(instance), "Patch Menu", true);
+        FXUtils.createWindowFromFXMLTemplate("window-patch-menu", new PatchController(instance), "Patch Menu", true);
     }
 
     /**
@@ -212,7 +213,7 @@ public class PatchController extends GameUIController<FroggerGameInstance> {
     public static void loadPatches(IGameType gameType) {
         getPatches().clear();
 
-        for (URL patchLocation : Utils.getInternalResourceFilesInDirectory(gameType.getEmbeddedResourceURL("patches"), true)) {
+        for (URL patchLocation : FileUtils.getInternalResourceFilesInDirectory(gameType.getEmbeddedResourceURL("patches"), true)) {
             try {
                 Config config = new Config(patchLocation.openStream());
                 GamePatch loadPatch = new GamePatch();

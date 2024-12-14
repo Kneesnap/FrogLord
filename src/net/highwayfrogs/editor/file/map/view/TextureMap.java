@@ -19,7 +19,10 @@ import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameObject.SCSharedGameObject;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFController;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.MathUtils;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -103,7 +106,7 @@ public class TextureMap extends SCSharedGameObject {
      */
     public PhongMaterial getDiffuseMaterial() {
         if (this.material == null)
-            this.material = Utils.makeDiffuseMaterial(Utils.toFXImage(getTextureTree().getImage(), false));
+            this.material = Scene3DUtils.makeUnlitSharpMaterial(FXUtils.toFXImage(getTextureTree().getImage(), false));
         return this.material;
     }
 
@@ -136,7 +139,7 @@ public class TextureMap extends SCSharedGameObject {
      */
     public PhongMaterial getDiffuseHighlightedMaterial() {
         if (this.highlightedMaterial == null)
-            this.highlightedMaterial = Utils.makeDiffuseMaterial(Utils.toFXImage(makeHighlightedImage(), false));
+            this.highlightedMaterial = Scene3DUtils.makeLitBlurryMaterial(FXUtils.toFXImage(makeHighlightedImage(), false));
 
         return this.highlightedMaterial;
     }
@@ -149,13 +152,13 @@ public class TextureMap extends SCSharedGameObject {
         this.textureTree.rebuildTree(sourceMap);
 
         if (this.material != null) {
-            Image image = Utils.toFXImage(getTextureTree().getImage(), false);
+            Image image = FXUtils.toFXImage(getTextureTree().getImage(), false);
             this.material.setDiffuseMap(image);
             this.material.setSpecularMap(image); // Fixes polygon lighting.
         }
 
         if (this.highlightedMaterial != null) {
-            Image image = Utils.toFXImage(makeHighlightedImage(), false);
+            Image image = FXUtils.toFXImage(makeHighlightedImage(), false);
             this.highlightedMaterial.setDiffuseMap(image); // Fixes polygon lighting.
             this.highlightedMaterial.setSpecularMap(image); // Fixes polygon lighting.
         }
@@ -188,7 +191,7 @@ public class TextureMap extends SCSharedGameObject {
             }
         }
 
-        int newSize = Utils.power(2, (int) (Math.log10(Math.sqrt(totalArea * 2)) * toBase2) + 1); // One size up, because it won't be stored completely optimally.
+        int newSize = MathUtils.power(2, (int) (Math.log10(Math.sqrt(totalArea * 2)) * toBase2) + 1); // One size up, because it won't be stored completely optimally.
         this.width = (int) (newSize / getMode().getWidthMultiplier());
         this.height = (int) (newSize / getMode().getHeightMultiplier());
 
@@ -557,7 +560,7 @@ public class TextureMap extends SCSharedGameObject {
         default BigInteger makeIdentifier(int... colors) {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < colors.length; i++)
-                sb.append(Utils.padStringLeft(Integer.toHexString(colors[i]).toUpperCase(), Constants.INTEGER_SIZE, '0'));
+                sb.append(StringUtils.padStringLeft(Integer.toHexString(colors[i]).toUpperCase(), Constants.INTEGER_SIZE, '0'));
 
             return new BigInteger(sb.toString(), 16);
         }

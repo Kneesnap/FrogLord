@@ -25,21 +25,22 @@ import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFController;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFMainController;
+import net.highwayfrogs.editor.games.sony.shared.utils.FileUtils3D;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
-import net.highwayfrogs.editor.utils.FileUtils3D;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.io.File;
-import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -78,7 +79,7 @@ public class MOFHolder extends SCSharedGameFile {
         // TODO: TOSS
         File outputFile = new File(GUIMain.getWorkingDirectory(), getFileDisplayName());
         if (this.rawBytes != null)
-            Files.write(outputFile.toPath(), this.rawBytes);
+            FileUtils.writeBytesToFile(getLogger(), outputFile, this.rawBytes, true);
     }
 
     @Override
@@ -182,7 +183,7 @@ public class MOFHolder extends SCSharedGameFile {
     @Override
     public void handleWadEdit(WADFile parent) {
         if (!Platform.isSupported(ConditionalFeature.SCENE3D)) {
-            Utils.makePopUp("Your version of JavaFX does not support 3D, so models cannot be previewed.", AlertType.WARNING);
+            FXUtils.makePopUp("Your version of JavaFX does not support 3D, so models cannot be previewed.", AlertType.WARNING);
             return;
         }
 
@@ -282,7 +283,7 @@ public class MOFHolder extends SCSharedGameFile {
         if (bank == null)
             return (animationId != 0) ? "Animation " + animationId : "Default Animation";
 
-        String bankName = Utils.stripWin95(Utils.stripExtension(getFileDisplayName()));
+        String bankName = SCUtils.stripWin95(FileUtils.stripExtension(getFileDisplayName()));
         NameBank childBank = bank.getChildBank(bankName);
         return childBank != null ? childBank.getName(animationId) : getConfig().getAnimationBank().getEmptyChildNameFor(animationId, getAnimationCount());
     }
@@ -303,8 +304,8 @@ public class MOFHolder extends SCSharedGameFile {
         FileUtils3D.exportMofToObj(asStaticFile(), folder, vlo);
 
         // Export mm3d too.
-        File saveTo = new File(folder, Utils.stripExtension(getFileDisplayName()) + ".mm3d");
-        Utils.deleteFile(saveTo);
+        File saveTo = new File(folder, FileUtils.stripExtension(getFileDisplayName()) + ".mm3d");
+        FileUtils.deleteFile(saveTo);
 
         MisfitModel3DObject model = FileUtils3D.convertMofToMisfitModel(this);
         DataWriter writer = new DataWriter(new FileReceiver(saveTo));
@@ -372,7 +373,7 @@ public class MOFHolder extends SCSharedGameFile {
             return false;
 
         FroggerGameInstance frogger = (FroggerGameInstance) getGameInstance();
-        if (frogger.getConfig().isAtOrBeforeBuild4() || frogger.getConfig().getBuild() >= 50)
+        if (frogger.getVersionConfig().isAtOrBeforeBuild4() || frogger.getVersionConfig().getBuild() >= 50)
             return false; // Note: Build 5 may or may not be included. Build 50 is also probably not the correct build to test against here.
 
         String name = getFileDisplayName();
@@ -383,6 +384,6 @@ public class MOFHolder extends SCSharedGameFile {
                 || "GEN_CHECKPOINT_5.XMR".equals(name);
         boolean isGoldenFrog = "GEN_GOLD_FROG.XMR".equals(name);
 
-        return isFroglet || (isGoldenFrog && !frogger.getConfig().isAtOrBeforeBuild20());
+        return isFroglet || (isGoldenFrog && !frogger.getVersionConfig().isAtOrBeforeBuild20());
     }
 }

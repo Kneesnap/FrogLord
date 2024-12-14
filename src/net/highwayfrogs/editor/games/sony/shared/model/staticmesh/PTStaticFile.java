@@ -18,6 +18,8 @@ import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -35,7 +37,7 @@ public class PTStaticFile extends SCSharedGameFile {
     private PTModelCollprim collprim;
 
     public static final int IDENTIFIER = 0x33305453;
-    public static final String IDENTIFIER_STRING = Utils.toMagicString(IDENTIFIER); // 'ST03'
+    public static final String IDENTIFIER_STRING = Utils.toIdentifierString(IDENTIFIER); // 'ST03'
 
     // Flag 0 is set when the file is loaded by the game. Probably some kind of "is resolved" flag.
     // Flag 1 is unknown, but does not seem to be set.
@@ -166,8 +168,8 @@ public class PTStaticFile extends SCSharedGameFile {
 
     @Override
     public void handleWadEdit(WADFile parent) {
-        PTSkeletonFile skeletonFile = getGameInstance().getMainArchive().getFileByName(Utils.stripExtension(getFileDisplayName()) + ".SKEL");
-        PTActionSetFile animationFile = getGameInstance().getMainArchive().getFileByName(Utils.stripExtension(getFileDisplayName()) + ".ANIM");
+        PTSkeletonFile skeletonFile = getGameInstance().getMainArchive().getFileByName(FileUtils.stripExtension(getFileDisplayName()) + ".SKEL");
+        PTActionSetFile animationFile = getGameInstance().getMainArchive().getFileByName(FileUtils.stripExtension(getFileDisplayName()) + ".ANIM");
         PTModel model = new PTModel(this, skeletonFile, animationFile);
         model.updateStaticModel();
         model.updateAnimation();
@@ -178,7 +180,7 @@ public class PTStaticFile extends SCSharedGameFile {
     @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {
         propertyList = super.addToPropertyList(propertyList);
-        propertyList.add("Flags", Utils.toHexString(this.flags));
+        propertyList.add("Flags", NumberUtils.toHexString(this.flags));
         propertyList.add("Parts", this.parts.size());
         return propertyList;
     }

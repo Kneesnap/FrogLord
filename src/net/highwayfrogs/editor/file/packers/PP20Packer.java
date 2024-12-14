@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.writer.BitWriter;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.MathUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.Arrays;
@@ -38,7 +40,7 @@ public class PP20Packer {
     public static final int COMPRESSION_LEVEL_BITS = 2;
     public static final String MARKER = "PP20";
     public static final byte[] MARKER_BYTES = MARKER.getBytes();
-    public static final int MAX_UNCOMPRESSED_FILE_SIZE = Utils.power(2, 3 * Constants.BITS_PER_BYTE) - 1; // Has 3 bytes to store this info in.
+    public static final int MAX_UNCOMPRESSED_FILE_SIZE = MathUtils.power(2, 3 * Constants.BITS_PER_BYTE) - 1; // Has 3 bytes to store this info in.
 
     // To be perfectly honest, I'm not sure what this value is.
     // The "safety margin" is something of a miracle that we're able to calculate.
@@ -74,7 +76,7 @@ public class PP20Packer {
 
         // Take the compressed data, and pad it with the file structure. Then, we're done.
         byte[] compressedData = compressData(data, packerData);
-        byte[] sizeBytes = Utils.reverseByteArray(Utils.toByteArray(data.length));
+        byte[] sizeBytes = DataUtils.reverseByteArray(DataUtils.toByteArray(data.length));
         System.arraycopy(MARKER_BYTES, 0, compressedData, 0, MARKER_BYTES.length);
         System.arraycopy(compressionSettings, 0, compressedData, 4, compressionSettings.length);
         System.arraycopy(sizeBytes, 1, compressedData, compressedData.length - 4, Constants.INTEGER_SIZE - 1);
@@ -109,8 +111,8 @@ public class PP20Packer {
                 if (diff >= 0 && newVal < info.getWindowMax() / 2) {
                     if (diff >= info.getWindowLeft())
                         diff -= info.getWindowMax();
-                    info.getWindowArray()[info.getWindowOffset() + diff] = Utils.unsignedIntToShort(newVal);
-                    info.getWindowArray()[info.getWindowMax() + info.getWindowOffset() + diff] = Utils.unsignedIntToShort(newVal);
+                    info.getWindowArray()[info.getWindowOffset() + diff] = DataUtils.unsignedIntToShort(newVal);
+                    info.getWindowArray()[info.getWindowMax() + info.getWindowOffset() + diff] = DataUtils.unsignedIntToShort(newVal);
                 }
             }
 

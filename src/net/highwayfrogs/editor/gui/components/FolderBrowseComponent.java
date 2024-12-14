@@ -16,7 +16,8 @@ import net.highwayfrogs.editor.gui.GameConfigController.GameConfigUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 
 import java.io.File;
 import java.util.Objects;
@@ -67,7 +68,7 @@ public abstract class FolderBrowseComponent extends GameUIController<GameInstanc
         browseButton.setOnMouseClicked(event -> {
             event.consume();
             String oldFilePath = getCurrentFolderPath();
-            File selectedFile = Utils.promptChooseDirectory(null, folderPromptTitle, saveDirectory);
+            File selectedFile = FXUtils.promptChooseDirectory(null, folderPromptTitle, saveDirectory);
             if (selectedFile != null) {
                 String newFilePath = selectedFile.getAbsolutePath();
                 if (!Objects.equals(oldFilePath, newFilePath)) {
@@ -100,7 +101,7 @@ public abstract class FolderBrowseComponent extends GameUIController<GameInstanc
     public void onSceneAdd(Scene newScene) {
         super.onSceneAdd(newScene);
         String startFilePath = getStartingFolderPath();
-        if (!Utils.isNullOrWhiteSpace(startFilePath) && Utils.isNullOrWhiteSpace(getCurrentFolderPath()))
+        if (!StringUtils.isNullOrWhiteSpace(startFilePath) && StringUtils.isNullOrWhiteSpace(getCurrentFolderPath()))
             this.folderPathField.setText(startFilePath);
     }
 
@@ -177,9 +178,9 @@ public abstract class FolderBrowseComponent extends GameUIController<GameInstanc
         @Override
         protected void onSetFolderPath(String newFilePath) {
             if (this.gameConfig != null) {
-                this.gameConfig.getOrCreateKeyValueNode(this.configKey).setValue(newFilePath);
+                this.gameConfig.getOrCreateKeyValueNode(this.configKey).setAsString(newFilePath);
                 if (GUIMain.getWorkingDirectory() != null)
-                    this.gameConfig.getOrCreateKeyValueNode(GameConfigController.CONFIG_GAME_LAST_FOLDER).setValue(GUIMain.getWorkingDirectory().getAbsolutePath());
+                    this.gameConfig.getOrCreateKeyValueNode(GameConfigController.CONFIG_GAME_LAST_FOLDER).setAsString(GUIMain.getWorkingDirectory().getAbsolutePath());
             }
 
             this.controller.updateLoadButton();

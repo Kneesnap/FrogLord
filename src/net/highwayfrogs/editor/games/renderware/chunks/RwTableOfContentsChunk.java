@@ -5,10 +5,13 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
+import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
-import net.highwayfrogs.editor.games.renderware.RwStreamSectionType;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -20,7 +23,7 @@ public class RwTableOfContentsChunk extends RwStreamChunk {
     private final List<RwTableOfContentsChunkEntry> entries = new ArrayList<>();
 
     public RwTableOfContentsChunk(RwStreamFile streamFile, int version, RwStreamChunk parentChunk) {
-        super(streamFile, RwStreamSectionType.TOC, version, parentChunk);
+        super(streamFile, RwStreamChunkType.TOC, version, parentChunk);
     }
 
     @Override
@@ -40,6 +43,16 @@ public class RwTableOfContentsChunk extends RwStreamChunk {
         writer.writeInt(this.entries.size());
         for (int i = 0; i < this.entries.size(); i++)
             this.entries.get(i).save(writer);
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        propertyList.add("Entry Count", this.entries.size());
+        for (int i = 0; i < this.entries.size(); i++)
+            propertyList.add("Entry #" + (i + 1), this.entries.get(i));
+
+        return propertyList;
     }
 
     public static class RwTableOfContentsChunkEntry extends SharedGameData {
@@ -73,6 +86,12 @@ public class RwTableOfContentsChunk extends RwStreamChunk {
             writer.writeInt(this.gameId);
             writer.writeInt(this.offset);
             writer.writeBytes(this.guid);
+        }
+
+        @Override
+        public String toString() {
+            return "ChunkDef{offset=" + NumberUtils.toHexString(this.offset) + ",game=" + Integer.toHexString(this.gameId).toUpperCase()
+                    + ",type=" + Integer.toHexString(this.chunkId).toUpperCase() + ",guid=" + Arrays.toString(this.guid) + "}";
         }
     }
 }

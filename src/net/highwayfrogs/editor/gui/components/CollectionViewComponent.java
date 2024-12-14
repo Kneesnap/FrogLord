@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.gui.components;
 
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
@@ -13,7 +14,6 @@ import java.util.Objects;
 
 /**
  * Allows viewing a list of entries.
- * TODO: Right click -> Rename, Import Raw, Export Raw, Import .png, Export .png, Delete.
  * Created by Kneesnap on 4/12/2024.
  */
 @Getter
@@ -36,6 +36,10 @@ public abstract class CollectionViewComponent<TGameInstance extends GameInstance
         refreshDisplay();
     }
 
+    /**
+     * Sets the currently active search query.
+     * @param searchQuery the search query to update
+     */
     public void setSearchQuery(String searchQuery) {
         if (Objects.equals(this.searchQuery, searchQuery))
             return;
@@ -54,9 +58,17 @@ public abstract class CollectionViewComponent<TGameInstance extends GameInstance
      * Called when a view entry has been selected
      * @param viewEntry the view entry which was selected
      */
+    protected abstract void onDoubleClick(TViewEntry viewEntry);
+
+    /**
+     * Called when a view entry has been selected
+     * @param viewEntry the view entry which was selected
+     */
     public void setSelectedViewEntry(TViewEntry viewEntry) {
+        TViewEntry oldEntry = this.selectedViewEntry;
         this.selectedViewEntry = viewEntry;
-        onSelect(viewEntry);
+        if (!Objects.equals(oldEntry, viewEntry))
+            onSelect(viewEntry);
     }
 
     /**
@@ -90,14 +102,9 @@ public abstract class CollectionViewComponent<TGameInstance extends GameInstance
     /**
      * Gets the view entries to be visible in the collection view
      */
-    public abstract Collection<TViewEntry> getViewEntries();
+    public abstract Collection<? extends TViewEntry> getViewEntries();
 
     public interface ICollectionViewEntry {
-        /**
-         * Gets a parent entry representing the category.
-         */
-        ICollectionViewEntry getCollectionViewParentEntry();
-
         /**
          * Returns the name to display in the viewer.
          */
@@ -112,5 +119,13 @@ public abstract class CollectionViewComponent<TGameInstance extends GameInstance
          * Gets the icon (if there is one) to display next to the entry name.
          */
         Image getCollectionViewIcon();
+
+        /**
+         * Sets up right-click menu items when clicked.
+         * @param contextMenu the menu to add the right-click menu items to.
+         */
+        default void setupRightClickMenuItems(ContextMenu contextMenu) {
+            // Setup nothing by default.
+        }
     }
 }

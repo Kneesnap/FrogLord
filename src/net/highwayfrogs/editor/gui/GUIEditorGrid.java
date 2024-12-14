@@ -26,7 +26,7 @@ import net.highwayfrogs.editor.gui.mesh.fxobject.ScaleGizmo;
 import net.highwayfrogs.editor.gui.mesh.fxobject.ScaleGizmo.IScaleChangeListener;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo.IPositionChangeListener;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.*;
 
 import java.text.DecimalFormat;
 import java.util.*;
@@ -47,8 +47,8 @@ public class GUIEditorGrid {
     private int rowIndex;
 
     private static final DecimalFormat FORMAT = new DecimalFormat("#.#######");
-    private static final Image GRAY_IMAGE_XZ = Utils.makeColorImageNoCache(Color.GRAY, 60, 60);
-    private static final Image GRAY_IMAGE_Y = Utils.makeColorImageNoCache(Color.GRAY, 15, 60);
+    private static final Image GRAY_IMAGE_XZ = ColorUtils.makeColorImageNoCache(Color.GRAY, 60, 60);
+    private static final Image GRAY_IMAGE_Y = ColorUtils.makeColorImageNoCache(Color.GRAY, 15, 60);
     private static final StringConverter<Double> SLIDER_DEGREE_CONVERTER = new StringConverter<Double>() {
         @Override
         public String toString(Double num) {
@@ -208,7 +208,7 @@ public class GUIEditorGrid {
      */
     public TextField addTextField(String label, String value, Function<String, Boolean> setter) {
         TextField field = addTextField(label, value);
-        Utils.setHandleKeyPress(field, setter, this::onChange);
+        FXUtils.setHandleKeyPress(field, setter, this::onChange);
         return field;
     }
 
@@ -233,7 +233,7 @@ public class GUIEditorGrid {
      */
     public TextField addSignedByteField(String label, byte number, Function<Byte, Boolean> validityTest, Consumer<Byte> setter) {
         return addTextField(label, String.valueOf(number), str -> {
-            if (!Utils.isInteger(str))
+            if (!NumberUtils.isInteger(str))
                 return false;
 
             int parsedNumber = Integer.parseInt(str);
@@ -284,7 +284,7 @@ public class GUIEditorGrid {
      */
     public TextField addUnsignedByteField(String label, short number, Function<Short, Boolean> validityTest, Consumer<Short> setter) {
         return addTextField(label, String.valueOf(number), str -> {
-            if (!Utils.isInteger(str))
+            if (!NumberUtils.isInteger(str))
                 return false;
 
             int parsedNumber = Integer.parseInt(str);
@@ -335,7 +335,7 @@ public class GUIEditorGrid {
      */
     public TextField addSignedShortField(String label, short number, Function<Short, Boolean> validityTest, Consumer<Short> setter) {
         return addTextField(label, String.valueOf(number), str -> {
-            if (!Utils.isInteger(str))
+            if (!NumberUtils.isInteger(str))
                 return false;
 
             int parsedNumber = Integer.parseInt(str);
@@ -396,9 +396,9 @@ public class GUIEditorGrid {
      * @return textField
      */
     public TextField addUnsignedShortField(String label, short number, Function<Short, Boolean> validityTest, Consumer<Short> setter) {
-        return addUnsignedShortField(label, Utils.shortToUnsignedInt(number),
-                validityTest != null ? intValue -> validityTest.apply(Utils.unsignedIntToShort(intValue)) : null,
-                newValue -> setter.accept(Utils.unsignedIntToShort(newValue)));
+        return addUnsignedShortField(label, DataUtils.shortToUnsignedInt(number),
+                validityTest != null ? intValue -> validityTest.apply(DataUtils.unsignedIntToShort(intValue)) : null,
+                newValue -> setter.accept(DataUtils.unsignedIntToShort(newValue)));
     }
 
     /**
@@ -411,7 +411,7 @@ public class GUIEditorGrid {
      */
     public TextField addUnsignedShortField(String label, int number, Function<Integer, Boolean> validityTest, Consumer<Integer> setter) {
         return addTextField(label, String.valueOf(number), str -> {
-            if (!Utils.isInteger(str))
+            if (!NumberUtils.isInteger(str))
                 return false;
 
             int parsedNumber = Integer.parseInt(str);
@@ -461,7 +461,7 @@ public class GUIEditorGrid {
      */
     public TextField addSignedIntegerField(String label, int number, Function<Integer, Boolean> validityTest, Consumer<Integer> setter) {
         return addTextField(label, String.valueOf(number), str -> {
-            if (!Utils.isInteger(str))
+            if (!NumberUtils.isInteger(str))
                 return false;
 
             long parsedNumber = Long.parseLong(str);
@@ -522,9 +522,9 @@ public class GUIEditorGrid {
      * @return textField
      */
     public TextField addUnsignedIntegerField(String label, int number, Function<Integer, Boolean> validityTest, Consumer<Integer> setter) {
-        return addUnsignedIntegerField(label, Utils.intToUnsignedLong(number),
-                validityTest != null ? longValue -> validityTest.apply(Utils.unsignedLongToInt(longValue)) : null,
-                newValue -> setter.accept(Utils.unsignedLongToInt(newValue)));
+        return addUnsignedIntegerField(label, DataUtils.intToUnsignedLong(number),
+                validityTest != null ? longValue -> validityTest.apply(DataUtils.unsignedLongToInt(longValue)) : null,
+                newValue -> setter.accept(DataUtils.unsignedLongToInt(newValue)));
     }
 
     /**
@@ -537,7 +537,7 @@ public class GUIEditorGrid {
      */
     public TextField addUnsignedIntegerField(String label, long number, Function<Long, Boolean> validityTest, Consumer<Long> setter) {
         return addTextField(label, String.valueOf(number), str -> {
-            if (!Utils.isInteger(str))
+            if (!NumberUtils.isInteger(str))
                 return false;
 
             long parsedNumber = Long.parseLong(str);
@@ -584,7 +584,7 @@ public class GUIEditorGrid {
      */
     public TextField addFloatField(String label, float number, Consumer<Float> setter, Predicate<Float> test) {
         TextField field = addTextField(label, String.valueOf(number), str -> {
-            if (!Utils.isNumber(str))
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             float floatValue = Float.parseFloat(str);
@@ -606,7 +606,7 @@ public class GUIEditorGrid {
      */
     public TextField addDoubleField(String label, double number, Consumer<Double> setter, Predicate<Double> test) {
         TextField field = addTextField(label, String.valueOf(number), str -> {
-            if (!Utils.isNumber(str))
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             double doubleValue = Double.parseDouble(str);
@@ -649,7 +649,7 @@ public class GUIEditorGrid {
         AtomicBoolean firstOpen = new AtomicBoolean(true);
         box.addEventFilter(ComboBox.ON_SHOWN, event -> { // Show the selected value when the dropdown is opened.
             if (firstOpen.getAndSet(false))
-                Utils.comboBoxScrollToValue(box);
+                FXUtils.comboBoxScrollToValue(box);
         });
 
         if (setter != null) {
@@ -767,22 +767,22 @@ public class GUIEditorGrid {
         xField.setPrefWidth(60);
         yField.setPrefWidth(60);
         zField.setPrefWidth(60);
-        Utils.setHandleKeyPress(xField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(xField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             vector.setFloatX(Float.parseFloat(str), bits);
             return true;
         }, onPass);
-        Utils.setHandleKeyPress(yField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(yField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             vector.setFloatY(Float.parseFloat(str), bits);
             return true;
         }, onPass);
-        Utils.setHandleKeyPress(zField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(zField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             vector.setFloatZ(Float.parseFloat(str), bits);
@@ -894,22 +894,22 @@ public class GUIEditorGrid {
         xField.setPrefWidth(60);
         yField.setPrefWidth(60);
         zField.setPrefWidth(60);
-        Utils.setHandleKeyPress(xField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(xField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             vector.setFloatX(Float.parseFloat(str), bits);
             return true;
         }, onPass);
-        Utils.setHandleKeyPress(yField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(yField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             vector.setFloatY(Float.parseFloat(str), bits);
             return true;
         }, onPass);
-        Utils.setHandleKeyPress(zField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(zField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             vector.setFloatZ(Float.parseFloat(str), bits);
@@ -995,7 +995,7 @@ public class GUIEditorGrid {
      * @param vector The SVector itself.
      */
     public void addSVector(String text, int bits, SVector vector, Runnable runnable) {
-        addTextField(text, Utils.fixedPointShortToFloatNBits(vector.getX(), bits) + ", " + Utils.fixedPointShortToFloatNBits(vector.getY(), bits) + ", " + Utils.fixedPointShortToFloatNBits(vector.getZ(), bits), newText -> {
+        addTextField(text, DataUtils.fixedPointShortToFloatNBits(vector.getX(), bits) + ", " + DataUtils.fixedPointShortToFloatNBits(vector.getY(), bits) + ", " + DataUtils.fixedPointShortToFloatNBits(vector.getZ(), bits), newText -> {
             if (!vector.loadFromFloatText(newText, bits))
                 return false;
 
@@ -1124,6 +1124,21 @@ public class GUIEditorGrid {
      * @param listener the listener which handles a new positional update
      */
     public AtomicReference<MeshView> addPositionEditor(MeshViewController<?> controller, UUID identifier, String text, double x, double y, double z, IPositionChangeListener listener) {
+        return addPositionEditor(controller, identifier, text, x, y, z, 1, listener);
+    }
+
+    /**
+     * Creates a position editor.
+     * @param controller the UI controller responsible for gizmo management
+     * @param identifier the UUID identifying the gizmo mesh view display
+     * @param text the text representing the position
+     * @param x the x world position
+     * @param y the y world position
+     * @param z the z world position
+     * @param scale the scale of the gizmo
+     * @param listener the listener which handles a new positional update
+     */
+    public AtomicReference<MeshView> addPositionEditor(MeshViewController<?> controller, UUID identifier, String text, double x, double y, double z, double scale, IPositionChangeListener listener) {
         TextField[] textFields = new TextField[3];
         double[] positionCache = new double[]{x, y, z};
 
@@ -1152,7 +1167,7 @@ public class GUIEditorGrid {
         AtomicReference<MeshView> meshViewRef = new AtomicReference<>(controller.getMarkerManager().updateGizmo(identifier, x, y, z, ourListener));
         if (controller != null) {
             addBoldLabelButton(text + ":", "Toggle Display", 25,
-                    () -> meshViewRef.set(controller.getMarkerManager().toggleGizmo(identifier, x, y, z, ourListener)));
+                    () -> meshViewRef.set(controller.getMarkerManager().toggleGizmo(identifier, x, y, z, scale, ourListener)));
         }
 
         GridPane vecPane = new GridPane();
@@ -1174,8 +1189,8 @@ public class GUIEditorGrid {
         xField.setPrefWidth(60);
         yField.setPrefWidth(60);
         zField.setPrefWidth(60);
-        Utils.setHandleKeyPress(xField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(xField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             double newValue = Double.parseDouble(str);
@@ -1196,8 +1211,8 @@ public class GUIEditorGrid {
 
             return true;
         }, this::onChange);
-        Utils.setHandleKeyPress(yField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(yField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             double newValue = Double.parseDouble(str);
@@ -1218,8 +1233,8 @@ public class GUIEditorGrid {
 
             return true;
         }, this::onChange);
-        Utils.setHandleKeyPress(zField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(zField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             double newValue = Double.parseDouble(str);
@@ -1269,6 +1284,24 @@ public class GUIEditorGrid {
      * @param listener the listener which handles a new positional update
      */
     public AtomicReference<MeshView> addScaleEditor(MeshViewController<?> controller, UUID identifier, String text, double x, double y, double z, double scaleX, double scaleY, double scaleZ, IScaleChangeListener listener) {
+        return addScaleEditor(controller,  identifier, text, x, y, z, scaleX, scaleY, scaleZ, 1, listener);
+    }
+
+    /**
+     * Creates a position editor.
+     * @param controller the UI controller responsible for gizmo management
+     * @param identifier the UUID identifying the gizmo mesh view display
+     * @param text the text representing the position
+     * @param x the x world position
+     * @param y the y world position
+     * @param z the z world position
+     * @param scaleX the x scale
+     * @param scaleY the y scale
+     * @param scaleZ the z scale
+     * @param scale the gizmo scale
+     * @param listener the listener which handles a new positional update
+     */
+    public AtomicReference<MeshView> addScaleEditor(MeshViewController<?> controller, UUID identifier, String text, double x, double y, double z, double scaleX, double scaleY, double scaleZ, double scale, IScaleChangeListener listener) {
         TextField[] textFields = new TextField[3];
         double[] scaleCache = new double[]{scaleX, scaleY, scaleZ};
 
@@ -1297,7 +1330,7 @@ public class GUIEditorGrid {
         AtomicReference<MeshView> meshViewRef = new AtomicReference<>(controller.getMarkerManager().updateGizmo(identifier, x, y, z, scaleX, scaleY, scaleZ, ourListener));
         if (controller != null) {
             addBoldLabelButton(text + ":", "Toggle Display", 25,
-                    () -> meshViewRef.set(controller.getMarkerManager().toggleGizmo(identifier, x, y, z, scaleX, scaleY, scaleZ, ourListener)));
+                    () -> meshViewRef.set(controller.getMarkerManager().toggleGizmo(identifier, x, y, z, scaleX, scaleY, scaleZ, scale, ourListener)));
         }
 
         GridPane vecPane = new GridPane();
@@ -1319,8 +1352,8 @@ public class GUIEditorGrid {
         xField.setPrefWidth(60);
         yField.setPrefWidth(60);
         zField.setPrefWidth(60);
-        Utils.setHandleKeyPress(xField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(xField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             double newValue = Double.parseDouble(str);
@@ -1341,8 +1374,8 @@ public class GUIEditorGrid {
 
             return true;
         }, this::onChange);
-        Utils.setHandleKeyPress(yField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(yField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             double newValue = Double.parseDouble(str);
@@ -1363,8 +1396,8 @@ public class GUIEditorGrid {
 
             return true;
         }, this::onChange);
-        Utils.setHandleKeyPress(zField, str -> {
-            if (!Utils.isNumber(str))
+        FXUtils.setHandleKeyPress(zField, str -> {
+            if (!NumberUtils.isNumber(str))
                 return false;
 
             double newValue = Double.parseDouble(str);
@@ -1634,9 +1667,9 @@ public class GUIEditorGrid {
      */
     public ColorPicker addColorPicker(String text, double height, int color, Consumer<Integer> handler) {
         addLabel(text);
-        ColorPicker picker = setupSecondNode(new ColorPicker(Utils.fromRGB(color)), false);
+        ColorPicker picker = setupSecondNode(new ColorPicker(ColorUtils.fromRGB(color)), false);
         picker.valueProperty().addListener((observable, oldValue, newValue) -> {
-            handler.accept(Utils.toARGB(newValue));
+            handler.accept(ColorUtils.toARGB(newValue));
             onChange();
         });
 
@@ -1654,15 +1687,15 @@ public class GUIEditorGrid {
     public ColorPicker addColorPickerWithAlpha(String text, double height, int color, Consumer<Integer> handler) {
         addLabel(text);
         AtomicInteger colorArgb = new AtomicInteger(color);
-        ColorPicker picker = setupSecondNode(new ColorPicker(Utils.fromRGB(color)), false);
+        ColorPicker picker = setupSecondNode(new ColorPicker(ColorUtils.fromRGB(color)), false);
         picker.valueProperty().addListener((observable, oldValue, newValue) -> {
-            colorArgb.set((Utils.toARGB(newValue) & 0x00FFFFFF) | (Utils.getAlphaInt(colorArgb.get()) << 24));
+            colorArgb.set((ColorUtils.toARGB(newValue) & 0x00FFFFFF) | (ColorUtils.getAlphaInt(colorArgb.get()) << 24));
             handler.accept(colorArgb.get());
             onChange();
         });
         addRow(height);
 
-        addIntegerSlider("Opacity (Alpha)", Utils.getAlphaInt(color), newAlpha -> {
+        addIntegerSlider("Opacity (Alpha)", ColorUtils.getAlphaInt(color), newAlpha -> {
             colorArgb.set((colorArgb.get() & 0x00FFFFFF) | (newAlpha << 24));
             handler.accept(colorArgb.get());
             onChange();
@@ -1701,7 +1734,7 @@ public class GUIEditorGrid {
         AtomicBoolean firstOpen = new AtomicBoolean(true);
         box.addEventFilter(ComboBox.ON_SHOWN, event -> { // Show the selected value when the dropdown is opened.
             if (firstOpen.getAndSet(false))
-                Utils.comboBoxScrollToValue(box);
+                FXUtils.comboBoxScrollToValue(box);
         });
 
         button.setOnAction(evt -> {
@@ -1854,26 +1887,35 @@ public class GUIEditorGrid {
     public void addRotationMatrix(PSXMatrix matrix, Runnable onUpdate) {
         addNormalLabel("Rotation:");
 
-        Slider yawUI = addDoubleSlider("Yaw", matrix.getYawAngle(), yaw -> {
-            matrix.updateMatrix(yaw, matrix.getPitchAngle(), matrix.getRollAngle());
-            if (onUpdate != null)
-                onUpdate.run();
+        Runnable[] updateHook = new Runnable[1];
+        Slider pitchUI = addDoubleSlider("Pitch (X)", matrix.getPitchAngle(), pitch -> {
+            matrix.updateMatrix(pitch, matrix.getYawAngle(), matrix.getRollAngle());
+            if (updateHook[0] != null)
+                updateHook[0].run();
         }, -Math.PI, Math.PI);
 
-        Slider pitchUI = addDoubleSlider("Pitch", matrix.getPitchAngle(), pitch -> {
-            if (Math.abs(pitch) >= Math.PI / 2)
-                return; // LOCK! ABORT!
-
-            matrix.updateMatrix(matrix.getYawAngle(), pitch, matrix.getRollAngle());
-            if (onUpdate != null)
-                onUpdate.run();
+        Slider yawUI = addDoubleSlider("Yaw (Y)", matrix.getYawAngle(), yaw -> {
+            matrix.updateMatrix(matrix.getPitchAngle(), yaw, matrix.getRollAngle());
+            if (updateHook[0] != null)
+                updateHook[0].run();
         }, -Math.PI / 2, Math.PI / 2); // Cuts off at 90 degrees to prevent gymbal lock.
 
-        Slider rollUI = addDoubleSlider("Roll", matrix.getRollAngle(), roll -> {
-            matrix.updateMatrix(matrix.getYawAngle(), matrix.getPitchAngle(), roll);
+        Slider rollUI = addDoubleSlider("Roll (Z)", matrix.getRollAngle(), roll -> {
+            matrix.updateMatrix(matrix.getPitchAngle(), matrix.getYawAngle(), roll);
+            if (updateHook[0] != null)
+                updateHook[0].run();
+        }, -Math.PI, Math.PI);
+
+        updateHook[0] = () -> {
             if (onUpdate != null)
                 onUpdate.run();
-        }, -Math.PI, Math.PI);
+
+            // Setting yaw to near -90/+90 can reset the other angles. It's confusing, but having the sliders update makes it seem better.
+            // We try to avoid letting this reset occur, so ideally this won't matter.
+            pitchUI.setValue(matrix.getPitchAngle());
+            yawUI.setValue(matrix.getYawAngle());
+            rollUI.setValue(matrix.getRollAngle());
+        };
 
         yawUI.setLabelFormatter(SLIDER_DEGREE_CONVERTER);
         pitchUI.setLabelFormatter(SLIDER_DEGREE_CONVERTER);
@@ -2011,17 +2053,21 @@ public class GUIEditorGrid {
         addLabel(sliderName);
         Slider slider = setupSecondNode(new Slider(minValue, maxValue, currentValue), false);
         slider.setDisable(setter == null);
-        if (onRelease) {
-            slider.valueChangingProperty().addListener(((observable, wasChanging, changing) -> {
-                if (setter != null && !changing)
-                    setter.accept(slider.getValue());
-            }));
+        if (setter != null) {
+            if (onRelease) {
+                slider.valueChangingProperty().addListener(((observable, wasChanging, changing) -> {
+                    if (!changing)
+                        setter.accept(slider.getValue());
+                }));
+            }
         }
+
         slider.valueProperty().addListener(((observable, oldValue, newValue) -> {
             if (setter != null && !onRelease)
                 setter.accept(newValue.doubleValue());
             onChange();
         }));
+
         slider.setMajorTickUnit((maxValue - minValue) / 4);
         slider.setShowTickLabels(true);
         slider.setShowTickMarks(true);

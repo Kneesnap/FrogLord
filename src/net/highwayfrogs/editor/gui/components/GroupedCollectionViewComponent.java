@@ -3,11 +3,15 @@ package net.highwayfrogs.editor.gui.components;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.Accordion;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TitledPane;
 import javafx.scene.image.Image;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
@@ -183,7 +187,7 @@ public abstract class GroupedCollectionViewComponent<TGameInstance extends GameI
 
             ObservableList<TViewEntry> fxFilesList = FXCollections.observableArrayList(this.entries);
             ListView<TViewEntry> listView = new ListView<>(fxFilesList);
-            listView.setCellFactory(param -> new CollectionViewEntryListCell<>());
+            listView.setCellFactory(param -> new GroupedCollectionViewComponentEntryListCell<>(this.viewComponent));
             listView.setItems(fxFilesList);
 
             pane.setContent(listView);
@@ -208,9 +212,6 @@ public abstract class GroupedCollectionViewComponent<TGameInstance extends GameI
         }
 
         private void onSelectionChange(ObservableValue<? extends TViewEntry> observableValue, TViewEntry oldViewEntry, TViewEntry newViewEntry) {
-            if (newViewEntry == null)
-                return;
-
             // Clear selection of all other titled panes.
             for (CollectionViewGroup<TViewEntry> group : viewComponent.groups)
                 if (group.titledPane != null && this.titledPane != group.titledPane)
@@ -218,11 +219,6 @@ public abstract class GroupedCollectionViewComponent<TGameInstance extends GameI
 
             // Select it in the view component.
             this.viewComponent.setSelectedViewEntry(newViewEntry);
-        }
-
-        @Override
-        public ICollectionViewEntry getCollectionViewParentEntry() {
-            return null;
         }
 
         @Override
@@ -254,4 +250,31 @@ public abstract class GroupedCollectionViewComponent<TGameInstance extends GameI
             return this.predicate != null && this.predicate.test(viewEntry);
         }
     }
+
+    private static class GroupedCollectionViewComponentEntryListCell<TGameInstance extends GameInstance, TViewEntry extends ICollectionViewEntry> extends CollectionViewEntryListCell<TViewEntry> {
+        private final GroupedCollectionViewComponent<TGameInstance, TViewEntry> component;
+        private final EventHandler<? super MouseEvent> doubleClickHandler;
+
+        @SuppressWarnings("unchecked")
+        private GroupedCollectionViewComponentEntryListCell(GroupedCollectionViewComponent<TGameInstance, TViewEntry> component) {
+            this.component = component;
+            this.doubleClickHandler = event -> {
+                if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
+                    event.consume();
+                    this.component.onDoubleClick(((ListCell<TViewEntry>) event.getSource()).getItem());
+                }
+            };
+        }
+
+        @Override
+        public void updateItem(TViewEntry viewEntry, boolean empty) {
+            super.updateItem(viewEntry, empty);
+            if (empty) {
+                setOnMouseClicked(null);
+            } else {
+                setOnMouseClicked(this.doubleClickHandler);
+            }
+        }
+    }
+
 }

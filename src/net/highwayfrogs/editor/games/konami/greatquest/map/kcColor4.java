@@ -4,11 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.ColorUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.awt.*;
 import java.text.DecimalFormat;
@@ -21,7 +22,7 @@ import java.text.DecimalFormat;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class kcColor4 extends GameObject implements IInfoWriter {
+public class kcColor4 implements IInfoWriter, IBinarySerializable {
     private static final DecimalFormat DISPLAY_FORMAT = new DecimalFormat("0.###");
     private float red;
     private float green;
@@ -62,18 +63,29 @@ public class kcColor4 extends GameObject implements IInfoWriter {
      * @return this
      */
     public kcColor4 fromARGB(int argbColor) {
-        this.red = Utils.getRedInt(argbColor) / 255F;
-        this.green = Utils.getGreenInt(argbColor) / 255F;
-        this.blue = Utils.getBlueInt(argbColor) / 255F;
-        this.alpha = Utils.getAlphaInt(argbColor) / 255F;
+        this.red = ColorUtils.getRedInt(argbColor) / 255F;
+        this.green = ColorUtils.getGreenInt(argbColor) / 255F;
+        this.blue = ColorUtils.getBlueInt(argbColor) / 255F;
+        this.alpha = ColorUtils.getAlphaInt(argbColor) / 255F;
         return this;
+    }
+
+    /**
+     * Gets this color as an ARGB8888 integer.
+     */
+    public int toARGB() {
+        byte red = (byte) Math.round(this.red * 255F);
+        byte green = (byte) Math.round(this.green * 255F);
+        byte blue = (byte) Math.round(this.blue * 255F);
+        byte alpha = (byte) Math.round(this.alpha * 255F);
+        return ColorUtils.toARGB(red, green, blue, alpha);
     }
 
     @Override
     public void writeInfo(StringBuilder builder) {
         int rgbColor = toColor().getRGB();
         builder.append("kcColor4[ARGB=")
-                .append(Utils.to0PrefixedHexString(rgbColor))
+                .append(NumberUtils.to0PrefixedHexString(rgbColor))
                 .append(",red=").append(DISPLAY_FORMAT.format(this.red))
                 .append(",green=").append(DISPLAY_FORMAT.format(this.green))
                 .append(",blue=").append(DISPLAY_FORMAT.format(this.blue))

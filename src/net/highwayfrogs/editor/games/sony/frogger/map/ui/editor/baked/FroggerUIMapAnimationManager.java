@@ -22,7 +22,7 @@ import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.MeshViewFrameTimer.MeshViewFixedFrameRateTimerTask;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode.OverlayTarget;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 import java.awt.image.BufferedImage;
 import java.util.List;
@@ -93,7 +93,7 @@ public class FroggerUIMapAnimationManager extends FroggerBakedMapListManager<Fro
 
         TextureRemapArray remap = getMap().getTextureRemap();
         if (remap == null)
-            return Utils.toFXImage(UnknownTextureSource.CYAN_INSTANCE.makeImage(), true);
+            return FXUtils.toFXImage(UnknownTextureSource.CYAN_INSTANCE.makeImage(), true);
 
         Short textureId;
         if (animation.getTextureIds().size() > 0) {
@@ -102,7 +102,7 @@ public class FroggerUIMapAnimationManager extends FroggerBakedMapListManager<Fro
             textureId = animation.getTargetPolygons().get(0).getPolygon().getTextureId();
         } else {
             // No texture set.
-            return Utils.toFXImage(UnknownTextureSource.MAGENTA_INSTANCE.makeImage(), true);
+            return FXUtils.toFXImage(UnknownTextureSource.MAGENTA_INSTANCE.makeImage(), true);
         }
 
         // Find remapped texture.
@@ -115,7 +115,7 @@ public class FroggerUIMapAnimationManager extends FroggerBakedMapListManager<Fro
         }
 
         // The texture couldn't be found.
-        return Utils.toFXImage(UnknownTextureSource.CYAN_INSTANCE.makeImage(), true);
+        return FXUtils.toFXImage(UnknownTextureSource.CYAN_INSTANCE.makeImage(), true);
     }
 
     @Override
@@ -222,7 +222,7 @@ public class FroggerUIMapAnimationManager extends FroggerBakedMapListManager<Fro
         }
 
         BufferedImage newImage = animation.getAnimationFrame(null, (int) this.animationPreviewFrameSlider.getValue() - 1, true);
-        this.animationPreview.setImage(Utils.toFXImage(newImage, false));
+        this.animationPreview.setImage(FXUtils.toFXImage(newImage, false));
         this.animationPreview.setDisable(false);
     }
 

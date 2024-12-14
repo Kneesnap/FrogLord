@@ -10,11 +10,14 @@ import net.highwayfrogs.editor.games.sony.SCGameObject;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Represents the GRID_STACK struct.
@@ -59,7 +62,7 @@ public class FroggerGridStack extends SCGameObject<FroggerGameInstance> {
      */
     public void loadGridSquares(DataReader reader) {
         if (this.loadSquareCount < 0)
-            throw new RuntimeException("Cannot read grid squares from " + Utils.toHexString(reader.getIndex()) + ", the amount of squares to load was set to " + this.loadSquareCount + ".");
+            throw new RuntimeException("Cannot read grid squares from " + NumberUtils.toHexString(reader.getIndex()) + ", the amount of squares to load was set to " + this.loadSquareCount + ".");
 
         this.gridSquares.clear();
         for (int i = 0; i < this.loadSquareCount; i++) {
@@ -101,8 +104,8 @@ public class FroggerGridStack extends SCGameObject<FroggerGameInstance> {
     }
 
     @Override
-    public Logger getLogger() {
-        return Logger.getLogger(getLoggerInfo());
+    public ILogger getLogger() {
+        return new LazyInstanceLogger(getGameInstance(), FroggerGridStack::getLoggerInfo, this);
     }
 
     /**
@@ -122,7 +125,7 @@ public class FroggerGridStack extends SCGameObject<FroggerGameInstance> {
      * @return height
      */
     public float getAverageWorldHeightAsFloat() {
-        return Utils.fixedPointIntToFloat4Bit(getAverageWorldHeight());
+        return DataUtils.fixedPointIntToFloat4Bit(getAverageWorldHeight());
     }
 
     /**
@@ -142,7 +145,7 @@ public class FroggerGridStack extends SCGameObject<FroggerGameInstance> {
      * @param newHeight The new height.
      */
     public void setAverageWorldHeight(float newHeight) {
-        setAverageWorldHeight(Utils.floatToFixedPointInt4Bit(newHeight));
+        setAverageWorldHeight(DataUtils.floatToFixedPointInt4Bit(newHeight));
     }
 
     /**
@@ -174,7 +177,7 @@ public class FroggerGridStack extends SCGameObject<FroggerGameInstance> {
         for (int i = this.gridSquares.size() - 1; i >= 0; i--) {
             FroggerGridSquare square = this.gridSquares.get(i);
             if (square.getPolygon() != null)
-                return Utils.fixedPointIntToFloat4Bit(square.calculateAverageWorldHeight());
+                return DataUtils.fixedPointIntToFloat4Bit(square.calculateAverageWorldHeight());
         }
 
         // No usable grid squares.

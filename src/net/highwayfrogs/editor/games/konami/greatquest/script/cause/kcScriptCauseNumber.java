@@ -3,8 +3,13 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionID;
+import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionNumber;
+import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionNumber.NumberOperation;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptValidationData;
+import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
 
@@ -21,14 +26,8 @@ public class kcScriptCauseNumber extends kcScriptCause {
     private kcScriptCauseNumberOperation operation;
     private int value;
 
-    public kcScriptCauseNumber(GreatQuestInstance gameInstance) {
-        super(gameInstance, kcScriptCauseType.NUMBER, 1);
-    }
-
-    public kcScriptCauseNumber(GreatQuestInstance gameInstance, kcScriptCauseNumberOperation operation, int number) {
-        this(gameInstance);
-        this.operation = operation;
-        this.value = number;
+    public kcScriptCauseNumber(kcScript script) {
+        super(script, kcScriptCauseType.NUMBER, 1, 2);
     }
 
     @Override
@@ -44,22 +43,110 @@ public class kcScriptCauseNumber extends kcScriptCause {
     }
 
     @Override
+    protected void loadArguments(OptionalArguments arguments) {
+        this.operation = arguments.useNext().getAsEnumOrError(kcScriptCauseNumberOperation.class);
+        this.value = arguments.useNext().getAsInteger();
+    }
+
+    @Override
+    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+        arguments.createNext().setAsEnum(this.operation);
+        arguments.createNext().setAsInteger(this.value);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode() ^ (this.operation.ordinal() << 24) ^ this.value;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj) && ((kcScriptCauseNumber) obj).getOperation() == this.operation
+                && ((kcScriptCauseNumber) obj).getValue() == this.value;
+    }
+
+    @Override
     public void toString(StringBuilder builder, kcScriptDisplaySettings settings) {
         builder.append("When a number is received that ");
         builder.append(this.operation.getDisplayAction());
         builder.append(' ').append(this.value);
     }
 
+    @Override
+    public void printAdvancedWarnings(kcScriptValidationData data) {
+        super.printAdvancedWarnings(data);
+        if (!data.anyActionsMatch(kcActionID.NUMBER, this::doesActionMatch))
+            printWarning(data.getLogger(), data.getEntityName() + " does not have a " + kcActionID.NUMBER.getFrogLordName() + " effect capable of causing it.");
+    }
+
+    private boolean doesActionMatch(kcActionNumber action) {
+        if (action.getOperation() == NumberOperation.ENTITY_VARIABLE) {
+            return true; // We don't know what this could be, so we'll assume it matches.
+        } else if (action.getOperation() == NumberOperation.LITERAL_NUMBER) {
+            return doesValueMatch(action.getNumber());
+        } else if (action.getOperation() == NumberOperation.RANDOM) {
+            return couldRandomValueMatch(action.getNumber());
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Tests if the value given matches the criteria.
+     * @param value the value to test
+     */
+    public boolean doesValueMatch(int value) {
+        switch (this.operation) {
+            case NOT_EQUAL_TO:
+                return value != this.value;
+            case EQUAL_TO:
+                return value == this.value;
+            case LESS_THAN:
+                return value < this.value;
+            case GREATER_THAN:
+                return value > this.value;
+            case LESS_THAN_OR_EQUAL_TO:
+                return value <= this.value;
+            case GREATER_THAN_OR_EQUAL_TO:
+                return value >= this.value;
+            default:
+                throw new UnsupportedOperationException("Unsupported operation: " + this.operation);
+        }
+    }
+
+    /**
+     * Returns true if a random value between [0, value) could activate this cause.
+     * @param upperExclusiveBound the value boundary
+     */
+    public boolean couldRandomValueMatch(int upperExclusiveBound) {
+        switch (this.operation) {
+            case NOT_EQUAL_TO:
+                return upperExclusiveBound > 1 || this.value != 0;
+            case EQUAL_TO:
+                return upperExclusiveBound > this.value;
+            case LESS_THAN:
+                return this.value > 0; // RAND(0, value) can always be zero.
+            case GREATER_THAN:
+                return upperExclusiveBound > this.value + 1;
+            case LESS_THAN_OR_EQUAL_TO:
+                return this.value >= 0;  // RAND(0, value) can always be zero.
+            case GREATER_THAN_OR_EQUAL_TO:
+                return upperExclusiveBound >= this.value + 1;
+            default:
+                throw new UnsupportedOperationException("Unsupported operation: " + this.operation);
+        }
+    }
+
 
     @Getter
     @AllArgsConstructor
     public enum kcScriptCauseNumberOperation { // the provided number <...> <value>
-        DOES_NOT_EQUAL("does not equal"),
-        EQUALS("is equal to"),
+        NOT_EQUAL_TO("does not equal"),
+        EQUAL_TO("is equal to"),
         LESS_THAN("is less than"),
         GREATER_THAN("is greater than"),
-        LESS_THAN_OR_EQUAL("is less than or equal to"),
-        GREATER_THAN_OR_EQUAL("is greater than or equal to");
+        LESS_THAN_OR_EQUAL_TO("is less than or equal to"),
+        GREATER_THAN_OR_EQUAL_TO("is greater than or equal to");
 
         private final String displayAction;
 

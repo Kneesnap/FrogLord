@@ -21,6 +21,7 @@ import net.highwayfrogs.editor.games.sony.shared.overlay.SCOverlayTable;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCMainMenuUIController;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -90,11 +91,12 @@ public abstract class SCGameInstance extends GameInstance {
     /**
      * Load and setup all instance data relating to the game such as version configuration and game files.
      * @param versionConfigName The name of the version configuration to load.
+     * @param instanceConfig The configuration stored for the user on a per-game-version basis.
      * @param mwdFile The file representing the Millennium WAD.
      * @param exeFile The main game executable file, containing the MWI.
      * @param progressBar the progress bar to display load progress on, if it exists
      */
-    public void loadGame(String versionConfigName, File mwdFile, File exeFile, ProgressBarComponent progressBar) {
+    public void loadGame(String versionConfigName, net.highwayfrogs.editor.system.Config instanceConfig, File mwdFile, File exeFile, ProgressBarComponent progressBar) {
         if (this.mainArchive != null)
             throw new RuntimeException("The game instance has already been loaded.");
 
@@ -104,8 +106,8 @@ public abstract class SCGameInstance extends GameInstance {
 
         this.mwdFile = mwdFile;
         this.exeFile = exeFile;
-        loadGameConfig(versionConfigName);
-        if (!getConfig().isMwdLooseFiles() && (mwdFile == null || !mwdFile.exists() || !mwdFile.isFile()))
+        loadGameConfig(versionConfigName, instanceConfig);
+        if (!this.getVersionConfig().isMwdLooseFiles() && (mwdFile == null || !mwdFile.exists() || !mwdFile.isFile()))
             throw new RuntimeException("The MWD file '" + mwdFile + "' does not exist.");
 
         this.archiveIndex = this.readMWI();
@@ -130,15 +132,15 @@ public abstract class SCGameInstance extends GameInstance {
     }
 
     @Override
-    public SCGameConfig getConfig() {
-        return (SCGameConfig) super.getConfig();
+    public SCGameConfig getVersionConfig() {
+        return (SCGameConfig) super.getVersionConfig();
     }
 
     @Override
     public URL getFXMLTemplateURL(String template) {
         URL templateUrl = super.getFXMLTemplateURL(template);
         if (templateUrl == null) // Lookup from shared fxml templates if the lookup in this game fails.
-            templateUrl = Utils.getResourceURL("games/sony/fxml/" + template + ".fxml");
+            templateUrl = FileUtils.getResourceURL("games/sony/fxml/" + template + ".fxml");
 
         return templateUrl;
     }
@@ -559,8 +561,8 @@ public abstract class SCGameInstance extends GameInstance {
     }
 
     private void readExecutableHeader(DataReader reader) {
-        if (getConfig().getOverrideRamOffset() != 0) {
-            this.ramOffset = getConfig().getOverrideRamOffset();
+        if (this.getVersionConfig().getOverrideRamOffset() != 0) {
+            this.ramOffset = this.getVersionConfig().getOverrideRamOffset();
         } else if (isPSX()) {
             reader.jumpTemp(0);
             reader.verifyString("PS-X EXE"); // Ensure it's a PSX executable.
@@ -568,15 +570,15 @@ public abstract class SCGameInstance extends GameInstance {
             this.ramOffset = reader.readUnsignedIntAsLong() - 0x800; // 0x800 is a CD sector. It's also the distance between the exe header and the start of the executable data put in memory.
             reader.jumpReturn();
         } else {
-            throw new RuntimeException("Failed to load ramOffset for '" + getConfig().getInternalName() + "', it may need to be added to the configuration.");
+            throw new RuntimeException("Failed to load ramOffset for '" + this.getVersionConfig().getInternalName() + "', it may need to be added to the configuration.");
         }
     }
 
     private void readOverlayTable(DataReader reader) {
-        if (getConfig().getOverlayTableOffset() <= 0 || !isPSX())
+        if (this.getVersionConfig().getOverlayTableOffset() <= 0 || !isPSX())
             return;
 
-        reader.jumpTemp((int) getConfig().getOverlayTableOffset());
+        reader.jumpTemp((int) this.getVersionConfig().getOverlayTableOffset());
         this.overlayTable.load(reader);
         reader.jumpReturn();
         getLogger().info("Read " + this.overlayTable.getEntries().size() + " overlay entries from the table.");
@@ -585,10 +587,10 @@ public abstract class SCGameInstance extends GameInstance {
     // Beyond here are functions for handling game data from game files, and potentially also configuration data.
     private void readBmpPointerData(DataReader reader) {
         this.bmpTexturePointers.clear();
-        if (getConfig().getBmpPointerAddress() <= 0)
+        if (this.getVersionConfig().getBmpPointerAddress() <= 0)
             return; // Not specified.
 
-        reader.setIndex(getConfig().getBmpPointerAddress());
+        reader.setIndex(this.getVersionConfig().getBmpPointerAddress());
 
         long nextPossiblePtr;
         while (reader.hasMore() && isValidLookingPointer(nextPossiblePtr = reader.readUnsignedIntAsLong()))
@@ -612,10 +614,10 @@ public abstract class SCGameInstance extends GameInstance {
     }
 
     private void writeBmpPointerData(DataWriter exeWriter) {
-        if (getConfig().getBmpPointerAddress() <= 0 || this.bmpTexturePointers.isEmpty())
+        if (this.getVersionConfig().getBmpPointerAddress() <= 0 || this.bmpTexturePointers.isEmpty())
             return; // Not specified.
 
-        exeWriter.setIndex(getConfig().getBmpPointerAddress());
+        exeWriter.setIndex(this.getVersionConfig().getBmpPointerAddress());
         this.bmpTexturePointers.forEach(exeWriter::writeUnsignedInt);
     }
 
@@ -623,13 +625,13 @@ public abstract class SCGameInstance extends GameInstance {
      * Read the MWI file from the executable.
      */
     public MillenniumWadIndex readMWI() {
-        if (getConfig().getMWIOffset() <= 0)
+        if (this.getVersionConfig().getMWIOffset() <= 0)
             throw new RuntimeException("The MWI cannot be read because either no MWI offset was specified or the configuration hasn't been loaded yet.");
 
         // Read MWI bytes.
         DataReader reader = getExecutableReader();
-        reader.setIndex(getConfig().getMWIOffset());
-        byte[] mwiBytes = reader.readBytes(getConfig().getMWILength());
+        reader.setIndex(this.getVersionConfig().getMWIOffset());
+        byte[] mwiBytes = reader.readBytes(this.getVersionConfig().getMWILength());
 
         // Load an MWI file.
         DataReader arrayReader = new DataReader(new ArraySource(mwiBytes));
@@ -653,10 +655,10 @@ public abstract class SCGameInstance extends GameInstance {
 
         // Verify MWI size ok.
         int bytesWritten = mwiWriter.getIndex();
-        Utils.verify(bytesWritten == getConfig().getMWILength(), "Saving the MWI failed. The size of the written MWI does not match the correct MWI size! [%d/%d]", bytesWritten, getConfig().getMWILength());
+        Utils.verify(bytesWritten == this.getVersionConfig().getMWILength(), "Saving the MWI failed. The size of the written MWI does not match the correct MWI size! [%d/%d]", bytesWritten, this.getVersionConfig().getMWILength());
 
         // Write MWI to the provided writer.
-        writer.setIndex(getConfig().getMWIOffset());
+        writer.setIndex(this.getVersionConfig().getMWIOffset());
         writer.writeBytes(receiver.toArray());
     }
 
@@ -665,14 +667,14 @@ public abstract class SCGameInstance extends GameInstance {
      * @param progressBar the progress bar to display load progress on, if it exists
      */
     public MWDFile readMWD(ProgressBarComponent progressBar) {
-        if (getConfig().getMWIOffset() <= 0)
+        if (this.getVersionConfig().getMWIOffset() <= 0)
             throw new RuntimeException("The MWI cannot be read because either no MWI offset was specified or the configuration hasn't been loaded yet.");
 
         MWDFile mwdFile = new MWDFile(this);
         this.mainArchive = mwdFile;
 
         // Read the MWD.
-        if (getConfig().isMwdLooseFiles()) {
+        if (this.getVersionConfig().isMwdLooseFiles()) {
             mwdFile.loadFilesFromDirectory(progressBar);
         } else {
             FileSource fileSource;
@@ -702,10 +704,10 @@ public abstract class SCGameInstance extends GameInstance {
             writeExecutableData(getArchiveIndex());
 
         byte[] data = getExecutableBytes();
-        data = getConfig().applyConfigIdentifier(data);
+        data = this.getVersionConfig().applyConfigIdentifier(data);
 
         // Write file.
-        Utils.deleteFile(outputFile);
+        FileUtils.deleteFile(outputFile);
         Files.write(outputFile.toPath(), data);
     }
 

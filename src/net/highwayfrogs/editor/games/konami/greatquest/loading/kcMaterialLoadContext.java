@@ -1,17 +1,18 @@
 package net.highwayfrogs.editor.games.konami.greatquest.loading;
 
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestArchiveFile;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetBinFile;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestImageFile;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkTextureReference;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestImageFile;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.GreatQuestChunkTextureReference;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 /**
@@ -32,7 +33,7 @@ public class kcMaterialLoadContext {
     /**
      * Gets the logger
      */
-    public Logger getLogger() {
+    public ILogger getLogger() {
         return this.mainArchive.getLogger();
     }
 
@@ -82,7 +83,7 @@ public class kcMaterialLoadContext {
             if (material.getTextureFileName() == null)
                 continue;
 
-            String textureFileName = Utils.stripExtension(material.getTextureFileName());
+            String textureFileName = FileUtils.stripExtension(material.getTextureFileName());
             if (textureFileName.isEmpty())
                 continue;
 
@@ -150,7 +151,7 @@ public class kcMaterialLoadContext {
         if (this.globalCachedImages.isEmpty()) {
             for (GreatQuestArchiveFile file : this.mainArchive.getFiles()) {
                 if (file instanceof GreatQuestImageFile && file.getFileName() != null) {
-                    String fileName = Utils.stripExtension(file.getFileName());
+                    String fileName = FileUtils.stripExtension(file.getFileName());
                     List<GreatQuestImageFile> images = this.globalCachedImages.computeIfAbsent(fileName, key -> new ArrayList<>());
                     images.add((GreatQuestImageFile) file);
                 }
@@ -165,7 +166,7 @@ public class kcMaterialLoadContext {
             if (material.getTexture() != null)
                 continue; // Already has a resolved texture reference.
 
-            List<GreatQuestImageFile> images = this.globalCachedImages.get(Utils.stripExtension(material.getTextureFileName()));
+            List<GreatQuestImageFile> images = this.globalCachedImages.get(FileUtils.stripExtension(material.getTextureFileName()));
             if (images == null || images.isEmpty())
                 continue;
 
@@ -189,7 +190,7 @@ public class kcMaterialLoadContext {
             // The materials have the flag indicating a texture is included, but no name is actually there.
             // I believe they just might be bad exports from their 3D modelling tools.
             // It's probably unnecessary to warn about this.
-            if (Utils.isNullOrEmpty(material.getTextureFileName()) && Utils.isNullOrEmpty(material.getMaterialName()))
+            if (StringUtils.isNullOrEmpty(material.getTextureFileName()) && StringUtils.isNullOrEmpty(material.getMaterialName()))
                 continue;
 
             if (material.getTexture() != null)
@@ -202,7 +203,7 @@ public class kcMaterialLoadContext {
         for (Entry<kcMaterial, GreatQuestArchiveFile> entry : this.multipleMatchMaterials.entrySet()) {
             kcMaterial material = entry.getKey();
             GreatQuestArchiveFile file = entry.getValue();
-            List<GreatQuestImageFile> foundImages = this.globalCachedImages.get(Utils.stripExtension(material.getTextureFileName()));
+            List<GreatQuestImageFile> foundImages = this.globalCachedImages.get(FileUtils.stripExtension(material.getTextureFileName()));
             int foundImageCount = foundImages != null ? foundImages.size() : 0;
 
             // Attempt to search for images.
@@ -210,7 +211,7 @@ public class kcMaterialLoadContext {
                 int lastDirectorySeparator = file.getFilePath().lastIndexOf('\\');
                 if (lastDirectorySeparator != -1) {
                     String texturePath = file.getFilePath().substring(0, lastDirectorySeparator + 1)
-                            + Utils.stripExtension(material.getTextureFileName()) + ".img";
+                            + FileUtils.stripExtension(material.getTextureFileName()) + ".img";
 
                     GreatQuestArchiveFile targetImageFile = this.mainArchive.applyFileName(texturePath, false);
                     if (targetImageFile != null) {
@@ -239,7 +240,7 @@ public class kcMaterialLoadContext {
      * @return localImageFile or null.
      */
     private GreatQuestImageFile findLocalImageFile(GreatQuestChunkedFile chunkedFile, String imageFileName) {
-        String strippedTextureFileName = Utils.stripExtension(imageFileName);
+        String strippedTextureFileName = FileUtils.stripExtension(imageFileName);
 
         // Setup image cache.
         Map<String, GreatQuestImageFile> cachedImages = this.chunkedFileImageCache.get(chunkedFile);

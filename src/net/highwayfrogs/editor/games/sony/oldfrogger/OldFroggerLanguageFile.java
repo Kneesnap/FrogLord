@@ -10,7 +10,7 @@ import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,13 +33,13 @@ public class OldFroggerLanguageFile extends SCGameFile<OldFroggerGameInstance> {
     public void load(DataReader reader) {
         this.entries.clear();
         while (reader.getRemaining() >= FIXED_STRING_LENGTH)
-            this.entries.add(reader.readTerminatedStringOfLength(FIXED_STRING_LENGTH));
+            this.entries.add(reader.readNullTerminatedFixedSizeString(FIXED_STRING_LENGTH));
     }
 
     @Override
     public void save(DataWriter writer) {
         for (int i = 0; i < this.entries.size(); i++)
-            writer.writeTerminatedStringOfLength(this.entries.get(i), FIXED_STRING_LENGTH);
+            writer.writeNullTerminatedFixedSizeString(this.entries.get(i), FIXED_STRING_LENGTH);
     }
 
     @Override
@@ -63,7 +63,7 @@ public class OldFroggerLanguageFile extends SCGameFile<OldFroggerGameInstance> {
                 if (newValue == null)
                     return null;
                 if (newValue.length() >= FIXED_STRING_LENGTH) {
-                    Utils.makePopUp("The string provided is too long.", AlertType.ERROR);
+                    FXUtils.makePopUp("The string provided is too long.", AlertType.ERROR);
                     return null;
                 }
 

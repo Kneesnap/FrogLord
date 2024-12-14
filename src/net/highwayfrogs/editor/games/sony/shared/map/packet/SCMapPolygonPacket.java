@@ -12,11 +12,11 @@ import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
 import net.highwayfrogs.editor.games.sony.shared.map.SCMapFilePacket;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Represents polygon data for an SC game.
@@ -54,7 +54,7 @@ public class SCMapPolygonPacket<TGameInstance extends SCGameInstance> extends SC
 
         // Read polygons.
         if (reader.getIndex() != polygonDataStartIndex)
-            throw new RuntimeException("We expected to read polygon data, but it starts at " + Utils.toHexString(polygonDataStartIndex) + ", and the reader is at " + Utils.toHexString(reader.getIndex()) + ".");
+            throw new RuntimeException("We expected to read polygon data, but it starts at " + NumberUtils.toHexString(polygonDataStartIndex) + ", and the reader is at " + NumberUtils.toHexString(reader.getIndex()) + ".");
 
         this.polygons.clear();
         for (int i = 0; i < polygonCount; i++) {
@@ -65,7 +65,7 @@ public class SCMapPolygonPacket<TGameInstance extends SCGameInstance> extends SC
 
         // Read vertices.
         if (reader.getIndex() != vertexDataStartIndex)
-            throw new RuntimeException("We expected to read vertex data, but it starts at " + Utils.toHexString(vertexDataStartIndex) + ", and the reader is at " + Utils.toHexString(reader.getIndex()) + ".");
+            throw new RuntimeException("We expected to read vertex data, but it starts at " + NumberUtils.toHexString(vertexDataStartIndex) + ", and the reader is at " + NumberUtils.toHexString(reader.getIndex()) + ".");
 
         this.vertices.clear();
         for (int i = 0; i < vertexCount; i++)
@@ -73,7 +73,7 @@ public class SCMapPolygonPacket<TGameInstance extends SCGameInstance> extends SC
 
         // Read grid offset table.
         if (reader.getIndex() != gridOffsetTableStartIndex)
-            throw new RuntimeException("We expected to read the grid offset table, but it starts at " + Utils.toHexString(gridOffsetTableStartIndex) + ", and the reader is at " + Utils.toHexString(reader.getIndex()) + ".");
+            throw new RuntimeException("We expected to read the grid offset table, but it starts at " + NumberUtils.toHexString(gridOffsetTableStartIndex) + ", and the reader is at " + NumberUtils.toHexString(reader.getIndex()) + ".");
 
         for (int y = 0; y < this.vertexGridOffsetTable.length; y++)
             for (int x = 0; x < this.vertexGridOffsetTable[y].length; x++)
@@ -81,7 +81,7 @@ public class SCMapPolygonPacket<TGameInstance extends SCGameInstance> extends SC
 
         // Read grid length table.
         if (reader.getIndex() != gridLengthTableStartIndex)
-            throw new RuntimeException("We expected to read the grid length table, but it starts at " + Utils.toHexString(gridLengthTableStartIndex) + ", and the reader is at " + Utils.toHexString(reader.getIndex()) + ".");
+            throw new RuntimeException("We expected to read the grid length table, but it starts at " + NumberUtils.toHexString(gridLengthTableStartIndex) + ", and the reader is at " + NumberUtils.toHexString(reader.getIndex()) + ".");
 
         for (int y = 0; y < this.vertexGridLengthTable.length; y++)
             for (int x = 0; x < this.vertexGridLengthTable[y].length; x++)
@@ -89,7 +89,7 @@ public class SCMapPolygonPacket<TGameInstance extends SCGameInstance> extends SC
 
         // Read UVs.
         if (reader.getIndex() != uvDataStartIndex)
-            throw new RuntimeException("We expected to read UV data, but it starts at " + Utils.toHexString(uvDataStartIndex) + ", and the reader is at " + Utils.toHexString(reader.getIndex()) + ".");
+            throw new RuntimeException("We expected to read UV data, but it starts at " + NumberUtils.toHexString(uvDataStartIndex) + ", and the reader is at " + NumberUtils.toHexString(reader.getIndex()) + ".");
 
         this.uvs.clear();
         for (int i = 0; i < uvCount; i++) {
@@ -211,7 +211,7 @@ public class SCMapPolygonPacket<TGameInstance extends SCGameInstance> extends SC
      * @param mapFile The map file to get the dimensions for.
      * @return vertexGridimensions
      */
-    private static int getVertexGridDimensions(SCMapFile<? extends SCGameInstance> mapFile, Logger logger) {
+    private static int getVertexGridDimensions(SCMapFile<? extends SCGameInstance> mapFile, ILogger logger) {
         switch (mapFile.getGameInstance().getGameType()) {
             case MOONWARRIOR:
                 return 32;

@@ -14,6 +14,8 @@ import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.Arrays;
@@ -76,8 +78,8 @@ public class FormEntryController extends GameUIController<FroggerGameInstance> {
         entitySelector.valueProperty().addListener((observable, oldValue, newValue) -> getSelectedEntry().setEntityType(newValue));
         deathSelector.valueProperty().addListener((observable, oldValue, newValue) -> getSelectedEntry().setDeathType(newValue));
         scriptSelector.valueProperty().addListener(((observable, oldValue, newValue) -> getSelectedEntry().setScriptId(newValue)));
-        Utils.setHandleTestKeyPress(wadIndexField, Utils::isInteger, newValue -> getSelectedEntry().setId(Integer.parseInt(newValue)));
-        Utils.setHandleTestKeyPress(scriptIdField, Utils::isInteger, newValue -> getSelectedEntry().setScriptId(Integer.parseInt(newValue)));
+        FXUtils.setHandleTestKeyPress(wadIndexField, NumberUtils::isInteger, newValue -> getSelectedEntry().setId(Integer.parseInt(newValue)));
+        FXUtils.setHandleTestKeyPress(scriptIdField, NumberUtils::isInteger, newValue -> getSelectedEntry().setScriptId(Integer.parseInt(newValue)));
         editButton.setOnAction(evt -> ScriptEditorController.openEditor(getGameInstance(), getGameInstance().getScripts().get(this.scriptSelector.getValue())));
 
         for (int i = 0; i < FormLibFlag.values().length; i++) {
@@ -105,7 +107,7 @@ public class FormEntryController extends GameUIController<FroggerGameInstance> {
             return;
 
         entitySelector.getSelectionModel().select(newEntry.getEntityType());
-        Utils.comboBoxScrollToValue(entitySelector);
+        FXUtils.comboBoxScrollToValue(entitySelector);
         deathSelector.getSelectionModel().select(newEntry.getDeathType());
         wadIndexField.setText(String.valueOf(newEntry.getId()));
         scriptIdField.setText(String.valueOf(newEntry.getScriptId()));
@@ -130,6 +132,6 @@ public class FormEntryController extends GameUIController<FroggerGameInstance> {
      * Open the level info controller.
      */
     public static void openEditor(FroggerGameInstance instance) {
-        Utils.createWindowFromFXMLTemplate("edit-hardcoded-form-entry", new FormEntryController(instance), "Form Library Editor", true);
+        FXUtils.createWindowFromFXMLTemplate("edit-hardcoded-form-entry", new FormEntryController(instance), "Form Library Editor", true);
     }
 }

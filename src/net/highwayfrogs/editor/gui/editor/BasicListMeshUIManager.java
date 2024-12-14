@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.gui.editor;
 
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -12,12 +13,11 @@ import javafx.scene.paint.PhongMaterial;
 import lombok.Getter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * A basic mesh UI manager which allows displaying one or more contents of a list in 3D space for editing.
@@ -26,6 +26,7 @@ import java.util.Objects;
 @Getter
 public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, T3DDelegate> extends MeshUIManager<TMesh> {
     private final Map<TValue, T3DDelegate> delegatesByValue = new HashMap<>();
+    private final boolean includeNull;
 
     // UI:
     private GUIEditorGrid mainGrid;
@@ -35,12 +36,18 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
     private ComboBox<TValue> valueSelectionBox;
     private Button addValueButton;
     private Button removeValueButton;
+    protected boolean disableRemoveButton;
 
-    private static final PhongMaterial MATERIAL_WHITE = Utils.makeUnlitSharpMaterial(Color.WHITE);
-    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeUnlitSharpMaterial(Color.YELLOW);
+    private static final PhongMaterial MATERIAL_WHITE = Scene3DUtils.makeUnlitSharpMaterial(Color.WHITE);
+    private static final PhongMaterial MATERIAL_YELLOW = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
 
     public BasicListMeshUIManager(MeshViewController<TMesh> controller) {
+        this(controller, false);
+    }
+
+    public BasicListMeshUIManager(MeshViewController<TMesh> controller, boolean includeNull) {
         super(controller);
+        this.includeNull = includeNull;
     }
 
     /**
@@ -195,7 +202,7 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
         // Display Settings Checkbox.
         this.valueDisplaySetting = this.mainGrid.addEnumSelector("Value(s) Displayed", ListDisplayType.SELECTED, ListDisplayType.values(), false, newValue -> {
             if (newValue == ListDisplayType.ALL) {
-                setValuesVisible(true);
+                updateValueVisibility(); // Sometimes 'ALL' won't actually show everything.
             } else if (newValue == ListDisplayType.SELECTED) {
                 setValuesVisible(false);
 
@@ -311,7 +318,7 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
         // Setup basics.
         this.editorGrid.clearEditor();
         TValue selectedValue = this.valueSelectionBox.getValue();
-        this.removeValueButton.setDisable(selectedValue == null);
+        this.removeValueButton.setDisable(selectedValue == null || this.disableRemoveButton);
         if (selectedValue != null) {
             try {
                 updateEditor(selectedValue);
@@ -344,7 +351,37 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
      * @return removed successfully
      */
     protected boolean tryRemoveValue(TValue value) {
-        return getValues().remove(value);
+        return value != null && getValues().remove(value);
+    }
+
+    /**
+     * Refreshes the underlying list of values. (Used when the list is swapped/changed.)
+     */
+    protected void refreshList() {
+        List<TValue> newValues = getValues();
+        Set<TValue> newValueSet = newValues != null && newValues.size() > 0 ? new HashSet<>(newValues) : Collections.emptySet();
+
+        // Remove old values.
+        Iterator<Entry<TValue, T3DDelegate>> iterator = this.delegatesByValue.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Entry<TValue, T3DDelegate> entry = iterator.next();
+            if (!newValueSet.contains(entry.getKey())) {
+                iterator.remove();
+                onValueRemoved(entry.getKey(), entry.getValue());
+            }
+        }
+
+        // Create entries for the new values.
+        if (newValues != null) {
+            for (int i = 0; i < newValues.size(); i++) {
+                TValue newValue = newValues.get(i);
+                if (!this.delegatesByValue.containsKey(newValue))
+                    createDisplay(newValue);
+            }
+        }
+
+        updateValuesInUI();
+        updateValueVisibility();
     }
 
     /**
@@ -354,7 +391,11 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
         int valueCount = getValues().size();
         this.valueCountLabel.setText(getValueName() + " Count: " + valueCount);
 
-        this.valueSelectionBox.setItems(FXCollections.observableArrayList(getValues()));
+        ObservableList<TValue> items = FXCollections.observableArrayList(getValues());
+        if (this.includeNull && (items.isEmpty() || items.get(0) != null))
+            items.add(0, null);
+
+        this.valueSelectionBox.setItems(items);
     }
 
     public enum ListDisplayType {
@@ -373,11 +414,12 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
         @Override
         public void updateItem(TValue value, boolean empty) {
             super.updateItem(value, empty);
-            int index = this.listManager.valueSelectionBox.getItems().indexOf(value);
-            setText(this.listManager.getListDisplayName(index, value));
-            setStyle(this.listManager.getListDisplayStyle(index, value));
+            int subtractionIndex = (this.listManager.includeNull ? 1 : 0);
+            int index = (value != null) ? this.listManager.valueSelectionBox.getItems().indexOf(value) : (subtractionIndex - 1);
+            setText(this.listManager.getListDisplayName(index - subtractionIndex, value));
+            setStyle(this.listManager.getListDisplayStyle(index - subtractionIndex, value));
 
-            Image image = this.listManager.getListDisplayImage(index, value);
+            Image image = this.listManager.getListDisplayImage(index - subtractionIndex, value);
             ImageView imageView = null;
             if (image != null) {
                 imageView = new ImageView(image);

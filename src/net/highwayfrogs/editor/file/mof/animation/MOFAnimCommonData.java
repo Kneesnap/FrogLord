@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.mof.animation.transform.TransformObject;
 import net.highwayfrogs.editor.file.mof.animation.transform.TransformType;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ public class MOFAnimCommonData extends GameObject {
     @Override
     public void load(DataReader reader) {
         int flags = reader.readInt();
-        Utils.verify(flags == DEFAULT_FLAGS, "Cannot handle AnimCommonData flags: (%s)", Utils.toHexString(flags));
+        Utils.verify(flags == DEFAULT_FLAGS, "Cannot handle AnimCommonData flags: (%s)", NumberUtils.toHexString(flags));
 
         short transformCount = reader.readShort();
         short rotationCount = reader.readShort();

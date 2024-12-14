@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file.writer;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,14 @@ public class BitWriter {
      */
     public int getByteCount() {
         return this.bytes.size() + (this.currentBit != Constants.BITS_PER_BYTE ? 1 : 0);
+    }
+
+    /**
+     * Write a singular bit.
+     * @param bit The bit to write. 1 or 0.
+     */
+    public void writeBit(boolean bit) {
+        writeBit(Utils.getBit(bit));
     }
 
     /**

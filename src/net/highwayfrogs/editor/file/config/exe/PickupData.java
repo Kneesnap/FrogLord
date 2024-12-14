@@ -17,8 +17,9 @@ import net.highwayfrogs.editor.games.sony.SCGameObject;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerFlyScoreType;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
-import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -85,7 +86,7 @@ public class PickupData extends SCGameData<FroggerGameInstance> {
      * Gets the sprite scale size as a floating point value.
      */
     public float getSpriteSizeAsFloat() {
-        return Utils.fixedPointIntToFloatNBits(this.spriteSize, 16);
+        return DataUtils.fixedPointIntToFloatNBits(this.spriteSize, 16);
     }
 
     /**
@@ -141,7 +142,7 @@ public class PickupData extends SCGameData<FroggerGameInstance> {
             int newWidth = (int) (this.awtPreviewImage.getWidth() * ENTITY_FLY_SPRITE_SCALE_SIZE);
             int newHeight = (int) (this.awtPreviewImage.getHeight() * ENTITY_FLY_SPRITE_SCALE_SIZE);
             BufferedImage scaledPreviewImage = ImageWorkHorse.resizeImage(this.awtPreviewImage, newWidth, newHeight, true);
-            this.fxPreviewImage = Utils.toFXImage(scaledPreviewImage, false);
+            this.fxPreviewImage = FXUtils.toFXImage(scaledPreviewImage, false);
         }
 
         /**
@@ -161,7 +162,7 @@ public class PickupData extends SCGameData<FroggerGameInstance> {
                 return this.highlightedMaterial;
             } else {
                 if (this.normalMaterial == null)
-                    this.normalMaterial = Utils.makeUnlitSharpMaterial(this.fxPreviewImage);
+                    this.normalMaterial = Scene3DUtils.makeUnlitSharpMaterial(this.fxPreviewImage);
 
                 return this.normalMaterial;
             }

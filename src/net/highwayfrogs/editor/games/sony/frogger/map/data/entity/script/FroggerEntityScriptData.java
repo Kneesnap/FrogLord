@@ -20,13 +20,13 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.form.IFroggerFormEntr
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.Tuple2;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * Listens to entity script data.
@@ -48,7 +48,7 @@ public abstract class FroggerEntityScriptData extends SCGameData<FroggerGameInst
     }
 
     @Override
-    public Logger getLogger() {
+    public ILogger getLogger() {
         return this.parentEntity != null ? this.parentEntity.getLogger() : super.getLogger();
     }
 
@@ -93,7 +93,7 @@ public abstract class FroggerEntityScriptData extends SCGameData<FroggerGameInst
         if (formEntry == null)
             return null;
 
-        String dataClassName = instance.getConfig().getFormBank().getConfig().getString(formEntry.getFormTypeName(), null);
+        String dataClassName = instance.getVersionConfig().getFormBank().getConfig().getString(formEntry.getFormTypeName(), null);
         if (dataClassName == null)
             return null;
 

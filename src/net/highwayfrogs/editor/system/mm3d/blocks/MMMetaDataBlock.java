@@ -31,7 +31,7 @@ public class MMMetaDataBlock extends MMDataBlockBody {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeTerminatorString(this.key);
-        writer.writeTerminatorString(this.value);
+        writer.writeNullTerminatedString(this.key);
+        writer.writeNullTerminatedString(this.value);
     }
 }

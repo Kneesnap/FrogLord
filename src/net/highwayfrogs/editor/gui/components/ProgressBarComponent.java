@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.system.AbstractService;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.net.URL;
@@ -38,7 +39,7 @@ public class ProgressBarComponent extends GameUIController<GameInstance> {
     @Getter private String status;
     private boolean nextUpdateQueued;
 
-    private static final URL PROGRESS_BAR_FXML_TEMPLATE_URL = Utils.getResourceURL("fxml/window-progress-bar.fxml");;
+    private static final URL PROGRESS_BAR_FXML_TEMPLATE_URL = FileUtils.getResourceURL("fxml/window-progress-bar.fxml");;
     private static final FXMLLoader PROGRESS_BAR_FXML_TEMPLATE_LOADER = new FXMLLoader(PROGRESS_BAR_FXML_TEMPLATE_URL);
 
     public ProgressBarComponent(GameInstance instance) {

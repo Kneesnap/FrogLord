@@ -4,11 +4,12 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData;
 import net.highwayfrogs.editor.games.generic.GamePlatform;
+import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -39,10 +40,24 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
     // Bit 0|0x1 = ? (kcGraphicsSetVertexShader)
     // Bit 12|0x1000 = Disable Blend
 
+    // Rendering flow:
+    // kcCSceneMgr::Render is a scheduled task.
+    // The kcCSceneMgr is a(n) kcCOctTreeSceneMgr.
+    // The OctTree will traverse the Visual OctTree to first render entities (first opaque draw calls then translucent), then terrain (first opaque draw calls then translucent). Water is rendered separately by its own render function.
+    // The resulting lists appear to be sorted as well, by something unknown, probably distance.
+    // When the scene elements are drawn, their OTAPrim->Render method is called
+    // For terrain, this is kcCOTAPrim::Render which will skip if flag 0x80 set, or if what appears to be a backface culling check fails?
+    //  If it does decide to render, it adds a single vertex buffer.
+    // For entities, kcCEntity3D::Render() is called, which for most things will eventually boil down to kcCModel::Render()
+    // kcCModel::Render() when called outside of the scene rendering logic will render very inefficiently, but I'm not sure that ever happens.
+    // During this flow, it will try and group as many vertex buffers and draw calls as possible together.
+    // It's hard to tell how well optimized this is, because it appears to have a draw call for every single kcModel node (vertex buffer).
+    // On PC, this definitely appears to be an issue, but on PS2 it does appear to try to combine them. It is unclear if this also hits performance, but I strongly suspect it does.
+
     // PS2 FVF Flags:
     public static final int FVF_FLAG_PS2_NORMALS_HAVE_W = Constants.BIT_FLAG_4; // 0x10
     public static final int FVF_FLAG_PS2_POSITIONS_HAVE_SIZE = Constants.BIT_FLAG_5; // 0x20
-    public static final int FVF_FLAG_PS2_DIFFUSE_RGBA255 = Constants.BIT_FLAG_6; // 0x40
+    public static final int FVF_FLAG_PS2_DIFFUSE_RGBA255 = Constants.BIT_FLAG_6; // 0x40 -> Doesn't seem to always be correct.
     public static final int FVF_FLAG_PS2_HAS_MATRIX = Constants.BIT_FLAG_12; // 0x1000, Also disables blend?
 
     // PC FVF Flags:
@@ -69,7 +84,7 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
     }
 
     @Override
-    public void load(DataReader reader) {
+    public void load(DataReader reader) { // Based on kcModelPrepare()
         // 1. Read Header.
         this.fvf = reader.readUnsignedIntAsLong();
         int componentCount = reader.readInt();
@@ -91,9 +106,8 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
         // 3. Read Materials.
         this.materials.clear();
         for (int i = 0; i < materialCount; i++) {
-            kcMaterial newMaterial = new kcMaterial();
+            kcMaterial newMaterial = new kcMaterial(getGameInstance());
             newMaterial.load(reader);
-            newMaterial.applyModelMaterialInfo(); // Some of the data should be destroyed / overwritten.
             this.materials.add(newMaterial);
         }
 
@@ -137,17 +151,17 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
         int realStride = (reader.getRemaining() / vertexCount);
 
         if (realStrideRemainder != 0 || realStride != configuredStride) {
-            getLogger().warning("3D model had " + vertexCount + " vertices with a stride calculated to be " + configuredStride + ", but the actual stride of remaining data was " + realStride + ". (Remainder: " + realStrideRemainder + ")");
+            getLogger().warning("Found a 3D model which had a stride calculated to be " + configuredStride + ", but the actual stride of remaining data was " + realStride + ". (Will fix it if possible)");
 
             if (this.components[this.components.length - 1] == kcVertexFormatComponent.WEIGHT1F && realStride == 24 && configuredStride == 26) {
                 // An example of an afflicted file, file 3594 on the PS2 PAL release.
                 // The current hypothesis for these files is that the game itself wouldn't even load them properly.
-                // TODO: This fix doesn't seem to give proper UV values. Investigate that once we fix PS2 texture exporting.
+                // These models appear to exist in the PC port without any issue.
+                // As such, even though this fix doesn't load 100% properly, it loads well enough to get a sense of what the model is. I don't see a reason to fix it further atm.
 
                 kcVertexFormatComponent[] newComponents = new kcVertexFormatComponent[this.components.length - 1];
                 System.arraycopy(this.components, 0, newComponents, 0, newComponents.length);
                 this.components = newComponents;
-                getLogger().warning(" - However, a hack was applied to fix the model.");
             } else {
                 reader.skipBytes(reader.getRemaining());
                 return;
@@ -208,6 +222,30 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
         // 8. Write vertex buffers.
         for (int i = 0; i < this.primitives.size(); i++)
             this.primitives.get(i).saveVertices(writer);
+    }
+
+    /**
+     * Test if the model uses the given FVF component.
+     * @param fvfComponent the fvf component to test
+     * @return true iff the model has the given fvf component
+     */
+    public boolean hasComponent(kcVertexFormatComponent fvfComponent) {
+        return this.components != null && Utils.contains(this.components, fvfComponent);
+    }
+
+    /**
+     * Test if the vertex components contain normal data.
+     */
+    public boolean hasVertexNormals() {
+        return hasComponent(kcVertexFormatComponent.NORMAL_XYZF) || hasComponent(kcVertexFormatComponent.NORMAL_XYZWF);
+    }
+
+    /**
+     * Test if the vertex components contain texCoord data.
+     */
+    public boolean hasVertexTexCoords() {
+        return hasComponent(kcVertexFormatComponent.TEX1F) || hasComponent(kcVertexFormatComponent.TEX2F)
+                || hasComponent(kcVertexFormatComponent.TEX1_STQP);
     }
 
     /**
@@ -422,7 +460,7 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
         propertyList.add("Materials", this.materials.size());
         propertyList.add("Nodes", this.nodes.size());
         propertyList.add("Primitives", this.primitives.size());
-        propertyList.add("FvF", Utils.toHexString(this.fvf));
+        propertyList.add("FvF", NumberUtils.toHexString(this.fvf));
         propertyList.add("Components", Arrays.toString(this.components));
         propertyList.add("Bones Per Primitive", this.bonesPerPrimitive);
         return propertyList;

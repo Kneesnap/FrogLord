@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.games.sony.frogger.FroggerTextureRemap;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.util.Locale;
 import java.util.function.Function;
@@ -64,7 +64,7 @@ public abstract class MapBook extends ExeStruct {
             return;
         }
 
-        String name = entry.hasFullFilePath() ? "txl_" + Utils.stripExtension(entry.getDisplayName()).toLowerCase(Locale.ROOT) + (lowPoly ? "_win95" : "") : null;
+        String name = entry.hasFullFilePath() ? "txl_" + FileUtils.stripExtension(entry.getDisplayName()).toLowerCase(Locale.ROOT) + (lowPoly ? "_win95" : "") : null;
         instance.addRemap(new FroggerTextureRemap(instance, entry, name, remapPointer));
     }
 }

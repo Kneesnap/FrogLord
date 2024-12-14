@@ -16,8 +16,8 @@ public abstract class PSXShadedDynamicMesh<TPolygon, TPSXShadingManager extends 
     private final TPSXShadingManager shadedTextureManager;
     private boolean shadingEnabled;
 
-    public PSXShadedDynamicMesh(TextureAtlas atlas, boolean shadingEnabledByDefault) {
-        super(atlas);
+    public PSXShadedDynamicMesh(TextureAtlas atlas, DynamicMeshTextureQuality textureQuality, boolean shadingEnabledByDefault) {
+        super(atlas, textureQuality);
         this.shadingEnabled = shadingEnabledByDefault;
         this.shadedTextureManager = createShadedTextureManager();
     }

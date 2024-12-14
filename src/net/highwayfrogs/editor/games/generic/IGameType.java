@@ -5,15 +5,17 @@ import net.highwayfrogs.editor.gui.GameConfigController;
 import net.highwayfrogs.editor.gui.GameConfigController.GameConfigUIController;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.TimeUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Represents a unique game.
@@ -42,9 +44,10 @@ public interface IGameType {
      * @param instance the game instance to setup from configuration
      * @param gameVersionConfigName the name of the version config file to use
      * @param gameSetupConfig the configuration data to load the game instance with
+     * @param instanceConfig the config which the instance stores its user-configuration data within
      * @param progressBar the progress bar to display load progress on (optional)
      */
-    void loadGameInstance(GameInstance instance, String gameVersionConfigName, Config gameSetupConfig, ProgressBarComponent progressBar);
+    void loadGameInstance(GameInstance instance, String gameVersionConfigName, Config gameSetupConfig, Config instanceConfig, ProgressBarComponent progressBar);
 
     /**
      * Creates a new config for this game type.
@@ -64,8 +67,17 @@ public interface IGameType {
      * @param localPath the local path of the file to load
      * @return embeddedResourceStream
      */
+    default String getEmbeddedResourcePath(String localPath) {
+        return "games/" + getIdentifier() + "/" + localPath;
+    }
+
+    /**
+     * Gets an InputStream to files included for this specific game.
+     * @param localPath the local path of the file to load
+     * @return embeddedResourceStream
+     */
     default InputStream getEmbeddedResourceStream(String localPath) {
-        return Utils.getResourceStream("games/" + getIdentifier() + "/" + localPath);
+        return FileUtils.getResourceStream(getEmbeddedResourcePath(localPath));
     }
 
     /**
@@ -74,7 +86,29 @@ public interface IGameType {
      * @return embeddedResourceURL
      */
     default URL getEmbeddedResourceURL(String localPath) {
-        return Utils.getResourceURL("games/" + getIdentifier() + "/" + localPath);
+        return FileUtils.getResourceURL(getEmbeddedResourcePath(localPath));
+    }
+
+    /**
+     * Load a config file from a resource path.
+     * @param localPath the local resource path to load the config from
+     * @return loadedConfig
+     */
+    default Config loadConfigFromEmbeddedResourcePath(String localPath, boolean allowNull) {
+        String embeddedResourcePath = getEmbeddedResourcePath(localPath);
+        InputStream inputStream = getEmbeddedResourceStream(localPath);
+        if (inputStream == null) {
+            if (allowNull)
+                return null;
+
+            throw new IllegalArgumentException("Local resource path '" + localPath + "' (" + embeddedResourcePath + ") could not be resolved to a config file.");
+        }
+
+        try {
+            return Config.loadTextConfigFromInputStream(inputStream, embeddedResourcePath);
+        } catch (Throwable th) {
+            throw new RuntimeException("Failed to read config file resource '" + embeddedResourcePath + "'.", th);
+        }
     }
 
     /**
@@ -87,13 +121,13 @@ public interface IGameType {
 
         // Load configs.
         versionConfigs = new ArrayList<>();
-        Logger logger = Logger.getLogger(getClass().getSimpleName());
-        List<URL> versionConfigFiles = Utils.getInternalResourceFilesInDirectory(getEmbeddedResourceURL("versions"), true);
+        ILogger logger = ClassNameLogger.getLogger(null, getClass());
+        List<URL> versionConfigFiles = FileUtils.getInternalResourceFilesInDirectory(getEmbeddedResourceURL("versions"), true);
         if (versionConfigFiles.isEmpty())
             logger.severe("Did not find any version configs for the game type " + getIdentifier() + "/'" + getDisplayName() + "'. This seems like a bug.");
 
         for (URL url : versionConfigFiles) {
-            String versionConfigName = Utils.getFileNameWithoutExtension(url);
+            String versionConfigName = FileUtils.getFileNameWithoutExtension(url);
 
             net.highwayfrogs.editor.file.config.Config versionConfig;
             try {

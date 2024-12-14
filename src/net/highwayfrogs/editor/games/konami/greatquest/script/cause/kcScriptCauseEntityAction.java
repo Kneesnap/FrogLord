@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInheritanceGroup;
 
 /**
  * Represents entity actions shared between ACTOR / PLAYER types.
@@ -10,24 +11,25 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum kcScriptCauseEntityAction {
-    UNKNOWN_0(0, "Never", false, false), // Rolling Rapids Creek - Hides a bug. (Separate from the script to hide the bug in the tutorial.)
-    INTERACT(1, "When the player interacts with the attached entity", true, false), // Triggers: CFrogCtl::OnBeginAction, CFrogCtl::CheckForHealthBug
-    BUMPS(2, "When the player collides/bumps into the attached entity", true, true), // Triggers: CProp::TriggerHitCallback, CCharacter::BumpCallback
-    ATTACK(5, "When the player targets the attached entity for an attack", true, false), // Triggers: CFrogCtl::Spit, CFrogCtl::OnBeginMissile, CFrogCtl::OnBeginMagicStone, and, CFrogCtl::OnBeginMelee
-    PICKUP_ITEM(7, "When the player picks up the attached item entity", true, false), // Trigger: CCharacter::PickupCallback
-    TAKE_NEGATIVE_DAMAGE(8, "When the attached entity takes negative damage (gains health), which is how scripts cause healing.", false, true),
-    UNKNOWN_9(9, "Never", false, false), // Bog Town - Plays Random Frogger Hurt Noise
-    DEATH(10, "When the attached entity dies", false, true), // Trigger: kcCActor::OnDamage, Player deaths are also broadcast from the actor cause, but not from the player cause.
-    UNKNOWN_13(13, "Never", false, false); // Rolling Rapids Creek - Starts unused copy of tutorial sequence from after opening the locked door.
+    UNKNOWN_0(0, "Never", false, false, kcEntityInheritanceGroup.ENTITY), // Rolling Rapids Creek - Hides a bug. (Separate from the script to hide the bug in the tutorial.)
+    INTERACT(1, "When the player interacts with the script entity", true, false, kcEntityInheritanceGroup.ACTOR_BASE), // Target Triggers: CFrogCtl::OnBeginAction, CFrogCtl::CheckForHealthBug
+    BUMPS(2, "When another entity/player collides/bumps into the script entity", true, true, kcEntityInheritanceGroup.PROP_OR_CHARACTER), // Target Triggers: CProp::TriggerHitCallback, CCharacter::BumpCallback
+    TARGET_FOR_ATTACK(5, "When the player targets the script entity for an attack", true, false, kcEntityInheritanceGroup.ACTOR_BASE), // Target Triggers: CFrogCtl::Spit, CFrogCtl::OnBeginMissile, CFrogCtl::OnBeginMagicStone, and, CFrogCtl::OnBeginMelee
+    PICKUP_ITEM(7, "When the player picks up the script entity", true, false, kcEntityInheritanceGroup.ITEM), // Target Trigger: CCharacter::PickupCallback
+    HEAL(8, "When the script entity heals", false, true, kcEntityInheritanceGroup.ACTOR), // Target Trigger: kcCActor::OnDamage
+    UNKNOWN_9(9, "Never", false, false, kcEntityInheritanceGroup.ENTITY), // Bog Town - Plays Random Frogger Hurt Noise
+    DEATH(10, "When the script entity dies", false, true, kcEntityInheritanceGroup.ACTOR), // Target Trigger: kcCActor::OnDamage, NOTE: If the --PreventDeath flag is set, it looks like this trigger can still occur, as it's only the animation which doesn't occur, the health still reaches 0.
+    UNKNOWN_13(13, "Never", false, false, kcEntityInheritanceGroup.ENTITY); // Rolling Rapids Creek - Starts unused copy of tutorial sequence from after opening the locked door.
 
     private final int value;
     private final String playerDescription;
     private final String actorDescription;
-    private final boolean implementedForPlayer; // If this message is broadcast by an unmodified copy of the game for players.
-    private final boolean implementedForActor; // If this message is broadcast by an unmodified copy of the game for actors.
+    private final boolean implementedForPlayer; // If this cause is sent by an unmodified copy of the game for players.
+    private final boolean implementedForActor; // If this cause is sent by an unmodified copy of the game for actors.
+    private final kcEntityInheritanceGroup entityGroup;
 
-    kcScriptCauseEntityAction(int value, String description, boolean implementedForPlayer, boolean implementedForActor) {
-        this(value, getDescription(value, description, implementedForPlayer, false), getDescription(value, description, implementedForActor, true), implementedForPlayer, implementedForActor);
+    kcScriptCauseEntityAction(int value, String description, boolean implementedForPlayer, boolean implementedForActor, kcEntityInheritanceGroup category) {
+        this(value, getDescription(value, description, implementedForPlayer, false), getDescription(value, description, implementedForActor, true), implementedForPlayer, implementedForActor, category);
     }
 
     /**

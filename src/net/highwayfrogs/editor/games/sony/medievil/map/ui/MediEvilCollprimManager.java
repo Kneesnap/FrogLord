@@ -15,7 +15,7 @@ import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 import java.util.List;
 
@@ -28,13 +28,13 @@ public class MediEvilCollprimManager extends MediEvilMapListManager<MediEvilMapC
     private CheckBox wireframePreviewCheckBox;
     private ComboBox<MediEvilMapCollprimType> collprimTypeFilterComboBox;
 
-    private static final PhongMaterial MATERIAL_GREEN = Utils.makeUnlitSharpMaterial(Color.GREEN);
-    private static final PhongMaterial MATERIAL_LIME = Utils.makeUnlitSharpMaterial(Color.LIME);
-    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeUnlitSharpMaterial(Color.YELLOW);
-    private static final PhongMaterial MATERIAL_PINK = Utils.makeUnlitSharpMaterial(Color.PINK);
-    private static final PhongMaterial MATERIAL_SALMON = Utils.makeUnlitSharpMaterial(Color.LIGHTSALMON);
-    private static final PhongMaterial MATERIAL_BLUE = Utils.makeUnlitSharpMaterial(Color.BLUE);
-    private static final PhongMaterial MATERIAL_WHITE = Utils.makeUnlitSharpMaterial(Color.WHITE);
+    private static final PhongMaterial MATERIAL_GREEN = Scene3DUtils.makeUnlitSharpMaterial(Color.GREEN);
+    private static final PhongMaterial MATERIAL_LIME = Scene3DUtils.makeUnlitSharpMaterial(Color.LIME);
+    private static final PhongMaterial MATERIAL_YELLOW = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
+    private static final PhongMaterial MATERIAL_PINK = Scene3DUtils.makeUnlitSharpMaterial(Color.PINK);
+    private static final PhongMaterial MATERIAL_SALMON = Scene3DUtils.makeUnlitSharpMaterial(Color.LIGHTSALMON);
+    private static final PhongMaterial MATERIAL_BLUE = Scene3DUtils.makeUnlitSharpMaterial(Color.BLUE);
+    private static final PhongMaterial MATERIAL_WHITE = Scene3DUtils.makeUnlitSharpMaterial(Color.WHITE);
 
     public MediEvilCollprimManager(MeshViewController<MediEvilMapMesh> controller) {
         super(controller);

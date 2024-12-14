@@ -8,6 +8,7 @@ import javafx.scene.input.PickResult;
 import javafx.scene.shape.Box;
 import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Rotate;
+import javafx.scene.transform.Scale;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -95,7 +96,7 @@ public class ScaleGizmo extends DynamicMesh {
     }
 
     public ScaleGizmo(boolean xAxisEnabled, boolean yAxisEnabled, boolean zAxisEnabled) {
-        super(new SequentialTextureAtlas(32, 32, false));
+        super(new SequentialTextureAtlas(32, 32, false), DynamicMeshTextureQuality.LIT_BLURRY);
         this.xAxisEnabled = xAxisEnabled;
         this.yAxisEnabled = yAxisEnabled;
         this.zAxisEnabled = zAxisEnabled;
@@ -377,6 +378,8 @@ public class ScaleGizmo extends DynamicMesh {
     private void onDragStart(MouseEvent event) {
         MeshView meshView = (MeshView) event.getSource();
         Group scene = Scene3DUtils.getSubSceneGroup(meshView.getScene());
+
+        // Clear existing axis plane, if it somehow exists.
         if (this.axisPlane != null) {
             scene.getChildren().remove(this.axisPlane);
             this.axisPlane = null;
@@ -390,22 +393,23 @@ public class ScaleGizmo extends DynamicMesh {
             return;
 
         // Setup moving data.
+        Scale scale = Scene3DUtils.getOptional3DScale(meshView);
         GizmoMeshViewState state = this.meshViewStates.get(meshView);
         if (clickedMeshNode == this.xAxisNode) {
             this.movementAxis = Rotate.X_AXIS;
             this.xAxisNode.updateTextureIndex(this.redTextureUvIndex, this.orangeTextureUvIndex);
             this.xAxisNode.updateTextureIndex(this.lightRedTextureUvIndex, this.orangeTextureUvIndex);
-            state.setDragStartLength(this.scaleX * BAR_LENGTH);
+            state.setDragStartLength(this.scaleX * BAR_LENGTH * (scale != null ? scale.getX() : 1));
         } else if (clickedMeshNode == this.yAxisNode) {
             this.movementAxis = Rotate.Y_AXIS;
             this.yAxisNode.updateTextureIndex(this.greenTextureUvIndex, this.orangeTextureUvIndex);
             this.yAxisNode.updateTextureIndex(this.lightGreenTextureUvIndex, this.orangeTextureUvIndex);
-            state.setDragStartLength(this.scaleY * BAR_LENGTH);
+            state.setDragStartLength(this.scaleY * BAR_LENGTH * (scale != null ? scale.getY() : 1));
         } else if (clickedMeshNode == this.zAxisNode) {
             this.movementAxis = Rotate.Z_AXIS;
             this.zAxisNode.updateTextureIndex(this.blueTextureUvIndex, this.orangeTextureUvIndex);
             this.zAxisNode.updateTextureIndex(this.lightBlueTextureUvIndex, this.orangeTextureUvIndex);
-            state.setDragStartLength(this.scaleZ * BAR_LENGTH);
+            state.setDragStartLength(this.scaleZ * BAR_LENGTH * (scale != null ? scale.getZ() : 1));
         } else {
             // Didn't click one of the axis.
             this.movementAxis = null;
@@ -416,7 +420,13 @@ public class ScaleGizmo extends DynamicMesh {
         this.axisPlane = Scene3DUtils.createAxisPlane(meshView, scene, state.getCamera(), this.movementAxis);
 
         // Update state.
-        state.setDragStartPosition(result.getIntersectedPoint());
+        if (scale != null) {
+            // We need to get the coordinates scaled to world space, but still local to the MeshView origin. (It gave us the coordinates before scaling was applied)
+            Point3D startPoint = result.getIntersectedPoint();
+            state.setDragStartPosition(new Point3D(startPoint.getX() * scale.getX(), startPoint.getY() * scale.getY(), startPoint.getZ() * scale.getZ()));
+        } else {
+            state.setDragStartPosition(result.getIntersectedPoint());
+        }
 
         // Disable dragging on the gizmo, so only the plane will get events.
         meshView.setMouseTransparent(true);
@@ -451,17 +461,22 @@ public class ScaleGizmo extends DynamicMesh {
 
         // Treat the initial mouse position as the origin for all dragged mouse positions.
         // This allows us to calculate the new position of the scale box as relative to the click position.
+        // The initial mouse position was scaled, but the new mouse position is not-- we're now getting positions from the axis plane not on the scaled gizmo MeshView.
         Point3D mouseOffset = mousePoint.subtract(state.getDragStartPosition());
 
         // Update positions.
+        Scale gizmoScale = Scene3DUtils.getOptional3DScale(meshView);
         if (this.movementAxis == Rotate.X_AXIS) {
-            double newX = Math.max(0, (mouseOffset.getX() + state.getDragStartLength()) / BAR_LENGTH);
+            double scale = (gizmoScale != null ? gizmoScale.getX() : 1);
+            double newX = Math.max(0, (mouseOffset.getX() + state.getDragStartLength()) / (scale * BAR_LENGTH));
             setScaleX(newX, true);
         } else if (this.movementAxis == Rotate.Y_AXIS) {
-            double newY = Math.max(0, -(mouseOffset.getY() - state.getDragStartLength()) / BAR_LENGTH);
+            double scale = (gizmoScale != null ? gizmoScale.getY() : 1);
+            double newY = Math.max(0, -(mouseOffset.getY() - state.getDragStartLength()) / (scale * BAR_LENGTH));
             setScaleY(newY, true);
         } else if (this.movementAxis == Rotate.Z_AXIS) {
-            double newZ = Math.max(0, (mouseOffset.getZ() + state.getDragStartLength()) / BAR_LENGTH);
+            double scale = (gizmoScale != null ? gizmoScale.getZ() : 1);
+            double newZ = Math.max(0, (mouseOffset.getZ() + state.getDragStartLength()) / (scale * BAR_LENGTH));
             setScaleZ(newZ, true);
         }
     }

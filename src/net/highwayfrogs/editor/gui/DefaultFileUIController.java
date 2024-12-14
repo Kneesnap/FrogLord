@@ -1,19 +1,23 @@
 package net.highwayfrogs.editor.gui;
 
+import javafx.beans.property.DoubleProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.SplitPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
-import net.highwayfrogs.editor.games.generic.GameObject;
+import net.highwayfrogs.editor.games.generic.data.GameObject;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -25,15 +29,19 @@ import net.highwayfrogs.editor.utils.Utils;
 public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFile extends GameObject<?> & IPropertyListCreator> extends GameUIController<TGameInstance> {
     private final Image icon;
     private final String fileNameText;
+    @FXML private SplitPane mainSplitPane;
+    @FXML private AnchorPane leftSideAnchorPane;
     @FXML private VBox leftSidePanelFreeArea;
     @FXML private HBox leftSidePanelTopBox;
     @FXML private HBox contentBox;
+    @FXML private VBox rightSidePanelFreeArea;
     @FXML private ImageView iconImageView;
     @FXML private Label fileNameLabel;
     private TGameFile file;
+    private Class<? extends TGameFile> fileClass;
     private final PropertyListViewerComponent<TGameInstance> propertyListViewer;
 
-    private static final String TEMPLATE_URL = "edit-file-default-template";
+    public static final String TEMPLATE_URL = "edit-file-default-template";
 
     public DefaultFileUIController(TGameInstance instance, String fileNameText, Image icon) {
         super(instance);
@@ -49,10 +57,22 @@ public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFi
         if (this.fileNameLabel != null)
             this.fileNameLabel.setText(this.fileNameText != null ? this.fileNameText : "Unnamed File Type");
 
-        if (this.contentBox != null) {
+        if (this.mainSplitPane.getDividers().size() > 0) {
+            DoubleProperty position = this.mainSplitPane.getDividers().get(0).positionProperty();
+            position.set(.4D);
+            this.contentBox.prefWidthProperty().bind(position);
+            this.leftSidePanelFreeArea.prefWidthProperty().bind(position);
+            this.leftSideAnchorPane.prefWidthProperty().bind(position);
+            this.leftSidePanelTopBox.prefWidthProperty().bind(position);
+        }
+
+        if (this.rightSidePanelFreeArea != null) {
+            HBox.setHgrow(this.rightSidePanelFreeArea, Priority.ALWAYS);
+
             Node propertyListViewRootNode = this.propertyListViewer.getRootNode();
-            HBox.setHgrow(propertyListViewRootNode, Priority.ALWAYS);
-            this.contentBox.getChildren().add(propertyListViewRootNode);
+            VBox.setVgrow(propertyListViewRootNode, Priority.ALWAYS);
+            this.propertyListViewer.bindSize();
+            getRightSidePanelFreeArea().getChildren().add(propertyListViewRootNode);
             addController(this.propertyListViewer);
         }
     }
@@ -61,12 +81,27 @@ public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFi
      * Setup this window, by loading a GameFile to edit.
      * @param file The file to load and edit.
      */
+    @SuppressWarnings("unchecked")
     public void setTargetFile(TGameFile file) {
         TGameFile oldFile = this.file;
         if (oldFile != file) {
+            if (file != null && (this.fileClass == null || file.getClass().isAssignableFrom(this.fileClass)))
+                this.fileClass = (Class<? extends TGameFile>) file.getClass();
+
             this.file = file;
             this.propertyListViewer.showProperties(file != null ? file.createPropertyList() : null);
         }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public boolean trySetTargetFile(GameObject<?> file) {
+        if ((this.fileClass != null && this.fileClass.isInstance(file))) {
+            setTargetFile((TGameFile) file);
+            return true;
+        }
+
+        return super.trySetTargetFile(file);
     }
 
     /**
@@ -90,7 +125,7 @@ public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFi
      */
     public static <TGameInstance extends GameInstance, TGameFile extends GameObject<?> & IPropertyListCreator, TUIController extends DefaultFileUIController<TGameInstance, TGameFile>> TUIController loadEditor(TGameInstance gameInstance, String template, TUIController controller, TGameFile fileToEdit) {
         try {
-            FXMLLoader templateLoader = Utils.getFXMLTemplateLoader(gameInstance, template);
+            FXMLLoader templateLoader = FXUtils.getFXMLTemplateLoader(gameInstance, template);
             GameUIController.loadController(gameInstance, templateLoader, controller);
             controller.setTargetFile(fileToEdit);
         } catch (Throwable th) {
@@ -99,5 +134,4 @@ public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFi
 
         return controller;
     }
-
 }

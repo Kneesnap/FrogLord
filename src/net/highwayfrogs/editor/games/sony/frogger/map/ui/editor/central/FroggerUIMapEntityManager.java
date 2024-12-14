@@ -29,7 +29,6 @@ import net.highwayfrogs.editor.gui.editor.MeshViewFrameTimer.MeshViewFixedFrameR
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
-import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -49,7 +48,7 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
 
     public static final float ENTITY_PLACEHOLDER_SPRITE_SIZE = 16F;
     public static final TriangleMesh ENTITY_PLACEHOLDER_SPRITE_MESH = Scene3DUtils.createSpriteMesh(ENTITY_PLACEHOLDER_SPRITE_SIZE);
-    public static final PhongMaterial ENTITY_PLACEHOLDER_SPRITE_MATERIAL = Utils.makeUnlitSharpMaterial(ImageResource.SQUARE_LETTER_E_128.getFxImage());
+    public static final PhongMaterial ENTITY_PLACEHOLDER_SPRITE_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(ImageResource.SQUARE_LETTER_E_128.getFxImage());
     public static final PhongMaterial ENTITY_HIGHLIGHTED_PLACEHOLDER_SPRITE_MATERIAL = Scene3DUtils.updateHighlightMaterial(null, ImageResource.SQUARE_LETTER_E_128.getAwtImage());
 
     public FroggerUIMapEntityManager(MeshViewController<FroggerMapMesh> controller) {
@@ -188,6 +187,7 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
             if (modelMesh.getFaceCount() > 0) {
                 DynamicMesh.tryRemoveMesh(entityMeshView);
                 entityMeshView.setMesh(modelMesh);
+                entityMeshView.setCullFace(CullFace.BACK);
                 // TODO: Future: Register mesh properly once we redo MOF support to use the new system. (DynamicMesh.addMeshView)
 
                 // Update entity display material and such.
@@ -253,9 +253,9 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
 
         float[] positionData = entity.getPositionAndRotation(this.posCache);
 
-        float roll = positionData != null ? positionData[3] : 0;
-        float pitch = positionData != null ? positionData[4] : 0;
-        float yaw = positionData != null ? positionData[5] : 0;
+        float pitch = positionData != null ? positionData[3] : 0;
+        float yaw = positionData != null ? positionData[4] : 0;
+        float roll = positionData != null ? positionData[5] : 0;
 
         int foundRotations = 0;
         for (Transform transform : entityMeshView.getTransforms()) { // Update existing rotations.
@@ -265,20 +265,20 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
             foundRotations++;
             Rotate rotate = (Rotate) transform;
             if (rotate.getAxis() == Rotate.X_AXIS) {
-                rotate.setAngle(Math.toDegrees(roll));
-            } else if (rotate.getAxis() == Rotate.Y_AXIS) {
                 rotate.setAngle(Math.toDegrees(pitch));
-            } else if (rotate.getAxis() == Rotate.Z_AXIS) {
+            } else if (rotate.getAxis() == Rotate.Y_AXIS) {
                 rotate.setAngle(Math.toDegrees(yaw));
+            } else if (rotate.getAxis() == Rotate.Z_AXIS) {
+                rotate.setAngle(Math.toDegrees(roll));
             } else {
                 foundRotations--;
             }
         }
 
         if (foundRotations == 0) { // There are no rotations, so add rotations.
-            entityMeshView.getTransforms().add(new Rotate(Math.toDegrees(yaw), Rotate.Z_AXIS));
-            entityMeshView.getTransforms().add(new Rotate(Math.toDegrees(pitch), Rotate.Y_AXIS));
-            entityMeshView.getTransforms().add(new Rotate(Math.toDegrees(roll), Rotate.X_AXIS));
+            entityMeshView.getTransforms().add(new Rotate(Math.toDegrees(roll), Rotate.Z_AXIS));
+            entityMeshView.getTransforms().add(new Rotate(Math.toDegrees(yaw), Rotate.Y_AXIS));
+            entityMeshView.getTransforms().add(new Rotate(Math.toDegrees(pitch), Rotate.X_AXIS));
         }
 
         entityMeshView.setTranslateX(positionData != null ? positionData[0] : 0);

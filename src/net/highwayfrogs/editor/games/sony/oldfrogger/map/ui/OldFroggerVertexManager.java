@@ -8,7 +8,7 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapUIManager.OldFroggerMapListManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,8 +20,8 @@ import java.util.UUID;
 public class OldFroggerVertexManager extends OldFroggerMapListManager<SVector, Sphere> {
     private DisplayList verticeDisplayList;
 
-    private static final PhongMaterial MATERIAL_YELLOW = Utils.makeUnlitSharpMaterial(Color.YELLOW);
-    private static final PhongMaterial MATERIAL_GREEN = Utils.makeUnlitSharpMaterial(Color.LIME);
+    private static final PhongMaterial MATERIAL_YELLOW = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
+    private static final PhongMaterial MATERIAL_GREEN = Scene3DUtils.makeUnlitSharpMaterial(Color.LIME);
     private static final UUID VERTEX_POSITION_IDENTIFIER = UUID.randomUUID();
 
     public OldFroggerVertexManager(MeshViewController<OldFroggerMapMesh> controller) {

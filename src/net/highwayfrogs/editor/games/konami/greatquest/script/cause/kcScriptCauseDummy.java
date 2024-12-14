@@ -1,21 +1,27 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Implements a basic "dumb" script cause that can be used as a replacement for another script.
  * Created by Kneesnap on 8/16/2023.
  */
+@Getter
 public class kcScriptCauseDummy extends kcScriptCause {
     private int subCauseType;
     private List<Integer> unhandledValues;
 
-    public kcScriptCauseDummy(GreatQuestInstance gameInstance, kcScriptCauseType type) {
-        super(gameInstance, type, 0);
+    public kcScriptCauseDummy(kcScript script, kcScriptCauseType type) {
+        super(script, type, 0, 0);
     }
 
     @Override
@@ -29,6 +35,38 @@ public class kcScriptCauseDummy extends kcScriptCause {
         output.add(this.subCauseType);
         if (this.unhandledValues != null)
             output.addAll(this.unhandledValues);
+    }
+
+    @Override
+    protected void loadArguments(OptionalArguments arguments) {
+        this.subCauseType = arguments.useNext().getAsInteger();
+        if (arguments.hasNext()) {
+            if (this.unhandledValues == null)
+                this.unhandledValues = new ArrayList<>();
+
+            this.unhandledValues.clear();
+            while (arguments.hasNext())
+                this.unhandledValues.add(arguments.useNext().getAsInteger());
+        }
+    }
+
+    @Override
+    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+        arguments.createNext().setAsString(NumberUtils.to0PrefixedHexString(this.subCauseType), false);
+        if (this.unhandledValues != null)
+            for (int i = 0; i < this.unhandledValues.size(); i++)
+                arguments.createNext().setAsString(NumberUtils.to0PrefixedHexString(this.unhandledValues.get(i)), false);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode() ^ (this.subCauseType << 24) ^ this.unhandledValues.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj) && ((kcScriptCauseDummy) obj).getSubCauseType() == this.subCauseType
+                && Objects.equals(((kcScriptCauseDummy) obj).getUnhandledValues(), this.unhandledValues);
     }
 
     @Override
@@ -52,5 +90,16 @@ public class kcScriptCauseDummy extends kcScriptCause {
     @Override
     public boolean validateArgumentCount(int argumentCount) {
         return true;
+    }
+
+    @Override
+    public boolean validateGqsArgumentCount(int argumentCount) {
+        return true;
+    }
+
+    @Override
+    public void printWarnings(ILogger logger) {
+        super.printWarnings(logger);
+        printWarning(logger, "is a dummy cause, which isn't supposed to happen!");
     }
 }

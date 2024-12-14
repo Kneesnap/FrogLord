@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.OldFroggerMapGridHeaderPacket.OldFroggerMapGrid;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -70,7 +70,7 @@ public class OldFroggerMapQuadPacket extends OldFroggerMapPacket {
         int quadDataStartAddress = reader.readInt();
 
         if (quadDataStartAddress != reader.getIndex())
-            throw new RuntimeException("The address where quad data starts was not at the expected location. (Expected: " + Utils.toHexString(reader.getIndex()) + ", Provided: " + Utils.toHexString(quadDataStartAddress) + ")");
+            throw new RuntimeException("The address where quad data starts was not at the expected location. (Expected: " + NumberUtils.toHexString(reader.getIndex()) + ", Provided: " + NumberUtils.toHexString(quadDataStartAddress) + ")");
 
         // This ensures that we end up at the end of this section.
         // This packet doesn't have the information necessary to read the data, but it is responsible for writing it.

@@ -72,9 +72,9 @@ public class PathEntityData<TDifficultyData extends OldFroggerDifficultyData> ex
         position[0] = endVec.getFloatX();
         position[1] = endVec.getFloatY();
         position[2] = endVec.getFloatZ();
-        position[3] = (float) matrix.getRollAngle();
-        position[4] = (float) matrix.getPitchAngle();
-        position[5] = (float) matrix.getYawAngle();
+        position[3] = (float) matrix.getPitchAngle();
+        position[4] = (float) matrix.getYawAngle();
+        position[5] = (float) matrix.getRollAngle();
         return position;
     }
 }

@@ -4,7 +4,7 @@ import javafx.scene.image.Image;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
-import net.highwayfrogs.editor.games.konami.hudson.IHudsonFileDefinition;
+import net.highwayfrogs.editor.games.shared.basic.file.definition.IGameFileDefinition;
 import net.highwayfrogs.editor.gui.ImageResource;
 
 /**
@@ -12,7 +12,7 @@ import net.highwayfrogs.editor.gui.ImageResource;
  * Created by Kneesnap on 8/8/2024.
  */
 public class HudsonDummyFile extends HudsonGameFile {
-    public HudsonDummyFile(IHudsonFileDefinition fileDefinition) {
+    public HudsonDummyFile(IGameFileDefinition fileDefinition) {
         super(fileDefinition);
     }
 
@@ -28,6 +28,6 @@ public class HudsonDummyFile extends HudsonGameFile {
 
     @Override
     public Image getCollectionViewIcon() {
-        return ImageResource.QUESTION_MARK_15.getFxImage();
+        return ImageResource.QUESTION_MARK_16.getFxImage();
     }
 }

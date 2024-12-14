@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager;
 
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.GreatQuestMapMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.GreatQuestMapMeshController;
 import net.highwayfrogs.editor.gui.editor.BasicListMeshUIManager;

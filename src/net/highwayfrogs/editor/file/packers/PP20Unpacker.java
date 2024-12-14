@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.writer.BitReader;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -24,7 +24,7 @@ public class PP20Unpacker {
      * @return isCompressed
      */
     public static boolean isCompressed(byte[] a) {
-        return a.length > 11 && Utils.testSignature(a, PP20Packer.MARKER_BYTES);
+        return a.length > 11 && DataUtils.testSignature(a, PP20Packer.MARKER_BYTES);
     }
 
     /**

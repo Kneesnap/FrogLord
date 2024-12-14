@@ -6,7 +6,7 @@ import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameObject.SCSharedGameObject;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,7 +82,7 @@ public class TextureRemapArray extends SCSharedGameObject {
         if (this.name != null && !this.name.isEmpty())
             return "Remap[" + this.name + "]";
 
-        return "Remap@" + Utils.toHexString(this.loadAddress) + "/" + Utils.toHexString(getReaderIndex()) + "[" + this.textureIds.size() + "]";
+        return "Remap@" + NumberUtils.toHexString(this.loadAddress) + "/" + NumberUtils.toHexString(getReaderIndex()) + "[" + this.textureIds.size() + "]";
     }
 
     @Override

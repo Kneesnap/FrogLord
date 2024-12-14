@@ -2,20 +2,23 @@ package net.highwayfrogs.editor.system;
 
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.utils.IBinarySerializable;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
+import net.highwayfrogs.editor.utils.StringUtils;
+import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.objects.StringNode;
 
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.*;
-import java.util.Map.Entry;
-import java.util.logging.Logger;
 
 /**
  * Configuration implementation converted from ModToolFramework.
@@ -38,17 +41,24 @@ import java.util.logging.Logger;
  *
  * [[ChildSection]] # This is a new section, a child to the previous section. Note how there are two square brackets used here. This is to indicate that it is attached to the previous node, and not a node which is attached to the root.
  * # If you wanted to attach a child here, you'd create a section with three square brackets prefixing the section name.
- * ``` # Three backticks, as seen here will result in an empty line of text. If you just include an empty line of text normally, it will be ignored. You can also technically put a '#' on the line (Single-Line comment), as comments can exist on otherwise empty lines.
  *
  * By default, any text is interpreted as being in the implicit root node. In other words, there is a default node which values will go into until a section is defined.
  *
- * Everything after '#' on a line of text will be ignored, as a comment. If you need to put '#' into a line of text or a value, escape it by typing '\#' instead.
+ * Everything after '#' on a line of text will be ignored, as a comment. If you need to put '#' into a line of text or a value, escape it by typing '##' instead.
  * Created by Kneesnap on 4/25/2024.
  */
+@SuppressWarnings("unused")
 public class Config implements IBinarySerializable {
     private final Map<String, ConfigValueNode> keyValuePairs = new HashMap<>();
+    private final List<String> orderedKeyValuePairs = new ArrayList<>();
     private final Map<String, List<Config>> childConfigsByName = new HashMap<>();
-    private static final ConfigValueNode EMPTY_DEFAULT_NODE = new ConfigValueNode("", "");
+    private static final ConfigValueNode EMPTY_DEFAULT_NODE = new ConfigValueNode(null);
+    public static final char COMMENT_CHARACTER = '#';
+    public static final String COMMENT_CHARACTER_STRING = String.valueOf(COMMENT_CHARACTER); // "#"
+    public static final String ESCAPED_COMMENT_CHAR = COMMENT_CHARACTER_STRING + COMMENT_CHARACTER; // "##"
+
+    public static final String DEFAULT_EXTENSION = "cfg";
+    public static final BrowserFileType DEFAULT_FILE_TYPE = new BrowserFileType("FrogLord Config", DEFAULT_EXTENSION);
 
     /**
      * The name of this section. Should NOT contain '[' or ']'.
@@ -64,10 +74,16 @@ public class Config implements IBinarySerializable {
     private String sectionComment;
 
     /**
+     * The index (one-indexed) line number which the value was originally loaded from.
+     */
+    @Getter
+    @Setter
+    private int originalLineNumber = -1;
+
+    /**
      * This is the config which holds this config as a child config, if there is one.
      */
     @Getter
-    @Setter(AccessLevel.PROTECTED)
     private Config parentConfig;
 
     /**
@@ -100,6 +116,30 @@ public class Config implements IBinarySerializable {
     @Getter
     private final List<ConfigValueNode> internalText = new ArrayList<>();
 
+    public void setSectionName(String newSectionName) {
+        if (newSectionName == null)
+            throw new NullPointerException("newSectionName");
+        if (newSectionName.equalsIgnoreCase(this.sectionName))
+            return;
+
+        // Remove from parent tracking.
+        if (this.parentConfig != null) {
+            List<Config> configs = this.parentConfig.childConfigsByName.get(this.sectionName);
+            if (configs.remove(this) && configs.isEmpty())
+                this.parentConfig.childConfigsByName.remove(this.sectionName, configs);
+        }
+
+        this.sectionName = newSectionName;
+
+        // Add to parent tracking.
+        if (this.parentConfig != null) {
+            List<Config> configsByName = this.parentConfig.childConfigsByName.computeIfAbsent(this.sectionName, key -> new ArrayList<>());
+            int foundIndex = Collections.binarySearch(configsByName, this, Comparator.comparingInt(this.parentConfig.internalChildConfigs::lastIndexOf));
+            if (foundIndex < 0)
+                configsByName.add(-(foundIndex + 1), this);
+        }
+    }
+
     /**
      * Gets the individual lines of text from a list of config value nodes.
      * @return textStringList
@@ -108,8 +148,24 @@ public class Config implements IBinarySerializable {
         List<String> textList = new ArrayList<>(this.internalText.size());
         for (int i = 0; i < this.internalText.size(); i++) {
             ConfigValueNode node = this.internalText.get(i);
-            String text = node != null ? node.getValue() : null;
-            if (!Utils.isNullOrWhiteSpace(text) && !node.isEscapedNewLine())
+            String text = node.getAsStringLiteral();
+            if (!StringUtils.isNullOrWhiteSpace(text))
+                textList.add(text);
+        }
+
+        return textList;
+    }
+
+    /**
+     * Gets the individual lines of text (with their comments) from a list of config value nodes.
+     * @return textStringList
+     */
+    public List<String> getTextWithComments() {
+        List<String> textList = new ArrayList<>(this.internalText.size());
+        for (int i = 0; i < this.internalText.size(); i++) {
+            ConfigValueNode node = this.internalText.get(i);
+            String text = node.getTextWithComments();
+            if (text != null)
                 textList.add(text);
         }
 
@@ -123,14 +179,20 @@ public class Config implements IBinarySerializable {
         return this.parentConfig == null;
     }
 
+    /**
+     * Gets the config root node.
+     */
+    public Config getRootNode() {
+        Config temp = this;
+        while (temp.getParentConfig() != null)
+            temp = temp.getParentConfig();
+
+        return temp;
+    }
+
     private static final byte BINARY_FORMAT_VERSION = 0;
 
     public Config(String name) {
-        this(null, name);
-    }
-
-    public Config(Config parentConfig, String name) {
-        this.parentConfig = parentConfig;
         this.sectionName = name;
     }
 
@@ -153,37 +215,42 @@ public class Config implements IBinarySerializable {
         }
 
         short sectionNameLength = reader.readUnsignedByteAsShort();
-        this.sectionName = reader.readString(sectionNameLength);
+        this.sectionName = reader.readTerminatedString(sectionNameLength);
         if (loadSettings.isReadingCommentsEnabled()) {
             int sectionCommentLength = reader.readInt();
-            this.sectionComment = reader.readString(sectionCommentLength);
+            this.sectionComment = reader.readTerminatedString(sectionCommentLength);
         }
 
+        this.originalLineNumber = reader.readInt();
+
         // Read key value pairs.
+        String rootName = getRootNode().getSectionName();
         int keyValueCount = reader.readInt();
         for (int i = 0; i < keyValueCount; i++) {
             short keyLength = reader.readUnsignedByteAsShort();
-            String key = reader.readString(keyLength);
-            ConfigValueNode node = new ConfigValueNode("", "");
-            node.loadFromReader(reader, loadSettings);
-            this.keyValuePairs.put(key, node);
+            String key = reader.readTerminatedString(keyLength);
+            ConfigValueNode node = new ConfigValueNode();
+            node.loadFromReader(reader, loadSettings, rootName);
+            if (this.keyValuePairs.put(key, node) == null)
+                this.orderedKeyValuePairs.add(key);
         }
 
         // Read Text.
         int textEntries = reader.readInt();
         for (int i = 0; i < textEntries; i++) {
-            ConfigValueNode node = new ConfigValueNode("", "");
-            node.loadFromReader(reader, loadSettings);
+            ConfigValueNode node = new ConfigValueNode();
             this.internalText.add(node);
+            node.loadFromReader(reader, loadSettings, rootName);
         }
 
         // Read child configs.
         int childCount = reader.readInt();
         for (int i = 0; i < childCount; i++) {
-            Config childConfig = new Config(this, "$UnknownChildConfigNode");
-            childConfig.loadFromReader(reader, this, loadSettings);
+            Config childConfig = new Config("$UnknownChildConfigNode");
             addChildConfig(childConfig);
-        }}
+            childConfig.loadFromReader(reader, this, loadSettings);
+        }
+    }
 
     @Override
     public void save(DataWriter writer) {
@@ -197,9 +264,17 @@ public class Config implements IBinarySerializable {
     public void addChildConfig(Config childConfig) {
         if (childConfig == null)
             throw new NullPointerException("childConfig");
+        if (childConfig == this)
+            throw new IllegalArgumentException("Cannot attach child config to itself.");
 
         if (this.internalChildConfigs.contains(childConfig))
             return;
+
+        if (childConfig.getParentConfig() == null) {
+            childConfig.parentConfig = this;
+        } else if (childConfig.getParentConfig() != this) {
+            throw new IllegalArgumentException("The provided child config is already added to another Config somewhere.");
+        }
 
         this.internalChildConfigs.add(childConfig);
         this.childConfigsByName.computeIfAbsent(childConfig.getSectionName(), key -> new ArrayList<>()).add(childConfig);
@@ -217,6 +292,8 @@ public class Config implements IBinarySerializable {
         // Remove.
         if (!this.internalChildConfigs.remove(childConfig))
             return false;
+
+        childConfig.parentConfig = null;
 
         // Stop tracking for the name.
         List<Config> childConfigs = this.childConfigsByName.get(childConfig.getSectionName());
@@ -246,12 +323,15 @@ public class Config implements IBinarySerializable {
                 writer.writeStringBytes(this.sectionComment);
         }
 
+        writer.writeInt(this.originalLineNumber);
+
         // Write key value pairs.
         writer.writeInt(this.keyValuePairs.size());
-        for (Entry<String, ConfigValueNode> entry : this.keyValuePairs.entrySet()) {
-            writer.writeUnsignedByte((short) (entry.getKey() != null ? entry.getKey().length() : 0));
-            writer.writeStringBytes(entry.getKey());
-            entry.getValue().saveToWriter(writer, saveSettings);
+        for (String entryKey : this.orderedKeyValuePairs) {
+            ConfigValueNode valueNode = this.keyValuePairs.get(entryKey);
+            writer.writeUnsignedByte((short) (entryKey != null ? entryKey.length() : 0));
+            writer.writeStringBytes(entryKey);
+            valueNode.saveToWriter(writer, saveSettings);
         }
 
         // Write Text.
@@ -271,7 +351,10 @@ public class Config implements IBinarySerializable {
      * @return removedKeyValuePair
      */
     public ConfigValueNode removeKeyValueNode(String keyName) {
-        return this.keyValuePairs.remove(keyName);
+        ConfigValueNode removedNode = this.keyValuePairs.remove(keyName);
+        if (removedNode != null)
+            this.orderedKeyValuePairs.remove(keyName);
+        return removedNode;
     }
 
     /**
@@ -287,16 +370,14 @@ public class Config implements IBinarySerializable {
             return this.removeKeyValueNode(keyName);
         }
 
-        if (node.isEscapedNewLine())
-            throw new IllegalArgumentException("Supplied config value '" + node.getValue() + "' had IsEscapedNewLine set to true. This cannot be used in key-value pairs!");
-
         ConfigValueNode existingNode = this.keyValuePairs.get(keyName);
         if (existingNode != null) { // Get existing node.
-            existingNode.setValue(node.getValue());
-            if (!Utils.isNullOrWhiteSpace(node.getComment()) && Utils.isNullOrWhiteSpace(existingNode.getComment()))
+            existingNode.setAsString(node.getAsString(), node.isSurroundByQuotes());
+            if (!StringUtils.isNullOrWhiteSpace(node.getComment()) && StringUtils.isNullOrWhiteSpace(existingNode.getComment()))
                 existingNode.setComment(node.getComment());
         } else { // Create new node.
             this.keyValuePairs.put(keyName, node.clone());
+            this.orderedKeyValuePairs.add(keyName);
         }
 
         return existingNode;
@@ -314,8 +395,9 @@ public class Config implements IBinarySerializable {
         if (valueNode != null)
             return valueNode;
 
-        ConfigValueNode newNode = new ConfigValueNode("$NO_VALUE$", "");
-        this.keyValuePairs.put(keyName, newNode);
+        ConfigValueNode newNode = new ConfigValueNode("$NO_VALUE_WAS_SET$");
+        if (this.keyValuePairs.put(keyName, newNode) == null)
+            this.orderedKeyValuePairs.add(keyName);
         return newNode;
     }
 
@@ -331,13 +413,13 @@ public class Config implements IBinarySerializable {
     /**
      * Gets a value from a key value pair in the config. Throws an error if the value is not found.
      * @param keyName The name of the key. (Case-sensitive)
-     * /// <exception cref="KeyNotFoundException">Thrown if the key is not found, and errorIfNotFound is true.</exception>
      * @return valueNode
      */
     public ConfigValueNode getKeyValueNodeOrError(String keyName) {
         ConfigValueNode valueNode = this.keyValuePairs.get(keyName);
         if (valueNode == null)
-            throw new IllegalStateException("'" + keyName + "' was not found in the config.");
+            throw new IllegalStateException("'" + keyName + "' was expected to be attached to '" + this.sectionName + "'"
+                    + (this.originalLineNumber >= 0 ? " near line " + this.originalLineNumber + ", but it was not found." : "."));
 
         return valueNode;
     }
@@ -381,7 +463,7 @@ public class Config implements IBinarySerializable {
     public Config getOrCreateChildConfigByName(String name) {
         List<Config> childConfigs = this.childConfigsByName.computeIfAbsent(name, key -> new ArrayList<>());
         if (childConfigs.isEmpty()) {
-            Config newConfig = new Config(this, name);
+            Config newConfig = new Config(name);
             addChildConfig(newConfig);
             return newConfig;
         } else {
@@ -420,13 +502,9 @@ public class Config implements IBinarySerializable {
 
         File parentFile = outputFile.getParentFile();
         if (parentFile != null && !parentFile.exists())
-            Utils.makeDirectory(parentFile);
+            FileUtils.makeDirectory(parentFile);
 
-        try {
-            Files.write(outputFile.toPath(), toString().getBytes(StandardCharsets.UTF_8));
-        } catch (IOException ex) {
-            Utils.handleError(getLogger(), ex, true, "Failed to save to the file '%s'.", outputFile);
-        }
+        FileUtils.writeBytesToFile(getLogger(), outputFile, toString().getBytes(StandardCharsets.UTF_8), true);
     }
 
     @Override
@@ -439,22 +517,26 @@ public class Config implements IBinarySerializable {
     }
 
     private void toString(StringBuilder builder, String sectionStart, String sectionEnd) {
+        int builderStartLength = builder.length();
+
         // Write key value pairs.
-        for (Entry<String, ConfigValueNode> entry : this.keyValuePairs.entrySet()){
-            builder.append(escapeKey(entry.getKey()));
+        for (String entryKey : this.orderedKeyValuePairs) {
+            builder.append(escapeKey(entryKey));
             builder.append("=");
-            builder.append(entry.getValue());
+            builder.append(this.keyValuePairs.get(entryKey).getTextWithComments());
+
             builder.append(Constants.NEWLINE);
         }
 
         // Write Raw text.
         for (int i = 0; i < this.internalText.size(); i++) {
             ConfigValueNode line = this.internalText.get(i);
-            builder.append(line).append(Constants.NEWLINE);
+            builder.append(line.getTextWithComments()).append(Constants.NEWLINE);
         }
 
         // Empty line between sections.
-        builder.append(Constants.NEWLINE);
+        if (builder.length() > builderStartLength)
+            builder.append(Constants.NEWLINE);
 
         // Write child sections in order.
         if (this.internalChildConfigs.size() > 0) {
@@ -471,11 +553,11 @@ public class Config implements IBinarySerializable {
 
     private static void writeSectionHeader(StringBuilder builder, String sectionStart, String sectionEnd, Config node) {
         builder.append(sectionStart);
-        builder.append(escapeString(node.getSectionName()));
+        builder.append(escapeComment(node.getSectionName()));
 
         builder.append(sectionEnd);
-        if (!Utils.isNullOrWhiteSpace(node.getSectionComment())) {
-            builder.append(" # ");
+        if (!StringUtils.isNullOrWhiteSpace(node.getSectionComment())) {
+            builder.append(ConfigValueNode.DEFAULT_COMMENT_SEPARATOR);
             builder.append(node.getSectionComment());
         }
 
@@ -483,33 +565,54 @@ public class Config implements IBinarySerializable {
     }
 
     /**
-     * General escaping applied to various parts of a config.
+     * Comment char escaping applied to various parts of a config.
      * @param value The value to escape.
      * @return escapedValue
      */
-    public static String escapeString(String value) {
+    public static String escapeComment(String value) {
         if (value == null)
             return null;
 
-        return value.replace("\n", "\\n")
-                .replace("\r", "\\r")
-                .replace("\\", "\\\\")
-                .replace("#", "\\#");
+        return value.replace(COMMENT_CHARACTER_STRING, ESCAPED_COMMENT_CHAR);
     }
 
     /**
-     * Unescape the general escaping applied to various parts of a config.
+     * Unescape the comment-char escaping applied to various parts of a config.
      * @param value The value to unescape.
      * @return unescapedValue
      */
-    public static String unescapeString(String value) {
+    public static String unescapeComment(String value) {
         if (value == null)
             return null;
 
-        return value.replace("\\n", "\n")
-                .replace("\\r", "\r")
-                .replace("\\#", "#")
-                .replace("\\\\", "\\");
+        return value.replace(ESCAPED_COMMENT_CHAR, COMMENT_CHARACTER_STRING);
+    }
+
+    /**
+     * Escape the value string in a key-value pair.
+     * @param value The value to escape.
+     * @return escapedValue
+     */
+    public static String escapeValue(String value) {
+        if ("null".equals(value))
+            return null;
+
+        return escapeComment(value);
+    }
+
+    /**
+     * Unescape the value string in a key-value pair.
+     * @param value The value to unescape.
+     * @return unescapedValue
+     */
+    public static String unescapeValue(String value) {
+        if (value == null || value.equals("null")) {
+            return null;
+        } else if (value.equals("\"null\"")) {
+            return "null";
+        }
+
+        return unescapeComment(value);
     }
 
     /**
@@ -518,7 +621,10 @@ public class Config implements IBinarySerializable {
      * @return escapedKey
      */
     public static String escapeKey(String key) {
-        return escapeString(key).replace(" ", "\\ ").replace("=", "\\=");
+        return escapeComment(key)
+                .replace(" ", "\\ ")
+                .replace("=", "\\=")
+                .replace("\\", "\\\\");
     }
 
     /**
@@ -527,7 +633,10 @@ public class Config implements IBinarySerializable {
      * @return unescapedKey
      */
     public static String unescapeKey(String key) {
-        return unescapeString(key).replace("\\ ", " ").replace("\\=", "=");
+        return unescapeComment(key)
+                .replace("\\ ", " ")
+                .replace("\\=", "=")
+                .replace("\\\\", "\\");
     }
 
     /**
@@ -554,8 +663,23 @@ public class Config implements IBinarySerializable {
      * @return readConfig
      */
     public static Config loadConfigFromTextFile(File targetFile, boolean createIfMissing) {
+        return loadConfigFromTextFile(targetFile, null, createIfMissing);
+    }
+
+    /**
+     * Reads a configuration from a text file.
+     * @param targetFile The file to read the configuration from.
+     * @param baseFolder The file to read the configuration from.
+     * @param createIfMissing if the file is not found, an empty config will still be returned when this is true.
+     * @throws IllegalConfigSyntaxException Thrown if invalid configuration syntax is found.
+     * @return readConfig
+     */
+    public static Config loadConfigFromTextFile(File targetFile, File baseFolder, boolean createIfMissing) {
         if (targetFile == null)
             throw new NullPointerException("targetFile");
+
+        if (baseFolder != null && !baseFolder.isDirectory())
+            throw new IllegalArgumentException("Specified 'baseFolder' was not a directory! (" + baseFolder.getName() + ")");
 
         String configFileText;
         if (!targetFile.exists() || !targetFile.isFile()) {
@@ -564,10 +688,10 @@ public class Config implements IBinarySerializable {
 
             configFileText = "";
         } else {
-            configFileText = String.join(Constants.NEWLINE, Utils.readLinesFromFile(targetFile));
+            configFileText = String.join(Constants.NEWLINE, FileUtils.readLinesFromFile(targetFile));
         }
 
-        return loadConfigFromString(configFileText, Utils.stripExtension(targetFile.getName()));
+        return loadConfigFromString(configFileText, baseFolder != null ? FileUtils.toLocalPath(baseFolder, targetFile, true) : targetFile.getName());
     }
 
     /**
@@ -576,7 +700,6 @@ public class Config implements IBinarySerializable {
      * @return loadedConfig
      */
     public static Config loadTextConfigFromURL(URL url) {
-        String versionConfigName = Utils.getFileNameWithoutExtension(url);
         InputStream inputStream;
         try {
             inputStream = url.openStream();
@@ -584,19 +707,19 @@ public class Config implements IBinarySerializable {
             throw new RuntimeException("Failed to load URL: '" + url + "'.", e);
         }
 
-        return loadTextConfigFromInputStream(inputStream, versionConfigName);
+        return loadTextConfigFromInputStream(inputStream, url.toString());
     }
 
     /**
      * Loads a text config from the input stream.
      * @param inputStream the input stream to read from
-     * @param versionConfigName the name of the config
+     * @param configFileName the name of the config
      * @return loadedConfig
      */
-    public static Config loadTextConfigFromInputStream(InputStream inputStream, String versionConfigName) {
-        List<String> configLines = Utils.readLinesFromStream(inputStream);
+    public static Config loadTextConfigFromInputStream(InputStream inputStream, String configFileName) {
+        List<String> configLines = FileUtils.readLinesFromStream(inputStream);
         String configFileText = String.join(Constants.NEWLINE, configLines);
-        return loadConfigFromString(configFileText, versionConfigName);
+        return loadConfigFromString(configFileText, configFileName);
     }
 
 
@@ -608,16 +731,14 @@ public class Config implements IBinarySerializable {
      * @return readConfig
      */
     public static Config loadConfigFromString(String configString, String configFileName) {
-        BadStringReader reader = new BadStringReader(new StringReader(configString));
-        try {
-            return loadConfigFromString(null, reader, 0, configFileName, null);
-        } finally {
-            reader.close();
+        try (BadStringReader reader = new BadStringReader(new StringReader(configString))) {
+            return loadConfigFromString(reader, 0, configFileName, configFileName, null);
         }
     }
 
-    private static Config loadConfigFromString(Config parentConfig, BadStringReader stringReader, int layer, String sectionName, String sectionComment) {
-        Config config = new Config(parentConfig, sectionName);
+    private static Config loadConfigFromString(BadStringReader stringReader, int layer, String fileName, String sectionName, String sectionComment) {
+        Config config = new Config(sectionName);
+        config.setOriginalLineNumber(stringReader.getLineNumber());
         config.setSectionComment(sectionComment);
 
         while (true) {
@@ -625,7 +746,7 @@ public class Config implements IBinarySerializable {
             if (line == null)
                 return config; // Reached end of file?
 
-            if (Utils.isNullOrWhiteSpace(line))
+            if (StringUtils.isNullOrWhiteSpace(line))
                 continue; // Empty lines are skipped.
 
             String trimmedLine = line.trim();
@@ -634,11 +755,19 @@ public class Config implements IBinarySerializable {
                 String comment = "";
                 String sectionLine = trimmedLine;
 
-                // Read the comment, if there is one.
-                int commentIndex = sectionLine.indexOf('#');
-                if (commentIndex != -1) {
-                    comment = Utils.trimStart(sectionLine.substring(commentIndex + 1));
-                    sectionLine = Utils.trimEnd(sectionLine.substring(0, commentIndex));
+                // Find the position where the comment starts, if there is one. Makes sure to ignore escaped comment chars.
+                int commentIndex = sectionLine.indexOf(COMMENT_CHARACTER);
+                while (commentIndex >= 0 && sectionLine.length() > commentIndex) {
+                    if (sectionLine.length() > commentIndex + 1 && sectionLine.charAt(commentIndex + 1) == COMMENT_CHARACTER) {
+                        commentIndex = sectionLine.indexOf(COMMENT_CHARACTER, commentIndex + 2); // This can be an index larger than the string.
+                        if (commentIndex + 2 > commentIndex)
+                            commentIndex = -1;
+
+                        continue;
+                    }
+
+                    comment = StringUtils.trimStart(sectionLine.substring(commentIndex + 1));
+                    sectionLine = StringUtils.trimEnd(sectionLine.substring(0, commentIndex));
                 }
 
                 // This is the start of a new section.
@@ -676,12 +805,12 @@ public class Config implements IBinarySerializable {
                     throw new IllegalConfigSyntaxException("Section identifier had no name! (Line: '" + sectionLine + "')");
 
                 // Determine super-section and section name.
-                String newSectionName = unescapeString(sectionLine.substring(leftLayer, leftLayer + nameLength));
+                String newSectionName = unescapeComment(sectionLine.substring(leftLayer, leftLayer + nameLength));
 
                 // Create child config.
                 if (sectionLayer == layer + 1) {
                     // Read for this config.
-                    Config loadedChildConfig = loadConfigFromString(config, stringReader, sectionLayer, newSectionName, comment);
+                    Config loadedChildConfig = loadConfigFromString(stringReader, sectionLayer, fileName, newSectionName, comment);
                     config.addChildConfig(loadedChildConfig);
                 } else {
                     // Some other config earlier in the hierarchy (earlier layer) owns this.
@@ -695,25 +824,31 @@ public class Config implements IBinarySerializable {
             // Read the comment, if there is one.
             String text = trimmedLine;
 
+            String commentSeparator = ConfigValueNode.DEFAULT_COMMENT_SEPARATOR;
             String commentText = "";
             int commentAt = -1;
             for (int i = 0; i < text.length(); i++) {
                 char current = text.charAt(i);
 
-                if (current == '\\') {
-                    i++; // Skip the next character, it's escaped.
-                } else if (current == '#') {
-                    commentAt = i;
-                    break;
+                if (current == COMMENT_CHARACTER) {
+                    if (text.length() > i + 1 && text.charAt(i + 1) == COMMENT_CHARACTER) {
+                        i++; // Escaped character, skip it!
+                    } else {
+                        commentAt = i;
+                        break;
+                    }
                 }
             }
 
             if (commentAt != -1) {
-                commentText = Utils.trimStart(text.substring(commentAt + 1));
-                text = Utils.trimEnd(text.substring(0, commentAt));
+                String rawCommentText = text.substring(commentAt + 1);
+                commentText = StringUtils.trimStart(rawCommentText);
+                String rawText = text.substring(0, commentAt);
+                text = StringUtils.trimEnd(rawText);
+                commentSeparator = rawText.substring(text.length()) + COMMENT_CHARACTER + rawCommentText.substring(0, rawText.length() - text.length());
             }
 
-            if (Utils.isNullOrWhiteSpace(text) && Utils.isNullOrWhiteSpace(commentText))
+            if (StringUtils.isNullOrWhiteSpace(text) && StringUtils.isNullOrWhiteSpace(commentText))
                 continue; // If there is no text, and no comment on a line, skip it.
 
             // Determine if this is a key-value pair.
@@ -732,16 +867,21 @@ public class Config implements IBinarySerializable {
             }
 
             // Parse/store the values.
+            ConfigValueNode newNode;
             if (splitAt != -1) { // It's a key-value pair.
                 String key = unescapeKey(text.substring(0, splitAt));
-                String value = unescapeString(text.substring(splitAt + 1));
-                config.keyValuePairs.put(key, new ConfigValueNode(value, commentText));
+                String value = unescapeValue(text.substring(splitAt + 1));
+                if (config.keyValuePairs.put(key, newNode = new ConfigValueNode(value, commentText, commentSeparator)) == null)
+                    config.orderedKeyValuePairs.add(key);
             } else { // It's raw text.
-                boolean isEmpty = text.equalsIgnoreCase("```");
-                ConfigValueNode newNode = isEmpty ? new ConfigValueNode("", commentText) : new ConfigValueNode(text, commentText);
-                newNode.setEscapedNewLine(isEmpty);
+                newNode = new ConfigValueNode(text, commentText, commentSeparator);
+                newNode.setAsString(text); // Ensure it is not escaped, as escaped text isn't supported here.
                 config.getInternalText().add(newNode);
             }
+
+            // Setup the new node.
+            newNode.setOriginalLineNumber(stringReader.getLineNumber());
+            newNode.setOriginalFileName(fileName);
         }
     }
 
@@ -755,28 +895,57 @@ public class Config implements IBinarySerializable {
         }
     }
 
-
     /**
      * Settings/data used when loading a config.
      * This is an example of passing settings / data among IBinarySerializable can work.
      */
-    private static class ConfigSettings {
-        @Getter @Setter private boolean readingCommentsEnabled = true;
-        @Getter @Setter private boolean headerPending = true;
+    @Setter
+    @Getter
+    public static class ConfigSettings {
+        private boolean readingCommentsEnabled = true;
+        private boolean headerPending = true;
     }
 
     /**
      * A node which contains some kind of value, and potentially a comment.
      */
     @Getter
-    public static class ConfigValueNode {
-        @Setter private String comment;
-        @Setter(AccessLevel.PRIVATE) private boolean escapedNewLine;
-        @Setter private String value; // Can be empty, but not null.
+    public static class ConfigValueNode extends StringNode {
+        private String comment;
+        @Setter @NonNull private String commentSeparator;
+
+        /**
+         * The index (one-indexed) line number which the value was originally loaded from.
+         */
+        @Getter
+        @Setter(AccessLevel.PRIVATE)
+        private int originalLineNumber = -1;
+
+        /**
+         * The index (one-indexed) line number which the value was originally loaded from.
+         */
+        @Getter
+        @Setter(AccessLevel.PRIVATE)
+        private String originalFileName;
+
+        public static final String DEFAULT_COMMENT_SEPARATOR = " " + COMMENT_CHARACTER + " ";
+
+        public ConfigValueNode() {
+            this("");
+        }
+
+        public ConfigValueNode(String value) {
+            this(value, "");
+        }
 
         public ConfigValueNode(String value, String comment) {
-            this.value = value != null ? value : "";
+            this(value, comment, DEFAULT_COMMENT_SEPARATOR);
+        }
+
+        public ConfigValueNode(String value, String comment, String commentSeparator) {
+            super(value);
             this.comment = comment;
+            this.commentSeparator = commentSeparator;
         }
 
         /**
@@ -784,13 +953,15 @@ public class Config implements IBinarySerializable {
          * @param reader the reader to read data from
          * @param configSettings the settings to load with
          */
-        public void loadFromReader(DataReader reader, ConfigSettings configSettings) {
+        public void loadFromReader(DataReader reader, ConfigSettings configSettings, String rootName) {
             int valueLength = reader.readUnsignedShortAsInt();
-            this.value = reader.readString(valueLength);
-            this.escapedNewLine = reader.readByte() != 0;
+            this.value = reader.readTerminatedString(valueLength);
+            this.originalLineNumber = reader.readInt();
+            this.originalFileName = rootName;
+            this.surroundByQuotes = reader.readByte() == 1;
             if (configSettings.isReadingCommentsEnabled()) {
                 int commentLength = reader.readUnsignedShortAsInt();
-                this.comment = reader.readString(commentLength);
+                this.comment = reader.readTerminatedString(commentLength);
             }
         }
 
@@ -805,8 +976,8 @@ public class Config implements IBinarySerializable {
             if (this.value != null)
                 writer.writeStringBytes(this.value);
 
-            // Is it an escaped newline?
-            writer.writeByte((byte) (this.escapedNewLine ? 1 : 0));
+            writer.writeInt(this.originalLineNumber);
+            writer.writeByte(this.surroundByQuotes ? (byte) 1 : (byte) 0);
 
             // Write comment.
             if (configSettings.isReadingCommentsEnabled()) {
@@ -822,17 +993,10 @@ public class Config implements IBinarySerializable {
          */
         @SuppressWarnings("MethodDoesntCallSuperMethod")
         public ConfigValueNode clone() {
-            ConfigValueNode newNode = new ConfigValueNode(this.value, this.comment);
-            newNode.escapedNewLine = this.escapedNewLine;
+            ConfigValueNode newNode = new ConfigValueNode(getAsStringLiteral(), this.comment, this.commentSeparator);
+            newNode.originalLineNumber = this.originalLineNumber;
+            newNode.originalFileName = this.originalFileName;
             return newNode;
-        }
-
-        /**
-         * Gets the node value as a string.
-         * @return stringValue
-         */
-        public String getAsString() {
-            return this.value;
         }
 
         /**
@@ -840,176 +1004,37 @@ public class Config implements IBinarySerializable {
          * @param newValue the new string value
          */
         public void setAsString(String newValue) {
-            this.value = newValue;
+            setAsString(newValue, false);
         }
 
         /**
-         * Gets the node value as a boolean.
-         * @return boolValue
-         * @throws IllegalConfigSyntaxException Thrown if the node data is not a valid boolean.
+         * Gets the text line with the comment(s) included.
+         * This should not be used for key-value pairs.
          */
-        public boolean getAsBoolean() {
-            if ("true".equalsIgnoreCase(this.value)
-                    || "yes".equalsIgnoreCase(this.value)
-                    || "1".equalsIgnoreCase(this.value))
-                return true;
-
-            if ("false".equalsIgnoreCase(this.value)
-                    || "no".equalsIgnoreCase(this.value)
-                    || "0".equalsIgnoreCase(this.value))
-                return false;
-
-            throw new IllegalConfigSyntaxException("Don't know how to interpret '" + this.value + "' as a boolean.");
+        public String getTextWithComments() {
+            if (StringUtils.isNullOrWhiteSpace(this.comment))
+                return escapeValue(getAsStringLiteral());
+            return escapeValue(getAsStringLiteral()) + this.commentSeparator + this.comment;
         }
 
         /**
-         * Sets the node value to a boolean.
-         * @param newValue The new value.
+         * Sets the end-of-line comment
+         * @param comment the comment to apply
+         * @return this
          */
-        public void setAsBoolean(boolean newValue) {
-            this.value = newValue ? "true" : "false";
-        }
-
-        /**
-         * Gets the node value as an integer.
-         * @return intValue
-         * @throws IllegalConfigSyntaxException Thrown if the value is not formatted as either an integer or a hex integer.
-         */
-        public int getAsInteger() {
-            if (!Utils.isNullOrWhiteSpace(this.value)) {
-                try {
-                    return Utils.isHexInteger(this.value) ? Utils.parseHexInteger(this.value) : Integer.parseInt(this.value);
-                } catch (NumberFormatException nfe) {
-                    throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid integer.", nfe);
-                }
-            }
-
-
-            throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid integer.");
-        }
-
-        /**
-         * Gets the node value as an integer.
-         * @param fallback the number to return if there is no value.
-         * @return intValue
-         * @throws IllegalConfigSyntaxException Thrown if the value is not formatted as either an integer or a hex integer.
-         */
-        public double getAsInteger(int fallback) {
-            if (!Utils.isNullOrWhiteSpace(this.value)) {
-                try {
-                    return Utils.isHexInteger(this.value) ? Utils.parseHexInteger(this.value) : Integer.parseInt(this.value);
-                } catch (NumberFormatException nfe) {
-                    throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid integer.", nfe);
-                }
-            }
-
-            return fallback;
-        }
-
-        /**
-         * Sets the node value to an integer.
-         * @param newValue The new value.
-         */
-        public void setAsInteger(int newValue) {
-            this.value = Integer.toString(newValue);
-        }
-
-        /**
-         * Gets the node value as a double.
-         * @return doubleValue
-         * @throws IllegalConfigSyntaxException Thrown if the value is not formatted as either an integer or a hex integer.
-         */
-        public double getAsDouble() {
-            if (!Utils.isNullOrWhiteSpace(this.value)) {
-                try {
-                    return Double.parseDouble(this.value);
-                } catch (NumberFormatException nfe) {
-                    throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid number.", nfe);
-                }
-            }
-
-            throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid number.");
-        }
-
-        /**
-         * Gets the node value as a double.
-         * @param fallback the number to return if there is no value.
-         * @return doubleValue
-         * @throws IllegalConfigSyntaxException Thrown if the value is not formatted as either an integer or a hex integer.
-         */
-        public double getAsDouble(double fallback) {
-            if (!Utils.isNullOrWhiteSpace(this.value)) {
-                try {
-                    return Double.parseDouble(value);
-                } catch (NumberFormatException nfe) {
-                    throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid number.", nfe);
-                }
-            }
-
-            return fallback;
-        }
-
-        /**
-         * Sets the node value to a double.
-         * @param newValue The new value.
-         */
-        public void setAsDouble(double newValue){
-            this.value = Double.toString(newValue);
-        }
-
-        /**
-         * Gets the value as an enum.
-         * @return enumValue
-         * @throws IllegalConfigSyntaxException Thrown if the value was not a valid enum or a valid enum index.
-         */
-        public <TEnum extends Enum<TEnum>> TEnum getAsEnum(Class<TEnum> enumClass) {
-            if (Utils.isNullOrEmpty(this.value))
-                return null;
-
-            try {
-                return Enum.valueOf(enumClass, this.value);
-            } catch (Exception e) {
-                throw new IllegalConfigSyntaxException("The value '" + this.value + "' could not be interpreted as an enum value from " + enumClass.getSimpleName() + ".", e);
-            }
-        }
-
-        /**
-         * Gets the value as an enum.
-         * @return enumValue
-         * @throws IllegalConfigSyntaxException Thrown if the value was not a valid enum or a valid enum index.
-         */
-        public <TEnum extends Enum<TEnum>> TEnum getAsEnum(TEnum defaultEnum) {
-            if (defaultEnum == null)
-                throw new NullPointerException("defaultEnum");
-
-            if (!Utils.isNullOrWhiteSpace(this.value)) {
-                try {
-                    return Enum.valueOf(defaultEnum.getDeclaringClass(), this.value);
-                } catch (Exception e) {
-                    throw new IllegalConfigSyntaxException("The value '" + this.value + "' could not be interpreted as an enum value from " + defaultEnum.getDeclaringClass().getSimpleName() + ".", e);
-                }
-            }
-
-            return defaultEnum;
-        }
-
-        /**
-         * Sets the node value to an enum.
-         * @param newValue The new value.
-         * @param <TEnum> The enum value type
-         */
-        public <TEnum extends Enum<TEnum>> void setAsEnum(TEnum newValue) {
-            this.value = newValue != null ? newValue.name() : "";
+        public ConfigValueNode setComment(String comment) {
+            this.comment = comment;
+            return this;
         }
 
         @Override
-        public String toString() {
-            if (this.escapedNewLine)
-                return "```" + (Utils.isNullOrWhiteSpace(this.comment) ? "" : " # " + this.comment);
-            if (Utils.isNullOrWhiteSpace(this.comment))
-                return Config.escapeString(this.value != null ? this.value : "");
-            return Config.escapeString(this.value != null ? this.value : "")
-                    + (Utils.isNullOrWhiteSpace(this.value) ? "# " : " # ") + this.comment;
+        protected String getExtraDebugErrorInfo() {
+            if (this.originalLineNumber <= 0 && StringUtils.isNullOrWhiteSpace(this.originalFileName))
+                return super.getExtraDebugErrorInfo();
+
+            return super.getExtraDebugErrorInfo()
+                    + (!StringUtils.isNullOrWhiteSpace(this.originalFileName) ? " File: " + this.originalFileName : "")
+                    + (this.originalLineNumber > 0 ? " Line: " + this.originalLineNumber : "");
         }
     }
 
@@ -1018,6 +1043,7 @@ public class Config implements IBinarySerializable {
         private final StringReader _internalReader;
         private final StringBuilder stringBuilder = new StringBuilder();
         public String cachedNextLine;
+        @Getter private int lineNumber; // The line number of the line which was just read.
 
         public BadStringReader(StringReader reader) {
             this._internalReader = reader;
@@ -1056,11 +1082,12 @@ public class Config implements IBinarySerializable {
             // Build the string.
             String newLine = this.stringBuilder.toString();
             this.stringBuilder.setLength(0);
+            this.lineNumber++;
             return newLine;
         }
     }
 
-    private static Logger getLogger() {
-        return Logger.getLogger(Config.class.getSimpleName());
+    private static ILogger getLogger() {
+        return ClassNameLogger.getLogger(null, Config.class);
     }
 }

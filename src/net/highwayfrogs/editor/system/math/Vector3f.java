@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.utils.IBinarySerializable;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 
 /**
  * Represents a vector with three 32 bit floating point values.
@@ -30,12 +30,12 @@ public class Vector3f implements IBinarySerializable {
     public static final Vector3f UNIT_Y = new Vector3f(0f, 1f, 0f);
 
     /**
-     * Defines a unit-length Vector3 that points towards the Y-axis.
+     * Defines a unit-length Vector3 that points towards the Z-axis.
      */
     public static final Vector3f UNIT_Z = new Vector3f(0f, 0f, 1f);
 
     /**
-     * Defines a zero-length Vector2.
+     * Defines a zero-length Vector3.
      */
     public static final Vector3f ZERO = new Vector3f(0f, 0f, 0f);
 
@@ -118,6 +118,20 @@ public class Vector3f implements IBinarySerializable {
     }
 
     /**
+     * Adds xyz components to this vector.
+     * @param x The x value to add.
+     * @param y The y value to add.
+     * @param z The z value to add.
+     * @return this
+     */
+    public Vector3f add(float x, float y, float z) {
+        this.x += x;
+        this.y += y;
+        this.z += z;
+        return this;
+    }
+
+    /**
      * Subtracts a vector.
      * @param other The vector to subtract.
      * @return this
@@ -139,6 +153,18 @@ public class Vector3f implements IBinarySerializable {
         this.y *= other.y;
         this.z *= other.z;
         return this;
+    }
+
+    /**
+     * Multiply this against a Matrix4x4.
+     * @param matrix The matrix to multiply against
+     * @return this
+     */
+    public Vector3f multiply(Matrix4x4f matrix) {
+        if (matrix == null)
+            throw new NullPointerException("matrix");
+
+        return matrix.multiply(this, this);
     }
 
     /**
@@ -191,7 +217,7 @@ public class Vector3f implements IBinarySerializable {
     }
 
     /**
-     * Sets both the x, y, and, z scalar components of the vector.
+     * Sets the x, y, and z scalar components of the vector.
      * @param x The new x value
      * @param y The new y value
      * @param z The new z value
@@ -231,6 +257,46 @@ public class Vector3f implements IBinarySerializable {
         return this;
     }
 
+    /**
+     * Calculate the cross-product of this and another vector
+     * @param other the other vector
+     * @param result the vector to store the output within
+     * @return crossProduct
+     */
+    public Vector3f crossProduct(Vector3f other, Vector3f result) {
+        if (result == null)
+            result = new Vector3f();
+
+        result.setXYZ(((this.y * other.z) - (this.z * other.y)), ((this.z * other.x) - (this.x * other.z)), ((this.x * other.y) - (this.y * other.x)));
+        return result;
+    }
+
+    /**
+     * Calculate the cross-product of this and another vector.
+     * @param other the other vector
+     * @return crossProduct
+     */
+    public Vector3f crossProduct(Vector3f other) {
+        return crossProduct(other, new Vector3f());
+    }
+
+    /**
+     * Reads the contents of this vector from a string
+     * @param input the input to parse
+     */
+    public void parse(String input) {
+        if (input == null)
+            throw new NullPointerException("input");
+
+        String[] split = input.split(",?\\s+");
+        if (split.length != 3)
+            throw new NumberFormatException("'" + input + "' cannot be parsed as a Vector3f because it appears to have " + split.length + " values.");
+
+        this.x = Float.parseFloat(split[0]);
+        this.y = Float.parseFloat(split[1]);
+        this.z = Float.parseFloat(split[2]);
+    }
+
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof Vector3f))
@@ -246,6 +312,13 @@ public class Vector3f implements IBinarySerializable {
     @Override
     public int hashCode() {
         return Float.hashCode(this.x) * 397 * Float.hashCode(this.y) ^ Float.hashCode(this.z);
+    }
+
+    /**
+     * Gets this vector as a string which can be parsed.
+     */
+    public String toParseableString() {
+        return this.x + ", " + this.y + ", " + this.z;
     }
 
     @Override
@@ -321,5 +394,29 @@ public class Vector3f implements IBinarySerializable {
         float resultY = blend * (b.y - a.y) + a.y;
         float resultZ = blend * (b.z - a.z) + a.z;
         return new Vector3f(resultX, resultY, resultZ);
+    }
+
+    /**
+     * Returns a new Vector that is the linear blend of the 2 given Vectors.
+     * @param a     First input vector.
+     * @param b     Second input vector.
+     * @param blend The blend factor. a when blend=0, b when blend=1.
+     * @return a when blend=0, b when blend=1, and a linear combination otherwise.
+     */
+    public static Vector3f lerp(Vector3f a, Vector3f b, float blend, Vector3f result) {
+        result.setX(blend * (b.x - a.x) + a.x);
+        result.setY(blend * (b.y - a.y) + a.y);
+        result.setZ(blend * (b.z - a.z) + a.z);
+        return result;
+    }
+
+    /**
+     * Calculate the dot product of two vectors.
+     * @param a the first input vector
+     * @param b the second input vector
+     * @return dotProduct
+     */
+    public static double dotProduct(Vector3f a, Vector3f b) {
+        return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
     }
 }

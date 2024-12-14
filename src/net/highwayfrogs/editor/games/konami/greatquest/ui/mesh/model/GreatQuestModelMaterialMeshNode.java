@@ -1,10 +1,11 @@
 package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model;
 
-import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
-import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
-import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelPrim;
-import net.highwayfrogs.editor.games.konami.greatquest.model.kcVertex;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton;
+import net.highwayfrogs.editor.games.konami.greatquest.math.kcMatrix;
+import net.highwayfrogs.editor.games.konami.greatquest.model.*;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
+import net.highwayfrogs.editor.system.math.Matrix4x4f;
+import net.highwayfrogs.editor.system.math.Vector3f;
 
 import java.util.List;
 
@@ -13,7 +14,9 @@ import java.util.List;
  * Created by Kneesnap on 4/15/2024.
  */
 public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcModelPrim> {
-    private static final double PS2_SCALE = .01D;
+    private final Vector3f tempVertex = new Vector3f();
+    private final Vector3f tempWeighedVertex = new Vector3f();
+    private final Vector3f tempTransformedVertex = new Vector3f();
 
     public GreatQuestModelMaterialMeshNode(GreatQuestModelMaterialMesh mesh) {
         super(mesh);
@@ -22,6 +25,13 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
     @Override
     public GreatQuestModelMaterialMesh getMesh() {
         return (GreatQuestModelMaterialMesh) super.getMesh();
+    }
+
+    /**
+     * Gets the skeleton used to draw this model.
+     */
+    public kcCResourceSkeleton getSkeleton() {
+        return getMesh().getFullMesh().getSkeleton();
     }
 
     @Override
@@ -43,16 +53,9 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
         DynamicMeshTypedDataEntry entry = new DynamicMeshTypedDataEntry(getMesh(), modelPrim);
 
         // Write vertices and uvs.
-        double scaleMultiplier = getVertexScalingMultiplier();
         for (int i = 0; i < modelPrim.getVertices().size(); i++) {
             kcVertex vertex = modelPrim.getVertices().get(i);
-
-            if (getMesh().isSwapAxis()) {
-                entry.addVertexValue((float) (vertex.getX() * scaleMultiplier), (float) (vertex.getZ() * scaleMultiplier), (float) (vertex.getY() * scaleMultiplier));
-            } else {
-                entry.addVertexValue((float) (vertex.getX() * scaleMultiplier), (float) (vertex.getY() * scaleMultiplier), (float) (vertex.getZ() * scaleMultiplier));
-            }
-
+            entry.addVertexValue(calculateVertexPos(modelPrim, i));
             entry.addTexCoordValue(vertex.getU0(), -vertex.getV0());
         }
 
@@ -109,13 +112,7 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
 
     @Override
     public void updateVertex(DynamicMeshTypedDataEntry entry, int localVertexIndex) {
-        kcVertex vertex = entry.getDataSource().getVertices().get(localVertexIndex);
-        double scaleMultiplier = getVertexScalingMultiplier();
-        if (getMesh().isSwapAxis()) {
-            entry.addVertexValue((float) (vertex.getX() * scaleMultiplier), (float) (vertex.getZ() * scaleMultiplier), (float) (vertex.getY() * scaleMultiplier));
-        } else {
-            entry.addVertexValue((float) (vertex.getX() * scaleMultiplier), (float) (vertex.getY() * scaleMultiplier), (float) (vertex.getZ() * scaleMultiplier));
-        }
+        entry.writeVertexXYZ(localVertexIndex, calculateVertexPos(entry.getDataSource(), localVertexIndex));
     }
 
     @Override
@@ -134,10 +131,44 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
         return getMesh().getModel();
     }
 
-    public double getVertexScalingMultiplier() {
-        if (getModel().getGameInstance().isPS2() && !(getMesh().getFullMesh() != null && getMesh().getFullMesh().isEnvironmentalMesh()))
-            return PS2_SCALE;
 
-        return 1;
+    private Vector3f calculateVertexPos(kcModelPrim modelPrim, int localVertexIndex) {
+        kcVertex vertex = modelPrim.getVertices().get(localVertexIndex);
+        Vector3f localPos = this.tempVertex.setXYZ(vertex.getX(), vertex.getY(), vertex.getZ()); // Scaling must happen first for animations to apply at the right pivot points.
+
+        Vector3f result = this.tempTransformedVertex.setXYZ(localPos);
+        kcCResourceSkeleton skeleton = getSkeleton();
+        if (skeleton != null) {
+            GreatQuestModelMesh fullMesh = getMesh().getFullMesh();
+            result = result.setXYZ(0, 0, 0); // The result is a sum of weighed bones.
+
+            // Add bone.
+            float weight0 = vertex.getWeight() != null && vertex.getWeight().length > 0 ? vertex.getWeight()[0] : 1F;
+            float weight1 = (1F - weight0);
+
+            Vector3f tmpWeightedVtx = this.tempWeighedVertex;
+            kcModelNode parentNode = modelPrim.getParentNode();
+            if (parentNode != null && parentNode.getNodeId() >= 0) {
+                Matrix4x4f tempMatrix = fullMesh.getFinalBoneTransform(parentNode.getNodeId());
+                result.add(kcMatrix.kcMatrixMulVector(tempMatrix, localPos, tmpWeightedVtx).multiplyScalar(weight0));
+            }
+
+            if (modelPrim.getBoneIds() != null && modelPrim.getBoneIds().length > 0) {
+                short boneId = modelPrim.getBoneIds()[0];
+                if (boneId != 0) { // kcModelTransformRender()
+                    Matrix4x4f tempMatrix = fullMesh.getFinalBoneTransform(boneId);
+                    result.add(kcMatrix.kcMatrixMulVector(tempMatrix, localPos, tmpWeightedVtx).multiplyScalar(weight1));
+                }
+            }
+        }
+
+        if (getMesh().isSwapAxis()) {
+            float temp = result.getY();
+            result.setX(-result.getX());
+            result.setY(result.getZ());
+            result.setZ(temp);
+        }
+
+        return result;
     }
 }

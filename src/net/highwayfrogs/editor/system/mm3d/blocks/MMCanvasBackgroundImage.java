@@ -43,7 +43,7 @@ public class MMCanvasBackgroundImage extends MMDataBlockBody {
         writer.writeFloat(this.scale);
         for (float centerVal : this.center)
             writer.writeFloat(centerVal);
-        writer.writeTerminatorString(this.fileName);
+        writer.writeNullTerminatedString(this.fileName);
 
     }
 

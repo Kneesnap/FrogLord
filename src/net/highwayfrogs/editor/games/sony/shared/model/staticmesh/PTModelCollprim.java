@@ -11,7 +11,7 @@ import net.highwayfrogs.editor.games.sony.shared.collprim.ICollprimEditorUI;
 import net.highwayfrogs.editor.games.sony.shared.collprim.PTCollprim;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MeshUIManager;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Represents a collprim with a static pointer.
@@ -37,7 +37,7 @@ public class PTModelCollprim extends PTCollprim {
         }
 
         if (this.matrixAddress <= 0)
-            throw new RuntimeException("Cannot read collprim matrix, the pointer " + Utils.toHexString(this.matrixAddress) + " is invalid.");
+            throw new RuntimeException("Cannot read collprim matrix, the pointer " + NumberUtils.toHexString(this.matrixAddress) + " is invalid.");
 
         reader.requireIndex(getLogger(), this.matrixAddress, "Expected PTCollprim matrix");
         this.matrix = new PSXMatrix();
@@ -52,7 +52,7 @@ public class PTModelCollprim extends PTCollprim {
      */
     public void writeMatrix(DataWriter writer) {
         if (this.matrixAddress <= 0)
-            throw new RuntimeException("Cannot write collprim matrix, the pointer " + Utils.toHexString(this.matrixAddress) + " is invalid.");
+            throw new RuntimeException("Cannot write collprim matrix, the pointer " + NumberUtils.toHexString(this.matrixAddress) + " is invalid.");
 
         if (this.matrix != null) {
             writer.writeAddressTo(this.matrixAddress);

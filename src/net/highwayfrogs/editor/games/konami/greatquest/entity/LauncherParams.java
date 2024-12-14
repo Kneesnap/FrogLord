@@ -1,14 +1,20 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
 import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceModel;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceModel;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcIGenericResourceData;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.function.Function;
 
@@ -18,37 +24,48 @@ import java.util.function.Function;
  * Created by Kneesnap on 8/21/2023.
  */
 @Getter
-public class LauncherParams extends kcProjectileParams {
-    private int vtxResourceHash;
-    private int cruiseParticleEffectHash;
-    private int hitParticleEffectHash;
-    private int projectileLifeTime;
-    private float speed;
-    private final transient GreatQuestChunkedFile holder;
+public class LauncherParams extends kcProjectileParams implements kcIGenericResourceData {
+    private final kcCResourceGeneric resource;
+    private final GreatQuestHash<kcCResourceModel> vtxModelRef; // Resolved in CLauncher::Init()
+    private final GreatQuestHash<kcCResourceGeneric> cruiseParticleEffectRef; // Resolved in CLauncher::Init()
+    private final GreatQuestHash<kcCResourceGeneric> hitParticleEffectRef; // Resolved in CLauncher::Init()
+    @Setter private int projectileLifeTime;
+    @Setter private float speed;
     private static final int PADDING_VALUES = 7;
 
-    public LauncherParams(GreatQuestChunkedFile holder) {
-        super(holder != null ? holder.getGameInstance() : null);
-        this.holder = holder;
+    private static final String NAME_SUFFIX = "LauncherDesc";
+
+    public LauncherParams(@NonNull kcCResourceGeneric resource) {
+        super(resource.getGameInstance());
+        this.resource = resource;
+        this.vtxModelRef = new GreatQuestHash<>();
+        this.cruiseParticleEffectRef = new GreatQuestHash<>();
+        this.hitParticleEffectRef = new GreatQuestHash<>();
+        GreatQuestUtils.applySelfNameSuffixAndToFutureNameChanges(resource, NAME_SUFFIX);
     }
 
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.vtxResourceHash = reader.readInt();
-        this.cruiseParticleEffectHash = reader.readInt();
-        this.hitParticleEffectHash = reader.readInt();
+        int vtxResourceHash = reader.readInt();
+        int cruiseParticleEffectHash = reader.readInt();
+        int hitParticleEffectHash = reader.readInt();
         this.projectileLifeTime = reader.readInt();
         this.speed = reader.readFloat();
         reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
+
+        GreatQuestChunkedFile parentFile = this.resource.getParentFile();
+        GreatQuestUtils.resolveResourceHash(kcCResourceModel.class, parentFile, this, this.vtxModelRef, vtxResourceHash, true);
+        GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, parentFile, this, this.cruiseParticleEffectRef, cruiseParticleEffectHash, true);
+        GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, parentFile, this, this.hitParticleEffectRef, hitParticleEffectHash, true);
     }
 
     @Override
     public void save(DataWriter writer) {
         super.save(writer);
-        writer.writeInt(this.vtxResourceHash);
-        writer.writeInt(this.cruiseParticleEffectHash);
-        writer.writeInt(this.hitParticleEffectHash);
+        writer.writeInt(this.vtxModelRef.getHashNumber());
+        writer.writeInt(this.cruiseParticleEffectRef.getHashNumber());
+        writer.writeInt(this.hitParticleEffectRef.getHashNumber());
         writer.writeInt(this.projectileLifeTime);
         writer.writeFloat(this.speed);
         writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
@@ -58,26 +75,32 @@ public class LauncherParams extends kcProjectileParams {
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         super.writeMultiLineInfo(builder, padding);
 
-        writeAssetInfo(builder, padding, "Model", this.vtxResourceHash, kcCResourceModel::getFullPath);
-        writeAssetInfo(builder, padding, "Cruise Particle Effect", this.cruiseParticleEffectHash, kcCResource::getName);
-        writeAssetInfo(builder, padding, "Hit Particle Effect", this.hitParticleEffectHash, kcCResource::getName);
+        writeAssetInfo(builder, padding, "Model", this.vtxModelRef, kcCResourceModel::getFullPath);
+        writeAssetInfo(builder, padding, "Cruise Particle Effect", this.cruiseParticleEffectRef, kcCResource::getName);
+        writeAssetInfo(builder, padding, "Hit Particle Effect", this.hitParticleEffectRef, kcCResource::getName);
 
         builder.append(" - Projectile Life Time: ").append(this.projectileLifeTime).append(Constants.NEWLINE);
         builder.append(" - Speed: ").append(this.speed).append(Constants.NEWLINE);
     }
 
-    private <TResource extends kcCResource> void writeAssetInfo(StringBuilder builder, String padding, String prefix, int resourceHash, Function<TResource, String> getter) {
+    private <TResource extends kcCResource> void writeAssetInfo(StringBuilder builder, String padding, String prefix, GreatQuestHash<? extends TResource> hash, Function<TResource, String> getter) {
         builder.append(padding).append(prefix).append(": ");
 
-        TResource resource = GreatQuestUtils.findResourceByHash(this.holder, getGameInstance(), resourceHash);
+        TResource resource = hash != null ? hash.getResource() : null;
+        int resourceHash = hash != null ? hash.getHashNumber() : 0;
         if (resource != null) {
             builder.append(getter.apply(resource));
         } else if (resourceHash != 0 && resourceHash != -1) {
-            builder.append(Utils.to0PrefixedHexString(resourceHash));
+            builder.append(NumberUtils.to0PrefixedHexString(resourceHash));
         } else {
             builder.append("None");
         }
 
         builder.append(Constants.NEWLINE);
+    }
+
+    @Override
+    public kcCResourceGenericType getResourceType() {
+        return kcCResourceGenericType.LAUNCHER_DESCRIPTION;
     }
 }

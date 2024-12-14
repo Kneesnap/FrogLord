@@ -18,10 +18,12 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapA
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.util.Arrays;
-import java.util.logging.Logger;
 
 /**
  * Represents a map polygon seen in Frogger.
@@ -76,8 +78,15 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
     }
 
     @Override
-    public Logger getLogger() {
-        return Logger.getLogger((this.mapFile != null ? this.mapFile.getFileDisplayName() + "|" : "") + "FroggerMapPolygon{" + this.polygonType + "," + Utils.toHexString(this.lastReadAddress) + "}");
+    public ILogger getLogger() {
+        return new LazyInstanceLogger(getGameInstance(), FroggerMapPolygon::getLoggerInfo, this);
+    }
+
+    /**
+     * Gets logger information for the polygon.
+     */
+    public String getLoggerInfo() {
+        return (this.mapFile != null ? this.mapFile.getFileDisplayName() + "|" : "") + "FroggerMapPolygon{" + this.polygonType + "," + NumberUtils.toHexString(this.lastReadAddress) + "}";
     }
 
     @Override
@@ -280,6 +289,17 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
     }
 
     /**
+     * Tests if this polygon is fully opaque, all pixels having maximum alpha/opacity.
+     */
+    public boolean isFullyOpaque() {
+        GameImage image = getTexture();
+        if (image != null && image.testFlag(GameImage.FLAG_BLACK_IS_TRANSPARENT))
+            return false;
+
+        return !isSemiTransparent();
+    }
+
+    /**
      * Gets the UV horizontal offset applied from map animation.
      * @param animation the animation to apply the offset from
      * @param frame the animation frame to apply
@@ -412,7 +432,7 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
             if (textureRemap != null) {
                 int remapIndex = textureRemap.getRemapIndex(gameImage.getTextureId());
                 if (remapIndex >= 0)
-                    this.textureId = Utils.unsignedIntToShort(remapIndex);
+                    this.textureId = DataUtils.unsignedIntToShort(remapIndex);
             }
         }
     }

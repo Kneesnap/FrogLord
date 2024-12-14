@@ -1,10 +1,15 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcActorDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcHealthDesc.kcDamageType;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
 
@@ -14,64 +19,60 @@ import java.util.List;
  * From doing debugging on this I found there's a fairly long cooldown between enemies taking damage, and your attacks hitting do nothing.
  * Created by Kneesnap on 8/16/2023.
  */
+@Getter
 public class kcScriptCauseDamage extends kcScriptCause {
-    private DamageFlag damageFlag;
+    private kcDamageType damageType;
 
-    public kcScriptCauseDamage(GreatQuestInstance gameInstance) {
-        super(gameInstance, kcScriptCauseType.DAMAGE, 0);
+    public kcScriptCauseDamage(kcScript script) {
+        super(script, kcScriptCauseType.DAMAGE, 0, 1);
     }
 
     @Override
     public void load(int subCauseType, List<Integer> extraValues) {
-        this.damageFlag = DamageFlag.values()[(subCauseType & 0x1F)];
+        this.damageType = kcDamageType.values()[(subCauseType & 0x1F)];
     }
 
     @Override
     public void save(List<Integer> output) {
-        output.add(this.damageFlag.ordinal());
+        output.add(this.damageType.ordinal());
+    }
+
+    @Override
+    protected void loadArguments(OptionalArguments arguments) {
+        this.damageType = arguments.useNext().getAsEnumOrError(kcDamageType.class);
+    }
+
+    @Override
+    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+        arguments.createNext().setAsEnum(this.damageType);
+    }
+
+    @Override
+    public void printWarnings(ILogger logger) {
+        super.printWarnings(logger);
+
+        kcCResourceEntityInst targetEntity = getScriptEntity();
+        kcEntityInst entity = targetEntity != null ? targetEntity.getInstance() : null;
+        kcEntity3DDesc entityDescription = entity != null ? entity.getDescription() : null;
+        if (entityDescription instanceof kcActorDesc && (((kcActorDesc) entityDescription).getHealth().getImmuneMask() & this.damageType.getMask()) == this.damageType.getMask())
+            printWarning(logger, targetEntity.getName() + " is immune to the " + this.damageType + " damage type.");
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode() ^ this.damageType.ordinal();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj) && ((kcScriptCauseDamage) obj).getDamageType() == this.damageType;
     }
 
     @Override
     public void toString(StringBuilder builder, kcScriptDisplaySettings settings) {
-        builder.append("The attached entity taking damage with the ").append(this.damageFlag).append(" flag set.");
-    }
-
-    @Getter
-    @AllArgsConstructor
-    public enum DamageFlag {
-        FIRE(Constants.BIT_FLAG_0),
-        ICE(Constants.BIT_FLAG_1),
-        UNKNOWN_FLAG_2(Constants.BIT_FLAG_2),
-        MELEE(Constants.BIT_FLAG_3),
-        RANGED(Constants.BIT_FLAG_4),
-        UNKNOWN_FLAG_5(Constants.BIT_FLAG_5), // The Magical General has this.
-        UNKNOWN_FLAG_6(Constants.BIT_FLAG_6),
-        UNKNOWN_FLAG_7(Constants.BIT_FLAG_7),
-        UNKNOWN_FLAG_8(Constants.BIT_FLAG_8),
-        UNKNOWN_FLAG_9(Constants.BIT_FLAG_9),
-        UNKNOWN_FLAG_10(Constants.BIT_FLAG_10),
-        UNKNOWN_FLAG_11(Constants.BIT_FLAG_11),
-        FALL(Constants.BIT_FLAG_12),
-        UNKNOWN_FLAG_13(Constants.BIT_FLAG_13),
-        UNKNOWN_FLAG_14(Constants.BIT_FLAG_14),
-        UNKNOWN_FLAG_15(Constants.BIT_FLAG_15),
-        UNKNOWN_FLAG_16(Constants.BIT_FLAG_16),
-        UNKNOWN_FLAG_17(Constants.BIT_FLAG_17),
-        UNKNOWN_FLAG_18(Constants.BIT_FLAG_18),
-        UNKNOWN_FLAG_19(Constants.BIT_FLAG_19),
-        UNKNOWN_FLAG_20(Constants.BIT_FLAG_20),
-        UNKNOWN_FLAG_21(Constants.BIT_FLAG_21),
-        UNKNOWN_FLAG_22(Constants.BIT_FLAG_22),
-        UNKNOWN_FLAG_23(Constants.BIT_FLAG_23),
-        UNKNOWN_FLAG_24(Constants.BIT_FLAG_24),
-        UNKNOWN_FLAG_25(Constants.BIT_FLAG_25),
-        UNKNOWN_FLAG_26(Constants.BIT_FLAG_26),
-        UNKNOWN_FLAG_27(Constants.BIT_FLAG_27),
-        UNKNOWN_FLAG_28(Constants.BIT_FLAG_28),
-        UNKNOWN_FLAG_29(Constants.BIT_FLAG_29),
-        UNKNOWN_FLAG_30(Constants.BIT_FLAG_30),
-        UNKNOWN_FLAG_31(Constants.BIT_FLAG_31);
-
-        private final int mask;
+        kcCResourceEntityInst targetEntity = getScriptEntity();
+        builder.append("When ")
+                .append(targetEntity != null ? targetEntity.getName() : "the attacked entity")
+                .append(" takes ").append(this.damageType).append(" damage");
     }
 }

@@ -50,13 +50,13 @@ public class FroggerMapFilePacketGraphical extends FroggerMapFilePacket {
         writer.writeUnsignedInt(fileSizeInBytes);
 
         // Write pointer addresses.
-        writer.writeAddressAt(this.lightPacketAddress, getParentFile().getLightPacket().getLastValidWriteHeaderAddress());
-        writer.writeAddressAt(this.groupPacketAddress, getParentFile().getGroupPacket().getLastValidWriteHeaderAddress());
-        writer.writeAddressAt(this.polygonPacketAddress, getParentFile().getPolygonPacket().getLastValidWriteHeaderAddress());
-        writer.writeAddressAt(this.vertexPacketAddress, getParentFile().getVertexPacket().getLastValidWriteHeaderAddress());
-        writer.writeAddressAt(this.gridPacketAddress, getParentFile().getGridPacket().getLastValidWriteHeaderAddress());
+        writer.writeIntAtPos(this.lightPacketAddress, getParentFile().getLightPacket().getLastValidWriteHeaderAddress());
+        writer.writeIntAtPos(this.groupPacketAddress, getParentFile().getGroupPacket().getLastValidWriteHeaderAddress());
+        writer.writeIntAtPos(this.polygonPacketAddress, getParentFile().getPolygonPacket().getLastValidWriteHeaderAddress());
+        writer.writeIntAtPos(this.vertexPacketAddress, getParentFile().getVertexPacket().getLastValidWriteHeaderAddress());
+        writer.writeIntAtPos(this.gridPacketAddress, getParentFile().getGridPacket().getLastValidWriteHeaderAddress());
         if (getParentFile().isMapAnimationEnabled())
-            writer.writeAddressAt(this.animationPacketAddress, getParentFile().getAnimationPacket().getLastValidWriteHeaderAddress());
+            writer.writeIntAtPos(this.animationPacketAddress, getParentFile().getAnimationPacket().getLastValidWriteHeaderAddress());
 
         // Update internal tracking.
         this.lightPacketAddress = getParentFile().getLightPacket().getLastValidWriteHeaderAddress();

@@ -5,13 +5,15 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData;
-import net.highwayfrogs.editor.games.konami.hudson.HudsonFileUserFSDefinition;
+import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
-import net.highwayfrogs.editor.games.konami.hudson.IHudsonFileDefinition;
 import net.highwayfrogs.editor.games.konami.rescue.FroggerRescueInstance;
+import net.highwayfrogs.editor.games.renderware.RwUtils;
+import net.highwayfrogs.editor.games.shared.basic.file.definition.IGameFileDefinition;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -29,8 +31,9 @@ public class FroggerRescueSoundBank extends HudsonGameFile {
     private final List<FroggerRescueSoundBankEntry> entries = new ArrayList<>();
 
     public static final String SIGNATURE = "SBNK";
+    private static final int ALIGNMENT = 16;
 
-    public FroggerRescueSoundBank(IHudsonFileDefinition fileDefinition) {
+    public FroggerRescueSoundBank(IGameFileDefinition fileDefinition) {
         super(fileDefinition);
     }
 
@@ -57,7 +60,7 @@ public class FroggerRescueSoundBank extends HudsonGameFile {
         // Read raw file contents.
         for (int i = 0; i < this.entries.size(); i++) {
             this.entries.get(i).readFileContents(reader);
-            reader.alignRequireEmpty(16);
+            reader.skipBytes(ALIGNMENT - (reader.getIndex() % ALIGNMENT)); // NOTE: DO NOT replace this with alignRequireEmpty(), because this should skip the bytes when already aligned.
         }
 
         requireReaderIndex(reader, fileLength, "Expected end of file");
@@ -73,7 +76,7 @@ public class FroggerRescueSoundBank extends HudsonGameFile {
         // Read entries.
         for (int i = 0; i < this.entries.size(); i++) {
             this.entries.get(i).save(writer);
-            writer.align(16);
+            writer.skipBytes(ALIGNMENT - (writer.getIndex() % ALIGNMENT)); // Do not use the align method, as this should skip the bytes if already aligned to the boundary.
         }
 
         // Read raw file contents.
@@ -97,9 +100,9 @@ public class FroggerRescueSoundBank extends HudsonGameFile {
 
     @Override
     public void export(File exportFolder) {
-        if (!(getFileDefinition() instanceof HudsonFileUserFSDefinition))
+        if (getFileDefinition().getFile() == null)
             exportFolder = new File(exportFolder, "Sounds [" + getDisplayName() + "]");
-        Utils.makeDirectory(exportFolder);
+        FileUtils.makeDirectory(exportFolder);
 
         for (int i = 0; i < this.entries.size(); i++) {
             File outputFile = new File(exportFolder, "SOUND" + String.format("%03d", i) + "_" + this.entries.get(i).getUnknownValue() + ".wav");
@@ -107,14 +110,14 @@ public class FroggerRescueSoundBank extends HudsonGameFile {
             try {
                 Files.write(outputFile.toPath(), this.entries.get(i).getRawFileContents());
             } catch (IOException ex) {
-                Utils.handleError(getLogger(), ex, false, "Failed to export file '%s'.", Utils.toLocalPath(exportFolder, outputFile, true));
+                Utils.handleError(getLogger(), ex, false, "Failed to export file '%s'.", FileUtils.toLocalPath(exportFolder, outputFile, true));
             }
         }
     }
 
     public static class FroggerRescueSoundBankEntry extends GameData<FroggerRescueInstance> {
         private int fileSize = -1;
-        private int alwaysOne = 1; // This is NOT channel count, since some stereo wavs still have this as one.
+        private boolean unknown = true; // This is NOT channel count, since some stereo wavs still have this as one. Always seen as either 0 or 1.
         @Getter private int unknownValue; // TODO: SOLVE THIS -> Could it be related to the .bin file?
         private int startAddress = -1;
         @Getter private byte[] rawFileContents;
@@ -126,10 +129,7 @@ public class FroggerRescueSoundBank extends HudsonGameFile {
         @Override
         public void load(DataReader reader) {
             this.fileSize = reader.readInt();
-            this.alwaysOne = reader.readInt(); // This isn't the channel count.
-            if (this.alwaysOne != 1)
-                getLogger().warning("Value thought to always be one was read as " + this.alwaysOne + ".");
-
+            this.unknown = RwUtils.readRwBool(reader);
             this.unknownValue = reader.readInt();
             this.startAddress = reader.readInt();
         }
@@ -137,7 +137,7 @@ public class FroggerRescueSoundBank extends HudsonGameFile {
         @Override
         public void save(DataWriter writer) {
             writer.writeInt(this.rawFileContents != null ? this.rawFileContents.length : 0);
-            writer.writeInt(this.alwaysOne);
+            RwUtils.writeRwBool(writer, this.unknown);
             writer.writeInt(this.unknownValue);
             this.startAddress = writer.writeNullPointer();
         }
@@ -148,9 +148,9 @@ public class FroggerRescueSoundBank extends HudsonGameFile {
          */
         public void readFileContents(DataReader reader) {
             if (this.startAddress <= 0)
-                throw new RuntimeException("Cannot read file data, the pointer " + Utils.toHexString(this.startAddress) + " is invalid.");
+                throw new RuntimeException("Cannot read file data, the pointer " + NumberUtils.toHexString(this.startAddress) + " is invalid.");
             if (this.fileSize < 0)
-                throw new RuntimeException("Cannot read file data, the file size " + Utils.toHexString(this.fileSize) + " is invalid.");
+                throw new RuntimeException("Cannot read file data, the file size " + NumberUtils.toHexString(this.fileSize) + " is invalid.");
 
             // There isn't actually any static entity list saved, so we'll just validate the pointer as a sanity check and continue.
             reader.requireIndex(getLogger(), this.startAddress, "Expected raw file contents");
@@ -165,7 +165,7 @@ public class FroggerRescueSoundBank extends HudsonGameFile {
          */
         public void writeFileContents(DataWriter writer) {
             if (this.startAddress <= 0)
-                throw new RuntimeException("Cannot write raw file contents, the pointer " + Utils.toHexString(this.startAddress) + " is invalid.");
+                throw new RuntimeException("Cannot write raw file contents, the pointer " + NumberUtils.toHexString(this.startAddress) + " is invalid.");
 
             // This data doesn't actually exist, so just write the pointer and be done with it.
             writer.writeAddressTo(this.startAddress);

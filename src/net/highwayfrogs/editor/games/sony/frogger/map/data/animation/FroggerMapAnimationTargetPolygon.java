@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketAnimation;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.List;
@@ -47,7 +48,7 @@ public class FroggerMapAnimationTargetPolygon extends SCGameData<FroggerGameInst
         int polygonIndex = Utils.binarySearch(mapPolygons, polygonPointer, FroggerMapPolygon::getLastReadAddress);
         FroggerMapPolygon polygon = polygonIndex >= 0 ? mapPolygons.get(polygonIndex) : null;
         if (polygon == null)
-            throw new RuntimeException("No polygon was loaded from " + Utils.toHexString(polygonPointer) + ".");
+            throw new RuntimeException("No polygon was loaded from " + NumberUtils.toHexString(polygonPointer) + ".");
 
         setPolygon(polygon);
     }

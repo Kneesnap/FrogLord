@@ -17,7 +17,7 @@ import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.ColorUtils;
 
 import java.util.Arrays;
 
@@ -129,6 +129,17 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
             return true;
 
         return (this.flags & FLAG_SEMI_TRANSPARENT) == FLAG_SEMI_TRANSPARENT;
+    }
+
+    /**
+     * If the polygon renders as fully opaque, this will return true.
+     */
+    public boolean isFullyOpaque(MediEvilLevelTableEntry levelTableEntry) {
+        GameImage image = getTexture(levelTableEntry);
+        if (image != null && (image.testFlag(GameImage.FLAG_TRANSLUCENT) || image.testFlag(GameImage.FLAG_BLACK_IS_TRANSPARENT)))
+            return false;
+
+        return (this.flags & FLAG_SEMI_TRANSPARENT) != FLAG_SEMI_TRANSPARENT;
     }
 
     /**
@@ -262,7 +273,7 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
             gpuCode |= CVector.FLAG_SEMI_TRANSPARENT;
 
         // Create color.
-        CVector loadedColor = CVector.makeColorFromRGB(Utils.swapRedBlue(bgrColor));
+        CVector loadedColor = CVector.makeColorFromRGB(ColorUtils.swapRedBlue(bgrColor));
         loadedColor.setCode(gpuCode);
         return loadedColor;
     }

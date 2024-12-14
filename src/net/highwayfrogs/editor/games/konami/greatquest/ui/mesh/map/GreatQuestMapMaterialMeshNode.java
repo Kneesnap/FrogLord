@@ -1,10 +1,9 @@
 package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map;
 
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
-import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResOctTreeSceneMgr;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResOctTreeSceneMgr.kcVtxBufFileStruct;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcVertex;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResOctTreeSceneMgr;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResOctTreeSceneMgr.kcVtxBufFileStruct;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
 
 import java.util.List;
@@ -14,8 +13,15 @@ import java.util.List;
  * Created by Kneesnap on 4/14/2024.
  */
 public class GreatQuestMapMaterialMeshNode extends DynamicMeshAdapterNode<kcVtxBufFileStruct> {
+    private final kcVtxBufFileStruct highlightedVertexBuffer;
+
     public GreatQuestMapMaterialMeshNode(GreatQuestMapMaterialMesh mesh) {
+        this(mesh, null);
+    }
+
+    public GreatQuestMapMaterialMeshNode(GreatQuestMapMaterialMesh mesh, kcVtxBufFileStruct highlightedVertexBuffer) {
         super(mesh);
+        this.highlightedVertexBuffer = highlightedVertexBuffer;
     }
 
     @Override
@@ -28,13 +34,13 @@ public class GreatQuestMapMaterialMeshNode extends DynamicMeshAdapterNode<kcVtxB
         super.onAddedToMesh();
 
         // Setup vertex buffers matching this material.
-        kcCResOctTreeSceneMgr sceneMgr = getMap().getSceneManager();
-        List<kcMaterial> materials = sceneMgr.getMaterials();
-        for (kcVtxBufFileStruct vertexBuffer : sceneMgr.getVertexBuffers()) {
-            int materialId = (int) vertexBuffer.getMaterialId();
-            kcMaterial material = materialId >= 0 && materials.size() > materialId ? materials.get(materialId) : null;
-            if (material == getMesh().getMapMaterial())
-                this.add(vertexBuffer);
+        if (this.highlightedVertexBuffer != null) {
+            add(this.highlightedVertexBuffer);
+        } else {
+            kcCResOctTreeSceneMgr sceneMgr = getMap().getSceneManager();
+            List<kcVtxBufFileStruct> vertexBuffers = sceneMgr.getVertexBuffersForMaterial(getMesh().getMapMaterial());
+            if (vertexBuffers != null)
+                vertexBuffers.forEach(this::add);
         }
     }
 

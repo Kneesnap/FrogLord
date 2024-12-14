@@ -4,8 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.system.math.Vector2f;
 import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.Utils;
-
-import java.util.logging.Logger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 /**
  * This represents a unit of vertex positions, texture coordinate values, and face values which are conceptually grouped together.
@@ -269,6 +268,15 @@ public class DynamicMeshDataEntry {
 
         // Trigger an update. (If batching is enabled, this will occur after all changes are ready)
         this.mesh.getEditableVertices().applyToFxArray();
+    }
+
+    /**
+     * Writes vertex position data to a vertex.
+     * @param localVtxIndex The index to a vertex saved here.
+     * @param position the position vector to write
+     */
+    public void writeVertexXYZ(int localVtxIndex, Vector3f position) {
+        writeVertexXYZ(localVtxIndex, position.getX(), position.getY(), position.getZ());
     }
 
     /**
@@ -658,11 +666,35 @@ public class DynamicMeshDataEntry {
     }
 
     /**
+     * Gets the current vertex writer start position.
+     * If the internal start index is invalid, the start index will be calculated.
+     */
+    public int getVertexStartIndex() {
+        return this.vertexStartIndex >= 0 ? this.vertexStartIndex : (this.mesh.getEditableVertices().pendingSize() / this.mesh.getPointElementSize());
+    }
+
+    /**
+     * Gets the current texCoord writer start position.
+     * If the internal start index is invalid, the start index will be calculated.
+     */
+    public int getTexCoordStartIndex() {
+        return this.texCoordStartIndex >= 0 ? this.texCoordStartIndex : (this.mesh.getEditableTexCoords().pendingSize() / this.mesh.getTexCoordElementSize());
+    }
+
+    /**
+     * Gets the current face writer start position.
+     * If the internal start index is invalid, the start index will be calculated.
+     */
+    public int getFaceStartIndex() {
+        return this.faceStartIndex >= 0 ? this.faceStartIndex : (this.mesh.getEditableFaces().pendingSize() / this.mesh.getFaceElementSize());
+    }
+
+    /**
      * Print debug information about this entry.
      */
     @SuppressWarnings("unused")
     public void printDebugInformation() {
-        Logger logger = this.mesh.getLogger();
+        ILogger logger = this.mesh.getLogger();
         logger.info("Mesh Entry (" + Utils.getSimpleName(this) + " for " + Utils.getSimpleName(this.mesh) + "):");
         logger.info(" - Faces [Start: " + this.faceStartIndex + ", Written: " + this.writtenFaceCount + ", Pending: " + this.pendingFaceCount
                 + ", Array Size: " + this.mesh.getEditableFaces().size() + "/" + this.mesh.getEditableFaces().pendingSize() + "/" + this.mesh.getFaces().size() + "]");

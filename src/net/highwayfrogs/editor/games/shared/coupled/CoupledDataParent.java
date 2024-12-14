@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.games.shared.coupled;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.games.generic.GameObject.SharedGameObject;
+import net.highwayfrogs.editor.games.generic.data.GameObject.SharedGameObject;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 
 /**

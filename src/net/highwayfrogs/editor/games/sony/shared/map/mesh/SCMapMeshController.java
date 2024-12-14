@@ -20,7 +20,8 @@ import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -36,8 +37,8 @@ public class SCMapMeshController<TMapMesh extends SCMapMesh> extends MeshViewCon
     private static final double DEFAULT_MOVEMENT_SPEED = 250;
     private DisplayList vertexDisplayList;
 
-    private static final PhongMaterial VERTEX_MATERIAL = Utils.makeUnlitSharpMaterial(Color.YELLOW);
-    private static final PhongMaterial CONNECTION_MATERIAL = Utils.makeUnlitSharpMaterial(Color.LIMEGREEN);
+    private static final PhongMaterial VERTEX_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
+    private static final PhongMaterial CONNECTION_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.LIMEGREEN);
 
     @Override
     public void setupBindings(SubScene subScene3D, MeshView meshView) {
@@ -85,7 +86,7 @@ public class SCMapMeshController<TMapMesh extends SCMapMesh> extends MeshViewCon
                 for (int localVtxId = 0; localVtxId < mapPolygon.getVertexCount(); localVtxId++) {
                     int mapVertexId = mapPolygon.getVertices()[localVtxId];
                     SVector vertex = mapMesh.getMap().getPolygonPacket().getVertices().get(mapVertexId);
-                    getLogger().info(" Vertex " + localVtxId + "/" + mapVertexId + " -> Pad: " + Utils.toHexString(vertex.getUnsignedPadding()));
+                    getLogger().info(" Vertex " + localVtxId + "/" + mapVertexId + " -> Pad: " + NumberUtils.toHexString(vertex.getUnsignedPadding()));
                 }
             }
         });

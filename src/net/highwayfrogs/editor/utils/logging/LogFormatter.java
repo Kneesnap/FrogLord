@@ -29,7 +29,9 @@ public class LogFormatter extends Formatter {
         if (record.getSourceClassName() != null) {
             source = record.getSourceClassName();
             if (record.getSourceMethodName() != null)
-                source += " " + record.getSourceMethodName();
+                source += "." + record.getSourceMethodName();
+        } else if (record.getSourceMethodName() != null && record.getSourceMethodName().length() > 0) {
+            source = record.getSourceMethodName();
         } else {
             source = record.getLoggerName();
         }

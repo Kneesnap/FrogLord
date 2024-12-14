@@ -14,7 +14,7 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.system.NameValuePair;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 /**
  * Manages the mof display on the main menu.
@@ -47,7 +47,7 @@ public class MOFMainController extends SCFileEditorUIController<SCGameInstance, 
     @FXML
     private void onView(ActionEvent evt) {
         if (!Platform.isSupported(ConditionalFeature.SCENE3D)) {
-            Utils.makePopUp("Your version of JavaFX does not support 3D, so models cannot be previewed.", AlertType.WARNING);
+            FXUtils.makePopUp("Your version of JavaFX does not support 3D, so models cannot be previewed.", AlertType.WARNING);
             return;
         }
 

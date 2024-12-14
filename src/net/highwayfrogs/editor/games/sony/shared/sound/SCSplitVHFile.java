@@ -10,7 +10,7 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.SCVABUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 /**
  * Represents a .VH file.
@@ -47,7 +47,7 @@ public class SCSplitVHFile extends SCSharedGameFile {
         if (this.soundBank != null && this.vbFile != null)
             return loadEditor(getGameInstance(), "edit-file-vb", new SCVABUIController(getGameInstance()), this.vbFile);
 
-        Utils.makePopUp("Could not find the sound bank body file which pairs with this file.", AlertType.ERROR);
+        FXUtils.makePopUp("Could not find the sound bank body file which pairs with this file.", AlertType.ERROR);
         return null;
     }
 

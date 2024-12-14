@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
 
 /**
  * Entity data which involves a matrix.
@@ -39,12 +39,12 @@ public class FroggerEntityDataMatrix extends FroggerEntityData {
     @Override
     public float[] getPositionAndRotation(float[] position) {
         int[] pos = this.matrix.getTransform();
-        position[0] = Utils.fixedPointIntToFloat4Bit(pos[0]);
-        position[1] = Utils.fixedPointIntToFloat4Bit(pos[1]);
-        position[2] = Utils.fixedPointIntToFloat4Bit(pos[2]);
-        position[3] = (float) this.matrix.getRollAngle();
-        position[4] = (float) this.matrix.getPitchAngle();
-        position[5] = (float) this.matrix.getYawAngle();
+        position[0] = DataUtils.fixedPointIntToFloat4Bit(pos[0]);
+        position[1] = DataUtils.fixedPointIntToFloat4Bit(pos[1]);
+        position[2] = DataUtils.fixedPointIntToFloat4Bit(pos[2]);
+        position[3] = (float) this.matrix.getPitchAngle();
+        position[4] = (float) this.matrix.getYawAngle();
+        position[5] = (float) this.matrix.getRollAngle();
         return position;
     }
 

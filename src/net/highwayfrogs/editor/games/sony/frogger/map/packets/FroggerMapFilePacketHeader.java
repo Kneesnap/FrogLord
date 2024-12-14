@@ -37,11 +37,11 @@ public class FroggerMapFilePacketHeader extends FroggerMapFilePacket {
             getLogger().warning("The file reported having a length of " + mapFileSize + " bytes, but it actually was " + reader.getSize() + " bytes.");
 
         // Read version.
-        String versionString = reader.readString(VERSION.length());
+        String versionString = reader.readTerminatedString(VERSION.length());
         if (!VERSION.equals(versionString))
             throw new RuntimeException("The file '" + getParentFile().getFileDisplayName() + "' reported an unsupported version of v" + versionString + ", whereas only v" + VERSION + " is supported!");
 
-        this.comment = reader.readTerminatedStringOfLength(COMMENT_BYTES); // After the terminator byte we've got uninitialized (uncleared malloc) memory.
+        this.comment = reader.readNullTerminatedFixedSizeString(COMMENT_BYTES); // After the terminator byte we've got uninitialized (uncleared malloc) memory.
         this.generalPacketAddress = reader.readInt();
         this.graphicalPacketAddress = reader.readInt();
         this.formPacketAddress = reader.readInt();
@@ -54,7 +54,7 @@ public class FroggerMapFilePacketHeader extends FroggerMapFilePacket {
     protected void saveBodyFirstPass(DataWriter writer) {
         writer.writeNullPointer(); // Map file size.
         writer.writeStringBytes(VERSION);
-        writer.writeTerminatedStringOfLength(this.comment, COMMENT_BYTES);
+        writer.writeNullTerminatedFixedSizeString(this.comment, COMMENT_BYTES);
         this.generalPacketAddress = writer.writeNullPointer();
         this.graphicalPacketAddress = writer.writeNullPointer();
         this.formPacketAddress = writer.writeNullPointer();
@@ -69,12 +69,12 @@ public class FroggerMapFilePacketHeader extends FroggerMapFilePacket {
         writer.writeUnsignedInt(fileSizeInBytes);
 
         // Write pointer addresses.
-        writer.writeAddressAt(this.generalPacketAddress, getParentFile().getGeneralPacket().getLastValidWriteHeaderAddress());
-        writer.writeAddressAt(this.graphicalPacketAddress, getParentFile().getGraphicalPacket().getLastValidWriteHeaderAddress());
-        writer.writeAddressAt(this.formPacketAddress, getParentFile().getFormPacket().getLastValidWriteHeaderAddress());
-        writer.writeAddressAt(this.entityPacketAddress, getParentFile().getEntityPacket().getLastValidWriteHeaderAddress());
-        writer.writeAddressAt(this.zonePacketAddress, getParentFile().getZonePacket().getLastValidWriteHeaderAddress());
-        writer.writeAddressAt(this.pathPacketAddress, getParentFile().getPathPacket().getLastValidWriteHeaderAddress());
+        writer.writeIntAtPos(this.generalPacketAddress, getParentFile().getGeneralPacket().getLastValidWriteHeaderAddress());
+        writer.writeIntAtPos(this.graphicalPacketAddress, getParentFile().getGraphicalPacket().getLastValidWriteHeaderAddress());
+        writer.writeIntAtPos(this.formPacketAddress, getParentFile().getFormPacket().getLastValidWriteHeaderAddress());
+        writer.writeIntAtPos(this.entityPacketAddress, getParentFile().getEntityPacket().getLastValidWriteHeaderAddress());
+        writer.writeIntAtPos(this.zonePacketAddress, getParentFile().getZonePacket().getLastValidWriteHeaderAddress());
+        writer.writeIntAtPos(this.pathPacketAddress, getParentFile().getPathPacket().getLastValidWriteHeaderAddress());
 
         // Update internal tracking.
         this.generalPacketAddress = getParentFile().getGeneralPacket().getLastValidWriteHeaderAddress();

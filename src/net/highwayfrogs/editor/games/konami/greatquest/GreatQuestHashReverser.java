@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.games.konami.greatquest;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.*;
 
@@ -99,6 +99,7 @@ public class GreatQuestHashReverser {
         System.out.println("By default, what you type in will be hashed and you'll be shown the hash of the text.");
         System.out.println("Starting your input with '$<hash>,<template>' will find all strings which matches the hash by filling in the '*' characters in the template.");
         System.out.println("Starting your input with '@<hash>,<template>' will perform searches on the template by replacing '*' with increasing numbers of asterisks.");
+        System.out.println("Starting your input with '#<hash>,<suffix>' will return the hash with the provided suffix removed. (Useful for finding the hash of a shared prefix)");
         System.out.println("Putting a '!' at the end will force non-repeat mode.");
         // Example Command: '$6AFA9D47,D00lILog*t' will find the letter 'o' for '*' making D00lILog*t.
 
@@ -137,7 +138,7 @@ public class GreatQuestHashReverser {
             String[] split = line.split(",", 2);
             int hash = Integer.parseUnsignedInt(split[0], 16);
             String template = split[1];
-            System.out.println("Brute-forcing '" + template + "' to find strings that hash to '" + Utils.to0PrefixedHexString(hash) + "'.");
+            System.out.println("Brute-forcing '" + template + "' to find strings that hash to '" + NumberUtils.to0PrefixedHexString(hash) + "'.");
 
             long hashStartTime = System.currentTimeMillis();
             List<String> reverseHashes = GreatQuestHashReverser.reverseHash(template, hash, debugMode, allowDuplicateMode);
@@ -147,8 +148,8 @@ public class GreatQuestHashReverser {
             System.out.println("Results:");
             for (String str : reverseHashes)
                 System.out.println(" - " + str);
-            System.out.println(reverseHashes.size() + " result(s) in " + (hashEndTime - hashStartTime) + " ms for " + Utils.to0PrefixedHexString(hash) + ".");
-
+            System.out.println(reverseHashes.size() + " result(s) in " + (hashEndTime - hashStartTime) + " ms for " + NumberUtils.to0PrefixedHexString(hash) + ".");
+            printHashIfKnown(hash);
         } else if (line.startsWith("@")) {
             line = line.substring(1);
 
@@ -160,7 +161,7 @@ public class GreatQuestHashReverser {
             String[] split = line.split(",", 2);
             int hash = Integer.parseUnsignedInt(split[0], 16);
             String template = split[1];
-            System.out.println("Brute-forcing '" + template + "' to find strings that hash to '" + Utils.to0PrefixedHexString(hash) + "'.");
+            System.out.println("Brute-forcing '" + template + "' to find strings that hash to '" + NumberUtils.to0PrefixedHexString(hash) + "'.");
 
             long hashStartTime = System.currentTimeMillis();
             List<String> reverseHashes = GreatQuestHashReverser.reverseHashRepeat(template, hash);
@@ -170,15 +171,45 @@ public class GreatQuestHashReverser {
             System.out.println("Results:");
             for (String str : reverseHashes)
                 System.out.println(" - " + str);
-            System.out.println(reverseHashes.size() + " result(s) in " + (hashEndTime - hashStartTime) + " ms for " + Utils.to0PrefixedHexString(hash) + ".");
+            System.out.println(reverseHashes.size() + " result(s) in " + (hashEndTime - hashStartTime) + " ms for " + NumberUtils.to0PrefixedHexString(hash) + ".");
+            printHashIfKnown(hash);
+        } else if (line.startsWith("#")) {
+            line = line.substring(1);
+
+            if (!line.contains(",")) {
+                System.out.println("There was no suffix provided.");
+                return;
+            }
+
+            String[] split = line.split(",", 2);
+            int hash = Integer.parseUnsignedInt(split[0], 16);
+            String suffix = split[1];
+            System.out.println("Reversed Hash: " +  NumberUtils.to0PrefixedHexString(GreatQuestUtils.reverseHash(hash, suffix, true)));
         } else if (line.startsWith("\\")) {
             String hashFilePath = GreatQuestUtils.getFileIdFromPath(line);
             System.out.println("Full File Path: '" + line + "'");
             System.out.println("Hash File Path: '" + hashFilePath + "'");
-            System.out.println("Hash: " + Utils.to0PrefixedHexString(GreatQuestUtils.hash(hashFilePath)));
-        } else {
-            System.out.println("Hash: " + Utils.to0PrefixedHexString(GreatQuestUtils.hash(line)));
+            System.out.println("Hash: " + NumberUtils.to0PrefixedHexString(GreatQuestUtils.hash(hashFilePath)));
+        } else if (!NumberUtils.isHexInteger("0x" + line) || !printHashIfKnown(NumberUtils.parseHexInteger("0x" + line))) {
+            System.out.println("Hash: " + NumberUtils.to0PrefixedHexString(GreatQuestUtils.hash(line)));
         }
+    }
+
+    private static Map<Integer, String> HARDCODED_HASHES;
+    private static boolean printHashIfKnown(int hash) {
+        if (HARDCODED_HASHES == null) {
+            HARDCODED_HASHES = new HashMap<>();
+            GreatQuestUtils.addDefaultHashesToMap(HARDCODED_HASHES);
+        }
+
+        String knownStr = HARDCODED_HASHES.get(hash);
+        if (knownStr != null) {
+            System.out.println();
+            System.out.println("The hash " + NumberUtils.to0PrefixedHexString(hash) + " is recognized as '" + knownStr + "'.");
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -359,7 +390,7 @@ public class GreatQuestHashReverser {
         // XOR out the known characters, limiting the possible resulting characters.
         int templateHash = GreatQuestUtils.hash(template.replace('*', '\0')); // '\0' is a character that will not modify the string when Xor'd.
         if (debugMode)
-            System.out.println("Partial hash from template '" + template + "' is " + Utils.to0PrefixedHexString(templateHash) + ", XOR is " + Utils.to0PrefixedHexString(hash ^ templateHash) + ".");
+            System.out.println("Partial hash from template '" + template + "' is " + NumberUtils.to0PrefixedHexString(templateHash) + ", XOR is " + NumberUtils.to0PrefixedHexString(hash ^ templateHash) + ".");
 
         // Test if it's in duplicate mode.
         int sequenceLength = 0;
@@ -421,7 +452,6 @@ public class GreatQuestHashReverser {
     }
 
     private static List<String> generateStrings(TGQHashContext context) {
-        // TODO: Consider doing this in parallel. In theory this should distribute very easily.
         // Generate possible strings.
         boolean debugMode = context.isDebugMode();
         List<String> results = new ArrayList<>();
@@ -440,7 +470,7 @@ public class GreatQuestHashReverser {
                         System.out.println("Attempted to add duplicate string '" + tempStr + "'.");
                     }
                 } else if (debugMode) {
-                    System.out.println("Finished string to a non-matching hash: '" + temp + "', Tracked: " + Utils.to0PrefixedHexString(temp.getHash()) + ", String: " + Utils.to0PrefixedHexString(GreatQuestUtils.hash(temp.toString())) + ", Target: " + Utils.to0PrefixedHexString(context.getTargetHash()));
+                    System.out.println("Finished string to a non-matching hash: '" + temp + "', Tracked: " + NumberUtils.to0PrefixedHexString(temp.getHash()) + ", String: " + NumberUtils.to0PrefixedHexString(GreatQuestUtils.hash(temp.toString())) + ", Target: " + NumberUtils.to0PrefixedHexString(context.getTargetHash()));
                 }
 
                 continue;

@@ -17,7 +17,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEn
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.segments.FroggerPathSegment;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
 
 import java.text.DecimalFormat;
 import java.util.List;
@@ -199,15 +199,15 @@ public class FroggerPathInfo extends SCGameData<FroggerGameInstance> {
 
         FroggerPath path = getPath();
         if (path != null) {
-            final float distAlongPath = Utils.fixedPointIntToFloat4Bit(getTotalPathDistance());
+            final float distAlongPath = DataUtils.fixedPointIntToFloat4Bit(getTotalPathDistance());
             final float totalPathDist = path.calculateTotalLengthFloat();
 
             Slider travDistSlider = editorGrid.addDoubleSlider("Travel Distance:", distAlongPath, newValue -> {
-                setTotalPathDistance(Utils.floatToFixedPointInt4Bit(newValue.floatValue()));
+                setTotalPathDistance(DataUtils.floatToFixedPointInt4Bit(newValue.floatValue()));
                 manager.updateEntityPositionRotation(entity);
             }, 0.0, totalPathDist);
             TextField travDistText = editorGrid.addFloatField("", distAlongPath, newValue -> {
-                setTotalPathDistance(Utils.floatToFixedPointInt4Bit(newValue));
+                setTotalPathDistance(DataUtils.floatToFixedPointInt4Bit(newValue));
                 manager.updateEntityPositionRotation(entity);
             }, newValue -> !((newValue < 0.0f) || (newValue > totalPathDist)));
             travDistText.textProperty().bindBidirectional(travDistSlider.valueProperty(), new NumberStringConverter(new DecimalFormat("####0.00")));

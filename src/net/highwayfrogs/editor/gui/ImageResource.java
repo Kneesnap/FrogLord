@@ -4,13 +4,15 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
-import java.util.logging.Logger;
 
 /**
  * A registry of all static images included in a FrogLord build.
@@ -31,6 +33,15 @@ public enum ImageResource {
     SWAMPY_32("icons/swampy.png"),
     QUESTION_MARK_32("icons/unknown.png"),
     ICON_MULTIMEDIA_32("icons/applications-multimedia32.png"),
+    COLOR_WHEEL_32("icons/color_wheel.png"),
+    GOURAUD_TRIANGLE_32("icons/gouraud-triangle.png"),
+    GOURAUD_TRIANGLE_LIST_32("icons/gouraud-triangle-list.png"),
+    GOURAUD_TRIANGLE_NO_OUTLINE_32("icons/gouraud-triangle-no-outline.png"),
+    COORDINATE_SYSTEM_XY_32("icons/coordinate-system-xy.png"),
+
+    // FrogLord
+    MATRIX_16("icons/matrix16.png"),
+    MATRIX_32("icons/matrix32.png"),
 
     // Logos
     FROGLORD_LOGO_ALTERNATE_LARGE("graphics/alternate-logo-large.png"),
@@ -38,6 +49,12 @@ public enum ImageResource {
     FROGLORD_LOGO_MAIN_LARGE("graphics/logo-large.png"),
     FROGLORD_LOGO_MAIN_SQUARE_ICON("graphics/logo-small.png"),
     FROGLORD_LOGO_SQUARE_ICON("graphics/icon.png"),
+
+    // Nuvola
+    NUVOLA_BLACK_BOX_32("icons/nuvola/kblackbox_icon.png"),
+
+    // Vexels (Office Icons)
+    VEXELS_OFFICE_BULB_ICON_32("icons/vexels-office-icons/bulb-icon.png"),
 
     // Icons taken from Ghidra. See '/resources/icons/ghidra/LICENSE.MD' for licensing information.
     GHIDRA_ICON_MULTIMEDIA_16("icons/ghidra/applications-multimedia16.png"),
@@ -102,14 +119,56 @@ public enum ImageResource {
     GHIDRA_ICON_ARROW_DIAGONAL_UP_LEFT_16("icons/ghidra/viewmagfit.png"),
     GHIDRA_ICON_WARNING_TRIANGLE_YELLOW_16("icons/ghidra/warning.png"),
 
+    // Icons styled after Windows 98, from https://github.com/nestoris/Win98SE/
+    WIN98_CHARACTER_MAP_16("icons/win98se/16/accessories-character-map.png"),
+    WIN98_CHARACTER_MAP_32("icons/win98se/32/accessories-character-map.png"),
+    WIN98_DICTIONARY_16("icons/win98se/16/accessories-dictionary.png"),
+    WIN98_DICTIONARY_32("icons/win98se/32/accessories-dictionary.png"),
+    WIN98_ADDRESS_BOOK_NEW_16("icons/win98se/16/accessories-address-book-new.png"),
+    WIN98_ADDRESS_BOOK_NEW_32("icons/win98se/32/accessories-address-book-new.png"),
+    WIN98_SCREENSHOOTER_16("icons/win98se/16/applets-screenshooter.png"),
+    WIN98_SCREENSHOOTER_32("icons/win98se/32/applets-screenshooter.png"),
+    WIN98_APPLICATION_ADD_16("icons/win98se/16/application-add.png"),
+    WIN98_APPLICATION_ADD_32("icons/win98se/32/application-add.png"),
+    WIN98_COLOR_PICKER_16("icons/win98se/16/color-picker.png"),
+    WIN98_CALENDAR_16("icons/win98se/16/date.png"),
+    WIN98_FIND_16("icons/win98se/16/find.png"),
+    WIN98_HELP_CONTENTS_16("icons/win98se/16/help-contents.png"),
+    WIN98_HELP_CONTENTS_32("icons/win98se/32/help-contents.png"),
+    WIN98_HELP_FAQ_16("icons/win98se/16/help-faq.png"),
+    WIN98_HELP_FAQ_32("icons/win98se/32/help-faq.png"),
+    WIN98_HEXCHAT_16("icons/win98se/16/hexchat.png"),
+    WIN98_INSERT_IMAGE_16("icons/win98se/16/insert-image.png"),
+    WIN98_INSERT_IMAGE_32("icons/win98se/32/insert-image.png"),
+    WIN98_INSERT_LINK_16("icons/win98se/16/insert-link.png"),
+    WIN98_INSERT_LINK_32("icons/win98se/32/insert-link.png"),
+    WIN98_INSERT_OBJECT_16("icons/win98se/16/insert-object.png"),
+    WIN98_INSERT_OBJECT_32("icons/win98se/32/insert-object.png"),
+    WIN98_LOCK_16("icons/win98se/16/lock.png"),
+    WIN98_MEDIA_OPTICAL_16("icons/win98se/16/media-optical.png"),
+    WIN98_MEDIA_OPTICAL_32("icons/win98se/32/media-optical.png"),
+    WIN98_SYSTEM_SETTINGS_16("icons/win98se/16/system-settings.png"),
+    WIN98_TIME_16("icons/win98se/16/time.png"),
+    WIN98_TERMINAL_16("icons/win98se/16/utilities-terminal.png"),
+    WIN98_TERMINAL_32("icons/win98se/32/utilities-terminal.png"),
+    WIN98_WINDOW_16("icons/win98se/16/window.png"),
+
     // Resized images:
-    PHOTO_ALBUM_15(ImageResource.PHOTO_ALBUM_32, 15),
-    TREASURE_MAP_15(ImageResource.TREASURE_MAP_32, 15),
-    GEOMETRIC_SHAPES_15(ImageResource.GEOMETRIC_SHAPES_32, 15),
-    ZIPPED_FOLDER_15(ImageResource.ZIPPED_FOLDER_32, 15),
-    QUESTION_MARK_15(ImageResource.QUESTION_MARK_32, 15),
-    MUSIC_NOTE_16(ImageResource.MUSIC_NOTE_32, 16),
-    GHIDRA_ICON_PAPER_WITH_TEXT_32(GHIDRA_ICON_PAPER_WITH_TEXT_16, 32);
+    SKELETON_JOINTS_16(SKELETON_JOINTS_32, 16),
+    PHOTO_ALBUM_16(PHOTO_ALBUM_32, 16),
+    TREASURE_MAP_16(TREASURE_MAP_32, 16),
+    GEOMETRIC_SHAPES_16(GEOMETRIC_SHAPES_32, 16),
+    ZIPPED_FOLDER_16(ZIPPED_FOLDER_32, 16),
+    QUESTION_MARK_16(QUESTION_MARK_32, 16),
+    MUSIC_NOTE_16(MUSIC_NOTE_32, 16),
+    PAINTERS_PALETTE_16(PAINTERS_PALETTE_32, 16),
+    COLOR_WHEEL_16(COLOR_WHEEL_32, 16),
+    GOURAUD_TRIANGLE_16(GOURAUD_TRIANGLE_32, 16),
+    GOURAUD_TRIANGLE_LIST_16(GOURAUD_TRIANGLE_LIST_32, 16),
+    COORDINATE_SYSTEM_XY_16(COORDINATE_SYSTEM_XY_32, 16),
+    GHIDRA_ICON_PAPER_WITH_TEXT_32(GHIDRA_ICON_PAPER_WITH_TEXT_16, 32),
+    NUVOLA_BLACK_BOX_16(NUVOLA_BLACK_BOX_32, 16),
+    VEXELS_OFFICE_BULB_ICON_16(VEXELS_OFFICE_BULB_ICON_32, 16);
 
     private final String resourcePath;
     private final ImageResource parentImageResource;
@@ -138,7 +197,7 @@ public enum ImageResource {
 
         if (this.resourcePath != null) {
             // Read the image.
-            URL imageUrl = Utils.getResourceURL(this.resourcePath);
+            URL imageUrl = FileUtils.getResourceURL(this.resourcePath);
             if (imageUrl == null)
                 throw new IllegalStateException("Cannot load image from resource '" + this.resourcePath + "'.");
 
@@ -190,7 +249,7 @@ public enum ImageResource {
         return this.fxImage = SwingFXUtils.toFXImage(awtImage, null);
     }
 
-    private static Logger getLogger() {
-        return Logger.getLogger(ImageResource.class.getSimpleName());
+    private static ILogger getLogger() {
+        return ClassNameLogger.getLogger(null, ImageResource.class);
     }
 }

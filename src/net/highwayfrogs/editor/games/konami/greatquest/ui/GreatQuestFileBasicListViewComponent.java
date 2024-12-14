@@ -1,32 +1,41 @@
 package net.highwayfrogs.editor.games.konami.greatquest.ui;
 
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestArchiveFile;
+import javafx.scene.Scene;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
-import net.highwayfrogs.editor.gui.components.GroupedCollectionViewComponent;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestGameFile;
+import net.highwayfrogs.editor.gui.components.ListViewComponent;
 
-import java.util.Collection;
+import java.util.List;
 
 /**
  * A view component for the GreatQuestArchiveFiles in a game instance.
  * Created by Kneesnap on 4/14/2024.
  */
-public class GreatQuestFileBasicListViewComponent extends GroupedCollectionViewComponent<GreatQuestInstance, GreatQuestArchiveFile> {
+public class GreatQuestFileBasicListViewComponent extends ListViewComponent<GreatQuestInstance, GreatQuestGameFile> {
     public GreatQuestFileBasicListViewComponent(GreatQuestInstance instance) {
         super(instance);
     }
 
     @Override
-    protected void setupViewEntryGroups() {
-        addGroup(new LazyCollectionViewGroup<>("Files", value -> true));
+    public void onSceneAdd(Scene newScene) {
+        super.onSceneAdd(newScene);
+        if (getSelectedViewEntry() == null && getEntries().size() > 0)
+            getRootNode().getSelectionModel().selectFirst();
     }
 
     @Override
-    protected void onSelect(GreatQuestArchiveFile file) {
-        getGameInstance().getMainMenuController().showEditor(file);
+    protected void onSelect(GreatQuestGameFile file) {
+        if (file != null)
+            getGameInstance().getMainMenuController().showEditor(file);
     }
 
     @Override
-    public Collection<GreatQuestArchiveFile> getViewEntries() {
-        return getGameInstance().getMainArchive().getFiles();
+    protected void onDoubleClick(GreatQuestGameFile file) {
+        file.handleDoubleClick();
+    }
+
+    @Override
+    public List<GreatQuestGameFile> getViewEntries() {
+        return getGameInstance().getAllFiles();
     }
 }

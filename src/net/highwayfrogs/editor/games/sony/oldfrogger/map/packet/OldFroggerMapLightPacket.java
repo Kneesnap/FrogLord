@@ -17,7 +17,7 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerLightManager;
 import net.highwayfrogs.editor.games.sony.shared.misc.MRLightType;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.ColorUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -143,17 +143,17 @@ public class OldFroggerMapLightPacket extends OldFroggerMapPacket {
             switch (this.apiType) {
                 case AMBIENT:
                     AmbientLight ambLight = new AmbientLight();
-                    ambLight.setColor(Utils.fromRGB(this.color.toRGB()));
+                    ambLight.setColor(ColorUtils.fromRGB(this.color.toRGB()));
                     return ambLight;
                 case PARALLEL:
                     // IMPORTANT! JavaFX does NOT support parallel (directional) lights [AndyEder]
                     DirectionalLight parallelLight = new DirectionalLight();
-                    parallelLight.setColor(Utils.fromRGB(this.color.toRGB()));
+                    parallelLight.setColor(ColorUtils.fromRGB(this.color.toRGB()));
                     parallelLight.setDirection(new Point3D(this.direction.getFloatX(12), this.direction.getFloatY(12), this.direction.getFloatZ(12)));
                     return parallelLight;
                 case POINT:
                     PointLight pointLight = new PointLight();
-                    pointLight.setColor(Utils.fromRGB(this.color.toRGB()));
+                    pointLight.setColor(ColorUtils.fromRGB(this.color.toRGB()));
 
                     // Assuming direction is position? Are POINT lights ever used? [AndyEder]
                     // I recall point lights getting used somewhere, but I can't recall and could be wrong. (~Knee)

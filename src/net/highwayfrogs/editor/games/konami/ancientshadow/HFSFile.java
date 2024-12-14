@@ -5,17 +5,21 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData;
-import net.highwayfrogs.editor.games.generic.GameObject;
+import net.highwayfrogs.editor.games.generic.data.GameData;
+import net.highwayfrogs.editor.games.generic.data.GameObject;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameInstance;
-import net.highwayfrogs.editor.games.konami.hudson.IHudsonFileDefinition;
-import net.highwayfrogs.editor.games.konami.hudson.IHudsonFileSystem;
 import net.highwayfrogs.editor.games.konami.hudson.file.HudsonRwStreamFile;
+import net.highwayfrogs.editor.games.shared.basic.file.BasicGameFile;
+import net.highwayfrogs.editor.games.shared.basic.file.IVirtualFileSystem;
+import net.highwayfrogs.editor.games.shared.basic.file.definition.IGameFileDefinition;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.CollectionTreeViewComponent.CollectionViewTreeNode;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,18 +29,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
 
 /**
  * Represents the HFS file format.
  * Created by Kneesnap on 6/7/2020.
  */
 @Getter
-public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
+public class HFSFile extends HudsonGameFile implements IVirtualFileSystem {
     private final List<List<HudsonGameFile>> hfsFiles = new ArrayList<>();
     public static final String SIGNATURE = "hfs\n"; // Version 11?
 
-    public HFSFile(IHudsonFileDefinition fileDefinition) {
+    public HFSFile(IGameFileDefinition fileDefinition) {
         super(fileDefinition);
     }
 
@@ -74,7 +77,7 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
             // Read files.
             for (int j = 0; j < header.getFileEntries().size(); j++) {
                 HFSHeaderFileEntry fileEntry = header.getFileEntries().get(j);
-                IHudsonFileDefinition fileDefinition = new HFSFileDefinition(this, i, j);
+                IGameFileDefinition fileDefinition = new HFSFileDefinition(this, i, j);
 
                 // Read file contents.
                 fileEntry.requireReaderIndex(reader, header.getFileDataStartAddress() + (fileEntry.getCdSector() * Constants.CD_SECTOR_SIZE), "Expected file data");
@@ -152,11 +155,11 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
     /*@Override
     public GameUIController<?> makeEditorUI() {
         return null;
-    }*/ // TODO: IMPLEMENT.
+    }*/ // TODO: IMPLEMENT. (Share UI options with a RenderWareStream list?)
 
     @Override
     public Image getCollectionViewIcon() {
-        return ImageResource.ZIPPED_FOLDER_15.getFxImage();
+        return ImageResource.ZIPPED_FOLDER_16.getFxImage();
     }
 
     @Override
@@ -171,12 +174,12 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
     @Override
     public void export(File exportFolder) {
         File filesExportDir = new File(exportFolder, "Files [" + getDisplayName() + "]");
-        Utils.makeDirectory(filesExportDir);
+        FileUtils.makeDirectory(filesExportDir);
 
         for (int i = 0; i < this.hfsFiles.size(); i++) {
             File groupFolder = new File(filesExportDir, "GROUP" + String.format("%02d", i));
             List<HudsonGameFile> groupFiles = this.hfsFiles.get(i);
-            Utils.makeDirectory(groupFolder);
+            FileUtils.makeDirectory(groupFolder);
 
             for (int j = 0; j < groupFiles.size(); j++) {
                 File outputFile = new File(groupFolder, "FILE" + String.format("%03d", j));
@@ -184,13 +187,13 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
                 try {
                     Files.write(outputFile.toPath(), groupFiles.get(j).getRawData());
                 } catch (IOException ex) {
-                    Utils.handleError(getLogger(), ex, false, "Failed to export file '%s'.", Utils.toLocalPath(exportFolder, outputFile, true));
+                    Utils.handleError(getLogger(), ex, false, "Failed to export file '%s'.", FileUtils.toLocalPath(exportFolder, outputFile, true));
                 }
             }
         }
 
         File imagesExportDir = new File(exportFolder, "Images [" + getDisplayName() + "]");
-        Utils.makeDirectory(imagesExportDir);
+        FileUtils.makeDirectory(imagesExportDir);
 
         Map<String, AtomicInteger> nameCountMap = new HashMap<>();
         for (int i = 0; i < this.hfsFiles.size(); i++) {
@@ -200,7 +203,7 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
             for (int j = 0; j < groupFiles.size(); j++) {
                 HudsonGameFile gameFile = groupFiles.get(j);
                 if (gameFile instanceof HudsonRwStreamFile)
-                    ((HudsonRwStreamFile) gameFile).exportTextures(groupFolder, nameCountMap);
+                    ((HudsonRwStreamFile) gameFile).getRwStreamFile().exportTextures(groupFolder, nameCountMap);
             }
         }
     }
@@ -252,13 +255,15 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
          * Gets the logger string.
          */
         public String getLoggerString() {
-            // TODO: Use new Utils indexOf method once it's been merged.
             return this.parent != null ? this.parent.getLoggerString() + "/HFSHeader{" + this.parent.hfsFiles.size() + "}" : Utils.getSimpleName(this);
         }
 
         @Override
-        public Logger getLogger() {
-            return this.parent != null ? Logger.getLogger(getLoggerString()) : super.getLogger();
+        public ILogger getLogger() {
+            if (this.parent == null)
+                return super.getLogger();
+
+            return new LazyInstanceLogger(getGameInstance(), HFSHeader::getLoggerString, this);
         }
     }
 
@@ -277,18 +282,20 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
          * Gets the logger string.
          */
         public String getLoggerString() {
-            // TODO: Use new Utils indexOf method once it's been merged.
-            return this.parent != null ? this.parent.getLoggerString() + "/FileEntry{" + this.parent.fileEntries.indexOf(this) + "}" : Utils.getSimpleName(this);
+            return this.parent != null ? this.parent.getLoggerString() + "/FileEntry{" + Utils.getLoadingIndex(this.parent.fileEntries, this) + "}" : Utils.getSimpleName(this);
         }
 
         @Override
-        public Logger getLogger() {
-            return this.parent != null ? Logger.getLogger(getLoggerString()) : super.getLogger();
+        public ILogger getLogger() {
+            if (this.parent == null)
+                return super.getLogger();
+
+            return new LazyInstanceLogger(getGameInstance(), HFSHeaderFileEntry::getLoggerString, this);
         }
     }
 
     @Getter
-    public static class HFSFileDefinition extends GameObject<HudsonGameInstance> implements IHudsonFileDefinition {
+    public static class HFSFileDefinition extends GameObject<HudsonGameInstance> implements IGameFileDefinition, Comparable<HFSFileDefinition> {
         private final HFSFile hfsFile;
         private final int groupIndex;
         private final int fileIndex;
@@ -302,30 +309,47 @@ public class HFSFile extends HudsonGameFile implements IHudsonFileSystem {
 
         @Override
         public String getFileName() {
-            return this.hfsFile.getDisplayName() + getNameSuffix();
+            return getNameSuffix(false);
         }
 
         @Override
-        public String getFullFileName() {
-            return this.hfsFile.getFullDisplayName() + getNameSuffix();
+        public String getFullFilePath() {
+            return this.hfsFile.getFullDisplayName() + getNameSuffix(true);
         }
 
         @Override
-        public CollectionViewTreeNode<HudsonGameFile> getOrCreateTreePath(CollectionViewTreeNode<HudsonGameFile> rootNode, HudsonGameFile gameFile) {
-            IHudsonFileDefinition fileDefinition = this.hfsFile.getFileDefinition();
-            CollectionViewTreeNode<HudsonGameFile> hfsNode = fileDefinition != null ? fileDefinition.getOrCreateTreePath(rootNode, this.hfsFile) : rootNode;
-            if (this.groupIndex != 0 || this.hfsFile.getGameFiles().size() > 1)
-                hfsNode = hfsNode.getOrCreateChildNode("subHfsFile=" + this.groupIndex);
+        public File getFile() {
+            return null; // This is virtual and returns no file.
+        }
+
+        @Override
+        public CollectionViewTreeNode<BasicGameFile<?>> getOrCreateTreePath(CollectionViewTreeNode<BasicGameFile<?>> rootNode, BasicGameFile<?> gameFile) {
+            IGameFileDefinition fileDefinition = this.hfsFile.getFileDefinition();
+            CollectionViewTreeNode<BasicGameFile<?>> hfsNode = fileDefinition != null ? fileDefinition.getOrCreateTreePath(rootNode, this.hfsFile) : rootNode;
+            if (this.groupIndex != 0 || this.hfsFile.getHfsFiles().size() > 1)
+                hfsNode = hfsNode.getOrCreateChildNode(String.format("subHfsFile%03d", this.groupIndex));
 
             return hfsNode.addChildNode(gameFile);
         }
 
-        private String getNameSuffix() {
-            if (this.groupIndex == 0 && this.hfsFile.getGameFiles().size() == 1) {
+        private String getNameSuffix(boolean includeGroup) {
+            if (!includeGroup || (this.groupIndex == 0 && this.hfsFile.getHfsFiles().size() == 1)) {
                 return "{file=" + this.fileIndex + "}";
             } else {
                 return "{group=" + this.groupIndex + ",file=" + this.fileIndex + "}";
             }
+        }
+
+        @Override
+        public int compareTo(HFSFileDefinition other) {
+            if (other == null)
+                return 1;
+
+            int value = Integer.compare(this.groupIndex, other.groupIndex);
+            if (value != 0)
+                return value;
+
+            return Integer.compare(this.fileIndex, other.fileIndex);
         }
     }
 }

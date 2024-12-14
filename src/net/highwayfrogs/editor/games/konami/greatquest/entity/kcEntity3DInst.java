@@ -5,12 +5,18 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityFlag.kcEntityInstanceFlag;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.entity.GreatQuestMapEditorEntityDisplay;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.system.Config.ConfigValueNode;
+import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.UUID;
 
@@ -19,13 +25,12 @@ import java.util.UUID;
  * Created by Kneesnap on 8/24/2023.
  */
 @Getter
-@Setter
 public class kcEntity3DInst extends kcEntityInst {
-    private int flags; // TODO: InitFlags() is called.
+    @Setter private int flags;
     private kcAxisType billboardAxis = kcAxisType.Y;
-    private final kcVector4 position = new kcVector4();
-    private final kcVector4 rotation = new kcVector4();
-    private final kcVector4 scale = new kcVector4();
+    private final kcVector4 position = new kcVector4(0, 0, 0, 1);
+    private final kcVector4 rotation = new kcVector4(0, 0, 0, 1);
+    private final kcVector4 scale = new kcVector4(1, 1, 1, 1);
     private final int[] reservedValues = new int[7];
     private final int[] padding = new int[32];
 
@@ -67,19 +72,19 @@ public class kcEntity3DInst extends kcEntityInst {
     @Override
     protected void setupMainEditor(GreatQuestEntityManager manager, GUIEditorGrid grid, GreatQuestMapEditorEntityDisplay entityDisplay) {
         super.setupMainEditor(manager, grid, entityDisplay);
-        grid.addLabel("Flags", Utils.toHexString(this.flags));
-        grid.addEnumSelector("Billboard Axis", this.billboardAxis, kcAxisType.values(), false, newType -> this.billboardAxis = newType);
+        grid.addLabel("Flags", NumberUtils.toHexString(this.flags));
+        grid.addEnumSelector("Billboard Axis", this.billboardAxis, kcAxisType.values(), false, this::setBillboardAxis);
 
         // Position Editor
-        grid.addPositionEditor(manager.getController(), GIZMO_ID, "Position", this.position.getX(), this.position.getY(), this.position.getZ(), (meshView, oldX, oldY, oldZ, newX, newY, newZ, flags) -> {
+        grid.addPositionEditor(manager.getController(), GIZMO_ID, "Position", this.position.getX(), this.position.getY(), this.position.getZ(), .02, (meshView, oldX, oldY, oldZ, newX, newY, newZ, flags) -> {
             this.position.setX((float) newX);
             this.position.setY((float) newY);
             this.position.setZ((float) newZ);
             entityDisplay.setPosition(newX, newY, newZ);
         });
 
-        // Scale Editor TODO: I think we want to make these gizmos managed by the entity editor for maximum flexibility.
-        grid.addScaleEditor(manager.getController(), GIZMO_ID, "Scale", this.position.getX(), this.position.getY(), this.position.getZ(), this.scale.getX(), this.scale.getY(), this.scale.getZ(), (meshView, oldX, oldY, oldZ, newX, newY, newZ) -> {
+        // Scale Editor
+        grid.addScaleEditor(manager.getController(), GIZMO_ID, "Scale", this.position.getX(), this.position.getY(), this.position.getZ(), this.scale.getX(), this.scale.getY(), this.scale.getZ(), .02, (meshView, oldX, oldY, oldZ, newX, newY, newZ) -> {
             this.scale.setX((float) newX);
             this.scale.setY((float) newY);
             this.scale.setZ((float) newZ);
@@ -103,13 +108,72 @@ public class kcEntity3DInst extends kcEntityInst {
         }, -Math.PI, Math.PI);
     }
 
+    /**
+     * Test if the entity has a flag set.
+     * @param instanceFlag the flag to test
+     * @return entityFlags
+     */
+    public boolean hasFlag(kcEntityInstanceFlag instanceFlag) {
+        if (instanceFlag == null)
+            throw new NullPointerException("instanceFlag");
+
+        return (this.flags & instanceFlag.getInstanceBitFlagMask()) == instanceFlag.getInstanceBitFlagMask();
+    }
+
+    /**
+     * Sets the billboard axis.
+     * @param newAxis The axis to apply
+     */
+    @SuppressWarnings("unused") // Available to Noodle scripts.
+    public void setBillboardAxis(kcAxisType newAxis) {
+        if (newAxis == null)
+            throw new NullPointerException("newAxis");
+
+        this.billboardAxis = newAxis;
+    }
+
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         super.writeMultiLineInfo(builder, padding);
-        builder.append(padding).append("Flags: ").append(Utils.toHexString(this.flags)).append(Constants.NEWLINE);
+        builder.append(padding).append("Flags: ").append(kcEntityInstanceFlag.getAsOptionalArguments(this.flags).getNamedArgumentsAsCommaSeparatedString()).append(Constants.NEWLINE);
         builder.append(padding).append("Billboard Axis: ").append(this.billboardAxis).append(Constants.NEWLINE);
         this.position.writePrefixedInfoLine(builder, "Position", padding);
         this.rotation.writePrefixedInfoLine(builder, "Rotation", padding);
         this.scale.writePrefixedInfoLine(builder, "Scale", padding);
+    }
+
+    private static final String CONFIG_KEY_FLAGS = "flags";
+    private static final String CONFIG_KEY_BILLBOARD_AXIS = "billboardAxis";
+    private static final String CONFIG_KEY_POSITION = "position";
+    private static final String CONFIG_KEY_ROTATION = "rotation";
+    private static final String CONFIG_KEY_SCALE = "scale";
+
+    @Override
+    public void fromConfig(Config input) {
+        super.fromConfig(input);
+
+        ConfigValueNode flagNode = input.getOptionalKeyValueNode(CONFIG_KEY_FLAGS);
+        OptionalArguments flagArguments = flagNode != null ? OptionalArguments.parseCommaSeparatedNamedArguments(flagNode.getAsString()) : new OptionalArguments();
+        this.flags = kcEntityInstanceFlag.getValueFromArguments(flagArguments);
+        flagArguments.warnAboutUnusedArguments(getResource().getLogger());
+
+        this.billboardAxis = input.getOrDefaultKeyValueNode(CONFIG_KEY_BILLBOARD_AXIS).getAsEnum(kcAxisType.Y);
+        this.position.parse(input.getKeyValueNodeOrError(CONFIG_KEY_POSITION).getAsString(), 1F);
+        this.rotation.parse(input.getKeyValueNodeOrError(CONFIG_KEY_ROTATION).getAsString(), 1F);
+        this.scale.parse(input.getKeyValueNodeOrError(CONFIG_KEY_SCALE).getAsString(), 1F);
+    }
+
+    @Override
+    public void toConfig(Config output, kcScriptList scriptList, kcScriptDisplaySettings settings) {
+        super.toConfig(output, scriptList, settings);
+
+        output.getOrCreateKeyValueNode(CONFIG_KEY_FLAGS)
+                .setComment("For a full list of flags, refer to the GQS scripting documentation.")
+                .setAsString(kcEntityInstanceFlag.getAsOptionalArguments(this.flags).getNamedArgumentsAsCommaSeparatedString());
+
+        output.getOrCreateKeyValueNode(CONFIG_KEY_BILLBOARD_AXIS).setAsEnum(this.billboardAxis);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_POSITION).setAsString(this.position.toParseableString(1F));
+        output.getOrCreateKeyValueNode(CONFIG_KEY_ROTATION).setAsString(this.rotation.toParseableString(1F));
+        output.getOrCreateKeyValueNode(CONFIG_KEY_SCALE).setAsString(this.scale.toParseableString(1F));
     }
 }

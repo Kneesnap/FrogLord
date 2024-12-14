@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.gui.texture.atlas.SimpleTreeTextureAtlas.TreeAtlasTexture;
-import net.highwayfrogs.editor.utils.SortedList;
+import net.highwayfrogs.editor.utils.objects.SortedList;
 
 /**
  * A texture atlas using an algorithm which places textures using a tree.

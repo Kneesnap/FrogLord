@@ -5,7 +5,7 @@ import javafx.scene.control.Label;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerReactionType;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
@@ -41,14 +41,14 @@ public class OldFroggerEditorUtils {
      * @param allowEditingLevels If difficulty levels should be toggled.
      */
     public static void addDifficultyEditor(GUIEditorGrid editor, int difficulty, Consumer<Integer> setter, boolean allowEditingLevels, Runnable updateEditor) {
-        final Label label = editor.addLabel("Difficulty Value", Utils.toHexString(difficulty));
+        final Label label = editor.addLabel("Difficulty Value", NumberUtils.toHexString(difficulty));
         AtomicInteger currentDifficulty = new AtomicInteger(difficulty);
 
         // Add handler to update the label.
         Consumer<Integer> ourSetter = newValue -> {
             currentDifficulty.set(newValue);
             if (label != null)
-                label.setText(Utils.toHexString(newValue));
+                label.setText(NumberUtils.toHexString(newValue));
 
             if (setter != null)
                 setter.accept(newValue);

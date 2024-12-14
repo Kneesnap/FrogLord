@@ -15,7 +15,8 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapPolyg
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerGridManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.InputMenu;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.*;
 
@@ -56,7 +57,7 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
 
         // Verify header data is okay before continuing.
         if (gridDataStartAddress != reader.getIndex())
-            throw new RuntimeException("The address where grid data starts was not at the expected location. (Expected: " + Utils.toHexString(reader.getIndex()) + ", Provided: " + Utils.toHexString(gridDataStartAddress) + ")");
+            throw new RuntimeException("The address where grid data starts was not at the expected location. (Expected: " + NumberUtils.toHexString(reader.getIndex()) + ", Provided: " + NumberUtils.toHexString(gridDataStartAddress) + ")");
 
         // Read grid data. (Needs entity info)
         reader.setIndex(gridDataStartAddress);
@@ -69,14 +70,14 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
 
         // Ensure we ended at the right spot.
         if (quadPointer != reader.getIndex())
-            throw new RuntimeException("The address where the quad list starts was not at the expected location. (Expected: " + Utils.toHexString(reader.getIndex()) + ", Provided: " + Utils.toHexString(quadPointer) + ")");
+            throw new RuntimeException("The address where the quad list starts was not at the expected location. (Expected: " + NumberUtils.toHexString(reader.getIndex()) + ", Provided: " + NumberUtils.toHexString(quadPointer) + ")");
 
         // Read quad data.
         // (Do nothing)
 
         // Ensure quad data ended at the expected position.
         if (staticEntityPointer != reader.getIndex())
-            throw new RuntimeException("The address where the static entity list starts was not at the expected location. (Expected: " + Utils.toHexString(reader.getIndex()) + ", Provided: " + Utils.toHexString(staticEntityPointer) + ", Quad Count: " + quadCount + ")");
+            throw new RuntimeException("The address where the static entity list starts was not at the expected location. (Expected: " + NumberUtils.toHexString(reader.getIndex()) + ", Provided: " + NumberUtils.toHexString(staticEntityPointer) + ", Quad Count: " + quadCount + ")");
 
         // Skip entity list.
         reader.skipBytes(staticEntityCount * Constants.INTEGER_SIZE);
@@ -346,8 +347,8 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
             // Add Entity Button
             editor.addButton("Add Entity", () -> {
                 InputMenu.promptInput(getGameInstance(), "Please enter the ID of the entity to add.", str -> {
-                    if (!Utils.isInteger(str)) {
-                        Utils.makePopUp("'" + str + "' is not a valid number.", AlertType.WARNING);
+                    if (!NumberUtils.isInteger(str)) {
+                        FXUtils.makePopUp("'" + str + "' is not a valid number.", AlertType.WARNING);
                         return;
                     }
 
@@ -361,7 +362,7 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
                     }
 
                     if (foundEntity == null) {
-                        Utils.makePopUp("No entity was found with ID " + entityId, AlertType.WARNING);
+                        FXUtils.makePopUp("No entity was found with ID " + entityId, AlertType.WARNING);
                         return;
                     }
 

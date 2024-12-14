@@ -8,7 +8,8 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Vector comprised of shorts.
@@ -59,7 +60,7 @@ public class SVector extends GameObject implements Vector {
      * Gets the padding unsigned.
      */
     public int getUnsignedPadding() {
-        return Utils.shortToUnsignedInt(this.padding);
+        return DataUtils.shortToUnsignedInt(this.padding);
     }
 
     /**
@@ -120,9 +121,9 @@ public class SVector extends GameObject implements Vector {
      * @param z The z value to set.
      */
     public void setValues(float x, float y, float z, int bits) {
-        this.x = Utils.floatToFixedPointShort(x, bits);
-        this.y = Utils.floatToFixedPointShort(y, bits);
-        this.z = Utils.floatToFixedPointShort(z, bits);
+        this.x = DataUtils.floatToFixedPointShort(x, bits);
+        this.y = DataUtils.floatToFixedPointShort(y, bits);
+        this.z = DataUtils.floatToFixedPointShort(z, bits);
     }
 
     /**
@@ -233,32 +234,32 @@ public class SVector extends GameObject implements Vector {
 
     @Override
     public float getFloatX(int bits) {
-        return Utils.fixedPointShortToFloatNBits(getX(), bits);
+        return DataUtils.fixedPointShortToFloatNBits(getX(), bits);
     }
 
     @Override
     public float getFloatY(int bits) {
-        return Utils.fixedPointShortToFloatNBits(getY(), bits);
+        return DataUtils.fixedPointShortToFloatNBits(getY(), bits);
     }
 
     @Override
     public float getFloatZ(int bits) {
-        return Utils.fixedPointShortToFloatNBits(getZ(), bits);
+        return DataUtils.fixedPointShortToFloatNBits(getZ(), bits);
     }
 
     @Override
     public void setFloatX(float xVal, int bits) {
-        this.x = Utils.floatToFixedPointShort(xVal, bits);
+        this.x = DataUtils.floatToFixedPointShort(xVal, bits);
     }
 
     @Override
     public void setFloatY(float yVal, int bits) {
-        this.y = Utils.floatToFixedPointShort(yVal, bits);
+        this.y = DataUtils.floatToFixedPointShort(yVal, bits);
     }
 
     @Override
     public void setFloatZ(float zVal, int bits) {
-        this.z = Utils.floatToFixedPointShort(zVal, bits);
+        this.z = DataUtils.floatToFixedPointShort(zVal, bits);
     }
 
     /**
@@ -285,7 +286,7 @@ public class SVector extends GameObject implements Vector {
             return false;
 
         for (String testStr : split)
-            if (!Utils.isNumber(testStr))
+            if (!NumberUtils.isNumber(testStr))
                 return false;
 
         setFloatX(Float.parseFloat(split[0]), bits);

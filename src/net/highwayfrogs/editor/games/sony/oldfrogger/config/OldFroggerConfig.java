@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.games.sony.oldfrogger.config;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.games.sony.SCGameConfig;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,9 +41,9 @@ public class OldFroggerConfig extends SCGameConfig {
         String remapTableStr = config.getString("remapTable", null);
         if (remapTableStr != null) {
             String[] split = remapTableStr.split("@");
-            if (split.length == 2 && Utils.isInteger(split[0]) && Utils.isHexInteger(split[1])) {
+            if (split.length == 2 && NumberUtils.isInteger(split[0]) && NumberUtils.isHexInteger(split[1])) {
                 this.remapTableCount = Integer.parseInt(split[0]);
-                this.remapTableAddress = Utils.parseHexInteger(split[1]);
+                this.remapTableAddress = NumberUtils.parseHexInteger(split[1]);
             } else {
                 getLogger().warning("Invalid remapTable data specified '" + remapTableStr + "'.");
             }
@@ -54,9 +54,9 @@ public class OldFroggerConfig extends SCGameConfig {
         String levelTableStr = config.getString("levelTable", null);
         if (levelTableStr != null) {
             String[] split = levelTableStr.split("@");
-            if (split.length == 2 && Utils.isInteger(split[0]) && Utils.isHexInteger(split[1])) {
+            if (split.length == 2 && NumberUtils.isInteger(split[0]) && NumberUtils.isHexInteger(split[1])) {
                 this.levelTableCount = Integer.parseInt(split[0]);
-                this.levelTableAddress = Utils.parseHexInteger(split[1]);
+                this.levelTableAddress = NumberUtils.parseHexInteger(split[1]);
             } else {
                 getLogger().warning("Invalid levelTable data specified '" + levelTableStr + "'");
             }

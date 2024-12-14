@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.file.map.view;
 import lombok.Getter;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.system.math.Vector2f;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.ColorUtils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -81,7 +81,7 @@ public class ColorBlendTextureSource implements ITextureSource {
         BufferedImage image = new BufferedImage(this.width, this.height, BufferedImage.TYPE_INT_ARGB);
         for (int x = 0; x < this.width; x++) {
             float t = (float) (x - getLeftPadding()) / getUnpaddedWidth();
-            int interpolatedColor = Utils.calculateInterpolatedColourARGB(this.color1, this.color2, t);
+            int interpolatedColor = ColorUtils.calculateInterpolatedColourARGB(this.color1, this.color2, t);
             for (int y = 0; y < this.height; y++)
                 image.setRGB(x, y, interpolatedColor);
         }

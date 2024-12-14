@@ -2,9 +2,9 @@ package net.highwayfrogs.editor.system.mm3d.blocks;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.system.mm3d.OffsetType;
@@ -52,7 +52,7 @@ public class MMFrameAnimationPointsBlock extends MMDataBlockBody {
     }
 
     @Getter
-    public static class FrameAnimationPoint extends GameObject {
+    public static class FrameAnimationPoint implements IBinarySerializable {
         private float rotX; // NOTE: In radians!
         private float rotY;
         private float rotZ;

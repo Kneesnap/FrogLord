@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.gui;
 
+import com.sun.javafx.runtime.VersionInfo;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -9,7 +10,7 @@ import javafx.stage.Stage;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.utils.DataSizeUnit;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 /**
  * Controls the about menu.
@@ -28,16 +29,16 @@ public class AboutController extends GameUIController<GameInstance> {
     @Override
     protected void onControllerLoad(Node rootNode) {
         versionLabel.setText("FrogLord " + Constants.VERSION);
-        javaVersionLabel.setText("Java Version: " + System.getProperty("java.runtime.version"));
+        javaVersionLabel.setText("Java Version: " + System.getProperty("java.runtime.version") + ", JavaFX: " + VersionInfo.getVersion());
         javaRuntimeName.setText("Java Runtime: " + System.getProperty("java.runtime.name"));
-        memoryLabel.setText("Memory Info: " + DataSizeUnit.formatSize(Runtime.getRuntime().totalMemory()) + " Total, " + DataSizeUnit.formatSize(Runtime.getRuntime().maxMemory()) + " Max");
+        memoryLabel.setText("Memory Info: " + DataSizeUnit.formatSize(Runtime.getRuntime().totalMemory()) + ", Total: " + DataSizeUnit.formatSize(Runtime.getRuntime().maxMemory()) + " Max");
     }
 
     @Override
     public void onSceneAdd(Scene newScene) {
         super.onSceneAdd(newScene);
         Stage stage = (Stage) newScene.getWindow();
-        Utils.closeOnEscapeKey(stage, null);
+        FXUtils.closeOnEscapeKey(stage, null);
     }
 
     @FXML
@@ -49,7 +50,7 @@ public class AboutController extends GameUIController<GameInstance> {
      * Opens the about menu.
      */
     public static void openAboutMenu(GameInstance instance) {
-        Utils.createWindowFromFXMLTemplate("window-about", new AboutController(instance), "About FrogLord", true);
+        FXUtils.createWindowFromFXMLTemplate("window-about", new AboutController(instance), "About FrogLord", true);
     }
 
     @FXML

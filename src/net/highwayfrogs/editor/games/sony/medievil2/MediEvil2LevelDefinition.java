@@ -11,6 +11,8 @@ import net.highwayfrogs.editor.games.sony.medievil2.map.MediEvil2Map;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -84,7 +86,7 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
         getLogger().info("Read level definition " + (this.levelRelocName != null ? "'" + this.levelRelocName + "'" : "") + ":");
         getLogger().info(" Resources: " + this.vloResourceId + ", " + this.wadResourceId + ", " + this.timResourceId + ", " + this.levelNameId + ", Sections: " + sectionCount);
         for (MediEvil2LevelSectionDefinition sectionDefinition : this.levelSections)
-            getLogger().info(" Section: " + sectionDefinition.getMapResourceId() + ", " + sectionDefinition.getVloResourceId() + " -> " + Utils.toHexString(sectionDefinition.getTextureRemapPointer()));
+            getLogger().info(" Section: " + sectionDefinition.getMapResourceId() + ", " + sectionDefinition.getVloResourceId() + " -> " + NumberUtils.toHexString(sectionDefinition.getTextureRemapPointer()));
         getLogger().info("");
     }
 
@@ -221,7 +223,7 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
         public TextureRemapArray getRemap() {
             if (this.textureRemap == null) {
                 MediEvil2Map mapFile = getMapFile();
-                String mapName = (mapFile != null ? Utils.stripExtension(mapFile.getFileDisplayName()).toLowerCase() : "map" + this.mapResourceId);
+                String mapName = (mapFile != null ? FileUtils.stripExtension(mapFile.getFileDisplayName()).toLowerCase() : "map" + this.mapResourceId);
                 if (this.textureRemapPointer > 0)
                     this.textureRemap = new TextureRemapArray(getGameInstance(), "txl_" + mapName, this.textureRemapPointer);
             }

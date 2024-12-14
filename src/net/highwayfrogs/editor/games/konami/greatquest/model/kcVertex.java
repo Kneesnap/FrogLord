@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.Arrays;
 
@@ -16,40 +17,41 @@ public class kcVertex implements IInfoWriter {
     private float x;
     private float y;
     private float z;
+    private float w;
     private float normalX;
     private float normalY;
     private float normalZ;
-    private long diffuse;
-    private long specular;
+    private int diffuse;
     private float u0;
     private float v0;
     private float u1;
     private float v1;
     private float[] weight;
-    private float w;
-    private float psize;
+    private float pointSize; // Presumably only used when a vertex might be rendered as part of a POINT display list
 
     /**
      * Loads vertex data from the reader for the given components.
      * @param reader     The reader to load vertex data from.
      * @param components The components describing the vertex data to load.
+     * @param scaleVertex if vertex scaling should be applied to compressed positions.
      */
-    public void load(DataReader reader, kcVertexFormatComponent[] components, long fvf) {
+    public void load(DataReader reader, kcVertexFormatComponent[] components, long fvf, boolean scaleVertex) {
         if (components == null)
             return;
 
         for (int i = 0; i < components.length; i++)
-            this.load(reader, components[i], fvf);
+            this.load(reader, components[i], fvf, scaleVertex);
     }
 
     /**
      * Loads vertex data from the reader for the given components.
      * @param reader    The reader to load vertex data from.
      * @param component The component describing the vertex data to load.
+     * @param scaleVertex  if vertex scaling should be applied to compressed positions.
      */
-    public void load(DataReader reader, kcVertexFormatComponent component, long fvf) {
+    public void load(DataReader reader, kcVertexFormatComponent component, long fvf, boolean scaleVertex) {
         if ((fvf & kcModel.FVF_FLAG_COMPRESSED) == kcModel.FVF_FLAG_COMPRESSED) {
-            loadCompressed(reader, component);
+            loadCompressed(reader, component, scaleVertex);
         } else {
             loadNormal(reader, component);
         }
@@ -107,17 +109,17 @@ public class kcVertex implements IInfoWriter {
                 green = reader.readFloat();
                 blue = reader.readFloat();
                 float alpha = reader.readFloat();
-                this.diffuse = (((long) (alpha * 255F)) << 24) | (((long) (red * 255F)) << 16) | (((long) (green * 255F)) << 8) | (long) (blue * 255F);
+                this.diffuse = (((int) (alpha * 255F)) << 24) | (((int) (red * 255F)) << 16) | (((int) (green * 255F)) << 8) | (int) (blue * 255F);
                 break;
             case DIFFUSE_RGBAI: // 4
-                this.diffuse = reader.readUnsignedIntAsLong();
+                this.diffuse = reader.readInt();
                 break;
             case DIFFUSE_RGBA255F: // 16
                 red = reader.readFloat();
                 green = reader.readFloat();
                 blue = reader.readFloat();
                 alpha = reader.readFloat();
-                this.diffuse = ((((long) alpha) & 0xFF) << 24) | ((((long) red) & 0xFF) << 16) | ((((long) green) & 0xFF) << 8) | (((long) blue) & 0xFF);
+                this.diffuse = ((((int) alpha) & 0xFF) << 24) | ((((int) red) & 0xFF) << 16) | ((((int) green) & 0xFF) << 8) | (((int) blue) & 0xFF);
                 break;
             case SPECULAR_RGBF: // 12
             case SPECULAR_RGBAF: // 16
@@ -176,24 +178,31 @@ public class kcVertex implements IInfoWriter {
                 reader.skipBytes(16);
                 break;
             case PSIZE: // 4
-                this.psize = reader.readFloat();
+                this.pointSize = reader.readFloat();
                 break;
             default:
                 throw new RuntimeException("Cannot read vertex data due to unsupported kcVertexFormatComponent " + component);
         }
     }
 
+    // kcModelRender() -> Calls kcGraphicsSetRenderState(KCRS_COMPVERTSCALE, 0.006666667), then afterward it gets set back to 1.0.
+    // This sets the scale of compressed vertex floats. The real game somehow configures the PS2 to apply the compressed vertex scaling itself.
+    // However, we apply the scaling on load/save to just keep it simple.
+    private static final int COMPRESSED_POSITION_UP_SCALE = 150;
+    private static final double COMPRESSED_POSITION_DOWN_SCALE = 1D / COMPRESSED_POSITION_UP_SCALE; // The game uses .006666667 instead.
     private static final int COMPRESSION_FIXED_PT_MAIN_UNIT = 4096;
     private static final int COMPRESSION_FIXED_PT_OTHER_UNIT = 16;
+    private static final int COMPRESSION_FIXED_PT_POSITION_UNIT = COMPRESSION_FIXED_PT_OTHER_UNIT * COMPRESSED_POSITION_UP_SCALE;
     private static final float COMPRESSION_MAIN_MULTIPLIER = 1F / COMPRESSION_FIXED_PT_MAIN_UNIT;
     private static final float COMPRESSION_OTHER_MULTIPLIER = 1F / COMPRESSION_FIXED_PT_OTHER_UNIT;
+    private static final double COMPRESSION_POSITION_MULTIPLIER = COMPRESSED_POSITION_DOWN_SCALE / COMPRESSION_FIXED_PT_OTHER_UNIT;
 
     private static float readCompressedFloat(DataReader reader) {
         return readCompressedFloat(reader, COMPRESSION_MAIN_MULTIPLIER);
     }
 
-    private static float readCompressedFloat(DataReader reader, float multiplier) {
-        return reader.readShort() * multiplier;
+    private static float readCompressedFloat(DataReader reader, double multiplier) {
+        return (float) (reader.readShort() * multiplier);
     }
 
     /**
@@ -201,25 +210,27 @@ public class kcVertex implements IInfoWriter {
      * This method has been verified against both the PS2 PAL and PC versions.
      * @param reader    The reader to load vertex data from.
      * @param component The component describing the vertex data to load.
+     * @param scaleVertex if vertex scaling should be applied to compressed positions.
      */
-    public void loadCompressed(DataReader reader, kcVertexFormatComponent component) {
+    public void loadCompressed(DataReader reader, kcVertexFormatComponent component, boolean scaleVertex) {
         short red;
         short green;
         short blue;
         short alpha;
+        final double positionMultiplier = scaleVertex ? COMPRESSION_POSITION_MULTIPLIER : COMPRESSION_OTHER_MULTIPLIER;
 
         switch (component) {
             case POSITION_XYZF: // 6
-                this.x = readCompressedFloat(reader, COMPRESSION_OTHER_MULTIPLIER);
-                this.y = readCompressedFloat(reader, COMPRESSION_OTHER_MULTIPLIER);
-                this.z = readCompressedFloat(reader, COMPRESSION_OTHER_MULTIPLIER);
+                this.x = readCompressedFloat(reader, positionMultiplier);
+                this.y = readCompressedFloat(reader, positionMultiplier);
+                this.z = readCompressedFloat(reader, positionMultiplier);
                 this.w = 1F;
                 break;
             case POSITION_XYZWF: // 8
-                this.x = readCompressedFloat(reader, COMPRESSION_OTHER_MULTIPLIER);
-                this.y = readCompressedFloat(reader, COMPRESSION_OTHER_MULTIPLIER);
-                this.z = readCompressedFloat(reader, COMPRESSION_OTHER_MULTIPLIER);
-                this.w = readCompressedFloat(reader, COMPRESSION_OTHER_MULTIPLIER);
+                this.x = readCompressedFloat(reader, positionMultiplier);
+                this.y = readCompressedFloat(reader, positionMultiplier);
+                this.z = readCompressedFloat(reader, positionMultiplier);
+                this.w = readCompressedFloat(reader, positionMultiplier);
                 break;
             case NORMAL_XYZF: // 6
                 this.normalX = readCompressedFloat(reader);
@@ -241,7 +252,7 @@ public class kcVertex implements IInfoWriter {
                 green = (short) (reader.readShort() & 0xFF);
                 blue = (short) (reader.readShort() & 0xFF);
                 alpha = (short) (reader.readShort() & 0xFF);
-                this.diffuse = (((long) alpha) << 24) | (((long) red) << 16) | (((long) green) << 8) | ((long) blue);
+                this.diffuse = (((int) alpha) << 24) | (((int) red) << 16) | (((int) green) << 8) | ((int) blue);
                 break;
             case DIFFUSE_RGBF: // 6
             case DIFFUSE_RGBAI: // 4
@@ -302,7 +313,7 @@ public class kcVertex implements IInfoWriter {
                 reader.skipBytes(8);
                 break;
             case PSIZE: // 2
-                this.psize = readCompressedFloat(reader, COMPRESSION_OTHER_MULTIPLIER);
+                this.pointSize = readCompressedFloat(reader, COMPRESSION_OTHER_MULTIPLIER);
                 break;
             default:
                 throw new RuntimeException("Cannot read compressed vertex data due to unsupported kcVertexFormatComponent " + component);
@@ -325,23 +336,25 @@ public class kcVertex implements IInfoWriter {
      * Saves vertex data to the writer for the given components.
      * @param writer     The writer to write vertex data from.
      * @param components The components describing the vertex data to write.
+     * @param scaleVertex if vertex scaling should be applied to compressed positions.
      */
-    public void save(DataWriter writer, kcVertexFormatComponent[] components, long fvf) {
+    public void save(DataWriter writer, kcVertexFormatComponent[] components, long fvf, boolean scaleVertex) {
         if (components == null)
             return;
 
         for (int i = 0; i < components.length; i++)
-            this.save(writer, components[i], fvf);
+            this.save(writer, components[i], fvf, scaleVertex);
     }
 
     /**
      * Saves vertex data to the writer for the given component.
      * @param writer    The writer to write vertex data from.
      * @param component The component describing the vertex data to write.
+     * @param scaleVertex if vertex scaling should be applied to compressed positions.
      */
-    public void save(DataWriter writer, kcVertexFormatComponent component, long fvf) {
+    public void save(DataWriter writer, kcVertexFormatComponent component, long fvf, boolean scaleVertex) {
         if ((fvf & kcModel.FVF_FLAG_COMPRESSED) == kcModel.FVF_FLAG_COMPRESSED) {
-            saveCompressed(writer, component);
+            saveCompressed(writer, component, scaleVertex);
         } else {
             saveNormal(writer, component);
         }
@@ -388,7 +401,7 @@ public class kcVertex implements IInfoWriter {
                 writer.writeFloat(getDiffuseAlpha());
                 break;
             case DIFFUSE_RGBAI: // 4
-                writer.writeUnsignedInt(this.diffuse);
+                writer.writeInt(this.diffuse);
                 break;
             case DIFFUSE_RGBA255F: // 16
                 writer.writeFloat(getDiffuseRed255F());
@@ -429,8 +442,8 @@ public class kcVertex implements IInfoWriter {
             case TEX1_STQP: // 16
                 writer.writeFloat(this.u0);
                 writer.writeFloat(this.v0);
-                writer.writeFloat(1F); // Unused
-                writer.writeFloat(1F); // Unused
+                writer.writeFloat(1F); // Unused (Value seen in C001.VTX)
+                writer.writeFloat(0F); // Unused (Value seen in C001.VTX)
                 break;
             case WEIGHT3F: // 12
                 if (this.weight == null || this.weight.length != 3)
@@ -454,7 +467,7 @@ public class kcVertex implements IInfoWriter {
                 writer.writeNull(16);
                 break;
             case PSIZE: // 4
-                writer.writeFloat(this.psize);
+                writer.writeFloat(this.pointSize);
                 break;
             default:
                 throw new RuntimeException("Cannot read vertex data due to unsupported kcVertexFormatComponent " + component);
@@ -465,19 +478,21 @@ public class kcVertex implements IInfoWriter {
      * Saves vertex data to the writer for the given component.
      * @param writer    The writer to write vertex data from.
      * @param component The component describing the vertex data to write.
+     * @param scaleVertex if vertex scaling should be applied to compressed positions.
      */
-    public void saveCompressed(DataWriter writer, kcVertexFormatComponent component) {
+    public void saveCompressed(DataWriter writer, kcVertexFormatComponent component, boolean scaleVertex) {
+        final int positionUnit = scaleVertex ? COMPRESSION_FIXED_PT_POSITION_UNIT : COMPRESSION_FIXED_PT_OTHER_UNIT;
         switch (component) {
             case POSITION_XYZF: // 6
-                writeCompressedFloat(writer, this.x, COMPRESSION_FIXED_PT_OTHER_UNIT);
-                writeCompressedFloat(writer, this.y, COMPRESSION_FIXED_PT_OTHER_UNIT);
-                writeCompressedFloat(writer, this.z, COMPRESSION_FIXED_PT_OTHER_UNIT);
+                writeCompressedFloat(writer, this.x, positionUnit);
+                writeCompressedFloat(writer, this.y, positionUnit);
+                writeCompressedFloat(writer, this.z, positionUnit);
                 break;
             case POSITION_XYZWF: // 8
-                writeCompressedFloat(writer, this.x, COMPRESSION_FIXED_PT_OTHER_UNIT);
-                writeCompressedFloat(writer, this.y, COMPRESSION_FIXED_PT_OTHER_UNIT);
-                writeCompressedFloat(writer, this.z, COMPRESSION_FIXED_PT_OTHER_UNIT);
-                writeCompressedFloat(writer, this.w, COMPRESSION_FIXED_PT_OTHER_UNIT);
+                writeCompressedFloat(writer, this.x, positionUnit);
+                writeCompressedFloat(writer, this.y, positionUnit);
+                writeCompressedFloat(writer, this.z, positionUnit);
+                writeCompressedFloat(writer, this.w, positionUnit);
                 break;
             case NORMAL_XYZF: // 6
                 writeCompressedFloat(writer, this.normalX);
@@ -563,7 +578,7 @@ public class kcVertex implements IInfoWriter {
                 writer.writeNull(8);
                 break;
             case PSIZE: // 2
-                writeCompressedFloat(writer, this.psize, COMPRESSION_FIXED_PT_OTHER_UNIT);
+                writeCompressedFloat(writer, this.pointSize, COMPRESSION_FIXED_PT_OTHER_UNIT);
                 break;
             default:
                 throw new RuntimeException("Cannot read vertex data due to unsupported kcVertexFormatComponent " + component);
@@ -638,9 +653,9 @@ public class kcVertex implements IInfoWriter {
     public void writeInfo(StringBuilder builder) {
         builder.append("kcVertex{pos=[").append(this.x).append(",").append(this.y).append(",").append(this.z);
         builder.append("},normal={").append(this.normalX).append(",").append(this.normalY).append(",").append(this.normalZ);
-        builder.append("},diffuse=").append(this.diffuse).append(",specular=").append(this.specular);
+        builder.append("},diffuse=").append(NumberUtils.to0PrefixedHexString(this.diffuse));
         builder.append(",uv0=[").append(this.u0).append(",").append(this.v0);
         builder.append("],uv1=[").append(this.u1).append(",").append(this.v1);
-        builder.append("],weight=").append(Arrays.toString(this.weight)).append(",w=").append(this.w).append(",psize=").append(this.psize);
+        builder.append("],weight=").append(Arrays.toString(this.weight)).append(",w=").append(this.w).append(",pointSize=").append(this.pointSize);
     }
 }

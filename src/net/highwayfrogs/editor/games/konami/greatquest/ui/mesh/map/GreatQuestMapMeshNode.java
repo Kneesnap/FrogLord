@@ -1,9 +1,9 @@
 package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map;
 
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResOctTreeSceneMgr.kcVtxBufFileStruct;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcVertex;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResOctTreeSceneMgr.kcVtxBufFileStruct;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
 import net.highwayfrogs.editor.gui.texture.Texture;
 import net.highwayfrogs.editor.system.math.Vector2f;
@@ -93,7 +93,7 @@ public class GreatQuestMapMeshNode extends DynamicMeshAdapterNode<kcVtxBufFileSt
     }
 
     private Texture getTexture(kcVtxBufFileStruct vtxBuf) {
-        int materialId = (int) vtxBuf.getMaterialId();
+        int materialId = vtxBuf.getMaterialId();
         List<kcMaterial> materials = getMap().getSceneManager().getMaterials();
         kcMaterial material = materialId >= 0 && materials.size() > materialId ? materials.get(materialId) : null;
         return getMesh().getTextureAtlas().getTextureFromSourceOrFallback(material != null ? material.getTexture() : null);

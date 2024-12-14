@@ -47,7 +47,7 @@ public class MOFAnimation extends MOFBase {
 
     @Override
     public void onLoad(DataReader reader, byte[] signature) {
-        boolean forceFrameZero = (getGameInstance().isFrogger() && ((FroggerGameInstance) getGameInstance()).getConfig().getBuild() == 1);
+        boolean forceFrameZero = (getGameInstance().isFrogger() && ((FroggerGameInstance) getGameInstance()).getVersionConfig().getBuild() == 1);
         this.startAtFrameZero = forceFrameZero || (signature[0] == MR_ANIM_FILE_START_FRAME_AT_ZERO); // '1'
         this.transformType = TransformType.getType(signature[1]);
 

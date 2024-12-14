@@ -5,7 +5,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Represents the header packet in a pre-recode Frogger map.
@@ -32,7 +32,7 @@ public class OldFroggerMapHeaderPacket extends OldFroggerMapPacket {
         int packetCount = reader.readUnsignedShortAsInt();
         reader.skipShort(); // Padding
         reader.verifyString(VERSION);
-        this.comment = reader.readTerminatedStringOfLength(COMMENT_LENGTH);
+        this.comment = reader.readNullTerminatedFixedSizeString(COMMENT_LENGTH);
 
         // Read header pointers.
         long levelSpecificAddr = reader.readUnsignedIntAsLong();
@@ -48,7 +48,7 @@ public class OldFroggerMapHeaderPacket extends OldFroggerMapPacket {
             getLogger().warning("The amount of bytes reported by the file '" + getParentFile().getFileDisplayName() + "' was " + fileLengthInBytes + ", but the actual amount was " + reader.getSize() + ".");
 
         if ((mofsAddr & 0xFFFFFFFFL) != EXPECTED_MOF_ADDRESS)
-            getLogger().warning("MofsAddress was " + Utils.toHexString(mofsAddr) + ", but " + Utils.toHexString(EXPECTED_MOF_ADDRESS) + " was expected.");
+            getLogger().warning("MofsAddress was " + NumberUtils.toHexString(mofsAddr) + ", but " + NumberUtils.toHexString(EXPECTED_MOF_ADDRESS) + " was expected.");
     }
 
     @Override
@@ -57,7 +57,7 @@ public class OldFroggerMapHeaderPacket extends OldFroggerMapPacket {
         writer.writeUnsignedShort(EXPECTED_PACKET_COUNT);
         writer.writeUnsignedShort(0); // Padding
         writer.writeStringBytes(VERSION);
-        writer.writeTerminatedStringOfLength(this.comment, COMMENT_LENGTH);
+        writer.writeNullTerminatedFixedSizeString(this.comment, COMMENT_LENGTH);
 
         writer.writeUnsignedInt(0); // levelSpecificAddr
         writer.writeUnsignedInt(0); // graphicalAddr

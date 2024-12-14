@@ -14,15 +14,17 @@ import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerU
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapLightManager.FroggerMapLightPreview;
 import net.highwayfrogs.editor.games.sony.shared.misc.MRLightType;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.Utils;
-
-import java.util.logging.Logger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 /**
  * Holds lighting data, or the "LIGHT" struct in mapdisp.H
  * TODO: Can I get 3D previews of the lit areas? Down to the minimum vertex height. Would make it really nice to tell.
  * TODO: Our new baked lighting system might want to do raycasting. I say this since it's clear their lighting system did. Although... I'm not sure if the JavaFX preview will support that so I dunno 100%.
  * TODO: JavaFX 17 has SpotLight & 18 adds DirectionalLight. Should be able to improve our lighting if we upgrade. (Make sure to update lights in old Frogger, camera height-field in old Frogger, lights in Beast Wars, and any other games.)
+ * TODO: TODO: Use Fxyz3D's Cone mesh to highlight spot lights.
  * Created by Kneesnap on 8/24/2018.
  */
 public class FroggerMapLight extends SCGameData<FroggerGameInstance> {
@@ -141,8 +143,8 @@ public class FroggerMapLight extends SCGameData<FroggerGameInstance> {
     }
 
     @Override
-    public Logger getLogger() {
-        return Logger.getLogger(getLoggerInfo());
+    public ILogger getLogger() {
+        return new LazyInstanceLogger(getGameInstance(), FroggerMapLight::getLoggerInfo, this);
     }
 
     /**
@@ -158,9 +160,9 @@ public class FroggerMapLight extends SCGameData<FroggerGameInstance> {
         });
 
         // Light color.
-        int rgbColor = Utils.toRGB(Utils.fromBGR(this.color));
+        int rgbColor = ColorUtils.toRGB(ColorUtils.fromBGR(this.color));
         editor.addColorPicker("Color", 25, rgbColor, newColor -> {
-            this.color = Utils.toBGR(Utils.fromRGB(newColor));
+            this.color = ColorUtils.toBGR(ColorUtils.fromRGB(newColor));
             lightPreview.updateLight();
         });
 

@@ -14,6 +14,9 @@ import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -29,7 +32,7 @@ public class PTSkeletonFile extends SCSharedGameFile implements IPropertyListCre
     private final List<PTSkeletonBone> bones = new ArrayList<>();
 
     public static final int IDENTIFIER = 0x33304B53;
-    public static final String IDENTIFIER_STRING = Utils.toMagicString(IDENTIFIER); // 'SK03'
+    public static final String IDENTIFIER_STRING = Utils.toIdentifierString(IDENTIFIER); // 'SK03'
 
     public PTSkeletonFile(SCGameInstance instance) {
         super(instance);
@@ -69,7 +72,7 @@ public class PTSkeletonFile extends SCSharedGameFile implements IPropertyListCre
     @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {
         propertyList = super.addToPropertyList(propertyList);
-        propertyList.add("Flags", Utils.toHexString(this.flags));
+        propertyList.add("Flags", NumberUtils.toHexString(this.flags));
         propertyList.add("Bones", this.bones.size());
         return propertyList;
     }
@@ -81,11 +84,11 @@ public class PTSkeletonFile extends SCSharedGameFile implements IPropertyListCre
 
     @Override
     public void handleWadEdit(WADFile parent) {
-        PTStaticFile staticFile = getGameInstance().getMainArchive().getFileByName(Utils.stripExtension(getFileDisplayName()) + ".STAT");
+        PTStaticFile staticFile = getGameInstance().getMainArchive().getFileByName(FileUtils.stripExtension(getFileDisplayName()) + ".STAT");
         if (staticFile != null) {
             staticFile.handleWadEdit(parent);
         } else {
-            Utils.makePopUp("Couldn't find static mesh for file '" + getFileDisplayName() + "'!", AlertType.ERROR);
+            FXUtils.makePopUp("Couldn't find static mesh for file '" + getFileDisplayName() + "'!", AlertType.ERROR);
         }
     }
 

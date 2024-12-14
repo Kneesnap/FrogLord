@@ -16,7 +16,7 @@ import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.TexturedPoly;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.ColorUtils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -130,7 +130,7 @@ public class MOFPolyTexture extends MOFPolygon implements TexturedPoly {
     private BufferedImage makeShadeImage(int width, int height, boolean useRaw) {
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = image.createGraphics();
-        graphics.setColor(useRaw ? getColor().toShadeColor() : Utils.toAWTColor(loadColor(getColor())));
+        graphics.setColor(useRaw ? getColor().toShadeColor() : ColorUtils.toAWTColor(loadColor(getColor())));
         graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
         graphics.dispose();
         return image;
@@ -142,7 +142,7 @@ public class MOFPolyTexture extends MOFPolygon implements TexturedPoly {
      * @return loadedColor
      */
     public static Color loadColor(PSXColorVector color) { // Color Application works with approximately this formula: (texBlue - (alphaAsPercentage * (texBlue - shadeBlue)))
-        return Utils.fromRGB(color.toShadeRGB(), (1D - Math.max(0D, Math.min(1D, ((color.getShadingRed() + color.getShadingGreen() + color.getShadingBlue()) / 127D / 3D)))));
+        return ColorUtils.fromRGB(color.toShadeRGB(), (1D - Math.max(0D, Math.min(1D, ((color.getShadingRed() + color.getShadingGreen() + color.getShadingBlue()) / 127D / 3D)))));
     }
 
     /**
@@ -156,9 +156,9 @@ public class MOFPolyTexture extends MOFPolygon implements TexturedPoly {
                 int rgb = applyImage.getRGB(x, y);
                 int overlay = shadeImage.getRGB(x, y);
                 int alpha = (rgb & 0xFF000000) >> 24;
-                int red = (int) (((double) Utils.getRedInt(overlay) / 127D) * (double) Utils.getRedInt(rgb));
-                int green = (int) (((double) Utils.getGreenInt(overlay) / 127D) * (double) Utils.getGreenInt(rgb));
-                int blue = (int) (((double) Utils.getBlueInt(overlay) / 127D) * (double) Utils.getBlueInt(rgb));
+                int red = (int) (((double) ColorUtils.getRedInt(overlay) / 127D) * (double) ColorUtils.getRedInt(rgb));
+                int green = (int) (((double) ColorUtils.getGreenInt(overlay) / 127D) * (double) ColorUtils.getGreenInt(rgb));
+                int blue = (int) (((double) ColorUtils.getBlueInt(overlay) / 127D) * (double) ColorUtils.getBlueInt(rgb));
                 newImage.setRGB(x, y, ((alpha << 24) | ((red & 0xFF) << 16) | ((green & 0xFF) << 8) | (blue & 0xFF)));
             }
         }

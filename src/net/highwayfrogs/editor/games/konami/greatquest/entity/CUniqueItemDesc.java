@@ -1,12 +1,13 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
-import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.system.Config;
 
 /**
  * Represents the 'CUniqueItemDesc' struct.
@@ -14,18 +15,12 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
  * Created by Kneesnap on 8/21/2023.
  */
 @Getter
-@Setter
 public class CUniqueItemDesc extends CItemDesc {
     private UniqueItemType type = UniqueItemType.NONE;
     private static final int PADDING_VALUES = 8;
 
-    public CUniqueItemDesc(GreatQuestInstance instance) {
-        super(instance);
-    }
-
-    @Override
-    protected int getTargetClassID() {
-        return kcClassID.UNIQUE_ITEM.getClassId();
+    public CUniqueItemDesc(@NonNull kcCResourceGeneric resource) {
+        super(resource, kcEntityDescType.UNIQUE_ITEM);
     }
 
     @Override
@@ -46,6 +41,30 @@ public class CUniqueItemDesc extends CItemDesc {
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         super.writeMultiLineInfo(builder, padding);
         builder.append(padding).append("Unique Item Type: ").append(this.type).append(Constants.NEWLINE);
+    }
+
+    @Override
+    public void fromConfig(Config input) {
+        super.fromConfig(input);
+        this.type = input.getKeyValueNodeOrError("itemType").getAsEnumOrError(UniqueItemType.class);
+    }
+
+    @Override
+    public void toConfig(Config output, kcScriptDisplaySettings settings) {
+        super.toConfig(output, settings);
+        output.getOrCreateKeyValueNode("itemType").setAsEnum(this.type);
+    }
+
+    /**
+     * Sets the unique item type.
+     * @param newType The unique item type to apply
+     */
+    @SuppressWarnings("unused") // Available to Noodle scripts.
+    public void setType(UniqueItemType newType) {
+        if (newType == null)
+            throw new NullPointerException("newType");
+
+        this.type = newType;
     }
 
     public enum UniqueItemType {

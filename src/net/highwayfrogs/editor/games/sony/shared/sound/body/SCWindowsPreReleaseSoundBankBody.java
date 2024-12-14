@@ -7,13 +7,13 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.sound.body.SCWindowsPreReleaseSoundBankBody.SCWindowsPreReleaseSoundBodyEntry;
 import net.highwayfrogs.editor.games.sony.shared.sound.body.SCWindowsRetailSoundBankBody.SCWindowsSoundBodyEntry;
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCWindowsSoundBankHeader.SCWindowsSoundBankHeaderEntry;
+import net.highwayfrogs.editor.utils.AudioUtils;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.UnsupportedAudioFileException;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
 
@@ -47,7 +47,7 @@ public class SCWindowsPreReleaseSoundBankBody extends SCWindowsSoundBankBody<SCW
             if (reader.hasMore()) { // The last entry is null in the prototype.
                 super.load(reader);
 
-                AudioFormat appliedFormat = generateAudioFormat();
+                AudioFormat appliedFormat = getAudioFormatFromRawData();
                 if (appliedFormat != null)
                     getAudioFormat().applyAudioFormat(appliedFormat); // Use the audio info from the wav file.
             }
@@ -58,22 +58,7 @@ public class SCWindowsPreReleaseSoundBankBody extends SCWindowsSoundBankBody<SCW
             if (this.cachedRawAudio != null)
                 return this.cachedRawAudio;
 
-            ByteArrayInputStream inputStream = new ByteArrayInputStream(this.rawAudioData);
-            AudioInputStream audioInputStream;
-            AudioInputStream convertedInputStream;
-
-            try {
-                audioInputStream = AudioSystem.getAudioInputStream(inputStream);
-                convertedInputStream = AudioSystem.getAudioInputStream(getAudioFormat(), audioInputStream);
-                audioInputStream.close();
-            } catch (UnsupportedAudioFileException | IOException ex) {
-                Utils.handleError(getLogger(), ex, true, "Couldn't read the audio data. The audio will still play, but it will have a pop.");
-                return this.rawAudioData;
-            }
-
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(65536);
-            Utils.copyInputStreamData(convertedInputStream, byteArrayOutputStream, true);
-            return this.cachedRawAudio = byteArrayOutputStream.toByteArray();
+            return this.cachedRawAudio = AudioUtils.getRawAudioDataConvertedFromWavFile(getAudioFormat(), this.rawAudioData);
         }
 
         @Override
@@ -85,7 +70,7 @@ public class SCWindowsPreReleaseSoundBankBody extends SCWindowsSoundBankBody<SCW
         public void importSoundFromFile(File file) throws IOException {
             byte[] newWavBytes = Files.readAllBytes(file.toPath());
             if (newWavBytes == null || newWavBytes.length == 0) {
-                Utils.makePopUp("The file is empty.", AlertType.ERROR);
+                FXUtils.makePopUp("The file is empty.", AlertType.ERROR);
                 return;
             }
 
@@ -100,9 +85,9 @@ public class SCWindowsPreReleaseSoundBankBody extends SCWindowsSoundBankBody<SCW
 
             // Update audio format, and revert if it can't be applied.
             String errorMessage;
-            if ((errorMessage = getAudioFormat().applyAudioFormat(generateAudioFormat())) != null) {
+            if ((errorMessage = getAudioFormat().applyAudioFormat(getAudioFormatFromRawData())) != null) {
                 this.rawAudioData = oldWavBytes;
-                Utils.makePopUp(errorMessage, AlertType.ERROR);
+                FXUtils.makePopUp(errorMessage, AlertType.ERROR);
             } else {
                 // Reset cache.
                 this.cachedRawAudio = null;
@@ -110,8 +95,9 @@ public class SCWindowsPreReleaseSoundBankBody extends SCWindowsSoundBankBody<SCW
         }
 
         @SneakyThrows
-        private AudioFormat generateAudioFormat() {
-            return this.rawAudioData != null && this.rawAudioData.length > 0 ? AudioSystem.getAudioInputStream(new BufferedInputStream(new ByteArrayInputStream(this.rawAudioData))).getFormat() : null;
+        private AudioFormat getAudioFormatFromRawData() {
+
+            return this.rawAudioData != null && this.rawAudioData.length > 0 ? AudioUtils.getAudioFormatFromWavFile(this.rawAudioData) : null;
         }
     }
 }

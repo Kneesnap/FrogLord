@@ -6,7 +6,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerCameraHeightFieldManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
 
 import java.util.Arrays;
 
@@ -25,7 +25,7 @@ public class OldFroggerMapCameraHeightFieldPacket extends OldFroggerMapPacket {
     private short startPositionZ;
     private short[][] heightMap;
 
-    private static final short DEFAULT_HEIGHT = Utils.floatToFixedPointShort4Bit(-100F);
+    private static final short DEFAULT_HEIGHT = DataUtils.floatToFixedPointShort4Bit(-100F);
 
     public OldFroggerMapCameraHeightFieldPacket(OldFroggerMapFile parentFile) {
         super(parentFile, IDENTIFIER, PacketSizeType.NO_SIZE);
@@ -123,28 +123,28 @@ public class OldFroggerMapCameraHeightFieldPacket extends OldFroggerMapPacket {
      * Gets the starting X position which the height grid starts at as a float.
      */
     public float getStartXAsFloat() {
-        return Utils.fixedPointIntToFloat4Bit(this.startPositionX);
+        return DataUtils.fixedPointIntToFloat4Bit(this.startPositionX);
     }
 
     /**
      * Gets the starting Z position which the height grid starts at as a float.
      */
     public float getStartZAsFloat() {
-        return Utils.fixedPointIntToFloat4Bit(this.startPositionZ);
+        return DataUtils.fixedPointIntToFloat4Bit(this.startPositionZ);
     }
 
     /**
      * Gets the length (X axis) of a camera grid square as a float.
      */
     public float getSquareXSizeAsFloat() {
-        return Utils.fixedPointShortToFloatNBits(this.xSquareSize, 8);
+        return DataUtils.fixedPointShortToFloatNBits(this.xSquareSize, 8);
     }
 
     /**
      * Gets the length (Z axis) of a camera grid square as a float.
      */
     public float getSquareZSizeAsFloat() {
-        return Utils.fixedPointShortToFloatNBits(this.zSquareSize, 8);
+        return DataUtils.fixedPointShortToFloatNBits(this.zSquareSize, 8);
     }
 
     /**
@@ -156,7 +156,7 @@ public class OldFroggerMapCameraHeightFieldPacket extends OldFroggerMapPacket {
         if (gridX < 0 || gridX >= this.xSquareCount)
             throw new IndexOutOfBoundsException("The provided grid X coordinate (" + this.xSquareCount + ") was outside of the range [0, " + gridX + ").");
 
-        return Utils.fixedPointIntToFloat4Bit(this.startPositionX + (gridX * this.xSquareSize));
+        return DataUtils.fixedPointIntToFloat4Bit(this.startPositionX + (gridX * this.xSquareSize));
     }
 
     /**
@@ -171,7 +171,7 @@ public class OldFroggerMapCameraHeightFieldPacket extends OldFroggerMapPacket {
         if (gridZ < 0 || gridZ >= this.zSquareCount)
             throw new IndexOutOfBoundsException("The provided grid Z coordinate (" + this.zSquareCount + ") was outside of the range [0, " + gridZ + ").");
 
-        return Utils.fixedPointIntToFloat4Bit(this.heightMap[gridZ][gridX]);
+        return DataUtils.fixedPointIntToFloat4Bit(this.heightMap[gridZ][gridX]);
     }
 
     /**
@@ -183,7 +183,7 @@ public class OldFroggerMapCameraHeightFieldPacket extends OldFroggerMapPacket {
         if (gridZ < 0 || gridZ >= this.zSquareCount)
             throw new IndexOutOfBoundsException("The provided grid Z coordinate (" + this.zSquareCount + ") was outside of the range [0, " + gridZ + ").");
 
-        return Utils.fixedPointIntToFloat4Bit(this.startPositionZ + (gridZ * this.zSquareSize));
+        return DataUtils.fixedPointIntToFloat4Bit(this.startPositionZ + (gridZ * this.zSquareSize));
     }
 
     /**

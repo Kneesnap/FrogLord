@@ -6,9 +6,9 @@ import javafx.scene.input.MouseEvent;
 import lombok.Getter;
 import net.highwayfrogs.editor.gui.InputManager.KeyHandler;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.function.Consumer;
-import java.util.logging.Logger;
 
 /**
  * Allows implementing a way to select a value in a MeshViewController.
@@ -32,7 +32,7 @@ public class SelectionPromptTracker<TPromptTarget> {
     /**
      * Gets the logger used for logging selection prompt related information.
      */
-    public Logger getLogger() {
+    public ILogger getLogger() {
         return this.uiManager != null ? this.uiManager.getLogger() : this.controller.getLogger();
     }
 

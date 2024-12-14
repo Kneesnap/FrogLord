@@ -19,13 +19,14 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Represents a form definition in an old Frogger map.
@@ -49,7 +50,7 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
     }
 
     @Override
-    public Logger getLogger() {
+    public ILogger getLogger() {
         return this.map.getFormInstancePacket().getLogger();
     }
 
@@ -72,7 +73,7 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
             OldFroggerMapFormDataEntry newEntry = new OldFroggerMapFormDataEntry(getGameInstance());
 
             if (i > 0 && endPointer != formEntryDataStartAddress)
-                getLogger().warning("Form " + i + " starts at " + Utils.toHexString(formEntryDataStartAddress) + ", but the form ended at " + Utils.toHexString(endPointer));
+                getLogger().warning("Form " + i + " starts at " + NumberUtils.toHexString(formEntryDataStartAddress) + ", but the form ended at " + NumberUtils.toHexString(endPointer));
 
             reader.jumpTemp(formEntryDataStartAddress);
             newEntry.load(reader);
@@ -187,7 +188,7 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
                     for (OldFroggerMapEntity entity : entityManager.getValues())
                         if (entity.getFormTypeId() == this.formType)
                             entityManager.updateEntityMesh(entity);
-            }).setConverter(new AbstractIndexStringConverter<>(wadEntries, (index, entry) -> Utils.stripExtension(entry.getDisplayName())));
+            }).setConverter(new AbstractIndexStringConverter<>(wadEntries, (index, entry) -> FileUtils.stripExtension(entry.getDisplayName())));
         } else {
             editor.addUnsignedFixedShort("WAD File Index", this.mofId, newValue -> this.mofId = newValue, 1);
         }

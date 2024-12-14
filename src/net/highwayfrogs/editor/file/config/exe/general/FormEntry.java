@@ -56,7 +56,7 @@ public class FormEntry extends SCGameData<FroggerGameInstance> implements IFrogg
      * Gets the frogger game config.
      */
     public FroggerConfig getConfig() {
-        return getGameInstance().getConfig();
+        return getGameInstance().getVersionConfig();
     }
 
     @Override

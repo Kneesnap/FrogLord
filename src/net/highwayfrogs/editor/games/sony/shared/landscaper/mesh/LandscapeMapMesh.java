@@ -27,7 +27,7 @@ public class LandscapeMapMesh extends PSXShadedDynamicMesh<LandscapePolygon, Lan
     private final DynamicMeshOverlayNode highlightedMousePolygonNode;
 
     public LandscapeMapMesh(Landscape landscape) {
-        super(new TreeTextureAtlas(64, 64, true), true);
+        super(new TreeTextureAtlas(64, 64, true), DynamicMeshTextureQuality.UNLIT_SHARP, true);
         this.landscape = landscape;
 
         // Add textures.

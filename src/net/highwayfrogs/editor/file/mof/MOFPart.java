@@ -16,6 +16,7 @@ import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.shared.collprim.MRCollprim;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.*;
@@ -114,9 +115,9 @@ public class MOFPart extends SCSharedGameData {
                     reader.jumpReturn();
 
                     if (endValue != 0)
-                        throw new RuntimeException("Didn't properly calculate the end of matrix data. (Start: " + Utils.toHexString(matrixPointer) + ", End: " + Utils.toHexString(startOfSectionAfterMatrixPtr) + ", Remainder: " + remainderBytes + ", End Value: " + endValue + ")");
+                        throw new RuntimeException("Didn't properly calculate the end of matrix data. (Start: " + NumberUtils.toHexString(matrixPointer) + ", End: " + NumberUtils.toHexString(startOfSectionAfterMatrixPtr) + ", Remainder: " + remainderBytes + ", End Value: " + endValue + ")");
                 } else {
-                    throw new RuntimeException("Didn't properly calculate the end of matrix data. (Start: " + Utils.toHexString(matrixPointer) + ", End: " + Utils.toHexString(startOfSectionAfterMatrixPtr) + ", Remainder: " + remainderBytes + ")");
+                    throw new RuntimeException("Didn't properly calculate the end of matrix data. (Start: " + NumberUtils.toHexString(matrixPointer) + ", End: " + NumberUtils.toHexString(startOfSectionAfterMatrixPtr) + ", Remainder: " + remainderBytes + ")");
                 }
             }
 
@@ -383,7 +384,7 @@ public class MOFPart extends SCSharedGameData {
         incompletePart.matrices = this.matrices;
         incompletePart.flipbook = this.flipbook;
         SCGameInstance instance = getParent().getGameInstance();
-        if (getParent().hasTextureAnimation() && (!instance.isFrogger() || !((FroggerConfig) instance.getConfig()).isAtOrBeforeBuild23())) // TODO: Replace with some kind of warning system, where instead of throwing exceptions, we can have warnings per-file, etc.
+        if (getParent().hasTextureAnimation() && (!instance.isFrogger() || !((FroggerConfig) instance.getVersionConfig()).isAtOrBeforeBuild23())) // TODO: Replace with some kind of warning system, where instead of throwing exceptions, we can have warnings per-file, etc.
             throw new RuntimeException("Texture animation cannot be copied to an incomplete MOF right now!"); // It is believed this wouldn't work in the retail game either.
     }
 

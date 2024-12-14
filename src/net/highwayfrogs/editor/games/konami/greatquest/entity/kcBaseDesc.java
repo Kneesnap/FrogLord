@@ -1,19 +1,18 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
 import lombok.Getter;
-import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.generic.data.GameData;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.function.Function;
 
@@ -26,11 +25,15 @@ import java.util.function.Function;
  */
 @Getter
 public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
-    @Setter private GreatQuestChunkedFile parentFile;
-    @Setter private kcCResourceGeneric genericResourceParent;
+    private final kcCResource resource;
 
-    public kcBaseDesc(GreatQuestInstance instance) {
+    public kcBaseDesc(kcCResource resource) {
+        this(resource != null ? resource.getGameInstance() : null, resource);
+    }
+
+    private kcBaseDesc(GreatQuestInstance instance, kcCResource resource) {
         super(instance);
+        this.resource = resource;
     }
 
     /**
@@ -43,6 +46,14 @@ public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements
      */
     public boolean allowAlternativeClassID() {
         return false;
+    }
+
+    @Override
+    public ILogger getLogger() {
+        if (this.resource != null)
+            return this.resource.getLogger();
+
+        return super.getLogger();
     }
 
     @Override
@@ -59,8 +70,10 @@ public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements
                     shouldError = false;
             }
 
-            if (shouldError)
-                throw new RuntimeException("Read an unexpected target class ID: " + Utils.to0PrefixedHexString(classID) + " for " + getClass().getSimpleName() + " in " + (this.parentFile != null ? this.parentFile.getDebugName() : ""));
+            if (shouldError) {
+                GreatQuestChunkedFile parentFile = getParentFile();
+                throw new RuntimeException("Read an unexpected target class ID: " + NumberUtils.to0PrefixedHexString(classID) + " for " + getClass().getSimpleName() + " in " + (parentFile != null ? parentFile.getDebugName() : ""));
+            }
         }
     }
 
@@ -74,7 +87,7 @@ public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements
         saveData(writer);
 
         // Write correct size.
-        writer.writeAddressAt(writtenDataSizeAddress, writer.getIndex() - writtenDataStartIndex);
+        writer.writeIntAtPos(writtenDataSizeAddress, writer.getIndex() - writtenDataStartIndex);
     }
 
     /**
@@ -84,38 +97,55 @@ public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements
     protected abstract void saveData(DataWriter writer);
 
     /**
-     * Write the asset name to the builder to a single line.
-     * @param builder      The builder to write to.
-     * @param padding      The line padding data.
-     * @param prefix       The prefix to write.
-     * @param resourceHash The hash value to lookup.
+     * Return true if the parent resource is named any one of the given names.
+     * @param names the names to test
+     * @return parent resources
      */
-    protected StringBuilder writeAssetLine(StringBuilder builder, String padding, String prefix, int resourceHash) {
-        return writeAssetInfo(builder, padding, prefix, resourceHash, kcCResource::getName).append(Constants.NEWLINE);
+    public boolean isParentResourceNamed(String... names) {
+        return this.resource != null && this.resource.doesNameMatch(names);
+    }
+
+    /**
+     * Gets the parent chunk file containing the resource which contains this data.
+     */
+    public GreatQuestChunkedFile getParentFile() {
+        return this.resource != null ? this.resource.getParentFile() : null;
+    }
+
+    /**
+     * Write the asset name to the builder to a single line.
+     * @param builder The builder to write to.
+     * @param padding The line padding data.
+     * @param prefix The prefix to write.
+     * @param hashObj The hash value to lookup.
+     */
+    protected StringBuilder writeAssetLine(StringBuilder builder, String padding, String prefix, GreatQuestHash<?> hashObj) {
+        if (hashObj == null)
+            throw new NullPointerException("hashObj");
+
+        builder.append(padding).append(prefix).append(": ");
+        return builder.append(hashObj.getDisplayString(false)).append(Constants.NEWLINE);
     }
 
     /**
      * Write asset information to the builder. The information written is specified via the function.
      * If the asset isn't found, the hash is written instead.
-     * @param builder      The builder to write to.
-     * @param padding      The line padding data.
-     * @param prefix       The prefix to write.
-     * @param resourceHash The hash value to lookup.
-     * @param getter       The function to turn the resource into a string.
-     * @param <TResource>  The resource type to lookup.
+     * @param builder The builder to write to.
+     * @param padding The line padding data.
+     * @param prefix The prefix to write.
+     * @param hashObj The hash value to lookup.
+     * @param getter The function to turn the resource into a string.
+     * @param <TResource> The resource type to lookup.
      */
-    protected <TResource extends kcCResource> StringBuilder writeAssetInfo(StringBuilder builder, String padding, String prefix, int resourceHash, Function<TResource, String> getter) {
-        builder.append(padding).append(prefix).append(": ");
+    protected <TResource extends kcCResource> StringBuilder writeAssetLine(StringBuilder builder, String padding, String prefix, GreatQuestHash<TResource> hashObj, Function<TResource, String> getter) {
+        if (hashObj == null)
+            throw new NullPointerException("hashObj");
 
-        TResource resource = GreatQuestUtils.findResourceByHash(this.parentFile, getGameInstance(), resourceHash);
-        if (resource != null) {
-            builder.append(getter.apply(resource));
-        } else if (resourceHash != 0 && resourceHash != -1) {
-            builder.append(Utils.to0PrefixedHexString(resourceHash));
+        if (hashObj.getResource() != null) {
+            builder.append(padding).append(prefix).append(": ");
+            return builder.append(getter.apply(hashObj.getResource())).append(Constants.NEWLINE);
         } else {
-            builder.append("None");
+            return writeAssetLine(builder, padding, prefix, hashObj);
         }
-
-        return builder;
     }
 }

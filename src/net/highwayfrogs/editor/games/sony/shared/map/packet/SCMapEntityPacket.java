@@ -10,7 +10,7 @@ import net.highwayfrogs.editor.games.sony.shared.map.SCMapFilePacket;
 import net.highwayfrogs.editor.games.sony.shared.map.data.SCMapEntity;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +34,7 @@ public class SCMapEntityPacket<TGameInstance extends SCGameInstance> extends SCM
         reader.skipBytesRequireEmpty(Constants.SHORT_SIZE);
         int entityListPtr = reader.readInt();
         if (entityListPtr != reader.getIndex()) {
-            getLogger().warning("Expected entity data to start at " + Utils.toHexString(reader.getIndex()) + ", but it actually started at " + Utils.toHexString(entityListPtr) + ".");
+            getLogger().warning("Expected entity data to start at " + NumberUtils.toHexString(reader.getIndex()) + ", but it actually started at " + NumberUtils.toHexString(entityListPtr) + ".");
             reader.setIndex(entityListPtr);
         }
 

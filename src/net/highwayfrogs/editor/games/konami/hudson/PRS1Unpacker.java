@@ -1,8 +1,9 @@
 package net.highwayfrogs.editor.games.konami.hudson;
 
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
 
 /**
  * Contains PRS1 compression utilities.
@@ -27,12 +28,12 @@ public class PRS1Unpacker {
         int uncompressedSize = reader.readInt();
         int compressedSize = reader.readInt();
 
-        return decompressData(reader, compressedSize - 12, uncompressedSize); // Strangely, I don't think the actual algorithm removes 12 (the size of the header). I don't know why that works and this doesn't.
+        return decompressData(reader, compressedSize, uncompressedSize);
     }
 
     /**
      * Decompresses raw PRS1 data.
-     * Reverse engineered from "Frogger's Adventures: The Rescue" PC.
+     * Reverse engineered from "Frogger's Adventures: The Rescue" PC at 0x00540358.
      * This algorithm was also found in the Mario Party 4 decomp and likely exists in more games too.
      * @param reader         The reader to read data from.
      * @param compressedSize The size of the compressed data.
@@ -42,8 +43,8 @@ public class PRS1Unpacker {
         byte[] outputBuffer = new byte[uncompressedSize];
         int outPos = 0;
 
-        byte[] compressionBuffer = new byte[0x10000]; // This is fucked in the actual game. It's only 0xFEE bytes large, meaning it overwrites memory it's not supposed to overwrite. Either that or that memory is used.
-        int bufferIndex = 0xFEE;
+        byte[] compressionBuffer = new byte[4096]; // The original buffer is most likely 4096 bytes large.
+        int bufferPos = 0xFEE;
         int temp = 0;
 
         while (true) {
@@ -54,35 +55,35 @@ public class PRS1Unpacker {
                     return outputBuffer;
 
                 compressedSize--;
-                temp = 0xFF00 | (reader.readByte() & 0xFF);
+                temp = 0xFF00 | (reader.hasMore() ? (reader.readByte() & 0xFF) : 0);
             }
 
             if (compressedSize == 0)
                 return outputBuffer;
 
-            byte currentByte = reader.readByte();
+            byte currentByte = (reader.hasMore() ? reader.readByte() : Constants.NULL_BYTE);
             if ((temp & 1) == 0) {
                 if (compressedSize == 1)
                     return outputBuffer;
 
                 compressedSize -= 2;
-                int readOffset = reader.readUnsignedByteAsShort();
+                short readOffset = reader.hasMore() ? reader.readUnsignedByteAsShort() : 0;
 
                 for (int i = 0; i <= (readOffset & 0x0F) + 2; i++) {
-                    byte copy = compressionBuffer[i + ((((currentByte & 0xFF) | ((readOffset & 0xF0) << 4))) & 0xFFF)];
+                    byte copy = compressionBuffer[(i + ((currentByte & 0xFF) | ((readOffset & 0xF0) << 4))) & 0xFFF];
                     if (outPos < uncompressedSize)
                         outputBuffer[outPos] = copy;
                     outPos++;
-                    compressionBuffer[bufferIndex] = copy;
-                    bufferIndex = (bufferIndex + 1) & 0xFFF;
+                    compressionBuffer[bufferPos] = copy;
+                    bufferPos = (bufferPos + 1) & 0xFFF;
                 }
             } else {
                 if (outPos < uncompressedSize)
                     outputBuffer[outPos] = currentByte;
 
                 outPos++;
-                compressionBuffer[bufferIndex] = currentByte;
-                bufferIndex = (bufferIndex + 1) & 0xFFF;
+                compressionBuffer[bufferPos] = currentByte;
+                bufferPos = (bufferPos + 1) & 0xFFF;
                 compressedSize--;
             }
         }
@@ -94,6 +95,6 @@ public class PRS1Unpacker {
      * @return isCompressedData.
      */
     public static boolean isCompressedPRS1(byte[] data) {
-        return data != null && data.length > 12 && Utils.testSignature(data, MAGIC);
+        return data != null && data.length > 12 && DataUtils.testSignature(data, MAGIC);
     }
 }

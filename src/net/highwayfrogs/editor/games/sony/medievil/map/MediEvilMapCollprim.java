@@ -18,8 +18,8 @@ import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.BasicListMeshUIManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
+import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
-import net.highwayfrogs.editor.utils.Utils;
 
 import java.text.DecimalFormat;
 
@@ -99,7 +99,7 @@ public class MediEvilMapCollprim extends SCGameData<MediEvilGameInstance> {
 
         // Lengths
         grid.addFloatField("xLength", getFloatXLength(), newX -> {
-            this.xLength = Utils.floatToFixedPointInt4Bit(newX);
+            this.xLength = DataUtils.floatToFixedPointInt4Bit(newX);
             recalculateRadiusSquared();
             radiusLabel.setText(getRadiusLabelText());
             if (box != null)
@@ -107,7 +107,7 @@ public class MediEvilMapCollprim extends SCGameData<MediEvilGameInstance> {
         }, null);
 
         grid.addFloatField("yLength", getFloatYLength(), newY -> {
-            this.yLength = Utils.floatToFixedPointInt4Bit(newY);
+            this.yLength = DataUtils.floatToFixedPointInt4Bit(newY);
             recalculateRadiusSquared();
             radiusLabel.setText(getRadiusLabelText());
             if (box != null)
@@ -115,7 +115,7 @@ public class MediEvilMapCollprim extends SCGameData<MediEvilGameInstance> {
         }, null);
 
         grid.addFloatField("zLength", getFloatZLength(), newZ -> {
-            this.zLength = Utils.floatToFixedPointInt4Bit(newZ);
+            this.zLength = DataUtils.floatToFixedPointInt4Bit(newZ);
             recalculateRadiusSquared();
             radiusLabel.setText(getRadiusLabelText());
             if (box != null)
@@ -385,28 +385,28 @@ public class MediEvilMapCollprim extends SCGameData<MediEvilGameInstance> {
      * Gets the x length of this collprim in floating point form.
      */
     public float getFloatXLength() {
-        return Utils.fixedPointIntToFloat4Bit(this.xLength);
+        return DataUtils.fixedPointIntToFloat4Bit(this.xLength);
     }
 
     /**
      * Gets the y length of this collprim in floating point form.
      */
     public float getFloatYLength() {
-        return Utils.fixedPointIntToFloat4Bit(this.yLength);
+        return DataUtils.fixedPointIntToFloat4Bit(this.yLength);
     }
 
     /**
      * Gets the z length of this collprim in floating point form.
      */
     public float getFloatZLength() {
-        return Utils.fixedPointIntToFloat4Bit(this.zLength);
+        return DataUtils.fixedPointIntToFloat4Bit(this.zLength);
     }
 
     /**
      * Gets the radius squared from the collprim in floating point form.
      */
     public double getFloatRadiusSq() {
-        return Utils.fixedPointIntToFloatNBits(this.radiusSq, 8);
+        return DataUtils.fixedPointIntToFloatNBits(this.radiusSq, 8);
     }
 
     /**
@@ -417,9 +417,9 @@ public class MediEvilMapCollprim extends SCGameData<MediEvilGameInstance> {
      * @return the 3d representation
      */
     public <TManager extends BasicListMeshUIManager<?, MediEvilMapCollprim, Box>> Box addDisplay(TManager manager, DisplayList displayList, PhongMaterial material) {
-        float x = Utils.fixedPointIntToFloat4Bit(this.matrix.getTransform()[0]);
-        float y = Utils.fixedPointIntToFloat4Bit(this.matrix.getTransform()[1]);
-        float z = Utils.fixedPointIntToFloat4Bit(this.matrix.getTransform()[2]);
+        float x = DataUtils.fixedPointIntToFloat4Bit(this.matrix.getTransform()[0]);
+        float y = DataUtils.fixedPointIntToFloat4Bit(this.matrix.getTransform()[1]);
+        float z = DataUtils.fixedPointIntToFloat4Bit(this.matrix.getTransform()[2]);
 
         Box box = displayList.addBoundingBoxCenteredWithDimensions(x, y, z, getFloatXLength() * 2, getFloatYLength() * 2, getFloatZLength() * 2, material, true);
         updateBoxRotation(box);
@@ -433,9 +433,9 @@ public class MediEvilMapCollprim extends SCGameData<MediEvilGameInstance> {
             return;
 
         Translate position = Scene3DUtils.get3DTranslation(box, true);
-        position.setX(Utils.fixedPointIntToFloat4Bit(this.matrix.getTransform()[0]));
-        position.setY(Utils.fixedPointIntToFloat4Bit(this.matrix.getTransform()[1]));
-        position.setZ(Utils.fixedPointIntToFloat4Bit(this.matrix.getTransform()[2]));
+        position.setX(DataUtils.fixedPointIntToFloat4Bit(this.matrix.getTransform()[0]));
+        position.setY(DataUtils.fixedPointIntToFloat4Bit(this.matrix.getTransform()[1]));
+        position.setZ(DataUtils.fixedPointIntToFloat4Bit(this.matrix.getTransform()[2]));
     }
 
     private void updateBoxRotation(Box box) {
@@ -450,20 +450,20 @@ public class MediEvilMapCollprim extends SCGameData<MediEvilGameInstance> {
             Rotate rotate = (Rotate) transform;
             if (rotate.getAxis() == Rotate.X_AXIS) {
                 foundRotations++;
-                rotate.setAngle(Math.toDegrees(this.matrix.getRollAngle()));
+                rotate.setAngle(Math.toDegrees(this.matrix.getPitchAngle()));
             } else if (rotate.getAxis() == Rotate.Y_AXIS) {
                 foundRotations++;
-                rotate.setAngle(Math.toDegrees(-this.matrix.getPitchAngle()));
+                rotate.setAngle(Math.toDegrees(-this.matrix.getYawAngle()));
             } else if (rotate.getAxis() == Rotate.Z_AXIS) {
                 foundRotations++;
-                rotate.setAngle(Math.toDegrees(this.matrix.getYawAngle()));
+                rotate.setAngle(Math.toDegrees(this.matrix.getRollAngle()));
             }
         }
 
         if (foundRotations == 0) { // There are no rotations, so add rotations.
-            box.getTransforms().add(new Rotate(Math.toDegrees(this.matrix.getYawAngle()), Rotate.Z_AXIS));
-            box.getTransforms().add(new Rotate(Math.toDegrees(-this.matrix.getPitchAngle()), Rotate.Y_AXIS));
-            box.getTransforms().add(new Rotate(Math.toDegrees(this.matrix.getRollAngle()), Rotate.X_AXIS));
+            box.getTransforms().add(new Rotate(Math.toDegrees(this.matrix.getRollAngle()), Rotate.Z_AXIS));
+            box.getTransforms().add(new Rotate(Math.toDegrees(-this.matrix.getYawAngle()), Rotate.Y_AXIS));
+            box.getTransforms().add(new Rotate(Math.toDegrees(this.matrix.getPitchAngle()), Rotate.X_AXIS));
         }
     }
 

@@ -13,7 +13,7 @@ import net.highwayfrogs.editor.games.sony.shared.misc.MRLightType;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.ColorUtils;
 
 import java.util.List;
 
@@ -134,7 +134,7 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
         switch (light.getLightType()) {
             case AMBIENT:
                 AmbientLight ambLight = fxLight instanceof AmbientLight ? (AmbientLight) fxLight : new AmbientLight();
-                ambLight.setColor(Utils.fromBGR(light.getColor()));
+                ambLight.setColor(ColorUtils.fromBGR(light.getColor()));
                 fxLight = ambLight;
                 break;
 
@@ -142,14 +142,14 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
                 // The way the lighting is applied looks different in-game slightly, as it applies to the polygon in-game,
                 // where in FrogLord it looks more like a fragment shader I think. But, I think this is about as close to accurate as we can expect.
                 DirectionalLight parallelLight = fxLight instanceof DirectionalLight ? (DirectionalLight) fxLight : new DirectionalLight();
-                parallelLight.setColor(Utils.fromBGR(light.getColor()));
+                parallelLight.setColor(ColorUtils.fromBGR(light.getColor()));
                 parallelLight.setDirection(new Point3D(light.getDirection().getFloatX(12), light.getDirection().getFloatY(12), light.getDirection().getFloatZ(12)));
                 fxLight = parallelLight;
                 break;
 
             case POINT: // Point lights are not used.
                 PointLight pointLight = fxLight instanceof PointLight ? (PointLight) fxLight : new PointLight();
-                pointLight.setColor(Utils.fromBGR(light.getColor()));
+                pointLight.setColor(ColorUtils.fromBGR(light.getColor()));
                 // Assuming direction is position? Are POINT lights ever used? [AndyEder]
                 pointLight.setTranslateX(light.getDirection().getFloatX());
                 pointLight.setTranslateY(light.getDirection().getFloatY());
@@ -185,7 +185,7 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
                 return this.colorPreviewImage;
 
             this.lastColorPreviewColorValue = this.mapLight.getColor();
-            return this.colorPreviewImage = Utils.makeColorImageNoCache(Utils.fromBGR(this.mapLight.getColor()), 8, 8);
+            return this.colorPreviewImage = ColorUtils.makeColorImageNoCache(ColorUtils.fromBGR(this.mapLight.getColor()), 8, 8);
         }
 
         /**

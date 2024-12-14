@@ -16,11 +16,13 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.psx.shading.PSXTextureShader;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.InputMenu;
-import net.highwayfrogs.editor.utils.IBinarySerializable;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.ColorUtils;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -123,7 +125,7 @@ public class CVector implements IBinarySerializable {
      * @return redAsShort
      */
     public short getRedShort() {
-        return Utils.byteToUnsignedShort(this.red);
+        return DataUtils.byteToUnsignedShort(this.red);
     }
 
     /**
@@ -131,7 +133,7 @@ public class CVector implements IBinarySerializable {
      * @param newRed the new value of red between 0 and 255.
      */
     public void setRedShort(short newRed) {
-        this.red = Utils.unsignedShortToByte(newRed);
+        this.red = DataUtils.unsignedShortToByte(newRed);
     }
 
     /**
@@ -139,7 +141,7 @@ public class CVector implements IBinarySerializable {
      * @return greenAsShort
      */
     public short getGreenShort() {
-        return Utils.byteToUnsignedShort(this.green);
+        return DataUtils.byteToUnsignedShort(this.green);
     }
 
     /**
@@ -147,7 +149,7 @@ public class CVector implements IBinarySerializable {
      * @param newGreen the new value of green between 0 and 255.
      */
     public void setGreenShort(short newGreen) {
-        this.green = Utils.unsignedShortToByte(newGreen);
+        this.green = DataUtils.unsignedShortToByte(newGreen);
     }
 
     /**
@@ -155,7 +157,7 @@ public class CVector implements IBinarySerializable {
      * @return blueShort
      */
     public short getBlueShort() {
-        return Utils.byteToUnsignedShort(this.blue);
+        return DataUtils.byteToUnsignedShort(this.blue);
     }
 
     /**
@@ -163,7 +165,7 @@ public class CVector implements IBinarySerializable {
      * @param newBlue the new value of blue between 0 and 255.
      */
     public void setBlueShort(short newBlue) {
-        this.blue = Utils.unsignedShortToByte(newBlue);
+        this.blue = DataUtils.unsignedShortToByte(newBlue);
     }
 
     /**
@@ -203,7 +205,7 @@ public class CVector implements IBinarySerializable {
      * @return rgbValue
      */
     public int toRGB() {
-        return Utils.toRGB(this.red, this.green, this.blue);
+        return ColorUtils.toRGB(this.red, this.green, this.blue);
     }
 
     /**
@@ -211,7 +213,7 @@ public class CVector implements IBinarySerializable {
      * @return argbValue
      */
     public int toARGB() {
-        return Utils.toARGB(this.red, this.green, this.blue, (byte) 0xFF);
+        return ColorUtils.toARGB(this.red, this.green, this.blue, (byte) 0xFF);
     }
 
     /**
@@ -239,12 +241,12 @@ public class CVector implements IBinarySerializable {
      */
     public void fromCRGB(int crgbValue) {
         fromRGB(crgbValue);
-        this.code = Utils.unsignedShortToByte((short) ((crgbValue >> 24) & 0xFF));
+        this.code = DataUtils.unsignedShortToByte((short) ((crgbValue >> 24) & 0xFF));
     }
 
     @Override
     public String toString() {
-        return "CVector<red=" + getRedShort() + ",green=" + getGreenShort() + ",blue=" + getBlueShort() + ",code=" + Utils.byteToUnsignedShort(this.code) + ">";
+        return "CVector<red=" + getRedShort() + ",green=" + getGreenShort() + ",blue=" + getBlueShort() + ",code=" + DataUtils.byteToUnsignedShort(this.code) + ">";
     }
 
     /**
@@ -326,14 +328,14 @@ public class CVector implements IBinarySerializable {
         }));
 
         // Texture Preview
-        ImageView preview = new ImageView(scaledTexture != null ? Utils.toFXImage(scaledTexture, false) : null);
+        ImageView preview = new ImageView(scaledTexture != null ? FXUtils.toFXImage(scaledTexture, false) : null);
         preview.setOnMouseClicked(evt ->
                 InputMenu.promptInput(null, "Please enter the color value you'd like to use.", Integer.toHexString(toRGB()).toUpperCase(), newText -> {
                     int colorRGB;
                     try {
                         colorRGB = Integer.parseInt(newText, 16);
                     } catch (NumberFormatException nfe) {
-                        Utils.makePopUp("'" + newText + "' is not a valid hex number.", AlertType.ERROR);
+                        FXUtils.makePopUp("'" + newText + "' is not a valid hex number.", AlertType.ERROR);
                         return;
                     }
 
@@ -356,7 +358,7 @@ public class CVector implements IBinarySerializable {
             } else {
                 newImage = PSXTextureShader.makeFlatShadedImage(45, 45, this);
             }
-            preview.setImage(Utils.toFXImage(newImage, false));
+            preview.setImage(FXUtils.toFXImage(newImage, false));
         };
         imageUpdate[0].run();
 
@@ -500,7 +502,7 @@ public class CVector implements IBinarySerializable {
         graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
         graphics.dispose();
 
-        view.setImage(Utils.toFXImage(image, false));
+        view.setImage(FXUtils.toFXImage(image, false));
     }
 
     /**

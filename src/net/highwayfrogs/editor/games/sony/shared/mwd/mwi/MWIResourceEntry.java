@@ -8,11 +8,13 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.*;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
-import net.highwayfrogs.editor.utils.FroggerVersionComparison;
+import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerVersionComparison;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.util.Locale;
-import java.util.logging.Logger;
 
 /**
  * Represents an entry in the MWI.
@@ -29,7 +31,7 @@ public class MWIResourceEntry extends SCSharedGameData implements ISCFileDefinit
     @Getter @Setter private int checksum;
     @Getter private String filePath;
     @Getter private String sha1Hash;
-    private transient Logger logger;
+    private transient ILogger logger;
     transient int filePathPointerAddress = NO_FILE_NAME_MARKER;
 
     // This flag set seems to be consistent.
@@ -61,7 +63,7 @@ public class MWIResourceEntry extends SCSharedGameData implements ISCFileDefinit
 
         int unpackedSizeWithSafetyMargin;
         if (isOldFormat()) {
-            this.filePath = reader.readTerminatedStringOfLength(OLD_FIXED_FILE_PATH_LENGTH);
+            this.filePath = reader.readNullTerminatedFixedSizeString(OLD_FIXED_FILE_PATH_LENGTH);
             this.flags = reader.readInt();
             warnAboutInvalidBitFlags(this.flags, OLD_FORMAT_VALIDATION_MASK);
             this.typeId = reader.readInt();
@@ -125,7 +127,7 @@ public class MWIResourceEntry extends SCSharedGameData implements ISCFileDefinit
     public void save(DataWriter writer) {
         this.filePathPointerAddress = NO_FILE_NAME_MARKER;
         if (isOldFormat()) {
-            writer.writeTerminatedStringOfLength(this.filePath != null ? this.filePath : "", OLD_FIXED_FILE_PATH_LENGTH);
+            writer.writeNullTerminatedFixedSizeString(this.filePath != null ? this.filePath : "", OLD_FIXED_FILE_PATH_LENGTH);
             writer.writeInt(this.flags);
             writer.writeInt(this.typeId);
             writer.writeInt(this.sectorOffset);
@@ -167,7 +169,7 @@ public class MWIResourceEntry extends SCSharedGameData implements ISCFileDefinit
             return; // No address to write the file name pointer to.
 
         if (!hasFilePath()) {
-            writer.writeAddressAt(this.filePathPointerAddress, NO_FILE_NAME_MARKER);
+            writer.writeIntAtPos(this.filePathPointerAddress, NO_FILE_NAME_MARKER);
             this.filePathPointerAddress = NO_FILE_NAME_MARKER;
             return;
         }
@@ -175,16 +177,16 @@ public class MWIResourceEntry extends SCSharedGameData implements ISCFileDefinit
         // Write the current address to the file path location.
         writer.writeAddressTo(this.filePathPointerAddress);
         this.filePathPointerAddress = NO_FILE_NAME_MARKER;
-        writer.writeTerminatorString(this.filePath);
+        writer.writeNullTerminatedString(this.filePath);
         writer.align(Constants.INTEGER_SIZE);
     }
 
     @Override
-    public Logger getLogger() {
+    public ILogger getLogger() {
         if (this.logger != null)
             return this.logger;
 
-        return this.logger = Logger.getLogger(getLoggerString());
+        return this.logger = new LazyInstanceLogger(getGameInstance(), MWIResourceEntry::getLoggerString, this);
     }
 
     @Override
@@ -196,7 +198,7 @@ public class MWIResourceEntry extends SCSharedGameData implements ISCFileDefinit
      * Get the config active for the game instance.
      */
     public SCGameConfig getConfig() {
-        return getGameInstance().getConfig();
+        return getGameInstance().getVersionConfig();
     }
 
     /**
@@ -318,7 +320,7 @@ public class MWIResourceEntry extends SCSharedGameData implements ISCFileDefinit
             byte[] rawBytes = compressedFileBytes != null ? compressedFileBytes : fileBytes;
             int calculatedChecksum = SCUtils.calculateChecksum(rawBytes);
             if (calculatedChecksum != this.checksum)
-                getLogger().warning("Checksum Mismatch!! MWI Checksum: " + Utils.toHexString(this.checksum) + ", Calculated Checksum: " + Utils.toHexString(calculatedChecksum) + " [Compressed: " + isCompressed() + "]");
+                getLogger().warning("Checksum Mismatch!! MWI Checksum: " + NumberUtils.toHexString(this.checksum) + ", Calculated Checksum: " + NumberUtils.toHexString(calculatedChecksum) + " [Compressed: " + isCompressed() + "]");
         }
 
         if (safetyMarginWordCount != this.safetyMarginWordCount)

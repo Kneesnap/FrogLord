@@ -1,24 +1,26 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.ProxyReact;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Represents the 'kcProjectileParams' struct.
  * Created by Kneesnap on 8/21/2023.
  */
 @Getter
+@Setter
 public class kcProjectileParams extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
-    private ProxyReact proxyReact;
+    private ProxyReact proxyReact = ProxyReact.NOTIFY;
     private float sensorRadius;
-    private int group;
+    private int group; // Bone ID? Not sure.
     private int focus;
     private float mass;
     private float gravity;
@@ -67,14 +69,26 @@ public class kcProjectileParams extends GameData<GreatQuestInstance> implements 
 
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        builder.append(padding).append("Flags: ").append(Utils.toHexString(this.flags)).append(Constants.NEWLINE);
+        builder.append(padding).append("Flags: ").append(NumberUtils.toHexString(this.flags)).append(Constants.NEWLINE);
         builder.append(padding).append("Hit Strength: ").append(this.hitStrength)
-                .append(", Damage Flags: ").append(Utils.toHexString(this.damageFlags)).append(Constants.NEWLINE);
+                .append(", Damage Flags: ").append(NumberUtils.toHexString(this.damageFlags)).append(Constants.NEWLINE);
         builder.append(padding).append("Collision Proxy Reaction: ").append(this.proxyReact).append(Constants.NEWLINE);
         builder.append(padding).append("Sensor Radius: ").append(this.sensorRadius).append(Constants.NEWLINE);
         builder.append(padding).append("Group: ").append(this.group).append(", Focus: ").append(this.focus).append(Constants.NEWLINE);
         builder.append(padding).append("Mass: ").append(this.mass).append(", Gravity: ").append(this.gravity).append(Constants.NEWLINE);
         builder.append(padding).append("Retain Bounce: ").append(this.retainBounce)
                 .append(", Retain Slide: ").append(this.retainSlide).append(Constants.NEWLINE);
+    }
+
+    /**
+     * Sets the reaction type.
+     * @param reactionType The reaction type to apply.
+     */
+    @SuppressWarnings("unused") // Available to Noodle scripts.
+    public void setReactionType(ProxyReact reactionType) {
+        if (reactionType == null)
+            throw new NullPointerException("reactionType");
+
+        this.proxyReact = reactionType;
     }
 }

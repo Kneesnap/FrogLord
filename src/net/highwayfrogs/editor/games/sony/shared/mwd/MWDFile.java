@@ -20,6 +20,8 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
@@ -71,7 +73,7 @@ public class MWDFile extends SCSharedGameData {
         // Read header.
         reader.verifyString(MARKER);
         reader.skipBytesRequireEmpty(Constants.INTEGER_SIZE);
-        this.buildNotes = reader.readTerminatedStringOfLength(BUILD_NOTES_SIZE);
+        this.buildNotes = reader.readNullTerminatedFixedSizeString(BUILD_NOTES_SIZE);
         getGameInstance().getLogger().info("Build Notes: \n" + this.buildNotes + (this.buildNotes.endsWith("\n") ? "" : "\n"));
 
         boolean lastFileLoadSuccess = false;
@@ -122,12 +124,12 @@ public class MWDFile extends SCSharedGameData {
             }
 
             if (entry.getArchiveOffset() != 0)
-                getLogger().warning("Expected archiveOffset to be zero for entry '" + entry.getDisplayName() + "', but it was: " + entry.getSectorOffset() + "/" + Utils.toHexString(entry.getArchiveOffset()) + ".");
+                getLogger().warning("Expected archiveOffset to be zero for entry '" + entry.getDisplayName() + "', but it was: " + entry.getSectorOffset() + "/" + NumberUtils.toHexString(entry.getArchiveOffset()) + ".");
 
             // NOTE: The file names are fully upper-case in the MWI, which may not match the correct file casing.
             // So, on case-sensitive file-systems (eg: Linux), this will fail to find the files. Not sure what we can do about that.
             // Perhaps we can make a function to handle it.
-            String localFilePath = Utils.ensureValidPathSeparator(entry.getFullFilePath(), true);
+            String localFilePath = FileUtils.ensureValidPathSeparator(entry.getFullFilePath(), true);
             File localFile = new File(getGameInstance().getMainGameFolder(), localFilePath);
             if (!localFile.exists() || !localFile.isFile()) {
                 getLogger().severe("Could not find the file '" + localFilePath + "'. If you are on Linux");
@@ -189,7 +191,7 @@ public class MWDFile extends SCSharedGameData {
             DataReader singleFileReader = new DataReader(new ArraySource(fileBytes));
             file.load(singleFileReader);
             if (singleFileReader.hasMore() && file.warnIfEndNotReached()) // Warn if the full file is not read.
-                file.getLogger().warning("File contents were read to index " + Utils.toHexString(singleFileReader.getIndex()) + ", leaving " + singleFileReader.getRemaining() + " bytes unread. (Length: " + Utils.toHexString(fileBytes.length) + ")");
+                file.getLogger().warning("File contents were read to index " + NumberUtils.toHexString(singleFileReader.getIndex()) + ", leaving " + singleFileReader.getRemaining() + " bytes unread. (Length: " + NumberUtils.toHexString(fileBytes.length) + ")");
         } catch (Exception ex) {
             success = false;
             Utils.handleError(getLogger(), ex, false, "Failed to load %s (%d)", mwiEntry.getDisplayName(), mwiEntry.getResourceId());
@@ -280,12 +282,12 @@ public class MWDFile extends SCSharedGameData {
         writer.writeInt(0);
 
         Date date = Date.from(Calendar.getInstance().toInstant());
-        writer.writeTerminatorString("\nCreated by FrogLord"
+        writer.writeNullTerminatedString("\nCreated by FrogLord"
                 + "\nCreation Date: " + DATE_FORMAT.format(date)
                 + "\nCreation Time: " + TIME_FORMAT.format(date)
                 + "\n[BuildInfo]"
                 + "\ngame=" + getGameInstance().getGameType().getIdentifier()
-                + "\ngameVersion=" + getGameInstance().getConfig().getInternalName()
+                + "\ngameVersion=" + getGameInstance().getVersionConfig().getInternalName()
                 + "\nversion=1"
                 + "\n");
         writer.align(Constants.CD_SECTOR_SIZE);
@@ -293,7 +295,7 @@ public class MWDFile extends SCSharedGameData {
         long mwdStart = System.currentTimeMillis();
         for (SCGameFile<?> file : this.files) {
             if ((writer.getIndex() % Constants.CD_SECTOR_SIZE) != 0)
-                throw new RuntimeException("Writer index (" + Utils.toHexString(writer.getIndex()) + ") was not aligned to CD sector size!");
+                throw new RuntimeException("Writer index (" + NumberUtils.toHexString(writer.getIndex()) + ") was not aligned to CD sector size!");
 
             MWIResourceEntry entry = file.getIndexEntry();
             int currentSector = writer.getIndex() / Constants.CD_SECTOR_SIZE;
@@ -456,7 +458,7 @@ public class MWDFile extends SCSharedGameData {
         if (fileDisplayName != null && fileDisplayName.equalsIgnoreCase(fileName))
             return true;
 
-        String fileNameWithoutExtension = fileDisplayName != null ? Utils.stripExtension(fileDisplayName) : null;
+        String fileNameWithoutExtension = fileDisplayName != null ? FileUtils.stripExtension(fileDisplayName) : null;
         if (fileNameWithoutExtension != null && fileNameWithoutExtension.equalsIgnoreCase(fileName))
             return true;
 

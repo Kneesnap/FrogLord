@@ -20,7 +20,9 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -138,7 +140,7 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
     @FXML
     @SneakyThrows
     private void exportImage(ActionEvent event) {
-        File selectedFile = Utils.promptFileSave(getGameInstance(), "Specify the file to export this image as...", null, "Image Files", "png");
+        File selectedFile = FXUtils.promptFileSave(getGameInstance(), "Specify the file to export this image as...", null, "Image Files", "png");
         if (selectedFile != null)
             ImageIO.write(toBufferedImage(this.selectedImage), "png", selectedFile);
     }
@@ -146,7 +148,7 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
     @FXML
     @SneakyThrows
     private void importImage(ActionEvent event) {
-        File selectedFile = Utils.promptFileOpen(getGameInstance(), "Select the image to import...", "Image Files", "png");
+        File selectedFile = FXUtils.promptFileOpen(getGameInstance(), "Select the image to import...", "Image Files", "png");
         if (selectedFile == null)
             return; // Cancelled.
 
@@ -156,7 +158,7 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
 
     @FXML
     private void exportAllImages(ActionEvent event) {
-        File selectedFolder = Utils.promptChooseDirectory(getGameInstance(), "Select the directory to export images to.", true);
+        File selectedFolder = FXUtils.promptChooseDirectory(getGameInstance(), "Select the directory to export images to.", true);
         if (selectedFolder == null)
             return; // Cancelled.
 
@@ -167,15 +169,15 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
     @FXML
     @SneakyThrows
     private void importAllImages(ActionEvent event) {
-        File selectedFolder = Utils.promptChooseDirectory(getGameInstance(), "Select the directory to import images from.", true);
+        File selectedFolder = FXUtils.promptChooseDirectory(getGameInstance(), "Select the directory to import images from.", true);
         if (selectedFolder == null)
             return; // Cancelled.
 
         updateFilter();
         int importedFiles = 0;
-        for (File file : Utils.listFiles(selectedFolder)) {
-            String name = Utils.stripExtension(file.getName());
-            if (!Utils.isInteger(name))
+        for (File file : FileUtils.listFiles(selectedFolder)) {
+            String name = FileUtils.stripExtension(file.getName());
+            if (!NumberUtils.isInteger(name))
                 continue;
 
             int id = Integer.parseInt(name);
@@ -250,7 +252,7 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
             boolean scaleSize = this.sizeChoiceBox.getValue() != ImageControllerViewSetting.ORIGINAL_SIZE;
             this.imageView.setFitWidth(scaleSize ? SCALE_DIMENSION : image.getWidth());
             this.imageView.setFitHeight(scaleSize ? SCALE_DIMENSION : image.getHeight());
-            this.imageView.setImage(Utils.toFXImage(image, false));
+            this.imageView.setImage(FXUtils.toFXImage(image, false));
         }
     }
 

@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.gui.editor;
 
 import javafx.application.ConditionalFeature;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -12,9 +13,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
@@ -25,10 +24,17 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.psx.shading.IPSXShadedMesh;
 import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList.RenderListManager;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.fx.wrapper.FXFixedMouseSplitPaneSkin;
+import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -37,7 +43,6 @@ import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.logging.Logger;
 
 /**
  * Manages the UI which is displayed when a mesh is viewed.
@@ -46,14 +51,14 @@ import java.util.logging.Logger;
 @Getter
 public abstract class MeshViewController<TMesh extends DynamicMesh> implements Initializable {
     // Useful constants and settings
-    public static final double MAP_VIEW_NEAR_CLIP = 0.1;
+    public static final double MAP_VIEW_NEAR_CLIP = 1; // The closer this value is to 0.0, the worse z-fighting gets. Source: https://www.khronos.org/opengl/wiki/Depth_Buffer_Precision
     public static final double MAP_VIEW_FAR_CLIP = 2000.0;
     public static final double MAP_VIEW_FOV = 60.0;
+    private static final int SPLIT_DIVIDER_SIZE = 10;
 
     private final GameInstance gameInstance;
     private SubScene subScene;
-    private Group subScene2DElements;
-    private Logger cachedLogger;
+    private final Map<MeshView, ChangeListener<DrawMode>> meshViewDrawModeListeners = new HashMap<>();
 
     // Baseline UI components
     @FXML private AnchorPane anchorPaneUIRoot;
@@ -66,6 +71,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     @FXML private ComboBox<DrawMode> comboBoxMeshDrawMode;
     @FXML private ComboBox<CullFace> comboBoxMeshCullFace;
     @FXML private CheckBox checkBoxEnablePsxShading;
+    @FXML private Label textureSheetDebugLabel;
     @FXML private ImageView textureSheetDebugView;
     @FXML private ColorPicker colorPickerLevelBackground;
     @FXML private TextField textFieldCamMoveSpeed;
@@ -89,6 +95,8 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
 
     // View Settings
     @FXML private TitledPane viewSettings;
+    @FXML private ScrollPane viewScrollPane;
+    @FXML private VBox viewSettingsBox;
     @FXML private GridPane viewSettingsPane;
 
     // Camera Settings.
@@ -103,8 +111,8 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     private final RenderListManager renderManager = new RenderListManager();
     private final RenderListManager transparentRenderManager = new RenderListManager();
     private final MeshViewFrameTimer frameTimer = new MeshViewFrameTimer(this);
-    private final InputManager inputManager = new InputManager();
-    private final FirstPersonCamera firstPersonCamera = new FirstPersonCamera(this.inputManager);
+    private final InputManager inputManager;
+    private final FirstPersonCamera firstPersonCamera;
 
     // Instance Data:
     private TMesh mesh;
@@ -112,6 +120,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
 
     // Mesh Rendering:
     private MeshView meshView;
+    private AnchorPane root2D;
     private Group root3D;
     private Scene meshScene;
     private Scene originalScene;
@@ -128,6 +137,8 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
 
     protected MeshViewController(GameInstance instance) {
         this.gameInstance = instance;
+        this.inputManager = new InputManager(instance);
+        this.firstPersonCamera = new FirstPersonCamera(this.inputManager);
     }
 
     @Override
@@ -138,11 +149,8 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     /**
      * Get the logger for this controller.
      */
-    public Logger getLogger() {
-        if (this.cachedLogger != null)
-            return this.cachedLogger;
-
-        return this.cachedLogger = Logger.getLogger(Utils.getSimpleName(this));
+    public ILogger getLogger() {
+        return ClassNameLogger.getLogger(getGameInstance(), getClass());
     }
 
     /**
@@ -234,6 +242,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         SubScene subScene3D = new SubScene(this.root3D, stageToOverride.getScene().getWidth() - uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.DISABLED);
         subScene3D.setFill(Color.BLACK);
         subScene3D.setCamera(this.firstPersonCamera.getCamera());
+        subScene3D.setManaged(false); // Prevents the SubScene from impacting its parent node size.
 
         // Ensure that the render manager has access to the root node
         Group normalGroup = new Group();
@@ -243,20 +252,30 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         this.renderManager.setRoot(normalGroup);
         this.transparentRenderManager.setRoot(transparentGroup);
 
+        // Using a BorderPane attempts to size it properly.
+        BorderPane borderPane3D = new BorderPane();
+        borderPane3D.setCenter(subScene3D);
+
         // Initialise the UI layout.
-        BorderPane uiPane = new BorderPane();
-        uiPane.setLeft(loadRoot);
-        this.subScene2DElements = new Group();
-        this.subScene2DElements.getChildren().add(subScene3D);
-        uiPane.setCenter(this.subScene2DElements);
+        SplitPane splitPane = new SplitPane();
+        splitPane.setSkin(new FXFixedMouseSplitPaneSkin(splitPane)); // Prevents mouse events from getting eaten.
+        SplitPane.setResizableWithParent(loadRoot, false);
+        SplitPane.setResizableWithParent(borderPane3D, true);
+        splitPane.setDividerPositions(.2);
+        splitPane.getItems().addAll(loadRoot, borderPane3D);
+
+        // Setup the root node. (This exists so we can also add 2D elements above the 3D space.
+        this.root2D = new AnchorPane();
+        GameUIController.setAnchorPaneStretch(splitPane);
+        this.root2D.getChildren().add(splitPane);
 
         // Create and set the scene with antialiasing.
-        this.meshScene = new Scene(uiPane, -1, -1, true, SceneAntialiasing.DISABLED);
-        this.originalScene = Utils.setSceneKeepPosition(stageToOverride, this.meshScene);
+        this.meshScene = new Scene(this.root2D, subScene3D.getWidth(), subScene3D.getHeight(), true, SceneAntialiasing.DISABLED);
+        this.originalScene = FXUtils.setSceneKeepPosition(stageToOverride, this.meshScene);
 
         // Handle scaling of SubScene on stage resizing.
-        this.meshScene.widthProperty().addListener((observable, old, newVal) -> subScene3D.setWidth(newVal.doubleValue() - uiRootPaneWidth()));
-        subScene3D.heightProperty().bind(this.meshScene.heightProperty());
+        subScene3D.widthProperty().bind(borderPane3D.widthProperty());
+        subScene3D.heightProperty().bind(borderPane3D.heightProperty());
 
         // Associate camera controls with the scene.
         this.firstPersonCamera.assignSceneControls(stageToOverride, this.meshScene);
@@ -288,12 +307,12 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                 }
 
                 getMesh().removeView(getMeshView()); // Remove view from mesh.
-                Utils.setSceneKeepPosition(this.overwrittenStage, this.originalScene);
+                FXUtils.setSceneKeepPosition(this.overwrittenStage, this.originalScene);
                 this.root3D.getChildren().clear(); // Clear data to avoid memory leak.
             } else if (event.getCode() == KeyCode.F9) { // Print mesh information.
                 getMesh().printDebugMeshInfo();
             } else if (event.getCode() == KeyCode.F10) { // Take screenshot.
-                Utils.takeScreenshot(null, this.subScene, getMeshScene(), Utils.stripExtension(getMeshDisplayName()), false);
+                Scene3DUtils.takeScreenshot(null, this.subScene, getMeshScene(), FileUtils.stripExtension(getMeshDisplayName()), false);
             } else if (event.getCode() == KeyCode.F12 && getMesh().getTextureAtlas() != null) {
 
                 if (getMesh().getTextureAtlas().getTextureSource().isEnableAwtImage()) {
@@ -301,7 +320,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                     try {
                         ImageIO.write(getMesh().getTextureAtlas().getImage(), "png", new File(GUIMain.getWorkingDirectory(), "texture-sheet-awt.png"));
                     } catch (IOException ex) {
-                        Utils.makeErrorPopUp("Failed to save 'texture-sheet-awt.png'.", ex, true);
+                        FXUtils.makeErrorPopUp("Failed to save 'texture-sheet-awt.png'.", ex, true);
                     }
                 }
 
@@ -310,7 +329,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                     try {
                         ImageIO.write(SwingFXUtils.fromFXImage(getMesh().getTextureAtlas().getFxImage(), null), "png", new File(GUIMain.getWorkingDirectory(), "texture-sheet-fx.png"));
                     } catch (IOException ex) {
-                        Utils.makeErrorPopUp("Failed to save 'texture-sheet-fx.png'.", ex, true);
+                        FXUtils.makeErrorPopUp("Failed to save 'texture-sheet-fx.png'.", ex, true);
                     }
                 }
             } else if ((event.isControlDown() && event.getCode() == KeyCode.ENTER)) { // Toggle full-screen.
@@ -357,6 +376,23 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     }
 
     /**
+     * Adds two nodes to the view settings grid.
+     * @param leftNode the node to place in the left column
+     * @param rightNode the node to place in the right column
+     */
+    protected void addToViewSettingsGrid(Node leftNode, Node rightNode) {
+        int oldSize = getViewSettingsPane().getRowConstraints().size();
+        RowConstraints example = getViewSettingsPane().getRowConstraints().get(0);
+        getViewSettingsPane().getRowConstraints().add(new RowConstraints(example.getMinHeight(), example.getPrefHeight(), example.getMaxHeight(), example.getVgrow(), example.getValignment(), example.isFillHeight()));
+        GridPane.setColumnIndex(leftNode, 0);
+        GridPane.setColumnIndex(rightNode, 1);
+        GridPane.setRowIndex(leftNode, oldSize);
+        GridPane.setRowIndex(rightNode, oldSize);
+        getViewSettingsPane().getChildren().add(leftNode);
+        getViewSettingsPane().getChildren().add(rightNode);
+    }
+
+    /**
      * If this is true, it gives a preference to 3D models having transparency over the world.
      */
     protected boolean mapRendersFirst() {
@@ -393,14 +429,14 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
      * Get the root pane width.
      */
     public double uiRootPaneWidth() {
-        return anchorPaneUIRoot.getPrefWidth();
+        return anchorPaneUIRoot.getWidth();
     }
 
     /**
      * Get the root pane height.
      */
     public double uiRootPaneHeight() {
-        return anchorPaneUIRoot.getPrefHeight();
+        return anchorPaneUIRoot.getHeight();
     }
 
     /**
@@ -463,8 +499,11 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
             this.checkBoxEnablePsxShading.setDisable(true);
         }
 
-        if (getMesh().getMaterialFxImage() != null)
+        if (getMesh().getMaterial() != null) {
             this.textureSheetDebugView.imageProperty().bind(getMesh().getMaterial().diffuseMapProperty());
+        } else {
+            this.viewSettingsBox.getChildren().removeAll(this.textureSheetDebugLabel, this.textureSheetDebugView);
+        }
 
         // Must be called after FroggerMapInfoUIController is passed.
         runForEachManager(MeshUIManager::onSetup, "onSetup"); // Setup all the managers.
@@ -502,9 +541,9 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         final double lineSize = getAxisDisplaySize();
 
         this.axisDisplayList = getRenderManager().createDisplayListWithNewGroup();
-        this.axisDisplayList.addLine(0, 0, 0, axisLength, 0, 0, lineSize, Utils.makeUnlitSharpMaterial(Color.RED)); // X Axis.
-        this.axisDisplayList.addLine(0, 0, 0, 0, axisLength, 0, lineSize, Utils.makeUnlitSharpMaterial(Color.GREEN)); // Y Axis.
-        this.axisDisplayList.addLine(0, 0, 0, 0, 0, axisLength, lineSize, Utils.makeUnlitSharpMaterial(Color.BLUE)); // Z Axis.
+        this.axisDisplayList.addLine(0, 0, 0, axisLength, 0, 0, lineSize, Scene3DUtils.makeUnlitSharpMaterial(Color.RED)); // X Axis.
+        this.axisDisplayList.addLine(0, 0, 0, 0, axisLength, 0, lineSize, Scene3DUtils.makeUnlitSharpMaterial(Color.GREEN)); // Y Axis.
+        this.axisDisplayList.addLine(0, 0, 0, 0, 0, axisLength, lineSize, Scene3DUtils.makeUnlitSharpMaterial(Color.BLUE)); // Z Axis.
 
         this.axisDisplayList.setVisible(this.checkBoxShowAxis.isSelected());
         this.checkBoxShowAxis.selectedProperty().addListener((listener, oldValue, newValue) -> this.axisDisplayList.setVisible(newValue));
@@ -559,6 +598,22 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     }
 
     /**
+     * Sets up the default inverse camera.
+     */
+    protected void setupDefaultInverseCamera() {
+        setupDefaultInverseCamera(0, 0, 0, 25);
+    }
+
+    /**
+     * Sets up the default inverse camera.
+     */
+    protected void setupDefaultInverseCamera(double xPos, double yPos, double zPos, double size) {
+        getFirstPersonCamera().setInvertY(true);
+        getFirstPersonCamera().setPos(xPos, yPos + size, zPos);
+        getFirstPersonCamera().setCameraLookAt(xPos, yPos, zPos + size);
+    }
+
+    /**
      * Bind mesh scene controls to the provided MeshView.
      * @param controller the controller to bind the controls from
      * @param meshView the meshView to bind the controls to
@@ -570,6 +625,16 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         controller.getCheckBoxShowMesh().selectedProperty().bindBidirectional(meshView.visibleProperty());
         controller.getComboBoxMeshDrawMode().valueProperty().bindBidirectional(meshView.drawModeProperty());
         controller.getComboBoxMeshCullFace().valueProperty().bindBidirectional(meshView.cullFaceProperty());
+
+        if (!meshView.isMouseTransparent()) {
+            ChangeListener<DrawMode> drawModeChangeListener =
+                    (observable, oldMode, newMode) -> meshView.setMouseTransparent(newMode != DrawMode.FILL);
+
+            if (controller.meshViewDrawModeListeners.put(meshView, drawModeChangeListener) != null)
+                controller.getLogger().warning("drawModeChangeListener is already set!");
+
+            meshView.drawModeProperty().addListener(drawModeChangeListener);
+        }
     }
 
     /**
@@ -581,6 +646,10 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         controller.getCheckBoxShowMesh().selectedProperty().unbindBidirectional(meshView.visibleProperty());
         controller.getComboBoxMeshDrawMode().valueProperty().unbindBidirectional(meshView.drawModeProperty());
         controller.getComboBoxMeshCullFace().valueProperty().unbindBidirectional(meshView.cullFaceProperty());
+
+        ChangeListener<DrawMode> drawModeChangeListener = controller.meshViewDrawModeListeners.remove(meshView);
+        if (drawModeChangeListener != null)
+            meshView.drawModeProperty().removeListener(drawModeChangeListener);
     }
 
     /**
@@ -610,7 +679,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
      */
     public static <TController extends MeshViewController<TDynMesh>, TDynMesh extends DynamicMesh> TController setupMeshViewer(Stage stageToOverride, TController controller, TDynMesh mesh) {
         if (!Platform.isSupported(ConditionalFeature.SCENE3D)) {
-            Utils.makePopUp("Your version of JavaFX does not support 3D, so meshes cannot be previewed.", AlertType.WARNING);
+            FXUtils.makePopUp("Your version of JavaFX does not support 3D, so meshes cannot be previewed.", AlertType.WARNING);
             return null;
         }
 

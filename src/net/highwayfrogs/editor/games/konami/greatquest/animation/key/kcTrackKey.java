@@ -3,10 +3,11 @@ package net.highwayfrogs.editor.games.konami.greatquest.animation.key;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.GameData;
+import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.kcControlType;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton.kcNode;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -14,9 +15,9 @@ import net.highwayfrogs.editor.utils.Utils;
  * Created by Kneesnap on 5/2/2024.
  */
 @Getter
-public abstract class kcTrackKey extends GameData<GreatQuestInstance> implements IInfoWriter {
+public abstract class kcTrackKey<TSelf extends kcTrackKey<TSelf>> extends GameData<GreatQuestInstance> implements IInfoWriter {
     private final kcControlType controlType; // NOTE: Consider making not final later.
-    private int timeStamp; // TODO: Turn into more widely recognized units.
+    private int tick;
 
     public kcTrackKey(GreatQuestInstance instance, kcControlType controlType) {
         super(instance);
@@ -28,7 +29,7 @@ public abstract class kcTrackKey extends GameData<GreatQuestInstance> implements
         int startIndex = reader.getIndex();
         int expectedByteLength = getExpectedDataByteLength();
         int expectedEndIndex = startIndex + expectedByteLength;
-        this.timeStamp = reader.readInt();
+        this.tick = reader.readInt();
 
         try {
             loadKeyData(reader, expectedEndIndex);
@@ -54,7 +55,7 @@ public abstract class kcTrackKey extends GameData<GreatQuestInstance> implements
         int expectedEndIndex = startIndex + expectedKeyDataLength;
 
         // Write key data.
-        writer.writeInt(this.timeStamp);
+        writer.writeInt(this.tick);
 
         try {
             saveKeyData(writer, expectedEndIndex);
@@ -87,11 +88,41 @@ public abstract class kcTrackKey extends GameData<GreatQuestInstance> implements
      */
     protected abstract void saveKeyData(DataWriter writer, int dataEndIndex);
 
+    /**
+     * Interpolates the value between the previous value and the current one, then applies it to the target system.
+     * @param node the bone which is
+     * @param previousKey the previous key to apply the interpolated value to
+     * @param state the state to apply the interpolated value to
+     * @param t a value between 0.0 and 1.0 representing how much to include from each
+     */
+    protected abstract void applyInterpolateValueImpl(kcNode node, TSelf previousKey, kcAnimState state, float t);
+
+    /**
+     * Interpolates the value between the previous value and the current one, then applies it to the target system.
+     * @param node the bone which is
+     * @param previousKey the previous key to apply the interpolated value to
+     * @param state the state to apply the interpolated value to
+     * @param t a value between 0.0 and 1.0 representing how much to include from each
+     */
+    @SuppressWarnings("unchecked")
+    public void applyInterpolateValue(kcNode node, kcTrackKey<?> previousKey, kcAnimState state, float t) {
+        if (previousKey != null && !getClass().isInstance(previousKey))
+            throw new ClassCastException("Cannot use track key " + Utils.getSimpleName(previousKey) + " as if it is a " + getClass().getSimpleName() + ".");
+
+        this.applyInterpolateValueImpl(node, (TSelf) previousKey, state, t);
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
         writeInfo(builder);
         return builder.toString();
+    }
+
+    @Override
+    public void writeInfo(StringBuilder builder) {
+        builder.append(Utils.getSimpleName(this)).append("['").append(getControlType())
+                .append("']: Timestamp=").append(this.tick);
     }
 
     /**

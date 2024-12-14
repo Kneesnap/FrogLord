@@ -30,11 +30,30 @@ public class IntList {
         return indexOf(value) != -1;
     }
 
+    public boolean isArrayFull() {
+        return this.size >= this.array.length;
+    }
+
     public boolean add(int value) {
-        if (this.size == this.array.length - 1)
+        if (isArrayFull())
             resize(this.array.length * 2);
 
         this.array[this.size++] = value;
+        return false;
+    }
+
+    public boolean add(int index, int value) {
+        if (isArrayFull())
+            resize(this.array.length * 2);
+
+        if (this.size == index) {
+            add(value);
+        } else {
+            System.arraycopy(this.array, index, this.array, index + 1, this.size - index);
+            this.array[index] = value;
+            this.size++;
+        }
+
         return false;
     }
 
@@ -74,5 +93,9 @@ public class IntList {
 
     public int[] getArray() {
         return Arrays.copyOf(array, this.size);
+    }
+
+    public int[] getInternalArray() {
+        return this.array;
     }
 }

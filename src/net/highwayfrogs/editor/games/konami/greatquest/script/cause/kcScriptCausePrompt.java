@@ -1,20 +1,26 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
 
 /**
  * Caused by the player responding to a prompt.
  * This functionality is unused in unmodified gameplay.
+ * It does not appear to be possible to actually show a prompt to the player, attempting to do so will instead immediately trigger this cause with a hash of zero.
  * Created by Kneesnap on 8/17/2023.
  */
+@Getter
 public class kcScriptCausePrompt extends kcScriptCause {
     private int promptHash;
 
-    public kcScriptCausePrompt(GreatQuestInstance gameInstance) {
-        super(gameInstance, kcScriptCauseType.PROMPT, 1);
+    public kcScriptCausePrompt(kcScript script) {
+        super(script, kcScriptCauseType.PROMPT, 1, 1);
     }
 
     @Override
@@ -32,9 +38,35 @@ public class kcScriptCausePrompt extends kcScriptCause {
     }
 
     @Override
+    protected void loadArguments(OptionalArguments arguments) {
+        this.promptHash = GreatQuestUtils.getAsHash(arguments.useNext(), 0);
+    }
+
+    @Override
+    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+        kcScriptDisplaySettings.applyGqsSyntaxHashDisplay(arguments.createNext(), settings, this.promptHash);
+    }
+
+    @Override
+    public void printWarnings(ILogger logger) {
+        super.printWarnings(logger);
+        printWarning(logger, "is not supported by the game.");
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode() ^ this.promptHash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj) && ((kcScriptCausePrompt) obj).getPromptHash() == this.promptHash;
+    }
+
+    @Override
     public void toString(StringBuilder builder, kcScriptDisplaySettings settings) {
         builder.append("The player responds to the dialog prompt ");
         builder.append(kcScriptDisplaySettings.getHashDisplay(settings, this.promptHash, true));
-        builder.append(" (This feature appears unfinished/not working)");
+        builder.append(". (This feature was not finished, so it will not work properly)");
     }
 }

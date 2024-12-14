@@ -4,9 +4,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.system.mm3d.OffsetType;
@@ -24,7 +25,9 @@ public class MMSkeletalAnimationBlock extends MMDataBlockBody {
     private short flags;
     private String name;
     private float fps;
-    private List<List<MMSkeletalAnimationFrame>> frames = new ArrayList<>();
+    private final List<List<MMSkeletalAnimationFrame>> frames = new ArrayList<>();
+
+    public static final int FLAG_LOOPING = Constants.BIT_FLAG_0; // 1.7+
 
     public MMSkeletalAnimationBlock(MisfitModel3DObject parent) {
         super(OffsetType.SKELETAL_ANIMATIONS, parent);
@@ -54,7 +57,7 @@ public class MMSkeletalAnimationBlock extends MMDataBlockBody {
     @Override
     public void save(DataWriter writer) {
         writer.writeShort(this.flags);
-        writer.writeTerminatorString(this.name);
+        writer.writeNullTerminatedString(this.name);
         writer.writeFloat(this.fps);
 
         // Write frames.
@@ -70,7 +73,7 @@ public class MMSkeletalAnimationBlock extends MMDataBlockBody {
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class MMSkeletalAnimationFrame extends GameObject {
+    public static class MMSkeletalAnimationFrame implements IBinarySerializable {
         private int jointIndex;
         private MMAnimationKeyframeType keyframeType;
         private float posX; // In radians, might be transform, might be rotation.

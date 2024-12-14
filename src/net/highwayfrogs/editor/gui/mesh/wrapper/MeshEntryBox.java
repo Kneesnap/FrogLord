@@ -4,8 +4,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
-
-import java.util.logging.Logger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 /**
  * Represents a 3D box part of a DynamicMeshDataEntry.
@@ -67,7 +66,7 @@ public class MeshEntryBox {
         }
     }
 
-    private Logger getLogger() {
+    private ILogger getLogger() {
         return this.entry.getMesh().getLogger();
     }
 

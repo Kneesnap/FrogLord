@@ -37,6 +37,9 @@ import net.highwayfrogs.editor.gui.texture.atlas.AtlasTexture;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.*;
@@ -334,7 +337,7 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
                             if (textureSource == null)
                                 textureSource = UnknownTextureSource.MAGENTA_INSTANCE;
 
-                            Image fxImage = cachedImageMap.computeIfAbsent(textureSource, texSource -> Utils.toFXImage(texSource.makeImage(), false));
+                            Image fxImage = cachedImageMap.computeIfAbsent(textureSource, texSource -> FXUtils.toFXImage(texSource.makeImage(), false));
                             this.graphics.drawImage(fxImage, textureSource.getLeftPadding(), textureSource.getUpPadding(), textureSource.getUnpaddedWidth(), textureSource.getUnpaddedHeight(), xPos, yPos, this.tileWidth, this.tileHeight);
                         }
 
@@ -476,7 +479,7 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
     @FXML
     private void onUpdateHeight(ActionEvent evt) {
         String text = this.stackHeightField.getText();
-        if (Utils.isNumber(text)) {
+        if (NumberUtils.isNumber(text)) {
             this.stackHeightField.setStyle(null);
             this.selectedStacks.forEach(stack -> stack.setAverageWorldHeight(Float.parseFloat(text)));
         } else {
@@ -664,7 +667,7 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
 
             if (checkBox == null) {
                 // Create new.
-                CheckBox newCheckBox = new CheckBox(Utils.capitalize(flag.name()));
+                CheckBox newCheckBox = new CheckBox(StringUtils.capitalize(flag.name()));
                 newCheckBox.setAllowIndeterminate(false);
                 if (flag.getTooltipDescription() != null)
                     newCheckBox.setTooltip(new Tooltip(flag.getTooltipDescription()));
@@ -793,7 +796,7 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
 
         // Handle the edits.
         // We make a new key press handler each time to avoid a partially modified text field from having its old value bleed in after a new offset is put in the text field.
-        Utils.setHandleKeyPress(textField, newText -> {
+        FXUtils.setHandleKeyPress(textField, newText -> {
             FroggerMapCameraZone safeCamZone = getActiveCameraZone();
             if (safeCamZone == null) { // Shouldn't occur.
                 updateCameraZoneUI();
@@ -878,6 +881,6 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
      * @param controller The mesh manager.
      */
     public static void openGridEditor(FroggerMapMeshController controller) {
-        Utils.createWindowFromFXMLTemplate("window-edit-map-collision-grid", new FroggerUIGridManager(controller), "Grid Editor", true);
+        FXUtils.createWindowFromFXMLTemplate("window-edit-map-collision-grid", new FroggerUIGridManager(controller), "Grid Editor", true);
     }
 }

@@ -14,6 +14,8 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.Proper
 import net.highwayfrogs.editor.gui.texture.BufferedImageWrapper;
 import net.highwayfrogs.editor.gui.texture.atlas.SequentialTextureAtlas;
 import net.highwayfrogs.editor.gui.texture.atlas.TextureAtlas;
+import net.highwayfrogs.editor.utils.ColorUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import javax.imageio.ImageIO;
@@ -87,7 +89,7 @@ public class BeastWarsTexFile extends SCGameFile<BeastWarsInstance> {
                     byte blue = reader.readByte();
                     byte green = reader.readByte();
                     byte red = reader.readByte();
-                    newImage.setRGB(x, y, Utils.toARGB(red, green, blue, alpha != 0 ? alpha : (byte) 0xFF));
+                    newImage.setRGB(x, y, ColorUtils.toARGB(red, green, blue, alpha != 0 ? alpha : (byte) 0xFF));
                 }
             }
 
@@ -153,7 +155,7 @@ public class BeastWarsTexFile extends SCGameFile<BeastWarsInstance> {
         }
 
         // Write size.
-        writer.writeAddressAt(sizePtr, writer.getIndex() - sizePtr);
+        writer.writeIntAtPos(sizePtr, writer.getIndex() - sizePtr);
     }
 
     private void writePcImages(DataWriter writer) {
@@ -162,11 +164,11 @@ public class BeastWarsTexFile extends SCGameFile<BeastWarsInstance> {
             for (int y = 0; y < TEXTURE_DIMENSION; y++) {
                 for (int x = 0; x < TEXTURE_DIMENSION; x++) {
                     int argbColor = image.getRGB(x, y);
-                    byte alpha = Utils.getAlpha(argbColor);
+                    byte alpha = ColorUtils.getAlpha(argbColor);
                     writer.writeByte(alpha == (byte) 0xFF ? 0x00 : alpha);
-                    writer.writeByte(Utils.getBlue(argbColor));
-                    writer.writeByte(Utils.getGreen(argbColor));
-                    writer.writeByte(Utils.getRed(argbColor));
+                    writer.writeByte(ColorUtils.getBlue(argbColor));
+                    writer.writeByte(ColorUtils.getGreen(argbColor));
+                    writer.writeByte(ColorUtils.getRed(argbColor));
                 }
             }
         }
@@ -265,7 +267,7 @@ public class BeastWarsTexFile extends SCGameFile<BeastWarsInstance> {
     @Override
     @SneakyThrows
     public void exportAlternateFormat() {
-        ImageIO.write(createTextureMap(), "png", new File(GUIMain.getWorkingDirectory(), Utils.stripExtension(getFileDisplayName()) + ".png"));
+        ImageIO.write(createTextureMap(), "png", new File(GUIMain.getWorkingDirectory(), FileUtils.stripExtension(getFileDisplayName()) + ".png"));
         getLogger().info("Exported texture map Image.");
     }
 

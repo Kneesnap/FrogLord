@@ -28,11 +28,18 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
     @Setter private FroggerMapStartRotation startRotation = FroggerMapStartRotation.NORTH;
     private FroggerMapTheme mapTheme = FroggerMapTheme.SUBURBIA;
     @Setter private int startingTimeLimit = 99;
-    private final SVector defaultCameraSourceOffset = new SVector();
-    private final SVector defaultCameraTargetOffset = new SVector();
+    private final SVector defaultCameraSourceOffset = new SVector(); // Applied when there is no ZONE for the active area. (If there is a zone, the source/target of the zone will be used.)
+    private final SVector defaultCameraTargetOffset = new SVector(); // Further usage described below.
     private short frogRedLighting;
     private short frogGreenLighting;
     private short frogBlueLighting;
+
+    // Camera offsets are used for several different things:
+    // The height in ORG when there are at least 2 players is multiplied by 1.5x in InitialiseCameras()
+    // In multiplayer, the following scenarios the camera(s) will reset to use the default offsets.
+    //  - When a tie occurs, all cameras
+    //  - When a player collects a checkpoint and the game is not complete, their camera
+    //  - When a player resets from death, their camera
 
     private static final int TOTAL_CHECKPOINT_TIMER_ENTRIES = 5;
     private static final int GAME_PERSPECTIVE = 192;

@@ -11,17 +11,25 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
 import javafx.stage.Stage;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.system.math.Vector3f;
+import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
-import java.util.*;
-import java.util.logging.Logger;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This tracks keyboard and mouse input for usage primarily in 3D environments.
  * Created by Kneesnap on 1/2/2024.
  */
+@RequiredArgsConstructor
 public class InputManager {
+    private final GameInstance gameInstance;
     private final Map<KeyCode, List<KeyHandler>> keySpecificHandlers = new HashMap<>();
     private final ChangeListener<? super Boolean> stageInputListener = this::onStageFocusChange;
     private final List<KeyHandler> keyHandlers = new ArrayList<>();
@@ -34,7 +42,7 @@ public class InputManager {
     @Getter private final MouseInputState lastDragStartMouseState = new MouseInputState();
     @Getter private final MouseInputState lastMouseState = new MouseInputState();
     @Getter private final MouseInputState mouseState = new MouseInputState();
-    private Logger cachedLogger;
+    @Getter private boolean significantMouseDragRecorded;
 
     public interface KeyHandler {
         void accept(InputManager manager, KeyEvent event);
@@ -268,6 +276,7 @@ public class InputManager {
         double mouseDeltaX = 0;
         double mouseDeltaY = 0;
         if (evt.getEventType().equals(MouseEvent.MOUSE_PRESSED)) {
+            this.significantMouseDragRecorded = false;
             this.lastDragStartMouseState.apply(evt);
             this.lastMouseState.apply(evt);
             this.mouseState.apply(evt);
@@ -276,6 +285,8 @@ public class InputManager {
             this.mouseState.apply(evt);
             mouseDeltaX = (this.mouseState.getX() - this.lastMouseState.getX());
             mouseDeltaY = (this.mouseState.getY() - this.lastMouseState.getY());
+            if (Math.abs(this.mouseState.getX() - this.lastDragStartMouseState.getX()) >= 4 || Math.abs(this.mouseState.getY() - this.lastDragStartMouseState.getY()) >= 4)
+                this.significantMouseDragRecorded = true;
         }
 
         // Send out mouse event handlers for the specific mouse event.
@@ -326,11 +337,8 @@ public class InputManager {
     /**
      * Gets the logger for this class.
      */
-    private Logger getLogger() {
-        if (this.cachedLogger != null)
-            return this.cachedLogger;
-
-        return this.cachedLogger = Logger.getLogger("InputManager");
+    private ILogger getLogger() {
+        return ClassNameLogger.getLogger(this.gameInstance, getClass());
     }
 
     /**

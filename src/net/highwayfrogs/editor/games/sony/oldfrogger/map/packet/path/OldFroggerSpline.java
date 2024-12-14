@@ -11,7 +11,7 @@ import net.highwayfrogs.editor.games.sony.shared.spline.MRSplineHermite;
 import net.highwayfrogs.editor.games.sony.shared.spline.MRSplineMatrix;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
 
 import java.util.Arrays;
 
@@ -230,10 +230,10 @@ public class OldFroggerSpline extends SCSharedGameData {
      * @return tPercentages
      */
     public float[] calculateSmoothing() {
-        float length = Utils.fixedPointIntToFloat4Bit(calculateLength());
+        float length = DataUtils.fixedPointIntToFloat4Bit(calculateLength());
         float[] result = new float[4];
         for (int i = 0; i < result.length; i++)
-            result[i] = Utils.fixedPointIntToFloatNBits(this.smoothT[i], 12) / length;
+            result[i] = DataUtils.fixedPointIntToFloatNBits(this.smoothT[i], 12) / length;
         return result;
     }
 
@@ -242,9 +242,9 @@ public class OldFroggerSpline extends SCSharedGameData {
      * @param smoothingT The amount of distance each segment takes up. [0,1]
      */
     public void loadSmoothT(float[] smoothingT) {
-        float length = Utils.fixedPointIntToFloat4Bit(calculateLength());
+        float length = DataUtils.fixedPointIntToFloat4Bit(calculateLength());
         for (int i = 0; i < this.smoothT.length; i++)
-            this.smoothT[i] = Utils.floatToFixedPointInt((length * smoothingT[i]), 12);
+            this.smoothT[i] = DataUtils.floatToFixedPointInt((length * smoothingT[i]), 12);
     }
 
     /**

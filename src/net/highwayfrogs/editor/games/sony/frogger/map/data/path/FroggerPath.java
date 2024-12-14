@@ -12,11 +12,14 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.path.segments.Frogger
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketPath;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapPathManager.FroggerPathPreview;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Represents the PATH struct.
@@ -74,7 +77,7 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
             return;
         }
         if (this.tempEntityIndexPointer <= 0)
-            throw new RuntimeException("Cannot read path entity list, the pointer " + Utils.toHexString(this.tempEntityIndexPointer) + " is invalid.");
+            throw new RuntimeException("Cannot read path entity list, the pointer " + NumberUtils.toHexString(this.tempEntityIndexPointer) + " is invalid.");
 
         // The entity packet must have been read.
         if (this.mapFile.getEntityPacket() == null || !this.mapFile.getEntityPacket().isActive())
@@ -170,7 +173,7 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
             return;
         }
         if (this.tempEntityIndexPointer <= 0)
-            throw new RuntimeException("Cannot write path entity list, the pointer " + Utils.toHexString(this.tempEntityIndexPointer) + " is invalid.");
+            throw new RuntimeException("Cannot write path entity list, the pointer " + NumberUtils.toHexString(this.tempEntityIndexPointer) + " is invalid.");
 
         // Test if there are any entities which would make us save the entity list.
         List<FroggerMapEntity> pathEntities = recalculateListOfEntitiesUsingPath();
@@ -218,8 +221,8 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
     }
 
     @Override
-    public Logger getLogger() {
-        return Logger.getLogger(getLoggerInfo());
+    public ILogger getLogger() {
+        return new LazyInstanceLogger(getGameInstance(), FroggerPath::getLoggerInfo, this);
     }
 
     /**
@@ -292,7 +295,7 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
      * @return totalLength
      */
     public float calculateTotalLengthFloat() {
-        return Utils.fixedPointIntToFloat4Bit(calculateTotalLength());
+        return DataUtils.fixedPointIntToFloat4Bit(calculateTotalLength());
     }
 
     /**

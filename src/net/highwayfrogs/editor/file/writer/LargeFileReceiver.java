@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.file.writer;
 
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,7 +18,7 @@ public class LargeFileReceiver implements DataReceiver {
     @SneakyThrows
     public LargeFileReceiver(File file) {
         this.targetFile = file;
-        Utils.deleteFile(file);
+        FileUtils.deleteFile(file);
         this.randomAccessFile = new RandomAccessFile(file, "rw");
     }
 

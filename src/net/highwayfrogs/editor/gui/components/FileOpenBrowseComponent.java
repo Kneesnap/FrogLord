@@ -16,7 +16,10 @@ import net.highwayfrogs.editor.gui.GameConfigController.GameConfigUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
+import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
+import net.highwayfrogs.editor.utils.StringUtils;
 
 import java.io.File;
 import java.util.Objects;
@@ -72,7 +75,8 @@ public abstract class FileOpenBrowseComponent extends GameUIController<GameInsta
         browseButton.setOnMouseClicked(event -> {
             event.consume();
             String oldFilePath = getCurrentFilePath();
-            File selectedFile = Utils.promptFileOpenExtensions(null, fileOpenPromptTitle, fileOpenPromptTypeInfo, fileExtensions);
+            SavedFilePath pathConfig = new SavedFilePath(this.fileIdLabel.getText(), fileOpenPromptTitle, new BrowserFileType(fileOpenPromptTypeInfo, fileExtensions));
+            File selectedFile = FileUtils.askUserToOpenFile(null, pathConfig);
             if (selectedFile != null) {
                 String newFilePath = selectedFile.getAbsolutePath();
                 if (!Objects.equals(oldFilePath, newFilePath)) {
@@ -105,7 +109,7 @@ public abstract class FileOpenBrowseComponent extends GameUIController<GameInsta
     public void onSceneAdd(Scene newScene) {
         super.onSceneAdd(newScene);
         String startFilePath = getStartingFilePath();
-        if (!Utils.isNullOrWhiteSpace(startFilePath) && Utils.isNullOrWhiteSpace(getCurrentFilePath()))
+        if (!StringUtils.isNullOrWhiteSpace(startFilePath) && StringUtils.isNullOrWhiteSpace(getCurrentFilePath()))
             this.filePathField.setText(startFilePath);
     }
 
@@ -191,9 +195,9 @@ public abstract class FileOpenBrowseComponent extends GameUIController<GameInsta
         @Override
         protected void onSetFilePath(String newFilePath) {
             if (this.gameConfig != null) {
-                this.gameConfig.getOrCreateKeyValueNode(this.configKey).setValue(newFilePath);
+                this.gameConfig.getOrCreateKeyValueNode(this.configKey).setAsString(newFilePath);
                 if (GUIMain.getWorkingDirectory() != null)
-                    this.gameConfig.getOrCreateKeyValueNode(GameConfigController.CONFIG_GAME_LAST_FOLDER).setValue(GUIMain.getWorkingDirectory().getAbsolutePath());
+                    this.gameConfig.getOrCreateKeyValueNode(GameConfigController.CONFIG_GAME_LAST_FOLDER).setAsString(GUIMain.getWorkingDirectory().getAbsolutePath());
             }
 
             this.controller.updateLoadButton();

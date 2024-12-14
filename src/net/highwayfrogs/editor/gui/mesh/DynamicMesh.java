@@ -8,15 +8,18 @@ import javafx.scene.shape.VertexFormat;
 import lombok.Getter;
 import net.highwayfrogs.editor.gui.texture.Texture;
 import net.highwayfrogs.editor.gui.texture.atlas.TextureAtlas;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.fx.wrapper.FXIntArray;
 import net.highwayfrogs.editor.utils.fx.wrapper.FXIntArrayBatcher;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Logger;
 
 /**
  * This represents a triangle mesh which has functionality to dynamically create, update, and change mesh data.
@@ -24,6 +27,7 @@ import java.util.logging.Logger;
  */
 public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
     private final String meshName;
+    @Getter private final DynamicMeshTextureQuality textureQuality;
     @Getter private final TextureAtlas textureAtlas;
     @Getter private final FXIntArrayBatcher editableFaces;
     @Getter private final DynamicMeshFloatArray editableTexCoords;
@@ -33,23 +37,24 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
     @Getter private final List<MeshView> meshViews = new ArrayList<>(); // Tracks all views which are viewing this mesh.
     @Getter private Image materialFxImage;
     @Getter private PhongMaterial material;
-    private Logger cachedLogger;
+    private ILogger cachedLogger;
 
     // It's possible to disable smoothing, using a non-empty array where the first element is zero.
     // This feature was not documented anywhere I could find, but I found the code responsible at com.sun.prism.impl.BaseMesh.checkSmoothingGroup()
     // Apply this to a mesh and smoothing should be disabled.
     private static final int[] SMOOTHING_ARRAY_DISABLE_SMOOTHING = new int[0];
 
-    public DynamicMesh(TextureAtlas atlas) {
-        this(atlas, VertexFormat.POINT_TEXCOORD, null);
+    public DynamicMesh(TextureAtlas atlas, DynamicMeshTextureQuality textureQuality) {
+        this(atlas, textureQuality, VertexFormat.POINT_TEXCOORD, null);
     }
 
-    public DynamicMesh(TextureAtlas atlas, String meshName) {
-        this(atlas, VertexFormat.POINT_TEXCOORD, meshName);
+    public DynamicMesh(TextureAtlas atlas, DynamicMeshTextureQuality textureQuality, String meshName) {
+        this(atlas, textureQuality, VertexFormat.POINT_TEXCOORD, meshName);
     }
 
-    public DynamicMesh(TextureAtlas atlas, VertexFormat format, String meshName) {
+    public DynamicMesh(TextureAtlas atlas, DynamicMeshTextureQuality textureQuality, VertexFormat format, String meshName) {
         super(format);
+        this.textureQuality = textureQuality;
         this.meshName = meshName;
         this.textureAtlas = atlas;
         if (atlas != null) {
@@ -68,11 +73,18 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
     /**
      * Gets the logger used for this mesh.
      */
-    public Logger getLogger() {
+    public ILogger getLogger() {
         if (this.cachedLogger != null)
             return this.cachedLogger;
 
-        return this.cachedLogger = Logger.getLogger(Utils.getSimpleName(this) + ".Name='" + getMeshName() + "'");
+        return this.cachedLogger = new LazyInstanceLogger(null, DynamicMesh::getLoggerInfo, this);
+    }
+
+    /**
+     * Gets the logger info.
+     */
+    public String getLoggerInfo() {
+        return Utils.getSimpleName(this) + ".Name='" + getMeshName() + "'";
     }
 
     /**
@@ -301,16 +313,16 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
      * @param newImage the image to apply
      */
     protected PhongMaterial updateMaterial(BufferedImage newImage) {
-        return updateMaterial(Utils.toFXImage(newImage, false));
+        return updateMaterial(FXUtils.toFXImage(newImage, false));
     }
 
     /**
-     * Apply a new image to the material
+     * Apply a new image to the material.
      * @param newFxImage the image to apply
      */
     protected PhongMaterial updateMaterial(Image newFxImage) {
         if (this.material == null) {
-            this.material = Utils.makeDiffuseMaterial(this.materialFxImage = newFxImage);
+            this.material = Scene3DUtils.makePhongMaterial(this.materialFxImage = newFxImage, this.textureQuality);
 
             // Apply newly created material to meshes.
             for (int i = 0; i < this.meshViews.size(); i++)
@@ -320,8 +332,10 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
         }
 
         // Update material image.
-        if (this.materialFxImage != newFxImage)
-            this.material.setDiffuseMap(this.materialFxImage = newFxImage);
+        if (this.materialFxImage != newFxImage) {
+            this.material = Scene3DUtils.updatePhongMaterial(this.material, newFxImage, this.textureQuality);
+            this.materialFxImage = newFxImage;
+        }
         return this.material;
     }
 
@@ -354,7 +368,7 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
      */
     @SuppressWarnings("CommentedOutCode")
     public void printDebugMeshInfo() {
-        Logger logger = getLogger();
+        ILogger logger = getLogger();
         logger.info("Mesh Information" + (this.meshName != null ? "[" + this.meshName + "]:" : ":"));
         logger.info(" Texture Atlas: " + (this.textureAtlas != null ? this.textureAtlas.getAtlasWidth() + "x" + this.textureAtlas.getAtlasHeight() + " (" + this.textureAtlas.getSortedTextureList().size() + " entries)" : "None"));
         logger.info(" Vertices[EditableSize=" + this.editableVertices.size() + ",EditablePendingSize=" + this.editableVertices.pendingSize() + ",FxArraySize=" + getPoints().size() + "]");
@@ -381,5 +395,10 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
      */
     public static boolean tryRemoveMesh(MeshView meshView) {
         return meshView != null && meshView.getMesh() instanceof DynamicMesh && ((DynamicMesh) meshView.getMesh()).removeView(meshView);
+    }
+
+    public enum DynamicMeshTextureQuality {
+        LIT_BLURRY,
+        UNLIT_SHARP
     }
 }

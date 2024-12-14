@@ -11,7 +11,7 @@ import net.highwayfrogs.editor.games.sony.shared.collprim.MRCollprim;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFController;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MeshUIManager;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Represents a collprim used in a beast wars map.
@@ -66,7 +66,7 @@ public class BeastWarsMapCollprim extends MRCollprim {
         }
 
         if (reader == null)
-            throw new RuntimeException("Cannot read matrix from " + Utils.toHexString(rawMatrixValue) + " without a DataReader.");
+            throw new RuntimeException("Cannot read matrix from " + NumberUtils.toHexString(rawMatrixValue) + " without a DataReader.");
 
         reader.jumpTemp(rawMatrixValue);
         this.matrix = new PSXMatrix();

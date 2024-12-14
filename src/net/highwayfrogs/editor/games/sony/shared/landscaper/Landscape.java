@@ -4,13 +4,13 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.landscaper.mesh.LandscapeMapMesh;
 import net.highwayfrogs.editor.games.sony.shared.landscaper.mesh.LandscapeMapMeshNode;
 import net.highwayfrogs.editor.system.classlist.GlobalClassRegistry;
 import net.highwayfrogs.editor.system.classlist.IndexedClassRegistry;
-import net.highwayfrogs.editor.utils.IBinarySerializable;
-import net.highwayfrogs.editor.utils.IndexBitArray;
+import net.highwayfrogs.editor.utils.objects.IndexBitArray;
 
 import java.util.ArrayList;
 import java.util.Collections;

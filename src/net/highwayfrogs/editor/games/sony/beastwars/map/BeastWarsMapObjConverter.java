@@ -7,7 +7,10 @@ import net.highwayfrogs.editor.games.sony.beastwars.map.data.BeastWarsMapCollpri
 import net.highwayfrogs.editor.games.sony.beastwars.map.data.MapTextureInfoEntry;
 import net.highwayfrogs.editor.games.sony.shared.collprim.MRCollprim.CollprimType;
 import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -17,7 +20,6 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Converts a Beast Wars map to a .obj file.
@@ -29,7 +31,7 @@ public class BeastWarsMapObjConverter {
      * @param map The map file to export to obj.
      */
     public static void exportMapToObj(BeastWarsMapFile map) {
-        String strippedName = Utils.stripExtension(map.getFileDisplayName());
+        String strippedName = FileUtils.stripExtension(map.getFileDisplayName());
         exportMapToObj(new File(GUIMain.getWorkingDirectory(), strippedName), strippedName, map);
     }
 
@@ -41,15 +43,15 @@ public class BeastWarsMapObjConverter {
      */
     @SuppressWarnings("unchecked")
     public static void exportMapToObj(File folder, String exportName, BeastWarsMapFile map) {
-        Logger logger = map.getLogger();
+        ILogger logger = map.getLogger();
 
         // Find the corresponding texture file.
         BeastWarsTexFile texFile = map.getTextureFile();
         if (texFile == null)
-            Utils.makePopUp("Couldn't find the associated .TEX file. Exporting anyways.", AlertType.WARNING);
+            FXUtils.makePopUp("Couldn't find the associated .TEX file. Exporting anyways.", AlertType.WARNING);
 
         // Create folder.
-        Utils.makeDirectory(folder);
+        FileUtils.makeDirectory(folder);
 
         // Setup textures by vertex list.
         List<Integer>[] verticesPerTexture = new ArrayList[BeastWarsTexFile.MAXIMUM_TEXTURE_COUNT + 1];

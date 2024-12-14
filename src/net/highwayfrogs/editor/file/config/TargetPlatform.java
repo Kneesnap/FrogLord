@@ -31,7 +31,7 @@ public enum TargetPlatform {
      * @return mapBook
      */
     public static MapBook makeNewMapBook(FroggerGameInstance instance) {
-        if (instance.getConfig().isAtLeastRetailWindows()) {
+        if (instance.getVersionConfig().isAtLeastRetailWindows()) {
             return PC.getMapBookMaker().apply(instance);
         } else {
             return PSX.getMapBookMaker().apply(instance);
@@ -44,7 +44,7 @@ public enum TargetPlatform {
      * @return mapBook
      */
     public static ThemeBook makeNewThemeBook(FroggerGameInstance instance) {
-        if (instance.getConfig().isAtLeastRetailWindows()) {
+        if (instance.getVersionConfig().isAtLeastRetailWindows()) {
             return PC.getThemeBookMaker().apply(instance);
         } else {
             return PSX.getThemeBookMaker().apply(instance);

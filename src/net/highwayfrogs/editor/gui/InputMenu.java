@@ -4,10 +4,12 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -33,7 +35,7 @@ public class InputMenu {
      * @param handler The behavior to execute when the user accepts.
      */
     public static void promptInput(GameInstance instance, String prompt, String defaultText, Consumer<String> handler) {
-        Utils.createWindowFromFXMLTemplate("window-wait-for-user-input", new InputController(instance, prompt, handler, defaultText), "Waiting for user input...", true);
+        FXUtils.createWindowFromFXMLTemplate("window-wait-for-user-input", new InputController(instance, prompt, handler, defaultText), "Waiting for user input...", true);
     }
 
     /**
@@ -43,6 +45,53 @@ public class InputMenu {
     public static String promptInput(GameInstance instance, String prompt, String defaultText) {
         AtomicReference<String> resultHolder = new AtomicReference<>(null);
         promptInput(instance, prompt, defaultText, resultHolder::set);
+        return resultHolder.get();
+    }
+
+    /**
+     * Require the user to perform a selection.
+     * @param prompt The prompt to display the user.
+     */
+    public static String promptInputBlocking(GameInstance instance, String prompt, String defaultText, Consumer<String> handler) {
+        AtomicReference<String> resultHolder = new AtomicReference<>(null);
+        promptInput(instance, prompt, defaultText, newValue -> {
+            resultHolder.set(newValue);
+            if (handler != null)
+                handler.accept(newValue);
+        });
+        return resultHolder.get();
+    }
+
+    /**
+     * Prompts the user to respond with an integer value.
+     * @param instance the game instance to prompt under
+     * @param prompt the prompt to show to the user
+     * @param startValue the initial value to put in the text box
+     * @param handler the handler for handling an integer value. If an exception is thrown, the prompt response will be considered invalid.
+     * @return integer if successful, or null to indicate there is no new value
+     */
+    public static Integer promptInputInt(GameInstance instance, String prompt, int startValue, Consumer<Integer> handler) {
+        AtomicReference<Integer> resultHolder = new AtomicReference<>(null);
+        InputMenu.promptInput(instance, prompt, String.valueOf(startValue), response -> {
+            int parsedValue;
+            try {
+                parsedValue = Integer.parseInt(response);
+            } catch (NumberFormatException nfe) {
+                FXUtils.makePopUp("The value '" + response + "' cannot be interpreted as an integer!", AlertType.WARNING);
+                return;
+            }
+
+            try {
+                if (handler != null)
+                    handler.accept(parsedValue);
+            } catch (Throwable th) {
+                Utils.handleError(instance.getLogger(), th, true);
+                return;
+            }
+
+            resultHolder.set(parsedValue);
+        });
+
         return resultHolder.get();
     }
 

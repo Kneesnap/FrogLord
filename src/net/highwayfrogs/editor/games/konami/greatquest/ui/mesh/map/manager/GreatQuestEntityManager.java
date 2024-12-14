@@ -1,79 +1,122 @@
 package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager;
 
 import javafx.application.Platform;
+import javafx.scene.DepthTest;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.shape.Box;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.MeshView;
 import javafx.scene.shape.Sphere;
 import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceModel;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceNamedHash;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceNamedHash.HashTableEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcActorBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
-import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelDesc;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResource;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceEntityInst;
-import net.highwayfrogs.editor.games.konami.greatquest.toc.kcCResourceModel;
+import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.GreatQuestMapMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestMapUIManager.GreatQuestMapListManager;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.entity.GreatQuestMapEditorEntityDisplay;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestActionSequencePlayback;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelMaterialMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelMesh;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshCollection.MeshViewCollection;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.fx.wrapper.LazyFXListCell;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
  * Manages entities for a Great Quest map.
  * TODO: Need some way of viewing an entities activation radius.
- * TODO: Some entities (like the big pike) aren't getting rendered. I think it's when their texture isn't found..?
  * TODO: Allow teleporting the camera to an entity selected.
- * TODO: We need a generalized property editing system. So for each class can implement an interface, and become editable.
- *  - These will become convertible to text as well.
- *  - Allow creating a class to define editing certain things.
- *  - Allow updating other UI components potentially? Not sure yet.
- *  - This editor should use a standardized vector interface between games.
+ * TODO: Use Fxyz3D's Capsule mesh instead of sphere for capsules.
  * Created by Kneesnap on 4/14/2024.
  */
 @Getter
 public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourceEntityInst, GreatQuestMapEditorEntityDisplay> {
-    private final Map<kcCResourceModel, GreatQuestModelMesh> cachedModelMeshes = new HashMap<>();
+    private final Map<kcActorBaseDesc, GreatQuestModelMesh> cachedModelMeshesByDesc = new HashMap<>();
+    private final Map<GreatQuestModelMesh, GreatQuestActionSequencePlayback> cachedPlaybacksByMesh = new HashMap<>();
+    private final GreatQuestModelMesh fallbackModel = new GreatQuestModelMesh((kcModelWrapper) null, false);
     private final DisplayList collisionPreviewDisplayList;
-    private final DisplayList boundingSphereDisplayList;
+    private final DisplayList boundingShapeDisplayList;
     private final List<GreatQuestMapEnvironmentCollection> waterMeshCollections = new ArrayList<>();
     private GreatQuestMapEnvironmentCollection skyBoxCollection;
+    private final MeshView selectedSkeletonMeshView = new MeshView();
     private CheckBox showEntityMeshCheckBox;
+    private CheckBox showEntitySkeletonCheckBox;
     private CheckBox showCollisionCheckBox;
     private CheckBox showBoundingSphereCheckBox;
     private CheckBox showBoundingBoxCheckBox;
+    private ComboBox<kcCActionSequence> sequenceSelectionBox;
+    private CheckBox playSequencesCheckBox;
     private static final Pattern DOME_PATTERN = Pattern.compile("(?i)^\\d\\ddome(\\d\\d)?\\.vtx$");
     private static final Pattern WATER_PATTERN = Pattern.compile("(?i)^\\d\\d((lake)|(river)|(waterfall)|(water))(\\d\\d)?\\.((ctm)|(vtx))$");
 
     public GreatQuestEntityManager(MeshViewController<GreatQuestMapMesh> controller) {
         super(controller);
         this.collisionPreviewDisplayList = getTransparentRenderManager().createDisplayListWithNewGroup();
-        this.boundingSphereDisplayList = getTransparentRenderManager().createDisplayListWithNewGroup(); // Draws on top of collision preview.
+        this.boundingShapeDisplayList = getTransparentRenderManager().createDisplayListWithNewGroup(); // Draws on top of collision preview. Needs a new group so we can sort.
+    }
+
+    @Override
+    public void onSetup() {
+        super.onSetup();
+
+        this.selectedSkeletonMeshView.setDepthTest(DepthTest.DISABLE);
+        getRenderManager().createDisplayList().add(this.selectedSkeletonMeshView);
+        getController().getMainLight().getScope().add(this.selectedSkeletonMeshView);
+
+        // Add task to animate the selected model.
+        getController().getFrameTimer().addPerFrameTask(deltaTime -> {
+            if (!this.playSequencesCheckBox.isSelected()) {
+                // Tick only the selected entity.
+                GreatQuestMapEditorEntityDisplay display = getDelegatesByValue().get(getSelectedValue());
+                if (display != null && display.getSequencePlayback() != null) {
+                    display.getSequencePlayback().tick();
+                    display.getModelMesh().tickAnimation(deltaTime);
+                }
+
+                return;
+            }
+
+            for (GreatQuestActionSequencePlayback playback : this.cachedPlaybacksByMesh.values()) {
+                playback.tick();
+                playback.getModelMesh().tickAnimation(deltaTime);
+            }
+        });
     }
 
     @Override
     protected void setupMainGridEditor(UISidePanel sidePanel) {
         super.setupMainGridEditor(sidePanel);
         getValueDisplaySetting().setValue(ListDisplayType.ALL);
+        this.selectedSkeletonMeshView.setVisible(false);
         this.showEntityMeshCheckBox = getMainGrid().addCheckBox("Show Entity Mesh", true, this::setEntityMeshVisible);
+        this.showEntitySkeletonCheckBox = getMainGrid().addCheckBox("Show Entity Skeleton", this.selectedSkeletonMeshView.isVisible(), this.selectedSkeletonMeshView::setVisible);
         this.showCollisionCheckBox = getMainGrid().addCheckBox("Show Collision Proxy", false, this::setCollisionProxyVisible);
         this.showBoundingSphereCheckBox = getMainGrid().addCheckBox("Show Bounding Sphere", false, this::setBoundingSphereVisible);
         this.showBoundingBoxCheckBox = getMainGrid().addCheckBox("Show Waypoint Bounding Box", false, this::setBoundingBoxVisible);
         getMainGrid().addCheckBox("Show Sky Box", true, this::setSkyBoxVisible);
         getMainGrid().addCheckBox("Show Water", true, this::setWaterVisible);
+        this.playSequencesCheckBox = getMainGrid().addCheckBox("Play All Sequences", false, this::onSetPlayAllSequences);
+        this.sequenceSelectionBox = getMainGrid().addSelectionBox("Sequences", null, Collections.emptyList(), newSequence -> {
+            GreatQuestMapEditorEntityDisplay display = getDelegatesByValue().get(getSelectedValue());
+            if (display != null && display.getSequencePlayback() != null)
+                display.getSequencePlayback().setSequenceAndTick(newSequence);
+        });
+        this.sequenceSelectionBox.setButtonCell(new LazyFXListCell<>(kcCActionSequence::getSequenceName, "No Sequence"));
+        this.sequenceSelectionBox.setCellFactory(listView -> new LazyFXListCell<>(kcCActionSequence::getSequenceName, "No Sequence"));
 
         // Water and sky box should be setup last, because water is the biggest transparent model of all.
         // So, it should come after everything else.
@@ -117,7 +160,7 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
 
     @Override
     protected String getListDisplayStyle(int index, kcCResourceEntityInst entity) {
-        return (entity == null || !(entity.getEntity() instanceof kcEntity3DInst)) ? "-fx-text-fill: red;" : super.getListDisplayStyle(index, entity);
+        return (entity == null || !(entity.getInstance() instanceof kcEntity3DInst)) ? "-fx-text-fill: red;" : super.getListDisplayStyle(index, entity);
     }
 
     @Override
@@ -132,36 +175,64 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
 
     @Override
     protected GreatQuestMapEditorEntityDisplay setupDisplay(kcCResourceEntityInst entityInst) {
-        kcEntityInst entity = entityInst.getEntity();
+        kcEntityInst entity = entityInst.getInstance();
+        GreatQuestModelMesh modelMesh = this.fallbackModel;
 
-        kcCResourceModel model = null;
-        kcEntity3DDesc entityDescription = entity != null ? entity.getDescription(getMap()) : null;
+        // Resolve entity model, and use cache if possible.
+        GreatQuestActionSequencePlayback sequencePlayback = null;
+        kcEntity3DDesc entityDescription = entity != null ? entity.getDescription() : null;
         if (entityDescription instanceof kcActorBaseDesc) {
             kcActorBaseDesc actorBaseDesc = (kcActorBaseDesc) entityDescription;
-            kcModelDesc modelDesc = actorBaseDesc.getModelDesc(getMap());
-            if (modelDesc != null)
-                model = modelDesc.getModelResource(getMap());
+            modelMesh = this.cachedModelMeshesByDesc.computeIfAbsent(actorBaseDesc, kcActorBaseDesc::createModelMesh);
+
+            // Register
+            if (modelMesh.getAvailableSequences().size() > 0) {
+                sequencePlayback = this.cachedPlaybacksByMesh.computeIfAbsent(modelMesh, safeModelMesh -> {
+                    GreatQuestActionSequencePlayback newPlayback = new GreatQuestActionSequencePlayback(safeModelMesh);
+                    setDefaultSequence(newPlayback);
+                    return newPlayback;
+                });
+            }
         }
 
-        GreatQuestModelMesh modelMesh = this.cachedModelMeshes.computeIfAbsent(model, key -> new GreatQuestModelMesh(key, false));
         GreatQuestMapModelMeshCollection entityMeshCollection = new GreatQuestMapModelMeshCollection(this, entityInst);
         entityMeshCollection.setMesh(modelMesh.getActualMesh());
-        GreatQuestMapEditorEntityDisplay newDisplay = new GreatQuestMapEditorEntityDisplay(this, entityInst, entityMeshCollection);
+        GreatQuestMapEditorEntityDisplay newDisplay = new GreatQuestMapEditorEntityDisplay(this, modelMesh, entityInst, entityMeshCollection, sequencePlayback);
         newDisplay.setup();
         return newDisplay;
     }
 
     @Override
-    protected void updateEditor(kcCResourceEntityInst entityInst) {
-        getEditorGrid().addLabel("Entity Name", entityInst.getName());
-        getEditorGrid().addLabel("Entity Hash", Utils.to0PrefixedHexString(entityInst.getHash()));
-        entityInst.getEntity().setupEditor(this, getEditorGrid(), getDelegatesByValue().get(entityInst));
+    public void updateEditor() {
+        super.updateEditor();
+
+        GreatQuestMapEditorEntityDisplay display = getDelegatesByValue().get(getSelectedValue());
+        this.sequenceSelectionBox.setItems(display != null ? display.getModelMesh().getAvailableSequences() : null);
+        this.sequenceSelectionBox.getSelectionModel().clearSelection();
+        this.sequenceSelectionBox.setValue(display != null && display.getSequencePlayback() != null ? display.getSequencePlayback().getActiveSequence() : null);
+        this.sequenceSelectionBox.setDisable(display == null || display.getModelMesh().getAvailableSequences().isEmpty());
     }
 
     @Override
-    protected void setVisible(kcCResourceEntityInst kcCResourceEntityInst, GreatQuestMapEditorEntityDisplay entityDisplay, boolean visible) {
+    protected void updateEditor(kcCResourceEntityInst entityInst) {
+        getEditorGrid().addLabel("Entity Name", entityInst.getName());
+        getEditorGrid().addLabel("Entity Hash", entityInst.getHashAsHexString());
+
+        GreatQuestMapEditorEntityDisplay display = getDelegatesByValue().get(entityInst);
+        entityInst.getInstance().setupEditor(this, getEditorGrid(), display);
+    }
+
+    @Override
+    protected void setVisible(kcCResourceEntityInst entity, GreatQuestMapEditorEntityDisplay entityDisplay, boolean visible) {
         if (entityDisplay != null)
             entityDisplay.setVisible(visible);
+    }
+
+    private static void setDefaultSequence(GreatQuestActionSequencePlayback playback) {
+        // 'NrmIdle01' is the default sequence which all entities assume when a level starts.
+        kcCResourceNamedHash sequenceTable = playback.getModelMesh().getActionSequenceTable();
+        HashTableEntry idleEntry = sequenceTable != null ? sequenceTable.getEntryByName("NrmIdle01") : null;
+        playback.setSequenceAndTick(idleEntry != null ? idleEntry.getSequence() : null);
     }
 
     @Override
@@ -171,9 +242,18 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
             for (int i = 0; i < collection.getMeshViews().size(); i++) {
                 MeshView oldMeshView = collection.getMeshViews().get(i);
                 GreatQuestModelMaterialMesh oldCachedMesh = oldMeshView.getMesh() instanceof GreatQuestModelMaterialMesh ? ((GreatQuestModelMaterialMesh) oldMeshView.getMesh()) : null;
-                if (oldCachedMesh != null)
+                if (oldCachedMesh != null) {
                     oldMeshView.setMaterial(oldCachedMesh.getMaterial());
+                    if (oldCachedMesh.getFullMesh().getSkeletonMesh() != null) {
+                        oldCachedMesh.getFullMesh().getSkeletonMesh().removeView(this.selectedSkeletonMeshView);
+                        this.selectedSkeletonMeshView.getTransforms().clear();
+                    }
+                }
             }
+
+            oldDisplay.setVisible(isValueVisibleByUI(oldValue)); // Update visibility of collision shapes shown on select.
+            if (oldDisplay.getSequencePlayback() != null)
+                setDefaultSequence(oldDisplay.getSequencePlayback());
         }
 
         if (newDisplay != null) {
@@ -181,9 +261,18 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
             for (int i = 0; i < collection.getMeshViews().size(); i++) {
                 MeshView newMeshView = collection.getMeshViews().get(i);
                 GreatQuestModelMaterialMesh newCachedMesh = newMeshView.getMesh() instanceof GreatQuestModelMaterialMesh ? ((GreatQuestModelMaterialMesh) newMeshView.getMesh()) : null;
-                if (newCachedMesh != null)
+                if (newCachedMesh != null) {
                     newMeshView.setMaterial(newCachedMesh.getHighlightedMaterial());
+                    if (newCachedMesh.getFullMesh().getSkeletonMesh() != null) {
+                        newCachedMesh.getFullMesh().getSkeletonMesh().addView(this.selectedSkeletonMeshView);
+                        newDisplay.setupNode(this.selectedSkeletonMeshView);
+                    }
+                }
             }
+
+            newDisplay.setVisible(isValueVisibleByUI(newValue)); // Update visibility of collision shapes shown on select.
+            if (newDisplay.getSequencePlayback() != null)
+                newDisplay.getSequencePlayback().setSequenceAndTick(null);
         }
     }
 
@@ -202,6 +291,14 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
         }
     }
 
+    @Override
+    protected boolean tryRemoveValue(kcCResourceEntityInst entity) {
+        boolean success = super.tryRemoveValue(entity);
+        if (success)
+            entity.getParentFile().removeResource(entity);
+        return success;
+    }
+
     /**
      * Set if entity meshes are displayed.
      * @param visible the desired visibility state
@@ -218,8 +315,7 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
      */
     public void setCollisionProxyVisible(boolean visible) {
         for (GreatQuestMapEditorEntityDisplay display : getDelegatesByValue().values())
-            if (display.getCollisionPreview() != null)
-                display.getCollisionPreview().setVisible(visible && isValueVisibleByUI(display.getEntityInstance()));
+            display.setCollisionProxyVisible(visible && isValueVisibleByUI(display.getEntityInstance()));
     }
 
     /**
@@ -261,6 +357,10 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
             this.waterMeshCollections.get(i).setVisible(visible);
     }
 
+    private void onSetPlayAllSequences(boolean playAllSequences) {
+        this.cachedPlaybacksByMesh.values().forEach(GreatQuestEntityManager::setDefaultSequence);
+    }
+
     @Getter
     public static class GreatQuestMapModelMeshCollection extends MeshViewCollection<GreatQuestModelMaterialMesh> {
         private final GreatQuestEntityManager manager;
@@ -286,6 +386,17 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
             meshView.setOnMouseClicked(null);
             meshView.getTransforms().clear();
             this.manager.getController().getMainLight().getScope().remove(meshView);
+        }
+
+        /**
+         * Set the entity rotation of all attached MeshViews
+         * @param x the new x rotation
+         * @param y the new y rotation
+         * @param z the new z rotation
+         */
+        public void setRotation(double x, double y, double z, boolean hasSkeleton) {
+            for (int i = 0; i < getMeshViews().size(); i++)
+                GreatQuestUtils.setEntityRotation(getMeshViews().get(i), x, y, z, hasSkeleton);
         }
     }
 

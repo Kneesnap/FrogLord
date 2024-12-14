@@ -24,13 +24,13 @@ import java.util.List;
 public class SCMapSectionManager<TMapMesh extends SCMapMesh> extends SCMapListManager<TMapMesh, MediEvil2LevelSectionDefinition, MeshView> {
     public SCMapSectionManager(SCMapMeshController<TMapMesh> controller) {
         super(controller);
+        this.disableRemoveButton = true;
     }
 
     @Override
     public void onSetup() {
         super.onSetup();
         getAddValueButton().setDisable(true);
-        getRemoveValueButton().setDisable(true);
     }
 
     @Override

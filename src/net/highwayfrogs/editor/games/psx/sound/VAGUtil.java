@@ -106,8 +106,8 @@ public class VAGUtil {
 
         // Write sizes.
         if (includeWavHeader) {
-            writer.writeAddressAt(fileSizeAddress, writer.getIndex() - (fileSizeAddress + Constants.INTEGER_SIZE)); // Write file size.
-            writer.writeAddressAt(subChunk2SizeAddress, writer.getIndex() - (subChunk2SizeAddress + Constants.INTEGER_SIZE)); // Write chunk size.
+            writer.writeIntAtPos(fileSizeAddress, writer.getIndex() - (fileSizeAddress + Constants.INTEGER_SIZE)); // Write file size.
+            writer.writeIntAtPos(subChunk2SizeAddress, writer.getIndex() - (subChunk2SizeAddress + Constants.INTEGER_SIZE)); // Write chunk size.
         }
 
         writer.closeReceiver();

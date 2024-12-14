@@ -21,7 +21,7 @@ import java.util.List;
 public class MMTriangleGroupsBlock extends MMDataBlockBody {
     private short flags;
     private String name = "";
-    private List<Integer> triangleIndices = new ArrayList<>();
+    private final List<Integer> triangleIndices = new ArrayList<>();
     private short smoothness = 0xFF;
     private int material = -1; // Index into material list.
 
@@ -49,7 +49,7 @@ public class MMTriangleGroupsBlock extends MMDataBlockBody {
     @Override
     public void save(DataWriter writer) {
         writer.writeShort(this.flags);
-        writer.writeTerminatorString(this.name);
+        writer.writeNullTerminatedString(this.name);
         writer.writeInt(this.triangleIndices.size());
         for (int toWrite : this.triangleIndices)
             writer.writeInt(toWrite);

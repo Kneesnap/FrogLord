@@ -18,7 +18,7 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.path.OldFroggerS
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapUIManager.OldFroggerMapListManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ import java.util.List;
  * Created by Kneesnap on 12/12/2023.
  */
 public class OldFroggerPathManager extends OldFroggerMapListManager<OldFroggerMapPath, DisplayList> {
-    private static final PhongMaterial SPLINE_MATERIAL = Utils.makeUnlitSharpMaterial(Color.LIGHTPINK);
+    private static final PhongMaterial SPLINE_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.LIGHTPINK);
 
     public OldFroggerPathManager(MeshViewController<OldFroggerMapMesh> controller) {
         super(controller);

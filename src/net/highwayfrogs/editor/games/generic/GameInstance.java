@@ -9,35 +9,37 @@ import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.MainMenuController;
+import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.MainGameInstanceLogger;
 
 import java.io.File;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * Represents an instance of a game. For example, a folder containing the files for a single version of a game.
- * TODO: UI Plans?
- *  - Standardize 3D UI.
  *  TODO: I think there's some kind of caching bug with shading. It happened on "Time Device", where none of the shading in the world was right. Then, after I toggled shading off/on, it was fine. I suspect there's probably some tracking issue then.
  * Created by Kneesnap on 4/10/2024.
  */
-public abstract class GameInstance {
+public abstract class GameInstance implements IGameInstance {
     @Getter private final IGameType gameType;
-    @Getter private GameConfig config;
+    @Getter private NoodleScriptEngine scriptEngine;
+    @Getter private net.highwayfrogs.editor.system.Config config; // This contains user/instance configuration data. It is automatically saved on shutdown, and differs on a per-game-config basis.
+    @Getter private GameConfig versionConfig;
     @Getter private MainMenuController<?, ?> mainMenuController;
-    private Logger cachedLogger;
+    @Getter private final MainGameInstanceLogger logger;
     private StringBuilder cachedLogging;
 
-    private static final Map<IGameType, Map<String, FXMLLoader>> knownResourcePaths = new HashMap<>();
+    static final Map<IGameType, Map<String, FXMLLoader>> knownResourcePaths = new HashMap<>();
 
     public GameInstance(IGameType gameType) {
         if (gameType == null)
             throw new NullPointerException("gameType");
 
         this.gameType = gameType;
+        this.logger = new MainGameInstanceLogger(this);
     }
 
     /**
@@ -77,7 +79,7 @@ public abstract class GameInstance {
 
         this.mainMenuController = makeMainMenuController();
         if (this.mainMenuController != null) {
-            String versionName = (this.config.getDisplayName() != null ? this.config.getDisplayName() : this.config.getInternalName());
+            String versionName = (this.versionConfig.getDisplayName() != null ? this.versionConfig.getDisplayName() : this.versionConfig.getInternalName());
             GameUIController.loadController(this, MainMenuController.MAIN_MENU_FXML_TEMPLATE_LOADER, this.mainMenuController);
             Stage stage = GameUIController.openWindow(this.mainMenuController, "FrogLord " + Constants.VERSION + " -- " + this.gameType.getDisplayName() + " " + versionName, false);
             stage.setResizable(true);
@@ -92,22 +94,12 @@ public abstract class GameInstance {
     protected abstract MainMenuController<?, ?> makeMainMenuController();
 
     /**
-     * Gets the logger for this game instance.
-     */
-    public Logger getLogger() {
-        if (this.cachedLogger != null)
-            return this.cachedLogger;
-
-        return this.cachedLogger = Logger.getLogger(Utils.getSimpleName(this));
-    }
-
-    /**
      * Gets the main menu stage available for this game instance.
      */
     public Stage getMainStage() {
         Stage stage = this.mainMenuController != null ? this.mainMenuController.getStage() : null;
         if (stage == null) {
-            Utils.makePopUp("There was no stage available to override.", AlertType.ERROR);
+            FXUtils.makePopUp("There was no stage available to override.", AlertType.ERROR);
             return null;
         }
 
@@ -125,49 +117,73 @@ public abstract class GameInstance {
      * @param configName the name of the configuration game data is loaded from
      * @param config the config object to load data from
      */
-    public void loadGameConfig(String configName, Config config) {
-        if (this.config != null)
+    public void loadGameConfig(String configName, Config config, net.highwayfrogs.editor.system.Config userConfig) {
+        if (userConfig == null)
+            throw new NullPointerException("userConfig");
+        if (this.versionConfig != null)
             throw new IllegalStateException("Cannot load the game configuration '" + configName + "' because it has already been loaded.");
 
         // Register to GUIMain and log.
         GUIMain.getActiveGameInstances().add(this);
         getLogger().info("Hello! FrogLord is loading config '" + configName + "'.");
 
+        // Setup.
+        this.config = userConfig;
+        this.scriptEngine = new NoodleScriptEngine(this, configName + "@" + Utils.getSimpleName(this));
+
         // Create & load config.
-        this.config = this.gameType.createConfig(configName);
-        this.config.loadData(config, this.gameType);
+        this.versionConfig = this.gameType.createConfig(configName);
+        this.versionConfig.loadData(config, this.gameType);
         this.onConfigLoad(config);
+
+        // Setup script engine. (Occurs after loading configs)
+        setupScriptEngine(this.scriptEngine);
+        this.scriptEngine.seal();
+    }
+
+    /**
+     * Sets up the script engine for use with this game instance.
+     */
+    protected void setupScriptEngine(NoodleScriptEngine engine) {
+        engine.addWrapperTemplates(GameUtils.class, GameConfig.class);
     }
 
     /**
      * Load and setup game config data relating to the game such as version configuration and game files.
      * @param gameVersionConfigName the name of the version config file to load
+     * @param instanceConfig the instance configuration
      */
-    protected void loadGameConfig(String gameVersionConfigName) {
-        if (this.config != null)
+    protected void loadGameConfig(String gameVersionConfigName, net.highwayfrogs.editor.system.Config instanceConfig) {
+        if (this.versionConfig != null)
             throw new IllegalStateException("Cannot load the game configuration '" + gameVersionConfigName + "' because it has already been loaded.");
 
         // Load config.
         net.highwayfrogs.editor.file.config.Config gameConfig = new net.highwayfrogs.editor.file.config.Config(this.gameType.getEmbeddedResourceStream("versions/" + gameVersionConfigName + ".cfg"));
-        loadGameConfig(gameVersionConfigName, gameConfig);
+        loadGameConfig(gameVersionConfigName, gameConfig, instanceConfig);
     }
 
     /**
      * Load and setup game config data relating to the game such as version configuration and game files.
      * @param config the already loaded config file
+     * @param instanceConfig the instance configuration
      */
-    protected void loadGameConfig(GameConfig config) {
+    protected void loadGameConfig(GameConfig config, net.highwayfrogs.editor.system.Config instanceConfig) {
         if (config == null)
             throw new NullPointerException("config");
-        if (this.config != null)
+        if (this.config == null)
+            throw new NullPointerException("userConfig");
+        if (this.versionConfig != null)
             throw new IllegalStateException("Cannot load the game configuration '" + config.getInternalName() + "' because it has already been loaded.");
+
+        // Setup user config.
+        this.config = instanceConfig;
 
         // Register to GUIMain and log.
         GUIMain.getActiveGameInstances().add(this);
         getLogger().info("Hello! FrogLord is loading config '" + config.getInternalName() + "'.");
 
         // Create & load config.
-        this.config = config;
+        this.versionConfig = config;
         this.onConfigLoad(config.getConfig());
     }
 
@@ -177,72 +193,5 @@ public abstract class GameInstance {
      */
     protected void onConfigLoad(Config configObj) {
         // Does nothing by default.
-    }
-
-    /**
-     * Get the target platform this game version runs on.
-     */
-    public GamePlatform getPlatform() {
-        return this.config != null ? this.config.getPlatform() : null;
-    }
-
-    /**
-     * Test if this is a game version intended for Windows.
-     * @return isPCRelease
-     */
-    public boolean isPC() {
-        return getPlatform() == GamePlatform.WINDOWS;
-    }
-
-    /**
-     * Test if this is a game version intended for the PlayStation.
-     * @return isPSXRelease
-     */
-    public boolean isPSX() {
-        return getPlatform() == GamePlatform.PLAYSTATION;
-    }
-
-    /**
-     * Test if this is a game version intended for the PlayStation 2.
-     * @return isPS2Release
-     */
-    public boolean isPS2() {
-        return getPlatform() == GamePlatform.PLAYSTATION_2;
-    }
-
-    /**
-     * Tests if a given unsigned 32-bit number passed as a long looks like a valid pointer to memory present in the executable.
-     * @param testPointer The pointer to test.
-     * @return If it looks good or not.
-     */
-    public boolean isValidLookingPointer(long testPointer) {
-        return GameUtils.isValidLookingPointer(getPlatform(), testPointer);
-    }
-
-    /**
-     * Gets the FXMLLoader by its name.
-     * @param template The template name.
-     * @return loader
-     */
-    public URL getFXMLTemplateURL(String template) {
-        return this.gameType.getEmbeddedResourceURL("fxml/" + template + ".fxml");
-    }
-
-    /**
-     * Gets the fxml template URL by its name.
-     * @param template The template name.
-     * @return fxmlTemplateUrl
-     */
-    public FXMLLoader getFXMLTemplateLoader(String template) {
-        Map<String, FXMLLoader> resourcePaths = knownResourcePaths.computeIfAbsent(this.gameType, key -> new HashMap<>());
-        FXMLLoader fxmlLoader = resourcePaths.get(template);
-        if (!resourcePaths.containsKey(template)) {
-            URL url = getFXMLTemplateURL(template);
-            if (url != null)
-                fxmlLoader = new FXMLLoader(url);
-            resourcePaths.put(template, fxmlLoader);
-        }
-
-        return fxmlLoader;
     }
 }

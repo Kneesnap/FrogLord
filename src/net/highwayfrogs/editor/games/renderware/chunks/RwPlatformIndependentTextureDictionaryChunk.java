@@ -1,12 +1,21 @@
 package net.highwayfrogs.editor.games.renderware.chunks;
 
+import javafx.scene.control.ContextMenu;
+import javafx.scene.image.Image;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
+import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
-import net.highwayfrogs.editor.games.renderware.RwStreamSectionType;
+import net.highwayfrogs.editor.games.renderware.RwVersion;
+import net.highwayfrogs.editor.games.renderware.chunks.RwImageChunk.RwImageViewUIController;
+import net.highwayfrogs.editor.games.renderware.ui.IRwStreamChunkUIEntry;
+import net.highwayfrogs.editor.gui.GameUIController;
+import net.highwayfrogs.editor.gui.ImageResource;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,91 +26,300 @@ import java.util.List;
  */
 @Getter
 public class RwPlatformIndependentTextureDictionaryChunk extends RwStreamChunk {
-    private final List<RwPlatformIndependentTextureEntry> entries = new ArrayList<>();
+    private final List<IRwPlatformIndependentTexturePrefix> entries = new ArrayList<>();
+    private int textureFormatVersion;
 
     public RwPlatformIndependentTextureDictionaryChunk(RwStreamFile streamFile, int renderwareVersion, RwStreamChunk parentChunk) {
-        super(streamFile, RwStreamSectionType.PITEX_DICTIONARY, renderwareVersion, parentChunk);
+        super(streamFile, RwStreamChunkType.PITEX_DICTIONARY, renderwareVersion, parentChunk);
+        this.textureFormatVersion = RwVersion.isAtLeast(renderwareVersion, RwVersion.VERSION_3603) ? 1 : 0; // As seen in Frogger. This check can probably be changed.
     }
 
     @Override
     public void loadChunkData(DataReader reader, int dataLength, int version) {
-        short imageCount = reader.readShort(); // Might be number of textures, might be number of frames.
-        short creatorVersion = reader.readShort(); // Supported: 0
+        // rtpitexdChunkPrefix
+        int numTextures = reader.readUnsignedShortAsInt(); // Might be number of textures, might be number of frames.
+        this.textureFormatVersion = reader.readUnsignedShortAsInt(); // Supported: 0, 1.
 
-        if (creatorVersion == (short) 0) {
-            // _rtpitexdImage2TextureReadLegacy / RtPITexDictionaryStreamRead (rpitexd.o)
-
-            for (int i = 0; i < imageCount; i++) {
-                RwPlatformIndependentTextureEntry entry = new RwPlatformIndependentTextureEntry(this);
+        this.entries.clear();
+        if (this.textureFormatVersion == 0 || this.textureFormatVersion == 1) {
+            for (int i = 0; i < numTextures; i++) {
+                IRwPlatformIndependentTexturePrefix entry = createNewTexturePrefix();
                 entry.load(reader);
                 this.entries.add(entry);
+                this.childUISections.add(entry);
             }
-        } else if (creatorVersion == (short) 1){
-            getLogger().warning("Unknown texture format! Skipping!!!");
-            reader.skipBytes(Math.min(dataLength, reader.getRemaining()));
-            // _rtpitexdImage2TextureRead (rpitexd.o)
-            // TODO: IMPLEMENT.
         } else {
-            throw new UnsupportedOperationException("Texture Dictionary with creator version " + creatorVersion + " is unsupported!");
+            throw new UnsupportedOperationException("Texture Dictionary with texture format version " + this.textureFormatVersion + " is unsupported!");
         }
     }
+
+    /**
+     * Creates a new texture prefix for the version which is currently active.
+     */
+    public IRwPlatformIndependentTexturePrefix createNewTexturePrefix() {
+        switch (this.textureFormatVersion) {
+            case 0:
+                return new RwPlatformIndependentTexturePrefixLegacy(this);
+            case 1:
+                return new RwPlatformIndependentTexturePrefix(this);
+            default:
+                throw new UnsupportedOperationException("Texture Dictionary with texture format version " + this.textureFormatVersion + " is unsupported!");
+        }
+    }
+
+    @Override
+    public void saveChunkData(DataWriter writer) {
+        writer.writeUnsignedShort(this.entries.size());
+        writer.writeUnsignedShort(this.textureFormatVersion);
+
+        if (this.textureFormatVersion == 0 || this.textureFormatVersion == 1) {
+            for (int i = 0; i < this.entries.size(); i++) {
+                IRwPlatformIndependentTexturePrefix texturePrefix = this.entries.get(i);
+                texturePrefix.save(writer);
+                this.childUISections.add(texturePrefix);
+            }
+        } else {
+            throw new UnsupportedOperationException("Texture Dictionary with texture format version " + this.textureFormatVersion + " is unsupported!");
+        }
+    }
+
     @Override
     protected String getLoggerInfo() {
         return super.getLoggerInfo() + ",entries=" + this.entries.size();
     }
 
+    public interface IRwPlatformIndependentTexturePrefix extends IBinarySerializable, IRwStreamChunkUIEntry {
+        /**
+         * Gets the mip map images at different levels of detail.
+         */
+        List<RwImageChunk> getMipMapImages();
 
-    @Override
-    public void saveChunkData(DataWriter writer) {
-        // TODO: Implement.
+        /**
+         * Gets the texture name.
+         */
+        String getName();
+
+        /**
+         * Gets the texture mask name
+         */
+        String getMask();
+
+        /**
+         * Gets the texture flags.
+         */
+        int getFlags();
+
+        /**
+         * Creates a file name for the given image.
+         * @param mipMapLevel the mip map level of detail id for the image
+         * @return fileName
+         */
+        default String makeFileName(int mipMapLevel) {
+            StringBuilder sb = new StringBuilder();
+
+            String name = getName();
+            String mask = getMask();
+            if (name == null || name.isEmpty()) {
+                sb.append("UNKNOWN_NAME");
+            } else {
+                sb.append(name);
+            }
+
+            if (mipMapLevel >= 0 && getMipMapImages().size() > 1)
+                sb.append("-MIPMAP_").append(mipMapLevel);
+            if (mask != null && mask.trim().length() > 0)
+                sb.append(" (Mask ").append(mask).append(")");
+            return sb.toString();
+        }
+
+        /**
+         * Gets the string to show for the image when displayed in UI elements.
+         * @param mipMapId the mipMapId to apply
+         * @return displayString
+         */
+        default String getDisplayInfo(int mipMapId) {
+            String name = getName();
+            String mask = getMask();
+            int flags = getFlags();
+            return (name != null && name.length() > 0 ? "'" + name + "'" : "Unknown Name")
+                    + (getMipMapImages().size() > 1 && mipMapId >= 0 ? ", mipMap=" + mipMapId : "")
+                    + (mask != null && mask.trim().length() > 0 ? ", Mask: '" + mask + "'" : "")
+                    + (flags != 0 ? ", Flags: " + NumberUtils.toHexString(flags) : "");
+        }
+
+        /**
+         * Adds properties to the property list.
+         * @param propertyList the PropertyList to populate
+         */
+        default PropertyList addToPropertyList(PropertyList propertyList) {
+            String name = getName();
+            if (name != null && name.length() > 0)
+                propertyList.add("Name", name);
+
+            String mask = getMask();
+            if (mask != null && mask.length() > 0)
+                propertyList.add("Mask", mask);
+
+            propertyList.add("Mip-Map Images", getMipMapImages().size());
+            propertyList.add("Flags", NumberUtils.toHexString(getFlags()));
+            return propertyList;
+        }
+
+        /**
+         * Gets the largest mip-mapped image chunk.
+         */
+        default RwImageChunk getLargestImage() {
+            RwImageChunk largestImage = null;
+            int largestArea = Integer.MIN_VALUE;
+            for (int i = 0; i < getMipMapImages().size(); i++) {
+                RwImageChunk image = getMipMapImages().get(i);
+                int tempArea = image.getImage().getWidth() * image.getImage().getHeight();
+                if (tempArea > largestArea) {
+                    largestArea = tempArea;
+                    largestImage = image;
+                }
+            }
+
+            return largestImage;
+        }
     }
 
     @Getter
-    public static class RwPlatformIndependentTextureEntry extends GameObject {
-        private final RwPlatformIndependentTextureDictionaryChunk parentChunk;
-        private String name;
-        private String mask;
-        private int flags;
-        private final List<RwImageChunk> mipLevelImages = new ArrayList<>();
+    public static abstract class RwPlatformIndependentTexturePrefixBase extends SharedGameData implements IRwPlatformIndependentTexturePrefix {
+        protected final RwPlatformIndependentTextureDictionaryChunk parentChunk;
+        protected final List<RwImageChunk> mipMapImages = new ArrayList<>();
 
-        public RwPlatformIndependentTextureEntry(RwPlatformIndependentTextureDictionaryChunk chunk) {
+        public RwPlatformIndependentTexturePrefixBase(RwPlatformIndependentTextureDictionaryChunk chunk) {
+            super(chunk.getGameInstance());
             this.parentChunk = chunk;
         }
 
         @Override
+        public List<? extends IRwStreamChunkUIEntry> getChildUISections() {
+            return this.mipMapImages;
+        }
+
+        @Override
+        public RwStreamFile getStreamFile() {
+            return this.parentChunk.getStreamFile();
+        }
+
+        @Override
+        public GameUIController<?> makeEditorUI() {
+            RwImageChunk largestImage = getLargestImage();
+            return largestImage != null ? new RwImageViewUIController(largestImage) : null;
+        }
+
+        @Override
+        public String getCollectionViewDisplayName() {
+            return "rtpiTexturePrefix [" + getName() + "]";
+        }
+
+        @Override
+        public String getCollectionViewDisplayStyle() {
+            return null;
+        }
+
+        @Override
+        public Image getCollectionViewIcon() {
+            return ImageResource.PHOTO_ALBUM_16.getFxImage();
+        }
+
+        @Override
+        public abstract void load(DataReader reader);
+
+        @Override
+        public abstract void save(DataWriter writer);
+
+        @Override
+        public abstract String getName();
+
+        @Override
+        public abstract String getMask();
+
+        @Override
+        public abstract int getFlags();
+
+        @Override
+        public void setupRightClickMenuItems(ContextMenu contextMenu) {
+            // TODO: Future allow export / import.
+        }
+    }
+
+    @Getter
+    public static class RwPlatformIndependentTexturePrefixLegacy extends RwPlatformIndependentTexturePrefixBase {
+        private String name = "";
+        private String mask = "";
+        private int flags;
+
+        private static final int TEXTURE_BASE_NAME_LENGTH = 32;
+
+        public RwPlatformIndependentTexturePrefixLegacy(RwPlatformIndependentTextureDictionaryChunk chunk) {
+            super(chunk);
+        }
+
+        @Override
         public void load(DataReader reader) {
-            this.name = reader.readTerminatedStringOfLength(32);
-            this.mask = reader.readTerminatedStringOfLength(32);
+            this.name = reader.readNullTerminatedFixedSizeString(TEXTURE_BASE_NAME_LENGTH);
+            this.mask = reader.readNullTerminatedFixedSizeString(TEXTURE_BASE_NAME_LENGTH);
             int mipLevelCount = reader.readInt();
             this.flags = reader.readInt();
+
+            this.mipMapImages.clear();
             for (int i = 0; i < mipLevelCount; i++)
-                this.mipLevelImages.add(this.parentChunk.readChunk(reader, RwImageChunk.class));
+                this.mipMapImages.add(this.parentChunk.readChunk(reader, new RwImageChunk(this.parentChunk.getStreamFile(), this.parentChunk.getVersion(), this.parentChunk, this, i), false));
         }
 
         @Override
         public void save(DataWriter writer) {
-            // TODO
+            writer.writeNullTerminatedFixedSizeString(this.name, TEXTURE_BASE_NAME_LENGTH);
+            writer.writeNullTerminatedFixedSizeString(this.mask, TEXTURE_BASE_NAME_LENGTH);
+            writer.writeInt(this.mipMapImages.size());
+            writer.writeInt(this.flags);
+            for (int i = 0; i < this.mipMapImages.size(); i++)
+                this.parentChunk.writeChunk(writer, this.mipMapImages.get(i));
+        }
+    }
+
+    @Getter
+    public static class RwPlatformIndependentTexturePrefix extends RwPlatformIndependentTexturePrefixBase {
+        private final RwTextureChunk texture;
+
+        public RwPlatformIndependentTexturePrefix(RwPlatformIndependentTextureDictionaryChunk chunk) {
+            super(chunk);
+            this.texture = new RwTextureChunk(chunk.getStreamFile(), chunk.getVersion(), chunk);
         }
 
-        /**
-         * Makes a file name to save a particular image as.
-         * @param mipLevelId The mip level id.
-         * @return fileName
-         */
-        public String makeFileName(int mipLevelId) {
-            StringBuilder sb = new StringBuilder();
+        @Override
+        public void load(DataReader reader) {
+            this.mipMapImages.clear();
+            int mipLevelCount = reader.readInt();
+            for (int i = 0; i < mipLevelCount; i++)
+                this.mipMapImages.add(this.parentChunk.readChunk(reader, new RwImageChunk(this.parentChunk.getStreamFile(), this.parentChunk.getVersion(), this.parentChunk, this, i), false));
+            this.parentChunk.readChunk(reader, this.texture);
+        }
 
-            if (this.name == null || this.name.isEmpty()) {
-                sb.append("INVALID_NAME");
-            } else {
-                sb.append(this.name);
-            }
+        @Override
+        public void save(DataWriter writer) {
+            writer.writeInt(this.mipMapImages.size());
+            for (int i = 0; i < this.mipMapImages.size(); i++)
+                this.parentChunk.writeChunk(writer, this.mipMapImages.get(i));
+            this.parentChunk.writeChunk(writer, this.texture);
+        }
 
-            if (mipLevelId >= 0 && this.mipLevelImages.size() > 1)
-                sb.append("-").append(mipLevelId);
-            if (this.mask != null && this.mask.trim().length() > 0)
-                sb.append(" (").append(this.mask).append(")");
-            return sb.toString();
+        @Override
+        public String getName() {
+            return this.texture.getName();
+        }
+
+        @Override
+        public String getMask() {
+            return this.texture.getMask();
+        }
+
+        @Override
+        public int getFlags() {
+            return this.texture.getTexFiltAddr();
         }
     }
 }

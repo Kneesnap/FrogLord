@@ -49,7 +49,7 @@ public enum MusicTrack {
      */
     public byte getTrack(FroggerGameInstance instance) {
         if (instance.isPC()) {
-            if (instance.getConfig().isAtLeastRetailWindows()) {
+            if (instance.getVersionConfig().isAtLeastRetailWindows()) {
                 return getPcTrack();
             } else {
                 return getPrototypeTrack();
@@ -71,6 +71,6 @@ public enum MusicTrack {
         for (MusicTrack test : values())
             if (test.getTrack(instance) == id)
                 return test;
-        throw new RuntimeException("Cannot get track id " + id + " from " + instance.getConfig().getInternalName() + ".");
+        throw new RuntimeException("Cannot get track id " + id + " from " + instance.getVersionConfig().getInternalName() + ".");
     }
 }

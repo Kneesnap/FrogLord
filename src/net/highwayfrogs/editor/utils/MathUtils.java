@@ -5,7 +5,6 @@ package net.highwayfrogs.editor.utils;
  * Created by AndyEder on 2/14/2019.
  */
 public class MathUtils {
-
     /**
      * Calculates the greatest common divisor between the two numbers using euclid's algorithm.
      * If both factors are 0, 0 will be returned. Otherwise, the greatest common factor will be returned, with the default as 1 if there are no other shared factors.
@@ -44,7 +43,7 @@ public class MathUtils {
      * @return int
      */
     public static long clamp(long valueIn, long minVal, long maxVal) {
-        return (valueIn < minVal) ? minVal : (valueIn > maxVal) ? maxVal : valueIn;
+        return (valueIn < minVal) ? minVal : Math.min(valueIn, maxVal);
     }
 
     /**
@@ -55,7 +54,7 @@ public class MathUtils {
      * @return int
      */
     public static int clamp(int valueIn, int minVal, int maxVal) {
-        return (valueIn < minVal) ? minVal : (valueIn > maxVal) ? maxVal : valueIn;
+        return (valueIn < minVal) ? minVal : Math.min(valueIn, maxVal);
     }
 
     /**
@@ -66,7 +65,7 @@ public class MathUtils {
      * @return int
      */
     public static float clamp(float valueIn, float minVal, float maxVal) {
-        return (valueIn < minVal) ? minVal : (valueIn > maxVal) ? maxVal : valueIn;
+        return (valueIn < minVal) ? minVal : Math.min(valueIn, maxVal);
     }
 
     /**
@@ -78,5 +77,39 @@ public class MathUtils {
      */
     public static double clamp(double valueIn, double minVal, double maxVal) {
         return Math.max(minVal, Math.min(valueIn, maxVal));
+    }
+
+    /**
+     * Raise x to the y. Math.pow is pretty intensive, so we do this instead.
+     * @param x The base.
+     * @param y The exponent.
+     * @return value
+     */
+    public static int power(int x, int y) {
+        int result = 1;
+        while (y-- > 0)
+            result *= x;
+        return result;
+    }
+
+    /**
+     * Get the square root of a fixed-point integer.
+     * @param i The integer to get the square root of.
+     * @return squareRoot
+     */
+    public static int fixedSqrt(int i) {
+        return (int) Math.sqrt(i);
+    }
+
+    /**
+     * A clamp method that clamps down on negative numbers, and up on positive numbers.
+     * @param value The value to clamp.
+     * @return clampedCeil
+     */
+    public static int ceilNegative(double value) {
+        if ((int) value == value)
+            return (int) value;
+
+        return (value > 0) ? ((int) value + 1) : ((int) value - 1);
     }
 }

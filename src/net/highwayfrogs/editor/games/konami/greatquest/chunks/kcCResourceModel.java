@@ -1,0 +1,134 @@
+package net.highwayfrogs.editor.games.konami.greatquest.chunks;
+
+import lombok.Getter;
+import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
+import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
+import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
+import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
+import net.highwayfrogs.editor.gui.InputMenu;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.FileUtils;
+
+/**
+ * A reference to a 3D model.
+ * Created by Kneesnap on 6/28/2023.
+ */
+@Getter
+public class kcCResourceModel extends kcCResource {
+    private String fullPath = ""; // Full file path to the real model file.
+
+    public static final int FULL_PATH_SIZE = 260;
+
+    public kcCResourceModel(GreatQuestChunkedFile parentFile) {
+        super(parentFile, KCResourceID.MODEL);
+    }
+
+    @Override
+    public void load(DataReader reader) {
+        super.load(reader);
+        this.fullPath = reader.readNullTerminatedFixedSizeString(FULL_PATH_SIZE); // Don't read with the padding byte, as the padding bytes are only valid when the buffer is initially created, if the is shrunk (Such as GOOBER.VTX in 00.dat), after the null byte, the old bytes will still be there.
+
+        GreatQuestAssetBinFile mainArchive = getMainArchive();
+        if (mainArchive != null)
+            mainArchive.applyFileName(this.fullPath, false);
+
+        applyCollisionMeshName();
+    }
+
+    @Override
+    public void save(DataWriter writer) {
+        super.save(writer);
+        writer.writeNullTerminatedFixedSizeString(this.fullPath, FULL_PATH_SIZE, GreatQuestInstance.PADDING_BYTE_CD);
+    }
+
+    @Override
+    public void afterLoad1(kcLoadContext context) {
+        super.afterLoad1(context);
+        // We must wait until afterLoad1() because the file object won't exist for files found later in the file if we don't.
+        // But, this must run before afterLoad2() because that's when we start doing lookups based on file paths.
+        kcModelWrapper wrapper = getModelWrapper();
+        if (wrapper != null)
+            context.getMaterialLoadContext().applyLevelTextureFileNames(getParentFile(), this.fullPath, wrapper.getModel().getMaterials());
+    }
+
+    @Override
+    public void afterLoad2(kcLoadContext context) {
+        super.afterLoad2(context);
+        // Now we'll resolve the textures for this model using the textures found in the chunked file.
+        // We don't need to print a warning if the model doesn't exist, because the applyFileName() call would have already caught it.
+        kcModelWrapper wrapper = getModelWrapper();
+        if (wrapper != null)
+            context.getMaterialLoadContext().resolveMaterialTexturesInChunk(getParentFile(), wrapper, wrapper.getModel().getMaterials());
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        propertyList.add("File Path", this.fullPath,
+                () -> InputMenu.promptInputBlocking(getGameInstance(), "Please enter the new path.", this.fullPath, newPath -> setFullPath(newPath, true)));
+        return propertyList;
+    }
+
+    /**
+     * Gets the file name without the full path.
+     */
+    public String getFileName() {
+        return GreatQuestUtils.getFileNameFromPath(this.fullPath);
+    }
+
+    /**
+     * Gets the 3D this model stands in for.
+     * @return model
+     */
+    public kcModel getModel() {
+        GreatQuestArchiveFile file = getOptionalFileByName(this.fullPath);
+        return (file instanceof kcModelWrapper) ? ((kcModelWrapper) file).getModel() : null;
+    }
+
+    /**
+     * Gets the wrapper around the 3D model.
+     * @return modelWrapper
+     */
+    public kcModelWrapper getModelWrapper() {
+        GreatQuestArchiveFile file = getOptionalFileByName(this.fullPath);
+        return (file instanceof kcModelWrapper) ? ((kcModelWrapper) file) : null;
+    }
+
+    /**
+     * Sets the file path of the asset referenced here.
+     * @param newPath the file path to apply
+     * @param throwIfPathCannotBeResolved if the file path cannot be resolved to a valid asset and this is true, an exception will be thrown.
+     */
+    public void setFullPath(String newPath, boolean throwIfPathCannotBeResolved) {
+        if (newPath == null)
+            throw new NullPointerException("newPath");
+        if (newPath.length() >= FULL_PATH_SIZE)
+            throw new IllegalArgumentException("The provided path is too large! (Provided: " + newPath.length() + ", Maximum: " + (FULL_PATH_SIZE - 1) + ")");
+
+        if (throwIfPathCannotBeResolved) {
+            GreatQuestArchiveFile file = getOptionalFileByName(newPath);
+            if (!(file instanceof kcModelWrapper))
+                throw new IllegalArgumentException("The file path could not be resolved to a model! (" + newPath + ")");
+        }
+
+        setName(GreatQuestUtils.getFileNameFromPath(newPath));
+        this.fullPath = newPath;
+    }
+
+    private void applyCollisionMeshName() {
+        // If we resolve the model successfully, our goal is to generate the name of any corresponding collision mesh.
+        String baseName = FileUtils.stripExtension(getFileName());
+        String collisionMeshName = (baseName + kcCResourceTriMesh.EXTENSION_SUFFIX.toUpperCase());
+        if (baseName.equals(baseName.toUpperCase()))
+            collisionMeshName = collisionMeshName.toUpperCase();
+
+        kcCResource triMesh = getParentFile().getResourceByHash(GreatQuestUtils.hash(collisionMeshName));
+        if (triMesh != null)
+            triMesh.getSelfHash().setOriginalString(collisionMeshName);
+    }
+}

@@ -10,7 +10,7 @@ import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.function.Function;
 
@@ -120,7 +120,7 @@ public class PCMapBook extends MapBook {
     @Override
     public String toString() {
         return "MAP[Hi: " + getGameInstance().getResourceName(highMapId) + ",Lo: " + getGameInstance().getResourceName(lowMapId)
-                + "] Remap[Hi: " + Utils.toHexString(getFileHighRemapPointer()) + ",Lo: " + Utils.toHexString(getFileLowRemapPointer())
+                + "] Remap[Hi: " + NumberUtils.toHexString(getFileHighRemapPointer()) + ",Lo: " + NumberUtils.toHexString(getFileLowRemapPointer())
                 + "] WAD[Hi: " + getGameInstance().getResourceName(highWadId) + ",Lo: " + getGameInstance().getResourceName(lowWadId)
                 + "] PAL: " + getGameInstance().getResourceName(paletteId)
                 + " ENV: " + getGameInstance().getTextureIdFromPointer(this.environmentTexturePointer);

@@ -22,13 +22,13 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.suburbia.Sw
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.swamp.*;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.logging.Logger;
 
 /**
  * Represents arbitrary entity data.
@@ -71,7 +71,7 @@ public abstract class OldFroggerEntityData<TDifficultyData extends OldFroggerDif
     }
 
     @Override
-    public Logger getLogger() {
+    public ILogger getLogger() {
         return this.entity != null ? this.entity.getLogger() : super.getLogger();
     }
 

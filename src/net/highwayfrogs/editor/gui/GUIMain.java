@@ -8,6 +8,8 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.DataSizeUnit;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.logging.ConsoleOutputHandler;
 import net.highwayfrogs.editor.utils.logging.LogFormatter;
@@ -23,16 +25,20 @@ import java.util.logging.*;
 
 /**
  * The entry point to FrogLord.
- * TODO: Search bar, add bar, etc.
- * TODO: Use new config system in existing code parts?
+ * TODO: At some point we want to:
+ *  -> Make a better logging system, one which can dynamically create its information portion without creating memory leaks. One which can log per-game instance, and only log to that instance's main window. Also, it should be able to use format messages.
+ *  -> Allow automatic version selection when selecting a game.
+ *  -> PropertyList with nested portions.
+ *  -> Add a scripting console + a way to run scripts for each game, as well as an actual mod system definition.
+ *  -> Use new config system in existing code parts?
+ *  -> Improve the file path system by thinking about all the places we use it, and if we want to combine any usages.
+ *   -> Also, I don't like GUIMain.getWorkingDirectory(), we should allow paths to specify their default directories.
+ *   -> I also don't like how having multiple instances of FrogLord can break the configuration. Is there some way we can handle this better? Perhaps reloading configs which are not for the active game instance when we go to save and the file was unexpectedly changed?
  *
  * TODO: Solve TODOs in:
  *  - GUIMain.java
  *  - GameInstance.java
  *  - GroupedCollectionViewComponent.java
- *  - CollectionViewComponent.java
- *  - CollectionEditorComponent.java
- *  - SCGameFileListEditor.java
  *
  * TODO: Globus's computer seems to have different text settings than mine, so many of the UI buttons are just too small for the text.
  *  -> What do I need to make the FrogLord UI appear consistent across systems?
@@ -61,7 +67,7 @@ public class GUIMain extends Application {
         long availableMemory = Runtime.getRuntime().maxMemory();
         long minMemory = DataSizeUnit.GIGABYTE.getIncrement();
         if (availableMemory < minMemory)
-            Utils.makePopUp("FrogLord needs at least 1GB of RAM to function properly.\n"
+            FXUtils.makePopUp("FrogLord needs at least 1GB of RAM to function properly.\n"
                     + "FrogLord has only been given " + DataSizeUnit.formatSize(availableMemory) + " Memory.\n"
                     + "Proceed at your own risk. Things may not work properly.", AlertType.WARNING);
 
@@ -92,7 +98,7 @@ public class GUIMain extends Application {
                 throw new RuntimeException("Failed to delete working directory test file '" + testFile + "'.");
         }
 
-        Utils.makeDirectory(mainApplicationFolder);
+        FileUtils.makeDirectory(mainApplicationFolder);
     }
 
     private static void handleFxThreadError(Thread thread, Throwable throwable) {
@@ -107,6 +113,7 @@ public class GUIMain extends Application {
     @SuppressWarnings("CallToPrintStackTrace")
     private static void onShutdown() {
         Logger.getLogger(GUIMain.class.getSimpleName()).info("FrogLord is shutting down...");
+        saveMainConfig();
         
         // Logger shutdown.
         Logger globalLogger = Logger.getGlobal();
@@ -153,7 +160,7 @@ public class GUIMain extends Application {
     }
 
     private static void setupLogger() {
-        Utils.makeDirectory(new File(getMainApplicationFolder(), "logs")); // Ensure the logs directory exists.
+        FileUtils.makeDirectory(new File(getMainApplicationFolder(), "logs")); // Ensure the logs directory exists.
 
         // Setup global logger.
         Logger logger = Logger.getGlobal();

@@ -17,7 +17,8 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathSegme
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapPathManager.FroggerPathPreview;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.MathUtils;
 
 /**
  * Represents PATH_ARC.
@@ -55,7 +56,7 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
         if (getPath().isOldPathFormatEnabled()) {
             readRadius = reader.readUnsignedShortAsInt();
             this.pitch = 0; // Doesn't support pitch.
-            this.angle = Utils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 12);
+            this.angle = DataUtils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 12);
         } else {
             // Calculate angle.
             // 'angle' was how this data was included in the "Frogger map export revision 18-04-97.doc" file.
@@ -76,7 +77,7 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
         int calculatedRadius = calculateFixedRadius();
         int diff = readRadius - calculatedRadius;
         if (Math.abs(diff) >= 30) // There are only 17 occurrences with a value > 1 in psx-retail-usa. These appear to be outliers, though I don't know why their values are odd.
-            getLogger().warning("calculateFixedRadius() was inaccurate! (Read: " + readRadius + "/" + Utils.fixedPointIntToFloat4Bit(readRadius) + ", Calculated: " + calculatedRadius + "/" + Utils.fixedPointIntToFloat4Bit(calculatedRadius) + ", Difference: " + diff + "/" + Utils.fixedPointIntToFloat4Bit(diff) + ", Pitch: " + this.pitch + "/" + Utils.fixedPointIntToFloat4Bit(this.pitch) + ", Length: " + getLength() + "/" + Utils.fixedPointIntToFloat4Bit(getLength()) + ").");
+            getLogger().warning("calculateFixedRadius() was inaccurate! (Read: " + readRadius + "/" + DataUtils.fixedPointIntToFloat4Bit(readRadius) + ", Calculated: " + calculatedRadius + "/" + DataUtils.fixedPointIntToFloat4Bit(calculatedRadius) + ", Difference: " + diff + "/" + DataUtils.fixedPointIntToFloat4Bit(diff) + ", Pitch: " + this.pitch + "/" + DataUtils.fixedPointIntToFloat4Bit(this.pitch) + ", Length: " + getLength() + "/" + DataUtils.fixedPointIntToFloat4Bit(getLength()) + ").");
 
         // Normal warnings.
         if (FroggerPathSegmentArcOrientation.getDirection(this.normal) == null)
@@ -90,7 +91,7 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
         this.normal.saveWithPadding(writer);
         if (getPath().isOldPathFormatEnabled()) {
             writer.writeUnsignedShort(calculateFixedRadius());
-            writer.writeUnsignedShort(Utils.floatToFixedPointInt((float) this.angle, 12));
+            writer.writeUnsignedShort(DataUtils.floatToFixedPointInt((float) this.angle, 12));
         } else {
             writer.writeInt(calculateFixedRadius());
             writer.writeInt(this.pitch);
@@ -164,14 +165,14 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
     public void setupEditor(FroggerPathPreview pathPreview, GUIEditorGrid editor) {
         super.setupEditor(pathPreview, editor);
 
-        TextField radiusField = editor.addFloatField("Arc Radius:", Utils.fixedPointIntToFloat4Bit(calculateFixedRadius()), null, null); // Read-Only.
+        TextField radiusField = editor.addFloatField("Arc Radius:", DataUtils.fixedPointIntToFloat4Bit(calculateFixedRadius()), null, null); // Read-Only.
         editor.addFloatVector("Start", getStart(), () -> {
             onUpdate(pathPreview);
-            radiusField.setText(String.valueOf(Utils.fixedPointIntToFloat4Bit(calculateFixedRadius())));
+            radiusField.setText(String.valueOf(DataUtils.fixedPointIntToFloat4Bit(calculateFixedRadius())));
         }, pathPreview.getController());
         editor.addFloatVector("Center", getCenter(), () -> {
             onUpdate(pathPreview);
-            radiusField.setText(String.valueOf(Utils.fixedPointIntToFloat4Bit(calculateFixedRadius())));
+            radiusField.setText(String.valueOf(DataUtils.fixedPointIntToFloat4Bit(calculateFixedRadius())));
         }, pathPreview.getController());
 
         // Add normal editor.
@@ -197,8 +198,8 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
 
         // Old paths don't support pitch.
         if (!getPath().isOldPathFormatEnabled()) {
-            editor.addFloatField("Pitch:", Utils.fixedPointIntToFloat4Bit(getPitch()), newValue -> {
-                this.pitch = Utils.floatToFixedPointInt4Bit(newValue);
+            editor.addFloatField("Pitch:", DataUtils.fixedPointIntToFloat4Bit(getPitch()), newValue -> {
+                this.pitch = DataUtils.floatToFixedPointInt4Bit(newValue);
                 onUpdate(pathPreview);
             }, null);
         }
@@ -213,7 +214,7 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
         int xDiff = this.start.getX() - this.center.getX();
         int yDiff = this.start.getY() - this.center.getY();
         int zDiff = this.start.getZ() - this.center.getZ();
-        return Utils.fixedSqrt((xDiff * xDiff) + (zDiff * zDiff) + (yDiff * yDiff));
+        return MathUtils.fixedSqrt((xDiff * xDiff) + (zDiff * zDiff) + (yDiff * yDiff));
     }
 
     @Override

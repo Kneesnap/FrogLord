@@ -1,9 +1,9 @@
 package net.highwayfrogs.editor.system.mm3d;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,12 +13,12 @@ import java.util.List;
  * Created by Kneesnap on 2/28/2019.
  */
 @Getter
-public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
-    private List<T> blocks = new ArrayList<>();
+public class MMDataBlockHeader<T extends MMDataBlockBody> implements IBinarySerializable {
+    private final List<T> blocks = new ArrayList<>();
     private int invalidBodies;
 
-    private transient OffsetType offsetType;
-    private transient MisfitModel3DObject parent;
+    private transient final OffsetType offsetType;
+    private transient final MisfitModel3DObject parent;
 
     private static final short FLAGS = 0x00;
 
@@ -69,13 +69,13 @@ public class MMDataBlockHeader<T extends MMDataBlockBody> extends GameObject {
                 int writeSizeTo = writer.writeNullPointer();
                 int structStart = writer.getIndex();
                 body.save(writer);
-                writer.writeAddressAt(writeSizeTo, (writer.getIndex() - structStart));
+                writer.writeIntAtPos(writeSizeTo, (writer.getIndex() - structStart));
             }
         } else if (getOffsetType().isTypeB()) {
             int writeSizeTo = writer.writeNullPointer();
             int structStart = writer.getIndex();
             this.blocks.forEach(block -> block.save(writer));
-            writer.writeAddressAt(writeSizeTo, (writer.getIndex() - structStart) / this.blocks.size());
+            writer.writeIntAtPos(writeSizeTo, (writer.getIndex() - structStart) / this.blocks.size());
         }
     }
 
