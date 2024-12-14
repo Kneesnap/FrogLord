@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.gui.fxobject;
 
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
+import javafx.scene.SubScene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.shape.Rectangle;
@@ -56,7 +57,7 @@ public class SelectionRectangle {
         this.rectangle.setY(0);
         this.rectangle.setWidth(0);
         this.rectangle.setHeight(0);
-        this.controller.getSubScene2DElements().getChildren().add(this.rectangle);
+        this.controller.getRoot2D().getChildren().add(this.rectangle);
     }
 
     private void onMouseDragged(MouseEvent event) {
@@ -66,14 +67,14 @@ public class SelectionRectangle {
         // Update preview.
         event.consume();
         InputManager manager = this.controller.getInputManager();
-        Point2D uiOffset = this.controller.getSubScene().localToScene(0, 0);
-        if (uiOffset.getX() >= event.getSceneX() || uiOffset.getY() >= event.getSceneY())
-            return; // Don't allow moving the 3D view.
+        SubScene subScene = this.controller.getSubScene();
+        Point2D uiMinOffset = subScene.localToScene(0, 0); // Min corner of 3D view.
+        Point2D uiMaxOffset = subScene.localToScene(subScene.getWidth() - 1, subScene.getHeight() - 1); // Max corner of 3D view.
 
-        double minX = Math.min(event.getSceneX(), manager.getLastDragStartMouseState().getX()) - uiOffset.getX();
-        double maxX = Math.max(event.getSceneX(), manager.getLastDragStartMouseState().getX()) - uiOffset.getX();
-        double minY = Math.min(event.getSceneY(), manager.getLastDragStartMouseState().getY()) - uiOffset.getY();
-        double maxY = Math.max(event.getSceneY(), manager.getLastDragStartMouseState().getY()) - uiOffset.getY();
+        double minX = Math.max(uiMinOffset.getX(), Math.min(event.getSceneX(), manager.getLastDragStartMouseState().getX()));
+        double maxX = Math.min(uiMaxOffset.getX(), Math.max(event.getSceneX(), manager.getLastDragStartMouseState().getX()));
+        double minY = Math.max(uiMinOffset.getY(), Math.min(event.getSceneY(), manager.getLastDragStartMouseState().getY()));
+        double maxY = Math.min(uiMaxOffset.getY(), Math.max(event.getSceneY(), manager.getLastDragStartMouseState().getY()));
         this.rectangle.setX(minX);
         this.rectangle.setY(minY);
         this.rectangle.setWidth(maxX - minX);
@@ -91,7 +92,7 @@ public class SelectionRectangle {
         // Stop selecting.
         event.consume();
         this.selectionActive = false;
-        this.controller.getSubScene2DElements().getChildren().remove(this.rectangle);
+        this.controller.getRoot2D().getChildren().remove(this.rectangle);
 
         // Update InputManager.
         InputManager manager = this.controller.getInputManager();

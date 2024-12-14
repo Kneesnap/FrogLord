@@ -24,6 +24,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.psx.shading.IPSXShadedMesh;
 import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList.RenderListManager;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
@@ -57,8 +58,6 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
 
     private final GameInstance gameInstance;
     private SubScene subScene;
-    private Group subScene2DElements;
-    private Logger cachedLogger;
     private final Map<MeshView, ChangeListener<DrawMode>> meshViewDrawModeListeners = new HashMap<>();
 
     // Baseline UI components
@@ -121,6 +120,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
 
     // Mesh Rendering:
     private MeshView meshView;
+    private AnchorPane root2D;
     private Group root3D;
     private Scene meshScene;
     private Scene originalScene;
@@ -264,8 +264,13 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         splitPane.setDividerPositions(.2);
         splitPane.getItems().addAll(loadRoot, borderPane3D);
 
+        // Setup the root node. (This exists so we can also add 2D elements above the 3D space.
+        this.root2D = new AnchorPane();
+        GameUIController.setAnchorPaneStretch(splitPane);
+        this.root2D.getChildren().add(splitPane);
+
         // Create and set the scene with antialiasing.
-        this.meshScene = new Scene(splitPane, subScene3D.getWidth(), subScene3D.getHeight(), true, SceneAntialiasing.DISABLED);
+        this.meshScene = new Scene(this.root2D, subScene3D.getWidth(), subScene3D.getHeight(), true, SceneAntialiasing.DISABLED);
         this.originalScene = FXUtils.setSceneKeepPosition(stageToOverride, this.meshScene);
 
         // Handle scaling of SubScene on stage resizing.
