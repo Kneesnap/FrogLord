@@ -67,6 +67,7 @@ public class NoodleCompiler {
      * @return compiledScript
      */
     public static <T extends NoodleScript> T compileScript(NoodleScriptEngine engine, Config codeConfig, T scriptToLoad) {
+        int startLineNumber = codeConfig.getOriginalLineNumber() + 1;
         String codeText = String.join(Constants.NEWLINE, codeConfig.getTextWithComments()) + Constants.NEWLINE; // Adding the extra newline makes it easier on the token parser, aka if we don't it'll error.
         scriptToLoad.clearScript(); // Reset the script object before compiling anything into it.
         scriptToLoad.setConfig(codeConfig);
@@ -77,13 +78,13 @@ public class NoodleCompiler {
 
         // 1.) Parses the raw text into tokens.
         NoodleFileCodeSource mainSource = context.getCodeSource(scriptToLoad.getSourceFile());
-        parseIntoTokens(mainSource, codeText, context.getTokens(), 1);
+        parseIntoTokens(mainSource, codeText, context.getTokens(), startLineNumber);
 
         // 2.) Runs the preprocessor on the tokens.
         context.getPreprocessor().runPreprocessor(context, context.getTokens());
 
         // 3.) Builds an AST from the tokens.
-        buildAST(context, mainSource);
+        buildAST(context, mainSource, startLineNumber);
 
         // 4.) Compiles the AST into Noodle assembly instructions / bytecode.
         compileExpression(context, context.getNode());
@@ -618,14 +619,14 @@ public class NoodleCompiler {
      * Builds the abstract syntax tree used to represent the source code before compilation.
      * @param context The context to build the AST with.
      */
-    private static void buildAST(NoodleCompileContext context, NoodleCodeSource source) {
+    private static void buildAST(NoodleCompileContext context, NoodleCodeSource source, int startLineNumber) {
         // Build the tree.
         while (context.hasMoreTokens()) {
             buildStatement(context);
             context.getNodes().add(context.getNode());
         }
 
-        NoodleCodeLocation codeLocation = new NoodleCodeLocation(source, 1, 1);
+        NoodleCodeLocation codeLocation = new NoodleCodeLocation(source, startLineNumber, 1);
         context.setNode(new NoodleNodeBlock(codeLocation, context.getNodes()));
     }
 
@@ -1193,7 +1194,7 @@ public class NoodleCompiler {
         int lineNumber = startingLineIndex;
         while (pos < len) {
             int start = pos;
-            NoodleCodeLocation codeLoc = new NoodleCodeLocation(source, lineNumber + 1, pos - lineStart + 1);
+            NoodleCodeLocation codeLoc = new NoodleCodeLocation(source, lineNumber, pos - lineStart + 1);
             char currentChar = scriptText.charAt(pos - 1);
 
             pos++;

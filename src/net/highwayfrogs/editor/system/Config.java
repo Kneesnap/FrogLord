@@ -73,6 +73,13 @@ public class Config implements IBinarySerializable {
     private String sectionComment;
 
     /**
+     * The index (one-indexed) line number which the value was originally loaded from.
+     */
+    @Getter
+    @Setter
+    private int originalLineNumber = -1;
+
+    /**
      * This is the config which holds this config as a child config, if there is one.
      */
     @Getter
@@ -213,6 +220,8 @@ public class Config implements IBinarySerializable {
             this.sectionComment = reader.readTerminatedString(sectionCommentLength);
         }
 
+        this.originalLineNumber = reader.readInt();
+
         // Read key value pairs.
         int keyValueCount = reader.readInt();
         for (int i = 0; i < keyValueCount; i++) {
@@ -311,6 +320,8 @@ public class Config implements IBinarySerializable {
             if (this.sectionComment != null && this.sectionComment.length() > 0)
                 writer.writeStringBytes(this.sectionComment);
         }
+
+        writer.writeInt(this.originalLineNumber);
 
         // Write key value pairs.
         writer.writeInt(this.keyValuePairs.size());
@@ -649,8 +660,23 @@ public class Config implements IBinarySerializable {
      * @return readConfig
      */
     public static Config loadConfigFromTextFile(File targetFile, boolean createIfMissing) {
+        return loadConfigFromTextFile(targetFile, null, createIfMissing);
+    }
+
+    /**
+     * Reads a configuration from a text file.
+     * @param targetFile The file to read the configuration from.
+     * @param baseFolder The file to read the configuration from.
+     * @param createIfMissing if the file is not found, an empty config will still be returned when this is true.
+     * @throws IllegalConfigSyntaxException Thrown if invalid configuration syntax is found.
+     * @return readConfig
+     */
+    public static Config loadConfigFromTextFile(File targetFile, File baseFolder, boolean createIfMissing) {
         if (targetFile == null)
             throw new NullPointerException("targetFile");
+
+        if (baseFolder != null && !baseFolder.isDirectory())
+            throw new IllegalArgumentException("Specified 'baseFolder' was not a directory! (" + baseFolder.getName() + ")");
 
         String configFileText;
         if (!targetFile.exists() || !targetFile.isFile()) {
@@ -662,7 +688,7 @@ public class Config implements IBinarySerializable {
             configFileText = String.join(Constants.NEWLINE, FileUtils.readLinesFromFile(targetFile));
         }
 
-        return loadConfigFromString(configFileText, FileUtils.stripExtension(targetFile.getName()));
+        return loadConfigFromString(configFileText, baseFolder != null ? FileUtils.toLocalPath(baseFolder, targetFile, true) : targetFile.getName());
     }
 
     /**
@@ -671,7 +697,6 @@ public class Config implements IBinarySerializable {
      * @return loadedConfig
      */
     public static Config loadTextConfigFromURL(URL url) {
-        String versionConfigName = FileUtils.getFileNameWithoutExtension(url);
         InputStream inputStream;
         try {
             inputStream = url.openStream();
@@ -679,7 +704,7 @@ public class Config implements IBinarySerializable {
             throw new RuntimeException("Failed to load URL: '" + url + "'.", e);
         }
 
-        return loadTextConfigFromInputStream(inputStream, versionConfigName);
+        return loadTextConfigFromInputStream(inputStream, url.toString());
     }
 
     /**
@@ -710,6 +735,7 @@ public class Config implements IBinarySerializable {
 
     private static Config loadConfigFromString(BadStringReader stringReader, int layer, String sectionName, String sectionComment) {
         Config config = new Config(sectionName);
+        config.setOriginalLineNumber(stringReader.getLineNumber());
         config.setSectionComment(sectionComment);
 
         while (true) {
@@ -880,6 +906,14 @@ public class Config implements IBinarySerializable {
         private String comment;
         @Setter @NonNull private String commentSeparator;
 
+        /**
+         * The index (one-indexed) line number which the value was originally loaded from.
+         */
+        @Getter
+        @Setter
+        private int originalLineNumber = -1;
+
+
         public static final String DEFAULT_COMMENT_SEPARATOR = " " + COMMENT_CHARACTER + " ";
 
         public ConfigValueNode() {
@@ -908,6 +942,7 @@ public class Config implements IBinarySerializable {
         public void loadFromReader(DataReader reader, ConfigSettings configSettings) {
             int valueLength = reader.readUnsignedShortAsInt();
             this.value = reader.readTerminatedString(valueLength);
+            this.originalLineNumber = reader.readInt();
             this.surroundByQuotes = reader.readByte() == 1;
             if (configSettings.isReadingCommentsEnabled()) {
                 int commentLength = reader.readUnsignedShortAsInt();
@@ -926,7 +961,7 @@ public class Config implements IBinarySerializable {
             if (this.value != null)
                 writer.writeStringBytes(this.value);
 
-            // Write surrounded by quotes.
+            writer.writeInt(this.originalLineNumber);
             writer.writeByte(this.surroundByQuotes ? (byte) 1 : (byte) 0);
 
             // Write comment.
@@ -980,6 +1015,7 @@ public class Config implements IBinarySerializable {
         private final StringReader _internalReader;
         private final StringBuilder stringBuilder = new StringBuilder();
         public String cachedNextLine;
+        @Getter private int lineNumber; // The line number of the line which was just read.
 
         public BadStringReader(StringReader reader) {
             this._internalReader = reader;
@@ -1018,6 +1054,7 @@ public class Config implements IBinarySerializable {
             // Build the string.
             String newLine = this.stringBuilder.toString();
             this.stringBuilder.setLength(0);
+            this.lineNumber++;
             return newLine;
         }
     }
