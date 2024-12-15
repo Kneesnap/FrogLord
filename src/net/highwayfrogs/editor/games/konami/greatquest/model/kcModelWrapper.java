@@ -85,6 +85,9 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
     public void afterLoad2(kcLoadContext context) {
         super.afterLoad2(context);
 
+        // Generate collision mesh names. This is done in afterLoad2() to wait for our own file path to be set.
+        context.getMaterialLoadContext().applyFileNameAsCollisionMesh(getFileName());
+
         // Generate texture file names. This is done in afterLoad2() to wait for our own file path to be set.
         context.getMaterialLoadContext().applyLevelTextureFileNames(this, getFilePath(), this.model.getMaterials());
 
