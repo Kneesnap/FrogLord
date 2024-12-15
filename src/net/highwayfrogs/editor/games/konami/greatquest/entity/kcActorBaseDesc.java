@@ -183,7 +183,7 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         List<kcCResourceTrack> animations = animSet != null ? animSet.getAnimations() : null;
 
         kcCResourceNamedHash namedHash = getAnimationSequences();
-        return new GreatQuestModelMesh(modelWrapper, skeleton, animations, namedHash, name, false);
+        return new GreatQuestModelMesh(modelWrapper, skeleton, animations, namedHash, name);
     }
 
     private static final String CONFIG_KEY_MODEL_DESC = "modelDesc";

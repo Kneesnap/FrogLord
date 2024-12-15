@@ -249,6 +249,14 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
     }
 
     /**
+     * Test if the vertex components contain bone weight data.
+     */
+    public boolean hasBoneWeights() {
+        return hasComponent(kcVertexFormatComponent.WEIGHT1F) || hasComponent(kcVertexFormatComponent.WEIGHT2F)
+                || hasComponent(kcVertexFormatComponent.WEIGHT3F) || hasComponent(kcVertexFormatComponent.WEIGHT4F);
+    }
+
+    /**
      * Gets the primitives in an unmodifiable state.
      * We do not allow direct modification of the primitives due to their tracking in two places.
      */
@@ -463,6 +471,21 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
         propertyList.add("FvF", NumberUtils.toHexString(this.fvf));
         propertyList.add("Components", Arrays.toString(this.components));
         propertyList.add("Bones Per Primitive", this.bonesPerPrimitive);
+
+        // Nodes:
+        if (this.nodes.size() > 0) {
+            propertyList.add("", "");
+            for (int i = 0; i < this.nodes.size(); i++)
+                propertyList.add("Node " + i, this.nodes.get(i));
+        }
+
+        // Primitives:
+        if (this.primitives.size() > 0) {
+            propertyList.add("", "");
+            for (int i = 0; i < this.primitives.size(); i++)
+                propertyList.add("Primitive " + i, this.primitives.get(i));
+        }
+
         return propertyList;
     }
 }

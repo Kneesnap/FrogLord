@@ -119,6 +119,6 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
      * Opens the mesh viewer for the wrapped model.
      */
     public void openMeshViewer() {
-        MeshViewController.setupMeshViewer(getGameInstance(), new GreatQuestModelViewController(), new GreatQuestModelMesh(this, true));
+        MeshViewController.setupMeshViewer(getGameInstance(), new GreatQuestModelViewController(), new GreatQuestModelMesh(this));
     }
 }

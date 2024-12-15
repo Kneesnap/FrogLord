@@ -41,7 +41,7 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
         // Setup vertex buffers matching this material.
         List<kcMaterial> materials = getModel().getMaterials();
         for (kcModelPrim modelPrim : getModel().getPrimitives()) {
-            int materialId = (int) modelPrim.getMaterialId();
+            int materialId = modelPrim.getMaterialId();
             kcMaterial material = materialId >= 0 && materials.size() > materialId ? materials.get(materialId) : null;
             if (material == getMesh().getGameMaterial())
                 this.add(modelPrim);
@@ -77,13 +77,8 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
     }
 
     private void writeTriangleList(DynamicMeshTypedDataEntry entry, int uvStartIndex, int vtxStartIndex, int vertexCount) {
-        for (int i = 0; i < vertexCount; i += 3) {
-            if (getMesh().isSwapAxis()) {
-                entry.addFace(vtxStartIndex + i + 2, uvStartIndex + i + 2, vtxStartIndex + i + 1, uvStartIndex + i + 1, vtxStartIndex + i, uvStartIndex + i);
-            } else {
-                entry.addFace(vtxStartIndex + i, uvStartIndex + i, vtxStartIndex + i + 1, uvStartIndex + i + 1, vtxStartIndex + i + 2, uvStartIndex + i + 2);
-            }
-        }
+        for (int i = 0; i < vertexCount; i += 3)
+            entry.addFace(vtxStartIndex + i, uvStartIndex + i, vtxStartIndex + i + 1, uvStartIndex + i + 1, vtxStartIndex + i + 2, uvStartIndex + i + 2);
     }
 
     private  void writeTriangleStrip(DynamicMeshTypedDataEntry entry, int uvStartIndex, int vtxStartIndex, int vertexCount) {
@@ -102,11 +97,7 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
                 uv2 = temp;
             }
 
-            if (getMesh().isSwapAxis()) {
-                entry.addFace(vtxStartIndex + i + 2, uvStartIndex + i + 2, vtx2, uv2, vtx1, uv1);
-            } else {
-                entry.addFace(vtx1, uv1, vtx2, uv2, vtxStartIndex + i + 2, uvStartIndex + i + 2);
-            }
+            entry.addFace(vtx1, uv1, vtx2, uv2, vtxStartIndex + i + 2, uvStartIndex + i + 2);
         }
     }
 
@@ -160,13 +151,6 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
                     result.add(kcMatrix.kcMatrixMulVector(tempMatrix, localPos, tmpWeightedVtx).multiplyScalar(weight1));
                 }
             }
-        }
-
-        if (getMesh().isSwapAxis()) {
-            float temp = result.getY();
-            result.setX(-result.getX());
-            result.setY(result.getZ());
-            result.setZ(temp);
         }
 
         return result;

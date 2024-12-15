@@ -60,4 +60,9 @@ public class kcModelNode extends GameData<GreatQuestInstance> {
 
         return startIndex + this.primitives.size();
     }
+
+    @Override
+    public String toString() {
+        return "kcModelPrim{boneId=" + this.nodeId + ",primitives=" + this.primitives.size() + "}";
+    }
 }

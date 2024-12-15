@@ -117,10 +117,10 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
             this.meshViewCollection = new GreatQuestModelMeshViewCollection(this);
             this.meshViewCollection.setMesh(getMesh().getActualMesh());
 
-            boolean hasSkeleton = getMesh().getSkeleton() != null;
-            GreatQuestUtils.setEntityRotation(this.skeletonMeshView, 0, 0, 0, hasSkeleton);
+            boolean applySkeletonRotation = getMesh().isSkeletonAxisRotationApplied();
+            GreatQuestUtils.setEntityRotation(this.skeletonMeshView, 0, 0, 0, applySkeletonRotation);
             for (int i = 0; i < this.meshViewCollection.getMeshViews().size(); i++)
-                GreatQuestUtils.setEntityRotation(this.meshViewCollection.getMeshViews().get(i), 0, 0, 0, hasSkeleton);
+                GreatQuestUtils.setEntityRotation(this.meshViewCollection.getMeshViews().get(i), 0, 0, 0, applySkeletonRotation);
         }
 
         // Setup skeleton.
@@ -212,6 +212,8 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
             super.onMeshViewSetup(meshIndex, mesh, meshView);
             MeshViewController.bindMeshSceneControls(this.viewController, meshView);
             this.viewController.getMainLight().getScope().add(meshView);
+            if (mesh.isSkeletonAxisRotationApplied())
+                GreatQuestUtils.setEntityRotation(meshView, 0, 0, 0, true);
         }
 
         @Override
@@ -219,6 +221,8 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
             super.onMeshViewCleanup(meshIndex, mesh, meshView);
             MeshViewController.unbindMeshSceneControls(this.viewController, meshView);
             this.viewController.getMainLight().getScope().remove(meshView);
+            if (mesh.isSkeletonAxisRotationApplied())
+                GreatQuestUtils.setEntityRotation(meshView, 0, 0, 0, false);
         }
     }
 }

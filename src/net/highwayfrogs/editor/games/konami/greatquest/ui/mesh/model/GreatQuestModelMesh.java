@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleto
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
+import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelNode;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
@@ -34,7 +35,7 @@ public class GreatQuestModelMesh extends DynamicMesh {
     @Getter private final ObservableList<kcCResourceTrack> availableAnimations;
     @Getter private final ObservableList<kcCActionSequence> availableSequences;
     @Getter private final DynamicMeshCollection<GreatQuestModelMaterialMesh> actualMesh;
-    @Getter private final boolean swapAxis;
+    @Getter private final boolean skeletonAxisRotationApplied;
     @Getter private final boolean environmentalMesh;
     @Getter private kcCResourceTrack activeAnimation;
     @Getter private boolean repeatAnimationOnFinish; // Whether the animation should repeat upon finish.
@@ -50,19 +51,19 @@ public class GreatQuestModelMesh extends DynamicMesh {
     public static final int TICKS_PER_SECOND = 4800; // Obtained from CGreatQuest::Run()
 
 
-    public GreatQuestModelMesh(kcCResourceModel resourceModel, boolean swapAxis) {
-        this(resourceModel != null ? resourceModel.getModelWrapper() : null, resourceModel != null ? resourceModel.getName() : "dummy", swapAxis);
+    public GreatQuestModelMesh(kcCResourceModel resourceModel) {
+        this(resourceModel != null ? resourceModel.getModelWrapper() : null, resourceModel != null ? resourceModel.getName() : "dummy");
     }
 
-    public GreatQuestModelMesh(kcModelWrapper modelWrapper, boolean swapAxis) {
-        this(modelWrapper, modelWrapper != null ? modelWrapper.getExportName() : "dummy", swapAxis);
+    public GreatQuestModelMesh(kcModelWrapper modelWrapper) {
+        this(modelWrapper, modelWrapper != null ? modelWrapper.getExportName() : "dummy");
     }
 
-    private GreatQuestModelMesh(kcModelWrapper modelWrapper, String meshName, boolean swapAxis) {
-        this(modelWrapper, null, null, null, meshName, swapAxis);
+    private GreatQuestModelMesh(kcModelWrapper modelWrapper, String meshName) {
+        this(modelWrapper, null, null, null, meshName);
     }
 
-    public GreatQuestModelMesh(kcModelWrapper modelWrapper, kcCResourceSkeleton skeleton, List<kcCResourceTrack> animations, kcCResourceNamedHash actionSequenceTable, String meshName, boolean swapAxis) {
+    public GreatQuestModelMesh(kcModelWrapper modelWrapper, kcCResourceSkeleton skeleton, List<kcCResourceTrack> animations, kcCResourceNamedHash actionSequenceTable, String meshName) {
         super(null, DynamicMeshTextureQuality.LIT_BLURRY, meshName);
         this.modelWrapper = modelWrapper;
         this.skeleton = skeleton;
@@ -70,7 +71,6 @@ public class GreatQuestModelMesh extends DynamicMesh {
         this.availableAnimations = animations != null ? FXCollections.observableArrayList(animations) : FXCollections.observableArrayList();
         this.availableSequences = actionSequenceTable != null ? FXCollections.observableArrayList(actionSequenceTable.getSequences()) : FXCollections.observableArrayList();
         this.actualMesh = new DynamicMeshCollection<>(getMeshName());
-        this.swapAxis = swapAxis;
         this.environmentalMesh = modelWrapper != null && GreatQuestEntityManager.isFileNameEnvironmentalMesh(modelWrapper.getFileName());
         this.skeletonMesh = skeleton != null ? new GreatQuestModelSkeletonMesh(this, meshName + "Skeleton") : null;
         if (!this.availableAnimations.isEmpty())
@@ -80,13 +80,15 @@ public class GreatQuestModelMesh extends DynamicMesh {
 
         // Setup actual mesh.
         kcModel model = modelWrapper != null ? modelWrapper.getModel() : null;
+        this.skeletonAxisRotationApplied = (skeleton != null) || hasSkeletonAxisRotation(model);
+
         if (model != null) {
-            this.actualMesh.addMesh(new GreatQuestModelMaterialMesh(this, model, null, meshName, swapAxis));
+            this.actualMesh.addMesh(new GreatQuestModelMaterialMesh(this, model, null, meshName));
             for (kcMaterial material : model.getMaterials())
-                this.actualMesh.addMesh(new GreatQuestModelMaterialMesh(this, model, material, meshName, swapAxis));
+                this.actualMesh.addMesh(new GreatQuestModelMaterialMesh(this, model, material, meshName));
         } else {
             // Setup placeholder.
-            this.actualMesh.addMesh(new GreatQuestModelMaterialMesh(this, null, null, swapAxis));
+            this.actualMesh.addMesh(new GreatQuestModelMaterialMesh(this, null, null));
         }
     }
 
@@ -248,5 +250,20 @@ public class GreatQuestModelMesh extends DynamicMesh {
             throw new IllegalArgumentException("Invalid bone tag: " + tag);
 
         return this.cachedFinalBoneMatrices.get(tag);
+    }
+
+    private static boolean hasSkeletonAxisRotation(kcModel model) {
+        if (model == null)
+            return false;
+        if (model.getBonesPerPrimitive() > 0 && model.hasBoneWeights())
+            return true;
+
+        for (int i = 0; i < model.getNodes().size(); i++) {
+            kcModelNode modelNode = model.getNodes().get(i);
+            if (modelNode.getNodeId() > 0)
+                return true; // The Bone ID is non-zero! The model probably has weights.
+        }
+
+        return false;
     }
 }
