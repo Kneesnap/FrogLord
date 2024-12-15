@@ -27,6 +27,10 @@ repositories {
 
 dependencies {
 //    implementation("org.jfxtras:jmetro:11.6.14") // TODO: !
+
+    // https://mvnrepository.com/artifact/org.lwjgl/lwjgl
+    // https://docs.gradle.org/current/userguide/dependency_versions.html
+    implementation("org.lwjgl:lwjgl-assimp:3.3.4") // Reference: https://lwjglgamedev.gitbooks.io/3d-game-development-with-lwjgl/content/chapter27/chapter27.html
 }
 
 java { // https://docs.gradle.org/current/userguide/java_plugin.html
