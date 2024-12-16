@@ -164,7 +164,7 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
             // Resolve kcActionEffect.
             kcActionID actionID = kcActionID.getActionByCommandName(commandName);
             if (actionID == null)
-                throw new IllegalArgumentException("Could not identify the action '" + commandName + "' from '" + line + "' when importing sequence " + getName() + ".");
+                throw new IllegalArgumentException("Could not identify the action '" + commandName + "' from '" + textLine + "' when importing sequence " + getName() + ".");
 
             kcAction newAction = actionID.newInstance(this);
             try {

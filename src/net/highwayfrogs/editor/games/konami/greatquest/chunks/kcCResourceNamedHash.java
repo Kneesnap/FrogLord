@@ -271,10 +271,14 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
             }
 
             // Registers the sequence if it is new, and actually has actions.
-            if (newlyCreatedSequence && sequence.getActions().size() > 0) {
+            if (newlyCreatedSequence) {
                 getParentFile().addResource(sequence);
                 entry.getValueRef().setResource(sequence, true);
             }
+
+            // I don't think this will crash the game, but this is a mistake on the user's part.
+            if (sequence.getActions().isEmpty())
+                getLogger().warning("The action sequence '%s' contains no valid actions!", sequence.getName());
         }
     }
 
