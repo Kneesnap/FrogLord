@@ -271,7 +271,7 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
             }
 
             // Registers the sequence if it is new, and actually has actions.
-            if (newlyCreatedSequence && sequence.getActions().size() > 0) {
+            if (newlyCreatedSequence) {
                 getParentFile().addResource(sequence);
                 entry.getValueRef().setResource(sequence, true);
             }
