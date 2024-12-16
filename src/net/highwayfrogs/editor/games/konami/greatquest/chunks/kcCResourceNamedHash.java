@@ -249,6 +249,7 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
             if (entry == null) {
                 entry = new HashTableEntry(this, sequenceName);
                 entry.getValueRef().setHash(sequenceHash);
+                entry.getValueRef().setResource(getParentFile().getResourceByHash(sequenceHash), true); // Avoid an issue where copying this file from another list will cause the same action sequence to be added twice (which throws an exception)
                 entryLookupByValueHash.put(sequenceHash, entry);
                 this.entries.add(entry);
             }
@@ -266,7 +267,7 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
             try {
                 sequence.loadFromConfigNode(sequenceCfg);
             } catch (Throwable th) {
-                Utils.handleError(getLogger(), th, false, "Could not load the sequenced named '%s' as part of '%s'.", sequenceName, getName());
+                Utils.handleError(getLogger(), th, false, "Could not load the sequence named '%s' as part of '%s'.", sequenceName, getName());
                 continue; // Don't register anything that loaded via error.
             }
 
