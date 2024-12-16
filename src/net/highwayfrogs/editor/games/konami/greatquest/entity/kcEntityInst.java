@@ -101,9 +101,9 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
         setupMainEditor(manager, grid, entityDisplay);
 
         // Add basic entity data.
-        GreatQuestChunkedFile.writeAssetLine(grid, chunkedFile, "Target Entity", this.targetEntityRef);
+        this.targetEntityRef.addEditorUI(grid, chunkedFile, "Target Entity", kcCResourceEntityInst.class);
         grid.addSignedIntegerField("Priority", this.priority, newValue -> this.priority = newValue);
-        grid.addSignedIntegerField("Script Index", this.scriptIndex, newValue -> this.scriptIndex = newValue);
+        grid.addSignedIntegerField("Script Index", this.scriptIndex, newValue -> this.scriptIndex = newValue).setDisable(true);
 
         // Add script data, if it exists.
         kcScriptList scriptList = chunkedFile != null ? chunkedFile.getScriptList() : null;
