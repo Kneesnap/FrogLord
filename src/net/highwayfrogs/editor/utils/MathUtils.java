@@ -5,6 +5,8 @@ package net.highwayfrogs.editor.utils;
  * Created by AndyEder on 2/14/2019.
  */
 public class MathUtils {
+    public static final double PI_OVER_2 = Math.PI * .5;
+
     /**
      * Calculates the greatest common divisor between the two numbers using euclid's algorithm.
      * If both factors are 0, 0 will be returned. Otherwise, the greatest common factor will be returned, with the default as 1 if there are no other shared factors.
@@ -111,5 +113,14 @@ public class MathUtils {
             return (int) value;
 
         return (value > 0) ? ((int) value + 1) : ((int) value - 1);
+    }
+
+    /**
+     * Clamps an angle represented in degrees (where 0 represents no rotation) between -180 and 180.
+     * @param angle the angle to clamp
+     * @return clampedAngle
+     */
+    public static double clampAngleInDegrees(double angle) {
+        return ((angle % 360F) + 540F) % 360F - 180F;
     }
 }

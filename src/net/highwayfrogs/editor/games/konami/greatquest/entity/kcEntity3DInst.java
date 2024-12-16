@@ -1,10 +1,14 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityFlag.kcEntityInstanceFlag;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
@@ -13,12 +17,19 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.entity.GreatQuestMapEditorEntityDisplay;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
+import net.highwayfrogs.editor.system.math.Vector3f;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.MathUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
+import java.text.DecimalFormat;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 /**
  * Represents the 'kcEntity3DInst' struct.
@@ -92,20 +103,78 @@ public class kcEntity3DInst extends kcEntityInst {
         });
 
         // Rotation
-        grid.addDoubleSlider("Rotation X", this.rotation.getX(), newValue -> {
-            this.rotation.setX((float) (double) newValue);
-            entityDisplay.updateRotation();
-        }, -Math.PI, Math.PI);
+        addRotationSlider(getGameInstance(), grid, entityDisplay, "Rotation X", this.rotation.getX(), this.rotation::setX);
+        addRotationSlider(getGameInstance(), grid, entityDisplay, "Rotation Y", this.rotation.getY(), this.rotation::setY);
+        addRotationSlider(getGameInstance(), grid, entityDisplay, "Rotation Z", this.rotation.getZ(), this.rotation::setZ);
+    }
 
-        grid.addDoubleSlider("Rotation Y", this.rotation.getY(), newValue -> {
-            this.rotation.setY((float) (double) newValue);
+    private static final DecimalFormat ROTATION_ANGLE_FORMATTER = new DecimalFormat("##0.###");
+    private static void addRotationSlider(GreatQuestInstance instance, GUIEditorGrid grid, GreatQuestMapEditorEntityDisplay entityDisplay, String labelText, float angleInRadians, Consumer<Float> setter) {
+        double rotation = MathUtils.clampAngleInDegrees(Math.toDegrees(angleInRadians));
+        AtomicReference<Label> labelRef = new AtomicReference<>();
+        Slider slider = grid.addDoubleSlider(labelText + " (" + (int) rotation + "°)", rotation, newValue -> {
+            setter.accept((float) Math.toRadians(newValue));
             entityDisplay.updateRotation();
-        }, -Math.PI, Math.PI);
 
-        grid.addDoubleSlider("Rotation Z", this.rotation.getZ(), newValue -> {
-            this.rotation.setZ((float) (double) newValue);
-            entityDisplay.updateRotation();
-        }, -Math.PI, Math.PI);
+            Label label = labelRef.get();
+            if (label != null)
+                label.setText(labelText + " (" + ((int) (double) newValue) + "°)");
+        }, -180, 180, false, labelRef);
+        slider.setMajorTickUnit(90);
+
+        Label label = labelRef.get();
+        if (label != null) {
+            label.setOnMouseClicked(event -> {
+                event.consume();
+                double startRotation = slider.getValue();
+                InputMenu.promptInputBlocking(instance, "Please enter the new " + labelText + ".", ROTATION_ANGLE_FORMATTER.format(startRotation), newAngleText -> {
+                    if (!NumberUtils.isNumber(newAngleText)) {
+                        FXUtils.makePopUp("The value '" + newAngleText + "' cannot be interpreted as a number!", AlertType.WARNING);
+                        return;
+                    }
+
+                    float newAngle = Float.parseFloat(newAngleText);
+                    if (!Float.isFinite(newAngle)) {
+                        FXUtils.makePopUp("The value '" + newAngleText + "' cannot be used as an angle!", AlertType.WARNING);
+                        return;
+                    }
+
+                    setter.accept((float) Math.toRadians(newAngle));
+                    entityDisplay.updateRotation();
+                    label.setText(labelText + " (" + ((int) newAngle) + "°)");
+                    slider.setValue(newAngle);
+                });
+            });
+        }
+    }
+
+    /**
+     * Gets the entity rotation in degrees.
+     * @param output the output storage vector for the angles
+     * @return rotationAnglesInDegrees
+     */
+    public Vector3f getRotationAnglesInDegrees(Vector3f output) {
+        if (output == null)
+            output = new Vector3f();
+
+        output.setX((float) Math.toDegrees(this.rotation.getX()));
+        output.setY((float) Math.toDegrees(this.rotation.getY()));
+        output.setZ((float) Math.toDegrees(this.rotation.getZ()));
+        return output;
+    }
+
+    /**
+     * Sets the entity rotation based on a vector containing the angles in degrees.
+     * @param anglesInDegrees the vector containing angles in degrees
+     */
+    public void setRotationAnglesInDegrees(Vector3f anglesInDegrees) {
+        if (anglesInDegrees == null)
+            throw new NullPointerException("anglesInDegrees");
+
+        this.rotation.setX((float) Math.toRadians(anglesInDegrees.getX()));
+        this.rotation.setY((float) Math.toRadians(anglesInDegrees.getY()));
+        this.rotation.setZ((float) Math.toRadians(anglesInDegrees.getZ()));
+        this.rotation.setW(1F);
     }
 
     /**
@@ -157,10 +226,12 @@ public class kcEntity3DInst extends kcEntityInst {
         this.flags = kcEntityInstanceFlag.getValueFromArguments(flagArguments);
         flagArguments.warnAboutUnusedArguments(getResource().getLogger());
 
+        Vector3f degrees = new Vector3f();
         this.billboardAxis = input.getOrDefaultKeyValueNode(CONFIG_KEY_BILLBOARD_AXIS).getAsEnum(kcAxisType.Y);
         this.position.parse(input.getKeyValueNodeOrError(CONFIG_KEY_POSITION).getAsString(), 1F);
-        this.rotation.parse(input.getKeyValueNodeOrError(CONFIG_KEY_ROTATION).getAsString(), 1F);
+        degrees.parse(input.getKeyValueNodeOrError(CONFIG_KEY_ROTATION).getAsString());
         this.scale.parse(input.getKeyValueNodeOrError(CONFIG_KEY_SCALE).getAsString(), 1F);
+        setRotationAnglesInDegrees(degrees);
     }
 
     @Override
@@ -173,7 +244,7 @@ public class kcEntity3DInst extends kcEntityInst {
 
         output.getOrCreateKeyValueNode(CONFIG_KEY_BILLBOARD_AXIS).setAsEnum(this.billboardAxis);
         output.getOrCreateKeyValueNode(CONFIG_KEY_POSITION).setAsString(this.position.toParseableString(1F));
-        output.getOrCreateKeyValueNode(CONFIG_KEY_ROTATION).setAsString(this.rotation.toParseableString(1F));
+        output.getOrCreateKeyValueNode(CONFIG_KEY_ROTATION).setAsString(getRotationAnglesInDegrees(null).toParseableString());
         output.getOrCreateKeyValueNode(CONFIG_KEY_SCALE).setAsString(this.scale.toParseableString(1F));
     }
 }

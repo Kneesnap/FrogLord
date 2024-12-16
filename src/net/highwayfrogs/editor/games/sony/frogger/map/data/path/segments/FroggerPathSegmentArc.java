@@ -194,7 +194,7 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
         editor.addDoubleSlider("Angle:", this.angle, newAngle -> {
             this.angle = newAngle;
             onUpdate(pathPreview);
-        }, .01, 1, false).setDisable(this.angle > 1D);
+        }, .01, 1, false, null).setDisable(this.angle > 1D);
 
         // Old paths don't support pitch.
         if (!getPath().isOldPathFormatEnabled()) {

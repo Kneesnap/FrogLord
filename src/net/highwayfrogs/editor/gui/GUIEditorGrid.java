@@ -2036,7 +2036,7 @@ public class GUIEditorGrid {
      * @return slider
      */
     public Slider addDoubleSlider(String sliderName, double currentValue, Consumer<Double> setter, double minValue, double maxValue) {
-        return addDoubleSlider(sliderName, currentValue, setter, minValue, maxValue, false);
+        return addDoubleSlider(sliderName, currentValue, setter, minValue, maxValue, false, null);
     }
 
     /**
@@ -2049,8 +2049,11 @@ public class GUIEditorGrid {
      * @param onRelease    If setter should only be called when mouse is released.
      * @return slider
      */
-    public Slider addDoubleSlider(String sliderName, double currentValue, Consumer<Double> setter, double minValue, double maxValue, boolean onRelease) {
-        addLabel(sliderName);
+    public Slider addDoubleSlider(String sliderName, double currentValue, Consumer<Double> setter, double minValue, double maxValue, boolean onRelease, AtomicReference<Label> labelRef) {
+        Label label = addLabel(sliderName);
+        if (labelRef != null)
+            labelRef.set(label);
+
         Slider slider = setupSecondNode(new Slider(minValue, maxValue, currentValue), false);
         slider.setDisable(setter == null);
         if (setter != null) {

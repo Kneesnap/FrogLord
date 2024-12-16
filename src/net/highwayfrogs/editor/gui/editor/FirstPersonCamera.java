@@ -406,7 +406,7 @@ public class FirstPersonCamera extends Parent {
      * @param angle The desired yaw.
      */
     public void setYaw(double angle) {
-        double newYaw = ((angle % 360F) + 540F) % 360F - 180F;
+        double newYaw = MathUtils.clampAngleInDegrees(angle);
         this.rotateYaw.setAngle(MathUtils.clamp(newYaw, CAM_MIN_YAW_ANGLE_DEGREES, CAM_MAX_YAW_ANGLE_DEGREES));
         // TODO: figure out how to update affine transform here without performing forced update
     }
