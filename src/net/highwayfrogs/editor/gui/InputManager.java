@@ -5,10 +5,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.event.EventType;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.input.PickResult;
+import javafx.scene.input.*;
 import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +35,8 @@ public class InputManager {
     private final List<MouseHandler> mouseHandlers = new ArrayList<>();
     @Setter private MouseHandler finalMouseHandler;
     private final Map<EventType<? super MouseEvent>, List<MouseHandler>> mouseHandlersByType = new HashMap<>();
+    private final List<ScrollHandler> scrollHandlers = new ArrayList<>();
+    @Setter private ScrollHandler finalScrollHandler;
     private final boolean[] pressedKeys = new boolean[KeyCode.values().length];
     @Getter private final MouseInputState lastDragStartMouseState = new MouseInputState();
     @Getter private final MouseInputState lastMouseState = new MouseInputState();
@@ -52,6 +51,10 @@ public class InputManager {
         void accept(InputManager manager, MouseEvent event, double deltaX, double deltaY);
     }
 
+    public interface ScrollHandler {
+        void accept(InputManager manager, ScrollEvent event);
+    }
+
     /**
      * Assign (setup) the control event handlers on the supplied scene object.
      * @param scene The subscene to receive and process the keyboard and mouse events, etc.
@@ -59,6 +62,7 @@ public class InputManager {
     public void assignSceneControls(Stage stage, Scene scene) {
         scene.addEventHandler(KeyEvent.ANY, this::processKeyEvents);
         scene.addEventHandler(MouseEvent.ANY, this::processMouseEvents);
+        scene.addEventHandler(ScrollEvent.ANY, this::processScrollEvents);
 
         // Reset keys when focus is lost.
         stage.focusedProperty().addListener(this.stageInputListener);
@@ -133,6 +137,14 @@ public class InputManager {
     }
 
     /**
+     * Adds a scroll listener for all scroll events.
+     * @param listener The listener to add.
+     */
+    public void addScrollListener(ScrollHandler listener) {
+        this.scrollHandlers.add(listener);
+    }
+
+    /**
      * Test if the particular key is pressed.
      * @param keyCode key code to test current state
      * @return true, if the key is currently pressed
@@ -165,7 +177,7 @@ public class InputManager {
                 try {
                     handler.accept(this, evt);
                 } catch (Throwable th) {
-                    String errorMessage = "Failed to run KeyEventHandler " + handler + ".";
+                    String errorMessage = "Failed to run KeyHandler " + handler + ".";
                     getLogger().throwing("InputManager", "processKeyEvents", new RuntimeException(errorMessage, th));
                 }
 
@@ -183,7 +195,7 @@ public class InputManager {
             try {
                 handler.accept(this, evt);
             } catch (Throwable th) {
-                String errorMessage = "Failed to run KeyEventHandler " + handler + ".";
+                String errorMessage = "Failed to run KeyHandler " + handler + ".";
                 getLogger().throwing("InputManager", "processKeyEvents", new RuntimeException(errorMessage, th));
             }
 
@@ -198,7 +210,7 @@ public class InputManager {
             if (this.finalKeyHandler != null)
                 this.finalKeyHandler.accept(this, evt);
         } catch (Throwable th) {
-            String errorMessage = "Failed to run final KeyEventHandler " + this.finalKeyHandler + ".";
+            String errorMessage = "Failed to run final KeyHandler " + this.finalKeyHandler + ".";
             getLogger().throwing("InputManager", "processKeyEvents", new RuntimeException(errorMessage, th));
         }
 
@@ -237,7 +249,7 @@ public class InputManager {
                     try {
                         handler.accept(this, newEvent);
                     } catch (Throwable th) {
-                        String errorMessage = "Failed to run KeyEventHandler " + handler + ".";
+                        String errorMessage = "Failed to run KeyHandler " + handler + ".";
                         getLogger().throwing("InputManager", "resetKeys", new RuntimeException(errorMessage, th));
                     }
                 }
@@ -250,7 +262,7 @@ public class InputManager {
                 try {
                     handler.accept(this, newEvent);
                 } catch (Throwable th) {
-                    String errorMessage = "Failed to run KeyEventHandler " + handler + ".";
+                    String errorMessage = "Failed to run KeyHandler " + handler + ".";
                     getLogger().throwing("InputManager", "resetKeys", new RuntimeException(errorMessage, th));
                 }
             }
@@ -260,7 +272,7 @@ public class InputManager {
                 if (this.finalKeyHandler != null)
                     this.finalKeyHandler.accept(this, newEvent);
             } catch (Throwable th) {
-                String errorMessage = "Failed to run the final KeyEventHandler " + this.finalKeyHandler + ".";
+                String errorMessage = "Failed to run the final KeyHandler " + this.finalKeyHandler + ".";
                 getLogger().throwing("InputManager", "resetKeys", new RuntimeException(errorMessage, th));
             }
 
@@ -298,7 +310,7 @@ public class InputManager {
                 try {
                     handler.accept(this, evt, mouseDeltaX, mouseDeltaY);
                 } catch (Throwable th) {
-                    String errorMessage = "Failed to run MouseInputHandler " + handler + ".";
+                    String errorMessage = "Failed to run MouseHandler " + handler + ".";
                     getLogger().throwing("InputManager", "processMouseEvents", new RuntimeException(errorMessage, th));
                 }
 
@@ -315,7 +327,7 @@ public class InputManager {
             try {
                 handler.accept(this, evt, mouseDeltaX, mouseDeltaY);
             } catch (Throwable th) {
-                String errorMessage = "Failed to run MouseInputHandler " + handler + ".";
+                String errorMessage = "Failed to run MouseHandler " + handler + ".";
                 getLogger().throwing("InputManager", "processMouseEvents", new RuntimeException(errorMessage, th));
             }
 
@@ -328,11 +340,45 @@ public class InputManager {
             try {
                 this.finalMouseHandler.accept(this, evt, mouseDeltaX, mouseDeltaY);
             } catch (Throwable th) {
-                String errorMessage = "Failed to run final MouseInputHandler " + this.finalMouseHandler + ".";
+                String errorMessage = "Failed to run final MouseHandler " + this.finalMouseHandler + ".";
                 getLogger().throwing("InputManager", "processMouseEvents", new RuntimeException(errorMessage, th));
             }
         }
     }
+
+    /**
+     * Function to process mouse input events.
+     */
+    private void processScrollEvents(ScrollEvent event) {
+        if (Math.abs(event.getDeltaY()) < .00001)
+            return;
+
+        // Send out generic scroll handlers.
+        for (int i = 0; i < this.scrollHandlers.size(); i++) {
+            ScrollHandler handler = this.scrollHandlers.get(i);
+
+            try {
+                handler.accept(this, event);
+            } catch (Throwable th) {
+                String errorMessage = "Failed to run ScrollHandler " + handler + ".";
+                getLogger().throwing("InputManager", "processScrollEvents", new RuntimeException(errorMessage, th));
+            }
+
+            // If the event was consumed, abort.
+            if (event.isConsumed())
+                return;
+        }
+
+        if (this.finalScrollHandler != null) {
+            try {
+                this.finalScrollHandler.accept(this, event);
+            } catch (Throwable th) {
+                String errorMessage = "Failed to run final ScrollHandler " + this.finalScrollHandler + ".";
+                getLogger().throwing("InputManager", "processScrollEvents", new RuntimeException(errorMessage, th));
+            }
+        }
+    }
+
 
     /**
      * Gets the logger for this class.

@@ -9,6 +9,7 @@ import javafx.scene.PerspectiveCamera;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.transform.Affine;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Transform;
@@ -50,6 +51,10 @@ public class FirstPersonCamera extends Parent {
     private static final double CAM_MAX_YAW_ANGLE_DEGREES = 360.0;
     private static final double CAM_MIN_PITCH_ANGLE_DEGREES = -90.0;
     private static final double CAM_MAX_PITCH_ANGLE_DEGREES = 90.0;
+    private static final double CAM_FOV_CHANGE_DEGREES = 2.5;
+    private static final double CAM_MIN_FOV_ANGLE_DEGREES = CAM_FOV_CHANGE_DEGREES;
+    private static final double CAM_MAX_FOV_ANGLE_DEGREES = 120.0;
+
 
     // Camera processing thread
     AnimationTimer camUpdateThread;
@@ -119,6 +124,7 @@ public class FirstPersonCamera extends Parent {
     private void setupAndInitialiseCamera() {
         this.rootGrp.getChildren().add(getCamera());
         this.inputManager.setFinalMouseHandler(this::updateCameraViewFromMouseMovement);
+        this.inputManager.setFinalScrollHandler(this::updateCameraFovFromScroll);
     }
 
     /**
@@ -241,6 +247,22 @@ public class FirstPersonCamera extends Parent {
 
         // Dynamically generate the affine transform from the concatenated translation and rotation components
         this.affineXform.prepend(this.translate.createConcatenation(this.rotateYaw.createConcatenation(this.rotatePitch)));
+    }
+
+    /**
+     * Function to process scroll events.
+     */
+    private void updateCameraFovFromScroll(InputManager manager, ScrollEvent event) {
+        double newFov = getCamera().fieldOfViewProperty().doubleValue();
+        if (event.getDeltaY() > 0) { // Zoom In (Mouse Wheel Forward -> DeltaY is positive)
+            newFov -= CAM_FOV_CHANGE_DEGREES;
+        } else if (event.getDeltaY() < 0) { // Zoom Out (Mouse Wheel Backwards -> DeltaY is negative)
+            newFov += CAM_FOV_CHANGE_DEGREES;
+        } else {
+            return;
+        }
+
+        getCamera().fieldOfViewProperty().set(MathUtils.clamp(newFov, CAM_MIN_FOV_ANGLE_DEGREES, CAM_MAX_FOV_ANGLE_DEGREES));
     }
 
     /**
