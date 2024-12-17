@@ -149,9 +149,21 @@ public class kcScript extends GameObject<GreatQuestInstance> {
         }
 
         for (int i = 0; i < this.functions.size(); i++) {
-            builder.append("// Function #").append(i + 1).append(":\n");
-            this.functions.get(i).toString(builder, settings);
-            if (this.functions.get(i).getEffects().size() > 0)
+            kcScriptFunction function = this.functions.get(i);
+
+            builder.append("// Function #").append(i + 1).append(" (");
+            if (function.getCause() == null || function.getCause().isLoadedFromGame() || StringUtils.isNullOrWhiteSpace(function.getCause().getUserImportSource())) {
+                builder.append("Loaded from Game");
+            } else {
+                builder.append(function.getCause().getUserImportSource());
+            }
+
+            if (function.getCause() != null && function.getCause().getUserLineNumber() > 0)
+                builder.append(", Line #").append(function.getCause().getUserLineNumber());
+
+            builder.append("):\n");
+            function.toString(builder, settings);
+            if (function.getEffects().size() > 0)
                 builder.append('\n');
         }
     }
@@ -197,20 +209,56 @@ public class kcScript extends GameObject<GreatQuestInstance> {
                 continue; // Skip registration.
             }
 
+            String newFunctionUserImportSource = newFunction.getCause() != null ? newFunction.getCause().getUserImportSource() : null;
             GQSFunctionBehavior behavior = nestedFunction.getOrDefaultKeyValueNode(CONFIG_FIELD_SCRIPT_BEHAVIOR).getAsEnum(GQSFunctionBehavior.ADD);
-            if (behavior == GQSFunctionBehavior.DELETE || behavior == GQSFunctionBehavior.REPLACE) {
-                List<kcScriptFunction> functionsToRemove = functionsByCause.remove(newFunction.getCause());
-                if (functionsToRemove != null && !this.functions.removeAll(functionsToRemove) && behavior == GQSFunctionBehavior.DELETE)
-                    throw new RuntimeException("Function in '" + sourceName + "' used behavior " + behavior + " and tried to delete " + functionsToRemove.size() + " functions with the cause '" + newFunction.getCause().getAsGqsStatement() + "', but failed!");
-            }
+            if (behavior == GQSFunctionBehavior.DELETE) {
+                if (!newFunction.getEffects().isEmpty())
+                    throw new RuntimeException("Function in '" + sourceName + "' used behavior " + behavior + ", but also had " + newFunction.getEffects().size() + " effects!");
 
-            if (behavior == GQSFunctionBehavior.ADD || behavior == GQSFunctionBehavior.REPLACE) {
+                List<kcScriptFunction> functionsToRemove = functionsByCause.remove(newFunction.getCause());
+                if (functionsToRemove != null && !this.functions.removeAll(functionsToRemove))
+                    throw new RuntimeException("Function in '" + sourceName + "' used behavior " + behavior + " and tried to delete " + functionsToRemove.size() + " functions with the cause '" + newFunction.getCause().getAsGqsStatement() + "', but failed!");
+            } else if (behavior == GQSFunctionBehavior.REPLACE) { // Replace means to override ALL functions with the cause (regardless of where they came from), replacing them with the new target. If there are no matching functions, the new function will still be added.
+                List<kcScriptFunction> functionsToRemove = functionsByCause.remove(newFunction.getCause());
+                if (functionsToRemove != null && !this.functions.removeAll(functionsToRemove))
+                    throw new RuntimeException("Function in '" + sourceName + "' used behavior " + behavior + " and tried to replace " + functionsToRemove.size() + " functions with the cause '" + newFunction.getCause().getAsGqsStatement() + "', but failed!");
+
                 this.functions.add(newFunction);
                 functionsByCause.computeIfAbsent(newFunction.getCause(), key -> new ArrayList<>()).add(newFunction);
-            } else if (behavior == GQSFunctionBehavior.DELETE && !newFunction.getEffects().isEmpty()) {
-                throw new RuntimeException("Function in '" + sourceName + "' used behavior " + behavior + ", but also had " + newFunction.getEffects().size() + " effects!");
+            } else if (behavior == GQSFunctionBehavior.ADD) { // Add means to replace any function with the same cause previously imported from the same file, otherwise to add it. This will avoid overriding functions from other files/the vanilla game.
+                List<kcScriptFunction> functionsToReplace = functionsByCause.get(newFunction.getCause());
+                kcScriptFunction functionToReplace = getFunctionToReplace(functionsToReplace, newFunctionUserImportSource, behavior);
+
+                if (functionToReplace != null) {
+                    functionToReplace.loadFromConfigNode(nestedFunction);
+                } else {
+                    // Add the new function.
+                    this.functions.add(newFunction);
+                    functionsByCause.computeIfAbsent(newFunction.getCause(), key -> new ArrayList<>()).add(newFunction);
+                }
             }
         }
+    }
+
+    private static kcScriptFunction getFunctionToReplace(List<kcScriptFunction> functionsToReplace, String newFunctionUserImportSource, GQSFunctionBehavior behavior) {
+        if (functionsToReplace == null)
+            return null;
+
+        kcScriptFunction functionToReplace = null;
+        for (int i = 0; i < functionsToReplace.size(); i++) {
+            kcScriptFunction function = functionsToReplace.get(i);
+            kcScriptCause cause = function.getCause();
+
+            if (!cause.isLoadedFromGame() && Objects.equals(cause.getUserImportSource(), newFunctionUserImportSource)) {
+                if (functionToReplace != null) {
+                    throw new RuntimeException("Cannot use " + behavior + " behavior when there are multiple functions using cause '" + cause.getAsGqsStatement() + "' in '" + newFunctionUserImportSource + "'.");
+                } else { // Found the right function!
+                    functionToReplace = function;
+                }
+            }
+        }
+
+        return functionToReplace;
     }
 
     /**
