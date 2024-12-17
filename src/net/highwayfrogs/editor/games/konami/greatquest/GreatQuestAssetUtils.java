@@ -230,9 +230,8 @@ public class GreatQuestAssetUtils {
             return;
 
         String sourceName = deleteResourceCfg.getRootNode().getSectionName();
-        for (Config resourceList : deleteResourceCfg.getChildConfigNodes()) {
+        for (String resourceName : deleteResourceCfg.getTextWithoutComments()) {
             int resourceHash;
-            String resourceName = resourceList.getSectionName();
             if (NumberUtils.isHexInteger(resourceName)) {
                 resourceHash = NumberUtils.parseHexInteger(resourceName);
             } else {
