@@ -213,7 +213,7 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
 
         // Unlink all linked hashes.
         while (this.linkedHashes.size() > 0)
-            this.linkedHashes.get(0).onInvalidate();
+            this.linkedHashes.remove(0).onInvalidate();
 
         // Happens last so all the listeners fire before this finally occurs.
         if (!isMaster())
