@@ -132,20 +132,28 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
      */
     public void saveFileContents(File bodyFile, File indexFile, ProgressBarComponent progressBar) {
         // Write Body first (to generate a valid index for the .IDX)
+        DataWriter bodyWriter = null;
         try {
-            DataWriter bodyWriter = new DataWriter(new LargeFileReceiver(bodyFile));
+            bodyWriter = new DataWriter(new LargeFileReceiver(bodyFile));
             this.body.save(bodyWriter, progressBar);
         } catch (Throwable th) {
             Utils.handleError(getLogger(), th, true, "Failed to write '" + this.body.getFileName() + "', aborting..!");
             return;
+        } finally {
+            if (bodyWriter != null)
+                bodyWriter.closeReceiver();
         }
 
         // Write index second, after it has been generated with correct information.
+        DataWriter indexWriter = null;
         try {
-            DataWriter indexWriter = new DataWriter(new FileReceiver(indexFile));
+            indexWriter = new DataWriter(new FileReceiver(indexFile));
             this.index.save(indexWriter, progressBar);
         } catch (Throwable th) {
             Utils.handleError(getLogger(), th, true, "Failed to write '" + this.index.getFileName() + "', aborting..!");
+        } finally {
+            if (indexWriter != null)
+                indexWriter.closeReceiver();
         }
     }
 

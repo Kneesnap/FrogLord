@@ -712,7 +712,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         @NonNull private final SBRFile parentFile;
         private final byte type;
         private short flags;
-        private short priority = 100; // 100 seems to be default, 50 for vase break/barrel breaks, 50 for unimportant, 200 for music
+        private short priority = 100; // 100 seems to be default, 50 for vase break/barrel breaks, 50 for unimportant, 200 for music. >= 200 is necessary for looping to occur. (kcCSoundEffectStream::Play) Also seems to control m_musicHandle in PlaySfx.
 
         private static final int FLAG_VALIDATION_MASK = 0b11000001;
         public static final int FLAG_REPEAT = Constants.BIT_FLAG_0;
