@@ -97,7 +97,10 @@ public class kcActionSetSequence extends kcAction {
                 }
             }
 
-            setAnimationSequenceHash(foundSequence != null ? foundSequence.getHash() : (sequenceEntry != null ? sequenceEntry.getValueRef().getHashNumber() : 0));
+            // Resolve the sequence hash, while also tracking the sequence name in-case of error.
+            int newHash = foundSequence != null ? foundSequence.getHash() : (sequenceEntry != null ? sequenceEntry.getValueRef().getHashNumber() : 0);
+            this.sequenceRef.setHash(newHash, sequenceName, false);
+            setAnimationSequenceHash(newHash);
         }
 
         this.ignoreIfAlreadyActive = arguments.useFlag(ARGUMENT_IGNORE_IF_ALREADY_ACTIVE);
@@ -139,6 +142,8 @@ public class kcActionSetSequence extends kcAction {
             logger.warning("The action '" + getAsGqsStatement() + "' may CRASH the game, since it cannot resolve the skeleton.");
         } else if (actorDesc.getAnimationSequences() == null) {
             logger.warning("The action '" + getAsGqsStatement() + "' may CRASH the game, since it cannot resolve the kcCResourceNamedHash.");
+        } else if (this.sequenceRef.getResource() == null && this.sequenceEntry == null) {
+            printWarning(logger, "no sequence could be found with that name.");
         }
     }
 
