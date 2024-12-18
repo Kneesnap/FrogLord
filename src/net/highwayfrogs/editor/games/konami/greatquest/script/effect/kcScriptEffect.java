@@ -221,19 +221,18 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
         if (line.trim().isEmpty())
             throw new RuntimeException("Cannot parse '" + line + "' as a script effect.");
 
-        OptionalArguments arguments = OptionalArguments.parse(line);
-        String commandName = arguments.useNext().getAsString();
-        kcScriptEffect newEffect = createEffectForCommandName(function, commandName);
-        if (newEffect == null)
-            throw new RuntimeException("The command name '" + commandName + "' seems invalid, no kcScriptEffect could be created for it.");
-
         try {
+            OptionalArguments arguments = OptionalArguments.parse(line);
+            String commandName = arguments.useNext().getAsString();
+            kcScriptEffect newEffect = createEffectForCommandName(function, commandName);
+            if (newEffect == null)
+                throw new RuntimeException("The command name '" + commandName + "' seems invalid, no kcScriptEffect could be created for it.");
+
             newEffect.loadEffect(arguments, lineNumber, fileName);
+            return newEffect;
         } catch (Throwable th) {
             throw new RuntimeException("Failed to parse '" + line + "' in '" + fileName + "' on line " + lineNumber + " as a script effect.", th);
         }
-
-        return newEffect;
     }
 
     /**
