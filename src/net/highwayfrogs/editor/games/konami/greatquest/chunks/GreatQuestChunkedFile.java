@@ -84,7 +84,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         int tocPos = 0;
         while (reader.hasMore()) {
             String identifier = reader.readTerminatedString(4);
-            int length = reader.readInt() + 0x20; // 0x20 and not 0x24 because we're reading from the start of the data, not the length.
+            int length = reader.readInt() + kcCResource.NAME_SIZE; // 0x20 and not 0x24 because we're reading from the start of the data, not the length.
             byte[] readBytes = reader.readBytes(Math.min(reader.getRemaining(), length));
 
             // Read chunk.
@@ -418,6 +418,8 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     public void addResource(kcCResource resource) {
         if (resource == null)
             throw new NullPointerException("resource");
+        if (StringUtils.isNullOrEmpty(resource.getName()))
+            throw new IllegalArgumentException("Cannot add resource " + resource + ", as it does not appear to have a valid name.");
         if (resource instanceof kcCResourceTOC)
             throw new IllegalArgumentException("Table of Contents chunks cannot be manually added to chunked files.");
         if (resource.getParentFile() != this)
@@ -433,15 +435,27 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         if (conflictingResource != null)
             throw new IllegalArgumentException("Cannot add resource " + resource + ", as another resource (" + conflictingResource + ") has a conflicting hash.");
 
+        addResourceToList(resource);
+        resource.onAddedToChunkFile();
+    }
+
+    /**
+     * Add a resource to the resource list without performing any safety checks.
+     * This is not treated as registering the file.
+     * @param resource the resource to add.
+     */
+    void addResourceToList(kcCResource resource) {
+        int insertionIndex;
         int searchResult = Collections.binarySearch(this.chunks, resource, RESOURCE_ORDERING);
-        if (searchResult >= 0) {
-            conflictingResource = this.chunks.get(searchResult);
-            throw new IllegalArgumentException("[Shouldn't Happen] Cannot add resource " + resource + ", as another resource (" + conflictingResource + ") has a conflicting hash.");
+        if (searchResult >= 0) { // This happens when there are name collisions (such as trimesh files which all call themselves "unnamed" and do not appear to have any sort order.)
+            insertionIndex = searchResult + 1;
+            while (this.chunks.size() > insertionIndex && RESOURCE_ORDERING.compare(resource, this.chunks.get(insertionIndex)) == 0)
+                insertionIndex++;
+        } else { // Found a spot to insert it at.
+            insertionIndex = -(searchResult + 1);
         }
 
-        int insertionIndex = -(searchResult + 1);
         this.chunks.add(insertionIndex, resource);
-        resource.onAddedToChunkFile();
     }
 
     /**
@@ -456,15 +470,50 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         if (resource.getParentFile() != this)
             throw new IllegalArgumentException("Cannot remove resource " + resource + ", as it belongs to a different chunked file! (" + (resource.getParentFile() != null ? resource.getParentFile().getFilePath() : "null") + ")");
 
-        int resourceIndex = Collections.binarySearch(this.chunks, resource, RESOURCE_ORDERING);
-        if (resourceIndex < 0)
+        if (!removeResourceFromList(resource))
             throw new IllegalArgumentException("Cannot remove resource " + resource + ", as it does not appear to be registered in the chunk file.");
 
-        kcCResource removedResource = this.chunks.remove(resourceIndex);
-        if (removedResource != resource)
-            throw new IllegalArgumentException("[Shouldn't happen] The resource we removed (" + removedResource + ") was not the one we expected to remove!! (" + resourceIndex + ")");
+        resource.onRemovedFromChunkFile();
+    }
 
-        removedResource.onRemovedFromChunkFile();
+    /**
+     * Removes a resource from the resource list without performing safety checks.
+     * This is not treated as unregistering/removing the resource.
+     * @param resource the resource to remove.
+     * @return true iff the resource was removed.
+     */
+    boolean removeResourceFromList(kcCResource resource) {
+        if (resource == null || StringUtils.isNullOrEmpty(resource.getName()))
+            return false; // Can't remove such a resource.
+
+        int searchIndex = Collections.binarySearch(this.chunks, resource, RESOURCE_ORDERING);
+        if (searchIndex < 0)
+            return false;
+
+        // Search for the research to the left.
+        int resourceIndex = searchIndex;
+        kcCResource temp;
+        while (resourceIndex >= 0 && (temp = this.chunks.get(resourceIndex)) != resource && RESOURCE_ORDERING.compare(resource, temp) == 0)
+            resourceIndex--;
+
+        // Search for the resource to the right.
+        if (resourceIndex < 0 || this.chunks.get(resourceIndex) != resource) {
+            resourceIndex = searchIndex + 1;
+            while (this.chunks.size() > resourceIndex && (temp = this.chunks.get(resourceIndex)) != resource && RESOURCE_ORDERING.compare(resource, temp) == 0)
+                resourceIndex++;
+
+            // Couldn't find the index to remove from.
+            if (resourceIndex >= this.chunks.size())
+                return false;
+        }
+
+        kcCResource removedResource = this.chunks.remove(resourceIndex);
+        if (removedResource != resource) { // Sanity check.
+            this.chunks.add(resourceIndex, removedResource); // Add it back!!
+            throw new IllegalArgumentException("[Shouldn't happen] The resource we removed (" + removedResource + ") was not the one we expected to remove!! (" + resourceIndex + ")");
+        }
+
+        return true;
     }
 
     /**

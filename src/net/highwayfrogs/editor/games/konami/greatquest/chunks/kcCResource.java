@@ -49,7 +49,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
     @Getter @Setter private GreatQuestChunkedFile parentFile;
     private ILogger cachedLogger;
 
-    private static final int NAME_SIZE = 32;
+    public static final int NAME_SIZE = 32;
     public static final String DEFAULT_RESOURCE_NAME = "unnamed";
 
     private static final SavedFilePath CHUNK_FILE_PATH = new SavedFilePath("rawChunkFilePath", "Please select the file to use as the chunk data.", BrowserFileType.ALL_FILES);
@@ -59,7 +59,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
         this.selfHash = new GreatQuestHash<>(this); // kcCBaseResource::Init, kcCResource::Init
         this.chunkType = chunkType;
         this.parentFile = parentFile;
-        setName(DEFAULT_RESOURCE_NAME, false); // By default, resources are 'unnamed'. See kcCResource::Init()
+        setName(DEFAULT_RESOURCE_NAME, false, false); // By default, resources are 'unnamed'. See kcCResource::Init()
     }
 
     @Override
@@ -71,8 +71,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
     }
 
     /**
-     * Gets logger
-     * @return
+     * Gets logger information as a string.
      */
     public final String getLoggerInfo() {
         return (this.chunkType != null ? StringUtils.stripAlphanumeric(this.chunkType.getSignature()) : "????") + "|" + getName() + (this.parentFile != null ? "@" + this.parentFile.getExportName() : "") + getExtraLoggerInfo();
@@ -129,12 +128,24 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
      * @param updateHash Whether the hash should be updated.
      */
     public void setName(String newName, boolean updateHash) {
+        setName(newName, updateHash, true);
+    }
+
+    /**
+     * Sets the name of the resource.
+     * @param newName the new name to apply to the resource.
+     * @param updateHash Whether the hash should be updated.
+     * @param updateChunkedFile If true, the parent chunked file will have its chunk file order updated to reflect the new name.
+     */
+    private void setName(String newName, boolean updateHash, boolean updateChunkedFile) {
         if (newName == null)
             throw new NullPointerException("newName");
+        if (StringUtils.isNullOrEmpty(newName))
+            throw new IllegalArgumentException("Cannot use empty string a resource name!");
         if (newName.length() >= NAME_SIZE)
             throw new IllegalArgumentException("The provided name is too long! (Max: " + (NAME_SIZE - 1) + " characters, '" + newName + "')");
 
-        String oldName = this.nameProperty.getName();
+        String oldName = this.nameProperty.get();
         boolean didNameChange = oldName == null || !oldName.equalsIgnoreCase(newName);
 
         // Validate new name.
@@ -152,11 +163,19 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
             this.hashBasedOnName = false;
         }
 
+        // This should happen before updating the name.
+        boolean shouldAddToChunkedFile = updateChunkedFile && didNameChange
+                && getParentFile() != null && getParentFile().removeResourceFromList(this);
+
         // Apply new name. (Triggers any listeners, so it should run after the hash is updated, allowing further changes to occur.)
         if (!Objects.equals(oldName, newName)) {
             this.nameProperty.set(newName);
             this.cachedLogger = null; // The logger is no longer valid!
         }
+
+        // Must be run after the name property is updated.
+        if (shouldAddToChunkedFile)
+            getParentFile().addResourceToList(this);
     }
 
     /**
@@ -214,7 +233,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
         readRawData(reader);
 
         String newName = reader.readNullTerminatedFixedSizeString(NAME_SIZE, Constants.NULL_BYTE);
-        this.nameProperty.set(newName);
+        setName(newName, false, false);
         int newNameHash = GreatQuestUtils.hash(newName);
         this.hashBasedOnName = (newNameHash == this.selfHash.getHashNumber());
         if (this.hashBasedOnName)
