@@ -8,10 +8,9 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.KCResourceID;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcActorBaseDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffect;
@@ -229,7 +228,6 @@ public class kcScriptList extends kcCResource {
             GreatQuestAssetUtils.applyGqsScriptGroup(getParentFile(), scriptGroupCfg);
             getLogger().info("Finished importing the gqs.");
         });
-
     }
 
     /**
@@ -254,10 +252,11 @@ public class kcScriptList extends kcCResource {
         Map<kcCResourceEntityInst, kcScriptValidationData> dataMap = new HashMap<>();
         for (int i = 0; i < this.scripts.size(); i++) {
             kcScript script = this.scripts.get(i);
-            if (script.getEntity() == null)
+            kcCResourceEntityInst entity = script.getEntity();
+            if (entity == null)
                 throw new RuntimeException("Cannot print warnings, there's a script which doesn't have an entity linked!");
 
-            kcScriptValidationData functionData = getOrCreateValidationData(logger, dataMap, script.getEntity());
+            kcScriptValidationData functionData = getOrCreateValidationData(logger, dataMap, entity);
             for (int j = 0; j < script.getFunctions().size(); j++) {
                 kcScriptFunction function = script.getFunctions().get(j);
 
@@ -278,6 +277,29 @@ public class kcScriptList extends kcCResource {
                         validationData.getActionsByType().computeIfAbsent(action.getActionID(), key -> new ArrayList<>()).add(action);
                 }
             }
+
+            // Apply animation sequence checks.
+            kcEntityInst entityInst = entity.getInstance();
+            kcEntity3DDesc entityDesc = entityInst.getDescription();
+            kcActorBaseDesc actorBaseDesc = entityDesc instanceof kcActorBaseDesc ? (kcActorBaseDesc) entityDesc : null;
+            if (actorBaseDesc != null) {
+                kcCResourceNamedHash sequenceTable = actorBaseDesc.getAnimationSequences();
+                if (sequenceTable != null) {
+                    List<kcCActionSequence> sequences = sequenceTable.getSequences();
+                    for (int j = 0; j < sequences.size(); j++) {
+                        kcCActionSequence sequence = sequences.get(j);
+                        for (int k = 0; k < sequence.getActions().size(); k++) {
+                            kcAction action = sequence.getActions().get(k);
+
+                            // Apply it to the target entity, not to the attached script entity.
+                            kcScriptValidationData validationData = getOrCreateValidationData(logger, dataMap, entity);
+                            if (validationData != null)
+                                validationData.getActionsByType().computeIfAbsent(action.getActionID(), key -> new ArrayList<>()).add(action);
+                        }
+                    }
+                }
+            }
+
         }
 
         // Print the warnings in order.
