@@ -158,8 +158,9 @@ public class kcScriptList extends kcCResource {
                 functions += rootNode.getChildConfigNodes().size();
             }
 
-            getLogger().info("Saved " + this.scripts.size() + " script" + (this.scripts.size() != 1 ? "s" : "")
-                    + " containing " + functions + " function" + (functions != 1 ? "s" : "") + " to a folder named '" + scriptFolder.getName() + "'.");
+            getLogger().info("Saved %d script%s containing %d function%s to a folder named '%s'.",
+                    this.scripts.size(), (this.scripts.size() != 1 ? "s" : ""), functions, (functions != 1 ? "s" : ""),
+                    scriptFolder.getName());
         });
 
         MenuItem clearScriptsItem = new MenuItem("Clear Scripts");
@@ -190,7 +191,7 @@ public class kcScriptList extends kcCResource {
             int filesImported = 0;
             for (File file : FileUtils.listFiles(scriptFolder)) {
                 if (!file.getName().endsWith(kcScript.EXTENSION)) {
-                    getLogger().warning("Skipping " + file.getName());
+                    getLogger().warning("Skipping %s", file.getName());
                     continue;
                 }
 
@@ -198,13 +199,13 @@ public class kcScriptList extends kcCResource {
                 int entityNameHash = GreatQuestUtils.hash(scriptCfg.getSectionName());
                 kcCResourceEntityInst entity = getParentFile().getResourceByHash(entityNameHash);
                 if (entity == null) {
-                    getLogger().warning("Skipping " + scriptCfg.getSectionName() + ", as the entity could not be resolved.");
+                    getLogger().warning("Skipping %s, as the entity could not be resolved.", scriptCfg.getSectionName());
                     continue;
                 }
 
                 kcEntityInst entityInst = entity.getInstance();
                 if (entityInst == null) {
-                    getLogger().warning("Skipping " + entity.getName() + " because the entity is not valid.");
+                    getLogger().warning("Skipping %s because the entity is not valid.", entity.getName());
                     continue;
                 }
 
@@ -212,7 +213,7 @@ public class kcScriptList extends kcCResource {
                 entityInst.addScriptFunctions(this, scriptCfg, scriptCfg.getSectionName(), false);
             }
 
-            getLogger().info("Imported " + filesImported + " scripts.");
+            getLogger().info("Imported %d scripts.", filesImported);
         });
 
         // Apply GQS Script Group.
@@ -223,17 +224,18 @@ public class kcScriptList extends kcCResource {
             if (gqsGroupFile == null)
                 return;
 
+            getLogger().info("Importing GQS script group '%s'.", gqsGroupFile.getName());
             Config scriptGroupCfg = Config.loadConfigFromTextFile(gqsGroupFile, false);
             GreatQuestAssetUtils.applyGqsScriptGroup(getParentFile(), scriptGroupCfg);
-            getLogger().info("Imported GQS script group '" + gqsGroupFile.getName() + "'.");
+            getLogger().info("Finished importing the gqs.");
         });
 
     }
 
     /**
      * Writes the script list to a string builder.
-     * @param level    The level to find any extra data from.
-     * @param builder  The builder to write the script to.
+     * @param level The level to find any extra data from.
+     * @param builder The builder to write the script to.
      * @param settings The settings used to build the output.
      */
     public void toString(GreatQuestChunkedFile level, StringBuilder builder, kcScriptDisplaySettings settings) {
@@ -312,7 +314,6 @@ public class kcScriptList extends kcCResource {
         kcScriptValidationData validationData = dataMap.get(entity);
         if (validationData == null)
             dataMap.put(entity, validationData = new kcScriptValidationData(entity, logger));
-
         return validationData;
     }
 }

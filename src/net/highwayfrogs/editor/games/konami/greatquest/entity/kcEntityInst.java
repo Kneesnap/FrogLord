@@ -22,6 +22,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.entit
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.BasicWrappedLogger;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -143,10 +145,30 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
      * @param clearExistingFunctions if true, any existing functions will be wiped.
      */
     public void addScriptFunctions(kcScriptList scriptList, Config config, String sourceName, boolean clearExistingFunctions) {
+        addScriptFunctions(null, scriptList, config, sourceName, clearExistingFunctions);
+    }
+
+    /**
+     * Loads script functions from the config to this entity, creating a new script if necessary.
+     * @param logger the logger to write script information/warnings to
+     * @param scriptList The script list to resolve/create scripts with.
+     * @param config The config to load script functions from
+     * @param sourceName The source name (usually a file name) representing where the scripts came from.
+     * @param clearExistingFunctions if true, any existing functions will be wiped.
+     */
+    public void addScriptFunctions(ILogger logger, kcScriptList scriptList, Config config, String sourceName, boolean clearExistingFunctions) {
         if (scriptList == null)
             throw new NullPointerException("scriptList");
         if (config == null)
             throw new NullPointerException("config");
+
+        // Use a logger linked to the entity.
+        if (logger == null) {
+            logger = getResource() != null ? getResource().getLogger() : getLogger();
+        } else if (getResource() != null) {
+            ILogger entityLogger = getResource().getLogger();
+            logger = new BasicWrappedLogger(logger, entityLogger.getName(), entityLogger.getLoggerInfo());
+        }
 
         // Get or create a script for ourselves.
         kcScript script;
@@ -161,7 +183,7 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
         if (clearExistingFunctions)
             script.getFunctions().clear();
 
-        script.addFunctionsFromConfigNode(config, sourceName);
+        script.addFunctionsFromConfigNode(logger, config, sourceName);
     }
 
     /**

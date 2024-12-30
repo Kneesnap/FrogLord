@@ -12,6 +12,11 @@ import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
  */
 public interface kcActionExecutor extends IGameObject {
     /**
+     * Gets the name of the executor.
+     */
+    String getName();
+
+    /**
      * Gets the game instance which the game object belongs to.
      */
     GreatQuestInstance getGameInstance();

@@ -186,7 +186,9 @@ public class kcScript extends GameObject<GreatQuestInstance> {
      * @param baseConfigNode The config node to add functions from
      * @param sourceName The source name (usually a file name) representing where the scripts came from.
      */
-    public void addFunctionsFromConfigNode(Config baseConfigNode, String sourceName) {
+    public void addFunctionsFromConfigNode(ILogger logger, Config baseConfigNode, String sourceName) {
+        if (logger == null)
+            throw new NullPointerException("logger");
         if (baseConfigNode == null)
             throw new NullPointerException("baseConfigNode");
 
@@ -201,9 +203,8 @@ public class kcScript extends GameObject<GreatQuestInstance> {
 
             // Load the script function.
             try {
-                newFunction.loadFromConfigNode(nestedFunction);
+                newFunction.loadFromConfigNode(nestedFunction, logger);
             } catch (Throwable th) {
-                ILogger logger = getEntity() != null ? getEntity().getLogger() : getLogger();
                 String entityName = getEntity() != null ? "'" + getEntity().getName() + "'" : "null";
                 Utils.handleError(logger, th, false, "Failed to load script function for entity %s from '%s'.", entityName, sourceName);
                 continue; // Skip registration.
@@ -230,7 +231,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
                 kcScriptFunction functionToReplace = getFunctionToReplace(functionsToReplace, newFunctionUserImportSource, behavior);
 
                 if (functionToReplace != null) {
-                    functionToReplace.loadFromConfigNode(nestedFunction);
+                    functionToReplace.loadFromConfigNode(nestedFunction, logger);
                 } else {
                     // Add the new function.
                     this.functions.add(newFunction);
@@ -435,7 +436,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
          * Loads this function loaded from a Config node.
          * @param config The config containing the function definition
          */
-        public void loadFromConfigNode(Config config) {
+        public void loadFromConfigNode(Config config, ILogger logger) {
             if (config == null)
                 throw new NullPointerException("config");
 
@@ -451,7 +452,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
                 ConfigValueNode node = config.getInternalText().get(i);
                 String textLine = node != null ? node.getAsStringLiteral() : null;
                 if (!StringUtils.isNullOrWhiteSpace(textLine))
-                    this.effects.add(kcScriptEffect.parseScriptEffect(this, textLine, config.getOriginalLineNumber() + i, fileName));
+                    this.effects.add(kcScriptEffect.parseScriptEffect(logger, this, textLine, config.getOriginalLineNumber() + i, fileName));
             }
         }
 

@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.utils;
 import javafx.application.Platform;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.utils.logging.ILogger;
-import net.highwayfrogs.editor.utils.logging.InstanceLogger.WrapperLogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.WrappedLogger;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -47,7 +47,7 @@ public class Utils {
         if (instanceLogger != null)
             return instanceLogger;
 
-        return instanceLogger = new WrapperLogger(getLogger());
+        return instanceLogger = new WrappedLogger(getLogger());
     }
 
     /**

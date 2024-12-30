@@ -77,6 +77,7 @@ public class kcScriptCauseNumber extends kcScriptCause {
         super.printAdvancedWarnings(data);
         if (!data.anyActionsMatch(kcActionID.NUMBER, this::doesActionMatch))
             printWarning(data.getLogger(), data.getEntityName() + " does not have a " + kcActionID.NUMBER.getFrogLordName() + " effect capable of causing it.");
+        // We have confirmed that an entity terminating is still capable of calling SendNumber, and triggering its own script listeners, even if kcScriptCause.isEntityTerminated is true.
     }
 
     private boolean doesActionMatch(kcActionNumber action) {

@@ -233,11 +233,12 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
      */
     public void printWarning(ILogger logger, String warning) {
         if (!this.loadedFromGame)
-            logger.warning("The action '" + getAsGqsStatement() + "' "
-                    + (this.userImportSource != null ? "in '" + this.userImportSource + "' " : "")
-                    + (this.userLineNumber > 0 ? "on line " + this.userLineNumber + " " : "")
-                    + "will be skipped by the game, since " + warning
-                    + (warning.endsWith(".") || warning.endsWith("!") || warning.endsWith(")") ? "" : "."));
+            logger.warning("The action '%s' %s%swill be skipped by the game, since %s%s",
+                    getAsGqsStatement(),
+                    (this.userImportSource != null ? "in '" + this.userImportSource + "' " : ""),
+                    (this.userLineNumber > 0 ? "on line " + this.userLineNumber + " " : ""),
+                    warning,
+                    (warning.endsWith(".") || warning.endsWith("!") || warning.endsWith(")") ? "" : "."));
     }
 
     /**

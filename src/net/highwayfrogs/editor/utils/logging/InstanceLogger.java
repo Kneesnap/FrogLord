@@ -1,9 +1,9 @@
 package net.highwayfrogs.editor.utils.logging;
 
 import lombok.Getter;
-import lombok.NonNull;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.utils.StringUtils;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ResourceBundle;
 import java.util.function.Function;
@@ -16,43 +16,131 @@ import java.util.logging.Logger;
  * Created by Kneesnap on 11/12/2024.
  */
 public abstract class InstanceLogger implements ILogger {
-    protected final Logger wrappedLogger;
+    protected final Logger wrappedJavaLogger;
+    protected final ILogger wrappedLogger;
 
-    public InstanceLogger(@NonNull Logger wrappedLogger) {
+    public InstanceLogger(Logger wrappedJavaLogger) {
+        this.wrappedJavaLogger = wrappedJavaLogger;
+        this.wrappedLogger = null;
+    }
+
+    public InstanceLogger(ILogger wrappedLogger) {
+        this.wrappedJavaLogger = null;
         this.wrappedLogger = wrappedLogger;
+    }
+
+    protected InstanceLogger() {
+        this.wrappedJavaLogger = null;
+        this.wrappedLogger = null;
     }
 
     @Override
     public void log(LogRecord lr) {
-        lr.setLoggerName(getName()); // setLoggerName() will be overridden when we pass to the wrappedLogger.
-        lr.setSourceClassName(getLoggerInfo()); // setLoggerName() will be overridden when we pass to the wrappedLogger.
-        final ResourceBundle bundle = this.wrappedLogger.getResourceBundle();
-        final String bundleName = this.wrappedLogger.getResourceBundleName();
-        if (bundleName != null && bundle != null) {
-            lr.setResourceBundleName(bundleName);
-            lr.setResourceBundle(bundle);
+        if (this.wrappedJavaLogger != null) {
+            lr.setLoggerName(getName()); // setLoggerName() will be overridden when we pass to the wrappedLogger.
+            lr.setSourceClassName(getLoggerInfo()); // setLoggerName() will be overridden when we pass to the wrappedLogger.
+            final ResourceBundle bundle = this.wrappedJavaLogger.getResourceBundle();
+            final String bundleName = this.wrappedJavaLogger.getResourceBundleName();
+            if (bundleName != null && bundle != null) {
+                lr.setResourceBundleName(bundleName);
+                lr.setResourceBundle(bundle);
+            }
+
+            this.wrappedJavaLogger.log(lr);
+        } else if (this.wrappedLogger != null) {
+            this.wrappedLogger.log(lr);
         }
-        this.wrappedLogger.log(lr);
     }
 
     @Override
     public boolean isLoggable(Level level) {
-        return this.wrappedLogger.isLoggable(level);
+        if (this.wrappedJavaLogger != null) {
+            return this.wrappedJavaLogger.isLoggable(level);
+        } else if (this.wrappedLogger != null) {
+            return this.wrappedLogger.isLoggable(level);
+        } else {
+            return true;
+        }
     }
 
     @Override
     public String getName() {
-        return this.wrappedLogger.getName();
+        if (this.wrappedJavaLogger != null) {
+            return this.wrappedJavaLogger.getName();
+        } else if (this.wrappedLogger != null) {
+            return this.wrappedLogger.getName();
+        } else {
+            return Utils.getSimpleName(this);
+        }
     }
 
-    public static class WrapperLogger extends InstanceLogger {
-        public WrapperLogger(@NonNull Logger wrappedLogger) {
-            super(wrappedLogger);
+    /**
+     * Allows wrapping a logger and overriding the name/info.
+     */
+    public static class BasicWrappedLogger extends WrappedLogger {
+        private final String overrideName;
+        private final String overrideInfo;
+
+        public BasicWrappedLogger(Logger logger, String overrideName) {
+            this(logger, overrideName, null);
+        }
+
+        public BasicWrappedLogger(Logger logger, String overrideName, String overrideInfo) {
+            super(logger);
+            this.overrideName = overrideName;
+            this.overrideInfo = overrideInfo;
+        }
+
+        public BasicWrappedLogger(ILogger logger, String overrideName) {
+            this(logger, overrideName, null);
+        }
+
+        public BasicWrappedLogger(ILogger logger, String overrideName, String overrideInfo) {
+            super(logger);
+            this.overrideName = overrideName;
+            this.overrideInfo = overrideInfo;
+        }
+
+        public BasicWrappedLogger(String overrideName) {
+            this(overrideName, null);
+        }
+
+        public BasicWrappedLogger(String overrideName, String overrideInfo) {
+            super();
+            this.overrideName = overrideName;
+            this.overrideInfo = overrideInfo;
+        }
+
+        @Override
+        public String getName() {
+            return this.overrideName != null ? this.overrideName : super.getName();
         }
 
         @Override
         public String getLoggerInfo() {
-            return this.wrappedLogger.getName();
+            return this.overrideInfo != null ? this.overrideInfo : super.getLoggerInfo();
+        }
+    }
+
+    /**
+     * Allows wrapping a logger.
+     */
+    public static class WrappedLogger extends InstanceLogger {
+        public WrappedLogger(Logger logger) {
+            super(logger);
+        }
+
+        public WrappedLogger(ILogger logger) {
+            super(logger);
+        }
+
+        public WrappedLogger() {
+            super();
+        }
+
+        @Override
+        public String getLoggerInfo() {
+            return this.wrappedJavaLogger.getName();
         }
     }
 
@@ -113,7 +201,7 @@ public abstract class InstanceLogger implements ILogger {
         private static final Logger NULL_LOGGER = Logger.getLogger("NullGameInstance");
 
         public GameInstanceLogger(GameInstance instance) {
-            super(instance != null ? instance.getLogger().wrappedLogger : NULL_LOGGER);
+            super(instance != null ? instance.getLogger().wrappedJavaLogger : NULL_LOGGER);
             this.gameInstance = instance;
         }
 

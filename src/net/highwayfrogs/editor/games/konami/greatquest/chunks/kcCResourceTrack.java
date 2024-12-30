@@ -59,13 +59,13 @@ public class kcCResourceTrack extends kcCResource implements IMultiLineInfoWrite
             boolean expectedFirstTrackFlag = (i == 0);
             boolean didHaveFirstTrackFlag = ((track.getFlags() & kcTrack.FLAG_IS_FIRST) == kcTrack.FLAG_IS_FIRST);
             if (expectedFirstTrackFlag ^ didHaveFirstTrackFlag)
-                getLogger().severe("Expected track " + i + " to have the flag identifying it as the first track? " + expectedFirstTrackFlag + ", but was: " + didHaveFirstTrackFlag);
+                getLogger().severe("Expected track %d to have the flag identifying it as the first track? %b, but was: %b", i, expectedFirstTrackFlag, didHaveFirstTrackFlag);
 
             // Validate "FLAG_HAS_NEXT"
             boolean expectedNextTrackFlag = (this.tracks.size() > i + 1);
             boolean didHaveNextTrackFlag = ((track.getFlags() & kcTrack.FLAG_HAS_NEXT) == kcTrack.FLAG_HAS_NEXT);
             if (expectedNextTrackFlag ^ didHaveNextTrackFlag)
-                getLogger().severe("Expected track " + i + " to have the flag identifying there being a next track? " + expectedNextTrackFlag + ", but was: " + didHaveNextTrackFlag);
+                getLogger().severe("Expected track %d to have the flag identifying there being a next track? %b, but was: %b", i, expectedNextTrackFlag, didHaveNextTrackFlag);
         }
     }
 
