@@ -47,6 +47,7 @@ public class GreatQuestAssetUtils {
     private static final String CONFIG_SECTION_SOUND_EFFECTS = "SoundEffects";
     private static final String CONFIG_SECTION_COPY_RESOURCES = "CopyResources";
     private static final String CONFIG_SECTION_DELETE_RESOURCES = "DeleteResources";
+    private static final String CONFIG_SECTION_ANIMATIONS = "Animations";
     private static final String CONFIG_SECTION_ACTION_SEQUENCES = "Sequences";
     private static final String CONFIG_SECTION_DIALOG = "Dialog";
     private static final String CONFIG_SECTION_COLLISION_PROXIES = "Collision";
@@ -85,7 +86,8 @@ public class GreatQuestAssetUtils {
         applyCollisionProxies(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_COLLISION_PROXIES));
         copyResources(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_COPY_RESOURCES), logger);
         deleteResources(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_DELETE_RESOURCES), logger);
-        applyActionSequences(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ACTION_SEQUENCES));
+        updateAnimationSets(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ANIMATIONS), logger);
+        applyActionSequences(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ACTION_SEQUENCES), logger);
 
         // This should occur after resource copying to ensure it can resolve resources. Copied resources shouldn't reference entity descriptions since entity instances (a resource which is not expected to be copied) are the only resource to resolve entity descriptions.
         // This should also happen before entity instances are applied.
@@ -349,7 +351,45 @@ public class GreatQuestAssetUtils {
         }
     }
 
-    private static void applyActionSequences(GreatQuestChunkedFile chunkedFile, Config resourceHashTableCfg) {
+    private static void updateAnimationSets(GreatQuestChunkedFile chunkedFile, Config resourceHashTableCfg, ILogger logger) {
+        if (resourceHashTableCfg == null)
+            return;
+
+        for (Config animationSetCfg : resourceHashTableCfg.getChildConfigNodes()) {
+            String animationSetName = animationSetCfg.getSectionName();
+            int animationSetNameHash = GreatQuestUtils.hash(animationSetName);
+            kcCResourceAnimSet animationSet = GreatQuestUtils.findLevelResourceByHash(chunkedFile, animationSetNameHash);
+
+            // Try to find the animation set by auto-adding the prefix.
+            if (animationSet == null && !animationSetName.endsWith(kcCResourceAnimSet.NAME_SUFFIX)) {
+                animationSetName += kcCResourceAnimSet.NAME_SUFFIX;
+                animationSetNameHash = GreatQuestUtils.hash(animationSetName);
+                animationSet = GreatQuestUtils.findLevelResourceByHash(chunkedFile, animationSetNameHash);
+            }
+
+            // Create a new animation set.
+            if (animationSet == null) {
+                animationSet = new kcCResourceAnimSet(chunkedFile);
+                animationSet.setName(animationSetName, true);
+                chunkedFile.addResource(animationSet);
+            }
+
+            // Add the animations.
+            for (String animationName : animationSetCfg.getTextWithoutComments()) {
+                int animationNameHash = GreatQuestUtils.hash(animationName);
+                kcCResourceTrack animation = GreatQuestUtils.findLevelResourceByHash(chunkedFile, animationNameHash);
+                if (animation == null) {
+                    logger.warning("Could not find animation named '%s'.", animationName);
+                    continue;
+                }
+
+                if (!animationSet.contains(animation) && !animationSet.addAnimation(animation))
+                    logger.warning("Failed to add animation '%s' to '%s'.", animation.getName(), animationSet.getName());
+            }
+        }
+    }
+
+    private static void applyActionSequences(GreatQuestChunkedFile chunkedFile, Config resourceHashTableCfg, ILogger logger) {
         if (resourceHashTableCfg == null)
             return;
 

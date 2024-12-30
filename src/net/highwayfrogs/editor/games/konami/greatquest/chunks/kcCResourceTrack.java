@@ -116,4 +116,13 @@ public class kcCResourceTrack extends kcCResource implements IMultiLineInfoWrite
     public List<kcTrack> getTracksByTag(int tag) {
         return tag >= 0 && tag < this.tracksByTag.size() ? this.tracksByTag.get(tag) : Collections.emptyList();
     }
+
+    @Override
+    protected void onRemovedFromChunkFile() {
+        for (kcCResource resource : getParentFile().getChunks())
+            if (resource instanceof kcCResourceAnimSet)
+                ((kcCResourceAnimSet) resource).removeAnimation(this, false);
+
+        super.onRemovedFromChunkFile();
+    }
 }

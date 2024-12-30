@@ -16,6 +16,8 @@ import java.util.List;
 public class kcCResourceAnimSet extends kcCResource {
     private final kcAnimSetDesc animSetDesc;
 
+    public static final String NAME_SUFFIX = "-1AnimSet";
+
     public kcCResourceAnimSet(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.ANIMSET);
         this.animSetDesc = new kcAnimSetDesc(this);
@@ -44,5 +46,32 @@ public class kcCResourceAnimSet extends kcCResource {
      */
     public List<kcCResourceTrack> getAnimations() {
         return this.animSetDesc.getAnimations();
+    }
+
+    /**
+     * Test if the animation set contains the given animation
+     * @param animation the animation to find
+     * @return true if the animation is found
+     */
+    public boolean contains(kcCResourceTrack animation) {
+        return this.animSetDesc.contains(animation);
+    }
+
+    /**
+     * Adds an animation to the set
+     * @param animation the animation to add
+     * @return true if it was added
+     */
+    public boolean addAnimation(kcCResourceTrack animation) {
+        return this.animSetDesc.addAnimation(animation);
+    }
+
+    /**
+     * Removes an animation from the set
+     * @param animation the animation to remove
+     * @return true if it was removed
+     */
+    public boolean removeAnimation(kcCResourceTrack animation, boolean deleteEntry) {
+        return this.animSetDesc.removeAnimation(animation, deleteEntry);
     }
 }
