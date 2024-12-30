@@ -30,7 +30,7 @@ public class MainGameInstanceLogger extends InstanceLogger {
         if (this.cachedName == null || this.oldGameType != this.gameInstance.getGameType() || this.oldVersionConfig != this.gameInstance.getVersionConfig()) {
             this.oldGameType = this.gameInstance.getGameType();
             this.oldVersionConfig = this.gameInstance.getVersionConfig();
-            this.cachedName = this.oldGameType + (this.oldVersionConfig != null ? "{" + this.oldVersionConfig.getInternalName() + "}" : "");
+            this.cachedName = (this.oldGameType != null ? this.oldGameType.getIdentifier() : "null") + (this.oldVersionConfig != null ? "{" + this.oldVersionConfig.getInternalName() + "}" : "");
         }
 
         return this.cachedName;
