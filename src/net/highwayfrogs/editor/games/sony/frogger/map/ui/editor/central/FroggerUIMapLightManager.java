@@ -86,7 +86,8 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
 
     @Override
     protected void setVisible(FroggerMapLight light, FroggerMapLightPreview lightPreview, boolean visible) {
-        lightPreview.setVisible(visible);
+        if (lightPreview != null)
+            lightPreview.setVisible(visible);
     }
 
     @Override

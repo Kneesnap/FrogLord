@@ -122,7 +122,8 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
 
     @Override
     protected void setVisible(FroggerMapEntity oldEntity, MeshView meshView, boolean visible) {
-        meshView.setVisible(visible);
+        if (meshView != null)
+            meshView.setVisible(visible);
     }
 
     @Override
