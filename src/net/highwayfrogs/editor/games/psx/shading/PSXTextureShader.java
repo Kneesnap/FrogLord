@@ -42,7 +42,7 @@ public class PSXTextureShader {
     private final IndexBitArray pixelPosSeen = new IndexBitArray();
     private final IndexBitArray firstLayerPixelShadePositions = new IndexBitArray();
     private final FXIntArray pixelPosBuffer = new FXIntArray();
-    private static final int DEFAULT_SHADING_EXPANSION_LAYERS = 4; // 2 seems to be the minimum which fully covers the polygons. There are a few diagonal polygons in VOL2.MAP that seem like they need some help, but I don't think the issue is with this constant.
+    private static final int DEFAULT_SHADING_EXPANSION_LAYERS = 2; // 2 seems to be the minimum which fully covers the polygons.
     public static final int UNSHADED_COLOR_ARGB = 0x80808080;
     public static final CVector UNSHADED_COLOR = CVector.makeColorFromRGB(UNSHADED_COLOR_ARGB);
 
@@ -441,7 +441,7 @@ public class PSXTextureShader {
         int[] rawTargetImage = ImageWorkHorse.getPixelIntegerArray(targetImage);
         for (int i = 0; i < pixelPosBuffer.size(); i += 2) {
             int pixelPos = pixelPosBuffer.get(i);
-            if (seenPixelPos.getBit(pixelPos)) {
+            if (!seenPixelPos.setBit(pixelPos, true)) {
                 pixelPosBuffer.set(i, -1); // Skip this, the image actually did have a pixel get placed here.
                 continue;
             }
@@ -543,14 +543,15 @@ public class PSXTextureShader {
         return nextColorStartIndex;
     }
 
+    private static final float[] COLOR_MIXING_FACTOR = {1F, .5F, 2 / 3F, .75F};
     private static CVector tryLoadColor(BufferedImage targetImage, int[] rawTargetImage, PSXTextureShader instance, int currentPixelPos) {
         IndexBitArray seenPixelPos = instance.getPixelPosSeen();
-        CVector color1 = instance.getTempColorVector1();
-        CVector color2 = instance.getTempColorVector2();
+        CVector result = instance.getTempColorVector1();
+        CVector tempColor = instance.getTempColorVector2();
         int imageWidth = targetImage.getWidth();
         int x = currentPixelPos % imageWidth;
         int y = currentPixelPos / imageWidth;
-        boolean loadedAnyColorsYet = false;
+        int colorsMixed = 0;
 
         // Attempt to load color from the left pixel.
         if (x > 0) {
@@ -559,8 +560,8 @@ public class PSXTextureShader {
             if (seenPixelPos.getBit(leftPixel)) { // The nearby pixel has shading color data.
                 int leftPixelColor = rawTargetImage[leftPixel];
                 if (leftPixelColor != 0) {
-                    color1.fromARGB(leftPixelColor);
-                    loadedAnyColorsYet = true;
+                    result.fromARGB(leftPixelColor);
+                    colorsMixed++;
                 }
             }
         }
@@ -572,12 +573,11 @@ public class PSXTextureShader {
             if (seenPixelPos.getBit(rightPixel)) { // The nearby pixel has shading color data.
                 int rightPixelColor = rawTargetImage[rightPixel];
                 if (rightPixelColor != 0) {
-                    if (loadedAnyColorsYet) {
-                        color2.fromARGB(rightPixelColor);
-                        color1 = interpolateCVector(color1, color2, .5F, color1);
+                    if (colorsMixed++ > 0) {
+                        tempColor.fromARGB(rightPixelColor);
+                        result = interpolateCVector(tempColor, result, COLOR_MIXING_FACTOR[colorsMixed - 1], result);
                     } else {
-                        color1.fromARGB(rightPixelColor);
-                        loadedAnyColorsYet = true;
+                        result.fromARGB(rightPixelColor);
                     }
                 }
             }
@@ -590,12 +590,11 @@ public class PSXTextureShader {
             if (seenPixelPos.getBit(upperPixel)) { // The nearby pixel has shading color data.
                 int upperPixelColor = rawTargetImage[upperPixel];
                 if (upperPixelColor != 0) {
-                    if (loadedAnyColorsYet) {
-                        color2.fromARGB(upperPixelColor);
-                        color1 = interpolateCVector(color1, color2, .5F, color1);
+                    if (colorsMixed++ > 0) {
+                        tempColor.fromARGB(upperPixelColor);
+                        result = interpolateCVector(tempColor, result, COLOR_MIXING_FACTOR[colorsMixed - 1], result);
                     } else {
-                        color1.fromARGB(upperPixelColor);
-                        loadedAnyColorsYet = true;
+                        result.fromARGB(upperPixelColor);
                     }
                 }
             }
@@ -608,18 +607,17 @@ public class PSXTextureShader {
             if (seenPixelPos.getBit(lowerPixel)) { // The nearby pixel has shading color data.
                 int lowerPixelColor = rawTargetImage[lowerPixel];
                 if (lowerPixelColor != 0) {
-                    if (loadedAnyColorsYet) {
-                        color2.fromARGB(lowerPixelColor);
-                        color1 = interpolateCVector(color1, color2, .5F, color1);
+                    if (colorsMixed++ > 0) {
+                        tempColor.fromARGB(lowerPixelColor);
+                        result = interpolateCVector(tempColor, result, COLOR_MIXING_FACTOR[colorsMixed - 1], result);
                     } else {
-                        color1.fromARGB(lowerPixelColor);
-                        loadedAnyColorsYet = true;
+                        result.fromARGB(lowerPixelColor);
                     }
                 }
             }
         }
 
-        return loadedAnyColorsYet ? color1 : null;
+        return colorsMixed > 0 ? result : null;
     }
 
     private static void shadeRawPixel(int[] sourceImage, int[] targetImage, int pixelIndex, int shadeColor) {
