@@ -675,7 +675,7 @@ Click [here](../../../../src/net/highwayfrogs/editor/games/konami/greatquest/gen
 **Summary:** The script owner takes damage (loses health).  
 **Supported Entity Types:** Base Actors  
 **Ghidra Reference (Ignore):** `kcCScriptMgr::FireActorEffect[Remap] -> kcCActorBase::OnCommand/kcCActor::OnCommand`  
-**Usage:** `TakeDamage <attackStrength> [Damage Flags]`  
+**Usage:** `TakeDamage <attackStrength> <Damage Flags...>`  
 The attack strength is a whole number indicating how much damage to take.  
 A negative number will heal the entity.  
 
