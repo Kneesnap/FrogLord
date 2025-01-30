@@ -87,13 +87,21 @@ public class kcParam {
     }
 
     /**
+     * Gets this kcParam as a sound ID.
+     */
+    public int getAsSfxId() {
+        int value = getAsInteger();
+        return value != 0 && value != -1 ? value & ~kcActionPlaySound.BITMASK_STOP_SOUND : value;
+    }
+
+    /**
      * Get this kcParam as a sound path
      * @param instance the instance to resolve sound path from
      * @return soundPath
      */
     public String getAsSoundPath(GreatQuestInstance instance) {
         if (instance != null) {
-            return instance.getFullSoundPath(getAsInteger() & ~kcActionPlaySound.BITMASK_STOP_SOUND);
+            return instance.getFullSoundPath(getAsSfxId());
         } else {
             return String.valueOf(getAsInteger());
         }
@@ -195,7 +203,7 @@ public class kcParam {
             case SPECIAL_ACTIVATION_BIT_MASK:
                 return getEnumWarning(kcSpecialActivationMask.values());
             case SOUND:
-                if (intValue < 0 || instance == null || intValue >= instance.getNextFreeSoundId() || !instance.hasFullSoundPathFor(intValue))
+                if (instance == null || !instance.hasFullSoundPathFor(intValue))
                     return intValue + " does not appear to correspond to any named sound effects.";
                 break;
             case MILLISECONDS:

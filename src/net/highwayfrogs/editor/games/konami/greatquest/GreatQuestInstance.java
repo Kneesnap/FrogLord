@@ -391,7 +391,7 @@ public class GreatQuestInstance extends GameInstance {
      * @return true iff there is a corresponding sound path.
      */
     public boolean hasFullSoundPathFor(int sfxId) {
-        return !StringUtils.isNullOrWhiteSpace(this.soundPathsById.get(sfxId));
+        return sfxId >= 0 && sfxId < this.nextFreeSoundId && !StringUtils.isNullOrWhiteSpace(this.soundPathsById.get(sfxId));
     }
 
     /**
