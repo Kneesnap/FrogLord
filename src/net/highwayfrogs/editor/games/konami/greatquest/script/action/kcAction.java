@@ -23,7 +23,7 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
     private final kcActionExecutor executor;
     private final kcActionID actionID;
     private kcParam[] unhandledArguments;
-    private boolean loadedFromGame; // Reports whether the action was loaded from the game.
+    private boolean loadedFromGame = true; // Reports whether the action was loaded from the game.
     private int userLineNumber = -1; // The line number as imported by the user.
     private String userImportSource;
 
@@ -232,13 +232,12 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
      * @param warning the warning to print
      */
     public void printWarning(ILogger logger, String warning) {
-        if (!this.loadedFromGame)
-            logger.warning("The action '%s' %s%swill be skipped by the game, since %s%s",
-                    getAsGqsStatement(),
-                    (this.userImportSource != null ? "in '" + this.userImportSource + "' " : ""),
-                    (this.userLineNumber > 0 ? "on line " + this.userLineNumber + " " : ""),
-                    warning,
-                    (warning.endsWith(".") || warning.endsWith("!") || warning.endsWith(")") ? "" : "."));
+        logger.warning("The action '%s' %s%swill be skipped by the game, since %s%s",
+                getAsGqsStatement(),
+                (this.userImportSource != null ? "in '" + this.userImportSource + "' " : ""),
+                (this.userLineNumber > 0 ? "on line " + this.userLineNumber + " " : ""),
+                warning,
+                (warning.endsWith(".") || warning.endsWith("!") || warning.endsWith(")") ? "" : "."));
     }
 
     /**
