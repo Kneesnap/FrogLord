@@ -26,6 +26,7 @@ import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.AppendInfoLoggerWrapper;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -162,24 +163,6 @@ public class kcScriptList extends kcCResource {
                     scriptFolder.getName());
         });
 
-        MenuItem clearScriptsItem = new MenuItem("Clear Scripts");
-        contextMenu.getItems().add(clearScriptsItem);
-        clearScriptsItem.setOnAction(event -> {
-            if (!FXUtils.makePopUpYesNo("Are you sure you'd like to clear all the scripts in the level?"))
-                return;
-
-            // Ensure entities no longer have script indices. (Otherwise they will point to the wrong scripts when we add new ones.)
-            for (int i = 0; i < this.scripts.size(); i++) {
-                kcScript script = this.scripts.get(i);
-                kcCResourceEntityInst entity = script.getEntity();
-                if (entity != null && entity.getInstance() != null)
-                    entity.getInstance().removeScriptIndex();
-            }
-
-            this.scripts.clear();
-            getLogger().info("Cleared the script list.");
-        });
-
         MenuItem importScriptsItem = new MenuItem("Import Scripts");
         contextMenu.getItems().add(importScriptsItem);
         importScriptsItem.setOnAction(event -> {
@@ -213,6 +196,24 @@ public class kcScriptList extends kcCResource {
             }
 
             getLogger().info("Imported %d scripts.", filesImported);
+        });
+
+        MenuItem clearScriptsItem = new MenuItem("Clear Scripts");
+        contextMenu.getItems().add(clearScriptsItem);
+        clearScriptsItem.setOnAction(event -> {
+            if (!FXUtils.makePopUpYesNo("Are you sure you'd like to clear all the scripts in the level?"))
+                return;
+
+            // Ensure entities no longer have script indices. (Otherwise they will point to the wrong scripts when we add new ones.)
+            for (int i = 0; i < this.scripts.size(); i++) {
+                kcScript script = this.scripts.get(i);
+                kcCResourceEntityInst entity = script.getEntity();
+                if (entity != null && entity.getInstance() != null)
+                    entity.getInstance().removeScriptIndex();
+            }
+
+            this.scripts.clear();
+            getLogger().info("Cleared the script list.");
         });
 
         // Apply GQS Script Group.
@@ -253,6 +254,7 @@ public class kcScriptList extends kcCResource {
         for (int i = 0; i < this.scripts.size(); i++) {
             kcScript script = this.scripts.get(i);
             kcCResourceEntityInst entity = script.getEntity();
+
             if (entity == null)
                 throw new RuntimeException("Cannot print warnings, there's a script which doesn't have an entity linked!");
 
@@ -318,11 +320,11 @@ public class kcScriptList extends kcCResource {
                 for (int k = 0; k < function.getEffects().size(); k++) {
                     kcScriptEffect effect = function.getEffects().get(k);
                     kcAction action = (effect instanceof kcScriptEffectAction) ? ((kcScriptEffectAction) effect).getAction() : null;
-                    if (action == null)
+                    if (action == null || action.isLoadedFromGame())
                         continue;
 
                     kcScriptValidationData actionData = getOrCreateValidationData(logger, dataMap, effect.getTargetEntityRef().getResource());
-                    if (actionData != null && !action.isLoadedFromGame())
+                    if (actionData != null)
                         action.printAdvancedWarnings(actionData);
                 }
             }
@@ -334,8 +336,12 @@ public class kcScriptList extends kcCResource {
             return null;
 
         kcScriptValidationData validationData = dataMap.get(entity);
-        if (validationData == null)
-            dataMap.put(entity, validationData = new kcScriptValidationData(entity, logger));
+        if (validationData == null) {
+            ILogger tempLogger = new AppendInfoLoggerWrapper(logger, entity.getName(), AppendInfoLoggerWrapper.TEMPLATE_OVERRIDE_AT_ORIGINAL);
+            System.out.println(entity.getName() + "," + tempLogger.getName() + "," + tempLogger.getLoggerInfo() + "," + logger.getLoggerInfo() + "," + logger.getName()); // TODO: TOSS
+            dataMap.put(entity, validationData = new kcScriptValidationData(entity, tempLogger));
+        }
+
         return validationData;
     }
 }

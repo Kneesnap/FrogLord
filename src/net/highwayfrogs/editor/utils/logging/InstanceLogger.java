@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.utils.logging;
 
 import lombok.Getter;
+import lombok.NonNull;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -77,6 +78,7 @@ public abstract class InstanceLogger implements ILogger {
     /**
      * Allows wrapping a logger and overriding the name/info.
      */
+    @Getter
     public static class BasicWrappedLogger extends WrappedLogger {
         private final String overrideName;
         private final String overrideInfo;
@@ -111,14 +113,89 @@ public abstract class InstanceLogger implements ILogger {
             this.overrideInfo = overrideInfo;
         }
 
+        /**
+         * Gets the original Logger name.
+         */
+        public String getOriginalName() {
+            return super.getName();
+        }
+
+        /**
+         * Gets the original Logger info.
+         */
+        public String getOriginalLoggerInfo() {
+            return super.getLoggerInfo();
+        }
+
         @Override
         public String getName() {
-            return this.overrideName != null ? this.overrideName : super.getName();
+            return this.overrideName != null ? this.overrideName : getOriginalName();
         }
 
         @Override
         public String getLoggerInfo() {
-            return this.overrideInfo != null ? this.overrideInfo : super.getLoggerInfo();
+            return this.overrideInfo != null ? this.overrideInfo : getOriginalLoggerInfo();
+        }
+    }
+
+    /**
+     * Allows wrapping a logger and overriding the name/info.
+     * The only advantage to using this over BasicWrappedLogger is that it allows for the parent logger to change.
+     */
+    public static class AppendInfoLoggerWrapper extends BasicWrappedLogger {
+        private final String template;
+
+        public static final String TEMPLATE_BAR_SEPARATOR = "{original}|{override}";
+        public static final String TEMPLATE_OVERRIDE_AT_ORIGINAL = "{override}@{original}";
+
+        public AppendInfoLoggerWrapper(Logger logger, String overrideName, @NonNull String template) {
+            super(logger, overrideName);
+            this.template = template;
+        }
+
+        public AppendInfoLoggerWrapper(Logger logger, String overrideName, String overrideInfo, @NonNull String template) {
+            super(logger, overrideName, overrideInfo);
+            this.template = template;
+        }
+
+        public AppendInfoLoggerWrapper(ILogger logger, String overrideName, @NonNull String template) {
+            super(logger, overrideName);
+            this.template = template;
+        }
+
+        public AppendInfoLoggerWrapper(ILogger logger, String overrideName, String overrideInfo, @NonNull String template) {
+            super(logger, overrideName, overrideInfo);
+            this.template = template;
+        }
+
+        @Override
+        public String getName() {
+            String originalName = getOriginalName();
+            String overrideName = getOverrideName();
+            if (originalName != null && overrideName != null) {
+                return this.template
+                        .replace("{original}", originalName)
+                        .replace("{override}", overrideName);
+            } else if (overrideName != null) {
+                return overrideName;
+            } else {
+                return originalName;
+            }
+        }
+
+        @Override
+        public String getLoggerInfo() {
+            String originalInfo = getOriginalLoggerInfo();
+            String overrideInfo = getOverrideInfo();
+            if (originalInfo != null && overrideInfo != null) {
+                return this.template
+                        .replace("{original}", originalInfo)
+                        .replace("{override}", overrideInfo);
+            } else if (overrideInfo != null) {
+                return overrideInfo;
+            } else {
+                return originalInfo;
+            }
         }
     }
 
@@ -140,7 +217,14 @@ public abstract class InstanceLogger implements ILogger {
 
         @Override
         public String getLoggerInfo() {
-            return this.wrappedJavaLogger.getName();
+            if (this.wrappedJavaLogger != null) {
+                return this.wrappedJavaLogger.getName();
+            } else if (this.wrappedLogger != null) {
+                String wrappedInfo = this.wrappedLogger.getLoggerInfo();
+                return wrappedInfo != null ? wrappedInfo : this.wrappedLogger.getName();
+            } else {
+                return null;
+            }
         }
     }
 
@@ -148,7 +232,7 @@ public abstract class InstanceLogger implements ILogger {
      * Represents a logger which is easy to create.
      */
     public static class LazyInstanceLogger extends GameInstanceLogger {
-        private final Function<? extends Object, String> loggerInfoGetter;
+        private final Function<?, String> loggerInfoGetter;
         private final Object loggerInfoGetterParam;
         private final String constantLoggerName;
 
