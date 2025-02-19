@@ -59,7 +59,7 @@ public class FroggerMapFormData extends SCGameData<FroggerGameInstance> {
             getLogger().warning("Expected the GridSquare height list to point to the single height at " + NumberUtils.toHexString(expectedGridSquareHeightsPointer) + ", but it actually pointed to " + NumberUtils.toHexString(gridSquareHeightsPointer));
 
         // Read grid square flag list, and warn if we don't recognize them.
-        reader.requireIndex(getLogger(), gridSquareFlagsPointer, "Expected GridSquareFlag list");
+        requireReaderIndex(reader, gridSquareFlagsPointer, "Expected GridSquareFlag list");
         for (int z = 0; z < this.gridFlags.length; z++) {
             for (int x = 0; x < this.gridFlags[z].length; x++) {
                 short gridSquareFlags = this.gridFlags[z][x] = reader.readShort();

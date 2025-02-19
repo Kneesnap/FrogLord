@@ -48,7 +48,7 @@ public class PTActionSetFile extends SCSharedGameFile {
         int actionSetListPointer = reader.readInt();
 
         // Verify action set position.
-        reader.requireIndex(getLogger(), actionSetListPointer, "Expected PTActionSet");
+        requireReaderIndex(reader, actionSetListPointer, "Expected PTActionSet");
 
         // 1) Read action sets.
         this.actionSets.clear();

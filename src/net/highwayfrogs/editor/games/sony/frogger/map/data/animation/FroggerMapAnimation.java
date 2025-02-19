@@ -112,7 +112,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
         if (this.mapFile.isExtremelyEarlyMapFormat()) {
             reader.setIndex(this.textureIdListPointerAddress);
         } else {
-            reader.requireIndex(getLogger(), this.textureIdListPointerAddress, "Expected texture id list");
+            requireReaderIndex(reader, this.textureIdListPointerAddress, "Expected texture id list");
         }
 
         // Read the texture id list.
@@ -135,7 +135,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
         if (this.targetPolygonListPointerAddress <= 0)
             throw new RuntimeException("Cannot target polygon list, the pointer " + NumberUtils.toHexString(this.targetPolygonListPointerAddress) + " is invalid.");
 
-        reader.requireIndex(getLogger(), this.targetPolygonListPointerAddress, "Expected target polygon list");
+        requireReaderIndex(reader, this.targetPolygonListPointerAddress, "Expected target polygon list");
         for (int i = 0; i < this.targetPolygons.size(); i++)
             this.targetPolygons.get(i).load(reader);
 

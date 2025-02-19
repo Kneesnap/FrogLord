@@ -62,7 +62,7 @@ public class PTStaticPart extends SCSharedGameData {
         if (this.partCelStartAddress <= 0)
             throw new RuntimeException("Cannot partCel list, the pointer is invalid.");
 
-        reader.requireIndex(getLogger(), this.partCelStartAddress, "Expected PTStaticPartCel list");
+        requireReaderIndex(reader, this.partCelStartAddress, "Expected PTStaticPartCel list");
         for (int i = 0; i < this.partCels.size(); i++)
             this.partCels.get(i).load(reader);
 

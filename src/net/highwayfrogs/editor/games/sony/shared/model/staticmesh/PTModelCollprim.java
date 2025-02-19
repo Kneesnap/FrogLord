@@ -39,7 +39,7 @@ public class PTModelCollprim extends PTCollprim {
         if (this.matrixAddress <= 0)
             throw new RuntimeException("Cannot read collprim matrix, the pointer " + NumberUtils.toHexString(this.matrixAddress) + " is invalid.");
 
-        reader.requireIndex(getLogger(), this.matrixAddress, "Expected PTCollprim matrix");
+        requireReaderIndex(reader, this.matrixAddress, "Expected PTCollprim matrix");
         this.matrix = new PSXMatrix();
         this.matrix.load(reader);
 

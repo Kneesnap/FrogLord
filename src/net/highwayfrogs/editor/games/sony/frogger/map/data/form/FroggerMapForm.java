@@ -75,7 +75,7 @@ public class FroggerMapForm extends SCGameData<FroggerGameInstance> {
             formDataPointerList = reader.getIndex();
             reader.jumpReturn();
 
-            reader.requireIndex(getLogger(), nextFormDataEntryStartAddress, "Expected FroggerMapFormData list entry " + i);
+            requireReaderIndex(reader, nextFormDataEntryStartAddress, "Expected FroggerMapFormData list entry " + i);
             FroggerMapFormData newFormDataEntry = new FroggerMapFormData(this);
             this.formDataEntries.add(newFormDataEntry);
             newFormDataEntry.load(reader);

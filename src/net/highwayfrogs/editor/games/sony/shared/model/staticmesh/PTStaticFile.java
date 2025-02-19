@@ -64,7 +64,7 @@ public class PTStaticFile extends SCSharedGameFile {
         // Read collprim.
         if (collprimAddress > 0) {
             // Verify reader position.
-            reader.requireIndex(getLogger(), collprimAddress, "Expected main collprim data");
+            requireReaderIndex(reader, collprimAddress, "Expected main collprim data");
 
             this.collprim = new PTModelCollprim(getGameInstance());
             this.collprim.load(reader);
@@ -76,7 +76,7 @@ public class PTStaticFile extends SCSharedGameFile {
         }
 
         // Verify part position.
-        reader.requireIndex(getLogger(), partDataStartAddress, "Expected PTStaticPart data");
+        requireReaderIndex(reader, partDataStartAddress, "Expected PTStaticPart data");
 
         // Read part data.
         this.parts.clear();

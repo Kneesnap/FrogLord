@@ -48,7 +48,7 @@ public class PTSkeletonFile extends SCSharedGameFile implements IPropertyListCre
 
         // Read bones.
         this.bones.clear();
-        reader.requireIndex(getLogger(), boneDataStartAddress, "Expected PTSkeletonBone");
+        requireReaderIndex(reader, boneDataStartAddress, "Expected PTSkeletonBone");
         for (int i = 0; i < boneCount; i++) {
             PTSkeletonBone newBone = new PTSkeletonBone(this);
             this.bones.add(newBone);

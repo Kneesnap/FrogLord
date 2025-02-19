@@ -93,7 +93,7 @@ public class FroggerMapGroup extends SCGameData<FroggerGameInstance> {
             throw new RuntimeException("Cannot read static entity list, the pointer " + NumberUtils.toHexString(this.staticEntityListPointer) + " is invalid.");
 
         // There isn't actually any static entity list saved, so we'll just validate the pointer as a sanity check and continue.
-        reader.requireIndex(getLogger(), this.staticEntityListPointer, "Expected static entity list");
+        requireReaderIndex(reader, this.staticEntityListPointer, "Expected static entity list");
         this.staticEntityListPointer = -1;
     }
 

@@ -44,7 +44,7 @@ public abstract class FroggerMapZone extends SCGameData<FroggerGameInstance> {
 
         // Prepare regions for reading.
         this.regions.clear();
-        reader.requireIndex(getLogger(), regionDataStartAddress, "Expected FroggerMapZoneRegion list");
+        requireReaderIndex(reader, regionDataStartAddress, "Expected FroggerMapZoneRegion list");
         for (int i = 0; i < regionCount; i++) {
             FroggerMapZoneRegion newRegion = new FroggerMapZoneRegion();
             newRegion.load(reader);

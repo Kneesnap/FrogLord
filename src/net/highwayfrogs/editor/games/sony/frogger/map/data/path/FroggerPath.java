@@ -59,7 +59,7 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
             reader.jumpReturn();
 
             // Read next path segment.
-            reader.requireIndex(getLogger(), nextPathSegmentStartAddress, "Expected FroggerPathSegment");
+            requireReaderIndex(reader, nextPathSegmentStartAddress, "Expected FroggerPathSegment");
             FroggerPathSegmentType type = FroggerPathSegmentType.values()[reader.readInt()];
             FroggerPathSegment segment = type.makeNew(this);
             this.segments.add(segment);
@@ -87,7 +87,7 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
         if (this.mapFile.getGroupPacket().shouldSkipStaticEntityLists()) {
             reader.setIndex(this.tempEntityIndexPointer);
         } else {
-            reader.requireIndex(getLogger(), this.tempEntityIndexPointer, "Expected path entity id list");
+            requireReaderIndex(reader, this.tempEntityIndexPointer, "Expected path entity id list");
         }
 
         // Read the path ids from the data.

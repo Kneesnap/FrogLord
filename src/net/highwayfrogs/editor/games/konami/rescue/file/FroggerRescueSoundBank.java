@@ -153,7 +153,7 @@ public class FroggerRescueSoundBank extends HudsonGameFile {
                 throw new RuntimeException("Cannot read file data, the file size " + NumberUtils.toHexString(this.fileSize) + " is invalid.");
 
             // There isn't actually any static entity list saved, so we'll just validate the pointer as a sanity check and continue.
-            reader.requireIndex(getLogger(), this.startAddress, "Expected raw file contents");
+            requireReaderIndex(reader, this.startAddress, "Expected raw file contents");
             this.rawFileContents = reader.readBytes(this.fileSize);
             this.startAddress = -1;
             this.fileSize = -1;

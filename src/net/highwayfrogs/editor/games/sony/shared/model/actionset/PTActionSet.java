@@ -71,7 +71,7 @@ public class PTActionSet extends SCSharedGameData {
         if (this.actionListAddress <= 0)
             throw new RuntimeException("Cannot read action list, the action list pointer is invalid.");
 
-        reader.requireIndex(getLogger(), this.actionListAddress, "Expected PTAction list");
+        requireReaderIndex(reader, this.actionListAddress, "Expected PTAction list");
         for (int i = 0; i < this.actions.size(); i++)
             this.actions.get(i).load(reader);
 
@@ -86,7 +86,7 @@ public class PTActionSet extends SCSharedGameData {
         if (this.rotationDataPointer <= 0)
             throw new RuntimeException("Cannot read untranslated rotation list, the pointer is invalid.");
 
-        reader.requireIndex(getLogger(), this.rotationDataPointer, "Expected untranslated rotation list");
+        requireReaderIndex(reader, this.rotationDataPointer, "Expected untranslated rotation list");
         for (int i = 0; i < this.rotations.size(); i++)
             this.rotations.get(i).load(reader);
 
@@ -101,7 +101,7 @@ public class PTActionSet extends SCSharedGameData {
         if (this.rotationTranslationDataPointer <= 0)
             throw new RuntimeException("Cannot read translated rotation list, the pointer is invalid.");
 
-        reader.requireIndex(getLogger(), this.rotationTranslationDataPointer, "Expected translated rotation list");
+        requireReaderIndex(reader, this.rotationTranslationDataPointer, "Expected translated rotation list");
         for (int i = 0; i < this.rotationWithTranslations.size(); i++)
             this.rotationWithTranslations.get(i).load(reader);
 

@@ -116,7 +116,7 @@ public class MWIResourceEntry extends SCSharedGameData implements ISCFileDefinit
             return; // No address to write the file name pointer to.
         }
 
-        reader.requireIndex(getLogger(), this.filePathPointerAddress, "Expected file path");
+        requireReaderIndex(reader, this.filePathPointerAddress, "Expected file path");
         this.filePath = reader.readNullTerminatedString();
         this.filePathPointerAddress = NO_FILE_NAME_MARKER;
         reader.align(Constants.INTEGER_SIZE);

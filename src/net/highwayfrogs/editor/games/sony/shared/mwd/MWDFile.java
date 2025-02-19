@@ -86,7 +86,7 @@ public class MWDFile extends SCSharedGameData {
 
             // Validate position.
             if (lastFileLoadSuccess) {
-                reader.requireIndex(getLogger(), entry.getArchiveOffset(), "Expected file contents for '" + entry.getDisplayName() + "'");
+                requireReaderIndex(reader, entry.getArchiveOffset(), "Expected file contents for '" + entry.getDisplayName() + "'");
             } else {
                 reader.setIndex(entry.getArchiveOffset());
             }

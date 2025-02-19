@@ -79,7 +79,7 @@ public class PTStaticPartCel extends SCSharedGameData {
         if (this.primitiveBlockStartAddress <= 0)
             throw new RuntimeException("Cannot primitive block list, the pointer " + NumberUtils.toHexString(this.primitiveBlockStartAddress) + " is invalid.");
 
-        reader.requireIndex(getLogger(), this.primitiveBlockStartAddress, "Expected PTPrimitiveBlock list");
+        requireReaderIndex(reader, this.primitiveBlockStartAddress, "Expected PTPrimitiveBlock list");
         for (int i = 0; i < this.primitiveBlocks.size(); i++)
             this.primitiveBlocks.get(i).load(reader);
 
@@ -96,7 +96,7 @@ public class PTStaticPartCel extends SCSharedGameData {
         if (this.collprimListAddress <= 0)
             throw new RuntimeException("Cannot read collprim list, the pointer " + NumberUtils.toHexString(this.collprimListAddress) + " is invalid.");
 
-        reader.requireIndex(getLogger(), this.collprimListAddress, "Expected PTCollprim list");
+        requireReaderIndex(reader, this.collprimListAddress, "Expected PTCollprim list");
         for (int i = 0; i < this.collprims.size(); i++) {
             PTCollprim collprim = this.collprims.get(i);
             collprim.load(reader);
@@ -124,7 +124,7 @@ public class PTStaticPartCel extends SCSharedGameData {
             throw new RuntimeException("Cannot read mime vector list, the pointer " + NumberUtils.toHexString(this.mimeVectorStartAddress) + " is invalid.");
 
         this.mimeVectors.clear();
-        reader.requireIndex(getLogger(), this.mimeVectorStartAddress, "Expected mime vector list");
+        requireReaderIndex(reader, this.mimeVectorStartAddress, "Expected mime vector list");
         if ((this.parentPart.getFlags() & PTStaticPart.FLAG_MIME_ENABLED) == PTStaticPart.FLAG_MIME_ENABLED)
             for (int i = 0; i < this.parentPart.getMimeVectors(); i++)
                 this.mimeVectors.add(SVector.readWithPadding(reader));
@@ -166,7 +166,7 @@ public class PTStaticPartCel extends SCSharedGameData {
 
         // Read vectors.
         this.vectors.clear();
-        reader.requireIndex(getLogger(), this.vectorStartAddress, "Expected vector list");
+        requireReaderIndex(reader, this.vectorStartAddress, "Expected vector list");
         while (endIndex > reader.getIndex())
             this.vectors.add(SVector.readWithPadding(reader));
 
