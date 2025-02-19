@@ -29,9 +29,9 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
     private final List<kcMaterial> materials = new ArrayList<>();
     private final List<kcModelNode> nodes = new ArrayList<>();
     private final List<kcModelPrim> primitives = new ArrayList<>();
-    private long fvf;
+    private long fvf; // TODO: DEFAULT? PC only has either 0x152 or 0x156.
     private kcVertexFormatComponent[] components;
-    private int bonesPerPrimitive = 1;
+    private int bonesPerPrimitive = 1; // TODO: NOT Default.
 
     // FVF:
     // - _kcBlendMode blendMode;
@@ -356,6 +356,8 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
                 case 4:
                     components.add(kcVertexFormatComponent.WEIGHT4F);
                     break;
+                default:
+                    throw new RuntimeException("Unexpected weightBits value: " + weightBits);
             }
         }
 
