@@ -162,6 +162,7 @@ public class MediEvilMapCollprim extends SCGameData<MediEvilGameInstance> {
             if (testFlagMask(NORMAL_FLAG_FIRES_EVENT)) {
                 grid.addSignedIntegerField("Event ID", getNormalEventID(), value -> value >= 0 && value <= NORMAL_EVENT_ID_MASK, this::setNormalEventID);
             } else if (!testFlagMask(NORMAL_FLAG_IGNORE_PLAYER)) {
+                // TODO: Dropdown menu instead of ID list
                 grid.addSignedIntegerField("Material ID", getNormalMaterialID(), value -> value >= 0 && value <= NORMAL_MATERIAL_ID_MASK, this::setNormalMaterialID);
             }
         } else if (collprimType == MediEvilMapCollprimType.WARP) {
