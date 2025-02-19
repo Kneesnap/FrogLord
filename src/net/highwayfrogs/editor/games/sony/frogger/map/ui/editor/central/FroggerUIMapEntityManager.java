@@ -21,7 +21,6 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEnti
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.IFroggerFormEntry;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerCentralUIManager.FroggerCentralMapListManager;
-import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
@@ -170,12 +169,10 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
 
         // Attempt to apply from 3D model.
         IFroggerFormEntry formEntry = entity.getFormEntry();
-        WADEntry modelEntry = entity.getEntityModel();
-        if (modelEntry != null && modelEntry.getFile() instanceof MOFHolder) {
-            MOFHolder holder = ((MOFHolder) modelEntry.getFile()).getOverride();
-
+        MOFHolder holder = formEntry.getEntityModelMof(entity);
+        if (holder != null) {
             // Set VLO archive to the map VLO if currently unset.
-            VLOArchive vlo = getMap().getConfig().getForcedVLO(getMap().getGameInstance(), modelEntry.getDisplayName());
+            VLOArchive vlo = getMap().getConfig().getForcedVLO(getMap().getGameInstance(), holder.getFileDisplayName());
             if (vlo == null) {
                 ThemeBook themeBook = getMap().getGameInstance().getThemeBook(formEntry.getTheme());
                 if (themeBook != null)
