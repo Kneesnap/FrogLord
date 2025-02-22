@@ -473,9 +473,6 @@ public class MWDFile extends SCSharedGameData {
      * @return gameImage
      */
     public GameImage getImageByTextureId(int textureId) {
-        if (textureId < 0)
-            textureId = 0; // This is a hack to allow for loading maps without remaps on build 20. In new FrogLord, this should be null / return blank texture.
-
         for (VLOArchive vlo : getAllFiles(VLOArchive.class))
             for (GameImage testImage : vlo.getImages())
                 if (testImage.getTextureId() == textureId)
