@@ -302,6 +302,7 @@ public class MWDFile extends SCSharedGameData {
             entry.setSectorOffset(currentSector);
 
             file.saveFile(writer, progressBar);
+            writer.align(Constants.CD_SECTOR_SIZE);
         }
         getLogger().info("MWD Built. Total Time: " + (System.currentTimeMillis() - mwdStart) + " ms.");
 
