@@ -18,6 +18,7 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
+import net.highwayfrogs.editor.games.sony.shared.ui.SCMainMenuUIController;
 import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.FileUtils;
@@ -210,7 +211,7 @@ public class MWDFile extends SCSharedGameData {
      * @return replacementFile
      */
     @SuppressWarnings("unchecked")
-    public <T extends SCGameFile<?>> T replaceFile(byte[] fileBytes, MWIResourceEntry entry, SCGameFile<?> oldFile, boolean isInsideWadFile) {
+    public <T extends SCGameFile<?>> T replaceFile(String importedFileName, byte[] fileBytes, MWIResourceEntry entry, SCGameFile<?> oldFile, boolean updateUI) {
         T newFile;
 
         if (oldFile instanceof MOFHolder) {
@@ -220,29 +221,49 @@ public class MWDFile extends SCSharedGameData {
             newFile = this.loadFile(fileBytes, entry);
         }
 
-        if (oldFile != null) {
-            getGameInstance().getFileObjectsByFileEntries().remove(entry, oldFile);
-            oldFile.setFileDefinition(null);
-        }
-
-        getGameInstance().getFileObjectsByFileEntries().put(entry, newFile);
-        newFile.setFileDefinition(entry);
-
         // Replace file.
-        if (!isInsideWadFile) {
-            int fileIndex = this.files.indexOf(oldFile);
-            if (fileIndex >= 0)
-                this.files.set(fileIndex, newFile);
-        }
+        int fileIndex = this.files.indexOf(oldFile);
+        WADEntry wadEntry = getWadEntry(oldFile);
+        swapFileRegistry(entry, fileIndex, wadEntry, oldFile, newFile);
 
         // Load new file data.
         try {
             newFile.load(new DataReader(new ArraySource(fileBytes)));
         } catch (Exception ex) {
-            Utils.handleError(getLogger(), ex, true, "Failed to load %s (%d)", entry.getDisplayName(), entry.getResourceId());
+            Utils.handleError(getLogger(), ex, false, "Failed to import replacement for %s (%d)", entry.getDisplayName(), entry.getResourceId());
+            swapFileRegistry(entry, fileIndex, wadEntry, newFile, oldFile); // Restore old file.
+            return null;
+        }
+
+        // Handle load.
+        String fileDisplayName = entry.getDisplayName();
+        newFile.onImport(oldFile, fileDisplayName, importedFileName);
+        getLogger().info("Successfully replaced the existing file '%s' with the imported contents of '%s'.", fileDisplayName, importedFileName);
+
+        // Update UI.
+        if (updateUI) {
+            SCMainMenuUIController<?> mainMenuUI = getGameInstance().getMainMenuController();
+            mainMenuUI.showEditor(newFile);
+            if (mainMenuUI.getFileListComponent() != null) // Update the file list.
+                mainMenuUI.getFileListComponent().getCollectionViewComponent().refreshDisplay();
         }
 
         return newFile;
+    }
+
+    private void swapFileRegistry(MWIResourceEntry resourceEntry, int fileIndex, WADEntry wadEntry, SCGameFile<?> oldFile, SCGameFile<?> newFile) {
+        if (oldFile != null) {
+            getGameInstance().getFileObjectsByFileEntries().remove(resourceEntry, oldFile);
+            oldFile.setFileDefinition(null);
+        }
+
+        getGameInstance().getFileObjectsByFileEntries().put(resourceEntry, newFile);
+        newFile.setFileDefinition(resourceEntry);
+
+        if (fileIndex >= 0) // Found in MWD.
+            this.files.set(fileIndex, newFile);
+        if (wadEntry != null)
+            wadEntry.setFile(newFile);
     }
 
     /**
@@ -465,6 +486,28 @@ public class MWDFile extends SCSharedGameData {
 
         String fullFilePath = resourceEntry.getFullFilePath();
         return fullFilePath != null && fullFilePath.equalsIgnoreCase(fileName);
+    }
+
+    /**
+     * Gets the WAD entry which holds the given file, if there is one.
+     * @param gameFile The game file to find the WAD entry for
+     * @return wadEntry, or null
+     */
+    public WADEntry getWadEntry(SCGameFile<?> gameFile) {
+        for (int i = 0; i < this.files.size(); i++) {
+            SCGameFile<?> testFile = this.files.get(i);
+            if (!(testFile instanceof WADFile))
+                continue;
+
+            WADFile wadFile = (WADFile) testFile;
+            for (int j = 0; j < wadFile.getFiles().size(); j++) {
+                WADEntry wadEntry = wadFile.getFiles().get(j);
+                if (wadEntry.getFile() == gameFile)
+                    return wadEntry;
+            }
+        }
+
+        return null;
     }
 
     /**

@@ -2,6 +2,8 @@ package net.highwayfrogs.editor.games.sony;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,8 +22,15 @@ import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
+import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 
 /**
  * Represents a file (data corresponding to MWI entry or contents of a filesystem entity).
@@ -33,6 +42,9 @@ import net.highwayfrogs.editor.utils.logging.ILogger;
 public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends SCGameData<TGameInstance> implements ICollectionViewEntry, IPropertyListCreator {
     private byte[] rawFileData;
     private ISCFileDefinition fileDefinition;
+
+    public static final SavedFilePath SINGLE_FILE_IMPORT_PATH = new SavedFilePath("singleFileImportPath", "Choose the file to import.", BrowserFileType.ALL_FILES);
+    public static final SavedFilePath SINGLE_FILE_EXPORT_PATH = new SavedFilePath("singleFileExportPath", "Choose the file to save the data as.", BrowserFileType.ALL_FILES);
 
     public SCGameFile(TGameInstance instance) {
         super(instance);
@@ -76,6 +88,50 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
         return null;
     }
 
+    @Override
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        String fileName = getFileDisplayName();
+
+        MenuItem exportOriginalFile = new MenuItem("Export Original " + fileName);
+        contextMenu.getItems().add(exportOriginalFile);
+        exportOriginalFile.setOnAction(event -> askUserToSaveToFile(true));
+
+        MenuItem exportFile = new MenuItem("Export " + fileName);
+        contextMenu.getItems().add(exportFile);
+        exportFile.setOnAction(event -> askUserToSaveToFile(false));
+
+        MenuItem importFile = new MenuItem("Import " + fileName);
+        contextMenu.getItems().add(importFile);
+        importFile.setOnAction(event -> askUserToImportFile());
+    }
+
+    /**
+     * Ask the user where they would like to save this file, then saves it if the user gives a valid path.
+     * @param original If true, the rawFileBytes will be exported instead of the current file contents
+     */
+    public void askUserToSaveToFile(boolean original) {
+        File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), SINGLE_FILE_EXPORT_PATH, getFileDisplayName(), true);
+        if (outputFile != null)
+            saveToFile(outputFile, original, true);
+    }
+
+    /**
+     * Save the contents of the file to the file-system.
+     * @param outputFile The file to save to
+     * @param original If true, the rawFileBytes will be exported instead of the current file contents
+     */
+    public void saveToFile(File outputFile, boolean original, boolean showPopupOnError) {
+        boolean success;
+        if (original) {
+            success = FileUtils.writeBytesToFile(getLogger(), outputFile, this.rawFileData, showPopupOnError);
+        } else {
+            success = writeDataToFile(getLogger(), outputFile, showPopupOnError);
+        }
+
+        if (success)
+            getLogger().info("Exported '%s'. (%s Version)", getFileDisplayName(), original ? "Original Raw" : "Current");
+    }
+
     /**
      * WAD files are capable of containing any file.
      * This method is called when this file has the "Edit" button pressed from inside a WAD file.
@@ -91,6 +147,26 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
         } else {
             FXUtils.makePopUp("There is no editor available for " + Utils.getSimpleName(this), AlertType.ERROR);
         }
+    }
+
+    /**
+     * Ask the user to provide a file they'd like to replace the selected file with, then imports it if valid.
+     */
+    public void askUserToImportFile() {
+        File inputFile = FileUtils.askUserToSaveFile(getGameInstance(), SINGLE_FILE_IMPORT_PATH, getFileDisplayName(), true);
+        if (inputFile == null)
+            return;
+
+        byte[] rawFileBytes;
+        try {
+            rawFileBytes = Files.readAllBytes(inputFile.toPath());
+        } catch (IOException ex) {
+            Utils.handleError(getLogger(), ex, true, "Failed to read contents of '%s'.", inputFile.getName());
+            return;
+        }
+
+        if (getArchive().replaceFile(inputFile.getName(), rawFileBytes, getIndexEntry(), this, true) == null)
+            FXUtils.makePopUp("An error was encountered while reading the replacement file.", AlertType.ERROR);
     }
 
     /**

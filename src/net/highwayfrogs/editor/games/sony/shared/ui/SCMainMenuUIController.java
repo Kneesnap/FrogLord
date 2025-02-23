@@ -4,7 +4,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
-import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
@@ -16,7 +15,6 @@ import net.highwayfrogs.editor.games.sony.SCGameConfig;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
-import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.VLOController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.InputMenu;
@@ -31,7 +29,6 @@ import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.io.File;
-import java.nio.file.Files;
 import java.util.List;
 
 /**
@@ -39,8 +36,6 @@ import java.util.List;
  * Created by Kneesnap on 4/12/2024.
  */
 public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extends MainMenuController<TGameInstance, SCGameFile<?>> {
-    private static final SavedFilePath IMPORT_PATH = new SavedFilePath("singleFileImportPath", "Select the file to import...", BrowserFileType.ALL_FILES);
-    private static final SavedFilePath EXPORT_PATH = new SavedFilePath("singleFileExportPath", "Specify the file to export this data as...", BrowserFileType.ALL_FILES);
     private static final SavedFilePath TEXTURE_FOLDER = new SavedFilePath("bulkTextureExportPath", "Choose the folder to save all textures to.");
     private static final SavedFilePath MWI_FILE = new SavedFilePath("mwiFilePath", "Specify the file to save the MWI as...", new BrowserFileType("Millennium WAD Index", "MWI"));
 
@@ -71,9 +66,6 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
             getLogger().info("Exported MWI.");
         });
 
-        addMenuItem(this.menuBarFile, "Import File", this::importFile); // Ctrl + I
-        addMenuItem(this.menuBarFile, "Export File", this::exportFile); // Ctrl + O
-        addMenuItem(this.menuBarFile, "Export Original File", this::exportOriginalFile);
         addMenuItem(this.menuBarFile, "Export File (Alternate Format)", () -> getSelectedFileEntry().exportAlternateFormat()); // Ctrl + E
         addMenuItem(this.menuBarFile, "Export All Textures", this::exportBulkTextures);
 
@@ -155,77 +147,6 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
      */
     public MWDFile getArchive() {
         return getGameInstance() != null ? getGameInstance().getMainArchive() : null;
-    }
-
-    /**
-     * Import a file to replace the current file.
-     */
-    @SneakyThrows
-    public void importFile() {
-        File selectedFile = FileUtils.askUserToOpenFile(getGameInstance(), IMPORT_PATH);
-        if (selectedFile == null)
-            return; // Cancelled.
-
-        // Load old data.
-        SCGameFile<?> oldFile = getSelectedFileEntry();
-        if (oldFile == null) {
-            FXUtils.makePopUp("Can't import over null file.", AlertType.ERROR);
-            return;
-        }
-
-        MWIResourceEntry mwiEntry = oldFile.getIndexEntry();
-        String fileDisplayName = oldFile.getFileDisplayName();
-
-        // Import to file.
-        byte[] fileBytes = Files.readAllBytes(selectedFile.toPath());
-        SCGameFile<?> newFile = getArchive().replaceFile(fileBytes, mwiEntry, oldFile, false);
-        newFile.onImport(oldFile, fileDisplayName, selectedFile.getName());
-        showEditor(newFile.makeEditorUI()); // Open the editor for the new file.
-        if (getFileListComponent() != null) // Update the file list.
-            getFileListComponent().getCollectionViewComponent().refreshDisplay();
-
-        getLogger().info("Imported " + selectedFile.getName() + " as " + fileDisplayName + ".");
-    }
-
-    /**
-     * Export the current file in its original form.
-     */
-    public void exportOriginalFile() {
-        SCGameFile<?> currentFile = getSelectedFileEntry();
-        if (currentFile == null || currentFile.getRawFileData() == null) {
-            FXUtils.makePopUp("Cannot export file.", AlertType.ERROR);
-            return;
-        }
-
-        File selectedFile = FileUtils.askUserToSaveFile(getGameInstance(), EXPORT_PATH, currentFile.getFileDisplayName());
-        if (selectedFile == null)
-            return; // Cancel.
-
-        if (FileUtils.writeBytesToFile(getLogger(), selectedFile, currentFile.getRawFileData(), true))
-            getLogger().info("Exported " + selectedFile.getName() + ".");
-    }
-
-    /**
-     * Export the current file.
-     */
-    @SneakyThrows
-    public void exportFile() {
-        SCGameFile<?> currentFile = getSelectedFileEntry();
-        if (currentFile == null) {
-            FXUtils.makePopUp("Cannot export null file.", AlertType.ERROR);
-            return;
-        }
-
-        File selectedFile = FileUtils.askUserToSaveFile(getGameInstance(), EXPORT_PATH, currentFile.getFileDisplayName());
-        if (selectedFile == null)
-            return; // Cancel.
-
-        FileUtils.deleteFile(selectedFile); // Don't merge files, create a new one.
-        DataWriter writer = new DataWriter(new FileReceiver(selectedFile));
-        currentFile.save(writer);
-        writer.closeReceiver();
-
-        getLogger().info("Exported " + selectedFile.getName() + ".");
     }
 
     private void exportBulkTextures() {

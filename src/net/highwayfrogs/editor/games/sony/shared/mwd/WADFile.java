@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.games.sony.shared.mwd;
 
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
@@ -25,6 +27,7 @@ import net.highwayfrogs.editor.games.sony.shared.ui.file.WADController;
 import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -44,6 +47,8 @@ public class WADFile extends SCSharedGameFile {
 
     public static final int TYPE_ID = -1;
     private static final int TERMINATOR = -1;
+    private static final SavedFilePath WAD_FILE_EXPORT_PATH = new SavedFilePath("wadExportPath", "Select the directory to export WAD contents to.");
+    private static final SavedFilePath WAD_FILE_IMPORT_PATH = new SavedFilePath("wadImportPath", "Select the directory to import WAD contents from.");
 
     public WADFile(SCGameInstance instance) {
         super(instance);
@@ -170,6 +175,34 @@ public class WADFile extends SCSharedGameFile {
                     ((MOFHolder) file).exportObject(folder, vlo);
             }
         }, true);
+    }
+
+    @Override
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        super.setupRightClickMenuItems(contextMenu);
+
+        MenuItem exportOriginalFiles = new MenuItem("Export Original Files");
+        contextMenu.getItems().add(exportOriginalFiles);
+        exportOriginalFiles.setOnAction(event -> exportAllFiles(true));
+
+        MenuItem exportFiles = new MenuItem("Export Files");
+        contextMenu.getItems().add(exportFiles);
+        exportFiles.setOnAction(event -> exportAllFiles(false));
+    }
+
+    /**
+     * Export all files to the destination folder.
+     */
+    public void exportAllFiles(boolean original) {
+        File selectedFolder = FileUtils.askUserToSelectFolder(getGameInstance(), WAD_FILE_EXPORT_PATH);
+        if (selectedFolder == null)
+            return; // Cancelled.
+
+        for (WADEntry wadEntry : this.files) {
+            MWIResourceEntry resourceEntry = wadEntry.getFileEntry();
+            File outputFile = FileUtils.getNonExistantFile(new File(selectedFolder, resourceEntry.getDisplayName()));
+            resourceEntry.getGameFile().saveToFile(outputFile, original, false);
+        }
     }
 
     /**

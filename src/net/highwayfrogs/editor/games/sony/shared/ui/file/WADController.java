@@ -4,14 +4,13 @@ import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import lombok.SneakyThrows;
@@ -63,8 +62,9 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
             this.updateEntry();
         });
 
-        entryList.setOnMouseClicked(click -> {
-            if (click.getClickCount() == 2) {
+        entryList.setOnMouseClicked(event -> {
+            if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
+                event.consume();
                 this.selectedEntry = entryList.getSelectionModel().getSelectedItem();
                 this.updateEntry();
                 this.editFile();
@@ -131,7 +131,7 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
                 return;
             }
         } else if (fileName.endsWith(".vlo") || fileName.endsWith(".xar") || fileName.endsWith(".xmr")) {
-            this.selectedEntry.setFile(getFile().getArchive().replaceFile(newBytes, this.selectedEntry.getFileEntry(), this.selectedEntry.getFile(), true));
+            getFile().getArchive().replaceFile(fileName, newBytes, this.selectedEntry.getFileEntry(), this.selectedEntry.getFile(), true);
         } else {
             FXUtils.makePopUp("Don't know how to import this file type. Aborted.", AlertType.WARNING);
             return;
@@ -211,6 +211,7 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
     private static class WADEntryListCell extends ListCell<WADEntry> {
         private final WADController controller;
         private final EventHandler<? super MouseEvent> doubleClickHandler;
+        private final EventHandler<? super ContextMenuEvent> rightClickHandler;
 
         @SuppressWarnings("unchecked")
         private WADEntryListCell(WADController controller) {
@@ -226,6 +227,16 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
                     }
                 }
             };
+
+            this.rightClickHandler = event -> {
+                ContextMenu contextMenu = new ContextMenu();
+                WADEntry wadEntry = ((ListCell<WADEntry>) event.getSource()).getItem();
+                if (wadEntry != null && wadEntry.getFile() != null) {
+                    wadEntry.getFile().setupRightClickMenuItems(contextMenu);
+                    if (!contextMenu.getItems().isEmpty())
+                        contextMenu.show((Node) event.getSource(), event.getScreenX(), event.getScreenY());
+                }
+            };
         }
 
         @Override
@@ -235,6 +246,7 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
                 setGraphic(null);
                 setText(null);
                 setOnMouseClicked(null);
+                setOnContextMenuRequested(null);
                 return;
             }
 
@@ -249,6 +261,7 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
 
             setGraphic(iconView);
             setOnMouseClicked(this.doubleClickHandler);
+            setOnContextMenuRequested(this.rightClickHandler);
 
             // Update text.
             setStyle(wadEntryFile.getCollectionViewDisplayStyle());
