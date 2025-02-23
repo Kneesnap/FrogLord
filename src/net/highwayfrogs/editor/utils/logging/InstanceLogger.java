@@ -38,8 +38,6 @@ public abstract class InstanceLogger implements ILogger {
     @Override
     public void log(LogRecord lr) {
         if (this.wrappedJavaLogger != null) {
-            lr.setLoggerName(getName()); // setLoggerName() will be overridden when we pass to the wrappedLogger.
-            lr.setSourceClassName(getLoggerInfo()); // setLoggerName() will be overridden when we pass to the wrappedLogger.
             final ResourceBundle bundle = this.wrappedJavaLogger.getResourceBundle();
             final String bundleName = this.wrappedJavaLogger.getResourceBundleName();
             if (bundleName != null && bundle != null) {
@@ -146,6 +144,7 @@ public abstract class InstanceLogger implements ILogger {
         private final String template;
 
         public static final String TEMPLATE_BAR_SEPARATOR = "{original}|{override}";
+        public static final String TEMPLATE_COMMA_SEPARATOR = "{original},{override}";
         public static final String TEMPLATE_OVERRIDE_AT_ORIGINAL = "{override}@{original}";
 
         public AppendInfoLoggerWrapper(Logger logger, String overrideName, @NonNull String template) {

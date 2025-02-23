@@ -42,7 +42,10 @@ public interface ILogger {
      * @return logRecord
      */
     default LogRecord createLogRecord(Level level, String message) {
-        return new LogRecord(level, message);
+        LogRecord newRecord = new LogRecord(level, message);
+        newRecord.setLoggerName(getName());
+        newRecord.setSourceClassName(getLoggerInfo());
+        return newRecord;
     }
 
     /**
