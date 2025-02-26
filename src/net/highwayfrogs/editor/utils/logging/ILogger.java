@@ -37,15 +37,33 @@ public interface ILogger {
 
     /**
      * Creates a LogRecord for the given message.
+     * @param record the record to setup
+     * @return logRecord
+     */
+    default LogRecord setupLogRecord(LogRecord record) {
+        record.setLoggerName(getName());
+        record.setSourceClassName(getLoggerInfo());
+        return record;
+    }
+
+    /**
+     * Creates a LogRecord for the given message.
      * @param level the log level to apply
      * @param message the message to log
      * @return logRecord
      */
     default LogRecord createLogRecord(Level level, String message) {
-        LogRecord newRecord = new LogRecord(level, message);
-        newRecord.setLoggerName(getName());
-        newRecord.setSourceClassName(getLoggerInfo());
-        return newRecord;
+        return new LogRecord(level, message);
+    }
+
+    /**
+     * Creates and sets up a LogRecord for the given message.
+     * @param level the log level to apply
+     * @param message the message to log
+     * @return logRecord
+     */
+    default LogRecord createAndSetupLogRecord(Level level, String message) {
+        return setupLogRecord(createLogRecord(level, message));
     }
 
     /**
@@ -57,7 +75,7 @@ public interface ILogger {
         if (!isLoggable(level))
             return;
 
-        LogRecord lr = createLogRecord(level, msg);
+        LogRecord lr = createAndSetupLogRecord(level, msg);
         log(lr);
     }
 
@@ -72,7 +90,7 @@ public interface ILogger {
         if (!isLoggable(level))
             return;
 
-        LogRecord lr = createLogRecord(level, msg);
+        LogRecord lr = createAndSetupLogRecord(level, msg);
         lr.setSourceClassName(sourceClass);
         lr.setSourceMethodName(sourceMethod);
         log(lr);
@@ -121,7 +139,7 @@ public interface ILogger {
         if (!isLoggable(Level.FINER))
             return;
 
-        LogRecord lr = createLogRecord(Level.FINER, "THROW");
+        LogRecord lr = createAndSetupLogRecord(Level.FINER, "THROW");
         lr.setSourceClassName(sourceClass);
         lr.setSourceMethodName(sourceMethod);
         lr.setThrown(thrown);
