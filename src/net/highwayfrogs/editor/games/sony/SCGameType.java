@@ -34,16 +34,16 @@ import java.util.function.Supplier;
  * Created by Kneesnap on 9/6/2023.
  */
 public enum SCGameType implements IGameType {
-    //HEADRUSH(null), // Aka Brains In Planes
-    OLD_FROGGER("Old Frogger (Pre-Recode)", OldFroggerGameInstance::new, OldFroggerConfig::new, true),
-    BEAST_WARS("Beast Wars: Transformers", BeastWarsInstance::new, BeastWarsConfig::new, true),
-    FROGGER("Frogger: He's Back", FroggerGameInstance::new, FroggerConfig::new, false),
+    //HEADRUSH(null), // Aka Brains In Planes, 1996 -> 1997
+    OLD_FROGGER("Old Frogger (Pre-Recode)", OldFroggerGameInstance::new, OldFroggerConfig::new, true), // 1996 <-> March/April 1997
+    FROGGER("Frogger: He's Back", FroggerGameInstance::new, FroggerConfig::new, false), // April 1997 -> September 1997 (PC: March 1998)
+    BEAST_WARS("Beast Wars: Transformers", BeastWarsInstance::new, BeastWarsConfig::new, true), // 1996 -> October 1997 (PC: March 1998)
     //TAX_MAN(null),
-    MEDIEVIL("MediEvil", MediEvilGameInstance::new, MediEvilConfig::new, true),
-    //COMMON_TALES(null),
-    MOONWARRIOR("Moon Warrior", MoonWarriorInstance::new, null, true),
-    MEDIEVIL2("MediEvil II", MediEvil2GameInstance::new, MediEvil2Config::new, true),
-    C12("C-12: Final Resistance", null, null, true);
+    MEDIEVIL("MediEvil", MediEvilGameInstance::new, MediEvilConfig::new, true), // 1995? -> October 1998
+    //COMMON_TALES(null), // 1999
+    MOONWARRIOR("Moon Warrior", MoonWarriorInstance::new, null, true), // 1999
+    MEDIEVIL2("MediEvil II", MediEvil2GameInstance::new, MediEvil2Config::new, true), // October 1998 -> March 2000
+    C12("C-12: Final Resistance", null, null, true); // ?
 
     @Getter private final String displayName;
     private final Supplier<SCGameInstance> instanceMaker;
@@ -63,7 +63,7 @@ public enum SCGameType implements IGameType {
     }
 
     /**
-     * Test if this game was developed at or after the provided game.
+     * Test if this game was finished at or after the provided game.
      * This may not work perfectly with prototypes, but the general use of this is testing technical capabilities.
      * @param otherType The other game to test.
      * @return True iff the game was developed at or after the provided game.
@@ -75,7 +75,7 @@ public enum SCGameType implements IGameType {
     }
 
     /**
-     * Test if this game was developed at/before the provided game.
+     * Test if this game was finished at/before the provided game.
      * This may not work perfectly with prototypes, but the general use of this is testing technical capabilities.
      * @param otherType The other game to test.
      * @return True iff the game was developed before the provided game.
@@ -87,7 +87,7 @@ public enum SCGameType implements IGameType {
     }
 
     /**
-     * Test if this game was developed before the provided game.
+     * Test if this game was finished before the provided game.
      * This may not work perfectly with prototypes, but the general use of this is testing technical capabilities.
      * @param otherType The other game to test.
      * @return True iff the game was developed before the provided game.
@@ -96,6 +96,18 @@ public enum SCGameType implements IGameType {
         if (otherType == null)
             throw new RuntimeException("Cannot compare to null game type.");
         return otherType.ordinal() > ordinal();
+    }
+
+    /**
+     * Test if this game was finished after the provided game.
+     * This may not work perfectly with prototypes, but the general use of this is testing technical capabilities.
+     * @param otherType The other game to test.
+     * @return True iff the game was developed before the provided game.
+     */
+    public boolean isAfter(SCGameType otherType) {
+        if (otherType == null)
+            throw new RuntimeException("Cannot compare to null game type.");
+        return ordinal() > otherType.ordinal();
     }
 
     @Override

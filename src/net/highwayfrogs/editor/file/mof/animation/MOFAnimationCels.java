@@ -8,7 +8,6 @@ import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
-import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.ArrayList;
@@ -45,15 +44,15 @@ public class MOFAnimationCels extends SCSharedGameData {
 
         int flags = reader.readUnsignedShortAsInt();
         this.interpolationEnabled = (flags == FLAG_VIRTUAL_INTERPOLATION);
-        if (flags > (FLAG_VIRTUAL_INTERPOLATION | FLAG_VIRTUAL_STANDARD))
-            System.out.println("Model cel-set for " + getParent().getFileDisplayName() + " has unsupported flags (" + NumberUtils.toHexString(flags) + ")");
+        /*if (flags > (FLAG_VIRTUAL_INTERPOLATION | FLAG_VIRTUAL_STANDARD))
+            System.out.println("Model cel-set for " + getParent().getFileDisplayName() + " has unsupported flags (" + NumberUtils.toHexString(flags) + ")");*/
 
         int celNumberPointer = reader.readInt();
         int indicePointer = reader.readInt();
 
-        int totalIndiceCount = virtualCelCount * partCount;
+        int totalIndiceCount = celCount * partCount;
         reader.jumpTemp(celNumberPointer);
-        for (int i = 0; i < celCount; i++)
+        for (int i = 0; i < virtualCelCount; i++)
             celNumbers.add(reader.readUnsignedShortAsInt());
         reader.jumpReturn();
 

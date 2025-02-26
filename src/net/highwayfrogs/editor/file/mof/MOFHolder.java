@@ -18,6 +18,7 @@ import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbookAction;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnim;
 import net.highwayfrogs.editor.file.mof.view.MOFMesh;
+import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -28,7 +29,9 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.ISCFileDefinition;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFController;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFMainController;
@@ -39,6 +42,7 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.Proper
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.util.Arrays;
@@ -52,6 +56,7 @@ import java.util.Objects;
 @Getter
 @Setter
 public class MOFHolder extends SCSharedGameFile {
+    private final MRModel newModel;
     private byte[] rawBytes; // Raw file data. // TODO: TOSS
     private boolean dummy; // Is this dummied data?
     private boolean incomplete; // Some mofs are changed at run-time to share information. This attempts to handle that.
@@ -71,6 +76,13 @@ public class MOFHolder extends SCSharedGameFile {
         super(instance);
         this.theme = theme;
         this.completeMOF = lastCompleteMOF;
+        this.newModel = new MRModel(instance, theme, lastCompleteMOF != null ? lastCompleteMOF.getNewModel() : null);
+    }
+
+    @Override
+    public void setFileDefinition(ISCFileDefinition newFileDefinition) {
+        super.setFileDefinition(newFileDefinition);
+        this.newModel.setFileDefinition(newFileDefinition);
     }
 
     @Override
@@ -87,6 +99,13 @@ public class MOFHolder extends SCSharedGameFile {
         reader.jumpTemp(reader.getIndex()); // TODO: TOSS
         this.rawBytes = reader.readBytes(reader.getRemaining());
         reader.jumpReturn();
+
+        DataReader tempReader = new DataReader(new ArraySource(this.rawBytes));
+        try {
+            this.newModel.load(tempReader);
+        } catch (Throwable th) {
+            Utils.handleError(this.newModel.getLogger(), th, false, "Failed to load as MRModel.");
+        }
 
         reader.jumpTemp(reader.getIndex());
         byte[] temp = reader.readBytes(DUMMY_DATA.length);
@@ -177,7 +196,7 @@ public class MOFHolder extends SCSharedGameFile {
             }
         }
 
-        return propertyList;
+        return this.newModel.addToPropertyList(propertyList);
     }
 
     @Override

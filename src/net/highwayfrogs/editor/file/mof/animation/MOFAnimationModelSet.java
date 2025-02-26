@@ -42,7 +42,7 @@ public class MOFAnimationModelSet extends SCSharedGameData {
         int celsetPointer = reader.readInt(); // Right after struct.
         int bboxPointer = reader.readInt();
 
-        Utils.verify(bboxCount == 0, "The ModelSet has a non-zero BBOX count. (%d, %d)", bboxCount, bboxPointer);
+        //Utils.verify(bboxCount == 0, "The ModelSet has a non-zero BBOX count. (%d, %d)", bboxCount, bboxPointer);
         //if (modelCount != FORCED_MODEL_COUNT && !getParent().getFileDisplayName().contains("-FORCED_MODELS"))
         //    getParent().getFileEntry().setFilePath(getParent().getFileDisplayName() + "-FORCED_MODELS"); // TODO: Address later.
 

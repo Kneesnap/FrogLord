@@ -182,7 +182,8 @@ public class MediEvilEntityManager extends MediEvilMapListManager<MediEvilMapEnt
 
     @Override
     protected void setVisible(MediEvilMapEntity medievilMapEntity, MeshView meshView, boolean visible) {
-        meshView.setVisible(visible);
+        if (meshView != null)
+            meshView.setVisible(visible);
     }
 
     @Override

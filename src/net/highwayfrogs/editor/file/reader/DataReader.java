@@ -470,15 +470,14 @@ public class DataReader {
 
     /**
      * Create a sub-reader.
-     * @param startOffset The offset to start reading from.
-     * @param length      The length to read. -1 = Get remaining.
+     * @param length The offset to start reading from.
      * @return newReader
      */
-    public DataReader newReader(int startOffset, int length) {
-        jumpTemp(startOffset);
-        byte[] bytes = readBytes(length >= 0 ? length : getRemaining());
-        jumpReturn();
+    public DataReader readBytesAndCreateNewReader(int length) {
+        if (length < 0)
+            throw new IllegalArgumentException("Invalid length: " + length);
 
+        byte[] bytes = readBytes(length);
         return new DataReader(new ArraySource(bytes));
     }
 }

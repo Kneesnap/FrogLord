@@ -81,7 +81,8 @@ public class MOFAnimation extends MOFBase {
         int mofPointer = reader.readInt();
         reader.jumpReturn();
 
-        DataReader mofReader = reader.newReader(mofPointer, staticFilePointer - mofPointer);
+        reader.setIndex(mofPointer);
+        DataReader mofReader = reader.readBytesAndCreateNewReader(staticFilePointer - mofPointer);
         this.staticMOF.load(mofReader);
     }
 
