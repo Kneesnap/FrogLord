@@ -33,7 +33,6 @@ import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerFlyScoreType;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketHeader;
-import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerGridSquareFlagTester;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerVersionComparison;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
@@ -95,7 +94,6 @@ public class FroggerGameInstance extends SCGameInstance {
         // Setup version comparison.
         FroggerVersionComparison.setup(GUIMain.getWorkingDirectory());
         FroggerVersionComparison.addNewVersionToConfig(this);
-        FroggerGridSquareFlagTester.printFlagInformation(this); // TODO: TOSS
     }
 
     @Override
