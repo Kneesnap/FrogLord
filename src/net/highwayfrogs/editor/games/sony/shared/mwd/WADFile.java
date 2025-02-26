@@ -119,6 +119,7 @@ public class WADFile extends SCSharedGameFile {
 
                 // Make it a dummy file instead since it failed.
                 file = new DummyFile(getGameInstance(), fileBytes.length);
+                file.setRawFileData(fileBytes);
                 newEntry.setFile(file);
                 file.load(new DataReader(new ArraySource(fileBytes)));
             }
@@ -207,6 +208,7 @@ public class WADFile extends SCSharedGameFile {
 
     /**
      * Gets the Frogger map theme which the WAD corresponds to.
+     * TODO: Perhaps move to FroggerUtils.java instead?
      * Returns null if the game is not Frogger, or there is no map theme.
      * @return froggerMapTheme
      */
