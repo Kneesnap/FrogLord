@@ -482,7 +482,23 @@ public abstract class SCGameInstance extends GameInstance {
      * @return fps
      */
     public int getFPS() {
-        return isPSX() ? 30 : 25;
+        if (isPC()) {
+            // Beast Wars PC has not had its frame-rate tested.
+            return 25; // Frogger's PC release is locked to 25 FPS, regardless of EU/NA.
+        } else if (isPSX()) {
+            switch (getVersionConfig().getRegion()) {
+                case UNSPECIFIED: // By default, they seemed to make NTSC builds (prototypes).
+                case USA:
+                case JAPAN:
+                    return 30; // 30 FPS.
+                case EUROPE:
+                    return 25;
+                default:
+                    throw new RuntimeException("Don't know what the FPS should be for the " + getVersionConfig().getRegion() + " region.");
+            }
+        } else {
+            throw new RuntimeException("Don't know what the frame-rate for this game is.");
+        }
     }
 
     /**

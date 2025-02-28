@@ -182,8 +182,11 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
     @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {
         MWIResourceEntry mwiEntry = getIndexEntry();
-        if (mwiEntry != null)
+        if (mwiEntry != null) {
             propertyList.add("File Type ID", mwiEntry.getTypeId());
+            propertyList.add("Compressed? (PP20)", mwiEntry.isCompressed());
+        }
+
         if (getFileDefinition().hasFullFilePath())
             propertyList.add("File Path", getFileDefinition().getFullFilePath());
 
