@@ -291,7 +291,9 @@ public class Utils {
             th.printStackTrace(printWriter);
             String stackTraceStr = stringWriter.toString();
 
-            if (stackTraceStr.contains("ReadOnlyUnbackedObservableList.subList") && stackTraceStr.contains("clearAndSelect") && stackTraceStr.contains("Scene$MouseHandler.process")) {
+            if (stackTraceStr.contains("ReadOnlyUnbackedObservableList.subList")
+                    && ((stackTraceStr.contains("clearAndSelect") && stackTraceStr.contains("Scene$MouseHandler.process"))
+                    || stackTraceStr.contains("WeakListChangeListener.onChanged"))) {
                 if (logger != null) {
                     logger.warning("Skipping an internal JavaFX error which can safely be ignored.");
                 } else {
