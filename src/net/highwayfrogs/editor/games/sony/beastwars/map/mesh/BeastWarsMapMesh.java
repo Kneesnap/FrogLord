@@ -24,6 +24,7 @@ public class BeastWarsMapMesh extends DynamicMesh {
     public static final CursorVertexColor GRAY_COLOR = new CursorVertexColor(Color.GRAY, Color.BLACK);
     public static final CursorVertexColor YELLOW_COLOR = new CursorVertexColor(Color.YELLOW, Color.BLACK);
     public static final CursorVertexColor GREEN_COLOR = new CursorVertexColor(Color.GREEN, Color.BLACK);
+    public static final CursorVertexColor PINK_COLOR = new CursorVertexColor(Color.PINK, Color.BLACK);
 
     public BeastWarsMapMesh(BeastWarsMapFile mapFile) {
         super(new SequentialTextureAtlas(64, 64, true), DynamicMeshTextureQuality.UNLIT_SHARP);
@@ -47,6 +48,7 @@ public class BeastWarsMapMesh extends DynamicMesh {
         getTextureAtlas().addTexture(GRAY_COLOR);
         getTextureAtlas().addTexture(YELLOW_COLOR);
         getTextureAtlas().addTexture(GREEN_COLOR);
+        getTextureAtlas().addTexture(PINK_COLOR);
         getTextureAtlas().addTexture(UnknownTextureSource.CYAN_INSTANCE);
     }
 

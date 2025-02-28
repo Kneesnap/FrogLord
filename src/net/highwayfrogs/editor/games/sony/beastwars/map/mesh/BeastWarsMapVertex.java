@@ -206,8 +206,8 @@ public class BeastWarsMapVertex extends SCGameObject<BeastWarsInstance> {
             return UnknownTextureSource.CYAN_INSTANCE;
 
         BeastWarsTexFile texFile = this.map.getTextureFile();
-        if (texFile == null)
-            return UnknownTextureSource.CYAN_INSTANCE;
+        if (texFile == null || textureInfoEntry.getTextureId() >= texFile.getImages().size())
+            return BeastWarsMapMesh.PINK_COLOR;
 
         return texFile.getImages().get(textureInfoEntry.getTextureId());
     }
