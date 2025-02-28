@@ -16,6 +16,8 @@ import net.highwayfrogs.editor.games.sony.shared.sound.header.SCWindowsSoundBank
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
+import javax.sound.sampled.AudioFormat.Encoding;
+
 /**
  * Implements the Millennium Interactive sound bank header as seen on Windows.
  * Created by Kneesnap on 5/13/2024.
@@ -83,7 +85,9 @@ public class SCWindowsSoundBankHeader<TBodyEntry extends SCSplitSoundBankBodyEnt
                 int unk2 = reader.readInt();
                 Utils.verify(unk2 == UNKNOWN_VALUE, "Unknown Value #2 was not correct. (%d)", unk2);
                 this.audioFormat.setSampleRate(reader.readInt());
-                this.audioFormat.setSampleSizeInBits(reader.readInt());
+                int sampleSizeInBits = reader.readInt();
+                this.audioFormat.setSampleSizeInBits(sampleSizeInBits);
+                this.audioFormat.setEncoding((sampleSizeInBits == 8) ? Encoding.PCM_UNSIGNED : Encoding.PCM_SIGNED); // Seen in Beast Wars PC, but not Frogger.
             }
         }
 
