@@ -65,7 +65,7 @@ public class RwClumpMaterialMeshNode extends DynamicMeshAdapterNode<RwGeometryCh
         }
 
         // Write face data.
-        int vtxStartIndex = entry.getVertexStartIndex();
+        int vtxStartIndex = entry.getPendingVertexStartIndex();
         List<RpTriangle> triangles = geometry.getTriangles();
         List<RwTexCoords> texCoordSet = getTexCoordSet(geometry);
         int triangleIndex = 0;
@@ -85,7 +85,7 @@ public class RwClumpMaterialMeshNode extends DynamicMeshAdapterNode<RwGeometryCh
                 }
             }
 
-            int uvStartIndex = entry.getTexCoordStartIndex() + (triangleIndex++ * RpTriangle.VERTEX_COUNT);
+            int uvStartIndex = entry.getPendingTexCoordStartIndex() + (triangleIndex++ * RpTriangle.VERTEX_COUNT);
             entry.addFace(vtxStartIndex + triangle.getVertexIndices()[0], uvStartIndex,
                     vtxStartIndex + triangle.getVertexIndices()[1], uvStartIndex + 1,
                     vtxStartIndex + triangle.getVertexIndices()[2], uvStartIndex + 2);

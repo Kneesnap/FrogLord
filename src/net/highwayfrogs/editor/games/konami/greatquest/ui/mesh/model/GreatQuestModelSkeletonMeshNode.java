@@ -49,7 +49,7 @@ public class GreatQuestModelSkeletonMeshNode extends DynamicMeshAdapterNode<kcNo
         DynamicMeshTypedDataEntry entry = new DynamicMeshTypedDataEntry(getMesh(), bone);
 
         // Add pyramid vertices.
-        int vtxStartIndex = entry.getVertexStartIndex();
+        int vtxStartIndex = entry.getPendingVertexStartIndex();
         for (int i = 0; i < BASE_VERTICES.length; i++)
             entry.addVertexValue(calculateVertexPos(bone, BASE_VERTICES[i]));
 
@@ -57,7 +57,7 @@ public class GreatQuestModelSkeletonMeshNode extends DynamicMeshAdapterNode<kcNo
         entry.addTexCoordValue(evaluateUvs(bone));
 
         // Create pyramid.
-        int uvIndex = entry.getTexCoordStartIndex();
+        int uvIndex = entry.getPendingTexCoordStartIndex();
         MeshUtils.addPyramidFaces(entry, false, vtxStartIndex, vtxStartIndex + 1, vtxStartIndex + 2, vtxStartIndex + 3, vtxStartIndex + 4, uvIndex);
         return entry;
     }

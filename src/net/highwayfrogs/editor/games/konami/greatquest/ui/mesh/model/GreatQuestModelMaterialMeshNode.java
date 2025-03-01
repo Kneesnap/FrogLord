@@ -60,8 +60,8 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
         }
 
         // Write face data.
-        int uvStartIndex = entry.getTexCoordStartIndex();
-        int vtxStartIndex = entry.getVertexStartIndex();
+        int uvStartIndex = entry.getPendingTexCoordStartIndex();
+        int vtxStartIndex = entry.getPendingVertexStartIndex();
         switch (modelPrim.getPrimitiveType()) {
             case TRIANGLE_LIST:
                 writeTriangleList(entry, uvStartIndex, vtxStartIndex, (int) modelPrim.getVertexCount());

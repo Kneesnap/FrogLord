@@ -302,7 +302,7 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
             }
 
             // Vertice IDs are the same IDs seen in the map data.
-            int vertexStartIndex = newEntry.getVertexStartIndex();
+            int vertexStartIndex = newEntry.getPendingVertexStartIndex();
             for (int i = 0; i < triMesh.getFaces().size(); i++) {
                 kcCFace face = triMesh.getFaces().get(i);
                 int baseTexCoordIndex = getBaseTextureCoordinateIndex(getMesh(), triMesh, face);

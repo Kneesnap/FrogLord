@@ -56,8 +56,8 @@ public class GreatQuestMapMaterialMeshNode extends DynamicMeshAdapterNode<kcVtxB
         }
 
         // Write face data.
-        int uvStartIndex = entry.getTexCoordStartIndex();
-        int vtxStartIndex = entry.getVertexStartIndex();
+        int uvStartIndex = entry.getPendingTexCoordStartIndex();
+        int vtxStartIndex = entry.getPendingVertexStartIndex();
         switch (vtxBuf.getPrimitiveType()) {
             case TRIANGLE_LIST:
                 writeTriangleList(entry, uvStartIndex, vtxStartIndex, vtxBuf.getVertexCount());

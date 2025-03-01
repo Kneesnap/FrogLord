@@ -69,13 +69,13 @@ public class BeastWarsMapMeshNode extends DynamicMeshAdapterNode<BeastWarsMapVer
         DynamicMeshTypedDataEntry entry = getDataEntry(vertex);
 
         // Determine UV Indices.
-        int uvBottomLeftIndex = entry.getTexCoordStartIndex();
-        int uvBottomRightIndex = entry.getTexCoordStartIndex() + 1;
-        int uvTopLeftIndex = entry.getTexCoordStartIndex() + 2;
-        int uvTopRightIndex = entry.getTexCoordStartIndex() + 3;
+        int uvBottomLeftIndex = entry.getPendingTexCoordStartIndex();
+        int uvBottomRightIndex = entry.getPendingTexCoordStartIndex() + 1;
+        int uvTopLeftIndex = entry.getPendingTexCoordStartIndex() + 2;
+        int uvTopRightIndex = entry.getPendingTexCoordStartIndex() + 3;
 
         // Calculate vertices.
-        int vtxBottomLeftIndex = entry.getVertexStartIndex();
+        int vtxBottomLeftIndex = entry.getPendingVertexStartIndex();
         int vtxBottomRightIndex = vtxBottomLeftIndex + 1;
         int vtxTopLeftIndex = vtxBottomLeftIndex + getMap().getHeightMapXLength();
         int vtxTopRightIndex = vtxTopLeftIndex + 1;

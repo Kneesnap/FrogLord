@@ -11,8 +11,6 @@ import net.highwayfrogs.editor.gui.texture.atlas.TextureAtlas;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.Utils;
-import net.highwayfrogs.editor.utils.fx.wrapper.FXIntArray;
-import net.highwayfrogs.editor.utils.fx.wrapper.FXIntArrayBatcher;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
@@ -29,7 +27,7 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
     private final String meshName;
     @Getter private final DynamicMeshTextureQuality textureQuality;
     @Getter private final TextureAtlas textureAtlas;
-    @Getter private final FXIntArrayBatcher editableFaces;
+    @Getter private final DynamicMeshIntArray editableFaces;
     @Getter private final DynamicMeshFloatArray editableTexCoords;
     @Getter private final DynamicMeshFloatArray editableVertices;
     @Getter private final List<DynamicMeshNode> nodes = new ArrayList<>();
@@ -64,9 +62,9 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
         }
 
         // Setup editable array batches.
-        this.editableFaces = new FXIntArrayBatcher(new FXIntArray(), getFaces());
-        this.editableTexCoords = new DynamicMeshFloatArray(this, "texCoord", getTexCoords(), format.getTexCoordIndexOffset(), getTexCoordElementSize());
-        this.editableVertices = new DynamicMeshFloatArray(this, "vertex", getPoints(), format.getPointIndexOffset(), getPointElementSize());
+        this.editableFaces = new DynamicMeshIntArray(this, "face", getFaces(), getFaceElementSize(), this::updateEntryFacesAfterWrite);
+        this.editableTexCoords = new DynamicMeshFloatArray(this, "texCoord", getTexCoords(), format.getTexCoordIndexOffset(), getTexCoordElementSize(), this::updateEntryTexCoordsAfterWrite);
+        this.editableVertices = new DynamicMeshFloatArray(this, "vertex", getPoints(), format.getPointIndexOffset(), getPointElementSize(), this::updateEntryVerticesAfterWrite);
         getFaceSmoothingGroups().setAll(SMOOTHING_ARRAY_DISABLE_SMOOTHING); // Disable smoothing.
     }
 
@@ -115,19 +113,41 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
     }
 
     /**
-     * Updates entry start indices.
+     * Updates entry vertex start indices for all entries, as a response to buffered data being applied.
+     * This must be called AFTER the changes have been applied.
      */
-    public void updateEntryStartIndices() {
-        int faceStartIndex = 0;
-        int texCoordStartIndex = 0;
+    void updateEntryVerticesAfterWrite() {
         int vertexStartIndex = 0;
         for (int i = 0; i < this.dataEntries.size(); i++) {
             DynamicMeshDataEntry entry = this.dataEntries.get(i);
-            entry.updateStartIndices(faceStartIndex, texCoordStartIndex, vertexStartIndex);
-
-            faceStartIndex += entry.getWrittenFaceCount();
-            texCoordStartIndex += entry.getWrittenTexCoordCount();
+            entry.onVerticesWritten(vertexStartIndex);
             vertexStartIndex += entry.getWrittenVertexCount();
+        }
+    }
+
+    /**
+     * Updates entry texCoord start indices for all entries, as a response to buffered data being applied.
+     * This must be called AFTER the changes have been applied.
+     */
+    void updateEntryTexCoordsAfterWrite() {
+        int texCoordStartIndex = 0;
+        for (int i = 0; i < this.dataEntries.size(); i++) {
+            DynamicMeshDataEntry entry = this.dataEntries.get(i);
+            entry.onTexCoordsWritten(texCoordStartIndex);
+            texCoordStartIndex += entry.getWrittenTexCoordCount();
+        }
+    }
+
+    /**
+     * Updates entry face start indices for all entries, as a response to buffered data being applied.
+     * This must be called AFTER the changes have been applied.
+     */
+    void updateEntryFacesAfterWrite() {
+        int faceStartIndex = 0;
+        for (int i = 0; i < this.dataEntries.size(); i++) {
+            DynamicMeshDataEntry entry = this.dataEntries.get(i);
+            entry.onFacesWritten(faceStartIndex);
+            faceStartIndex += entry.getWrittenFaceCount();
         }
     }
 
@@ -379,7 +399,7 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
         logger.info(" Nodes[" + this.nodes.size() + "]:");
         for (int i = 0; i < this.nodes.size(); i++) {
             DynamicMeshNode node = this.nodes.get(i);
-            logger.info("  - " + Utils.getSimpleName(node) + "[" + node.getDataEntries().size() + " entries]");
+            node.printDebugMeshNodeInfo(logger, "  - ");
         }
 
         // This is disabled by default, since it spams the console, but it can be helpful for debugging.

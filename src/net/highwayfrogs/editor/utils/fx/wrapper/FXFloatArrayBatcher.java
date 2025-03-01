@@ -17,8 +17,10 @@ public class FXFloatArrayBatcher {
     @Getter private final ObservableFloatArray fxArray;
     private final IntegerCounter batchedUpdates;
     private final IntegerCounter batchedInsertion;
-    private final FXFloatArray queuedInsertionValues;
     private final FXIntArray queuedInsertionIndices;
+    private final FXIntArray queuedInsertionSourceSizes; // The size of each queued insertion
+    private final FXIntArray queuedInsertionSourceIndices; // The indices into the data buffer where the insertion data can be found.
+    private final FXFloatArray queuedInsertionSourceDataBuffer; // The buffer containing the insertion data.
     private final IntegerCounter batchedRemovals;
     private final IndexBitArray queuedIndexRemovals;
     private boolean updateOnBatchCompletion;
@@ -28,8 +30,10 @@ public class FXFloatArrayBatcher {
         this.fxArray = fxArray;
         this.batchedUpdates = new IntegerCounter();
         this.batchedInsertion = new IntegerCounter();
-        this.queuedInsertionValues = new FXFloatArray();
         this.queuedInsertionIndices = new FXIntArray();
+        this.queuedInsertionSourceSizes = new FXIntArray();
+        this.queuedInsertionSourceIndices = new FXIntArray();
+        this.queuedInsertionSourceDataBuffer = new FXFloatArray();
         this.batchedRemovals = new IntegerCounter();
         this.queuedIndexRemovals = new IndexBitArray();
     }
@@ -51,10 +55,20 @@ public class FXFloatArrayBatcher {
             this.updateOnBatchCompletion = true;
             return false;
         } else {
-            this.array.apply(this.fxArray);
-            this.updateOnBatchCompletion = false;
+            forceApplyToFxArray();
             return true;
         }
+    }
+
+    /**
+     * Force-applies to the wrapped JavaFX array, regardless of if batch updating is enabled or not.
+     */
+    public void forceApplyToFxArray() {
+        applyBatchInsertions();
+        applyBatchRemovals();
+
+        this.array.apply(this.fxArray);
+        this.updateOnBatchCompletion = false;
     }
 
     private boolean applyToFxArrayIfNecessary() {
@@ -65,22 +79,24 @@ public class FXFloatArrayBatcher {
      * Clear all batched data.
      */
     public void clear() {
-        this.queuedInsertionIndices.clear();
-        this.queuedInsertionValues.clear();
-        this.queuedIndexRemovals.clear();
-        this.updateOnBatchCompletion = false;
-
         if (this.batchedUpdates.isActive())
             throw new IllegalStateException("Cleared the array while batch update mode was enabled! (" + this.batchedUpdates.getCounter() + ")");
         if (this.batchedInsertion.isActive())
             throw new IllegalStateException("Cleared the array while batch insertion mode was enabled! (" + this.batchedInsertion.getCounter() + ")");
         if (this.batchedRemovals.isActive())
             throw new IllegalStateException("Cleared the array while batch removal mode was enabled! (" + this.batchedRemovals.getCounter() + ")");
+
+        this.queuedInsertionIndices.clear();
+        this.queuedInsertionSourceSizes.clear();
+        this.queuedInsertionSourceIndices.clear();
+        this.queuedInsertionSourceDataBuffer.clear();
+        this.queuedIndexRemovals.clear();
+        this.updateOnBatchCompletion = false;
     }
 
     /**
      * Check if the batching of updates is currently enabled.
-     * This will not delay any operations applying to the array, but it will delay updates to the FX array.
+     * This will not delay any operations applying to the staging array, but it will delay updates to the underlying FX array.
      */
     public boolean isBatchingUpdatesActive() {
         return this.batchedUpdates.isActive();
@@ -129,51 +145,65 @@ public class FXFloatArrayBatcher {
         if (!this.batchedInsertion.decrement())
             return false;
 
+        if (applyBatchInsertions()) {
+            return applyToFxArray(); // Ensure the array is updated, whether now or later.
+        } else {
+            return applyToFxArrayIfNecessary(); // We've exited a batch mode, so ensure the array gets updated if necessary.
+        }
+    }
+
+    private boolean applyBatchInsertions() {
         // Ensure the number of values matches the number of indices.
-        if (this.queuedInsertionIndices.size() != this.queuedInsertionValues.size())
-            throw new IllegalStateException("There were " + this.queuedInsertionIndices.size() + " indices corresponding to " + this.queuedInsertionValues.size() + " values.");
+        if (this.queuedInsertionIndices.size() != this.queuedInsertionSourceIndices.size())
+            throw new IllegalStateException("There were " + this.queuedInsertionIndices.size() + " indices corresponding to " + this.queuedInsertionSourceIndices.size() + " buffer index values.");
+        if (this.queuedInsertionIndices.size() != this.queuedInsertionSourceSizes.size())
+            throw new IllegalStateException("There were " + this.queuedInsertionIndices.size() + " indices corresponding to " + this.queuedInsertionSourceSizes.size() + " size values.");
 
         // Abort if there aren't any values to insert.
-        int valueCount = this.queuedInsertionValues.size();
-        if (valueCount == 0)
-            return applyToFxArrayIfNecessary(); // We've exited a batch mode, so ensure the array gets updated if necessary.
+        if (this.queuedInsertionIndices.size() == 0)
+            return false;
 
         // Shift the array elements and insert in the new values to their slots.
         // This relies upon the array being sorted.
-        this.array.insertValues(this.queuedInsertionIndices, this.queuedInsertionValues);
+        this.array.insertValues(this.queuedInsertionIndices, this.queuedInsertionSourceIndices, this.queuedInsertionSourceSizes, this.queuedInsertionSourceDataBuffer);
 
         // Execute hook
-        onBatchInsertionComplete(this.queuedInsertionIndices, this.queuedInsertionValues);
+        onBatchInsertionComplete(this.queuedInsertionIndices, this.queuedInsertionSourceSizes);
 
-        // Clear future.
-        this.queuedInsertionValues.clear();
+        // Clear for future.
         this.queuedInsertionIndices.clear();
-
-        // Ensure the array is updated, whether now or later.
-        return applyToFxArray();
+        this.queuedInsertionSourceIndices.clear();
+        this.queuedInsertionSourceSizes.clear();
+        this.queuedInsertionSourceDataBuffer.clear();
+        return true;
     }
 
     /**
      * Called when batch insertion is completed.
-     * @param indices The indices of the values inserted.
-     * @param values  The values inserted.
+     * @param insertionIndices The indices of the values inserted.
+     * @param insertionLengths An array of indices representing the amount of data to insert from the data buffer. Each array element must correspond to the corresponding destination index in the insertionIndices array.
      */
-    protected void onBatchInsertionComplete(FXIntArray indices, FXFloatArray values) {
+    protected void onBatchInsertionComplete(FXIntArray insertionIndices, FXIntArray insertionLengths) {
+        int totalInsertedElementCount = insertionLengths.sum();
+
         // Update the queued removals.
-        int remainingInsertions = values.size();
+        int remainingInsertions = insertionLengths.size();
+        int remainingInsertionElements = totalInsertedElementCount;
         int removeIndex = this.queuedIndexRemovals.getLastBitIndex();
         for (int i = this.queuedIndexRemovals.getBitCount(); i > 0; i--) {
             // Stop accounting for insertions which we've passed.
-            while (remainingInsertions > 0 && indices.get(remainingInsertions - 1) > removeIndex)
+            while (remainingInsertions > 0 && insertionIndices.get(remainingInsertions - 1) > removeIndex) {
+                remainingInsertionElements -= insertionLengths.get(remainingInsertions - 1);
                 remainingInsertions--;
+            }
 
             if (remainingInsertions == 0)
                 break; // All remaining indices are not impacted by the insertions, so we can stop.
 
             // Update the removed indices, moving the indices forward that need to be moved forward.
             // Careful, this code modifies the array we're iterating through, it should only edit parts of the array we're done iterating through.
+            this.queuedIndexRemovals.setBit(removeIndex + remainingInsertionElements, true);
             this.queuedIndexRemovals.setBit(removeIndex, false);
-            this.queuedIndexRemovals.setBit(removeIndex + remainingInsertions, true);
 
             // Find the next removed index we plan to edit. (Which happens to come earlier in the array)
             removeIndex = this.queuedIndexRemovals.getPreviousBitIndex(removeIndex);
@@ -202,6 +232,15 @@ public class FXFloatArrayBatcher {
     }
 
     /**
+     * Test if the given index is queued for removal.
+     * @param index the index to test
+     * @return queuedForRemoval
+     */
+    public boolean isQueuedForRemoval(int index) {
+        return this.queuedIndexRemovals.getBit(index);
+    }
+
+    /**
      * Check if batch removal of array values is currently enabled.
      */
     public boolean isBatchRemovalActive() {
@@ -224,10 +263,18 @@ public class FXFloatArrayBatcher {
         if (!this.batchedRemovals.decrement())
             return false;
 
+        if (applyBatchRemovals()) {
+            return applyToFxArray(); // Ensure the array is updated, whether now or later.
+        } else {
+            return applyToFxArrayIfNecessary(); // We've exited a batch mode, so ensure the array gets updated if necessary.
+        }
+    }
+
+    private boolean applyBatchRemovals() {
         // Abort if there aren't any values to remove.
         int removalCount = this.queuedIndexRemovals.getBitCount();
         if (removalCount == 0)
-            return applyToFxArrayIfNecessary(); // We've exited a batch mode, so ensure the array gets updated if necessary.
+            return false;
 
         // Remove the values from the array.
         this.array.removeIndices(this.queuedIndexRemovals);
@@ -237,9 +284,7 @@ public class FXFloatArrayBatcher {
 
         // Clear future.
         this.queuedIndexRemovals.clear();
-
-        // Ensure the array is updated, whether now or later.
-        return applyToFxArray();
+        return true;
     }
 
     /**
@@ -311,6 +356,7 @@ public class FXFloatArrayBatcher {
      */
     public void set(int index, float value) {
         this.array.set(index, value);
+        applyToFxArray();
     }
 
     /**
@@ -319,10 +365,7 @@ public class FXFloatArrayBatcher {
      * @param value new value to append to the array
      */
     public void add(float value) {
-        // Not batched since adding values to the end of an array doesn't have any performance benefit from batching.
-        int insertionIndex = this.array.size();
-        this.array.add(value);
-        onRangeInsertionComplete(insertionIndex, 1);
+        insert(this.array.size(), value);
     }
 
     /**
@@ -333,30 +376,51 @@ public class FXFloatArrayBatcher {
      */
     public boolean insert(int index, float value) {
         if (isBatchInsertionActive()) {
+            if (index > size() || index < 0)
+                throw new IndexOutOfBoundsException("The provided insertion index (" + index + ") is not valid when the array has a length of " + size() + ".");
+
             int insertionIndex = this.queuedInsertionIndices.getInsertionPoint(index);
-            this.queuedInsertionIndices.add(insertionIndex, index);
-            this.queuedInsertionValues.add(insertionIndex, value);
+            int previousIndex = insertionIndex - 1;
+            boolean hasPreviousBuffer = previousIndex >= 0 && this.queuedInsertionIndices.get(previousIndex) == index;
+            int previousBufferSize = hasPreviousBuffer ? this.queuedInsertionSourceSizes.get(previousIndex) : 0;
+            if (hasPreviousBuffer && (this.queuedInsertionSourceIndices.get(previousIndex) + previousBufferSize) == this.queuedInsertionSourceDataBuffer.size()) {
+                // Expand the previous buffer segment instead of adding a new one.
+                this.queuedInsertionSourceSizes.set(previousIndex, previousBufferSize + 1);
+                this.queuedInsertionSourceDataBuffer.add(value);
+            } else {
+                // Add a new buffer segment.
+                this.queuedInsertionIndices.add(insertionIndex, index);
+                this.queuedInsertionSourceSizes.add(insertionIndex, 1);
+                this.queuedInsertionSourceIndices.add(insertionIndex, this.queuedInsertionSourceDataBuffer.size());
+                this.queuedInsertionSourceDataBuffer.add(value);
+            }
+
             return false;
         } else {
             this.array.add(index, value);
             onRangeInsertionComplete(index, 1);
+            applyToFxArray();
             return true;
         }
     }
 
     /**
      * Removes a single value from the provided index.
-     * If bulk removal is enabled, these will be skipped.
+     * If bulk removal mode is enabled, the removal will be queued.
      * @param index index of the value to remove
      * @return removed value
      */
     public float remove(int index) {
         if (isBatchRemovalActive()) {
+            if (index >= size() || index < 0)
+                throw new IndexOutOfBoundsException("The provided removal index (" + index + ") is not valid when the array has a length of " + size() + ".");
+
             this.queuedIndexRemovals.setBit(index, true);
             return this.array.get(index);
         } else {
             float removedValue = this.array.remove(index);
             onRangeRemovalComplete(index, 1);
+            applyToFxArray();
             return removedValue;
         }
     }
@@ -370,11 +434,17 @@ public class FXFloatArrayBatcher {
      */
     public boolean remove(int startIndex, int amount) {
         if (isBatchRemovalActive()) {
-            this.queuedIndexRemovals.setBits(startIndex, amount, true);
+            if (startIndex + amount > size() || startIndex < 0) {
+                throw new IndexOutOfBoundsException("The provided removal index (" + startIndex + " + " + amount + ") is not valid when the array has a length of " + size() + ".");
+            } else {
+                this.queuedIndexRemovals.setBits(startIndex, amount, true);
+            }
+
             return false;
         } else {
             this.array.remove(startIndex, amount);
             onRangeRemovalComplete(startIndex, amount);
+            applyToFxArray();
             return true;
         }
     }
@@ -385,34 +455,18 @@ public class FXFloatArrayBatcher {
      * @param elements elements to append
      */
     public void addAll(float... elements) {
-        // These values are added to the end of the array.
-        // There is no performance benefit to batching values added to the end of the array.
-        int insertIndex = this.array.size();
-        this.array.addAll(elements);
-        onRangeInsertionComplete(insertIndex, elements.length);
+        addAll(this.array.size(), elements, 0, elements.length);
     }
 
     /**
      * Inserts given {@code elements} to the provided array index.
      * Capacity is increased if necessary to match the new size of the data.
-     * @param destIndex index of the elements to insert
+     * @param index index of the elements to insert
      * @param elements  elements to insert
      * @return true if the values were added, false if they were batched.
      */
-    public boolean addAll(int destIndex, float... elements) {
-        if (isBatchInsertionActive()) {
-            int insertionIndex = this.queuedInsertionIndices.getInsertionPoint(destIndex);
-            for (int i = 0; i < elements.length; i++) {
-                this.queuedInsertionIndices.add(insertionIndex + i, destIndex);
-                this.queuedInsertionValues.add(insertionIndex + i, elements[i]);
-            }
-
-            return false;
-        } else {
-            this.array.addAll(destIndex, elements);
-            onRangeInsertionComplete(destIndex, elements.length);
-            return true;
-        }
+    public boolean addAll(int index, float... elements) {
+        return addAll(index, elements, 0, elements.length);
     }
 
     /**
@@ -423,34 +477,52 @@ public class FXFloatArrayBatcher {
      * @param length   length of portion to append
      */
     public void addAll(float[] src, int srcIndex, int length) {
-        // These values are added to the end of the array.
-        // There is no performance benefit to batching values added to the end of the array.
-        int insertionIndex = this.array.size();
-        this.array.addAll(src, srcIndex, length);
-        onRangeInsertionComplete(insertionIndex, length);
+        addAll(this.array.size(), src, srcIndex, length);
     }
 
     /**
      * Appends a portion of given array to the target array index.
      * Capacity is increased if necessary to match the new size of the data.
-     * @param destIndex index of the values to insert
-     * @param src       source array
-     * @param srcIndex  starting position in source array
-     * @param length    length of portion to append
+     * @param index index of the values to insert
+     * @param src source array
+     * @param srcIndex starting position in source array
+     * @param length length of portion to append
      * @return true if the values were added, false if they were batched.
      */
-    public boolean addAll(int destIndex, float[] src, int srcIndex, int length) {
+    public boolean addAll(int index, float[] src, int srcIndex, int length) {
+        if (src == null)
+            throw new NullPointerException("src");
+        if (srcIndex < 0)
+            throw new IndexOutOfBoundsException("The provided source index (" + srcIndex + ") is not valid.");
+        if (srcIndex + length > src.length || length < 0)
+            throw new IndexOutOfBoundsException("The provided source length (" + length + ") is not valid at index " + srcIndex + " when the source array has a length of " + src.length + ".");
+
         if (isBatchInsertionActive()) {
-            int insertionIndex = this.queuedInsertionIndices.getInsertionPoint(destIndex);
-            for (int i = 0; i < length; i++) {
-                this.queuedInsertionIndices.add(insertionIndex + i, destIndex);
-                this.queuedInsertionValues.add(insertionIndex + i, src[srcIndex + i]);
+            int arrayLength = size();
+            if (index > arrayLength || index < 0)
+                throw new IndexOutOfBoundsException("The provided insertion index (" + index + ") is not valid when the array has a length of " + arrayLength + ".");
+
+            int insertionIndex = this.queuedInsertionIndices.getInsertionPoint(index);
+            int previousIndex = insertionIndex - 1;
+            boolean hasPreviousBuffer = previousIndex >= 0 && this.queuedInsertionIndices.get(previousIndex) == index;
+            int previousBufferSize = hasPreviousBuffer ? this.queuedInsertionSourceSizes.get(previousIndex) : 0;
+            if (hasPreviousBuffer && (this.queuedInsertionSourceIndices.get(previousIndex) + previousBufferSize) == this.queuedInsertionSourceDataBuffer.size()) {
+                // Expand the previous buffer segment instead of adding a new one.
+                this.queuedInsertionSourceSizes.set(previousIndex, previousBufferSize + length);
+                this.queuedInsertionSourceDataBuffer.addAll(src, srcIndex, length);
+            } else {
+                // Add a new buffer segment.
+                this.queuedInsertionIndices.add(insertionIndex, index);
+                this.queuedInsertionSourceSizes.add(insertionIndex, length);
+                this.queuedInsertionSourceIndices.add(insertionIndex, this.queuedInsertionSourceDataBuffer.size());
+                this.queuedInsertionSourceDataBuffer.addAll(src, srcIndex, length);
             }
 
             return false;
         } else {
-            this.array.addAll(destIndex, src, srcIndex, length);
-            onRangeInsertionComplete(destIndex, length);
+            this.array.addAll(index, src, srcIndex, length);
+            onRangeInsertionComplete(index, length);
+            applyToFxArray();
             return true;
         }
     }
@@ -459,13 +531,14 @@ public class FXFloatArrayBatcher {
      * Copies a portion of specified array into this observable array. Throws
      * the same exceptions as {@link System#arraycopy(java.lang.Object,
      * int, java.lang.Object, int, int) System.arraycopy()} method.
-     * @param destIndex the starting destination position in this observable array
+     * @param index     the starting destination position in this observable array
      * @param src       source array to copy
      * @param srcIndex  starting position in source array
      * @param length    length of portion to copy
      */
-    public void set(int destIndex, float[] src, int srcIndex, int length) {
-        this.array.set(destIndex, src, srcIndex, length);
+    public void set(int index, float[] src, int srcIndex, int length) {
+        this.array.set(index, src, srcIndex, length);
+        applyToFxArray();
     }
 
     /**
@@ -479,6 +552,6 @@ public class FXFloatArrayBatcher {
      * Get the number of elements that will be in the array after the queued batch operations complete.
      */
     public int pendingSize() {
-        return this.array.size() + this.queuedInsertionIndices.size() - this.queuedIndexRemovals.getBitCount();
+        return this.array.size() + this.queuedInsertionSourceSizes.sum() - this.queuedIndexRemovals.getBitCount();
     }
 }

@@ -35,7 +35,7 @@ public class DynamicMeshOverlayNode extends DynamicMeshAdapterNode<OverlayTarget
         // For each face/polygon in the target entry:
         for (int i = 0; i < data.getOverlayEntry().getWrittenFaceCount(); i++) {
             // Calculate the absolute face index of the target polygon.
-            int startFaceIndex = (data.getOverlayEntry().getFaceStartIndex() + i) * getMesh().getFaceElementSize();
+            int startFaceIndex = (data.getOverlayEntry().getPendingFaceStartIndex() + i) * getMesh().getFaceElementSize();
 
             // Each vertex is spaced in between the tex coord index, because the faces array includes a value for both texCoord and normal.
             int meshVertex1 = getMesh().getEditableFaces().get(startFaceIndex);

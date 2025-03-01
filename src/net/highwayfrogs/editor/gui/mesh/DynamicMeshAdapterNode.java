@@ -273,10 +273,5 @@ public abstract class DynamicMeshAdapterNode<TDataSource> extends DynamicMeshNod
             super(mesh);
             this.dataSource = dataSource;
         }
-
-        public DynamicMeshTypedDataEntry(DynamicMesh mesh, TDataSource dataSource, int vertexCount, int texCoordCount, int faceCount) {
-            super(mesh, vertexCount, texCoordCount, faceCount);
-            this.dataSource = dataSource;
-        }
     }
 }

@@ -133,6 +133,9 @@ public class TranslationGizmo extends DynamicMesh {
         final double halfBoxSize = (BOX_SIZE / 2);
         final double barEnd = BAR_LENGTH + halfBoxSize;
 
+        // Prevent constant updates of the FX array.
+        pushBatchUpdates();
+
         // Setup X-Axis Node (Red)
         if (this.xAxisEnabled) {
             this.xAxisNode = new DynamicMeshUnmanagedNode(this);
@@ -179,6 +182,8 @@ public class TranslationGizmo extends DynamicMesh {
         this.orangeTextureUvIndex = baseNodeEntry.addTexCoordValue(orangeTextureUv);
         MeshEntryBox.createCenteredBox(baseNodeEntry, 0, 0, 0, BOX_SIZE, BOX_SIZE, BOX_SIZE, this.whiteTextureUvIndex);
         this.baseNode.addEntry(baseNodeEntry);
+
+        popBatchUpdates(); // Apply to mesh buffers.
     }
 
     /**

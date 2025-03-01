@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.gui.mesh;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 
@@ -90,6 +91,20 @@ public abstract class DynamicMeshNode implements IDynamicMeshHelper {
         if (getMesh().getDataEntries().contains(entry))
             throw new IllegalArgumentException("The provided entry is registered to the mesh via another node.");
 
+        // The following tests will prevent a very difficult issue to identify from going unnoticed.
+        // If batch mode is used to insert/remove values, but it resolves fully before the node is registered, the entry is in a broken state.
+        // Because the entry was not registered at the time of array batch operations, its hook to handle the batch operations did not run.
+        if ((entry.getPendingVertexCount() != entry.getWrittenVertexCount() && !getMesh().getEditableVertices().isAnyBatchModeEnabled())
+                || (entry.getPendingTexCoordCount() != entry.getWrittenTexCoordCount() && !getMesh().getEditableTexCoords().isAnyBatchModeEnabled())
+                || (entry.getPendingFaceCount() != entry.getWrittenFaceCount() && !getMesh().getEditableFaces().isAnyBatchModeEnabled())) {
+            printDebugMeshNodeInfo(getMesh().getLogger(), "");
+            getMesh().getLogger().info("");
+            getMesh().getLogger().info("Mesh Entry to Add:");
+            entry.printDebugInformation(getMesh().getLogger(), " ");
+            getMesh().getLogger().info("");
+            throw new RuntimeException("The entry could not be added, as it appears to have been written using batch mode before it was registered to the node, which is not supported.");
+        }
+
         // Register the entry.
         this.dataEntries.add(entry);
         getMesh().getDataEntries().add(entry);
@@ -143,5 +158,14 @@ public abstract class DynamicMeshNode implements IDynamicMeshHelper {
     public boolean updateFace(DynamicMeshDataEntry entry, int localFaceIndex) {
         // Default implementation does nothing and returns false.
         return false;
+    }
+
+    /**
+     * Prints debug information to the logger.
+     */
+    public void printDebugMeshNodeInfo(ILogger logger, String leftPadding) {
+        logger.info(leftPadding + Utils.getSimpleName(this) + "[" + this.dataEntries.size() + " entries]:");
+        for (int i = 0; i < this.dataEntries.size(); i++)
+            this.dataEntries.get(i).printDebugInformation(logger, " " + leftPadding);
     }
 }
