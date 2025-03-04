@@ -146,7 +146,10 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
 
         reader.jumpReturn();
         if (readU != getU() || readV != getV())
-            getLogger().warning("UV Mismatch at image " + Utils.getLoadingIndex(this.parent.getImages(), this) + "! [" + readU + "," + readV + "] [" + getU() + "," + getV() + "] -> " + getIngameWidth() + "x" + getIngameHeight() + ", " + getFullWidth() + "x" + getFullHeight() + ", " + getFlags());
+            getLogger().warning("UV Mismatch at image %d! [%d,%d] [%d,%d] -> %dx%d, %dx%d, %04X [%d, %d]",
+                    Utils.getLoadingIndex(this.parent.getImages(), this), readU, readV, getU(), getV(),
+                    getIngameWidth(), getIngameHeight(), getFullWidth(), getFullHeight(), getFlags(),
+                    (getFullWidth() - getIngameWidth()), (getFullHeight() - getIngameHeight()));
     }
 
     @Override
@@ -294,7 +297,11 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
         short u = (short) (getVramX() % (getParent().isPsxMode() ? PSX_PAGE_WIDTH * getWidthMultiplier() : PC_PAGE_WIDTH));
 
         if (getParent().isPsxMode()) { // PS1 logic.
-            if (getFullHeight() != getIngameHeight()) // TODO: This is broken sometimes, when and why? C-12 Final Resistance
+            short fullHeight = getFullHeight();
+            short ingameHeight = getIngameHeight();
+
+            // The purpose here is not fully understood, but seems to accurately reflect the original behavior in all games.
+            if (fullHeight != ingameHeight && fullHeight != ingameHeight + 1)
                 u++;
             return u;
         }
