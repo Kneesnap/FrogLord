@@ -22,6 +22,7 @@ import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,6 +65,8 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
     private final List<BeastWarsMapLine> lines = new ArrayList<>();
     private final List<BeastWarsMapSpline> splines = new ArrayList<>();
     private final List<BeastWarsMapObject> objects = new ArrayList<>();
+
+    private WeakReference<BeastWarsTexFile> cachedTextureFile;
 
     // Unsaved data.
     private final transient BeastWarsMapVertex[][] verticeWrappers = new BeastWarsMapVertex[MAXIMUM_MAP_DIMENSION][MAXIMUM_MAP_DIMENSION];
@@ -122,20 +125,29 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
      * If it cannot be found, null will be returned.
      */
     public BeastWarsTexFile getTextureFile() {
+        BeastWarsTexFile cachedFile = this.cachedTextureFile != null ? this.cachedTextureFile.get() : null;
+        if (cachedFile != null)
+            return cachedFile;
+
         BeastWarsInstance instance = getGameInstance();
 
         // Search for a texture file with the same file name.
         MWIResourceEntry texResourceEntry = instance.getResourceEntryByName(FileUtils.stripExtension(getFileDisplayName()) + ".TEX");
         BeastWarsTexFile texFile = instance.getGameFile(texResourceEntry);
-        if (texFile != null)
+        if (texFile != null) {
+            this.cachedTextureFile = new WeakReference<>(texFile);
             return texFile;
+        }
 
         // Check the file immediately after the .MAP, and use it if it is a texture file.
         MWIResourceEntry mwiEntry = getIndexEntry();
         if (mwiEntry != null) {
             SCGameFile<?> nextFile = instance.getGameFile(mwiEntry.getResourceId() + 1);
-            if (nextFile instanceof BeastWarsTexFile)
-                return (BeastWarsTexFile) nextFile;
+            if (nextFile instanceof BeastWarsTexFile) {
+                texFile = (BeastWarsTexFile) nextFile;
+                this.cachedTextureFile = new WeakReference<>(texFile);
+                return texFile;
+            }
         }
 
         // Otherwise, we haven't found it.

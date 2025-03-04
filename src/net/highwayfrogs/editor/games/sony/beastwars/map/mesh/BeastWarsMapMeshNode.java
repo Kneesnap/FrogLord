@@ -11,6 +11,15 @@ import net.highwayfrogs.editor.system.math.Vector2f;
  * Created by Kneesnap on 9/25/2023.
  */
 public class BeastWarsMapMeshNode extends DynamicMeshAdapterNode<BeastWarsMapVertex> {
+
+    // The names of each are correct.
+    private static final Vector2f[] BASE_UV_COORDINATES_BY_INDEX = {
+            Vector2f.UNIT_Y, // 0F, 1F, uvBottomLeft
+            Vector2f.ONE, // 1F, 1F, uvBottomRight
+            Vector2f.ZERO, // 0F, 0F, uvTopLeft
+            Vector2f.UNIT_X, // 1F, 0F, uvTopRight
+    };
+
     public BeastWarsMapMeshNode(BeastWarsMapMesh mesh) {
         super(mesh);
     }
@@ -27,14 +36,15 @@ public class BeastWarsMapMeshNode extends DynamicMeshAdapterNode<BeastWarsMapVer
         for (int z = 0; z < getMap().getHeightMapZLength(); z++)
             for (int x = 0; x < getMap().getHeightMapXLength(); x++)
                 this.add(getMap().getVertex(x, z));
-        getMesh().popBatchOperations(); // Complete vertex operations before we're able to start adding other stuff. I think we should look into why this is necessary at some point.
+
+        // Ensure the vertex & texCoord ids are accessible to the face data.
+        getMesh().getEditableVertices().forceApplyToFxArray();
+        getMesh().getEditableTexCoords().forceApplyToFxArray();
 
         // After the vertices are set, lets try to create the faces.
         for (int z = 0; z < getMap().getHeightMapZLength(); z++)
             for (int x = 0; x < getMap().getHeightMapXLength(); x++)
                 this.setupFaces(getMap().getVertex(x, z));
-
-        getMesh().pushBatchOperations(); // onAddedToMesh() expects batch operations to be pushed.
     }
 
     @Override
@@ -46,17 +56,9 @@ public class BeastWarsMapMeshNode extends DynamicMeshAdapterNode<BeastWarsMapVer
             ITextureSource source = data.getTextureSource();
             Texture texture = getMesh().getTextureAtlas().getTextureFromSource(source);
 
-            if (texture != null) {
-                // The names of each are correct.
-                Vector2f uvBottomLeft = getMesh().getTextureAtlas().getUV(texture, Vector2f.UNIT_Y); // 0F, 1F
-                Vector2f uvBottomRight = getMesh().getTextureAtlas().getUV(texture, Vector2f.ONE); // 1F, 1F
-                Vector2f uvTopLeft = getMesh().getTextureAtlas().getUV(texture, Vector2f.ZERO); // 0F, 0F
-                Vector2f uvTopRight = getMesh().getTextureAtlas().getUV(texture, Vector2f.UNIT_X); // 1F, 0F
-                entry.addTexCoordValue(uvBottomLeft.getX(), uvBottomLeft.getY());
-                entry.addTexCoordValue(uvBottomRight.getX(), uvBottomRight.getY());
-                entry.addTexCoordValue(uvTopLeft.getX(), uvTopLeft.getY());
-                entry.addTexCoordValue(uvTopRight.getX(), uvTopRight.getY());
-            }
+            if (texture != null)
+                for (int i = 0; i < BASE_UV_COORDINATES_BY_INDEX.length; i++)
+                    entry.addTexCoordValue(getMesh().getTextureAtlas().getUV(texture, BASE_UV_COORDINATES_BY_INDEX[i]));
         }
 
         return entry;
@@ -94,12 +96,10 @@ public class BeastWarsMapMeshNode extends DynamicMeshAdapterNode<BeastWarsMapVer
     @Override
     public void updateTexCoord(DynamicMeshTypedDataEntry entry, int localTexCoordIndex) {
         BeastWarsMapVertex vertex = entry.getDataSource();
-        if (localTexCoordIndex == 0) {
-            // TODO: FINISH
-        } else if (localTexCoordIndex == 1) {
-            // TODO: FINISH
-        }
-        // TODO: !
+        ITextureSource source = vertex.getTextureSource();
+        Texture texture = getMesh().getTextureAtlas().getTextureFromSource(source);
+        Vector2f textureUv = getMesh().getTextureAtlas().getUV(texture, BASE_UV_COORDINATES_BY_INDEX[localTexCoordIndex % BASE_UV_COORDINATES_BY_INDEX.length]);
+        entry.writeTexCoordValue(localTexCoordIndex, textureUv);
     }
 
     /**
