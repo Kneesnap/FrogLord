@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.gui.DefaultFileUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 
@@ -50,6 +51,6 @@ public class DummyFile extends SCSharedGameFile {
 
     @Override
     public GameUIController<?> makeEditorUI() {
-        return null;
+        return DefaultFileUIController.loadEditor(getGameInstance(), new DefaultFileUIController<>(getGameInstance(), "Unsupported File Type", getCollectionViewIcon()), this);
     }
 }

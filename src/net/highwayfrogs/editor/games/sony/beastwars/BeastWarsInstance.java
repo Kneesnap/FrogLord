@@ -24,6 +24,7 @@ import net.highwayfrogs.editor.utils.DataUtils;
  * Created by Kneesnap on 9/8/2023.
  */
 public class BeastWarsInstance extends SCGameInstance {
+    public static final int FILE_TYPE_STD = 0;
     public static final int FILE_TYPE_VLO = 1;
     public static final int FILE_TYPE_MOF = 3;
     public static final int FILE_TYPE_MAP = 4;
@@ -43,7 +44,8 @@ public class BeastWarsInstance extends SCGameInstance {
             return new BeastWarsTexFile(this);
         if (resourceEntry.getTypeId() == FILE_TYPE_PLT || resourceEntry.hasExtension("plt"))
             return new PLTFile(this);
-
+        if (resourceEntry.getTypeId() == FILE_TYPE_STD && resourceEntry.hasExtension("bpp"))
+            return new BeastWarsBPPImageFile(this);
 
         return SCUtils.createSharedGameFile(resourceEntry, fileData);
     }

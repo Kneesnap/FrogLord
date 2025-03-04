@@ -406,4 +406,15 @@ public class DataUtils {
                 return false;
         return true;
     }
+
+    /**
+     * Swaps the byte-order (endian) of the given value.
+     * @param value the value to swap the byte-order for
+     * @return valueWithSwappedByteOrder
+     */
+    public static short swapShortByteOrder(short value) {
+        int lowByte = (value & 0xFF);
+        int highByte = (value & 0xFF00) >> 8;
+        return (short) ((lowByte << 8) | highByte);
+    }
 }
