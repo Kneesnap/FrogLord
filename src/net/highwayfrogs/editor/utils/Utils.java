@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.utils;
 
 import javafx.application.Platform;
+import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.WrappedLogger;
@@ -27,6 +28,11 @@ public class Utils {
     private static final Map<Integer, List<Integer>> integerLists = new HashMap<>();
     private static Logger logger;
     private static ILogger instanceLogger;
+
+    /**
+     * A task timer which can be used to schedule tasks on a non-UI thread.
+     */
+    @Getter private static final Timer asyncTaskTimer = new Timer();
 
     /**
      * Gets a logger usable in a static context.
@@ -642,5 +648,22 @@ public class Utils {
         }
 
         return builder.toString();
+    }
+
+    /**
+     * Creates a TimerTask object which can be scheduled
+     * @param task the task to execute
+     * @return timerTask
+     */
+    public static TimerTask createTimerTask(Runnable task) {
+        if (task == null)
+            throw new NullPointerException("task");
+
+        return new TimerTask() {
+            @Override
+            public void run() {
+                task.run();
+            }
+        };
     }
 }

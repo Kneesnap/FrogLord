@@ -315,11 +315,12 @@ public class FXUtils {
      * @return convertedImage
      */
     public static Image toFXImage(BufferedImage image, boolean useCache) {
-        imageCacheMap.entrySet().removeIf(entry -> entry.getValue().hasExpired());
         if (!useCache)
             return SwingFXUtils.toFXImage(image, null);
 
-        return imageCacheMap.computeIfAbsent(image, bufferedImage -> new TextureCache(SwingFXUtils.toFXImage(bufferedImage, null))).getImage();
+        synchronized (imageCacheMap) {
+            return imageCacheMap.computeIfAbsent(image, bufferedImage -> new TextureCache(SwingFXUtils.toFXImage(bufferedImage, null))).getImage();
+        }
     }
 
     /**
@@ -494,5 +495,17 @@ public class FXUtils {
         } else {
             throw new RuntimeException("Unsupported JavaFX Node: " + Utils.getSimpleName(node));
         }
+    }
+
+    private static void setupCacheTimerTask() {
+        Utils.getAsyncTaskTimer().scheduleAtFixedRate(Utils.createTimerTask(() -> {
+            synchronized (imageCacheMap) {
+                imageCacheMap.entrySet().removeIf(entry -> entry.getValue().hasExpired());
+            }
+        }), 0, TimeUnit.MINUTES.toMillis(1));
+    }
+
+    static {
+        setupCacheTimerTask();
     }
 }
