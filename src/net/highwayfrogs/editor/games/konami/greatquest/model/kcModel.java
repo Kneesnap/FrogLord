@@ -344,6 +344,9 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
         } else if (weightBits != 0) {
             components.add(kcVertexFormatComponent.POSITION_XYZF);
             switch (weightBits - 2) {
+                case -1:
+                    // Indicates there are no weights.
+                    break;
                 case 1:
                     components.add(kcVertexFormatComponent.WEIGHT1F);
                     break;
@@ -359,6 +362,9 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
                 default:
                     throw new RuntimeException("Unexpected weightBits value: " + weightBits);
             }
+        } else {
+            // This is technically supported by the engine, but I'd like to be warned if we ever have a build with it, since it's not known how this would be handled.
+            throw new RuntimeException("The kcModel had a weightBits value of zero! This may not indicate a problem, but instead warrants investigation!");
         }
 
         if ((fvf & FVF_FLAG_PC_NORMALS) == FVF_FLAG_PC_NORMALS)
