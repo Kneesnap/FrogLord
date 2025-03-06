@@ -134,7 +134,7 @@ public class BeastWarsBPPImageFile extends SCGameFile<BeastWarsInstance> {
     private static int fromPackedShortToARGB(short packedColor) {
         // Swap bytes... This is what the game does. PSX PAL has the swap loop at 0x80035C64.
         short swappedColor = DataUtils.swapShortByteOrder(packedColor);
-        return SCMapPolygon.fromPackedShort(swappedColor, PSXPolygonType.POLY_FT4, false).toARGB();
+        return SCMapPolygon.fromPackedShort(swappedColor, PSXPolygonType.POLY_FT4, false, false).toARGB();
     }
 
     private static short toPackedShort(int rgbColor) {

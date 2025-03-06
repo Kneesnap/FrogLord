@@ -317,7 +317,7 @@ public class SCMapPolygon extends SCGameData<SCGameInstance> {
         if (enableGouraudShading && polygonPacket != null) {
             for (int i = 0; i < colors.length; i++) {
                 SVector vertex = polygonPacket.getVertices().get(this.vertices[i]);
-                colors[i] = fromPackedShort(vertex.getPadding(), polygonType, isSemiTransparent);
+                colors[i] = fromPackedShort(vertex.getPadding(), polygonType, isSemiTransparent, true);
             }
         } else {
             Arrays.fill(colors, UNSHADED_COLOR);
@@ -380,9 +380,10 @@ public class SCMapPolygon extends SCGameData<SCGameInstance> {
      * @param packedColor the color to load from.
      * @param polygonType the polygon type to generate the code from.
      * @param isSemiTransparent whether this color is rendered with semi-transparent mode.
+     * @param enableModulation whether modulation should be enabled
      * @return colorVector
      */
-    public static CVector fromPackedShort(short packedColor, PSXPolygonType polygonType, boolean isSemiTransparent) {
+    public static CVector fromPackedShort(short packedColor, PSXPolygonType polygonType, boolean isSemiTransparent, boolean enableModulation) {
         // Process padding into color value.
         short red = (short) ((packedColor & 0x1F) << 3);
         short green = (short) (((packedColor >> 5) & 0x1F) << 3);
@@ -390,13 +391,15 @@ public class SCMapPolygon extends SCGameData<SCGameInstance> {
         int rgbColor = ColorUtils.toRGB(DataUtils.unsignedShortToByte(red), DataUtils.unsignedShortToByte(green), DataUtils.unsignedShortToByte(blue));
 
         // Calculate GPU code.
-        byte gpuCode = CVector.GP0_COMMAND_POLYGON_PRIMITIVE | CVector.FLAG_GOURAUD_SHADING | CVector.FLAG_MODULATION;
+        byte gpuCode = CVector.GP0_COMMAND_POLYGON_PRIMITIVE | CVector.FLAG_GOURAUD_SHADING;
         if (polygonType.isQuad())
             gpuCode |= CVector.FLAG_QUAD;
         if (polygonType.isTextured())
             gpuCode |= CVector.FLAG_TEXTURED;
         if (isSemiTransparent)
             gpuCode |= CVector.FLAG_SEMI_TRANSPARENT;
+        if (enableModulation)
+            gpuCode |= CVector.FLAG_MODULATION;
 
         // Create color.
         CVector loadedColor = CVector.makeColorFromRGB(rgbColor);

@@ -2,16 +2,24 @@ package net.highwayfrogs.editor.games.sony.beastwars.map.mesh;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
+import net.highwayfrogs.editor.games.psx.CVector;
+import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
+import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
+import net.highwayfrogs.editor.games.psx.shading.PSXShadedTextureManager;
+import net.highwayfrogs.editor.games.psx.shading.PSXTextureShader;
 import net.highwayfrogs.editor.games.sony.SCGameObject;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsInstance;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsTexFile;
 import net.highwayfrogs.editor.games.sony.beastwars.map.BeastWarsMapFile;
 import net.highwayfrogs.editor.games.sony.beastwars.map.data.MapTextureInfoEntry;
+import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
+import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapPolygon;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -161,6 +169,13 @@ public class BeastWarsMapVertex extends SCGameObject<BeastWarsInstance> {
     }
 
     /**
+     * Gets shading color as a {@code CVector}.
+     */
+    public CVector getColorVector() {
+        return SCMapPolygon.fromPackedShort(getColor(), PSXPolygonType.POLY_GT4, false, false);
+    }
+
+    /**
      * Sets the raw shading color value between [0, 65535] representing vertex shading color.
      */
     public void setColor(short newColor) {
@@ -210,5 +225,52 @@ public class BeastWarsMapVertex extends SCGameObject<BeastWarsInstance> {
             return BeastWarsMapMesh.PINK_COLOR;
 
         return texFile.getImages().get(textureInfoEntry.getTextureId());
+    }
+
+    private static final SCByteTextureUV[] CONSTANT_UVS = {
+            new SCByteTextureUV((byte) 1, (byte) 254), // 0F, 1F, uvBottomLeft
+            new SCByteTextureUV((byte) 254, (byte) 254), // 1F, 1F, uvBottomRight
+            new SCByteTextureUV((byte) 1, (byte) 1), // 0F, 0F, uvTopLeft
+            new SCByteTextureUV((byte) 254, (byte) 1), // 1F, 0F, uvTopRight
+    };
+
+    /**
+     * Creates a PSX shade definition for the polygon.
+     * @param mesh the mesh to create the shade definition for
+     * @param shadingEnabled if shading is enabled
+     * @return shadeDefinition
+     */
+    public PSXShadeTextureDefinition createPolygonShadeDefinition(BeastWarsMapMesh mesh, boolean shadingEnabled) {
+        // Determine the texture.
+        ITextureSource textureSource = getTextureSource();
+
+        // Clone colors.
+        CVector[] colors = new CVector[4];
+        if (shadingEnabled) {
+            // This may appear to be flipped from the UVs on the Y axis, and it is-- that's because the the top corner is wrong.
+            colors[0] = getColorVector();
+            colors[1] = getMap().getVertex(this.gridX + 1, this.gridZ).getColorVector();
+            colors[2] = getMap().getVertex(this.gridX, this.gridZ + 1).getColorVector();
+            colors[3] = getMap().getVertex(this.gridX + 1, this.gridZ + 1).getColorVector();
+        } else {
+            Arrays.fill(colors, PSXTextureShader.UNSHADED_COLOR);
+        }
+
+        PSXShadedTextureManager<BeastWarsMapVertex> shadedTextureManager = mesh != null ? mesh.getShadedTextureManager() : null;
+        return new PSXShadeTextureDefinition(shadedTextureManager, PSXPolygonType.POLY_GT4, textureSource, colors, CONSTANT_UVS, false);
+    }
+
+    @Override
+    public int hashCode() {
+        return this.map.hashCode() ^ this.gridX ^ (this.gridZ << 16);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof BeastWarsMapVertex))
+            return false;
+
+        BeastWarsMapVertex vertex = (BeastWarsMapVertex) obj;
+        return vertex.map == this.map && vertex.gridX == this.gridX && vertex.gridZ == this.gridZ;
     }
 }

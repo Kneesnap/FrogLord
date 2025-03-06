@@ -110,7 +110,7 @@ public class BeastWarsTexFile extends SCGameFile<BeastWarsInstance> {
         while (reader.getIndex() < paletteDataEndsAt) {
             CVector[] palette = new CVector[PALETTE_COLOR_COUNT];
             for (int i = 0; i < palette.length; i++) // It seems Beast Wars uses the same color encoding as MediEvil 2.
-                palette[i] = SCMapPolygon.fromPackedShort(reader.readShort(), PSXPolygonType.POLY_GT4, false);
+                palette[i] = SCMapPolygon.fromPackedShort(reader.readShort(), PSXPolygonType.POLY_GT4, false, false);
 
             palettes.add(palette);
         }

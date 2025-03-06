@@ -420,4 +420,22 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
     public void exportAlternateFormat() {
         BeastWarsMapObjConverter.exportMapToObj(this);
     }
+
+    /**
+     * Return true iff the map viewer should enable shading by default.
+     */
+    public boolean shouldMapViewerEnableShadingByDefault() {
+        // If there are no textures, don't enable shading!
+        BeastWarsTexFile textureFile = getTextureFile();
+        if (textureFile == null || textureFile.getImages().isEmpty())
+            return false;
+
+        // If the shading is minimum brightness (fully black), don't enable shading.
+        for (int z = 0; z < this.faceColors.length; z++)
+            for (int x = 0; x < this.faceColors.length; x++)
+                if (this.faceColors[z][x] > 0)
+                    return true;
+
+        return false;
+    }
 }

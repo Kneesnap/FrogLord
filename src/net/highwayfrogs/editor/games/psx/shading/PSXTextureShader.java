@@ -193,6 +193,7 @@ public class PSXTextureShader {
         instance.getFirstLayerPixelShadePositions().clear();
         instance.getPixelPosSeen().clear();
         instance.getPixelPosBuffer().clear();
+        boolean modulated = colors[0].testFlag(CVector.FLAG_MODULATION);
         if (colors.length == 3) {
             coordinates[0].loadUV(textureSource, textureUvs[0], textureScaleX, textureScaleY);
             coordinates[1].loadUV(textureSource, textureUvs[1], textureScaleX, textureScaleY);
@@ -201,7 +202,7 @@ public class PSXTextureShader {
 
             // Expand shading, then apply shading to the source image.
             expandShading(targetImage, instance, DEFAULT_SHADING_EXPANSION_LAYERS);
-            applyShadingToSourceImage(originalImage, targetImage);
+            applyShadingToSourceImage(originalImage, targetImage, modulated);
             if (highlightCorners) {
                 targetImage.setRGB(coordinates[0].getX(), coordinates[0].getY(), Color.YELLOW.getRGB());
                 targetImage.setRGB(coordinates[1].getX(), coordinates[1].getY(), Color.GREEN.getRGB());
@@ -231,7 +232,7 @@ public class PSXTextureShader {
 
             // Expand shading, then apply shading to the source image.
             expandShading(targetImage, instance, DEFAULT_SHADING_EXPANSION_LAYERS);
-            applyShadingToSourceImage(originalImage, targetImage);
+            applyShadingToSourceImage(originalImage, targetImage, modulated);
             if (highlightCorners) {
                 targetImage.setRGB(coordinates[0].getX(), coordinates[0].getY(), Color.BLUE.getRGB()); // 3
                 targetImage.setRGB(coordinates[1].getX(), coordinates[1].getY(), Color.RED.getRGB()); // 2
@@ -620,7 +621,7 @@ public class PSXTextureShader {
         return colorsMixed > 0 ? result : null;
     }
 
-    private static void shadeRawPixel(int[] sourceImage, int[] targetImage, int pixelIndex, int shadeColor) {
+    private static void shadeRawPixel(int[] sourceImage, int[] targetImage, int pixelIndex, int shadeColor, boolean modulated) {
         // This function is optimized for performance, since this is performance critical.
         // The big performance killer here was .setRGB(), with the runner up being the color functions in the Utils class.
         // Putting the bit manipulation here seemed to make a huge difference, which is why it was implemented here.
@@ -638,16 +639,25 @@ public class PSXTextureShader {
             int shadeRed = (shadeColor >> 16) & 0xFF;
             int shadeGreen = (shadeColor >> 8) & 0xFF;
             int shadeBlue = shadeColor & 0xFF;
-            byte newRed = (byte) Math.min(255, (shadeRed / 128D) * oldRed);
-            byte newGreen = (byte) Math.min(255, (shadeGreen / 128D) * oldGreen);
-            byte newBlue = (byte) Math.min(255, (shadeBlue / 128D) * oldBlue);
+
+            byte newRed, newGreen, newBlue;
+            if (modulated) {
+                newRed = (byte) Math.min(255, (shadeRed / 128D) * oldRed);
+                newGreen = (byte) Math.min(255, (shadeGreen / 128D) * oldGreen);
+                newBlue = (byte) Math.min(255, (shadeBlue / 128D) * oldBlue);
+            } else {
+                newRed = (byte) ((shadeRed / 255D) * oldRed);
+                newGreen = (byte) ((shadeGreen / 255D) * oldGreen);
+                newBlue = (byte) ((shadeBlue / 255D) * oldBlue);
+            }
+
             targetImage[pixelIndex] = ColorUtils.toARGB(newRed, newGreen, newBlue, alpha);
         } else {
             targetImage[pixelIndex] = shadeColor;
         }
     }
 
-    private static void applyShadingToSourceImage(BufferedImage sourceImage, BufferedImage targetImage) {
+    private static void applyShadingToSourceImage(BufferedImage sourceImage, BufferedImage targetImage, boolean modulated) {
         if (sourceImage == null)
             return;
         if (targetImage == null)
@@ -658,7 +668,7 @@ public class PSXTextureShader {
         int[] rawTargetImage = ImageWorkHorse.getPixelIntegerArray(targetImage);
         int pixelCount = targetImage.getWidth() * targetImage.getHeight();
         for (int i = 0; i < pixelCount; i++)
-            shadeRawPixel(rawSourceImage, rawTargetImage, i, rawTargetImage[i]);
+            shadeRawPixel(rawSourceImage, rawTargetImage, i, rawTargetImage[i], modulated);
     }
 
     /**
@@ -719,7 +729,7 @@ public class PSXTextureShader {
         int[] rawTargetImage = ImageWorkHorse.getPixelIntegerArray(targetImage);
         int pixelCount = targetImage.getWidth() * targetImage.getHeight();
         for (int i = 0; i < pixelCount; i++)
-            shadeRawPixel(rawSourceImage, rawTargetImage, i, colorArgb);
+            shadeRawPixel(rawSourceImage, rawTargetImage, i, colorArgb, true);
 
         return targetImage;
     }

@@ -1,6 +1,8 @@
 package net.highwayfrogs.editor.games.sony.beastwars.map.mesh;
 
+import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.beastwars.map.BeastWarsMapFile;
+import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.gui.texture.Texture;
@@ -11,14 +13,7 @@ import net.highwayfrogs.editor.system.math.Vector2f;
  * Created by Kneesnap on 9/25/2023.
  */
 public class BeastWarsMapMeshNode extends DynamicMeshAdapterNode<BeastWarsMapVertex> {
-
-    // The names of each are correct.
-    private static final Vector2f[] BASE_UV_COORDINATES_BY_INDEX = {
-            Vector2f.UNIT_Y, // 0F, 1F, uvBottomLeft
-            Vector2f.ONE, // 1F, 1F, uvBottomRight
-            Vector2f.ZERO, // 0F, 0F, uvTopLeft
-            Vector2f.UNIT_X, // 1F, 0F, uvTopRight
-    };
+    private final Vector2f tempVector = new Vector2f();
 
     public BeastWarsMapMeshNode(BeastWarsMapMesh mesh) {
         super(mesh);
@@ -48,17 +43,21 @@ public class BeastWarsMapMeshNode extends DynamicMeshAdapterNode<BeastWarsMapVer
     }
 
     @Override
-    protected DynamicMeshTypedDataEntry writeValuesToArrayAndCreateEntry(BeastWarsMapVertex data) {
-        DynamicMeshTypedDataEntry entry = new DynamicMeshTypedDataEntry(getMesh(), data);
-        entry.addVertexValue(data.getWorldX(), data.getWorldY(), data.getWorldZ());
+    protected DynamicMeshTypedDataEntry writeValuesToArrayAndCreateEntry(BeastWarsMapVertex vertex) {
+        DynamicMeshTypedDataEntry entry = new DynamicMeshTypedDataEntry(getMesh(), vertex);
+        entry.addVertexValue(vertex.getWorldX(), vertex.getWorldY(), vertex.getWorldZ());
 
-        if (data.hasTile()) {
-            ITextureSource source = data.getTextureSource();
+        if (vertex.hasTile()) {
+            ITextureSource source = vertex.getTextureSource();
             Texture texture = getMesh().getTextureAtlas().getTextureFromSource(source);
 
-            if (texture != null)
-                for (int i = 0; i < BASE_UV_COORDINATES_BY_INDEX.length; i++)
-                    entry.addTexCoordValue(getMesh().getTextureAtlas().getUV(texture, BASE_UV_COORDINATES_BY_INDEX[i]));
+            if (texture != null) {
+                PSXShadeTextureDefinition shadeDef = getMesh().getShadedTextureManager().getShadedTexture(vertex);
+                Texture shadedTexture = getMesh().getTextureAtlas().getTextureFromSource(shadeDef);
+                SCByteTextureUV[] uvs = shadeDef.getTextureUVs();
+                for (int i = 0; i < uvs.length; i++)
+                    entry.addTexCoordValue(getMesh().getTextureAtlas().getUV(shadedTexture, uvs[i].toVector(this.tempVector)));
+            }
         }
 
         return entry;
@@ -96,9 +95,10 @@ public class BeastWarsMapMeshNode extends DynamicMeshAdapterNode<BeastWarsMapVer
     @Override
     public void updateTexCoord(DynamicMeshTypedDataEntry entry, int localTexCoordIndex) {
         BeastWarsMapVertex vertex = entry.getDataSource();
-        ITextureSource source = vertex.getTextureSource();
-        Texture texture = getMesh().getTextureAtlas().getTextureFromSource(source);
-        Vector2f textureUv = getMesh().getTextureAtlas().getUV(texture, BASE_UV_COORDINATES_BY_INDEX[localTexCoordIndex % BASE_UV_COORDINATES_BY_INDEX.length]);
+        PSXShadeTextureDefinition shadeDef = getMesh().getShadedTextureManager().getShadedTexture(vertex);
+        Texture shadedTexture = getMesh().getTextureAtlas().getTextureFromSource(shadeDef);
+        SCByteTextureUV[] textureUvs = shadeDef.getTextureUVs();
+        Vector2f textureUv = getMesh().getTextureAtlas().getUV(shadedTexture, textureUvs[localTexCoordIndex % textureUvs.length].toVector(this.tempVector), this.tempVector);
         entry.writeTexCoordValue(localTexCoordIndex, textureUv);
     }
 
