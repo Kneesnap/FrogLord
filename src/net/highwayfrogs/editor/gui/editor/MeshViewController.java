@@ -21,6 +21,8 @@ import javafx.scene.shape.MeshView;
 import javafx.stage.Stage;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
+import lombok.Setter;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.psx.shading.IPSXShadedMesh;
 import net.highwayfrogs.editor.gui.GUIMain;
@@ -59,6 +61,9 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     private final GameInstance gameInstance;
     private SubScene subScene;
     private final Map<MeshView, ChangeListener<DrawMode>> meshViewDrawModeListeners = new HashMap<>();
+
+    // Position copied by the user
+    @Setter private SVector copiedPosition;
 
     // Baseline UI components
     @FXML private AnchorPane anchorPaneUIRoot;
@@ -139,6 +144,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         this.gameInstance = instance;
         this.inputManager = new InputManager(instance);
         this.firstPersonCamera = new FirstPersonCamera(this.inputManager);
+        this.copiedPosition = null;
     }
 
     @Override

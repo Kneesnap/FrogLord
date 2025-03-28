@@ -850,7 +850,52 @@ public class GUIEditorGrid {
         vecPane.setHgap(10);
         GridPane.setColumnSpan(vecPane, 2); // Make it take up the full space in the grid it will be added to.
         setupNode(vecPane); // Setup this in the new area.
-        addRow(75);
+        addRow(85);
+
+        GridPane vecPaneExtraButtons = new GridPane();
+        vecPaneExtraButtons.addRow(0);
+
+        // Copy the position so it can be pasted later
+        Button btn = new Button("Copy");
+        btn.setOnMouseClicked(evt -> {
+            if (controller != null) {
+                controller.setCopiedPosition(new SVector(vector.getFloatX(bits), vector.getFloatY(bits), vector.getFloatZ(bits)));
+                onPass.run();
+            }
+        });
+
+        vecPaneExtraButtons.addColumn(0, btn);
+
+        // Paste the position that has been previously copied
+        btn = new Button("Paste");
+        btn.setOnMouseClicked(evt -> {
+            if (controller != null && controller.getCopiedPosition() != null) {
+                SVector copy = controller.getCopiedPosition();
+                vector.setFloatX(copy.getFloatX(), bits);
+                vector.setFloatY(copy.getFloatY(), bits);
+                vector.setFloatZ(copy.getFloatZ(), bits);
+                xField.setText(String.valueOf(vector.getFloatX(bits)));
+                yField.setText(String.valueOf(vector.getFloatY(bits)));
+                zField.setText(String.valueOf(vector.getFloatZ(bits)));
+                onPass.run();
+            }
+        });
+
+        vecPaneExtraButtons.addColumn(1, btn);
+
+        // Relocate the position to whatever polygon is selected
+        btn = new Button("Select");
+        btn.setDisable(true);
+        btn.setOnMouseClicked(evt -> {
+            // TODO: When polygon selection is re-added, add the functionality here as well
+        });
+
+        vecPaneExtraButtons.addColumn(2, btn);
+
+        vecPaneExtraButtons.setHgap(10);
+        GridPane.setColumnSpan(vecPaneExtraButtons, 2); // Make it take up the full space in the grid it will be added to.
+        setupNode(vecPaneExtraButtons); // Setup this in the new area.
+        addRow(35);
     }
 
     /**
@@ -2071,7 +2116,8 @@ public class GUIEditorGrid {
             onChange();
         }));
 
-        slider.setMajorTickUnit((maxValue - minValue) / 4);
+        if (maxValue - minValue > 0)
+            slider.setMajorTickUnit((maxValue - minValue) / 4);
         slider.setShowTickLabels(true);
         slider.setShowTickMarks(true);
         slider.setMinorTickCount(0);
