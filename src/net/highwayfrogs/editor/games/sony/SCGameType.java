@@ -18,6 +18,7 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerConfig;
 import net.highwayfrogs.editor.gui.GameConfigController;
 import net.highwayfrogs.editor.gui.GameConfigController.GameConfigUIController;
+import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.FileOpenBrowseComponent.GameConfigFileOpenBrowseComponent;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.Config;
@@ -108,6 +109,19 @@ public enum SCGameType implements IGameType {
         if (otherType == null)
             throw new RuntimeException("Cannot compare to null game type.");
         return ordinal() > otherType.ordinal();
+    }
+
+    @Override
+    public ImageResource getFrogLordLogo() {
+        switch (this) {
+            case BEAST_WARS:
+                return ImageResource.FROGLORD_LOGO_GAME_BEASTWARS_LARGE;
+            case MEDIEVIL:
+            case MEDIEVIL2:
+                return ImageResource.FROGLORD_LOGO_GAME_MEDIEVIL_LARGE;
+            default:
+                return null;
+        }
     }
 
     @Override

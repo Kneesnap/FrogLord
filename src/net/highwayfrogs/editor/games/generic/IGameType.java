@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.generic;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.gui.GameConfigController;
 import net.highwayfrogs.editor.gui.GameConfigController.GameConfigUIController;
+import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.FileUtils;
@@ -61,6 +62,13 @@ public interface IGameType {
      * @param config the config used to load data
      */
     GameConfigUIController setupConfigUI(GameConfigController controller, GameConfig gameConfig, Config config);
+
+    /**
+     * Gets the FrogLord logo associated with this game type.
+     */
+    default ImageResource getFrogLordLogo() {
+        return ImageResource.FROGLORD_LOGO_MAIN_LARGE;
+    }
 
     /**
      * Gets an InputStream to files included for this specific game.

@@ -11,6 +11,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
@@ -43,6 +44,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
     private final Config unknownGameConfig = new Config("$UnknownGameConfig");
     private GameConfigUIController activeConfigController;
     private String selectedVersionConfigName;
+    @FXML private ImageView frogLordGameLogoView;
     @FXML private ComboBox<IGameType> gameTypeComboBox;
     @FXML private ComboBox<GameConfig> gameVersionComboBox;
     @FXML private VBox topBox;
@@ -252,6 +254,13 @@ public class GameConfigController extends GameUIController<GameInstance> {
                 uiController.updateLoadButton();
             }
         }
+
+        // Set the per-game logo.
+        ImageResource frogLordPerGameLogo = gameType != null ? gameType.getFrogLordLogo() : null;
+        if (frogLordPerGameLogo == null)
+            frogLordPerGameLogo = ImageResource.FROGLORD_LOGO_MAIN_LARGE;
+
+        this.frogLordGameLogoView.setImage(frogLordPerGameLogo.getFxImage());
     }
 
     private void addHelpText(List<String> helpText) {
