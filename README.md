@@ -46,29 +46,6 @@ Yes! Pull requests are welcome.
 **Building:**
 1. ``Build > Build Artifacts... > FrogLord > Build``
 
-### Using Maven
-
-**Requirements:**
-1. Maven:
-    - Download the latest version of [maven](https://maven.apache.org/download.cgi)
-    - Follow the [installation guide](https://maven.apache.org/install.html)
-2. Java JDK:
-    - Make an Oracle account (Unfortunately required for the next step)
-    - Download Java 8 [Java Development Kit](https://www.oracle.com/java/technologies/javase/javase8u211-later-archive-downloads.html)
-    - If you downloaded a bin file run that, otherwise install according to the instructions
-
-**Setup:**
-1. ``git clone https://github.com/Kneesnap/FrogLord.git``
-2. ``cd FrogLord``
-3. ``mvn compile`` - Verify code compiles
-
-**Building:**
-1. ``mvn package``
-
-**Running:**
-1. ``java -jar target/editor-{version}-jar-with-dependencies.jar`` 
-    * `{version}` is the current release
-
 ## Special Thanks:
  - Andy Eder (Frogger 2 Programmer, Significant FrogLord contributor)
  - Mysteli (Highway Frogs Creator, Documented demo replay file format)
