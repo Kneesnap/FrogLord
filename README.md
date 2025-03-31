@@ -19,15 +19,18 @@ Need help? Want to find/share mods? Talk with other Frogger fans? Join our [disc
 ![MOF Viewer](/_repository/model-screenshot.png)
 
 ## Supported Games
-| Name                     | # of Supported Builds | Support Notes                  |
-|--------------------------|-----------------------|--------------------------------|
-| Beast Wars: Transformers | PC: 1, PSX: 1         | Support WIP.                   |
-| C-12 Final Resistance    | PSX: 16               | Support WIP.                   |
-| Frogger He's Back        | PC: 6, PSX: 67        | Map editing not yet finalized. |
-| Frogger: The Great Quest | PC: 1, PS2: 3         | Support WIP.                   |
-| MediEvil                 | PSX: 38               | Support WIP.                   |
-| MediEvil II              | PSX: 16               | Support WIP.                   |
-| Moon Warrior             | PSX: 1                | Support WIP.                   |
+| Name                     | # of Supported Builds         | Support Notes                                 |
+|--------------------------|-------------------------------|-----------------------------------------------|
+| Beast Wars: Transformers | PC: 2, PSX: 4                 | All game data viewable, only some editable.   |
+| C-12 Final Resistance    | PSX: 16                       | View/edit most game data. Saving is untested. |
+| Frogger He's Back        | PC: 8, PSX: 67                | Custom levels can be/have been created.       |
+| Frogger: The Great Quest | PC: 1, PS2: 3                 | Almost full support. (Cannot import 3D mesh)  |
+| Frogger Beyond           | GC: 3, PC: 1, PS2: 2, Xbox: 1 | Extremely rudimentary viewer, no modding yet. |
+| Frogger Rescue           | GC: 1, PC: 1, PS2: 3          | Extremely rudimentary viewer, no modding yet. |
+| Frogger Ancient Shadow   | GC: 1, PC: 1, PS2: 1, Xbox: 1 | Extremely rudimentary viewer, no modding yet. |
+| MediEvil                 | PSX: 38                       | View/edit most game data. Saving is untested. |
+| MediEvil II              | PSX: 16                       | View/edit most game data. Saving is untested. |
+| Moon Warrior             | PSX: 1                        | View/edit most game data. Saving is untested. |
 
 ## Can I Contribute?
 Yes! Pull requests are welcome.  
