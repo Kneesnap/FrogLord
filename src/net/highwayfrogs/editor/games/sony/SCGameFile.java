@@ -153,7 +153,7 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
      * Ask the user to provide a file they'd like to replace the selected file with, then imports it if valid.
      */
     public void askUserToImportFile() {
-        File inputFile = FileUtils.askUserToSaveFile(getGameInstance(), SINGLE_FILE_IMPORT_PATH, getFileDisplayName(), true);
+        File inputFile = FileUtils.askUserToOpenFile(getGameInstance(), SINGLE_FILE_IMPORT_PATH);
         if (inputFile == null)
             return;
 
