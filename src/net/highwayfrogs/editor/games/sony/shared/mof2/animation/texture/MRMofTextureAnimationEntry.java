@@ -18,7 +18,7 @@ import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 @AllArgsConstructor
 public class MRMofTextureAnimationEntry implements IBinarySerializable {
     private short globalImageId; // Within .TXL, resolved to global image ID.
-    private int duration; // The number of game cycles (frames) which the texture will be shown for.
+    private int duration = 1; // The number of game cycles (frames) which the texture will be shown for.
 
     @Override
     public void load(DataReader reader) {

@@ -28,6 +28,7 @@ import java.util.List;
 
 /**
  * Represents the contents of an animated MOF file.
+ * We usually call these "XAR files" or "XAR mofs" because in reality, "animated mofs" implies that the static mofs can't have animations, which is untrue.
  * TODO: Go through and add IPropertyList generators.
  * TODO: Go through and add javadoc header comments.
  * TODO: I'd like to buff the MOF viewer to allow previewing all of the things in this file format.
@@ -274,7 +275,7 @@ public class MRAnimatedMof extends MRBaseModelData {
     public String generateSignature() {
         String firstChar;
         // Current behavior works with MediEvil ECTS. May want to reorganize if it doesn't work with Beast Wars or other.
-        if (getGameInstance().isFrogger() && ((FroggerConfig) getConfig()).isAtOrBeforeBuild20()) { // "start at frame zero" didn't exist before here.
+        if (getGameInstance().isFrogger() && ((FroggerConfig) getConfig()).isAtOrBeforeBuild20()) { // "start at frame zero" didn't exist before API version 1.32.
             firstChar = "\0";
         } else if (isStartAtFrameZero()) {
             firstChar = "1";

@@ -1886,6 +1886,7 @@ public class GUIEditorGrid {
      */
     public void addRotationMatrix(PSXMatrix matrix, Runnable onUpdate) {
         addNormalLabel("Rotation:");
+        // TODO: GLOBUS REALLY WANTS THESE TO SHOW RAW VALUES.
 
         Runnable[] updateHook = new Runnable[1];
         Slider pitchUI = addDoubleSlider("Pitch (X)", matrix.getPitchAngle(), pitch -> {

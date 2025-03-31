@@ -912,7 +912,7 @@ public class MRMofPart extends SCSharedGameData {
     public boolean doesVersionFormatHaveExtraZeroBeforePolygonData() {
         if (getGameInstance().isFrogger()) {
             FroggerConfig config = (FroggerConfig) getConfig();
-            return config.isAtOrBeforeBuild1();
+            return config.isAtOrBeforeBuild1(); // Doesn't seem related to MR API version, but it might be, since it jumps from 1.11a to 1.30 after this.
         } else {
             // Despite Frogger not having this beyond Build 1, Beast Wars seems to have this even in the retail version.
             return getGameInstance().getGameType().isAtOrBefore(SCGameType.BEAST_WARS);

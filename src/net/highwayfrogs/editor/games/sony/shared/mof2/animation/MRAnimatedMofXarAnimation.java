@@ -247,7 +247,7 @@ public class MRAnimatedMofXarAnimation extends SCSharedGameData {
     public boolean doesVersionFormatZeroFlags() {
         if (getGameInstance().isFrogger()) {
             FroggerConfig config = (FroggerConfig) getConfig();
-            return !config.isAtOrBeforeBuild4();
+            return !config.isAtOrBeforeBuild4(); // Not linked to the MR API version.
         } else {
             // Flags do appear to be zero'd in pre-recode Frogger.
             return getGameInstance().getGameType().isBefore(SCGameType.FROGGER);

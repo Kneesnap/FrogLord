@@ -200,7 +200,7 @@ public class MRStaticMof extends MRBaseModelData {
     public static boolean canVersionFormatHaveNullSignature(SCGameInstance gameInstance) {
         if (gameInstance.isFrogger()) {
             FroggerConfig config = (FroggerConfig) gameInstance.getVersionConfig();
-            return config.isAtOrBeforeBuild1();
+            return config.isAtOrBeforeBuild1(); // MR API version 1.30. (Build 1 is the last still using 1.11a, upgrading directly to 1.30)
         } else {
             return gameInstance.getGameType().isBefore(SCGameType.FROGGER);
         }
