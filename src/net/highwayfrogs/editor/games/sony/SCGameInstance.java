@@ -127,6 +127,11 @@ public abstract class SCGameInstance extends GameInstance {
     }
 
     @Override
+    public boolean isShowSaveWarning() {
+        return getGameType() == null || getGameType().isShowSaveWarning();
+    }
+
+    @Override
     public SCGameType getGameType() {
         return (SCGameType) super.getGameType();
     }

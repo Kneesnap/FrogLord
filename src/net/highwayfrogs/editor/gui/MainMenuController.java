@@ -185,6 +185,13 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
             return;
         }
 
+        if (getGameInstance().isShowSaveWarning()) {
+            boolean saveAnyways = FXUtils.makePopUpYesNo("Saving files for " + getGameInstance().getGameType().getDisplayName() + " is not officially supported yet.\n"
+                    + "It is likely the game will crash if the modified files are used. Would you like to continue?");
+            if (!saveAnyways)
+                return;
+        }
+
         try {
             saveMainGameData();
         } catch (Throwable th) {

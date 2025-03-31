@@ -333,6 +333,11 @@ public class GreatQuestInstance extends GameInstance {
         }
     }
 
+    @Override
+    public boolean isShowSaveWarning() {
+        return false;
+    }
+
     /**
      * Gets the full sound file path for the given sound ID.
      * @param soundId the sound ID to resolve.

@@ -20,7 +20,6 @@ import java.util.Map;
 
 /**
  * Represents an instance of a game. For example, a folder containing the files for a single version of a game.
- *  TODO: I think there's some kind of caching bug with shading. It happened on "Time Device", where none of the shading in the world was right. Then, after I toggled shading off/on, it was fine. I suspect there's probably some tracking issue then.
  * Created by Kneesnap on 4/10/2024.
  */
 public abstract class GameInstance implements IGameInstance {
@@ -111,6 +110,11 @@ public abstract class GameInstance implements IGameInstance {
      * @return gameFolder
      */
     public abstract File getMainGameFolder();
+
+    /**
+     * If true, a warning will be displayed when an attempt is made to save the game that saving the game is not fully supported.
+     */
+    public abstract boolean isShowSaveWarning();
 
     /**
      * Loads the game configuration from the provided config.

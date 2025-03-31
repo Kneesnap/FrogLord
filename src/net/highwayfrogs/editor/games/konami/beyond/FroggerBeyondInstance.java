@@ -44,4 +44,9 @@ public class FroggerBeyondInstance extends BasicGameInstance {
             return new FroggerBeyondDummyFile(fileDefinition);
         }
     }
+
+    @Override
+    public boolean isShowSaveWarning() {
+        return true;
+    }
 }
