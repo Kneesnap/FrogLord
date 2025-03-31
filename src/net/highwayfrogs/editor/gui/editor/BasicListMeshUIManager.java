@@ -268,8 +268,11 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
      * Updates the visibility state of all values to what the UI says they should be.
      */
     public void updateValueVisibility() {
-        for (TValue value : getValues())
-            setVisible(value, getDelegatesByValue().get(value), isValueVisibleByUI(value));
+        for (TValue value : getValues()) {
+            T3DDelegate delegate = this.delegatesByValue.get(value);
+            if (delegate != null)
+                setVisible(value, delegate, isValueVisibleByUI(value));
+        }
     }
 
     /**

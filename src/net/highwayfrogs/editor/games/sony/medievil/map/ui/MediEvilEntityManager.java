@@ -1,7 +1,10 @@
 package net.highwayfrogs.editor.games.sony.medievil.map.ui;
 
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.*;
+import javafx.scene.shape.CullFace;
+import javafx.scene.shape.DrawMode;
+import javafx.scene.shape.MeshView;
+import javafx.scene.shape.TriangleMesh;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Transform;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
@@ -16,6 +19,7 @@ import net.highwayfrogs.editor.games.sony.medievil.map.ui.MediEvilMapUIManager.M
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -105,10 +109,7 @@ public class MediEvilEntityManager extends MediEvilMapListManager<MediEvilMapEnt
         PhongMaterial material = FroggerUIMapEntityManager.ENTITY_PLACEHOLDER_SPRITE_MATERIAL;
 
         // NOTE: Maybe this could be a single tri mesh, local to this manager, and we just update its points in updateEntities().
-        TriangleMesh triMesh = new TriangleMesh(VertexFormat.POINT_TEXCOORD);
-        triMesh.getPoints().addAll(-entityIconSize * 0.5f, entityIconSize * 0.5f, 0, -entityIconSize * 0.5f, -entityIconSize * 0.5f, 0, entityIconSize * 0.5f, -entityIconSize * 0.5f, 0, entityIconSize * 0.5f, entityIconSize * 0.5f, 0);
-        triMesh.getTexCoords().addAll(0, 1, 0, 0, 1, 0, 1, 1);
-        triMesh.getFaces().addAll(0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 0, 0);
+        TriangleMesh triMesh = Scene3DUtils.createSpriteMesh(entityIconSize);
 
         // Update mesh.
         entityMesh.setMesh(triMesh);
@@ -165,7 +166,6 @@ public class MediEvilEntityManager extends MediEvilMapListManager<MediEvilMapEnt
         entityMeshView.setTranslateY(DataUtils.fixedPointIntToFloat4Bit(position.getY()));
         entityMeshView.setTranslateZ(DataUtils.fixedPointIntToFloat4Bit(position.getZ()));
     }
-
 
     @Override
     protected void updateEditor(MediEvilMapEntity entity) {

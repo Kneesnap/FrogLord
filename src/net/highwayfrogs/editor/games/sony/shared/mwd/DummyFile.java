@@ -9,6 +9,8 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.gui.DefaultFileUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.DataSizeUnit;
 
 import java.nio.ByteBuffer;
 
@@ -52,5 +54,12 @@ public class DummyFile extends SCSharedGameFile {
     @Override
     public GameUIController<?> makeEditorUI() {
         return DefaultFileUIController.loadEditor(getGameInstance(), new DefaultFileUIController<>(getGameInstance(), "Unsupported File Type", getCollectionViewIcon()), this);
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        propertyList.add("Size", DataSizeUnit.formatSize(this.length) + " (" + this.length + " bytes)");
+        return propertyList;
     }
 }

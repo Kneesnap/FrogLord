@@ -34,6 +34,7 @@ public class BeastWarsMapMeshController extends MeshViewController<BeastWarsMapM
     protected void setupManagers() {
         addManager(new BeastWarsCollprimManager(this));
         addManager(new BeastWarsLineManager(this));
+        addManager(new BeastWarsObjectManager(this));
         addManager(new BeastWarsZoneManager(this));
         // TODO
     }

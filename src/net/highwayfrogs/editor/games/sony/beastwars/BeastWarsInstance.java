@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.games.sony.beastwars;
 
+import lombok.Getter;
+import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
@@ -12,18 +14,21 @@ import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewCom
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
 import net.highwayfrogs.editor.utils.DataUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Represents a loaded instance of the Beast Wars: Transformers game files.
  * TODO: Many animated mofs have broken animations.
- * TODO: SFX on PC plays very poorly. PSX is fine.
- * TODO: .BPP, .DAT
- * TODO: PSX .TEX files need some work.
- * TODO: May be a level select in the PC version, also there are potentially names for the unknown map file names.
- * TODO: .PLT files cannot be viewed.
+ * TODO: .DAT
  * TODO: Collprims need finished preview in MOF editor + MAP Editor.
+ * TODO: Light UI manager.
  * Created by Kneesnap on 9/8/2023.
  */
+@Getter
 public class BeastWarsInstance extends SCGameInstance {
+    private final List<Integer> modelRemaps = new ArrayList<>();
+
     public static final int FILE_TYPE_STD = 0;
     public static final int FILE_TYPE_VLO = 1;
     public static final int FILE_TYPE_MOF = 3;
@@ -34,6 +39,11 @@ public class BeastWarsInstance extends SCGameInstance {
 
     public BeastWarsInstance() {
         super(SCGameType.BEAST_WARS);
+    }
+
+    @Override
+    public BeastWarsConfig getVersionConfig() {
+        return (BeastWarsConfig) super.getVersionConfig();
     }
 
     @Override
@@ -51,6 +61,14 @@ public class BeastWarsInstance extends SCGameInstance {
     }
 
     @Override
+    protected void onConfigLoad(Config configObj) {
+        super.onConfigLoad(configObj);
+
+        DataReader exeReader = getExecutableReader();
+        readModelRemaps(exeReader);
+    }
+
+    @Override
     protected void setupTextureRemaps(DataReader exeReader, MillenniumWadIndex wadIndex) {
         // This game does not appear to contain texture remap data.
     }
@@ -63,5 +81,15 @@ public class BeastWarsInstance extends SCGameInstance {
         fileListView.addGroup(new SCGameFileListTypeIdGroup("Map Texture", FILE_TYPE_TEX));
         fileListView.addGroup(new SCGameFileListTypeIdGroup("TIM [PSX Image]", FILE_TYPE_TIM));
         fileListView.addGroup(new SCGameFileListTypeIdGroup("PLT [Palette]", FILE_TYPE_PLT));
+    }
+
+    private void readModelRemaps(DataReader reader) {
+        this.modelRemaps.clear();
+        if (getVersionConfig().getModelRemapTablePointer() <= 0 || getVersionConfig().getModelRemapTableLength() <= 0)
+            return;
+
+        reader.setIndex(getVersionConfig().getModelRemapTablePointer());
+        for (int i = 0; i < getVersionConfig().getModelRemapTableLength(); i++)
+            this.modelRemaps.add(reader.readInt());
     }
 }

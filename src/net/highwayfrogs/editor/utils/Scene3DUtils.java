@@ -588,16 +588,33 @@ public class Scene3DUtils {
     }
 
     /**
-     * Creates a TriangleMesh (square, vertically aligned), often display a 2D sprite.
+     * Creates a TriangleMesh (square, vertically aligned) to display a 2D sprite.
      * @param spriteSize the size of the sprite
      */
     public static TriangleMesh createSpriteMesh(float spriteSize) {
         // NOTE: Maybe this could be a single tri mesh, local to this manager, and we just update its points in updateEntities().
         TriangleMesh triMesh = new TriangleMesh(VertexFormat.POINT_TEXCOORD);
-        triMesh.getPoints().addAll(-spriteSize * 0.5f, spriteSize * 0.5f, 0, -spriteSize * 0.5f, -spriteSize * 0.5f, 0, spriteSize * 0.5f, -spriteSize * 0.5f, 0, spriteSize * 0.5f, spriteSize * 0.5f, 0);
-        triMesh.getTexCoords().addAll(0, 1, 0, 0, 1, 0, 1, 1);
-        triMesh.getFaces().addAll(0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 0, 0);
-        return triMesh;
+        return applySpriteMeshData(triMesh, spriteSize);
+    }
+
+    /**
+     * Configures a TriangleMesh (square, vertically aligned) to display a 2D sprite.
+     * @param triangleMesh the mesh to configure
+     * @param spriteSize the size of the sprite
+     */
+    public static TriangleMesh applySpriteMeshData(TriangleMesh triangleMesh, float spriteSize) {
+        if (triangleMesh == null)
+            throw new NullPointerException("triangleMesh");
+        if (!Float.isFinite(spriteSize) || spriteSize <= 0)
+            throw new IllegalArgumentException("Invalid spriteSize: " + spriteSize);
+        if (triangleMesh.getVertexFormat() != VertexFormat.POINT_TEXCOORD)
+            throw new RuntimeException("The give vertex format is not currently supported!");
+
+        // NOTE: Maybe this could be a single tri mesh, local to this manager, and we just update its points in updateEntities().
+        triangleMesh.getPoints().setAll(-spriteSize * 0.5f, spriteSize * 0.5f, 0, -spriteSize * 0.5f, -spriteSize * 0.5f, 0, spriteSize * 0.5f, -spriteSize * 0.5f, 0, spriteSize * 0.5f, spriteSize * 0.5f, 0);
+        triangleMesh.getTexCoords().setAll(0, 1, 0, 0, 1, 0, 1, 1);
+        triangleMesh.getFaces().setAll(0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 0, 0);
+        return triangleMesh;
     }
 
     /**
