@@ -4,6 +4,7 @@ import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsInstance;
@@ -35,18 +36,21 @@ import java.util.List;
  * It appears every map tile's world position is similar to Frogger. In other words, 1.0 in fixed point is (1 << 8), and getting the grid position is (worldPos >> 8).
  * Data which probably is in the level but we don't know where:
  * - Player Start Pos (Object Pos?)
- * - Shading (FCOL?)
- * - Trigger zones? Information about where on the map your energon meter is drained. These are probably ZONE, but not sure.
+ * - Trigger zones? Information about where on the map your energon meter is drained. These are probably ZONE or tile flags, but not sure.
  * TODO: Ready:
  * - Splines
  * - Zones
  * - Texture Info Entries
  * - Grid Editing
+ * - Light
  * Not Ready:
  * - Objects
- * - Light
  * -
- * TODO: Adapt to match the SCChunkedFile<> utility.
+ * TODO: Create data editors.
+ * TODO: Allow saving. (Adapt to match the SCChunkedFile<> utility?)
+ * TODO: Shading is slightly off. For example, the energon shading in the first maximal level looks blueish in-game on the crystals, but redish in FrogLord.
+ *  -> The red walls look right though.
+ *  -> Also, there are some green mess ups. I wonder if we need to be giving an extra green bit.
  * Created by Kneesnap on 9/12/2023.
  */
 @Getter
@@ -55,7 +59,7 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
     private short heightMapZLength = 64;
     private short worldHeightScale = 4;
     private int unknownInfoValue1 = 8;
-    private short unknownInfoValue2 = 2;
+    private short unknownInfoValue2 = 2; // Seems to be zero for unused maps, or rather maps with empty data for most things.
     private short[][] heightMap;
     private short[][] tileMap;
     private short[][] faceColors;
@@ -65,20 +69,22 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
     private final List<BeastWarsMapLine> lines = new ArrayList<>();
     private final List<BeastWarsMapSpline> splines = new ArrayList<>();
     private final List<BeastWarsMapObject> objects = new ArrayList<>();
+    private final BeastWarsMapLight[] lights;
 
     private WeakReference<BeastWarsTexFile> cachedTextureFile;
 
     // Unsaved data.
     private final transient BeastWarsMapVertex[][] verticeWrappers = new BeastWarsMapVertex[MAXIMUM_MAP_DIMENSION][MAXIMUM_MAP_DIMENSION];
-    private byte[] rawData; // TODO: TOSS
 
     public static final short TEXTURE_ID_NO_TEXTURE = 0xFF;
 
     // There is a maximum of 0x4000 bytes (16Kb) of data allocated for the grids like the tile map or height map.
-    // Additionally the game will chop off the 7th bit (anything allowing data > 128) when reading the data.
+    // Additionally, the game will chop off the 7th bit (anything allowing data > 128) when reading the data.
     // So, while in terms of memory it could hold a 64x256 map, the game could itself wouldn't operate correctly.
     // As such, both dimensions are always limited to a maximum size of 128.
     public static final int MAXIMUM_MAP_DIMENSION = 128;
+
+    public static final int LIGHT_COUNT = 4;
 
     private static final int SIGNATURE_MAIN = 0x304D5742; // 'BMW0' - Empty Section -- Marks the start of a map file.
     private static final int SIGNATURE_INFO = 0x4F464E49; // 'INFO'
@@ -100,6 +106,9 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
 
     public BeastWarsMapFile(BeastWarsInstance instance) {
         super(instance);
+        this.lights = new BeastWarsMapLight[LIGHT_COUNT];
+        for (int i = 0; i < this.lights.length; i++)
+            this.lights[i] = new BeastWarsMapLight(instance);
     }
 
     /**
@@ -156,10 +165,6 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
 
     @Override
     public void load(DataReader reader) {
-        reader.jumpTemp(reader.getIndex());
-        this.rawData = reader.readBytes(reader.getRemaining());
-        reader.jumpReturn();
-
         while (reader.hasMore()) {
             int signature = reader.readInt();
             int size = reader.readInt();
@@ -193,6 +198,8 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
                 readEmptySection(signature, size);
             } else if (signature == SIGNATURE_COLP) { // 'COLP' - Collision Primitives
                 readCollisionPrimitives(reader, size);
+            } else if (signature == SIGNATURE_LIGHTS) {
+                readLights(reader, size);
             } else {
                 getLogger().warning("Skipping unsupported section '" + Utils.toIdentifierString(signature) + "' (" + size + " bytes).");
                 reader.skipBytes(size);
@@ -208,7 +215,7 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeBytes(this.rawData); // TODO: TOSS
+        writer.writeBytes(getRawFileData()); // TODO: TOSS
 
         // TODO: Implement
         // TODO: Don't forget to align to 4 byte intervals after writing a section!
@@ -369,7 +376,17 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
     }
 
     private void readLights(DataReader reader, int size) {
-        // TODO: Doesn't start with a count.
+        if (size != BeastWarsMapLight.SIZE_IN_BYTES * this.lights.length)
+            throw new RuntimeException("Unexpected size value for light section: " + size);
+
+        for (int i = 0; i < this.lights.length; i++)
+            this.lights[i].load(reader);
+
+        // The game does NOT copy the direction from the first light, which I think forces it to be an ambient light source.
+        SVector firstLightDirection = this.lights[0].getDirection();
+        if (firstLightDirection.getX() != 0 || firstLightDirection.getY() != 0 || firstLightDirection.getZ() != 0 || firstLightDirection.getPadding() != 0)
+            getLogger().warning("Expected the direction of the first light to be zeroed, but it wasn't! (%d, %d, %d, %d)",
+                    firstLightDirection.getX(), firstLightDirection.getY(), firstLightDirection.getZ(), firstLightDirection.getPadding());
     }
 
     @Override
@@ -407,12 +424,19 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
         for (int i = 0; i < this.zones.size(); i++)
             regionCount += this.zones.get(i).getRegions().size();
 
+        // Active light count.
+        int lightCount = 0;
+        for (int i = 0; i < this.lights.length; i++)
+            if (this.lights[i].isActive())
+                lightCount++;
+
         propertyList.add("Textures", activeTextureCount);
         propertyList.add("Collision Primitives", this.collprims.size());
         propertyList.add("Zones", this.zones.size() + " (" + regionCount + " Regions)");
         propertyList.add("Lines", this.lines.size());
         propertyList.add("Splines", this.splines.size());
-
+        propertyList.add("Objects", this.objects.size());
+        propertyList.add("Lights", lightCount);
         return propertyList;
     }
 
