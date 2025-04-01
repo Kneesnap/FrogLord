@@ -113,6 +113,15 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
     }
 
     /**
+     * Clears the contents of all grid squares.
+     */
+    public void clear() {
+        for (int z = 0; z < this.gridZCount; z++)
+            for (int x = 0; x < this.gridXCount; x++)
+                this.gridStacks[z][x].clear();
+    }
+
+    /**
      * Gets the grid square/rectangle X size as a floating point number.
      */
     public float getGridXSizeAsFloat() {
@@ -129,7 +138,7 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
     /**
      * Gets the x world origin position for the collision grid.
      * Fixed point 4 bits.
-     * TODO: Is this based on the group position? If so, I believe this implies the grid size is automatically calculated? Seems odd.
+     * TODO: Is this based on the group position? If so, I believe this implies the grid size is automatically calculated? Seems odd. Actually, it could be the other way around that the group size is calculated based on the grid.
      * @return baseGridX
      */
     public short getBaseGridX() {

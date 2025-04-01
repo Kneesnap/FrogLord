@@ -127,4 +127,28 @@ public class FroggerMapFilePacketPath extends FroggerMapFilePacket {
             }
         }
     }
+
+    /**
+     * Recalculate the list of entities corresponding to each path.
+     */
+    public void recalculateAllPathEntityLists() {
+        for (int i = 0; i < this.paths.size(); i++)
+            this.paths.get(i).getPathEntities().clear();
+
+        List<FroggerMapEntity> mapEntities = getParentFile().getEntityPacket().getEntities();
+        for (int i = 0; i < mapEntities.size(); i++) {
+            FroggerMapEntity entity = mapEntities.get(i);
+            FroggerPathInfo pathState = entity.getPathInfo();
+            if (pathState == null)
+                continue; // Entity has no pathing info.
+
+            int pathIndex = pathState.getPathId();
+            if (pathIndex < 0 || pathIndex >= this.paths.size()) {
+                entity.getLogger().warning("The attached path index of %d is invalid!", pathIndex);
+                continue;
+            }
+
+            this.paths.get(pathIndex).getPathEntities().add(entity);
+        }
+    }
 }

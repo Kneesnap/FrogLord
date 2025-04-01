@@ -109,6 +109,14 @@ public class FroggerGridStack extends SCGameObject<FroggerGameInstance> {
     }
 
     /**
+     * Clear all information about the square.
+     */
+    public void clear() {
+        this.gridSquares.clear();
+        this.averageHeight = 0;
+    }
+
+    /**
      * Gets the average world height.
      * This is used to prevent the player from walking into a cliff higher than their current position.
      * An example of this behavior is seen in Lily Islands (SUB1) at the bird pickup spot to the purple frog.

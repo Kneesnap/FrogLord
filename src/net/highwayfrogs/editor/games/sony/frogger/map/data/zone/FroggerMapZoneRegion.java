@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.zone;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
@@ -17,6 +18,8 @@ import java.util.function.BiConsumer;
  */
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class FroggerMapZoneRegion extends GameObject {
     private short xMin;
     private short zMin;

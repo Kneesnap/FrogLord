@@ -193,7 +193,8 @@ public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
      * Generate a new map groups array.
      * TODO: Look at how we can make this match the file contents perfectly.
      */
-    public  FroggerMapGroup[][] generateMapGroups() {
+    public FroggerMapGroup[][] generateMapGroups() {
+        this.invisibleMapGroup.clear();
         FroggerMapGroup[][] newMapGroups = new FroggerMapGroup[this.groupZSize][this.groupXCount];
         for (int z = 0; z < this.groupZCount; z++)
             for (int x = 0; x < this.groupXCount; x++)
@@ -202,7 +203,6 @@ public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
         List<SVector> vertices = getParentFile().getVertexPacket().getVertices();
         for (FroggerMapPolygon polygon : getParentFile().getPolygonPacket().getPolygons()) {
             if (!polygon.isVisible()) {
-                // TODO: Clear this group before starting.
                 this.invisibleMapGroup.getPolygonsByType()[polygon.getPolygonType().ordinal()].add(polygon);
                 continue;
             }
@@ -213,7 +213,7 @@ public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
             newMapGroups[groupZ][groupX].getPolygonsByType()[polygon.getPolygonType().ordinal()].add(polygon);
         }
 
-        return newMapGroups;
+        return this.mapGroups = newMapGroups;
     }
 
     /**

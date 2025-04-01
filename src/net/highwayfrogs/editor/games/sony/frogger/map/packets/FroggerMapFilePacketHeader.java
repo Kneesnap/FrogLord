@@ -6,13 +6,15 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 
+import java.nio.charset.StandardCharsets;
+
 /**
  * Represents the header packet for a Frogger map.
  * Created by Kneesnap on 5/25/2024.
  */
 @Getter
 public class FroggerMapFilePacketHeader extends FroggerMapFilePacket {
-    private String comment;
+    private String comment = DEFAULT_COMMENT;
     private int generalPacketAddress;
     private int graphicalPacketAddress;
     private int formPacketAddress;
@@ -22,7 +24,7 @@ public class FroggerMapFilePacketHeader extends FroggerMapFilePacket {
 
     public static final String IDENTIFIER = "FROG";
     private static final String VERSION = "2.00";
-    private static final String COMMENT = "Maybe this time it'll all work fine...";
+    private static final String DEFAULT_COMMENT = "Maybe this time it'll all work fine...";
     private static final int COMMENT_BYTES = 64;
 
 
@@ -94,5 +96,20 @@ public class FroggerMapFilePacketHeader extends FroggerMapFilePacket {
     public PropertyList addToPropertyList(PropertyList propertyList) {
         propertyList.add("Comment", this.comment);
         return propertyList;
+    }
+
+    /**
+     * Set the map comment
+     * @param newComment the comment to apply
+     */
+    public void setComment(String newComment) {
+        if (newComment == null)
+            throw new NullPointerException("newComment");
+
+        int commentByteLength = this.comment.getBytes(StandardCharsets.US_ASCII).length;
+        if (commentByteLength > COMMENT_BYTES)
+            throw new IllegalArgumentException("The provided comment was too large! (" + commentByteLength + " bytes is greater than the allowed " + COMMENT_BYTES + ".)");
+
+        this.comment = newComment;
     }
 }

@@ -80,6 +80,14 @@ public class FroggerMapGroup extends SCGameData<FroggerGameInstance> {
     }
 
     /**
+     * Clears the contents of the map group.
+     */
+    public void clear() {
+        for (int i = 0; i < this.polygonsByType.length; i++)
+            this.polygonsByType[i].clear();
+    }
+
+    /**
      * Reads the entity list from the current position.
      * @param reader the reader to read it from
      */

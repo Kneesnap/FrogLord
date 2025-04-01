@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -30,7 +31,7 @@ import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 public class FroggerMapLight extends SCGameData<FroggerGameInstance> {
     @Getter private final FroggerMapFile mapFile;
     private int parentId; // I believe this value was originally intended for use outside of LIGHT_TYPE_STATIC, for example, specifying which entity the light is attached to. However, this value seems to be complete garbage (unallocated data?) as I've been unable to find any meaningful pattern.
-    @Getter private MRLightType lightType = MRLightType.AMBIENT;
+    @Getter @Setter @NonNull private MRLightType lightType = MRLightType.AMBIENT;
     @Getter @Setter private int color; // BbGgRr
     @Getter private final SVector position = new SVector(); // This is probably the place in the world the light is placed in the editor.
     @Getter private final SVector direction = new SVector(); // When this is AMBIENT, I think this is arbitrary. When this is parallel, it seems to be a 12bit normalized direction vector. When this is point it is unused.

@@ -24,7 +24,7 @@ import java.util.List;
 public abstract class FroggerMapZone extends SCGameData<FroggerGameInstance> {
     private final FroggerMapFile mapFile;
     private final FroggerMapZoneType zoneType;
-    private final FroggerMapZoneRegion boundingRegion = new FroggerMapZoneRegion(); // This region always contains the child regions. TODO: Auto-generate.
+    private final FroggerMapZoneRegion boundingRegion = new FroggerMapZoneRegion(); // This region always contains the child regions. TODO: Auto-generate. YEET.
     private final List<FroggerMapZoneRegion> regions = new ArrayList<>();
 
     public FroggerMapZone(FroggerMapFile mapFile, FroggerMapZoneType zoneType) {

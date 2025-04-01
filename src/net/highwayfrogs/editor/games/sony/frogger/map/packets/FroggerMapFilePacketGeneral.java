@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.sony.frogger.map.packets;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
@@ -26,10 +27,12 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
     @Setter private int startGridCoordX;
     @Setter private int startGridCoordZ;
     @Setter private FroggerMapStartRotation startRotation = FroggerMapStartRotation.NORTH;
-    private FroggerMapTheme mapTheme = FroggerMapTheme.SUBURBIA;
+    @NonNull @Setter private FroggerMapTheme mapTheme = FroggerMapTheme.SUBURBIA;
     @Setter private int startingTimeLimit = 99;
     private final SVector defaultCameraSourceOffset = new SVector(); // Applied when there is no ZONE for the active area. (If there is a zone, the source/target of the zone will be used.)
     private final SVector defaultCameraTargetOffset = new SVector(); // Further usage described below.
+    // FrogInitCustomAmbient adds 128 to these to create a color.
+    // I don't see any good reason these are shorts and not bytes, so we'll represent them as bytes.
     private short frogRedLighting;
     private short frogGreenLighting;
     private short frogBlueLighting;
@@ -96,7 +99,7 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
             return;
         }
 
-        writer.writeShort((short) (this.mapTheme != null ? this.mapTheme : FroggerMapTheme.SUBURBIA).ordinal());
+        writer.writeShort((short) this.mapTheme.ordinal());
 
         // The timer is duplicated once for each frog.
         // It seems at one point it was planned to have the timer change based on how many frogs have been collected.
@@ -133,7 +136,7 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
         propertyList.add("Start Grid Coordinates", "[" + this.startGridCoordX + ", " + this.startGridCoordZ + "]");
         propertyList.add("Start Grid Rotation", (this.startRotation != null ? this.startRotation.name() + " (" + this.startRotation.getArrow() + ")" : "null"));
         if (hasFrogColorData())
-            propertyList.add("Frog Ambient Lighting", "<red=" + this.frogRedLighting + ",green=" + this.frogGreenLighting + ",blue=" + this.frogBlueLighting + ">");
+            propertyList.add("Frog Ambient Lighting", "<red=" + (this.frogRedLighting + 0x80) + ",green=" + (this.frogGreenLighting + 0x80) + ",blue=" + (this.frogBlueLighting + 0x80) + ">");
         return propertyList;
     }
 
@@ -190,9 +193,9 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
         // Add frog lighting data.
         if (hasFrogColorData()) {
             // TODO: Go over this data. Which maps is it used in? How can we preview this, adding the frog model to the level? (This would be good just for previewing the start position & rotation anyways) Make an ideal editor.
-            editor.addSignedShortField("Ambient Red", this.frogRedLighting, newFrogRedLighting -> this.frogRedLighting = newFrogRedLighting).setDisable(true);
-            editor.addSignedShortField("Ambient Green", this.frogGreenLighting, newFrogGreenLighting -> this.frogGreenLighting = newFrogGreenLighting).setDisable(true);
-            editor.addSignedShortField("Ambient Blue", this.frogBlueLighting, newFrogBlueLighting -> this.frogBlueLighting = newFrogBlueLighting).setDisable(true);
+            editor.addSignedByteField("Ambient Red", (byte) this.frogRedLighting, newFrogRedLighting -> this.frogRedLighting = newFrogRedLighting).setDisable(true);
+            editor.addSignedByteField("Ambient Green", (byte) this.frogGreenLighting, newFrogGreenLighting -> this.frogGreenLighting = newFrogGreenLighting).setDisable(true);
+            editor.addSignedByteField("Ambient Blue", (byte) this.frogBlueLighting, newFrogBlueLighting -> this.frogBlueLighting = newFrogBlueLighting).setDisable(true);
         }
     }
 
