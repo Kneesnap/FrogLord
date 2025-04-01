@@ -273,7 +273,7 @@ public class PTPolygon extends SCGameData<SCGameInstance> implements IPTPrimitiv
 
         // Create definition.
         ITextureSource textureSource = polygonType.isTextured() ? getTexture() : null;
-        return new PSXShadeTextureDefinition(modelMesh.getShadedTextureManager(), polygonType.getUnderlyingType(), textureSource, colors, uvs, isSemiTransparent);
+        return new PSXShadeTextureDefinition(modelMesh.getShadedTextureManager(), polygonType.getUnderlyingType(), textureSource, colors, uvs, isSemiTransparent, true);
     }
 
     /**

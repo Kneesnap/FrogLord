@@ -29,6 +29,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
     @Getter private final CVector[] colors;
     @Getter private final SCByteTextureUV[] textureUVs;
     @Getter private final boolean semiTransparentMode;
+    @Getter private final boolean enableModulation;
     @Getter @Setter private boolean debugDrawCornerMarkers;
     private Consumer<BufferedImage> onTextureSourceUpdate;
     @Getter private BufferedImage cachedImage;
@@ -49,13 +50,14 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
     public static final String[] QUAD_VERTEX_NAMES = {"Top Left", "Top Right", "Bottom Left", "Bottom Right"};
     public static final String[] TRI_VERTEX_NAMES = {"1st Corner", "2nd Corner", "3rd Corner"};
 
-    public PSXShadeTextureDefinition(PSXShadedTextureManager<?> shadedTextureManager, PSXPolygonType polygonType, ITextureSource textureSource, CVector[] colors, SCByteTextureUV[] textureUVs, boolean semiTransparentMode) {
+    public PSXShadeTextureDefinition(PSXShadedTextureManager<?> shadedTextureManager, PSXPolygonType polygonType, ITextureSource textureSource, CVector[] colors, SCByteTextureUV[] textureUVs, boolean semiTransparentMode, boolean enableModulation) {
         this.shadedTextureManager = shadedTextureManager;
         this.polygonType = polygonType;
         this.textureSource = textureSource;
         this.colors = colors;
         this.textureUVs = textureUVs;
         this.semiTransparentMode = semiTransparentMode;
+        this.enableModulation = enableModulation;
 
         // Calculates the texture scaling needed to make the gouraud shading look ok.
         int textureScaleX = 1;
@@ -80,6 +82,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
         this.polygonType = other.polygonType;
         this.textureSource = other.textureSource;
         this.semiTransparentMode = other.semiTransparentMode;
+        this.enableModulation = other.enableModulation;
         this.textureScaleX = other.textureScaleX;
         this.textureScaleY = other.textureScaleY;
 
@@ -195,7 +198,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
             for (int i = 0; i < this.textureUVs.length; i++)
                 copyUvs[i] = this.textureUVs[i] != null ? this.textureUVs[i].clone() : null;
 
-        return new PSXShadeTextureDefinition(this.shadedTextureManager, this.polygonType, this.textureSource, copyColors, copyUvs, this.semiTransparentMode);
+        return new PSXShadeTextureDefinition(this.shadedTextureManager, this.polygonType, this.textureSource, copyColors, copyUvs, this.semiTransparentMode, this.enableModulation);
     }
 
     /**
@@ -285,7 +288,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
                 return applyImagePostFx(PSXTextureShader.makeGouraudShadedImage(targetImage, getWidth(), getHeight(), this.colors));
             case POLY_GT3:
             case POLY_GT4:
-                return applyImagePostFx(PSXTextureShader.makeTexturedGouraudShadedImage(sourceImage, targetImage, this.textureSource, this.colors, this.textureUVs, this.textureScaleX, this.textureScaleY, this.debugDrawCornerMarkers));
+                return applyImagePostFx(PSXTextureShader.makeTexturedGouraudShadedImage(sourceImage, targetImage, this.textureSource, this.colors, this.textureUVs, this.textureScaleX, this.textureScaleY, this.debugDrawCornerMarkers, this.enableModulation));
             default:
                 throw new UnsupportedOperationException("The polygon type " + this.polygonType + " is not supported.");
         }

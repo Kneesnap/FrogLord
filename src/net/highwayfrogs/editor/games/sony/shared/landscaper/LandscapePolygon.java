@@ -344,7 +344,7 @@ public abstract class LandscapePolygon extends SCSharedGameData implements ILand
         }
 
         PSXShadedTextureManager<LandscapePolygon> shadedTextureManager = mesh != null ? mesh.getShadedTextureManager() : null;
-        return new PSXShadeTextureDefinition(shadedTextureManager, getPolygonType(), textureSource, colors, uvs, isSemiTransparent());
+        return new PSXShadeTextureDefinition(shadedTextureManager, getPolygonType(), textureSource, colors, uvs, isSemiTransparent(), true);
     }
 
     /**

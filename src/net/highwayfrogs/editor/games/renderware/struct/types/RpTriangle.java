@@ -147,7 +147,7 @@ public class RpTriangle extends RwStruct {
         RwMaterialChunk material = this.parentMesh.getMaterial(this);
         RwTextureChunk texture = material != null ? material.getTexture() : null;
         RwImageChunk image = texture != null ? texture.getImage() : null;
-        return new PSXShadeTextureDefinition(worldMesh.getShadedTextureManager(), polygonType, image, colors, uvs, false);
+        return new PSXShadeTextureDefinition(worldMesh.getShadedTextureManager(), polygonType, image, colors, uvs, false, true);
     }
 
     public interface IRwGeometryMesh extends IGameObject, IBinarySerializable {

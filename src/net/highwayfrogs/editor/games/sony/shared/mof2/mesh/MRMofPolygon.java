@@ -289,6 +289,6 @@ public class MRMofPolygon extends SCGameData<SCGameInstance> {
         colors[0] = shadingEnabled ? this.color.clone() : PSXTextureShader.UNSHADED_COLOR;
 
         MRMofShadedTextureManager shadedTextureManager = mesh != null ? mesh.getShadedTextureManager() : null;
-        return new PSXShadeTextureDefinition(shadedTextureManager, this.polygonType.getInternalType(), textureSource, colors, uvs, isSemiTransparent());
+        return new PSXShadeTextureDefinition(shadedTextureManager, this.polygonType.getInternalType(), textureSource, colors, uvs, isSemiTransparent(), true);
     }
 }

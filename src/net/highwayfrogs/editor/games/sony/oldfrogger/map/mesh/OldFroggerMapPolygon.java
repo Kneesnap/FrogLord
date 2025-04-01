@@ -150,7 +150,7 @@ public class OldFroggerMapPolygon extends SCGameData<OldFroggerGameInstance> {
 
         ITextureSource textureSource = this.polygonType.isTextured() ? getTexture(mapFile.getLevelTableEntry()) : null;
         PSXShadedTextureManager<OldFroggerMapPolygon> shadedTextureManager = mapMesh != null ? mapMesh.getShadedTextureManager() : null;
-        return new PSXShadeTextureDefinition(shadedTextureManager, this.polygonType, textureSource, colors, uvs, false);
+        return new PSXShadeTextureDefinition(shadedTextureManager, this.polygonType, textureSource, colors, uvs, false, true);
     }
 
     /**

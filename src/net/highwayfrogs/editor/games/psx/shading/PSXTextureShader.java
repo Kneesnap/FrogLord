@@ -166,10 +166,11 @@ public class PSXTextureShader {
      * @param textureScaleX The horizontal texture scaling factor. (Default = 1, which indicates no scaling)
      * @param textureScaleY The vertical texture scaling factor. (Default = 1, which indicates no scaling)
      * @param highlightCorners If true, the corners of the polygon will be colored using the baked lighting polygon vertex colors. (Order: Yellow, Green, Red, Blue)
+     * @param enableModulation If true, color modulation will be enabled.
      * @return gouraudShadedImage
      */
-    public static BufferedImage makeTexturedGouraudShadedImage(BufferedImage originalImage, ITextureSource textureSource, CVector[] colors, SCByteTextureUV[] textureUvs, int textureScaleX, int textureScaleY, boolean highlightCorners) {
-        return makeTexturedGouraudShadedImage(originalImage, null, textureSource, colors, textureUvs, textureScaleX, textureScaleY, highlightCorners);
+    public static BufferedImage makeTexturedGouraudShadedImage(BufferedImage originalImage, ITextureSource textureSource, CVector[] colors, SCByteTextureUV[] textureUvs, int textureScaleX, int textureScaleY, boolean highlightCorners, boolean enableModulation) {
+        return makeTexturedGouraudShadedImage(originalImage, null, textureSource, colors, textureUvs, textureScaleX, textureScaleY, highlightCorners, enableModulation);
     }
 
     /**
@@ -182,9 +183,10 @@ public class PSXTextureShader {
      * @param textureScaleX The horizontal texture scaling factor. (Default = 1, which indicates no scaling)
      * @param textureScaleY The vertical texture scaling factor. (Default = 1, which indicates no scaling)
      * @param highlightCorners If true, the corners of the polygon will be colored using the baked lighting polygon vertex colors. (Order: Yellow, Green, Red, Blue)
+     * @param enableModulation If true, color modulation will be enabled.
      * @return gouraudShadedImage
      */
-    public static BufferedImage makeTexturedGouraudShadedImage(BufferedImage originalImage, BufferedImage targetImage, ITextureSource textureSource, CVector[] colors, SCByteTextureUV[] textureUvs, int textureScaleX, int textureScaleY, boolean highlightCorners) {
+    public static BufferedImage makeTexturedGouraudShadedImage(BufferedImage originalImage, BufferedImage targetImage, ITextureSource textureSource, CVector[] colors, SCByteTextureUV[] textureUvs, int textureScaleX, int textureScaleY, boolean highlightCorners, boolean enableModulation) {
         if (targetImage == null)
             targetImage = new BufferedImage(originalImage.getWidth(), originalImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
 
@@ -193,7 +195,6 @@ public class PSXTextureShader {
         instance.getFirstLayerPixelShadePositions().clear();
         instance.getPixelPosSeen().clear();
         instance.getPixelPosBuffer().clear();
-        boolean modulated = colors[0].testFlag(CVector.FLAG_MODULATION);
         if (colors.length == 3) {
             coordinates[0].loadUV(textureSource, textureUvs[0], textureScaleX, textureScaleY);
             coordinates[1].loadUV(textureSource, textureUvs[1], textureScaleX, textureScaleY);
@@ -202,7 +203,7 @@ public class PSXTextureShader {
 
             // Expand shading, then apply shading to the source image.
             expandShading(targetImage, instance, DEFAULT_SHADING_EXPANSION_LAYERS);
-            applyShadingToSourceImage(originalImage, targetImage, modulated);
+            applyShadingToSourceImage(originalImage, targetImage, enableModulation);
             if (highlightCorners) {
                 targetImage.setRGB(coordinates[0].getX(), coordinates[0].getY(), Color.YELLOW.getRGB());
                 targetImage.setRGB(coordinates[1].getX(), coordinates[1].getY(), Color.GREEN.getRGB());
@@ -232,7 +233,7 @@ public class PSXTextureShader {
 
             // Expand shading, then apply shading to the source image.
             expandShading(targetImage, instance, DEFAULT_SHADING_EXPANSION_LAYERS);
-            applyShadingToSourceImage(originalImage, targetImage, modulated);
+            applyShadingToSourceImage(originalImage, targetImage, enableModulation);
             if (highlightCorners) {
                 targetImage.setRGB(coordinates[0].getX(), coordinates[0].getY(), Color.BLUE.getRGB()); // 3
                 targetImage.setRGB(coordinates[1].getX(), coordinates[1].getY(), Color.RED.getRGB()); // 2

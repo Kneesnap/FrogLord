@@ -257,7 +257,7 @@ public class BeastWarsMapVertex extends SCGameObject<BeastWarsInstance> {
         }
 
         PSXShadedTextureManager<BeastWarsMapVertex> shadedTextureManager = mesh != null ? mesh.getShadedTextureManager() : null;
-        return new PSXShadeTextureDefinition(shadedTextureManager, PSXPolygonType.POLY_GT4, textureSource, colors, CONSTANT_UVS, false);
+        return new PSXShadeTextureDefinition(shadedTextureManager, PSXPolygonType.POLY_GT4, textureSource, colors, CONSTANT_UVS, false, false);
     }
 
     @Override

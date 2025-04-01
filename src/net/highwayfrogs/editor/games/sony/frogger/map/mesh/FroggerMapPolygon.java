@@ -375,7 +375,7 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
         }
 
         PSXShadedTextureManager<FroggerMapPolygon> shadedTextureManager = mesh != null ? mesh.getShadedTextureManager() : null;
-        return new PSXShadeTextureDefinition(shadedTextureManager, this.polygonType.getInternalType(), textureSource, colors, uvs, isSemiTransparent());
+        return new PSXShadeTextureDefinition(shadedTextureManager, this.polygonType.getInternalType(), textureSource, colors, uvs, isSemiTransparent(), true);
     }
 
     /**
