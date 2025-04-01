@@ -29,7 +29,6 @@ public class FroggerMapCameraZone extends FroggerMapZone {
     private final SVector westTargetOffset = new SVector();
 
     public static final int BYTE_SIZE = (2 * Constants.SHORT_SIZE) + (8 * SVector.PADDED_BYTE_SIZE);
-    private static final short NO_FORCED_CAMERA_DIRECTION = -1;
 
     public FroggerMapCameraZone(FroggerMapFile mapFile) {
         super(mapFile, FroggerMapZoneType.CAMERA);
@@ -39,8 +38,7 @@ public class FroggerMapCameraZone extends FroggerMapZone {
     protected void loadExtensionData(DataReader reader) {
         this.flags = reader.readShort();
         warnAboutInvalidBitFlags(this.flags, FroggerMapCameraZoneFlag.FLAG_VALIDATION_MASK);
-        short cameraDirectionNum = reader.readShort();
-        this.forcedCameraDirection = (cameraDirectionNum != NO_FORCED_CAMERA_DIRECTION) ? FroggerCameraRotation.values()[cameraDirectionNum] : null;
+        this.forcedCameraDirection = FroggerCameraRotation.getCameraRotationFromID(reader.readShort());
         this.northSourceOffset.loadWithPadding(reader);
         this.northTargetOffset.loadWithPadding(reader);
         this.eastSourceOffset.loadWithPadding(reader);
@@ -63,7 +61,7 @@ public class FroggerMapCameraZone extends FroggerMapZone {
     @Override
     protected void saveExtensionData(DataWriter writer) {
         writer.writeShort(this.flags);
-        writer.writeShort(this.forcedCameraDirection != null ? (short) this.forcedCameraDirection.ordinal() : NO_FORCED_CAMERA_DIRECTION);
+        writer.writeShort(FroggerCameraRotation.getCameraRotationID(this.forcedCameraDirection));
         this.northSourceOffset.saveWithPadding(writer);
         this.northTargetOffset.saveWithPadding(writer);
         this.eastSourceOffset.saveWithPadding(writer);
