@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.games.sony.frogger.map;
 
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import lombok.Getter;
@@ -7,6 +9,9 @@ import net.highwayfrogs.editor.file.config.FroggerMapConfig;
 import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
+import net.highwayfrogs.editor.file.map.MAPFile;
+import net.highwayfrogs.editor.file.reader.ArraySource;
+import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
@@ -33,12 +38,12 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
-import net.highwayfrogs.editor.utils.ColorUtils;
-import net.highwayfrogs.editor.utils.DataUtils;
-import net.highwayfrogs.editor.utils.FXUtils;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.*;
 import net.highwayfrogs.editor.utils.objects.IndexBitArray;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -377,5 +382,47 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
      */
     public boolean isEarlyMapFormat() {
         return getConfig().isAtOrBeforeBuild1() || isQB() || isIslandOrIslandPlaceholder();
+    }
+
+    @Override
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        super.setupRightClickMenuItems(contextMenu);
+
+        MenuItem importFile = new MenuItem("Import MAP (Old FrogLord Format)");
+        contextMenu.getItems().add(importFile);
+        importFile.setOnAction(event -> askUserToImportOldFile());
+    }
+
+    /**
+     * Ask the user to provide a file they'd like to replace the selected file with, then imports it if valid.
+     */
+    public void askUserToImportOldFile() {
+        File inputFile = FileUtils.askUserToOpenFile(getGameInstance(), SINGLE_FILE_IMPORT_PATH);
+        if (inputFile == null)
+            return;
+
+        byte[] rawFileBytes;
+        try {
+            rawFileBytes = Files.readAllBytes(inputFile.toPath());
+        } catch (IOException ex) {
+            Utils.handleError(getLogger(), ex, true, "Failed to read contents of '%s'.", inputFile.getName());
+            return;
+        }
+
+        MAPFile oldMap = new MAPFile(this);
+        DataReader reader = new DataReader(new ArraySource(rawFileBytes));
+
+        try {
+            oldMap.load(reader);
+        } catch (Throwable th) {
+            Utils.handleError(getLogger(), th, true, "Encountered an error while reading the old map file format.");
+            return;
+        }
+
+        try {
+            oldMap.applyToNewMapFile();
+        } catch (Throwable th) {
+            Utils.handleError(getLogger(), th, true, "Encountered an error while converting the old map format.");
+        }
     }
 }
