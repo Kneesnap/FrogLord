@@ -29,7 +29,8 @@ import java.util.function.ToIntFunction;
 public class PSXShadeTextureImageCache {
     private final PSXShadeTextureSourceCacheEntry flatShadingCacheEntry = new PSXShadeTextureSourceCacheEntry(this, null, null);
     private final PSXShadeTextureSourceCacheEntry gouraudShadingCacheEntry = new PSXShadeTextureSourceCacheEntry(this, null, null);
-    private final Map<ITextureSource, PSXShadeTextureSourceCacheEntry> entriesByTextureSource = new ConcurrentHashMap<>(); // Consider switching this to an IdentityHashMap with a read-write lock, OR Collections.synchronizedMap(IdentityHashMap), because there's a concern about ITextureSources implementing their own equals/hashCode and breaking compatibility.
+    private final Map<ITextureSource, PSXShadeTextureSourceCacheEntry> scaledEntriesByTextureSource = new ConcurrentHashMap<>(); // Consider switching this to an IdentityHashMap with a read-write lock, OR Collections.synchronizedMap(IdentityHashMap), because there's a concern about ITextureSources implementing their own equals/hashCode and breaking compatibility.
+    private final Map<ITextureSource, PSXShadeTextureSourceCacheEntry> unscaledEntriesByTextureSource = new ConcurrentHashMap<>(); // Consider switching this to an IdentityHashMap with a read-write lock, OR Collections.synchronizedMap(IdentityHashMap), because there's a concern about ITextureSources implementing their own equals/hashCode and breaking compatibility.
     private final List<PSXShadedImageCacheEntry> entryExpirationQueue = new ArrayList<>();
     private final BinarySearchIntListHolder<BinarySearchIntListHolder<BinarySearchIntList<PSXShadedImageCacheEntry>>> cachedTargetImages = new BinarySearchIntListHolder<>(null, -1);
 
@@ -94,7 +95,7 @@ public class PSXShadeTextureImageCache {
      */
     public BufferedImage getSourceImage(PSXShadeTextureDefinition shadeTextureDefinition) {
         // Untextured shade definitions have no source image.
-        return shadeTextureDefinition.getPolygonType().isTextured() ? getOrCreateCacheEntry(shadeTextureDefinition).getSourceImage(shadeTextureDefinition) : null;
+        return shadeTextureDefinition.getPolygonType().isTextured() ? getOrCreateCacheEntry(shadeTextureDefinition).getSourceImage() : null;
     }
 
     /**
@@ -124,7 +125,13 @@ public class PSXShadeTextureImageCache {
      */
     public void onTextureSourceUpdate(PSXShadeTextureDefinition shadeTextureDefinition, BufferedImage newImage) {
         if (newImage != null) {
-            PSXShadeTextureSourceCacheEntry cacheEntry = this.entriesByTextureSource.get(shadeTextureDefinition.getTextureSource());
+            PSXShadeTextureSourceCacheEntry cacheEntry;
+            if (shadeTextureDefinition.isSourceImageScaled()) {
+                cacheEntry = this.scaledEntriesByTextureSource.get(shadeTextureDefinition.getTextureSource());
+            } else {
+                cacheEntry = this.unscaledEntriesByTextureSource.get(shadeTextureDefinition.getTextureSource());
+            }
+
             if (cacheEntry != null)
                 cacheEntry.onTextureSourceUpdate(newImage);
         }
@@ -133,7 +140,11 @@ public class PSXShadeTextureImageCache {
     private PSXShadeTextureSourceCacheEntry getCacheEntry(PSXShadeTextureDefinition shadeTextureDefinition) {
         PSXPolygonType polygonType = shadeTextureDefinition.getPolygonType();
         if (polygonType.isTextured()) {
-            return this.entriesByTextureSource.get(shadeTextureDefinition.getTextureSource());
+            if (shadeTextureDefinition.isSourceImageScaled()) {
+                return this.scaledEntriesByTextureSource.get(shadeTextureDefinition.getTextureSource());
+            } else {
+                return this.unscaledEntriesByTextureSource.get(shadeTextureDefinition.getTextureSource());
+            }
         } else if (polygonType.isGouraud()) {
             return this.gouraudShadingCacheEntry;
         } else if (polygonType.isFlat()) {
@@ -175,8 +186,11 @@ public class PSXShadeTextureImageCache {
         if (textureSource == null)
             throw new RuntimeException("Cannot cached data for a null ITextureSource!");
 
-        BufferedImage mainImage = textureSource.makeImage();
-        return this.entriesByTextureSource.computeIfAbsent(textureSource, key -> new PSXShadeTextureSourceCacheEntry(this, textureSource, mainImage));
+        if (shadeTextureDefinition.isSourceImageScaled()) {
+            return this.scaledEntriesByTextureSource.computeIfAbsent(textureSource, key -> new PSXShadeTextureSourceCacheEntry(this, textureSource, getTextureSourceImage(shadeTextureDefinition)));
+        } else {
+            return this.unscaledEntriesByTextureSource.computeIfAbsent(textureSource, key -> new PSXShadeTextureSourceCacheEntry(this, textureSource, textureSource.makeImage()));
+        }
     }
 
     /**
@@ -205,7 +219,6 @@ public class PSXShadeTextureImageCache {
         @Getter private final PSXShadeTextureImageCache cache;
         @Getter private final ITextureSource textureSource;
         private BufferedImage mainImage;
-        private BufferedImage scaledMainImage;
         private volatile WeakReference<BufferedImage> mainImageLastUpdatedFrom;
         private WeakReference<BinarySearchIntList<PSXShadedImageCacheEntry>> imageListRef;
 
@@ -234,25 +247,9 @@ public class PSXShadeTextureImageCache {
 
         /**
          * Gets the source image for the given shade texture definition
-         * @param shadeDef the shade texture definition to get the source image for
          * @return sourceImage
          */
-        public BufferedImage getSourceImage(PSXShadeTextureDefinition shadeDef) {
-            int textureScaleX = shadeDef.getTextureScaleX();
-            int textureScaleY = shadeDef.getTextureScaleY();
-            if (textureScaleX != 1 || textureScaleY != 1) {
-                if (this.scaledMainImage != null) {
-                    return this.scaledMainImage;
-                }
-
-                try {
-                    this.imageListLock.writeLock().lock();
-                    return this.scaledMainImage = ImageWorkHorse.resizeImage(this.mainImage, this.mainImage.getWidth() * textureScaleX, this.mainImage.getHeight() * textureScaleY, true);
-                } finally {
-                    this.imageListLock.writeLock().unlock();
-                }
-            }
-
+        public BufferedImage getSourceImage() {
             try {
                 this.imageListLock.readLock().lock();
                 return this.mainImage;
@@ -265,7 +262,6 @@ public class PSXShadeTextureImageCache {
             try {
                 this.imageListLock.writeLock().lock();
                 this.imageListRef = null;
-                this.scaledMainImage = null;
             } finally {
                 this.imageListLock.writeLock().unlock();
             }
@@ -280,14 +276,17 @@ public class PSXShadeTextureImageCache {
                 return;
 
             // Clear all cached images if the size changed.
-            if (newImage.getWidth() != this.mainImage.getWidth() || newImage.getHeight() != this.mainImage.getHeight()) {
+            if (newImage.getWidth() != this.mainImage.getWidth() || newImage.getHeight() != this.mainImage.getHeight())
                 removeImageList();
-                return;
-            }
 
             // Update image.
-            this.mainImageLastUpdatedFrom = new WeakReference<>(newImage);
-            this.mainImage = ImageWorkHorse.copyImage(newImage, this.mainImage);
+            try {
+                this.imageListLock.writeLock().lock();
+                this.mainImageLastUpdatedFrom = new WeakReference<>(newImage);
+                this.mainImage = ImageWorkHorse.copyImage(newImage, this.mainImage);
+            } finally {
+                this.imageListLock.writeLock().unlock();
+            }
         }
 
         /**

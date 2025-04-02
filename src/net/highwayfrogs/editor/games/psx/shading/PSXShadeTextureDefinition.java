@@ -102,6 +102,13 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
     }
 
     /**
+     * Returns true if scaling is applied to the source image to improve the fidelity of the shading approximation.
+     */
+    public boolean isSourceImageScaled() {
+        return this.textureScaleX != 1 || this.textureScaleY != 1;
+    }
+
+    /**
      * Tests if modulation should be enabled for the shade definition.
      */
     public boolean isModulated() {
