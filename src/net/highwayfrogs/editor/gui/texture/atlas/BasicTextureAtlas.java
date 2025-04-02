@@ -286,7 +286,7 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
         this.pushDisableUpdates();
 
         boolean ranOutOfSpace = !this.updatePositions(this.sortedTextures);
-        if (ranOutOfSpace) {
+        if (ranOutOfSpace && this.sortedTextures.size() > 0) {
             if (!isAutomaticResizingEnabled())
                 throw new RuntimeException("The texture atlas is full, and automatic resizing is disabled.");
 

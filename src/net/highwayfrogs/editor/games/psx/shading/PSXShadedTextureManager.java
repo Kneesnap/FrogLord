@@ -260,8 +260,8 @@ public abstract class PSXShadedTextureManager<TPolygon> {
     }
 
     /**
-     * Called when a shaded texture is added.
-     * @param shadedTexture The shaded texture which has been added.
+     * Called when a shaded texture is removed.
+     * @param shadedTexture The shaded texture which has been removed.
      */
     protected void onShadedTextureRemoved(PSXShadeTextureDefinition shadedTexture) {
         BufferedImage shadedImage = shadedTexture.getCachedImage();

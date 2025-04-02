@@ -63,9 +63,12 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
         int textureScaleX = 1;
         int textureScaleY = 1;
         if (polygonType.isGouraud() && polygonType.isTextured() && textureSource != null) {
-            while (GOURAUD_TEXTURE_MINIMUM_SIZE > (textureScaleX * textureSource.getUnpaddedWidth()))
+            // Originally this used getUnpaddedWidth()/getUnpaddedHeight(), but this was a BIG mistake.
+            // On levels such as Big Boulder Alley in Frogger, there are some images with a width of 10, in-game width of 2.
+            // This means in order to reach an unpadded size of 32, the total image size would reach 160x160. All for a single-color image.
+            while (GOURAUD_TEXTURE_MINIMUM_SIZE > (textureScaleX * textureSource.getWidth()))
                 textureScaleX <<= 1;
-            while (GOURAUD_TEXTURE_MINIMUM_SIZE > (textureScaleY * textureSource.getUnpaddedHeight()))
+            while (GOURAUD_TEXTURE_MINIMUM_SIZE > (textureScaleY * textureSource.getHeight()))
                 textureScaleY <<= 1;
         }
 
@@ -156,9 +159,12 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
         if (this.semiTransparentMode)
             hash = (31 * hash) + 1;
 
+        if (this.enableModulation)
+            hash = (31 * hash) + 1;
+
         // Add texture.
         if (this.textureSource != null)
-            hash = (31 * hash) + this.textureSource.hashCode();
+            hash = (31 * hash) + System.identityHashCode(this.textureSource);
 
         return hash;
     }
@@ -173,7 +179,8 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
                 && Objects.equals(this.textureSource, other.textureSource)
                 && Arrays.equals(this.colors, other.colors)
                 && (!doSharedUvsMatter() || Arrays.equals(this.textureUVs, other.textureUVs))
-                && this.semiTransparentMode == other.semiTransparentMode;
+                && this.semiTransparentMode == other.semiTransparentMode
+                && this.enableModulation == other.enableModulation;
     }
 
     /**
@@ -244,6 +251,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
         if (this.cachedImage != null && sourceImage != null && this.cachedImage.getWidth() == sourceImage.getWidth() && this.cachedImage.getHeight() == sourceImage.getHeight())
             return clearImage(this.cachedImage);
 
+        // Don't add the old cached image to the cache because its size isn't valid.
         PSXShadeTextureImageCache imageCache = this.shadedTextureManager != null ? this.shadedTextureManager.getImageCache() : null;
         return imageCache != null ? clearImage(imageCache.getTargetImage(this)) : null;
     }

@@ -23,7 +23,7 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
     private final List<TreeNode> freeSlotsByAreaHigherWidth = new ArrayList<>(); // Sorted by area, only contains nodes where width >= height
     private final List<TreeNode> freeSlotsByAreaHigherHeight = new ArrayList<>(); // Sorted by area, only contains nodes where height >= width.
     private final List<TreeNode> freeDiagonalSlots = new ArrayList<>(); // Sorted by area.
-    private final Map<AtlasTexture, TreeNode> nodesByTexture = new IdentityHashMap<>(); // Sorted by area.
+    private final Map<AtlasTexture, TreeNode> nodesByTexture = new IdentityHashMap<>();
     private TreeNode lastRemovedNode; // This is a cache. If we've just removed a node, we're probably updating it, and it's often good to place the updated texture in the same spot.
     private static final ToLongFunction<TreeNode> SLOT_AREA_CALCULATOR =
             (TreeNode node) -> (long) node.getNodeWidth() * node.getNodeHeight();
@@ -130,8 +130,8 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
         private final TreeNode parentNode;
         private final int x;
         private final int y;
-        private int nodeWidth;
-        private int nodeHeight;
+        private final int nodeWidth;
+        private final int nodeHeight;
         private TreeNode leftChild;
         private TreeNode rightChild;
         private TreeNode diagonalChild;
@@ -196,22 +196,16 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
 
             // Change node width / height.
             removeFromLists();
-            int startNodeWidth = this.nodeWidth;
-            int startNodeHeight = this.nodeHeight;
             if (this.leftChild != null) {
                 this.leftChild.removeFromLists();
-                this.nodeWidth = startNodeWidth + this.leftChild.getNodeWidth();
                 this.leftChild = null;
             }
             if (this.rightChild != null) {
                 this.rightChild.removeFromLists();
-                this.nodeHeight = startNodeHeight + this.rightChild.getNodeHeight();
                 this.rightChild = null;
             }
             if (this.diagonalChild != null) {
                 this.diagonalChild.removeFromLists();
-                this.nodeWidth = startNodeWidth + this.diagonalChild.getNodeWidth();
-                this.nodeHeight = startNodeHeight + this.diagonalChild.getNodeHeight();
                 this.diagonalChild = null;
             }
             addToLists();
@@ -223,19 +217,25 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
 
         /**
          * Gets the width of the diagonal space area.
+         * The diagonal space area of a node can be thought of as breaking each node into four non-uniform rectangles, one for each corner.
+         * The top left rectangle is exactly the size of the texture. The bottom right rectangle is the "diagonal space".
          */
         public int getDiagonalSpaceWidth() {
-            return getNodeWidth() - getEndX();
+            return getNodeWidth() - (this.texture != null ? this.texture.getPaddedWidth() : 0);
         }
         /**
          * Gets the height of the diagonal space area.
+         * The diagonal space area of a node can be thought of as breaking each node into four non-uniform rectangles, one for each corner.
+         * The top left rectangle is exactly the size of the texture. The bottom right rectangle is the "diagonal space".
          */
         public int getDiagonalSpaceHeight() {
-            return getNodeHeight() - getEndY();
+            return getNodeHeight() - (this.texture != null ? this.texture.getPaddedHeight() : 0);
         }
 
         /**
          * Gets the area taken up by the diagonal space.
+         * The diagonal space area of a node can be thought of as breaking each node into four non-uniform rectangles, one for each corner.
+         * The top left rectangle is exactly the size of the texture. The bottom right rectangle is the "diagonal space".
          */
         public long getDiagonalSpaceArea() {
             return (long) getDiagonalSpaceWidth() * getDiagonalSpaceHeight();
@@ -256,6 +256,7 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
 
             // Clear out the old texture.
             if (this.texture != null) {
+                this.textureAtlas.nodesByTexture.remove(this.texture, this);
                 this.texture = null;
                 // Shouldn't be in the lists, so we don't need to remove them.
 
@@ -271,6 +272,7 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
             // Apply texture.
             texture.setPosition(getX(), getY());
             this.texture = texture;
+            this.textureAtlas.nodesByTexture.put(texture, this);
 
             // Create new nodes.
             int texturePaddedWidth = texture.getPaddedWidth();
