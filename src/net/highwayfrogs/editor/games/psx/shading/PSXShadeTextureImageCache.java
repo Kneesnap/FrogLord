@@ -27,6 +27,7 @@ import java.util.function.ToIntFunction;
  * Created by Kneesnap on 6/18/2024.
  */
 public class PSXShadeTextureImageCache {
+    private final PSXShadeTextureSourceCacheEntry unknownTextureShadingCacheEntry = new PSXShadeTextureSourceCacheEntry(this, null, null);
     private final PSXShadeTextureSourceCacheEntry flatShadingCacheEntry = new PSXShadeTextureSourceCacheEntry(this, null, null);
     private final PSXShadeTextureSourceCacheEntry gouraudShadingCacheEntry = new PSXShadeTextureSourceCacheEntry(this, null, null);
     private final Map<ITextureSource, PSXShadeTextureSourceCacheEntry> scaledEntriesByTextureSource = new ConcurrentHashMap<>(); // Consider switching this to an IdentityHashMap with a read-write lock, OR Collections.synchronizedMap(IdentityHashMap), because there's a concern about ITextureSources implementing their own equals/hashCode and breaking compatibility.
@@ -124,15 +125,9 @@ public class PSXShadeTextureImageCache {
      * @param newImage the image to apply
      */
     public void onTextureSourceUpdate(PSXShadeTextureDefinition shadeTextureDefinition, BufferedImage newImage) {
-        if (newImage != null) {
-            PSXShadeTextureSourceCacheEntry cacheEntry;
-            if (shadeTextureDefinition.isSourceImageScaled()) {
-                cacheEntry = this.scaledEntriesByTextureSource.get(shadeTextureDefinition.getTextureSource());
-            } else {
-                cacheEntry = this.unscaledEntriesByTextureSource.get(shadeTextureDefinition.getTextureSource());
-            }
-
-            if (cacheEntry != null)
+        if (newImage != null && shadeTextureDefinition.getPolygonType().isTextured()) {
+            PSXShadeTextureSourceCacheEntry cacheEntry = getCacheEntry(shadeTextureDefinition);
+            if (cacheEntry != null && cacheEntry != this.unknownTextureShadingCacheEntry)
                 cacheEntry.onTextureSourceUpdate(newImage);
         }
     }
@@ -140,10 +135,13 @@ public class PSXShadeTextureImageCache {
     private PSXShadeTextureSourceCacheEntry getCacheEntry(PSXShadeTextureDefinition shadeTextureDefinition) {
         PSXPolygonType polygonType = shadeTextureDefinition.getPolygonType();
         if (polygonType.isTextured()) {
-            if (shadeTextureDefinition.isSourceImageScaled()) {
-                return this.scaledEntriesByTextureSource.get(shadeTextureDefinition.getTextureSource());
+            ITextureSource textureSource = shadeTextureDefinition.getTextureSource();
+            if (textureSource == null) {
+                return this.unknownTextureShadingCacheEntry;
+            } else if (shadeTextureDefinition.isSourceImageScaled()) {
+                return this.scaledEntriesByTextureSource.get(textureSource);
             } else {
-                return this.unscaledEntriesByTextureSource.get(shadeTextureDefinition.getTextureSource());
+                return this.unscaledEntriesByTextureSource.get(textureSource);
             }
         } else if (polygonType.isGouraud()) {
             return this.gouraudShadingCacheEntry;
@@ -182,10 +180,7 @@ public class PSXShadeTextureImageCache {
         if (cacheEntry != null)
             return cacheEntry;
 
-        ITextureSource textureSource = shadeTextureDefinition.getTextureSource();
-        if (textureSource == null)
-            throw new RuntimeException("Cannot cached data for a null ITextureSource!");
-
+        ITextureSource textureSource = shadeTextureDefinition.getTextureSource(); // If it were null, it'd have been handled already in getCacheEntry(), so it's not null.
         if (shadeTextureDefinition.isSourceImageScaled()) {
             return this.scaledEntriesByTextureSource.computeIfAbsent(textureSource, key -> new PSXShadeTextureSourceCacheEntry(this, textureSource, getTextureSourceImage(shadeTextureDefinition)));
         } else {
