@@ -26,7 +26,7 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
     private final Map<AtlasTexture, TreeNode> nodesByTexture = new IdentityHashMap<>();
     private TreeNode lastRemovedNode; // This is a cache. If we've just removed a node, we're probably updating it, and it's often good to place the updated texture in the same spot.
     private static final ToLongFunction<TreeNode> SLOT_AREA_CALCULATOR =
-            (TreeNode node) -> (long) node.getNodeWidth() * node.getNodeHeight();
+            (TreeNode node) -> (long) node.getFreeNodeWidth() * node.getFreeNodeHeight();
     private static final Comparator<TreeNode> SLOTS_BY_AREA_COMPARATOR = Comparator
             .comparingLong(SLOT_AREA_CALCULATOR)
             .thenComparingInt(TreeNode::getY)
@@ -105,6 +105,9 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
         // Try to insert to all the nodes.
         for (int i = startIndex; i < slots.size(); i++) {
             TreeNode node = slots.get(i);
+            if (node.getTexture() != null)
+                throw new RuntimeException("A node with a texture was found in the list of textures which were supposed to be freely usable!");
+
             if (node.setTexture(texture))
                 return true; // Successfully inserted texture.
         }
@@ -195,7 +198,7 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
                 return false;
 
             // Change node width / height.
-            removeFromLists();
+            removeFromLists(); // Necessary because we're about to potentially change which lists the node will be found it. We'll add it back after these.
             if (this.leftChild != null) {
                 this.leftChild.removeFromLists();
                 this.leftChild = null;
@@ -221,7 +224,7 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
          * The top left rectangle is exactly the size of the texture. The bottom right rectangle is the "diagonal space".
          */
         public int getDiagonalSpaceWidth() {
-            return getNodeWidth() - (this.texture != null ? this.texture.getPaddedWidth() : 0);
+            return this.nodeWidth - (this.texture != null ? this.texture.getPaddedWidth() : 0);
         }
         /**
          * Gets the height of the diagonal space area.
@@ -229,7 +232,7 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
          * The top left rectangle is exactly the size of the texture. The bottom right rectangle is the "diagonal space".
          */
         public int getDiagonalSpaceHeight() {
-            return getNodeHeight() - (this.texture != null ? this.texture.getPaddedHeight() : 0);
+            return this.nodeHeight - (this.texture != null ? this.texture.getPaddedHeight() : 0);
         }
 
         /**
@@ -242,6 +245,34 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
         }
 
         /**
+         * Gets the width of the free node area.
+         * @return freeNodeWidth
+         */
+        public int getFreeNodeWidth() {
+            if (this.leftChild != null) {
+                return this.leftChild.getX() - this.x;
+            } else if (this.diagonalChild != null) {
+                return this.diagonalChild.getX() - this.x;
+            } else {
+                return this.nodeWidth;
+            }
+        }
+
+        /**
+         * Gets the height of the free node area.
+         * @return freeNodeHeight
+         */
+        public int getFreeNodeHeight() {
+            if (this.rightChild != null) {
+                return this.rightChild.getY() - this.y;
+            } else if (this.diagonalChild != null) {
+                return this.diagonalChild.getY() - this.y;
+            } else {
+                return this.nodeHeight;
+            }
+        }
+
+        /**
          * Attempts to insert a texture node into the tree.
          * @param texture The texture to insert.
          * @return Whether there was space to insert the texture node.
@@ -251,7 +282,7 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
                 return true; // Already set.
 
             // First, test if there's room to fit it here.
-            if (texture != null && !canFitTexture(texture, getNodeWidth(), getNodeHeight()))
+            if (texture != null && !canFitTexture(texture, getFreeNodeWidth(), getFreeNodeHeight()))
                 return false; // Nope, there isn't enough space.
 
             // Clear out the old texture.
@@ -308,9 +339,11 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
                 if (getDiagonalSpaceArea() > 0)
                     tryAddToList(this.textureAtlas.freeDiagonalSlots, SLOTS_BY_DIAGONAL_AREA_COMPARATOR);
             } else {
-                if (this.nodeWidth >= this.nodeHeight)
+                int freeWidth = getFreeNodeWidth();
+                int freeHeight = getFreeNodeHeight();
+                if (freeWidth >= freeHeight)
                     tryAddToList(this.textureAtlas.freeSlotsByAreaHigherWidth, SLOTS_BY_AREA_COMPARATOR);
-                if (this.nodeWidth <= this.nodeHeight)
+                if (freeWidth <= freeHeight)
                     tryAddToList(this.textureAtlas.freeSlotsByAreaHigherHeight, SLOTS_BY_AREA_COMPARATOR);
 
                 tryAddToList(this.textureAtlas.freeSlotsByArea, SLOTS_BY_AREA_COMPARATOR);
@@ -329,9 +362,12 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
                 if (getDiagonalSpaceArea() > 0)
                     tryRemoveFromList(this.textureAtlas.freeDiagonalSlots, SLOTS_BY_DIAGONAL_AREA_COMPARATOR);
             } else {
-                if (this.nodeWidth >= this.nodeHeight)
+                int freeWidth = getFreeNodeWidth();
+                int freeHeight = getFreeNodeHeight();
+
+                if (freeWidth >= freeHeight)
                     tryRemoveFromList(this.textureAtlas.freeSlotsByAreaHigherWidth, SLOTS_BY_AREA_COMPARATOR);
-                if (this.nodeWidth <= this.nodeHeight)
+                if (freeWidth <= freeHeight)
                     tryRemoveFromList(this.textureAtlas.freeSlotsByAreaHigherHeight, SLOTS_BY_AREA_COMPARATOR);
 
                 tryRemoveFromList(this.textureAtlas.freeSlotsByArea, SLOTS_BY_AREA_COMPARATOR);
