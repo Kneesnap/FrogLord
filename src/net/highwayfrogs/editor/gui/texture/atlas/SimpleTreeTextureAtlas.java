@@ -49,7 +49,7 @@ public class SimpleTreeTextureAtlas extends BasicTextureAtlas<TreeAtlasTexture> 
         // Now, we'll calculate positions of all remaining textures by building their tree.
         for (int i = 1; i < sortedTextureList.size(); i++) {
             TreeAtlasTexture texture = sortedTextureList.get(i);
-            if (placeTexture(texture))
+            if (!placeTexture(texture))
                 return false; // Couldn't be added (no space).
         }
 
