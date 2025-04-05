@@ -234,7 +234,7 @@ public abstract class SCPolygonAdapterNode<TPolygon> extends DynamicMeshAdapterN
      * @param polygon the polygon to get the texture source from
      * @return textureSourceOrNull
      */
-    protected ITextureSource getTextureSource(TPolygon polygon) {
+    protected PSXShadeTextureDefinition getTextureSource(TPolygon polygon) {
         PSXShadedTextureManager<TPolygon> textureManager = getShadedTextureManager();
         if (textureManager == null)
             throw new RuntimeException("Cannot resolve TextureSource from " + Utils.getSimpleName(polygon) + " in " + Utils.getSimpleName(this) + ", because there is no shaded texture manager! Override the method if necessary.");

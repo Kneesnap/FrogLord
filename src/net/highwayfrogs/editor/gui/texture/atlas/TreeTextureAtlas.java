@@ -16,6 +16,20 @@ import java.util.function.ToLongFunction;
  * - <a href="http://blackpawn.com/texts/lightmaps/default.html"/>
  * - <a href="https://web.archive.org/web/20180913014836/http://clb.demon.fi:80/projects/rectangle-bin-packing"/>
  * - <a href="http://www.gamedev.net/community/forums/topic.asp?topic_id=392413"/>
+ *
+ * Troubleshooting:
+ *  When updating textures frequently (such as for animations), if they start to behave strangely, debug it like this.
+ *  It will save much time.
+ *   1) Is the texture atlas actually updating? Verify that any modified images are getting written via {@code AtlasBuilderTextureSource#update}.
+ *   2) Do the coordinates of the Texture object corresponding to the desired texture look okay?
+ *
+ * Note: On levels such as VOL2.MAP, scrolling animations do not work properly.
+ * I've spent hours upon hours debugging the issue, and have concluded it's a multithreading issue within JavaFX itself.
+ * I wasn't able to find a fix unfortunately.
+ * The issues go away if I manually slow down the texture tree atlas update, but that's basically just "if we introduce lag, the problem goes away".
+ * Because the stress put on this system is mainly from recreating PSX shading, I think it's okay to leave it as is, since it's only in the most extreme cases where it fails.
+ * Additionally, it works well enough to preview the animations, and the issue will go away when true vertex color support is added to JavaFX.
+ *
  * Created by Kneesnap on 6/19/2024.
  */
 public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
@@ -176,6 +190,8 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
 
         /**
          * Attempt to merge into the parent node.
+         * NOTE: This is not currently used because it seems to leave old nodes in the lists somehow.
+         * I've not figured out how, so it is disabled for now.
          */
         boolean tryMergeChildNodes() {
             if (this.texture != null)
@@ -207,6 +223,7 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
                 this.diagonalChild = null;
             }
             addToLists();
+            this.textureAtlas.lastRemovedNode = this;
 
             if (this.parentNode != null)
                 this.parentNode.tryMergeChildNodes();
@@ -263,7 +280,7 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
                 if (texture == null) { // There's no texture we intend to apply right now.
                     addToLists();
                     this.textureAtlas.lastRemovedNode = this;
-                    //tryMergeChildNodes(); // TODO: Commenting this out seems to create better packing in a general case.
+                    //tryMergeChildNodes();
                     return true;
                 }
             } else {
@@ -327,6 +344,9 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
         }
 
         private void removeFromLists() {
+            if (this.textureAtlas.lastRemovedNode == this)
+                this.textureAtlas.lastRemovedNode = null;
+
             if (isDiagonalNode()) {
                 tryRemoveFromList(this.textureAtlas.freeDiagonalSlots, SLOTS_BY_AREA_COMPARATOR);
             } else {

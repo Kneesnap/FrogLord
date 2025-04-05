@@ -188,7 +188,7 @@ public class FroggerUIMapAnimationManager extends FroggerBakedMapListManager<Fro
         }
 
         if (this.showAnimationsOnMapCheckBox.isSelected())
-            getController().getMesh().getMainNode().tickMapAnimations(timerTask.getDeltaFrames());
+            getMesh().getMainNode().tickMapAnimations(timerTask.getDeltaFrames());
     }
 
     /**
