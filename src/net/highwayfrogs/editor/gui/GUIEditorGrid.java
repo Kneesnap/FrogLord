@@ -4,6 +4,7 @@ import javafx.collections.FXCollections;
 import javafx.geometry.HPos;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -1879,6 +1880,8 @@ public class GUIEditorGrid {
         addRotationMatrix(matrix, null);
     }
 
+    private static final DecimalFormat ANGLE_DISPLAY_FORMAT = new DecimalFormat("0.###");
+
     /**
      * Add PSXMatrix rotation data to the edit grid.
      * @param matrix   The rotation matrix to add data for.
@@ -1886,27 +1889,83 @@ public class GUIEditorGrid {
      */
     public void addRotationMatrix(PSXMatrix matrix, Runnable onUpdate) {
         addNormalLabel("Rotation:");
-        // TODO: GLOBUS REALLY WANTS THESE TO SHOW RAW VALUES.
 
         Runnable[] updateHook = new Runnable[1];
-        Slider pitchUI = addDoubleSlider("Pitch (X)", matrix.getPitchAngle(), pitch -> {
+
+        AtomicReference<Label> pitchLabel = new AtomicReference<>();
+        Slider pitchUI = addDoubleSlider("Pitch (X: " + ANGLE_DISPLAY_FORMAT.format(Math.toDegrees(matrix.getPitchAngle())) + ")", matrix.getPitchAngle(), pitch -> {
             matrix.updateMatrix(pitch, matrix.getYawAngle(), matrix.getRollAngle());
             if (updateHook[0] != null)
                 updateHook[0].run();
-        }, -Math.PI, Math.PI);
+        }, -Math.PI, Math.PI, false, pitchLabel);
 
-        Slider yawUI = addDoubleSlider("Yaw (Y)", matrix.getYawAngle(), yaw -> {
+        AtomicReference<Label> yawLabel = new AtomicReference<>();
+        Slider yawUI = addDoubleSlider("Yaw (Y: " + ANGLE_DISPLAY_FORMAT.format(Math.toDegrees(matrix.getYawAngle())) + ")", matrix.getYawAngle(), yaw -> {
             matrix.updateMatrix(matrix.getPitchAngle(), yaw, matrix.getRollAngle());
             if (updateHook[0] != null)
                 updateHook[0].run();
-        }, -Math.PI / 2, Math.PI / 2); // Cuts off at 90 degrees to prevent gymbal lock.
+        }, -Math.PI / 2, Math.PI / 2, false, yawLabel); // Cuts off at 90 degrees to prevent gymbal lock.
 
-        Slider rollUI = addDoubleSlider("Roll (Z)", matrix.getRollAngle(), roll -> {
+        AtomicReference<Label> rollLabel = new AtomicReference<>();
+        Slider rollUI = addDoubleSlider("Roll (Z: " + ANGLE_DISPLAY_FORMAT.format(Math.toDegrees(matrix.getRollAngle())) + ")", matrix.getRollAngle(), roll -> {
             matrix.updateMatrix(matrix.getPitchAngle(), matrix.getYawAngle(), roll);
             if (updateHook[0] != null)
                 updateHook[0].run();
-        }, -Math.PI, Math.PI);
+        }, -Math.PI, Math.PI, false, rollLabel);
+        
+        // Label click handlers.
+        pitchLabel.get().setOnMouseClicked(event -> {
+            event.consume();
+            InputMenu.promptInput(null, "Please enter the new pitch angle.", String.valueOf(Math.toDegrees(matrix.getPitchAngle())), newText -> {
+                float newPitch;
+                try {
+                    newPitch = (float) Math.toRadians(Float.parseFloat(newText));
+                } catch (NumberFormatException ex) {
+                    FXUtils.makePopUp("Cannot interpret '" + newText + "' as a number.", AlertType.ERROR);
+                    return;
+                }
 
+                matrix.updateMatrix(newPitch, matrix.getYawAngle(), matrix.getRollAngle());
+                if (updateHook[0] != null)
+                    updateHook[0].run();
+            });
+        });
+
+        yawLabel.get().setOnMouseClicked(event -> {
+            event.consume();
+            InputMenu.promptInput(null, "Please enter the new yaw angle.", String.valueOf(Math.toDegrees(matrix.getYawAngle())), newText -> {
+                float newYaw;
+                try {
+                    newYaw = (float) Math.toRadians(Float.parseFloat(newText));
+                } catch (NumberFormatException ex) {
+                    FXUtils.makePopUp("Cannot interpret '" + newText + "' as a number.", AlertType.ERROR);
+                    return;
+                }
+
+                matrix.updateMatrix(matrix.getPitchAngle(), newYaw, matrix.getRollAngle());
+                if (updateHook[0] != null)
+                    updateHook[0].run();
+            });
+        });
+
+        rollLabel.get().setOnMouseClicked(event -> {
+            event.consume();
+            InputMenu.promptInput(null, "Please enter the new roll angle.", String.valueOf(Math.toDegrees(matrix.getRollAngle())), newText -> {
+                float newRoll;
+                try {
+                    newRoll = (float) Math.toRadians(Float.parseFloat(newText));
+                } catch (NumberFormatException ex) {
+                    FXUtils.makePopUp("Cannot interpret '" + newText + "' as a number.", AlertType.ERROR);
+                    return;
+                }
+
+                matrix.updateMatrix(matrix.getPitchAngle(), matrix.getYawAngle(), newRoll);
+                if (updateHook[0] != null)
+                    updateHook[0].run();
+            });
+        });
+
+        // Update hook.
         updateHook[0] = () -> {
             if (onUpdate != null)
                 onUpdate.run();
@@ -1916,6 +1975,9 @@ public class GUIEditorGrid {
             pitchUI.setValue(matrix.getPitchAngle());
             yawUI.setValue(matrix.getYawAngle());
             rollUI.setValue(matrix.getRollAngle());
+            pitchLabel.get().setText("Pitch (X: " + ANGLE_DISPLAY_FORMAT.format(Math.toDegrees(matrix.getPitchAngle())) + ")");
+            yawLabel.get().setText("Yaw (Y: " + ANGLE_DISPLAY_FORMAT.format(Math.toDegrees(matrix.getYawAngle())) + ")");
+            rollLabel.get().setText("Roll (Z: " + ANGLE_DISPLAY_FORMAT.format(Math.toDegrees(matrix.getRollAngle())) + ")");
         };
 
         yawUI.setLabelFormatter(SLIDER_DEGREE_CONVERTER);
