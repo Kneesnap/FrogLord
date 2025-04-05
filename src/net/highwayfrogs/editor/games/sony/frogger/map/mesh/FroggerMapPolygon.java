@@ -318,7 +318,7 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
 
         // The UV offset is counted in pixels, not uv units.
         // So we convert them to uv units.
-        return xOffset * (1F / image.getIngameWidth());
+        return ((float) xOffset / image.getIngameWidth());
     }
 
     /**
@@ -340,7 +340,7 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
 
         // The UV offset is counted in pixels, not uv units.
         // So we convert them to uv units.
-        return yOffset * (1F / image.getIngameHeight());
+        return ((float) yOffset / image.getIngameHeight());
     }
 
     /**
@@ -435,5 +435,16 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
                     this.textureId = DataUtils.unsignedIntToShort(remapIndex);
             }
         }
+    }
+
+    /**
+     * Set the bit flags of the map polygon.
+     * @param newFlags the new bit flags to apply to the polygon
+     */
+    public void setFlags(int newFlags) {
+        if ((newFlags & FLAG_VALIDATION_MASK) != newFlags)
+            throw new IllegalArgumentException("Cannot apply flags of " + newFlags + ", as it contains unrecognized bit flags!");
+
+        this.flags = (short) newFlags;
     }
 }

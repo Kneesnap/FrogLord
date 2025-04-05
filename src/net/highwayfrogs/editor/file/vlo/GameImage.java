@@ -186,6 +186,11 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
         return this.parent != null ? this.parent.getLogger() : super.getLogger();
     }
 
+    @Override
+    public String toString() {
+        return "GameImage{id=" + this.textureId + (this.parent != null ? "@" + this.parent.getFileDisplayName() : "") + "}";
+    }
+
     /**
      * Save extra data.
      * @param writer The writer to save data to.

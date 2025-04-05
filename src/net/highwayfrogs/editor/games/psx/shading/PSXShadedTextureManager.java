@@ -136,8 +136,10 @@ public abstract class PSXShadedTextureManager<TPolygon> {
         if (oldShadedTexture == null)
             return false; // Not registered.
 
-        if (Objects.equals(oldShadedTexture, newShadedTexture))
+        if (Objects.equals(oldShadedTexture, newShadedTexture)) {
+            applyTextureShading(polygon, newShadedTexture); // Ensures flat textured polygons animate if their UVs change.
             return false; // We've got the same shaded polygon, no need to update.
+        }
 
         // Remove from old polygon list.
         List<TPolygon> oldPolygonList = this.polygonsByShadedTexture.get(oldShadedTexture);
@@ -206,9 +208,11 @@ public abstract class PSXShadedTextureManager<TPolygon> {
         List<TPolygon> newPolygonList = this.polygonsByShadedTexture.get(newShadedTexture);
 
         if (newPolygonList != null) {
+            // Re-use the same object instance between different polygons.
             newPolygonList.add(polygon);
             this.shadedTexturesByPolygon.put(polygon, this.shadedTexturesByPolygon.get(newPolygonList.get(0)));
         } else {
+            // This shading definition isn't currently tracked, let's register it.
             newPolygonList = new ArrayList<>();
             newPolygonList.add(polygon);
             this.polygonsByShadedTexture.put(newShadedTexture, newPolygonList);

@@ -31,11 +31,6 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
             .comparingLong(SLOT_AREA_CALCULATOR)
             .thenComparingInt(TreeNode::getY)
             .thenComparingInt(TreeNode::getX);
-    private static final ToLongFunction<TreeNode> SLOT_DIAGONAL_AREA_CALCULATOR = TreeNode::getDiagonalSpaceArea;
-    private static final Comparator<TreeNode> SLOTS_BY_DIAGONAL_AREA_COMPARATOR = Comparator
-            .comparingLong(SLOT_DIAGONAL_AREA_CALCULATOR)
-            .thenComparingInt(TreeNode::getY)
-            .thenComparingInt(TreeNode::getX);
 
     public TreeTextureAtlas(int width, int height, boolean allowAutomaticResizing) {
         super(width, height, allowAutomaticResizing, AtlasTexture::new);
@@ -45,13 +40,13 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
     protected boolean updatePositions(SortedList<AtlasTexture> sortedTextureList) {
         // Setup root node.
         TreeNode rootNode = new TreeNode(this, null, 0, 0, getAtlasWidth(), getAtlasHeight(), false);
+        this.lastRemovedNode = null;
+        this.nodesByTexture.clear();
         this.freeDiagonalSlots.clear();
         this.freeSlotsByArea.clear();
         this.freeSlotsByAreaHigherWidth.clear();
         this.freeSlotsByAreaHigherHeight.clear();
-        this.freeSlotsByArea.add(rootNode);
-        this.freeSlotsByAreaHigherWidth.add(rootNode);
-        this.freeSlotsByAreaHigherHeight.add(rootNode);
+        rootNode.addToLists();
         return super.updatePositions(sortedTextureList);
     }
 
@@ -84,7 +79,7 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
         }
 
         // There wasn't any open spot, so let's try the diagonals.
-        return tryInsertTexture(this.freeDiagonalSlots, SLOT_DIAGONAL_AREA_CALCULATOR, texture);
+        return tryInsertTexture(this.freeDiagonalSlots, SLOT_AREA_CALCULATOR, texture);
     }
 
     private boolean tryInsertTexture(List<TreeNode> slots, ToLongFunction<TreeNode> areaCalculator, AtlasTexture texture) {
@@ -118,7 +113,7 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
 
     @Override
     protected void freeTexture(AtlasTexture texture) {
-        TreeNode node = this.nodesByTexture.remove(texture);
+        TreeNode node = this.nodesByTexture.get(texture);
         if (node != null)
             node.setTexture(null);
     }
@@ -219,32 +214,6 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
         }
 
         /**
-         * Gets the width of the diagonal space area.
-         * The diagonal space area of a node can be thought of as breaking each node into four non-uniform rectangles, one for each corner.
-         * The top left rectangle is exactly the size of the texture. The bottom right rectangle is the "diagonal space".
-         */
-        public int getDiagonalSpaceWidth() {
-            return this.nodeWidth - (this.texture != null ? this.texture.getPaddedWidth() : 0);
-        }
-        /**
-         * Gets the height of the diagonal space area.
-         * The diagonal space area of a node can be thought of as breaking each node into four non-uniform rectangles, one for each corner.
-         * The top left rectangle is exactly the size of the texture. The bottom right rectangle is the "diagonal space".
-         */
-        public int getDiagonalSpaceHeight() {
-            return this.nodeHeight - (this.texture != null ? this.texture.getPaddedHeight() : 0);
-        }
-
-        /**
-         * Gets the area taken up by the diagonal space.
-         * The diagonal space area of a node can be thought of as breaking each node into four non-uniform rectangles, one for each corner.
-         * The top left rectangle is exactly the size of the texture. The bottom right rectangle is the "diagonal space".
-         */
-        public long getDiagonalSpaceArea() {
-            return (long) getDiagonalSpaceWidth() * getDiagonalSpaceHeight();
-        }
-
-        /**
          * Gets the width of the free node area.
          * @return freeNodeWidth
          */
@@ -293,7 +262,8 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
 
                 if (texture == null) { // There's no texture we intend to apply right now.
                     addToLists();
-                    tryMergeChildNodes();
+                    this.textureAtlas.lastRemovedNode = this;
+                    //tryMergeChildNodes(); // TODO: Commenting this out seems to create better packing in a general case.
                     return true;
                 }
             } else {
@@ -336,8 +306,7 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
 
         private void addToLists() {
             if (isDiagonalNode()) {
-                if (getDiagonalSpaceArea() > 0)
-                    tryAddToList(this.textureAtlas.freeDiagonalSlots, SLOTS_BY_DIAGONAL_AREA_COMPARATOR);
+                tryAddToList(this.textureAtlas.freeDiagonalSlots, SLOTS_BY_AREA_COMPARATOR);
             } else {
                 int freeWidth = getFreeNodeWidth();
                 int freeHeight = getFreeNodeHeight();
@@ -353,14 +322,13 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
         private void tryAddToList(List<TreeNode> nodes, Comparator<TreeNode> comparator) {
             int index = Collections.binarySearch(nodes, this, comparator);
             if (index >= 0)
-                throw new RuntimeException("TreeNode is already in the list!");
+                throw new RuntimeException("TreeNode is already in the list! [" + this + " vs " + nodes.get(index) + "]");
             nodes.add(-(index + 1), this);
         }
 
         private void removeFromLists() {
             if (isDiagonalNode()) {
-                if (getDiagonalSpaceArea() > 0)
-                    tryRemoveFromList(this.textureAtlas.freeDiagonalSlots, SLOTS_BY_DIAGONAL_AREA_COMPARATOR);
+                tryRemoveFromList(this.textureAtlas.freeDiagonalSlots, SLOTS_BY_AREA_COMPARATOR);
             } else {
                 int freeWidth = getFreeNodeWidth();
                 int freeHeight = getFreeNodeHeight();

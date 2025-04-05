@@ -15,8 +15,8 @@ import java.awt.image.BufferedImage;
 @Getter
 public class AtlasTexture extends Texture {
     private final TextureAtlas atlas;
-    private int x;
-    private int y;
+    private int x = -1; // Setting initial positions to invalid coordinates ensures that if a texture is initialized to 0, 0
+    private int y = -1; // it will still be treated as the position changing. Also, it'll prevent accidents where the texture is not initialized to a position from going unnoticed.
     private int upPaddingEmpty;
     private int downPaddingEmpty;
     private int leftPaddingEmpty;
@@ -125,11 +125,9 @@ public class AtlasTexture extends Texture {
         if (y < 0)
             throw new IndexOutOfBoundsException("Y cannot be set below 0! (Got: " + y + ")");
 
-        boolean positionChanged = (this.x != x) || (this.y != y);
-
-        this.x = x;
-        this.y = y;
-        if (positionChanged) {
+        if (this.x != x || this.y != y) {
+            this.x = x;
+            this.y = y;
             this.atlasCachedImageInvalid = true;
             this.meshTextureCoordsInvalid = true;
             this.atlas.markImageDirty();

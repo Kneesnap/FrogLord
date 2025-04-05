@@ -194,8 +194,8 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
             throw new NullPointerException("textureSource");
 
         TTexture texture = getNullTextureFromSource(textureSource);
-        if (texture != null)
-            this.removeTexture(texture);
+        if (texture != null && !this.removeTexture(texture))
+            throw new RuntimeException("Failed to remove textureSource. (Internal error?)");
 
         return texture;
     }
@@ -211,8 +211,7 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
         if (texture == null)
             throw new NullPointerException("texture");
 
-        if (this.sortedTextures.remove(texture)) {
-            this.texturesBySource.remove(texture.getTextureSource());
+        if (this.sortedTextures.remove(texture) && this.texturesBySource.remove(texture.getTextureSource(), texture)) {
             texture.releaseTexture();
             texture.getImageChangeListeners().remove(this.imageChangeListener);
             if (this.fallbackTexture == texture)

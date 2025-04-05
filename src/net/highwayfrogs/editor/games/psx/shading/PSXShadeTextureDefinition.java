@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.gui.texture.Texture;
 import net.highwayfrogs.editor.system.math.Vector2f;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -194,7 +195,24 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
      * Returns true if UVs should impact the texture generated.
      */
     public boolean doSharedUvsMatter() {
-        return this.polygonType == PSXPolygonType.POLY_GT3 || this.polygonType == PSXPolygonType.POLY_GT4;
+        if (this.polygonType != PSXPolygonType.POLY_GT3 && this.polygonType != PSXPolygonType.POLY_GT4)
+            return false;
+
+        return !doAllColorsMatch();
+    }
+
+    /**
+     * Returns true if all colors match.
+     */
+    public boolean doAllColorsMatch() {
+        if (this.colors == null || this.colors.length == 0)
+            return true;
+
+        for (int i = 1; i < this.colors.length; i++)
+            if (!Objects.equals(this.colors[0], this.colors[i]))
+                return false;
+
+        return true;
     }
 
     /**
@@ -303,7 +321,11 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
                 return applyImagePostFx(PSXTextureShader.makeGouraudShadedImage(targetImage, getWidth(), getHeight(), this.colors));
             case POLY_GT3:
             case POLY_GT4:
-                return applyImagePostFx(PSXTextureShader.makeTexturedGouraudShadedImage(sourceImage, targetImage, this.textureSource, this.colors, this.textureUVs, this.textureScaleX, this.textureScaleY, this.debugDrawCornerMarkers, this.enableModulation));
+                if (doAllColorsMatch()) {
+                    return applyImagePostFx(PSXTextureShader.makeTexturedFlatShadedImage(sourceImage, targetImage, this.colors[0]));
+                } else {
+                    return applyImagePostFx(PSXTextureShader.makeTexturedGouraudShadedImage(sourceImage, targetImage, this.textureSource, this.colors, this.textureUVs, this.textureScaleX, this.textureScaleY, this.debugDrawCornerMarkers, this.enableModulation));
+                }
             default:
                 throw new UnsupportedOperationException("The polygon type " + this.polygonType + " is not supported.");
         }
@@ -432,6 +454,80 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
             default:
                 throw new UnsupportedOperationException("The polygon type " + this.polygonType + " is not supported.");
         }
+    }
+
+    /**
+     * Write the details of the shade texture definition to a String.
+     * @param includeHashes if hash information should be included
+     * @param includeColorAndUvInfo if color and uv information should be included
+     */
+    public String toString(boolean includeHashes, boolean includeColorAndUvInfo) {
+        StringBuilder builder = new StringBuilder();
+        toString(builder, includeHashes, includeColorAndUvInfo);
+        return builder.toString();
+    }
+
+    /**
+     * Write the details of the shade texture definition to a StringBuilder.
+     * @param builder The StringBuilder to write the contents to
+     * @param includeHashes if hash information should be included
+     * @param includeColorAndUvInfo if color and uv information should be included
+     */
+    public void toString(StringBuilder builder, boolean includeHashes, boolean includeColorAndUvInfo) {
+        builder.append("PSXShadeTextureDef{");
+
+        if (includeHashes) {
+            builder.append(Integer.toHexString(System.identityHashCode(this)))
+                    .append(",")
+                    .append(Integer.toHexString(hashCode()))
+                    .append("|");
+        }
+
+        builder.append(this.polygonType);
+
+        builder.append(",texture=").append(this.textureSource);
+
+        if (includeColorAndUvInfo) {
+            builder.append(",colors=[");
+            for (int i = 0; i < this.colors.length; i++) {
+                if (i > 0)
+                    builder.append(',');
+
+                builder.append(NumberUtils.to0PrefixedHexString(this.colors[i].hashCode()));
+            }
+
+            builder.append(']');
+
+            builder.append(",textureUvs=[");
+            for (int i = 0; i < this.textureUVs.length; i++) {
+                if (i > 0)
+                    builder.append(',');
+
+                builder.append('[').append(Integer.toHexString(this.textureUVs[i].getU() & 0xFF))
+                        .append(',').append(Integer.toHexString(this.textureUVs[i].getV() & 0xFF))
+                        .append(']');
+            }
+
+            builder.append(']');
+        }
+
+        if (isSourceImageScaled())
+            builder.append(",scale=[").append(this.textureScaleX).append(",").append(this.textureScaleY).append("]");
+        if (this.semiTransparentMode)
+            builder.append(",semiTransparent");
+        if (this.semiTransparentMode)
+            builder.append(",semiTransparent");
+        if (this.semiTransparentMode)
+            builder.append(",semiTransparent");
+        if (this.imageChangeListeners.size() > 0)
+            builder.append(",listeners=").append(this.imageChangeListeners.size());
+
+        builder.append('}');
+    }
+
+    @Override
+    public String toString() {
+        return toString(true, false);
     }
 
     private void onTextureSourceUpdate(BufferedImage newImage) {

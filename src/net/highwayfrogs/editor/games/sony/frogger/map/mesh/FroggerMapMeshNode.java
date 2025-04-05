@@ -92,9 +92,9 @@ public class FroggerMapMeshNode extends SCPolygonAdapterNode<FroggerMapPolygon> 
     /**
      * Ticks the map animations.
      */
-    public void tickMapAnimations() {
-        this.animationTickCounter++;
+    public void tickMapAnimations(int deltaFrames) {
         updateAnimatedPolygons();
+        this.animationTickCounter += deltaFrames;
     }
 
     /**
