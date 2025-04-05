@@ -13,8 +13,8 @@ import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameInstance;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.editor.FirstPersonCamera;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh.DynamicMeshTextureQuality;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo;
@@ -775,7 +775,7 @@ public class Scene3DUtils {
             String fileName = (namePrefix != null && namePrefix.length() > 0 ? namePrefix + "-" : "")
                     + StringUtils.padStringLeft(Integer.toString(id), 4, '0') + ".png";
 
-            File testFile = new File(GUIMain.getWorkingDirectory(), fileName);
+            File testFile = new File(FrogLordApplication.getWorkingDirectory(), fileName);
             if (!testFile.exists()) {
                 try {
                     ImageIO.write(sceneImage, "png", testFile);

@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.konami.rescue;
 
 
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.reader.ArraySource;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
@@ -10,7 +11,6 @@ import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk.IRwPlatformIndependentTexturePrefix;
 import net.highwayfrogs.editor.games.shared.basic.file.definition.PhysicalFileDefinition;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 
@@ -51,7 +51,7 @@ public class FroggerRescueMain {
             if (!dirFile.isFile() || dirFile.getName().contains("dummy"))
                 continue;
 
-            File outputFolder = new File(GUIMain.getMainApplicationFolder(), "RescueOutput/" + FileUtils.stripExtension(dirFile.getName()) + "/");
+            File outputFolder = new File(FrogLordApplication.getMainApplicationFolder(), "RescueOutput/" + FileUtils.stripExtension(dirFile.getName()) + "/");
             FileUtils.makeDirectory(outputFolder);
 
             HFSFile hfsFile = loadHfsFile(dirFile);

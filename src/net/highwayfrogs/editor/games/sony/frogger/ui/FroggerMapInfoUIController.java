@@ -14,6 +14,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.vlo.GameImage;
@@ -25,7 +26,6 @@ import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMeshControl
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.SelectionMenu.AttachmentListCell;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent;
@@ -138,12 +138,12 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
 
                 // With shading:
                 mapMesh.setShadingEnabled(true);
-                File file = new File(GUIMain.getWorkingDirectory(), getFile().getFileDisplayName() + "-shaded.png");
+                File file = new File(FrogLordApplication.getWorkingDirectory(), getFile().getFileDisplayName() + "-shaded.png");
                 ImageIO.write(mapMesh.getTextureAtlas().getImage(), "png", file);
 
                 // Without shading:
                 mapMesh.setShadingEnabled(false);
-                file = new File(GUIMain.getWorkingDirectory(), getFile().getFileDisplayName() + "-unshaded.png");
+                file = new File(FrogLordApplication.getWorkingDirectory(), getFile().getFileDisplayName() + "-unshaded.png");
                 ImageIO.write(mapMesh.getTextureAtlas().getImage(), "png", file);
             } catch (IOException e) {
                 handleError(e, true, "Failed to save all images.");

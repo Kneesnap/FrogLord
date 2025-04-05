@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.sony.beastwars;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -11,7 +12,6 @@ import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.beastwars.ui.TexController;
 import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapPolygon;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.texture.BufferedImageWrapper;
@@ -278,7 +278,7 @@ public class BeastWarsTexFile extends SCGameFile<BeastWarsInstance> {
     @Override
     @SneakyThrows
     public void exportAlternateFormat() {
-        ImageIO.write(createTextureMap(), "png", new File(GUIMain.getWorkingDirectory(), FileUtils.stripExtension(getFileDisplayName()) + ".png"));
+        ImageIO.write(createTextureMap(), "png", new File(FrogLordApplication.getWorkingDirectory(), FileUtils.stripExtension(getFileDisplayName()) + ".png"));
         getLogger().info("Exported texture map Image.");
     }
 

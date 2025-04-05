@@ -9,8 +9,8 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameInstance;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.logging.ILogger;
@@ -603,7 +603,7 @@ public class FileUtils {
          */
         public File getLastPath(GameInstance instance) {
             if (instance == null)
-                return GUIMain.getWorkingDirectory();
+                return FrogLordApplication.getWorkingDirectory();
 
             Config savedPaths = getSavedPaths(instance);
             ConfigValueNode node = savedPaths.getOrCreateKeyValueNode(this.configKeyName);
@@ -612,7 +612,7 @@ public class FileUtils {
             if (!StringUtils.isNullOrWhiteSpace(node.getAsString())) {
                 prevFile = new File(node.getAsString());
             } else {
-                prevFile = GUIMain.getWorkingDirectory();
+                prevFile = FrogLordApplication.getWorkingDirectory();
             }
 
             return prevFile;
@@ -685,7 +685,7 @@ public class FileUtils {
         File selectedFile = fileChooser.showOpenDialog(instance != null ? instance.getMainStage() : null);
         if (selectedFile != null) {
             savedPath.setResult(instance, selectedFile);
-            GUIMain.setWorkingDirectory(selectedFile.getParentFile());
+            FrogLordApplication.setWorkingDirectory(selectedFile.getParentFile());
         }
 
         return selectedFile;
@@ -753,7 +753,7 @@ public class FileUtils {
         File selectedFile = fileChooser.showSaveDialog(instance != null ? instance.getMainStage() : null);
         if (selectedFile != null) {
             savedPath.setResult(instance, selectedFile);
-            GUIMain.setWorkingDirectory(selectedFile.getParentFile());
+            FrogLordApplication.setWorkingDirectory(selectedFile.getParentFile());
         }
 
         return selectedFile;
@@ -810,7 +810,7 @@ public class FileUtils {
         File selectedFolder = chooser.showDialog(instance != null ? instance.getMainStage() : null);
         if (selectedFolder != null) {
             savedPath.setResult(instance, selectedFolder);
-            GUIMain.setWorkingDirectory(selectedFolder);
+            FrogLordApplication.setWorkingDirectory(selectedFolder);
         }
 
         return selectedFolder;

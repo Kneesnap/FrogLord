@@ -4,13 +4,13 @@ import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.VLOController;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
@@ -147,7 +147,7 @@ public class VLOArchive extends SCSharedGameFile {
     @Override
     @SneakyThrows
     public void exportAlternateFormat() {
-        ImageIO.write(makeVRAMImage(), "png", new File(GUIMain.getWorkingDirectory(), FileUtils.stripExtension(getFileDisplayName()) + ".png"));
+        ImageIO.write(makeVRAMImage(), "png", new File(FrogLordApplication.getWorkingDirectory(), FileUtils.stripExtension(getFileDisplayName()) + ".png"));
         System.out.println("Exported VRAM Image.");
     }
 

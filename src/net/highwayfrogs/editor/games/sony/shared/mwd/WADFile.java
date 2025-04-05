@@ -5,6 +5,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.mof.MOFFile;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
@@ -24,7 +25,6 @@ import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.WADController;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
@@ -162,7 +162,7 @@ public class WADFile extends SCSharedGameFile {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public void exportAlternateFormat() {
         getArchive().promptVLOSelection(getFroggerMapTheme(), vlo -> {
-            File folder = new File(GUIMain.getWorkingDirectory(), FileUtils.stripExtension(getFileDisplayName()).toLowerCase(Locale.ROOT) + File.separator);
+            File folder = new File(FrogLordApplication.getWorkingDirectory(), FileUtils.stripExtension(getFileDisplayName()).toLowerCase(Locale.ROOT) + File.separator);
             if (!folder.exists())
                 folder.mkdirs();
 

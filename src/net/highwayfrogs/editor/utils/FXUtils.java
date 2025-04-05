@@ -25,8 +25,8 @@ import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameInstance;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.GameUIController;
 
 import java.awt.image.BufferedImage;
@@ -116,11 +116,11 @@ public class FXUtils {
         }
         fileChooser.getExtensionFilters().add(new ExtensionFilter(typeInfo, allExtensions));
 
-        fileChooser.setInitialDirectory(FileUtils.getValidFolder(GUIMain.getWorkingDirectory()));
+        fileChooser.setInitialDirectory(FileUtils.getValidFolder(FrogLordApplication.getWorkingDirectory()));
 
         File selectedFile = fileChooser.showOpenDialog(instance != null ? instance.getMainStage() : null);
         if (selectedFile != null)
-            GUIMain.setWorkingDirectory(selectedFile.getParentFile());
+            FrogLordApplication.setWorkingDirectory(selectedFile.getParentFile());
 
         return selectedFile;
     }
@@ -165,7 +165,7 @@ public class FXUtils {
             }
         }
 
-        fileChooser.setInitialDirectory(FileUtils.getValidFolder(GUIMain.getWorkingDirectory()));
+        fileChooser.setInitialDirectory(FileUtils.getValidFolder(FrogLordApplication.getWorkingDirectory()));
         if (suggestName != null) {
             String initialName = suggestName;
             if (extension != null && !extension.equals("*") && !initialName.endsWith("." + extension))
@@ -176,7 +176,7 @@ public class FXUtils {
 
         File selectedFile = fileChooser.showSaveDialog(instance != null ? instance.getMainStage() : null);
         if (selectedFile != null)
-            GUIMain.setWorkingDirectory(selectedFile.getParentFile());
+            FrogLordApplication.setWorkingDirectory(selectedFile.getParentFile());
 
         return selectedFile;
     }
@@ -192,11 +192,11 @@ public class FXUtils {
     public static File promptChooseDirectory(GameInstance instance, String title, boolean saveDirectory) {
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle(title);
-        chooser.setInitialDirectory(FileUtils.getValidFolder(GUIMain.getWorkingDirectory()));
+        chooser.setInitialDirectory(FileUtils.getValidFolder(FrogLordApplication.getWorkingDirectory()));
 
         File selectedFolder = chooser.showDialog(instance != null ? instance.getMainStage() : null);
         if (selectedFolder != null && saveDirectory)
-            GUIMain.setWorkingDirectory(selectedFolder);
+            FrogLordApplication.setWorkingDirectory(selectedFolder);
 
         return selectedFolder;
     }

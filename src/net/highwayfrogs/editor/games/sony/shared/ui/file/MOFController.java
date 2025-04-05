@@ -27,6 +27,7 @@ import javafx.util.Duration;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
@@ -51,7 +52,6 @@ import net.highwayfrogs.editor.games.sony.shared.collprim.MRCollprim;
 import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.editor.RenderManager;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
@@ -200,7 +200,7 @@ public class MOFController extends SCFileEditorUIController<SCGameInstance, MOFH
 
             if (event.getCode() == KeyCode.S && event.isControlDown()) { // Save the texture map.
                 try {
-                    ImageIO.write(getMofMesh().getTextureMap().getTextureTree().getImage(), "png", new File(GUIMain.getWorkingDirectory(), "texMap-" + FileUtils.stripExtension(getMofMesh().getMofHolder().getFileDisplayName()) + ".png"));
+                    ImageIO.write(getMofMesh().getTextureMap().getTextureTree().getImage(), "png", new File(FrogLordApplication.getWorkingDirectory(), "texMap-" + FileUtils.stripExtension(getMofMesh().getMofHolder().getFileDisplayName()) + ".png"));
                 } catch (IOException ex) {
                     Utils.handleError(getLogger(), ex, true, "Failed to save texture sheet.");
                 }

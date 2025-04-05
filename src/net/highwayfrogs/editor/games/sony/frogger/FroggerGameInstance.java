@@ -5,6 +5,7 @@ import lombok.Cleanup;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.DemoFile;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.config.NameBank;
@@ -40,7 +41,6 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.LazySCGameFileListGroup;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
@@ -92,7 +92,7 @@ public class FroggerGameInstance extends SCGameInstance {
         super.loadGame(versionConfigName, instanceConfig, mwdFile, exeFile, progressBar);
 
         // Setup version comparison.
-        FroggerVersionComparison.setup(GUIMain.getWorkingDirectory());
+        FroggerVersionComparison.setup(FrogLordApplication.getWorkingDirectory());
         FroggerVersionComparison.addNewVersionToConfig(this);
     }
 

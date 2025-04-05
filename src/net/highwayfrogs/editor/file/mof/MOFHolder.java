@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
@@ -36,7 +37,6 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFController;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFMainController;
 import net.highwayfrogs.editor.games.sony.shared.utils.FileUtils3D;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
@@ -89,7 +89,7 @@ public class MOFHolder extends SCSharedGameFile {
     @SneakyThrows
     public void exportAlternateFormat() {
         // TODO: TOSS
-        File outputFile = new File(GUIMain.getWorkingDirectory(), getFileDisplayName());
+        File outputFile = new File(FrogLordApplication.getWorkingDirectory(), getFileDisplayName());
         if (this.rawBytes != null)
             FileUtils.writeBytesToFile(getLogger(), outputFile, this.rawBytes, true);
     }

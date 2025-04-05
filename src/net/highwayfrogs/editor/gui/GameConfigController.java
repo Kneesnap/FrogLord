@@ -15,6 +15,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameConfig;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.generic.IGameType;
@@ -106,12 +107,12 @@ public class GameConfigController extends GameUIController<GameInstance> {
 
     @FXML
     private void openTechSupportLink(ActionEvent event) {
-        GUIMain.getApplication().getHostServices().showDocument(Constants.HIGHWAY_FROGS_WEBSITE_URL);
+        FrogLordApplication.getApplication().getHostServices().showDocument(Constants.HIGHWAY_FROGS_WEBSITE_URL);
     }
 
     @FXML
     private void openSourceCodeLink(ActionEvent event) {
-        GUIMain.getApplication().getHostServices().showDocument(Constants.SOURCE_CODE_REPOSITORY_URL);
+        FrogLordApplication.getApplication().getHostServices().showDocument(Constants.SOURCE_CODE_REPOSITORY_URL);
     }
 
     @FXML
@@ -132,7 +133,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
 
         // Shutdown this menu.
         closeWindow();
-        GUIMain.saveMainConfig();
+        FrogLordApplication.saveMainConfig();
 
         // Setup the game instance.
         GameInstance newInstance = gameType.createGameInstance();
@@ -216,7 +217,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
         if (!StringUtils.isNullOrWhiteSpace(lastFolderPathAccessed)) {
             File testFolder = new File(lastFolderPathAccessed);
             if (testFolder.isDirectory())
-                GUIMain.setWorkingDirectory(testFolder);
+                FrogLordApplication.setWorkingDirectory(testFolder);
         }
 
         // Update the game type specific UI.
