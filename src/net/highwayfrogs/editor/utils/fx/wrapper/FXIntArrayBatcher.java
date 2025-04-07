@@ -17,7 +17,7 @@ public class FXIntArrayBatcher {
     @Getter private final ObservableIntegerArray fxArray;
     private final IntegerCounter batchedUpdates;
     private final IntegerCounter batchedInsertion;
-    private final FXIntArray queuedInsertionIndices;
+    private final FXIntArray queuedInsertionIndices; // The destination indices to paste each of the queued insertions
     private final FXIntArray queuedInsertionSourceSizes; // The size of each queued insertion
     private final FXIntArray queuedInsertionSourceIndices; // The indices into the data buffer where the insertion data can be found.
     private final FXIntArray queuedInsertionSourceDataBuffer; // The buffer containing the insertion data.
@@ -168,7 +168,12 @@ public class FXIntArrayBatcher {
         this.array.insertValues(this.queuedInsertionIndices, this.queuedInsertionSourceIndices, this.queuedInsertionSourceSizes, this.queuedInsertionSourceDataBuffer);
 
         // Execute hook
-        onBatchInsertionComplete(this.queuedInsertionIndices, this.queuedInsertionSourceSizes);
+        if (this.queuedInsertionIndices.size() == 1) {
+            // Range insertions are more efficient to handle, so we'd like to call them when possible.
+            onRangeInsertionComplete(this.queuedInsertionIndices.get(0), this.queuedInsertionSourceSizes.get(0));
+        } else {
+            onBatchInsertionComplete(this.queuedInsertionIndices, this.queuedInsertionSourceSizes);
+        }
 
         // Clear for future.
         this.queuedInsertionIndices.clear();
@@ -279,8 +284,23 @@ public class FXIntArrayBatcher {
         // Remove the values from the array.
         this.array.removeIndices(this.queuedIndexRemovals);
 
+        // Determine if all removed entries are grouped together (and can be treated as a more efficient ranged-removal)
+        boolean isRangeRemoval = true;
+        int startBit = this.queuedIndexRemovals.getFirstBitIndex();
+        for (int i = 0; i < removalCount; i++) {
+            if (!this.queuedIndexRemovals.getBit(startBit + i)) {
+                isRangeRemoval = false;
+                break;
+            }
+        }
+
         // Call hook
-        this.onBatchRemovalComplete(this.queuedIndexRemovals);
+        if (isRangeRemoval) {
+            // Range removals are more efficient to handle, so we'd like to call them when possible.
+            this.onRangeRemovalComplete(startBit, removalCount);
+        } else {
+            this.onBatchRemovalComplete(this.queuedIndexRemovals);
+        }
 
         // Clear future.
         this.queuedIndexRemovals.clear();

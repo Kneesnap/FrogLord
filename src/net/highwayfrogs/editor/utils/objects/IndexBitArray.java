@@ -110,8 +110,12 @@ public class IndexBitArray implements IBinarySerializable {
      * @return nextBit, or -1 if there is no such next bit.
      */
     public int getNextBitIndex(int lastBitIndex) {
-        if (this.lastBitIndex == -1 || lastBitIndex > this.lastBitIndex)
+        if (this.lastBitIndex == -1 || lastBitIndex >= this.lastBitIndex)
             return -1;
+
+        // Ensure any index less than zero will return the first bit found.
+        if (lastBitIndex < 0)
+            lastBitIndex = -1;
 
         int startElementIndex = (lastBitIndex + 1) >> ELEMENT_BIT_SHIFT;
         int startLocalBitIndex = (lastBitIndex + 1) % BITS_PER_ELEMENT;
@@ -144,6 +148,11 @@ public class IndexBitArray implements IBinarySerializable {
      * @return nextBit, or -1 if there is no such previous bit.
      */
     public int getPreviousBitIndex(int lastBitIndex) {
+        if (lastBitIndex <= 0)
+            return -1;
+        if (lastBitIndex > this.lastBitIndex)
+            return this.lastBitIndex;
+
         int startElementIndex = (lastBitIndex - 1) >> ELEMENT_BIT_SHIFT;
         int startLocalBitIndex = (lastBitIndex - 1) % BITS_PER_ELEMENT;
 
