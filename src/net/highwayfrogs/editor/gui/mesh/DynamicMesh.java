@@ -20,7 +20,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * This represents a triangle mesh which has functionality to dynamically create, update, and change mesh data.
+ * This represents a triangle mesh which has functionality to dynamically create, update, and change mesh data efficiently.
+ * It is a wrapped around JavaFX's TriangleMesh, but provides functionality for performing batch mesh data array updates to avoid unnecessary/costly JavaFX TriangleMesh array updates.
+ * This is done by keeping track of a list of {@code DynamicMeshNode} objects, which are responsible for providing data entries.
  * Created by Kneesnap on 9/24/2023.
  */
 public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {

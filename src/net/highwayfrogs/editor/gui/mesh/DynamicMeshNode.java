@@ -10,6 +10,8 @@ import java.util.List;
 
 /**
  * This represents a basic component in a mesh.
+ * A node comprises any number of DynamicMeshDataEntry containers, which represent a unit of mesh data.
+ * These data entry containers are tracked in the order which they are added/removed, and may not be located next to each other in the resulting mesh array.
  * Created by Kneesnap on 9/25/2023.
  */
 
