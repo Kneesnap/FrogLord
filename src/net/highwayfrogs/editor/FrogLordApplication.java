@@ -43,6 +43,7 @@ import java.util.logging.*;
  *
  * TODO: Globus's computer seems to have different text settings than mine, so many of the UI buttons are just too small for the text.
  *  -> What do I need to make the FrogLord UI appear consistent across systems?
+ * TODO: I think we should make unit tests at some point. Mesh system, texture tree system, Noodle? Utils? Math classes? DataReader/Writer? Config? Gradle, hrmm.
  */
 public class FrogLordApplication extends Application {
     @Getter private static Config mainConfig;

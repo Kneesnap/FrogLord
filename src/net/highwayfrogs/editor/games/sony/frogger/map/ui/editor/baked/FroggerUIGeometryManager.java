@@ -140,7 +140,10 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
 
         // If the animation should be applied.
         FroggerUIMapAnimationManager animationManager = getController().getAnimationManager();
-        if (animationManager != null && animationManager.getEditAnimationPolygonTargetsCheckBox().isSelected() && clickedPolygon.getPolygonType().isQuad()) {
+
+        // Animations can only be applied to textured polygons, because the game doesn't have an appropriate memory allocation otherwise.
+        // It appears triangles are valid to include animations on, as their structs all line up.
+        if (animationManager != null && animationManager.getEditAnimationPolygonTargetsCheckBox().isSelected() && clickedPolygon.getPolygonType().isTextured()) {
             FroggerMapAnimation animation = animationManager.getSelectedValue();
             if (animation != null) {
                 FroggerMapAnimationTargetPolygon existingTargetPolygon = getMap().getAnimationPacket().getAnimationTarget(clickedPolygon);

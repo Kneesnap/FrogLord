@@ -143,7 +143,11 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
      * @return listDisplayName
      */
     protected String getListDisplayName(int index, TValue value) {
-        return getValueName() + " " + index;
+        if (value != null) {
+            return getValueName() + " " + index;
+        } else {
+            return "None";
+        }
     }
 
     /**
