@@ -87,7 +87,7 @@ FrogLord allows adding/removing/editing individual chunks in the editor, but the
 ### Resource Chunk Types
 Information on how to edit the various resource chunk types can be found in the [GQS file documentation](./modding-gqs-file.md) instead.  
 
-### ![Icon](../../../icons/win98se/16/hexchat.png =32x32) Raw Data (ID: 1)
+### ![Icon](../../../icons/win98se/16/hexchat.png "Icon") Raw Data (ID: 1)
 Raw data is data with a less rigid structure, but in reality it's only used for the `kcEnvironment` (level lighting data) and `scriptdata` (a chunk containing all scripts for the level).
 
 ### ![Icon](../../../icons/image.png "Icon") Texture Reference (ID: 2)
@@ -111,7 +111,7 @@ There is no current way to import/export 3D model animations, but they can be vi
 Animation Hierarchies/Skeletons (.bhe files) are the 3D rig/skeleton used when animating a 3D model.  
 There is no current way to import/export 3D model animations, but they can be viewed through the ActorDesc data.
 
-### ![Icon](../../../icons/ghidra/program_obj.png =32x32) Animation Set (ID: 8)
+### ![Icon](../../../icons/ghidra/program_obj.png "Icon") Animation Set (ID: 8)
 These are unused by the base game, but contain a list of all animations usable by a particular 3D model.  
 FrogLord relies on these despite the game leaving them unused, because FrogLord uses them to know which animations can be used with a particular 3D model.  
 
@@ -119,7 +119,7 @@ FrogLord relies on these despite the game leaving them unused, because FrogLord 
 Collision Triangle Meshes (.ctm files) contain 3D meshes used for testing collision on different 3D models.  
 FrogLord is currently only able to preview these files when previewing a level.
 
-### ![Icon](../../../icons/win98se/16/hexchat.png =32x32) Generic Data Section (ID: 12)
+### ![Icon](../../../icons/win98se/16/hexchat.png "Icon") Generic Data Section (ID: 12)
 Much like the `Raw Data` resource type, `Generic Data` can contain many different types of data, as follows:  
 
 #### ![Icon](../../../icons/ghidra/face-monkey16.png "Icon") Actor Description (Generic Data Type)
@@ -138,7 +138,7 @@ TODO: Detail the FrogLord config syntax for creating these.
 An actor description is a template containing the settings used to create a projectile launcher (Goobers, Fireballs, spells, etc.)  
 TODO: Detail the FrogLord config syntax for creating these.  
 
-#### ![Icon](../../../icons/model.png "Icon" =16x16) Model Description (Generic Data Type)
+#### ![Icon](../../../icons/model.png "Icon") Model Description (Generic Data Type)
 This is mostly pointless, it's just an extra 3D model used in addition to the `Model Reference` chunk type.  
 
 #### ![Icon](../../../icons/ghidra/face-monkey16.png "Icon") Particle Emitter Param (Generic Data Type)
@@ -149,11 +149,11 @@ TODO: Detail the FrogLord config syntax for creating these.
 An actor description is a template containing the settings used to create a prop entity (Chairs, mushrooms, doors, treasure chests, etc.)  
 TODO: Detail the FrogLord config syntax for creating these.
 
-#### ![Icon](../../../icons/model.png =16x16) Proxy Capsule Description (Generic Data Type)
+#### ![Icon](../../../icons/model.png "Icon") Proxy Capsule Description (Generic Data Type)
 Defines an invisible 3D pill-shaped capsule which can be used for entity collision.  
 TODO: Include the FrogLord syntax for creating these.  
 
-#### ![Icon](../../../icons/gouraud-triangle-list.png "Icon" =16x16) Proxy Tri Mesh Description (Generic Data Type)
+#### ![Icon](../../../icons/gouraud-triangle-list.png "Icon") Proxy Tri Mesh Description (Generic Data Type)
 Defines an invisible 3D mesh which can be used for entity collision.  
 TODO: Include the FrogLord syntax for creating these.
 
@@ -169,19 +169,19 @@ An actor description is a template containing the settings used to create a wayp
 Waypoint entities are invisible, and are primarily used in scripts for purposes ranging from pathfinding to checking when an entity enters/exits a certain part of the world.  
 TODO: Detail the FrogLord config syntax for creating these.
 
-### ![Icon](../../../icons/ghidra/program_obj.png =32x32) Action Sequence (ID: 13)
+### ![Icon](../../../icons/ghidra/program_obj.png "Icon") Action Sequence (ID: 13)
 Action Sequences are special kinds of [kcScript](./scripting.md) which have a special set of script effects/actions available.  
 Each entity can have only one Action Sequence active at a time, and they often control entity 3D model animations.  
 The "Action Sequence Names" resource is automatically updated to include Action Sequences when they are added/removed.  
 The AI system responsible for pathfinding/walking/enemy attacks/etc will replace the current action sequence with one of its choosing (based on the sequence name) when an entity changes its current action.  
 Because of this, it is important to use the original naming conventions for any new action sequences that the AI system should use.  
 
-### ![Icon](../../../icons/ghidra/page_paste.png =32x32) Action Sequence Names (ID: 14)
+### ![Icon](../../../icons/ghidra/page_paste.png "Icon") Action Sequence Names (ID: 14)
 Action Sequences are a bit special, in that their hashes (See the [GQS documentation](./modding-gqs-file.md) for more info)) appear randomly generated instead of based on their name.  
 Because of this, there needs to be a way to figure out which Action Sequences correspond to which Action Sequence name.  
 This resource serves that purpose, and FrogLord will automatically update it when action sequences are added/removed.  
 
-### ![Icon](../../../icons/ghidra/face-monkey16.png =32x32) Entity Instance (ID: 15)
+### ![Icon](../../../icons/ghidra/face-monkey16.png "Icon") Entity Instance (ID: 15)
 Every single enemy/ally/character, coin/item, and 3D model is an entity.
 These entity instances are the definitions of where the entity should be placed in the world, if it has a script active, and other configuration data.  
 TODO: Detail the FrogLord config syntax for creating these.
