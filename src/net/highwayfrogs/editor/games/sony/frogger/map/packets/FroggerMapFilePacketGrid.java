@@ -16,8 +16,8 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
     public static final String IDENTIFIER = "GRID";
     @Getter private short gridXCount; // Number of grid squares in x. Modify via resizeGrid().
     @Getter private short gridZCount; // Number of grid squares in z. Modify via resizeGrid().
-    @Getter private short gridXSize = (short) 256; // x length of single square. Seems to always be 256. This is actually fixed point 8.8 aka 1.0F. Modifying this may lead to weird results.
-    @Getter private short gridZSize = (short) 256; // z length of single square. Seems to always be 256. This is actually fixed point 8.8, aka 1.0F. Modifying this may lead to weird results.
+    @Getter private short gridXSize = (short) 256; // x length of single square. Seems to always be 256. This is actually fixed point 4.12, aka 16.0F. Modifying this may lead to weird results by FrogLord, but not the game.
+    @Getter private short gridZSize = (short) 256; // z length of single square. Seems to always be 256. This is actually fixed point 4.12, aka 16.0F. Modifying this may lead to weird results by FrogLord, but not the game.
     private FroggerGridStack[][] gridStacks;
 
 
@@ -125,14 +125,14 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
      * Gets the grid square/rectangle X size as a floating point number.
      */
     public float getGridXSizeAsFloat() {
-        return DataUtils.fixedPointIntToFloatNBits(this.gridXSize, 8);
+        return DataUtils.fixedPointIntToFloat4Bit(this.gridXSize);
     }
 
     /**
      * Gets the grid square/rectangle Z size as a floating point number.
      */
     public float getGridZSizeAsFloat() {
-        return DataUtils.fixedPointIntToFloatNBits(this.gridZSize, 8);
+        return DataUtils.fixedPointIntToFloat4Bit(this.gridZSize);
     }
 
     /**

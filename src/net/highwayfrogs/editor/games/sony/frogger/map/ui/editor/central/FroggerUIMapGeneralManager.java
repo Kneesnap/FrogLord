@@ -84,8 +84,8 @@ public class FroggerUIMapGeneralManager extends FroggerCentralUIManager {
         SVector basePoint = groupPacket.getBasePoint();
         float baseX = basePoint.getFloatX();
         float baseZ = basePoint.getFloatZ();
-        float xSize = DataUtils.fixedPointIntToFloat4Bit(groupPacket.getGroupXSize());
-        float zSize = DataUtils.fixedPointIntToFloat4Bit(groupPacket.getGroupZSize());
+        float xSize = groupPacket.getGroupXSizeAsFloat();
+        float zSize = groupPacket.getGroupZSizeAsFloat();
         PhongMaterial material = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
         for (int x = 0; x < groupPacket.getGroupXCount(); x++)
             for (int z = 0; z < groupPacket.getGroupZCount(); z++)
@@ -101,8 +101,8 @@ public class FroggerUIMapGeneralManager extends FroggerCentralUIManager {
             return;
 
         FroggerMapFilePacketGrid gridPacket = getMap().getGridPacket();
-        float baseX = DataUtils.fixedPointIntToFloatNBits(gridPacket.getBaseGridX(), 4);
-        float baseZ = DataUtils.fixedPointIntToFloatNBits(gridPacket.getBaseGridZ(), 4);
+        float baseX = DataUtils.fixedPointIntToFloat4Bit(gridPacket.getBaseGridX());
+        float baseZ = DataUtils.fixedPointIntToFloat4Bit(gridPacket.getBaseGridZ());
         float xSize = gridPacket.getGridXSizeAsFloat();
         float zSize = gridPacket.getGridZSizeAsFloat();
         PhongMaterial gridMaterial = Scene3DUtils.makeUnlitSharpMaterial(Color.RED);

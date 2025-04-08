@@ -145,7 +145,7 @@ public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
      * @return groupX
      */
     public int getGroupXFromWorldX(int worldX) {
-        return (worldX - this.basePoint.getX()) / getGroupXSize();
+        return (worldX - this.basePoint.getX()) / this.groupXSize;
     }
 
     /**
@@ -154,7 +154,7 @@ public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
      * @return groupZ
      */
     public int getGroupZFromWorldZ(int worldZ) {
-        return (worldZ - this.basePoint.getZ()) / getGroupZSize();
+        return (worldZ - this.basePoint.getZ()) / this.groupZSize;
     }
 
     /**
@@ -179,14 +179,14 @@ public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
      * Gets the group square/rectangle X size as a floating point number.
      */
     public float getGroupXSizeAsFloat() {
-        return DataUtils.fixedPointIntToFloatNBits(this.groupXSize, 8);
+        return DataUtils.fixedPointIntToFloat4Bit(this.groupXSize);
     }
 
     /**
      * Gets the group square/rectangle Z size as a floating point number.
      */
     public float getGroupZSizeAsFloat() {
-        return DataUtils.fixedPointIntToFloatNBits(this.groupZSize, 8);
+        return DataUtils.fixedPointIntToFloat4Bit(this.groupZSize);
     }
 
     /**
