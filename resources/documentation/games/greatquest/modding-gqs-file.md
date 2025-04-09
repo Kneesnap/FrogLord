@@ -1,5 +1,5 @@
 # Great Quest Chunk Data Set (.GQS Files)
-Recall that a chunked file in Frogger: The Great Quest contains all the various data chunks loaded for a scene at any given time (such as level or menu screen).  
+Chunked files in Frogger: The Great Quest contain all the various data chunks loaded for a scene at any given time (such as level or menu screen).  
 GQS files are a special FrogLord format which detail the changes applied to a chunked file in order to install the mod.
 
 ## Before Starting
@@ -13,12 +13,15 @@ Hashes should only be used when there is no corresponding text available (or in 
 FrogLord shows the hash values for each file and chunk resource when selected.  
 
 ## Getting Started
-The recommended editor to use for `.gqs files` is [Notepad++](https://notepad-plus-plus.org/downloads/), but other text editors will work, even Visual Studio Code.  
+The recommended editor to use for `.gqs` files is [Notepad++](https://notepad-plus-plus.org/downloads/), but other text editors will work, even Visual Studio Code.  
 While using Notepad++, it is recommended to set the syntax highlighting to either `Shell` or `PowerShell` with the `Language > ...` menu, to color the scripts.
 
-## How to apply GQS files manually?
-In FrogLord, find the level to apply the GQS file to, and right-click the level's `scriptdata` chunk.  
-Select "Import GQS Script Group" and give FrogLord the desired GQS file.  
+## Applying GQS Files Manually
+In FrogLord:
+1. Locate the level you want to modify.
+2. Right-click the level's `scriptdata` chunk.
+3. Choose "Import GQS Script Group" and select the desired `.qgs` file.
+4. Check for warnings shown by FrogLord.
 FrogLord will import the GQS file. If FrogLord reports any warnings, make sure to read them, as they often indicate real issues.  
 The original game can often trip these warning messages, so if a warning is from the original game, it may be okay to ignore.  
 
@@ -27,6 +30,19 @@ TODO: Include some information on how to manage scripts with Noodle later.
 
 ## GQS Sections
 The following sections document each of the available GQS config sections which are available, how they work, and how to configure them.  
+
+### Quick Sections Reference
+- `[Models]`             – Adds 3D models and descriptions to chunked file
+- `[SoundEffects]`       – Adds references to streamed sound effects in `.SCK`
+- `[CopyResources]`      – Copies resources from one `.dat` to another
+- `[DeleteResources]`    – Deletes chunks from current level
+- `[Animations]`         – Adds animations to Animation Set
+- `[Sequences]`          – Creates/replaces Action Sequences
+- `[Dialog]`             – Creates/replaces dialog strings
+- `[Collision]`          – Creates/updates collision proxies
+- `[EntityDescriptions]` – Creates/updates entity templates (Actor, Prop, Item, etc.)
+- `[Entities]`           – Creates/updates Entity Instances
+- `[Scripts]`            – Adds scripts to existing entities
 
 ### [Models]
 Adds all included 3D model files as `Model References` to the chunked file.
@@ -88,7 +104,7 @@ CrateInst006 # Unnecessary; replaced by CrateInst003
 CrateInst007 # Unnecessary; replaced by CrateInst004
 FrogmotherInst002 # Unnecessary; utilizing FrogmotherInst001
 FrogmotherInst003 # Unnecessary; utilizing FrogmotherInst001
-FrogmotherInst004 # Unnecessary; replaced by FrogmotherInst001
+FrogmotherInst004 # Unnecessary; utilizing FrogmotherInst001
 ```
 
 ### [Animations]

@@ -2,7 +2,7 @@
 Frogger: The Great Quest has most of its "story"/per-level occurrences managed entirely through a scripting system.
 This system gives tons of flexibility to create mods since this lets us change almost all level behavior.  
 This scripting system is NOT the same thing as Noodle, which is the FrogLord scripting system.
-Instead, kcScript is a term we made for the scripting system found in the original Frogger: The Great Quest, as the official/original name is not known.
+Instead, `kcScript` is a term we made for the scripting system found in the original Frogger: The Great Quest, as the official/original name is not known.
 
 ## The Basics
 Each entity in a level can have a script, for example Frogger, coins, etc.
@@ -13,14 +13,14 @@ On the other hand, effects are the commands which can impact the game, such as b
 The following example would play a sound effect when the level loads.
 
 **Example:**  
-```PowerShell
+```powershell
 [Function] # When writing scripts, make sure the correct number of square brackets are used. (It'll usually be more than the one used here)
 cause=OnLevel BEGIN
 PlaySound "sfx/level_start_sfx"
 # More script effects could be written here if desired.
 ```  
 
-Because scripts belong to individual entities, they are considered to execute/run "as" that entity.
+Since scripts belong to individual entities, they execute *as* that entity.
 For example, if you use the `SetSequence` effect to cause an entity to animate, by default it will apply the animation to the entity which the script is written for.
 In order to specify you'd like to run it on a different entity, supply an extra flag `--AsEntity <String: entityName>`.
 For example, `SetSequence "NrmIdle01" --AsEntity "FrogInst001"` will run `SetSequence` as the player character, instead of the script owner.
@@ -67,6 +67,11 @@ FFM_DIALOG_001="This is an example, which could be displayed in-game as dialog."
 cause=OnPlayer INTERACT # When the player interacts with Fairy Frogmother.
 ShowDialog "FFM_DIALOG_001" # Shows the dialog defined earlier to the player.
 ```
+
+> [!NOTE]
+> When writing `.gqs` files, sections are grouped using square brackets.  
+> The number of brackets corresponds to how deeply nested the data is, similar to folders within folders.  
+> For further information on writing configuration files see [the documentation](../../froglord/config-files.md).
 
 ## Design Quirks
 There is no concept of an if statement, so controlling execution flow can be a bit annoying.
