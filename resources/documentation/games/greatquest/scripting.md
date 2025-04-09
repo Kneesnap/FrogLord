@@ -70,7 +70,8 @@ ShowDialog "FFM_DIALOG_001" # Shows the dialog defined earlier to the player.
 
 > [!NOTE]
 > When writing `.gqs` files, sections are grouped using square brackets.  
-> The number of brackets corresponds to how deeply nested the data is, similar to folders within folders.
+> The number of brackets corresponds to how deeply nested the data is, similar to folders within folders.  
+> For further information on writing configuration files see [the documentation](../../froglord/config-files.md).
 
 ## Design Quirks
 There is no concept of an if statement, so controlling execution flow can be a bit annoying.
