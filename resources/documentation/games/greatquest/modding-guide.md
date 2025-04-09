@@ -1,10 +1,11 @@
 # Frogger: The Great Quest Modding Guide
 This guide will go over the basics of creating mods for Frogger: The Great Quest.  
-Please ensure read the [setup guide](./modding-setup-guide.md) before following this guide.
-If you are just trying to install mods, navigate [here](installing-mods.md) instead.  
-**NOTE:** This guide is specific to Frogger: The Great Quest, and the information here may not be valid for other games.
+Please make sure to read the [setup guide](./modding-setup-guide.md) before following this guide.
+If you are just trying to install mods, navigate [here](installing-mods.md) instead.
+> [!NOTE]
+> This guide is specific to Frogger: The Great Quest, and the information here may not be valid for other games.
 
-## 1) An introduction to the proper way of making mods.
+## 1) Creating mods the proper way
 As mentioned in the [setup guide](./modding-setup-guide.md), each mod gets its own folder.
 Create a folder with the desired mod name at `<root folder>\<name of mod>`.
 This folder is known as the "mod folder" (not to be confused with the root folder established in the setup guide.)  
@@ -13,8 +14,8 @@ This folder is known as the "mod folder" (not to be confused with the root folde
 There are two required files to create in the mod folder: `script.ndl` and `main.cfg`.
 
 **main.cfg:**  
-Create a file called `main.cfg`, and copy the following into it. Then, fill it out.  
-```batch
+Create a file called `main.cfg`, paste the following into it, then fill it out.
+```sh
 name=My Cool Mod # The name of the mod.
 game=greatquest # Which game is this mod for?
 id=00000000-0000-0000-0000-000000000000 # Replace this with a randomly generated UUIDv4, such as from: https://www.uuidgenerator.net/ This will uniquely identify your mod, allowing other mods to require your mod to be installed.
@@ -29,47 +30,66 @@ Text written here or on subsequent lines is treated as a description of the mod.
 **script.ndl**  
 Create a file called `script.ndl`, and leave it empty for now.
 This is a [Noodle](scripting.md) script which will instruct FrogLord on which files to import/apply changes from.  
-This will be the most complex part of making mods, so it is strongly recommended to refer to other mods such as [this one](https://github.com/Kneesnap/frogger-tgq-project-puck/blob/main/script.ndl), or asking for help in the Highway Frogs discord server.  
+This will be the most complex part of making mods, so it is strongly recommended to refer to other mods such as [this one](https://github.com/Kneesnap/frogger-tgq-project-puck/blob/main/script.ndl), or asking for help in the [Highway Frogs discord server](https://discord.gg/XZH9Wa5rMV).  
 These scripts can be run in FrogLord with `Edit > Run Noodle Script`.  
 
-To avoid the complexity of Noodle, ignore this file for now, as in theory it's not necessary until the mod is ready to share.  
+To avoid the complexity of Noodle for now, you can safely leave this file empty until the mod is ready to be shared.
 
 **Everything Else:**  
 Other files/folders may be included in the mod folder in any organization, although it is recommended to follow the following directory structure.
 
+> [!NOTE]
+> Each of the follow folders corresponds to a level in the game and follows the level folder structure described below.
+
 ```
 Folders:
-level01/ Level Data for "Rolling Rapids Creek". (Follows the level folder structure seen below)
-level02/ Level Data for "Bog Town". (Follows the level folder structure seen below)
-level03/ Level Data for "Slick Willy's River Boat". (Follows the level folder structure seen below)
-level04/ Level Data for "River Town". (Follows the level folder structure seen below)
-level05/ Level Data for "Mushroom Valley". (Follows the level folder structure seen below)
-level06/ Level Data for "Fairy Town Spring". (Follows the level folder structure seen below)
-level07/ Level Data for "The Tree of Knowledge". (Follows the level folder structure seen below)
-level08/ Level Data for "Fairy Town Summer". (Follows the level folder structure seen below)
-level09/ Level Data for "The Cat Dragon's Lair". (Follows the level folder structure seen below)
-level10/ Level Data for "Fairy Town Fall". (Follows the level folder structure seen below)
-level11/ Level Data for "The Dark Trail". (PC Only) (Follows the level folder structure seen below)
-level11A/ Level Data for "The Dark Trail Ruins". (Follows the level folder structure seen below)
-level12/ Level Data for "Dr. Starkenstein's Castle". (Follows the level folder structure seen below)
-level13/ Level Data for "The Catacombs". (Follows the level folder structure seen below)
-level14/ Level Data for "The Goblin Trail". (Follows the level folder structure seen below)
-level15/ Level Data for "The Goblin Fort". (Follows the level folder structure seen below)
-level16/ Level Data for "The Ruins of Joy Town". (PC Only) (Follows the level folder structure seen below)
-level17/ Level Data for "Joy Castle". (Follows the level folder structure seen below)
-level18/ Level Data for "The Towers of Joy Castle". (Follows the level folder structure seen below)
+level01/   ← Level Data for "Rolling Rapids Creek"
+level02/   ← Level Data for "Bog Town"
+level03/   ← Level Data for "Slick Willy's River Boat"
+level04/   ← Level Data for "River Town"
+level05/   ← Level Data for "Mushroom Valley"
+level06/   ← Level Data for "Fairy Town Spring"
+level07/   ← Level Data for "The Tree of Knowledge"
+level08/   ← Level Data for "Fairy Town Summer"
+level09/   ← Level Data for "The Cat Dragon's Lair"
+level10/   ← Level Data for "Fairy Town Fall"
+level11/   ← Level Data for "The Dark Trail" (PC Only)
+level11A/  ← Level Data for "The Dark Trail Ruins"
+level12/   ← Level Data for "Dr. Starkenstein's Castle"
+level13/   ← Level Data for "The Catacombs"
+level14/   ← Level Data for "The Goblin Trail"
+level15/   ← Level Data for "The Goblin Fort"
+level16/   ← Level Data for "The Ruins of Joy Town" (PC Only)
+level17/   ← Level Data for "Joy Castle"
+level18/   ← Level Data for "The Towers of Joy Castle"
 
-Files/Folders inside of each of the previous folders:
- sfx/ Contains the sound effects (as .wav with the )
- entity-descriptions/ Contains descriptions of entities
- entities/ Contains entity definitions, and scripts which are isolated relatively to individual entities.
- scripts/ Contains files that define scripts which may target multiple entities, but overall are related. (This is just an organization tactic.)
- script.ndl The script to apply the changes for this particular level.
+Standard level folder layout:
+  sfx/                 ← Contains the sound effects (as .wav files)
+  entity-descriptions/ ← Contains descriptions of entities
+  entities/            ← Contains entity definitions and scripts (isolated relative to individual entities)
+  scripts/             ← Contains files that define scripts which may target multiple entities, but overall are related. (This is just an organization tactic.)
+  script.ndl           ← The script to apply the changes for this particular level
  
 TODO: 3D Models, 3D Model Animations, 3D Model Skeletons, 3D Model Collision
 TODO: Map Terrain, Map Terrain Collision, etc
 TODO: Textures
 TODO: More probably.
+```
+
+### Overall Mod Folder Structure
+```
+<My Cool Mod>/                ← Mod folder
+├── main.cfg                  ← Mod description (name, UUID, author, etc.)
+├── script.ndl                ← Script for applying mod to FrogLord
+├── level01/                  ← Level-specific data (e.g. Rolling Rapids Creek)
+│   ├── sfx/
+│   ├── entity-descriptions/
+│   ├── entities/
+│   ├── scripts/
+│   ├── script.ndl            ← Level-specific Noodle script
+├── level02/
+│   └── ...
+├── ... more levels ...
 ```
 
 ## 4) Making an example mod.
@@ -82,10 +102,13 @@ As an example, save the following as a file named `ModdingExample.gqs`:
 FrogmotherInst001
 ```
 
-After saving the .gqs file, using FrogLord, select `01.dat` (Rolling Rapids Creek), and right-click the resource chunk named `scriptdata`.  
-Then, select "Import GQS Script Group" and give FrogLord the `ModdingExample.gqs` file.  
-That's it! The mod can now be saved with `File > Save` or `Ctrl + S`, and tested by running `PC\GreatQuest.exe`.  
-Ensure that the mod worked by loading Rolling Rapids Creek, and seeing that Fairy Frogmother is missing from the tutorial.  
+After saving the .gqs file:
+1. Open FrogLord and select `01.dat` (Rolling Rapids Creek).
+2. Right-click the `scriptdata` resource chunk.
+3. Choose "Import GQS Script Group" and select the `ModdingExample.gqs` file.
+4. Save the mod (`File > Save` or `Ctrl + S`)
+
+That's it! To test your changes, run `PC\GreatQuest.exe`, load Rolling Rapids Creek, and confirm that Fairy Frogmother is missing from the tutorial.
 
 To make further changes to the GQS file, read [the documentation](./modding-gqs-file.md).  
 
@@ -97,9 +120,9 @@ If you run into any issues or need help, we're always available in the [Highway 
 
 ## 6) Sharing Mods
 When it becomes time to share the mod, the following steps are performed.  
-Do not share `data.bin` file directly, this would be copyright infrigement.
+Do not share `data.bin` file directly, this would be copyright infringement.
 Instead, compress the mod folder into a `.zip` file, before renaming it to `.mod` instead.  
-Make sure the `.zip` file has the mod files in the root directory and not in a sub-folder. Afterward, rename the `.zip` to be a `.mod` file instead.  
+Make sure the `.zip` file contains the mod files directly in the root folder — not in a sub-folder. Afterward, rename the `.zip` to be a `.mod` file instead.  
 Ensure installation of the `.mod` file succeeds using FrogLord, and then you're able to share the mod wherever! (It is recommended to share it with [Highway Frogs](https://highwayfrogs.net/) of course!)  
 
 ## A note for developers (Optional)
