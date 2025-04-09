@@ -9,10 +9,10 @@ A common config example looks like this:
 key1=123 # This could be anything, ie: a number, text, etc
 key2=Hello World!
 Anything after the key=value section is treated as plain text, and could be interpretted by FrogLord differently based on the context.
-For example, if this configuration section was being used to configure information about a mod, the text here could be treated as the mod's description.
+For example, if this configuration section was being used to configure information about a mod, the text here could be treated as the mod description.
 
 [SectionName2] # Another section
-key1=456 # When FrogLord 
+key1=456 # [SectionName2] can have its own definition of "key1" which is completely independent of the "key1" seen in [SectionName1].
 ```
 
 **Comments:**  
