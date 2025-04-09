@@ -14,8 +14,8 @@ This folder is known as the "mod folder" (not to be confused with the root folde
 There are two required files to create in the mod folder: `script.ndl` and `main.cfg`.
 
 **main.cfg:**  
-Create a file called `main.cfg`, paste the following into it, then fill it out.
-```sh
+Create a file named `main.cfg`, paste the following into it, then fill it out.
+```ini
 name=My Cool Mod # The name of the mod.
 game=greatquest # Which game is this mod for?
 id=00000000-0000-0000-0000-000000000000 # Replace this with a randomly generated UUIDv4, such as from: https://www.uuidgenerator.net/ This will uniquely identify your mod, allowing other mods to require your mod to be installed.
@@ -28,7 +28,7 @@ Text written here or on subsequent lines is treated as a description of the mod.
 ```
 
 **script.ndl**  
-Create a file called `script.ndl`, and leave it empty for now.
+Create a file named `script.ndl`, and leave it empty for now.
 This is a [Noodle](scripting.md) script which will instruct FrogLord on which files to import/apply changes from.  
 This will be the most complex part of making mods, so it is strongly recommended to refer to other mods such as [this one](https://github.com/Kneesnap/frogger-tgq-project-puck/blob/main/script.ndl), or asking for help in the [Highway Frogs discord server](https://discord.gg/XZH9Wa5rMV).  
 These scripts can be run in FrogLord with `Edit > Run Noodle Script`.  
@@ -78,18 +78,19 @@ TODO: More probably.
 
 ### Overall Mod Folder Structure
 ```
-<My Cool Mod>/                ← Mod folder
-├── main.cfg                  ← Mod description (name, UUID, author, etc.)
-├── script.ndl                ← Script for applying mod to FrogLord
-├── level01/                  ← Level-specific data (e.g. Rolling Rapids Creek)
-│   ├── sfx/
-│   ├── entity-descriptions/
-│   ├── entities/
-│   ├── scripts/
-│   ├── script.ndl            ← Level-specific Noodle script
-├── level02/
-│   └── ...
-├── ... more levels ...
+<Root Folder>/
+├── <Mod Folder>/                 ← Mod folder
+│   ├── main.cfg                  ← Mod description (name, UUID, author, etc.)
+│   ├── script.ndl                ← Script for applying mod to FrogLord
+│   ├── level01/                  ← Level-specific data (e.g. Rolling Rapids Creek)
+│   │   ├── sfx/
+│   │   ├── entity-descriptions/
+│   │   ├── entities/
+│   │   ├── scripts/
+│   │   ├── script.ndl            ← Level-specific Noodle script
+│   ├── level02/
+│   │   ├── ...
+│   ├── ... more levels ...
 ```
 
 ## 4) Making an example mod.

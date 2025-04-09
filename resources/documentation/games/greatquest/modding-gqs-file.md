@@ -31,6 +31,19 @@ TODO: Include some information on how to manage scripts with Noodle later.
 ## GQS Sections
 The following sections document each of the available GQS config sections which are available, how they work, and how to configure them.  
 
+### Quick Sections Reference
+- `[Models]`             – Adds 3D models and descriptions to chunked file
+- `[SoundEffects]`       – Adds references to streamed sound effects in `.SCK`
+- `[CopyResources]`      – Copies resources from one `.dat` to another
+- `[DeleteResources]`    – Deletes chunks from current level
+- `[Animations]`         – Adds animations to Animation Set
+- `[Sequences]`          – Creates/replaces Action Sequences
+- `[Dialog]`             – Creates/replaces dialog strings
+- `[Collision]`          – Creates/updates collision proxies
+- `[EntityDescriptions]` – Creates/updates entity templates (Actor, Prop, Item, etc.)
+- `[Entities]`           – Creates/updates Entity Instances
+- `[Scripts]`            – Adds scripts to existing entities
+
 ### [Models]
 Adds all included 3D model files as `Model References` to the chunked file.
 If `--CreateModelDesc <modelDescName>` is included (which in most circumstances it should be), a corresponding `Model Description` will also be created.  
@@ -223,17 +236,3 @@ SetSavePoint 100 -1.5 1.5 -15
 DeactivateCamera 0.0
 SetAlarm 0 1.0
 ```
-
-## Quick Sections Reference
-
-- `[Models]`             – Adds 3D models and descriptions to chunked file
-- `[SoundEffects]`       – Adds references to streamed sound effects in `.SCK`
-- `[CopyResources]`      – Copies resources from one `.dat` to another
-- `[DeleteResources]`    – Deletes chunks from current level
-- `[Animations]`         – Adds animations to Animation Set
-- `[Sequences]`          – Creates/replaces Action Sequences
-- `[Dialog]`             – Creates/replaces dialog strings
-- `[Collision]`          – Creates/updates collision proxies
-- `[EntityDescriptions]` – Creates/updates entity templates (Actor, Prop, Item, etc.)
-- `[Entities]`           – Creates/updates Entity Instances
-- `[Scripts]`            – Adds scripts to existing entities
