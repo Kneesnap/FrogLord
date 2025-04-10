@@ -68,3 +68,15 @@ Make sure both DxWnd and RivaTuner are currently running, not just setup properl
 
 ### The game crashes often on the main menu.  
 This is normal, and we have not yet determined the cause of this crash.  
+
+### "Unable to find compatible 3-d graphics hardware."
+![](./images/pc-3d-failure1.png)
+![](./images/pc-3d-failure2.png)
+
+**This issue was solved by using DxWnd.**  
+
+However, despite the game running, I am very skeptical about this fix.  
+It was determined that `D3D9DeviceEx::ResetSwapChain` was getting called with a resolution of `60x22` and an invalid video mode of `72047056`.  
+The real resolution should be `640x480`, and a video mode of `D3D9Format::X8R8G8B8`.  
+This makes me think that whatever is going wrong is some kind of memory corruption, and because I'm not sure how DxWnd fixes it, I suspect the memory corruption 
+This issue happened on a PC with the exact same GPU/GPU driver version as a PC that did not have the issue, so that is 100% confirmed to not be the issue.  

@@ -50,6 +50,12 @@ If an incorrect installation directory is chosen, follow the steps for an alread
 The PC version of Frogger: The Great Quest has game-breaking issues which must be fixed in order to make mods effectively.  
 Follow [the PC port guide](./pc-version-fixes.md) in order to properly set up the PC version.  
 
+## 2a) Downloading save files
+The level select wasn't included in the PC version, and wasn't working well, so the easiest way to pick between levels is to use pre-existing save-files.  
+Download them from [here](https://www.gamecopyworld.com/games/pc_frogger_the_great_quest.shtml), and follow the instructions.  
+> [!NOTE]
+> Note that since there are only 10 save file slots, there are two separate groups of files that should be switched between depending on which part of the game (early or late) is getting tested.
+
 ## 3) Getting started with FrogLord
 In the `<root folder>\PC` folder, make a copy of the `data.bin` file, and name it `data-original.bin`.  
 `data.bin` contains all game data inside of it, and is what FrogLord is able to modify.  
