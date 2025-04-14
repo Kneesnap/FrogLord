@@ -23,7 +23,7 @@ import java.util.List;
 @Getter
 public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
     public static final String IDENTIFIER = "GROU";
-    private final SVector basePoint = new SVector(); // TODO: NEEDS DEFAULT VALUE.
+    private final SVector basePoint = new SVector(); // TODO: NEEDS DEFAULT VALUE. (Auto-calculate???)
     @Setter private int groupXCount; // Number of groups in x. TODO: (AUTOCALCULATE WHENEVER THE GRID IS RESIZED BY ENSURING THE SAME BUFFER AS BEFORE EXISTS SURROUNDING THE GRID)
     @Setter private int groupZCount; // Number of groups in z. TODO: (AUTOCALCULATE WHENEVER THE GRID IS RESIZED BY ENSURING THE SAME BUFFER AS BEFORE EXISTS SURROUNDING THE GRID)
     private int groupXSize = 768; // Group X Length - Seems to always be 768, which is 3.0 in fixed point 8.8. (3.0 * the size of a unit square)

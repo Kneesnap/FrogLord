@@ -59,7 +59,7 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
         // Add mesh click listener.
         getInputManager().addMouseListener(MouseEvent.MOUSE_CLICKED, (manager, event, deltaX, deltaY) -> {
             PickResult result = event.getPickResult();
-            if (result == null || !(result.getIntersectedNode() instanceof MeshView) || manager.isSignificantMouseDragRecorded())
+            if (result == null || !(result.getIntersectedNode() instanceof MeshView) || manager.getMouseTracker().isSignificantMouseDragRecorded())
                 return; // No pick result, or the thing that was clicked was not the main mesh.
 
             Mesh mesh = ((MeshView) result.getIntersectedNode()).getMesh();

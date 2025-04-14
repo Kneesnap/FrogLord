@@ -62,6 +62,22 @@ import java.util.Random;
  * TODO: Build 7/8/11/17/18/19 -> GENERIC.VH FAILURE
  * TODO: It seems like gouraud shading is used significantly more than flat shading. How possible is it that the editor was gouraud primarily, and just created flat polygons whenever a gouraud polygon would be unnecessary to render in gouraud mode? Study maps to figure that one out. (The walls in desert levels make me question this idea)
  * TODO: Test modding the PC version still works when all is said & done.
+ *
+ * TODO: Future Editor Notes
+ *  - When Frogger started, PSX Alpha shows their collision grid only supported quads, not tris.
+ *  - Nearly all of the game is quads, but there are places that non-model tri's are used.
+ *  - We'll need a way to configure textures, both when placing new polygons and updating existing ones. (Paint texture sheet onto tiles, Stretch single texture, repeat single texture, etc.)
+ *  - Go through vanilla VLOs to find textures that should be treated as a whole.
+ *  - They had the ability to auto-generate geometric shapes. For example, in Reservoir Frogs, the pipes are clearly cylinders where they stated "I would like 5 grid-squares worth of cylinder pls", then they moved the vertices down to deform the shape.
+ *   -> Another example of where I think this was used are the branches on the tree on the ground in FOR2.
+ *  - It seems all the operations necessary to modify Frogger map geometry can be done with the existing format, EXCEPT lighting.
+ *  - Another important tool is the angler. Take a plane, 3D model, whatever. Really just a collection of vertices. Specify which axis you'd like to angle, then how much slope you'd like to apply. The Y value of each vertex will be changed up/down until reaching the end of the vertices in the desired axis.
+ *   -> This is how JUNGLE was angled, and how SKIING was angled. Probably also how the slime sliding pipes were angled.
+ *   -> There may have been a spline component to this too, as the bridge in FOR2 seems like that was feasible. Either that or it was angled by hand. Also feasible for something that small.
+ *  - The grid is absolute, meaning grid squares cannot be arbitrarily sized. I think this means that the maximum vertex offset in XZ from its grid square is either .25 or .5 * size of square. Do an automated scan of each level's collision grid polygons to see if this is true.
+ *   -> The limit appears to be 0.5 for USABLE_SAFE grid squares, and potentially 1.25 for everything else.
+ *  - Have a UI where in the grid editor to add a new plane into the world. It should be perfectly aligned to grid tile coordinates, and allow changing the Y in the 3D world with a gizmo. Example of what that would add would be the leaves near the red frog in FOR2.
+ *  - Allow placing a single texture into the map as a single polygon of specified grid size. Then, have a way to optionally split such textures into grid squares. (See FOR2.MAP's floor)
  * Created by Kneesnap on 8/22/2018.
  */
 public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {

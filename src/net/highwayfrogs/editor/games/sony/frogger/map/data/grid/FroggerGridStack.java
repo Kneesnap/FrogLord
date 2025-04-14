@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.grid;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -28,7 +29,7 @@ public class FroggerGridStack extends SCGameObject<FroggerGameInstance> {
     @Getter private final int x;
     @Getter private final int z;
     @Getter private final List<FroggerGridSquare> gridSquares = new ArrayList<>();
-    private short averageHeight; // This is only used for cliff deaths. I'm not sure yet how this is calculated, it's pretty complicated it seems.
+    @Getter @Setter private short averageRawHeight; // This is only used for cliff deaths. I'm not sure yet how this is calculated, it's pretty complicated it seems.
     private transient short loadSquareCount = -1;
 
     public static final int MAX_GRID_DIMENSION = 256;
@@ -48,7 +49,7 @@ public class FroggerGridStack extends SCGameObject<FroggerGameInstance> {
      */
     public int load(DataReader reader, int expectedSquareIndex) {
         this.loadSquareCount = reader.readUnsignedByteAsShort();
-        this.averageHeight = reader.readUnsignedByteAsShort();
+        this.averageRawHeight = reader.readUnsignedByteAsShort();
         int realSquareIndex = reader.readUnsignedShortAsInt();
         if (realSquareIndex != expectedSquareIndex)
             throw new RuntimeException("The expected grid square index (" + expectedSquareIndex + ") did not match the grid square index in the game data (" + realSquareIndex + ").");
@@ -82,7 +83,7 @@ public class FroggerGridStack extends SCGameObject<FroggerGameInstance> {
      */
     public int save(DataWriter writer, int gridSquareStartIndex) {
         writer.writeUnsignedByte((short) this.gridSquares.size());
-        writer.writeUnsignedByte(this.averageHeight);
+        writer.writeUnsignedByte(this.averageRawHeight);
         writer.writeUnsignedShort(gridSquareStartIndex);
         return gridSquareStartIndex + this.gridSquares.size();
     }
@@ -113,7 +114,7 @@ public class FroggerGridStack extends SCGameObject<FroggerGameInstance> {
      */
     public void clear() {
         this.gridSquares.clear();
-        this.averageHeight = 0;
+        this.averageRawHeight = 0;
     }
 
     /**
@@ -123,7 +124,7 @@ public class FroggerGridStack extends SCGameObject<FroggerGameInstance> {
      * @return height
      */
     public int getAverageWorldHeight() {
-        return (this.averageHeight << 6);
+        return (this.averageRawHeight << 6);
     }
 
     /**
@@ -143,7 +144,7 @@ public class FroggerGridStack extends SCGameObject<FroggerGameInstance> {
      * @param newHeight The new height.
      */
     public void setAverageWorldHeight(int newHeight) {
-        this.averageHeight = (short) (newHeight >> 6);
+        this.averageRawHeight = (short) (newHeight >> 6);
     }
 
     /**

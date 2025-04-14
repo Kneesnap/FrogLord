@@ -88,12 +88,21 @@ public class ColorUtils {
     }
 
     /**
-     * Get a Color object from an ARGB8888 value.
+     * Get a Color object from an RGB888 value.
      * @param rgb The integer to get the color from.
      * @return color
      */
     public static Color fromRGB(int rgb) {
         return Color.rgb((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
+    }
+
+    /**
+     * Get a Color object from an ARGB8888 value.
+     * @param argb The integer to get the color from.
+     * @return color
+     */
+    public static Color fromARGB(int argb) {
+        return Color.rgb((argb >> 16) & 0xFF, (argb >> 8) & 0xFF, argb & 0xFF, ((argb >> 24) & 0xFF) / 255D);
     }
 
     /**

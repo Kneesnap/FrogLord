@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.baked;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Separator;
 import javafx.scene.input.KeyCode;
@@ -22,14 +23,12 @@ import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapAnimation;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapAnimationTargetPolygon;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquare;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMeshController;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
-import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGrid;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.InputManager.MouseInputState;
 import net.highwayfrogs.editor.gui.editor.BakedLandscapeUIManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.SelectionPromptTracker;
@@ -37,6 +36,7 @@ import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode.OverlayTarget;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 import java.util.Collections;
@@ -45,13 +45,13 @@ import java.util.Objects;
 
 /**
  * Allows viewing / editing baked geometry data in a Frogger map.
- * TODO: Create some generalized selection system which integrates in 3D space allowing a smooth highlighting and selection between different types of things.
  * Created by Kneesnap on 6/6/2024.
  */
 public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMapMesh, FroggerMapPolygon> {
     private static final double VERTEX_BOX_SIZE = 1.5;
     private static final PhongMaterial VERTEX_BOX_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
     @Getter private final SelectionPromptTracker<FroggerMapPolygon> polygonSelector;
+    @Getter private FroggerUIGridManager gridEditorWindow;
 
     // UI
     private DisplayList unusedVertexBoxes;
@@ -78,6 +78,13 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
         return false;
     }
 
+    private void tryOpenGridEditor() {
+        if (this.gridEditorWindow != null && this.gridEditorWindow.isActive())
+            return; // Window is currently active.
+
+        this.gridEditorWindow = FroggerUIGridManager.openGridEditor(getController());
+    }
+
     @Override
     public void onSetup() {
         // Setup UI Pane & Grid.
@@ -86,7 +93,7 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
 
         // Setup UI.
         GUIEditorGrid mainGrid = this.sidePanel.makeEditorGrid();
-        mainGrid.addButton("Edit Collision Grid", () -> FroggerUIGridManager.openGridEditor(getController()));
+        mainGrid.addButton("Edit Collision Grid", this::tryOpenGridEditor);
         this.checkBoxShowUnusedVertices = mainGrid.addCheckBox("Show Unused Vertices", true, this::updateUnusedVertexVisibility);
         this.checkBoxHighlightInvisibleFaces = mainGrid.addCheckBox("Highlight Invisible Polygons", false, this::updateInvisiblePolygonHighlighting);
         this.sidePanel.add(new Separator(Orientation.HORIZONTAL));
@@ -111,27 +118,40 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
         this.checkBoxShowUnusedVertices.setOnAction(evt -> updateUnusedVertexVisibility());
 
         getController().getInputManager().addMouseListener(MouseEvent.MOUSE_CLICKED, (manager, event, deltaX, deltaY) -> {
-            Node clickedNode = manager.getMouseState().getIntersectedNode();
+            MouseInputState mouseState = manager.getMouseTracker().getMouseState();
+            Node clickedNode = mouseState.getIntersectedNode();
             if (clickedNode != getController().getMeshView() || (this.hoverView != null) || (this.highlightedPolygon == null))
                 return;
 
-            FroggerMapPolygon clickedPolygon = getMesh().getMainNode().getDataSourceByFaceIndex(manager.getMouseState().getIntersectedFaceIndex());
+            FroggerMapPolygon clickedPolygon = getMesh().getMainNode().getDataSourceByFaceIndex(mouseState.getIntersectedFaceIndex());
             if (clickedPolygon != this.highlightedPolygon)
                 return;
 
+            handleClick(event, clickedPolygon);
             event.consume();
-            handleClick(clickedPolygon);
         });
 
         updateUnusedVertexVisibility();
         super.onSetup();
     }
 
+    @Override
+    public void onRemove() {
+        super.onRemove();
+        if (this.gridEditorWindow != null) {
+            this.gridEditorWindow.closeWindow();
+            this.gridEditorWindow = null;
+        }
+    }
+
     /**
      * Handles when a polygon is clicked.
      * @param clickedPolygon the polygon which has been clicked
      */
-    protected void handleClick(FroggerMapPolygon clickedPolygon) {
+    protected void handleClick(MouseEvent event, FroggerMapPolygon clickedPolygon) {
+        if (this.polygonSelector.handleClick(event, clickedPolygon))
+            return;
+
         // If we're looking at invisible faces, toggle visibility.
         if (this.checkBoxHighlightInvisibleFaces.isSelected()) {
             clickedPolygon.setVisible(!clickedPolygon.isVisible());
@@ -143,15 +163,25 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
 
         // Animations can only be applied to textured polygons, because the game doesn't have an appropriate memory allocation otherwise.
         // It appears triangles are valid to include animations on, as their structs all line up.
-        if (animationManager != null && animationManager.getEditAnimationPolygonTargetsCheckBox().isSelected() && clickedPolygon.getPolygonType().isTextured()) {
+        if (animationManager != null && animationManager.getEditAnimationPolygonTargetsCheckBox().isSelected()) {
+            if (!clickedPolygon.getPolygonType().isTextured()) {
+                FXUtils.makePopUp("The selected polygon is not textured, so it cannot be animated.", AlertType.WARNING);
+                return;
+            }
+
             FroggerMapAnimation animation = animationManager.getSelectedValue();
             if (animation != null) {
                 FroggerMapAnimationTargetPolygon existingTargetPolygon = getMap().getAnimationPacket().getAnimationTarget(clickedPolygon);
-                if (existingTargetPolygon != null && existingTargetPolygon.getAnimation() == animation) {
+                if (existingTargetPolygon != null) {
+                    if (existingTargetPolygon.getAnimation() != animation) {
+                        FXUtils.makePopUp("The polygon uses another animation.", AlertType.WARNING);
+                        return;
+                    }
+
                     existingTargetPolygon.setPolygon(null); // Removes from tracking.
                     animation.getTargetPolygons().remove(existingTargetPolygon);
                     animationManager.updateAnimatedPolygonHighlighting();
-                } else if (existingTargetPolygon == null) {
+                } else {
                     animation.getTargetPolygons().add(new FroggerMapAnimationTargetPolygon(animation, clickedPolygon));
                     animationManager.updateAnimatedPolygonHighlighting();
                 }
@@ -238,6 +268,7 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
     }
 
     private void updateInvisiblePolygonHighlighting(boolean visible) {
+        getMesh().pushBatchOperations();
         getMesh().getHighlightedInvisiblePolygonNode().clear();
 
         if (visible) {
@@ -248,28 +279,8 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
                     getMesh().getHighlightedInvisiblePolygonNode().add(createOverlayTarget(polygon, FroggerMapMesh.GREEN_COLOR));
             }
         }
-    }
 
-    /**
-     * Update the grid polygon highlighting.
-     * @param visible Whether it should be visible
-     */
-    public void updateGridPolygonHighlighting(boolean visible) {
-        getMesh().getHighlightedGridPolygonNode().clear();
-
-        if (visible) {
-            FroggerMapFilePacketGrid gridPacket = getMap().getGridPacket();
-            for (int z = 0; z < gridPacket.getGridZCount(); z++) {
-                for (int x = 0; x < gridPacket.getGridXCount(); x++) {
-                    FroggerGridStack gridStack = gridPacket.getGridStack(x, z);
-                    for (int i = 0; i < gridStack.getGridSquares().size(); i++) {
-                        FroggerGridSquare gridSquare = gridStack.getGridSquares().get(i);
-                        if (gridSquare.getPolygon() != null)
-                            getMesh().getHighlightedGridPolygonNode().add(createOverlayTarget(gridSquare.getPolygon(), FroggerMapMesh.BLUE_COLOR));
-                    }
-                }
-            }
-        }
+        getMesh().popBatchOperations();
     }
 
     /**

@@ -289,6 +289,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                 // Stop camera processing and clear up the render manager
                 this.textureSheetDebugView.imageProperty().unbind();
                 this.firstPersonCamera.stopThreadProcessing();
+                this.firstPersonCamera.removeSceneControls(stageToOverride, this.meshScene);
                 this.renderManager.removeAllDisplayLists();
                 this.transparentRenderManager.removeAllDisplayLists();
                 this.inputManager.shutdown();

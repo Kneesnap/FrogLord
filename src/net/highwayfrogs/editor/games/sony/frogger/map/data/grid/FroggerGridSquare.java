@@ -72,15 +72,45 @@ public class FroggerGridSquare extends SCGameData<FroggerGameInstance> {
     }
 
     /**
+     * Get the ID of the square within the stack that holds this square.
+     */
+    public int getLayerID() {
+        return this.gridStack.getGridSquares().indexOf(this);
+    }
+
+    /**
      * Gets the logger information.
      */
     public String getLoggerInfo() {
-        return this.gridStack != null ? (this.gridStack.getLoggerInfo() + ",Layer=" + this.gridStack.getGridSquares().indexOf(this)) : Utils.getSimpleName(this);
+        return this.gridStack != null ? (this.gridStack.getLoggerInfo() + ",Layer=" + getLayerID()) : Utils.getSimpleName(this);
     }
 
     @Override
     public ILogger getLogger() {
         return new LazyInstanceLogger(getGameInstance(), FroggerGridSquare::getLoggerInfo, this);
+    }
+
+    /**
+     * Gets the simplified reaction used to represent the grid square flags, if there is a simple reaction which can be used for the current flags.
+     */
+    public FroggerGridSquareReaction getReaction() {
+        return FroggerGridSquareReaction.getReactionFromFlags(this.flags);
+    }
+
+    /**
+     * Applies the reaction used to the grid square flags.
+     * @param newReaction the reaction to apply
+     */
+    public void setReaction(FroggerGridSquareReaction newReaction) {
+        if (newReaction == null)
+            throw new NullPointerException("newReaction");
+
+        FroggerGridSquareReaction oldReaction = getReaction();
+        if (oldReaction == newReaction)
+            return;
+
+        this.flags &= ~FroggerGridSquareReaction.REACTION_BIT_MASK;
+        this.flags |= newReaction.getGridSquareFlagBitMask();
     }
 
     /**

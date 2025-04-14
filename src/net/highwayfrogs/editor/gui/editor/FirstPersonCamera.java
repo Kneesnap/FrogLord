@@ -220,6 +220,14 @@ public class FirstPersonCamera extends Parent {
     }
 
     /**
+     * Assign (setup) the control event handlers on the supplied scene object.
+     * @param scene The subscene to receive and process the keyboard and mouse events, etc.
+     */
+    public void removeSceneControls(Stage stage, Scene scene) {
+        this.inputManager.removeSceneControls(stage, scene);
+    }
+
+    /**
      * Function to process mouse input events.
      */
     private void updateCameraViewFromMouseMovement(InputManager manager, MouseEvent evt, double mouseDeltaX, double mouseDeltaY) {

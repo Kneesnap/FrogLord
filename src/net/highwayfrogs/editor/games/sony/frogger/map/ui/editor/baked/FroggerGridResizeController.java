@@ -48,7 +48,12 @@ public class FroggerGridResizeController extends GameUIController<FroggerGameIns
         int newX = Integer.parseInt(xText);
         int newZ = Integer.parseInt(zText);
         if (newX > 255 || newZ > 255) { // Engine limitation, the game sometimes does things like (x & 0xFF), which effectively means it can't go higher than 0xFF.
-            FXUtils.makePopUp("The grid cannot go larger than 255x255.", AlertType.ERROR);
+            FXUtils.makePopUp("The grid cannot go larger than 255 squares in either direction.", AlertType.ERROR);
+            return;
+        }
+
+        if (newX < 3 || newZ < 3) { // FrogLord limitation, the camera region editor breaks under 3x3.
+            FXUtils.makePopUp("The grid must have at least 3 squares in each direction.", AlertType.ERROR);
             return;
         }
 

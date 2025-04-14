@@ -4,6 +4,9 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquare;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquareFlag;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquareReaction;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.DataUtils;
@@ -63,6 +66,31 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
         for (int z = 0; z < this.gridZCount; z++)
             for (int x = 0; x < this.gridXCount; x++)
                 this.gridStacks[z][x].loadGridSquares(reader);
+
+        // Warn if an unrecognized grid flag combination is found.
+        for (int z = 0; z < this.gridZCount; z++) {
+            for (int x = 0; x < this.gridXCount; x++) {
+                FroggerGridStack gridStack = this.gridStacks[z][x];
+                for (int i = 0; i < gridStack.getGridSquares().size(); i++) {
+                    FroggerGridSquare gridSquare = gridStack.getGridSquares().get(i);
+                    FroggerGridSquareReaction reaction = gridSquare.getReaction();
+                    if (reaction == null) {
+                        StringBuilder builder = new StringBuilder();
+                        for (FroggerGridSquareFlag flag : FroggerGridSquareFlag.values()) {
+                            if (!flag.isLandGridData() || !flag.isPartOfSimpleReaction() || !gridSquare.testFlag(flag))
+                                continue;
+
+                            if (builder.length() > 0)
+                                builder.append(", ");
+
+                            builder.append(flag.name());
+                        }
+
+                        gridSquare.getLogger().warning("Found a GridSquare which had no corresponding FroggerGridSquareReaction! [%s]", builder);
+                    }
+                }
+            }
+        }
     }
 
     @Override
