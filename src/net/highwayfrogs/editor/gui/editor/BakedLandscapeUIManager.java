@@ -241,8 +241,11 @@ public abstract class BakedLandscapeUIManager<TMesh extends DynamicMesh, TPolygo
                 for (int i = 0; i < vertexIds.length; i++) {
                     int vertexId = vertexIds[i];
                     SVector vertexPos = getManager().getVertex(vertexId);
-                    if (vertexPos != null)
+                    if (vertexPos != null) {
                         getManager().getVertexGizmos()[i] = grid.addPositionEditor(controller, VERTEX_POSITION_EDITOR_ID, vertexNames[i] + " (" + vertexId + ")", vertexPos, this.vertexPositionChangeListener);
+                    } else {
+                        grid.addLabel(vertexNames[i] + " (" + vertexId + ")", "Invalid Vertex ID");
+                    }
                 }
             }
         }
@@ -262,6 +265,9 @@ public abstract class BakedLandscapeUIManager<TMesh extends DynamicMesh, TPolygo
                     }
                 }
             }
+
+            if (vertexIndex == -1)
+                throw new RuntimeException("Could not identify vertexIndex to update.");
 
             // Update sphere position.
             if (sphere != null) {

@@ -49,7 +49,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
     public static final int GOURAUD_TEXTURE_MINIMUM_SIZE = UNTEXTURED_GOURAUD_SIZE - (2 * UNTEXTURED_PADDING_SIZE);
 
     public static final String[] QUAD_VERTEX_NAMES = {"Top Left", "Top Right", "Bottom Left", "Bottom Right"};
-    public static final String[] TRI_VERTEX_NAMES = {"1st Corner", "2nd Corner", "3rd Corner"};
+    public static final String[] TRI_VERTEX_NAMES = {"1st Corner", "2nd Corner", "3rd Corner", "Padding"};
 
     public PSXShadeTextureDefinition(PSXShadedTextureManager<?> shadedTextureManager, PSXPolygonType polygonType, ITextureSource textureSource, CVector[] colors, SCByteTextureUV[] textureUVs, boolean semiTransparentMode, boolean enableModulation) {
         this.shadedTextureManager = shadedTextureManager;

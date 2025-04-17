@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquar
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquareFlag;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquareReaction;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack;
+import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.DataUtils;
 
@@ -123,6 +124,23 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
             // In build 71, the maximum seen is 12 in VOL2.MAP, followed by 2 in a few other maps.
             if (nonMatchingStacks >= 20)
                 getLogger().warning("Found %d grid stacks with unmatched cliff heights.", nonMatchingStacks);
+        }
+
+        // Ensure all grid triangles use the last vertex as the fourth vertex for calculation purposes.
+        for (int z = 0; z < this.gridStacks.length; z++) {
+            for (int x = 0; x < this.gridStacks[z].length; x++) {
+                FroggerGridStack gridStack = this.gridStacks[z][x];
+                for (FroggerGridSquare square : gridStack.getGridSquares()) {
+                    FroggerMapPolygon polygon = square.getPolygon();
+                    if (polygon == null || polygon.getPolygonType().isQuad())
+                        continue;
+
+                    int lastVtx = polygon.getVertices()[polygon.getVertexCount() - 1];
+                    int paddingVtx = polygon.getLoadedPaddingVertex();
+                    if (lastVtx != paddingVtx)
+                        polygon.getLogger().warning("Triangle polygon padding vertex (%d) did not match expected value! (%d)", paddingVtx, lastVtx);
+                }
+            }
         }
     }
 

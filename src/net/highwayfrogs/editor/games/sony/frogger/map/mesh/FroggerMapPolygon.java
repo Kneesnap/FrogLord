@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
@@ -50,6 +51,7 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
     private short flags;
     @Setter private short textureId = -1;
     private SCByteTextureUV[] textureUvs;
+    private int loadedPaddingVertex;
 
     // The last address which the polygon was written to.
     private transient int lastReadAddress = -1;
@@ -98,7 +100,10 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
         // Read vertices:
         for (int i = 0; i < this.vertices.length; i++)
             this.vertices[i] = reader.readUnsignedShortAsInt();
-        reader.align(Constants.INTEGER_SIZE); // Padding. The fourth vertex is a duplicate usually, but in some cases such as a polygon from a baked entity model seems to let this value be garbage.
+
+        // Padding. The fourth vertex is a duplicate usually, but in some cases such as a polygon from a baked entity model seems to let this value be garbage.
+        if (!this.polygonType.isQuad())
+            this.loadedPaddingVertex = reader.readUnsignedShortAsInt();
 
         // Read texture data. (if new format)
         boolean oldPolygonFormat = this.mapFile.getMapConfig().isOldMapTexturedPolyFormat();
@@ -164,12 +169,12 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
         this.lastWriteAddress = writer.getIndex();
 
         // Write Vertices:
-        for (int i = 0; i < getVertexCount(); i++)
+        for (int i = 0; i < this.vertices.length; i++)
             writer.writeUnsignedShort(this.vertices[i]);
 
         // Write padding vertex.
         if (this.vertices.length % 2 > 0)
-            writer.writeUnsignedShort(this.vertices[this.vertices.length - 1]);
+            writer.writeUnsignedShort(this.loadedPaddingVertex = this.vertices[this.vertices.length - 1]);
 
         // Write texture data. (if new format)
         boolean oldPolygonFormat = this.mapFile.getMapConfig().isOldMapTexturedPolyFormat();

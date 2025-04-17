@@ -153,7 +153,7 @@ public class FroggerGridSquare extends SCGameData<FroggerGameInstance> {
     }
 
     /**
-     * Calculates the average world height.
+     * Calculates the average world height. Equivalent to GetGridSquareHeight()
      * @return averageWorldHeight
      */
     public int calculateAverageWorldHeight() {
@@ -162,6 +162,13 @@ public class FroggerGridSquare extends SCGameData<FroggerGameInstance> {
         int vertexCount = this.polygon.getVertexCount();
         for (int i = 0; i < vertexCount; i++)
             worldHeight += vertices.get(this.polygon.getVertices()[i]).getY();
+
+        // Triangles are treated as quads for the purposes of grid calculations.
+        // Using the last vertex is validated as good by the warnings that will display if the data doesn't match this pattern when read.
+        if (vertexCount == 3) {
+            worldHeight += vertices.get(this.polygon.getVertices()[vertexCount - 1]).getY();
+            vertexCount++;
+        }
 
         return worldHeight / vertexCount;
     }

@@ -252,7 +252,7 @@ public class FroggerGridStack extends SCGameObject<FroggerGameInstance> {
             // Bottom right tri
             int mapPolyY1 = vertices.get(polygon.getVertices()[1]).getY();
             int mapPolyY2 = vertices.get(polygon.getVertices()[2]).getY();
-            int mapPolyY3 = polygon.getPolygonType().isQuad() ? vertices.get(polygon.getVertices()[3]).getY() : mapPolyY2; // TODO: NO!!! We must have validation if we are to keep this code.
+            int mapPolyY3 = polygon.getPolygonType().isQuad() ? vertices.get(polygon.getVertices()[3]).getY() : mapPolyY2; // mapPolyY2 has been validated by the warning which plays if the padding vertex does not match.
 
             dx = MAX_GRID_DIMENSION - dx;
             gridY = mapPolyY3 + ((dx * (mapPolyY2 - mapPolyY3)) >> 8) + ((dz * (mapPolyY1 - mapPolyY3)) >> 8);
