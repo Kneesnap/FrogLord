@@ -56,4 +56,4 @@ Yes! Pull requests are welcome.
  - Shakotay2 (XeNTax, Helped us figure out how 3D geometry was stored)
  - Everyone involved with Frogger's creation who we've spoken with.
  - yohoat (FrogLord Logo)
- - arch (BW/M1 FrogLord Logos & Beast Wars game info help)
+ - archᵗʰ (BW/M1 FrogLord Logos & Beast Wars game info help)
