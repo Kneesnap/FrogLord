@@ -224,7 +224,8 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
 
     @Override
     protected SVector getVertex(int vertexId) {
-        return getMap().getVertexPacket().getVertices().get(vertexId);
+        List<SVector> vertices = getMap().getVertexPacket().getVertices();
+        return vertices.size() > vertexId && vertexId >= 0 ? vertices.get(vertexId) : null;
     }
 
     @Override

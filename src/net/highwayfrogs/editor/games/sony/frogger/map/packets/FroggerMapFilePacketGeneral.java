@@ -16,6 +16,7 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
+import net.highwayfrogs.editor.utils.DataUtils;
 
 /**
  * Implements the general data file packet.
@@ -184,7 +185,8 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
             FroggerMapFilePacketGrid gridPacket = getParentFile().getGridPacket();
             FroggerGridStack baseStack = gridPacket.getGridStack(this.startGridCoordX, this.startGridCoordZ);
             if (baseStack != null) {
-                IVector gridOrigin = new IVector(gridPacket.getWorldXFromGridX(this.startGridCoordX, true), -baseStack.getAverageWorldHeight(), gridPacket.getWorldZFromGridZ(this.startGridCoordZ, true));
+                int squareY = DataUtils.floatToFixedPointInt4Bit(baseStack.getHighestGridSquareYAsFloat());
+                IVector gridOrigin = new IVector(gridPacket.getWorldXFromGridX(this.startGridCoordX, true), squareY, gridPacket.getWorldZFromGridZ(this.startGridCoordZ, true));
                 editor.addFloatVector("Camera Source", this.defaultCameraSourceOffset, null, controller, gridOrigin.defaultBits(), gridOrigin, null);
                 editor.addFloatVector("Camera Target", this.defaultCameraTargetOffset, null, controller, gridOrigin.defaultBits(), gridOrigin, null);
             }

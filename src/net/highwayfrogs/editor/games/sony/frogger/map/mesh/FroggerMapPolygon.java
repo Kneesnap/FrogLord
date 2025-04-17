@@ -18,12 +18,14 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapA
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
+import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Represents a map polygon seen in Frogger.
@@ -446,5 +448,35 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
             throw new IllegalArgumentException("Cannot apply flags of " + newFlags + ", as it contains unrecognized bit flags!");
 
         this.flags = (short) newFlags;
+    }
+
+    /**
+     * Calculate geometric center point of the polygon.
+     * @return Center of a polygon, else null.
+     */
+    public Vector3f getCenterOfPolygon(Vector3f output) {
+        if (output == null)
+            output = new Vector3f();
+
+        float x = 0.0f;
+        float y = 0.0f;
+        float z = 0.0f;
+        List<SVector> vertices = this.mapFile.getVertexPacket().getVertices();
+        int vertexCount = getVertexCount();
+        for (int i = 0; i < vertexCount; i++) {
+            SVector vertex = vertices.get(this.vertices[i]);
+            x += vertex.getFloatX();
+            y += vertex.getFloatY();
+            z += vertex.getFloatZ();
+        }
+
+        if (vertexCount != 0) {
+            float divisor = 1F / vertexCount;
+            x *= divisor;
+            y *= divisor;
+            z *= divisor;
+        }
+
+        return output.setXYZ(x, y, z);
     }
 }

@@ -7,6 +7,7 @@ import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
@@ -39,6 +40,7 @@ import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
+import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.StringUtils;
@@ -50,11 +52,8 @@ import java.util.function.Consumer;
 
 /**
  * This manages a window displaying the collision grid in a baked Frogger map.
- * TODO: Automatic shading stretching/deskewing.
- *
- * TODO: Water tiles aren't always super visible because they apparently render weirdly with semiTransparent... (hrmm, I think the depth buffer might disable them from drawing...)
- *R
- * TODO: Auto-generation of cliff-height?
+ * Water tiles aren't always super visible because they are hidden by the transparent water layer.
+ *  -> The easiest way to see clearly is to toggle wireframe mode.
  * Created by Kneesnap on 6/6/2024.
  */
 public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> {
@@ -178,12 +177,24 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
 
             if (newValue != null) {
                 this.collisionGridPreview.getMapMesh().pushBatchOperations();
+                boolean badCliffDeathData = false;
+                Vector3f temp = new Vector3f();
                 for (FroggerGridSquare gridSquare : this.collisionGridPreview.getSelectedGridSquares()) {
                     gridSquare.setReaction(newValue);
                     updateGridPolygonHighlighting(gridSquare, true);
+
+                    // This isn't perfect, but should work well enough.
+                    FroggerMapPolygon polygon = gridSquare.getPolygon();
+                    if (polygon != null && newValue == FroggerGridSquareReaction.CLIFF_DEATH && !badCliffDeathData) {
+                        float testY = polygon.getCenterOfPolygon(temp).getY();
+                        if (testY <= FroggerGridStack.CLIFF_Y_THRESHOLD_MAX || testY > FroggerGridStack.CLIFF_Y_THRESHOLD_MIN)
+                            badCliffDeathData = true;
+                    }
                 }
 
                 this.collisionGridPreview.getMapMesh().popBatchOperations();
+                if (badCliffDeathData)
+                    FXUtils.makePopUp("Cliff deaths do not work correctly below Y=" + FroggerGridStack.CLIFF_Y_THRESHOLD_MIN + " or above Y=" + FroggerGridStack.CLIFF_Y_THRESHOLD_MAX + ".", AlertType.WARNING);
             }
 
             updateGridFlagsUI(false);
@@ -259,9 +270,7 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
         this.mapMeshController.getBakedGeometryManager().getPolygonSelector().activate(poly -> {
             onSelect.accept(poly);
             Platform.runLater(this::openWindowAndWait);
-        }, () -> {
-            Platform.runLater(this::openWindowAndWait);
-        });
+        }, () -> Platform.runLater(this::openWindowAndWait));
     }
 
     @FXML
@@ -322,12 +331,12 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
         updateGridSquareUI();
     }
 
-    @FXML
+    @FXML // This is no longer accessible to the average user. It has been kept around for debugging purposes, but most users will never need to edit this.
     private void onUpdateHeight(ActionEvent evt) {
         String text = this.stackHeightField.getText();
         if (NumberUtils.isNumber(text)) {
             this.stackHeightField.setStyle(null);
-            this.collisionGridPreview.getSelectedGridStacks().forEach(stack -> stack.setAverageWorldHeight(Float.parseFloat(text)));
+            this.collisionGridPreview.getSelectedGridStacks().forEach(stack -> stack.setCliffHeight(Float.parseFloat(text)));
         } else {
             this.stackHeightField.setStyle(Constants.FX_STYLE_INVALID_TEXT);
         }
@@ -413,7 +422,9 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
 
     @FXML
     private void onResizeGrid(ActionEvent evt) {
+        closeWindow(); // Without this, the grid window will show on top of the resize window, making it impossible to see.
         FroggerGridResizeController.open(this);
+        Platform.runLater(this::openWindowAndWait);
     }
 
     /**
@@ -518,7 +529,7 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
         // Update main UI components.
         this.gridStackSelectedLabel.setDisable(gridStackCount == 0);
         this.stackHeightLabel.setDisable(gridStackCount == 0);
-        this.stackHeightField.setDisable(gridStackCount == 0);
+        this.stackHeightField.setDisable(true); // This will work if enabled, but this should not be necessary to edit by hand.
         this.addGridSquareButton.setDisable(gridStackCount != 1);
         this.removeGridSquareButton.setDisable(gridStackCount == 0 || selectedStacks.stream().mapToInt(gridStack -> gridStack.getGridSquares().size()).sum() == 0);
 
@@ -526,14 +537,14 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
         if (gridStackCount > 1) {
             this.gridStackSelectedLabel.setText(gridStackCount + " stacks selected");
             if (sameHeight(selectedStacks)) {
-                this.stackHeightField.setText(String.valueOf(selectedStacks.get(0).getAverageWorldHeightAsFloat()));
+                this.stackHeightField.setText(String.valueOf(selectedStacks.get(0).getCliffHeightAsFloat()));
             } else {
                 this.stackHeightField.setText("");
             }
         } else if (gridStackCount == 1) {
             FroggerGridStack gridStack = selectedStacks.get(0);
             this.gridStackSelectedLabel.setText("Stack[x=" + gridStack.getX() + ",z=" + gridStack.getZ() + "]");
-            this.stackHeightField.setText(String.valueOf(gridStack.getAverageWorldHeightAsFloat()));
+            this.stackHeightField.setText(String.valueOf(gridStack.getCliffHeightAsFloat()));
         }
     }
 
@@ -654,7 +665,7 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
 
     private static boolean sameHeight(Collection<FroggerGridStack> stacks) {
         return stacks.stream()
-                .mapToInt(FroggerGridStack::getAverageWorldHeight)
+                .mapToInt(FroggerGridStack::getRawCliffHeightValue)
                 .distinct().count() == 1;
     }
 

@@ -47,6 +47,7 @@ public class FroggerGridResizeController extends GameUIController<FroggerGameIns
 
         int newX = Integer.parseInt(xText);
         int newZ = Integer.parseInt(zText);
+        // We know for sure the grid can be > 128 squares, as a 94 x 152 collision grid is seen for SWP2.MAP in PSX Build 30.
         if (newX > 255 || newZ > 255) { // Engine limitation, the game sometimes does things like (x & 0xFF), which effectively means it can't go higher than 0xFF.
             FXUtils.makePopUp("The grid cannot go larger than 255 squares in either direction.", AlertType.ERROR);
             return;

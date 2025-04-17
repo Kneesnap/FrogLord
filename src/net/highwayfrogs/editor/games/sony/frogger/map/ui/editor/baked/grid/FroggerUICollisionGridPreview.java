@@ -587,9 +587,11 @@ public class FroggerUICollisionGridPreview {
                         continue;
 
                     int verticesShared = 0;
-                    for (int j = 0; j < testPolygon.getVertexCount(); j++)
-                        if (Utils.indexOf(oldPolygon.getVertices(), testPolygon.getVertices()[j]) >= 0)
+                    for (int j = 0; j < testPolygon.getVertexCount(); j++) {
+                        int foundAtIndex = Utils.indexOf(oldPolygon.getVertices(), testPolygon.getVertices()[j]);
+                        if (foundAtIndex >= 0 && foundAtIndex < oldPolygon.getVertexCount()) // Ensure we don't check the padding vertex, if there is one.
                             verticesShared++;
+                    }
 
                     if (verticesShared > bestOptionVerticesShared) {
                         bestSquare = testSquare;

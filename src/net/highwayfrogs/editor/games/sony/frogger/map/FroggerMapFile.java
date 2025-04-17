@@ -271,7 +271,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
             for (int x = 0; x < this.gridPacket.getGridXCount(); x++) {
                 FroggerGridStack gridStack = this.gridPacket.getGridStack(x, z);
                 gridStack.getGridSquares().clear();
-                gridStack.setAverageWorldHeight(0);
+                gridStack.setCliffHeight(0F);
                 if (x == 0 || x == this.gridPacket.getGridXCount() - 1 || z == 0 || z == this.gridPacket.getGridZCount() - 1)
                     continue; // No squares around edges.
 
