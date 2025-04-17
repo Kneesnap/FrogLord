@@ -45,7 +45,6 @@ public class FroggerGridStack extends SCGameObject<FroggerGameInstance> {
     // After some sleuthing, it seems this is based on averaging the vertices in the area of the grid stack.
     // A good example to demonstrate why is the water sections in SUB1 where there are tiles at y=0 underneath water at y=-32.
     // The water quads are large, taking up 3x3 grid tiles each, and only the grid stacks directly under the water vertices which get their cliff height boosted to y=-4.
-    // TODO: Dumb idea, what if it's polygon-based? Eg: If there's a vertex shared
 
     // Unfortunately, because only an unsigned byte has been allocated, any cliff height below Y=0 or above Y=1020 is impossible to represent properly.
     // This can even be seen in original maps such as SUB2.MAP. Upon previewing the collision grid cliff heights many of them will be seen high in the air due to wrapping around.
