@@ -52,7 +52,7 @@ Follow [the PC port guide](./pc-version-fixes.md) in order to properly set up th
 
 ## 2a) Downloading save files
 The level select wasn't included in the PC version, and wasn't working well, so the easiest way to pick between levels is to use pre-existing save-files.  
-Download them from [here](https://www.gamecopyworld.com/games/pc_frogger_the_great_quest.shtml), and follow the instructions.  
+Download them from [here](http://www.trainerscity.com/en/pc/13036-Frogger-:-The-Great-Quest-Save-Game), and follow the instructions.  
 > [!NOTE]
 > Note that since there are only 10 save file slots, there are two separate groups of files that should be switched between depending on which part of the game (early or late) is getting tested.
 
