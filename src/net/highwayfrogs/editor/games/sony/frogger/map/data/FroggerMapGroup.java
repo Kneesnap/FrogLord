@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygonType;
+import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGroup;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketPolygon;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
@@ -18,9 +19,7 @@ import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Represents the "MAP_GROUP" struct, which is used to determine which parts of the world need to be rendered, and which don't.
@@ -30,18 +29,25 @@ public class FroggerMapGroup extends SCGameData<FroggerGameInstance> {
     @Getter private final FroggerMapFile mapFile;
     @Getter private final int x;
     @Getter private final int z;
-    @Getter @SuppressWarnings("unchecked") private final List<FroggerMapPolygon>[] polygonsByType = (List<FroggerMapPolygon>[]) new List[FroggerMapPolygonType.values().length];
+    @SuppressWarnings("unchecked") private final List<FroggerMapPolygon>[] polygonsByType = (List<FroggerMapPolygon>[]) new List[FroggerMapPolygonType.values().length];
+    @SuppressWarnings("unchecked") private final List<FroggerMapPolygon>[] unmodifiablePolygonsByType = (List<FroggerMapPolygon>[]) new List[this.polygonsByType.length];
+    private final List<FroggerMapPolygon> allPolygons = new ArrayList<>();
+    private final List<FroggerMapPolygon> unmodifiablePolygons = Collections.unmodifiableList(this.allPolygons);
     private transient final short[] loadPolygonCounts = new short[FroggerMapPolygonType.values().length];
     private transient final int[] loadPolygonPointers = new int[FroggerMapPolygonType.values().length];
     private transient int staticEntityListPointer = -1;
+
+    public static final int MAX_POLYGON_COUNT = 255;
 
     public FroggerMapGroup(FroggerMapFile mapFile, int x, int z) {
         super(mapFile != null ? mapFile.getGameInstance() : null);
         this.mapFile = mapFile;
         this.x = x;
         this.z = z;
-        for (int i = 0; i < this.polygonsByType.length; i++)
+        for (int i = 0; i < this.polygonsByType.length; i++) {
             this.polygonsByType[i] = new ArrayList<>();
+            this.unmodifiablePolygonsByType[i] = Collections.unmodifiableList(this.polygonsByType[i]);
+        }
         Arrays.fill(this.loadPolygonCounts, (short) -1);
         Arrays.fill(this.loadPolygonPointers, -1);
     }
@@ -49,6 +55,14 @@ public class FroggerMapGroup extends SCGameData<FroggerGameInstance> {
     @Override
     public FroggerConfig getConfig() {
         return (FroggerConfig) super.getConfig();
+    }
+
+    /**
+     * Builds 2 -> 4 do not resolve properly. I have not dug into why this is, but let's avoid the warning message for now since it seems OK.
+     * @return earlyJulyPointerFormat
+     */
+    public boolean isEarlyJulyPointerFormat() {
+        return getConfig().isAtOrBeforeBuild4() && !getConfig().isAtOrBeforeBuild1();
     }
 
     @Override
@@ -80,14 +94,6 @@ public class FroggerMapGroup extends SCGameData<FroggerGameInstance> {
     }
 
     /**
-     * Clears the contents of the map group.
-     */
-    public void clear() {
-        for (int i = 0; i < this.polygonsByType.length; i++)
-            this.polygonsByType[i].clear();
-    }
-
-    /**
      * Reads the entity list from the current position.
      * @param reader the reader to read it from
      */
@@ -112,6 +118,7 @@ public class FroggerMapGroup extends SCGameData<FroggerGameInstance> {
         if (this.mapFile.getMapConfig().isOldFormFormat())
             return; // The groups data looks correct, but it doesn't seem to align with the expected data format.
 
+        this.allPolygons.clear();
         for (int i = 0; i < FroggerMapPolygonType.values().length; i++) {
             FroggerMapPolygonType polygonType = FroggerMapPolygonType.values()[i];
             List<FroggerMapPolygon> typedPolygons = this.polygonsByType[i];
@@ -142,8 +149,34 @@ public class FroggerMapGroup extends SCGameData<FroggerGameInstance> {
                 FroggerMapPolygon polygon = globalPolygonsByType.get(polygonIndex + j);
                 polygon.setVisible(polygonsVisible);
                 typedPolygons.add(polygon);
+                this.allPolygons.add(polygon);
             }
         }
+    }
+
+    /**
+     * Checks if the polygons tracked here match the positions FrogLord would place the polygons in itself.
+     */
+    public void warnIfFrogLordAlgorithmDoesNotMatchData() {
+        if (isInvisibleGroup())
+            return;
+
+        // Validate the groups of the polygons here.
+        FroggerMapFilePacketGroup groupPacket = this.mapFile.getGroupPacket();
+        for (int i = 0; i < this.polygonsByType.length; i++) {
+            List<FroggerMapPolygon> polygons = this.polygonsByType[i];
+
+            int polygonErrorCount = 0;
+            for (int j = 0; j < polygons.size(); j++) {
+                FroggerMapPolygon polygon = polygons.get(j);
+                if (groupPacket.getMapGroup(polygon) != this)
+                    polygonErrorCount++;
+            }
+
+            if (polygonErrorCount > 0)
+                getLogger().warning("%d %s polygon(s) were in rendering groups that FrogLord did not expect!", polygonErrorCount, FroggerMapPolygonType.values()[i]);
+        }
+
     }
 
     @Override
@@ -157,10 +190,18 @@ public class FroggerMapGroup extends SCGameData<FroggerGameInstance> {
             throw new NullPointerException("Failed to obtain mapConfig");
 
         // Write polygon counts.
+        boolean disablePolygonLimit = isPolygonLimitDisabled();
         for (int i = 0; i < FroggerMapPolygonType.values().length; i++) {
             FroggerMapPolygonType type = FroggerMapPolygonType.values()[i];
+            short polygonCount = (short) this.polygonsByType[i].size();
+
+            // The invisible polygon group supports having > 255 polygons because it is never rendered.
+            // But, we can't actually write a number > 255, so this is done to maintain consistency with the behavior seen in original maps. (Reference _WIN95 maps)
+            if (disablePolygonLimit)
+                polygonCount %= (MAX_POLYGON_COUNT + 1);
+
             if (g2Supported || type != FroggerMapPolygonType.G2)
-                writer.writeUnsignedByte((short) this.polygonsByType[i].size());
+                writer.writeUnsignedByte(polygonCount);
         }
         writer.align(Constants.INTEGER_SIZE);
 
@@ -172,21 +213,6 @@ public class FroggerMapGroup extends SCGameData<FroggerGameInstance> {
 
         this.staticEntityListPointer = writer.writeNullPointer();
         writer.writeNull((mapConfig.getGroupPaddingAmount() - 1) * Constants.POINTER_SIZE);
-    }
-
-    /**
-     * Builds 2 -> 4 do not resolve properly. I have not dug into why this is, but let's avoid the warning message for now since it seems OK.
-     * @return earlyJulyPointerFormat
-     */
-    public boolean isEarlyJulyPointerFormat() {
-        return getConfig().isAtOrBeforeBuild4() && !getConfig().isAtOrBeforeBuild1();
-    }
-
-    /**
-     * Test if this is the map group containing invisible polygons.
-     */
-    public boolean isInvisibleGroup() {
-        return this.x == -1 && this.z == -1;
     }
 
     /**
@@ -232,11 +258,106 @@ public class FroggerMapGroup extends SCGameData<FroggerGameInstance> {
      * Gets the logger information.
      */
     public String getLoggerInfo() {
-        return this.mapFile != null ? this.mapFile.getFileDisplayName() + "|MapGroup[" + this.z + "][" + this.x + "]" : Utils.getSimpleName(this);
+        if (this.mapFile == null)
+            return Utils.getSimpleName(this);
+
+        return this.mapFile.getFileDisplayName() + "|MapGroup[" + (isInvisibleGroup() ?  "Invisible" : this.z + "][" + this.x) + "]";
     }
 
     @Override
     public ILogger getLogger() {
         return new LazyInstanceLogger(getGameInstance(), FroggerMapGroup::getLoggerInfo, this);
+    }
+
+    /**
+     * Clears the contents of the map group.
+     */
+    public void clear() {
+        this.allPolygons.clear();
+        for (int i = 0; i < this.polygonsByType.length; i++)
+            this.polygonsByType[i].clear();
+    }
+
+    /**
+     * Test if this is the map group containing invisible polygons.
+     */
+    public boolean isInvisibleGroup() {
+        return this.x == -1 && this.z == -1;
+    }
+
+    /**
+     * Returns true iff the polygon limit is disabled for this particular map group.
+     */
+    private boolean isPolygonLimitDisabled() {
+        // Invisible groups have the polygon limit disabled.
+        // This behavior is observable in the low poly _WIN95 maps, such as JUN1_WIN95.MAP, which have tons of invisible polygons for collision.
+        return isInvisibleGroup();
+    }
+
+    /**
+     * Gets a Collection containing all registered polygons. The order of polygons is not guaranteed.
+     */
+    public Collection<FroggerMapPolygon> getAllPolygons() {
+        return this.unmodifiablePolygons;
+    }
+
+    /**
+     * Gets a list containing all polygons of the given type registered to the group.
+     * @param polygonType the type of polygons to obtain
+     * @return polygonList
+     */
+    public List<FroggerMapPolygon> getPolygonsByType(FroggerMapPolygonType polygonType) {
+        if (polygonType == null)
+            throw new NullPointerException("polygonType");
+
+        return this.unmodifiablePolygonsByType[polygonType.ordinal()];
+    }
+
+    /**
+     * Adds the polygon to the map group.
+     * Failure conditions include the polygon already being registered, or the maximum polygon count having been reached.
+     * @param polygon the polygon to add
+     * @return true iff the polygon was added successfully
+     */
+    public boolean addPolygon(FroggerMapPolygon polygon) {
+        if (polygon == null)
+            throw new NullPointerException("polygon");
+
+        if (polygon.getMapFile() != this.mapFile) {
+            String groupMapFileName = this.mapFile != null ? this.mapFile.getFileDisplayName() : null;
+            String polygonMapFileName = polygon.getMapFile() != null ? polygon.getMapFile().getFileDisplayName() : null;
+            throw new RuntimeException("The polygon belongs to different map file (" + polygonMapFileName + ") than the one the group exists for! (" + groupMapFileName + ")");
+        }
+
+        if (polygon.isVisible() == isInvisibleGroup())
+            throw new RuntimeException("Cannot add " + (polygon.isVisible() ? "a visible" : "an invisible") + " polygon to this map group.");
+
+        List<FroggerMapPolygon> polygonList = this.polygonsByType[polygon.getPolygonType().ordinal()];
+
+        // The invisible map group is never rendered, so it's fine if it goes past its limits. This even happens in the retail _WIN95 maps.
+        // We need to track the polygon, because map group registration is important for actually saving polygons.
+        if (polygonList.size() >= MAX_POLYGON_COUNT && !isPolygonLimitDisabled())
+            return false;
+
+        if (polygonList.contains(polygon))
+            return false;
+
+        polygonList.add(polygon);
+        this.allPolygons.add(polygon);
+        return true;
+    }
+
+    /**
+     * Test if a polygon is tracked by the map group
+     * @param polygon the polygon to test
+     */
+    public boolean contains(FroggerMapPolygon polygon) {
+        if (polygon == null)
+            throw new NullPointerException("polygon");
+
+        if (polygon.getMapFile() != this.mapFile)
+            return false;
+
+        return this.polygonsByType[polygon.getPolygonType().ordinal()].contains(polygon);
     }
 }

@@ -17,6 +17,7 @@ import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Translate;
 import lombok.Getter;
+import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
@@ -62,6 +63,8 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
     private FroggerMapPolygon highlightedPolygon;
     private OverlayTarget highlightedPolygonTarget;
     private MeshView hoverView; // Anything we're hovering over which should allow selection instead of the cursor.
+
+    public static final CursorVertexColor GREEN_COLOR = new CursorVertexColor(java.awt.Color.GREEN, java.awt.Color.BLACK);
 
     public FroggerUIGeometryManager(FroggerMapMeshController controller) {
         super(controller);
@@ -155,6 +158,7 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
         // If we're looking at invisible faces, toggle visibility.
         if (this.checkBoxHighlightInvisibleFaces.isSelected()) {
             clickedPolygon.setVisible(!clickedPolygon.isVisible());
+            updateInvisiblePolygonHighlight(clickedPolygon);
             return;
         }
 
@@ -277,11 +281,17 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
             for (int i = 0; i < polygons.size(); i++) {
                 FroggerMapPolygon polygon = polygons.get(i);
                 if (!polygon.isVisible())
-                    getMesh().getHighlightedInvisiblePolygonNode().add(createOverlayTarget(polygon, FroggerMapMesh.GREEN_COLOR));
+                    updateInvisiblePolygonHighlight(polygon);
             }
         }
 
         getMesh().popBatchOperations();
+    }
+
+    private void updateInvisiblePolygonHighlight(FroggerMapPolygon polygon) {
+        ITextureSource overlayTexture = polygon.isVisible() ? null : GREEN_COLOR;
+        DynamicMeshDataEntry polygonDataEntry = getMesh().getMainNode().getDataEntry(polygon);
+        getMesh().getHighlightedInvisiblePolygonNode().setOverlayTexture(polygonDataEntry, overlayTexture);
     }
 
     /**

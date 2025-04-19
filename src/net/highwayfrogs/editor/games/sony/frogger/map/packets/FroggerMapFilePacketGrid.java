@@ -24,10 +24,14 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
     public static final String IDENTIFIER = "GRID";
     @Getter private short gridXCount; // Number of grid squares in x. Modify via resizeGrid().
     @Getter private short gridZCount; // Number of grid squares in z. Modify via resizeGrid().
-    @Getter private short gridXSize = (short) 256; // x length of single square. Seems to always be 256. This is actually fixed point 4.12, aka 16.0F. Modifying this may lead to weird results by FrogLord, but not the game.
-    @Getter private short gridZSize = (short) 256; // z length of single square. Seems to always be 256. This is actually fixed point 4.12, aka 16.0F. Modifying this may lead to weird results by FrogLord, but not the game.
+    @Getter private short gridXSize = GRID_STACK_WORLD_LENGTH; // x length of single square. This value does not work correctly if changed to something other than the default.
+    @Getter private short gridZSize = GRID_STACK_WORLD_LENGTH; // z length of single square. This value does not work correctly if changed to something other than the default.
     private FroggerGridStack[][] gridStacks;
 
+    /**
+     * This represents the length and width of a grid stack/square. Is equivalent to 16.0F in floating point.
+     */
+    public static final short GRID_STACK_WORLD_LENGTH = (short) 256;
 
     public FroggerMapFilePacketGrid(FroggerMapFile parentFile) {
         super(parentFile, IDENTIFIER);
@@ -40,6 +44,10 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
         this.gridXSize = reader.readShort();
         this.gridZSize = reader.readShort();
         this.gridStacks = new FroggerGridStack[this.gridZCount][this.gridXCount];
+
+        // Validate size as the expected value.
+        if (this.gridXSize != GRID_STACK_WORLD_LENGTH || this.gridZSize != GRID_STACK_WORLD_LENGTH)
+            getLogger().warning("Unexpected grid sizes! Got: [%d/%f, %d/%f]", this.gridXSize, getGridXSizeAsFloat(), this.gridZSize, getGridZSizeAsFloat());
 
         // Prevent further loading.
         if (getParentFile().isExtremelyEarlyMapFormat() && !getParentFile().isIsland() && !getParentFile().isQB()) {
@@ -142,6 +150,9 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
                 }
             }
         }
+
+        // Now that the vertices are loaded, validate the polygon in the map group placement.
+        getParentFile().getGroupPacket().warnIfFrogLordAlgorithmDoesNotMatchData();
     }
 
     @Override

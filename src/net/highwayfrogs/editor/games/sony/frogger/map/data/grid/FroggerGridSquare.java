@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.FroggerMapGroup;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -66,8 +67,12 @@ public class FroggerGridSquare extends SCGameData<FroggerGameInstance> {
         // Write polygon pointer after validating the polygon is registered & was written.
         if (this.polygon == null || this.polygon.getLastWriteAddress() <= 0)
             throw new RuntimeException("A FroggerGridSquare's polygon was not saved! Most likely it was not registered to the map! (" + getLoggerInfo() + ")");
-        if (Collections.binarySearch(getMapFile().getPolygonPacket().getPolygonsByType(this.polygon.getPolygonType()), this.polygon, Comparator.comparingInt(FroggerMapPolygon::getLastWriteAddress)) < 0)
+
+        // Ensure the polygon was written.
+        FroggerMapGroup mapGroup = getMapFile().getGroupPacket().getMapGroup(this.polygon);
+        if (Collections.binarySearch(mapGroup.getPolygonsByType(this.polygon.getPolygonType()), this.polygon, Comparator.comparingInt(FroggerMapPolygon::getLastWriteAddress)) < 0)
             throw new RuntimeException("A FroggerGridSquare's polygon was not saved! Most likely it was not registered to the map! (" + getLoggerInfo() + ")");
+
         writer.writeInt(this.polygon.getLastWriteAddress());
     }
 

@@ -203,17 +203,8 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
 
             int x = Integer.parseInt(split[0]);
             int z = Integer.parseInt(split[1]);
-            if (x < 0 || z < 0) {
-                FXUtils.makePopUp("Dimensions cannot be less than zero.", AlertType.ERROR);
-                return;
-            }
-
-            if (x > 255 || z > 255) { // Frogger limitation.
-                FXUtils.makePopUp("The collision grid cannot go larger than 255x255.", AlertType.ERROR);
-                return;
-            }
-
-            getFile().randomizeMap(x, z);
+            if (FroggerGridResizeController.isGridSizeValid(x, z))
+                getFile().randomizeMap(x, z);
         });
     }
 

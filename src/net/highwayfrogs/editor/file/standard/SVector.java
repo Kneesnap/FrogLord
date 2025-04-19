@@ -122,6 +122,16 @@ public class SVector implements IBinarySerializable, Vector {
      * @param y The y value to set.
      * @param z The z value to set.
      */
+    public void setValues(float x, float y, float z) {
+        setValues(x, y, z, defaultBits());
+    }
+
+    /**
+     * Set the values of this vector.
+     * @param x The x value to set.
+     * @param y The y value to set.
+     * @param z The z value to set.
+     */
     public void setValues(float x, float y, float z, int bits) {
         this.x = DataUtils.floatToFixedPointShort(x, bits);
         this.y = DataUtils.floatToFixedPointShort(y, bits);

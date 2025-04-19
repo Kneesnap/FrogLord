@@ -42,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.logging.Level;
 
 /**
  * Contains static utilities used to interact with JavaFX.
@@ -494,6 +495,24 @@ public class FXUtils {
             throw new RuntimeException("Unsupported JavaFX Shape3D: " + Utils.getSimpleName(node));
         } else {
             throw new RuntimeException("Unsupported JavaFX Node: " + Utils.getSimpleName(node));
+        }
+    }
+
+    /**
+     * Gets the appropriate AlertType for a given logging Level.
+     * @param level the logging level to get an AlertType for
+     * @return alertType
+     */
+    public static AlertType getAlertTypeFromLogLevel(Level level) {
+        if (level == null)
+            throw new NullPointerException("level");
+
+        if (level.intValue() >= Level.SEVERE.intValue()) { // serious failure
+            return AlertType.ERROR;
+        } else if (level.intValue() >= Level.WARNING.intValue()) { // potential problem
+            return AlertType.WARNING;
+        } else { // informational messages
+            return AlertType.INFORMATION;
         }
     }
 

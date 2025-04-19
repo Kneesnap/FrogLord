@@ -18,6 +18,7 @@ import java.util.function.ToIntBiFunction;
 import java.util.function.ToIntFunction;
 import java.util.function.ToLongBiFunction;
 import java.util.function.ToLongFunction;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -231,6 +232,62 @@ public class Utils {
             } else {
                 Platform.runLater(() -> FXUtils.makeErrorPopUp(null, th, false));
             }
+        }
+    }
+
+    public enum ProblemResponse {
+        CREATE_POPUP,
+        THROW_EXCEPTION,
+        PRINT_STACK_TRACE,
+        PRINT_STACK_TRACE_WITH_POPUP,
+        PRINT_MESSAGE,
+    }
+
+    /**
+     * Handles a problem based on the user-configured ProblemResponse.
+     * Allows a function to report a problem in a different way, based on calling context.
+     * @param response the response to apply
+     * @param logger the logger to use to write messages to
+     * @param severity the severity of the message to write
+     * @param template the message template
+     * @param arguments any message arguments
+     */
+    public static void handleProblem(ProblemResponse response, ILogger logger, Level severity, String template, Object... arguments) {
+        if (response == null)
+            throw new NullPointerException("response");
+        if (severity == null)
+            throw new NullPointerException("severity");
+        if (template == null)
+            throw new NullPointerException("template");
+        if (arguments == null)
+            throw new NullPointerException("arguments");
+
+        String formattedMessage = StringUtils.formatStringSafely(template, arguments);
+        switch (response) {
+            case CREATE_POPUP:
+                if (Platform.isFxApplicationThread()) {
+                    FXUtils.makePopUp(formattedMessage, FXUtils.getAlertTypeFromLogLevel(severity));
+                } else {
+                    Platform.runLater(() -> FXUtils.makePopUp(formattedMessage, FXUtils.getAlertTypeFromLogLevel(severity)));
+                }
+
+                break;
+            case THROW_EXCEPTION:
+                throw new RuntimeException(formattedMessage);
+            case PRINT_STACK_TRACE:
+                handleError(logger, new RuntimeException(formattedMessage), false);
+                break;
+            case PRINT_STACK_TRACE_WITH_POPUP:
+                handleError(logger, new RuntimeException(formattedMessage), true);
+                break;
+            case PRINT_MESSAGE:
+                if (logger == null)
+                    logger = getInstanceLogger();
+
+                logger.log(severity, formattedMessage);
+                break;
+            default:
+                throw new UnsupportedOperationException("The ProblemResponse '" + response + "' is not supported.");
         }
     }
 

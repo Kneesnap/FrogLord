@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.mesh;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadedTextureManager.PSXMeshShadedTextureManager;
@@ -10,6 +9,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapA
 import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapAnimationTargetPolygon;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh.FroggerShadedTextureManager;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketAnimation;
+import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.baked.FroggerUIGeometryManager;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.baked.FroggerUIGridManager;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.baked.FroggerUIMapAnimationManager;
 import net.highwayfrogs.editor.gui.editor.BakedLandscapeUIManager;
@@ -17,7 +17,6 @@ import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode;
 import net.highwayfrogs.editor.gui.mesh.PSXShadedDynamicMesh;
 import net.highwayfrogs.editor.gui.texture.atlas.TreeTextureAtlas;
 
-import java.awt.*;
 import java.util.Collection;
 
 /**
@@ -32,8 +31,7 @@ public class FroggerMapMesh extends PSXShadedDynamicMesh<FroggerMapPolygon, Frog
     private final DynamicMeshOverlayNode highlightedAnimatedPolygonsNode;
     private final DynamicMeshOverlayNode highlightedInvisiblePolygonNode;
     private final DynamicMeshOverlayNode highlightedGridPolygonNode;
-
-    public static final CursorVertexColor GREEN_COLOR = new CursorVertexColor(Color.GREEN, Color.BLACK);
+    private final DynamicMeshOverlayNode highlightedGroupPolygonNode;
 
     public FroggerMapMesh(FroggerMapFile mapFile) {
         super(new TreeTextureAtlas(64, 64, true), DynamicMeshTextureQuality.UNLIT_SHARP, true);
@@ -61,6 +59,9 @@ public class FroggerMapMesh extends PSXShadedDynamicMesh<FroggerMapPolygon, Frog
 
         this.highlightedMousePolygonNode = new DynamicMeshOverlayNode(this);
         addNode(this.highlightedMousePolygonNode);
+
+        this.highlightedGroupPolygonNode = new DynamicMeshOverlayNode(this);
+        addNode(this.highlightedGroupPolygonNode);
     }
 
     @Override
@@ -72,7 +73,7 @@ public class FroggerMapMesh extends PSXShadedDynamicMesh<FroggerMapPolygon, Frog
         getTextureAtlas().addTexture(BakedLandscapeUIManager.MATERIAL_POLYGON_HIGHLIGHT);
         getTextureAtlas().addTexture(FroggerUIMapAnimationManager.MATERIAL_POLYGON_HIGHLIGHT);
         getTextureAtlas().addTexture(FroggerMapAnimation.UNKNOWN_TEXTURE_SOURCE);
-        getTextureAtlas().addTexture(GREEN_COLOR);
+        getTextureAtlas().addTexture(FroggerUIGeometryManager.GREEN_COLOR);
         getTextureAtlas().addTexture(FroggerUIGridManager.MATERIAL_HIGHLIGHT_GRID_DARK_RED);
         getTextureAtlas().addTexture(FroggerUIGridManager.MATERIAL_HIGHLIGHT_GRID_RED);
         getTextureAtlas().addTexture(FroggerUIGridManager.MATERIAL_HIGHLIGHT_GRID_PINK);

@@ -169,6 +169,14 @@ public class FroggerConfig extends SCGameConfig {
     }
 
     /**
+     * Tests if the build is at/before build 2.
+     * @return isBuildAtOrBeforeBuild2
+     */
+    public boolean isAtOrBeforeBuild2() {
+        return (this.build > 0 && this.build <= 2) || isBeforeBuild1() || isWindowsAlpha();
+    }
+
+    /**
      * Tests if the build is at/before build 4.
      * @return isBuildAtOrBeforeBuild4
      */
