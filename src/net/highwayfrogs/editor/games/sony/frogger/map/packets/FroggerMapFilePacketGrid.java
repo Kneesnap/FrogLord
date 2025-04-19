@@ -228,7 +228,6 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
     /**
      * Gets the x world origin position for the collision grid.
      * Fixed point 4 bits.
-     * TODO: Is this based on the group position? If so, I believe this implies the grid size is automatically calculated? Seems odd. Actually, it could be the other way around that the group size is calculated based on the grid.
      * @return baseGridX
      */
     public short getBaseGridX() {
