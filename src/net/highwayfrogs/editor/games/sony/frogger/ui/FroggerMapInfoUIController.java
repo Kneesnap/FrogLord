@@ -23,6 +23,7 @@ import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMeshController;
+import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.baked.FroggerGridResizeController;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
