@@ -34,14 +34,13 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 
 /**
@@ -412,14 +411,37 @@ public class FXUtils {
         } else {
             String errorMessage = stringWriter.toString();
 
-            Alert alert = new Alert(AlertType.ERROR, errorMessage, ButtonType.OK);
-            if (ex != null) {
-                alert.setResizable(true);
-                alert.setWidth(1000);
-                alert.setHeight(750);
-            }
+            showPopUpAndWait(() -> {
+                Alert alert = new Alert(AlertType.ERROR, errorMessage, ButtonType.OK);
+                if (ex != null) {
+                    alert.setResizable(true);
+                    alert.setWidth(1000);
+                    alert.setHeight(750);
+                }
 
-            alert.showAndWait();
+                return alert;
+            });
+        }
+    }
+
+    // Shows a popup and waits for a response, even if async.
+    private static Optional<ButtonType> showPopUpAndWait(Supplier<Alert> alertMaker) {
+        if (Platform.isFxApplicationThread())
+            return alertMaker.get().showAndWait();
+
+        CountDownLatch tempLatch = new CountDownLatch(1);
+        AtomicReference<Optional<ButtonType>> resultingButtonType = new AtomicReference<>();
+        Platform.runLater(() -> {
+            resultingButtonType.set(alertMaker.get().showAndWait());
+            tempLatch.countDown();
+        });
+
+        try {
+            tempLatch.await();
+            return resultingButtonType.get();
+        } catch (InterruptedException ex) {
+            Utils.handleError(null, ex, false);
+            return Optional.empty();
         }
     }
 
@@ -428,7 +450,7 @@ public class FXUtils {
      * @param message The message to display.
      */
     public static void makePopUp(String message, AlertType type) {
-        new Alert(type, message, ButtonType.OK).showAndWait();
+        showPopUpAndWait(() -> new Alert(type, message, ButtonType.OK));
     }
 
     /**
@@ -436,7 +458,8 @@ public class FXUtils {
      * @param message The message to display.
      */
     public static boolean makePopUpYesNo(String message) {
-        return new Alert(AlertType.CONFIRMATION, message, ButtonType.YES, ButtonType.NO).showAndWait().orElse(ButtonType.NO) == ButtonType.YES;
+        return showPopUpAndWait(() -> new Alert(AlertType.CONFIRMATION, message, ButtonType.YES, ButtonType.NO))
+                .orElse(ButtonType.NO) == ButtonType.YES;
     }
 
     /**

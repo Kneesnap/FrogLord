@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.utils;
 
-import javafx.application.Platform;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.utils.logging.ILogger;
@@ -226,13 +225,8 @@ public class Utils {
         }
 
         // Create popup window.
-        if (showWindow) {
-            if (Platform.isFxApplicationThread()) {
-                FXUtils.makeErrorPopUp(null, th, false);
-            } else {
-                Platform.runLater(() -> FXUtils.makeErrorPopUp(null, th, false));
-            }
-        }
+        if (showWindow)
+            FXUtils.makeErrorPopUp(null, th, false);
     }
 
     public enum ProblemResponse {
@@ -265,12 +259,7 @@ public class Utils {
         String formattedMessage = StringUtils.formatStringSafely(template, arguments);
         switch (response) {
             case CREATE_POPUP:
-                if (Platform.isFxApplicationThread()) {
-                    FXUtils.makePopUp(formattedMessage, FXUtils.getAlertTypeFromLogLevel(severity));
-                } else {
-                    Platform.runLater(() -> FXUtils.makePopUp(formattedMessage, FXUtils.getAlertTypeFromLogLevel(severity)));
-                }
-
+                FXUtils.makePopUp(formattedMessage, FXUtils.getAlertTypeFromLogLevel(severity));
                 break;
             case THROW_EXCEPTION:
                 throw new RuntimeException(formattedMessage);
@@ -380,14 +369,8 @@ public class Utils {
         }
 
         // Create popup window.
-        if (showWindow) {
-            if (Platform.isFxApplicationThread()) {
-                FXUtils.makeErrorPopUp(formattedMessage, th, false);
-            } else {
-                final String finalFormattedMessage = formattedMessage;
-                Platform.runLater(() -> FXUtils.makeErrorPopUp(finalFormattedMessage, th, false));
-            }
-        }
+        if (showWindow)
+            FXUtils.makeErrorPopUp(formattedMessage, th, false);
     }
 
     /**
