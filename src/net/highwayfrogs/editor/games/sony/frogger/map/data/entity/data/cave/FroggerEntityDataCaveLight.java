@@ -31,9 +31,9 @@ public class FroggerEntityDataCaveLight extends FroggerEntityDataMatrix {
         this.minRadius = reader.readInt();
         this.maxRadius = reader.readInt();
         this.dieSpeed = reader.readInt();
-        // TODO: These are only in old builds.
         reader.skipBytesRequireEmpty(Constants.INTEGER_SIZE); // "count" - Used to keep track of die time. Appears unused though.
-        reader.skipBytesRequireEmpty(Constants.INTEGER_SIZE); // "setup" - Already setup?
+        if (hasExtraPaddingValue())
+            reader.skipBytesRequireEmpty(Constants.INTEGER_SIZE); // "setup" - Already setup?
     }
 
     @Override
@@ -42,7 +42,9 @@ public class FroggerEntityDataCaveLight extends FroggerEntityDataMatrix {
         writer.writeInt(this.minRadius);
         writer.writeInt(this.maxRadius);
         writer.writeInt(this.dieSpeed);
-        writer.writeNull(2 * Constants.INTEGER_SIZE);
+        writer.writeNull(Constants.INTEGER_SIZE);
+        if (hasExtraPaddingValue())
+            writer.writeNull(Constants.INTEGER_SIZE);
     }
 
     @Override
@@ -51,5 +53,16 @@ public class FroggerEntityDataCaveLight extends FroggerEntityDataMatrix {
         editor.addUnsignedIntegerField("Min Radius (grid)", this.minRadius, (Consumer<Integer>) newMinRadius -> this.minRadius = newMinRadius);
         editor.addUnsignedIntegerField("Max Radius (grid)", this.maxRadius, (Consumer<Integer>) newMaxRadius -> this.maxRadius = newMaxRadius);
         editor.addFixedInt("Die Speed (grid/sec)", this.dieSpeed, newDieSpeed -> this.dieSpeed = newDieSpeed, 30);
+    }
+
+    private boolean hasExtraPaddingValue() {
+        // This was probably false in May '97 builds.
+        if ("CAVM.MAP".equals(getMapFile().getFileDisplayName())) {
+            return getConfig().getBuild() != 2;
+        } else if ("CAV1.MAP".equals(getMapFile().getFileDisplayName())) {
+            return !getConfig().isAtOrBeforeBuild1();
+        } else {
+            return true;
+        }
     }
 }
