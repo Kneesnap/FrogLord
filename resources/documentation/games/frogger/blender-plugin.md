@@ -63,7 +63,7 @@ The first and most important thing to know about the Blender support is that whe
 Anything separate from this object can be added/removed freely, **BUT WILL NOT BE EXPORTED**.  
 The solution to this is to merge any objects directly into the `LevelMesh`/`LevelObject` before exporting back to `.ffs`.  
 
-The design philosophy for Blender support is to only support the parts of Frogger map editing that Blender is suited to support.  
+The design philosophy for Blender support is to utilize its strengths to supplement the current limitations of FrogLord.  
 For example, Blender is perfect for changing the level geometry, adding detail, etc. But it can't be used to modify entities, paths, etc.  
 
 ### Material / Texture Limitations
@@ -99,7 +99,7 @@ Next, import the `.ffs` file back into FrogLord by selecting the map file and pr
 
 ## A note on lighting.
 Frogger maps heavily rely on vertex coloring for map detail.  
-Unfortunately, the vertex colors in the original editor (Mappy), and the lighting data were mixed together to create the vertex colors we see in-game.  
+Unfortunately, the vertex colors in the original editor (Mappy) and the lighting data were mixed together to create the vertex colors we see in-game.  
 This was done when the .MAP files were created, not while the game is running.  
 This is usually referred to as "baked lighting", and it creates a major problem for our ability to edit lighting.  
 
