@@ -1,13 +1,13 @@
 package net.highwayfrogs.editor.system.classlist;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.BitReader;
-import net.highwayfrogs.editor.file.writer.BitWriter;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.system.classlist.GlobalClassRegistry.ClassEntry;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.BitReader;
+import net.highwayfrogs.editor.utils.data.writer.BitWriter;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.HashMap;

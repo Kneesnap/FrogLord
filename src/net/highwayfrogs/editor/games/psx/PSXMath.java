@@ -1,8 +1,8 @@
 package net.highwayfrogs.editor.games.psx;
 
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.ArraySource;
-import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.ArraySource;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.io.InputStream;

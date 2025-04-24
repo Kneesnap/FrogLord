@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.file.packers;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.writer.BitReader;
+import net.highwayfrogs.editor.utils.data.writer.BitReader;
 import net.highwayfrogs.editor.utils.DataUtils;
 
 import java.util.concurrent.atomic.AtomicInteger;

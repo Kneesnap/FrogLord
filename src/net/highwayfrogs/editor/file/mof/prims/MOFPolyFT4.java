@@ -1,8 +1,8 @@
 package net.highwayfrogs.editor.file.mof.prims;
 
 import net.highwayfrogs.editor.file.mof.MOFPart;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Created by Kneesnap on 1/1/2019.

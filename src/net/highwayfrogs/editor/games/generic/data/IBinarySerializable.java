@@ -1,12 +1,12 @@
 package net.highwayfrogs.editor.games.generic.data;
 
-import net.highwayfrogs.editor.file.reader.ArraySource;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.reader.FileSource;
-import net.highwayfrogs.editor.file.writer.ArrayReceiver;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.ArraySource;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.FileSource;
+import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.io.File;

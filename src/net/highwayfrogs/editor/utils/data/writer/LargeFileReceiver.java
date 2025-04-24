@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file.writer;
+package net.highwayfrogs.editor.utils.data.writer;
 
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.utils.FileUtils;

@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.file.patch.commands;
 import net.highwayfrogs.editor.file.patch.PatchRuntime;
 import net.highwayfrogs.editor.file.patch.PatchValue;
 import net.highwayfrogs.editor.file.patch.reference.PatchValueReference;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.List;
 import java.util.function.BiConsumer;

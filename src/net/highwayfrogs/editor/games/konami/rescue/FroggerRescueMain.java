@@ -2,8 +2,6 @@ package net.highwayfrogs.editor.games.konami.rescue;
 
 
 import net.highwayfrogs.editor.FrogLordApplication;
-import net.highwayfrogs.editor.file.reader.ArraySource;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkTypeRegistry;
@@ -13,6 +11,8 @@ import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentText
 import net.highwayfrogs.editor.games.shared.basic.file.definition.PhysicalFileDefinition;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.ArraySource;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;

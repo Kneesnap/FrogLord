@@ -1,8 +1,8 @@
 package net.highwayfrogs.editor.games.generic.data;
 
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 
 /**

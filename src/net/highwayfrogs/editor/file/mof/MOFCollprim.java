@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.file.mof;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.games.sony.shared.collprim.CollprimShapeAdapter;
 import net.highwayfrogs.editor.games.sony.shared.collprim.ICollprimEditorUI;

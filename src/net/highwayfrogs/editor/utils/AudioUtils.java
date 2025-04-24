@@ -1,10 +1,10 @@
 package net.highwayfrogs.editor.utils;
 
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.writer.ArrayReceiver;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
+import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import javax.sound.sampled.*;
 import java.io.ByteArrayInputStream;
