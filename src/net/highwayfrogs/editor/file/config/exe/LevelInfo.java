@@ -2,13 +2,13 @@ package net.highwayfrogs.editor.file.config.exe;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.data.WorldId;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapLevelID;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Holds information about each level.
@@ -90,8 +90,8 @@ public class LevelInfo extends ExeStruct {
      * Gets the MapLevel this info represents.
      * @return mapLevel
      */
-    public MAPLevel getLevel() {
-        return isTerminator() ? null : MAPLevel.values()[this.level];
+    public FroggerMapLevelID getLevel() {
+        return isTerminator() ? null : FroggerMapLevelID.values()[this.level];
     }
 
     /**

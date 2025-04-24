@@ -10,7 +10,6 @@ import net.highwayfrogs.editor.file.DemoFile;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.config.TargetPlatform;
-import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.data.MusicTrack;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
@@ -19,11 +18,8 @@ import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.general.DemoTableEntry;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.config.script.FroggerScript;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
-import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
@@ -31,6 +27,7 @@ import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.frogger.file.FroggerPaletteFile;
 import net.highwayfrogs.editor.games.sony.frogger.file.FroggerSkyLand;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapLevelID;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerFlyScoreType;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketHeader;
@@ -45,6 +42,9 @@ import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -62,11 +62,11 @@ public class FroggerGameInstance extends SCGameInstance {
     private final List<LevelInfo> arcadeLevelInfo = new ArrayList<>();
     private final List<LevelInfo> raceLevelInfo = new ArrayList<>();
     private final List<LevelInfo> allLevelInfo = new ArrayList<>();
-    private final Map<MAPLevel, LevelInfo> levelInfoMap = new HashMap<>();
+    private final Map<FroggerMapLevelID, LevelInfo> levelInfoMap = new HashMap<>();
     private final List<DemoTableEntry> demoTableEntries = new ArrayList<>();
     private final List<FormEntry> fullFormBook = new ArrayList<>();
     private final List<FroggerScript> scripts = new ArrayList<>();
-    private final Map<MAPLevel, Image> levelImageMap = new HashMap<>();
+    private final Map<FroggerMapLevelID, Image> levelImageMap = new HashMap<>();
     private final Map<FroggerMapTheme, FormEntry[]> allowedForms = new HashMap<>();
     private final ThemeBook[] themeLibrary = new ThemeBook[FroggerMapTheme.values().length];
     private final PickupData[] pickupData = new PickupData[FroggerFlyScoreType.values().length];
@@ -215,11 +215,11 @@ public class FroggerGameInstance extends SCGameInstance {
     }
 
     /**
-     * Get a map book by a MAPLevel.
+     * Get a map book by a FroggerMapLevelID.
      * @param level The level to get the book for.
      * @return mapBook
      */
-    public MapBook getMapBook(MAPLevel level) {
+    public MapBook getMapBook(FroggerMapLevelID level) {
         return this.mapLibrary.size() > 0 ? this.mapLibrary.get(level.ordinal()) : null;
     }
 
@@ -392,7 +392,7 @@ public class FroggerGameInstance extends SCGameInstance {
      * @param level The level to get the track for.
      * @return music.
      */
-    public MusicTrack getMusic(MAPLevel level) {
+    public MusicTrack getMusic(FroggerMapLevelID level) {
         return this.musicTracks.size() > level.ordinal() ? this.musicTracks.get(level.ordinal()) : null;
     }
 
@@ -401,7 +401,7 @@ public class FroggerGameInstance extends SCGameInstance {
      * @param level The level to get the info for.
      * @return levelInfo
      */
-    public LevelInfo getLevel(MAPLevel level) {
+    public LevelInfo getLevel(FroggerMapLevelID level) {
         for (LevelInfo info : this.allLevelInfo)
             if (info.getLevel() == level)
                 return info;
@@ -576,10 +576,11 @@ public class FroggerGameInstance extends SCGameInstance {
 
         Config mapBookRestore = config.getChild(CHILD_RESTORE_MAP_BOOK);
         for (String key : mapBookRestore.keySet()) {
-            MAPLevel level = MAPLevel.getByName(key);
+            FroggerMapLevelID level = FroggerMapLevelID.getByName(key);
             Utils.verify(level != null, "Unknown level: '%s'", key);
-            Utils.verify(level.isExists(), "Cannot modify %s, its level doesn't exist.", key);
-            getMapBook(level).handleCorrection(mapBookRestore.getString(key));
+            MapBook mapBook = getMapBook(level);
+            Utils.verify(mapBook != null, "Cannot modify %s, its level doesn't exist.", key);
+            mapBook.handleCorrection(mapBookRestore.getString(key));
         }
     }
 
@@ -597,7 +598,7 @@ public class FroggerGameInstance extends SCGameInstance {
             if (demoEntry == null)
                 return; // Couldn't find a demo by this name, so... skip.
 
-            byte[] levelId = DataUtils.toByteArray(MAPLevel.SUBURBIA1.ordinal());
+            byte[] levelId = DataUtils.toByteArray(FroggerMapLevelID.SUBURBIA1.ordinal());
             byte[] demoId = DataUtils.toByteArray(demoEntry.getResourceId());
 
             byte[] searchFor = new byte[levelId.length + demoId.length];
@@ -625,7 +626,7 @@ public class FroggerGameInstance extends SCGameInstance {
 
             // Add demo entry.
             boolean isValid = (levelId != DemoTableEntry.SKIP_INT && minLevel != DemoTableEntry.SKIP_INT);
-            this.demoTableEntries.add(new DemoTableEntry(isValid ? MAPLevel.values()[levelId] : null, isValid ? resourceId : -1, isValid ? MAPLevel.values()[minLevel] : null, isValid));
+            this.demoTableEntries.add(new DemoTableEntry(isValid ? FroggerMapLevelID.values()[levelId] : null, isValid ? resourceId : -1, isValid ? FroggerMapLevelID.values()[minLevel] : null, isValid));
         }
     }
 

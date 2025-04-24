@@ -4,7 +4,6 @@ import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.FroggerMapConfig;
-import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -127,7 +126,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
 
     @Override
     public Image getCollectionViewIcon() {
-        MAPLevel level = MAPLevel.getByName(getFileDisplayName());
+        FroggerMapLevelID level = getMapLevelID();
 
         // Find level image, or create it if it's not found.
         Image levelImage = getGameInstance().getLevelImageMap().get(level);
@@ -393,5 +392,12 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
      */
     public boolean isEarlyMapFormat() {
         return getConfig().isAtOrBeforeBuild1() || isQB() || isIslandOrIslandPlaceholder();
+    }
+
+    /**
+     * Gets the hardcoded map level ID for the level, if one exists.
+     */
+    public FroggerMapLevelID getMapLevelID() {
+        return FroggerMapLevelID.getByName(getFileDisplayName());
     }
 }

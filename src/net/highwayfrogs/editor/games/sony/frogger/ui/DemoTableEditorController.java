@@ -8,9 +8,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.ChoiceBox;
 import javafx.stage.Stage;
 import net.highwayfrogs.editor.file.DemoFile;
-import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.exe.general.DemoTableEntry;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapLevelID;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.utils.FXUtils;
@@ -25,9 +25,9 @@ import java.util.List;
 public class DemoTableEditorController extends GameUIController<FroggerGameInstance> {
     private DemoTableEntry selectedEntry;
     @FXML private ChoiceBox<DemoTableEntry> demoSelector;
-    @FXML private ChoiceBox<MAPLevel> levelSelector;
+    @FXML private ChoiceBox<FroggerMapLevelID> levelSelector;
     @FXML private ChoiceBox<DemoFile> fileSelector;
-    @FXML private ChoiceBox<MAPLevel> unlockSelector;
+    @FXML private ChoiceBox<FroggerMapLevelID> unlockSelector;
 
     public DemoTableEditorController(FroggerGameInstance instance) {
         super(instance);
@@ -45,9 +45,9 @@ public class DemoTableEditorController extends GameUIController<FroggerGameInsta
         this.demoSelector.valueProperty().addListener(((observable, oldValue, newValue) -> selectEntry(newValue)));
 
         List<DemoFile> demoFiles = getGameInstance().getMainArchive().getAllFiles(DemoFile.class);
-        levelSelector.setItems(FXCollections.observableArrayList(MAPLevel.values()));
+        levelSelector.setItems(FXCollections.observableArrayList(FroggerMapLevelID.values()));
         fileSelector.setItems(FXCollections.observableArrayList(demoFiles));
-        unlockSelector.setItems(FXCollections.observableArrayList(MAPLevel.values()));
+        unlockSelector.setItems(FXCollections.observableArrayList(FroggerMapLevelID.values()));
 
         fileSelector.setConverter(new AbstractIndexStringConverter<>(demoFiles, (index, entry) -> FileUtils.stripExtension(entry.getFileDisplayName())));
 

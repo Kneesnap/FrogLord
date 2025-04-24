@@ -15,12 +15,12 @@ import javafx.scene.layout.Priority;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.FrogLordApplication;
-import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapLevelID;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMeshController;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.baked.FroggerGridResizeController;
@@ -105,7 +105,7 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
         this.propertyListViewer.showProperties(mapFile.createPropertyList());
 
         // Apply level name & screenshot to UI, if found.
-        MAPLevel level = MAPLevel.getByName(mapFile.getFileDisplayName());
+        FroggerMapLevelID level = mapFile.getMapLevelID();
         if (level != null && !mapFile.getGameInstance().getLevelInfoMap().isEmpty()) {
             LevelInfo info = mapFile.getGameInstance().getLevelInfoMap().get(level);
             if (info != null) {
