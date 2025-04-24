@@ -37,8 +37,9 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
     private final List<TreeNode> freeSlotsByAreaHigherWidth = new ArrayList<>(); // Sorted by area, only contains nodes where width >= height
     private final List<TreeNode> freeSlotsByAreaHigherHeight = new ArrayList<>(); // Sorted by area, only contains nodes where height >= width.
     private final List<TreeNode> freeDiagonalSlots = new ArrayList<>(); // Sorted by area.
-    private final Map<AtlasTexture, TreeNode> nodesByTexture = new IdentityHashMap<>();
-    private TreeNode lastRemovedNode; // This is a cache. If we've just removed a node, we're probably updating it, and it's often good to place the updated texture in the same spot.
+    private final Object listLock = new Object();
+    private final Map<AtlasTexture, TreeNode> nodesByTexture = Collections.synchronizedMap(new IdentityHashMap<>());
+    private volatile TreeNode lastRemovedNode; // This is a cache. If we've just removed a node, we're probably updating it, and it's often good to place the updated texture in the same spot.
     private static final ToLongFunction<TreeNode> SLOT_AREA_CALCULATOR =
             (TreeNode node) -> (long) node.getFreeNodeWidth() * node.getFreeNodeHeight();
     private static final Comparator<TreeNode> SLOTS_BY_AREA_COMPARATOR = Comparator
@@ -97,32 +98,34 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
     }
 
     private boolean tryInsertTexture(List<TreeNode> slots, ToLongFunction<TreeNode> areaCalculator, AtlasTexture texture) {
-        long targetArea = (long) texture.getPaddedWidth() * texture.getPaddedHeight();
+        synchronized (this.listLock) { // Can't lock the individual lists without creating a deadlock.
+            long targetArea = (long) texture.getPaddedWidth() * texture.getPaddedHeight();
 
-        // Binary search the list to find the slot we'd like to add it at, then find the start index.
-        int startIndex;
-        int binarySearchIndex = Utils.binarySearch(slots, targetArea, areaCalculator);
-        if (binarySearchIndex >= 0) {
-            // We found an exact match for this size, so we're going to find the minimum index which matches the area and resume there.
-            startIndex = binarySearchIndex;
-            while (startIndex > 0 && areaCalculator.applyAsLong(slots.get(startIndex - 1)) == targetArea)
-                startIndex--;
-        } else {
-            startIndex = -(binarySearchIndex + 1);
+            // Binary search the list to find the slot we'd like to add it at, then find the start index.
+            int startIndex;
+            int binarySearchIndex = Utils.binarySearch(slots, targetArea, areaCalculator);
+            if (binarySearchIndex >= 0) {
+                // We found an exact match for this size, so we're going to find the minimum index which matches the area and resume there.
+                startIndex = binarySearchIndex;
+                while (startIndex > 0 && areaCalculator.applyAsLong(slots.get(startIndex - 1)) == targetArea)
+                    startIndex--;
+            } else {
+                startIndex = -(binarySearchIndex + 1);
+            }
+
+            // Try to insert to all the nodes.
+            for (int i = startIndex; i < slots.size(); i++) {
+                TreeNode node = slots.get(i);
+                if (node.getTexture() != null)
+                    throw new RuntimeException("A node with a texture was found in the list of textures which were supposed to be freely usable!");
+
+                if (node.setTexture(texture))
+                    return true; // Successfully inserted texture.
+            }
+
+            // Failed to insert the node.
+            return false;
         }
-
-        // Try to insert to all the nodes.
-        for (int i = startIndex; i < slots.size(); i++) {
-            TreeNode node = slots.get(i);
-            if (node.getTexture() != null)
-                throw new RuntimeException("A node with a texture was found in the list of textures which were supposed to be freely usable!");
-
-            if (node.setTexture(texture))
-                return true; // Successfully inserted texture.
-        }
-
-        // Failed to insert the node.
-        return false;
     }
 
     @Override
@@ -258,6 +261,10 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
             }
         }
 
+        private boolean canInsertTexture(AtlasTexture texture) {
+            return (texture == this.texture) || texture == null || canFitTexture(texture, getFreeNodeWidth(), getFreeNodeHeight());
+        }
+
         /**
          * Attempts to insert a texture node into the tree.
          * @param texture The texture to insert.
@@ -268,7 +275,7 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
                 return true; // Already set.
 
             // First, test if there's room to fit it here.
-            if (texture != null && !canFitTexture(texture, getFreeNodeWidth(), getFreeNodeHeight()))
+            if (!canInsertTexture(texture))
                 return false; // Nope, there isn't enough space.
 
             // Clear out the old texture.
@@ -280,7 +287,7 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
                 if (texture == null) { // There's no texture we intend to apply right now.
                     addToLists();
                     this.textureAtlas.lastRemovedNode = this;
-                    //tryMergeChildNodes();
+                    tryMergeChildNodes();
                     return true;
                 }
             } else {
@@ -337,10 +344,12 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
         }
 
         private void tryAddToList(List<TreeNode> nodes, Comparator<TreeNode> comparator) {
-            int index = Collections.binarySearch(nodes, this, comparator);
-            if (index >= 0)
-                throw new RuntimeException("TreeNode is already in the list! [" + this + " vs " + nodes.get(index) + "]");
-            nodes.add(-(index + 1), this);
+            synchronized (this.textureAtlas.listLock) { // Can't lock the individual lists without creating a deadlock.
+                int index = Collections.binarySearch(nodes, this, comparator);
+                if (index >= 0)
+                    throw new RuntimeException("TreeNode is already in the list! [" + this + " vs " + nodes.get(index) + "]");
+                nodes.add(-(index + 1), this);
+            }
         }
 
         private void removeFromLists() {
@@ -363,11 +372,13 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
         }
 
         private void tryRemoveFromList(List<TreeNode> nodes, Comparator<TreeNode> comparator) {
-            int index = Collections.binarySearch(nodes, this, comparator);
-            if (index < 0)
-                throw new RuntimeException("TreeNode was not found in the list!");
-            if (nodes.remove(index) != this)
-                throw new RuntimeException("Removed the wrong TreeNode somehow!!!?");
+            synchronized (this.textureAtlas.listLock) { // Can't lock the individual lists without creating a deadlock.
+                int index = Collections.binarySearch(nodes, this, comparator);
+                if (index < 0)
+                    throw new RuntimeException("TreeNode was not found in the list!");
+                if (nodes.remove(index) != this)
+                    throw new RuntimeException("Removed the wrong TreeNode somehow!!!?");
+            }
         }
 
         private static boolean canFitTexture(AtlasTexture texture, int width, int height) {
