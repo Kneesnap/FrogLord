@@ -20,11 +20,11 @@ This feature is currently under development.
 FrogLord will automatically convert imported images to the best available image pixel format based on the following criteria.  
 So when making large mods, reference the following table to ensure your images don't get too large.
 
-| Name     | Bits Per Pixel | When is it used                                   |
-|----------|----------------|---------------------------------------------------|
-| INDEXED8 | 8              | If there are no more than 256 colors used.        |
-| R8G8B8   | 24             | If there's at least one pixel which isn't opaque. |
-| A8R8G8B8 | 32             | When there are no other formats are available.    |
+| Name     | Bits Per Pixel | When is it used                                    |
+|----------|----------------|----------------------------------------------------|
+| INDEXED8 | 8              | If there are no more than 256 colors used.         |
+| R8G8B8   | 24             | If there's at least one pixel which isn't opaque.  |
+| A8R8G8B8 | 32             | As a fallback when other formats aren't available. |
 
 ## Sound Banks (.sbr)
 Sound Banks contain all game sound effects.
@@ -32,10 +32,10 @@ Every single level (and the main menu) have their own .SBR files, labelled betwe
 
 **Difference between "Entry" and "Wave":**
 FrogLord has a drop-down menu to show both "Entries" and "Waves".  
-"Waves" are the actual sound files (think .wav) inside of the .SBR files.
+"Waves" are the actual sound files (think .wav) inside of the .SBR files.  
 "Entries" contain information about the sound files (like if they are music, what volume to play them at, etc.)
 
-Entries are also able to reference sounds found in the .SCK file (see below for more info.).
+Entries can also reference sounds found in the .SCK file (see below for more info).
 
 **How can I export/change sounds in FrogLord?**  
 TODO: Explain
@@ -187,6 +187,6 @@ These entity instances are the definitions of where the entity should be placed 
 TODO: Detail the FrogLord config syntax for creating these.
 
 ## FAQ
-### How can I add/delete files from the game?
+### Q: How can I add/delete files from the game?
 This functionality is not officially supported yet, even if Noodle is capable of doing it.  
 Please wait for a future release before using this capability in mods.
