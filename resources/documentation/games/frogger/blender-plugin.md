@@ -78,7 +78,7 @@ When the geometry changes are done, or you're ready to synchronize with FrogLord
 Next, import the `.ffs` file back into FrogLord by selecting the map file and pressing the `Import .ffs` button.  
 
 > [!IMPORTANT]
-> It is strongly recommended to only make changes in one program (Blender or FrogLord, but not both) at a time, and when finished with a particular program, synchronizing changes to the other program.
+> It is strongly recommended to only make changes in one program (Blender or FrogLord, but not both) at a time, and when finished with a particular program, synchronize changes to the other program.
 >
 > To synchronize FrogLord changes with Blender (and delete any changes in Blender which hadn't been shared with FrogLord), export the `.ffs` file from FrogLord, then import it into Blender.  
 > To synchronize Blender changes with FrogLord (and delete any changes in FrogLord which hadn't been shared with Blender), export the `.ffs` file from Blender, then import it into FrogLord.  
