@@ -120,6 +120,25 @@ public interface IGameType {
     }
 
     /**
+     * Resolve a version config by its name.
+     * @param internalName the name to resolve
+     * @return gameConfig or null
+     */
+    default GameConfig getVersionConfigByName(String internalName) {
+        if (internalName == null)
+            return null;
+
+        List<GameConfig> versionConfigs = getVersionConfigs();
+        for (int i = 0; i < versionConfigs.size(); i++) {
+            GameConfig testGameConfig = versionConfigs.get(i);
+            if (internalName.equals(testGameConfig.getInternalName()))
+                return testGameConfig;
+        }
+
+        return null;
+    }
+
+    /**
      * Gets a list of version configs available for this game type.
      */
     default List<GameConfig> getVersionConfigs() {

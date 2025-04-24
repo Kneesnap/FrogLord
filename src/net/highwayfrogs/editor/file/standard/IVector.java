@@ -151,6 +151,9 @@ public class IVector extends GameObject implements Vector {
         double tmpZ = DataUtils.fixedPointIntToFloatNBits(this.z, 12);
 
         double res = Math.sqrt((tmpX * tmpX) + (tmpY * tmpY) + (tmpZ * tmpZ));
+        if (Math.abs(res) <= .000001)
+            return this; // This is something I've added, I don't know what the actual game does here. Should probably figure that out at some point.
+
         tmpX /= res;
         tmpY /= res;
         tmpZ /= res;

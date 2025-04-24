@@ -769,7 +769,7 @@ public class FileUtils {
      * @return file, if successfully saved
      */
     public static File askUserToSaveImageFile(ILogger logger, GameInstance instance, BufferedImage image, String suggestedFileName, boolean overrideLastFileName) {
-        File selectedFile = askUserToSaveFile(instance, EXPORT_SINGLE_IMAGE_PATH, suggestedFileName, true);
+        File selectedFile = askUserToSaveFile(instance, EXPORT_SINGLE_IMAGE_PATH, suggestedFileName, overrideLastFileName);
         if (selectedFile == null)
             return null;
 

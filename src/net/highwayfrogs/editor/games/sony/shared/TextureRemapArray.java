@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.sony.shared;
 
 import lombok.Getter;
-import lombok.Setter;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
@@ -17,9 +16,10 @@ import java.util.List;
  */
 @Getter
 public class TextureRemapArray extends SCSharedGameObject {
-    @Setter private long loadAddress;
+    private long loadAddress;
     private String name;
     private final List<Short> textureIds = new ArrayList<>();
+    private int textureIdSlotsAvailable = -1;
 
     public TextureRemapArray(SCGameInstance instance) {
         super(instance);
@@ -40,12 +40,47 @@ public class TextureRemapArray extends SCSharedGameObject {
     }
 
     /**
+     * Initialize the number of texture slots available.
+     * @param slotsAvailable the number of texture slots available.
+     */
+    public void initTextureSlotsAvailable(int slotsAvailable) {
+        if (this.textureIdSlotsAvailable != -1)
+            throw new IllegalStateException("The slots available count has already been initialized.");
+        if (slotsAvailable < 0)
+            throw new IllegalArgumentException("Cannot apply texture slot value of " + slotsAvailable + ".");
+
+        this.textureIdSlotsAvailable = slotsAvailable;
+    }
+
+    /**
      * Gets the remapped texture id.
      * @param localTextureId The local texture id to remap.
      * @return The remapped (global) texture id, or null if this is not in the remap.
      */
     public Short getRemappedTextureId(int localTextureId) {
         return localTextureId >= 0 && localTextureId < this.textureIds.size() ? this.textureIds.get(localTextureId) : null;
+    }
+
+    /**
+     * Resolves the local remap index to a texture.
+     * @param localTextureId the local remap texture ID
+     * @param vloArchive If provided, the texture will first attempt to be resolved here before resolving elsewhere.
+     * @return gameImageOrNull
+     */
+    public GameImage resolveTexture(int localTextureId, VLOArchive vloArchive) {
+        Short globalTextureId = getRemappedTextureId(localTextureId);
+        if (globalTextureId == null)
+            return null;
+
+        // First try the one the user supplied.
+        if (vloArchive != null) {
+            GameImage gameImage = vloArchive.getImageByTextureId(globalTextureId, false);
+            if (gameImage != null)
+                return gameImage;
+        }
+
+        // If all else fails, resolve the texture ID from any VLO we can find it in.
+        return getGameInstance().getMainArchive().getImageByTextureId(globalTextureId);
     }
 
     /**

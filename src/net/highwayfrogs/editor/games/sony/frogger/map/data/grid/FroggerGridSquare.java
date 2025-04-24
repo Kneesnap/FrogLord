@@ -26,7 +26,7 @@ import java.util.List;
 @Getter
 public class FroggerGridSquare extends SCGameData<FroggerGameInstance> {
     private final FroggerGridStack gridStack;
-    private int flags;
+    @Setter private int flags;
     @Setter private FroggerMapPolygon polygon;
 
     public FroggerGridSquare(FroggerGridStack gridStack) {

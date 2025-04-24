@@ -6,7 +6,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.TextField;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
-import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGroup;
+import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGrid;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
@@ -83,7 +83,7 @@ public class FroggerGridResizeController extends GameUIController<FroggerGameIns
         // Clear map works well with the following tests: 128x128, 255x20, 191x191, 255x191
         // Clear does not work well with the following tests: 255x255, 200x200, 20x200, 192x192, 255x192
         // 255x255 doesn't save because of the number of vertices when clearing the map, but in theory I think would be the same.
-        if (newX > 255 || newZ > 255) { // Engine limitation, the game sometimes does things like (x & 0xFF), which effectively means it can't go higher than 0xFF.
+        if (newX > FroggerMapFilePacketGrid.MAX_GRID_SQUARE_COUNT_X || newZ > FroggerMapFilePacketGrid.MAX_GRID_SQUARE_COUNT_Z) { // Engine limitation, the game sometimes does things like (x & 0xFF), which effectively means it can't go higher than 0xFF.
             FXUtils.makePopUp("The grid cannot go larger than 255 squares in either direction.", AlertType.ERROR);
             return false;
         }
@@ -95,9 +95,8 @@ public class FroggerGridResizeController extends GameUIController<FroggerGameIns
 
         // Warn the user if the area they've created is too large to be represented in the MAP_GROUP system without issues.
         // We allow selecting the higher values instead of fully preventing them for reasons from testing to possible eventual fixing of the system to support the full range.
-        final int maxSafeGridZCount = FroggerMapFilePacketGroup.MAX_SAFE_GROUP_Z_COUNT * FroggerMapFilePacketGroup.GRID_STACK_LENGTH - 1;
-        if (newZ > maxSafeGridZCount)
-            FXUtils.makePopUp("This selection will cause rendering issues in-game. To avoid these issues, reduce the gridZCount value to no more than " + maxSafeGridZCount + ".", AlertType.WARNING);
+        if (newZ > FroggerMapFilePacketGrid.MAX_SAFE_GRID_SQUARE_COUNT_Z)
+            FXUtils.makePopUp("This selection will cause rendering issues in-game. To avoid these issues, reduce the gridZCount value to no more than " + FroggerMapFilePacketGrid.MAX_SAFE_GRID_SQUARE_COUNT_Z + ".", AlertType.WARNING);
 
         return true;
     }

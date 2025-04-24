@@ -24,6 +24,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMeshController;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.baked.FroggerGridResizeController;
+import net.highwayfrogs.editor.games.sony.frogger.utils.FFSUtil;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
@@ -32,11 +33,17 @@ import net.highwayfrogs.editor.gui.SelectionMenu.AttachmentListCell;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
+import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.List;
 
@@ -56,6 +63,10 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
     @FXML private Button loadFromFFS;
     @FXML private Button saveToFFS;
     @FXML private Button saveToObj;
+
+    private static final BrowserFileType FFS_FILE_TYPE = new BrowserFileType("Frogger File Sync", "ffs");
+    private static final SavedFilePath FFS_IMPORT_PATH = new SavedFilePath("ffsImportPath", "Please select the map ffs file to import.", FFS_FILE_TYPE);
+    private static final SavedFilePath FFS_EXPORT_FOLDER = new SavedFilePath("ffsExportPath", "Please select the folder to export the .ffs map into");
 
     public FroggerMapInfoUIController(FroggerGameInstance instance) {
         super(instance);
@@ -215,5 +226,27 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
         // TODO: IMPLEMENT
         FXUtils.makePopUp("Exporting to obj is not currently supported.", AlertType.ERROR);
         // TODO: FileUtils3D.exportMapToObj(getFile(), Utils.promptChooseDirectory(getGameInstance(), "Choose the directory to save the map to.", false));
+    }
+
+    @FXML
+    @SneakyThrows
+    private void loadFromFFS(ActionEvent event) {
+        File importFile = FileUtils.askUserToOpenFile(getGameInstance(), FFS_IMPORT_PATH);
+        if (importFile != null)
+            FFSUtil.importFFSToMap(getFile(), importFile, ProblemResponse.CREATE_POPUP);
+    }
+
+    @FXML
+    @SneakyThrows
+    private void exportToFFS(ActionEvent event) {
+        File outputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), FFS_EXPORT_FOLDER);
+        if (outputFolder == null)
+            return;
+
+        FFSUtil.saveMapAsFFS(getFile(), outputFolder, ProblemResponse.CREATE_POPUP);
+
+        InputStream blenderScriptStream = getGameInstance().getGameType().getEmbeddedResourceStream(FFSUtil.BLENDER_ADDON_FILE_NAME);
+        if (blenderScriptStream != null)
+            Files.write(new File(outputFolder, FFSUtil.BLENDER_ADDON_FILE_NAME).toPath(), FileUtils.readBytesFromStream(blenderScriptStream));
     }
 }

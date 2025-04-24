@@ -6,7 +6,6 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
@@ -265,19 +264,7 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
         if (textureRemap == null)
             return null;
 
-        Short globalTextureId = textureRemap.getRemappedTextureId(this.textureId);
-        if (globalTextureId == null)
-            return null;
-
-        VLOArchive vloArchive = this.mapFile != null ? this.mapFile.getVloFile() : null;
-        if (vloArchive != null) {
-            GameImage gameImage = vloArchive.getImageByTextureId(globalTextureId, false);
-            if (gameImage != null)
-                return gameImage;
-        }
-
-        // If all else fails, resolve the texture ID from any VLO we can find it in.
-        return getGameInstance().getMainArchive().getImageByTextureId(globalTextureId);
+        return textureRemap.resolveTexture(this.textureId, this.mapFile != null ? this.mapFile.getVloFile() : null);
     }
 
     /**
@@ -450,7 +437,7 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
      */
     public void setFlags(int newFlags) {
         if ((newFlags & FLAG_VALIDATION_MASK) != newFlags)
-            throw new IllegalArgumentException("Cannot apply flags of " + newFlags + ", as it contains unrecognized bit flags!");
+            throw new IllegalArgumentException("Cannot apply flags of " + newFlags + " to FroggerMapPolygon, as it contains unrecognized bit flags!");
 
         this.flags = (short) newFlags;
     }

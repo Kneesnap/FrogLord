@@ -304,6 +304,9 @@ public abstract class SCGameInstance extends GameInstance {
             reader.setIndex(reader.getIndex() - Constants.SHORT_SIZE);
         }
 
+        // Setup the number of slots available.
+        textureRemap.initTextureSlotsAvailable(Math.max(textureRemap.getTextureIds().size(), ((reader.getIndex() - textureRemap.getReaderIndex()) / Constants.SHORT_SIZE)));
+
         // Run hook (Allows adding new remaps after this one, but NOT before)
         onRemapRead(textureRemap, reader);
 
@@ -311,7 +314,7 @@ public abstract class SCGameInstance extends GameInstance {
         nextTextureRemap = this.textureRemaps.size() > index + 1 ? this.textureRemaps.get(index + 1) : null;
         int extraBytes = nextTextureRemap != null ? nextTextureRemap.getReaderIndex() - reader.getIndex() : 0;
         if (extraBytes != 0)
-            getLogger().warning(textureRemap + " has " + extraBytes + " unread bytes between it and " + nextTextureRemap + ".");
+            getLogger().warning( "%s has %d unread bytes between it and %s.", textureRemap, extraBytes, nextTextureRemap);
 
         // Return, but only after calling hook.
         reader.jumpReturn();

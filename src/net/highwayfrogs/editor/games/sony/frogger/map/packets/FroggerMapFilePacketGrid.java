@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquar
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.DataUtils;
 
 import java.util.*;
@@ -32,6 +33,11 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
      * This represents the length and width of a grid stack/square. Is equivalent to 16.0F in floating point.
      */
     public static final short GRID_STACK_WORLD_LENGTH = (short) 256;
+
+    public static final int MAX_GRID_SQUARE_COUNT_X = 255;
+    public static final int MAX_GRID_SQUARE_COUNT_Z = 255;
+    // Beyond this point, there will be rendering issues.
+    public static final int MAX_SAFE_GRID_SQUARE_COUNT_Z = FroggerMapFilePacketGroup.MAX_SAFE_GROUP_Z_COUNT * FroggerMapFilePacketGroup.GRID_STACK_LENGTH - 1;
 
     public FroggerMapFilePacketGrid(FroggerMapFile parentFile) {
         super(parentFile, IDENTIFIER);
@@ -138,7 +144,8 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
         for (int z = 0; z < this.gridStacks.length; z++) {
             for (int x = 0; x < this.gridStacks[z].length; x++) {
                 FroggerGridStack gridStack = this.gridStacks[z][x];
-                for (FroggerGridSquare square : gridStack.getGridSquares()) {
+                for (int i = 0; i < gridStack.getGridSquares().size(); i++) {
+                    FroggerGridSquare square = gridStack.getGridSquares().get(i);
                     FroggerMapPolygon polygon = square.getPolygon();
                     if (polygon == null || polygon.getPolygonType().isQuad())
                         continue;
@@ -147,6 +154,37 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
                     int paddingVtx = polygon.getLoadedPaddingVertex();
                     if (lastVtx != paddingVtx)
                         polygon.getLogger().warning("Triangle polygon padding vertex (%d) did not match expected value! (%d)", paddingVtx, lastVtx);
+                }
+            }
+        }
+
+        // Frogger polygons appear to always have their center in the grid square which they occupy.
+        // This ensures we'll know if/when that is not the case.
+        // Being able to rely on this behavior is important for modding capabilities such as FFS imports, or general map editing, and automated grid generation.
+        Vector3f tempCenterOfPolygon = null;
+        for (int z = 0; z < this.gridStacks.length; z++) {
+            for (int x = 0; x < this.gridStacks[z].length; x++) {
+                float lastY = Float.MAX_VALUE;
+                FroggerGridStack gridStack = this.gridStacks[z][x];
+                for (int i = 0; i < gridStack.getGridSquares().size(); i++) {
+                    FroggerGridSquare square = gridStack.getGridSquares().get(i);
+                    FroggerMapPolygon polygon = square.getPolygon();
+
+                    tempCenterOfPolygon = polygon.getCenterOfPolygon(tempCenterOfPolygon);
+                    int polygonGridX = getGridXFromWorldX(tempCenterOfPolygon.getX());
+                    int polygonGridZ = getGridZFromWorldZ(tempCenterOfPolygon.getZ());
+
+                    // The only time this has been observed is in SWP5_WIN95.MAP, and that data looks damaged/unintended.
+                    if (polygonGridX != gridStack.getX() && polygonGridZ != gridStack.getZ() && !getParentFile().getFileDisplayName().equalsIgnoreCase("SWP5_WIN95.MAP"))
+                        polygon.getLogger().warning("Polygon was in grid square [%d, %d], but its center was actually found in [%d, %d].", gridStack.getX(), gridStack.getZ(), polygonGridX, polygonGridZ);
+
+                    // FFS uses the height of each polygon in a grid stack to determine the ordering.
+                    // This ensures that such an assumption is valid.
+                    float currentY = tempCenterOfPolygon.getY();
+                    if (currentY > lastY && !getParentFile().getFileDisplayName().equalsIgnoreCase("SWP5_WIN95.MAP")) // Remember that Frogger's "up" is negative. (So a negative number would technically represent a higher height than a positive number)
+                        square.getLogger().warning("The grid square's height (%f) was lower than the previous square's height! (%f)", currentY, lastY);
+
+                    lastY = currentY;
                 }
             }
         }
@@ -253,12 +291,30 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
     }
 
     /**
+     * Gets the grid X value from a world X value.
+     * @param worldX The world X coordinate.
+     * @return gridX
+     */
+    public int getGridXFromWorldX(float worldX) {
+        return getGridXFromWorldX(DataUtils.floatToFixedPointInt4Bit(worldX));
+    }
+
+    /**
      * Gets the grid Z value from a world Z value.
      * @param worldZ The world Z coordinate.
      * @return gridZ
      */
     public int getGridZFromWorldZ(int worldZ) {
         return (worldZ - getBaseGridZ()) >> 8;
+    }
+
+    /**
+     * Gets the grid Z value from a world Z value.
+     * @param worldZ The world Z coordinate.
+     * @return gridZ
+     */
+    public int getGridZFromWorldZ(float worldZ) {
+        return getGridZFromWorldZ(DataUtils.floatToFixedPointInt4Bit(worldZ));
     }
 
     /**
@@ -300,6 +356,9 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
      * @param zSize The new z count of the grid.
      */
     public void resizeGrid(int xSize, int zSize) {
+        if (xSize < 0 || xSize > MAX_GRID_SQUARE_COUNT_X || zSize < 0 || zSize > MAX_GRID_SQUARE_COUNT_Z)
+            throw new IllegalArgumentException("Invalid grid dimensions! (" + xSize + " x " + zSize + ")");
+
         if (xSize == this.gridXCount && zSize == this.gridZCount)
             return; // Same size.
 
@@ -415,5 +474,44 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
         FroggerGridStack gridStack = getGridStack(x, z);
         if (gridStack != null)
             results.computeIfAbsent(gridStack, key -> new ArrayList<>()).add(vertex);
+    }
+
+    /**
+     * Gets or creates a grid square representing the given polygon, at the right position.
+     * Throws an Exception if the polygon is located outside the grid.
+     * The logic for this has been as matching the original by checking on-load warnings.
+     * @param polygon the polygon to get/add a grid square for.
+     * @param temp the temporary vector to store calculation data within. If null, a new one will be allocated.
+     * @return gridSquare
+     */
+    public FroggerGridSquare getOrAddGridSquare(FroggerMapPolygon polygon, Vector3f temp) {
+        if (polygon == null)
+            throw new NullPointerException("polygon");
+
+        temp = polygon.getCenterOfPolygon(temp);
+        int polygonGridX = getGridXFromWorldX(temp.getX());
+        int polygonGridZ = getGridZFromWorldZ(temp.getZ());
+
+        if (polygonGridX <= 0 || polygonGridX >= this.gridXCount || polygonGridZ <= 0 || polygonGridZ >= this.gridZCount)
+            throw new IllegalArgumentException("The provided polygon corresponds to the gridStack at [" + polygonGridX + ", " + polygonGridZ + "], which is outside the grid.");
+
+        float insertionY = temp.getY();
+        FroggerGridStack gridStack = getGridStack(polygonGridX, polygonGridZ);
+        int i;
+        for (i = 0; i < gridStack.getGridSquares().size(); i++) {
+            FroggerGridSquare gridSquare = gridStack.getGridSquares().get(i);
+            FroggerMapPolygon gridPolygon = gridSquare.getPolygon();
+            if (gridPolygon == polygon) {
+                return gridSquare;
+            } else if (gridPolygon != null) {
+                float testY = gridPolygon.getCenterOfPolygon(temp).getY();
+                if (insertionY > testY)
+                    break; // Remember that Frogger's "up" is negative. (So a negative number would technically represent a higher height than a positive number)
+            }
+        }
+
+        FroggerGridSquare newGridSquare = new FroggerGridSquare(gridStack, polygon);
+        gridStack.getGridSquares().add(i, newGridSquare);
+        return newGridSquare;
     }
 }
