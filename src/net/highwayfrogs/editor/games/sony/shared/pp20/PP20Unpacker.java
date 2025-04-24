@@ -1,10 +1,10 @@
-package net.highwayfrogs.editor.file.packers;
+package net.highwayfrogs.editor.games.sony.shared.pp20;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.writer.BitReader;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.data.writer.BitReader;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
