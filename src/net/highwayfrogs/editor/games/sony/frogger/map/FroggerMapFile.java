@@ -74,6 +74,10 @@ import java.util.Random;
  *   -> The limit appears to be 0.5 for USABLE_SAFE grid squares, and potentially 1.25 for everything else.
  *  - Have a UI where in the grid editor to add a new plane into the world. It should be perfectly aligned to grid tile coordinates, and allow changing the Y in the 3D world with a gizmo. Example of what that would add would be the leaves near the red frog in FOR2.
  *  - Allow placing a single texture into the map as a single polygon of specified grid size. Then, have a way to optionally split such textures into grid squares. (See FOR2.MAP's floor)
+ *
+ * TODO: Grid Editor Plans:
+ *  - The plan eventually is to have it possible to use a selection rectangle (just like blender) to select multiple polygons at once
+ *   - then you could click a button "add all selected polygons to grid" and it'll automatically place them in the right places
  * Created by Kneesnap on 8/22/2018.
  */
 public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
