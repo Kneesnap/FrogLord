@@ -47,7 +47,7 @@ import java.util.Objects;
 public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
     @Getter private final FroggerMapFile mapFile;
     @Getter private int formGridId = -1;
-    @Getter private int uniqueId = -1; // TODO: Appears to start at zero per-file, and be counted upwards.
+    @Getter private int uniqueId = -1; // Appears to start at zero per-file, and be counted upwards. But some IDs seem garbage. I'm not really sure.
     @Getter private IFroggerFormEntry formEntry;
     @Getter private short flags;
     @Getter private FroggerEntityData entityData;
@@ -205,7 +205,9 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
             editor.addLabel("Entity Type", "Unknown");
         }
 
-        editor.addUnsignedShortField("Entity ID", this.uniqueId, newUniqueId -> this.uniqueId = newUniqueId);
+        editor.addUnsignedShortField("Entity ID", this.uniqueId,
+                newUniqueId -> this.uniqueId == newUniqueId || getMapFile().getEntityPacket().getEntityByUniqueId(newUniqueId) == null,
+                newUniqueId -> this.uniqueId = newUniqueId);
 
         // Show form data.
         List<FroggerOldMapFormData> oldForms = (this.formEntry instanceof FroggerOldMapForm) ? ((FroggerOldMapForm) this.formEntry).getFormDataEntries() : null;
@@ -387,7 +389,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
         NO_COLLISION(Constants.BIT_FLAG_3, "Collision does not apply to this entity."),
         ALIGN_TO_WORLD(Constants.BIT_FLAG_4, "Do not face the path's direction. (Path Entity Only)"),
         PROJECT_ON_LAND(Constants.BIT_FLAG_5, "Snap rotation to the grid square polygon. (Path Entity Only)"),
-        LOCAL_ALIGN(Constants.BIT_FLAG_6, "Entity position matrix is calculated \"locally\" (using Y part of previous position?)"); // TODO: Hrm.
+        LOCAL_ALIGN(Constants.BIT_FLAG_6, "Entity position matrix is calculated \"locally\" (Pipe Slugs)");
 
         private final int bitFlagMask;
         private final String description;
