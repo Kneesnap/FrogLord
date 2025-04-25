@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadedTextureManager.PSXMeshShadedTextureManager;
+import net.highwayfrogs.editor.games.sony.frogger.file.FroggerSkyLand.SkyLandTile;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapAnimation;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapAnimationTargetPolygon;
@@ -18,6 +19,7 @@ import net.highwayfrogs.editor.gui.mesh.PSXShadedDynamicMesh;
 import net.highwayfrogs.editor.gui.texture.atlas.TreeTextureAtlas;
 
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * The triangle mesh representation of a FroggerMapFile.
@@ -27,6 +29,7 @@ import java.util.Collection;
 public class FroggerMapMesh extends PSXShadedDynamicMesh<FroggerMapPolygon, FroggerShadedTextureManager> {
     private final FroggerMapFile map;
     private final FroggerMapMeshNode mainNode;
+    private final FroggerSkyLandMeshNode skyLandMeshNode;
     private final DynamicMeshOverlayNode highlightedMousePolygonNode;
     private final DynamicMeshOverlayNode highlightedAnimatedPolygonsNode;
     private final DynamicMeshOverlayNode highlightedInvisiblePolygonNode;
@@ -42,11 +45,19 @@ public class FroggerMapMesh extends PSXShadedDynamicMesh<FroggerMapPolygon, Frog
         getTextureAtlas().setFallbackTexture(UnknownTextureSource.MAGENTA_INSTANCE);
         setupBasicTextures();
         setupShadedPolygons();
+        Map<SkyLandTile, FroggerMapPolygon> skyLandPolygons = FroggerSkyLandMeshNode.addShadedPolygons(this);
         getTextureAtlas().endBulkOperations();
 
         // Setup main node.
         this.mainNode = new FroggerMapMeshNode(this);
         addNode(this.mainNode);
+
+        if (skyLandPolygons != null && skyLandPolygons.size() > 0) {
+            this.skyLandMeshNode = new FroggerSkyLandMeshNode(this, skyLandPolygons);
+            addNode(this.skyLandMeshNode);
+        } else {
+            this.skyLandMeshNode = null;
+        }
 
         this.highlightedAnimatedPolygonsNode = new DynamicMeshOverlayNode(this);
         addNode(this.highlightedAnimatedPolygonsNode);

@@ -16,7 +16,7 @@ import java.util.List;
  */
 
 public abstract class DynamicMeshNode implements IDynamicMeshHelper {
-    @Getter private final DynamicMesh mesh;
+    @Getter protected final DynamicMesh mesh;
     @Getter private final List<DynamicMeshDataEntry> dataEntries = new ArrayList<>();
     private ILogger cachedLogger;
 

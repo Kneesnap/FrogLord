@@ -56,6 +56,7 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
     private transient int lastReadAddress = -1;
     private transient int lastWriteAddress = -1;
     @Setter private transient boolean visible; // Whether the polygon should be made visible in-game or not.
+    @Setter private transient boolean skyLand;
 
     public static final int FLAG_SEMI_TRANSPARENT = Constants.BIT_FLAG_0;
     public static final int FLAG_ENVIRONMENT_MAPPED = Constants.BIT_FLAG_1; // Show the solid environment bitmap. (For instance, how water appears as a solid body, or sludge in the sewer levels.)
@@ -257,10 +258,16 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
      * Gets the active texture on this polygon.
      */
     public GameImage getTexture() {
-        if (!this.polygonType.isTextured() && (this.textureId == 0 || this.textureId == -1))
+        if (!this.polygonType.isTextured() || this.textureId < 0)
             return null;
 
-        TextureRemapArray textureRemap = getMapFile().getTextureRemap();
+        TextureRemapArray textureRemap;
+        if (this.skyLand) {
+            textureRemap = getGameInstance().getSkyLandTextureRemap();
+        } else {
+            textureRemap = this.mapFile.getTextureRemap();
+        }
+
         if (textureRemap == null)
             return null;
 

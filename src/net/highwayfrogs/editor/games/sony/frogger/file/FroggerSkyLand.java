@@ -3,6 +3,8 @@ package net.highwayfrogs.editor.games.sony.frogger.file;
 import javafx.scene.image.Image;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
@@ -19,17 +21,14 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 /**
- * Reads the sky land tile map.
- * TODO: Implement this to make it show up when viewing sky levels.
- * TODO: Does the bit format differ slightly for older versions?
- * This looks buggy in prototype builds. However, it has been confirmed to load as it appears in-game up to the build PSX Alpha.
+ * Reads the sky land tile map. This looks buggy in prototype builds.
+ * However, it has been confirmed to display consistently with how it appears in-game in PSX Alpha, PSX Build 33, PSX Build 71, and more.
  * Created by Kneesnap on 2/15/2019.
  */
-@Getter
 public class FroggerSkyLand extends SCGameFile<FroggerGameInstance> {
-    private int xLength;
-    private int yLength;
-    private short[][] tileMap;
+    @Getter private int xLength;
+    @Getter private int yLength;
+    private SkyLandTile[][] tileMap;
 
     public FroggerSkyLand(FroggerGameInstance instance) {
         super(instance);
@@ -54,10 +53,10 @@ public class FroggerSkyLand extends SCGameFile<FroggerGameInstance> {
     public void load(DataReader reader) {
         this.xLength = reader.readUnsignedShortAsInt();
         this.yLength = reader.readUnsignedShortAsInt();
-        this.tileMap = new short[this.yLength][this.xLength];
+        this.tileMap = new SkyLandTile[this.yLength][this.xLength];
         for (int y = 0; y < this.yLength; y++)
             for (int x = 0; x < this.xLength; x++)
-                this.tileMap[y][x] = reader.readShort();
+                this.tileMap[y][x] = new SkyLandTile(x, y, reader.readShort());
     }
 
     @Override
@@ -66,7 +65,17 @@ public class FroggerSkyLand extends SCGameFile<FroggerGameInstance> {
         writer.writeUnsignedShort(this.yLength);
         for (int y = 0; y < this.yLength; y++)
             for (int x = 0; x < this.xLength; x++)
-                writer.writeShort(this.tileMap[y][x]);
+                writer.writeShort(this.tileMap[y][x].toPackedValue());
+    }
+
+    /**
+     * Gets the tile at the given XY position.
+     * @param x the x tile position to lookup
+     * @param y the y tile position to lookup
+     * @return tile, or null
+     */
+    public SkyLandTile getTile(int x, int y) {
+        return x >= 0 && y >= 0 && this.xLength > x && this.yLength > y ? this.tileMap[y][x] : null;
     }
 
     /**
@@ -116,48 +125,14 @@ public class FroggerSkyLand extends SCGameFile<FroggerGameInstance> {
         Graphics graphics = finalImage.createGraphics();
         for (int y = 0; y < this.yLength; y++) {
             for (int x = 0; x < this.xLength; x++) {
-                short packedTileData = this.tileMap[y][x];
-                BufferedImage tileImage = images[getLocalTextureId(packedTileData)][getTextureRotation(packedTileData).ordinal()];
+                SkyLandTile tile = this.tileMap[y][x];
+                BufferedImage tileImage = images[tile.getLocalTextureId()][tile.getRotation().ordinal()];
                 graphics.drawImage(tileImage, x * width, (this.yLength - y - 1) * height, width, height, null);
             }
         }
 
         graphics.dispose();
         return finalImage;
-    }
-
-
-    /**
-     * Gets the local (non-remapped) texture ID from the packed value.
-     * @param packedValue The packed value to get the texture ID from.
-     * @return localTextureId
-     */
-    public static short getLocalTextureId(short packedValue) {
-        // & 0x3FFF -> Get texture id in txl_sky_land. Bits 0 -> 13.
-        return (short) (packedValue & 0x3FFF);
-    }
-
-    /**
-     * Gets texture rotation from the packed value.
-     * @param packedValue The packed value to get the texture rotation from.
-     * @return textureRotation
-     */
-    public static SkyLandRotation getTextureRotation(short packedValue) {
-        // & 0xC000 -> Texture Rotation [0->4]. Bits 14 + 15.
-        return SkyLandRotation.values()[((packedValue & 0xC000) >> 14)];
-    }
-
-    /**
-     * Creates a packed sky land tile short.
-     * @param localTextureId the texture id to apply
-     * @param rotation the texture rotation to apply
-     * @return packedSkyLandTileShort
-     */
-    public static short packSkyLandTile(short localTextureId, SkyLandRotation rotation) {
-        if (rotation == null)
-            throw new NullPointerException("rotation");
-
-        return (short) ((localTextureId & 0x3FFF) | (rotation.ordinal() << 14));
     }
 
     @Getter
@@ -169,5 +144,56 @@ public class FroggerSkyLand extends SCGameFile<FroggerGameInstance> {
         MODE_4(90D);
 
         private final double angle;
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    public static class SkyLandTile {
+        private final int x;
+        private final int y;
+        @NonNull private SkyLandRotation rotation = SkyLandRotation.values()[0];
+        private short localTextureId;
+
+        public SkyLandTile(int x, int y, short packedValue) {
+            this.x = x;
+            this.y = y;
+            loadFromPackedValue(packedValue);
+        }
+
+        /**
+         * Loads the tile data from the packed value.
+         * @param packedValue the packed value to read data from
+         */
+        public void loadFromPackedValue(short packedValue) {
+            this.rotation = getTextureRotation(packedValue);
+            this.localTextureId = getLocalTextureId(packedValue);
+        }
+
+        /**
+         * Converts the data held within the tile to a packed value.
+         */
+        public short toPackedValue() {
+            return (short) ((this.localTextureId & 0x3FFF) | (this.rotation.ordinal() << 14));
+        }
+
+        /**
+         * Gets the local (non-remapped) texture ID from the packed value.
+         * @param packedValue The packed value to get the texture ID from.
+         * @return localTextureId
+         */
+        public static short getLocalTextureId(short packedValue) {
+            // & 0x3FFF -> Get texture id in txl_sky_land. Bits 0 -> 13.
+            return (short) (packedValue & 0x3FFF);
+        }
+
+        /**
+         * Gets texture rotation from the packed value.
+         * @param packedValue The packed value to get the texture rotation from.
+         * @return textureRotation
+         */
+        public static SkyLandRotation getTextureRotation(short packedValue) {
+            // & 0xC000 -> Texture Rotation [0->4]. Bits 14 + 15.
+            return SkyLandRotation.values()[((packedValue & 0xC000) >> 14)];
+        }
     }
 }
