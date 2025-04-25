@@ -16,6 +16,7 @@ import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Represents a Frogger map's collision grid.
@@ -364,33 +365,124 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
      * @param zSize The new z count of the grid.
      */
     public void resizeGrid(int xSize, int zSize) {
-        if (xSize % 2 > 0)
-            xSize++; // Grids can NOT have an odd number of squares!
-        if (zSize % 2 > 0)
-            zSize++; // Grids can NOT have an odd number of squares!
+        if ((xSize == this.gridXCount || xSize + 1 == this.gridXCount) && (zSize == this.gridZCount || zSize + 1 == this.gridZCount))
+            return; // No change, so don't bother generating the polygon mappings.
 
-        if (xSize < 0 || xSize > MAX_GRID_SQUARE_COUNT_X || zSize < 0 || zSize > MAX_GRID_SQUARE_COUNT_Z)
-            throw new IllegalArgumentException("Invalid grid dimensions! (" + xSize + " x " + zSize + ")");
-
-        if (xSize == this.gridXCount && zSize == this.gridZCount)
-            return; // Same size.
-
-        // Populate new grid.
-        FroggerGridStack[][] newGridStacks = new FroggerGridStack[zSize][xSize];
-        for (int z = 0; z < zSize; z++) {
-            for (int x = 0; x < xSize; x++) {
-                if (x >= this.gridXCount || z >= this.gridZCount) {
-                    newGridStacks[z][x] = new FroggerGridStack(getParentFile(), x, z);
-                } else {
-                    newGridStacks[z][x] = this.gridStacks[z][x];
+        Map<FroggerMapPolygon, Integer> polygonsWithFlagsToInsertIntoGrid = new HashMap<>();
+        if (this.gridStacks != null) {
+            for (int z = 0; z < this.gridZCount; z++) {
+                for (int x = 0; x < this.gridXCount; x++) {
+                    FroggerGridStack gridStack = this.gridStacks[z][x];
+                    for (int i = 0; i < gridStack.getGridSquares().size(); i++) {
+                        FroggerGridSquare gridSquare = gridStack.getGridSquares().get(i);
+                        if (gridSquare.getPolygon() != null)
+                            polygonsWithFlagsToInsertIntoGrid.put(gridSquare.getPolygon(), gridSquare.getFlags());
+                    }
                 }
             }
         }
 
-        // Apply the new grid.
+        resizeGrid(xSize, zSize, polygonsWithFlagsToInsertIntoGrid);
+    }
+
+    /**
+     * Resize the grid to a new size.
+     * @param xSize The new x count of the grid.
+     * @param zSize The new z count of the grid.
+     * @param polygonsWithGridFlags a map containing the polygons to include in the newly resized grid, mapped to their grid flags, if they have any.
+     */
+    public void resizeGrid(int xSize, int zSize, Map<FroggerMapPolygon, Integer> polygonsWithGridFlags) {
+        if (polygonsWithGridFlags == null)
+            throw new NullPointerException("polygonsWithGridFlags");
+
+        // Update & validate grid sizes.
+        if (xSize % 2 > 0)
+            xSize++; // Grids can NOT have an odd number of squares!
+        if (zSize % 2 > 0)
+            zSize++; // Grids can NOT have an odd number of squares!
+        if (xSize < 0 || xSize > MAX_GRID_SQUARE_COUNT_X || zSize < 0 || zSize > MAX_GRID_SQUARE_COUNT_Z)
+            throw new IllegalArgumentException("Invalid grid dimensions! (" + xSize + " x " + zSize + ")");
+
+        FroggerGridStack[][] newGridStacks;
+        if (xSize != this.gridXCount || zSize != this.gridZCount) {
+            // Copy existing objects to new grid.
+            newGridStacks = new FroggerGridStack[zSize][xSize];
+            for (int z = 0; z < zSize; z++) {
+                for (int x = 0; x < xSize; x++) {
+                    if (x >= this.gridXCount || z >= this.gridZCount) {
+                        newGridStacks[z][x] = new FroggerGridStack(getParentFile(), x, z);
+                    } else {
+                        newGridStacks[z][x] = this.gridStacks[z][x];
+                        this.gridStacks[z][x].clear();
+                    }
+                }
+            }
+        } else {
+            newGridStacks = this.gridStacks;
+            clear();
+        }
+
+        // Apply the new grid sizes.
         this.gridXCount = (short) xSize;
         this.gridZCount = (short) zSize;
         this.gridStacks = newGridStacks;
+
+        // Populate resized collision grid.
+        Vector3f tempPolygonCenter = new Vector3f();
+        for (Entry<FroggerMapPolygon, Integer> entry : polygonsWithGridFlags.entrySet()) {
+            FroggerMapPolygon polygon = entry.getKey();
+            Integer gridFlagsObj = entry.getValue();
+
+            // Add polygon to grid, and set flags if present.
+            FroggerGridSquare gridSquare = getOrAddGridSquare(polygon, tempPolygonCenter);
+            if (gridFlagsObj != null)
+                gridSquare.setFlags(gridFlagsObj);
+        }
+
+        // Calculate new cliff height values.
+        recalculateAllCliffHeights();
+    }
+
+    /**
+     * Clears the grid and generates a completely fresh grid based on the provided polygon/grid-square pairs.
+     * @param polygonsWithGridFlags a map containing the polygons to include in the grid, mapped to their grid flags.
+     */
+    public void generateGrid(Map<FroggerMapPolygon, Integer> polygonsWithGridFlags) {
+        if (polygonsWithGridFlags == null)
+            throw new NullPointerException("polygonsWithGridFlags");
+
+        // Determine the boundaries the grid must at minimum encompass.
+        float minWorldGridX = Float.MAX_VALUE;
+        float minWorldGridZ = Float.MAX_VALUE;
+        float maxWorldGridX = Float.MIN_VALUE;
+        float maxWorldGridZ = Float.MIN_VALUE;
+        Vector3f tempPolygonCenter = new Vector3f();
+        for (FroggerMapPolygon polygon : polygonsWithGridFlags.keySet()) {
+            polygon.getCenterOfPolygon(tempPolygonCenter);
+            float worldGridX = tempPolygonCenter.getX();
+            float worldGridZ = tempPolygonCenter.getZ();
+            if (worldGridX < minWorldGridX)
+                minWorldGridX = worldGridX;
+            if (worldGridX > maxWorldGridX)
+                maxWorldGridX = worldGridX;
+            if (worldGridZ < minWorldGridZ)
+                minWorldGridZ = worldGridZ;
+            if (worldGridZ > maxWorldGridZ)
+                maxWorldGridZ = worldGridZ;
+        }
+
+        clear();
+
+        // If we've found an area the grid must cover, resize the grid to cover at least that area.
+        if (maxWorldGridX > minWorldGridX && maxWorldGridZ > minWorldGridZ) {
+            int newXCount = 3 + ((DataUtils.floatToFixedPointShort4Bit(maxWorldGridX) - DataUtils.floatToFixedPointShort4Bit(minWorldGridX))
+                    / FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH);
+            int newZCount = 3 + ((DataUtils.floatToFixedPointShort4Bit(maxWorldGridZ) - DataUtils.floatToFixedPointShort4Bit(minWorldGridZ))
+                    / FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH);
+
+            // Grids can't have an odd number of squares, but that will be automatically adjusted.
+            resizeGrid(Math.max(this.gridXCount, newXCount), Math.max(this.gridZCount, newZCount), polygonsWithGridFlags);
+        }
     }
 
     private static final List<String> BUILD_31_MAPS_WITHOUT_CLIFF_HEIGHTS = Arrays.asList("DES2.MAP", "DES5.MAP", "FOR1.MAP",

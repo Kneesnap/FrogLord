@@ -23,8 +23,6 @@ import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePack
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketVertex;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
-import net.highwayfrogs.editor.system.math.Vector3f;
-import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
@@ -223,7 +221,7 @@ public class FFSUtil {
             throw new RuntimeException("Failed to read " + inputFile.getName(), ex);
         }
 
-        // Clear remap before running commands. (Commands must update remap.
+        // Clear remap before running commands. (Commands must update remap.)
         List<Short> oldTextureIds = new ArrayList<>(textureRemap.getTextureIds());
         textureRemap.getTextureIds().clear();
 
@@ -281,11 +279,6 @@ public class FFSUtil {
         // Register new polygons, and determine the minimum grid size we need.
         FroggerMapFilePacketPolygon polygonPacket = map.getPolygonPacket();
         polygonPacket.clearPolygons();
-        Vector3f tempPolygonCenter = new Vector3f();
-        float minWorldGridX = Float.MAX_VALUE;
-        float minWorldGridZ = Float.MAX_VALUE;
-        float maxWorldGridX = Float.MIN_VALUE;
-        float maxWorldGridZ = Float.MIN_VALUE;
         for (FroggerMapPolygon polygon : context.getNewPolygons()) {
             polygonPacket.addPolygon(polygon);
 
@@ -295,42 +288,10 @@ public class FFSUtil {
                 if (animation != null)
                     animation.getTargetPolygons().add(new FroggerMapAnimationTargetPolygon(animation, polygon));
             }
-
-            // Calculate minGridX/Z
-            if (!context.getNewPolygonGridSquareFlags().containsKey(polygon))
-                continue; // If it's not a grid square, we can ignore it.
-
-            polygon.getCenterOfPolygon(tempPolygonCenter);
-            float worldGridX = tempPolygonCenter.getX();
-            float worldGridZ = tempPolygonCenter.getZ();
-            if (worldGridX < minWorldGridX)
-                minWorldGridX = worldGridX;
-            if (worldGridX > maxWorldGridX)
-                maxWorldGridX = worldGridX;
-            if (worldGridZ < minWorldGridZ)
-                minWorldGridZ = worldGridZ;
-            if (worldGridZ > maxWorldGridZ)
-                maxWorldGridZ = worldGridZ;
         }
 
         // 5) Generate the new collision grid.
-        FroggerMapFilePacketGrid gridPacket = map.getGridPacket();
-        gridPacket.clear();
-        if (maxWorldGridX > minWorldGridX && maxWorldGridZ > minWorldGridZ) {
-            int newXCount = 3 + ((DataUtils.floatToFixedPointShort4Bit(maxWorldGridX) - DataUtils.floatToFixedPointShort4Bit(minWorldGridX)) / FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH);
-            int newZCount = 3 + ((DataUtils.floatToFixedPointShort4Bit(maxWorldGridZ) - DataUtils.floatToFixedPointShort4Bit(minWorldGridZ)) / FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH);
-
-            // Grids can't have an odd number of squares, but that will be automatically adjusted.
-            gridPacket.resizeGrid(Math.max(gridPacket.getGridXCount(), newXCount), Math.max(gridPacket.getGridZCount(), newZCount));
-
-            // Populate resized collision grid.
-            for (FroggerMapPolygon polygon : context.getNewPolygons()) {
-                Integer gridFlagsObj = context.getNewPolygonGridSquareFlags().get(polygon);
-                if (gridFlagsObj != null)
-                    gridPacket.getOrAddGridSquare(polygon, tempPolygonCenter).setFlags(gridFlagsObj);
-            }
-        }
-        gridPacket.recalculateAllCliffHeights();
+        map.getGridPacket().generateGrid(context.getNewPolygonGridSquareFlags());
 
         // 6) Generate map groups for the new level data.
         map.getGroupPacket().generateMapGroups(response, true);

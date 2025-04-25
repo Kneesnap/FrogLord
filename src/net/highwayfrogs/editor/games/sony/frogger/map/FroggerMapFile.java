@@ -256,6 +256,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
         this.vertexPacket.getVertices().clear();
         this.animationPacket.getAnimations().clear();
         this.polygonPacket.clearPolygons();
+        this.gridPacket.clear(); // The resized grid should be empty.
         this.gridPacket.resizeGrid(xTileCount, zTileCount); // Add two, so we can have a border surrounding the map.
         this.generalPacket.setStartGridCoordX((xTileCount / 2) + 1);
         this.generalPacket.setStartGridCoordZ(1);
