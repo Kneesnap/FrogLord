@@ -1,9 +1,7 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.packets;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquare;
@@ -14,6 +12,8 @@ import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.*;
 
@@ -50,6 +50,14 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
         this.gridXSize = reader.readShort();
         this.gridZSize = reader.readShort();
         this.gridStacks = new FroggerGridStack[this.gridZCount][this.gridXCount];
+
+        // Validate counts are not even. (This causes them to not align around 0, 0 correctly.)
+        // This is because the grid base position is automatically calculated by placing the center of the grid at 0, 0, 0.
+        // However, when there are an odd number of squares, this will place the middle of a square at 0, 0, 0, instead of the corner of a square.
+        // The game is hardcoded to expect the middle of a square to be at multiples of 16.0 plus 8.0, not at 0, 0, 0.
+        // So, any grid data seen with odd dimensions are a violation of how FrogLord understands & supports the game data.
+        if (this.gridXCount % 2 > 0 || this.gridZCount % 2 > 0)
+            getLogger().warning("Collision grids are expected NEVER to contain an odd grid-square count! Had [%d, %d]", this.gridXCount, this.gridZCount);
 
         // Validate size as the expected value.
         if (this.gridXSize != GRID_STACK_WORLD_LENGTH || this.gridZSize != GRID_STACK_WORLD_LENGTH)
@@ -356,6 +364,11 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
      * @param zSize The new z count of the grid.
      */
     public void resizeGrid(int xSize, int zSize) {
+        if (xSize % 2 > 0)
+            xSize++; // Grids can NOT have an odd number of squares!
+        if (zSize % 2 > 0)
+            zSize++; // Grids can NOT have an odd number of squares!
+
         if (xSize < 0 || xSize > MAX_GRID_SQUARE_COUNT_X || zSize < 0 || zSize > MAX_GRID_SQUARE_COUNT_Z)
             throw new IllegalArgumentException("Invalid grid dimensions! (" + xSize + " x " + zSize + ")");
 
@@ -492,7 +505,7 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
         int polygonGridX = getGridXFromWorldX(temp.getX());
         int polygonGridZ = getGridZFromWorldZ(temp.getZ());
 
-        if (polygonGridX <= 0 || polygonGridX >= this.gridXCount || polygonGridZ <= 0 || polygonGridZ >= this.gridZCount)
+        if (polygonGridX < 0 || polygonGridX >= this.gridXCount || polygonGridZ < 0 || polygonGridZ >= this.gridZCount)
             throw new IllegalArgumentException("The provided polygon corresponds to the gridStack at [" + polygonGridX + ", " + polygonGridZ + "], which is outside the grid.");
 
         float insertionY = temp.getY();

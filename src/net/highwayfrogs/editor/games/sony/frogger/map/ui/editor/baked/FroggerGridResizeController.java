@@ -83,8 +83,9 @@ public class FroggerGridResizeController extends GameUIController<FroggerGameIns
         // Clear map works well with the following tests: 128x128, 255x20, 191x191, 255x191
         // Clear does not work well with the following tests: 255x255, 200x200, 20x200, 192x192, 255x192
         // 255x255 doesn't save because of the number of vertices when clearing the map, but in theory I think would be the same.
-        if (newX > FroggerMapFilePacketGrid.MAX_GRID_SQUARE_COUNT_X || newZ > FroggerMapFilePacketGrid.MAX_GRID_SQUARE_COUNT_Z) { // Engine limitation, the game sometimes does things like (x & 0xFF), which effectively means it can't go higher than 0xFF.
-            FXUtils.makePopUp("The grid cannot go larger than 255 squares in either direction.", AlertType.ERROR);
+        // We don't allow 255x255 because odd-number grid-squares do not work.
+        if (newX >= FroggerMapFilePacketGrid.MAX_GRID_SQUARE_COUNT_X || newZ >= FroggerMapFilePacketGrid.MAX_GRID_SQUARE_COUNT_Z) { // Engine limitation, the game sometimes does things like (x & 0xFF), which effectively means it can't go higher than 0xFF.
+            FXUtils.makePopUp("The grid cannot go larger than 254 squares in either direction.", AlertType.ERROR);
             return false;
         }
 
@@ -97,6 +98,9 @@ public class FroggerGridResizeController extends GameUIController<FroggerGameIns
         // We allow selecting the higher values instead of fully preventing them for reasons from testing to possible eventual fixing of the system to support the full range.
         if (newZ > FroggerMapFilePacketGrid.MAX_SAFE_GRID_SQUARE_COUNT_Z)
             FXUtils.makePopUp("This selection will cause rendering issues in-game. To avoid these issues, reduce the gridZCount value to no more than " + FroggerMapFilePacketGrid.MAX_SAFE_GRID_SQUARE_COUNT_Z + ".", AlertType.WARNING);
+
+        if (newX % 2 > 0 || newZ % 2 > 0)
+            FXUtils.makePopUp("The collision grid breaks when non-even lengths are used.\nThe provided size will be automatically adjusted to account for this.", AlertType.INFORMATION);
 
         return true;
     }

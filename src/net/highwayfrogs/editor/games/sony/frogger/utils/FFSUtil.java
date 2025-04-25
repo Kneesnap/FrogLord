@@ -317,10 +317,10 @@ public class FFSUtil {
         FroggerMapFilePacketGrid gridPacket = map.getGridPacket();
         gridPacket.clear();
         if (maxWorldGridX > minWorldGridX && maxWorldGridZ > minWorldGridZ) {
-            int newXCount = 2 + (DataUtils.floatToFixedPointShort4Bit(maxWorldGridX) / FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH)
-                    - (DataUtils.floatToFixedPointShort4Bit(minWorldGridX) / FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH);
-            int newZCount = 2 + (DataUtils.floatToFixedPointShort4Bit(maxWorldGridZ) / FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH)
-                    - (DataUtils.floatToFixedPointShort4Bit(minWorldGridZ) / FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH);
+            int newXCount = 3 + ((DataUtils.floatToFixedPointShort4Bit(maxWorldGridX) - DataUtils.floatToFixedPointShort4Bit(minWorldGridX)) / FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH);
+            int newZCount = 3 + ((DataUtils.floatToFixedPointShort4Bit(maxWorldGridZ) - DataUtils.floatToFixedPointShort4Bit(minWorldGridZ)) / FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH);
+
+            // Grids can't have an odd number of squares, but that will be automatically adjusted.
             gridPacket.resizeGrid(Math.max(gridPacket.getGridXCount(), newXCount), Math.max(gridPacket.getGridZCount(), newZCount));
 
             // Populate resized collision grid.
