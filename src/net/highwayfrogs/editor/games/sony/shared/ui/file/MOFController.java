@@ -778,7 +778,7 @@ public class MOFController extends SCFileEditorUIController<SCGameInstance, MOFH
             frameSlider.setMin(0);
             frameSlider.setBlockIncrement(1);
             frameSlider.setMinorTickCount(1);
-            frameSlider.setSnapToTicks(true);
+            frameSlider.setSnapToTicks(frameSlider.getMax() <= 30); // It gets in the way of functionality if this is enabled when there are tons of frames.
             frameSlider.setShowTickLabels(false);
             frameSlider.setShowTickMarks(true);
             frameSlider.valueProperty().addListener(((observable, oldValue, newValue) -> {
