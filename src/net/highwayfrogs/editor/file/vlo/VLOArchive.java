@@ -5,9 +5,7 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.FrogLordApplication;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.VLOController;
@@ -16,6 +14,8 @@ import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -65,28 +65,60 @@ public class VLOArchive extends SCSharedGameFile {
         int textureOffset = reader.readInt();
 
         // Load clut data.
+        int clutAddress = -1, clutAddressEnd = -1;
         if (isPsxMode()) { // GRV file has clut data.
             int clutCount = reader.readInt();
-            int clutOffset = reader.readInt();
+            clutAddress = reader.readInt();
 
-            reader.jumpTemp(clutOffset);
+            reader.jumpTemp(clutAddress);
+            this.clutEntries.clear();
             for (int i = 0; i < clutCount; i++) {
-                ClutEntry clut = new ClutEntry();
+                ClutEntry clut = new ClutEntry(getGameInstance());
                 clut.load(reader);
-                clutEntries.add(clut);
+                this.clutEntries.add(clut);
             }
 
+            clutAddressEnd = reader.getIndex();
             reader.jumpReturn();
         }
 
+        // Load clut colors.
+        int clutColorsStartAt = this.clutEntries.size() > 0 ? this.clutEntries.get(0).getTempColorsPointer() : -1;
+        int clutColorsEndAt = clutColorsStartAt;
+        reader.jumpTemp(reader.getIndex());
+        if (clutColorsStartAt >= 0)
+            reader.setIndex(clutColorsStartAt);
+        for (int i = 0; i < this.clutEntries.size(); i++)
+            clutColorsEndAt = Math.max(clutColorsEndAt, this.clutEntries.get(i).readClutColors(reader));
+        reader.jumpReturn();
+
         // Load image data.
-        reader.jumpTemp(textureOffset);
+        this.images.clear();
+        requireReaderIndex(reader, textureOffset, "Expected VLO texture data");
         for (int i = 0; i < fileCount; i++) {
             GameImage image = new GameImage(this);
             image.load(reader);
             this.images.add(image);
         }
-        reader.jumpReturn();
+
+        // Skip CLUT data.
+        if (clutAddress >= 0)
+            requireReaderIndex(reader, clutAddress, "Expected CLUT data");
+        if (clutAddressEnd >= 0)
+            reader.setIndex(clutAddressEnd);
+
+        // Read image data.
+        for (int i = 0; i < this.images.size(); i++) {
+            reader.alignRequireEmpty(Constants.INTEGER_SIZE);
+            this.images.get(i).readImageData(reader);
+        }
+
+        // Skip CLUT Color Data
+        reader.alignRequireEmpty(Constants.INTEGER_SIZE);
+        if (clutColorsStartAt >= 0)
+            requireReaderIndex(reader, clutColorsStartAt, "Expected CLUT color data");
+        if (clutColorsEndAt >= 0)
+            reader.setIndex(clutColorsEndAt);
     }
 
     @Override
@@ -102,21 +134,29 @@ public class VLOArchive extends SCSharedGameFile {
             clutHeaderPointer = writer.writeNullPointer(); // This will be written later.
         }
 
+        // Write images.
         writer.writeAddressTo(imageHeaderPointer);
-        this.images.forEach(image -> image.save(writer));
+        for (int i = 0; i < this.images.size(); i++)
+            this.images.get(i).save(writer);
+
+        // Write CLUT entries.
         if (isPsxMode()) { // Add room for clut setup data.
             writer.writeAddressTo(clutHeaderPointer);
-            this.clutEntries.forEach(entry -> entry.save(writer));
+            for (int i = 0; i < this.clutEntries.size(); i++)
+                this.clutEntries.get(i).save(writer);
         }
 
-        this.images.forEach(image -> image.saveExtra(writer));
-        if (isPsxMode())
-            this.clutEntries.forEach(entry -> entry.saveExtra(writer));
-    }
+        // Write image data.
+        for (int i = 0; i < this.images.size(); i++) {
+            writer.align(Constants.INTEGER_SIZE);
+            this.images.get(i).writeImageData(writer);
+        }
 
-    @Override
-    public boolean warnIfEndNotReached() {
-        return false;
+        // Write clut colors.
+        writer.align(Constants.INTEGER_SIZE);
+        if (isPsxMode())
+            for (int i = 0; i < this.clutEntries.size(); i++)
+                this.clutEntries.get(i).writeClutColors(writer);
     }
 
     /**

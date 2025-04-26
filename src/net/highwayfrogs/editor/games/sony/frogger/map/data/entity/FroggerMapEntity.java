@@ -137,7 +137,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
 
         // Warnings!
 
-        if (this.entityData instanceof FroggerEntityDataPathInfo && getPathInfo().getPath() == null)
+        if (this.entityData instanceof FroggerEntityDataPathInfo && getPathInfo().getPath() == null && !getMapFile().isIslandOrIslandPlaceholder())
             getLogger().warning("Entity references an invalid path ID! (%d)", getPathInfo().getPathId());
     }
 
@@ -148,7 +148,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
             getLogger().warning("The entity uses an invalid form grid ID! (%d).", this.formGridId);
             FXUtils.makePopUp("[" + getLoggerInfo() + "] uses an invalid form grid ID! (" + this.formGridId + ")\nThis may cause issues!", AlertType.WARNING);
         }
-        if (this.entityData instanceof FroggerEntityDataPathInfo && getPathInfo().getPath() == null) {
+        if (this.entityData instanceof FroggerEntityDataPathInfo && getPathInfo().getPath() == null && !getMapFile().isIslandOrIslandPlaceholder()) {
             getLogger().warning("Entity references an invalid path ID! (%d)", getPathInfo().getPathId());
             FXUtils.makePopUp("[" + getLoggerInfo() + "] uses an invalid path ID! (" + getPathInfo().getPathId() + ")\nThis may cause issues!", AlertType.WARNING);
         }

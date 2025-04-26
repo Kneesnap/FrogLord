@@ -34,26 +34,24 @@ import java.util.function.Consumer;
  * A singular game image. MR_TXSETUP struct.
  * Created by Kneesnap on 8/30/2018.
  */
-@Getter
-@Setter
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "lossy-conversions"})
 public class GameImage extends SCSharedGameData implements Cloneable, TextureSource, ITextureSource {
-    private final List<Consumer<BufferedImage>> imageChangeListeners;
-    private final VLOArchive parent;
-    private short vramX;
-    private short vramY;
-    private short fullWidth;
-    private short fullHeight;
-    private short textureId;
-    private short flags;
-    private short clutId;
+    @Getter private final List<Consumer<BufferedImage>> imageChangeListeners;
+    @Getter private final VLOArchive parent;
+    @Getter @Setter private short vramX;
+    @Getter @Setter private short vramY;
+    @Getter @Setter private short fullWidth;
+    @Getter @Setter private short fullHeight;
+    @Getter @Setter private short textureId;
+    @Getter private short flags;
+    @Getter private short clutId;
     private byte ingameWidth; // In-game texture width, used to remove texture padding.
     private byte ingameHeight;
     private byte[] imageBytes;
-    private ImageClutMode clutMode; // TPF
-    private int abr; // ABR.
+    @Getter private ImageClutMode clutMode; // TPF
+    @Getter private int abr; // ABR.
 
-    private transient int tempSaveImageDataPointer;
+    private transient int tempImageDataPointer = -1;
     private transient BufferedImage cachedImage;
 
     public static final int MAX_DIMENSION = 256;
@@ -74,6 +72,7 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
     public static final int FLAG_REFERENCED_BY_NAME = Constants.BIT_FLAG_4; // All images have this. It means it has an entry in bmp_pointers. Images without this flag can be dynamically loaded/unloaded without having a fixed memory location which the code can access the texture info from.
     public static final int FLAG_BLACK_IS_TRANSPARENT = Constants.BIT_FLAG_5; // Seems like it may not be used. Would be weird if that were the case.
     public static final int FLAG_2D_SPRITE = Constants.BIT_FLAG_15; // Indicates that an animation list should be used when the image is used to create a sprite. I dunno, it seems like every single texture in frogger has this flag set. (Though this is not confirmed, let alone confirmed for all versions)
+    // TODO: FLAG VALIDATION!
 
     public GameImage(VLOArchive parent) {
         super(parent != null ? parent.getGameInstance() : null);
@@ -88,7 +87,7 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
         this.fullWidth = reader.readShort();
         this.fullHeight = reader.readShort();
 
-        int offset = reader.readInt();
+        this.tempImageDataPointer = reader.readInt();
         this.textureId = reader.readShort();
 
         short readPage = reader.readShort();
@@ -114,37 +113,6 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
         this.ingameWidth = reader.readByte();
         this.ingameHeight = reader.readByte();
 
-        reader.jumpTemp(offset);
-
-        int pixelCount = getFullWidth() * getFullHeight();
-        if (getParent().isPsxMode()) {
-            ByteBuffer buffer = ByteBuffer.allocate(PC_BYTES_PER_PIXEL * pixelCount);
-
-            if (getClutMode() == ImageClutMode.MODE_15BIT_NO_CLUT) { // Used in PS1 demo. Example: Frogger's eye, VOL@35 (The fireball texture)
-                for (int i = 0; i < pixelCount; i++)
-                    buffer.putInt(PSXClutColor.readBGRAColorFromShort(reader.readShort(), false));
-            } else if (getClutMode() == ImageClutMode.MODE_8BIT) { // Used in PS1 release. Example: STARTNTSC.VLO
-                ClutEntry clut = getClut();
-                for (int i = 0; i < pixelCount; i++)
-                    readPSXPixel(reader.readUnsignedByteAsShort(), clut, buffer);
-            } else { // 4bit (normal) mode.
-                ClutEntry clut = getClut();
-                for (int i = 0; i < pixelCount / 2; i++) { // We read two pixels per iteration.
-                    short value = reader.readUnsignedByteAsShort();
-                    int low = value & 0x0F;
-                    int high = value >> 4;
-
-                    readPSXPixel(low, clut, buffer);
-                    readPSXPixel(high, clut, buffer);
-                }
-            }
-
-            this.imageBytes = buffer.array();
-        } else {
-            this.imageBytes = reader.readBytes(pixelCount * PC_BYTES_PER_PIXEL);
-        }
-
-        reader.jumpReturn();
         if (readU != getU() || readV != getV())
             getLogger().warning("UV Mismatch at image %d! [%d,%d] [%d,%d] -> %dx%d, %dx%d, %04X [%d, %d]",
                     Utils.getLoadingIndex(this.parent.getImages(), this), readU, readV, getU(), getV(),
@@ -159,7 +127,7 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
 
         writer.writeShort((short) (this.fullWidth / getWidthMultiplier()));
         writer.writeShort(this.fullHeight);
-        this.tempSaveImageDataPointer = writer.writeNullPointer();
+        this.tempImageDataPointer = writer.writeNullPointer();
         writer.writeShort(this.textureId);
 
         short oldVramX = this.vramX;
@@ -192,22 +160,68 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
     }
 
     /**
+     * Load image data.
+     * @param reader The reader to read image data from.
+     */
+    void readImageData(DataReader reader) {
+        if (this.tempImageDataPointer < 0)
+            throw new RuntimeException("Cannot read image data, the image data pointer is invalid.");
+
+        requireReaderIndex(reader, this.tempImageDataPointer, "Expected image data");
+        this.tempImageDataPointer = -1;
+
+        // Read image.
+        int pixelCount = getFullWidth() * getFullHeight();
+        if (getParent().isPsxMode()) {
+            ByteBuffer buffer = ByteBuffer.allocate(PC_BYTES_PER_PIXEL * pixelCount);
+
+            if (getClutMode() == ImageClutMode.MODE_15BIT_NO_CLUT) { // Used in PS1 demo. Example: Frogger's eye, VOL@35 (The fireball texture)
+                for (int i = 0; i < pixelCount; i++)
+                    buffer.putInt(PSXClutColor.readBGRAColorFromShort(reader.readShort(), false));
+            } else if (getClutMode() == ImageClutMode.MODE_8BIT) { // Used in PS1 release. Example: STARTNTSC.VLO
+                ClutEntry clut = getClut();
+                for (int i = 0; i < pixelCount; i++)
+                    readPSXPixel(reader.readUnsignedByteAsShort(), clut, buffer);
+            } else { // 4bit (normal) mode.
+                ClutEntry clut = getClut();
+                for (int i = 0; i < pixelCount / 2; i++) { // We read two pixels per iteration.
+                    short value = reader.readUnsignedByteAsShort();
+                    int low = value & 0x0F;
+                    int high = value >> 4;
+
+                    readPSXPixel(low, clut, buffer);
+                    readPSXPixel(high, clut, buffer);
+                }
+            }
+
+            this.imageBytes = buffer.array();
+        } else {
+            this.imageBytes = reader.readBytes(pixelCount * PC_BYTES_PER_PIXEL);
+        }
+    }
+
+    /**
      * Save extra data.
      * @param writer The writer to save data to.
      */
-    public void saveExtra(DataWriter writer) {
-        writer.writeAddressTo(this.tempSaveImageDataPointer);
+    void writeImageData(DataWriter writer) {
+        if (this.tempImageDataPointer < 0)
+            throw new RuntimeException("Cannot write image data, the image data pointer is invalid.");
+
+        writer.writeAddressTo(this.tempImageDataPointer);
         writeImageBytes(writer);
+
+        this.tempImageDataPointer = -1;
     }
 
     private void writeImageBytes(DataWriter writer) {
         if (!getParent().isPsxMode()) {
-            writer.writeBytes(getImageBytes()); // The image bytes as they are loaded are already as they should be when saved.
+            writer.writeBytes(this.imageBytes); // The image bytes as they are loaded are already as they should be when saved.
             return;
         }
 
         if (getClutMode() == ImageClutMode.MODE_15BIT_NO_CLUT) {
-            for (int i = 0; i < getImageBytes().length; i += PC_BYTES_PER_PIXEL)
+            for (int i = 0; i < this.imageBytes.length; i += PC_BYTES_PER_PIXEL)
                 PSXClutColor.fromRGBA(this.imageBytes, i).save(writer);
             return;
         }
@@ -216,7 +230,7 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
         clut.getColors().clear(); // Generate a new clut.
         int maxColors = getClut().calculateColorCount();
 
-        for (int i = 0; i < getImageBytes().length; i += PC_BYTES_PER_PIXEL) {
+        for (int i = 0; i < this.imageBytes.length; i += PC_BYTES_PER_PIXEL) {
             PSXClutColor color = PSXClutColor.fromRGBA(this.imageBytes, i);
             if (!clut.getColors().contains(color))
                 clut.getColors().add(color);
@@ -228,10 +242,10 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
         clut.getColors().sort(Comparator.comparingInt(PSXClutColor::toRGBA));
 
         if (getClutMode() == ImageClutMode.MODE_8BIT) {
-            for (int i = 0; i < getImageBytes().length; i += PC_BYTES_PER_PIXEL)
+            for (int i = 0; i < this.imageBytes.length; i += PC_BYTES_PER_PIXEL)
                 writer.writeByte((byte) clut.getColors().indexOf(PSXClutColor.fromRGBA(this.imageBytes, i)));
         } else if (getClutMode() == ImageClutMode.MODE_4BIT) {
-            for (int i = 0; i < getImageBytes().length; i += (PC_BYTES_PER_PIXEL * 2)) {
+            for (int i = 0; i < this.imageBytes.length; i += (PC_BYTES_PER_PIXEL * 2)) {
                 PSXClutColor color1 = PSXClutColor.fromRGBA(this.imageBytes, i);
                 PSXClutColor color2 = PSXClutColor.fromRGBA(this.imageBytes, i + PC_BYTES_PER_PIXEL);
                 writer.writeByte((byte) (clut.getColors().indexOf(color1) | (clut.getColors().indexOf(color2) << 4)));
