@@ -29,7 +29,7 @@ import java.util.List;
 @Getter
 public class FroggerPathInfo extends SCGameData<FroggerGameInstance> {
     private final FroggerMapFile mapFile;
-    private int pathId;
+    private int pathId = -1;
     @Setter private int segmentId;
     @Setter private int segmentDistance;
     private int motionType = FroggerPathMotionType.REPEAT.getFlagBitMask();
@@ -42,7 +42,7 @@ public class FroggerPathInfo extends SCGameData<FroggerGameInstance> {
 
     @Override
     public void load(DataReader reader) {
-        this.pathId = reader.readUnsignedShortAsInt();
+        this.pathId = reader.readUnsignedShortAsInt(); // Validated in entity loading logic because we want to identify the entity who loads with this data.
         this.segmentId = reader.readUnsignedShortAsInt();
         this.segmentDistance = reader.readUnsignedShortAsInt();
         this.motionType = reader.readUnsignedShortAsInt();
@@ -53,7 +53,7 @@ public class FroggerPathInfo extends SCGameData<FroggerGameInstance> {
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedShort(this.pathId);
+        writer.writeUnsignedShort(this.pathId); // Validated in entity saving logic because we want to identify the entity who saves with this data.
         writer.writeUnsignedShort(this.segmentId);
         writer.writeUnsignedShort(this.segmentDistance);
         writer.writeUnsignedShort(this.motionType);
@@ -181,21 +181,18 @@ public class FroggerPathInfo extends SCGameData<FroggerGameInstance> {
 
         if (this.pathId < 0 || this.pathId >= mapPaths.size()) { // Invalid path! Show this as a text box.
             editorGrid.addUnsignedShortField("Path ID", this.pathId, newPathId -> newPathId < mapPaths.size(), newPathId -> {
+                getMapFile().getPathPacket().removeEntityFromPathTracking(entity);
                 this.pathId = newPathId;
+                getMapFile().getPathPacket().addEntityToPathTracking(entity);
                 manager.updateEntityPositionRotation(entity);
                 manager.updateEditor(); // Update the entity editor display, update path slider, etc.
             });
         } else { // Otherwise, show it as a selection box!
-            editorGrid.addBoldLabelButton("Path " + this.pathId, "Select Path", 25, () ->
-                    manager.getController().getPathManager().getPathSelector().promptPath((path, segment, segDistance) -> {
-                        setPath(path, segment);
-                        setSegmentDistance(segDistance);
-                        manager.updateEntityPositionRotation(entity);
-                        manager.updateEditor(); // Update the entity editor display, update path slider, etc.
-                    }, null));
+            editorGrid.addBoldLabelButton("Path " + this.pathId, "Select Path", 25,
+                    () -> manager.setSelectedMouseEntity(entity));
         }
 
-        editorGrid.addUnsignedShortField("Path Speed (???)", this.speed, newSpeed -> this.speed = newSpeed); // TODO: FIXED POINT?
+        editorGrid.addUnsignedShortField("Path Speed (???)", this.speed, newSpeed -> this.speed = newSpeed); // TODO: FIXED POINT IN UNITS OF DISTANCE/FRAME? NON-FIXED POINT IN TERMS OF DISTANCE/SEC?
 
         FroggerPath path = getPath();
         if (path != null) {

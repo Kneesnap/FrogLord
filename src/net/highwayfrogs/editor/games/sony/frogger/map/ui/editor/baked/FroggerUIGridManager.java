@@ -266,7 +266,6 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
         closeWindow();
         setGridPolygonHighlightingVisible(true); // Force highlighting to be visible.
 
-        this.mapMeshController.getBakedGeometryManager().deselectHighlightedPolygon(); // Ensure the user's cursor is free for a selection.
         this.mapMeshController.getBakedGeometryManager().getPolygonSelector().activate(poly -> {
             onSelect.accept(poly);
             Platform.runLater(this::openWindowAndWait);

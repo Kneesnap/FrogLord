@@ -43,6 +43,7 @@ import net.highwayfrogs.editor.utils.Scene3DUtils;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * Allows viewing / editing baked geometry data in a Frogger map.
@@ -109,6 +110,9 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
         });
 
         mapScene.setOnMouseMoved(evt -> {
+            if (getController().getPathManager().getPathSelector().isPromptActive())
+                return; // Don't highlight polygons while the path selector is active, it's distracting.
+
             Node node = evt.getPickResult().getIntersectedNode();
             if (node == getController().getMeshView() && !isPolygonSelected() && this.hoverView == null) {
                 FroggerMapPolygon polygon = getMesh().getMainNode().getDataSourceByFaceIndex(evt.getPickResult().getIntersectedFace());
@@ -401,6 +405,17 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
     public static class FroggerBakedMapPolygonSelector extends SelectionPromptTracker<FroggerMapPolygon> {
         public FroggerBakedMapPolygonSelector(FroggerUIGeometryManager manager) {
             super(manager, true);
+        }
+
+        @Override
+        public FroggerUIGeometryManager getUiManager() {
+            return (FroggerUIGeometryManager) super.getUiManager();
+        }
+
+        @Override
+        public void activate(Consumer<FroggerMapPolygon> onSelect, Runnable onCancel) {
+            super.activate(onSelect, onCancel);
+            getUiManager().deselectHighlightedPolygon(); // Ensure polygon clicking is available.
         }
     }
 

@@ -3,10 +3,8 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.grid;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameObject;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
@@ -14,6 +12,8 @@ import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
@@ -244,7 +244,7 @@ public class FroggerGridStack extends SCGameObject<FroggerGameInstance> {
             int mapPolyY2 = vertices.get(polygon.getVertices()[2]).getY();
 
             dz = MAX_GRID_DIMENSION - dz;
-            gridY = mapPolyY0 + ((dx * (mapPolyY1 - mapPolyY0)) >> 8) + ((dz * (mapPolyY2 - mapPolyY0)) >> 8);
+            gridY = mapPolyY0 + ((dx * (mapPolyY1 - mapPolyY0)) / MAX_GRID_DIMENSION) + ((dz * (mapPolyY2 - mapPolyY0)) / MAX_GRID_DIMENSION);
             xSlope.setY(mapPolyY1 - mapPolyY0);
             zSlope.setY(mapPolyY0 - mapPolyY2);
         } else {
@@ -254,7 +254,7 @@ public class FroggerGridStack extends SCGameObject<FroggerGameInstance> {
             int mapPolyY3 = polygon.getPolygonType().isQuad() ? vertices.get(polygon.getVertices()[3]).getY() : mapPolyY2; // mapPolyY2 has been validated by the warning which plays if the padding vertex does not match.
 
             dx = MAX_GRID_DIMENSION - dx;
-            gridY = mapPolyY3 + ((dx * (mapPolyY2 - mapPolyY3)) >> 8) + ((dz * (mapPolyY1 - mapPolyY3)) >> 8);
+            gridY = mapPolyY3 + ((dx * (mapPolyY2 - mapPolyY3)) / MAX_GRID_DIMENSION) + ((dz * (mapPolyY1 - mapPolyY3)) / MAX_GRID_DIMENSION);
             xSlope.setY(mapPolyY3 - mapPolyY2);
             zSlope.setY(mapPolyY1 - mapPolyY3);
         }

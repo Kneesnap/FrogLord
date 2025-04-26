@@ -153,6 +153,16 @@ public class InputManager {
     }
 
     /**
+     * Removes a mouse listener listening for a specific mouse event type.
+     * @param eventType The event type to remove.
+     * @param listener The listener to add.
+     */
+    public boolean removeMouseListener(EventType<? super MouseEvent> eventType, MouseHandler listener) {
+        List<MouseHandler> handlerList = this.mouseHandlersByType.get(eventType);
+        return handlerList != null && handlerList.remove(listener);
+    }
+
+    /**
      * Adds a scroll listener for all scroll events.
      * @param listener The listener to add.
      */

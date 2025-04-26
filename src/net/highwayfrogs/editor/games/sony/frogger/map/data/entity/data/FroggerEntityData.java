@@ -101,24 +101,24 @@ public abstract class FroggerEntityData extends SCGameData<FroggerGameInstance> 
 
     /**
      * Make FroggerEntityData for the given form.
-     * @param mapFile The map file to create data for.
-     * @param entity   The entity to make data for.
+     * @param entity The entity to make the data for.
+     * @param formEntry The form entry to apply.
      * @return entityData
      */
     @SneakyThrows
-    public static FroggerEntityData makeData(FroggerMapFile mapFile, FroggerMapEntity entity) {
-        if (entity == null)
+    public static FroggerEntityData makeData(FroggerMapEntity entity, IFroggerFormEntry formEntry) {
+        if (entity == null || formEntry == null)
             return null;
 
-        String dataClassName = mapFile.getConfig().getEntityBank().getConfig().getString(entity.getTypeName(), null);
+        String dataClassName = entity.getConfig().getEntityBank().getConfig().getString(formEntry.getEntityTypeName(), null);
         if (dataClassName == null)
             return null;
 
         Tuple2<Class<? extends FroggerEntityData>, ? extends Constructor<? extends FroggerEntityData>> entityDataFactory = getEntityDataFactory(dataClassName);
         if (entityDataFactory == null)
-            throw new RuntimeException("Failed to find FroggerEntityData class for the type: " + entity.getTypeName() + ", " + dataClassName);
+            throw new RuntimeException("Failed to find FroggerEntityData class for the type: " + formEntry.getEntityTypeName() + ", " + dataClassName);
 
-        FroggerEntityData newData = entityDataFactory.getB().newInstance(mapFile);
+        FroggerEntityData newData = entityDataFactory.getB().newInstance(entity.getMapFile());
         newData.parentEntity = entity;
         return newData;
     }

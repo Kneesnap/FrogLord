@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data;
 
 import lombok.Getter;
-import lombok.Setter;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
@@ -23,10 +22,10 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
  * Base entity data which holds path data.
  * Created by Kneesnap on 1/20/2019.
  */
-@Getter
-@Setter
+
 public class FroggerEntityDataPathInfo extends FroggerEntityData {
-    private FroggerPathInfo pathInfo;
+    @Getter private FroggerPathInfo pathInfo;
+    private float[] cachedPosition;
     private static final IVector GAME_Y_AXIS_POS = new IVector(0, SCMath.FIXED_POINT_ONE, 0);
 
     public FroggerEntityDataPathInfo(FroggerMapFile mapFile) {
@@ -47,12 +46,24 @@ public class FroggerEntityDataPathInfo extends FroggerEntityData {
     @Override
     public float[] getPositionAndRotation(float[] position) {
         FroggerPathInfo pathInfo = getPathInfo();
-        if (pathInfo == null)
+        if (pathInfo == null) {
+            if (this.cachedPosition != null) {
+                System.arraycopy(this.cachedPosition, 0, position, 0, this.cachedPosition.length);
+                return position;
+            }
+
             return null; // No path state.
+        }
 
         FroggerPath path = pathInfo.getPath();
-        if (path == null)
+        if (path == null) {
+            if (this.cachedPosition != null) {
+                System.arraycopy(this.cachedPosition, 0, position, 0, this.cachedPosition.length);
+                return position;
+            }
+
             return null; // Invalid path id.
+        }
 
         // Reimplements ENTITY.C/ENTSTRUpdateMovingMOF()
         FroggerPathResult result = path.evaluatePosition(pathInfo);
@@ -122,5 +133,20 @@ public class FroggerEntityDataPathInfo extends FroggerEntityData {
     public void setupEditor(GUIEditorGrid editor, FroggerUIMapEntityManager manager) {
         this.pathInfo.setupEditor(manager, this, editor);
         super.setupEditor(editor, manager); // Path ID comes before the rest.
+    }
+
+    /**
+     * Copies pathing data from the old data.
+     * @param oldMatrixData the old matrix data to copy from
+     * @param oldPathData the old pathing data to copy from
+     */
+    public void copyFrom(FroggerEntityDataMatrix oldMatrixData, FroggerEntityDataPathInfo oldPathData) {
+        if (oldMatrixData != null)
+            this.cachedPosition = oldMatrixData.getPositionAndRotation(this.cachedPosition != null ? this.cachedPosition : new float[6]);
+
+        if (oldPathData != null) {
+            this.pathInfo = oldPathData.getPathInfo();
+            this.cachedPosition = oldPathData.cachedPosition;
+        }
     }
 }

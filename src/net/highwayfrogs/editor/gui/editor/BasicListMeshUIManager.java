@@ -4,6 +4,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -13,6 +14,7 @@ import javafx.scene.paint.PhongMaterial;
 import lombok.Getter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -100,14 +102,13 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
         this.addValueButton = new Button("Add " + getValueName());
         this.addValueButton.setOnAction(evt -> {
             TValue newValue = createNewValue();
-            if (newValue == null)
-                return; // Don't add a new value.
+            if (newValue == null) {
+                FXUtils.makePopUp("Failed to create a new " + getValueName() + ".", AlertType.WARNING);
+                return;
+            }
 
-            // Register and update UI.
-            getValues().add(newValue);
-            createDisplay(newValue); // Creates a new display. (Run early so that when we try to access the 3D delegate from the map as part of forcing the UI to select the new one, the new 3D delegate will be available in the hashmap.)
-            updateValuesInUI();
-            this.valueSelectionBox.getSelectionModel().selectLast();
+            if (!addValue(newValue))
+                FXUtils.makePopUp("Failed to add the new " + getValueName() + ".\n" + newValue, AlertType.WARNING);
         });
         this.addValueButton.setAlignment(Pos.CENTER);
         this.mainGrid.setupNode(this.addValueButton);
@@ -337,6 +338,21 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
     }
 
     /**
+     * Adds a value to the list and manages corresponding 3D representation in the scene.
+     * @param value The value to add.
+     */
+    public boolean addValue(TValue value) {
+        if (!tryAddValue(value))
+            return false;
+
+        createDisplay(value); // Creates a new display. (Run early so that when we try to access the 3D delegate from the map as part of forcing the UI to select the new one, the new 3D delegate will be available in the hashmap.)
+        updateValuesInUI();
+        this.valueSelectionBox.getSelectionModel().selectLast();
+        updateEditor();
+        return true;
+    }
+
+    /**
      * Removes a value from the list and any corresponding 3D representation in the scene.
      * @param value The value to remove.
      */
@@ -350,6 +366,15 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
         updateValuesInUI();
         this.valueSelectionBox.setValue(null);
         this.valueSelectionBox.getSelectionModel().clearSelection();
+    }
+
+    /**
+     * Attempts to add the value to the list.
+     * @param value the value to add
+     * @return added successfully
+     */
+    protected boolean tryAddValue(TValue value) {
+        return value != null && getValues().add(value);
     }
 
     /**

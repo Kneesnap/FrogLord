@@ -6,6 +6,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.PickResult;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.CullFace;
@@ -27,16 +28,20 @@ import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMeshController;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerCentralUIManager.FroggerCentralMapListManager;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapPathManager.FroggerPathPreview;
+import net.highwayfrogs.editor.gui.InputManager;
+import net.highwayfrogs.editor.gui.InputManager.MouseHandler;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.SelectionPromptTracker;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
-import net.highwayfrogs.editor.utils.lambda.TriConsumer;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * Allows editing Frogger map paths.
@@ -46,19 +51,23 @@ import java.util.List;
  * TODO: Go over path speed. What kind of unit is this? Create separate editor grid functions for path speed which accurately mimic the behavior. Update entity data, units, etc.
  * TODO: Allow selecting individual segments instead of showing them all at once, and highlight them.
  * TODO: Can I make a 3D path editor soon? I bet it's doable.
+ * TODO: Consider path speed to be part of the path itself instead of per-entity. (Add validation that all entities on a path follow the true path speed, still allow speed editing on each individual entity, just have it impact the underlying path. If there is none, disable/hide the field.)
  * Created by Kneesnap on 6/2/2024.
  */
 public class FroggerUIMapPathManager extends FroggerCentralMapListManager<FroggerPath, FroggerPathPreview> {
     @Getter private final PathSelectionTracker pathSelector;
+    private final Map<Node, FroggerPathSegmentPreview> previewsByLargerClickAreas = new HashMap<>();
     private DisplayList pathDisplayList;
     @Getter private TextField fullPathLengthField;
 
+    private static final PhongMaterial MATERIAL_INVISIBLE = Scene3DUtils.makeUnlitSharpMaterial(Color.rgb(255, 255, 255, 0));
     private static final PhongMaterial MATERIAL_WHITE = Scene3DUtils.makeUnlitSharpMaterial(Color.WHITE);
     private static final PhongMaterial MATERIAL_YELLOW = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
     private static final PhongMaterial MATERIAL_LIGHT_GREEN = Scene3DUtils.makeUnlitSharpMaterial(Color.LIGHTGREEN);
     private static final PhongMaterial MATERIAL_BLUE = Scene3DUtils.makeUnlitSharpMaterial(Color.BLUE);
     private static final PhongMaterial MATERIAL_GREEN = Scene3DUtils.makeUnlitSharpMaterial(Color.GREEN);
     private static final PhongMaterial MATERIAL_PURPLE = Scene3DUtils.makeUnlitSharpMaterial(Color.PURPLE);
+    private static final int MOUSE_PATH_DISTANCE_THRESHOLD = 20;
 
     public FroggerUIMapPathManager(MeshViewController<FroggerMapMesh> controller) {
         super(controller);
@@ -112,6 +121,11 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
     }
 
     @Override
+    public boolean isValueVisibleByUI(FroggerPath path) {
+        return this.pathSelector.isPromptActive() || super.isValueVisibleByUI(path);
+    }
+
+    @Override
     protected FroggerPathPreview setupDisplay(FroggerPath path) {
         return new FroggerPathPreview(this, path);
     }
@@ -151,6 +165,7 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
         private final FroggerUIMapPathManager pathManager;
         private final FroggerPath path;
         private final List<Node> nodes = new ArrayList<>();
+        private final List<FroggerPathSegmentPreview> segmentPreviews = new ArrayList<>();
         @Setter private TextField pathSegmentLengthField;
 
         private static final int SEGMENT_STEP_SIZE = 32;
@@ -171,6 +186,9 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
 
             this.pathManager.pathDisplayList.removeAll(this.nodes);
             this.nodes.clear();
+            for (int i = 0; i < this.segmentPreviews.size(); i++)
+                this.pathManager.previewsByLargerClickAreas.remove(this.segmentPreviews.get(i).getInvisibleLargerCylinder());
+            this.segmentPreviews.clear();
         }
 
         /**
@@ -207,6 +225,10 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
         public void addPath(FroggerPathInfo pathInfo, PhongMaterial materialLine, PhongMaterial materialArc, PhongMaterial materialSpline) {
             removePathNodes(); // Ensure any earlier path nodes are gone.
 
+            int maxSegmentLength = SEGMENT_STEP_SIZE;
+            if (this.pathManager.getValueDisplaySetting().getValue() == ListDisplayType.ALL || this.pathManager.pathSelector.isPromptActive())
+                maxSegmentLength *= 2;
+
             // Add preview nodes for each segment.
             pathInfo.setPathId(this.path.getPathIndex());
             for (int segmentIndex = 0; segmentIndex < this.path.getSegments().size(); segmentIndex++) {
@@ -221,10 +243,10 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
                     material = materialArc;
 
                 // Handle if the segment is empty.
-                final int stepSize = Math.min(SEGMENT_STEP_SIZE, segment.getLength());
+                final int stepSize = Math.min(maxSegmentLength, segment.getLength());
                 if (stepSize == 0) { // If the path is 100% empty, just show the start.
                     Vector pos = segment.getStartPosition();
-                    addPathLineSegment(pos.getFloatX(), pos.getFloatY(), pos.getFloatZ(), pos.getFloatX(), pos.getFloatY(), pos.getFloatZ(), .2, material, true, this.path, segment, 0);
+                    addPathLineSegment(pos.getFloatX(), pos.getFloatY(), pos.getFloatZ(), pos.getFloatX(), pos.getFloatY(), pos.getFloatZ(), .2, material, true, segment, 0);
                     continue;
                 }
 
@@ -237,7 +259,7 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
                     Vector v1 = this.path.evaluatePosition(pathInfo).getPosition();
                     if (!v0.equals(v1))
                         addPathLineSegment(v0.getFloatX(), v0.getFloatY(), v0.getFloatZ(), v1.getFloatX(), v1.getFloatY(), v1.getFloatZ(), 0.20,
-                                material, step == 0, this.path, segment, (step * stepSize) + (stepSize / 2));
+                                material, step == 0, segment, (step * stepSize) + (stepSize / 2));
                 }
             }
         }
@@ -255,8 +277,7 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
          * @param showStart Whether to display a sphere at the start of the line segment.
          * @return The newly created/added cylinder (cylinder primitive only!)
          */
-        private Cylinder addPathLineSegment(double x0, double y0, double z0, double x1, double y1, double z1, double radius, PhongMaterial material, boolean showStart, FroggerPath path, FroggerPathSegment segment, int segDistance) {
-            EventHandler<MouseEvent> mouseEventEventHandler = evt -> handleClick(evt, path, segment, segDistance);
+        private FroggerPathSegmentPreview addPathLineSegment(double x0, double y0, double z0, double x1, double y1, double z1, double radius, PhongMaterial material, boolean showStart, FroggerPathSegment segment, int segDistance) {
             final Point3D yAxis = new Point3D(0.0, 1.0, 0.0);
             final Point3D p0 = new Point3D(x0, y0, z0);
             final Point3D p1 = new Point3D(x1, y1, z1);
@@ -275,22 +296,45 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
             line.setDrawMode(DrawMode.FILL);
             line.setCullFace(CullFace.BACK);
             line.setMouseTransparent(false);
-            line.setOnMouseClicked(mouseEventEventHandler);
             line.getTransforms().addAll(moveToMidpoint, rotateAroundCenter);
 
+            Cylinder invisibleLargerCylinder = null;
+            if (this.pathManager.pathSelector.isPromptActive() && this.pathManager.pathSelector.mouseUpdateHook != null) {
+                // The purpose of this is to ensure the mouse clicks are registered
+                invisibleLargerCylinder = new Cylinder(MOUSE_PATH_DISTANCE_THRESHOLD, length, 3);
+                invisibleLargerCylinder.setMaterial(MATERIAL_INVISIBLE);
+                invisibleLargerCylinder.setMouseTransparent(false);
+                invisibleLargerCylinder.getTransforms().addAll(moveToMidpoint, rotateAroundCenter);
+                this.nodes.add(invisibleLargerCylinder);
+                this.pathManager.pathDisplayList.add(invisibleLargerCylinder);
+            }
+
+            Sphere startOfSegmentMarker = null;
             if (showStart) {
-                Sphere sphStart = this.pathManager.pathDisplayList.addSphere(x0, y0, z0, radius * 5.0, material, false);
-                sphStart.setOnMouseClicked(mouseEventEventHandler);
-                this.nodes.add(sphStart);
+                startOfSegmentMarker = this.pathManager.pathDisplayList.addSphere(x0, y0, z0, radius * 5.0, material, false);
+                this.nodes.add(startOfSegmentMarker);
             }
 
             this.nodes.add(line);
             this.pathManager.pathDisplayList.add(line);
-            return line;
+
+            // Create preview.
+            FroggerPathSegmentPreview preview = new FroggerPathSegmentPreview(segment, segDistance, line, invisibleLargerCylinder, startOfSegmentMarker);
+            EventHandler<MouseEvent> mouseEventEventHandler = evt -> handleClick(evt, preview);
+            line.setOnMouseClicked(mouseEventEventHandler);
+            if (invisibleLargerCylinder != null) {
+                invisibleLargerCylinder.setOnMouseClicked(mouseEventEventHandler);
+                this.pathManager.previewsByLargerClickAreas.put(invisibleLargerCylinder, preview);
+            }
+
+            if (startOfSegmentMarker != null)
+                startOfSegmentMarker.setOnMouseClicked(mouseEventEventHandler);
+
+            return preview;
         }
 
-        private void handleClick(MouseEvent event, FroggerPath path, FroggerPathSegment segment, int segDistance) {
-            if (this.pathManager.getPathSelector().isPromptActive() && this.pathManager.getPathSelector().handleClick(event, new FroggerPathSelection(path, segment, segDistance)))
+        private void handleClick(MouseEvent event, FroggerPathSegmentPreview segmentPreview) {
+            if (this.pathManager.getPathSelector().isPromptActive() && this.pathManager.getPathSelector().handleClick(event, segmentPreview))
                 return;
 
             // Select clicked path.
@@ -298,15 +342,11 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
         }
     }
 
-    @Getter
-    @RequiredArgsConstructor
-    public static class FroggerPathSelection {
-        private final FroggerPath path;
-        private final FroggerPathSegment pathSegment;
-        private final int segmentDistance;
-    }
+    public static class PathSelectionTracker extends SelectionPromptTracker<FroggerPathSegmentPreview> {
+        private final MouseHandler mouseHandler = this::handleMouseMove;
+        private Consumer<FroggerPathSegmentPreview> mouseUpdateHook;
 
-    public static class PathSelectionTracker extends SelectionPromptTracker<FroggerPathSelection> {
+
         public PathSelectionTracker(FroggerUIMapPathManager pathManager) {
             super(pathManager, true);
         }
@@ -316,20 +356,61 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
             return (FroggerUIMapPathManager) super.getUiManager();
         }
 
+        @Override
+        public void activate(Consumer<FroggerPathSegmentPreview> onSelect, Runnable onCancel) {
+            super.activate(onSelect, onCancel);
+            getUiManager().updateValueVisibility(); // Update the values to show with their weird colors.
+            if (getController() != null)
+                getController().getInputManager().addMouseListener(MouseEvent.MOUSE_MOVED, this.mouseHandler);
+        }
+
+        @Override
+        protected void onPromptDisable(FroggerPathSegmentPreview pathSelection) {
+            if (getController() != null)
+                getController().getInputManager().removeMouseListener(MouseEvent.MOUSE_MOVED, this.mouseHandler);
+
+            super.onPromptDisable(pathSelection);
+            getUiManager().updateValueVisibility(); // Update the values to not appear with their weird colors anymore.
+        }
+
+        private void handleMouseMove(InputManager manager, MouseEvent event, double deltaX, double deltaY) {
+            if (!isPromptActive() || manager.getMouseTracker().isSignificantMouseDragRecorded() || this.mouseUpdateHook == null)
+                return;
+
+            PickResult pickResult = event.getPickResult();
+            if (pickResult == null)
+                return;
+
+            FroggerPathSegmentPreview preview = getUiManager().previewsByLargerClickAreas.get(pickResult.getIntersectedNode());
+            if (preview != null)
+                this.mouseUpdateHook.accept(preview);
+        }
+
         /**
          * Prompts the user for a path.
          * @param handler  The handler to accept a prompt with.
          * @param onCancel A callback to run upon cancelling.
          */
-        public void promptPath(TriConsumer<FroggerPath, FroggerPathSegment, Integer> handler, Runnable onCancel) {
-            activate(result -> handler.accept(result.getPath(), result.getPathSegment(), result.getSegmentDistance()), onCancel);
-            getUiManager().updateValueVisibility(); // Update the values to show with their weird colors.
+        public void promptPath(Consumer<FroggerPathSegmentPreview> handler, Consumer<FroggerPathSegmentPreview> updateHandler, Runnable onCancel) {
+            this.mouseUpdateHook = updateHandler;
+            activate(handler, onCancel);
         }
+    }
 
-        @Override
-        protected void onPromptDisable(FroggerPathSelection pathSelection) {
-            super.onPromptDisable(pathSelection);
-            getUiManager().updateValueVisibility(); // Update the values to not appear with their weird colors anymore.
+    @Getter
+    @RequiredArgsConstructor
+    public static class FroggerPathSegmentPreview {
+        private final FroggerPathSegment pathSegment;
+        private final int segmentDistance; // How far along the segment the middle of this cylinder is at.
+        private final Cylinder fxCylinder;
+        private final Cylinder invisibleLargerCylinder;
+        private final Sphere startOfSegmentMarker;
+
+        /**
+         * Gets the path which the segment preview represents a portion of.
+         */
+        public FroggerPath getPath() {
+            return this.pathSegment.getPath();
         }
     }
 }

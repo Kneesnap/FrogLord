@@ -13,9 +13,9 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
  * Entity data which involves a matrix.
  * Created by Kneesnap on 1/20/2019.
  */
-@Getter
 public class FroggerEntityDataMatrix extends FroggerEntityData {
-    private final PSXMatrix matrix = new PSXMatrix();
+    @Getter private final PSXMatrix matrix = new PSXMatrix();
+    private final float[] cachedPosition = new float[6];
 
     public FroggerEntityDataMatrix(FroggerMapFile mapFile) {
         super(mapFile);
@@ -52,5 +52,36 @@ public class FroggerEntityDataMatrix extends FroggerEntityData {
     public void setupEditor(GUIEditorGrid editor, FroggerUIMapEntityManager manager) {
         editor.addMeshMatrix(this.matrix, manager.getController(), () -> manager.updateEntityPositionRotation(getParentEntity()), true);
         super.setupEditor(editor, manager);
+    }
+
+    /**
+     * Copies pathing data from the old data.
+     * @param oldMatrixData the old matrix data to copy from
+     * @param oldPathData the old pathing data to copy from
+     */
+    public void copyFrom(FroggerEntityDataMatrix oldMatrixData, FroggerEntityDataPathInfo oldPathData) {
+        if (oldMatrixData != null) {
+            this.matrix.copyFrom(oldMatrixData.getMatrix());
+        } else if (oldPathData != null) {
+            float[] positionData = oldPathData.getPositionAndRotation(this.cachedPosition);
+            if (positionData != null)
+                applyPositionData(positionData);
+        }
+    }
+
+    /**
+     * Applies the position data from a position array to the matrix
+     * @param positionData the positional data to apply
+     */
+    public void applyPositionData(float[] positionData) {
+        if (positionData == null)
+            throw new NullPointerException("positionData");
+        if (positionData.length != 6)
+            throw new IllegalArgumentException("Invalid position data length: " + positionData.length + "!");
+
+        this.matrix.getTransform()[0] = DataUtils.floatToFixedPointInt4Bit(positionData[0]);
+        this.matrix.getTransform()[1] = DataUtils.floatToFixedPointInt4Bit(positionData[1]);
+        this.matrix.getTransform()[2] = DataUtils.floatToFixedPointInt4Bit(positionData[2]);
+        this.matrix.updateMatrix(positionData[3], positionData[4], positionData[5]);
     }
 }

@@ -28,7 +28,7 @@ import java.util.List;
 public class FroggerPath extends SCGameData<FroggerGameInstance> {
     @Getter private final FroggerMapFile mapFile;
     @Getter private final List<FroggerPathSegment> segments = new ArrayList<>();
-    @Getter private final List<FroggerMapEntity> pathEntities = new ArrayList<>(); // Sorted by entity index. TODO: ADD / REMOVE AUTOMATICALLY..?
+    @Getter private final List<FroggerMapEntity> pathEntities = new ArrayList<>(); // Sorted by entity index.
     private transient int tempEntityIndexPointer = -1;
 
     private static final short ENTITY_LIST_TERMINATOR = -1;

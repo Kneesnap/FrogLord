@@ -23,7 +23,7 @@ Need help? Want to find/share mods? Talk with other Frogger fans? Join our [disc
 |--------------------------|-------------------------------|-----------------------------------------------|
 | Beast Wars: Transformers | PC: 2, PSX: 4                 | All game data viewable, only some editable.   |
 | C-12 Final Resistance    | PSX: 16                       | View/edit most game data. Saving is untested. |
-| Frogger He's Back        | PC: 8, PSX: 67                | Custom levels can be/have been created.       |
+| Frogger He's Back        | PC: 8, PSX: 67                | Full support (Custom Levels are available.)   |
 | Frogger: The Great Quest | PC: 1, PS2: 3                 | Almost full support. (Cannot import 3D mesh)  |
 | Frogger Beyond           | GC: 3, PC: 1, PS2: 2, Xbox: 1 | Extremely rudimentary viewer, no modding yet. |
 | Frogger Rescue           | GC: 1, PC: 1, PS2: 3          | Extremely rudimentary viewer, no modding yet. |
