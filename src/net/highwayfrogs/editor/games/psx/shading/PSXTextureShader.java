@@ -469,7 +469,7 @@ public class PSXTextureShader {
         for (int i = colorStartIndex; i < nextColorStartIndex; i += 2) {
             int currentPixelPos = pixelPosBuffer.get(i);
             int currentColor = pixelPosBuffer.get(i + 1);
-            if (currentPixelPos >= 0)
+            if (currentPixelPos >= 0 && currentPixelPos < rawTargetImage.length) // currentPixelPos >= rawTargetImage.length in SWP4.MAP in Frogger PSX Build 4.
                 rawTargetImage[currentPixelPos] = currentColor;
         }
 
@@ -559,7 +559,8 @@ public class PSXTextureShader {
         if (x > 0) {
             int leftPixel = (y * imageWidth) + (x - 1);
 
-            if (seenPixelPos.getBit(leftPixel)) { // The nearby pixel has shading color data.
+            if (seenPixelPos.getBit(leftPixel) && leftPixel < rawTargetImage.length) { // leftPixel >= rawTargetImage.length in SWP4.MAP in Frogger PSX Build 4.
+                // The nearby pixel has shading color data.
                 int leftPixelColor = rawTargetImage[leftPixel];
                 if (leftPixelColor != 0) {
                     result.fromARGB(leftPixelColor);
