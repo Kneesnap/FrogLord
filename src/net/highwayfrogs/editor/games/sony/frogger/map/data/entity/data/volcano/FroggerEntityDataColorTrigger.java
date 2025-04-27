@@ -8,6 +8,8 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
+import java.util.Arrays;
+
 /**
  * Represents the "VOL_COLOUR_TRIGGER" struct defined in ent_vol.h
  * Created by Kneesnap on 11/26/2018.
@@ -22,6 +24,10 @@ public class FroggerEntityDataColorTrigger extends FroggerEntityDataMatrix {
 
     public FroggerEntityDataColorTrigger(FroggerMapFile mapFile) {
         super(mapFile);
+
+        // Any buttons with 0s will crash the game when stepped on, because no entity with id 0 exists
+        // So initialize to -1 instead, the value for no unique id
+        Arrays.fill(this.uniqueIds, (short) -1);
     }
 
     @Override
@@ -48,8 +54,10 @@ public class FroggerEntityDataColorTrigger extends FroggerEntityDataMatrix {
         editor.addEnumSelector("Trigger Type", this.type, FroggerEntityTriggerType.values(), false, newType -> this.type = newType);
         editor.addEnumSelector("Color", this.color, VolcanoTriggerColor.values(), false, newColor -> this.color = newColor);
         for (int i = 0; i < this.uniqueIds.length; i++) {
-            final int tempI = i;
-            editor.addSignedShortField("Trigger #" + (i + 1), this.uniqueIds[i], newVal -> this.uniqueIds[tempI] = newVal);
+            final int tempIndex = i;
+            editor.addSignedShortField("Trigger #" + (i + 1), this.uniqueIds[i],
+                    newEntityId -> newEntityId == -1 || getMapFile().getEntityPacket().getEntityByUniqueId(newEntityId) != null, // Ensure entity exists.
+                    newEntityId -> this.uniqueIds[tempIndex] = newEntityId);
         }
     }
 
