@@ -239,7 +239,7 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
 
                 // Fix entities attached to segments after this.
                 for (FroggerMapEntity entity : this.mapFile.getEntityPacket().getEntities()) {
-                    if (entity.getPathInfo() == null)
+                    if (entity.getPathInfo() == null || entity.getPathInfo().getPath() != this)
                         continue;
 
                     FroggerPathInfo info = entity.getPathInfo();
