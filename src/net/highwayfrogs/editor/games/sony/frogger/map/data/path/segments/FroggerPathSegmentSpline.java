@@ -230,6 +230,7 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
         editor.addFloatVector("Control 1", curve.getControl1(), () -> loadFromCurve(curve, pathPreview), pathPreview.getController());
         editor.addFloatVector("Control 2", curve.getControl2(), () -> loadFromCurve(curve, pathPreview), pathPreview.getController());
         editor.addFloatVector("End", curve.getEnd(), () -> loadFromCurve(curve, pathPreview), pathPreview.getController());
+        // TODO: Globus suggests that the path length is not getting automatically updated when positions change.
         /*makeTEditor(pathPreview, editor);
 
         editor.addBoldLabel("Smooth C:"); //TODO: Make a real editor.

@@ -95,7 +95,7 @@ public class OldFroggerEntityManager extends OldFroggerMapListManager<OldFrogger
 
             // Update material.
             TextureMap textureSheet = modelMesh.getTextureMap();
-            entityMesh.setMaterial((getSelectedValue() == entity) ? textureSheet.getDiffuseHighlightedMaterial() : textureSheet.getDiffuseMaterial());
+            entityMesh.setMaterial((getSelectedValue() == entity) ? textureSheet.getLitHighlightedMaterial() : textureSheet.getUnlitSharpMaterial());
             return;
         }
 

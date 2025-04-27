@@ -89,7 +89,7 @@ public class BeastWarsObjectManager extends BeastWarsMapListManager<BeastWarsMap
 
             // Update material.
             TextureMap textureSheet = modelMesh.getTextureMap();
-            objectMesh.setMaterial((getSelectedValue() == object) ? textureSheet.getDiffuseHighlightedMaterial() : textureSheet.getDiffuseMaterial());
+            objectMesh.setMaterial((getSelectedValue() == object) ? textureSheet.getLitHighlightedMaterial() : textureSheet.getUnlitSharpMaterial());
             return;
         }
 

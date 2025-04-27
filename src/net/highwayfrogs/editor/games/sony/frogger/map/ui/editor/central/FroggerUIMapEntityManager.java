@@ -192,6 +192,7 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
         if (meshView != null) {
             this.litEntityRenderList.remove(meshView);
             this.unlitEntityRenderList.remove(meshView);
+            getController().getLightManager().clearAmbientLighting(meshView);
         }
     }
 
@@ -286,6 +287,13 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
     }
 
     /**
+     * Update all entity meshes.
+     */
+    public void updateAllEntityMeshes() {
+        getValues().forEach(this::updateEntityMesh);
+    }
+
+    /**
      * Update the mesh displayed for the given entity.
      * @param entity The entity to update the mesh for.s
      */
@@ -326,11 +334,10 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
                 // Update entity display material and such.
                 TextureMap textureSheet = modelMesh.getTextureMap();
                 if (isEntityHighlighted) {
-                    entityMeshView.setMaterial(textureSheet.getDiffuseHighlightedMaterial());
+                    entityMeshView.setMaterial(textureSheet.getLitHighlightedMaterial());
                     registerUnlitEntity(entityMeshView);
                 } else {
-                    entityMeshView.setMaterial(textureSheet.getDiffuseMaterial());
-                    registerLitEntity(entityMeshView);
+                    registerLitEntity(entity, entityMeshView, textureSheet);
                 }
 
                 return;
@@ -358,11 +365,21 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
     }
 
     private void registerUnlitEntity(MeshView meshView) {
+        getController().getLightManager().clearAmbientLighting(meshView);
         if (this.unlitEntityRenderList == null || this.unlitEntityRenderList.addIfMissing(meshView))
             this.litEntityRenderList.remove(meshView);
     }
 
-    private void registerLitEntity(MeshView meshView) {
+    private void registerLitEntity(FroggerMapEntity entity, MeshView meshView, TextureMap textureSheet) {
+        FroggerUIMapLightManager lightManager = getController().getLightManager();
+        boolean lightingEnabled = lightManager.isLightingAppliedToEntities();
+        meshView.setMaterial(lightingEnabled ? textureSheet.getBlurryLitMaterial() : textureSheet.getUnlitSharpMaterial());
+        if (lightingEnabled) {
+            lightManager.setAmbientLightingMode(meshView, !entity.getConfig().isAtOrBeforeBuild40() && "CHECKPOINT".equals(entity.getTypeName())); // 'CHECKPOINT' is valid starting from PSX Alpha to retail.
+        } else {
+            lightManager.clearAmbientLighting(meshView);
+        }
+
         if (this.litEntityRenderList.addIfMissing(meshView) && this.unlitEntityRenderList != null)
             this.unlitEntityRenderList.remove(meshView);
     }

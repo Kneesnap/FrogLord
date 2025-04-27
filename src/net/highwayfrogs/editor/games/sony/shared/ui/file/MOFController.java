@@ -138,7 +138,7 @@ public class MOFController extends SCFileEditorUIController<SCGameInstance, MOFH
         this.rotZ = new Rotate(0, Rotate.Z_AXIS);
         meshView.getTransforms().addAll(rotX, rotY, rotZ);
 
-        meshView.setMaterial(getMofMesh().getTextureMap().getDiffuseMaterial());
+        meshView.setMaterial(getMofMesh().getTextureMap().getUnlitSharpMaterial());
         meshView.setCullFace(CullFace.NONE);
 
         // Create a perspective camera through which the 3D view is realised.
