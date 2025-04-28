@@ -23,6 +23,7 @@ import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerFlyScoreType;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataPathInfo;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.IFroggerFormEntry;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathInfo;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
@@ -401,7 +402,20 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
         if (entity == null || entity.getEntityData() == null || entityMeshView == null)
             return; // No data to update position from.
 
-        float[] positionData = (entity == this.selectedMouseEntity) ? this.selectedMouseEntityPosition : entity.getPositionAndRotation(this.posCache);
+        // Determine position to display entity at.
+        float[] positionData;
+        if (entity == this.selectedMouseEntity) { // Mouse selections are bound to the mouse entity position.
+            positionData = this.selectedMouseEntityPosition;
+        } else {
+            FroggerPathInfo pathPreview = getController().getPathManager().getPathRunnerPreviews().get(entity);
+            if (pathPreview != null && FroggerEntityDataPathInfo.evaluatePathInfoToEntityArray(pathPreview, entity, this.posCache)) {
+                // If the entity is shown as following its path currently, use the path preview position.
+                positionData = this.posCache;
+            } else {
+                // Otherwise, use the true entity position.
+                positionData = entity.getPositionAndRotation(this.posCache);
+            }
+        }
 
         float pitch = positionData != null ? positionData[3] : 0;
         float yaw = positionData != null ? positionData[4] : 0;

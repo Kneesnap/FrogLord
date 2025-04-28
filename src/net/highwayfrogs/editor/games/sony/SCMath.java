@@ -1,8 +1,9 @@
 package net.highwayfrogs.editor.games.sony;
 
+import net.highwayfrogs.editor.file.standard.IVector;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.data.reader.ArraySource;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.FileUtils;
 
 /**
  * Represents math capabilities used by Sony Cambridge games.
@@ -13,6 +14,7 @@ public class SCMath {
     private static short[] SIN_ENTRIES;
     private static final int ACOSTABLE_ENTRIES = 4096;
     public static final int FIXED_POINT_ONE = 4096;
+    public static final IVector GAME_Y_AXIS_POS = new IVector(0, SCMath.FIXED_POINT_ONE, 0);
 
     // So... why is PI funky?
     // When reverse engineering the proper math for Frogger path calculations, I was just slightly off.

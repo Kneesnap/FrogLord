@@ -2,10 +2,12 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.path;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathInfo.FroggerPathMotionType;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.segments.FroggerPathSegment;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketPath;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapPathManager.FroggerPathPreview;
@@ -276,7 +278,17 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
      * @return finishedPosition
      */
     public FroggerPathResult evaluatePosition(FroggerPathInfo pathInfo) {
-        return this.segments.get(pathInfo.getSegmentId()).calculatePosition(pathInfo);
+        FroggerPathResult pathResult = this.segments.get(pathInfo.getSegmentId()).calculatePosition(pathInfo);
+
+        // PATH.C/EvaluatePathRunnerPosition
+        if (pathInfo.testFlag(FroggerPathMotionType.BACKWARDS)) {
+            IVector rotation = pathResult.getRotation();
+            rotation.setX(-rotation.getX());
+            rotation.setY(-rotation.getY());
+            rotation.setZ(-rotation.getZ());
+        }
+
+        return pathResult;
     }
 
     /**

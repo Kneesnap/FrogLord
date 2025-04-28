@@ -4,6 +4,7 @@ import javafx.event.EventHandler;
 import javafx.geometry.Point3D;
 import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
@@ -22,6 +23,7 @@ import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathInfo;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathInfo.FroggerPathMotionType;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathSegmentType;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.segments.FroggerPathSegment;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
@@ -32,6 +34,7 @@ import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.gui.InputManager.MouseHandler;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.gui.editor.MeshViewFrameTimer.MeshViewFixedFrameRateTimerTask;
 import net.highwayfrogs.editor.gui.editor.SelectionPromptTracker;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
 import net.highwayfrogs.editor.utils.FXUtils;
@@ -46,7 +49,6 @@ import java.util.function.Consumer;
 /**
  * Allows editing Frogger map paths.
  * TODO: Allow calculating position and rotation independently, more closely to how the old Frogger system does it? Not sure.
- * TODO: Allow a toggle to making the entities move along the paths. Eg: You can see when things will / will not line up. TODO: this should also be valid for EntityData & ScriptData, so they can do bobbing & stuff.
  * TODO: We should allow dragging an entity along the path in 3D space. Eg: Click and hold will let you drag, by finding nearby path parts
  * TODO: Go over path speed. What kind of unit is this? Create separate editor grid functions for path speed which accurately mimic the behavior. Update entity data, units, etc.
  * TODO: Allow selecting individual segments instead of showing them all at once, and highlight them.
@@ -57,8 +59,10 @@ import java.util.function.Consumer;
 public class FroggerUIMapPathManager extends FroggerCentralMapListManager<FroggerPath, FroggerPathPreview> {
     @Getter private final PathSelectionTracker pathSelector;
     private final Map<Node, FroggerPathSegmentPreview> previewsByLargerClickAreas = new HashMap<>();
+    @Getter private final Map<FroggerMapEntity, FroggerPathInfo> pathRunnerPreviews = new HashMap<>();
     private DisplayList pathDisplayList;
     @Getter private TextField fullPathLengthField;
+    private CheckBox tickPathRunners;
 
     private static final PhongMaterial MATERIAL_INVISIBLE = Scene3DUtils.makeUnlitSharpMaterial(Color.rgb(255, 255, 255, 0));
     private static final PhongMaterial MATERIAL_WHITE = Scene3DUtils.makeUnlitSharpMaterial(Color.WHITE);
@@ -78,11 +82,13 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
     public void onSetup() {
         super.onSetup();
         this.pathDisplayList = getRenderManager().createDisplayListWithNewGroup();
+        getFrameTimer(getGameInstance().getFPS()).addTask(1, this, FroggerUIMapPathManager::tickPathRunnerPreviews);
     }
 
     @Override
     protected void setupMainGridEditor(UISidePanel sidePanel) {
         super.setupMainGridEditor(sidePanel);
+        this.tickPathRunners = getMainGrid().addCheckBox("Tick Path Runners", false, this::onTickPathRunnerCheckBoxUpdate);
         this.fullPathLengthField = getMainGrid().addFloatField("Full Path Length", 0, null, null);
         this.fullPathLengthField.setDisable(true);
     }
@@ -155,6 +161,60 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
     protected void setVisible(FroggerPath path, FroggerPathPreview pathPreview, boolean visible) {
         pathPreview.setVisible(visible);
     }
+
+    private void onTickPathRunnerCheckBoxUpdate(boolean enablePathRunnerPreview) {
+        FroggerUIMapEntityManager entityManager = getController().getEntityManager();
+
+        if (enablePathRunnerPreview) {
+            getEditorGrid().getGridPane().setDisable(true);
+            entityManager.getEditorGrid().getGridPane().setDisable(true);
+            return;
+        }
+
+        // Enable UI once again.
+        getEditorGrid().getGridPane().setDisable(false);
+        entityManager.getEditorGrid().getGridPane().setDisable(false);
+
+        // Reset path runner stuff.
+        this.pathRunnerPreviews.clear();
+        List<FroggerPath> paths = getValues();
+        for (int i = 0; i < paths.size(); i++) {
+            FroggerPath path = paths.get(i);
+            for (int j = 0; j < path.getPathEntities().size(); j++)
+                entityManager.updateEntityPositionRotation(path.getPathEntities().get(j));
+        }
+    }
+
+    /**
+     * Updates the polygon mesh data for polygons with animations.
+     */
+    public void tickPathRunnerPreviews(MeshViewFixedFrameRateTimerTask<?> timerTask) {
+        if (!this.tickPathRunners.isSelected())
+            return;
+
+        FroggerUIMapEntityManager entityManager = getController().getEntityManager();
+        List<FroggerPath> paths = getValues();
+        int deltaFrames = timerTask.getDeltaFrames();
+        for (int i = 0; i < paths.size(); i++) {
+            FroggerPath path = paths.get(i);
+            for (int j = 0; j < path.getPathEntities().size(); j++) {
+                FroggerMapEntity pathEntity = path.getPathEntities().get(j);
+                FroggerPathInfo pathInfo = this.pathRunnerPreviews.computeIfAbsent(pathEntity, entity -> entity.getPathInfo() != null ? entity.getPathInfo().clone() : null);
+                if (pathInfo == null || pathInfo.testFlag(FroggerPathMotionType.FINISHED))
+                    continue;
+
+                int distanceMoved = deltaFrames * pathInfo.getSpeed();
+                if (pathInfo.testFlag(FroggerPathMotionType.BACKWARDS)) {
+                    pathInfo.setTotalPathDistance(pathInfo.getTotalPathDistance() - distanceMoved, true);
+                } else {
+                    pathInfo.setTotalPathDistance(pathInfo.getTotalPathDistance() + distanceMoved, true);
+                }
+
+                entityManager.updateEntityPositionRotation(pathEntity);
+            }
+        }
+    }
+
 
     /**
      * Represents a 3D path preview.

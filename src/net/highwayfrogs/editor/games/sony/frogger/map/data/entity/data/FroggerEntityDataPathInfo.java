@@ -1,20 +1,12 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.standard.IVector;
-import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
-import net.highwayfrogs.editor.games.sony.SCMath;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity.FroggerMapEntityEntityFlag;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack.FroggerGridStackInfo;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathInfo;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathResult;
-import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGrid;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -26,7 +18,9 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 public class FroggerEntityDataPathInfo extends FroggerEntityData {
     @Getter private FroggerPathInfo pathInfo;
     private float[] cachedPosition;
-    private static final IVector GAME_Y_AXIS_POS = new IVector(0, SCMath.FIXED_POINT_ONE, 0);
+
+    private static final Vector3f TEMP_POSITION = new Vector3f();
+    private static final Vector3f TEMP_ROTATION = new Vector3f();
 
     public FroggerEntityDataPathInfo(FroggerMapFile mapFile) {
         super(mapFile);
@@ -45,7 +39,7 @@ public class FroggerEntityDataPathInfo extends FroggerEntityData {
 
     @Override
     public float[] getPositionAndRotation(float[] position) {
-        FroggerPathInfo pathInfo = getPathInfo();
+        FroggerPathInfo pathInfo = this.pathInfo;
         if (pathInfo == null) {
             if (this.cachedPosition != null) {
                 System.arraycopy(this.cachedPosition, 0, position, 0, this.cachedPosition.length);
@@ -55,72 +49,16 @@ public class FroggerEntityDataPathInfo extends FroggerEntityData {
             return null; // No path state.
         }
 
-        FroggerPath path = pathInfo.getPath();
-        if (path == null) {
+        // Attempt to evaluate path info.
+        if (!evaluatePathInfoToEntityArray(pathInfo, getParentEntity(), position)) {
             if (this.cachedPosition != null) {
                 System.arraycopy(this.cachedPosition, 0, position, 0, this.cachedPosition.length);
                 return position;
             }
 
-            return null; // Invalid path id.
+            return null; // Invalid path data.
         }
 
-        // Reimplements ENTITY.C/ENTSTRUpdateMovingMOF()
-        FroggerPathResult result = path.evaluatePosition(pathInfo);
-
-        // Don't rotate if we're aligned to the world.
-        SVector pathPosition = result.getPosition();
-        position[0] = pathPosition.getFloatX();
-        position[1] = pathPosition.getFloatY();
-        position[2] = pathPosition.getFloatZ();
-        if (getParentEntity().testFlag(FroggerMapEntityEntityFlag.ALIGN_TO_WORLD)) { // Example: The spinners in VOL1.MAP don't rotate to follow the path despite following it. Also the pink balloons.
-            position[3] = 0;
-            position[4] = 0;
-            position[5] = 0;
-            return position;
-        }
-
-        IVector vecZ = new IVector(result.getRotation());
-        if (getParentEntity().testFlag(FroggerMapEntityEntityFlag.PROJECT_ON_LAND)) { // Example: Hedgehogs and many of the jungle entities.
-            FroggerMapFilePacketGrid gridPacket = getMapFile().getGridPacket();
-            FroggerGridStack gridStack = gridPacket.getGridStack(gridPacket.getGridXFromWorldX(pathPosition.getX()), gridPacket.getGridZFromWorldZ(pathPosition.getZ()));
-            FroggerGridStackInfo stackInfo = gridStack != null ? gridStack.getGridStackInfo() : null;
-            if (stackInfo != null) {
-                int dx = stackInfo.getXSlope().dotProduct(vecZ) >> 12;
-                int dz = stackInfo.getZSlope().dotProduct(vecZ) >> 12;
-                position[1] = stackInfo.getY() >> 4; // Snap to the ground.
-                vecZ.setX(((stackInfo.getXSlope().getX() * dx) + (stackInfo.getZSlope().getX() * dz)) >> 12);
-                vecZ.setY(((stackInfo.getXSlope().getY() * dx) + (stackInfo.getZSlope().getY() * dz)) >> 12);
-                vecZ.setZ(((stackInfo.getXSlope().getZ() * dx) + (stackInfo.getZSlope().getZ() * dz)) >> 12);
-            }
-        }
-
-        IVector vecX = new IVector();
-        if (getParentEntity().testFlag(FroggerMapEntityEntityFlag.LOCAL_ALIGN)) {
-            // I don't think this is entirely correct to how it works in-game, but it captures the spirit of what the code in-game is supposed to do.
-            // After the player dies or collects a checkpoint, some entities rotate weirdly. (It might take a few tries) For example,
-            // There's one slug in SWP4.MAP which absolutely refuses to cooperate. All the other ones appear right.
-
-            vecX.clear();
-            if (Math.abs(vecZ.getFloatX()) > .5F) { // In PSXMatrix, matrix[2][0] = vecZ.x
-                vecX.setZ(SCMath.FIXED_POINT_ONE);
-            } else {
-                vecX.setX(SCMath.FIXED_POINT_ONE);
-            }
-        } else {
-            // ENTITY_BOOK_XZ_PARALLEL_TO_CAMERA applies sprite billboarding, but FrogLord doesn't need to show that.
-            IVector.MROuterProduct12(GAME_Y_AXIS_POS, vecZ, vecX);
-        }
-
-
-        vecX.normalise();
-        IVector vecY = new IVector();
-        IVector.MROuterProduct12(vecZ, vecX, vecY);
-        PSXMatrix matrix = PSXMatrix.WriteAxesAsMatrix(new PSXMatrix(), vecX, vecY, vecZ);
-
-        position[3] = (float) matrix.getPitchAngle();
-        position[4] = (float) matrix.getYawAngle();
-        position[5] = (float) matrix.getRollAngle();
         return position;
     }
 
@@ -148,5 +86,31 @@ public class FroggerEntityDataPathInfo extends FroggerEntityData {
             this.pathInfo = oldPathData.getPathInfo();
             this.cachedPosition = oldPathData.cachedPosition;
         }
+    }
+
+    /**
+     * Evaluates the path info to an entity position/rotation array
+     * @param pathInfo the path info to evaluate
+     * @param entity the entity to evaluate for
+     * @param outputArray the output array to store results within
+     * @return true iff evaluation was successful
+     */
+    public static boolean evaluatePathInfoToEntityArray(FroggerPathInfo pathInfo, FroggerMapEntity entity, float[] outputArray) {
+        if (pathInfo == null)
+            throw new NullPointerException("pathInfo");
+        if (outputArray == null)
+            throw new NullPointerException("outputArray");
+        if (outputArray.length != 6)
+            throw new IllegalArgumentException("outputArray.length was expected to be 6, but was actually " + outputArray.length + "!");
+        if (!pathInfo.evaluatePositionAndRotation(entity, TEMP_POSITION, TEMP_ROTATION))
+            return false; // Invalid path data.
+
+        outputArray[0] = TEMP_POSITION.getX();
+        outputArray[1] = TEMP_POSITION.getY();
+        outputArray[2] = TEMP_POSITION.getZ();
+        outputArray[3] = TEMP_ROTATION.getX();
+        outputArray[4] = TEMP_ROTATION.getY();
+        outputArray[5] = TEMP_ROTATION.getZ();
+        return true;
     }
 }
