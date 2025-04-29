@@ -121,6 +121,20 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
     }
 
     @Override
+    public void moveDelta(SVector delta) {
+        this.start.add(delta);
+        this.center.add(delta);
+    }
+
+    @Override
+    public void flip() {
+        FroggerPathResult endPos = calculatePosition(getLength());
+        this.start.setValues(endPos.getPosition());
+        this.normal.setValues((short) -this.normal.getX(), (short) -this.normal.getY(), (short) -this.normal.getZ());
+        this.pitch = -this.pitch;
+    }
+
+    @Override
     protected String getCalculatedIncorrectLengthString() {
         return "Angle Slider: " + this.angle;
     }
@@ -194,11 +208,11 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
         editor.addFloatVector("Start", getStart(), () -> {
             onUpdate(pathPreview);
             radiusField.setText(String.valueOf(DataUtils.fixedPointIntToFloat4Bit(calculateFixedRadius())));
-        }, pathPreview.getController());
+        }, pathPreview.getController(), this::selectPathPosition);
         editor.addFloatVector("Center", getCenter(), () -> {
             onUpdate(pathPreview);
             radiusField.setText(String.valueOf(DataUtils.fixedPointIntToFloat4Bit(calculateFixedRadius())));
-        }, pathPreview.getController());
+        }, pathPreview.getController(), this::selectPathPosition);
 
         // Add normal editor.
         FroggerPathSegmentArcOrientation orientation = FroggerPathSegmentArcOrientation.getDirection(this.normal);

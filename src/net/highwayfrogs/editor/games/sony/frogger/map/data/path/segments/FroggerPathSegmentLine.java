@@ -65,10 +65,29 @@ public class FroggerPathSegmentLine extends FroggerPathSegment {
     }
 
     @Override
+    public void moveDelta(SVector delta) {
+        this.start.setX((short) (this.start.getX() + delta.getX()));
+        this.start.setY((short) (this.start.getY() + delta.getY()));
+        this.start.setZ((short) (this.start.getZ() + delta.getZ()));
+        this.end.setX((short) (this.end.getX() + delta.getX()));
+        this.end.setY((short) (this.end.getY() + delta.getY()));
+        this.end.setZ((short) (this.end.getZ() + delta.getZ()));
+    }
+
+    @Override
+    public void flip() {
+        short tempX = this.end.getX();
+        short tempY = this.end.getY();
+        short tempZ = this.end.getZ();
+        this.end.setValues(this.start);
+        this.start.setValues(tempX, tempY, tempZ);
+    }
+
+    @Override
     public void setupEditor(FroggerPathPreview pathPreview, GUIEditorGrid editor) {
         super.setupEditor(pathPreview, editor);
-        editor.addFloatVector("Start:", getStart(), () -> onUpdate(pathPreview), pathPreview.getController());
-        editor.addFloatVector("End:", getEnd(), () -> onUpdate(pathPreview), pathPreview.getController());
+        editor.addFloatVector("Start:", getStart(), () -> onUpdate(pathPreview), pathPreview.getController(), this::selectPathPosition);
+        editor.addFloatVector("End:", getEnd(), () -> onUpdate(pathPreview), pathPreview.getController(), this::selectPathPosition);
     }
 
     @Override

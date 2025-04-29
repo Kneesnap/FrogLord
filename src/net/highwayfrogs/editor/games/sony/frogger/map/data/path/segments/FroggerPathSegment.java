@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.path.segments;
 import javafx.scene.control.TextField;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
@@ -10,11 +11,15 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathInfo;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathResult;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathSegmentType;
+import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMeshController;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapPathManager.FroggerPathPreview;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.ArraySource;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
@@ -86,6 +91,31 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
     public ILogger getLogger() {
         return new LazyInstanceLogger(getGameInstance(), FroggerPathSegment::getLoggerInfo, this);
     }
+
+    /**
+     * Helper method to copy this segment to a new segment
+     */
+    public FroggerPathSegment clone(FroggerPath newPath) {
+        byte[] rawData = writeDataToByteArray();
+        FroggerPathSegment newSegment = this.type.makeNew(newPath);
+        newPath.getSegments().add(newSegment);
+
+        DataReader reader = new DataReader(new ArraySource(rawData));
+        reader.skipInt(); // Skip the type.
+        newSegment.load(reader);
+
+        return newSegment;
+    }
+
+    /**
+     * Helper method to move the segment according to the delta. Used with the "Move All" control.
+     */
+    public abstract void moveDelta(SVector delta);
+
+    /**
+     * Helper method to reverse the segment so its end-point becomes its start point.
+     */
+    public abstract void flip();
 
     /**
      * Setup this segment at the end of the given path.
@@ -165,6 +195,11 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
         } : null, null); // Read-Only.
         segmentLengthField.setDisable(true);
         pathPreview.setPathSegmentLengthField(segmentLengthField);
+
+        editor.addButton("Flip", () -> {
+            flip();
+            onUpdate(pathPreview);
+        });
     }
 
     /**
@@ -177,21 +212,34 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
             updateDisplay(pathPreview);
     }
 
-    private void updateDisplay(FroggerPathPreview pathPreview) {
+    public void updateDisplay(FroggerPathPreview pathPreview) {
         pathPreview.updatePath();
         updateSegmentEntities(pathPreview.getController().getEntityManager());
     }
 
     private void updateSegmentEntities(FroggerUIMapEntityManager entityManager) {
-        int pathIndex = getPath().getPathIndex();
         int segmentIndex = getPathSegmentIndex();
-        List<FroggerMapEntity> mapEntities = entityManager.getMap().getEntityPacket().getEntities();
-        for (int i = 0; i < mapEntities.size(); i++) {
-            FroggerMapEntity entity = mapEntities.get(i);
+        List<FroggerMapEntity> pathEntities = getPath().getPathEntities();
+        for (int i = 0; i < pathEntities.size(); i++) {
+            FroggerMapEntity entity = pathEntities.get(i);
             FroggerPathInfo pathInfo = entity.getPathInfo();
-            if (pathInfo != null && pathInfo.getPathId() == pathIndex && pathInfo.getSegmentId() == segmentIndex)
+            if (pathInfo != null && pathInfo.getSegmentId() == segmentIndex)
                 entityManager.updateEntityPositionRotation(entity);
         }
+    }
+
+    protected void selectPathPosition(MeshViewController<?> controller, Vector vector, int bits) {
+        if (!(controller instanceof FroggerMapMeshController))
+            throw new UnsupportedOperationException("controller was " + Utils.getSimpleName(controller) + ".");
+
+        FroggerMapMeshController frogController = (FroggerMapMeshController) controller;
+        frogController.getBakedGeometryManager().getPolygonSelector().activate(polygon -> {
+            Vector3f centerOfPolygon = polygon.getCenterOfPolygon(null);
+            vector.setFloatX(centerOfPolygon.getX(), bits);
+            vector.setFloatY(centerOfPolygon.getY(), bits);
+            vector.setFloatZ(centerOfPolygon.getZ(), bits);
+            frogController.getPathManager().updateEditor();
+        }, null);
     }
 
     /**

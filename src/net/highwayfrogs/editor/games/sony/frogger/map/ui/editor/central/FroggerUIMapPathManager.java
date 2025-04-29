@@ -2,8 +2,10 @@ package net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central;
 
 import javafx.event.EventHandler;
 import javafx.geometry.Point3D;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
@@ -61,6 +63,8 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
     @Getter private TextField fullPathLengthField;
     @Getter private TextField pathSpeedField;
     private CheckBox tickPathRunners;
+    private Button clonePathButton;
+    private Button flipPathButton;
 
     private static final PhongMaterial MATERIAL_INVISIBLE = Scene3DUtils.makeUnlitSharpMaterial(Color.rgb(255, 255, 255, 0));
     private static final PhongMaterial MATERIAL_WHITE = Scene3DUtils.makeUnlitSharpMaterial(Color.WHITE);
@@ -111,6 +115,33 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
         }, 16);
         this.pathSpeedField.setDisable(true);
         updatePathSpeedTextField();
+
+        this.clonePathButton = new Button("Clone Path");
+        this.clonePathButton.setOnAction(evt -> {
+            FroggerPath path = getSelectedValue();
+            if (path != null)
+                addValue(path.clone());
+        });
+        this.clonePathButton.setAlignment(Pos.CENTER);
+        getMainGrid().setupNode(this.clonePathButton);
+
+        // Value Removal Button
+        this.flipPathButton = new Button("Flip Path");
+        this.flipPathButton.setOnAction(evt -> {
+            FroggerPath path = getSelectedValue();
+            if (path == null)
+                return;
+
+            path.flip();
+            path.getPathEntities().forEach(this.pathRunnerPreviews::remove); // Remove now invalid path previews.
+            path.getPathEntities().forEach(getController().getEntityManager()::updateEntityPositionRotation);
+            if (!getEditorGrid().getGridPane().isDisable())
+                updateEditor(); // Causes a lag-spike. It's most apparent while path ticking is enabled, but the UI is disabled then so it's safe for us to not update then.
+        });
+        this.flipPathButton.setAlignment(Pos.CENTER);
+        getMainGrid().setupSecondNode(this.flipPathButton, false);
+        getMainGrid().addRow();
+
     }
 
     @Override
@@ -157,6 +188,14 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
     }
 
     @Override
+    public void updateEditor() {
+        super.updateEditor();
+        boolean doesNotHavePath = (getSelectedValue() == null);
+        this.clonePathButton.setDisable(doesNotHavePath);
+        this.flipPathButton.setDisable(doesNotHavePath);
+    }
+
+    @Override
     protected void updateEditor(FroggerPath selectedPath) {
         getEditorGrid().addBoldLabel("Path Data");
         selectedPath.setupEditor(getDelegatesByValue().get(selectedPath), getEditorGrid());
@@ -180,7 +219,8 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
 
     @Override
     protected void setVisible(FroggerPath path, FroggerPathPreview pathPreview, boolean visible) {
-        pathPreview.setVisible(visible);
+        if (pathPreview != null)
+            pathPreview.setVisible(visible);
     }
 
     private void onTickPathRunnerCheckBoxUpdate(boolean enablePathRunnerPreview) {
@@ -204,6 +244,8 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
             for (int j = 0; j < path.getPathEntities().size(); j++)
                 entityManager.updateEntityPositionRotation(path.getPathEntities().get(j));
         }
+
+        updateEditor();
     }
 
     /**

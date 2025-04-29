@@ -126,4 +126,21 @@ public interface IBinarySerializable {
 
         return FileUtils.writeBytesToFile(logger, outputFile, arrayReceiver.toArray(), showPopupOnError);
     }
+
+    /**
+     * Serializes the data in this object, saving it to a byte array.
+     */
+    default byte[] writeDataToByteArray() {
+        ArrayReceiver arrayReceiver = new ArrayReceiver();
+        DataWriter writer = new DataWriter(arrayReceiver);
+
+        try {
+            this.save(writer);
+            writer.closeReceiver();
+        } catch (Throwable th) {
+            throw new RuntimeException("Failed to serialize " + this + ".", th);
+        }
+
+        return arrayReceiver.toArray();
+    }
 }

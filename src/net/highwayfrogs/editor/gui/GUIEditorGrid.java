@@ -29,13 +29,13 @@ import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo.IPositionChangeListener;
 import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.*;
+import net.highwayfrogs.editor.utils.lambda.TriConsumer;
 
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -727,6 +727,15 @@ public class GUIEditorGrid {
     }
 
     /**
+     * Add a float Vector for editing.
+     * @param text   The name of the SVector.
+     * @param vector The SVector itself.
+     */
+    public void addFloatVector(String text, Vector vector, Runnable update, MeshViewController<?> controller, TriConsumer<MeshViewController<?>, Vector, Integer> positionSelector) {
+        addFloatVector(text, vector, update, controller, vector.defaultBits(), null, null, positionSelector);
+    }
+
+    /**
      * Add a float SVector for editing.
      * @param text   The name of the SVector.
      * @param vector The SVector itself.
@@ -740,7 +749,7 @@ public class GUIEditorGrid {
      * @param text   The name of the SVector.
      * @param vector The SVector itself.
      */
-    public void addFloatVector(String text, Vector vector, Runnable update, MeshViewController<?> controller, int bits, Vector origin, Shape3D visualRepresentative, BiConsumer<Vector, Integer> positionSelector) {
+    public void addFloatVector(String text, Vector vector, Runnable update, MeshViewController<?> controller, int bits, Vector origin, Shape3D visualRepresentative, TriConsumer<MeshViewController<?>, Vector, Integer> positionSelector) {
         if (controller != null && visualRepresentative == null) {
             addBoldLabelButton(text + ":", "Toggle Display", 25,
                     () -> controller.getMarkerManager().updateMarker(controller.getMarkerManager().getShowPosition() == null || !Objects.equals(vector, controller.getMarkerManager().getShowPosition()) ? vector : null, bits, origin, null));
@@ -898,7 +907,7 @@ public class GUIEditorGrid {
         if (positionSelector != null) {
             selectButton.setOnMouseClicked(evt -> {
                 Vector oldPosition = vector.clone();
-                positionSelector.accept(vector, bits);
+                positionSelector.accept(controller, vector, bits);
 
                 if (!oldPosition.equals(vector)) {
                     xField.setText(String.valueOf(vector.getFloatX(bits)));
@@ -1911,7 +1920,7 @@ public class GUIEditorGrid {
      * @param matrix           The rotation matrix to add data for.
      * @param onPositionUpdate Behavior to apply when the position is updated.
      */
-    public void addMeshMatrix(PSXMatrix matrix, MeshViewController<?> controller, Runnable onPositionUpdate, boolean rotationUpdates, BiConsumer<Vector, Integer> positionSelector) {
+    public void addMeshMatrix(PSXMatrix matrix, MeshViewController<?> controller, Runnable onPositionUpdate, boolean rotationUpdates, TriConsumer<MeshViewController<?>, Vector, Integer> positionSelector) {
         IVector vec = new IVector(matrix.getTransform()[0], matrix.getTransform()[1], matrix.getTransform()[2]);
 
         addFloatVector("Position", vec, () -> {
