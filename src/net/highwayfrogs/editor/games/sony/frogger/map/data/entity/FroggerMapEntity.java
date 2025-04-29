@@ -194,7 +194,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
      * Gets logger information to display when the logger is used.
      */
     public String getLoggerInfo() {
-        return this.mapFile.getFileDisplayName() + "|Entity " + this.uniqueId + "|" + getTypeName();
+        return this.mapFile.getFileDisplayName() + "|Entity " + getEntityIndex() + "/" + this.uniqueId + "|" + getTypeName();
     }
 
     /**

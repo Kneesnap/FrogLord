@@ -47,7 +47,7 @@ public class FroggerPathInfo extends SCGameData<FroggerGameInstance> {
     @Setter private int segmentId;
     @Setter private int segmentDistance;
     private int motionType = FroggerPathMotionType.REPEAT.getFlagBitMask();
-    private int speed = 10;
+    @Setter private int speed = 10; // This is NOT a per-path property, sometimes entities on the same path have different speeds, such as the beavers in ORG1.
 
     public FroggerPathInfo(FroggerMapFile mapFile) {
         super(mapFile != null ? mapFile.getGameInstance() : null);
@@ -327,7 +327,10 @@ public class FroggerPathInfo extends SCGameData<FroggerGameInstance> {
                     () -> manager.setSelectedMouseEntity(entity));
         }
 
-        editorGrid.addUnsignedShortField("Path Speed (???)", this.speed, newSpeed -> this.speed = newSpeed); // TODO: FIXED POINT IN UNITS OF DISTANCE/FRAME? NON-FIXED POINT IN TERMS OF DISTANCE/SEC?
+        editorGrid.addUnsignedFixedShort("Speed (distance/frame)", this.speed, newSpeed -> {
+            this.speed = newSpeed;
+            manager.getController().getPathManager().updateEditor(); // Update path speed UI.
+        }, 16);
 
         FroggerPath path = getPath();
         if (path != null) {

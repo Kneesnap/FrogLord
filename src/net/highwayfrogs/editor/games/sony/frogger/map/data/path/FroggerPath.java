@@ -111,7 +111,6 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
             warnEntityListMismatch(pathEntityIds);
         }
 
-
         this.tempEntityIndexPointer = -1;
     }
 

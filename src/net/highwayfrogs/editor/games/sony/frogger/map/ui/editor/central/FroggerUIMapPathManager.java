@@ -37,6 +37,7 @@ import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.MeshViewFrameTimer.MeshViewFixedFrameRateTimerTask;
 import net.highwayfrogs.editor.gui.editor.SelectionPromptTracker;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
+import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 
@@ -49,11 +50,7 @@ import java.util.function.Consumer;
 /**
  * Allows editing Frogger map paths.
  * TODO: Allow calculating position and rotation independently, more closely to how the old Frogger system does it? Not sure.
- * TODO: We should allow dragging an entity along the path in 3D space. Eg: Click and hold will let you drag, by finding nearby path parts
- * TODO: Go over path speed. What kind of unit is this? Create separate editor grid functions for path speed which accurately mimic the behavior. Update entity data, units, etc.
- * TODO: Allow selecting individual segments instead of showing them all at once, and highlight them.
- * TODO: Can I make a 3D path editor soon? I bet it's doable.
- * TODO: Consider path speed to be part of the path itself instead of per-entity. (Add validation that all entities on a path follow the true path speed, still allow speed editing on each individual entity, just have it impact the underlying path. If there is none, disable/hide the field.)
+ * TODO: Consider the value of a path editor editable in 3D space/based on gizmos?
  * Created by Kneesnap on 6/2/2024.
  */
 public class FroggerUIMapPathManager extends FroggerCentralMapListManager<FroggerPath, FroggerPathPreview> {
@@ -62,6 +59,7 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
     @Getter private final Map<FroggerMapEntity, FroggerPathInfo> pathRunnerPreviews = new HashMap<>();
     private DisplayList pathDisplayList;
     @Getter private TextField fullPathLengthField;
+    @Getter private TextField pathSpeedField;
     private CheckBox tickPathRunners;
 
     private static final PhongMaterial MATERIAL_INVISIBLE = Scene3DUtils.makeUnlitSharpMaterial(Color.rgb(255, 255, 255, 0));
@@ -91,6 +89,28 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
         this.tickPathRunners = getMainGrid().addCheckBox("Tick Path Runners", false, this::onTickPathRunnerCheckBoxUpdate);
         this.fullPathLengthField = getMainGrid().addFloatField("Full Path Length", 0, null, null);
         this.fullPathLengthField.setDisable(true);
+
+        // Keep outside the editor grid, so it can be changed while path runners are ticking.
+        this.pathSpeedField = getMainGrid().addUnsignedFixedShort("Speed (distance/frame)", (short) 0, newSpeed -> {
+            FroggerPath path = getSelectedValue();
+            if (path == null)
+                return;
+
+            for (int i = 0; i < path.getPathEntities().size(); i++) {
+                FroggerMapEntity entity = path.getPathEntities().get(i);
+                FroggerPathInfo pathInfo = entity.getPathInfo();
+                FroggerPathInfo fakePathInfo = this.pathRunnerPreviews.get(entity);
+                if (pathInfo != null)
+                    pathInfo.setSpeed(newSpeed);
+                if (fakePathInfo != null)
+                    fakePathInfo.setSpeed(newSpeed);
+            }
+
+            // Ensure any displayed path speed in the UI is updated.
+            getController().getEntityManager().updateEditor();
+        }, 16);
+        this.pathSpeedField.setDisable(true);
+        updatePathSpeedTextField();
     }
 
     @Override
@@ -155,6 +175,7 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
     @Override
     protected void onSelectedValueChange(FroggerPath oldPath, FroggerPathPreview oldPathPreview, FroggerPath newPath, FroggerPathPreview newPathPreview) {
         this.fullPathLengthField.setText(newPath != null ? Float.toString(newPath.calculateTotalLengthFloat()) : "No Path");
+        updatePathSpeedTextField();
     }
 
     @Override
@@ -213,6 +234,42 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
                 entityManager.updateEntityPositionRotation(pathEntity);
             }
         }
+    }
+
+    private void updatePathSpeedTextField() {
+        if (this.pathSpeedField == null)
+            return;
+
+        FroggerPath path = getSelectedValue();
+        if (path == null) {
+            this.pathSpeedField.setDisable(true);
+            this.pathSpeedField.setText("No Path");
+            return;
+        }
+
+        boolean allPathSpeedsMatch = true;
+        int speed = -1;
+        for (int i = 0; i < path.getPathEntities().size(); i++) {
+            FroggerPathInfo pathInfo = path.getPathEntities().get(i).getPathInfo();
+            if (pathInfo == null)
+                continue;
+
+            if (speed == -1) {
+                speed = pathInfo.getSpeed();
+            } else if (speed != pathInfo.getSpeed()) {
+                allPathSpeedsMatch = false;
+                break;
+            }
+        }
+
+        if (!allPathSpeedsMatch) {
+            this.pathSpeedField.setDisable(true);
+            this.pathSpeedField.setText("Speeds Differ");
+            return;
+        }
+
+        this.pathSpeedField.setText(String.valueOf(DataUtils.fixedPointIntToFloat4Bit(speed)));
+        this.pathSpeedField.setDisable(false);
     }
 
 

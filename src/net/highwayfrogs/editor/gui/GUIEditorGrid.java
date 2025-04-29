@@ -1651,8 +1651,8 @@ public class GUIEditorGrid {
      * @param handler  The setter handler.
      * @param interval The interval it takes for a single full integer to be read.
      */
-    public void addUnsignedFixedShort(String text, int value, Consumer<Integer> handler, int interval) {
-        addUnsignedFixedShort(text, value, handler, interval, 0x0000, 0xFFFF);
+    public TextField addUnsignedFixedShort(String text, int value, Consumer<Integer> handler, int interval) {
+        return addUnsignedFixedShort(text, value, handler, interval, 0x0000, 0xFFFF);
     }
 
     /**
@@ -1664,11 +1664,11 @@ public class GUIEditorGrid {
      * @param minValue The minimum value (IN INTEGER FORM).
      * @param maxValue The maximum value (IN INTEGER FORM).
      */
-    public void addUnsignedFixedShort(String text, int value, Consumer<Integer> handler, int interval, int minValue, int maxValue) {
+    public TextField addUnsignedFixedShort(String text, int value, Consumer<Integer> handler, int interval, int minValue, int maxValue) {
         boolean isNegativeOneMax = ((minValue == -1 || minValue == 0) && maxValue == 0xFFFF);
         String displayStr = (isNegativeOneMax && value == 0xFFFF) ? "-1" : FORMAT.format((double) value / interval);
 
-        addTextField(text, displayStr, newText -> {
+        return addTextField(text, displayStr, newText -> {
             double parsedValue;
 
             try {
