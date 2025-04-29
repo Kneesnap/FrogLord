@@ -1,17 +1,16 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.path.segments;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathInfo;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathResult;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathSegmentType;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapPathManager.FroggerPathPreview;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.MathUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents PATH_LINE.
@@ -52,23 +51,43 @@ public class FroggerPathSegmentLine extends FroggerPathSegment {
     }
 
     @Override
-    public FroggerPathResult calculatePosition(FroggerPathInfo info) {
+    public FroggerPathResult calculatePosition(int segmentDistance) {
         int deltaX = this.end.getX() - this.start.getX();
         int deltaY = this.end.getY() - this.start.getY();
         int deltaZ = this.end.getZ() - this.start.getZ();
 
+        int segmentLength = getLength();
         SVector result = new SVector();
-        result.setX((short) (this.start.getX() + ((deltaX * info.getSegmentDistance()) / getLength())));
-        result.setY((short) (this.start.getY() + ((deltaY * info.getSegmentDistance()) / getLength())));
-        result.setZ((short) (this.start.getZ() + ((deltaZ * info.getSegmentDistance()) / getLength())));
+        result.setX((short) (this.start.getX() + (segmentLength != 0 ? ((deltaX * segmentDistance) / segmentLength) : 0)));
+        result.setY((short) (this.start.getY() + (segmentLength != 0 ? ((deltaY * segmentDistance) / segmentLength) : 0)));
+        result.setZ((short) (this.start.getZ() + (segmentLength != 0 ? ((deltaZ * segmentDistance) / segmentLength) : 0)));
         return new FroggerPathResult(result, new IVector(deltaX, deltaY, deltaZ).normalise());
+    }
+
+    @Override
+    public void moveDelta(SVector delta) {
+        this.start.setX((short) (this.start.getX() + delta.getX()));
+        this.start.setY((short) (this.start.getY() + delta.getY()));
+        this.start.setZ((short) (this.start.getZ() + delta.getZ()));
+        this.end.setX((short) (this.end.getX() + delta.getX()));
+        this.end.setY((short) (this.end.getY() + delta.getY()));
+        this.end.setZ((short) (this.end.getZ() + delta.getZ()));
+    }
+
+    @Override
+    public void flip() {
+        short tempX = this.end.getX();
+        short tempY = this.end.getY();
+        short tempZ = this.end.getZ();
+        this.end.setValues(this.start);
+        this.start.setValues(tempX, tempY, tempZ);
     }
 
     @Override
     public void setupEditor(FroggerPathPreview pathPreview, GUIEditorGrid editor) {
         super.setupEditor(pathPreview, editor);
-        editor.addFloatVector("Start:", getStart(), () -> onUpdate(pathPreview), pathPreview.getController());
-        editor.addFloatVector("End:", getEnd(), () -> onUpdate(pathPreview), pathPreview.getController());
+        editor.addFloatVector("Start:", getStart(), () -> onUpdate(pathPreview), pathPreview.getController(), this::selectPathPosition);
+        editor.addFloatVector("End:", getEnd(), () -> onUpdate(pathPreview), pathPreview.getController(), this::selectPathPosition);
     }
 
     @Override

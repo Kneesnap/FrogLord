@@ -2,16 +2,18 @@ package net.highwayfrogs.editor.games.sony.frogger.map.packets;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathInfo;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -63,6 +65,7 @@ public class FroggerMapFilePacketPath extends FroggerMapFilePacket {
 
     @Override
     protected void saveBodyFirstPass(DataWriter writer) {
+        recalculateAllPathEntityLists();
         writer.writeInt(this.paths.size()); // pathCount
 
         // Write slots for pointers to the path data.
@@ -129,6 +132,40 @@ public class FroggerMapFilePacketPath extends FroggerMapFilePacket {
     }
 
     /**
+     * Removes the entity from path tracking.
+     * @param entity the entity to remove from path tracking
+     */
+    public boolean removeEntityFromPathTracking(FroggerMapEntity entity) {
+        if (entity == null)
+            return false;
+
+        FroggerPathInfo pathState = entity.getPathInfo();
+        if (pathState == null)
+            return false; // Entity has no pathing info.
+
+        int pathIndex = pathState.getPathId();
+        if (pathIndex < 0 || pathIndex >= this.paths.size())
+            return false; // Invalid path!
+
+        FroggerPath path = this.paths.get(pathIndex);
+        int searchIndex = Collections.binarySearch(path.getPathEntities(), entity, Comparator.comparingInt(FroggerMapEntity::getEntityIndex));
+        if (searchIndex >= 0) {
+            path.getPathEntities().remove(searchIndex);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Adds the entity to path tracking.
+     * @param entity the entity to add
+     */
+    public boolean addEntityToPathTracking(FroggerMapEntity entity) {
+        return addEntityToPathTracking(entity, false);
+    }
+
+    /**
      * Recalculate the list of entities corresponding to each path.
      */
     public void recalculateAllPathEntityLists() {
@@ -136,19 +173,40 @@ public class FroggerMapFilePacketPath extends FroggerMapFilePacket {
             this.paths.get(i).getPathEntities().clear();
 
         List<FroggerMapEntity> mapEntities = getParentFile().getEntityPacket().getEntities();
-        for (int i = 0; i < mapEntities.size(); i++) {
-            FroggerMapEntity entity = mapEntities.get(i);
-            FroggerPathInfo pathState = entity.getPathInfo();
-            if (pathState == null)
-                continue; // Entity has no pathing info.
+        for (int i = 0; i < mapEntities.size(); i++)
+            addEntityToPathTracking(mapEntities.get(i), true);
+    }
 
-            int pathIndex = pathState.getPathId();
-            if (pathIndex < 0 || pathIndex >= this.paths.size()) {
-                entity.getLogger().warning("The attached path index of %d is invalid!", pathIndex);
-                continue;
-            }
+    private boolean addEntityToPathTracking(FroggerMapEntity entity, boolean forceAddToEnd) {
+        if (entity == null)
+            return false;
 
-            this.paths.get(pathIndex).getPathEntities().add(entity);
+        FroggerPathInfo pathState = entity.getPathInfo();
+        if (pathState == null)
+            return false; // Entity has no pathing info.
+
+        int pathIndex = pathState.getPathId();
+        if (pathIndex < 0 || pathIndex >= this.paths.size()) {
+            // entity.getLogger().warning("Cannot attach entity to an invalid path index of %d!", pathIndex);
+            return false;
+        }
+
+        int entityIndex = entity.getEntityIndex();
+        if (entityIndex < 0)
+            return false; // Entity isn't registered, so the index we'd insert it to would be invalid!
+
+        FroggerPath path = this.paths.get(pathIndex);
+        if (forceAddToEnd || path.getPathEntities().isEmpty() || entityIndex > path.getPathEntities().get(path.getPathEntities().size() - 1).getEntityIndex()) {
+            // Skip the expensive indexOf-based binary search if it's just going at the end.
+            path.getPathEntities().add(entity);
+            return true;
+        } else {
+            int searchIndex = Collections.binarySearch(path.getPathEntities(), entity, Comparator.comparingInt(FroggerMapEntity::getEntityIndex));
+            if (searchIndex >= 0)
+                return false; // Already found, so don't add it!
+
+            path.getPathEntities().add(-(searchIndex + 1), entity);
+            return true;
         }
     }
 }

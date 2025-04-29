@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity;
 
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Tooltip;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -7,9 +8,6 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.mof.MOFHolder;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
@@ -31,8 +29,11 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
@@ -47,7 +48,16 @@ import java.util.Objects;
 public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
     @Getter private final FroggerMapFile mapFile;
     @Getter private int formGridId = -1;
-    @Getter private int uniqueId = -1; // TODO: Appears to start at zero per-file, and be counted upwards.
+
+    // Unique Entity IDs are per-level, and were tracked by Mappy. It seems that every time mappy needed to assign an ID, it would increment a counter (starting at zero), and assign the previous counter value.
+    // These IDs were somehow able to reach into the thousands for some levels.
+    // These IDs are not as important as they might seem however, as they are only used for:
+    // - VOL Trigger switches (those colored switches for platforms) use it to control activate/de-activate entities.
+    // - ORG Snakes that ride on logs specify the entity ID of the log they should ride.
+    // - ORG Baby Frogs that ride on logs specify the entity ID of the log they should ride.
+    // - sky_froggers_magical_popping_balloon to activate the bird flock
+    // - When flies bounce up & down, their unique ID has the first 3 bits taken (so a number between 0 and 7), and is used as something of an initial Y offset.
+    @Getter private int uniqueId = -1;
     @Getter private IFroggerFormEntry formEntry;
     @Getter private short flags;
     @Getter private FroggerEntityData entityData;
@@ -78,6 +88,10 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
         this.formGridId = reader.readUnsignedShortAsInt();
         this.uniqueId = reader.readUnsignedShortAsInt();
 
+        // Warn about invalid form grid IDs.
+        if (this.formGridId < 0 || this.formGridId >= Math.max(getMapFile().getFormPacket().getOldForms().size(), getMapFile().getFormPacket().getForms().size()))
+            getLogger().warning("The entity uses an invalid form grid ID! (%d).", this.formGridId);
+
         int formId = this.formGridId;
         if (this.mapFile.getMapConfig().isOldFormFormat()) {
             this.formEntry = this.mapFile.getFormPacket().getOldForms().get(this.formGridId);
@@ -106,7 +120,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
             return; // Can't read more data. Ideally this doesn't happen, but this is a good failsafe. It's most likely to happen in early builds, and it does happen in Build 01.
 
         try {
-            this.entityData = FroggerEntityData.makeData(this.mapFile, this);
+            this.entityData = FroggerEntityData.makeData(this, this.formEntry);
             if (this.entityData != null) {
                 this.entityData.load(reader);
                 reader.alignRequireEmpty(Constants.INTEGER_SIZE); // Padding.
@@ -120,10 +134,25 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
         } catch (Throwable th) {
             Utils.handleError(getLogger(), th, false, "Failed to load entity data for entity %d/%s.", this.uniqueId, this.formEntry.getFormTypeName());
         }
+
+        // Warnings!
+
+        if (this.entityData instanceof FroggerEntityDataPathInfo && getPathInfo().getPath() == null && !getMapFile().isIslandOrIslandPlaceholder())
+            getLogger().warning("Entity references an invalid path ID! (%d)", getPathInfo().getPathId());
     }
 
     @Override
     public void save(DataWriter writer) {
+        // Warnings!
+        if (this.formGridId < 0 || this.formGridId >= Math.max(getMapFile().getFormPacket().getOldForms().size(), getMapFile().getFormPacket().getForms().size())) {
+            getLogger().warning("The entity uses an invalid form grid ID! (%d).", this.formGridId);
+            FXUtils.makePopUp("[" + getLoggerInfo() + "] uses an invalid form grid ID! (" + this.formGridId + ")\nThis may cause issues!", AlertType.WARNING);
+        }
+        if (this.entityData instanceof FroggerEntityDataPathInfo && getPathInfo().getPath() == null && !getMapFile().isIslandOrIslandPlaceholder()) {
+            getLogger().warning("Entity references an invalid path ID! (%d)", getPathInfo().getPathId());
+            FXUtils.makePopUp("[" + getLoggerInfo() + "] uses an invalid path ID! (" + getPathInfo().getPathId() + ")\nThis may cause issues!", AlertType.WARNING);
+        }
+
         writer.writeUnsignedShort(this.formGridId);
         writer.writeUnsignedShort(this.uniqueId);
         if (this.mapFile.getMapConfig().isOldFormFormat()) {
@@ -165,7 +194,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
      * Gets logger information to display when the logger is used.
      */
     public String getLoggerInfo() {
-        return this.mapFile.getFileDisplayName() + "|Entity " + this.uniqueId + "|" + getTypeName();
+        return this.mapFile.getFileDisplayName() + "|Entity " + getEntityIndex() + "/" + this.uniqueId + "|" + getTypeName();
     }
 
     /**
@@ -205,7 +234,9 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
             editor.addLabel("Entity Type", "Unknown");
         }
 
-        editor.addUnsignedShortField("Entity ID", this.uniqueId, newUniqueId -> this.uniqueId = newUniqueId);
+        editor.addUnsignedShortField("Entity ID", this.uniqueId,
+                newUniqueId -> this.uniqueId == newUniqueId || (getMapFile().getEntityPacket().getEntityByUniqueId(newUniqueId) == null && getMapFile().getEntityPacket().getNextFreeEntityId() > newUniqueId && newUniqueId >= 0),
+                newUniqueId -> setUniqueID(newUniqueId, false));
 
         // Show form data.
         List<FroggerOldMapFormData> oldForms = (this.formEntry instanceof FroggerOldMapForm) ? ((FroggerOldMapForm) this.formEntry).getFormDataEntries() : null;
@@ -256,6 +287,28 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
         // Add raw data.
         if (this.rawData != null)
             editor.addTextField("Raw Data", DataUtils.toByteString(this.rawData));
+    }
+
+    /**
+     * Sets the unique ID of the entity.
+     * @param newUniqueId the new unique ID to apply
+     * @param skipIdChecks whether checks on the validity of the ID should be skipped.
+     */
+    public void setUniqueID(int newUniqueId, boolean skipIdChecks) {
+        if (this.uniqueId == newUniqueId)
+            return; // No change.
+        if (newUniqueId < 0)
+            throw new IllegalArgumentException("Invalid unique ID provided: " + newUniqueId);
+
+        // Checks are also skipped if the entity is not registered.
+        if (!skipIdChecks || getEntityIndex() < 0) {
+            if (getMapFile().getEntityPacket().getEntityByUniqueId(newUniqueId) != null)
+                throw new RuntimeException("Cannot apply unique ID of " + newUniqueId + ", as another entity already has this ID!");
+            if (newUniqueId >= getMapFile().getEntityPacket().getNextFreeEntityId())
+                throw new RuntimeException("Cannot apply unique ID of " + newUniqueId + ", as it would invalidate the next free entity ID of " + getMapFile().getEntityPacket().getNextFreeEntityId() + ".");
+        }
+
+        this.uniqueId = newUniqueId;
     }
 
     /**
@@ -316,11 +369,19 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
     }
 
     /**
-     * Get any PSXMatrix owned by this entity, if it has any.
-     * @return psxMatrix
+     * Get any FroggerEntityDataPathInfo owned by this entity, if its entity data is of that type.
+     * @return pathEntityData
      */
-    public PSXMatrix getMatrixInfo() {
-        return this.entityData instanceof FroggerEntityDataMatrix ? ((FroggerEntityDataMatrix) this.entityData).getMatrix() : null;
+    public FroggerEntityDataPathInfo getPathEntityData() {
+        return this.entityData instanceof FroggerEntityDataPathInfo ? ((FroggerEntityDataPathInfo) this.entityData) : null;
+    }
+
+    /**
+     * Get any FroggerEntityDataMatrix owned by this entity, if its entity data is of that type.
+     * @return matrixEntityData
+     */
+    public FroggerEntityDataMatrix getMatrixEntityData() {
+        return this.entityData instanceof FroggerEntityDataMatrix ? ((FroggerEntityDataMatrix) this.entityData) : null;
     }
 
     /**
@@ -364,15 +425,37 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
         Class<?> oldEntityDataClass = FroggerEntityData.getEntityDataClass(getGameInstance(), this.formEntry);
         Class<?> newEntityDataClass = FroggerEntityData.getEntityDataClass(getGameInstance(), newEntry);
         if (this.formEntry == null || !Objects.equals(newEntityDataClass, oldEntityDataClass)) {
-            PSXMatrix oldMatrix = getMatrixInfo(); // Call before setting entityData to null.
-            FroggerPathInfo oldPath = getPathInfo();
-            this.entityData = FroggerEntityData.makeData(this.mapFile, this);
+            boolean hadOldEntityData = (this.entityData != null);
+            if (hadOldEntityData) // Remove any previous tracking.
+                getMapFile().getPathPacket().removeEntityFromPathTracking(this);
 
-            if (this.entityData instanceof FroggerEntityDataMatrix && oldMatrix != null)
-                ((FroggerEntityDataMatrix) this.entityData).getMatrix().copyFrom(oldMatrix);
+            // Call before setting entityData to new data.
+            FroggerEntityDataMatrix oldMatrixData = getMatrixEntityData();
+            FroggerEntityDataPathInfo oldPathData = getPathEntityData();
 
-            if (this.entityData instanceof FroggerEntityDataPathInfo && oldPath != null)
-                ((FroggerEntityDataPathInfo) this.entityData).setPathInfo(oldPath);
+            // Setup new data.
+            this.entityData = FroggerEntityData.makeData(this, newEntry);
+
+            // Copy data.
+            if (this.entityData instanceof FroggerEntityDataMatrix) {
+                ((FroggerEntityDataMatrix) this.entityData).copyFrom(oldMatrixData, oldPathData);
+            } else if (this.entityData instanceof FroggerEntityDataPathInfo) {
+                ((FroggerEntityDataPathInfo) this.entityData).copyFrom(oldMatrixData, oldPathData);
+            }
+
+            // If old entity data was present (entity isn't loading), then update the path to point to the new data
+            if (hadOldEntityData)
+                getMapFile().getPathPacket().addEntityToPathTracking(this);
+
+            // Attempt to find a form compatible with the new entity data.
+            if ((hadOldEntityData || this.formGridId < 0) && newEntityDataClass != null && !this.mapFile.getMapConfig().isOldFormFormat()) {
+                for (FroggerMapEntity testEntity : getMapFile().getEntityPacket().getEntities()) {
+                    if (testEntity != this && newEntry == testEntity.getFormEntry() && newEntityDataClass.isInstance(testEntity.getEntityData())) {
+                        this.formGridId = testEntity.getFormGridId();
+                        break;
+                    }
+                }
+            }
         }
 
         this.formEntry = newEntry;
@@ -387,7 +470,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
         NO_COLLISION(Constants.BIT_FLAG_3, "Collision does not apply to this entity."),
         ALIGN_TO_WORLD(Constants.BIT_FLAG_4, "Do not face the path's direction. (Path Entity Only)"),
         PROJECT_ON_LAND(Constants.BIT_FLAG_5, "Snap rotation to the grid square polygon. (Path Entity Only)"),
-        LOCAL_ALIGN(Constants.BIT_FLAG_6, "Entity position matrix is calculated \"locally\" (using Y part of previous position?)"); // TODO: Hrm.
+        LOCAL_ALIGN(Constants.BIT_FLAG_6, "Entity position matrix is calculated \"locally\" (Pipe Slugs)");
 
         private final int bitFlagMask;
         private final String description;

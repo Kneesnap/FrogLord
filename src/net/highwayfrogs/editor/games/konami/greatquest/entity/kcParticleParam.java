@@ -3,8 +3,6 @@ package net.highwayfrogs.editor.games.konami.greatquest.entity;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.konami.IConfigData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
@@ -13,6 +11,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInf
 import net.highwayfrogs.editor.games.konami.greatquest.map.kcColor4;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents the 'kcParticleParam' struct.

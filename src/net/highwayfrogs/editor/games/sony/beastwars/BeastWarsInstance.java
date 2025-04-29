@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.sony.beastwars;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
@@ -13,6 +12,7 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 
 import java.util.ArrayList;
 import java.util.List;

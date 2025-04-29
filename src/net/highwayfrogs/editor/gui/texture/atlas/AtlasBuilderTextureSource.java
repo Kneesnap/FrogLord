@@ -33,6 +33,7 @@ import java.util.function.Consumer;
  * Back-ported from ModToolFramework.
  * Caching is utilized to avoid intensive operations for each update.
  * This class has been profiled heavily.
+ * TODO: In JavaFX 13+, try converting to PixelBuffer for even better performance (Potentially multithreaded image writing can come back?). Example: https://foojay.io/today/high-performance-rendering-in-javafx/
  * Created by Kneesnap on 9/23/2023.
  */
 @Getter
@@ -49,8 +50,9 @@ public class AtlasBuilderTextureSource implements ITextureSource {
     private WritableImage cachedFxImage; // Caching the image allows for faster generation.
     @Setter private DynamicMesh mesh;
 
-    private static final int THREAD_COUNT = 4;
+    private static final int THREAD_COUNT = Math.max(1, Runtime.getRuntime().availableProcessors() - 2);
     private static final ExecutorService ATLAS_BUILDER_THREAD_POOL = Executors.newWorkStealingPool(THREAD_COUNT);
+    private static final boolean SINGLE_THREADED_DEBUGGING_ENABLED = false;
 
     public AtlasBuilderTextureSource(TextureAtlas atlas, boolean enableAwtImage, boolean enableFxImage) {
         if (atlas == null)
@@ -80,11 +82,6 @@ public class AtlasBuilderTextureSource implements ITextureSource {
 
         writeImageAsyncAndWait(false);
         updateTextureCoordinates(); // Apply the new texture coordinates to the mesh.
-
-        // Ensure image cache is okay.
-        SortedList<? extends AtlasTexture> sortedTextures = this.atlas.getSortedTextureList();
-        for (int i = 0; i < sortedTextures.size(); i++)
-            sortedTextures.get(i).onTextureWrittenToAtlas();
 
         return this.cachedImage;
     }
@@ -118,17 +115,23 @@ public class AtlasBuilderTextureSource implements ITextureSource {
         this.atlas.prepareImageGeneration();
 
         // Create and submit tasks.
-        this.atlas.startBulkOperations();
-        while (THREAD_COUNT > this.asyncWriteTasks.size())
-            this.asyncWriteTasks.add(new AsyncTaskWriteTexture(this.writeTaskState));
+        this.atlas.pushDisableUpdates();
 
-        // Submit work.
-        for (int i = 0; i < this.asyncWriteTasks.size(); i++)
-            ATLAS_BUILDER_THREAD_POOL.submit((Callable<?>) this.asyncWriteTasks.get(i));
+        if (SINGLE_THREADED_DEBUGGING_ENABLED) {
+            AsyncTaskWriteTexture singleTask = new AsyncTaskWriteTexture(this.writeTaskState);
+            singleTask.call();
+        } else {
+            while (THREAD_COUNT > this.asyncWriteTasks.size())
+                this.asyncWriteTasks.add(new AsyncTaskWriteTexture(this.writeTaskState));
+
+            // Submit work.
+            for (int i = 0; i < this.asyncWriteTasks.size(); i++)
+                ATLAS_BUILDER_THREAD_POOL.submit((Callable<?>) this.asyncWriteTasks.get(i));
+        }
 
         // Write textures to the atlas on the main thread.
         this.writeTaskState.writeTextures();
-        this.atlas.endBulkOperations();
+        this.atlas.popDisableUpdates();
 
         // NOTE:
         // We tried to build a large BufferedImage then write it to the WritableImage, but that was significantly slower than just writing directly to the FX image.
@@ -269,8 +272,11 @@ public class AtlasBuilderTextureSource implements ITextureSource {
          */
         public void queueImage(AtlasTexture texture) {
             BufferedImage awtImage = texture.getImage(); // Ensures the image is ready.
-            if (this.atlasBuilder.isEnableAwtImage()) // BufferedImage can be written async.
+            if (this.atlasBuilder.isEnableAwtImage()) { // BufferedImage can be written async.
                 this.awtGraphics.drawImage(awtImage, texture.getX() + texture.getLeftPaddingEmpty(), texture.getY() + texture.getUpPaddingEmpty(), texture.getNonEmptyPaddedWidth(), texture.getNonEmptyPaddedHeight(), null);
+                texture.onTextureWrittenToAtlas();
+            }
+
             // NOTE: It is (TECHNICALLY) possible to update the FX image async, and it does yield a marginal performance boost.
             // HOWEVER, once we do that, it randomly causes the 3D scene to not respond to mouse input.
             // Also, it causes the texture sheet ImageView to throw heaps of errors when viewed.
@@ -294,12 +300,14 @@ public class AtlasBuilderTextureSource implements ITextureSource {
                 texture = this.texturesReadyToWrite.remove(0);
             }
 
-            BufferedImage awtImage = texture.getImage(); // Gets the cached image.
             // The AWT image is written in part of queueImage(), because it is safe to write async.
             // The FX image is NOT safe to write async, so it is written here (on the main thread).
-            if (this.atlasBuilder.isEnableFxImage())
+            if (this.atlasBuilder.isEnableFxImage()) {
+                BufferedImage awtImage = texture.getImage(); // Gets the cached image.
                 ImageWorkHorse.writeBufferedImageToFxImage(awtImage, this.atlasBuilder.cachedFxImage, texture.getX() + texture.getLeftPaddingEmpty(), texture.getY() + texture.getUpPaddingEmpty());
-            texture.onTextureWrittenToAtlas();
+                texture.onTextureWrittenToAtlas();
+            }
+
             return true;
         }
 

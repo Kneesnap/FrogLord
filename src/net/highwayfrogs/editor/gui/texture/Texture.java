@@ -241,14 +241,14 @@ public abstract class Texture {
     /**
      * Pushes a signal to disable updates, until popped.
      */
-    protected final void pushDisableUpdates() {
+    public final void pushDisableUpdates() {
         this.disableUpdateCount++;
     }
 
     /**
      * Pops a signal to disable updates.
      */
-    protected final void popDisableUpdates() {
+    public final void popDisableUpdates() {
         if (this.disableUpdateCount <= 0)
             throw new UnsupportedOperationException("Cannot pop disable updates, because there's nothing to pop.");
 

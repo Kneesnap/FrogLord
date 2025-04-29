@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.file.patch.commands.PatchCommandManager;
 import net.highwayfrogs.editor.file.patch.reference.PatchTextReference;
 import net.highwayfrogs.editor.file.patch.reference.PatchValueReference;
 import net.highwayfrogs.editor.file.patch.reference.PatchWrapperValue;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameObject.SCSharedGameObject;
 import net.highwayfrogs.editor.utils.FXUtils;

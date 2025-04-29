@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.generic.IGameType;
 import net.highwayfrogs.editor.gui.GameConfigController;
 import net.highwayfrogs.editor.gui.GameConfigController.GameConfigUIController;
+import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.FileOpenBrowseComponent.GameConfigFileOpenBrowseComponent;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.Config;
@@ -34,6 +35,11 @@ public class GreatQuestGameType implements IGameType {
     @Override
     public GameInstance createGameInstance() {
         return new GreatQuestInstance();
+    }
+
+    @Override
+    public ImageResource getFrogLordLogo() {
+        return ImageResource.FROGLORD_LOGO_GAME_GREAT_QUEST_LARGE;
     }
 
     @Override

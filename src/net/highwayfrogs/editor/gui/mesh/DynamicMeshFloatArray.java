@@ -144,14 +144,14 @@ public class DynamicMeshFloatArray extends FXFloatArrayBatcher {
 
         faceData.endBatchingUpdates();
         if (facesUsingRemovedIndices > 0) // Won't warn if the faceData in question is queued for removal.
-            getLogger().warning("%d total face element(s) referenced newly removed values. This will probably create visual corruption, so make sure to remove the faces first next time.", facesUsingRemovedIndices);
+            getLogger().warning("%d total face element(s) referenced newly range-removed %s values. This will probably create visual corruption, so make sure to remove the faces first next time.", facesUsingRemovedIndices, this.unitName);
     }
 
     @Override
     protected void onBatchRemovalComplete(IndexBitArray indices) {
         super.onBatchRemovalComplete(indices);
         if ((indices.getBitCount() % this.elementsPerUnit) != 0)
-            throw new IllegalStateException("A batch removal occurred which removed a number of elements which was not divisible by " + this.elementsPerUnit + ", a requirement for a single " + this.unitName + ". (Indices: " + indices.getBitCount() + ")");
+            throw new IllegalStateException("A batch removal occurred which removed a number of " + this.unitName + " elements which was not divisible by " + this.elementsPerUnit + ", a requirement for a single " + this.unitName + ". (Indices: " + indices.getBitCount() + ")");
 
         // Update indices to reflect the data has been removed.
         if (this.indexUpdateCallback != null)
@@ -167,11 +167,11 @@ public class DynamicMeshFloatArray extends FXFloatArrayBatcher {
 
             // Show warnings if the face array is seen to be using data that was just removed.
             if (indices.getBit(oldElementIndex) && !getMesh().getEditableFaces().isQueuedForRemoval(i) && ++errorCount <= FACE_ELEMENT_BATCH_REMOVAL_WARNING_LIMIT)
-                getLogger().warning("Face Element " + i + " referenced index " + oldDataIndex + ", which was just removed. This will probably create visual corruption.");
+                getLogger().warning("Face Element %d referenced %s index %d, which was just removed. This will probably create visual corruption.", i, this.unitName, oldDataIndex);
 
             // Calculate the number of indices removed at/before the current index.
             int removedElements = 0;
-            int previousBit = oldDataIndex;
+            int previousBit = oldElementIndex;
             while ((previousBit = indices.getPreviousBitIndex(previousBit)) >= 0)
                 removedElements++;
 
@@ -182,6 +182,6 @@ public class DynamicMeshFloatArray extends FXFloatArrayBatcher {
 
         faceData.endBatchingUpdates();
         if (errorCount > FACE_ELEMENT_BATCH_REMOVAL_WARNING_LIMIT) // Won't warn if the faceData in question is queued for removal.
-            getLogger().warning("%d total face element(s) referenced newly removed values. This will probably create visual corruption, so make sure to remove the faces first next time.", errorCount);
+            getLogger().warning("%d total face element(s) referenced newly batch-removed %s values. This will probably create visual corruption, so make sure to remove the faces first next time.", errorCount, this.unitName);
     }
 }

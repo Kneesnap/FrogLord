@@ -106,7 +106,7 @@ public class FroggerUIMapAnimationManager extends FroggerBakedMapListManager<Fro
         }
 
         // Find remapped texture.
-        Short realTextureId = remap.getTextureIds().size() > textureId ? remap.getRemappedTextureId(textureId) : null;
+        Short realTextureId = remap.getRemappedTextureId(textureId);
         if (realTextureId != null) {
             VLOArchive vloFile = getMap().getVloFile();
             GameImage gameImage = vloFile != null ? vloFile.getImageByTextureId(realTextureId) : null;
@@ -188,7 +188,7 @@ public class FroggerUIMapAnimationManager extends FroggerBakedMapListManager<Fro
         }
 
         if (this.showAnimationsOnMapCheckBox.isSelected())
-            getController().getMesh().getMainNode().tickMapAnimations();
+            getMesh().getMainNode().tickMapAnimations(timerTask.getDeltaFrames());
     }
 
     /**

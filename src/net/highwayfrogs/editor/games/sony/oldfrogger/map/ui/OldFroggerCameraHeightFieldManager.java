@@ -124,8 +124,9 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
         this.meshView.setVisible(false);
 
         SelectionRectangle selectionRectangle = new SelectionRectangle(getController(), this.meshView);
-        selectionRectangle.setListener((dragStart, dragEnd) -> {
-            int meshIndex = getClosestVertex(dragEnd);
+        selectionRectangle.applyListenersToNode();
+        selectionRectangle.setOnDragCompleteListener(mouseTracker -> {
+            int meshIndex = getClosestVertex(mouseTracker.getMouseState());
             if (meshIndex < 0)
                 return;
 
@@ -156,7 +157,7 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
 
         if (input.isKeyPressed(KeyCode.SHIFT)) {
             // Select all within the area covered by the mouse drag.
-            int oldMeshIndex = getClosestVertex(input.getLastDragStartMouseState());
+            int oldMeshIndex = getClosestVertex(input.getMouseTracker().getLastDragStartMouseState());
             if (oldMeshIndex < 0)
                 return;
 
@@ -176,7 +177,7 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
             for (int gridZ = minZ; gridZ <= maxZ; gridZ++)
                 for (int gridX = minX; gridX <= maxX; gridX++)
                     selectVertex(gridX, gridZ);
-        } else if (input.hasMouseMovedSinceDragStart()) {
+        } else if (input.getMouseTracker().isSignificantMouseDragRecorded()) {
             // If the mouse has moved meaningfully, don't do any selection.
         } else if (input.isKeyPressed(KeyCode.CONTROL)) {
             // Select / deselect a vertex, but without deselecting all others.

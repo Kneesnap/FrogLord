@@ -2,10 +2,9 @@ package net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
@@ -96,26 +95,7 @@ public class OldFroggerMapPolygon extends SCGameData<OldFroggerGameInstance> {
             return null; // Don't have the ability to look anything up.
 
         TextureRemapArray textureRemap = levelTableEntry.getTextureRemap();
-        if (textureRemap == null)
-            return null; // Failed to get the texture remap.
-
-        Short globalTextureId = textureRemap.getRemappedTextureId((int) this.textureId);
-        if (globalTextureId == null)
-            return null; // This texture wasn't found in the remap.
-
-        // Lookup image source.
-        GameImage imageSource = null;
-
-        // Try in the main VLO first.
-        VLOArchive mainArchive = levelTableEntry.getMainVLOArchive();
-        if (mainArchive != null)
-            imageSource = mainArchive.getImageByTextureId(globalTextureId);
-
-        // Otherwise, search globally.
-        if (imageSource == null)
-            imageSource = levelTableEntry.getArchive().getImageByTextureId(globalTextureId);
-
-        return imageSource;
+        return textureRemap != null ? textureRemap.resolveTexture((int) this.textureId, levelTableEntry.getMainVLOArchive()) : null;
     }
 
     /**

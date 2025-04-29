@@ -3,10 +3,8 @@ package net.highwayfrogs.editor.games.sony.frogger.map.mesh;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadedTextureManager;
@@ -18,12 +16,16 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapA
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
+import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Represents a map polygon seen in Frogger.
@@ -48,11 +50,13 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
     private short flags;
     @Setter private short textureId = -1;
     private SCByteTextureUV[] textureUvs;
+    private int loadedPaddingVertex;
 
     // The last address which the polygon was written to.
     private transient int lastReadAddress = -1;
     private transient int lastWriteAddress = -1;
     @Setter private transient boolean visible; // Whether the polygon should be made visible in-game or not.
+    @Setter private transient boolean skyLand;
 
     public static final int FLAG_SEMI_TRANSPARENT = Constants.BIT_FLAG_0;
     public static final int FLAG_ENVIRONMENT_MAPPED = Constants.BIT_FLAG_1; // Show the solid environment bitmap. (For instance, how water appears as a solid body, or sludge in the sewer levels.)
@@ -96,7 +100,10 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
         // Read vertices:
         for (int i = 0; i < this.vertices.length; i++)
             this.vertices[i] = reader.readUnsignedShortAsInt();
-        reader.align(Constants.INTEGER_SIZE); // Padding. The fourth vertex is a duplicate usually, but in some cases such as a polygon from a baked entity model seems to let this value be garbage.
+
+        // Padding. The fourth vertex is a duplicate usually, but in some cases such as a polygon from a baked entity model seems to let this value be garbage.
+        if (!this.polygonType.isQuad())
+            this.loadedPaddingVertex = reader.readUnsignedShortAsInt();
 
         // Read texture data. (if new format)
         boolean oldPolygonFormat = this.mapFile.getMapConfig().isOldMapTexturedPolyFormat();
@@ -162,12 +169,12 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
         this.lastWriteAddress = writer.getIndex();
 
         // Write Vertices:
-        for (int i = 0; i < getVertexCount(); i++)
+        for (int i = 0; i < this.vertices.length; i++)
             writer.writeUnsignedShort(this.vertices[i]);
 
         // Write padding vertex.
         if (this.vertices.length % 2 > 0)
-            writer.writeUnsignedShort(this.vertices[this.vertices.length - 1]);
+            writer.writeUnsignedShort(this.loadedPaddingVertex = this.vertices[this.vertices.length - 1]);
 
         // Write texture data. (if new format)
         boolean oldPolygonFormat = this.mapFile.getMapConfig().isOldMapTexturedPolyFormat();
@@ -251,26 +258,20 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
      * Gets the active texture on this polygon.
      */
     public GameImage getTexture() {
-        if (!this.polygonType.isTextured() && (this.textureId == 0 || this.textureId == -1))
+        if (!this.polygonType.isTextured() || this.textureId < 0)
             return null;
 
-        TextureRemapArray textureRemap = getMapFile().getTextureRemap();
+        TextureRemapArray textureRemap;
+        if (this.skyLand) {
+            textureRemap = getGameInstance().getSkyLandTextureRemap();
+        } else {
+            textureRemap = this.mapFile.getTextureRemap();
+        }
+
         if (textureRemap == null)
             return null;
 
-        Short globalTextureId = textureRemap.getRemappedTextureId(this.textureId);
-        if (globalTextureId == null)
-            return null;
-
-        VLOArchive vloArchive = this.mapFile != null ? this.mapFile.getVloFile() : null;
-        if (vloArchive != null) {
-            GameImage gameImage = vloArchive.getImageByTextureId(globalTextureId, false);
-            if (gameImage != null)
-                return gameImage;
-        }
-
-        // If all else fails, resolve the texture ID from any VLO we can find it in.
-        return getGameInstance().getMainArchive().getImageByTextureId(globalTextureId);
+        return textureRemap.resolveTexture(this.textureId, this.mapFile != null ? this.mapFile.getVloFile() : null);
     }
 
     /**
@@ -318,7 +319,7 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
 
         // The UV offset is counted in pixels, not uv units.
         // So we convert them to uv units.
-        return xOffset * (1F / image.getIngameWidth());
+        return ((float) xOffset / image.getIngameWidth());
     }
 
     /**
@@ -340,7 +341,7 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
 
         // The UV offset is counted in pixels, not uv units.
         // So we convert them to uv units.
-        return yOffset * (1F / image.getIngameHeight());
+        return ((float) yOffset / image.getIngameHeight());
     }
 
     /**
@@ -435,5 +436,46 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
                     this.textureId = DataUtils.unsignedIntToShort(remapIndex);
             }
         }
+    }
+
+    /**
+     * Set the bit flags of the map polygon.
+     * @param newFlags the new bit flags to apply to the polygon
+     */
+    public void setFlags(int newFlags) {
+        if ((newFlags & FLAG_VALIDATION_MASK) != newFlags)
+            throw new IllegalArgumentException("Cannot apply flags of " + newFlags + " to FroggerMapPolygon, as it contains unrecognized bit flags!");
+
+        this.flags = (short) newFlags;
+    }
+
+    /**
+     * Calculate geometric center point of the polygon.
+     * @return Center of a polygon, else null.
+     */
+    public Vector3f getCenterOfPolygon(Vector3f output) {
+        if (output == null)
+            output = new Vector3f();
+
+        float x = 0.0f;
+        float y = 0.0f;
+        float z = 0.0f;
+        List<SVector> vertices = this.mapFile.getVertexPacket().getVertices();
+        int vertexCount = getVertexCount();
+        for (int i = 0; i < vertexCount; i++) {
+            SVector vertex = vertices.get(this.vertices[i]);
+            x += vertex.getFloatX();
+            y += vertex.getFloatY();
+            z += vertex.getFloatZ();
+        }
+
+        if (vertexCount != 0) {
+            float divisor = 1F / vertexCount;
+            x *= divisor;
+            y *= divisor;
+            z *= divisor;
+        }
+
+        return output.setXYZ(x, y, z);
     }
 }

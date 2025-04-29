@@ -1,8 +1,6 @@
 package net.highwayfrogs.editor.games.shared.basic;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.generic.IGameType;
 import net.highwayfrogs.editor.games.shared.basic.file.BasicGameFile;
@@ -15,6 +13,8 @@ import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.FileSource;
 
 import java.io.File;
 import java.util.ArrayList;

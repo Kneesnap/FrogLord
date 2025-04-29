@@ -2,8 +2,6 @@ package net.highwayfrogs.editor.games.konami.greatquest.chunks;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
@@ -14,6 +12,8 @@ import net.highwayfrogs.editor.system.math.Matrix4x4f;
 import net.highwayfrogs.editor.system.math.Quaternion;
 import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.system.math.Vector4f;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;

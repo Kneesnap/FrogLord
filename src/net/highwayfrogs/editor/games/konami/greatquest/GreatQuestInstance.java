@@ -1,10 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.reader.FileSource;
-import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.file.writer.LargeFileReceiver;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.kcTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcAnimState;
@@ -49,6 +45,10 @@ import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.*;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.FileSource;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.writer.LargeFileReceiver;
 
 import java.io.File;
 import java.io.IOException;

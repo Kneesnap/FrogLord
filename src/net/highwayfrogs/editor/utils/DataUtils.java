@@ -185,7 +185,16 @@ public class DataUtils {
      * @return shortValue
      */
     public static short floatToFixedPointShort(float floatVal, int n) {
-        return (short) (floatVal * (1 << n));
+        if (!Float.isFinite(floatVal))
+            throw new IllegalArgumentException("Cannot represent " + floatVal + " as a fixed-point value!");
+
+        int fixedPtValue = (int) (floatVal * (1 << n));
+        if (fixedPtValue < Short.MIN_VALUE || fixedPtValue > Short.MAX_VALUE) {
+            final int wholeNumberBitCount = (Constants.SHORT_SIZE * Constants.BITS_PER_BYTE) - n - 1;
+            throw new IllegalArgumentException("Cannot represent " + floatVal + " as a 1." + wholeNumberBitCount + "." + n + " fixed-point value!");
+        }
+
+        return (short) fixedPtValue;
     }
 
     /**
@@ -242,6 +251,12 @@ public class DataUtils {
      * @return intValue
      */
     public static int floatToFixedPointInt(float floatVal, int n) {
+        if (!Float.isFinite(floatVal))
+            throw new IllegalArgumentException("Cannot represent " + floatVal + " as a fixed-point value!");
+        final int wholeNumberBitCount = (Constants.INTEGER_SIZE * Constants.BITS_PER_BYTE) - n - 1;
+        if (floatVal >= (1 << wholeNumberBitCount) || floatVal < -(1 << wholeNumberBitCount))
+            throw new IllegalArgumentException("Cannot represent " + floatVal + " as a 1." + wholeNumberBitCount + "." + n + " fixed-point value!");
+
         return (int) (floatVal * (float) (1 << n));
     }
 

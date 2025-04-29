@@ -11,6 +11,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
@@ -114,7 +115,7 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
 
     @Override
     public void onSceneRemove(Scene oldScene) {
-        GUIMain.getActiveGameInstances().remove(getGameInstance()); // Window getting closed.
+        FrogLordApplication.getActiveGameInstances().remove(getGameInstance()); // Window getting closed.
         super.onSceneRemove(oldScene);
     }
 
@@ -174,7 +175,7 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
 
     @FXML
     private void actionLoadMain(ActionEvent evt) {
-        GUIMain.openLoadGameSettingsMenu();
+        FrogLordApplication.openLoadGameSettingsMenu();
     }
 
     @FXML

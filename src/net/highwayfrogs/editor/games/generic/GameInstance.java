@@ -5,8 +5,8 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.stage.Stage;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
@@ -127,8 +127,8 @@ public abstract class GameInstance implements IGameInstance {
         if (this.versionConfig != null)
             throw new IllegalStateException("Cannot load the game configuration '" + configName + "' because it has already been loaded.");
 
-        // Register to GUIMain and log.
-        GUIMain.getActiveGameInstances().add(this);
+        // Register to FrogLordApplication and log.
+        FrogLordApplication.getActiveGameInstances().add(this);
         getLogger().info("Hello! FrogLord is loading config '" + configName + "'.");
 
         // Setup.
@@ -182,8 +182,8 @@ public abstract class GameInstance implements IGameInstance {
         // Setup user config.
         this.config = instanceConfig;
 
-        // Register to GUIMain and log.
-        GUIMain.getActiveGameInstances().add(this);
+        // Register to FrogLordApplication and log.
+        FrogLordApplication.getActiveGameInstances().add(this);
         getLogger().info("Hello! FrogLord is loading config '" + config.getInternalName() + "'.");
 
         // Create & load config.

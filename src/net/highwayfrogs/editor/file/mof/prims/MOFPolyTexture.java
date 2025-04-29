@@ -10,11 +10,11 @@ import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
 import net.highwayfrogs.editor.file.mof.MOFPart;
 import net.highwayfrogs.editor.file.mof.view.MOFMesh;
-import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.system.TexturedPoly;
 import net.highwayfrogs.editor.utils.ColorUtils;
 

@@ -9,8 +9,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import lombok.Getter;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameInstance;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.GameConfigController;
 import net.highwayfrogs.editor.gui.GameConfigController.GameConfigUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
@@ -196,8 +196,8 @@ public abstract class FileOpenBrowseComponent extends GameUIController<GameInsta
         protected void onSetFilePath(String newFilePath) {
             if (this.gameConfig != null) {
                 this.gameConfig.getOrCreateKeyValueNode(this.configKey).setAsString(newFilePath);
-                if (GUIMain.getWorkingDirectory() != null)
-                    this.gameConfig.getOrCreateKeyValueNode(GameConfigController.CONFIG_GAME_LAST_FOLDER).setAsString(GUIMain.getWorkingDirectory().getAbsolutePath());
+                if (FrogLordApplication.getWorkingDirectory() != null)
+                    this.gameConfig.getOrCreateKeyValueNode(GameConfigController.CONFIG_GAME_LAST_FOLDER).setAsString(FrogLordApplication.getWorkingDirectory().getAbsolutePath());
             }
 
             this.controller.updateLoadButton();

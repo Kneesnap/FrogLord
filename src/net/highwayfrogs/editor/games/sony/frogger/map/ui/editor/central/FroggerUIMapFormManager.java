@@ -18,7 +18,7 @@ public class FroggerUIMapFormManager extends FroggerCentralMapListManager<Frogge
 
     @Override
     public String getTitle() {
-        return "Map Forms (Entity Grids)";
+        return "Entity Form Grids";
     }
 
     @Override

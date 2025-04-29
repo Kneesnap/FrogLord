@@ -5,10 +5,8 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack;
@@ -16,6 +14,9 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Implements the general data file packet.
@@ -184,9 +185,10 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
             FroggerMapFilePacketGrid gridPacket = getParentFile().getGridPacket();
             FroggerGridStack baseStack = gridPacket.getGridStack(this.startGridCoordX, this.startGridCoordZ);
             if (baseStack != null) {
-                IVector gridOrigin = new IVector(gridPacket.getWorldXFromGridX(this.startGridCoordX, true), -baseStack.getAverageWorldHeight(), gridPacket.getWorldZFromGridZ(this.startGridCoordZ, true));
-                editor.addFloatVector("Camera Source", this.defaultCameraSourceOffset, null, controller, gridOrigin.defaultBits(), gridOrigin, null);
-                editor.addFloatVector("Camera Target", this.defaultCameraTargetOffset, null, controller, gridOrigin.defaultBits(), gridOrigin, null);
+                int squareY = DataUtils.floatToFixedPointInt4Bit(baseStack.getHighestGridSquareYAsFloat());
+                IVector gridOrigin = new IVector(gridPacket.getWorldXFromGridX(this.startGridCoordX, true), squareY, gridPacket.getWorldZFromGridZ(this.startGridCoordZ, true));
+                editor.addFloatVector("Camera Source", this.defaultCameraSourceOffset, null, controller, gridOrigin.defaultBits(), gridOrigin, null, null);
+                editor.addFloatVector("Camera Target", this.defaultCameraTargetOffset, null, controller, gridOrigin.defaultBits(), gridOrigin, null, null);
             }
         }
 

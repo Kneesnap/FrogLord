@@ -6,7 +6,6 @@ import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.FroggerMapConfig;
-import net.highwayfrogs.editor.file.config.data.MAPLevel;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.map.MAPFile;
@@ -19,7 +18,7 @@ import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.FroggerMapLight;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquare;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquareFlag;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquareReaction;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMeshController;
@@ -39,6 +38,7 @@ import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.*;
+import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 import net.highwayfrogs.editor.utils.objects.IndexBitArray;
 
 import java.io.File;
@@ -59,14 +59,30 @@ import java.util.Random;
  *  5) Come up with a plan for how to make each UI as intuitive as possible. Incorporate 3D space as best as possible.
  *  6) Start work on the new Frogger terrain editor.
  *
- * TODO: It seems polygon highlighting still needs work, its usages like to make the map invisible and throw warnings.
  * TODO: We need to allow deselecting the current entry in the BasicList mesh view thing.
- * TODO: Fix grid manager selection box by making a selection menu based on GUIEditorGrid's selection box code. TODO: Also, create FXNodeUtils.java for this.
- * TODO: Fix saving wads / mofs.
  * TODO: Finish converting the rest of the old FrogLord code to the new standards.
  * TODO: Build 7/8/11/17/18/19 -> GENERIC.VH FAILURE
  * TODO: It seems like gouraud shading is used significantly more than flat shading. How possible is it that the editor was gouraud primarily, and just created flat polygons whenever a gouraud polygon would be unnecessary to render in gouraud mode? Study maps to figure that one out. (The walls in desert levels make me question this idea)
- * TODO: Test modding the PC version still works when all is said & done.
+ *
+ * TODO: Future Editor Notes
+ *  - When Frogger started, PSX Alpha shows their collision grid only supported quads, not tris.
+ *  - Nearly all of the game is quads, but there are places that non-model tri's are used.
+ *  - We'll need a way to configure textures, both when placing new polygons and updating existing ones. (Paint texture sheet onto tiles, Stretch single texture, repeat single texture, etc.)
+ *  - Go through vanilla VLOs to find textures that should be treated as a whole.
+ *  - They had the ability to auto-generate geometric shapes. For example, in Reservoir Frogs, the pipes are clearly cylinders where they stated "I would like 5 grid-squares worth of cylinder pls", then they moved the vertices down to deform the shape.
+ *   -> Another example of where I think this was used are the branches on the tree on the ground in FOR2.
+ *  - It seems all the operations necessary to modify Frogger map geometry can be done with the existing format, EXCEPT lighting.
+ *  - Another important tool is the angler. Take a plane, 3D model, whatever. Really just a collection of vertices. Specify which axis you'd like to angle, then how much slope you'd like to apply. The Y value of each vertex will be changed up/down until reaching the end of the vertices in the desired axis.
+ *   -> This is how JUNGLE was angled, and how SKIING was angled. Probably also how the slime sliding pipes were angled.
+ *   -> There may have been a spline component to this too, as the bridge in FOR2 seems like that was feasible. Either that or it was angled by hand. Also feasible for something that small.
+ *  - The grid is absolute, meaning grid squares cannot be arbitrarily sized. I think this means that the maximum vertex offset in XZ from its grid square is either .25 or .5 * size of square. Do an automated scan of each level's collision grid polygons to see if this is true.
+ *   -> The limit appears to be 0.5 for USABLE_SAFE grid squares, and potentially 1.25 for everything else.
+ *  - Have a UI where in the grid editor to add a new plane into the world. It should be perfectly aligned to grid tile coordinates, and allow changing the Y in the 3D world with a gizmo. Example of what that would add would be the leaves near the red frog in FOR2.
+ *  - Allow placing a single texture into the map as a single polygon of specified grid size. Then, have a way to optionally split such textures into grid squares. (See FOR2.MAP's floor)
+ *
+ * TODO: Grid Editor Plans:
+ *  - The plan eventually is to have it possible to use a selection rectangle (just like blender) to select multiple polygons at once
+ *   - then you could click a button "add all selected polygons to grid" and it'll automatically place them in the right places
  * Created by Kneesnap on 8/22/2018.
  */
 public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
@@ -116,7 +132,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
 
     @Override
     public Image getCollectionViewIcon() {
-        MAPLevel level = MAPLevel.getByName(getFileDisplayName());
+        FroggerMapLevelID level = getMapLevelID();
 
         // Find level image, or create it if it's not found.
         Image levelImage = getGameInstance().getLevelImageMap().get(level);
@@ -235,65 +251,71 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
     public void randomizeMap(final int xTileCount, final int zTileCount) {
         this.generalPacket.setStartRotation(FroggerMapStartRotation.NORTH);
         this.generalPacket.setStartingTimeLimit(99);
-        this.generalPacket.getDefaultCameraSourceOffset().setValues((short) 0, (short) -50, (short) 3);
+        this.generalPacket.getDefaultCameraSourceOffset().setValues(0F, -100F, -25F);
         this.generalPacket.getDefaultCameraTargetOffset().clear();
 
         this.pathPacket.getPaths().clear();
         this.zonePacket.getZones().clear();
         this.formPacket.getForms().clear();
-        this.entityPacket.getEntities().clear();
+        this.entityPacket.clear();
         this.lightPacket.getLights().clear();
         this.vertexPacket.getVertices().clear();
         this.animationPacket.getAnimations().clear();
         this.polygonPacket.clearPolygons();
-        this.gridPacket.resizeGrid(xTileCount + 2, zTileCount + 2); // Add two, so we can have a border surrounding the map.
+        this.gridPacket.clear(); // The resized grid should be empty.
+        this.gridPacket.resizeGrid(xTileCount, zTileCount); // Add two, so we can have a border surrounding the map.
         this.generalPacket.setStartGridCoordX((xTileCount / 2) + 1);
         this.generalPacket.setStartGridCoordZ(1);
 
         // Create stacks.
         Random random = new Random();
-        float xSize = DataUtils.fixedPointShortToFloat4Bit(this.gridPacket.getGridXSize());
-        float zSize = DataUtils.fixedPointShortToFloat4Bit(this.gridPacket.getGridZSize());
-        float baseX = DataUtils.fixedPointShortToFloat4Bit(this.gridPacket.getBaseGridX());
-        float baseZ = DataUtils.fixedPointShortToFloat4Bit(this.gridPacket.getBaseGridZ());
-        for (int z = 0; z < this.gridPacket.getGridZCount(); z++) {
-            for (int x = 0; x < this.gridPacket.getGridXCount(); x++) {
-                FroggerGridStack gridStack = this.gridPacket.getGridStack(x, z);
-                gridStack.getGridSquares().clear();
-                gridStack.setAverageWorldHeight(0);
-                if (x == 0 || x == this.gridPacket.getGridXCount() - 1 || z == 0 || z == this.gridPacket.getGridZCount() - 1)
-                    continue; // No squares around edges.
+        int[] colorPalette = new int[zTileCount];
+        int midIndex = (zTileCount / 2) + (zTileCount % 2);
+        for (int i = 0; i < midIndex; i++)
+            colorPalette[i] = random.nextInt(0x1000000);
+        for (int i = midIndex; i < colorPalette.length; i++)
+            colorPalette[i] = colorPalette[colorPalette.length - i - 1];
 
-                SVector topLeft = new SVector(baseX + (x * xSize), 0, baseZ + (z + 1) * zSize);
-                SVector topRight = new SVector(baseX + (x + 1) * xSize, 0, baseZ + (z + 1) * zSize);
-                SVector botLeft = new SVector(baseX + x * xSize, 0, baseZ + z * zSize);
-                SVector botRight = new SVector(baseX + (x + 1) * xSize, 0, baseZ + z * zSize);
+        short xSize = this.gridPacket.getGridXSize();
+        short zSize = this.gridPacket.getGridZSize();
+        short baseX = this.gridPacket.getBaseGridX();
+        short baseZ = this.gridPacket.getBaseGridZ();
+        for (int z = 0; z <= this.gridPacket.getGridZCount(); z++) {
+            for (int x = 0; x <= this.gridPacket.getGridXCount(); x++) {
+                int bottomLeftIndex = this.vertexPacket.getVertices().size();
+                this.vertexPacket.getVertices().add(new SVector(baseX + x * xSize, 0, baseZ + z * zSize));
+                int bottomRightIndex = bottomLeftIndex + 1;
+                int topLeftIndex = bottomLeftIndex + xTileCount + 1;
+                int topRightIndex = bottomRightIndex + xTileCount + 1;
 
-                int leftIndex = this.vertexPacket.getVertices().size();
-                this.vertexPacket.getVertices().add(topLeft);
-                this.vertexPacket.getVertices().add(topRight);
-                this.vertexPacket.getVertices().add(botLeft);
-                this.vertexPacket.getVertices().add(botRight);
-                FroggerMapPolygon polyF4 = new FroggerMapPolygon(this, FroggerMapPolygonType.F4);
-                polyF4.setVisible(true);
-                polyF4.getColors()[0].fromCRGB(0xFF000000 | random.nextInt(0x1000000));
-                polyF4.getVertices()[0] = leftIndex;
-                polyF4.getVertices()[1] = leftIndex + 1;
-                polyF4.getVertices()[2] = leftIndex + 3; // Swapped with the next one to make work.
-                polyF4.getVertices()[3] = leftIndex + 2;
-                this.polygonPacket.addPolygon(polyF4);
+                // Add polygon unless we're generating the final row of vertices.
+                if (x < this.gridPacket.getGridXCount() && z < this.gridPacket.getGridZCount()) {
+                    FroggerGridStack gridStack = this.gridPacket.getGridStack(x, z);
+                    gridStack.getGridSquares().clear();
+                    gridStack.setCliffHeight(0F);
 
-                FroggerGridSquare newSquare = new FroggerGridSquare(gridStack, polyF4);
-                newSquare.setFlag(FroggerGridSquareFlag.USABLE, true);
-                newSquare.setFlag(FroggerGridSquareFlag.SAFE, true);
-                gridStack.getGridSquares().add(newSquare);
+                    FroggerMapPolygon polyF4 = new FroggerMapPolygon(this, FroggerMapPolygonType.F4);
+                    polyF4.setVisible(true);
+
+                    int colorIndex = (z + Math.abs((x - (xTileCount / 2)) / 4)) % colorPalette.length;
+                    polyF4.getColors()[0].fromCRGB(0xFF000000 | colorPalette[colorIndex]);
+                    polyF4.getVertices()[0] = topLeftIndex;
+                    polyF4.getVertices()[1] = topRightIndex;
+                    polyF4.getVertices()[2] = bottomLeftIndex;
+                    polyF4.getVertices()[3] = bottomRightIndex;
+                    this.polygonPacket.addPolygon(polyF4);
+
+                    FroggerGridSquare newSquare = new FroggerGridSquare(gridStack, polyF4);
+                    newSquare.setReaction(FroggerGridSquareReaction.SAFE);
+                    gridStack.getGridSquares().add(newSquare);
+                }
             }
         }
 
         // Add Lights (Makes sure models get colored in):
         FroggerMapLight light1 = new FroggerMapLight(this, MRLightType.PARALLEL);
         light1.setColor(ColorUtils.toBGR(Color.WHITE));
-        light1.getDirection().setValues(-140.375F, 208.375F, 48.125F, 4);
+        light1.getDirection().setValues(-140.375F, 208.375F, 48.125F);
         this.lightPacket.getLights().add(light1);
 
         FroggerMapLight light2 = new FroggerMapLight(this, MRLightType.AMBIENT);
@@ -301,13 +323,8 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
         this.lightPacket.getLights().add(light2);
 
         // Setup Group:
-        this.groupPacket.getBasePoint().setX((short) -((xTileCount / 2) + 1));
-        this.groupPacket.getBasePoint().setZ((short) -((zTileCount / 2) + 1));
-
-        this.groupPacket.setGroupXCount((short) (1 + (xTileCount / (this.groupPacket.getGroupXSize() / this.gridPacket.getGridXSize()))));
-        this.groupPacket.setGroupZCount((short) (1 + (zTileCount / (this.groupPacket.getGroupZSize() / this.gridPacket.getGridZSize()))));
-
-        getLogger().info("Scrambled the map file.");
+        this.groupPacket.generateMapGroups(ProblemResponse.CREATE_POPUP, true);
+        getLogger().info("Cleared the map, its new size is %dx%d.", xTileCount, zTileCount);
     }
 
     /**
@@ -382,6 +399,13 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
      */
     public boolean isEarlyMapFormat() {
         return getConfig().isAtOrBeforeBuild1() || isQB() || isIslandOrIslandPlaceholder();
+    }
+
+    /**
+     * Gets the hardcoded map level ID for the level, if one exists.
+     */
+    public FroggerMapLevelID getMapLevelID() {
+        return FroggerMapLevelID.getByName(getFileDisplayName());
     }
 
     @Override

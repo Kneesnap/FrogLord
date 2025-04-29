@@ -1,8 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
 import javafx.scene.control.Alert.AlertType;
-import net.highwayfrogs.editor.file.writer.ArrayReceiver;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxAttributes;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxEntry;
@@ -26,6 +24,8 @@ import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.MessageTrackingLogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;

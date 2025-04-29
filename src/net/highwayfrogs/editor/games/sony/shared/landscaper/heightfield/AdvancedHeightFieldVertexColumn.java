@@ -1,12 +1,12 @@
 package net.highwayfrogs.editor.games.sony.shared.landscaper.heightfield;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.shared.landscaper.Landscape;
 import net.highwayfrogs.editor.games.sony.shared.landscaper.LandscapeVertex;
 import net.highwayfrogs.editor.system.math.Vector3f;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.Collections;

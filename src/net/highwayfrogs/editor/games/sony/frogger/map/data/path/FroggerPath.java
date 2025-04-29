@@ -2,12 +2,13 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.path;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.file.standard.IVector;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathInfo.FroggerPathMotionType;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.segments.FroggerPathSegment;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketPath;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapPathManager.FroggerPathPreview;
@@ -15,11 +16,14 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Represents the PATH struct.
@@ -28,7 +32,7 @@ import java.util.List;
 public class FroggerPath extends SCGameData<FroggerGameInstance> {
     @Getter private final FroggerMapFile mapFile;
     @Getter private final List<FroggerPathSegment> segments = new ArrayList<>();
-    @Getter private final List<FroggerMapEntity> pathEntities = new ArrayList<>(); // Sorted by entity index. TODO: ADD / REMOVE AUTOMATICALLY..?
+    @Getter private final List<FroggerMapEntity> pathEntities = new ArrayList<>(); // Sorted by entity index.
     private transient int tempEntityIndexPointer = -1;
 
     private static final short ENTITY_LIST_TERMINATOR = -1;
@@ -109,7 +113,6 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
             warnEntityListMismatch(pathEntityIds);
         }
 
-
         this.tempEntityIndexPointer = -1;
     }
 
@@ -188,6 +191,53 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
     }
 
     /**
+     * Flip the direction of the full path.
+     */
+    public void flip() {
+        // Flip segment direction, and calculate segment distances.
+        int pathLength = 0;
+        int segmentCount = this.segments.size();
+        int[] segmentDistances = new int[segmentCount];
+        for (int i = 0; i < segmentCount; i++) {
+            segmentDistances[i] = pathLength;
+
+            FroggerPathSegment segment = this.segments.get(i);
+            pathLength += segment.getLength();
+            segment.flip();
+        }
+
+        // Reverse segment order.
+        for (int i = 0; i < segmentCount >> 1; i++) {
+            FroggerPathSegment temp = this.segments.get(segmentCount - i - 1);
+            this.segments.set(segmentCount - i - 1, this.segments.get(i));
+            this.segments.set(i, temp);
+        }
+
+        // Reverse entity paths.
+        for (int i = 0; i < this.pathEntities.size(); i++) {
+            FroggerPathInfo pathInfo = this.pathEntities.get(i).getPathInfo();
+            if (pathInfo == null)
+                continue;
+
+            int totalDistance = segmentDistances[pathInfo.getSegmentId()] + pathInfo.getSegmentDistance();
+            pathInfo.setTotalPathDistance(pathLength - totalDistance, false);
+        }
+    }
+
+    /**
+     * Creates a copy of the path. Does not keep any of the attached entities.
+     */
+    public FroggerPath clone() {
+        FroggerPath newPath = new FroggerPath(this.mapFile);
+        for (int i = 0; i < this.segments.size(); i++) {
+            FroggerPathSegment oldSegment = this.segments.get(i);
+            newPath.segments.add(oldSegment.clone(newPath));
+        }
+
+        return newPath;
+    }
+
+    /**
      * Recalculate the list of entities using this path.
      */
     public List<FroggerMapEntity> recalculateListOfEntitiesUsingPath() {
@@ -231,6 +281,35 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
      * @param editor The editor to setup under.
      */
     public void setupEditor(FroggerPathPreview pathPreview, GUIEditorGrid editor) {
+        // The Move All control allows you to move every path segment all at once
+        // Useful in conjunction with the Copy Path button
+        if (!this.segments.isEmpty()) {
+            SVector currPosition = this.segments.get(0).getStartPosition().clone();
+            SVector lastPosition = currPosition.clone();
+            AtomicInteger nodesToKeepRef = new AtomicInteger(editor.getGridPane().getChildren().size() + 2);
+            editor.addFloatVector("Move Path", currPosition, () -> {
+                SVector delta = currPosition.clone().subtract(lastPosition);
+                for (int i = 0; i < this.segments.size(); i++)
+                    this.segments.get(i).moveDelta(delta);
+
+                // The values seen in the UI are now invalid. If we were to update them again, it would be so slow as to be impossible to use.
+                // If we left it alone, the user might accidentally apply old data again.
+                int nodesToKeep = nodesToKeepRef.get();
+                if (editor.getGridPane().getChildren().size() > nodesToKeep) {
+                    editor.getGridPane().getChildren().remove(nodesToKeep, editor.getGridPane().getChildren().size());
+
+                    // Create a button to manually refresh the UI once the user is done.
+                    nodesToKeepRef.incrementAndGet();
+                    editor.addButton("Show Path Data", pathPreview.getPathManager()::updateEditor);
+                }
+
+                lastPosition.setValues(currPosition);
+                this.pathEntities.forEach(pathPreview.getController().getEntityManager()::updateEntityPositionRotation);
+                pathPreview.updatePath(); // Update path.
+            }, pathPreview.getController());
+            nodesToKeepRef.set(editor.getGridPane().getChildren().size());
+        }
+
         for (int i = 0; i < this.segments.size(); i++) {
             final int tempIndex = i;
 
@@ -238,10 +317,7 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
                 this.segments.remove(tempIndex);
 
                 // Fix entities attached to segments after this.
-                for (FroggerMapEntity entity : this.mapFile.getEntityPacket().getEntities()) {
-                    if (entity.getPathInfo() == null)
-                        continue;
-
+                for (FroggerMapEntity entity : this.pathEntities) {
                     FroggerPathInfo info = entity.getPathInfo();
                     if (info.getSegmentId() > tempIndex) {
                         info.setSegmentId(info.getSegmentId() - 1);
@@ -256,6 +332,7 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
                 }
 
                 pathPreview.getPathManager().updateEditor();
+                pathPreview.updatePath(); // Remove view.
             });
 
             this.segments.get(i).setupEditor(pathPreview, editor);
@@ -267,6 +344,7 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
             newSegment.setupNewSegment();
             this.segments.add(newSegment);
             pathPreview.getPathManager().updateEditor();
+            pathPreview.updatePath(); // Show new segment.
         }, FroggerPathSegmentType.values(), FroggerPathSegmentType.LINE);
     }
 
@@ -276,7 +354,17 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
      * @return finishedPosition
      */
     public FroggerPathResult evaluatePosition(FroggerPathInfo pathInfo) {
-        return this.segments.get(pathInfo.getSegmentId()).calculatePosition(pathInfo);
+        FroggerPathResult pathResult = this.segments.get(pathInfo.getSegmentId()).calculatePosition(pathInfo);
+
+        // PATH.C/EvaluatePathRunnerPosition
+        if (pathInfo.testFlag(FroggerPathMotionType.BACKWARDS)) {
+            IVector rotation = pathResult.getRotation();
+            rotation.setX(-rotation.getX());
+            rotation.setY(-rotation.getY());
+            rotation.setZ(-rotation.getZ());
+        }
+
+        return pathResult;
     }
 
     /**

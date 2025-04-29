@@ -2,12 +2,13 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.grid;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.FroggerMapGroup;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -25,7 +26,7 @@ import java.util.List;
 @Getter
 public class FroggerGridSquare extends SCGameData<FroggerGameInstance> {
     private final FroggerGridStack gridStack;
-    private int flags;
+    @Setter private int flags;
     @Setter private FroggerMapPolygon polygon;
 
     public FroggerGridSquare(FroggerGridStack gridStack) {
@@ -66,21 +67,55 @@ public class FroggerGridSquare extends SCGameData<FroggerGameInstance> {
         // Write polygon pointer after validating the polygon is registered & was written.
         if (this.polygon == null || this.polygon.getLastWriteAddress() <= 0)
             throw new RuntimeException("A FroggerGridSquare's polygon was not saved! Most likely it was not registered to the map! (" + getLoggerInfo() + ")");
-        if (Collections.binarySearch(getMapFile().getPolygonPacket().getPolygonsByType(this.polygon.getPolygonType()), this.polygon, Comparator.comparingInt(FroggerMapPolygon::getLastWriteAddress)) < 0)
+
+        // Ensure the polygon was written.
+        FroggerMapGroup mapGroup = getMapFile().getGroupPacket().getMapGroup(this.polygon);
+        if (Collections.binarySearch(mapGroup.getPolygonsByType(this.polygon.getPolygonType()), this.polygon, Comparator.comparingInt(FroggerMapPolygon::getLastWriteAddress)) < 0)
             throw new RuntimeException("A FroggerGridSquare's polygon was not saved! Most likely it was not registered to the map! (" + getLoggerInfo() + ")");
+
         writer.writeInt(this.polygon.getLastWriteAddress());
+    }
+
+    /**
+     * Get the ID of the square within the stack that holds this square.
+     */
+    public int getLayerID() {
+        return this.gridStack.getGridSquares().indexOf(this);
     }
 
     /**
      * Gets the logger information.
      */
     public String getLoggerInfo() {
-        return this.gridStack != null ? (this.gridStack.getLoggerInfo() + ",Layer=" + this.gridStack.getGridSquares().indexOf(this)) : Utils.getSimpleName(this);
+        return this.gridStack != null ? (this.gridStack.getLoggerInfo() + ",Layer=" + getLayerID()) : Utils.getSimpleName(this);
     }
 
     @Override
     public ILogger getLogger() {
         return new LazyInstanceLogger(getGameInstance(), FroggerGridSquare::getLoggerInfo, this);
+    }
+
+    /**
+     * Gets the simplified reaction used to represent the grid square flags, if there is a simple reaction which can be used for the current flags.
+     */
+    public FroggerGridSquareReaction getReaction() {
+        return FroggerGridSquareReaction.getReactionFromFlags(this.flags);
+    }
+
+    /**
+     * Applies the reaction used to the grid square flags.
+     * @param newReaction the reaction to apply
+     */
+    public void setReaction(FroggerGridSquareReaction newReaction) {
+        if (newReaction == null)
+            throw new NullPointerException("newReaction");
+
+        FroggerGridSquareReaction oldReaction = getReaction();
+        if (oldReaction == newReaction)
+            return;
+
+        this.flags &= ~FroggerGridSquareReaction.REACTION_BIT_MASK;
+        this.flags |= newReaction.getGridSquareFlagBitMask();
     }
 
     /**
@@ -123,7 +158,7 @@ public class FroggerGridSquare extends SCGameData<FroggerGameInstance> {
     }
 
     /**
-     * Calculates the average world height.
+     * Calculates the average world height. Equivalent to GetGridSquareHeight()
      * @return averageWorldHeight
      */
     public int calculateAverageWorldHeight() {
@@ -132,6 +167,13 @@ public class FroggerGridSquare extends SCGameData<FroggerGameInstance> {
         int vertexCount = this.polygon.getVertexCount();
         for (int i = 0; i < vertexCount; i++)
             worldHeight += vertices.get(this.polygon.getVertices()[i]).getY();
+
+        // Triangles are treated as quads for the purposes of grid calculations.
+        // Using the last vertex is validated as good by the warnings that will display if the data doesn't match this pattern when read.
+        if (vertexCount == 3) {
+            worldHeight += vertices.get(this.polygon.getVertices()[vertexCount - 1]).getY();
+            vertexCount++;
+        }
 
         return worldHeight / vertexCount;
     }

@@ -98,7 +98,7 @@ public class MediEvilEntityManager extends MediEvilMapListManager<MediEvilMapEnt
 
             // Update material.
             TextureMap textureSheet = modelMesh.getTextureMap();
-            entityMesh.setMaterial((getSelectedValue() == entity) ? textureSheet.getDiffuseHighlightedMaterial() : textureSheet.getDiffuseMaterial());
+            entityMesh.setMaterial((getSelectedValue() == entity) ? textureSheet.getLitHighlightedMaterial() : textureSheet.getUnlitSharpMaterial());
             return;
         }
 

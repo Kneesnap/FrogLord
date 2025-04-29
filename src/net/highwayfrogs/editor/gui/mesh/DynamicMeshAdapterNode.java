@@ -12,15 +12,12 @@ import java.util.Map;
  * Created by Kneesnap on 9/25/2023.
  */
 public abstract class DynamicMeshAdapterNode<TDataSource> extends DynamicMeshNode {
-    @Getter private final DynamicMesh mesh;
     private final Map<TDataSource, DynamicMeshTypedDataEntry> entriesByDataSource = new HashMap<>();
 
     public DynamicMeshAdapterNode(DynamicMesh mesh) {
         super(mesh);
         if (mesh == null)
             throw new NullPointerException("mesh");
-
-        this.mesh = mesh;
     }
 
     @Override

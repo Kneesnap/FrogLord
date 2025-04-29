@@ -48,6 +48,7 @@ public class TextureMap extends SCSharedGameObject {
     private final VLOArchive vloArchive;
     private final List<Short> remapList;
     private PhongMaterial material;
+    private PhongMaterial litMaterial;
     private PhongMaterial highlightedMaterial;
     private final TextureTree textureTree;
     @Setter private ShadingMode mode;
@@ -101,10 +102,10 @@ public class TextureMap extends SCSharedGameObject {
     }
 
     /**
-     * Gets the 3D PhongMaterial (diffuse components only, affected by lighting).
+     * Gets the 3D PhongMaterial (diffuse components only, NOT affected by lighting).
      * @return phongMaterial
      */
-    public PhongMaterial getDiffuseMaterial() {
+    public PhongMaterial getUnlitSharpMaterial() {
         if (this.material == null)
             this.material = Scene3DUtils.makeUnlitSharpMaterial(FXUtils.toFXImage(getTextureTree().getImage(), false));
         return this.material;
@@ -137,7 +138,18 @@ public class TextureMap extends SCSharedGameObject {
      * Gets the 3D PhongMaterial (diffuse components only, affected by lighting).
      * @return phongMaterial
      */
-    public PhongMaterial getDiffuseHighlightedMaterial() {
+    public PhongMaterial getBlurryLitMaterial() {
+        if (this.litMaterial == null)
+            this.litMaterial = Scene3DUtils.makeLitBlurryMaterial(FXUtils.toFXImage(getTextureTree().getImage(), false));
+
+        return this.litMaterial;
+    }
+
+    /**
+     * Gets the 3D PhongMaterial (diffuse components only, affected by lighting).
+     * @return phongMaterial
+     */
+    public PhongMaterial getLitHighlightedMaterial() {
         if (this.highlightedMaterial == null)
             this.highlightedMaterial = Scene3DUtils.makeLitBlurryMaterial(FXUtils.toFXImage(makeHighlightedImage(), false));
 
@@ -155,6 +167,12 @@ public class TextureMap extends SCSharedGameObject {
             Image image = FXUtils.toFXImage(getTextureTree().getImage(), false);
             this.material.setDiffuseMap(image);
             this.material.setSpecularMap(image); // Fixes polygon lighting.
+        }
+
+        if (this.litMaterial != null) {
+            Image image = FXUtils.toFXImage(getTextureTree().getImage(), false);
+            this.litMaterial.setDiffuseMap(image); // Fixes polygon lighting.
+            this.litMaterial.setSpecularMap(image); // Fixes polygon lighting.
         }
 
         if (this.highlightedMaterial != null) {

@@ -6,6 +6,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.zone.FroggerMapCameraZone;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGeneral;
@@ -18,7 +19,6 @@ import net.highwayfrogs.editor.utils.DataUtils;
 
 /**
  * Controls a Frogger map mesh.
- * TODO: It'd be very nice to get SKY_LAND rendering under the sky maps. We can hardcode the colors to use for each map.
  * Created by Kneesnap on 5/28/2024.
  */
 @Getter
@@ -28,6 +28,7 @@ public class FroggerMapMeshController extends MeshViewController<FroggerMapMesh>
     private FroggerUIMapAnimationManager animationManager;
     private FroggerUIMapEntityManager entityManager;
     private FroggerUIMapPathManager pathManager;
+    private FroggerUIMapLightManager lightManager;
 
     public FroggerMapMeshController(FroggerGameInstance instance) {
         super(instance);
@@ -41,6 +42,8 @@ public class FroggerMapMeshController extends MeshViewController<FroggerMapMesh>
     @Override
     public void setupBindings(SubScene subScene3D, MeshView meshView) {
         super.setupBindings(subScene3D, meshView);
+        if (getMapFile().getMapTheme() == FroggerMapTheme.SKY) // Extend view area to cover SKY LAND.
+            getFirstPersonCamera().getCamera().setFarClip(getFirstPersonCamera().getCamera().getFarClip() * 1.5);
         getMainLight().getScope().add(getMeshView());
         getMainLight().getScope().addAll(getAxisDisplayList().getNodes());
         this.generalManager.getSidePanel().requestFocus();
@@ -53,7 +56,7 @@ public class FroggerMapMeshController extends MeshViewController<FroggerMapMesh>
         addManager(this.entityManager = new FroggerUIMapEntityManager(this));
         addManager(new FroggerUIMapFormManager(this));
         addManager(this.pathManager = new FroggerUIMapPathManager(this));
-        addManager(new FroggerUIMapLightManager(this));
+        addManager(this.lightManager = new FroggerUIMapLightManager(this));
         addManager(this.animationManager = new FroggerUIMapAnimationManager(this));
     }
 

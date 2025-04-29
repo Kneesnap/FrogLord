@@ -1,8 +1,8 @@
-# Great Quest Scripting (GQS)
+# kcScript (Great Quest Scripting)
 Frogger: The Great Quest has most of its "story"/per-level occurrences managed entirely through a scripting system.
 This system gives tons of flexibility to create mods since this lets us change almost all level behavior.  
 This scripting system is NOT the same thing as Noodle, which is the FrogLord scripting system.
-Instead, GQS/kcScript is a term we made for the scripting system found in the original Frogger: The Great Quest, as the official/original name is not known.
+Instead, `kcScript` is a term we made for the scripting system found in the original Frogger: The Great Quest, as the official/original name is not known.
 
 ## The Basics
 Each entity in a level can have a script, for example Frogger, coins, etc.
@@ -13,14 +13,14 @@ On the other hand, effects are the commands which can impact the game, such as b
 The following example would play a sound effect when the level loads.
 
 **Example:**  
-```PowerShell
-[Function]
+```powershell
+[Function] # When writing scripts, make sure the correct number of square brackets are used. (It'll usually be more than the one used here)
 cause=OnLevel BEGIN
 PlaySound "sfx/level_start_sfx"
 # More script effects could be written here if desired.
 ```  
 
-Because scripts belong to individual entities, they are considered to execute/run "as" that entity.
+Since scripts belong to individual entities, they execute *as* that entity.
 For example, if you use the `SetSequence` effect to cause an entity to animate, by default it will apply the animation to the entity which the script is written for.
 In order to specify you'd like to run it on a different entity, supply an extra flag `--AsEntity <String: entityName>`.
 For example, `SetSequence "NrmIdle01" --AsEntity "FrogInst001"` will run `SetSequence` as the player character, instead of the script owner.
@@ -31,20 +31,15 @@ But with the addition of `--AsEntity`, the term "script owner" now may instead r
 The easiest way to get started is by looking at examples. To export scripts from the original game, select a level in FrogLord, and find the chunk named `scriptdata`.
 By right-clicking it and selecting "Export Scripts" you'll be able to specify a folder to save the scripts to.
 Make sure to use a different folder for each level you export scripts for to avoid confusion and overriding files with the same name.
-While these files have a `.gqs` extension, they are just text files, and can be opened in any text editor.  
-The recommended editor is Visual Studio Code, with the "Shell" syntax highlighting.  
-Other text editors such as Notepad++ can be used, for which we recommend using either "Shell" or "PowerShell" syntax highlighting.  
+Scripts can be re-imported back into FrogLord by writing them in [GQS Files](./modding-gqs-file.md), and importing them like any other GQS file.  
+It is recommended to split up the scripts for a level into multiple different files for organizational purposes.
 
-Even though it would be possible to make changes to these scripts and then re-import them by right-clicking `scriptdata` and selecting "Import Scripts", this is not recommended.  
-Since [mods must follow this guide](modding-guide.md), the recommended method for modifying scripts is by creating **GQS Script Groups**.  
-
-### GQS Script Groups
-GQS Script Group files are designed to organize GQS scripts.  
-They reduce the number of files necessary when making a script by allowing separate resources such as entities, dialog text, script functions, and others to be included in a single file.
-
+### GQS Example
 ```PowerShell
 # The following section contains the text/string resources which can be used as dialog text.
 # The quotes are optional, but help make syntax highlighters display this file more cleanly.
+# Information about GQS files in general are available in the GQS file documentation.
+# This example demonstrates how different parts of GQS files can be necessary for scripts to work.
 [Dialog]
 FFM_DIALOG_001="This is an example, which could be displayed in-game as dialog." # Shown in-game with 'ShowDialog "FFM_DIALOG_001"'.
 
@@ -65,7 +60,7 @@ FFM_DIALOG_001="This is an example, which could be displayed in-game as dialog."
 
 [Scripts]
 # This section contains scripts.
-# The scripts are added to existing entity scripts, meaning if an entity can have parts of its script spread across different GQS Script groups.
+# The scripts are added to existing entity scripts, meaning if an entity can have parts of its script spread across different GQS files.
 
 [[FrogmotherInst001]] # The name of the entity to add script functions to.
 [[[Function]]] # Define a new function for Fairy FrogMotherInst001. (Note the 3 square brackets).
@@ -73,8 +68,10 @@ cause=OnPlayer INTERACT # When the player interacts with Fairy Frogmother.
 ShowDialog "FFM_DIALOG_001" # Shows the dialog defined earlier to the player.
 ```
 
-#### How to use GQS Script Groups in Noodle?
-TODO: Include some information on how to manage scripts with Noodle.
+> [!NOTE]
+> When writing `.gqs` files, sections are grouped using square brackets.  
+> The number of brackets corresponds to how deeply nested the data is, similar to folders within folders.  
+> For further information on writing configuration files see [the documentation](../../froglord/config-files.md).
 
 ## Design Quirks
 There is no concept of an if statement, so controlling execution flow can be a bit annoying.
@@ -531,7 +528,7 @@ However, this will not work. In-game this would show a dialog box with the text 
 This is because `ShowDialog` is expecting the name of a text resource containing the dialog text, and not the dialog text itself.  
 So, `ShowDialog "DIALOG_004"` would work if there is a text resource named `DIALOG_004` in the level.  
 This allowed the original team to translate the game into multiple languages without having to copy the scripts for every single language.  
-Instructions for adding text/string resources are in the `GQS Script Group` documentation near the start of this file.  
+Instructions for adding text/string resources are in the documentation near the start of this file, but can also be found [here](./modding-gqs-file.md)  
 
 ### SetAlarm (Both)
 **Summary:** Sets an alarm to ring (Script Cause: `OnAlarm`) after a delay.  

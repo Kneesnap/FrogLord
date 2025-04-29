@@ -10,9 +10,7 @@ import javafx.scene.transform.Translate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
@@ -20,6 +18,8 @@ import net.highwayfrogs.editor.gui.editor.BasicListMeshUIManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.text.DecimalFormat;
 
@@ -93,7 +93,7 @@ public class MediEvilMapCollprim extends SCGameData<MediEvilGameInstance> {
         grid.addMeshMatrix(this.matrix, manager.getController(), () -> {
             updateBoxPosition(box);
             updateBoxRotation(box);
-        }, true);
+        }, true, null);
 
         Label radiusLabel = grid.addLabel("Radius (Normal, Sq)", getRadiusLabelText());
 

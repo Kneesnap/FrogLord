@@ -27,6 +27,7 @@ import javafx.util.Duration;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
@@ -51,7 +52,6 @@ import net.highwayfrogs.editor.games.sony.shared.collprim.MRCollprim;
 import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.editor.RenderManager;
 import net.highwayfrogs.editor.gui.mesh.MeshData;
@@ -138,7 +138,7 @@ public class MOFController extends SCFileEditorUIController<SCGameInstance, MOFH
         this.rotZ = new Rotate(0, Rotate.Z_AXIS);
         meshView.getTransforms().addAll(rotX, rotY, rotZ);
 
-        meshView.setMaterial(getMofMesh().getTextureMap().getDiffuseMaterial());
+        meshView.setMaterial(getMofMesh().getTextureMap().getUnlitSharpMaterial());
         meshView.setCullFace(CullFace.NONE);
 
         // Create a perspective camera through which the 3D view is realised.
@@ -200,7 +200,7 @@ public class MOFController extends SCFileEditorUIController<SCGameInstance, MOFH
 
             if (event.getCode() == KeyCode.S && event.isControlDown()) { // Save the texture map.
                 try {
-                    ImageIO.write(getMofMesh().getTextureMap().getTextureTree().getImage(), "png", new File(GUIMain.getWorkingDirectory(), "texMap-" + FileUtils.stripExtension(getMofMesh().getMofHolder().getFileDisplayName()) + ".png"));
+                    ImageIO.write(getMofMesh().getTextureMap().getTextureTree().getImage(), "png", new File(FrogLordApplication.getWorkingDirectory(), "texMap-" + FileUtils.stripExtension(getMofMesh().getMofHolder().getFileDisplayName()) + ".png"));
                 } catch (IOException ex) {
                     Utils.handleError(getLogger(), ex, true, "Failed to save texture sheet.");
                 }
@@ -778,7 +778,7 @@ public class MOFController extends SCFileEditorUIController<SCGameInstance, MOFH
             frameSlider.setMin(0);
             frameSlider.setBlockIncrement(1);
             frameSlider.setMinorTickCount(1);
-            frameSlider.setSnapToTicks(true);
+            frameSlider.setSnapToTicks(frameSlider.getMax() <= 30); // It gets in the way of functionality if this is enabled when there are tons of frames.
             frameSlider.setShowTickLabels(false);
             frameSlider.setShowTickMarks(true);
             frameSlider.valueProperty().addListener(((observable, oldValue, newValue) -> {

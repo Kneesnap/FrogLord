@@ -20,6 +20,7 @@ import java.util.List;
  */
 public class FroggerGridSquareFlagTester extends SCGameObject<FroggerGameInstance> {
     private final boolean[][] flagTracker = new boolean[FroggerGridSquareFlag.values().length][FroggerGridSquareFlag.values().length];
+    private final boolean[][] notAlwaysSeenFlagTracker = new boolean[FroggerGridSquareFlag.values().length][FroggerGridSquareFlag.values().length];
 
     public FroggerGridSquareFlagTester(FroggerGameInstance instance) {
         super(instance);
@@ -37,8 +38,11 @@ public class FroggerGridSquareFlagTester extends SCGameObject<FroggerGameInstanc
 
             for (int j = 0; j < FroggerGridSquareFlag.values().length; j++) {
                 FroggerGridSquareFlag tempTestFlag = FroggerGridSquareFlag.values()[j];
-                if ((flags & tempTestFlag.getBitFlagMask()) == tempTestFlag.getBitFlagMask())
+                if ((flags & tempTestFlag.getBitFlagMask()) == tempTestFlag.getBitFlagMask()) {
                     this.flagTracker[i][j] = true;
+                } else {
+                    this.notAlwaysSeenFlagTracker[i][j] = true;
+                }
             }
         }
     }
@@ -50,14 +54,17 @@ public class FroggerGridSquareFlagTester extends SCGameObject<FroggerGameInstanc
         // Determine which flags are used / unused.
         String[] flagsSeenWithFlag = new String[FroggerGridSquareFlag.values().length];
         String[] flagsNotSeenWithFlag = new String[FroggerGridSquareFlag.values().length];
+        String[] flagsAlwaysSeenWithFlag = new String[FroggerGridSquareFlag.values().length];
 
         StringBuilder seenBuilder = new StringBuilder();
         StringBuilder notSeenBuilder = new StringBuilder();
+        StringBuilder alwaysSeenBuilder = new StringBuilder();
         for (int i = 0; i < FroggerGridSquareFlag.values().length; i++) {
             boolean[] flagSeen = this.flagTracker[i];
 
             seenBuilder.setLength(0);
             notSeenBuilder.setLength(0);
+            alwaysSeenBuilder.setLength(0);
             for (int j = 0; j < FroggerGridSquareFlag.values().length; j++) {
                 StringBuilder currentBuilder = flagSeen[j] ? seenBuilder : notSeenBuilder;
 
@@ -66,12 +73,21 @@ public class FroggerGridSquareFlagTester extends SCGameObject<FroggerGameInstanc
 
                 FroggerGridSquareFlag tempTestFlag = FroggerGridSquareFlag.values()[j];
                 currentBuilder.append(tempTestFlag.name());
+
+                if (!this.notAlwaysSeenFlagTracker[i][j]) {
+                    if (alwaysSeenBuilder.length() > 0)
+                        alwaysSeenBuilder.append(", ");
+
+                    alwaysSeenBuilder.append(tempTestFlag.name());
+                }
             }
 
             if (seenBuilder.length() > 0)
                 flagsSeenWithFlag[i] = seenBuilder.toString();
             if (notSeenBuilder.length() > 0)
                 flagsNotSeenWithFlag[i] = notSeenBuilder.toString();
+            if (alwaysSeenBuilder.length() > 0)
+                flagsAlwaysSeenWithFlag[i] = alwaysSeenBuilder.toString();
         }
 
         // Print output.
@@ -81,10 +97,16 @@ public class FroggerGridSquareFlagTester extends SCGameObject<FroggerGameInstanc
                 getLogger().info(" - " + FroggerGridSquareFlag.values()[i].name() + ": [" + (flagsNotSeenWithFlag[i] != null ? flagsNotSeenWithFlag[i] : "") + "]");
         getLogger().info("");
 
-        getLogger().info("Flags Seen Together:");
+        getLogger().info("Flags Sometimes Seen Together:");
         for (int i = 0; i < FroggerGridSquareFlag.values().length; i++)
             if (flagsSeenWithFlag[i] != null)
                 getLogger().info(" - " + FroggerGridSquareFlag.values()[i].name() + ": [" + (flagsSeenWithFlag[i] != null ? flagsSeenWithFlag[i] : "") + "]");
+        getLogger().info("");
+
+        getLogger().info("Flags Always Seen Together:");
+        for (int i = 0; i < FroggerGridSquareFlag.values().length; i++)
+            if (flagsAlwaysSeenWithFlag[i] != null)
+                getLogger().info(" - " + FroggerGridSquareFlag.values()[i].name() + ": [" + (flagsAlwaysSeenWithFlag[i] != null ? flagsAlwaysSeenWithFlag[i] : "") + "]");
         getLogger().info("");
     }
 

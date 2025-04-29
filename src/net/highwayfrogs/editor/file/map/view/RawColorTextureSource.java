@@ -18,6 +18,7 @@ import java.util.function.Consumer;
 @Getter
 public class RawColorTextureSource implements ITextureSource {
     private final List<Consumer<BufferedImage>> imageChangeListeners = new ArrayList<>();
+    private final javafx.scene.paint.Color fxColor;
     private final int argbColor;
 
     public static final Vector2f TEXTURE_UV = new Vector2f(.5F, .5F);
@@ -32,6 +33,7 @@ public class RawColorTextureSource implements ITextureSource {
 
     public RawColorTextureSource(int argbColor) {
         this.argbColor = argbColor;
+        this.fxColor = ColorUtils.fromARGB(argbColor);
     }
 
     /**

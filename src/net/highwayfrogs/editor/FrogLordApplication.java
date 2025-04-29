@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.gui;
+package net.highwayfrogs.editor;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -6,6 +6,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.stage.Stage;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.gui.GameConfigController;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.DataSizeUnit;
 import net.highwayfrogs.editor.utils.FXUtils;
@@ -32,37 +33,38 @@ import java.util.logging.*;
  *  -> Add a scripting console + a way to run scripts for each game, as well as an actual mod system definition.
  *  -> Use new config system in existing code parts?
  *  -> Improve the file path system by thinking about all the places we use it, and if we want to combine any usages.
- *   -> Also, I don't like GUIMain.getWorkingDirectory(), we should allow paths to specify their default directories.
+ *   -> Also, I don't like FrogLordApplication.getWorkingDirectory(), we should allow paths to specify their default directories.
  *   -> I also don't like how having multiple instances of FrogLord can break the configuration. Is there some way we can handle this better? Perhaps reloading configs which are not for the active game instance when we go to save and the file was unexpectedly changed?
  *
  * TODO: Solve TODOs in:
- *  - GUIMain.java
+ *  - FrogLordApplication.java
  *  - GameInstance.java
  *  - GroupedCollectionViewComponent.java
  *
  * TODO: Globus's computer seems to have different text settings than mine, so many of the UI buttons are just too small for the text.
  *  -> What do I need to make the FrogLord UI appear consistent across systems?
+ * TODO: I think we should make unit tests at some point. Mesh system, texture tree system, Noodle? Utils? Math classes? DataReader/Writer? Config? Gradle, hrmm.
  */
-public class GUIMain extends Application {
+public class FrogLordApplication extends Application {
     @Getter private static Config mainConfig;
     @Getter private static File mainConfigFile;
     @Getter private static File mainApplicationFolder;
     @Getter private static File workingDirectory = new File("./");
-    @Getter private static GUIMain application;
+    @Getter private static FrogLordApplication application;
     @Getter private static final List<GameInstance> activeGameInstances = new CopyOnWriteArrayList<>();
 
     public static void main(String[] args) {
-        launch(GUIMain.class, args);
+        launch(FrogLordApplication.class, args);
     }
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        Thread.setDefaultUncaughtExceptionHandler(GUIMain::handleFxThreadError);
+        Thread.setDefaultUncaughtExceptionHandler(FrogLordApplication::handleFxThreadError);
 
         application = this;
         resolveMainFolder(); // Run before setting up the logger.
         setupLogger();
-        Runtime.getRuntime().addShutdownHook(new Thread(GUIMain::onShutdown));
+        Runtime.getRuntime().addShutdownHook(new Thread(FrogLordApplication::onShutdown));
 
         long availableMemory = Runtime.getRuntime().maxMemory();
         long minMemory = DataSizeUnit.GIGABYTE.getIncrement();
@@ -112,7 +114,7 @@ public class GUIMain extends Application {
     
     @SuppressWarnings("CallToPrintStackTrace")
     private static void onShutdown() {
-        Logger.getLogger(GUIMain.class.getSimpleName()).info("FrogLord is shutting down...");
+        Logger.getLogger(FrogLordApplication.class.getSimpleName()).info("FrogLord is shutting down...");
         saveMainConfig();
         
         // Logger shutdown.
@@ -216,7 +218,7 @@ public class GUIMain extends Application {
             fileHandler.setFilter(record -> !LogFormatter.isJavaFXMessage(record));
             logger.addHandler(fileHandler);
         } catch (Throwable th) {
-            logger.throwing("GUIMain", "setupLogger", new RuntimeException("Failed to setup FileHandler for logger.", th));
+            logger.throwing("FrogLordApplication", "setupLogger", new RuntimeException("Failed to setup FileHandler for logger.", th));
         }
     }
 }

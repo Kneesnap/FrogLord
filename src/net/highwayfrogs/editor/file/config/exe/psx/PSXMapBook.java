@@ -3,14 +3,14 @@ package net.highwayfrogs.editor.file.config.exe.psx;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GamePlatform;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.function.Function;
 
@@ -80,7 +80,7 @@ public class PSXMapBook extends MapBook {
         int wadId = this.wadId;
 
         // When the map reports a particular theme, I think it's reliable.
-        if (map != null && map.getMapTheme() != null && getConfig().getPlatform() == GamePlatform.PLAYSTATION) {
+        if (map != null && map.getMapTheme() != null && getConfig().getPlatform() == GamePlatform.PLAYSTATION && !map.isMultiplayer()) {
             PSXThemeBook themeBook = ((PSXThemeBook) getGameInstance().getThemeBook(map.getMapTheme()));
             if (themeBook != null && themeBook.getWadId() != wadId)
                 wadId = themeBook.getWadId();

@@ -3,10 +3,10 @@ package net.highwayfrogs.editor.file.mof.prims;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
 import net.highwayfrogs.editor.file.mof.MOFPart;
-import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXGPUPrimitive;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

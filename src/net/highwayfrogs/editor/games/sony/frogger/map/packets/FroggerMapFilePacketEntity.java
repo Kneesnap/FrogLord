@@ -2,25 +2,26 @@ package net.highwayfrogs.editor.games.sony.frogger.map.packets;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.IFroggerFormEntry;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Represents an entity table marker packet.
  * Created by Kneesnap on 5/25/2024.
  */
-@Getter
 public class FroggerMapFilePacketEntity extends FroggerMapFilePacket {
     public static final String IDENTIFIER = "EMTP";
     private final List<FroggerMapEntity> entities = new ArrayList<>();
+    private final List<FroggerMapEntity> unmodifiableEntities = Collections.unmodifiableList(this.entities);
+    @Getter private int nextFreeEntityId;
 
     public FroggerMapFilePacketEntity(FroggerMapFile parentFile) {
         super(parentFile, IDENTIFIER, true, PacketSizeType.SIZE_INCLUSIVE);
@@ -29,6 +30,7 @@ public class FroggerMapFilePacketEntity extends FroggerMapFilePacket {
     @Override
     protected void loadBody(DataReader reader, int endIndex) {
         this.entities.clear();
+        this.nextFreeEntityId = 0;
         if (getMapConfig().isIslandPlaceholder()) { // QB.MAP & ISLAND.MAP are allowed, it's just the placeholders which aren't.
             reader.setIndex(endIndex);
             return;
@@ -41,6 +43,7 @@ public class FroggerMapFilePacketEntity extends FroggerMapFilePacket {
         FroggerMapEntity lastEntity = null;
         int entityPointerList = reader.getIndex();
         int lastEntityScriptDataStartAddress = -1;
+        Set<Integer> seenEntityIds = new HashSet<>();
         reader.setIndex(entityPointerList + (entityCount * Constants.POINTER_SIZE));
         for (int i = 0; i < entityCount; i++) {
             // Read from the pointer list.
@@ -61,6 +64,11 @@ public class FroggerMapFilePacketEntity extends FroggerMapFilePacket {
                 FroggerMapEntity entity = new FroggerMapEntity(getParentFile());
                 this.entities.add(entity);
                 entity.load(reader);
+                if (entity.getUniqueId() >= this.nextFreeEntityId)
+                    this.nextFreeEntityId = entity.getUniqueId() + 1;
+                if (!seenEntityIds.add(entity.getUniqueId()))
+                    getLogger().warning("Found multiple entities with the supposedly unique ID of %d!", entity.getUniqueId());
+
                 lastEntity = entity;
                 lastEntityScriptDataStartAddress = reader.getIndex();
                 entity.loadEntityData(reader);
@@ -134,11 +142,54 @@ public class FroggerMapFilePacketEntity extends FroggerMapFilePacket {
     }
 
     /**
+     * Gets the entities tracked by this packet.
+     */
+    public List<FroggerMapEntity> getEntities() {
+        return this.unmodifiableEntities;
+    }
+
+    /**
+     * Clears the list of tracked entities.
+     */
+    public void clear() {
+        this.entities.clear();
+        this.nextFreeEntityId = 0;
+        for (FroggerPath path : getParentFile().getPathPacket().getPaths())
+            path.getPathEntities().clear();
+    }
+
+    /**
+     * Attempts to add an entity to the entity list.
+     * @param entity the entity to add
+     * @return if the entity was added successfully
+     */
+    public boolean addEntity(FroggerMapEntity entity) {
+        if (entity == null)
+            throw new NullPointerException("entity");
+
+        if (entity.getUniqueId() >= 0) {
+            if (getEntityByUniqueId(entity.getUniqueId()) != null)
+                return false; // Entity already exists with the ID.
+
+            if (entity.getUniqueId() >= this.nextFreeEntityId)
+                this.nextFreeEntityId = entity.getUniqueId() + 1;
+        } else {
+            // Automatically generate the next free entity ID.
+            entity.setUniqueID(this.nextFreeEntityId++, true);
+        }
+
+        this.entities.add(entity);
+        getParentFile().getPathPacket().addEntityToPathTracking(entity);
+        return true;
+    }
+
+    /**
      * Remove an entity from this map.
      * @param entity The entity to remove.
      */
     public boolean removeEntity(FroggerMapEntity entity) {
-        return this.entities.remove(entity);
+        getParentFile().getPathPacket().removeEntityFromPathTracking(entity);
+        return this.entities.remove(entity); // Can only occur after removing from path tracking.
     }
 
     /**

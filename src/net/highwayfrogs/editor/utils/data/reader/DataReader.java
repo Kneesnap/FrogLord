@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file.reader;
+package net.highwayfrogs.editor.utils.data.reader;
 
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.utils.DataUtils;

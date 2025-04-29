@@ -2,8 +2,8 @@ package net.highwayfrogs.editor.games.renderware.game.file;
 
 import javafx.scene.image.Image;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.games.renderware.ui.RenderWareStreamEditorUIController;
 import net.highwayfrogs.editor.games.shared.basic.file.definition.IGameFileDefinition;

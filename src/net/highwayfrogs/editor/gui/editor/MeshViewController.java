@@ -21,9 +21,9 @@ import javafx.scene.shape.MeshView;
 import javafx.stage.Stage;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.psx.shading.IPSXShadedMesh;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList.RenderListManager;
@@ -289,6 +289,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                 // Stop camera processing and clear up the render manager
                 this.textureSheetDebugView.imageProperty().unbind();
                 this.firstPersonCamera.stopThreadProcessing();
+                this.firstPersonCamera.removeSceneControls(stageToOverride, this.meshScene);
                 this.renderManager.removeAllDisplayLists();
                 this.transparentRenderManager.removeAllDisplayLists();
                 this.inputManager.shutdown();
@@ -318,7 +319,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                 if (getMesh().getTextureAtlas().getTextureSource().isEnableAwtImage()) {
                     getLogger().info("Saving main mesh texture sheet to 'texture-sheet-awt.png'...");
                     try {
-                        ImageIO.write(getMesh().getTextureAtlas().getImage(), "png", new File(GUIMain.getWorkingDirectory(), "texture-sheet-awt.png"));
+                        ImageIO.write(getMesh().getTextureAtlas().getImage(), "png", new File(FrogLordApplication.getWorkingDirectory(), "texture-sheet-awt.png"));
                     } catch (IOException ex) {
                         FXUtils.makeErrorPopUp("Failed to save 'texture-sheet-awt.png'.", ex, true);
                     }
@@ -327,7 +328,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                 if (getMesh().getTextureAtlas().getTextureSource().isEnableFxImage()) {
                     getLogger().info("Saving main mesh texture sheet to 'texture-sheet-fx.png'...");
                     try {
-                        ImageIO.write(SwingFXUtils.fromFXImage(getMesh().getTextureAtlas().getFxImage(), null), "png", new File(GUIMain.getWorkingDirectory(), "texture-sheet-fx.png"));
+                        ImageIO.write(SwingFXUtils.fromFXImage(getMesh().getTextureAtlas().getFxImage(), null), "png", new File(FrogLordApplication.getWorkingDirectory(), "texture-sheet-fx.png"));
                     } catch (IOException ex) {
                         FXUtils.makeErrorPopUp("Failed to save 'texture-sheet-fx.png'.", ex, true);
                     }

@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file.reader;
+package net.highwayfrogs.editor.utils.data.reader;
 
 import java.io.IOException;
 

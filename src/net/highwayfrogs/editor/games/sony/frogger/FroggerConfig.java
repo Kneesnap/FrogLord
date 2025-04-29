@@ -169,6 +169,14 @@ public class FroggerConfig extends SCGameConfig {
     }
 
     /**
+     * Tests if the build is at/before build 2.
+     * @return isBuildAtOrBeforeBuild2
+     */
+    public boolean isAtOrBeforeBuild2() {
+        return (this.build > 0 && this.build <= 2) || isBeforeBuild1() || isWindowsAlpha();
+    }
+
+    /**
      * Tests if the build is at/before build 4.
      * @return isBuildAtOrBeforeBuild4
      */
@@ -225,11 +233,19 @@ public class FroggerConfig extends SCGameConfig {
     }
 
     /**
+     * Tests if the build is at/before build 29.
+     * @return isBuildAtOrBeforeBuild29
+     */
+    public boolean isAtOrBeforeBuild29() {
+        return (this.build >= 0 && this.build <= 29) || isBeforeBuild1() || isWindowsAlpha() || isWindowsBeta();
+    }
+
+    /**
      * Tests if the build is at/before build 33
      * @return isBuildAtOrBeforeBuild33
      */
     public boolean isAtOrBeforeBuild33() {
-        return (this.build >= 0 && this.build <= 38) || isBeforeBuild1() || isWindowsAlpha() || isWindowsBeta();
+        return (this.build >= 0 && this.build <= 33) || isBeforeBuild1() || isWindowsAlpha() || isWindowsBeta();
     }
 
     /**
@@ -238,6 +254,14 @@ public class FroggerConfig extends SCGameConfig {
      */
     public boolean isAtOrBeforeBuild38() {
         return (this.build >= 0 && this.build <= 38) || isBeforeBuild1() || isWindowsAlpha() || isWindowsBeta();
+    }
+
+    /**
+     * Tests if the build is at/before build 40
+     * @return isBuildAtOrBeforeBuild40
+     */
+    public boolean isAtOrBeforeBuild40() {
+        return (this.build >= 0 && this.build <= 40) || isBeforeBuild1() || isWindowsAlpha() || isWindowsBeta();
     }
 
     /**

@@ -2,15 +2,16 @@ package net.highwayfrogs.editor.games.sony.frogger.map.packets;
 
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.FroggerMapConfig;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.FroggerMapGroup;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygonType;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -106,6 +107,12 @@ public class FroggerMapFilePacketPolygon extends FroggerMapFilePacket {
             if (g2Supported || i != FroggerMapPolygonType.G2.ordinal())
                 writer.writeNullPointer();
 
+        // Map groups were previously generated, and determine polygon save order.
+        // All polygons found in this object are guaranteed to have been placed into map groups by that process.
+        // So, instead of getting polygons from this object to save, we must get them from the map group to ensure proper save order.
+        // Not doing this will make map groups not load properly.
+        FroggerMapFilePacketGroup groupPacket = getParentFile().getGroupPacket();
+
         // Write the polygon blocks.
         int[] polygonOffsets = new int[FroggerMapPolygonType.values().length];
         for (int i = 0; i < FroggerMapPolygonType.values().length; i++) {
@@ -120,14 +127,25 @@ public class FroggerMapFilePacketPolygon extends FroggerMapFilePacket {
             polygonPointerOffsetList = writer.getIndex();
             writer.jumpReturn();
 
-            // Write polygons.
-            List<FroggerMapPolygon> polygons = this.polygonsByType[i];
-            for (int j = 0; j < polygons.size(); j++)
-                polygons.get(j).save(writer);
+            // Write polygons based on the group order. (All polygons are guaranteed to be within groups due to the generateMapGroups call)
+            FroggerMapPolygonType polygonType = FroggerMapPolygonType.values()[i];
+            for (int z = 0; z < groupPacket.getGroupZCount(); z++)
+                for (int x = 0; x < groupPacket.getGroupXCount(); x++)
+                    savePolygonList(writer, groupPacket.getMapGroup(x, z), polygonType);
+
+            // Lastly, write the polygons in the invisible group.
+            if (groupPacket.hasInvisiblePolygonGroup())
+                savePolygonList(writer, groupPacket.getInvisibleMapGroup(), polygonType);
         }
 
         // Now that the polygons are saved, save the polygon lists in the map groups.
         getParentFile().getGroupPacket().saveGroupPolygonLists(writer, polygonOffsets);
+    }
+
+    private void savePolygonList(DataWriter writer, FroggerMapGroup mapGroup, FroggerMapPolygonType polygonType) {
+        List<FroggerMapPolygon> polygons = mapGroup.getPolygonsByType(polygonType);
+        for (int i = 0; i < polygons.size(); i++)
+            polygons.get(i).save(writer);
     }
 
     @Override
@@ -189,7 +207,4 @@ public class FroggerMapFilePacketPolygon extends FroggerMapFilePacket {
             this.polygonsByType[polygon.getPolygonType().ordinal()].add(polygon);
         return true;
     }
-
-    // TODO: CALCULATE THE MAP BASED ON CALCULATING THE GROUP
-    //   - Where do invisible polygons go? At the start? At the end? Probably at the end.
 }
