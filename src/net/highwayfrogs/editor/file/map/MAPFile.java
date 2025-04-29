@@ -36,7 +36,6 @@ import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.*;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGeneral.FroggerMapStartRotation;
-import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 import net.highwayfrogs.editor.utils.data.reader.ArraySource;
@@ -704,22 +703,6 @@ public class MAPFile extends SCGameData<FroggerGameInstance> {
     }
 
     /**
-     * Get the world X the grid starts at.
-     * @return baseGridX
-     */
-    public short getBaseGridX() {
-        return (short) (-(getGridXSize() * getGridXCount()) >> 1);
-    }
-
-    /**
-     * Get the world Z the grid starts at.
-     * @return baseGridZ
-     */
-    public short getBaseGridZ() {
-        return (short) (-(getGridZSize() * getGridZCount()) >> 1);
-    }
-
-    /**
      * Gets the base point's world x coordinate.
      * @return worldX
      */
@@ -791,25 +774,6 @@ public class MAPFile extends SCGameData<FroggerGameInstance> {
                     this.allPolygons.add((MAPPolygon) prim);
         return this.allPolygons;
     }
-
-    /**
-     * Gets all the polygons in this map, in a list.
-     * Ensures they are returned in a predictable order.
-     * @return allPolygons
-     */
-    public List<MAPPolygon> getAllPolygonsSafe() {
-        List<MAPPolygon> polyList = new ArrayList<>();
-        for (MAPPolygonType polyType : MAPPolygonType.values()) {
-            List<MAPPrimitive> list = getPolygons().get(polyType);
-            if (list != null)
-                for (MAPPrimitive prim : list)
-                    if (prim instanceof MAPPolygon)
-                        polyList.add((MAPPolygon) prim);
-        }
-
-        return polyList;
-    }
-
     /**
      * Recalculate map groups.
      */
@@ -831,18 +795,6 @@ public class MAPFile extends SCGameData<FroggerGameInstance> {
         }
 
         return groups;
-    }
-
-    /**
-     * Gets the remap table for this map.
-     * @return remapTable
-     */
-    public List<Short> getRemapTable() {
-        if (getConfig().getIslandRemap().size() > 0 && this.newMapFile.getFileDisplayName().contains("ISLAND.MAP"))
-            return getConfig().getIslandRemap();
-
-        LinkedTextureRemap<?> textureRemap = getGameInstance().getLinkedTextureRemap(this.newMapFile.getIndexEntry());
-        return textureRemap != null ? textureRemap.getTextureIds() : null;
     }
 
     /**
@@ -911,9 +863,9 @@ public class MAPFile extends SCGameData<FroggerGameInstance> {
 
         // Entities
         this.newMapFile.getLogger().info("Converting entities...");
-        entityPacket.getEntities().clear();
+        entityPacket.clear();
         for (Entity entity : this.entities)
-            entityPacket.getEntities().add(entity.convertToNewFormat(this.newMapFile));
+            entityPacket.addEntity(entity.convertToNewFormat(this.newMapFile));
         pathPacket.recalculateAllPathEntityLists();
 
         // Lights
