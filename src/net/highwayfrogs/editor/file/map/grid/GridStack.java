@@ -6,11 +6,11 @@ import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -98,7 +98,7 @@ public class GridStack extends GameObject {
      */
     public void convertToNewFormat(@NonNull FroggerGridStack newGridStack, @NonNull Map<MAPPrimitive, FroggerMapPolygon> convertedPolygons) {
         newGridStack.clear();
-        newGridStack.setAverageWorldHeight(this.averageHeight << 6);
+        newGridStack.setRawCliffHeightValue(DataUtils.unsignedShortToByte(this.averageHeight));
         for (GridSquare gridSquare : this.gridSquares)
             newGridStack.getGridSquares().add(gridSquare.convertToNewFormat(newGridStack, convertedPolygons));
     }

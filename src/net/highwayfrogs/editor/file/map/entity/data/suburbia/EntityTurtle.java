@@ -3,9 +3,9 @@ package net.highwayfrogs.editor.file.map.entity.data.suburbia;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.PathData;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents the "SUBURBIA_TURTLE" struct.

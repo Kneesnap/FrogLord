@@ -4,8 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.zone.FroggerCameraRotation;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.zone.FroggerMapCameraZone;
@@ -13,6 +11,8 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.zone.FroggerMapCamera
 import net.highwayfrogs.editor.games.sony.frogger.map.data.zone.FroggerMapZone;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.zone.FroggerMapZoneRegion;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -132,8 +132,14 @@ public class Zone extends GameObject {
         newMapZone.getBoundingRegion().setZMax(this.mainRegion.getZMax());
 
         // Apply regions
-        for (ZoneRegion region : this.regions)
-            newMapZone.getRegions().add(new FroggerMapZoneRegion(region.getXMin(), region.getZMin(), region.getXMax(), region.getZMax()));
+        for (ZoneRegion region : this.regions) {
+            FroggerMapZoneRegion newRegion = new FroggerMapZoneRegion(newMapZone);
+            newRegion.setXMin(region.getXMin());
+            newRegion.setZMin(region.getZMin());
+            newRegion.setXMax(region.getXMax());
+            newRegion.setZMax(region.getZMax());
+            newMapZone.getRegions().add(newRegion);
+        }
 
         // Apply camera data.
         for (FroggerMapCameraZoneFlag camZoneFlag : FroggerMapCameraZoneFlag.values())

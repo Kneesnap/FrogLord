@@ -3,10 +3,10 @@ package net.highwayfrogs.editor.file.map.entity.data.cave;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * An earlier version of the fat fire fly bug. Seems to be from before the camera movement from eating the bug.

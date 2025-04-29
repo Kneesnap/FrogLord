@@ -3,8 +3,8 @@ package net.highwayfrogs.editor.file.map.entity.script.swamp;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * A special (PSX Demo only) script data set.

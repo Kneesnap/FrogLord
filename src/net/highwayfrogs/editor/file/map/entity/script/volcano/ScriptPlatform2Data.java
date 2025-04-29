@@ -3,9 +3,9 @@ package net.highwayfrogs.editor.file.map.entity.script.volcano;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.script.EntityScriptData;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * This holds data not present in the code, for the entity: vol_platform2.

@@ -22,14 +22,10 @@ import net.highwayfrogs.editor.file.map.poly.line.MAPLineType;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygon;
 import net.highwayfrogs.editor.file.map.poly.polygon.MAPPolygonType;
 import net.highwayfrogs.editor.file.map.zone.Zone;
-import net.highwayfrogs.editor.file.reader.ArraySource;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.file.writer.ArrayReceiver;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.sony.SCGameData;
@@ -42,6 +38,11 @@ import net.highwayfrogs.editor.games.sony.frogger.map.packets.*;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGeneral.FroggerMapStartRotation;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
+import net.highwayfrogs.editor.utils.data.reader.ArraySource;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.AppendInfoLoggerWrapper;
 
@@ -963,14 +964,11 @@ public class MAPFile extends SCGameData<FroggerGameInstance> {
 
         // Groups.
         this.newMapFile.getLogger().info("Converting map groups...");
-        groupPacket.getBasePoint().setValues(makeBasePoint());
-        groupPacket.setGroupXCount(this.groupXCount);
-        groupPacket.setGroupZCount(this.groupZCount);
         if (this.groupXSize != groupPacket.getGroupXSize())
             throw new RuntimeException("Expected groupXSize of " + this.groupXSize + ", but was actually: " + groupPacket.getGroupXSize() + ".");
         if (this.groupZSize != groupPacket.getGroupZSize())
             throw new RuntimeException("Expected groupZSize of " + this.groupZSize + ", but was actually: " + groupPacket.getGroupZSize() + ".");
-        groupPacket.generateMapGroups();
+        groupPacket.generateMapGroups(ProblemResponse.THROW_EXCEPTION, true);
 
         this.newMapFile.getLogger().info("Finished loading map from old format.");
     }

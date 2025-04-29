@@ -2,9 +2,9 @@ package net.highwayfrogs.editor.file.map.entity.data.rushedmap;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.entity.data.PathData;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Holds entity data for the swan in the old build.
