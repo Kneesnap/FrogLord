@@ -9,10 +9,8 @@ import javafx.scene.shape.Sphere;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFController;
@@ -22,6 +20,8 @@ import net.highwayfrogs.editor.gui.editor.MeshUIManager;
 import net.highwayfrogs.editor.gui.editor.RenderManager;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.function.Consumer;
 
@@ -198,7 +198,7 @@ public abstract class MRCollprim extends SCSharedGameData implements ICollprim {
         }, newRadiusSq -> newRadiusSq >= 0 && !Float.isNaN(newRadiusSq) && Float.isFinite(newRadiusSq));
 
         // Position
-        grid.addFloatVector("Position", getOffset(), () -> editor.updateCollprimPosition(this, adapter), editor.getController(), getOffset().defaultBits(), null, adapter.getShape());
+        grid.addFloatVector("Position", getOffset(), () -> editor.updateCollprimPosition(this, adapter), editor.getController(), getOffset().defaultBits(), null, adapter.getShape(), null);
 
         // Lengths
         TextField xLengthField = grid.addFloatField("xLength", getXLength(), newVal -> {

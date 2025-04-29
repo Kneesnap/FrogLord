@@ -27,6 +27,7 @@ import net.highwayfrogs.editor.gui.mesh.fxobject.ScaleGizmo;
 import net.highwayfrogs.editor.gui.mesh.fxobject.ScaleGizmo.IScaleChangeListener;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo.IPositionChangeListener;
+import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.*;
 
 import java.text.DecimalFormat;
@@ -34,18 +35,25 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
  * Creates an editor grid.
+ * TODO: Do a cleanup on this class:
+ *  - Support a baseline amount of common data structures, for example, Vector3f instead of SVector.
+ *   - Per-game options like SVector can have functionality extended through a static utility class.
+ *  - Complex features (such as vector position editors) should return an object which access to the various FX nodes, to make customizing individual editors (adding new nodes even), more feasible)
  * Created by Kneesnap on 1/20/2019.
  */
 @SuppressWarnings("UnusedReturnValue")
 public class GUIEditorGrid {
     @Getter private final GridPane gridPane;
     private int rowIndex;
+
+    private static Vector3f LAST_COPIED_POSITION;
 
     private static final DecimalFormat FORMAT = new DecimalFormat("#.#######");
     private static final Image GRAY_IMAGE_XZ = ColorUtils.makeColorImageNoCache(Color.GRAY, 60, 60);
@@ -724,7 +732,7 @@ public class GUIEditorGrid {
      * @param vector The SVector itself.
      */
     public void addFloatVector(String text, Vector vector, Runnable update, MeshViewController<?> controller, int bits) {
-        addFloatVector(text, vector, update, controller, bits, null, null);
+        addFloatVector(text, vector, update, controller, bits, null, null, null);
     }
 
     /**
@@ -732,7 +740,7 @@ public class GUIEditorGrid {
      * @param text   The name of the SVector.
      * @param vector The SVector itself.
      */
-    public void addFloatVector(String text, Vector vector, Runnable update, MeshViewController<?> controller, int bits, Vector origin, Shape3D visualRepresentative) {
+    public void addFloatVector(String text, Vector vector, Runnable update, MeshViewController<?> controller, int bits, Vector origin, Shape3D visualRepresentative, BiConsumer<Vector, Integer> positionSelector) {
         if (controller != null && visualRepresentative == null) {
             addBoldLabelButton(text + ":", "Toggle Display", 25,
                     () -> controller.getMarkerManager().updateMarker(controller.getMarkerManager().getShowPosition() == null || !Objects.equals(vector, controller.getMarkerManager().getShowPosition()) ? vector : null, bits, origin, null));
@@ -849,9 +857,65 @@ public class GUIEditorGrid {
         yView.setOnMouseReleased(evt -> yLastDrag[0] = null);
 
         vecPane.setHgap(10);
-        GridPane.setColumnSpan(vecPane, 2); // Make it take up the full space in the grid it will be added to.
-        setupNode(vecPane); // Setup this in the new area.
-        addRow(75);
+        setupSecondNode(vecPane, true); // Setup this in the new area.
+        addRow(85);
+
+        GridPane vecPaneExtraButtons = new GridPane();
+        vecPaneExtraButtons.addRow(0);
+
+        // Copy the position so it can be pasted later
+        Button copyButton = new Button("Copy");
+        copyButton.setOnMouseClicked(evt -> {
+            if (LAST_COPIED_POSITION == null)
+                LAST_COPIED_POSITION = new Vector3f();
+
+            LAST_COPIED_POSITION.setXYZ(vector.getFloatX(bits), vector.getFloatY(bits), vector.getFloatZ(bits));
+        });
+
+        vecPaneExtraButtons.addColumn(0, copyButton);
+
+        // Paste the position that has been previously copied
+        Button pasteButton = new Button("Paste");
+        pasteButton.setOnMouseClicked(evt -> {
+            if (LAST_COPIED_POSITION == null) {
+                FXUtils.makePopUp("No position has been copied, so no position will be pasted.", AlertType.WARNING);
+                return;
+            }
+
+            vector.setFloatX(LAST_COPIED_POSITION.getX(), bits);
+            vector.setFloatY(LAST_COPIED_POSITION.getY(), bits);
+            vector.setFloatZ(LAST_COPIED_POSITION.getZ(), bits);
+            xField.setText(String.valueOf(vector.getFloatX(bits)));
+            yField.setText(String.valueOf(vector.getFloatY(bits)));
+            zField.setText(String.valueOf(vector.getFloatZ(bits)));
+            onPass.run();
+        });
+
+        vecPaneExtraButtons.addColumn(1, pasteButton);
+
+        // Relocate the position to whatever polygon is selected
+        Button selectButton = new Button("Select");
+        if (positionSelector != null) {
+            selectButton.setOnMouseClicked(evt -> {
+                Vector oldPosition = vector.clone();
+                positionSelector.accept(vector, bits);
+
+                if (!oldPosition.equals(vector)) {
+                    xField.setText(String.valueOf(vector.getFloatX(bits)));
+                    yField.setText(String.valueOf(vector.getFloatY(bits)));
+                    zField.setText(String.valueOf(vector.getFloatZ(bits)));
+                    onPass.run();
+                }
+            });
+        } else {
+            selectButton.setDisable(true); // No behavior linked.
+        }
+
+        vecPaneExtraButtons.addColumn(2, selectButton);
+
+        vecPaneExtraButtons.setHgap(10);
+        setupSecondNode(vecPaneExtraButtons, true); // Setup this in the new area.
+        addRow(35);
     }
 
     /**
@@ -1839,7 +1903,7 @@ public class GUIEditorGrid {
      * @param onPositionUpdate Behavior to apply when the position is updated.
      */
     public void addMeshMatrix(PSXMatrix matrix, MeshViewController<?> controller, Runnable onPositionUpdate) {
-        addMeshMatrix(matrix, controller, onPositionUpdate, false);
+        addMeshMatrix(matrix, controller, onPositionUpdate, false, null);
     }
 
     /**
@@ -1847,7 +1911,7 @@ public class GUIEditorGrid {
      * @param matrix           The rotation matrix to add data for.
      * @param onPositionUpdate Behavior to apply when the position is updated.
      */
-    public void addMeshMatrix(PSXMatrix matrix, MeshViewController<?> controller, Runnable onPositionUpdate, boolean rotationUpdates) {
+    public void addMeshMatrix(PSXMatrix matrix, MeshViewController<?> controller, Runnable onPositionUpdate, boolean rotationUpdates, BiConsumer<Vector, Integer> positionSelector) {
         IVector vec = new IVector(matrix.getTransform()[0], matrix.getTransform()[1], matrix.getTransform()[2]);
 
         addFloatVector("Position", vec, () -> {
@@ -1856,7 +1920,7 @@ public class GUIEditorGrid {
             matrix.getTransform()[2] = vec.getZ();
             if (onPositionUpdate != null)
                 onPositionUpdate.run(); // Run position hook.
-        }, controller, 4, null, null);
+        }, controller, 4, null, null, positionSelector);
 
         addRotationMatrix(matrix, rotationUpdates ? onPositionUpdate : null);
     }
@@ -2134,7 +2198,8 @@ public class GUIEditorGrid {
             onChange();
         }));
 
-        slider.setMajorTickUnit((maxValue - minValue) / 4);
+        if (maxValue > minValue)
+            slider.setMajorTickUnit((maxValue - minValue) / 4);
         slider.setShowTickLabels(true);
         slider.setShowTickMarks(true);
         slider.setMinorTickCount(0);

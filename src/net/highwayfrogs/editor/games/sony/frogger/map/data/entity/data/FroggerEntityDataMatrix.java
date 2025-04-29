@@ -50,7 +50,8 @@ public class FroggerEntityDataMatrix extends FroggerEntityData {
 
     @Override
     public void setupEditor(GUIEditorGrid editor, FroggerUIMapEntityManager manager) {
-        editor.addMeshMatrix(this.matrix, manager.getController(), () -> manager.updateEntityPositionRotation(getParentEntity()), true);
+        editor.addMeshMatrix(this.matrix, manager.getController(), () -> manager.updateEntityPositionRotation(getParentEntity()), true,
+                (vector, bits) -> manager.setSelectedMouseEntity(getParentEntity()));
         super.setupEditor(editor, manager);
     }
 

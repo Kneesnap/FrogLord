@@ -58,6 +58,11 @@ public interface Vector {
     }
 
     /**
+     * Creates a copy of the vector object.
+     */
+    Vector clone();
+
+    /**
      * Get this vector as a Wavefront-OBJ vertex command.
      * @return vertexCommandString
      */

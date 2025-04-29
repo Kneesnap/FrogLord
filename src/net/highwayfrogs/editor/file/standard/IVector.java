@@ -63,6 +63,14 @@ public class IVector extends GameObject implements Vector {
     }
 
     /**
+     * Clones the IVector.
+     */
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
+    public IVector clone() {
+        return new IVector(this.x, this.y, this.z);
+    }
+
+    /**
      * Calculates the dot product between this vector and another vector.
      * @param other the other vector
      * @return dotProduct
