@@ -57,10 +57,11 @@ public class FroggerPathSegmentLine extends FroggerPathSegment {
         int deltaY = this.end.getY() - this.start.getY();
         int deltaZ = this.end.getZ() - this.start.getZ();
 
+        int segmentLength = getLength();
         SVector result = new SVector();
-        result.setX((short) (this.start.getX() + ((deltaX * info.getSegmentDistance()) / getLength())));
-        result.setY((short) (this.start.getY() + ((deltaY * info.getSegmentDistance()) / getLength())));
-        result.setZ((short) (this.start.getZ() + ((deltaZ * info.getSegmentDistance()) / getLength())));
+        result.setX((short) (this.start.getX() + (segmentLength != 0 ? ((deltaX * info.getSegmentDistance()) / segmentLength) : 0)));
+        result.setY((short) (this.start.getY() + (segmentLength != 0 ? ((deltaY * info.getSegmentDistance()) / segmentLength) : 0)));
+        result.setZ((short) (this.start.getZ() + (segmentLength != 0 ? ((deltaZ * info.getSegmentDistance()) / segmentLength) : 0)));
         return new FroggerPathResult(result, new IVector(deltaX, deltaY, deltaZ).normalise());
     }
 
