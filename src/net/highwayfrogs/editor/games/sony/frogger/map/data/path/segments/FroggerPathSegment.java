@@ -53,7 +53,7 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
             if (Math.abs(diffLength) > getIncorrectLengthTolerance()) {
                 String extraMessage = getCalculatedIncorrectLengthString();
                 getLogger().warning("calculateFixedPointLength() was inaccurate! [Read Length: " + this.length + "/" + DataUtils.fixedPointIntToFloat4Bit(this.length)
-                        + ", Calculated Length: " + newLength + "/" + DataUtils.fixedPointIntToFloat4Bit(this.length)
+                        + ", Calculated Length: " + newLength + "/" + DataUtils.fixedPointIntToFloat4Bit(newLength)
                         + ", Diff: " + diffLength + "/" + DataUtils.fixedPointIntToFloat4Bit(diffLength)
                         + (extraMessage != null && extraMessage.length() > 0 ? ", " + extraMessage : "") + "]");
             }
@@ -106,21 +106,21 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
 
     /**
      * Calculate the position after a path is completed.
-     * @param info The info to calculate with.
+     * @param segmentDistance The segment distance to calculate.
      * @return finishPosition
      */
-    public abstract FroggerPathResult calculatePosition(FroggerPathInfo info);
+    public abstract FroggerPathResult calculatePosition(int segmentDistance);
 
     /**
-     * Calculate the position along this segment.
-     * @param distance The distance along this segment.
-     * @return pathResult
+     * Calculate the position after a path is completed.
+     * @param pathInfo The info to calculate with.
+     * @return finishPosition
      */
-    public FroggerPathResult calculatePosition(int distance) {
-        FroggerPathInfo fakeInfo = new FroggerPathInfo(this.path.getMapFile());
-        fakeInfo.setPath(this.path, this);
-        fakeInfo.setSegmentDistance(distance);
-        return calculatePosition(fakeInfo);
+    public FroggerPathResult calculatePosition(FroggerPathInfo pathInfo) {
+        if (pathInfo == null)
+            throw new NullPointerException("pathInfo");
+
+        return calculatePosition(pathInfo.getSegmentDistance());
     }
 
     /**

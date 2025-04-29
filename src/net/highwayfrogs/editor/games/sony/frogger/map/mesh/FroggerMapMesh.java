@@ -48,16 +48,16 @@ public class FroggerMapMesh extends PSXShadedDynamicMesh<FroggerMapPolygon, Frog
         Map<SkyLandTile, FroggerMapPolygon> skyLandPolygons = FroggerSkyLandMeshNode.addShadedPolygons(this);
         getTextureAtlas().endBulkOperations();
 
-        // Setup main node.
-        this.mainNode = new FroggerMapMeshNode(this);
-        addNode(this.mainNode);
-
         if (skyLandPolygons != null && skyLandPolygons.size() > 0) {
             this.skyLandMeshNode = new FroggerSkyLandMeshNode(this, skyLandPolygons);
             addNode(this.skyLandMeshNode);
         } else {
             this.skyLandMeshNode = null;
         }
+
+        // Setup main node. (After sky land mesh, so sky land shows behind transparent things.
+        this.mainNode = new FroggerMapMeshNode(this);
+        addNode(this.mainNode);
 
         this.highlightedAnimatedPolygonsNode = new DynamicMeshOverlayNode(this);
         addNode(this.highlightedAnimatedPolygonsNode);

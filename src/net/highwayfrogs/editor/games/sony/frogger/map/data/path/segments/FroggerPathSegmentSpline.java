@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.path.segments;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathInfo;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathResult;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathSegmentType;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapPathManager.FroggerPathPreview;
@@ -66,8 +65,8 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
     }
 
     @Override
-    public FroggerPathResult calculatePosition(FroggerPathInfo info) {
-        return new FroggerPathResult(calculateSplinePoint(info.getSegmentDistance()), calculateSplineTangent(info.getSegmentDistance()));
+    public FroggerPathResult calculatePosition(int segmentDistance) {
+        return new FroggerPathResult(calculateSplinePoint(segmentDistance), calculateSplineTangent(segmentDistance));
     }
 
     // What follows is insanely nasty, but it is what the game engine does, so we have no choice...
