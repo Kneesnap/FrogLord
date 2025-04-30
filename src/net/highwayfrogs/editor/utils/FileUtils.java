@@ -744,7 +744,7 @@ public class FileUtils {
         } else if (savedPath.getFileTypes().size() > 0){
             String startFileName = suggestedFileName;
             String extension = getFileNameExtension(savedPath.getFileTypes().get(0).getExtensions().get(0));
-            if (extension != null && !extension.equals("*") && !startFileName.contains("."))
+            if (extension != null && !extension.equals("*") && (startFileName == null || !startFileName.contains(".")))
                 startFileName += "." + extension;
 
             fileChooser.setInitialFileName(startFileName);
