@@ -22,7 +22,9 @@ import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -51,6 +53,13 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
     private final Map<Integer, CheckBox> flagCheckBoxMap = new HashMap<>();
     private final ImageFilterSettings imageFilterSettings = new ImageFilterSettings(ImageState.EXPORT);
 
+    private static final ImageFilterSettings IMAGE_EXPORT_SETTINGS = new ImageFilterSettings(ImageState.EXPORT)
+            .setTrimEdges(false)
+            .setAllowTransparency(true);
+
+    private static final SavedFilePath IMAGE_EXPORT_DIRECTORY = new SavedFilePath("vlo-bulk-export", "Select the folder to export images to...");
+    private static final SavedFilePath IMAGE_IMPORT_DIRECTORY = new SavedFilePath("vlo-bulk-import", "Select the folder to import images from...");
+
     private static final int SCALE_DIMENSION = 256;
 
     public VLOController(SCGameInstance instance) {
@@ -72,8 +81,8 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
             if (image == null)
                 return null;
 
-            String imageName = getConfig().getImageNames().getOrDefault(image.getTextureId(), "");
-            return index + ": " + imageName + " [" + image.getFullWidth() + ", " + image.getFullHeight() + "] (ID: " + image.getTextureId() + ")";
+            String imageName = image.getOriginalName();
+            return index + ": " + (imageName != null ? imageName : "") + " [" + image.getFullWidth() + ", " + image.getFullHeight() + "] (ID: " + image.getTextureId() + ")";
         }));
 
         imageList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> selectImage(newValue, false));
@@ -140,36 +149,36 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
     @FXML
     @SneakyThrows
     private void exportImage(ActionEvent event) {
-        File selectedFile = FXUtils.promptFileSave(getGameInstance(), "Specify the file to export this image as...", null, "Image Files", "png");
+        String originalName = this.selectedImage.getOriginalName();
+        File selectedFile = FileUtils.askUserToSaveFile(getGameInstance(), FileUtils.EXPORT_SINGLE_IMAGE_PATH, originalName != null ? originalName + ".png" : null);
         if (selectedFile != null)
-            ImageIO.write(toBufferedImage(this.selectedImage), "png", selectedFile);
+            ImageIO.write(this.selectedImage.toBufferedImage(IMAGE_EXPORT_SETTINGS), "png", selectedFile);
     }
 
     @FXML
     @SneakyThrows
     private void importImage(ActionEvent event) {
-        File selectedFile = FXUtils.promptFileOpen(getGameInstance(), "Select the image to import...", "Image Files", "png");
+        File selectedFile = FileUtils.askUserToOpenFile(getGameInstance(), FileUtils.IMPORT_SINGLE_IMAGE_PATH);
         if (selectedFile == null)
             return; // Cancelled.
 
-        this.selectedImage.replaceImage(ImageIO.read(selectedFile));
+        this.selectedImage.replaceImage(ImageIO.read(selectedFile), ProblemResponse.CREATE_POPUP);
         updateDisplay();
     }
 
     @FXML
     private void exportAllImages(ActionEvent event) {
-        File selectedFolder = FXUtils.promptChooseDirectory(getGameInstance(), "Select the directory to export images to.", true);
+        File selectedFolder = FileUtils.askUserToSelectFolder(getGameInstance(), IMAGE_EXPORT_DIRECTORY);
         if (selectedFolder == null)
             return; // Cancelled.
 
-        updateFilter();
-        getFile().exportAllImages(selectedFolder, imageFilterSettings);
+        getFile().exportAllImages(selectedFolder, IMAGE_EXPORT_SETTINGS);
     }
 
     @FXML
     @SneakyThrows
     private void importAllImages(ActionEvent event) {
-        File selectedFolder = FXUtils.promptChooseDirectory(getGameInstance(), "Select the directory to import images from.", true);
+        File selectedFolder = FileUtils.askUserToSelectFolder(getGameInstance(), IMAGE_IMPORT_DIRECTORY);
         if (selectedFolder == null)
             return; // Cancelled.
 
@@ -182,13 +191,12 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
 
             int id = Integer.parseInt(name);
             if (id >= 0 && id < getFile().getImages().size()) {
-                getFile().getImages().get(id).replaceImage(ImageIO.read(file));
+                getFile().getImages().get(id).replaceImage(ImageIO.read(file), ProblemResponse.CREATE_POPUP);
                 importedFiles++;
             }
-
         }
 
-        getLogger().info("Imported " + importedFiles + " images.");
+        getLogger().info("Imported %d images.", importedFiles);
         updateDisplay();
     }
 
