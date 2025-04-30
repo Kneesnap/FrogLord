@@ -55,13 +55,6 @@ public abstract class EntityData extends SCGameData<FroggerGameInstance> {
             EntityFatFireFlyBuild1.class, EntityWeb.class, EntityTurtleOld.class, EntitySwanOld.class, EntityCrocodileOld.class,
             EntitySpider.class, EntityTriggeredPlatform.class);
 
-    private static final Map<String, Class<? extends EntityData>> MODERN_FORM_REMAP = new HashMap<String, Class<? extends EntityData>>() {
-        {
-            put("PathInfo", PathData.class);
-            put("Matrix", MatrixData.class);
-        }
-    };
-
     public EntityData(FroggerGameInstance instance) {
         super(instance);
     }
@@ -121,6 +114,8 @@ public abstract class EntityData extends SCGameData<FroggerGameInstance> {
             return CACHE_MAP.get("MatrixData");
         } else if ("PathInfo".equals(dataClassName)) {
             return CACHE_MAP.get("PathData");
+        } else if ("CaveLight".equals(dataClassName)) {
+            return CACHE_MAP.get("EntityFrogLight");
         }
 
         tuple = CACHE_MAP.get(dataClassName);

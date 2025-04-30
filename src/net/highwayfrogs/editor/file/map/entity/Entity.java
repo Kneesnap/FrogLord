@@ -270,9 +270,9 @@ public class Entity extends SCGameData<FroggerGameInstance> {
 
         FroggerMapEntity newEntity = new FroggerMapEntity(mapFile);
         DataReader reader = new DataReader(new ArraySource(receiver.toArray()));
-        newEntity.load(reader);
 
         try {
+            newEntity.load(reader);
             newEntity.loadEntityData(reader);
             if (reader.getRemaining() != 0)
                 newEntity.getLogger().warning("There were %d bytes left after reading the entity data.", reader.getRemaining());
