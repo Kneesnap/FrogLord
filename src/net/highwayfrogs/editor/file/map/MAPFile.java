@@ -907,6 +907,8 @@ public class MAPFile extends SCGameData<FroggerGameInstance> {
             for (int x = 0; x < this.gridXCount; x++)
                 this.gridStacks.get(stackId++).convertToNewFormat(gridPacket.getGridStack(x, z), convertedPolygons);
 
+        gridPacket.recalculateAllCliffHeights(); // Recalculate cliff heights.
+
         // Animations
         this.newMapFile.getLogger().info("Converting animations...");
         animationPacket.getAnimations().clear();
