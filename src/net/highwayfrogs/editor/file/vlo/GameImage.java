@@ -17,11 +17,11 @@ import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 
 /**
  * A singular game image. MR_TXSETUP struct.
@@ -376,28 +377,37 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
      * Replace this texture with a new one.
      * @param image The new image to use.
      */
-    public void replaceImage(BufferedImage image) {
+    public void replaceImage(BufferedImage image, ProblemResponse response) {
+        // We can only parse TYPE_INT_ARGB, so if it's not that, we must convert the image to that, so it can be parsed properly.
+        image = ImageWorkHorse.convertBufferedImageToFormat(image, BufferedImage.TYPE_INT_ARGB);
+
+        // Ensure transparent pixels are now black.
         image = ImageWorkHorse.applyFilter(image, new BlackFilter());
 
-        if (image.getType() != BufferedImage.TYPE_INT_ARGB) { // We can only parse TYPE_INT_ARGB, so if it's not that, we must convert the image to that, so it can be parsed properly.
-            BufferedImage sourceImage = image;
-            image = new BufferedImage(sourceImage.getWidth(), sourceImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
-            Graphics graphics = image.createGraphics();
-            graphics.drawImage(sourceImage, 0, 0, null);
-            graphics.dispose();
-        }
+        // Automatically generate padding if necessary.
+        /*if (getIngameWidth() == image.getWidth() && getIngameHeight() == image.getHeight()) {
+            // TODO: Automatically generate padding, and update dimensions.
 
+        }*/
+
+        // Now that the dimensions are finalized, grant easy access to them.
         short imageWidth = (short) image.getWidth();
         short imageHeight = (short) image.getHeight();
-        Utils.verify(imageWidth <= MAX_DIMENSION && imageHeight <= MAX_DIMENSION, "The imported image is too big. Frogger's engine only supports up to %dx%d.", MAX_DIMENSION, MAX_DIMENSION);
 
+        // Ensure it's not too large.
+        if (imageWidth > MAX_DIMENSION || imageHeight > MAX_DIMENSION) {
+            Utils.handleProblem(response, getLogger(), Level.SEVERE, "The imported image is too big. The maximum image dimensions supported are %dx%d.", MAX_DIMENSION, MAX_DIMENSION);
+            return;
+        }
+
+        // TODO: warn if VRAM overlap occurs, or page boundary is crossed.
         /*if ((imageWidth / getWidthMultiplier()) + getVramX() > MAX_DIMENSION)
             Utils.makePopUp("This image does not fit horizontally in VRAM. Use the VRAM editor to make it fit.", AlertType.WARNING);
+         */
 
-        if (imageWidth > getFullWidth() || imageHeight > getFullHeight())
-            Utils.makePopUp("The image you have imported is larger than the image it replaced.\nThis may cause problems if it overlaps with another texture. Click on the 'VRAM' option to make sure the texture is ok.", AlertType.WARNING);*/
 
         if (getFullWidth() != imageWidth || getFullHeight() != imageHeight) {
+            // If it's not the expected dimensions, use a default padding scheme.
             this.fullWidth = imageWidth;
             this.fullHeight = imageHeight;
             setIngameWidth((short) (imageWidth - 2));
@@ -408,7 +418,7 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
         int[] array = new int[getFullHeight() * getFullWidth()];
         image.getRGB(0, 0, getFullWidth(), getFullHeight(), array, 0, getFullWidth());
 
-        //Convert int array into byte array.
+        // Convert int array into byte array.
         ByteBuffer buffer = ByteBuffer.allocate(array.length * Constants.INTEGER_SIZE);
         buffer.asIntBuffer().put(array);
         byte[] bytes = buffer.array();
@@ -531,6 +541,13 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
     public boolean contains(double x, double y) {
         return x >= getVramX() && x <= (getVramX() + getFullWidth())
                 && y >= getVramY() && y <= (getVramY() + getFullHeight());
+    }
+
+    /**
+     * Gets the name configured as the original name for this image.
+     */
+    public String getOriginalName() {
+        return getConfig().getImageNames().get(this.textureId);
     }
 
     @Override

@@ -37,11 +37,6 @@ public class ConsoleOutputHandler extends StreamHandler {
         return super.isLoggable(record) && !LogFormatter.isJavaFXMessage(record);
     }
 
-    @Override
-    public void close() throws SecurityException {
-        this.flush();
-    }
-
     @Getter
     @Setter
     private static class ConsoleOutputStream extends OutputStream {

@@ -14,6 +14,7 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
@@ -23,6 +24,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 /**
  * Reads the "FORM" struct.
@@ -34,8 +36,8 @@ import java.util.List;
 @Getter
 public class FroggerMapForm extends SCGameData<FroggerGameInstance> {
     private final FroggerMapFile mapFile;
-    private short xGridSquareCount; // Number of x grid squares in this form.
-    private short zGridSquareCount; // Number of z grid squares in this form.
+    private short xGridSquareCount; // Number of x grid squares in this form. This value is sometimes garbage, even in the retail game (SUB3.MAP, Both PC & PSX).
+    private short zGridSquareCount; // Number of z grid squares in this form. This value is sometimes garbage, even in the retail game (SUB3.MAP, Both PC & PSX).
     private short xOffset; // Offset to bottom left or grid from entity origin.
     private short zOffset; // Offset to bottom left or grid from entity origin.
     private final List<FroggerMapFormData> formDataEntries = new ArrayList<>();
@@ -80,6 +82,9 @@ public class FroggerMapForm extends SCGameData<FroggerGameInstance> {
             this.formDataEntries.add(newFormDataEntry);
             newFormDataEntry.load(reader);
         }
+
+        if (this.formDataEntries.size() > 0 && (this.xGridSquareCount <= 0 || this.zGridSquareCount <= 0))
+            getLogger().warning("Contained a form data entry while having dimensions of [%d, %d]", this.xGridSquareCount, this.zGridSquareCount);
     }
 
     /**
@@ -104,6 +109,9 @@ public class FroggerMapForm extends SCGameData<FroggerGameInstance> {
 
     @Override
     public void save(DataWriter writer) {
+        if (this.formDataEntries.size() > 0 && (this.xGridSquareCount <= 0 || this.zGridSquareCount <= 0))
+            Utils.handleProblem(ProblemResponse.CREATE_POPUP, getLogger(), Level.WARNING, "Map form %d in %s contains a form data entry while having dimensions of [%d, %d].\nThis may cause issues with the game!", getFormIndex(), this.mapFile.getFileDisplayName(), this.xGridSquareCount, this.zGridSquareCount);
+
         writer.writeUnsignedShort(this.formDataEntries.size());
         writer.writeNull(Constants.SHORT_SIZE); // Runtime value.
         writer.writeShort(this.xGridSquareCount);
@@ -150,14 +158,17 @@ public class FroggerMapForm extends SCGameData<FroggerGameInstance> {
      * @param editor The editor to setup under.
      */
     public void setupEditor(FroggerUIMapFormManager manager, GUIEditorGrid editor) {
+        if (this.formDataEntries.isEmpty()) // The data shown here is ignored by the game when there is no form data. So the garbage values we see are fine.
+            editor.addBoldLabel("Data ignored, as there is no form data.");
+
         // Grid Counts:
-        editor.addSignedShortField("Grid Width (X)", this.xGridSquareCount, newX -> newX > 0, newX -> {
+        editor.addSignedShortField("Grid Width (X)", this.xGridSquareCount, newX -> newX > 0 || this.formDataEntries.isEmpty(), newX -> {
             setXGridSquareCount(newX);
             if (manager != null)
                 manager.updateEditor();
         });
 
-        editor.addSignedShortField("Grid Length (Z)", this.zGridSquareCount, newZ -> newZ > 0, newZ -> {
+        editor.addSignedShortField("Grid Length (Z)", this.zGridSquareCount, newZ -> newZ > 0 || this.formDataEntries.isEmpty(), newZ -> {
             setZGridSquareCount(newZ);
             if (manager != null)
                 manager.updateEditor();

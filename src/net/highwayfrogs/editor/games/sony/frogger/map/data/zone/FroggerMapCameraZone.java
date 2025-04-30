@@ -3,11 +3,11 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.zone;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.FroggerOffsetVectorType;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.function.Predicate;
 
@@ -104,7 +104,7 @@ public class FroggerMapCameraZone extends FroggerMapZone {
             case EAST:
                 return sourceOffset ? this.eastSourceOffset : this.eastTargetOffset;
             case SOUTH:
-                return sourceOffset ? this.southSourceOffset : this.westTargetOffset;
+                return sourceOffset ? this.southSourceOffset : this.southTargetOffset;
             case WEST:
                 return sourceOffset ? this.westSourceOffset : this.westTargetOffset;
             default:

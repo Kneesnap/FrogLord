@@ -256,9 +256,14 @@ public class Utils {
         if (arguments == null)
             throw new NullPointerException("arguments");
 
+        // Get logger if missing.
+        if (logger == null)
+            logger = getInstanceLogger();
+
         String formattedMessage = StringUtils.formatStringSafely(template, arguments);
         switch (response) {
             case CREATE_POPUP:
+                logger.log(severity, formattedMessage);
                 FXUtils.makePopUp(formattedMessage, FXUtils.getAlertTypeFromLogLevel(severity));
                 break;
             case THROW_EXCEPTION:
@@ -270,9 +275,6 @@ public class Utils {
                 handleError(logger, new RuntimeException(formattedMessage), true);
                 break;
             case PRINT_MESSAGE:
-                if (logger == null)
-                    logger = getInstanceLogger();
-
                 logger.log(severity, formattedMessage);
                 break;
             default:
