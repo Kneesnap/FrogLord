@@ -203,8 +203,7 @@ public class FroggerMapFilePacketPolygon extends FroggerMapFilePacket {
             return false; // Already contained or null
 
         this.polygons.add(polygon);
-        if (polygon.isVisible())
-            this.polygonsByType[polygon.getPolygonType().ordinal()].add(polygon);
+        this.polygonsByType[polygon.getPolygonType().ordinal()].add(polygon);
         return true;
     }
 }
