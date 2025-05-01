@@ -167,15 +167,15 @@ public class FroggerMapFilePacketEntity extends FroggerMapFilePacket {
         if (entity == null)
             throw new NullPointerException("entity");
 
-        if (entity.getUniqueId() >= 0) {
-            if (getEntityByUniqueId(entity.getUniqueId()) != null)
-                return false; // Entity already exists with the ID.
+        FroggerMapEntity existingEntityWithId = getEntityByUniqueId(entity.getUniqueId());
+        if (existingEntityWithId == entity)
+            return false; // Entity already registered.
 
-            if (entity.getUniqueId() >= this.nextFreeEntityId)
-                this.nextFreeEntityId = entity.getUniqueId() + 1;
-        } else {
+        if (existingEntityWithId != null || entity.getUniqueId() < 0) { // Entity needs a new ID.
             // Automatically generate the next free entity ID.
             entity.setUniqueID(this.nextFreeEntityId++, true);
+        } else if (entity.getUniqueId() >= this.nextFreeEntityId) { // Expand new ID.
+            this.nextFreeEntityId = entity.getUniqueId() + 1;
         }
 
         this.entities.add(entity);

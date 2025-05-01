@@ -156,6 +156,11 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
 
     @Override
     protected FroggerMapEntity createNewValue() {
+        // If an entity is selected, create a clone of the current entity.
+        FroggerMapEntity selectedEntity = getSelectedValue();
+        if (selectedEntity != null)
+            return selectedEntity.clone();
+
         // The entity ID will be automatically generated when the entity is added, so we do not need to set it here.
         // The form grid ID will also be set (if possible) when the map form entry is created.
         // The red checkpoint frog has been picked because it's more visually noticeable on most maps. (If the user adds an entity while zoomed out, it might be hard to see it)
