@@ -4,12 +4,12 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.shared.mof2.collision.MRMofBoundingBox;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.AppendInfoLoggerWrapper;
 
@@ -31,14 +31,23 @@ public class MRMofPartCel extends SCSharedGameData {
     private transient int normalPointer = -1;
     private transient int boundingBoxPointer = -1;
 
+    public static final int SIZE_IN_BYTES = 4 * Constants.INTEGER_SIZE;
+
     public MRMofPartCel(MRMofPart parent) {
         super(parent.getGameInstance());
         this.parent = parent;
     }
 
+    /**
+     * Gets the ID of this partCel.
+     */
+    public int getPartCelID() {
+        return Utils.getLoadingIndex(this.parent.getPartCels(), this);
+    }
+
     @Override
     public ILogger getLogger() {
-        return new AppendInfoLoggerWrapper(this.parent.getLogger(), "partCel=" + Utils.getLoadingIndex(this.parent.getPartCels(), this), AppendInfoLoggerWrapper.TEMPLATE_COMMA_SEPARATOR);
+        return new AppendInfoLoggerWrapper(this.parent.getLogger(), "partCel=" + getPartCelID(), AppendInfoLoggerWrapper.TEMPLATE_COMMA_SEPARATOR);
     }
 
     @Override
@@ -53,7 +62,7 @@ public class MRMofPartCel extends SCSharedGameData {
     public void save(DataWriter writer) {
         boolean vertexPointerSet = (this.vertexPointer >= 0);
         boolean normalPointerSet = (this.normalPointer >= 0);
-        if ((!vertexPointerSet || !normalPointerSet) && !this.parent.getParentMof().getModel().isIncomplete())
+        if (!vertexPointerSet || !normalPointerSet)
             throw new RuntimeException("Vertex/Normal vector buffers have not been saved yet, so the MRMofPartCel header cannot be saved.");
 
         writer.writeInt(this.vertexPointer);
@@ -79,8 +88,7 @@ public class MRMofPartCel extends SCSharedGameData {
         this.vertexPointer = -1;
 
         this.vertices.clear();
-        if (!this.parent.getParentMof().getModel().isIncomplete()) // Incomplete MOFs skip this, but still their vertexPointer reset.
-            context.getPartCelVectors().copyElementsFromBuffer(this.vertices, vertexPointer, vertexCount);
+        context.getPartCelVectors().copyElementsFromBuffer(this.vertices, vertexPointer, vertexCount);
     }
 
     /**
@@ -108,8 +116,7 @@ public class MRMofPartCel extends SCSharedGameData {
         this.normalPointer = -1;
 
         this.normals.clear();
-        if (!this.parent.getParentMof().getModel().isIncomplete()) // Incomplete MOFs skip this, but still their normalPointer pointer reset.
-            context.getPartCelVectors().copyElementsFromBuffer(this.normals, normalPointer, normalCount);
+        context.getPartCelVectors().copyElementsFromBuffer(this.normals, normalPointer, normalCount);
     }
 
     /**
@@ -159,7 +166,7 @@ public class MRMofPartCel extends SCSharedGameData {
      * @param writer The writer to save the bounding box to.
      * @param previousBoundingBoxes A registry of bounding boxes previously written (reusable pointers)
      */
-    void saveBoundingBox(DataWriter writer, Map<MRMofBoundingBox, Integer> previousBoundingBoxes) {
+    void saveBoundingBox(DataWriter writer, Map<MRMofBoundingBox, Integer> previousBoundingBoxes, boolean incompleteMof) {
         // Write the bounding box, or find where it has already been written.
         Integer boundingBoxWriteIndex = previousBoundingBoxes != null ? previousBoundingBoxes.get(this.boundingBox) : null;
         if (this.boundingBox != null && boundingBoxWriteIndex == null) {
@@ -174,7 +181,7 @@ public class MRMofPartCel extends SCSharedGameData {
 
         if (this.boundingBoxPointer > 0) { // Ready to write to the header.
             // Write to the header.
-            if (!this.parent.getParentMof().getModel().isIncomplete())
+            if (!incompleteMof)
                 writer.writeIntAtPos(this.boundingBoxPointer, boundingBoxWriteIndex);
             this.boundingBoxPointer = -1;
         } else { // Not ready to write to the header.

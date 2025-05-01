@@ -19,11 +19,7 @@ import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
 import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbookAction;
 import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnim;
 import net.highwayfrogs.editor.file.mof.view.MOFMesh;
-import net.highwayfrogs.editor.utils.data.reader.ArraySource;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
-import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
@@ -43,6 +39,10 @@ import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.ArraySource;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
 
 import java.io.File;
 import java.util.Arrays;
@@ -130,6 +130,18 @@ public class MOFHolder extends SCSharedGameFile {
 
     @Override
     public void save(DataWriter writer) {
+        if (this.newModel != null) { // TODO: Toss later!
+            try {
+                byte[] newModelData = this.newModel.writeDataToByteArray();
+                if (newModelData != null) {
+                    writer.writeBytes(newModelData);
+                    return;
+                }
+            } catch (Throwable th) {
+                Utils.handleError(this.newModel.getLogger(), th, false, "Failed to save as MRModel.");
+            }
+        }
+
         if (isDummy()) { // Save dummy mofs.
             writer.writeBytes(DUMMY_DATA);
             return;
