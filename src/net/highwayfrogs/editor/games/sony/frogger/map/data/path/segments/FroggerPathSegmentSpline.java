@@ -33,11 +33,6 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
     }
 
     @Override
-    public boolean isAllowLengthEdit() {
-        return true;
-    }
-
-    @Override
     protected void loadData(DataReader reader) {
         // Read MR_SPLINE_MATRIX:
         this.splineMatrix.load(reader);
@@ -162,9 +157,10 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
     @Override
     public int calculateFixedPointLength() {
         // TODO: Reimplement.
-        // We leave this up to user input, since I've yet to come up with an algorithm which is accurate enough to get this right,
-        // and it seems like just leaving it as-is even during changes will create valid results.
-        final int maxLength = 1000 * (1 << 4);
+        // The following just ends up generating the same value each time.
+        // That's because what actually determines the length of the spline seems to depend on the smoothing spline, which we don't support yet.
+        // I've commented this out despite it seemingly mostly valid, because this is slow.
+        /*final int maxLength = 1000 * (1 << 4);
         int bestLength = 0;
         double bestDistance = Double.MAX_VALUE;
 
@@ -181,7 +177,8 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
             }
         }
 
-        return bestLength;
+        return bestLength;*/
+        return getLength();
     }
 
     @Override
@@ -227,11 +224,14 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
         super.setupEditor(pathPreview, editor);
 
         MRBezierCurve curve = convertToBezierCurve();
-        editor.addFloatVector("Start", curve.getStart(), () -> loadFromCurve(curve, pathPreview), pathPreview.getController(), this::selectPathPosition);
-        editor.addFloatVector("Control 1", curve.getControl1(), () -> loadFromCurve(curve, pathPreview), pathPreview.getController(), this::selectPathPosition);
-        editor.addFloatVector("Control 2", curve.getControl2(), () -> loadFromCurve(curve, pathPreview), pathPreview.getController(), this::selectPathPosition);
-        editor.addFloatVector("End", curve.getEnd(), () -> loadFromCurve(curve, pathPreview), pathPreview.getController(), this::selectPathPosition);
-        // TODO: Globus suggests that the path length is not getting automatically updated when positions change.
+        editor.addFloatVector("Start", curve.getStart(), () -> loadFromCurve(curve, pathPreview), pathPreview.getController(),
+                (vector, bits) -> selectPathPosition(pathPreview, vector, bits, () -> loadFromCurve(curve, pathPreview)));
+        editor.addFloatVector("Control 1", curve.getControl1(), () -> loadFromCurve(curve, pathPreview), pathPreview.getController(),
+                (vector, bits) -> selectPathPosition(pathPreview, vector, bits, () -> loadFromCurve(curve, pathPreview)));
+        editor.addFloatVector("Control 2", curve.getControl2(), () -> loadFromCurve(curve, pathPreview), pathPreview.getController(),
+                (vector, bits) -> selectPathPosition(pathPreview, vector, bits, () -> loadFromCurve(curve, pathPreview)));
+        editor.addFloatVector("End", curve.getEnd(), () -> loadFromCurve(curve, pathPreview), pathPreview.getController(),
+                (vector, bits) -> selectPathPosition(pathPreview, vector, bits, () -> loadFromCurve(curve, pathPreview)));
         /*makeTEditor(pathPreview, editor);
 
         editor.addBoldLabel("Smooth C:"); //TODO: Make a real editor.
