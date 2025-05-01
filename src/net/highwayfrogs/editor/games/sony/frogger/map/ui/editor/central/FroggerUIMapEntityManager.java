@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central;
 
 import javafx.geometry.Point3D;
 import javafx.scene.Node;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
 import javafx.scene.paint.PhongMaterial;
@@ -224,6 +225,9 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
             this.selectedMouseEntityPosition[0] = (float) newWorldPos.getX();
             this.selectedMouseEntityPosition[1] = (float) newWorldPos.getY();
             this.selectedMouseEntityPosition[2] = (float) newWorldPos.getZ();
+            if (getController().getInputManager().isKeyPressed(KeyCode.CONTROL))
+                for (int i = 0; i < this.selectedMouseEntityPosition.length; i++)
+                    this.selectedMouseEntityPosition[i] = Math.round(this.selectedMouseEntityPosition[i]);
         }
 
         updateEntityPositionRotation(this.selectedMouseEntity); // Update display position.
