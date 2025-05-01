@@ -751,11 +751,21 @@ public class FileUtils {
         }
 
         File selectedFile = fileChooser.showSaveDialog(instance != null ? instance.getMainStage() : null);
-        if (selectedFile != null) {
-            savedPath.setResult(instance, selectedFile);
-            FrogLordApplication.setWorkingDirectory(selectedFile.getParentFile());
+        if (selectedFile == null)
+            return null;
+
+        if (selectedFile.isFile() && selectedFile.exists() && !selectedFile.canWrite() && !selectedFile.setWritable(true)) {
+            FXUtils.makePopUp("Can't write to the file '" + selectedFile.getName() + "'." + Constants.NEWLINE + "Check that you have permission to write to this file.", AlertType.ERROR);
+            return askUserToSaveFile(instance, savedPath, suggestedFileName, overrideLastFileName);
         }
 
+        if (selectedFile.exists() && !selectedFile.setLastModified(System.currentTimeMillis())) {
+            FXUtils.makePopUp("Can't write to the file '" + selectedFile.getName() + "'." + Constants.NEWLINE + "Check that you have permission to write to this file.", AlertType.ERROR);
+            return askUserToSaveFile(instance, savedPath, suggestedFileName, overrideLastFileName);
+        }
+
+        savedPath.setResult(instance, selectedFile);
+        FrogLordApplication.setWorkingDirectory(selectedFile.getParentFile());
         return selectedFile;
     }
 

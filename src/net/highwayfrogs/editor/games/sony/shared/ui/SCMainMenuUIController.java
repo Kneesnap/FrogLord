@@ -103,11 +103,10 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
         // This is for the user's own good-- I've seen it too many times.
         // A user either doesn't understand the consequences or doesn't think it's a big deal, until it becomes a problem.
         if (outputMwdFile.equals(getGameInstance().getMwdFile())) {
-            FXUtils.makePopUp("Overwriting loaded game files is not permitted.", AlertType.WARNING);
+            FXUtils.makePopUp("Overwriting loaded game files is not permitted.", AlertType.ERROR);
             return;
         }
 
-        File outputMwiFile = new File(outputMwdFile.getParentFile(), FileUtils.stripExtension(outputMwdFile.getName()) + ".MWI");
         File outputExeFile = FileUtils.askUserToSaveFile(getGameInstance(), SAVE_EXE_FILE_PATH, "modded_" + getGameInstance().getExeFile().getName());
         if (outputExeFile == null)
             return;
@@ -115,9 +114,16 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
         // This is for the user's own good-- I've seen it too many times.
         // A user either doesn't understand the consequences or doesn't think it's a big deal, until it becomes a problem.
         if (outputExeFile.equals(getGameInstance().getExeFile())) {
-            FXUtils.makePopUp("Overwriting loaded game files is not permitted.", AlertType.WARNING);
+            FXUtils.makePopUp("Overwriting loaded game files is not permitted.", AlertType.ERROR);
             return;
         }
+
+        // Prevent the user from separating the files unless they really intend to.
+        if (!outputExeFile.getParentFile().equals(getGameInstance().getMwdFile()))
+            if (!FXUtils.makePopUpYesNo("Are you sure you would like to save " + outputMwdFile.getName() + " and " + outputExeFile.getName() + " to different folders?\nUnless you know what you're doing, respond 'No'."))
+                return;
+
+        File outputMwiFile = new File(outputExeFile.getParentFile(), FileUtils.stripExtension(outputMwdFile.getName()) + ".MWI");
 
         ProgressBarComponent.openProgressBarWindow(getGameInstance(), "Saving Files", progressBar -> {
             // Save the MWD file.
@@ -142,9 +148,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
 
             // Wait until after the MWD has been saved to save the MWI.
             FileUtils.deleteFile(outputMwiFile); // Don't merge files, create a new one.
-            DataWriter writer = new DataWriter(new FileReceiver(outputMwiFile));
-            getGameInstance().getArchiveIndex().save(writer);
-            writer.closeReceiver();
+            getGameInstance().getArchiveIndex().writeDataToFile(getLogger(), outputMwiFile, true);
         });
     }
 
