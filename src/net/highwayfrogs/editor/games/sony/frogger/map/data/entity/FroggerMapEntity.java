@@ -32,6 +32,7 @@ import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.ArraySource;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
@@ -410,6 +411,18 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
             positionData = new float[6];
 
         return this.entityData.getPositionAndRotation(positionData);
+    }
+
+    /**
+     * Creates a clone of the FroggerMapEntity.
+     */
+    public FroggerMapEntity clone() {
+        byte[] entityData = writeDataToByteArray();
+        FroggerMapEntity clonedEntity = new FroggerMapEntity(this.mapFile);
+        DataReader reader = new DataReader(new ArraySource(entityData));
+        clonedEntity.load(reader);
+        clonedEntity.loadEntityData(reader);
+        return clonedEntity;
     }
 
     /**

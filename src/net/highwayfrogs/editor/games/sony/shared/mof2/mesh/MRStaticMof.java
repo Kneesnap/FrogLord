@@ -2,8 +2,6 @@ package net.highwayfrogs.editor.games.sony.shared.mof2.mesh;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.SCUtils;
@@ -12,6 +10,8 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.MRBaseModelData;
 import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPart.MRMofPartHeader;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -63,9 +63,6 @@ public class MRStaticMof extends MRBaseModelData {
         for (int i = 0; i < partCount; i++) {
             MRMofPart part = new MRMofPart(this);
             headers[i] = part.loadHeader(reader, context);
-            if (isIncomplete)
-                getModel().getCompleteCounterpart().asStaticFile().getParts().get(i).copyToIncompletePart(part);
-
             this.parts.add(part);
         }
 

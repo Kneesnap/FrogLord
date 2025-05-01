@@ -3,9 +3,9 @@ package net.highwayfrogs.editor.utils.objects;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
-import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.ArrayList;
@@ -145,6 +145,10 @@ public abstract class ReferencableBuffer<TElement> {
     public int saveElementBuffer(DataWriter writer, List<TElement> buffer) {
         if (this.bufferStartIndex < 0)
             this.bufferStartIndex = writer.getIndex();
+
+        // Nothing to write.
+        if (buffer.isEmpty())
+            return this.bufferStartIndex;
 
         List<Integer> spotsToCheck = this.elementSaveOccurrences.get(buffer.get(0));
 

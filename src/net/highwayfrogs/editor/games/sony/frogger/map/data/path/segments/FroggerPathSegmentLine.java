@@ -86,8 +86,10 @@ public class FroggerPathSegmentLine extends FroggerPathSegment {
     @Override
     public void setupEditor(FroggerPathPreview pathPreview, GUIEditorGrid editor) {
         super.setupEditor(pathPreview, editor);
-        editor.addFloatVector("Start:", getStart(), () -> onUpdate(pathPreview), pathPreview.getController(), this::selectPathPosition);
-        editor.addFloatVector("End:", getEnd(), () -> onUpdate(pathPreview), pathPreview.getController(), this::selectPathPosition);
+        editor.addFloatVector("Start", getStart(), () -> onUpdate(pathPreview), pathPreview.getController(),
+                (vector, bits) -> selectPathPosition(pathPreview, vector, bits, null));
+        editor.addFloatVector("End", getEnd(), () -> onUpdate(pathPreview), pathPreview.getController(),
+                (vector, bits) -> selectPathPosition(pathPreview, vector, bits, null));
     }
 
     @Override

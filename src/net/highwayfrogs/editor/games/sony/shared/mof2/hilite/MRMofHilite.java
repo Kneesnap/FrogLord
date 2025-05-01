@@ -4,9 +4,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPart;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPolygon;
@@ -14,6 +12,8 @@ import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFController;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.RenderManager;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.AppendInfoLoggerWrapper;
 
@@ -28,6 +28,8 @@ public class MRMofHilite extends SCSharedGameData {
     @Getter private SVector vertex;
     @Getter private MRMofPolygon polygon;
     private int tempAttachIndex = -1;
+
+    public static final int SIZE_IN_BYTES = 3 * Constants.INTEGER_SIZE;
 
     public MRMofHilite(@NonNull MRMofPart parentPart) {
         super(parentPart.getGameInstance());

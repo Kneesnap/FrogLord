@@ -544,11 +544,11 @@ public class FileUtils {
             throw new IllegalArgumentException("The path to '" + outputFile + "' did not exist, therefore the file cannot be written.");
 
         try {
-            if (!folder.canWrite() && !folder.setWritable(true)) // We want it to properly create popups based on thread/etc, since this error is one which is likely the user's responsibility.
-                throw new IOException("Can't write to the file '" + outputFile.getName() + "'." + Constants.NEWLINE + "Do you have permission to save in this folder?");
+            if (!folder.canWrite() && !folder.setWritable(true)) // We want it to properly create popups based on thread/etc., since this error is one which is likely the user's responsibility.
+                throw new IOException("Can't write to the file '" + outputFile.getName() + "'." + Constants.NEWLINE + "Check that you have permission to save to this folder.");
 
             if (outputFile.isFile() && outputFile.exists() && !outputFile.canWrite() && !outputFile.setWritable(true)) // TODO: Consider changing this to a Yes/No popup, with the ability to accept all
-                throw new IOException("Can't write to the file '" + outputFile.getName() + "'." + Constants.NEWLINE + "Do you have permission to write to this file?");
+                throw new IOException("Can't write to the file '" + outputFile.getName() + "'." + Constants.NEWLINE + "Check that you have permission to write to this file.");
 
             if (outputFile.exists() && !outputFile.setLastModified(System.currentTimeMillis()))
                 throw new IOException("Failed to update the last modified date for '" + outputFile.getName() + "'.");
@@ -655,7 +655,7 @@ public class FileUtils {
                 String lowerCase = type.toLowerCase();
                 String upperCase = type.toUpperCase();
 
-                if (lowerCase.equals(upperCase)) {
+                if (lowerCase.equals(upperCase) || ((lowerCase.startsWith("sl") || lowerCase.startsWith("sc")) && lowerCase.endsWith("_*.*"))) { // Ignore 'SLUS', etc.
                     this.extensions.add(type);
                 } else {
                     this.extensions.add(lowerCase);
@@ -744,18 +744,28 @@ public class FileUtils {
         } else if (savedPath.getFileTypes().size() > 0){
             String startFileName = suggestedFileName;
             String extension = getFileNameExtension(savedPath.getFileTypes().get(0).getExtensions().get(0));
-            if (extension != null && !extension.equals("*") && !startFileName.contains("."))
+            if (extension != null && !extension.equals("*") && (startFileName == null || !startFileName.contains(".")))
                 startFileName += "." + extension;
 
             fileChooser.setInitialFileName(startFileName);
         }
 
         File selectedFile = fileChooser.showSaveDialog(instance != null ? instance.getMainStage() : null);
-        if (selectedFile != null) {
-            savedPath.setResult(instance, selectedFile);
-            FrogLordApplication.setWorkingDirectory(selectedFile.getParentFile());
+        if (selectedFile == null)
+            return null;
+
+        if (selectedFile.isFile() && selectedFile.exists() && !selectedFile.canWrite() && !selectedFile.setWritable(true)) {
+            FXUtils.makePopUp("Can't write to the file '" + selectedFile.getName() + "'." + Constants.NEWLINE + "Check that you have permission to write to this file.", AlertType.ERROR);
+            return askUserToSaveFile(instance, savedPath, suggestedFileName, overrideLastFileName);
         }
 
+        if (selectedFile.exists() && !selectedFile.setLastModified(System.currentTimeMillis())) {
+            FXUtils.makePopUp("Can't write to the file '" + selectedFile.getName() + "'." + Constants.NEWLINE + "Check that you have permission to write to this file.", AlertType.ERROR);
+            return askUserToSaveFile(instance, savedPath, suggestedFileName, overrideLastFileName);
+        }
+
+        savedPath.setResult(instance, selectedFile);
+        FrogLordApplication.setWorkingDirectory(selectedFile.getParentFile());
         return selectedFile;
     }
 
@@ -765,17 +775,26 @@ public class FileUtils {
      * @param instance The game instance to save the image path to.
      * @param image The image to save
      * @param suggestedFileName The suggested file name
-     * @param overrideLastFileName Whether the suggested file name has priority over the previous file name.
      * @return file, if successfully saved
      */
-    public static File askUserToSaveImageFile(ILogger logger, GameInstance instance, BufferedImage image, String suggestedFileName, boolean overrideLastFileName) {
-        File selectedFile = askUserToSaveFile(instance, EXPORT_SINGLE_IMAGE_PATH, suggestedFileName, overrideLastFileName);
+    public static File askUserToSaveImageFile(ILogger logger, GameInstance instance, BufferedImage image, String suggestedFileName) {
+        boolean hasSuggestedFileName = suggestedFileName != null && suggestedFileName.trim().length() > 0;
+        String[] extensionSuffixes = ImageIO.getWriterFileSuffixes();
+
+        // Add extension.
+        if (hasSuggestedFileName) {
+            String providedExtension = FileUtils.getFileNameExtension(suggestedFileName);
+            if (providedExtension == null || !Utils.contains(extensionSuffixes, providedExtension.toLowerCase()))
+                suggestedFileName += "." + (Utils.contains(extensionSuffixes, "png") ? "png" : extensionSuffixes[0]);
+        }
+
+        File selectedFile = askUserToSaveFile(instance, EXPORT_SINGLE_IMAGE_PATH, suggestedFileName, suggestedFileName != null && suggestedFileName.trim().length() > 0);
         if (selectedFile == null)
             return null;
 
         String extension = FileUtils.getFileNameExtensionLower(selectedFile.getName());
         if (extension == null || !Utils.contains(ImageIO.getWriterFileSuffixes(), extension)) {
-            FXUtils.makePopUp("Couldn't figure out the image format by the file extension. (" + extension + ")", AlertType.ERROR);
+            FXUtils.makePopUp("Couldn't determine which image format to use for the file extension '." + extension + "'.", AlertType.ERROR);
             return null;
         }
 

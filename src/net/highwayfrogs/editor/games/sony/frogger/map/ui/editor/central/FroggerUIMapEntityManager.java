@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central;
 
 import javafx.geometry.Point3D;
 import javafx.scene.Node;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
 import javafx.scene.paint.PhongMaterial;
@@ -155,6 +156,11 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
 
     @Override
     protected FroggerMapEntity createNewValue() {
+        // If an entity is selected, create a clone of the current entity.
+        FroggerMapEntity selectedEntity = getSelectedValue();
+        if (selectedEntity != null)
+            return selectedEntity.clone();
+
         // The entity ID will be automatically generated when the entity is added, so we do not need to set it here.
         // The form grid ID will also be set (if possible) when the map form entry is created.
         // The red checkpoint frog has been picked because it's more visually noticeable on most maps. (If the user adds an entity while zoomed out, it might be hard to see it)
@@ -224,6 +230,9 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
             this.selectedMouseEntityPosition[0] = (float) newWorldPos.getX();
             this.selectedMouseEntityPosition[1] = (float) newWorldPos.getY();
             this.selectedMouseEntityPosition[2] = (float) newWorldPos.getZ();
+            if (getController().getInputManager().isKeyPressed(KeyCode.CONTROL))
+                for (int i = 0; i < this.selectedMouseEntityPosition.length; i++)
+                    this.selectedMouseEntityPosition[i] = Math.round(this.selectedMouseEntityPosition[i]);
         }
 
         updateEntityPositionRotation(this.selectedMouseEntity); // Update display position.

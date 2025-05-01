@@ -4,10 +4,8 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
@@ -23,6 +21,8 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.hilite.MRMofHilite;
 import net.highwayfrogs.editor.games.sony.shared.mof2.hilite.MRMofHilite.HiliteAttachType;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.AppendInfoLoggerWrapper;
 
@@ -156,9 +156,9 @@ public class MRMofPart extends SCSharedGameData {
                 int localIndex = block.getPolygons().indexOf(polygon);
                 if (localIndex >= 0)
                     return blockIndex + localIndex;
-
-                blockIndex += block.getPolygons().size();
             }
+
+            blockIndex += block.getPolygons().size();
         }
 
         throw new IllegalArgumentException("The specified MRMofPolygon is not registered, and therefore does not have an index!");
@@ -409,6 +409,7 @@ public class MRMofPart extends SCSharedGameData {
         float maxX = Float.MIN_VALUE;
         float maxY = Float.MIN_VALUE;
         float maxZ = Float.MIN_VALUE;
+        boolean anyVertices = false;
 
         for (MRMofPartCel partCel : getPartCels()) {
             for (SVector vertex : partCel.getVertices()) {
@@ -418,17 +419,21 @@ public class MRMofPart extends SCSharedGameData {
                 maxX = Math.max(maxX, vertex.getFloatX());
                 maxY = Math.max(maxY, vertex.getFloatY());
                 maxZ = Math.max(maxZ, vertex.getFloatZ());
+                anyVertices = true;
             }
         }
 
-        box.getVertices()[0].setValues(minX, minY, minZ, 4);
-        box.getVertices()[1].setValues(minX, minY, maxZ, 4);
-        box.getVertices()[2].setValues(minX, maxY, minZ, 4);
-        box.getVertices()[3].setValues(minX, maxY, maxZ, 4);
-        box.getVertices()[4].setValues(maxX, minY, minZ, 4);
-        box.getVertices()[5].setValues(maxX, minY, maxZ, 4);
-        box.getVertices()[6].setValues(maxX, maxY, minZ, 4);
-        box.getVertices()[7].setValues(maxX, maxY, maxZ, 4);
+        if (anyVertices) {
+            box.getVertices()[0].setValues(minX, minY, minZ, 4);
+            box.getVertices()[1].setValues(minX, minY, maxZ, 4);
+            box.getVertices()[2].setValues(minX, maxY, minZ, 4);
+            box.getVertices()[3].setValues(minX, maxY, maxZ, 4);
+            box.getVertices()[4].setValues(maxX, minY, minZ, 4);
+            box.getVertices()[5].setValues(maxX, minY, maxZ, 4);
+            box.getVertices()[6].setValues(maxX, maxY, minZ, 4);
+            box.getVertices()[7].setValues(maxX, maxY, maxZ, 4);
+        }
+
         return box;
     }
 
@@ -541,25 +546,36 @@ public class MRMofPart extends SCSharedGameData {
          * @param reader The reader to load the body from.
          */
         public void loadBody(DataReader reader) {
-            this.mofPart.readPartCels(reader, this.partCelPointer, this.partCelCount, this.vertexCount, this.normalCount, this.context); // Incomplete changes this.
+            MRMofPart counterpart;
+            boolean isIncomplete = this.mofPart.getParentMof().getModel().isIncomplete();
+            if (isIncomplete) {
+                if (this.mofPart.getParentMof().getModel().getCompleteCounterpart() == null)
+                    throw new RuntimeException("Incomplete model is missing a counterpart!!");
+
+                counterpart = this.mofPart.getParentMof().getModel().getCompleteCounterpart().asStaticFile().getParts().get(this.mofPart.getPartID());
+            } else {
+                counterpart = null;
+            }
+
+            this.mofPart.readPartCels(reader, this.partCelPointer, this.partCelCount, this.vertexCount, this.normalCount, this.context, counterpart); // Incomplete changes this.
 
             // Skip the bounding boxes of incomplete mofs.
-            if (this.mofPart.getParentMof().getModel().isIncomplete())
+            if (isIncomplete)
                 while (reader.getIndex() != this.hilitePointer && reader.getIndex() != this.collPrimPointer && reader.getIndex() != this.animatedTexturePointer && reader.getIndex() != this.flipbookPointer && reader.getIndex() != this.primitivePointer)
                     new MRMofBoundingBox().load(reader);
 
-            this.mofPart.readHilites(reader, this.hilitePointer, this.hiliteCount); // Appears to be the same even when incomplete.
-            this.mofPart.readCollPrims(reader, this.collPrimPointer);  // It is unknown if being incomplete impacts this.
+            this.mofPart.readHilites(reader, this.hilitePointer, this.hiliteCount, counterpart); // Appears to be the same even when incomplete.
+            this.mofPart.readCollPrims(reader, this.collPrimPointer, counterpart);  // It is unknown if being incomplete impacts this.
             int matrixDataEndPointer = calculateStartOfSectionAfterMatrixData(this.collPrimMatrixPointer, this.animatedTexturePointer, this.flipbookPointer, this.primitivePointer);
-            this.mofPart.readCollPrimMatrices(reader, this.collPrimMatrixPointer, matrixDataEndPointer); // It is unknown if being incomplete impacts this.
+            this.mofPart.readCollPrimMatrices(reader, this.collPrimMatrixPointer, matrixDataEndPointer, counterpart); // It is unknown if being incomplete impacts this.
             int textureAnimationDataEndPointer = calculateStartOfSectionAfterTextureAnimationData(this.animatedTexturePointer, this.flipbookPointer, this.primitivePointer);
-            this.mofPart.readTextureAnimations(reader, this.animatedTexturePointer, textureAnimationDataEndPointer); // It is unknown if being incomplete impacts this.
-            this.mofPart.readFlipbook(reader, this.flipbookPointer); // Appears to be the same even when incomplete.
+            this.mofPart.readTextureAnimations(reader, this.animatedTexturePointer, textureAnimationDataEndPointer, counterpart); // It is unknown if being incomplete impacts this.
+            this.mofPart.readFlipbook(reader, this.flipbookPointer, counterpart); // Appears to be the same even when incomplete.
             this.mofPart.readPrimitives(reader, this.primitivePointer, this.primitiveCount); // Appears to be the same even when incomplete.
 
             int generatedFlags = this.mofPart.generateBitFlags();
             if (this.flags != generatedFlags)
-                throw new RuntimeException("Expected Flags do not match the flags actually seen. (Read: " + flags + ", Expected: " + generatedFlags + ")");
+                throw new RuntimeException("Expected Flags do not match the flags actually seen. (Read: " + this.flags + ", Expected: " + generatedFlags + ")");
 
             clear();
         }
@@ -599,7 +615,18 @@ public class MRMofPart extends SCSharedGameData {
         }
     }
 
-    private void readPartCels(DataReader reader, int partCelPointer, int partCelCount, int vertexCount, int normalCount, MRStaticMofDataContext context) {
+    private void readPartCels(DataReader reader, int partCelPointer, int partCelCount, int vertexCount, int normalCount, MRStaticMofDataContext context, MRMofPart completeMofPart) {
+        if (completeMofPart != null) {
+            // Incomplete mofs use partCels from their counterpart.
+            this.partCels = completeMofPart.partCels;
+            requireReaderIndex(reader, partCelPointer, "Expected incomplete/empty partCel data to start");
+            reader.skipBytes(partCelCount * MRMofPartCel.SIZE_IN_BYTES);
+            if (this.partCels.size() != partCelCount)
+                getLogger().warning("Incomplete mof expected %d partCels, but %d were actually linked.", partCelCount, this.partCels.size());
+
+            return;
+        }
+
         this.partCels.clear();
         if (partCelCount <= 0)
             return;
@@ -666,16 +693,34 @@ public class MRMofPart extends SCSharedGameData {
 
         // Write PartCel headers.
         writer.writeAddressTo(partcelPointer);
-        for (int i = 0; i < this.partCels.size(); i++)
-            this.partCels.get(i).save(writer);
+        if (incompleteMof) {
+            writer.writeNull(this.partCels.size() * MRMofPartCel.SIZE_IN_BYTES);
+        } else {
+            for (int i = 0; i < this.partCels.size(); i++)
+                this.partCels.get(i).save(writer);
+        }
 
         // Write PartCel bounding boxes.
         Map<MRMofBoundingBox, Integer> previousBoundingBoxes = new HashMap<>();
         for (int i = 0; i < this.partCels.size(); i++)
-            this.partCels.get(i).saveBoundingBox(writer, previousBoundingBoxes);
+            this.partCels.get(i).saveBoundingBox(writer, previousBoundingBoxes, incompleteMof);
     }
 
-    private void readHilites(DataReader reader, int hilitePointer, int hiliteCount) {
+    private void readHilites(DataReader reader, int hilitePointer, int hiliteCount, MRMofPart completeMofPart) {
+        if (completeMofPart != null) {
+            // Incomplete mofs use hilites from their counterpart.
+            this.hilites = completeMofPart.hilites;
+            if (this.hilites.size() != hiliteCount)
+                getLogger().warning("Incomplete mof expected %d hilites, but %d were actually linked.", hiliteCount, this.hilites.size());
+
+            if (hilitePointer > 0) {
+                requireReaderIndex(reader, hilitePointer, "Expected incomplete/empty hilite data to start");
+                reader.skipBytes(hiliteCount * MRMofHilite.SIZE_IN_BYTES);
+            }
+
+            return;
+        }
+
         this.hilites.clear();
         if (hiliteCount <= 0)
             return;
@@ -697,7 +742,16 @@ public class MRMofPart extends SCSharedGameData {
             this.hilites.get(i).save(writer);
     }
 
-    private void readCollPrims(DataReader reader, int collPrimPointer) {
+    private void readCollPrims(DataReader reader, int collPrimPointer, MRMofPart completeMofPart) {
+        if (completeMofPart != null) {
+            // Incomplete mofs use collPrims from their counterpart.
+            this.collPrims = completeMofPart.collPrims;
+            if (collPrimPointer > 0)
+                requireReaderIndex(reader, collPrimPointer, "Expected empty/incomplete CollPrims");
+            reader.skipBytes(this.collPrims.size() * MRMofCollprim.SIZE_IN_BYTES);
+            return;
+        }
+
         this.collPrims.clear();
         if (collPrimPointer <= 0)
             return;
@@ -736,7 +790,16 @@ public class MRMofPart extends SCSharedGameData {
         return startOfSectionAfterMatrixPtr;
     }
 
-    private void readCollPrimMatrices(DataReader reader, int matrixPointer, int startOfSectionAfterMatrixPtr) {
+    private void readCollPrimMatrices(DataReader reader, int matrixPointer, int startOfSectionAfterMatrixPtr, MRMofPart completeMofPart) {
+        if (completeMofPart != null) {
+            // Incomplete mofs use collPrim matrices from their counterpart.
+            this.collPrimMatrices = completeMofPart.collPrimMatrices;
+            if (matrixPointer > 0)
+                requireReaderIndex(reader, matrixPointer, "Expected empty/incomplete CollPrim Matrices");
+            reader.setIndex(startOfSectionAfterMatrixPtr);
+            return;
+        }
+
         this.collPrimMatrices.clear();
         if (matrixPointer <= 0)
             return;
@@ -792,7 +855,21 @@ public class MRMofPart extends SCSharedGameData {
         return startOfSectionAfterMatrixPtr;
     }
 
-    private void readTextureAnimations(DataReader reader, int partPolyAnimPointer, int startOfSectionAfterTextureAnimationData) {
+    private void readTextureAnimations(DataReader reader, int partPolyAnimPointer, int startOfSectionAfterTextureAnimationData, MRMofPart completeMofPart) {
+        if (completeMofPart != null) {
+            // Incomplete mofs use texture animations from their counterpart.
+            if (completeMofPart.getTextureAnimations().size() > 0 && (!getGameInstance().isFrogger() || !((FroggerConfig) getGameInstance().getVersionConfig()).isAtOrBeforeBuild23()))
+                getLogger().warning("Texture animation cannot be copied to an incomplete MOF (from %s) due to polygon data not being shared!", completeMofPart.getParentMof().getModel().getFileDisplayName());
+
+            /*
+            requireReaderIndex(reader, partPolyAnimPointer, "Expected empty/incomplete texture animations");
+            reader.skipBytesRequireEmpty(this.textureAnimations.size() * MRMofTextureAnimationPolygonTarget.SIZE_IN_BYTES);
+            requireReaderIndex(reader, startOfSectionAfterTextureAnimationData, "Expected end of empty/incomplete texture animations");
+             */
+            reader.setIndex(startOfSectionAfterTextureAnimationData);
+            return;
+        }
+
         this.textureAnimationPolygonTargets.clear();
         this.textureAnimations.clear();
         if (partPolyAnimPointer <= 0)
@@ -846,7 +923,15 @@ public class MRMofPart extends SCSharedGameData {
             this.textureAnimationPolygonTargets.get(i).saveTextureAnimationPointer(writer, pointersByAnimation);
     }
 
-    private void readFlipbook(DataReader reader, int flipbookPointer) {
+    private void readFlipbook(DataReader reader, int flipbookPointer, MRMofPart completeMofPart) {
+        if (completeMofPart != null) {
+            // Incomplete mofs use flipbook from their counterpart.
+            this.flipbook = completeMofPart.flipbook;
+            requireReaderIndex(reader, flipbookPointer, "Expected incomplete/empty flipbook data");
+            new MRMofFlipbookAnimationList().load(reader); // Skip the area covered by the flipbook.
+            return;
+        }
+
         this.flipbook.getAnimations().clear();
         if (flipbookPointer <= 0)
             return;

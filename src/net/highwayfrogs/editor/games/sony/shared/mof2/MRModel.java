@@ -9,10 +9,7 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.NameBank;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
-import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
@@ -36,6 +33,9 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.Proper
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
 
 import java.io.File;
 import java.util.Arrays;
@@ -156,6 +156,9 @@ public class MRModel extends SCSharedGameFile {
         propertyList = super.addToPropertyList(propertyList);
 
         propertyList.add("Type", getModelType() + (this.incomplete ? " (Incomplete)" : ""));
+        if (this.incomplete)
+            propertyList.add("Complete Counterpart", this.completeCounterpart.getFileDisplayName());
+
         if (this.animatedMof != null)
             propertyList = this.animatedMof.addToPropertyList(propertyList);
         if (this.staticMof != null)

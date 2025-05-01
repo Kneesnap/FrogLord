@@ -208,11 +208,11 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
         editor.addFloatVector("Start", getStart(), () -> {
             onUpdate(pathPreview);
             radiusField.setText(String.valueOf(DataUtils.fixedPointIntToFloat4Bit(calculateFixedRadius())));
-        }, pathPreview.getController(), this::selectPathPosition);
+        }, pathPreview.getController(), (vector, bits) -> selectPathPosition(pathPreview, vector, bits, null));
         editor.addFloatVector("Center", getCenter(), () -> {
             onUpdate(pathPreview);
             radiusField.setText(String.valueOf(DataUtils.fixedPointIntToFloat4Bit(calculateFixedRadius())));
-        }, pathPreview.getController(), this::selectPathPosition);
+        }, pathPreview.getController(), (vector, bits) -> selectPathPosition(pathPreview, vector, bits, null));
 
         // Add normal editor.
         FroggerPathSegmentArcOrientation orientation = FroggerPathSegmentArcOrientation.getDirection(this.normal);

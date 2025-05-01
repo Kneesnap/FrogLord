@@ -236,6 +236,7 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
         if (progressBar != null)
             progressBar.setStatusMessage("Saving '" + getFileDisplayName() + "'");
         long startTime = System.currentTimeMillis();
+        long compressionTime;
 
         try {
             // Save the file contents to a byte array.
@@ -244,7 +245,16 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
 
             // Potentially compress the saved byte array.
             byte[] fileBytes = receiver.toArray();
-            PackResult packResult = getFileDefinition().isCompressed() ? PP20Packer.packData(fileBytes) : null;
+
+            PackResult packResult;
+            if (getFileDefinition().isCompressed()) {
+                long compressionStartTime = System.currentTimeMillis();
+                packResult = PP20Packer.packData(fileBytes);
+                compressionTime = System.currentTimeMillis() - compressionStartTime;
+            } else {
+                packResult = null;
+                compressionTime = 0;
+            }
 
             MWIResourceEntry mwiEntry = getIndexEntry();
             if (mwiEntry != null)
@@ -261,8 +271,14 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
         if (progressBar != null)
             progressBar.addCompletedProgress(1);
         long timeTaken = (endTime - startTime);
-        if (timeTaken >= 10)
-            getLogger().warning("Saving the file '" + getFileDisplayName() + "' took " + timeTaken + " ms.");
+        if (timeTaken >= 10) {
+            // No need to include the file name, as that's already part of the logger info.
+            if (compressionTime > 0) {
+                getLogger().warning("Saving took %d ms. (Save Logic: %d ms, Compression: %d ms)", timeTaken, timeTaken - compressionTime, compressionTime);
+            } else {
+                getLogger().warning("Saving took %d ms.", timeTaken);
+            }
+        }
     }
 
     /**

@@ -60,7 +60,7 @@ public class GreatQuestImageController extends GreatQuestFileEditorUIController<
     private void exportImage(ActionEvent event) {
         GreatQuestImageFile image = getFile();
         if (image != null)
-            FileUtils.askUserToSaveImageFile(image.getLogger(), getGameInstance(), image.getImage(), image.getExportName(), true);
+            FileUtils.askUserToSaveImageFile(image.getLogger(), getGameInstance(), image.getImage(), image.getExportName());
     }
 
     @SneakyThrows

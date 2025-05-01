@@ -1,6 +1,8 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.path.segments;
 
+import javafx.geometry.Point3D;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.Vector;
@@ -15,7 +17,8 @@ import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMeshControl
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapPathManager.FroggerPathPreview;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.gui.InputManager;
+import net.highwayfrogs.editor.gui.InputManager.MouseInputState;
 import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -193,7 +196,6 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
             onManualLengthUpdate(pathPreview, editor);
             updateDisplay(pathPreview); // Don't call onUpdate because that will recalculate length.
         } : null, null); // Read-Only.
-        segmentLengthField.setDisable(true);
         pathPreview.setPathSegmentLengthField(segmentLengthField);
 
         editor.addButton("Flip", () -> {
@@ -228,17 +230,34 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
         }
     }
 
-    protected void selectPathPosition(MeshViewController<?> controller, Vector vector, int bits) {
-        if (!(controller instanceof FroggerMapMeshController))
-            throw new UnsupportedOperationException("controller was " + Utils.getSimpleName(controller) + ".");
-
-        FroggerMapMeshController frogController = (FroggerMapMeshController) controller;
+    /**
+     * Allows using the 'Select' button to update a position.
+     * @param pathPreview the pathPreview to update
+     * @param vector the vector to reposition
+     * @param bits the number bits of precision.
+     */
+    protected void selectPathPosition(FroggerPathPreview pathPreview, Vector vector, int bits, Runnable onFinish) {
+        FroggerMapMeshController frogController = pathPreview.getController();
         frogController.getBakedGeometryManager().getPolygonSelector().activate(polygon -> {
-            Vector3f centerOfPolygon = polygon.getCenterOfPolygon(null);
-            vector.setFloatX(centerOfPolygon.getX(), bits);
-            vector.setFloatY(centerOfPolygon.getY(), bits);
-            vector.setFloatZ(centerOfPolygon.getZ(), bits);
+            InputManager inputManager = pathPreview.getController().getInputManager();
+            if (inputManager.isKeyPressed(KeyCode.CONTROL)) {
+                MouseInputState mouseState = inputManager.getMouseTracker().getMouseState();
+                Point3D intersectedPoint = new Point3D(mouseState.getIntersectedPoint().getX(), mouseState.getIntersectedPoint().getY(), mouseState.getIntersectedPoint().getZ());
+                Point3D newWorldPos = mouseState.getIntersectedNode().localToScene(intersectedPoint);
+                vector.setFloatX(Math.round(newWorldPos.getX()), bits);
+                vector.setFloatY(Math.round(newWorldPos.getY()), bits);
+                vector.setFloatZ(Math.round(newWorldPos.getZ()), bits);
+            } else {
+                Vector3f centerOfPolygon = polygon.getCenterOfPolygon(null);
+                vector.setFloatX(centerOfPolygon.getX(), bits);
+                vector.setFloatY(centerOfPolygon.getY(), bits);
+                vector.setFloatZ(centerOfPolygon.getZ(), bits);
+            }
+
+            pathPreview.updatePath();
             frogController.getPathManager().updateEditor();
+            if (onFinish != null)
+                onFinish.run();
         }, null);
     }
 
