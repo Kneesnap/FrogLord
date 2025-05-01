@@ -286,6 +286,7 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
         if (!this.segments.isEmpty()) {
             SVector currPosition = this.segments.get(0).getStartPosition().clone();
             SVector lastPosition = currPosition.clone();
+            AtomicInteger rowsToKeepRef = new AtomicInteger(editor.getGridPane().getRowConstraints().size() + 1);
             AtomicInteger nodesToKeepRef = new AtomicInteger(editor.getGridPane().getChildren().size() + 2);
             editor.addFloatVector("Move Path", currPosition, () -> {
                 SVector delta = currPosition.clone().subtract(lastPosition);
@@ -295,12 +296,18 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
                 // The values seen in the UI are now invalid. If we were to update them again, it would be so slow as to be impossible to use.
                 // If we left it alone, the user might accidentally apply old data again.
                 int nodesToKeep = nodesToKeepRef.get();
+                int rowsToKeep = rowsToKeepRef.get();
                 if (editor.getGridPane().getChildren().size() > nodesToKeep) {
                     editor.getGridPane().getChildren().remove(nodesToKeep, editor.getGridPane().getChildren().size());
+                    editor.getGridPane().getRowConstraints().remove(rowsToKeep, editor.getGridPane().getRowConstraints().size());
 
                     // Create a button to manually refresh the UI once the user is done.
+                    editor.addSeparator();
+                    rowsToKeepRef.incrementAndGet();
                     nodesToKeepRef.incrementAndGet();
                     editor.addButton("Show Path Data", pathPreview.getPathManager()::updateEditor);
+                    rowsToKeepRef.incrementAndGet();
+                    nodesToKeepRef.incrementAndGet();
                 }
 
                 lastPosition.setValues(currPosition);
@@ -308,6 +315,7 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
                 pathPreview.updatePath(); // Update path.
             }, pathPreview.getController());
             nodesToKeepRef.set(editor.getGridPane().getChildren().size());
+            rowsToKeepRef.set(editor.getGridPane().getRowConstraints().size() - 1);
         }
 
         for (int i = 0; i < this.segments.size(); i++) {
