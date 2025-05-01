@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.FileOpenBrowseComponent.GameConfigFileOpenBrowseComponent;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -22,6 +23,9 @@ import java.io.File;
 public class GreatQuestGameType implements IGameType {
     public static final GreatQuestGameType INSTANCE = new GreatQuestGameType();
     private static final String CONFIG_BIN_PATH = "binFilePath";
+
+    public static final BrowserFileType GAME_ARCHIVE_FILE_TYPE = new BrowserFileType("Frogger The Great Quest Data", "bin");
+
     @Override
     public String getDisplayName() {
         return "Frogger: The Great Quest";
@@ -73,7 +77,7 @@ public class GreatQuestGameType implements IGameType {
 
         public GreatQuestGameConfigUI(GameConfigController controller, GameConfig gameConfig, Config config) {
             super(controller, gameConfig);
-            this.binFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, config, CONFIG_BIN_PATH, "Game Archive (.bin)", "Please locate and open 'data.bin'", "Frogger The Great Quest Data", "bin");
+            this.binFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, config, CONFIG_BIN_PATH, "Game Archive (.bin)", "Please locate and open 'data.bin'", GAME_ARCHIVE_FILE_TYPE);
             loadController(null);
         }
 

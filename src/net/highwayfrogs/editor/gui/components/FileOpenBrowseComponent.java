@@ -36,11 +36,11 @@ public abstract class FileOpenBrowseComponent extends GameUIController<GameInsta
     private final TextField filePathField;
     private final Button browseButton;
 
-    public FileOpenBrowseComponent(GameInstance instance, String fileTypeLabel, String fileOpenPromptTitle, String fileOpenPromptTypeInfo, String... fileExtensions) {
+    public FileOpenBrowseComponent(GameInstance instance, String fileTypeLabel, String fileOpenPromptTitle, BrowserFileType browserFileType) {
         super(instance);
         this.fileIdLabel = createLabel(fileTypeLabel);
         this.filePathField = createFilePathField(fileOpenPromptTitle);
-        this.browseButton = createBrowseButton(fileOpenPromptTitle, fileOpenPromptTypeInfo, fileExtensions);
+        this.browseButton = createBrowseButton(fileOpenPromptTitle, browserFileType);
         loadController(createContainerBox());
     }
 
@@ -70,12 +70,12 @@ public abstract class FileOpenBrowseComponent extends GameUIController<GameInsta
         return filePathField;
     }
 
-    private Button createBrowseButton(String fileOpenPromptTitle, String fileOpenPromptTypeInfo, String[] fileExtensions) {
+    private Button createBrowseButton(String fileOpenPromptTitle, BrowserFileType browserFileType) {
         Button browseButton = new Button("Browse");
         browseButton.setOnMouseClicked(event -> {
             event.consume();
             String oldFilePath = getCurrentFilePath();
-            SavedFilePath pathConfig = new SavedFilePath(this.fileIdLabel.getText(), fileOpenPromptTitle, new BrowserFileType(fileOpenPromptTypeInfo, fileExtensions));
+            SavedFilePath pathConfig = new SavedFilePath(this.fileIdLabel.getText(), fileOpenPromptTitle, browserFileType);
             File selectedFile = FileUtils.askUserToOpenFile(null, pathConfig);
             if (selectedFile != null) {
                 String newFilePath = selectedFile.getAbsolutePath();
@@ -149,12 +149,12 @@ public abstract class FileOpenBrowseComponent extends GameUIController<GameInsta
     public static class LazyFileOpenBrowseComponent extends FileOpenBrowseComponent {
         private final Supplier<String> startFilePathSource;
         private final Consumer<String> newFilePathHandler;
-        public LazyFileOpenBrowseComponent(GameInstance instance, Consumer<String> newFilePathHandler, String fileTypeLabel, String fileOpenPromptTitle, String fileOpenPromptTypeInfo, String... fileExtensions) {
-            this(instance, null, newFilePathHandler, fileTypeLabel, fileOpenPromptTitle, fileOpenPromptTypeInfo, fileExtensions);
+        public LazyFileOpenBrowseComponent(GameInstance instance, Consumer<String> newFilePathHandler, String fileTypeLabel, String fileOpenPromptTitle, BrowserFileType browserFileType) {
+            this(instance, null, newFilePathHandler, fileTypeLabel, fileOpenPromptTitle, browserFileType);
         }
 
-        public LazyFileOpenBrowseComponent(GameInstance instance, Supplier<String> startFilePathSource, Consumer<String> newFilePathHandler, String fileTypeLabel, String fileOpenPromptTitle, String fileOpenPromptTypeInfo, String... fileExtensions) {
-            super(instance, fileTypeLabel, fileOpenPromptTitle, fileOpenPromptTypeInfo, fileExtensions);
+        public LazyFileOpenBrowseComponent(GameInstance instance, Supplier<String> startFilePathSource, Consumer<String> newFilePathHandler, String fileTypeLabel, String fileOpenPromptTitle, BrowserFileType browserFileType) {
+            super(instance, fileTypeLabel, fileOpenPromptTitle, browserFileType);
             this.startFilePathSource = startFilePathSource;
             this.newFilePathHandler = newFilePathHandler;
         }
@@ -179,8 +179,8 @@ public abstract class FileOpenBrowseComponent extends GameUIController<GameInsta
         private final Config gameConfig; // TODO: Get config from controller instead?
         private final String configKey;
 
-        public GameConfigFileOpenBrowseComponent(GameConfigUIController controller, Config config, String configKey, String fileTypeLabel, String fileOpenPromptTitle, String fileOpenPromptTypeInfo, String... fileExtensions) {
-            super(null, fileTypeLabel, fileOpenPromptTitle, fileOpenPromptTypeInfo, fileExtensions);
+        public GameConfigFileOpenBrowseComponent(GameConfigUIController controller, Config config, String configKey, String fileTypeLabel, String fileOpenPromptTitle, BrowserFileType browserFileType) {
+            super(null, fileTypeLabel, fileOpenPromptTitle, browserFileType);
             this.controller = controller;
             this.gameConfig = config;
             this.configKey = configKey;

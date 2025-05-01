@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.gui.components.FileOpenBrowseComponent.GameConfig
 import net.highwayfrogs.editor.gui.components.FolderBrowseComponent.GameConfigFolderBrowseComponent;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -23,6 +24,8 @@ import java.io.File;
 public class AncientShadowGameType implements IGameType {
     public static final AncientShadowGameType INSTANCE = new AncientShadowGameType();
     private static final String CONFIG_MAIN_FILE_PATH = "mainFilePath"; // gamedata.bin (console versions) or the folder containing hfs files on PC.
+
+    public static final BrowserFileType ANCIENT_SHADOW_FILE_TYPE = new BrowserFileType("Frogger Ancient Shadow Data", "gamedata.bin", "hfs");
 
     @Override
     public String getDisplayName() {
@@ -75,7 +78,7 @@ public class AncientShadowGameType implements IGameType {
                 this.binFileBrowseComponent = null;
                 this.folderBrowseComponent = new GameConfigFolderBrowseComponent(this, config, CONFIG_MAIN_FILE_PATH, "Game Data Folder", "Please locate the folder containing game data (.HFS files)", false);
             } else {
-                this.binFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, config, CONFIG_MAIN_FILE_PATH, "Game Archive (gamedata.bin/*.hfs)", "Please locate and open 'gamedata.bin' (Or a .HFS file)", "Frogger Ancient Shadow Data", "gamedata.bin", "hfs");
+                this.binFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, config, CONFIG_MAIN_FILE_PATH, "Game Archive (gamedata.bin/*.hfs)", "Please locate and open 'gamedata.bin' (Or a .HFS file)", ANCIENT_SHADOW_FILE_TYPE);
                 this.folderBrowseComponent = null;
             }
             loadController(null);

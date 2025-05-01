@@ -9,11 +9,10 @@ import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
-import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
 import net.highwayfrogs.editor.games.sony.SCGameConfig;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.VLOController;
 import net.highwayfrogs.editor.gui.GameUIController;
@@ -27,6 +26,8 @@ import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
 
 import java.io.File;
 import java.util.List;
@@ -37,7 +38,11 @@ import java.util.List;
  */
 public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extends MainMenuController<TGameInstance, SCGameFile<?>> {
     private static final SavedFilePath TEXTURE_FOLDER = new SavedFilePath("bulkTextureExportPath", "Choose the folder to save all textures to.");
-    private static final SavedFilePath MWI_FILE = new SavedFilePath("mwiFilePath", "Specify the file to save the MWI as...", new BrowserFileType("Millennium WAD Index", "MWI"));
+    public static final BrowserFileType MWI_FILE_TYPE = new BrowserFileType("Millennium WAD Index", "MWI");
+    private static final SavedFilePath MWI_FILE = new SavedFilePath("mwiFilePath", "Specify the file to save the MWI as...", MWI_FILE_TYPE);
+
+    private static final SavedFilePath SAVE_MWD_FILE_PATH = new SavedFilePath("mwd-save-path", "Please select the file to save the MWD file as...", SCGameType.MWD_FILE_TYPE);
+    private static final SavedFilePath SAVE_EXE_FILE_PATH = new SavedFilePath("exe-save-path", "Please select the file to save the executable as...", SCGameType.EXECUTABLE_FILE_TYPE);
 
     public SCMainMenuUIController(TGameInstance instance) {
         super(instance);
@@ -90,9 +95,29 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
         }
 
         // The canWrite check does not work on the files, only on the directory.
-        File outputMwdFile = new File(baseFolder, FileUtils.stripExtension(getGameInstance().getMwdFile().getName()) + "-MODIFIED.MWD");
-        File outputMwiFile = new File(baseFolder, FileUtils.stripExtension(getGameInstance().getMwdFile().getName()) + "-MODIFIED.MWI");
-        File outputExeFile = new File(baseFolder, FileUtils.stripExtension(getGameInstance().getExeFile().getName()) + "-modified.exe");
+
+        File outputMwdFile = FileUtils.askUserToSaveFile(getGameInstance(), SAVE_MWD_FILE_PATH, "modded_" + FileUtils.stripExtension(getGameInstance().getMwdFile().getName()) + ".MWD");
+        if (outputMwdFile == null)
+            return;
+
+        // This is for the user's own good-- I've seen it too many times.
+        // A user either doesn't understand the consequences or doesn't think it's a big deal, until it becomes a problem.
+        if (outputMwdFile.equals(getGameInstance().getMwdFile())) {
+            FXUtils.makePopUp("Overwriting loaded game files is not permitted.", AlertType.WARNING);
+            return;
+        }
+
+        File outputMwiFile = new File(outputMwdFile.getParentFile(), FileUtils.stripExtension(outputMwdFile.getName()) + ".MWI");
+        File outputExeFile = FileUtils.askUserToSaveFile(getGameInstance(), SAVE_EXE_FILE_PATH, "modded_" + getGameInstance().getExeFile().getName());
+        if (outputExeFile == null)
+            return;
+
+        // This is for the user's own good-- I've seen it too many times.
+        // A user either doesn't understand the consequences or doesn't think it's a big deal, until it becomes a problem.
+        if (outputExeFile.equals(getGameInstance().getExeFile())) {
+            FXUtils.makePopUp("Overwriting loaded game files is not permitted.", AlertType.WARNING);
+            return;
+        }
 
         ProgressBarComponent.openProgressBarWindow(getGameInstance(), "Saving Files", progressBar -> {
             // Save the MWD file.

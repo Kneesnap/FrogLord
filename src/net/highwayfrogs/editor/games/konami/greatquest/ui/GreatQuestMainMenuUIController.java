@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.ui;
 import javafx.scene.Node;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestGameType;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
@@ -13,7 +14,6 @@ import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
-import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 
 import java.io.File;
@@ -24,8 +24,7 @@ import java.io.IOException;
  * Created by Kneesnap on 4/14/2024.
  */
 public class GreatQuestMainMenuUIController extends MainMenuController<GreatQuestInstance, GreatQuestGameFile> {
-    public static final BrowserFileType ARCHIVE_FILE_TYPE = new BrowserFileType("Frogger The Great Quest Archive", "bin");
-    public static final SavedFilePath OUTPUT_BIN_FILE_PATH = new SavedFilePath("outputDataBinFilePath", "Please select the file to save 'data.bin' as...", ARCHIVE_FILE_TYPE);
+    public static final SavedFilePath OUTPUT_BIN_FILE_PATH = new SavedFilePath("outputDataBinFilePath", "Please select the file to save 'data.bin' as...", GreatQuestGameType.GAME_ARCHIVE_FILE_TYPE);
     public static final SavedFilePath FILE_EXPORT_FOLDER = new SavedFilePath("fullExportFolderPath", "Please select the folder to export game files into...");
 
     public GreatQuestMainMenuUIController(GreatQuestInstance instance) {

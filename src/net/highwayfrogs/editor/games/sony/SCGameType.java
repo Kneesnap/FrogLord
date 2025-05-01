@@ -22,6 +22,7 @@ import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.FileOpenBrowseComponent.GameConfigFileOpenBrowseComponent;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -54,6 +55,10 @@ public enum SCGameType implements IGameType {
 
     public static final String CONFIG_MWD_PATH = "mwdFilePath";
     public static final String CONFIG_EXE_PATH = "executableFilePath";
+
+    public static final BrowserFileType MWD_FILE_TYPE = new BrowserFileType("Millennium WAD", "MWD");
+    public static final BrowserFileType EXECUTABLE_FILE_TYPE = new BrowserFileType("Game Executable",
+            "EXE", "SLUS_*.*", "SLES_*.*", "SLPS_*.*", "SLED_*.*", "SCES_*.*", "SCUS_*.*", "dat");
 
     SCGameType(String displayName, Supplier<SCGameInstance> instanceMaker, Function<String, SCGameConfig> configMaker, boolean showSaveWarning) {
         this.displayName = displayName;
@@ -174,8 +179,8 @@ public enum SCGameType implements IGameType {
 
         public SCGameConfigUI(GameConfigController controller, SCGameConfig gameConfig, Config config) {
             super(controller, gameConfig);
-            this.mwdFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, config, CONFIG_MWD_PATH, "Millennium WAD (.MWD)", "Please select a Millennium WAD", "Millennium WAD", "MWD");
-            this.exeFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, config, CONFIG_EXE_PATH, "Game Executable (.EXE, SLUS, etc.)", "Please select the main executable", "Game Executable", "EXE", "dat", "04", "06", "26", "64", "65", "66", "99");
+            this.mwdFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, config, CONFIG_MWD_PATH, "Millennium WAD (.MWD)", "Please select a Millennium WAD", MWD_FILE_TYPE);
+            this.exeFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, config, CONFIG_EXE_PATH, "Game Executable (.EXE, SLUS, etc.)", "Please select the main executable", EXECUTABLE_FILE_TYPE);
             loadController(null);
         }
 
