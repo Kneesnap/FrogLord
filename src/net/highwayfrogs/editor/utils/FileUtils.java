@@ -765,17 +765,26 @@ public class FileUtils {
      * @param instance The game instance to save the image path to.
      * @param image The image to save
      * @param suggestedFileName The suggested file name
-     * @param overrideLastFileName Whether the suggested file name has priority over the previous file name.
      * @return file, if successfully saved
      */
-    public static File askUserToSaveImageFile(ILogger logger, GameInstance instance, BufferedImage image, String suggestedFileName, boolean overrideLastFileName) {
-        File selectedFile = askUserToSaveFile(instance, EXPORT_SINGLE_IMAGE_PATH, suggestedFileName, overrideLastFileName);
+    public static File askUserToSaveImageFile(ILogger logger, GameInstance instance, BufferedImage image, String suggestedFileName) {
+        boolean hasSuggestedFileName = suggestedFileName != null && suggestedFileName.trim().length() > 0;
+        String[] extensionSuffixes = ImageIO.getWriterFileSuffixes();
+
+        // Add extension.
+        if (hasSuggestedFileName) {
+            String providedExtension = FileUtils.getFileNameExtension(suggestedFileName);
+            if (providedExtension == null || !Utils.contains(extensionSuffixes, providedExtension.toLowerCase()))
+                suggestedFileName += "." + (Utils.contains(extensionSuffixes, "png") ? "png" : extensionSuffixes[0]);
+        }
+
+        File selectedFile = askUserToSaveFile(instance, EXPORT_SINGLE_IMAGE_PATH, suggestedFileName, suggestedFileName != null && suggestedFileName.trim().length() > 0);
         if (selectedFile == null)
             return null;
 
         String extension = FileUtils.getFileNameExtensionLower(selectedFile.getName());
         if (extension == null || !Utils.contains(ImageIO.getWriterFileSuffixes(), extension)) {
-            FXUtils.makePopUp("Couldn't figure out the image format by the file extension. (" + extension + ")", AlertType.ERROR);
+            FXUtils.makePopUp("Couldn't determine which image format to use for the file extension '." + extension + "'.", AlertType.ERROR);
             return null;
         }
 

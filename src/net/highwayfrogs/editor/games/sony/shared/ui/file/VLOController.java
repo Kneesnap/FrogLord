@@ -150,20 +150,18 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
     @SneakyThrows
     private void exportImage(ActionEvent event) {
         String originalName = this.selectedImage.getOriginalName();
-        File selectedFile = FileUtils.askUserToSaveFile(getGameInstance(), FileUtils.EXPORT_SINGLE_IMAGE_PATH, originalName != null ? originalName + ".png" : null);
-        if (selectedFile != null)
-            ImageIO.write(this.selectedImage.toBufferedImage(IMAGE_EXPORT_SETTINGS), "png", selectedFile);
+        BufferedImage image = this.selectedImage.toBufferedImage(IMAGE_EXPORT_SETTINGS);
+        FileUtils.askUserToSaveImageFile(getLogger(), getGameInstance(), image, originalName);
     }
 
     @FXML
     @SneakyThrows
     private void importImage(ActionEvent event) {
-        File selectedFile = FileUtils.askUserToOpenFile(getGameInstance(), FileUtils.IMPORT_SINGLE_IMAGE_PATH);
-        if (selectedFile == null)
-            return; // Cancelled.
-
-        this.selectedImage.replaceImage(ImageIO.read(selectedFile), ProblemResponse.CREATE_POPUP);
-        updateDisplay();
+        BufferedImage loadedImage = FileUtils.askUserToOpenImageFile(getLogger(), getGameInstance());
+        if (loadedImage != null) {
+            this.selectedImage.replaceImage(loadedImage, ProblemResponse.CREATE_POPUP);
+            updateDisplay();
+        }
     }
 
     @FXML
