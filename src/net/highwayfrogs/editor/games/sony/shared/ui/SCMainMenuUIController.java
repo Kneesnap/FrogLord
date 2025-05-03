@@ -219,7 +219,8 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
             @SuppressWarnings("unchecked")
             SCFileEditorUIController<?, ? super SCGameFile<?>> fileController = (SCFileEditorUIController<?, ? super SCGameFile<?>>) controller;
             if ((fileController.getFileClass() != null && fileController.getFileClass().isInstance(file))) {
-                fileController.setTargetFile(file);
+                if (fileController.getFile() != file)
+                    fileController.setTargetFile(file);
                 return;
             }
         }

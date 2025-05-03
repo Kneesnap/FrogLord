@@ -40,13 +40,16 @@ public abstract class GroupedCollectionViewComponent<TGameInstance extends GameI
 
     @Override
     protected void onControllerLoad(Node rootNode) {
-        this.hasExpansionOccurred = false;
+        if (this.groups.isEmpty())
+            this.hasExpansionOccurred = false;
         super.onControllerLoad(rootNode);
         setAnchorPaneStretch(rootNode);
     }
 
     @Override
     public void refreshDisplay() {
+        TViewEntry oldSelectedEntry = getSelectedViewEntry();
+
         // Create the list of groups to add files amongst.
         if (this.groups.isEmpty())
             setupViewEntryGroups();
@@ -56,14 +59,18 @@ public abstract class GroupedCollectionViewComponent<TGameInstance extends GameI
             this.groups.get(i).getEntries().clear();
 
         // Add files to the different groups.
+        CollectionViewGroup<TViewEntry> selectedViewGroup = null;
         for (TViewEntry viewEntry : getViewEntries()) {
             // Check each file group to see if the file belongs there.
             boolean addedSuccessfully = false;
             for (int i = 0; i < this.groups.size(); i++) {
                 CollectionViewGroup<TViewEntry> fileGroup = this.groups.get(i);
                 if (fileGroup.isPartOfGroup(viewEntry)) {
-                    if (matchesSearchQuery(viewEntry))
+                    if (matchesSearchQuery(viewEntry)) {
                         fileGroup.getEntries().add(viewEntry);
+                        if (viewEntry == oldSelectedEntry)
+                            selectedViewGroup = fileGroup;
+                    }
 
                     addedSuccessfully = true;
                     break;
@@ -76,13 +83,27 @@ public abstract class GroupedCollectionViewComponent<TGameInstance extends GameI
                 addGroup(newGroup);
                 if (matchesSearchQuery(viewEntry))
                     newGroup.getEntries().add(viewEntry);
+                if (viewEntry == oldSelectedEntry)
+                    selectedViewGroup = newGroup;
             }
         }
 
         // Update UI visibility.
-        this.hasExpansionOccurred = false;
+        if (oldSelectedEntry == null || selectedViewGroup == null)
+            this.hasExpansionOccurred = false;
         for (int i = 0; i < this.groups.size(); i++)
             this.groups.get(i).updateEntryList();
+
+        // Re-select the old value.
+        if (oldSelectedEntry != null && selectedViewGroup != null) {
+            // Clear selection of all other titled panes.
+            for (CollectionViewGroup<TViewEntry> group : this.groups)
+                if (group.getTitledPane() != null && selectedViewGroup.getTitledPane() != group.getTitledPane())
+                    group.getListView().getSelectionModel().clearSelection();
+
+            getRootNode().setExpandedPane(selectedViewGroup.getTitledPane());
+            selectedViewGroup.getListView().getSelectionModel().select(oldSelectedEntry);
+        }
     }
 
     /**
@@ -141,7 +162,6 @@ public abstract class GroupedCollectionViewComponent<TGameInstance extends GameI
                 if (this.titledPane != null) {
                     // Update existing pane to show updated entry list.
                     getListView().setItems(FXCollections.observableArrayList(this.entries));
-                    // TODO: We might need to re-select the previously selected value.
                     this.titledPane.setText(getCollectionViewDisplayName());
                 } else {
                     createTitlePane();
@@ -213,7 +233,7 @@ public abstract class GroupedCollectionViewComponent<TGameInstance extends GameI
 
         private void onSelectionChange(ObservableValue<? extends TViewEntry> observableValue, TViewEntry oldViewEntry, TViewEntry newViewEntry) {
             // Clear selection of all other titled panes.
-            for (CollectionViewGroup<TViewEntry> group : viewComponent.groups)
+            for (CollectionViewGroup<TViewEntry> group : this.viewComponent.groups)
                 if (group.titledPane != null && this.titledPane != group.titledPane)
                     group.getListView().getSelectionModel().clearSelection();
 

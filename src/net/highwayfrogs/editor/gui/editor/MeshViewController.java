@@ -308,8 +308,8 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                 }
 
                 getMesh().removeView(getMeshView()); // Remove view from mesh.
-                FXUtils.setSceneKeepPosition(this.overwrittenStage, this.originalScene);
                 this.root3D.getChildren().clear(); // Clear data to avoid memory leak.
+                FXUtils.setSceneKeepPosition(this.overwrittenStage, this.originalScene);
             } else if (event.getCode() == KeyCode.F9) { // Print mesh information.
                 getMesh().printDebugMeshInfo();
             } else if (event.getCode() == KeyCode.F10) { // Take screenshot.
