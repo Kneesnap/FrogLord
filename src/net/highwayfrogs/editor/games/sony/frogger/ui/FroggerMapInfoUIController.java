@@ -25,6 +25,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMeshController;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.baked.FroggerGridResizeController;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FFSUtil;
+import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerUtils;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
@@ -67,6 +68,7 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
     private static final BrowserFileType FFS_FILE_TYPE = new BrowserFileType("Frogger File Sync", "ffs");
     private static final SavedFilePath FFS_IMPORT_PATH = new SavedFilePath("ffsImportPath", "Please select the map ffs file to import.", FFS_FILE_TYPE);
     private static final SavedFilePath FFS_EXPORT_FOLDER = new SavedFilePath("ffsExportPath", "Please select the folder to export the .ffs map into");
+    private static final SavedFilePath OBJ_EXPORT_FOLDER = new SavedFilePath("mapObjExportPath", "Please select the folder to export the map .obj into");
 
     public FroggerMapInfoUIController(FroggerGameInstance instance) {
         super(instance);
@@ -223,9 +225,9 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
     @FXML
     @SneakyThrows
     private void exportToObj(ActionEvent event) {
-        // TODO: IMPLEMENT
-        FXUtils.makePopUp("Exporting to obj is not currently supported.", AlertType.ERROR);
-        // TODO: FileUtils3D.exportMapToObj(getFile(), Utils.promptChooseDirectory(getGameInstance(), "Choose the directory to save the map to.", false));
+        File outputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), OBJ_EXPORT_FOLDER);
+        if (outputFolder != null)
+            FroggerUtils.exportMapToObj(getFile(), outputFolder);
     }
 
     @FXML
