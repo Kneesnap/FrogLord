@@ -20,6 +20,7 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -522,6 +523,24 @@ public class FileUtils {
     }
 
     /**
+     * Safely writes the given string to a file, replacing the file if it already exists.
+     * The string will be written to the file as a UTF-8 byte-array, and will fully overwrite any existing contents of the file.
+     * If an exception occurs during the writing of the file, false will be returned, and the error will be handled
+     * @param logger the logger to write any error to. If null is provided, the util logger will be used.
+     * @param outputFile The file to write the data to
+     * @param value The string to write to the file
+     * @param showPopupOnError If true and an error occurs, a popup will be displayed.
+     * @return true iff the file was successfully written
+     */
+    public static boolean writeStringToFile(ILogger logger, File outputFile, String value, boolean showPopupOnError) {
+        if (value == null)
+            throw new NullPointerException("value");
+
+        return writeBytesToFile(logger, outputFile, value.getBytes(StandardCharsets.UTF_8), showPopupOnError);
+    }
+
+
+    /**
      * Safely writes the given bytes to a file, replacing the file if it already exists.
      * If an exception occurs during the writing of the file, false will be returned, and the error will be handled
      * @param logger the logger to write any error to. If null is provided, the util logger will be used.
@@ -833,5 +852,20 @@ public class FileUtils {
         }
 
         return selectedFolder;
+    }
+
+    /**
+     * Tests if a string is a safe file name or not.
+     * @param testString The string to test.
+     * @return isSafeFileName
+     */
+    public static boolean isUntrustedInputValidFileName(String testString) {
+        for (int i = 0; i < testString.length(); i++) {
+            char temp = testString.charAt(i);
+            if (!Character.isLetterOrDigit(temp) && temp != '_' && temp != ' ' && temp != '-' && temp != '.')
+                return false;
+        }
+
+        return true;
     }
 }
