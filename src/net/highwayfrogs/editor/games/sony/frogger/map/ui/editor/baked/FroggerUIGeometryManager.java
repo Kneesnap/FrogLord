@@ -439,7 +439,7 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
             // Polygon type information.
             this.polygonIsSemiTransparentCheckBox = grid.addCheckBox("Semi Transparent", false, null);
             this.polygonIsEnvironmentMappedCheckBox = grid.addCheckBox("Environment Mapped", false, null);
-            this.polygonIsMaxOrderTableCheckBox = grid.addCheckBox("Max Order Table", false, null);
+            this.polygonIsMaxOrderTableCheckBox = grid.addCheckBox("Water Wibble (Max OT)", false, null);
             this.polygonIsSemiTransparentCheckBox.setDisable(true);
             this.polygonIsEnvironmentMappedCheckBox.setDisable(true);
             this.polygonIsMaxOrderTableCheckBox.setDisable(true);
@@ -470,9 +470,12 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
                 this.polygonIsSemiTransparentCheckBox.setSelected(polygon != null && polygon.testFlag(FroggerMapPolygon.FLAG_SEMI_TRANSPARENT));
                 this.polygonIsEnvironmentMappedCheckBox.setSelected(polygon != null && polygon.testFlag(FroggerMapPolygon.FLAG_ENVIRONMENT_MAPPED));
                 this.polygonIsMaxOrderTableCheckBox.setSelected(polygon != null && polygon.testFlag(FroggerMapPolygon.FLAG_MAX_ORDER_TABLE));
-                this.polygonIsSemiTransparentCheckBox.setDisable(polygon == null);
-                this.polygonIsEnvironmentMappedCheckBox.setDisable(polygon == null);
-                this.polygonIsMaxOrderTableCheckBox.setDisable(polygon == null);
+
+                boolean isTextured = polygon != null && polygon.getPolygonType().isTextured(); // FT4/GT4 are the only ones where water wibble will work. However, FT3 (unknown about GT3) seems to still set max OT, even if water wibble won't apply.
+                this.polygonIsMaxOrderTableCheckBox.setText(isTextured && polygon.getPolygonType().isQuad() ? "Water Wibble (& Max OT)" : "Max OT (Draws First)");
+                this.polygonIsSemiTransparentCheckBox.setDisable(!isTextured);
+                this.polygonIsEnvironmentMappedCheckBox.setDisable(!isTextured);
+                this.polygonIsMaxOrderTableCheckBox.setDisable(!isTextured);
             }
 
             super.updateUI();
