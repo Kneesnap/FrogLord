@@ -119,7 +119,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
         }
 
         // Prevent the user from separating the files unless they really intend to.
-        if (!outputExeFile.getParentFile().equals(getGameInstance().getMwdFile()))
+        if (!outputExeFile.getParentFile().equals(getGameInstance().getMwdFile().getParentFile()))
             if (!FXUtils.makePopUpYesNo("Are you sure you would like to save " + outputMwdFile.getName() + " and " + outputExeFile.getName() + " to different folders?\nUnless you know what you're doing, respond 'No'."))
                 return;
 
