@@ -143,7 +143,8 @@ public class FroggerConfig extends SCGameConfig {
         return "pc-retail-v1.0".equalsIgnoreCase(getInternalName())
                 || "pc-retail-v3.0e".equalsIgnoreCase(getInternalName())
                 || "pc-retail-v3.0e-vogons".equalsIgnoreCase(getInternalName())
-                || "pc-demo".equalsIgnoreCase(getInternalName());
+                || "pc-demo".equalsIgnoreCase(getInternalName())
+                || "pc-demo-powerplay".equalsIgnoreCase(getInternalName());
     }
 
     /**
