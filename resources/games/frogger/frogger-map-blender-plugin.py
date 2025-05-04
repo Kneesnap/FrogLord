@@ -222,10 +222,23 @@ def load_ffs_file(operator, context, filepath):
 
     # Create a material for faces without textures.
     untextured_material = bpy.data.materials[UNTEXTURED_MATERIAL_NAME] if UNTEXTURED_MATERIAL_NAME in bpy.data.materials else bpy.data.materials.new(name=UNTEXTURED_MATERIAL_NAME)
-    untextured_material.diffuse_color = (1.0, 1.0, 1.0, 1.0)
-    untextured_material.specular_intensity = 0.0
     untextured_material.frogger_data.texture_id = -2 # Mark as different from the default 'no texture ID' value.
     untextured_material_id = len(mesh.materials)
+    untextured_material.use_nodes = True
+    clear_material(untextured_material)
+
+    untextured_material_nodes = untextured_material.node_tree.nodes
+    untextured_material_links = untextured_material.node_tree.links
+
+    # Create the nodes. (All together to avoid object reference invalidation.)
+    vertex_color_input = create_material_node(untextured_material_nodes, 'ShaderNodeVertexColor')
+    untextured_material_nodes[vertex_color_input].layer_name = VERTEX_COLOR_LAYER_NAME
+    if untextured_material_nodes.get('Material Output') is None: # By default, this node exists.
+        material_output = create_material_node(untextured_material_nodes, 'ShaderNodeOutputMaterial')
+        untextured_material_nodes[material_output].name = 'Material Output'
+
+    # Setup.
+    untextured_material_links.new(untextured_material_nodes[vertex_color_input].outputs['Color'], untextured_material_nodes.get('Material Output').inputs['Surface'])
     mesh.materials.append(untextured_material)
 
     # Process FFS File Commands.
