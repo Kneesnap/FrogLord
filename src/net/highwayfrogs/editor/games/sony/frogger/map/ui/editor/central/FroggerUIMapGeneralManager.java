@@ -305,13 +305,13 @@ public class FroggerUIMapGeneralManager extends FroggerCentralUIManager {
         }
 
         FroggerGridStack startStack = gridPacket.getGridStack(startX, startZ);
-        if (startStack.getGridSquares().isEmpty()) {
+        if (startStack == null || startStack.getGridSquares().isEmpty()) {
             this.playerCharacterView.setVisible(false);
             return;
         }
 
         FroggerGridSquare gridSquare = startStack.getGridSquares().get(startStack.getGridSquares().size() - 1);
-        if (gridSquare.getPolygon() == null) {
+        if (gridSquare == null || gridSquare.getPolygon() == null) {
             this.playerCharacterView.setVisible(false);
             return;
         }
