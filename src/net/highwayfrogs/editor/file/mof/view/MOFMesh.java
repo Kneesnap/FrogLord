@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Getter
 public class MOFMesh extends FrogMesh<MOFPolygon> {
     private final MOFHolder mofHolder;
-    private int animationId;
+    private int animationId = -1;
     private int frameCount;
     private final List<Vector> verticeCache = new ArrayList<>();
     @Setter private boolean showOverlay;
@@ -41,6 +41,10 @@ public class MOFMesh extends FrogMesh<MOFPolygon> {
     public MOFMesh(MOFHolder holder) {
         super(holder.makeTextureMap(), VertexFormat.POINT_TEXCOORD);
         this.mofHolder = holder;
+        for (MOFPart part : holder.asStaticFile().getParts())
+            if (part.isHiddenByConfiguration())
+                this.hiddenParts.add(part);
+
         updateData();
     }
 
