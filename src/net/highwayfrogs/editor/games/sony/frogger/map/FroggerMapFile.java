@@ -242,7 +242,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
     /**
      * Procedurally generate an empty map, making it easier to start from scratch on a map you'd like to make in Blender.
      */
-    public void randomizeMap(final int xTileCount, final int zTileCount) {
+    public void randomizeMap(int xTileCount, int zTileCount) {
         this.generalPacket.setStartRotation(FroggerMapStartRotation.NORTH);
         this.generalPacket.setStartingTimeLimit(99);
         this.generalPacket.getDefaultCameraSourceOffset().setValues(0F, -100F, -25F);
@@ -258,6 +258,8 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
         this.polygonPacket.clearPolygons();
         this.gridPacket.clear(); // The resized grid should be empty.
         this.gridPacket.resizeGrid(xTileCount, zTileCount); // Add two, so we can have a border surrounding the map.
+        xTileCount = this.gridPacket.getGridXCount(); // Ensure we use what's actually been applied.
+        zTileCount = this.gridPacket.getGridZCount();
         this.generalPacket.setStartGridCoordX((xTileCount / 2) + 1);
         this.generalPacket.setStartGridCoordZ(1);
 
