@@ -407,7 +407,7 @@ public class FroggerPathInfo extends SCGameData<FroggerGameInstance> {
                 throw new NullPointerException("pathInfo");
 
             boolean oneShotFlag = pathInfo.testFlag(FroggerPathMotionType.ONE_SHOT);
-            boolean repeatFlag = pathInfo.testFlag(FroggerPathMotionType.ONE_SHOT);
+            boolean repeatFlag = pathInfo.testFlag(FroggerPathMotionType.REPEAT);
             for (int i = 0; i < values().length; i++) {
                 FroggerEndOfPathBehavior behavior = values()[i];
                 if (oneShotFlag == behavior.oneShotFlagSet && repeatFlag == behavior.repeatFlagSet)
