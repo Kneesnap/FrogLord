@@ -283,6 +283,8 @@ public class FroggerUIMapGeneralManager extends FroggerCentralUIManager {
                     int action = getGameInstance().getVersionConfig().getAnimationBank().getIndexForName("GENM_FROG_SIT");
                     if (action >= 0)
                         mofMesh.setAction(action); // GENM_FROG_SIT
+                } else {
+                    mofMesh.setAction(-1);
                 }
 
                 this.playerCharacterView.setCullFace(CullFace.BACK);

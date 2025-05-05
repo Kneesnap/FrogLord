@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Getter
 public class MOFMesh extends FrogMesh<MOFPolygon> {
     private final MOFHolder mofHolder;
-    private int animationId = -1;
+    private int animationId;
     private int frameCount;
     private final List<Vector> verticeCache = new ArrayList<>();
     @Setter private boolean showOverlay;
