@@ -179,7 +179,7 @@ def load_ffs_file(operator, context, filepath):
     # Exit edit mode.
     # Edit mode prevents editing vertex color data.
     # Reference: https://blender.stackexchange.com/questions/122202/changing-vertex-colors-through-python
-    old_mode = bpy.context.active_object.mode
+    old_mode = bpy.context.active_object.mode if bpy.context.active_object else 'OBJECT'
     bpy.ops.object.mode_set(mode = 'OBJECT')
 
     # Delete old data. This prevented crashes previously, but I've maybe fixed the crash bug.
@@ -424,7 +424,7 @@ def save_ffs_file(operator, context, filepath):
     # Exit edit mode.
     # Edit mode prevents accessing vertex color data.
     # Reference: https://blender.stackexchange.com/questions/122202/changing-vertex-colors-through-python
-    old_mode = bpy.context.active_object.mode
+    old_mode = bpy.context.active_object.mode if bpy.context.active_object else 'OBJECT'
     bpy.ops.object.mode_set(mode = 'OBJECT')
 
     mesh = bpy.data.meshes[LEVEL_MESH_NAME]
