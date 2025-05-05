@@ -41,7 +41,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
                     .thenComparing(GreatQuestAssetBinFileHeader::getName)
                     .thenComparingInt(GreatQuestAssetBinFileHeader::hashCode);
 
-    private static final int NAME_SIZE = 0x108;
+    public static final int NAME_SIZE = 0x108;
 
     public GreatQuestAssetBinFile(GreatQuestInstance gameInstance) {
         super(gameInstance);

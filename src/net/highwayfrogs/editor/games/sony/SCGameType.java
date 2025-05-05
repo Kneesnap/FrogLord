@@ -1,10 +1,14 @@
 package net.highwayfrogs.editor.games.sony;
 
 import javafx.scene.Node;
+import javafx.scene.control.Alert.AlertType;
 import lombok.Getter;
+import lombok.SneakyThrows;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.GameConfig;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.generic.IGameType;
+import net.highwayfrogs.editor.games.shared.basic.GameBuildInfo;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsConfig;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
@@ -16,18 +20,25 @@ import net.highwayfrogs.editor.games.sony.medievil2.MediEvil2GameInstance;
 import net.highwayfrogs.editor.games.sony.moonwarrior.MoonWarriorInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerConfig;
+import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
 import net.highwayfrogs.editor.gui.GameConfigController;
 import net.highwayfrogs.editor.gui.GameConfigController.GameConfigUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.FileOpenBrowseComponent.GameConfigFileOpenBrowseComponent;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.utils.*;
 import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
-import net.highwayfrogs.editor.utils.StringUtils;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.RandomAccessFileSource;
 
 import java.io.File;
+import java.io.RandomAccessFile;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -52,6 +63,7 @@ public enum SCGameType implements IGameType {
     private final Function<String, SCGameConfig> configMaker;
     @Getter private final String identifier;
     @Getter private final boolean showSaveWarning;
+    private final Map<Long, SCGameConfig> executableCheckSums = new HashMap<>();
 
     public static final String CONFIG_MWD_PATH = "mwdFilePath";
     public static final String CONFIG_EXE_PATH = "executableFilePath";
@@ -165,42 +177,190 @@ public enum SCGameType implements IGameType {
     }
 
     @Override
-    public GameConfigUIController setupConfigUI(GameConfigController controller, GameConfig gameConfig, Config config) {
-        SCGameConfig scGameConfig = gameConfig instanceof SCGameConfig ? (SCGameConfig) gameConfig : null;
-        return new SCGameConfigUI(controller, scGameConfig, config);
+    public SCGameConfigUI setupConfigUI(GameConfigController controller) {
+        return new SCGameConfigUI(controller);
+    }
+
+    private void ensureExecutableChecksumLookup() {
+        if (!this.executableCheckSums.isEmpty())
+            return;
+
+        SCGameConfig oldConfig;
+        List<GameConfig> gameConfigs = getVersionConfigs();
+        for (int i = 0; i < gameConfigs.size(); i++) {
+            SCGameConfig gameConfig = (SCGameConfig) gameConfigs.get(i);
+            for (int j = 0; j < gameConfig.getExecutableChecksums().length; j++) {
+                long checksum = gameConfig.getExecutableChecksums()[j];
+                if ((oldConfig = this.executableCheckSums.put(checksum, gameConfig)) != null)
+                    Utils.getInstanceLogger().warning("There was an executable checksum collision! %d -> [Old: %s, New: %s]", checksum, oldConfig.getInternalName(), gameConfig.getInternalName());
+            }
+        }
+    }
+
+    /**
+     * Resolves a SCGameConfig by its executable checksum.
+     * @param checksum the checksum to resolve
+     * @return gameConfig, or null
+     */
+    public SCGameConfig getConfigByExecutableChecksum(long checksum) {
+        ensureExecutableChecksumLookup();
+        return this.executableCheckSums.get(checksum);
     }
 
     /**
      * The UI definition for the game.
      */
-    public static class SCGameConfigUI extends GameConfigUIController {
+    public static class SCGameConfigUI extends GameConfigUIController<SCGameConfig> {
         private final GameConfigFileOpenBrowseComponent mwdFileBrowseComponent;
         private final GameConfigFileOpenBrowseComponent exeFileBrowseComponent;
 
-        public SCGameConfigUI(GameConfigController controller, SCGameConfig gameConfig, Config config) {
-            super(controller, gameConfig);
-            this.mwdFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, config, CONFIG_MWD_PATH, "Millennium WAD (.MWD)", "Please select a Millennium WAD", MWD_FILE_TYPE);
-            this.exeFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, config, CONFIG_EXE_PATH, "Game Executable (.EXE, SLUS, etc.)", "Please select the main executable", EXECUTABLE_FILE_TYPE);
-            loadController(null);
+        public SCGameConfigUI(GameConfigController controller) {
+            super(controller, SCGameConfig.class);
+            this.mwdFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, CONFIG_MWD_PATH, "Millennium WAD (.MWD)", "Please select a Millennium WAD", MWD_FILE_TYPE, this::validateSelectedMwdFile);
+            this.exeFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, CONFIG_EXE_PATH, "Game Executable (.EXE, SLUS, etc.)", "Please select the main executable", EXECUTABLE_FILE_TYPE, this::validateSelectedExecutable);
         }
 
-        @Override
-        public SCGameConfig getGameConfig() {
-            return (SCGameConfig) super.getGameConfig();
+        private boolean shouldEnableMwdFileBrowser() {
+            SCGameConfig gameConfig = getActiveGameConfig();
+            return gameConfig == null || !gameConfig.isMwdLooseFiles();
         }
 
         @Override
         public boolean isLoadButtonDisabled() {
-            return (StringUtils.isNullOrWhiteSpace(this.mwdFileBrowseComponent.getCurrentFilePath()) && (getGameConfig() == null || !getGameConfig().isMwdLooseFiles()))
+            return (shouldEnableMwdFileBrowser() && StringUtils.isNullOrWhiteSpace(this.mwdFileBrowseComponent.getCurrentFilePath()))
                     || StringUtils.isNullOrWhiteSpace(this.exeFileBrowseComponent.getCurrentFilePath());
+        }
+
+        @Override
+        protected void onChangeGameConfig(SCGameConfig oldGameConfig, Config oldEditorConfig, SCGameConfig newGameConfig, Config newEditorConfig) {
+            this.mwdFileBrowseComponent.setDisable(!shouldEnableMwdFileBrowser());
+            this.mwdFileBrowseComponent.resetFilePath();
+            this.exeFileBrowseComponent.resetFilePath();
         }
 
         @Override
         protected void onControllerLoad(Node rootNode) {
             super.onControllerLoad(rootNode);
-            if (getGameConfig() == null || !getGameConfig().isMwdLooseFiles())
-                addController(this.mwdFileBrowseComponent);
+            addController(this.mwdFileBrowseComponent);
             addController(this.exeFileBrowseComponent);
+        }
+
+        @SneakyThrows
+        @SuppressWarnings("IfStatementMissingBreakInLoop")
+        private boolean validateSelectedExecutable(String newFilePath, File newFile) {
+            SCGameType gameType = getGameType() instanceof SCGameType ? (SCGameType) getGameType() : null;
+            if (gameType != null) {
+                long exeChecksum = DataUtils.getCRC32(newFile);
+
+                boolean foundChecksum = false;
+                if (getActiveGameConfig() != null) {
+                    long[] checksumsAvailable = getActiveGameConfig().getExecutableChecksums();
+                    for (int j = 0; !foundChecksum && j < checksumsAvailable.length; j++)
+                        if (checksumsAvailable[j] == exeChecksum)
+                            foundChecksum = true;
+                }
+
+                // Try to read any configuration stored in the executable.
+                Config executableConfig;
+                try (RandomAccessFileSource fileSource = new RandomAccessFileSource(newFile)) {
+                    DataReader reader = new DataReader(fileSource);
+                    executableConfig = FileUtils.loadConfigDataFromExecutable(reader, newFile.getName());
+                }
+
+                if (executableConfig != null) {
+                    applyBuildInfo(executableConfig);
+                } else if (!foundChecksum) {
+                    SCGameConfig gameConfig = gameType.getConfigByExecutableChecksum(exeChecksum);
+                    if (gameConfig != null) { // Found it.
+                        getParentController().selectVersion(gameConfig);
+                    } else {
+                        // Try to find the hash in other games.
+                        SCGameConfig otherGameTypeConfig = null;
+                        for (SCGameType otherGameType : SCGameType.values())
+                            if ((otherGameTypeConfig = otherGameType.getConfigByExecutableChecksum(exeChecksum)) != null)
+                                break;
+
+                        if (otherGameTypeConfig != null) {
+                            // Don't select the version, since it overwrite the path on the previous game, instead of the correct place.
+                            FXUtils.makePopUp("That file is for " + otherGameTypeConfig.getGameType().getDisplayName() + ", not " + getGameType().getDisplayName() + ".", AlertType.ERROR);
+                            return false;
+                        } else {
+                            Utils.getInstanceLogger().warning("The provided executable was not registered, and it had a checksum of: %d.", exeChecksum);
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        @SneakyThrows
+        private boolean validateSelectedMwdFile(String newFilePath, File newFile) {
+            long fileSize = newFile.length();
+            if (fileSize < Constants.CD_SECTOR_SIZE) {
+                FXUtils.makePopUp("The selected file does not appear to be a valid MWD file.", AlertType.ERROR);
+                return false;
+            }
+
+            try (RandomAccessFile fileReader = new RandomAccessFile(newFile, "r")) {
+                byte[] signature = new byte[MWDFile.FILE_SIGNATURE.length()];
+                fileReader.read(signature);
+
+                if (!DataUtils.testSignature(signature, MWDFile.FILE_SIGNATURE)) {
+                    FXUtils.makePopUp("The selected file does not appear to be a valid MWD file.", AlertType.ERROR);
+                    return false;
+                }
+
+                // Read MWD build note.
+                int bytesRead;
+                fileReader.seek(MWDFile.BUILD_NOTES_START_OFFSET);
+                byte[] buildNoteBytes = new byte[MWDFile.BUILD_NOTES_SIZE];
+                if ((bytesRead = fileReader.read(buildNoteBytes)) != buildNoteBytes.length)
+                    throw new RuntimeException("Expected to read " + buildNoteBytes.length + " bytes for the build note, but only read " + bytesRead + " bytes instead!");
+
+                if (!parseBuildInfo(buildNoteBytes))
+                    return false;
+            }
+
+            return true;
+        }
+
+        private boolean parseBuildInfo(byte[] configBytes) {
+            // Find the end of the string.
+            int endIndex;
+            for (endIndex = 0; endIndex < configBytes.length; endIndex++)
+                if (configBytes[endIndex] == 0)
+                    break;
+
+            // Read the build info, and use that to determine the version.
+            // This only applies to versions of the game saved by FrogLord.
+            String buildComment = new String(configBytes, 0, endIndex, StandardCharsets.US_ASCII);
+            Config buildCommentConfig = Config.loadConfigFromString(buildComment, "GameData");
+            return applyBuildInfo(buildCommentConfig);
+        }
+
+        private boolean applyBuildInfo(Config config) {
+            Config buildInfoConfig = config != null ? config.getChildConfigByName(GameBuildInfo.CONFIG_KEY_ROOT_NAME) : null;
+            if (buildInfoConfig != null) {
+                GameBuildInfo<? extends SCGameInstance> buildInfo = new GameBuildInfo<>(buildInfoConfig);
+
+                // Ensure correct GameType.
+                if (!buildInfo.getGameType().equalsIgnoreCase(getGameType().getIdentifier())) {
+                    FXUtils.makePopUp("That file is for " + StringUtils.capitalize(buildInfo.getGameType()) + ", not " + getGameType().getDisplayName() + ".", AlertType.ERROR);
+                    return false;
+                }
+
+                GameConfig foundConfig = getGameType().getVersionConfigByName(buildInfo.getGameVersion());
+                if (foundConfig == null) {
+                    FXUtils.makePopUp("That file is an unknown version: '" + buildInfo.getGameVersion() + "'.\nWas it saved with a different version of FrogLord?", AlertType.ERROR);
+                    return false;
+                }
+
+                // Automatically become the correct version.
+                getParentController().selectVersion(foundConfig);
+            }
+
+            return true;
         }
     }
 }

@@ -1,6 +1,9 @@
 package net.highwayfrogs.editor.games.konami.ancientshadow;
 
 import javafx.scene.Node;
+import javafx.scene.control.Alert.AlertType;
+import lombok.SneakyThrows;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.GameConfig;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.generic.GamePlatform;
@@ -11,11 +14,11 @@ import net.highwayfrogs.editor.gui.components.FileOpenBrowseComponent.GameConfig
 import net.highwayfrogs.editor.gui.components.FolderBrowseComponent.GameConfigFolderBrowseComponent;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.utils.*;
 import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
-import net.highwayfrogs.editor.utils.StringUtils;
-import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
+import java.io.RandomAccessFile;
 
 /**
  * Represents the game "Frogger Ancient Shadow".
@@ -61,27 +64,34 @@ public class AncientShadowGameType implements IGameType {
     }
 
     @Override
-    public AncientShadowGameConfigUI setupConfigUI(GameConfigController controller, GameConfig gameConfig, Config config) {
-        return new AncientShadowGameConfigUI(controller, gameConfig, config);
+    public AncientShadowGameConfigUI setupConfigUI(GameConfigController controller) {
+        return new AncientShadowGameConfigUI(controller);
     }
 
     /**
      * The UI definition for the game.
      */
-    public static class AncientShadowGameConfigUI extends GameConfigUIController {
+    public static class AncientShadowGameConfigUI extends GameConfigUIController<GameConfig> {
         private final GameConfigFileOpenBrowseComponent binFileBrowseComponent;
         private final GameConfigFolderBrowseComponent folderBrowseComponent;
 
-        public AncientShadowGameConfigUI(GameConfigController controller, GameConfig gameConfig, Config config) {
-            super(controller, gameConfig);
-            if (gameConfig != null && gameConfig.getPlatform() == GamePlatform.WINDOWS) {
-                this.binFileBrowseComponent = null;
-                this.folderBrowseComponent = new GameConfigFolderBrowseComponent(this, config, CONFIG_MAIN_FILE_PATH, "Game Data Folder", "Please locate the folder containing game data (.HFS files)", false);
+        public AncientShadowGameConfigUI(GameConfigController controller) {
+            super(controller, GameConfig.class);
+            this.binFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, CONFIG_MAIN_FILE_PATH, "Game Archive (gamedata.bin/*.hfs)", "Please locate and open 'gamedata.bin' (Or a .HFS file)", ANCIENT_SHADOW_FILE_TYPE, this::validateBinFileLooksOkay);
+            this.folderBrowseComponent = new GameConfigFolderBrowseComponent(this, CONFIG_MAIN_FILE_PATH, "Game Data Folder", "Please locate the folder containing game data (.HFS files)", null);
+        }
+
+        @Override
+        protected void onChangeGameConfig(GameConfig oldGameConfig, Config oldEditorConfig, GameConfig newGameConfig, Config newEditorConfig) {
+            if (newGameConfig != null && newGameConfig.getPlatform() == GamePlatform.WINDOWS) {
+                removeController(this.binFileBrowseComponent);
+                this.folderBrowseComponent.resetFolderPath();
+                addController(this.folderBrowseComponent);
             } else {
-                this.binFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, config, CONFIG_MAIN_FILE_PATH, "Game Archive (gamedata.bin/*.hfs)", "Please locate and open 'gamedata.bin' (Or a .HFS file)", ANCIENT_SHADOW_FILE_TYPE);
-                this.folderBrowseComponent = null;
+                removeController(this.folderBrowseComponent);
+                this.binFileBrowseComponent.resetFilePath();
+                addController(this.binFileBrowseComponent);
             }
-            loadController(null);
         }
 
         @Override
@@ -93,10 +103,33 @@ public class AncientShadowGameType implements IGameType {
         @Override
         protected void onControllerLoad(Node rootNode) {
             super.onControllerLoad(rootNode);
-            if (this.binFileBrowseComponent != null)
-                addController(this.binFileBrowseComponent);
-            if (this.folderBrowseComponent != null)
-                addController(this.folderBrowseComponent);
+            onChangeGameConfig(getActiveGameConfig(), getActiveEditorConfig(), getActiveGameConfig(), getActiveEditorConfig());
+        }
+
+        @SneakyThrows
+        private boolean validateBinFileLooksOkay(String newFilePath, File newFile) {
+            long fileLength = newFile.length();
+            if (fileLength < Constants.INTEGER_SIZE) {
+                FXUtils.makePopUp("That file does not appear to be a valid .hfs file/gamedata.bin.", AlertType.ERROR);
+                return false;
+            }
+
+            try (RandomAccessFile reader = new RandomAccessFile(newFile, "r")) {
+                byte[] signature = new byte[HFSFile.SIGNATURE.length()];
+                reader.read(signature);
+
+                if (FileUtils.isProbablySonyIso(reader)) {
+                    FXUtils.makePopUp("That file appears to be a CD image, not a game data file.\nExtract the game files from the CD image first.", AlertType.ERROR);
+                    return false;
+                }
+
+                if (!DataUtils.testSignature(signature, HFSFile.SIGNATURE)) {
+                    FXUtils.makePopUp("That file does not appear to be a valid .hfs file/gamedata.bin.", AlertType.ERROR);
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }

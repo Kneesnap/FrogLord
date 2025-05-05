@@ -14,6 +14,7 @@ import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import lombok.Getter;
+import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameConfig;
@@ -43,7 +44,7 @@ import java.util.Objects;
 public class GameConfigController extends GameUIController<GameInstance> {
     private final Config gameConfigRoot;
     private final Config unknownGameConfig = new Config("$UnknownGameConfig");
-    private GameConfigUIController activeConfigController;
+    private GameConfigUIController<?> activeConfigController;
     private String selectedVersionConfigName;
     @FXML private ImageView frogLordGameLogoView;
     @FXML private ComboBox<IGameType> gameTypeComboBox;
@@ -60,7 +61,6 @@ public class GameConfigController extends GameUIController<GameInstance> {
     public static final String CONFIG_GAME_VERSION = "gameVersion";
     public static final String CONFIG_GAME_LAST_FOLDER = "lastFolder";
     // TODO: Selection logic for game version.
-    //  - Auto-selection.
     //  - Allow drag & drop files to select & configure game. (Problem with detected game version -> needing to figure out writes to an arbitrary config..? Perhaps choose a new config if detection occurs before setting occurs. Not sure tho.)
 
     private static final List<String> SELECT_GAME_TEXT = Arrays.asList("Welcome to FrogLord!",
@@ -70,6 +70,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
             "Next, give FrogLord the information & files it needs to load the game data.",
             "Many games (especially console games) have their files inside a CD image. (iso, bin/cue, etc.)",
             "Those games will need to be extracted first with other software such as ISOBuster, PowerISO, etc.",
+            "PC version files are often found in the installation folder, eg: 'C:\\Program Files\\...'.",
             "Once all the information is ready, press the 'Load' button to load the game data.");
 
     private static final URL FXML_TEMPLATE_URL = FileUtils.getResourceURL("fxml/window-load-game.fxml");
@@ -228,7 +229,9 @@ public class GameConfigController extends GameUIController<GameInstance> {
      * Update the UI for the game type.
      */
     public void updateGameTypeUI() {
-        if (this.activeConfigController != null) {
+        IGameType gameType = getSelectedGameType();
+        boolean useExistingController = this.activeConfigController != null && this.activeConfigController.getGameType() == gameType;
+        if (this.activeConfigController != null && !useExistingController) {
             removeController(this.activeConfigController);
             this.activeConfigController = null;
             this.loadButton.setDisable(true); // Disable the load button for now.
@@ -237,7 +240,6 @@ public class GameConfigController extends GameUIController<GameInstance> {
         // Clear the UI.
         this.topBox.getChildren().clear();
         this.bottomBox.getChildren().clear();
-        IGameType gameType = getSelectedGameType();
 
         // Create help UI.
         if (gameType == null) {
@@ -248,13 +250,26 @@ public class GameConfigController extends GameUIController<GameInstance> {
 
         // Create new game-specific UI.
         if (gameType != null) {
-            GameConfigUIController uiController = gameType.setupConfigUI(this, this.gameVersionComboBox.getValue(), getOrCreateGameConfig());
-            if (uiController != null) {
-                uiController.addChildControllers(this.bottomBox.getChildren());
+            GameConfig gameConfig = this.gameVersionComboBox.getValue();
+            if (gameConfig != null && gameConfig.getGameType() != gameType)
+                gameConfig = null;
+
+            if (useExistingController) {
+                this.activeConfigController.addChildControllers(this.bottomBox.getChildren());
+                this.activeConfigController.setActiveGameConfig(gameConfig, getOrCreateGameConfig());
+            } else {
+                GameConfigUIController<?> uiController = gameType.setupConfigUI(this);
+                if (uiController == null)
+                    throw new RuntimeException("Game Type '" + gameType.getDisplayName() + "' did not provide a GameConfigUIController, so the user interface cannot be created!!");
+
+                uiController.loadController(this.bottomBox);
+                uiController.setActiveGameConfig(gameConfig, getOrCreateGameConfig());
                 addController(this.activeConfigController = uiController);
-                uiController.updateLoadButton();
             }
         }
+
+        if (this.activeConfigController != null)
+            this.activeConfigController.updateLoadButton();
 
         // Set the per-game logo.
         ImageResource frogLordPerGameLogo = gameType != null ? gameType.getFrogLordLogo() : null;
@@ -319,6 +334,20 @@ public class GameConfigController extends GameUIController<GameInstance> {
     }
 
     /**
+     * Selects the provided game version.
+     * @param gameVersion the game version to select
+     */
+    public void selectVersion(GameConfig gameVersion) {
+        if (gameVersion == null)
+            throw new NullPointerException("gameVersion");
+
+        if (this.gameTypeComboBox.getValue() != gameVersion.getGameType())
+            this.gameTypeComboBox.getSelectionModel().select(gameVersion.getGameType());
+        if (this.gameVersionComboBox.getValue() != gameVersion)
+            this.gameVersionComboBox.getSelectionModel().select(gameVersion);
+    }
+
+    /**
      * Open the game config window.
      * @param configRoot the config root.
      */
@@ -333,15 +362,54 @@ public class GameConfigController extends GameUIController<GameInstance> {
      * Represents a UI controller for any game's config screen.
      */
     @Getter
-    public static abstract class GameConfigUIController extends GameUIController<GameInstance> {
-        private final GameConfigController parentController;
-        private final GameConfig gameConfig;
+    public static abstract class GameConfigUIController<TGameConfig extends GameConfig> extends GameUIController<GameInstance> {
+        @NonNull private final GameConfigController parentController;
+        @NonNull private final Class<TGameConfig> gameConfigClass;
+        private IGameType gameType;
+        private TGameConfig activeGameConfig;
+        private Config activeEditorConfig;
 
-        public GameConfigUIController(GameConfigController parentController, GameConfig gameConfig) {
+        public GameConfigUIController(@NonNull GameConfigController parentController, @NonNull Class<TGameConfig> gameConfigClass) {
             super(null);
             this.parentController = parentController;
-            this.gameConfig = gameConfig;
+            this.gameConfigClass = gameConfigClass;
         }
+
+        /**
+         * Sets which game config is currently active.
+         * @param newGameConfig the game config to apply, if there is one
+         * @param newEditorConfig the editor config to apply
+         */
+        public final void setActiveGameConfig(GameConfig newGameConfig, Config newEditorConfig) {
+            if (newEditorConfig == null)
+                throw new NullPointerException("newEditorConfig");
+            if (newGameConfig != null && !this.gameConfigClass.isInstance(newGameConfig))
+                throw new ClassCastException("Cannot treat " + Utils.getSimpleName(newGameConfig) + " as a(n) " + this.gameConfigClass.getSimpleName() + ".");
+            if (newGameConfig != null && this.gameType != null && this.gameType != newGameConfig.getGameType())
+                throw new IllegalArgumentException("Cannot apply GameType of '" + newGameConfig.getGameType().getDisplayName() + "' to " + Utils.getSimpleName(this) + ", which only accepts GameTypes of '" + this.gameType.getDisplayName() + "'.");
+
+            TGameConfig oldGameConfig = this.activeGameConfig;
+            Config oldEditorConfig = this.activeEditorConfig;
+            this.activeGameConfig = this.gameConfigClass.cast(newGameConfig);
+            this.activeEditorConfig = newEditorConfig;
+            if (this.gameType == null && this.activeGameConfig != null)
+                this.gameType = this.activeGameConfig.getGameType();
+
+            try {
+                onChangeGameConfig(oldGameConfig, oldEditorConfig, this.activeGameConfig, this.activeEditorConfig);
+            } catch (Throwable th) {
+                Utils.handleError(null, th, true, "Encountered an error processing the change to game configuration data!");
+            }
+        }
+
+        /**
+         * Called when the game configuration changes.
+         * @param oldGameConfig the previous game config
+         * @param oldEditorConfig the previous editor config
+         * @param newGameConfig the current game config
+         * @param newEditorConfig the current editor config
+         */
+        protected abstract void onChangeGameConfig(TGameConfig oldGameConfig, Config oldEditorConfig, TGameConfig newGameConfig, Config newEditorConfig);
 
         /**
          * Update the load button.
@@ -354,6 +422,24 @@ public class GameConfigController extends GameUIController<GameInstance> {
          * Test if the load button should be disabled.
          */
         public abstract boolean isLoadButtonDisabled();
+
+        @Override
+        public void addController(GameUIController<?> childController) {
+            super.addController(childController);
+
+            Node childRootNode = childController.getRootNode();
+            if (!this.parentController.getBottomBox().getChildren().contains(childRootNode))
+                this.parentController.getBottomBox().getChildren().add(childRootNode);
+        }
+
+        @Override
+        public boolean removeController(GameUIController<?> childController) {
+            if (!super.removeController(childController))
+                return false;
+
+            this.parentController.getBottomBox().getChildren().remove(childController.getRootNode());
+            return true;
+        }
 
         @Override
         protected void onControllerLoad(Node rootNode) {

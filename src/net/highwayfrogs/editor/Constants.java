@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.games.renderware.game.RwGenericGameType;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 
 import java.awt.*;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
 
@@ -23,6 +24,12 @@ public class Constants {
     public static final String NEWLINE = System.lineSeparator();
 
     public static final int CD_SECTOR_SIZE = 0x800;
+
+    public static final int SONY_ISO_CD_SECTOR_SIZE = 2352; // 0x930
+    public static final String SONY_ISO_CD_SIGNATURE = "\1CD001\1";
+    public static final byte[] SONY_ISO_CD_SIGNATURE_BYTES = SONY_ISO_CD_SIGNATURE.getBytes(StandardCharsets.US_ASCII);
+    public static final int PSX_WRITABLE_START_OFFSET = 0x84;
+    public static final int PSX_WRITABLE_AREA_SIZE = CD_SECTOR_SIZE - PSX_WRITABLE_START_OFFSET;
 
     public static final int BYTE_SIZE = 1;
     public static final int SHORT_SIZE = 2;

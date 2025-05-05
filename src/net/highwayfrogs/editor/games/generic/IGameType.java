@@ -59,9 +59,8 @@ public interface IGameType {
     /**
      * Creates config UI to configure the load of a potential game instance.
      * @param controller the UI controller to create the UI under
-     * @param config the config used to load data
      */
-    GameConfigUIController setupConfigUI(GameConfigController controller, GameConfig gameConfig, Config config);
+    GameConfigUIController<?> setupConfigUI(GameConfigController controller);
 
     /**
      * Gets the FrogLord logo associated with this game type.
