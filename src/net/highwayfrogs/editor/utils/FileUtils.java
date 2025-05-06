@@ -800,30 +800,38 @@ public class FileUtils {
      * @return file, if successfully saved
      */
     public static File askUserToSaveImageFile(ILogger logger, GameInstance instance, BufferedImage image, String suggestedFileName) {
-        boolean hasSuggestedFileName = suggestedFileName != null && suggestedFileName.trim().length() > 0;
-        String[] extensionSuffixes = ImageIO.getWriterFileSuffixes();
+        boolean hasSuggestedFileName = suggestedFileName != null && !suggestedFileName.trim().isEmpty();
+        if (!hasSuggestedFileName)
+            suggestedFileName = "unknown";
 
         // Add extension.
-        if (hasSuggestedFileName) {
-            String providedExtension = FileUtils.getFileNameExtension(suggestedFileName);
-            if (providedExtension == null || !Utils.contains(extensionSuffixes, providedExtension.toLowerCase()))
-                suggestedFileName += "." + (Utils.contains(extensionSuffixes, "png") ? "png" : extensionSuffixes[0]);
-        }
+        String[] extensionSuffixes = ImageIO.getWriterFileSuffixes();
+        String providedExtension = FileUtils.getFileNameExtension(suggestedFileName);
+        if (providedExtension == null || !Utils.contains(extensionSuffixes, providedExtension.toLowerCase()))
+            suggestedFileName += "." + (Utils.contains(extensionSuffixes, "png") ? "png" : extensionSuffixes[0]);
 
-        File selectedFile = askUserToSaveFile(instance, EXPORT_SINGLE_IMAGE_PATH, suggestedFileName, suggestedFileName != null && suggestedFileName.trim().length() > 0);
+        File selectedFile = askUserToSaveFile(instance, EXPORT_SINGLE_IMAGE_PATH, suggestedFileName, hasSuggestedFileName);
         if (selectedFile == null)
             return null;
 
         String extension = FileUtils.getFileNameExtensionLower(selectedFile.getName());
-        if (extension == null || !Utils.contains(ImageIO.getWriterFileSuffixes(), extension)) {
+        if (extension == null || !Utils.contains(extensionSuffixes, extension)) {
             FXUtils.makePopUp("Couldn't determine which image format to use for the file extension '." + extension + "'.", AlertType.ERROR);
             return null;
         }
 
         try {
-            ImageIO.write(image, extension, selectedFile);
+            if (!ImageIO.write(image, extension, selectedFile)) {
+                FXUtils.makePopUp("No image writer was available for the ." + extension + " image type.", AlertType.ERROR);
+                return null;
+            }
         } catch (IOException ex) {
             Utils.handleError(logger, ex, true, "Failed to save image to file '%s'.", selectedFile.getName());
+            return null;
+        }
+
+        if (!selectedFile.exists() || !selectedFile.isFile()) {
+            FXUtils.makePopUp("The image was expected to have been written to the file, but wasn't!!", AlertType.ERROR);
             return null;
         }
 

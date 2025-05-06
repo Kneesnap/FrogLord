@@ -151,7 +151,7 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
     private void exportImage(ActionEvent event) {
         String originalName = this.selectedImage.getOriginalName();
         BufferedImage image = this.selectedImage.toBufferedImage(IMAGE_EXPORT_SETTINGS);
-        FileUtils.askUserToSaveImageFile(getLogger(), getGameInstance(), image, originalName);
+        FileUtils.askUserToSaveImageFile(getLogger(), getGameInstance(), image, originalName != null ? originalName : String.valueOf(this.selectedImage.getTextureId()));
     }
 
     @FXML
