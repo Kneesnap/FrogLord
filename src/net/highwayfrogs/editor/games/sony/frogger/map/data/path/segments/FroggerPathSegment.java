@@ -244,9 +244,9 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
                 MouseInputState mouseState = inputManager.getMouseTracker().getMouseState();
                 Point3D intersectedPoint = new Point3D(mouseState.getIntersectedPoint().getX(), mouseState.getIntersectedPoint().getY(), mouseState.getIntersectedPoint().getZ());
                 Point3D newWorldPos = mouseState.getIntersectedNode().localToScene(intersectedPoint);
-                vector.setFloatX(Math.round(newWorldPos.getX()), bits);
-                vector.setFloatY(Math.round(newWorldPos.getY()), bits);
-                vector.setFloatZ(Math.round(newWorldPos.getZ()), bits);
+                vector.setFloatX(Math.round(newWorldPos.getX() / 4F) * 4F, bits);
+                vector.setFloatY(Math.round(newWorldPos.getY() / 4F) * 4F, bits);
+                vector.setFloatZ(Math.round(newWorldPos.getZ() / 4F) * 4F, bits);
             } else {
                 Vector3f centerOfPolygon = polygon.getCenterOfPolygon(null);
                 vector.setFloatX(centerOfPolygon.getX(), bits);

@@ -233,8 +233,8 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
             this.selectedMouseEntityPosition[1] = (float) newWorldPos.getY();
             this.selectedMouseEntityPosition[2] = (float) newWorldPos.getZ();
             if (getController().getInputManager().isKeyPressed(KeyCode.CONTROL))
-                for (int i = 0; i < this.selectedMouseEntityPosition.length; i++)
-                    this.selectedMouseEntityPosition[i] = Math.round(this.selectedMouseEntityPosition[i]);
+                for (int i = 0; i < 3; i++)
+                    this.selectedMouseEntityPosition[i] = Math.round(this.selectedMouseEntityPosition[i] / 8F) * 8F;
         }
 
         updateEntityPositionRotation(this.selectedMouseEntity); // Update display position.
