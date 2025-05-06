@@ -102,7 +102,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
             formId = reader.readUnsignedShortAsInt();
             this.formEntry = getGameInstance().getMapFormEntry(this.mapFile.getMapTheme(), formId);
             this.flags = reader.readShort();
-            warnAboutInvalidBitFlags(this.flags, FroggerMapEntityEntityFlag.FLAG_VALIDATION_MASK);
+            warnAboutInvalidBitFlags(this.flags, FroggerMapEntityFlag.FLAG_VALIDATION_MASK);
             reader.skipBytesRequireEmpty(RUNTIME_POINTERS * Constants.POINTER_SIZE);
         }
 
@@ -253,7 +253,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
         }
 
         editor.addBoldLabel("Flags:");
-        for (FroggerMapEntityEntityFlag flag : FroggerMapEntityEntityFlag.values())
+        for (FroggerMapEntityFlag flag : FroggerMapEntityFlag.values())
             editor.addCheckBox(StringUtils.capitalize(flag.name()), testFlag(flag), newState -> {
                 setFlag(flag, newState);
                 manager.updateEntityPositionRotation(this);
@@ -340,7 +340,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
      * @param flag The flag to test.
      * @return hasFlag
      */
-    public boolean testFlag(FroggerMapEntityEntityFlag flag) {
+    public boolean testFlag(FroggerMapEntityFlag flag) {
         return (this.flags & flag.getBitFlagMask()) == flag.getBitFlagMask();
     }
 
@@ -349,7 +349,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
      * @param flag     The flag type.
      * @param newState The new state of the flag.
      */
-    public void setFlag(FroggerMapEntityEntityFlag flag, boolean newState) {
+    public void setFlag(FroggerMapEntityFlag flag, boolean newState) {
         boolean oldState = testFlag(flag);
         if (oldState == newState)
             return; // Prevents the ^ operation from breaking the value.
@@ -476,7 +476,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
 
     @Getter
     @AllArgsConstructor
-    public enum FroggerMapEntityEntityFlag {
+    public enum FroggerMapEntityFlag {
         NO_LIVE_ENTITY(Constants.BIT_FLAG_0, "Don't create a live entity."),
         NO_DISPLAY(Constants.BIT_FLAG_1, "Don't display any mesh."),
         NO_MOVEMENT(Constants.BIT_FLAG_2, "Don't allow entity movement."),

@@ -18,7 +18,7 @@ import net.highwayfrogs.editor.games.sony.SCMath;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity.FroggerMapEntityEntityFlag;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity.FroggerMapEntityFlag;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataPathInfo;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack.FroggerGridStackInfo;
@@ -236,14 +236,14 @@ public class FroggerPathInfo extends SCGameData<FroggerGameInstance> {
             position.setXYZ(pathPosition.getFloatX(), pathPosition.getFloatY(), pathPosition.getFloatZ());
 
         // Example: The spinners in VOL1.MAP don't rotate to follow the path despite following it. Also the pink balloons.
-        if (entity != null && entity.testFlag(FroggerMapEntityEntityFlag.ALIGN_TO_WORLD)) {
+        if (entity != null && entity.testFlag(FroggerMapEntityFlag.ALIGN_TO_WORLD)) {
             if (rotation != null)
                 rotation.setXYZ(0, 0, 0);
             return true;
         }
 
         IVector vecZ = new IVector(result.getRotation());
-        if (entity != null && entity.testFlag(FroggerMapEntityEntityFlag.PROJECT_ON_LAND)) { // Example: Hedgehogs and many of the jungle entities.
+        if (entity != null && entity.testFlag(FroggerMapEntityFlag.PROJECT_ON_LAND)) { // Example: Hedgehogs and many of the jungle entities.
             FroggerMapFilePacketGrid gridPacket = getMapFile().getGridPacket();
             FroggerGridStack gridStack = gridPacket.getGridStack(gridPacket.getGridXFromWorldX(pathPosition.getX()), gridPacket.getGridZFromWorldZ(pathPosition.getZ()));
             FroggerGridStackInfo stackInfo = gridStack != null ? gridStack.getGridStackInfo() : null;
@@ -262,7 +262,7 @@ public class FroggerPathInfo extends SCGameData<FroggerGameInstance> {
             return true; // Only rotation calculations occur past this point.
 
         IVector vecX = new IVector();
-        if (entity != null && entity.testFlag(FroggerMapEntityEntityFlag.LOCAL_ALIGN)) {
+        if (entity != null && entity.testFlag(FroggerMapEntityFlag.LOCAL_ALIGN)) {
             // I don't think this is entirely correct to how it works in-game, but it captures the spirit of what the code in-game is supposed to do.
             // After the player dies or collects a checkpoint, some entities rotate weirdly. (It might take a few tries) For example,
             // There's one slug in SWP4.MAP which absolutely refuses to cooperate. All the other ones appear right.
