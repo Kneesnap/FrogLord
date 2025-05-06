@@ -523,7 +523,7 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
             if (vloArchive == null || getEditTarget() == null)
                 return;
 
-            remapArray.askUserToSelectImage(vloArchive, true, selectedImage -> { // TODO: Set false after testing.
+            remapArray.askUserToSelectImage(vloArchive, false, selectedImage -> {
                 FroggerMapPolygon polygon = getEditTarget();
                 if (!shouldHandleUIChanges() || !getShadeDefinition().isTextured() || polygon == null)
                     return;
