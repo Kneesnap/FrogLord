@@ -19,6 +19,8 @@ import javafx.scene.transform.Translate;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
@@ -28,6 +30,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMeshController;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
+import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.InputManager.MouseInputState;
 import net.highwayfrogs.editor.gui.editor.BakedLandscapeUIManager;
@@ -505,6 +508,38 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
             // Apply updated uv data and update the 3D view.
             polygon.getTextureUvs()[uvIndex].copyFrom(uv);
             mesh.getShadedTextureManager().updatePolygon(polygon);
+        }
+
+        @Override
+        protected void selectNewTexture(ITextureSource oldTextureSource) {
+            TextureRemapArray remapArray = getManager().getMap().getTextureRemap();
+            if (remapArray == null)
+                return;
+
+            // Resolve VLO.
+            VLOArchive vloArchive = oldTextureSource instanceof GameImage ? ((GameImage) oldTextureSource).getParent() : null;
+            if (vloArchive == null)
+                vloArchive = getManager().getMap().getVloFile();
+            if (vloArchive == null || getEditTarget() == null)
+                return;
+
+            remapArray.askUserToSelectImage(vloArchive, true, selectedImage -> { // TODO: Set false after testing.
+                FroggerMapPolygon polygon = getEditTarget();
+                if (!shouldHandleUIChanges() || !getShadeDefinition().isTextured() || polygon == null)
+                    return;
+
+                if (selectedImage != null) {
+                    int remapIndex = remapArray.getRemapIndex(selectedImage.getTextureId());
+                    if (remapIndex < 0)
+                        throw new RuntimeException("Could not find the selected image (" + selectedImage.getTextureId() + ") in the textureRemap!");
+
+                    polygon.setTextureId((short) remapIndex);
+                } else {
+                    polygon.setTextureId((short) -1);
+                }
+
+                getManager().getController().getMesh().getShadedTextureManager().updatePolygon(polygon);
+            });
         }
     }
 }
