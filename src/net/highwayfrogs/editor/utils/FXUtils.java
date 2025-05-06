@@ -334,14 +334,14 @@ public class FXUtils {
         field.setOnKeyPressed(evt -> {
             KeyCode code = evt.getCode();
             if (field.getStyle().isEmpty() && (code.isLetterKey() || code.isDigitKey() || code == KeyCode.BACK_SPACE)) {
-                field.setStyle("-fx-text-inner-color: darkgreen;");
+                field.setStyle("-fx-text-inner-color: darkgreen; -fx-focus-color: green; -fx-faint-focus-color: #ff002200");
             } else if (code == KeyCode.ESCAPE) {
                 if (field.getParent() != null)
                     field.getParent().requestFocus();
                 evt.consume(); // Don't pass further, eg: we don't want to exit the UI we're in.
                 field.setText(resetTextRef.get());
                 field.setStyle(null);
-            } else if (code == KeyCode.ENTER) {
+            } else if (code == KeyCode.ENTER || code == KeyCode.TAB) { // Tab should not only accept the value, but move to the next input field as well.
                 boolean successfullyHandled = false;
                 String newText = field.getText();
 
