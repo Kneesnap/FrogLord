@@ -140,6 +140,8 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
 
         if (this.entityData instanceof FroggerEntityDataPathInfo && getPathInfo().getPath() == null && !getMapFile().isIslandOrIslandPlaceholder())
             getLogger().warning("Entity references an invalid path ID! (%d)", getPathInfo().getPathId());
+        if (testFlag(FroggerMapEntityFlag.HIDDEN))
+            getLogger().warning("I have the HIDDEN flag, which was expected to be runtime-only!");
     }
 
     @Override
@@ -254,10 +256,11 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
 
         editor.addBoldLabel("Flags:");
         for (FroggerMapEntityFlag flag : FroggerMapEntityFlag.values())
-            editor.addCheckBox(StringUtils.capitalize(flag.name()), testFlag(flag), newState -> {
-                setFlag(flag, newState);
-                manager.updateEntityPositionRotation(this);
-            }).setTooltip(new Tooltip(flag.getDescription()));
+            if (flag.isShowInEditor())
+                editor.addCheckBox(StringUtils.capitalize(flag.name()), testFlag(flag), newState -> {
+                    setFlag(flag, newState);
+                    manager.updateEntityPositionRotation(this);
+                }).setTooltip(new Tooltip(flag.getDescription()));
 
         // Copulate entity data editor.
         if (this.entityData != null) {
@@ -477,16 +480,17 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
     @Getter
     @AllArgsConstructor
     public enum FroggerMapEntityFlag {
-        NO_LIVE_ENTITY(Constants.BIT_FLAG_0, "Don't create a live entity."),
-        NO_DISPLAY(Constants.BIT_FLAG_1, "Don't display any mesh."),
-        NO_MOVEMENT(Constants.BIT_FLAG_2, "Don't allow entity movement."),
-        NO_COLLISION(Constants.BIT_FLAG_3, "Collision does not apply to this entity."),
-        ALIGN_TO_WORLD(Constants.BIT_FLAG_4, "Do not face the path's direction. (Path Entity Only)"),
-        PROJECT_ON_LAND(Constants.BIT_FLAG_5, "Snap rotation to the grid square polygon. (Path Entity Only)"),
-        LOCAL_ALIGN(Constants.BIT_FLAG_6, "Entity position matrix is calculated \"locally\" (Pipe Slugs)");
+        HIDDEN(Constants.BIT_FLAG_0, false, "Don't create a live entity.\nThis is runtime only, and is used to for example, hide the checkpoint entities once collected."),
+        NO_DISPLAY(Constants.BIT_FLAG_1, true, "Don't display any 3D model in-game."),
+        NO_MOVEMENT(Constants.BIT_FLAG_2, true, "Disable entity movement."),
+        NO_COLLISION(Constants.BIT_FLAG_3, true, "Collision does not apply to this entity.\nNot used by the original game maps,\n but it is applied at runtime for entities like JUN_ROPE_BRIDGE."),
+        ALIGN_TO_WORLD(Constants.BIT_FLAG_4, true, "Do not face the path's direction. (Path Entity Only)"),
+        PROJECT_ON_LAND(Constants.BIT_FLAG_5, true, "Snap rotation to the grid square polygon. (Path Entity Only)"),
+        LOCAL_ALIGN(Constants.BIT_FLAG_6, true, "Entity position matrix is calculated \"locally\" (Pipe Slugs)");
 
         private final int bitFlagMask;
+        private final boolean showInEditor;
         private final String description;
-        public static final int FLAG_VALIDATION_MASK = 0b1111111;
+        public static final int FLAG_VALIDATION_MASK = 0b1111110;
     }
 }
