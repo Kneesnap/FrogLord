@@ -528,10 +528,10 @@ def save_ffs_file(operator, context, filepath):
         if is_textured:
             for i in range(polygon.loop_total):
                 uv = uv_layer.data[polygon.loop_start + i].uv
-                if uv[0] < 0 or uv[0] > 1 or uv[1] < 0 or uv[1] > 1:
-                    operator.report({"WARNING"}, "Face %d has uvs[%d] out of the range Frogger supports! (%f, %f)" % (polygon_index, i, uv[0]. uv[1]))
+                if uv[0] < -0.001 or uv[0] > 1.001 or uv[1] < -0.001 or uv[1] > 1.001:
+                    operator.report({"WARNING"}, "Face %d has uvs[%d] out of the range Frogger supports! (%f, %f)" % (polygon_index, i, uv[0], uv[1]))
 
-                uvs.append((uv[0], 1.0 - uv[1]))
+                uvs.append((max(0.0, min(1.0, uv[0])), max(0.0, min(1.0, 1.0 - uv[1]))))
             uvs = to_ffs_order(uvs)
 
         # Determine polygon type.
