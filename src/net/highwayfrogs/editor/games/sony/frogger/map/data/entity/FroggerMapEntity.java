@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity;
 
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.Tooltip;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -260,7 +259,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
                 editor.addCheckBox(StringUtils.capitalize(flag.name()), testFlag(flag), newState -> {
                     setFlag(flag, newState);
                     manager.updateEntityPositionRotation(this);
-                }).setTooltip(new Tooltip(flag.getDescription()));
+                }).setTooltip(FXUtils.createTooltip(flag.getDescription()));
 
         // Copulate entity data editor.
         if (this.entityData != null) {

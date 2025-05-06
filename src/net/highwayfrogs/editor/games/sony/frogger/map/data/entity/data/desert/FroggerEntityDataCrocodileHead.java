@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataMatrix;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -18,7 +19,7 @@ public class FroggerEntityDataCrocodileHead extends FroggerEntityDataMatrix {
     private int snapDelay = 20;
     private int pauseDelay = 20;
     private boolean shouldSnap;
-    private int submergedDelay = 10;
+    private int submergedDelay = 10; // How many frames to stay submerged before rising.
 
     public FroggerEntityDataCrocodileHead(FroggerMapFile mapFile) {
         super(mapFile);
@@ -54,11 +55,17 @@ public class FroggerEntityDataCrocodileHead extends FroggerEntityDataMatrix {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addUnsignedFixedShort("Rise Height (grid)", this.riseHeight, newRiseHeight -> this.riseHeight = newRiseHeight, 256);
-        editor.addUnsignedFixedShort("Rise Speed (per frame)", this.riseSpeed, newRiseSpeed -> this.riseSpeed = newRiseSpeed, 256);
-        editor.addUnsignedFixedShort("Snap Delay (secs)", this.snapDelay, newSnapDelay -> this.snapDelay = newSnapDelay, 30);
-        editor.addCheckBox("Should Snap", this.shouldSnap, newSnapOrNot -> this.shouldSnap = newSnapOrNot);
-        editor.addUnsignedFixedShort("Pause Delay (secs)", this.pauseDelay, newPauseDelay -> this.pauseDelay = newPauseDelay, 30);
-        editor.addUnsignedFixedShort("Submerged Delay (secs)", this.submergedDelay, newSubmergedDelay -> this.submergedDelay = newSubmergedDelay, 30);
+        editor.addUnsignedFixedShort("Rise Height", this.riseHeight, newRiseHeight -> this.riseHeight = newRiseHeight, 256)
+                .setTooltip(FXUtils.createTooltip("How much distance should be risen before entering the pause state."));
+        editor.addUnsignedFixedShort("Rise Speed (per frame)", this.riseSpeed, newRiseSpeed -> this.riseSpeed = newRiseSpeed, 256)
+                .setTooltip(FXUtils.createTooltip("How much distance should be risen each frame, while the crocodile head is rising."));
+        editor.addUnsignedFixedShort("Snap Delay (secs)", this.snapDelay, newSnapDelay -> this.snapDelay = newSnapDelay, getGameInstance().getFPS())
+                .setTooltip(FXUtils.createTooltip("Controls how long (in seconds), the crocodile head will stay in the snapping phase. (Kills the player)"));
+        editor.addCheckBox("Should Snap", this.shouldSnap, newSnapOrNot -> this.shouldSnap = newSnapOrNot)
+                .setTooltip(FXUtils.createTooltip("Enables occasional snapping while in the pause state."));
+        editor.addUnsignedFixedShort("Pause Delay (secs)", this.pauseDelay, newPauseDelay -> this.pauseDelay = newPauseDelay, getGameInstance().getFPS())
+                .setTooltip(FXUtils.createTooltip("Controls how long the crocodile head sits above the water in a state the player can safely jump on."));
+        editor.addUnsignedFixedShort("Submerged Delay (secs)", this.submergedDelay, newSubmergedDelay -> this.submergedDelay = newSubmergedDelay, getGameInstance().getFPS())
+                .setTooltip(FXUtils.createTooltip("How the crocodile head will stay submerged before rising."));
     }
 }

@@ -1,8 +1,8 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.jungle;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataMatrix;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMeshController;
@@ -28,7 +28,7 @@ public class FroggerEntityDataOutro extends FroggerEntityDataMatrix {
     public void load(DataReader reader) {
         super.load(reader);
         for (int i = 0; i < this.targets.length; i++) {
-            OutroTarget newTarget = new OutroTarget();
+            OutroTarget newTarget = new OutroTarget(getGameInstance());
             newTarget.load(reader);
             this.targets[i] = newTarget;
         }
@@ -51,9 +51,13 @@ public class FroggerEntityDataOutro extends FroggerEntityDataMatrix {
     }
 
     @Getter // Represents JUN_OUTRO_TARGETS
-    public static final class OutroTarget extends GameObject {
+    public static final class OutroTarget extends SCSharedGameData {
         private final SVector target = new SVector(); // Target position.
         private int time = 150; // Time to reach target. (Unused, the game just hardcodes 30)
+
+        public OutroTarget(SCGameInstance instance) {
+            super(instance);
+        }
 
         @Override
         public void load(DataReader reader) {
@@ -69,7 +73,10 @@ public class FroggerEntityDataOutro extends FroggerEntityDataMatrix {
 
         public void setupEditor(GUIEditorGrid grid, FroggerMapMeshController controller) {
             grid.addFloatSVector("Target", this.target, controller);
-            grid.addFixedInt("Time (Unused)", this.time, newTime -> this.time = newTime, 30);
+
+            // The game just hardcodes 30 instead.
+            grid.addFixedInt("Time (Unused)", this.time, newTime -> this.time = newTime, getGameInstance().getFPS())
+                    .setDisable(true);
         }
     }
 }

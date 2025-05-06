@@ -4,6 +4,7 @@ import javafx.scene.control.Tooltip;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.view.RawColorTextureSource;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.baked.FroggerUIGridManager;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -135,7 +136,7 @@ public enum FroggerGridSquareReaction {
      * Gets the FX UI Tooltip used for the reaction.
      */
     public Tooltip getTooltip() {
-        return new Tooltip(getTooltipDescription());
+        return FXUtils.createTooltip(getTooltipDescription());
     }
 
     /**

@@ -1,12 +1,12 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.script.jungle;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.script.FroggerEntityScriptData;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents floating tree data.
@@ -32,6 +32,6 @@ public class FroggerEntityScriptDataFloatingTree extends FroggerEntityScriptData
 
     @Override
     public void setupEditor(GUIEditorGrid editor, FroggerUIMapEntityManager manager) {
-        editor.addFixedInt("Delay Before Moving (secs)", this.delayBeforeMoving, newDelayBeforeMoving -> this.delayBeforeMoving = newDelayBeforeMoving, 30);
+        editor.addFixedInt("Delay Before Moving (secs)", this.delayBeforeMoving, newDelayBeforeMoving -> this.delayBeforeMoving = newDelayBeforeMoving, getGameInstance().getFPS());
     }
 }

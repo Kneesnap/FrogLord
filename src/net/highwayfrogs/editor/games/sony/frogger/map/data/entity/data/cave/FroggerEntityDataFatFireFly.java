@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEn
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.IFroggerFlySpriteData;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -47,7 +48,7 @@ public class FroggerEntityDataFatFireFly extends FroggerEntityDataMatrix impleme
         editor.addEnumSelector("Fly Score Type", this.flyType, FroggerFlyScoreType.values(), false, newType -> {
             this.flyType = newType;
             manager.updateEntityMesh(getParentEntity());
-        });
+        }).setTooltip(FXUtils.createTooltip("This has never been tested as anything other than SUPER_LIGHT."));
         editor.addFloatSVector("Target (Unused)", this.target, manager.getController());
     }
 }

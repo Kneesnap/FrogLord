@@ -6,11 +6,8 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
+import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
@@ -24,6 +21,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import javafx.util.Duration;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameInstance;
@@ -85,6 +83,32 @@ public class FXUtils {
         public boolean hasExpired() {
             return (System.currentTimeMillis() - lastUpdate) > IMAGE_CACHE_EXPIRE;
         }
+    }
+
+    /**
+     * Creates a tooltip of indefinite length from the provided text.
+     * @param tooltipText the text to create the tooltip from
+     * @return tooltipText
+     */
+    public static Tooltip createTooltip(String tooltipText) {
+        return createTooltip(tooltipText, Duration.INDEFINITE);
+    }
+
+    /**
+     * Creates a tooltip which lasts for the given duration
+     * @param tooltipText the toolTip text to create the tooltip from
+     * @param duration the duration which the tooltip should display for
+     * @return tooltip
+     */
+    @SuppressWarnings("StatementWithEmptyBody")
+    public static Tooltip createTooltip(String tooltipText, Duration duration) {
+        if (StringUtils.isNullOrWhiteSpace(tooltipText))
+            return null;
+
+        Tooltip tooltip = new Tooltip(tooltipText);
+        if (duration != null) // Default value is 5000 ms.
+            ; // TODO: JavaFX 9+ tooltip.setShowDuration(duration);
+        return tooltip;
     }
 
     /**

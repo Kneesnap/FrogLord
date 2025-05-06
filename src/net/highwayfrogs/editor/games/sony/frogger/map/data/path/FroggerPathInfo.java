@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.path;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
-import javafx.scene.control.Tooltip;
 import javafx.util.converter.NumberStringConverter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -29,6 +28,7 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.fx.wrapper.LazyFXListCell;
@@ -362,7 +362,7 @@ public class FroggerPathInfo extends SCGameData<FroggerGameInstance> {
                 editorGrid.addCheckBox(type.getLongDisplayName(), testFlag(type), newState -> {
                     setFlag(type, newState);
                     manager.updateEntityPositionRotation(entity); // These flags can control how the entity appears.
-                }).setTooltip(new Tooltip(type.getTooltipText()));
+                }).setTooltip(FXUtils.createTooltip(type.getTooltipText()));
 
         FroggerEndOfPathBehavior endOfPathBehavior = FroggerEndOfPathBehavior.getBehavior(this);
         ComboBox<FroggerEndOfPathBehavior> endOfPathSelector = editorGrid.addEnumSelector("End of Path Behavior", endOfPathBehavior, FroggerEndOfPathBehavior.values(), false, newValue -> {
@@ -371,7 +371,7 @@ public class FroggerPathInfo extends SCGameData<FroggerGameInstance> {
         });
         endOfPathSelector.setConverter(new AbstractStringConverter<>(FroggerEndOfPathBehavior::getDisplayName));
         endOfPathSelector.setCellFactory(listView -> new LazyFXListCell<>(FroggerEndOfPathBehavior::getDisplayName, "Error")
-                .setWithoutIndexTooltipHandler(behavior -> behavior != null ? new Tooltip(behavior.getTooltipText()) : null));
+                .setWithoutIndexTooltipHandler(behavior -> behavior != null ? FXUtils.createTooltip(behavior.getTooltipText()) : null));
     }
 
     @Getter

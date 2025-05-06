@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.gui;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.geometry.HPos;
 import javafx.geometry.Orientation;
@@ -168,8 +169,10 @@ public class GUIEditorGrid {
     public void addBoldNormalLabel(String boldLabel, String normalLabel, double height) {
         Label bold = addLabel(boldLabel);
         bold.setFont(Constants.SYSTEM_BOLD_FONT);
+        Label secondLabel = new Label(normalLabel);
         setupSecondNode(new Label(normalLabel), false);
         addRow(height);
+        copyTooltipHack(bold, secondLabel);
     }
 
     private Label addLabel(String text) {
@@ -192,9 +195,10 @@ public class GUIEditorGrid {
      * @param height The desired row height.
      */
     public Label addLabel(String label, String value, double height) {
-        addLabel(label);
+        Label firstLabel = addLabel(label);
         Label valueText = setupSecondNode(new Label(value), false);
         addRow(height);
+        copyTooltipHack(firstLabel, valueText);
         return valueText;
     }
 
@@ -204,9 +208,10 @@ public class GUIEditorGrid {
      * @param value The field value.
      */
     public TextField addTextField(String label, String value) {
-        addLabel(label);
+        Label labelObj = addLabel(label);
         TextField field = setupSecondNode(new TextField(value), false);
         addRow(25);
+        copyTooltipHack(labelObj, field);
         return field;
     }
 
@@ -650,7 +655,7 @@ public class GUIEditorGrid {
      * @return comboBox
      */
     public <T> ComboBox<T> addSelectionBox(String label, T current, List<T> values, Consumer<T> setter, double height) {
-        addLabel(label);
+        Label fxLabel = addLabel(label);
         ComboBox<T> box = setupSecondNode(new ComboBox<>(FXCollections.observableArrayList(values)), false);
         box.valueProperty().setValue(current); // Set the selected value.
         box.getSelectionModel().select(current); // Automatically scroll to selected value.
@@ -669,6 +674,7 @@ public class GUIEditorGrid {
         }
 
         addRow(height);
+        copyTooltipHack(fxLabel, box);
         return box;
     }
 
@@ -1526,8 +1532,8 @@ public class GUIEditorGrid {
      * @param handler The setter handler.
      * @param interval The interval it takes for a single full integer to be read.
      */
-    public void addFixedShort(String text, short value, Consumer<Short> handler, int interval) {
-        addFixedShort(text, value, handler, interval, Short.MIN_VALUE, Short.MAX_VALUE);
+    public TextField addFixedShort(String text, short value, Consumer<Short> handler, double interval) {
+        return addFixedShort(text, value, handler, interval, Short.MIN_VALUE, Short.MAX_VALUE);
     }
 
     /**
@@ -1538,7 +1544,7 @@ public class GUIEditorGrid {
      * @param interval         The interval it takes for a single full integer to be read.
      * @param allowNegativeOne If -1 is allowed and valid.
      */
-    public void addFixedShort(String text, short value, Consumer<Short> handler, int interval, boolean allowNegativeOne) {
+    public void addFixedShort(String text, short value, Consumer<Short> handler, double interval, boolean allowNegativeOne) {
         addFixedShort(text, value, handler, interval, allowNegativeOne ? -1 : 0, Short.MAX_VALUE);
     }
 
@@ -1551,11 +1557,11 @@ public class GUIEditorGrid {
      * @param minValue The minimum value (IN INTEGER FORM).
      * @param maxValue The maximum value (IN INTEGER FORM).
      */
-    public void addFixedShort(String text, short value, Consumer<Short> handler, int interval, int minValue, int maxValue) {
+    public TextField addFixedShort(String text, short value, Consumer<Short> handler, double interval, int minValue, int maxValue) {
         boolean isNegativeOneSpecial = (minValue == -1 && maxValue > 0);
         String displayStr = (isNegativeOneSpecial && value == -1) ? "-1" : FORMAT.format((double) value / interval);
 
-        addTextField(text, displayStr, newText -> {
+        return addTextField(text, displayStr, newText -> {
             double parsedValue;
 
             try {
@@ -1605,7 +1611,7 @@ public class GUIEditorGrid {
      * @param handler The setter handler.
      * @param interval The interval it takes for a single full integer to be read.
      */
-    public TextField addFixedInt(String text, int value, Consumer<Integer> handler, int interval) {
+    public TextField addFixedInt(String text, int value, Consumer<Integer> handler, double interval) {
         return addFixedInt(text, value, handler, interval, Integer.MIN_VALUE, Integer.MAX_VALUE);
     }
 
@@ -1618,7 +1624,7 @@ public class GUIEditorGrid {
      * @param minValue The minimum value (IN INTEGER FORM).
      * @param maxValue The maximum value (IN INTEGER FORM).
      */
-    public TextField addFixedInt(String text, int value, Consumer<Integer> handler, int interval, int minValue, int maxValue) {
+    public TextField addFixedInt(String text, int value, Consumer<Integer> handler, double interval, int minValue, int maxValue) {
         boolean isNegativeOneSpecial = (minValue == -1 && maxValue > 0);
         String displayStr = (isNegativeOneSpecial && value == -1) ? "-1" : FORMAT.format((double) value / interval);
 
@@ -1660,7 +1666,7 @@ public class GUIEditorGrid {
      * @param handler  The setter handler.
      * @param interval The interval it takes for a single full integer to be read.
      */
-    public TextField addUnsignedFixedShort(String text, int value, Consumer<Integer> handler, int interval) {
+    public TextField addUnsignedFixedShort(String text, int value, Consumer<Integer> handler, double interval) {
         return addUnsignedFixedShort(text, value, handler, interval, 0x0000, 0xFFFF);
     }
 
@@ -1673,7 +1679,7 @@ public class GUIEditorGrid {
      * @param minValue The minimum value (IN INTEGER FORM).
      * @param maxValue The maximum value (IN INTEGER FORM).
      */
-    public TextField addUnsignedFixedShort(String text, int value, Consumer<Integer> handler, int interval, int minValue, int maxValue) {
+    public TextField addUnsignedFixedShort(String text, int value, Consumer<Integer> handler, double interval, int minValue, int maxValue) {
         boolean isNegativeOneMax = ((minValue == -1 || minValue == 0) && maxValue == 0xFFFF);
         String displayStr = (isNegativeOneMax && value == 0xFFFF) ? "-1" : FORMAT.format((double) value / interval);
 
@@ -1740,7 +1746,7 @@ public class GUIEditorGrid {
      * @return colorPicker
      */
     public ColorPicker addColorPicker(String text, double height, int color, Consumer<Integer> handler) {
-        addLabel(text);
+        Label fxLabel = addLabel(text);
         ColorPicker picker = setupSecondNode(new ColorPicker(ColorUtils.fromRGB(color)), false);
         picker.valueProperty().addListener((observable, oldValue, newValue) -> {
             handler.accept(ColorUtils.toARGB(newValue));
@@ -1748,6 +1754,7 @@ public class GUIEditorGrid {
         });
 
         addRow(height);
+        copyTooltipHack(fxLabel, picker);
         return picker;
     }
 
@@ -1759,7 +1766,7 @@ public class GUIEditorGrid {
      * @return colorPicker
      */
     public ColorPicker addColorPickerWithAlpha(String text, double height, int color, Consumer<Integer> handler) {
-        addLabel(text);
+        Label fxLabel = addLabel(text);
         AtomicInteger colorArgb = new AtomicInteger(color);
         ColorPicker picker = setupSecondNode(new ColorPicker(ColorUtils.fromRGB(color)), false);
         picker.valueProperty().addListener((observable, oldValue, newValue) -> {
@@ -1769,11 +1776,13 @@ public class GUIEditorGrid {
         });
         addRow(height);
 
-        addIntegerSlider("Opacity (Alpha)", ColorUtils.getAlphaInt(color), newAlpha -> {
+        Slider slider = addIntegerSlider("Opacity (Alpha)", ColorUtils.getAlphaInt(color), newAlpha -> {
             colorArgb.set((colorArgb.get() & 0x00FFFFFF) | (newAlpha << 24));
             handler.accept(colorArgb.get());
             onChange();
         }, 0, 255);
+        copyTooltipHack(fxLabel, picker);
+        copyTooltipHack(slider, picker);
         return picker;
     }
 
@@ -1817,6 +1826,7 @@ public class GUIEditorGrid {
         });
         addRow(25);
 
+        copyTooltipHack(button, box);
         return box;
     }
 
@@ -1837,10 +1847,11 @@ public class GUIEditorGrid {
      * @param onPress    What to do when the button is pressed.
      */
     public Button addLabelButton(String labelText, String buttonText, double height, Runnable onPress) {
-        addLabel(labelText);
+        Label fxLabel = addLabel(labelText);
         Button button = setupSecondNode(new Button(buttonText), false);
         button.setOnAction(evt -> onPress.run());
         addRow(height);
+        copyTooltipHack(fxLabel, button);
         return button;
     }
 
@@ -1866,6 +1877,7 @@ public class GUIEditorGrid {
         Button button = setupSecondNode(new Button(buttonText), false);
         button.setOnAction(evt -> onPress.run());
         addRow(height);
+        copyTooltipHack(bold, button);
         return button;
     }
 
@@ -2144,7 +2156,7 @@ public class GUIEditorGrid {
      * @return slider
      */
     public Slider addIntegerSlider(String sliderName, int currentValue, Consumer<Integer> setter, int minValue, int maxValue) {
-        addLabel(sliderName);
+        Label fxLabel = addLabel(sliderName);
         Slider slider = setupSecondNode(new Slider(minValue, maxValue, currentValue), false);
         slider.setDisable(setter == null);
         slider.valueProperty().addListener(((observable, oldValue, newValue) -> {
@@ -2159,6 +2171,7 @@ public class GUIEditorGrid {
         slider.setMinorTickCount(0);
         slider.setBlockIncrement(1);
         addRow(40);
+        copyTooltipHack(fxLabel, slider);
         return slider;
     }
 
@@ -2214,6 +2227,7 @@ public class GUIEditorGrid {
         slider.setMinorTickCount(0);
         slider.setBlockIncrement(1);
         addRow(40);
+        copyTooltipHack(label, slider);
         return slider;
     }
 
@@ -2227,5 +2241,20 @@ public class GUIEditorGrid {
         newPane.getColumnConstraints().add(new ColumnConstraints(10, 130, Region.USE_PREF_SIZE, Priority.SOMETIMES, null, true));
         newPane.getColumnConstraints().add(new ColumnConstraints(10, 120, Region.USE_PREF_SIZE, Priority.SOMETIMES, null, false));
         return newPane;
+    }
+
+    // This is a major hack that we're going to use until we have something better.
+    // It manages to copy the tooltip to the label corresponding to the text field.
+    private void copyTooltipHack(Control control1, Control control2) {
+        if (control1 == null || control2 == null)
+            return;
+
+        Platform.runLater(() -> {
+            if (control1.getTooltip() != null && control2.getTooltip() == null) {
+                control2.setTooltip(control1.getTooltip());
+            } else if (control1.getTooltip() == null && control2.getTooltip() != null) {
+                control1.setTooltip(control2.getTooltip());
+            }
+        });
     }
 }

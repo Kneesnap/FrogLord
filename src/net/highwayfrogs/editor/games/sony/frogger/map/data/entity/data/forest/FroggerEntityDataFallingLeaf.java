@@ -41,7 +41,7 @@ public class FroggerEntityDataFallingLeaf extends FroggerEntityDataMatrix {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addUnsignedFixedShort("Fall Speed", this.fallSpeed, newFallSpeed -> this.fallSpeed = newFallSpeed, 2184);
+        editor.addUnsignedFixedShort("Fall Speed", this.fallSpeed, newFallSpeed -> this.fallSpeed = newFallSpeed, 2184.5);
         editor.addUnsignedFixedShort("Sway (percent/frame)", this.swayDuration, newSwayDuration -> this.swayDuration = newSwayDuration, 1024, 0, 1024);
         editor.addUnsignedFixedShort("Sway Angle (degrees)", this.swayAngle, newSwayAngle -> this.swayAngle = newSwayAngle, 1, 0, 360);
     }

@@ -191,7 +191,7 @@ public class FroggerGameInstance extends SCGameInstance {
         fileListView.addGroup(new SCGameFileListTypeIdGroup("Models", FILE_TYPE_MAPMOF));
         fileListView.addGroup(new SCGameFileListTypeIdGroup("VB/VH Sound Bank", FILE_TYPE_SOUND));
         fileListView.addGroup(new SCGameFileListTypeIdGroup("DAT [Recorded Demo]", FILE_TYPE_DEMO_DATA));
-        fileListView.addGroup(new SCGameFileListTypeIdGroup("PAL [Unused Palette]", FILE_TYPE_PAL));
+        fileListView.addGroup(new SCGameFileListTypeIdGroup("Unused Palettes (.PAL)", FILE_TYPE_PAL));
     }
 
     /**

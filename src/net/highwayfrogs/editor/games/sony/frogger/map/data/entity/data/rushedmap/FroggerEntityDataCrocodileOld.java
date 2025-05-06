@@ -34,6 +34,6 @@ public class FroggerEntityDataCrocodileOld extends FroggerEntityDataPathInfo {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addUnsignedFixedShort("Mouth Open Delay (secs)", this.openMouthDelay, newValue -> this.openMouthDelay = newValue, 30);
+        editor.addUnsignedFixedShort("Mouth Open Delay (secs)", this.openMouthDelay, newValue -> this.openMouthDelay = newValue, getGameInstance().getFPS());
     }
 }

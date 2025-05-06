@@ -219,8 +219,7 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
             CheckBox newBox = new CheckBox(flag.getDisplayName());
             GridPane.setRowIndex(newBox, pos / 2);
             GridPane.setColumnIndex(newBox, pos % 2);
-            if (flag.getDescription() != null)
-                newBox.setTooltip(new Tooltip(flag.getDescription()));
+            newBox.setTooltip(FXUtils.createTooltip(flag.getDescription()));
             this.zoneFlagGrid.getChildren().add(newBox);
             this.zoneFlagMap[i] = newBox;
 
@@ -617,8 +616,7 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
                 // Create new.
                 CheckBox newCheckBox = new CheckBox(StringUtils.capitalize(flag.name()) + (flag.isUnused() ? " (Unused)" : ""));
                 newCheckBox.setAllowIndeterminate(false);
-                if (flag.getTooltipDescription() != null)
-                    newCheckBox.setTooltip(new Tooltip(flag.getTooltipDescription()));
+                newCheckBox.setTooltip(FXUtils.createTooltip(flag.getTooltipDescription()));
 
                 GridPane.setRowIndex(newCheckBox, i / columnCount);
                 GridPane.setColumnIndex(newCheckBox, i++ % columnCount);
