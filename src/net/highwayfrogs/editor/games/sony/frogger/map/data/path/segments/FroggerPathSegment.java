@@ -254,7 +254,7 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
                 vector.setFloatZ(centerOfPolygon.getZ(), bits);
             }
 
-            pathPreview.updatePath();
+            onUpdate(pathPreview);
             frogController.getPathManager().updateEditor();
             if (onFinish != null)
                 onFinish.run();
