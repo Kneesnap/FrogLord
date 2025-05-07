@@ -935,8 +935,12 @@ public class FileUtils {
     }
 
     private static final String FROGLORD_EXECUTABLE_SIGNATURE = "FROGLORD";
+    private static final byte[] FROGLORD_EXECUTABLE_SIGNATURE_BYTES = FROGLORD_EXECUTABLE_SIGNATURE.getBytes(StandardCharsets.US_ASCII);
     private static final String PSX_EXECUTABLE_SIGNATURE = "PS-X EXE";
+    private static final short PSX_EXE_HEADER_VERSION = 0; // Only increment this with a breaking change.
+    private static final int PSX_BASIC_HEADER_SIZE = FROGLORD_EXECUTABLE_SIGNATURE_BYTES.length + 1;
     private static final String WINDOWS_PE_EXECUTABLE_SIGNATURE = "MZ";
+    private static final short WINDOWS_EXE_HEADER_VERSION = 0; // Only increment this with a breaking change.
 
     /**
      * Reads configuration data from the executable.
@@ -957,25 +961,33 @@ public class FileUtils {
         byte[] configBytes;
         if (DataUtils.testSignature(headerBytes, 0, WINDOWS_PE_EXECUTABLE_SIGNATURE)) { // PC
             // Test if the executable already has the identifier at the end.
-            executableReader.setIndex(executableReader.getSize() - Constants.INTEGER_SIZE - FROGLORD_EXECUTABLE_SIGNATURE.length());
+            executableReader.setIndex(executableReader.getSize() - Constants.INTEGER_SIZE - FROGLORD_EXECUTABLE_SIGNATURE_BYTES.length - 1);
+            byte version = executableReader.readByte();
+            if ((version & 0xFF) > PSX_EXE_HEADER_VERSION)
+                throw new RuntimeException("This executable was saved with a newer (incompatible) version of FrogLord, and is thus unsupported in this version.");
+
             int address = executableReader.readInt();
-            byte[] signature = executableReader.readBytes(FROGLORD_EXECUTABLE_SIGNATURE.length());
+            byte[] signature = executableReader.readBytes(FROGLORD_EXECUTABLE_SIGNATURE_BYTES.length);
             if (!DataUtils.testSignature(signature, FROGLORD_EXECUTABLE_SIGNATURE))
                 return null; // Nothing here.
 
             executableReader.setIndex(address);
-            configBytes = executableReader.readBytes(executableReader.getRemaining() - Constants.INTEGER_SIZE - FROGLORD_EXECUTABLE_SIGNATURE.length());
+            configBytes = executableReader.readBytes(executableReader.getRemaining() - Constants.INTEGER_SIZE - FROGLORD_EXECUTABLE_SIGNATURE_BYTES.length);
         } else if (DataUtils.testSignature(headerBytes, 0, PSX_EXECUTABLE_SIGNATURE)) { // PSX
             if (executableReader.getSize() < Constants.CD_SECTOR_SIZE)
                 throw new RuntimeException("The executable is too small to be a PSX executable!");
 
             executableReader.setIndex(Constants.PSX_WRITABLE_START_OFFSET);
-            if (executableReader.readByte() == 0)
+            byte[] signature = executableReader.readBytes(FROGLORD_EXECUTABLE_SIGNATURE_BYTES.length);
+            if (!DataUtils.testSignature(signature, FROGLORD_EXECUTABLE_SIGNATURE))
                 return null; // There's no data there.
 
             // Read after the header, but before the data begins.
-            executableReader.setIndex(Constants.PSX_WRITABLE_START_OFFSET);
-            configBytes = executableReader.readBytes(Constants.PSX_WRITABLE_AREA_SIZE);
+            byte version = executableReader.readByte();
+            if ((version & 0xFF) > PSX_EXE_HEADER_VERSION)
+                throw new RuntimeException("This executable was saved with a newer (incompatible) version of FrogLord, and is thus unsupported in this version.");
+
+            configBytes = executableReader.readBytes(Constants.PSX_WRITABLE_AREA_SIZE - PSX_BASIC_HEADER_SIZE);
         } else {
             throw new UnsupportedOperationException("loadConfigDataFromExecutable() doesn't support recognize the executable format.");
         }
@@ -1010,7 +1022,7 @@ public class FileUtils {
         if (gameInstance.isPC()) {
             // Test if the executable already has the identifier at the end.
             byte[] realExecutable;
-            int frogLordSignatureStartIndex = executableBytes.length - FROGLORD_EXECUTABLE_SIGNATURE.length() - 1;
+            int frogLordSignatureStartIndex = executableBytes.length - FROGLORD_EXECUTABLE_SIGNATURE_BYTES.length;
             if (DataUtils.testSignature(executableBytes, frogLordSignatureStartIndex, FROGLORD_EXECUTABLE_SIGNATURE)) {
                 // Remove previously appended executable data.
                 int address = DataUtils.readIntFromBytes(executableBytes, frogLordSignatureStartIndex - Constants.INTEGER_SIZE);
@@ -1023,6 +1035,8 @@ public class FileUtils {
             ArrayReceiver receiver = new ArrayReceiver();
             DataWriter writer = new DataWriter(receiver);
             writer.writeBytes(bytes);
+            writer.writeByte(Constants.NULL_BYTE); // Terminate string.
+            writer.writeUnsignedByte(WINDOWS_EXE_HEADER_VERSION); // Version.
             writer.writeInt(realExecutable.length);
             writer.writeStringBytes(FROGLORD_EXECUTABLE_SIGNATURE);
             writer.closeReceiver();
@@ -1034,12 +1048,23 @@ public class FileUtils {
             System.arraycopy(appendBytes, 0, newExecutableBytes, realExecutable.length, appendBytes.length);
             return newExecutableBytes;
         } else if (gameInstance.isPSX()) {
-            if (bytes.length > Constants.PSX_WRITABLE_AREA_SIZE)
+            if (bytes.length + PSX_BASIC_HEADER_SIZE > Constants.PSX_WRITABLE_AREA_SIZE)
                 throw new RuntimeException("Cannot save configuration to executable, it is too large to fit in the available area! (" + bytes.length + " > " + Constants.PSX_WRITABLE_AREA_SIZE + ")");
 
             // Write after the header, but before the data begins.
-            System.arraycopy(bytes, 0, executableBytes, Constants.PSX_WRITABLE_START_OFFSET, bytes.length);
-            Arrays.fill(executableBytes, Constants.PSX_WRITABLE_START_OFFSET + bytes.length, Constants.CD_SECTOR_SIZE, Constants.NULL_BYTE);
+            int writeOffset = Constants.PSX_WRITABLE_START_OFFSET;
+            System.arraycopy(FROGLORD_EXECUTABLE_SIGNATURE_BYTES, 0, executableBytes, writeOffset, FROGLORD_EXECUTABLE_SIGNATURE_BYTES.length);
+            writeOffset += FROGLORD_EXECUTABLE_SIGNATURE_BYTES.length;;
+
+            // Write version.
+            executableBytes[writeOffset++] = (byte) PSX_EXE_HEADER_VERSION;
+
+            // Write config.
+            System.arraycopy(bytes, 0, executableBytes, writeOffset, bytes.length);
+            writeOffset += bytes.length;
+
+            // Write padding.
+            Arrays.fill(executableBytes, writeOffset, Constants.CD_SECTOR_SIZE, Constants.NULL_BYTE);
             return executableBytes;
         } else {
             throw new UnsupportedOperationException("saveConfigDataToExecutable() doesn't support the " + gameInstance.getPlatform() + " platform yet.");

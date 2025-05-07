@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.zip.CRC32;
@@ -381,7 +382,7 @@ public class DataUtils {
      * @return hasSignature
      */
     public static boolean testSignature(byte[] data, String test) {
-        return testSignature(data, 0, test.getBytes());
+        return testSignature(data, 0, test.getBytes(StandardCharsets.US_ASCII));
     }
 
     /**
@@ -392,7 +393,7 @@ public class DataUtils {
      * @return hasSignature
      */
     public static boolean testSignature(byte[] data, int startIndex, String test) {
-        return testSignature(data, startIndex, test.getBytes());
+        return testSignature(data, startIndex, test.getBytes(StandardCharsets.US_ASCII));
     }
 
     /**
