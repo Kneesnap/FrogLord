@@ -91,6 +91,22 @@ def create_material_node(nodes, node_type):
     nodes.new(type=node_type)
     return id
 
+# A note on the different rendering engines.
+# Vertex colors are great! It's really nice we finally have a good way of editing them.
+# Unfortunately, Blender uses the vertex color of 0, 0, 0 when rendering material previews.
+# Because the vertex color is multiplied against the texture color, this always results in a fully black material preview.
+# More Information: https://blenderartists.org/t/help-fixing-black-incorrect-material-preview/1592069
+
+# The solution to this really sucks, but it's to have different shaders for different rendering engines.
+# By setting the scene to render with the 'CYCLES' engine, the material previews will render with 'EEVEE', while the scene renders with 'CYCLES'.
+# By doing that, we can have a different engine used for the material previews than the one used to draw the scene.
+# I'm not entirely sure why that works, since you'd think setting the scene to use the 'CYCLES' engine would make it... render with the cycles engine in the main viewport.
+# Buuuut, it seems to work so I guess I can't really complain.
+
+# Other Options:
+# - Open Shading Language https://docs.blender.org/manual/en/latest/render/shader_nodes/osl.html (Might be able to write a custom shader?).
+#  - Perhaps there's some way we can tell if we're rendering for a material preview or not. Worst case scenario we can treat pure black as pure white.
+
 # Create shading material definition.
 def create_shaded_material(material, folder, test_file):
     clear_material(material)
@@ -100,13 +116,8 @@ def create_shaded_material(material, folder, test_file):
     # To understand what this function does, check out the 'Shading' tab in Blender.
     nodes = material.node_tree.nodes
     links = material.node_tree.links
-
-    # Create the nodes. (All together to avoid object reference invalidation.)
-    gouraud_mixer = create_material_node(nodes, 'ShaderNodeMix')
-    texture = create_material_node(nodes, 'ShaderNodeTexImage')
-    color_doubler = create_material_node(nodes, 'ShaderNodeMix')
-    value_two = create_material_node(nodes, 'ShaderNodeValue')
-    vertex_color_input = create_material_node(nodes, 'ShaderNodeVertexColor')
+    
+    # Get or create default nodes.
     if nodes.get('Principled BSDF') is None: # By default, this node exists.
         principled_bsdf = create_material_node(nodes, 'ShaderNodeBsdfPrincipled')
         nodes[principled_bsdf].name = 'Principled BSDF'
@@ -114,8 +125,21 @@ def create_shaded_material(material, folder, test_file):
         material_output = create_material_node(nodes, 'ShaderNodeOutputMaterial')
         nodes[material_output].name = 'Material Output'
 
+    # Create the nodes. (All together to avoid object reference invalidation.)
+    gouraud_mixer = create_material_node(nodes, 'ShaderNodeMix')
+    texture = create_material_node(nodes, 'ShaderNodeTexImage')
+    color_doubler = create_material_node(nodes, 'ShaderNodeMix')
+    value_two = create_material_node(nodes, 'ShaderNodeValue')
+    vertex_color_input = create_material_node(nodes, 'ShaderNodeVertexColor')
+    preview_output = create_material_node(nodes, 'ShaderNodeOutputMaterial')
+
     # Build the shader graph.
     nodes.get('Material Output').location_absolute = Vector((330.0, 201.0))
+    nodes.get('Material Output').target = 'EEVEE' # See above.
+    
+    nodes[preview_output].name = 'Material Preview Output'
+    nodes[preview_output].location_absolute = Vector((330.0, -45.0))
+    nodes[preview_output].target = 'CYCLES' # See above
 
     # The purpose of this node is to allow passing a surface to the output instead of just an RGB color.
     # Or in other words, it allows us to use the texture alpha.
@@ -142,6 +166,7 @@ def create_shaded_material(material, folder, test_file):
     nodes[texture].location_absolute = Vector((-457.75, -79))
     links.new(nodes[texture].outputs['Color'], nodes[gouraud_mixer].inputs['B'])
     links.new(nodes[texture].outputs['Alpha'], principled_bsdf.inputs['Alpha'])
+    links.new(nodes[texture].outputs['Color'], nodes[preview_output].inputs['Surface'])
 
     nodes[color_doubler].blend_type = 'MULTIPLY' # https://docs.blender.org/api/current/bpy_types_enum_items/ramp_blend_items.html#rna-enum-ramp-blend-items
     nodes[color_doubler].data_type = 'RGBA'
@@ -205,6 +230,8 @@ def load_ffs_file(operator, context, filepath):
     if mesh != obj.data:
         operator.report({"ERROR"}, "The object named '%s' MUST be attached to the mesh named '%s'!" % (LEVEL_OBJECT_NAME, LEVEL_MESH_NAME))
         return {'CANCELLED'}
+
+    bpy.context.scene.render.engine = 'CYCLES' # See above for an explanation of why the scene must use the CYCLES engine.
 
     # Read FFS file into list of commands.
     folder, file_name = os.path.split(filepath)
