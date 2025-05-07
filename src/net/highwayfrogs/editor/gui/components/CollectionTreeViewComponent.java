@@ -64,6 +64,27 @@ public abstract class CollectionTreeViewComponent<TGameInstance extends GameInst
         } while (tempNode != null);
     }
 
+    @Override
+    public void setSelectedViewEntryInUI(TViewEntry viewEntry) {
+        CollectionViewTreeNode<TViewEntry> treeNodeEntry = getOrCreateTreePath(this.rootNode, viewEntry);
+        if (treeNodeEntry == null || treeNodeEntry.getFxTreeItem() == null)
+            return;
+
+        CollectionViewTreeNode<TViewEntry> temp = treeNodeEntry;
+        List<CollectionViewTreeNode<TViewEntry>> nodeTraversal = new ArrayList<>();
+        while (temp != null) {
+            if (temp.getFxTreeItem() != null)
+                nodeTraversal.add(temp);
+            temp = temp.getParent();
+        }
+
+        // Expand the tree to reach the UI.
+        for (int i = nodeTraversal.size() - 1; i >= 0; i--)
+            nodeTraversal.get(i).getFxTreeItem().setExpanded(true);
+
+        getRootNode().getSelectionModel().select(treeNodeEntry.getFxTreeItem());
+    }
+
     private void onSelectionChange(ObservableValue<? extends TreeItem<CollectionViewTreeNode<TViewEntry>>> observableValue, TreeItem<CollectionViewTreeNode<TViewEntry>> oldViewEntry, TreeItem<CollectionViewTreeNode<TViewEntry>> newViewEntry) {
         TViewEntry viewEntry = newViewEntry != null ? (newViewEntry.getValue() != null ? newViewEntry.getValue().getValue() : null) : null;
         setSelectedViewEntry(viewEntry);

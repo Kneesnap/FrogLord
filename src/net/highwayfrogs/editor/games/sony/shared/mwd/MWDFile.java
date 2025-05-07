@@ -246,9 +246,12 @@ public class MWDFile extends SCSharedGameData {
         // Update UI.
         if (updateUI) {
             SCMainMenuUIController<?> mainMenuUI = getGameInstance().getMainMenuController();
-            mainMenuUI.showEditor(newFile);
-            if (mainMenuUI.getFileListComponent() != null) // Update the file list.
+            if (mainMenuUI.getFileListComponent() != null) { // Update the file list.
                 mainMenuUI.getFileListComponent().getCollectionViewComponent().refreshDisplay();
+                mainMenuUI.getFileListComponent().getCollectionViewComponent().setSelectedViewEntryInUI(newFile);
+            } else {
+                mainMenuUI.showEditor(newFile.makeEditorUI());
+            }
         }
 
         return newFile;

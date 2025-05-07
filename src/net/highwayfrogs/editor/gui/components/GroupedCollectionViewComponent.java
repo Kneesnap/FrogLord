@@ -95,15 +95,29 @@ public abstract class GroupedCollectionViewComponent<TGameInstance extends GameI
             this.groups.get(i).updateEntryList();
 
         // Re-select the old value.
-        if (oldSelectedEntry != null && selectedViewGroup != null) {
-            // Clear selection of all other titled panes.
-            for (CollectionViewGroup<TViewEntry> group : this.groups)
-                if (group.getTitledPane() != null && selectedViewGroup.getTitledPane() != group.getTitledPane())
-                    group.getListView().getSelectionModel().clearSelection();
+        if (oldSelectedEntry != null && selectedViewGroup != null)
+            setSelectedViewEntryInUI(oldSelectedEntry);
+    }
 
-            getRootNode().setExpandedPane(selectedViewGroup.getTitledPane());
-            selectedViewGroup.getListView().getSelectionModel().select(oldSelectedEntry);
+    @Override
+    public void setSelectedViewEntryInUI(TViewEntry viewEntry) {
+        // Clear selection of all other titled panes.
+        CollectionViewGroup<TViewEntry> displayedGroup = null;
+        for (int i = 0; i < this.groups.size(); i++) {
+            CollectionViewGroup<TViewEntry> group = this.groups.get(i);
+            if (displayedGroup == null && viewEntry != null && group.isPartOfGroup(viewEntry)) {
+                displayedGroup = group;
+            } else if (group.getListView() != null) {
+                group.getListView().getSelectionModel().clearSelection();
+            }
         }
+
+        if (displayedGroup == null)
+            return; // It's not present, abort!
+
+        if (displayedGroup.getTitledPane() != null)
+            getRootNode().setExpandedPane(displayedGroup.getTitledPane());
+        displayedGroup.getListView().getSelectionModel().select(viewEntry);
     }
 
     /**
