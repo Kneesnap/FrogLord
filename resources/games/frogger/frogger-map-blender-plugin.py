@@ -108,7 +108,11 @@ def create_material_node(nodes, node_type):
 #  - Perhaps there's some way we can tell if we're rendering for a material preview or not. Worst case scenario we can treat pure black as pure white.
 
 # Create shading material definition.
-def create_shaded_material(material, folder, test_file):
+def create_shaded_material(material, folder, file_name):
+    texture_file_path = os.path.join(folder, file_name)
+    if not os.path.exists(texture_file_path):
+        raise Exception("Could not find the texture file '%s', was the .ffs file moved to a folder without its textures?" % file_name)
+
     clear_material(material)
     material.preview_render_type = 'FLAT'
     material.use_nodes = True
@@ -160,7 +164,7 @@ def create_shaded_material(material, folder, test_file):
     nodes[gouraud_mixer].location_absolute = Vector((-156, 295.5))
     links.new(nodes[gouraud_mixer].outputs['Result'], principled_bsdf.inputs['Base Color'])
 
-    nodes[texture].image = bpy.data.images.load(folder + os.path.sep + test_file)
+    nodes[texture].image = bpy.data.images.load(texture_file_path)
     nodes[texture].extension = 'EXTEND' # Extend repeating edge pixels of the image.
     nodes[texture].interpolation = 'Closest' # Disable interpolation.
     nodes[texture].location_absolute = Vector((-457.75, -79))
