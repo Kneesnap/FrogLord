@@ -74,8 +74,20 @@ public class GreatQuestMainMenuUIController extends MainMenuController<GreatQues
     @Override
     protected void saveMainGameData() {
         File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), OUTPUT_BIN_FILE_PATH, "data.bin");
-        if (outputFile != null)
-            ProgressBarComponent.openProgressBarWindow(getGameInstance(), "Saving Files", progressBar -> getGameInstance().saveGame(outputFile, progressBar));
+        if (outputFile == null)
+            return;
+
+        // This is for the user's own good-- I've seen it too many times.
+        // A user either doesn't understand the consequences or doesn't think it's a big deal, until it becomes a problem.
+        if (outputFile.equals(getGameInstance().getMainArchiveBinFile())
+                && !FXUtils.makePopUpYesNo("Frogger: The Great Quest is best modded by applying changes to an unmodified copy of the game."
+                + "\nTherefore, it is not STRONGLY DISCOURAGED to overwrite the original 'data.bin' file."
+                + "\nFor more information, please review the Great Quest modding guide." // I'd like to link it here, but I'm not sure that's possible.
+                + "\nDo you wish to continue?")) {
+            return;
+        }
+
+        ProgressBarComponent.openProgressBarWindow(getGameInstance(), "Saving Files", progressBar -> getGameInstance().saveGame(outputFile, progressBar));
     }
 
     @Override
