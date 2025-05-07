@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.packets;
 
+import javafx.scene.control.Alert.AlertType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
@@ -17,6 +18,7 @@ import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -104,6 +106,9 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
 
     @Override
     protected void saveBodyFirstPass(DataWriter writer) {
+        if (!doesStartTileLookValid())
+            FXUtils.makePopUp("The player start position for " + getParentFile().getFileDisplayName() + " is invalid. This may cause problems in-game.", AlertType.ERROR);
+
         writer.writeUnsignedShort(this.startGridCoordX);
         writer.writeUnsignedShort(this.startGridCoordZ);
         writer.writeShort((short) (this.startRotation != null ? this.startRotation : FroggerMapStartRotation.NORTH).ordinal());
@@ -201,11 +206,13 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
         }
 
         // Add start tile / rotation data.
-        editor.addUnsignedShortField("Start xTile", this.startGridCoordX, newX -> testStartTileLooksValid(newX, this.startGridCoordZ), newX -> {
+        editor.addUnsignedShortField("Start xTile", this.startGridCoordX,
+                newX -> !doesStartTileLookValid() || testStartTileLooksValid(newX, this.startGridCoordZ), newX -> {
             this.startGridCoordX = newX;
             manager.updatePlayerCharacter();
         });
-        editor.addUnsignedShortField("Start zTile", this.startGridCoordZ, newZ -> testStartTileLooksValid(this.startGridCoordX, newZ), newZ -> {
+        editor.addUnsignedShortField("Start zTile", this.startGridCoordZ,
+                newZ -> !doesStartTileLookValid() || testStartTileLooksValid(this.startGridCoordX, newZ), newZ -> {
             this.startGridCoordZ = newZ;
             manager.updatePlayerCharacter();
         });
@@ -243,6 +250,10 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
      */
     public int getAmbientFrogColorAsRgb() {
         return ColorUtils.toRGB(this.frogRedLighting, this.frogGreenLighting, this.frogBlueLighting);
+    }
+    
+    private boolean doesStartTileLookValid() {
+        return testStartTileLooksValid(this.startGridCoordX, this.startGridCoordZ);
     }
 
     private boolean testStartTileLooksValid(int newStartX, int newStartZ) {
