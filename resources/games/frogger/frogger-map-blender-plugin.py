@@ -612,30 +612,6 @@ def save_ffs_file(operator, context, filepath):
     bpy.ops.object.mode_set(mode = old_mode) # Restore previous mode.
     return {'FINISHED'}
 
-# [AE] Panel for aggregation of polygon properties
-# TODO: Finish this.
-class PolygonPropsPanel(bpy.types.Panel):
-    bl_idname = "OBJECT_PT_polygon_props"
-    bl_label = "Polygon Props"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "object"
-
-    @classmethod
-    def poll(cls, context):
-        return (context.object is not None)
-    
-    def draw(self, context):
-        layout = self.layout
-        obj = context.object
-
-        if (obj.mode != 'EDIT'):
-            row = layout.row()
-            row.label(text="(Only available in Edit mode)")
-        else:
-            row = layout.row()
-            row.label(text="Custom properties go in here...")
-
 # Reference Blender > Text Editor > Templates > Python > Operator File Import.
 class LoadFfsOperator(bpy.types.Operator, ImportHelper):
     """This appears in the tooltip of the operator and in the generated docs"""
@@ -699,7 +675,6 @@ def register():
     bpy.utils.register_class(FroggerMaterialData)
     bpy.types.Material.frogger_data = bpy.props.PointerProperty(type=FroggerMaterialData)
 
-    bpy.utils.register_class(PolygonPropsPanel)
     bpy.utils.register_class(SaveFfsOperator)
     bpy.utils.register_class(LoadFfsOperator)
     bpy.types.VIEW3D_MT_object.append(menu_func)
@@ -711,7 +686,6 @@ def register():
 def unregister():
     bpy.utils.unregister_class(FroggerSceneData)
     bpy.utils.unregister_class(FroggerMaterialData)
-    bpy.utils.unregister_class(PolygonPropsPanel)
     bpy.utils.unregister_class(SaveFfsOperator)
     bpy.utils.unregister_class(LoadFfsOperator)
     bpy.types.VIEW3D_MT_object.remove(menu_func)
