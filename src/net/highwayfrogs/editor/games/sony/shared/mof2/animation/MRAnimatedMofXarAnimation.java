@@ -4,8 +4,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
@@ -13,6 +11,8 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPart;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRStaticMof;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.AppendInfoLoggerWrapper;
 
@@ -106,10 +106,16 @@ public class MRAnimatedMofXarAnimation extends SCSharedGameData {
         int partCount = this.staticMofPartCount;
         if (partCount <= 0)
             throw new RuntimeException("Cannot save a MRAnimatedMofXarAnimation with " + partCount + " static mof part(s).");
+        if ((this.transformIds.size() % partCount) != 0)
+            throw new RuntimeException("The number of transform IDs (" + this.transformIds.size() + ") was not divisible by the number of mof parts! (" + partCount + ")");
 
-        writer.writeUnsignedShort(this.celNumbers.size());
-        writer.writeUnsignedShort(partCount);
+        int celNumberMultiple = (this.interpolationEnabled ? CEL_NUMBERS_PER_FRAME_WHEN_INTERPOLATING : 1);
+        if ((this.celNumbers.size() % celNumberMultiple) != 0)
+            throw new RuntimeException("The number of celNumbers (" + this.celNumbers.size() + ") was not divisible by the expected number of values! (" + celNumberMultiple + ")");
+
         writer.writeUnsignedShort(this.transformIds.size() / partCount);
+        writer.writeUnsignedShort(partCount);
+        writer.writeUnsignedShort(this.celNumbers.size() / celNumberMultiple);
         writer.writeUnsignedShort(this.interpolationEnabled ? FLAG_VIRTUAL_INTERPOLATION : FLAG_VIRTUAL_STANDARD);
         this.tempCelNumberPointer = writer.writeNullPointer();
         this.tempTransformIdListPointer = writer.writeNullPointer();
