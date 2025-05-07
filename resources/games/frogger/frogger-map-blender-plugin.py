@@ -183,6 +183,22 @@ def create_shaded_material(material, folder, test_file):
     nodes[vertex_color_input].location_absolute = Vector((-583.5, 159.5))
     links.new(nodes[vertex_color_input].outputs['Color'], nodes[color_doubler].inputs['A'])
 
+# Gets the frogger texture ID for the given material.
+FROGGER_NO_TEXTURE_ID = -2
+FROGGER_UNKNOWN_TEXTURE_ID = -1
+def get_frogger_texture_id(material):
+    if material is None:
+        return FROGGER_NO_TEXTURE_ID
+
+    material_texture_id = material.frogger_data.texture_id
+    if material_texture_id >= 0 or material_texture_id == FROGGER_NO_TEXTURE_ID:
+        return material_texture_id
+
+    name_match = re.fullmatch(r'tex([0-9]+)(\.([0-9]+))?', material.name, flags=re.IGNORECASE)
+    if name_match is not None:
+        return int(name_match.group(1))
+
+    return FROGGER_UNKNOWN_TEXTURE_ID
 
 def swap_blender_order(array):
     # Swaps between <Frogger Polygon Data Order> <-> <Blender Data Order>
@@ -259,7 +275,7 @@ def load_ffs_file(operator, context, filepath):
 
     # Create a material for faces without textures.
     untextured_material = bpy.data.materials[UNTEXTURED_MATERIAL_NAME] if UNTEXTURED_MATERIAL_NAME in bpy.data.materials else bpy.data.materials.new(name=UNTEXTURED_MATERIAL_NAME)
-    untextured_material.frogger_data.texture_id = -2 # Mark as different from the default 'no texture ID' value.
+    untextured_material.frogger_data.texture_id = FROGGER_NO_TEXTURE_ID # Mark as different from the default 'no texture ID' value.
     untextured_material_id = len(mesh.materials)
     untextured_material.use_nodes = True
     clear_material(untextured_material)
@@ -515,10 +531,14 @@ def save_ffs_file(operator, context, filepath):
     writer.write('\n')
 
     # Write textures.
+    seen_materials = set()
     for material in mesh.materials:
-        if material.frogger_data.texture_id >= 0:
-            writer.write("texture %d\n" % (material.frogger_data.texture_id))
-    writer.write('\n')
+        material_id = get_frogger_texture_id(material)
+        if material_id >= 0 and not material_id in seen_materials:
+            writer.write("texture %d\n" % (material_id))
+            seen_materials.add(material_id)
+    if len(seen_materials) > 0:
+        writer.write('\n')
 
     # Write Vertices:
     for vert in bm.verts:
@@ -537,7 +557,7 @@ def save_ffs_file(operator, context, filepath):
 
         # Resolve material data.
         material = mesh.materials[polygon.material_index] if polygon.material_index >= 0 and len(mesh.materials) > polygon.material_index else None
-        material_texture_id = material.frogger_data.texture_id if material is not None else -1
+        material_texture_id = get_frogger_texture_id(material)
         is_textured = material_texture_id >= 0
 
         # Prepare polygon data for writing.
@@ -560,6 +580,8 @@ def save_ffs_file(operator, context, filepath):
 
                 uvs.append((max(0.0, min(1.0, uv[0])), max(0.0, min(1.0, 1.0 - uv[1]))))
             uvs = to_ffs_order(uvs)
+        elif material_texture_id != FROGGER_NO_TEXTURE_ID and material is not None:
+            operator.report({"WARNING"}, "Face %d used material %d/'%s', which was not a recognized Frogger texture! It will be exported as an untextured polygon!" % (polygon_index, polygon.material_index, material.name))
 
         # Determine polygon type.
         # <polygon_type> <show|hide> [texture] [flags] <vertexIds[]...> <textureUvs[]...> <colors[]...> [gridFlags]
@@ -610,6 +632,7 @@ def save_ffs_file(operator, context, filepath):
     bm.free()
 
     bpy.ops.object.mode_set(mode = old_mode) # Restore previous mode.
+    operator.report({"INFO"}, "Successfully exported the map!")
     return {'FINISHED'}
 
 # Reference Blender > Text Editor > Templates > Python > Operator File Import.
@@ -666,7 +689,7 @@ class FroggerSceneData(bpy.types.PropertyGroup):
     game_version: bpy.props.StringProperty(name="Frogger Version")
 
 class FroggerMaterialData(bpy.types.PropertyGroup):
-    texture_id: bpy.props.IntProperty(name="Texture ID", default=-1)
+    texture_id: bpy.props.IntProperty(name="Texture ID", default=FROGGER_UNKNOWN_TEXTURE_ID)
 
 def register():
     bpy.utils.register_class(FroggerSceneData)
