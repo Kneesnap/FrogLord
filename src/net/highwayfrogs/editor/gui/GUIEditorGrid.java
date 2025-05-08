@@ -1912,6 +1912,11 @@ public class GUIEditorGrid {
      * @return imageView
      */
     public ImageView addCenteredImageView(ImageView imageView) {
+        if (imageView.getFitWidth() < 1 && imageView.getImage() != null)
+            imageView.setFitWidth(imageView.getImage().getWidth());
+        if (imageView.getFitHeight() < 1 && imageView.getImage() != null)
+            imageView.setFitHeight(imageView.getImage().getHeight());
+
         GridPane.setHalignment(imageView, HPos.CENTER);
         setupSecondNode(imageView, true);
         addRow(imageView.getFitHeight() + 5);
