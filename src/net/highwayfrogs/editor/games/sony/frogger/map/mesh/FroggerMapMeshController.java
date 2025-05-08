@@ -27,6 +27,7 @@ public class FroggerMapMeshController extends MeshViewController<FroggerMapMesh>
     private FroggerUIGeometryManager bakedGeometryManager;
     private FroggerUIMapAnimationManager animationManager;
     private FroggerUIMapEntityManager entityManager;
+    private FroggerUIMapFormManager formManager;
     private FroggerUIMapPathManager pathManager;
     private FroggerUIMapLightManager lightManager;
 
@@ -54,7 +55,7 @@ public class FroggerMapMeshController extends MeshViewController<FroggerMapMesh>
         addManager(this.generalManager = new FroggerUIMapGeneralManager(this));
         addManager(this.bakedGeometryManager = new FroggerUIGeometryManager(this));
         addManager(this.entityManager = new FroggerUIMapEntityManager(this));
-        addManager(new FroggerUIMapFormManager(this));
+        addManager(this.formManager = new FroggerUIMapFormManager(this));
         addManager(this.pathManager = new FroggerUIMapPathManager(this));
         addManager(this.lightManager = new FroggerUIMapLightManager(this));
         addManager(this.animationManager = new FroggerUIMapAnimationManager(this));

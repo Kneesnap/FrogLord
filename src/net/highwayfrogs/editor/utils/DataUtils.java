@@ -1,6 +1,9 @@
 package net.highwayfrogs.editor.utils;
 
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
+import net.highwayfrogs.editor.utils.data.reader.ArraySource;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 
 import java.io.File;
 import java.io.IOException;
@@ -432,5 +435,24 @@ public class DataUtils {
         int lowByte = (value & 0xFF);
         int highByte = (value & 0xFF00) >> 8;
         return (short) ((lowByte << 8) | highByte);
+    }
+
+    /**
+     * Clones the data from one serializable object to another, by serializing the old object, and deserializing that data to the new object.
+     * @param oldObject the object to copy data from
+     * @param newObject the object to copy data to
+     * @return newObject
+     * @param <TObject> the type of object to operate on
+     */
+    public static <TObject extends IBinarySerializable> TObject cloneSerializableObject(TObject oldObject, TObject newObject) {
+        if (oldObject == null)
+            throw new NullPointerException("oldObject");
+        if (newObject == null)
+            throw new NullPointerException("newObject");
+
+        byte[] rawData = oldObject.writeDataToByteArray();
+        DataReader reader = new DataReader(new ArraySource(rawData));
+        newObject.load(reader);
+        return newObject;
     }
 }

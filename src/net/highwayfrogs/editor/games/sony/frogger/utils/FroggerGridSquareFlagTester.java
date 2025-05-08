@@ -3,8 +3,8 @@ package net.highwayfrogs.editor.games.sony.frogger.utils;
 import net.highwayfrogs.editor.games.sony.SCGameObject;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerMapForm;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerMapFormData;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormGrid;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormGridData;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquare;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquareFlag;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack;
@@ -136,13 +136,11 @@ public class FroggerGridSquareFlagTester extends SCGameObject<FroggerGameInstanc
         // Then do form squares.
         FroggerGridSquareFlagTester formFlagTester = new FroggerGridSquareFlagTester(gameInstance);
         for (FroggerMapFile mapFile : mapFiles) {
-            for (FroggerMapForm form : mapFile.getFormPacket().getForms()) {
-                for (FroggerMapFormData formData : form.getFormDataEntries()) {
-                    short[][] gridFlags = formData.getGridFlags();
-                    for (int z = 0; z < gridFlags.length; z++)
-                        for (int x = 0; x < gridFlags[z].length; x++)
-                            formFlagTester.add(DataUtils.shortToUnsignedInt(gridFlags[z][x]));
-                }
+            for (FroggerFormGrid form : mapFile.getFormPacket().getForms()) {
+                for (FroggerFormGridData formData : form.getFormDataEntries())
+                    for (int z = 0; z < form.getZGridSquareCount(); z++)
+                        for (int x = 0; x < form.getXGridSquareCount(); x++)
+                            formFlagTester.add(DataUtils.shortToUnsignedInt(formData.getGridSquareFlags(x, z)));
             }
         }
         formFlagTester.getLogger().info("Form Square Flags:");

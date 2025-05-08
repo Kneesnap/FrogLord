@@ -389,7 +389,7 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
     /**
      * Refreshes the underlying list of values. (Used when the list is swapped/changed.)
      */
-    protected void refreshList() {
+    public void refreshList() {
         List<TValue> newValues = getValues();
         Set<TValue> newValueSet = newValues != null && newValues.size() > 0 ? new HashSet<>(newValues) : Collections.emptySet();
 

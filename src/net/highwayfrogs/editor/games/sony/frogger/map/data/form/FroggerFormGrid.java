@@ -3,14 +3,15 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.form;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import lombok.Getter;
+import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquareFlag;
-import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketForm;
-import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapFormManager;
+import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.editor.MeshUIManager;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -23,29 +24,36 @@ import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 
 /**
  * Reads the "FORM" struct.
- * Appears to be entity collision info, like being able to walk on logs or birds.
+ * Represents a collision grid on an entity, to control how the player interacts with the given entity.
  * TODO: We need to create a 3D preview for this. Perhaps allow saving it to a separate file too, so it can be shared between levels.
  *  - I'm thinking we make it pop up a new window which has a 3D preview of the model with the form data shown in 3D space. Use rotation mode instead of FPS camera (orr will that break with rotations?)
  * Created by Kneesnap on 8/23/2018.
  */
-@Getter
-public class FroggerMapForm extends SCGameData<FroggerGameInstance> {
-    private final FroggerMapFile mapFile;
-    private short xGridSquareCount; // Number of x grid squares in this form. This value is sometimes garbage, even in the retail game (SUB3.MAP, Both PC & PSX).
-    private short zGridSquareCount; // Number of z grid squares in this form. This value is sometimes garbage, even in the retail game (SUB3.MAP, Both PC & PSX).
-    private short xOffset; // Offset to bottom left or grid from entity origin.
-    private short zOffset; // Offset to bottom left or grid from entity origin.
-    private final List<FroggerMapFormData> formDataEntries = new ArrayList<>();
+public class FroggerFormGrid extends SCGameData<FroggerGameInstance> {
+    @Getter private final FroggerMapFile mapFile; // If the form grid is linked to a particular map file, it is placed here.
+    @Getter private short xGridSquareCount; // Number of x grid squares in this form. This value is sometimes garbage, even in the retail game (SUB3.MAP, Both PC & PSX). TODO: On change, update the dependant data entries.
+    @Getter private short zGridSquareCount; // Number of z grid squares in this form. This value is sometimes garbage, even in the retail game (SUB3.MAP, Both PC & PSX).
+    @Getter private short xOffset; // Offset to bottom left or grid from entity origin.
+    @Getter private short zOffset; // Offset to bottom left or grid from entity origin.
+    private final List<FroggerFormGridData> formDataEntries = new ArrayList<>();
+    private final List<FroggerFormGridData> immutableFormDataEntries = Collections.unmodifiableList(this.formDataEntries);
+    @Getter private transient IFroggerFormEntry formEntry; // The form entry which is used by this map form. TODO: Perhaps enforce this when choosing what forms to apply to an entity, and whatnot.
 
     public static final int GRID_PIXELS = 20;
 
-    public FroggerMapForm(FroggerMapFile mapFile) {
-        super(mapFile != null ? mapFile.getGameInstance() : null);
+    public FroggerFormGrid(FroggerGameInstance instance) {
+        super(instance);
+        this.mapFile = null;
+    }
+
+    public FroggerFormGrid(@NonNull FroggerMapFile mapFile) {
+        super(mapFile.getGameInstance());
         this.mapFile = mapFile;
     }
 
@@ -62,7 +70,7 @@ public class FroggerMapForm extends SCGameData<FroggerGameInstance> {
         // The game only supports 1 form data in the retail build even if the data structure can hold more. It appears more than 1 was supported in build 20 though.
         // I don't know if them being supported means the game used them though.
         if (formDataEntryCount != 0 && formDataEntryCount != 1)
-            getLogger().warning("Form has " + formDataEntryCount + " FroggerMapFormData entries. Later builds of Frogger will ignore them.");
+            getLogger().warning("Form has " + formDataEntryCount + " FroggerFormGridData entries. Later builds of Frogger will ignore them.");
 
         // Skip pointer table.
         int formDataPointerList = reader.getIndex();
@@ -77,8 +85,8 @@ public class FroggerMapForm extends SCGameData<FroggerGameInstance> {
             formDataPointerList = reader.getIndex();
             reader.jumpReturn();
 
-            requireReaderIndex(reader, nextFormDataEntryStartAddress, "Expected FroggerMapFormData list entry " + i);
-            FroggerMapFormData newFormDataEntry = new FroggerMapFormData(this);
+            requireReaderIndex(reader, nextFormDataEntryStartAddress, "Expected FroggerFormGridData list entry " + i);
+            FroggerFormGridData newFormDataEntry = new FroggerFormGridData(this);
             this.formDataEntries.add(newFormDataEntry);
             newFormDataEntry.load(reader);
         }
@@ -87,30 +95,10 @@ public class FroggerMapForm extends SCGameData<FroggerGameInstance> {
             getLogger().warning("Contained a form data entry while having dimensions of [%d, %d]", this.xGridSquareCount, this.zGridSquareCount);
     }
 
-    /**
-     * Gets the index of this form.
-     */
-    public int getFormIndex() {
-        FroggerMapFilePacketForm formPacket = this.mapFile.getFormPacket();
-        return formPacket.getLoadingIndex(formPacket.getForms(), this);
-    }
-
-    /**
-     * Gets the logger information.
-     */
-    public String getLoggerInfo() {
-        return this.mapFile != null ? this.mapFile.getFileDisplayName() + "|MapForm{" + getFormIndex() + "}" : Utils.getSimpleName(this);
-    }
-
-    @Override
-    public ILogger getLogger() {
-        return new LazyInstanceLogger(getGameInstance(), FroggerMapForm::getLoggerInfo, this);
-    }
-
     @Override
     public void save(DataWriter writer) {
-        if (this.formDataEntries.size() > 0 && (this.xGridSquareCount <= 0 || this.zGridSquareCount <= 0))
-            Utils.handleProblem(ProblemResponse.CREATE_POPUP, getLogger(), Level.WARNING, "Map form %d in %s contains a form data entry while having dimensions of [%d, %d].\nThis may cause issues with the game!", getFormIndex(), this.mapFile.getFileDisplayName(), this.xGridSquareCount, this.zGridSquareCount);
+        if (!isEmpty() && (this.xGridSquareCount <= 0 || this.zGridSquareCount <= 0 || this.xGridSquareCount > 255 || this.zGridSquareCount > 255))
+            Utils.handleProblem(ProblemResponse.CREATE_POPUP, getLogger(), Level.WARNING, "Form grid for %s contains a form data entry while having dimensions of [%d, %d].\nThis may cause issues with the game!", this.formEntry != null ? this.formEntry.getFormTypeName() : "UNKNOWN_FORM_TYPE", this.xGridSquareCount, this.zGridSquareCount);
 
         writer.writeUnsignedShort(this.formDataEntries.size());
         writer.writeNull(Constants.SHORT_SIZE); // Runtime value.
@@ -139,6 +127,92 @@ public class FroggerMapForm extends SCGameData<FroggerGameInstance> {
     }
 
     /**
+     * Tests if the form grid data matches that of another form grid.
+     * @param other the other form grid to test
+     * @return true if the form grid data matches
+     */
+    public boolean doesFormGridDataMatch(FroggerFormGrid other) {
+        if (other == null)
+            return false;
+
+        if (isEmpty() != other.isEmpty()) {
+            return false;
+        } else if (isEmpty() && other.isEmpty()) {
+            return true;
+        }
+
+        return this.xGridSquareCount == other.xGridSquareCount && this.zGridSquareCount == other.zGridSquareCount
+                && this.xOffset == other.xOffset && this.zOffset == other.zOffset
+                && this.formDataEntries.equals(other.formDataEntries);
+    }
+
+    @Override
+    public ILogger getLogger() {
+        return new LazyInstanceLogger(getGameInstance(), FroggerFormGrid::getLoggerInfo, this);
+    }
+
+    /**
+     * Gets the logger information.
+     */
+    public String getLoggerInfo() {
+        return (this.mapFile != null ? this.mapFile.getFileDisplayName() + "|" : "")
+                + "FormGrid{" + (this.formEntry != null ? this.formEntry.getFormTypeName() : "Unknown Entity")
+                + (this.mapFile != null ? ",formIndex=" + this.mapFile.getFormPacket().getForms().indexOf(this) : "") + "}";
+    }
+
+    /**
+     * Gets the available form data entries.
+     */
+    public List<FroggerFormGridData> getFormDataEntries() {
+        return this.immutableFormDataEntries;
+    }
+
+    /**
+     * Checks if this form is shared across all usages of the form, instead of being locally defined in a specific map.
+     */
+    public boolean isGlobal() {
+        return this.mapFile == null && this.formEntry != null && this == this.formEntry.getFormGrid();
+    }
+
+    /**
+     * The form is considered empty if it has no data entries.
+     * When a form is empty, its data may be garbage/meaningless.
+     */
+    public boolean isEmpty() {
+        return this.formDataEntries.isEmpty();
+    }
+
+    /**
+     * Sets which form entry the grid is appropriate
+     * @param newEntry the form entry associated with this form grid.
+     * @return The form grid which should replace this object instance, if there is one.
+     */
+    public FroggerFormGrid initFormEntry(IFroggerFormEntry newEntry) {
+        if (newEntry == this.formEntry)
+            return this;
+
+        if (this.formEntry != null)
+            throw new IllegalStateException("Changing the formEntry of a formGrid is not permitted once it has been applied.");
+
+        this.formEntry = newEntry;
+
+        FroggerFormGrid globalFormGrid = newEntry.getFormGrid();
+        if (globalFormGrid == null) {
+            // Create a copy of this form, and apply it to the form book.
+            FroggerFormGrid newFormGrid = DataUtils.cloneSerializableObject(this, new FroggerFormGrid(getGameInstance()));
+            newEntry.setFormGrid(newFormGrid);
+            newFormGrid.initFormEntry(newEntry);
+            return newFormGrid;
+        } else if (this.doesFormGridDataMatch(globalFormGrid)) {
+            return globalFormGrid;
+        } else {
+            // This isn't the same as the one seen in the form grid.
+            getLogger().warning("The form grid does not match the one found in the form book. This should work fine, but is not expected. (Unless this is a modified version of the game.)");
+            return this;
+        }
+    }
+
+    /**
      * Gets the x offset as a floating point number.
      */
     public float getXOffsetAsFloat() {
@@ -157,7 +231,10 @@ public class FroggerMapForm extends SCGameData<FroggerGameInstance> {
      * @param manager the form UI manager
      * @param editor The editor to setup under.
      */
-    public void setupEditor(FroggerUIMapFormManager manager, GUIEditorGrid editor) {
+    public void setupEditor(MeshUIManager<? extends FroggerMapMesh> manager, GUIEditorGrid editor) {
+        editor.addBoldNormalLabel("Form Type:", isGlobal() ? "Shared globally" : "Local to this map");
+        editor.addBoldNormalLabel("Used By:", this.formEntry != null ? this.formEntry.getFormTypeName() : "None");
+
         if (this.formDataEntries.isEmpty()) // The data shown here is ignored by the game when there is no form data. So the garbage values we see are fine.
             editor.addBoldLabel("Data ignored, as there is no form data.");
 
@@ -186,14 +263,14 @@ public class FroggerMapForm extends SCGameData<FroggerGameInstance> {
                     return;
                 }
 
-                this.formDataEntries.add(new FroggerMapFormData(this));
+                this.formDataEntries.add(new FroggerFormGridData(this));
                 if (manager != null)
                     manager.updateEditor();
             });
         } else {
             for (int i = 0; i < this.formDataEntries.size(); i++) {
-                FroggerMapFormData formDataEntry = this.formDataEntries.get(i);
-                formDataEntry.setupEditor(this, editor);
+                FroggerFormGridData formDataEntry = this.formDataEntries.get(i);
+                formDataEntry.setupEditor(editor);
                 editor.addButton("Remove Form Data #" + (i + 1), () -> {
                     this.formDataEntries.remove(formDataEntry);
                     if (manager != null)
@@ -250,9 +327,9 @@ public class FroggerMapForm extends SCGameData<FroggerGameInstance> {
      */
     public Image makeDataImage(int selectedIndex) {
         if (this.formDataEntries.isEmpty())
-            throw new RuntimeException("Tried to create FroggerMapFormData image without FroggerMapFormData.");
+            throw new RuntimeException("Tried to create FroggerFormGridData image without FroggerFormGridData.");
 
-        FroggerMapFormData formDataEntry = this.formDataEntries.get(0);
+        FroggerFormGridData formDataEntry = this.formDataEntries.get(0);
         BufferedImage newImage = new BufferedImage(getXGridSquareCount() * GRID_PIXELS, getZGridSquareCount() * GRID_PIXELS, BufferedImage.TYPE_INT_ARGB);
         Graphics graphics = newImage.createGraphics();
 
@@ -262,7 +339,7 @@ public class FroggerMapForm extends SCGameData<FroggerGameInstance> {
 
         for (int x = 0; x < getXGridSquareCount(); x++) {
             for (int z = 0; z < getZGridSquareCount(); z++) {
-                int index = getIndex(x, z, getXGridSquareCount());
+                int index = getFormGridIndex(x, z, getXGridSquareCount());
 
                 int startX = (x * GRID_PIXELS);
                 int startY = ((getZGridSquareCount() - 1 - z) * GRID_PIXELS);
@@ -315,7 +392,7 @@ public class FroggerMapForm extends SCGameData<FroggerGameInstance> {
      * Calculates the index of a grid flag.
      * @return index
      */
-    public static int getIndex(int x, int z, int xCount) {
+    public static int getFormGridIndex(int x, int z, int xCount) {
         return (z * xCount) + x;
     }
 }

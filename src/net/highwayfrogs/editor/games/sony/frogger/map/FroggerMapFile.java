@@ -250,7 +250,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
 
         this.pathPacket.getPaths().clear();
         this.zonePacket.getZones().clear();
-        this.formPacket.getForms().clear();
+        this.formPacket.clear();
         this.entityPacket.clear();
         this.lightPacket.getLights().clear();
         this.vertexPacket.getVertices().clear();

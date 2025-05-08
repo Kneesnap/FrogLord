@@ -22,6 +22,17 @@ public interface IFroggerFormEntry extends IGameObject {
     String getFormTypeName();
 
     /**
+     * Gets the form grid associated with the form book.
+     */
+    FroggerFormGrid getFormGrid();
+
+    /**
+     * Sets the form grid associated with the form book.
+     * @param formGrid formGrid
+     */
+    void setFormGrid(FroggerFormGrid formGrid);
+
+    /**
      * Gets the WAD entry for the 3D model file used to render the provided entity.
      * @param entity the provided entity
      * @return entityModel, or null if we failed to resolve it
