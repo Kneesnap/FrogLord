@@ -450,10 +450,10 @@ def load_ffs_file(operator, context, filepath):
     mesh.update(calc_edges=True)
 
     # Finish Setup:
-    if not object_already_existed:
+    if not obj in bpy.context.collection.objects.values():
         bpy.context.collection.objects.link(obj) # Add object to scene.
-
-    bpy.context.view_layer.objects.active = obj # Set the active object.
+    if obj in bpy.context.view_layer.objects.values():
+        bpy.context.view_layer.objects.active = obj # Set the active object.
     obj.select_set(True) # Select the object.
 
     # [AE] Set initial rendering modes, etc.
