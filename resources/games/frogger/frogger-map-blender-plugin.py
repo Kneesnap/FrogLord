@@ -41,6 +41,7 @@ import re
 import io
 from datetime import datetime
 from mathutils import Vector
+import addon_utils
 
 # ImportHelper is a helper class, defines filename and
 # invoke() function which calls the file selector.
@@ -231,6 +232,16 @@ def convert_grid_flags(blender_grid_flags):
         return blender_grid_flags
 
 def load_ffs_file(operator, context, filepath):
+    is_cycles_enabled, is_cycles_loaded = addon_utils.check('cycles')
+    if not is_cycles_loaded:
+        operator.report({"INFO"}, "Attempting to automatically enable 'CYCLES' rendering engine.")
+        success = addon_utils.enable('cycles', default_set=True)
+        if success:
+            operator.report({"INFO"}, "Enabled the 'CYCLES' rendering engine.")
+        else:
+            operator.report({"ERROR"}, "Failed to enable the 'CYCLES' rendering engine.")
+            return {'CANCELLED'}
+
     # Exit edit mode.
     # Edit mode prevents editing vertex color data.
     # Reference: https://blender.stackexchange.com/questions/122202/changing-vertex-colors-through-python
