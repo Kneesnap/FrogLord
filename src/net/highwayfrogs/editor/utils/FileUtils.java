@@ -84,7 +84,7 @@ public class FileUtils {
                     }
                 }
 
-                return foundResourceUrls;
+                return removeFolders(foundResourceUrls);
             } catch (Throwable th) {
                 Utils.handleError(null, th, false, "Failed to get the FileSystem object for the FrogLord jar: '%s'", frogLordJar);
             }
@@ -96,11 +96,17 @@ public class FileUtils {
         try {
             Path path = Paths.get(resourcePath.toURI());
             try (Stream<Path> stream = Files.walk(path, includeSubFolders ? Integer.MAX_VALUE : 1)) {
-                return getUrlsFromPaths(resourcePath, stream, false);
+                return removeFolders(getUrlsFromPaths(resourcePath, stream, false));
             }
         } catch (URISyntaxException | IOException ex) {
             throw new RuntimeException("Failed to get files in resource directory '" + resourcePath + "'", ex);
         }
+    }
+
+    private static List<URL> removeFolders(List<URL> list) {
+        return list.stream()
+                .filter(url -> url != null && !url.getPath().endsWith("/"))
+                .collect(Collectors.toList());
     }
 
     private static List<URL> getUrlsFromPaths(URL baseUrl, Stream<Path> stream, boolean remakeResources) {
