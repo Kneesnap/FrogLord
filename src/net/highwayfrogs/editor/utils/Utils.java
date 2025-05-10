@@ -7,6 +7,8 @@ import net.highwayfrogs.editor.utils.logging.InstanceLogger.WrappedLogger;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
@@ -336,7 +338,7 @@ public class Utils {
         // JavaFX has an error which was fixed beyond Java 8, but it throws an exception in earlier versions with using null in ComboBoxes.
         // We do NOT want to open a popup for this error, as it will for sure confuse the user into thinking something went wrong.
         // And even if it doesn't, it's highly annoying.
-        /*if (th instanceof IndexOutOfBoundsException && "handleFxThreadError".equalsIgnoreCase(callingMethodName)) {
+        if (th instanceof IndexOutOfBoundsException && "handleFxThreadError".equalsIgnoreCase(callingMethodName)) {
             // Get the exception as a string.
             StringWriter stringWriter = new StringWriter();
             PrintWriter printWriter = new PrintWriter(stringWriter);
@@ -354,7 +356,7 @@ public class Utils {
 
                 return;
             }
-        }*/
+        }
 
         // Print stage trace.
         if (logger != null) {

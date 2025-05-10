@@ -364,7 +364,7 @@ public class FileUtils {
         if (folder != null && folder.exists() && folder.isDirectory())
             return folder;
 
-        return folder != null ? getValidFolder(folder.getParentFile()) : new File(GUIMain.getMainApplicationFolder(), "./");
+        return folder != null ? getValidFolder(folder.getParentFile()) : new File(FrogLordApplication.getMainApplicationFolder(), "./");
     }
 
     /**

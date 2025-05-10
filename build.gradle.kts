@@ -45,7 +45,7 @@ javafx {
 }
 
 application { // https://docs.gradle.org/current/userguide/application_plugin.html#application_plugin (Executable JVM Application, easy to start locally and package)
-    mainClass = "net.highwayfrogs.editor.gui.GUIMain"
+    mainClass = "net.highwayfrogs.editor.FrogLordApplication"
     applicationDefaultJvmArgs = sharedJvmArgs
 
     tasks.run.get().workingDir = File(tasks.run.get().workingDir, "debug/")
