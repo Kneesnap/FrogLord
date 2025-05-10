@@ -138,7 +138,7 @@ public class Zone extends GameObject {
             newRegion.setZMin(region.getZMin());
             newRegion.setXMax(region.getXMax());
             newRegion.setZMax(region.getZMax());
-            newMapZone.getRegions().add(newRegion);
+            newMapZone.addRegion(newRegion);
         }
 
         // Apply camera data.
