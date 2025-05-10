@@ -1,8 +1,6 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.entity;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerConfig;
@@ -17,6 +15,8 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
@@ -107,8 +107,8 @@ public class OldFroggerMapEntity extends SCGameData<OldFroggerGameInstance> {
         editor.addLabel("Entity ID", String.valueOf(this.entityId));
 
         OldFroggerMapForm form = getForm();
-        if (form != null && form.getMofFile() != null)
-            editor.addLabel("MOF / Model", form.getMofFile().getFileDisplayName());
+        if (form != null && form.getModel() != null)
+            editor.addLabel("MOF / Model", form.getModel().getFileDisplayName());
 
         OldFroggerFormConfig formConfig = getMap().getFormConfig();
         OldFroggerFormConfigEntry formConfigEntry = formConfig != null ? formConfig.getFormByType(this.formTypeId) : null;
@@ -170,7 +170,7 @@ public class OldFroggerMapEntity extends SCGameData<OldFroggerGameInstance> {
         // Get display name of MOF.
         OldFroggerMapForm form = getForm();
         if (form != null) {
-            WADEntry mofEntry = form.getMofFileEntry();
+            WADEntry mofEntry = form.getModelFileEntry();
             if (mofEntry != null)
                 return FileUtils.stripExtension(mofEntry.getDisplayName());
         }

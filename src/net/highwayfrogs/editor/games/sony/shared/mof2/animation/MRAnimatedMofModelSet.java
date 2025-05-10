@@ -2,11 +2,11 @@ package net.highwayfrogs.editor.games.sony.shared.mof2.animation;
 
 import lombok.Getter;
 import lombok.NonNull;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.shared.mof2.collision.MRMofBoundingBoxSet;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.AppendInfoLoggerWrapper;
 
@@ -65,9 +65,6 @@ public class MRAnimatedMofModelSet extends SCSharedGameData {
         this.tempModelPointer = reader.readInt(); // Bounding boxes (NOT SETS) are here.
         this.tempCelSetPointer = reader.readInt(); // Right after model(s) & bounding boxes (NOT SETS).
         this.tempBboxSetPointer = reader.readInt(); // After celSet data (usually the same as the common data pointer)
-
-        if (this.tempModelCount != 1) // TODO: TOSS
-            getLogger().info("Found modelSet with %d models!", this.tempModelCount);
     }
 
     @Override

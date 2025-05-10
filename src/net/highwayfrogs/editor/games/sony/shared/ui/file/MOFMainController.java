@@ -9,8 +9,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.system.NameValuePair;
@@ -20,7 +20,7 @@ import net.highwayfrogs.editor.utils.FXUtils;
  * Manages the mof display on the main menu.
  * Created by Kneesnap on 5/23/2020.
  */
-public class MOFMainController extends SCFileEditorUIController<SCGameInstance, MOFHolder> {
+public class MOFMainController extends SCFileEditorUIController<SCGameInstance, MRModel> {
     @FXML private TableView<NameValuePair> mofPropertyTable;
     @FXML private TableColumn<Object, Object> tableColumnFileDataName;
     @FXML private TableColumn<Object, Object> tableColumnFileDataValue;
@@ -31,13 +31,13 @@ public class MOFMainController extends SCFileEditorUIController<SCGameInstance, 
     }
 
     @Override
-    public void setTargetFile(MOFHolder mof) {
-        super.setTargetFile(mof);
+    public void setTargetFile(MRModel model) {
+        super.setTargetFile(model);
 
         this.mofPropertyTable.getItems().clear();
         this.tableColumnFileDataName.setCellValueFactory(new PropertyValueFactory<>("name"));
         this.tableColumnFileDataValue.setCellValueFactory(new PropertyValueFactory<>("value"));
-        PropertyList properties = mof.createPropertyList();
+        PropertyList properties = model.createPropertyList();
         if (properties != null)
             properties.apply(this.mofPropertyTable);
 

@@ -112,6 +112,24 @@ public abstract class SCPolygonAdapterNode<TPolygon> extends DynamicMeshAdapterN
         }
     }
 
+    @Override
+    public boolean updateVertex(DynamicMeshDataEntry entry, int localVertexIndex) {
+        if (super.updateVertex(entry, localVertexIndex))
+            return true;
+
+        if (entry == this.vertexEntry) {
+            List<SVector> vertices = getAllVertices();
+            if (vertices == null || localVertexIndex >= vertices.size())
+                throw new RuntimeException("Invalid vertex ID: " + localVertexIndex);
+
+            SVector vertexPos = vertices.get(localVertexIndex);
+            entry.writeVertexXYZ(localVertexIndex, vertexPos.getFloatX(), vertexPos.getFloatY(), vertexPos.getFloatZ());
+            return true;
+        }
+
+        return false;
+    }
+
     /**
      * Evaluates the texture coordinates given the provided data.
      * @param polygon the polygon to evaluate the texture coordinate from

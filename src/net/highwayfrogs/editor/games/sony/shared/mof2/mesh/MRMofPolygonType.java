@@ -23,8 +23,8 @@ public enum MRMofPolygonType {
     G4(PSXPolygonType.POLY_F4, 4, 0, 4, false), // Gouraud Shaded Quad
     GT3(PSXPolygonType.POLY_FT3, 3, 0, 3, true), // Gouraud Shaded Textured Triangle
     GT4(PSXPolygonType.POLY_FT4, 4, 0, 4, true), // Gouraud Shaded Textured Quad
-    E3(PSXPolygonType.POLY_F3, 3, 3, 1, false), // The MR API supports this, albeit I don't believe this was ever used outside of prototypes. TODO: Warning if these are seen.
-    E4(PSXPolygonType.POLY_F4, 4, 4, 1, false), // The MR API supports this, albeit I don't believe this was ever used outside of prototypes. TODO: Describe what these polygons are.
+    E3(PSXPolygonType.POLY_F3, 3, 3, 1, false), // The MR API supports this, albeit I don't believe this was ever used outside of prototypes.
+    E4(PSXPolygonType.POLY_F4, 4, 4, 1, false), // The MR API supports this, albeit I don't believe this was ever used outside of prototypes.
     LF2(null, 2, 0, 0, false), // The MR API supports this, albeit I don't believe this was ever used outside of prototypes.
     LF3(PSXPolygonType.POLY_F3, 3, 0, 0, false), // The MR API supports this, albeit I don't believe this was ever used outside of prototypes.
     HLF3(PSXPolygonType.POLY_F3, 3, 0, 0, false), // The MR API supports this, albeit I don't believe this was ever used outside of prototypes.

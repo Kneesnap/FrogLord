@@ -44,7 +44,7 @@ public class FroggerMapMeshController extends MeshViewController<FroggerMapMesh>
     public void setupBindings(SubScene subScene3D, MeshView meshView) {
         super.setupBindings(subScene3D, meshView);
         if (getMapFile().getMapTheme() == FroggerMapTheme.SKY) // Extend view area to cover SKY LAND.
-            getFirstPersonCamera().getCamera().setFarClip(getFirstPersonCamera().getCamera().getFarClip() * 1.5);
+            getCamera().setFarClip(getCamera().getFarClip() * 1.5);
         getMainLight().getScope().add(getMeshView());
         getMainLight().getScope().addAll(getAxisDisplayList().getNodes());
         this.generalManager.getSidePanel().requestFocus();

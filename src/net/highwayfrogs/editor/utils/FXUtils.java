@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.utils;
 
 import com.sun.javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -559,6 +560,24 @@ public class FXUtils {
             return AlertType.WARNING;
         } else { // informational messages
             return AlertType.INFORMATION;
+        }
+    }
+
+    /**
+     * Adds or removes the element in the list to ensure its presence matches the desired boolean.
+     * @param list the list to add/remove
+     * @param value the value to add/remove
+     * @param shouldBeInList if the element should be present in the list
+     */
+    public static <TElement> void setFoundInList(ObservableList<TElement> list, TElement value, boolean shouldBeInList) {
+        if (list == null)
+            throw new NullPointerException("list");
+
+        if (shouldBeInList) {
+            if (!list.contains(value))
+                list.add(value);
+        } else {
+            list.remove(value);
         }
     }
 

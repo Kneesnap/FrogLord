@@ -8,9 +8,8 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPart;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPolygon;
-import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFController;
+import net.highwayfrogs.editor.games.sony.shared.mof2.ui.managers.MRModelHiliteUIManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.editor.RenderManager;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -38,7 +37,7 @@ public class MRMofHilite extends SCSharedGameData {
 
     public MRMofHilite(@NonNull MRMofPart parent, SVector vertex) {
         this(parent);
-        this.vertex = vertex;
+        setVertex(vertex);
     }
 
     @Override
@@ -101,29 +100,17 @@ public class MRMofHilite extends SCSharedGameData {
 
     /**
      * Sets up the editor for this hilite.
-     * @param controller The controller to setup under.
+     * @param manager The UI manager to setup for.
+     * @param editorGrid The UI grid to add UI elements to.
      */
-    public void setupEditor(MOFController controller) {
-        GUIEditorGrid grid = controller.getUiController().getHiliteEditorGrid();
-        RenderManager manager = controller.getRenderManager();
-        grid.clearEditor();
-
+    public void setupEditor(MRModelHiliteUIManager manager, GUIEditorGrid editorGrid) {
         FroggerHiliteType froggerHiliteType = getFroggerHiliteType();
 
         if (froggerHiliteType != null) {
-            grid.addEnumSelector("Hilite Type", froggerHiliteType, FroggerHiliteType.values(), false, newType -> this.hiliteType = (short) newType.ordinal());
+            editorGrid.addEnumSelector("Hilite Type", froggerHiliteType, FroggerHiliteType.values(), false, newType -> this.hiliteType = (short) newType.ordinal());
         } else {
-            grid.addUnsignedByteField("Hilite Type", this.hiliteType, this::setHiliteType);
+            editorGrid.addUnsignedByteField("Hilite Type", this.hiliteType, this::setHiliteType);
         }
-
-        grid.addButton("Remove Hilite", () -> {
-            this.parentPart.getHilites().remove(this);
-            grid.clearEditor();
-            manager.clearDisplayList(MOFController.HILITE_VERTICE_LIST); // Toss the vertice choices.
-            controller.updateHiliteBoxes();
-        });
-
-        controller.getUiController().getHilitePane().setExpanded(true);
     }
 
     /**
@@ -133,7 +120,7 @@ public class MRMofHilite extends SCSharedGameData {
     public void setVertex(SVector vertex) {
         this.vertex = vertex;
         this.polygon = null;
-        this.attachType = HiliteAttachType.VERTEX;
+        this.attachType = vertex != null ? HiliteAttachType.VERTEX : HiliteAttachType.NONE;
     }
 
     /**
@@ -143,7 +130,7 @@ public class MRMofHilite extends SCSharedGameData {
     public void setPolygon(MRMofPolygon polygon) {
         this.polygon = polygon;
         this.vertex = null;
-        this.attachType = HiliteAttachType.VERTEX;
+        this.attachType = polygon != null ? HiliteAttachType.PRIM : HiliteAttachType.NONE;
     }
 
     /**

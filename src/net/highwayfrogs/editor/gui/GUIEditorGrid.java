@@ -22,7 +22,6 @@ import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
-import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFController;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.fxobject.ScaleGizmo;
 import net.highwayfrogs.editor.gui.mesh.fxobject.ScaleGizmo.IScaleChangeListener;
@@ -933,133 +932,6 @@ public class GUIEditorGrid {
         addRow(35);
     }
 
-    /**
-     * Add a float SVector for editing.
-     * @param text   The name of the SVector.
-     * @param vector The SVector itself.
-     */
-    public void addFloatVector(String text, Vector vector, Runnable update, MOFController controller, int bits, Vector origin, Shape3D visualRepresentative) {
-        if (controller != null && visualRepresentative == null) {
-            addBoldLabelButton(text + ":", "Toggle Display", 25,
-                    () -> controller.updateMarker(controller.getShowPosition() == null || !Objects.equals(vector, controller.getShowPosition()) ? vector : null, bits, origin, null));
-        } else {
-            addBoldLabel(text + ":");
-        }
-
-        Runnable onPass = () -> {
-            if (controller != null)
-                controller.updateMarker(vector, bits, origin, visualRepresentative);
-
-            if (update != null)
-                update.run();
-            onChange();
-        };
-
-        GridPane vecPane = new GridPane();
-        vecPane.addRow(0);
-
-        // Label:
-        VBox labelBox = new VBox();
-        labelBox.getChildren().add(new Label("X:"));
-        labelBox.getChildren().add(new Label("Y:"));
-        labelBox.getChildren().add(new Label("Z:"));
-        labelBox.setSpacing(10);
-        vecPane.addColumn(0, labelBox);
-
-        // XYZ:
-        VBox posBox = new VBox();
-        TextField xField = new TextField(String.valueOf(vector.getFloatX(bits)));
-        TextField yField = new TextField(String.valueOf(vector.getFloatY(bits)));
-        TextField zField = new TextField(String.valueOf(vector.getFloatZ(bits)));
-        xField.setPrefWidth(60);
-        yField.setPrefWidth(60);
-        zField.setPrefWidth(60);
-        FXUtils.setHandleKeyPress(xField, str -> {
-            if (!NumberUtils.isNumber(str))
-                return false;
-
-            vector.setFloatX(Float.parseFloat(str), bits);
-            return true;
-        }, onPass);
-        FXUtils.setHandleKeyPress(yField, str -> {
-            if (!NumberUtils.isNumber(str))
-                return false;
-
-            vector.setFloatY(Float.parseFloat(str), bits);
-            return true;
-        }, onPass);
-        FXUtils.setHandleKeyPress(zField, str -> {
-            if (!NumberUtils.isNumber(str))
-                return false;
-
-            vector.setFloatZ(Float.parseFloat(str), bits);
-            return true;
-        }, onPass);
-
-        posBox.getChildren().add(xField);
-        posBox.getChildren().add(yField);
-        posBox.getChildren().add(zField);
-        posBox.setSpacing(2);
-        vecPane.addColumn(1, posBox);
-
-        // XZ Move.
-        ImageView xzView = new ImageView(GRAY_IMAGE_XZ);
-        vecPane.addColumn(2, xzView);
-
-        DragPos[] xzLastDrag = new DragPos[1];
-        xzView.setOnMouseClicked(evt -> xzLastDrag[0] = new DragPos(evt.getX(), evt.getY()));
-        xzView.setOnMouseDragged(evt -> {
-            DragPos lastDrag = xzLastDrag[0];
-            if (lastDrag == null) { // Set it up if it's not present.
-                xzLastDrag[0] = new DragPos(evt.getX(), evt.getY());
-                return;
-            }
-
-            double xDiff = -(lastDrag.getX() - evt.getX()) / 10;
-            double zDiff = (lastDrag.getY() - evt.getY()) / 10;
-            double angle = controller != null ? -Math.toRadians(controller.getRotY().getAngle()) : Math.PI / 2;
-
-            vector.setFloatX((float) (vector.getFloatX(bits) + (xDiff * Math.cos(angle)) - (zDiff * Math.sin(angle))), bits);
-            vector.setFloatZ((float) (vector.getFloatZ(bits) + (xDiff * Math.sin(angle)) + (zDiff * Math.cos(angle))), bits);
-            xField.setText(String.valueOf(vector.getFloatX(bits)));
-            zField.setText(String.valueOf(vector.getFloatZ(bits)));
-
-            onPass.run();
-
-            lastDrag.setX(evt.getX());
-            lastDrag.setY(evt.getY());
-        });
-        xzView.setOnMouseReleased(evt -> xzLastDrag[0] = null);
-
-        // Y Move.
-        ImageView yView = new ImageView(GRAY_IMAGE_Y);
-        vecPane.addColumn(3, yView);
-
-        DragPos[] yLastDrag = new DragPos[1];
-        yView.setOnMouseClicked(evt -> yLastDrag[0] = new DragPos(evt.getX(), evt.getY()));
-        yView.setOnMouseDragged(evt -> {
-            DragPos lastDrag = yLastDrag[0];
-            if (lastDrag == null) { // Set it up if it's not present.
-                yLastDrag[0] = new DragPos(evt.getX(), evt.getY());
-                return;
-            }
-
-            double yDiff = -(lastDrag.getY() - evt.getY()) / 10;
-            vector.setFloatY((float) (vector.getFloatY(bits) + yDiff), bits);
-            yField.setText(String.valueOf(vector.getFloatY(bits)));
-            onPass.run();
-
-            lastDrag.setX(evt.getX());
-            lastDrag.setY(evt.getY());
-        });
-        yView.setOnMouseReleased(evt -> yLastDrag[0] = null);
-
-        vecPane.setHgap(10);
-        GridPane.setColumnSpan(vecPane, 2); // Make it take up the full space in the grid it will be added to.
-        setupNode(vecPane); // Setup this in the new area.
-        addRow(75);
-    }
-
     @Getter
     @Setter
     @AllArgsConstructor
@@ -1949,25 +1821,6 @@ public class GUIEditorGrid {
         }, controller, 4, null, null, positionSelector);
 
         addRotationMatrix(matrix, rotationUpdates ? onPositionUpdate : null);
-    }
-
-    /**
-     * Add a PSXMatrix to the editor grid.
-     * @param matrix           The rotation matrix to add data for.
-     * @param onPositionUpdate Behavior to apply when the position is updated.
-     */
-    public void addMofMatrix(PSXMatrix matrix, MOFController controller, Runnable onPositionUpdate) {
-        IVector vec = new IVector(matrix.getTransform()[0], matrix.getTransform()[1], matrix.getTransform()[2]);
-
-        addFloatVector("Position", vec, () -> {
-            matrix.getTransform()[0] = vec.getX();
-            matrix.getTransform()[1] = vec.getY();
-            matrix.getTransform()[2] = vec.getZ();
-            if (onPositionUpdate != null)
-                onPositionUpdate.run(); // Run position hook.
-        }, controller, 4, null, null);
-
-        addRotationMatrix(matrix, null);
     }
 
     private static final DecimalFormat ANGLE_DISPLAY_FORMAT = new DecimalFormat("0.###");

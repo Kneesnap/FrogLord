@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.system.mm3d.holders;
 
-import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
-import net.highwayfrogs.editor.file.standard.psx.ByteUV;
+import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
+import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPolygon;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockHeader;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.system.mm3d.OffsetType;
@@ -18,13 +18,13 @@ public class MMTextureCoordinateHolder extends MMDataBlockHeader<MMTextureCoordi
 
     /**
      * Adds a mof polygon coordinates.
-     * @param polyTex Textured polygon.
+     * @param polygon Textured polygon.
      */
-    public void addMofPolygon(int face, MOFPolyTexture polyTex) {
-        if (polyTex.isQuadFace()) {
-            addRectangle(face, polyTex);
-        } else if (polyTex.isTriFace()) {
-            addTriangle(face, polyTex);
+    public void addMofPolygon(int face, MRMofPolygon polygon) {
+        if (polygon.getVertexCount() == 4) {
+            addRectangle(face, polygon);
+        } else if (polygon.getVertexCount() == 3) {
+            addTriangle(face, polygon);
         } else {
             throw new RuntimeException("Failed to add MOF Texture Coordinates.");
         }
@@ -33,33 +33,33 @@ public class MMTextureCoordinateHolder extends MMDataBlockHeader<MMTextureCoordi
     /**
      * Add a triangle's texture coordinates to this.
      */
-    public void addTriangle(int face, MOFPolyTexture poly) {
+    public void addTriangle(int face, MRMofPolygon polygon) {
         MMTextureCoordinatesBlock block = addNewElement();
         block.setTriangle(face);
 
         for (int i = 0; i < MMTextureCoordinatesBlock.COORDINATES_COUNT; i++)
-            loadUV(poly, poly.getUvs().length - i - 1, block, i);
+            loadUV(polygon, polygon.getTextureUvs().length - i - 1, block, i);
     }
 
     /**
      * Add a rectangle polygon's texture coords to this.
      */
-    public void addRectangle(int face, MOFPolyTexture poly) {
+    public void addRectangle(int face, MRMofPolygon polygon) {
         MMTextureCoordinatesBlock block1 = addNewElement();
         block1.setTriangle(face);
-        loadUV(poly, 0, block1, 0);
-        loadUV(poly, 3, block1, 1);
-        loadUV(poly, 1, block1, 2);
+        loadUV(polygon, 0, block1, 0);
+        loadUV(polygon, 3, block1, 1);
+        loadUV(polygon, 1, block1, 2);
 
         MMTextureCoordinatesBlock block2 = addNewElement();
         block2.setTriangle(face + 1);
-        loadUV(poly, 1, block2, 0);
-        loadUV(poly, 3, block2, 1);
-        loadUV(poly, 2, block2, 2);
+        loadUV(polygon, 1, block2, 0);
+        loadUV(polygon, 3, block2, 1);
+        loadUV(polygon, 2, block2, 2);
     }
 
-    private void loadUV(MOFPolyTexture poly, int index, MMTextureCoordinatesBlock loadTo, int loadIndex) {
-        ByteUV uv = poly.getUvs()[index];
+    private void loadUV(MRMofPolygon polygon, int index, MMTextureCoordinatesBlock loadTo, int loadIndex) {
+        SCByteTextureUV uv = polygon.getTextureUvs()[index];
         loadTo.getXCoordinates()[loadIndex] = uv.getFloatU();
         loadTo.getYCoordinates()[loadIndex] = uv.getFloatV();
     }

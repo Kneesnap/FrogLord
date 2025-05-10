@@ -1,13 +1,13 @@
 package net.highwayfrogs.editor.games.sony.beastwars.map.data;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.psx.PSXMath;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsInstance;
 import net.highwayfrogs.editor.games.sony.beastwars.map.BeastWarsMapFile;
 import net.highwayfrogs.editor.games.sony.beastwars.ui.BeastWarsObjectManager;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -125,9 +125,9 @@ public class BeastWarsMapObject extends SCGameData<BeastWarsInstance> {
      * @param manager the entity manager responsible for the data
      */
     public void setupEditor(GUIEditorGrid editor, BeastWarsObjectManager manager) {
-        MOFHolder mof = getMof();
-        editor.addTextField("Model File", mof != null ? mof.getFileDisplayName() : "None").setEditable(false);
-        if (mof == null)
+        MRModel model = getModel();
+        editor.addTextField("Model File", model != null ? model.getFileDisplayName() : "None").setEditable(false);
+        if (model == null)
             editor.addTextField("formId", String.format("%04X", this.formId)).setEditable(false);
 
         // TODO: Add a proper editor once things are figured out.
@@ -153,7 +153,7 @@ public class BeastWarsMapObject extends SCGameData<BeastWarsInstance> {
     /**
      * Gets the mof object displayed for this object, if there is one.
      */
-    public MOFHolder getMof() {
+    public MRModel getModel() {
         /*if ((this.typeFlags & 0xC000) == 0x4000)
             return null;*/ // TODO: Document this better! TODO: Players might actually use this model...
 

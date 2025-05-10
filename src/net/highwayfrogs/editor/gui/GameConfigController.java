@@ -68,9 +68,9 @@ public class GameConfigController extends GameUIController<GameInstance> {
 
     private static final List<String> SELECT_GAME_VERSION_TEXT = Arrays.asList(
             "Next, give FrogLord the information & files it needs to load the game data.",
-            "Many games (especially console games) have their files inside a CD image. (iso, bin/cue, etc.)",
-            "Those games will need to be extracted first with other software such as ISOBuster, PowerISO, etc.",
-            "PC version files are often found in the installation folder, eg: 'C:\\Program Files\\...'.",
+            "PC game files are often found in the installation folder, eg: 'C:\\Program Files\\...'.",
+            "Other games (especially console games) have their files inside a CD image. (iso, bin/cue, etc.)",
+            "Those games will need to be extracted first with software such as ISOBuster, PowerISO, etc.",
             "Once all the information is ready, press the 'Load' button to load the game data.");
 
     private static final URL FXML_TEMPLATE_URL = FileUtils.getResourceURL("fxml/window-load-game.fxml");

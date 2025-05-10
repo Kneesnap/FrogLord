@@ -4,8 +4,6 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.*;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Transform;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
-import net.highwayfrogs.editor.file.mof.view.MOFMesh;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
@@ -14,6 +12,8 @@ import net.highwayfrogs.editor.games.sony.shared.map.data.SCMapEntity;
 import net.highwayfrogs.editor.games.sony.shared.map.mesh.SCMapMesh;
 import net.highwayfrogs.editor.games.sony.shared.map.mesh.SCMapMeshController;
 import net.highwayfrogs.editor.games.sony.shared.map.ui.SCMapUIManager.SCMapListManager;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
+import net.highwayfrogs.editor.games.sony.shared.mof2.ui.mesh.MRModelMesh;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
 import net.highwayfrogs.editor.utils.DataUtils;
 
@@ -28,7 +28,8 @@ import java.util.Map;
  * Created by Kneesnap on 5/14/2024.
  */
 public class SCMapEntityManager<TMapMesh extends SCMapMesh> extends SCMapListManager<TMapMesh, SCMapEntity, MeshView> {
-    private final Map<MOFHolder, MOFMesh> meshCache = new HashMap<>();
+    private final Map<MRModel, MRModelMesh> meshCache = new HashMap<>();
+
     public SCMapEntityManager(SCMapMeshController<TMapMesh> controller) {
         super(controller);
     }

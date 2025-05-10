@@ -2,45 +2,20 @@ package net.highwayfrogs.editor.games.sony.shared.utils;
 
 import javafx.scene.control.Alert.AlertType;
 import lombok.AllArgsConstructor;
-import lombok.Cleanup;
 import lombok.Getter;
-import lombok.SneakyThrows;
-import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.mof.*;
-import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
-import net.highwayfrogs.editor.file.mof.animation.MOFAnimationCels;
-import net.highwayfrogs.editor.file.mof.animation.transform.TransformObject;
-import net.highwayfrogs.editor.file.mof.animation.transform.TransformType;
-import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbook;
-import net.highwayfrogs.editor.file.mof.flipbook.MOFFlipbookAction;
-import net.highwayfrogs.editor.file.mof.hilite.MOFHilite;
-import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnim;
-import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnimEntryList;
-import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
-import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
-import net.highwayfrogs.editor.file.mof.prims.MOFPrimType;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
-import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
 import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
+import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPolygon;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
-import net.highwayfrogs.editor.system.mm3d.blocks.*;
-import net.highwayfrogs.editor.system.mm3d.blocks.MMFrameAnimationsBlock.MMAnimationFrame;
-import net.highwayfrogs.editor.system.mm3d.blocks.MMFrameAnimationsBlock.MMFloatVertex;
-import net.highwayfrogs.editor.system.mm3d.blocks.MMSkeletalAnimationBlock.MMAnimationKeyframeType;
-import net.highwayfrogs.editor.system.mm3d.blocks.MMSkeletalAnimationBlock.MMSkeletalAnimationFrame;
-import net.highwayfrogs.editor.system.mm3d.blocks.MMWeightedInfluencesBlock.MMWeightedInfluenceType;
-import net.highwayfrogs.editor.system.mm3d.blocks.MMWeightedInfluencesBlock.MMWeightedPositionType;
-import net.highwayfrogs.editor.utils.*;
+import net.highwayfrogs.editor.system.mm3d.blocks.MMMaterialsBlock;
+import net.highwayfrogs.editor.system.mm3d.blocks.MMTriangleGroupsBlock;
+import net.highwayfrogs.editor.utils.FXUtils;
 
-import java.io.File;
-import java.io.PrintWriter;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Contains static 3d file utilities.
@@ -50,146 +25,21 @@ public class FileUtils3D {
     private static final String MATERIAL_NAME_PREFIX = "tex";
 
     /**
-     * Export a MOF file to Wavefront OBJ.
-     * Not the cleanest thing in the world, but it doesn't need to be.
-     * @param staticMof The mof to export.
-     * @param folder    The folder to export into.
-     * @param vloTable  The image pack to use textures from.
-     */
-    @SneakyThrows
-    public static void exportMofToObj(MOFFile staticMof, File folder, VLOArchive vloTable) {
-        boolean exportTextures = vloTable != null;
-
-        String mofName = staticMof.getFileDisplayName();
-        String cleanName = FileUtils.stripExtension(mofName);
-        String mtlName = cleanName + ".mtl";
-        @Cleanup PrintWriter objWriter = new PrintWriter(new File(folder, cleanName + ".obj"));
-
-        objWriter.write("# FrogLord MOF Export" + Constants.NEWLINE);
-        objWriter.write("# Exported: " + Calendar.getInstance().getTime() + Constants.NEWLINE);
-        objWriter.write("# MOF Name: " + mofName + Constants.NEWLINE);
-        objWriter.write(Constants.NEWLINE);
-
-        if (exportTextures) {
-            objWriter.write("mtllib " + mtlName + Constants.NEWLINE);
-            objWriter.write(Constants.NEWLINE);
-        }
-
-        // Write Vertices.
-        int partCount = 0;
-        int verticeStart = 0;
-        for (MOFPart part : staticMof.getParts()) {
-            part.setTempVertexStart(verticeStart);
-            objWriter.write("# Part " + (partCount++) + ":" + Constants.NEWLINE);
-            MOFPartcel partcel = part.getStaticPartcel(); // 0 is the animation frame.
-            verticeStart += partcel.getVertices().size();
-
-            for (SVector vertex : partcel.getVertices())
-                objWriter.write(vertex.toOBJString() + Constants.NEWLINE);
-        }
-
-        objWriter.write(Constants.NEWLINE);
-
-        // Write Faces.
-        List<MOFPolygon> allPolygons = new ArrayList<>();
-        staticMof.getParts().forEach(part -> part.getMofPolygons().values().forEach(allPolygons::addAll));
-
-        // Register textures.
-        if (exportTextures) {
-            allPolygons.sort(Comparator.comparingInt(MOFPolygon::getOrderId));
-            objWriter.write("# Vertex Textures" + Constants.NEWLINE);
-
-            for (MOFPolygon poly : allPolygons) {
-                if (poly instanceof MOFPolyTexture) {
-                    MOFPolyTexture mofTex = (MOFPolyTexture) poly;
-                    for (int i = mofTex.getUvs().length - 1; i >= 0; i--)
-                        objWriter.write(mofTex.getObjUVString(i) + Constants.NEWLINE);
-                }
-            }
-        }
-
-        objWriter.write("# Faces" + Constants.NEWLINE);
-
-        AtomicInteger textureId = new AtomicInteger(Integer.MIN_VALUE);
-        AtomicInteger counter = new AtomicInteger();
-
-        Map<Integer, GameImage> textureMap = new HashMap<>();
-        List<PSXColorVector> faceColors = new ArrayList<>();
-        Map<PSXColorVector, List<MOFPolygon>> facesWithColors = new HashMap<>();
-
-        allPolygons.forEach(polygon -> {
-            if (!(polygon instanceof MOFPolyTexture)) {
-                PSXColorVector color = polygon.getColor();
-                if (!faceColors.contains(color))
-                    faceColors.add(color);
-                facesWithColors.computeIfAbsent(color, key -> new ArrayList<>()).add(polygon);
-            } else {
-                MOFPolyTexture texture = (MOFPolyTexture) polygon;
-
-                if (exportTextures) {
-                    GameImage image = textureMap.computeIfAbsent((int) texture.getImageId(), vloTable::getGlobalTexture);
-                    int newTextureId = image.getTextureId();
-
-                    if (newTextureId != textureId.get()) { // It's time to change the texture.
-                        textureId.set(newTextureId);
-                        objWriter.write(Constants.NEWLINE);
-                        objWriter.write("usemtl tex" + newTextureId + Constants.NEWLINE);
-                    }
-                }
-
-                objWriter.write(polygon.toObjFaceCommand(exportTextures, counter) + Constants.NEWLINE);
-            }
-        });
-
-        objWriter.append(Constants.NEWLINE);
-        objWriter.append("# Faces without textures.").append(Constants.NEWLINE);
-        for (Entry<PSXColorVector, List<MOFPolygon>> mapEntry : facesWithColors.entrySet()) {
-            objWriter.write("usemtl color" + faceColors.indexOf(mapEntry.getKey()) + Constants.NEWLINE);
-            mapEntry.getValue().forEach(poly -> objWriter.write(poly.toObjFaceCommand(exportTextures, null) + Constants.NEWLINE));
-        }
-
-
-        // Write MTL file.
-        if (exportTextures) {
-            @Cleanup PrintWriter mtlWriter = new PrintWriter(new File(folder, mtlName));
-
-            for (GameImage image : textureMap.values()) {
-                mtlWriter.write("newmtl tex" + image.getTextureId() + Constants.NEWLINE);
-                mtlWriter.write("Kd 1 1 1" + Constants.NEWLINE); // Diffuse color.
-                // "d 0.75" = Partially transparent, if we want to support this later.
-                mtlWriter.write("map_Kd " + image.getLocalImageID() + ".png" + Constants.NEWLINE);
-                mtlWriter.write(Constants.NEWLINE);
-            }
-
-            for (int i = 0; i < faceColors.size(); i++) {
-                PSXColorVector color = faceColors.get(i);
-                mtlWriter.write("newmtl color" + i + Constants.NEWLINE);
-                if (i == 0)
-                    mtlWriter.write("d 1" + Constants.NEWLINE); // All further textures should be completely solid.
-                mtlWriter.write("Kd " + DataUtils.unsignedByteToFloat(color.getRed()) + " " + DataUtils.unsignedByteToFloat(color.getGreen()) + " " + DataUtils.unsignedByteToFloat(color.getBlue()) + Constants.NEWLINE); // Diffuse color.
-                mtlWriter.write(Constants.NEWLINE);
-            }
-        }
-
-        System.out.println(mofName + " Exported.");
-    }
-
-    /**
      * Convert a MOF to a MisfitModel3D.
      * Notes: Misfit Model 3D has a bug in it regarding texture management, where it will use the wrong material, for instance on the underwater portion of SUB_LOG in SUB1.
      * It seems using Maverick Model 3D instead fixes this problem.
-     * @param holder The mof to convert.
+     * @param model The mof to convert.
      * @return misfit3d
      */
-    public static MisfitModel3DObject convertMofToMisfitModel(MOFHolder holder) {
-        MisfitModel3DObject model = new MisfitModel3DObject();
-        MOFFile staticMof = holder.asStaticFile();
-        VLOArchive vloTable = holder.getVloFile();
-        Utils.verify(vloTable != null, "Unknown VLO Table for %s!", holder.getFileDisplayName());
+    public static MisfitModel3DObject convertMofToMisfitModel(MRModel model) {
+        /*MisfitModel3DObject model = new MisfitModel3DObject();
+        MOFFile staticMof = model.asStaticFile();
+        VLOArchive vloTable = model.getVloFile();
+        Utils.verify(vloTable != null, "Unknown VLO Table for %s!", model.getFileDisplayName());
 
         // Add TransformType.
-        if (holder.isAnimatedMOF())
-            model.getMetadata().addMetadataValue("transformType", holder.getAnimatedFile().getTransformType().name());
+        if (model.isAnimatedMOF())
+            model.getMetadata().addMetadataValue("transformType", model.getAnimatedFile().getTransformType().name());
 
         // Add Joints.
         for (int i = 0; i < staticMof.getParts().size(); i++) {
@@ -236,8 +86,8 @@ public class FileUtils3D {
                 MMFrameAnimationsBlock animation = model.getFrameAnimations().getBody(action);
                 if (animation == null) {
                     animation = model.getFrameAnimations().addNewElement();
-                    animation.setFramesPerSecond(holder.getGameInstance().getFPS());
-                    animation.setName(holder.getName(action));
+                    animation.setFramesPerSecond(model.getGameInstance().getFPS());
+                    animation.setName(model.getName(action));
                 }
 
                 MOFFlipbookAction flipbookAction = part.getFlipbook().getAction(action);
@@ -253,15 +103,15 @@ public class FileUtils3D {
         }
 
         // Add XAR animations.
-        if (holder.isAnimatedMOF()) {
-            MOFAnimation animatedMof = holder.getAnimatedFile();
+        if (model.isAnimatedMOF()) {
+            MOFAnimation animatedMof = model.getAnimatedFile();
 
             for (int action = 0; action < animatedMof.getModelSet().getCelSet().getCels().size(); action++) {
                 MOFAnimationCels celAction = animatedMof.getModelSet().getCelSet().getCels().get(action);
 
                 MMSkeletalAnimationBlock skeletalAnimation = model.getSkeletalAnimations().addNewElement();
-                skeletalAnimation.setName(holder.getName(action));
-                skeletalAnimation.setFps(holder.getGameInstance().getFPS());
+                skeletalAnimation.setName(model.getName(action));
+                skeletalAnimation.setFps(model.getGameInstance().getFPS());
 
                 for (int frame = 0; frame < celAction.getFrameCount(); frame++) {
                     List<MMSkeletalAnimationFrame> keyframes = new ArrayList<>();
@@ -382,7 +232,8 @@ public class FileUtils3D {
             }
         }
 
-        return model;
+        return model;*/
+        return null; // TODO: IMPLEMENT.
     }
 
     private static void vecToFloat(SVector vec, float[] output) {
@@ -423,30 +274,32 @@ public class FileUtils3D {
     /**
      * Load a MOF from a model.
      * Due to limits of the mm3d file format, we are unable to generate a MOFAnimation, however it should be able to make a MOFFile just fine.
-     * @param model  The model to load from.
-     * @param holder The data to overwrite.
+     * @param misfitModel  The model to load from.
+     * @param model The data to overwrite.
      */
-    public static void importMofFromModel(MisfitModel3DObject model, MOFHolder holder) {
-        if (holder.isIncomplete()) {
+    public static void importMofFromModel(MisfitModel3DObject misfitModel, MRModel model) {
+        FXUtils.makePopUp("Importing 3D models from .mm3d is temporarily disabled until a future update.", AlertType.WARNING);
+
+        /*if (model.isIncomplete()) {
             FXUtils.makePopUp("Importing over incomplete mofs is not currently supported.", AlertType.WARNING);
             return;
         }
 
-        boolean isReplacementAnimated = model.getSkeletalAnimations().size() > 0;
-        boolean isUnsafeReplacementArea = (holder.getTheme() == null || holder.getTheme() == FroggerMapTheme.GENERAL);
-        if (isUnsafeReplacementArea && (isReplacementAnimated != holder.isAnimatedMOF())) { // Any model which is accessed directly by the game code via hardcoded ids is assumed to be a certain type by the code, and we should not change this type.
-            FXUtils.makePopUp("This " + (holder.isAnimatedMOF() ? "animated" : "static") + " model cannot be overwritten by a " + (isReplacementAnimated ? "animated" : "static") + " model.", AlertType.ERROR);
+        boolean isReplacementAnimated = misfitModel.getSkeletalAnimations().size() > 0;
+        boolean isUnsafeReplacementArea = (model.getTheme() == null || model.getTheme() == FroggerMapTheme.GENERAL);
+        if (isUnsafeReplacementArea && (isReplacementAnimated != model.isAnimatedMOF())) { // Any model which is accessed directly by the game code via hardcoded ids is assumed to be a certain type by the code, and we should not change this type.
+            FXUtils.makePopUp("This " + (model.isAnimatedMOF() ? "animated" : "static") + " model cannot be overwritten by a " + (isReplacementAnimated ? "animated" : "static") + " model.", AlertType.ERROR);
             return;
         }
 
-        if (model.getFrameAnimationPoints().size() > 0)
-            FXUtils.makePopUp("Frame Point animations are not supported. " + model.getFrameAnimationPoints().size() + " frame point animations will be skipped.", AlertType.WARNING);
+        if (misfitModel.getFrameAnimationPoints().size() > 0)
+            FXUtils.makePopUp("Frame Point animations are not supported. " + misfitModel.getFrameAnimationPoints().size() + " frame point animations will be skipped.", AlertType.WARNING);
 
-        MOFFile staticMof = holder.isDummy() ? new MOFFile(holder.getGameInstance(), holder) : holder.asStaticFile();
-        MOFAnimation animatedMof = isReplacementAnimated ? new MOFAnimation(holder.getGameInstance(), holder, staticMof) : null;
+        MOFFile staticMof = model.isDummy() ? new MOFFile(model.getGameInstance(), model) : model.getStaticMof();
+        MOFAnimation animatedMof = isReplacementAnimated ? new MOFAnimation(model.getGameInstance(), model, staticMof) : null;
 
         // Pre-Build Data Maps.
-        int newPartCount = model.getJoints().size();
+        int newPartCount = misfitModel.getJoints().size();
         Map<Integer, MMMaterialsBlock> materialMap = new HashMap<>();
         Map<Integer, MMTriangleNormalsBlock> normalMap = new HashMap<>();
         Map<Integer, MMTextureCoordinatesBlock> uvMap = new HashMap<>();
@@ -455,30 +308,30 @@ public class FileUtils3D {
         Map<Integer, Integer> modelVtxToPartcelVtxMap = new HashMap<>();
 
         // Build Maps.
-        for (MMTextureCoordinatesBlock block : model.getTextureCoordinates().getBlocks())
+        for (MMTextureCoordinatesBlock block : misfitModel.getTextureCoordinates().getBlocks())
             uvMap.put(block.getTriangle(), block);
 
-        for (MMTriangleNormalsBlock block : model.getNormals().getBlocks())
+        for (MMTriangleNormalsBlock block : misfitModel.getNormals().getBlocks())
             normalMap.put(block.getIndex(), block);
 
-        for (MMTriangleGroupsBlock block : model.getGroups().getBlocks()) {
-            MMMaterialsBlock material = block.getMaterial() != MMTriangleGroupsBlock.EMPTY_MATERIAL ? model.getMaterials().getBody(block.getMaterial()) : null;
+        for (MMTriangleGroupsBlock block : misfitModel.getGroups().getBlocks()) {
+            MMMaterialsBlock material = block.getMaterial() != MMTriangleGroupsBlock.EMPTY_MATERIAL ? misfitModel.getMaterials().getBody(block.getMaterial()) : null;
             for (int face : block.getTriangleIndices())
                 materialMap.put(face, material);
         }
 
         // Build Joint Map.
-        if (model.getWeightedInfluences().size() > 0) {
-            for (MMWeightedInfluencesBlock influence : model.getWeightedInfluences().getBlocks())
+        if (misfitModel.getWeightedInfluences().size() > 0) {
+            for (MMWeightedInfluencesBlock influence : misfitModel.getWeightedInfluences().getBlocks())
                 if (influence.getPositionType() == MMWeightedPositionType.VERTEX)
                     jointVerticeMap.computeIfAbsent(influence.getBoneJointIndex(), boneIndex -> new ArrayList<>()).add(influence.getPositionIndex());
-        } else if (model.getJointVertices().size() > 0) { // Fallback to joint vertice block if weighted influences don't exist, but joint vertices do. It likely means the user is using mm3d 1.4.
-            for (MMJointVerticesBlock jointVertices : model.getJointVertices().getBlocks())
+        } else if (misfitModel.getJointVertices().size() > 0) { // Fallback to joint vertice block if weighted influences don't exist, but joint vertices do. It likely means the user is using mm3d 1.4.
+            for (MMJointVerticesBlock jointVertices : misfitModel.getJointVertices().getBlocks())
                 jointVerticeMap.computeIfAbsent(jointVertices.getJointIndex(), boneIndex -> new ArrayList<>()).add(jointVertices.getVertexIndex());
         }
 
         int failCount = 0;
-        for (MMTriangleFaceBlock face : model.getTriangleFaces().getBlocks()) {
+        for (MMTriangleFaceBlock face : misfitModel.getTriangleFaces().getBlocks()) {
             boolean foundMatch = false;
             for (Entry<Integer, List<Integer>> jointVerticeEntry : jointVerticeMap.entrySet()) {
                 boolean matchVertices = true;
@@ -505,7 +358,7 @@ public class FileUtils3D {
 
         // Figure out which textures are allowed. (All of them) Maybe later we can put extra restrictions to figure out which ones are loaded when the model is loaded.
         Set<Short> allowedTextureIds = new HashSet<>();
-        for (VLOArchive vloArchive : holder.getArchive().getAllFiles(VLOArchive.class))
+        for (VLOArchive vloArchive : model.getArchive().getAllFiles(VLOArchive.class))
             for (GameImage gameImage : vloArchive.getImages())
                 allowedTextureIds.add(gameImage.getTextureId());
 
@@ -513,13 +366,13 @@ public class FileUtils3D {
         List<MOFPart> oldParts = new ArrayList<>(staticMof.getParts());
         staticMof.getParts().clear();
 
-        if (model.getSkeletalAnimations().size() > 0) { // This is an animated MOF.
-            String transformType = model.getFirstMetadataValue("transformType");
+        if (misfitModel.getSkeletalAnimations().size() > 0) { // This is an animated MOF.
+            String transformType = misfitModel.getFirstMetadataValue("transformType");
             if (transformType != null)
                 animatedMof.setTransformType(TransformType.valueOf(transformType));
 
             Map<TransformObject, Integer> indexMap = new HashMap<>();
-            for (MMSkeletalAnimationBlock skeletalAnimation : model.getSkeletalAnimations().getBlocks()) {
+            for (MMSkeletalAnimationBlock skeletalAnimation : misfitModel.getSkeletalAnimations().getBlocks()) {
                 MOFAnimationCels loadedAnimation = new MOFAnimationCels(animatedMof);
 
                 int uniqueFrames = 0;
@@ -594,11 +447,11 @@ public class FileUtils3D {
 
 
             // Apply animation data to the model.
-            holder.setStaticFile(null);
-            holder.setAnimatedFile(animatedMof);
+            model.setStaticFile(null);
+            model.setAnimatedFile(animatedMof);
         }
 
-        for (int partId = 0; partId < model.getJoints().size(); partId++) {
+        for (int partId = 0; partId < misfitModel.getJoints().size(); partId++) {
             MOFPart oldPart = oldParts.size() > partId ? oldParts.get(partId) : null;
             MOFPart part = new MOFPart(staticMof);
             staticMof.getParts().add(part);
@@ -609,15 +462,15 @@ public class FileUtils3D {
 
             // Load Vertices.
             for (int id : vertexIdList) {
-                MMVerticeBlock block = model.getVertices().getBody(id);
+                MMVerticeBlock block = misfitModel.getVertices().getBody(id);
                 modelVtxToPartcelVtxMap.put(id, basePartcel.getVertices().size());
                 basePartcel.getVertices().add(new SVector(-block.getX(), -block.getY(), block.getZ()));
             }
 
             // Load Normals.
             Map<Integer, int[]> normalIndexMap = new HashMap<>(); // <Face, Normal Indices>
-            for (MMTriangleNormalsBlock block : model.getNormals().getBlocks()) {
-                if (!jointFaceMap.get(partId).contains(model.getTriangleFaces().getBody(block.getIndex())))
+            for (MMTriangleNormalsBlock block : misfitModel.getNormals().getBlocks()) {
+                if (!jointFaceMap.get(partId).contains(misfitModel.getTriangleFaces().getBody(block.getIndex())))
                     continue; // If the face these normals are for aren't in this joint, skip it.
 
                 SVector n1 = new SVector(-block.getV1Normals()[0], -block.getV1Normals()[1], block.getV1Normals()[2]);
@@ -678,7 +531,7 @@ public class FileUtils3D {
             // Add Flipbook animations.
             if (!isReplacementAnimated && newPartCount == 1) {
                 MOFFlipbook flipbook = new MOFFlipbook();
-                for (MMFrameAnimationsBlock block : model.getFrameAnimations().getBlocks()) {
+                for (MMFrameAnimationsBlock block : misfitModel.getFrameAnimations().getBlocks()) {
                     int partcelIndex = part.getPartcels().size();
 
                     for (MMAnimationFrame frame : block.getFrames()) {
@@ -695,8 +548,8 @@ public class FileUtils3D {
 
                 if (flipbook.getActions().size() > 0)
                     part.setFlipbook(flipbook);
-            } else if (model.getFrameAnimations().size() > 0) {
-                FXUtils.makePopUp(model.getFrameAnimations().size() + " flipbook (frame) animations have been skipped, since this is either XAR or has more than one part.", AlertType.WARNING);
+            } else if (misfitModel.getFrameAnimations().size() > 0) {
+                FXUtils.makePopUp(misfitModel.getFrameAnimations().size() + " flipbook (frame) animations have been skipped, since this is either XAR or has more than one part.", AlertType.WARNING);
             }
 
             // Build Polygons.
@@ -800,22 +653,22 @@ public class FileUtils3D {
         }
 
         // Finish Up, apply data.
-        holder.setStaticFile(animatedMof != null ? null : staticMof);
-        holder.setAnimatedFile(animatedMof);
-        holder.setDummy(false);
+        model.setStaticFile(animatedMof != null ? null : staticMof);
+        model.setAnimatedFile(animatedMof);
+        model.setDummy(false);*/ // TODO: IMPLEMENT
     }
 
-    private static MOFPolygon getPolygonFromVertices(Map<SVector, Set<MOFPolygon>> polyMap, MOFPolygon oldPoly, SVector... vertices) {
-        short oldTextureId = (oldPoly instanceof MOFPolyTexture) ? ((MOFPolyTexture) oldPoly).getImageId() : (short) -1;
+    private static MRMofPolygon getPolygonFromVertices(Map<SVector, Set<MRMofPolygon>> polyMap, MRMofPolygon oldPoly, SVector... vertices) {
+        short oldTextureId = oldPoly.getTextureId();
 
-        Map<MOFPolygon, Integer> countMap = new HashMap<>();
+        Map<MRMofPolygon, Integer> countMap = new HashMap<>();
         for (SVector vertex : vertices)
-            for (MOFPolygon poly : polyMap.get(vertex))
+            for (MRMofPolygon poly : polyMap.get(vertex))
                 countMap.put(poly, countMap.getOrDefault(poly, 0) + 1);
 
-        MOFPolygon bestMatch = null;
-        for (MOFPolygon poly : countMap.keySet())
-            if (countMap.get(poly) == vertices.length && (bestMatch == null || (poly instanceof MOFPolyTexture && ((MOFPolyTexture) poly).getImageId() == oldTextureId)))
+        MRMofPolygon bestMatch = null;
+        for (MRMofPolygon poly : countMap.keySet())
+            if (countMap.get(poly) == vertices.length && (bestMatch == null || (poly.getPolygonType().isTextured() && poly.getTextureId() == oldTextureId)))
                 bestMatch = poly;
 
         return bestMatch;

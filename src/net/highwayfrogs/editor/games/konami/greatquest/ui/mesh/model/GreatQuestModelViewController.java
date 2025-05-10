@@ -104,8 +104,8 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
 
 
         // Setup camera stuff.
-        getFirstPersonCamera().getCamera().setFarClip(DEFAULT_FAR_CLIP);
-        getFirstPersonCamera().getCamera().setNearClip(DEFAULT_NEAR_CLIP);
+        getCamera().setFarClip(DEFAULT_FAR_CLIP);
+        getCamera().setNearClip(DEFAULT_NEAR_CLIP);
         getFirstPersonCamera().setDefaultMoveSpeed(DEFAULT_MOVEMENT_SPEED);
 
         getLightingGroup().getChildren().add(getMeshView());

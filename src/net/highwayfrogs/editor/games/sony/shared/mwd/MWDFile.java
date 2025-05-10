@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.sony.shared.mwd;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
@@ -12,6 +11,7 @@ import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.pp20.PP20Unpacker;
@@ -217,9 +217,9 @@ public class MWDFile extends SCSharedGameData {
     public <T extends SCGameFile<?>> T replaceFile(String importedFileName, byte[] fileBytes, MWIResourceEntry entry, SCGameFile<?> oldFile, boolean updateUI) {
         T newFile;
 
-        if (oldFile instanceof MOFHolder) {
-            MOFHolder oldHolder = (MOFHolder) oldFile;
-            newFile = (T) new MOFHolder(getGameInstance(), oldHolder.getTheme(), oldHolder.getCompleteMOF());
+        if (oldFile instanceof MRModel) {
+            MRModel oldModel = (MRModel) oldFile;
+            newFile = (T) new MRModel(getGameInstance(), oldModel.getTheme(), oldModel.getCompleteCounterpart());
         } else {
             newFile = this.loadFile(fileBytes, entry);
         }

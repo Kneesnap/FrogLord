@@ -2,14 +2,13 @@ package net.highwayfrogs.editor.games.sony.shared.mof2;
 
 import lombok.Getter;
 import lombok.NonNull;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRStaticMof;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 
 /**
@@ -33,7 +32,7 @@ public abstract class MRBaseModelData extends SCSharedGameData implements IPrope
     @Override
     public final void load(DataReader reader) {
         int readStartIndex = reader.getIndex();
-        byte[] signature = reader.readBytes(MOFHolder.DUMMY_DATA.length);
+        byte[] signature = reader.readBytes(MRModel.DUMMY_DATA.length);
         int modelSizeInBytes = reader.readInt();
         int flags = reader.readInt();
         loadModelData(reader, signature);

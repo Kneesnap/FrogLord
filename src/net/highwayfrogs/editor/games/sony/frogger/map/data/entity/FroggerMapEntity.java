@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
@@ -24,6 +23,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathInfo;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketEntity;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketForm;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
@@ -244,7 +244,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
         } else if (this.formEntry instanceof FroggerOldMapForm) {
             FroggerOldMapForm oldFormEntry = (FroggerOldMapForm) this.formEntry;
             editor.addLabel("Entity Type", this.formEntry.getEntityTypeName());
-            WADEntry wadEntry = oldFormEntry.getEntityModel(this);
+            WADEntry wadEntry = oldFormEntry.getEntityModelWadEntry(this);
             editor.addLabel("MOF Index", oldFormEntry.getMofId() + " (" + (wadEntry != null ? wadEntry.getDisplayName() : "null") + ")");
         } else if (this.formEntry != null) {
             editor.addLabel("Unsupported Form Type", Utils.getSimpleName(this.formEntry));
@@ -351,16 +351,16 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
      * Gets the entity model, if there is one we know how to resolve.
      * @return modelFile
      */
-    public WADEntry getEntityModel() {
-        return this.formEntry != null ? this.formEntry.getEntityModel(this) : null;
+    public WADEntry getEntityModelWadEntry() {
+        return this.formEntry != null ? this.formEntry.getEntityModelWadEntry(this) : null;
     }
 
     /**
      * Gets the entity model, if there is one we know how to resolve.
-     * @return mofHolder
+     * @return entityModel
      */
-    public MOFHolder getEntityModelMof() {
-        return this.formEntry != null ? this.formEntry.getEntityModelMof(this) : null;
+    public MRModel getEntityModel() {
+        return this.formEntry != null ? this.formEntry.getEntityModel(this) : null;
     }
 
     /**

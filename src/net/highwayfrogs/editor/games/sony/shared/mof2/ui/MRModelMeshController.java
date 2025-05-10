@@ -1,63 +1,46 @@
 package net.highwayfrogs.editor.games.sony.shared.mof2.ui;
 
-import javafx.scene.Group;
+
+import javafx.scene.Camera;
 import javafx.scene.PerspectiveCamera;
-import javafx.scene.Scene;
 import javafx.scene.SubScene;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.CullFace;
 import javafx.scene.shape.MeshView;
-import javafx.scene.transform.Rotate;
-import lombok.Setter;
-import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
-import net.highwayfrogs.editor.file.standard.Vector;
-import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
-import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
+import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
+import net.highwayfrogs.editor.games.sony.shared.mof2.animation.MRAnimatedMofModel;
+import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRStaticMof;
+import net.highwayfrogs.editor.games.sony.shared.mof2.ui.managers.MRModelCollprimUIManager;
+import net.highwayfrogs.editor.games.sony.shared.mof2.ui.managers.MRModelHiliteUIManager;
+import net.highwayfrogs.editor.games.sony.shared.mof2.ui.managers.MRModelMainUIManager;
+import net.highwayfrogs.editor.games.sony.shared.mof2.ui.managers.MRModelTextureAnimationUIManager;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.mesh.MRModelMesh;
-import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFController.MOFUIController;
+import net.highwayfrogs.editor.gui.editor.MeshMouseRotationUIManager;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
-import net.highwayfrogs.editor.gui.editor.RenderManager;
-import net.highwayfrogs.editor.gui.mesh.MeshData;
-import net.highwayfrogs.editor.utils.ColorUtils;
-import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 /**
- * TODO: Documentation.
- * TODO: Copy features from MOFController.java
+ * The core UI controller for the MRModelMesh viewer.
  * Created by Kneesnap on 2/21/2025.
  */
+@Getter
 public class MRModelMeshController extends MeshViewController<MRModelMesh> {
-    // TODO: UI Managers
-    private MOFUIController uiController; // TODO: Port into managers.
-    private PerspectiveCamera camera; // TODO: KEEP?
-    private Scene mofScene; // TODO: meshScene
-    private Group root3D;
-    private Rotate rotX; // TODO: KEEP?
-    private Rotate rotY;
-    private Rotate rotZ;
-    private final RenderManager renderManager = new RenderManager();
-    private boolean selectingVertex; // TODO: ???
-    private boolean selectingPart; // TODO: ???
-    private MeshData textureOverlay; // TODO: ???
-    private MeshData hiliteOverlay; // TODO: ???
+    private final MRModelMainUIManager mainManager;
+    private final MeshMouseRotationUIManager<MRModelMesh> rotationManager;
+    private final MRModelCollprimUIManager collprimManager;
+    private final MRModelHiliteUIManager hiliteManager;
+    private final MRModelTextureAnimationUIManager textureAnimationManager;
 
-    @Setter private Vector showPosition; // TODO: ???
-
-    private static final PhongMaterial HILITE_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.PURPLE);
-    private static final PhongMaterial COLLPRIM_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.LIGHTGREEN);
-    private static final PhongMaterial BBOX_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.RED);
-    private static final PhongMaterial GENERIC_POS_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
-    public static final CursorVertexColor ANIMATION_COLOR = new CursorVertexColor(java.awt.Color.MAGENTA, java.awt.Color.BLACK);
-    public static final CursorVertexColor CANT_APPLY_COLOR = new CursorVertexColor(java.awt.Color.RED, java.awt.Color.BLACK);
-    public static final CursorVertexColor HILITE_COLOR = new CursorVertexColor(ColorUtils.toAWTColor(Color.PURPLE), java.awt.Color.BLACK);
     public static final double MAP_VIEW_FAR_CLIP = 2000.0;
-    public static final ImageFilterSettings PREVIEW_SETTINGS = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(true);
-
 
     public MRModelMeshController(SCGameInstance instance) {
         super(instance);
+        this.mainManager = new MRModelMainUIManager(this);
+        this.rotationManager = new MeshMouseRotationUIManager<>(this);
+        this.collprimManager = new MRModelCollprimUIManager(this);
+        this.hiliteManager = new MRModelHiliteUIManager(this);
+        this.textureAnimationManager = new MRModelTextureAnimationUIManager(this);
     }
 
     @Override
@@ -66,16 +49,36 @@ public class MRModelMeshController extends MeshViewController<MRModelMesh> {
     }
 
     @Override
+    public PerspectiveCamera getCamera() {
+        return this.rotationManager.getCamera();
+    }
+
+    @Override
     public void setupBindings(SubScene subScene3D, MeshView meshView) {
         super.setupBindings(subScene3D, meshView);
         getMainLight().getScope().add(getMeshView());
         getMainLight().getScope().addAll(getAxisDisplayList().getNodes());
-        // TODO: this.generalManager.getSidePanel().requestFocus();
+        getComboBoxMeshCullFace().setValue(CullFace.NONE); // Easier to look at models like this.
+        getColorPickerLevelBackground().setValue(Color.GRAY);
     }
 
     @Override
     protected void setupManagers() {
+        addManager(this.mainManager);
+        addManager(this.rotationManager);
+        addManager(this.collprimManager);
+        addManager(this.hiliteManager);
+        addManager(this.textureAnimationManager);
+    }
 
+    @Override
+    protected double getAxisDisplayLength() {
+        return 8; // Half of a grid square.
+    }
+
+    @Override
+    protected double getAxisDisplaySize() {
+        return 1;
     }
 
     @Override
@@ -85,7 +88,12 @@ public class MRModelMeshController extends MeshViewController<MRModelMesh> {
 
     @Override
     protected void setDefaultCameraPosition() {
-        MRModel model = getModel();
+        Camera camera = getCamera();
+        camera.setFarClip(MAP_VIEW_FAR_CLIP);
+        camera.setTranslateZ(-45.0);
+        camera.setTranslateY(0.0);
+        this.rotationManager.getRotationX().setAngle(40);
+        this.rotationManager.getRotationY().setAngle(180);
     }
 
     /**
@@ -93,5 +101,19 @@ public class MRModelMeshController extends MeshViewController<MRModelMesh> {
      */
     public MRModel getModel() {
         return getMesh().getModel();
+    }
+
+    /**
+     * Gets the currently active static mof.
+     */
+    public MRStaticMof getActiveStaticMof() {
+        return getMesh().getActiveStaticMof();
+    }
+
+    /**
+     * Gets the currently active static mof model.
+     */
+    public MRAnimatedMofModel getActiveAnimatedMofModel() {
+        return getMesh().getActiveMofModel();
     }
 }

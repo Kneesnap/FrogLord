@@ -7,7 +7,6 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
@@ -16,6 +15,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormGrid;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.IFroggerFormEntry;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -212,7 +212,7 @@ public class FormEntry extends SCGameData<FroggerGameInstance> implements IFrogg
         int wadIndex = getWadIndex();
         if (wadFile != null && wadFile.getFiles().size() > wadIndex && wadIndex >= 0) { // Test if there's an associated WAD.
             WADEntry wadEntry = wadFile.getFiles().get(wadIndex);
-            if (!wadEntry.isDummy() && wadEntry.getFile() instanceof MOFHolder)
+            if (!wadEntry.isDummy() && (wadEntry.getFile() instanceof MRModel))
                 return wadEntry;
         }
 
@@ -220,7 +220,7 @@ public class FormEntry extends SCGameData<FroggerGameInstance> implements IFrogg
     }
 
     @Override
-    public WADEntry getEntityModel(FroggerMapEntity entity) {
+    public WADEntry getEntityModelWadEntry(FroggerMapEntity entity) {
         return getModel(entity.getMapFile());
     }
 

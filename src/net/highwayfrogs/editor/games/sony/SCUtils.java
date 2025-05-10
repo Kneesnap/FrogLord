@@ -1,15 +1,15 @@
 package net.highwayfrogs.editor.games.sony;
 
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.mof.MOFFile;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
-import net.highwayfrogs.editor.file.mof.animation.MOFAnimation;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.model.actionset.PTActionSetFile;
 import net.highwayfrogs.editor.games.sony.shared.model.skeleton.PTSkeletonFile;
 import net.highwayfrogs.editor.games.sony.shared.model.staticmesh.PTStaticFile;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
+import net.highwayfrogs.editor.games.sony.shared.mof2.animation.MRAnimatedMof;
+import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRStaticMof;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankBody;
@@ -69,14 +69,14 @@ public class SCUtils {
                 if (DataUtils.testSignature(fileData, PTActionSetFile.IDENTIFIER_STRING))
                     return new PTActionSetFile(resourceEntry.getGameInstance());
             } else {
-                if (DataUtils.testSignature(fileData, MOFHolder.DUMMY_DATA) || DataUtils.testSignature(fileData, MOFFile.SIGNATURE) || MOFAnimation.testSignature(fileData))
-                    return makeMofHolder(resourceEntry);
+                if (DataUtils.testSignature(fileData, MRModel.DUMMY_DATA) || DataUtils.testSignature(fileData, MRStaticMof.SIGNATURE) || MRAnimatedMof.testSignature(fileData))
+                    return makeModel(resourceEntry);
             }
         } else {
             if (resourceEntry.hasExtension("vlo"))
                 return new VLOArchive(resourceEntry.getGameInstance());
             if (resourceEntry.hasExtension("xmr") || resourceEntry.hasExtension("xar") || resourceEntry.hasExtension("xmu"))
-                return makeMofHolder(resourceEntry);
+                return makeModel(resourceEntry);
         }
 
         if (resourceEntry.hasExtension("vh") || resourceEntry.hasExtension("vb"))
@@ -95,45 +95,45 @@ public class SCUtils {
     /**
      * Creates a new mof holder for the file entry and game instance combo.
      * @param resourceEntry The file entry to create the file from.
-     * @return mofHolder
+     * @return model
      */
-    public static MOFHolder makeMofHolder(MWIResourceEntry resourceEntry) {
+    public static MRModel makeModel(MWIResourceEntry resourceEntry) {
         SCGameInstance instance = resourceEntry.getGameInstance();
         String fileName = resourceEntry.getDisplayName();
-        MOFHolder completeMof = null;
+        MRModel completeModel = null;
 
         // Override lookup.
         String otherMofFile = instance.getVersionConfig().getMofParentOverrides().get(fileName);
         if (otherMofFile != null) {
             MWIResourceEntry replaceEntry = instance.getResourceEntryByName(otherMofFile);
             if (replaceEntry != null)
-                completeMof = instance.getGameFile(replaceEntry.getResourceId());
-            if (completeMof == null)
+                completeModel = instance.getGameFile(replaceEntry.getResourceId());
+            if (completeModel == null)
                 resourceEntry.getLogger().warning("MOF Parent Override for '" + otherMofFile + "' was not found. Entry: " + replaceEntry);
         } else {
-            MOFHolder lastCompleteMOF = null;
+            MRModel lastCompleteMOF = null;
             for (int i = resourceEntry.getResourceId() - 1; i >= 0; i--) {
-                SCGameFile<?> testMof = instance.getGameFile(i);
-                if (testMof instanceof MOFHolder) {
-                    MOFHolder newHolder = (MOFHolder) testMof;
-                    if (!newHolder.isIncomplete()) {
-                        lastCompleteMOF = newHolder;
+                SCGameFile<?> testModel = instance.getGameFile(i);
+                if (testModel instanceof MRModel) {
+                    MRModel newModel = (MRModel) testModel;
+                    if (!newModel.isIncomplete()) {
+                        lastCompleteMOF = newModel;
                         break;
                     }
                 }
             }
 
-            completeMof = lastCompleteMOF;
+            completeModel = lastCompleteMOF;
         }
 
-        return new MOFHolder(resourceEntry.getGameInstance(), null, completeMof);
+        return new MRModel(resourceEntry.getGameInstance(), null, completeModel);
     }
 
     /**
      * Creates a new sound file for the file entry and game instance combo.
      * @param resourceEntry The file entry to create the file from.
      * @param fileData  The contents of the file to test.
-     * @return mofHolder
+     * @return gameFile
      */
     public static SCGameFile<?> makeSound(MWIResourceEntry resourceEntry, byte[] fileData, SCForcedLoadSoundFileType forcedType) {
         SCGameInstance instance = resourceEntry.getGameInstance();

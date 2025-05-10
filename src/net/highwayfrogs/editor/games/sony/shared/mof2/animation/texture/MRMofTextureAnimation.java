@@ -2,10 +2,10 @@ package net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture;
 
 import lombok.Getter;
 import lombok.NonNull;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPart;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,14 +48,14 @@ public class MRMofTextureAnimation implements IBinarySerializable {
      * @return entryForFrame
      */
     public MRMofTextureAnimationEntry getEntryForFrame(int frame) {
-        if (frame < 0)
-            return null;
-
         int frameCount = getTotalFrameCount();
         if (frameCount <= 0)
             return null;
 
         frame %= frameCount;
+        if (frame < 0)
+            frame += frameCount;
+
         for (int i = 0; i < this.entries.size(); i++) {
             MRMofTextureAnimationEntry entry = this.entries.get(i);
             if (entry.getDuration() > frame)

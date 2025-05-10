@@ -114,7 +114,7 @@ public class FroggerGameInstance extends SCGameInstance {
         } else if (resourceEntry.getTypeId() == FILE_TYPE_SOUND) {
             return SCUtils.makeSound(resourceEntry, fileData, null);
         } else if (resourceEntry.getTypeId() == FILE_TYPE_MOF || resourceEntry.getTypeId() == FILE_TYPE_MAPMOF) {
-            return SCUtils.makeMofHolder(resourceEntry);
+            return SCUtils.makeModel(resourceEntry);
         } else {
             return SCUtils.createSharedGameFile(resourceEntry, fileData);
         }

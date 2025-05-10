@@ -5,8 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
 import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse.BlackFilter;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse.TransparencyFilter;
@@ -23,7 +21,6 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.awt.image.BufferedImage;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -36,7 +33,7 @@ import java.util.logging.Level;
  * Created by Kneesnap on 8/30/2018.
  */
 @SuppressWarnings({"unused", "lossy-conversions"})
-public class GameImage extends SCSharedGameData implements Cloneable, TextureSource, ITextureSource {
+public class GameImage extends SCSharedGameData implements Cloneable, ITextureSource {
     @Getter private final List<Consumer<BufferedImage>> imageChangeListeners;
     @Getter private final VLOArchive parent;
     @Getter @Setter private short vramX;
@@ -109,7 +106,8 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
             this.clutId = reader.readShort();
         }
 
-        warnAboutInvalidBitFlags(this.flags & 0xFFFF, VALIDATION_FLAGS, toString());
+        if (getGameInstance().getGameType().isAtOrBefore(SCGameType.FROGGER))
+            warnAboutInvalidBitFlags(this.flags & 0xFFFF, VALIDATION_FLAGS, toString());
 
         short readU = reader.readUnsignedByteAsShort();
         short readV = reader.readUnsignedByteAsShort();
@@ -563,26 +561,6 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
      */
     public int getLocalImageID() {
         return getParent().getImages().indexOf(this);
-    }
-
-    @Override
-    public BufferedImage makeTexture(TextureMap map) {
-        return toBufferedImage(map.getDisplaySettings());
-    }
-
-    @Override
-    public boolean isOverlay(TextureMap map) {
-        return false;
-    }
-
-    @Override
-    public BigInteger makeIdentifier(TextureMap map) {
-        return makeIdentifier(0x7E8BA5E, getTextureId());
-    }
-
-    @Override
-    public GameImage getGameImage(TextureMap map) {
-        return this;
     }
 
     private BufferedImage makeUnmodifiedImage() {

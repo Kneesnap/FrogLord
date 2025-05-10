@@ -7,17 +7,17 @@ import javafx.scene.shape.MeshView;
 import javafx.scene.shape.TriangleMesh;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Transform;
-import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
-import net.highwayfrogs.editor.file.mof.view.MOFMesh;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.medievil.map.entity.MediEvilMapEntity;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMesh;
 import net.highwayfrogs.editor.games.sony.medievil.map.ui.MediEvilMapUIManager.MediEvilMapListManager;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
+import net.highwayfrogs.editor.games.sony.shared.mof2.ui.mesh.MRModelMesh;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
+import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 
@@ -30,7 +30,7 @@ import java.util.Map;
  * Created by Kneesnap on 12/12/2023.
  */
 public class MediEvilEntityManager extends MediEvilMapListManager<MediEvilMapEntity, MeshView> {
-    private final Map<MOFHolder, MOFMesh> meshCache = new HashMap<>();
+    private final Map<MRModel, MRModelMesh> meshCache = new HashMap<>();
     public MediEvilEntityManager(MeshViewController<MediEvilMapMesh> controller) {
         super(controller);
     }
@@ -81,24 +81,21 @@ public class MediEvilEntityManager extends MediEvilMapListManager<MediEvilMapEnt
     }
 
     private void updateEntityMesh(MediEvilMapEntity entity, MeshView entityMesh) {
-        MOFHolder holder = entity.getMof();
-        if (holder != null) {
+        MRModel model = entity.getModel();
+        if (model != null) {
+            DynamicMesh.tryRemoveMesh(entityMesh);
 
             // Set VLO archive to the map VLO if currently unset.
-            if (holder.getVloFile() == null) {
+            if (model.getVloFile() == null) {
                 MediEvilLevelTableEntry levelTableEntry = entity.getMap().getLevelTableEntry();
                 if (levelTableEntry != null)
-                    holder.setVloFile(levelTableEntry.getVloFile());
+                    model.setVloFile(levelTableEntry.getVloFile());
             }
 
             // Update MeshView.
-            MOFMesh modelMesh = this.meshCache.computeIfAbsent(holder, MOFHolder::makeMofMesh);
+            MRModelMesh modelMesh = this.meshCache.computeIfAbsent(model, MRModel::createMesh);
+            modelMesh.addView(entityMesh, (getSelectedValue() == entity), true);
             entityMesh.setCullFace(CullFace.BACK);
-            entityMesh.setMesh(modelMesh);
-
-            // Update material.
-            TextureMap textureSheet = modelMesh.getTextureMap();
-            entityMesh.setMaterial((getSelectedValue() == entity) ? textureSheet.getLitHighlightedMaterial() : textureSheet.getUnlitSharpMaterial());
             return;
         }
 

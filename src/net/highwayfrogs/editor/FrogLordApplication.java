@@ -44,6 +44,14 @@ import java.util.logging.*;
  * TODO: Globus's computer seems to have different text settings than mine, so many of the UI buttons are just too small for the text.
  *  -> What do I need to make the FrogLord UI appear consistent across systems?
  * TODO: I think we should make unit tests at some point. Mesh system, texture tree system, Noodle? Utils? Math classes? DataReader/Writer? Config? Gradle, hrmm.
+ *
+ * TODO: I'd like to buff the MOF viewer to allow previewing all of the things in this file format.
+ *  -> Animations probably should be viewable independently of each other? Not sure. But can they compound? Not sure.
+ *  -> Are there any xars with flipbook animations for example? Stuff we've taken for granted should be challenged.
+ *  -> Add TRUE interpolation support. Eg: Don't just add MediEvil interpolation, add an option to smooth animations.
+ * TODO: Rewrite handleWadEdit() and related wad functionality & UI.
+ * TODO: Remove exportAlternativeFormat() features.
+ * TODO: Is it finally time to delete the GameObject abstract class?
  */
 public class FrogLordApplication extends Application {
     @Getter private static Config mainConfig;

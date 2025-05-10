@@ -2,13 +2,13 @@ package net.highwayfrogs.editor.games.sony.medievil;
 
 import lombok.Getter;
 import lombok.NonNull;
-import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.reader.FileSource;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.FileSource;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.io.File;
 import java.util.*;
@@ -2395,7 +2395,7 @@ public class MediEvilScripter {
     }
 
     @Getter
-    public abstract static class EventBlock extends GameObject {
+    public abstract static class EventBlock implements IBinarySerializable {
         @NonNull private final EventType type;
         private short branchLevel;
         private short size;

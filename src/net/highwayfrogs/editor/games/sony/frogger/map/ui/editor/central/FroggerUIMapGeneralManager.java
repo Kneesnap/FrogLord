@@ -14,8 +14,6 @@ import javafx.scene.shape.CullFace;
 import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Translate;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
-import net.highwayfrogs.editor.file.mof.view.MOFMesh;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.FroggerMapGroup;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquare;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack;
@@ -24,6 +22,8 @@ import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGeneral;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGrid;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGroup;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
+import net.highwayfrogs.editor.games.sony.shared.mof2.ui.mesh.MRModelMesh;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.InputManager;
@@ -272,24 +272,21 @@ public class FroggerUIMapGeneralManager extends FroggerCentralUIManager {
 
             // Setup 3D model.
             String modelName = getPlayerCharacterModelName();
-            MOFHolder playerModel = getGameInstance().getMainArchive().getFileByName(modelName);
+            MRModel playerModel = getGameInstance().getMainArchive().getFileByName(modelName);
             if (playerModel == null) {
                 getLogger().warning("Failed to find the model named '%s' to use as the player character!", modelName);
                 this.playerCharacterView.setMesh(Scene3DUtils.createSpriteMesh(16F));
                 this.playerCharacterView.setMaterial(Scene3DUtils.makeLitBlurryMaterial(ImageResource.SQUARE_LETTER_E_128.getFxImage()));
             } else {
-                MOFMesh mofMesh = playerModel.makeMofMesh();
+                MRModelMesh modelMesh = playerModel.createMesh();
                 if (getMap().isMultiplayer()) {
                     int action = getGameInstance().getVersionConfig().getAnimationBank().getIndexForName("GENM_FROG_SIT");
                     if (action >= 0)
-                        mofMesh.setAction(action); // GENM_FROG_SIT
-                } else {
-                    mofMesh.setAction(-1);
+                        modelMesh.getAnimationPlayer().setFlipbookAnimationID(action, true); // GENM_FROG_SIT
                 }
 
                 this.playerCharacterView.setCullFace(CullFace.BACK);
-                this.playerCharacterView.setMesh(mofMesh);
-                this.playerCharacterView.setMaterial(mofMesh.getTextureMap().getBlurryLitMaterial());
+                modelMesh.addView(this.playerCharacterView, false, false);
             }
 
             // Setup lighting.

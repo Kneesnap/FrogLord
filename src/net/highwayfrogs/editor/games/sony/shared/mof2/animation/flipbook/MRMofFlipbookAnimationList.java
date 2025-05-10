@@ -1,9 +1,9 @@
 package net.highwayfrogs.editor.games.sony.shared.mof2.animation.flipbook;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,15 +42,22 @@ public class MRMofFlipbookAnimationList implements IBinarySerializable {
     /**
      * Get the PartCel index based on the number.
      * @param animationId The frame number presumably.
-     * @param frameCount  "Cel number" (Treated as the number of frames into the animation you are. NOTE: That's animation frames not FPS frames)
+     * @param animationTick "Cel number" (Treated as the number of frames into the animation you are. NOTE: That's animation frames not FPS frames)
      * @return celIndex
      */
-    public int getPartCelIndex(int animationId, int frameCount) {
+    public int getPartCelIndex(int animationId, int animationTick) {
         MRMofFlipbookAnimation action = getAction(animationId);
         if (action == null)
-            return 0;
+            return 0; // static partCel!
 
-        return action.getPartCelIndex() + (frameCount % action.getPartCelCount());
+        int frameCount = action.getPartCelCount();
+
+        // Calculate flipbook tick (takes negative animation ticks into consideration.)
+        int flipbookTick = animationTick % frameCount;
+        if (flipbookTick < 0)
+            flipbookTick += frameCount;
+
+        return action.getPartCelIndex() + flipbookTick;
     }
 
     /**

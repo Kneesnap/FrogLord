@@ -239,6 +239,16 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
     }
 
     /**
+     * Clears all mesh data from all attached nodes, without removing the nodes.
+     */
+    public void clearMeshData() {
+        pushBatchRemovals();
+        for (int i = this.nodes.size() - 1; i >= 0; i--)
+            this.nodes.get(i).clear();
+        popBatchRemovals();
+    }
+
+    /**
      * Test if a node is registered (active) on this mesh.
      * @param meshNode The node to test.
      * @return isActive

@@ -16,9 +16,6 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.config.exe.PickupData;
 import net.highwayfrogs.editor.file.config.exe.PickupData.PickupAnimationFrame;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
-import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
-import net.highwayfrogs.editor.file.mof.view.MOFMesh;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
@@ -30,6 +27,8 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathInfo;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerCentralUIManager.FroggerCentralMapListManager;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapPathManager.FroggerPathSegmentPreview;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
+import net.highwayfrogs.editor.games.sony.shared.mof2.ui.mesh.MRModelMesh;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
@@ -50,7 +49,7 @@ import java.util.Map;
 public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<FroggerMapEntity, MeshView> {
     private final float[] posCache = new float[6];
     private final float[] selectedMouseEntityPosition = new float[6];
-    private final Map<MOFHolder, MOFMesh> meshCache = new HashMap<>();
+    private final Map<MRModel, MRModelMesh> meshCache = new HashMap<>();
     @Getter private DisplayList litEntityRenderList;
     @Getter private DisplayList unlitEntityRenderList;
     private FroggerMapEntity selectedMouseEntity;
@@ -324,32 +323,29 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
 
         // Attempt to apply from 3D model.
         IFroggerFormEntry formEntry = entity.getFormEntry();
-        MOFHolder holder = formEntry != null ? formEntry.getEntityModelMof(entity) : null;
-        if (holder != null) {
+        MRModel model = formEntry != null ? formEntry.getEntityModel(entity) : null;
+        if (model != null) {
             // Set VLO archive to the map VLO if currently unset.
-            VLOArchive vlo = getMap().getConfig().getForcedVLO(getMap().getGameInstance(), holder.getFileDisplayName());
+            VLOArchive vlo = getMap().getConfig().getForcedVLO(getMap().getGameInstance(), model.getFileDisplayName());
             if (vlo == null) {
                 ThemeBook themeBook = getMap().getGameInstance().getThemeBook(formEntry.getTheme());
                 if (themeBook != null)
                     vlo = themeBook.getVLO(getMap());
             }
-            holder.setVloFile(vlo);
+            model.setVloFile(vlo);
 
             // Update MeshView.
-            MOFMesh modelMesh = this.meshCache.computeIfAbsent(holder, MOFHolder::makeMofMesh);
-            if (modelMesh.getFaceCount() > 0) {
+            MRModelMesh modelMesh = this.meshCache.computeIfAbsent(model, MRModel::createMeshWithDefaultAnimation);
+            if (modelMesh.getEditableFaces().size() > 0) {
                 DynamicMesh.tryRemoveMesh(entityMeshView);
-                entityMeshView.setMesh(modelMesh);
+                modelMesh.addView(entityMeshView, isEntityHighlighted, !getController().getLightManager().isLightingAppliedToEntities());
                 entityMeshView.setCullFace(CullFace.BACK);
-                // TODO: Future: Register mesh properly once we redo MOF support to use the new system. (DynamicMesh.addMeshView)
 
                 // Update entity display material and such.
-                TextureMap textureSheet = modelMesh.getTextureMap();
                 if (isEntityHighlighted) {
-                    entityMeshView.setMaterial(textureSheet.getLitHighlightedMaterial());
                     registerUnlitEntity(entityMeshView);
                 } else {
-                    registerLitEntity(entity, entityMeshView, textureSheet);
+                    registerLitEntity(entity, entityMeshView);
                 }
 
                 return;
@@ -382,10 +378,9 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
             this.litEntityRenderList.remove(meshView);
     }
 
-    private void registerLitEntity(FroggerMapEntity entity, MeshView meshView, TextureMap textureSheet) {
+    private void registerLitEntity(FroggerMapEntity entity, MeshView meshView) {
         FroggerUIMapLightManager lightManager = getController().getLightManager();
         boolean lightingEnabled = lightManager.isLightingAppliedToEntities();
-        meshView.setMaterial(lightingEnabled ? textureSheet.getBlurryLitMaterial() : textureSheet.getUnlitSharpMaterial());
         if (lightingEnabled) {
             lightManager.setAmbientLightingMode(meshView, !entity.getConfig().isAtOrBeforeBuild40() && "CHECKPOINT".equals(entity.getTypeName())); // 'CHECKPOINT' is valid starting from PSX Alpha to retail.
         } else {

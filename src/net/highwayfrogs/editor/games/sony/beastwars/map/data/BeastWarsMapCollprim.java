@@ -7,7 +7,6 @@ import net.highwayfrogs.editor.games.sony.beastwars.map.BeastWarsMapFile;
 import net.highwayfrogs.editor.games.sony.shared.collprim.CollprimShapeAdapter;
 import net.highwayfrogs.editor.games.sony.shared.collprim.ICollprimEditorUI;
 import net.highwayfrogs.editor.games.sony.shared.collprim.MRCollprim;
-import net.highwayfrogs.editor.games.sony.shared.ui.file.MOFController;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MeshUIManager;
 import net.highwayfrogs.editor.utils.NumberUtils;
@@ -80,14 +79,7 @@ public class BeastWarsMapCollprim extends MRCollprim {
     }
 
     @Override
-    protected void setupMatrixCreator(MOFController controller, CollprimShapeAdapter<?> adapter, GUIEditorGrid grid) {
-        grid.addButton("Create Matrix", () -> {
-            this.matrix = new PSXMatrix();
-            controller.updateCollprimBoxes(true, this); // Update the model display and UI.
-        });
-    }
-
-    @Override
+    @SuppressWarnings({"unchecked", "rawtypes"})
     protected <TManager extends MeshUIManager<?> & ICollprimEditorUI> void setupMatrixCreator(TManager manager, CollprimShapeAdapter<?> adapter, GUIEditorGrid grid) {
         grid.addButton("Create Matrix", () -> {
             this.matrix = new PSXMatrix();
