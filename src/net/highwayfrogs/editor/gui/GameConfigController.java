@@ -373,6 +373,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
             super(null);
             this.parentController = parentController;
             this.gameConfigClass = gameConfigClass;
+            this.gameType = parentController.getSelectedGameType();
         }
 
         /**
