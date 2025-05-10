@@ -4,6 +4,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import lombok.Getter;
+import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
@@ -121,7 +122,10 @@ public abstract class PSXShadingEditor<TShadeTarget> {
     }
 
     protected void updatePreviewImage(BufferedImage newShadedImage) {
-        if (this.shadeDefinition != null && newShadedImage != null) {
+        if (this.shadeDefinition != null) {
+            if (newShadedImage == null) // If this isn't displayed, it's not possible to assign new textures to untextured polygons.
+                newShadedImage = UnknownTextureSource.MAGENTA_INSTANCE.makeImage();
+
             this.previewImageView.setImage(FXUtils.toFXImage(ImageWorkHorse.resizeImage(newShadedImage, (int) this.previewImageView.getFitWidth(), (int) this.previewImageView.getFitHeight(), true), false));
         } else {
             this.previewImageView.setImage(null);

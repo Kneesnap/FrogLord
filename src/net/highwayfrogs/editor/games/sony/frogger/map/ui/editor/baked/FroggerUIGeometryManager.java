@@ -513,14 +513,16 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
         @Override
         protected void selectNewTexture(ITextureSource oldTextureSource) {
             TextureRemapArray remapArray = getManager().getMap().getTextureRemap();
-            if (remapArray == null)
+            if (remapArray == null) {
+                FXUtils.makePopUp("There is no texture remap available to assign textures from.", AlertType.ERROR);
                 return;
+            }
 
             // Resolve VLO.
             VLOArchive vloArchive = oldTextureSource instanceof GameImage ? ((GameImage) oldTextureSource).getParent() : null;
             if (vloArchive == null)
                 vloArchive = getManager().getMap().getVloFile();
-            if (vloArchive == null || getEditTarget() == null)
+            if (getEditTarget() == null)
                 return;
 
             remapArray.askUserToSelectImage(vloArchive, false, selectedImage -> {
