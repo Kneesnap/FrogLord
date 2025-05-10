@@ -119,9 +119,12 @@ public class FrogLordApplication extends Application {
             Utils.handleError(null, throwable, true, "An unhandled error occurred on %s. (SHOULDN'T OCCUR????)", thread);
         }
     }
-    
+
+    /**
+     * Called when FrogLord shuts down.
+     */
     @SuppressWarnings("CallToPrintStackTrace")
-    private static void onShutdown() {
+    public static void onShutdown() {
         Logger.getLogger(FrogLordApplication.class.getSimpleName()).info("FrogLord is shutting down...");
         saveMainConfig();
         
