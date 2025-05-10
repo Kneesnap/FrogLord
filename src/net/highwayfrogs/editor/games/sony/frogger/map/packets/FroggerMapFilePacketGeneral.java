@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.packets;
 
+import javafx.scene.control.Alert.AlertType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
@@ -10,11 +11,15 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack;
+import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapGeneralManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
+import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -34,9 +39,9 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
     private final SVector defaultCameraTargetOffset = new SVector(); // Further usage described below.
     // FrogInitCustomAmbient adds 128 to these to create a color.
     // I don't see any good reason these are shorts and not bytes, so we'll represent them as bytes.
-    private short frogRedLighting;
-    private short frogGreenLighting;
-    private short frogBlueLighting;
+    private byte frogRedLighting = -0x80; // (0x80 when treated as unsigned)
+    private byte frogGreenLighting = -0x80; // (0x80 when treated as unsigned)
+    private byte frogBlueLighting = -0x80; // (0x80 when treated as unsigned)
 
     // Camera offsets are used for several different things:
     // The height in ORG when there are at least 2 players is multiplied by 1.5x in InitialiseCameras()
@@ -82,15 +87,28 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
         }
 
         if (hasFrogColorData()) {
-            this.frogRedLighting = reader.readShort();
-            this.frogGreenLighting = reader.readShort();
-            this.frogBlueLighting = reader.readShort();
+            short blue = reader.readShort(); // Despite the game labelling this red, it seems to actually be blue.
+            short green = reader.readShort();
+            short red = reader.readShort(); // Despite the game labelling this blue, it seems to actually be red.
             reader.skipBytesRequireEmpty(Constants.SHORT_SIZE); // Padding
+
+            // Load the color values the same way the game will.
+            // Important to use addition instead of bitwise OR.
+            loadFrogLightingFromBgr(((blue + 0x80) << 16) + ((green + 0x80) << 8) + (red + 0x80));
         }
+    }
+
+    private void loadFrogLightingFromBgr(int bgrValue) {
+        this.frogBlueLighting = (byte) ((bgrValue >>> 16) & 0xFF);
+        this.frogGreenLighting = (byte) ((bgrValue >>> 8) & 0xFF);
+        this.frogRedLighting = (byte) (bgrValue & 0xFF);
     }
 
     @Override
     protected void saveBodyFirstPass(DataWriter writer) {
+        if (!doesStartTileLookValid())
+            FXUtils.makePopUp("The player start position for " + getParentFile().getFileDisplayName() + " is invalid. This may cause problems in-game.", AlertType.ERROR);
+
         writer.writeUnsignedShort(this.startGridCoordX);
         writer.writeUnsignedShort(this.startGridCoordZ);
         writer.writeShort((short) (this.startRotation != null ? this.startRotation : FroggerMapStartRotation.NORTH).ordinal());
@@ -115,9 +133,14 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
         }
 
         if (hasFrogColorData()) {
-            writer.writeShort(this.frogRedLighting);
-            writer.writeShort(this.frogGreenLighting);
-            writer.writeShort(this.frogBlueLighting);
+            short naiveBlue = (short) (((this.frogBlueLighting & 0xFF) - 0x80) & 0xFF);
+            short naiveGreen = (short) (((this.frogGreenLighting & 0xFF) - 0x80) & 0xFF);
+            short realRed = (short) (((this.frogRedLighting & 0xFF) - 0x80) & 0xFF);
+            int greenOverflow = (realRed >= 0x80) ? 1 : 0;
+            int blueOverflow = (naiveGreen >= 0x80 || ((naiveGreen - greenOverflow) & 0xFF) >= 0x80) ? 1 : 0;
+            writer.writeShort((short) ((naiveBlue - blueOverflow) & 0xFF)); // Despite the game labelling this red, it seems to actually be blue.
+            writer.writeShort((short) ((naiveGreen - greenOverflow) & 0xFF));
+            writer.writeShort(realRed); // Despite the game labelling this blue, it seems to actually be red.
             writer.writeNull(Constants.SHORT_SIZE); // Unused padding.
         }
     }
@@ -137,7 +160,7 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
         propertyList.add("Start Grid Coordinates", "[" + this.startGridCoordX + ", " + this.startGridCoordZ + "]");
         propertyList.add("Start Grid Rotation", (this.startRotation != null ? this.startRotation.name() + " (" + this.startRotation.getArrow() + ")" : "null"));
         if (hasFrogColorData())
-            propertyList.add("Frog Ambient Lighting", "<red=" + (this.frogRedLighting + 0x80) + ",green=" + (this.frogGreenLighting + 0x80) + ",blue=" + (this.frogBlueLighting + 0x80) + ">");
+            propertyList.add("Frog Ambient Lighting", "<red=" + (this.frogRedLighting & 0xFF) + ",green=" + (this.frogGreenLighting & 0xFF) + ",blue=" + (this.frogBlueLighting & 0xFF) + ">");
         return propertyList;
     }
 
@@ -163,11 +186,19 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
     }
 
     /**
+     * Test if the frog color data is in a state where it impacts rendering.
+     */
+    public boolean isFrogColorDataActive() {
+        return hasFrogColorData() && (this.frogRedLighting != -0x80 || this.frogGreenLighting != -0x80 || this.frogBlueLighting != -0x80);
+    }
+
+    /**
      * Creates an editor for the data in this packet.
-     * @param controller The controller to create the editor under.
+     * @param manager The manager to create the editor under.
      * @param editor The editor grid to create the editor UI with.
      */
-    public void setupEditor(MeshViewController<?> controller, GUIEditorGrid editor) {
+    public void setupEditor(FroggerUIMapGeneralManager manager, GUIEditorGrid editor) {
+        MeshViewController<?> controller = manager.getController();
         // Add map theme / level timer.
         if (!isAprilFormat()) {
             editor.addLabel("Theme", getParentFile().getMapTheme().name()); // Should look into whether this is ok to edit.
@@ -175,10 +206,30 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
         }
 
         // Add start tile / rotation data.
-        editor.addUnsignedShortField("Start xTile", this.startGridCoordX, newStartGridCoordX -> this.startGridCoordX = newStartGridCoordX);
-        editor.addUnsignedShortField("Start zTile", this.startGridCoordZ, newStartGridCoordZ -> this.startGridCoordZ = newStartGridCoordZ);
-        editor.addEnumSelector("Start Rotation", this.startRotation, FroggerMapStartRotation.values(), false, newStartRotation -> this.startRotation = newStartRotation)
-                .setConverter(new AbstractStringConverter<>(FroggerMapStartRotation::getArrow));
+        editor.addUnsignedShortField("Start xTile", this.startGridCoordX,
+                newX -> !doesStartTileLookValid() || testStartTileLooksValid(newX, this.startGridCoordZ), newX -> {
+            this.startGridCoordX = newX;
+            manager.updatePlayerCharacter();
+        });
+        editor.addUnsignedShortField("Start zTile", this.startGridCoordZ,
+                newZ -> !doesStartTileLookValid() || testStartTileLooksValid(this.startGridCoordX, newZ), newZ -> {
+            this.startGridCoordZ = newZ;
+            manager.updatePlayerCharacter();
+        });
+        editor.addEnumSelector("Start Rotation", this.startRotation, FroggerMapStartRotation.values(), false,
+                        newStartRotation -> {
+            this.startRotation = newStartRotation;
+            manager.updatePlayerCharacter();
+        }).setConverter(new AbstractStringConverter<>(FroggerMapStartRotation::getArrow));
+
+        // Add frog lighting data.
+        if (hasFrogColorData()) {
+            editor.addColorPicker("Ambient Frog Color", getAmbientFrogColorAsRgb(), newRgb -> {
+                loadFrogLightingFromBgr(ColorUtils.swapRedBlue(newRgb));
+                manager.getFrogLight().setColor(ColorUtils.fromRGB(newRgb, 1F));
+                manager.updatePlayerCharacterLighting();
+            });
+        }
 
         // Add camera data.
         if (hasCameraData()) {
@@ -191,14 +242,27 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
                 editor.addFloatVector("Camera Target", this.defaultCameraTargetOffset, null, controller, gridOrigin.defaultBits(), gridOrigin, null, null);
             }
         }
+    }
 
-        // Add frog lighting data.
-        if (hasFrogColorData()) {
-            // TODO: Go over this data. Which maps is it used in? How can we preview this, adding the frog model to the level? (This would be good just for previewing the start position & rotation anyways) Make an ideal editor.
-            editor.addSignedByteField("Ambient Red", (byte) this.frogRedLighting, newFrogRedLighting -> this.frogRedLighting = newFrogRedLighting).setDisable(true);
-            editor.addSignedByteField("Ambient Green", (byte) this.frogGreenLighting, newFrogGreenLighting -> this.frogGreenLighting = newFrogGreenLighting).setDisable(true);
-            editor.addSignedByteField("Ambient Blue", (byte) this.frogBlueLighting, newFrogBlueLighting -> this.frogBlueLighting = newFrogBlueLighting).setDisable(true);
-        }
+    /**
+     * Gets the ambient frog color as an RGB value.
+     * @return rgbValue
+     */
+    public int getAmbientFrogColorAsRgb() {
+        return ColorUtils.toRGB(this.frogRedLighting, this.frogGreenLighting, this.frogBlueLighting);
+    }
+    
+    private boolean doesStartTileLookValid() {
+        return testStartTileLooksValid(this.startGridCoordX, this.startGridCoordZ);
+    }
+
+    private boolean testStartTileLooksValid(int newStartX, int newStartZ) {
+        FroggerMapFilePacketGrid gridPacket = getParentFile().getGridPacket();
+        if (newStartX < 0 || newStartZ < 0 || newStartX >= gridPacket.getGridXCount() || newStartZ >= gridPacket.getGridZCount())
+            return false;
+
+        FroggerGridStack gridStack = gridPacket.getGridStack(newStartX, newStartZ);
+        return gridStack.getGridSquares().size() > 0;
     }
 
     /**
@@ -208,11 +272,42 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
     @Getter
     @AllArgsConstructor
     public enum FroggerMapStartRotation {
-        NORTH("↑"), // 0
-        EAST("→"), // 1
-        SOUTH("↓"), // 2
-        WEST("←"); // 3
+        NORTH("↑", 0F), // 0
+        EAST("→", 90F), // 1
+        SOUTH("↓", 180F), // 2
+        WEST("←", 270F); // 3
 
         private final String arrow;
+        private final float rotationInDegrees;
+    }
+
+    /**
+     * Tests the color loading & saving logic works for all possible colors.
+     */
+    @SuppressWarnings("unused")
+    private static void testColorLoadingAndSaving() {
+        for (short blue = 0; blue < 256; blue++) {
+            for (short green = 0; green < 256; green++) {
+                for (short red = 0; red < 256; red++) {
+                    // Load the color values the same way the game will.
+                    // Important to use addition instead of bitwise OR.
+                    int bgrValue = (((blue + 0x80) << 16) + ((green + 0x80) << 8) + (red + 0x80));
+                    byte blueLighting = (byte) ((bgrValue >>> 16) & 0xFF);
+                    byte greenLighting = (byte) ((bgrValue >>> 8) & 0xFF);
+                    byte redLighting = (byte) (bgrValue & 0xFF);
+
+                    short naiveBlue = (short) (((blueLighting & 0xFF) - 0x80) & 0xFF);
+                    short naiveGreen = (short) (((greenLighting & 0xFF) - 0x80) & 0xFF);
+                    short realRed = (short) (((redLighting & 0xFF) - 0x80) & 0xFF);
+                    int greenOverflow = (realRed >= 0x80) ? 1 : 0;
+                    int blueOverflow = (naiveGreen >= 0x80 || ((naiveGreen - greenOverflow) & 0xFF) >= 0x80) ? 1 : 0;
+                    short realGreen = (short) ((naiveGreen - greenOverflow) & 0xFF);
+                    short realBlue = (short) ((naiveBlue - blueOverflow) & 0xFF);
+                    int finalBgrValue = (((realBlue + 0x80) << 16) + ((realGreen + 0x80) << 8) + (realRed + 0x80));
+                    if ((bgrValue & 0xFFFFFF) != (finalBgrValue & 0xFFFFFF))
+                        Utils.getInstanceLogger().warning("Color mismatch! [%02X,%02X,%02X/%06X] -> [%02X,%02X,%02X] -> [%02X,%02X,%02X/%06X] (Naive Green: %02X, Green Overflow: %d, Naive Blue: %02X, Blue Overflow: %d)", blue, green, red, bgrValue, blueLighting & 0xFF, greenLighting & 0xFF, redLighting & 0xFF, realBlue, realGreen, realRed, finalBgrValue, naiveGreen, greenOverflow, naiveBlue, blueOverflow);
+                }
+            }
+        }
     }
 }

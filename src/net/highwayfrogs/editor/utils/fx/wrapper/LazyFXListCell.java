@@ -4,6 +4,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.function.BiFunction;
@@ -140,7 +141,7 @@ public class LazyFXListCell<T> extends ListCell<T> {
             }
         } catch (Throwable th) {
             Utils.handleError(null, th, false);
-            tooltip = new Tooltip("<ERROR: " + Utils.getSimpleName(th) + "/" + getIndex() + "/" + selection + ">");
+            tooltip = FXUtils.createTooltip("<ERROR: " + Utils.getSimpleName(th) + "/" + getIndex() + "/" + selection + ">");
         }
 
         setTooltip(tooltip);

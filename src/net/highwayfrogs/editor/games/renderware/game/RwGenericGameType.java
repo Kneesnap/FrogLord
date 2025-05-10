@@ -56,20 +56,24 @@ public class RwGenericGameType implements IGameType {
     }
 
     @Override
-    public RwGenericGameConfigUI setupConfigUI(GameConfigController controller, GameConfig gameConfig, Config config) {
-        return new RwGenericGameConfigUI(controller, gameConfig, config);
+    public RwGenericGameConfigUI setupConfigUI(GameConfigController controller) {
+        return new RwGenericGameConfigUI(controller);
     }
 
     /**
      * The UI definition for the game.
      */
-    public static class RwGenericGameConfigUI extends GameConfigUIController {
+    public static class RwGenericGameConfigUI extends GameConfigUIController<GameConfig> {
         private final GameConfigFolderBrowseComponent binFileBrowseComponent;
 
-        public RwGenericGameConfigUI(GameConfigController controller, GameConfig gameConfig, Config config) {
-            super(controller, gameConfig);
-            this.binFileBrowseComponent = new GameConfigFolderBrowseComponent(this, config, CONFIG_MAIN_FOLDER_PATH, "Game Data Folder", "Please locate the folder containing RenderWare game files", false);
-            loadController(null);
+        public RwGenericGameConfigUI(GameConfigController controller) {
+            super(controller, GameConfig.class);
+            this.binFileBrowseComponent = new GameConfigFolderBrowseComponent(this, CONFIG_MAIN_FOLDER_PATH, "Game Data Folder", "Please locate the folder containing RenderWare game files", null);
+        }
+
+        @Override
+        protected void onChangeGameConfig(GameConfig oldGameConfig, Config oldEditorConfig, GameConfig newGameConfig, Config newEditorConfig) {
+            this.binFileBrowseComponent.resetFolderPath();
         }
 
         @Override

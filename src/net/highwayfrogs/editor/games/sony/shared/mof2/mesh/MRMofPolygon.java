@@ -3,10 +3,8 @@ package net.highwayfrogs.editor.games.sony.shared.mof2.mesh;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.psx.shading.PSXTextureShader;
@@ -19,6 +17,8 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.ui.mesh.MRModelMesh;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.mesh.MRModelMesh.MRMofShadedTextureManager;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.AppendInfoLoggerWrapper;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
@@ -86,17 +86,10 @@ public class MRMofPolygon extends SCGameData<SCGameInstance> {
     public void load(DataReader reader) {
         this.lastReadAddress = reader.getIndex();
 
-        // Read vertices.
-        for (int i = 0; i < this.vertices.length; i++)
-            this.vertices[i] = reader.readUnsignedShortAsInt();
-
-        // Read environment normals.
-        for (int i = 0; i < this.environmentNormals.length; i++)
-            this.environmentNormals[i] = reader.readUnsignedShortAsInt();
-
-        // Read normals.
-        for (int i = 0; i < this.normals.length; i++)
-            this.normals[i] = reader.readUnsignedShortAsInt();
+        // Read core data.
+        readSwappedArray(reader, this.vertices);
+        readSwappedArray(reader, this.environmentNormals);
+        readSwappedArray(reader, this.normals);
 
         // Read texture data.
         if (this.polygonType.isTextured()) {
@@ -124,7 +117,6 @@ public class MRMofPolygon extends SCGameData<SCGameInstance> {
         short textureId = reader.readShort();
         if (textureId != 0)
             throw new RuntimeException("MOFPolyTexture had texture id which was not zero! (" + textureId + ").");
-
 
         if (this.textureUvs.length > 3) {
             this.textureUvs[3].load(reader); // This swap can be seen in MR_MESH.C/MRUpdateViewportMeshInstancesAnimatedPolys.
@@ -154,18 +146,9 @@ public class MRMofPolygon extends SCGameData<SCGameInstance> {
     @Override
     public void save(DataWriter writer) {
         this.lastWriteAddress = writer.getIndex();
-
-        // Write vertices.
-        for (int i = 0; i < this.vertices.length; i++)
-            writer.writeUnsignedShort(this.vertices[i]);
-
-        // Write environment normals.
-        for (int i = 0; i < this.environmentNormals.length; i++)
-            writer.writeUnsignedShort(this.environmentNormals[i]);
-
-        // Write normals.
-        for (int i = 0; i < this.normals.length; i++)
-            writer.writeUnsignedShort(this.normals[i]);
+        writeSwappedArray(writer, this.vertices);
+        writeSwappedArray(writer, this.environmentNormals);
+        writeSwappedArray(writer, this.normals);
 
         // Write texture data.
         if (this.polygonType.isTextured()) {
@@ -218,13 +201,13 @@ public class MRMofPolygon extends SCGameData<SCGameInstance> {
     /**
      * Gets the active texture on this polygon.
      */
-    public GameImage getTexture(MRMofTextureAnimation animation, int frame) {
+    public GameImage getTexture(MRMofTextureAnimation animation, int animationTick) {
         if (!this.polygonType.isTextured())
             return null;
 
         short globalTextureId = this.textureId;
         if (this.mofPart != null && animation != null) {
-            MRMofTextureAnimationEntry animationEntry = animation.getEntryForFrame(frame);
+            MRMofTextureAnimationEntry animationEntry = animation.getEntryForFrame(animationTick);
             if (animationEntry != null)
                 globalTextureId = animationEntry.getGlobalImageId();
         }
@@ -273,7 +256,7 @@ public class MRMofPolygon extends SCGameData<SCGameInstance> {
     /**
      * Creates a texture shade definition for this polygon.
      */
-    public PSXShadeTextureDefinition createPolygonShadeDefinition(MRModelMesh mesh, boolean shadingEnabled, MRMofTextureAnimation animation, int frame) {
+    public PSXShadeTextureDefinition createPolygonShadeDefinition(MRModelMesh mesh, boolean shadingEnabled, MRMofTextureAnimation animation, int animationTick) {
         SCByteTextureUV[] uvs = null;
         if (this.polygonType.isTextured()) {
             uvs = new SCByteTextureUV[this.textureUvs.length];
@@ -282,13 +265,37 @@ public class MRMofPolygon extends SCGameData<SCGameInstance> {
         }
 
         // Determine the texture.
-        ITextureSource textureSource = getTexture(animation, frame);
+        ITextureSource textureSource = getTexture(animation, animationTick);
 
         // Clone colors.
         CVector[] colors = new CVector[1];
-        colors[0] = shadingEnabled ? this.color.clone() : PSXTextureShader.UNSHADED_COLOR;
+        colors[0] = shadingEnabled || !this.polygonType.isTextured() ? this.color.clone() : PSXTextureShader.UNSHADED_COLOR;
 
         MRMofShadedTextureManager shadedTextureManager = mesh != null ? mesh.getShadedTextureManager() : null;
         return new PSXShadeTextureDefinition(shadedTextureManager, this.polygonType.getInternalType(), textureSource, colors, uvs, isSemiTransparent(), true);
+    }
+
+    private static void readSwappedArray(DataReader reader, int[] array) {
+        if (array.length == 4) {
+            array[0] = reader.readUnsignedShortAsInt();
+            array[1] = reader.readUnsignedShortAsInt();
+            array[3] = reader.readUnsignedShortAsInt();
+            array[2] = reader.readUnsignedShortAsInt();
+        } else {
+            for (int i = 0; i < array.length; i++)
+                array[i] = reader.readUnsignedShortAsInt();
+        }
+    }
+
+    private static void writeSwappedArray(DataWriter writer, int[] array) {
+        if (array.length == 4) {
+            writer.writeUnsignedShort(array[0]);
+            writer.writeUnsignedShort(array[1]);
+            writer.writeUnsignedShort(array[3]);
+            writer.writeUnsignedShort(array[2]);
+        } else {
+            for (int i = 0; i < array.length; i++)
+                writer.writeUnsignedShort(array[i]);
+        }
     }
 }

@@ -51,8 +51,8 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
         this.meshViewCollection.setMesh(getMesh().getActualMesh());
 
         super.setupBindings(subScene3D, meshView);
-        getFirstPersonCamera().getCamera().setNearClip(DEFAULT_NEAR_CLIP);
-        getFirstPersonCamera().getCamera().setFarClip(DEFAULT_FAR_CLIP);
+        getCamera().setNearClip(DEFAULT_NEAR_CLIP);
+        getCamera().setFarClip(DEFAULT_FAR_CLIP);
         getFirstPersonCamera().setDefaultMoveSpeed(DEFAULT_MOVEMENT_SPEED);
         getComboBoxMeshCullFace().setValue(CullFace.NONE); // Great Quest has no back-face culling.
 

@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataMatrix;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -47,6 +48,7 @@ public class FroggerEntityDataLogSnake extends FroggerEntityDataMatrix {
 
             return true;
         }, newLogId -> this.logId = newLogId);
-        editor.addUnsignedFixedShort("Speed", this.speed, newSpeed -> this.speed = newSpeed, 2184);
+        editor.addUnsignedFixedShort("Speed", this.speed, newSpeed -> this.speed = newSpeed, 2184.5)
+                .setTooltip(FXUtils.createTooltip("How fast along the log the snake moves. Seems to be roughly measured in grid squares per second."));
     }
 }

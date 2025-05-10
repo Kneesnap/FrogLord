@@ -27,6 +27,24 @@ public class NameBank {
     }
 
     /**
+     * Gets the index safely for the given name.
+     * @param name The name to get the index from.
+     * @return index, or -1
+     */
+    public int getIndexForName(String name) {
+        if (name == null)
+            throw new NullPointerException("name");
+
+        for (int i = 0; i < this.names.size(); i++) {
+            String testName = this.names.get(i);
+            if (name.equalsIgnoreCase(testName))
+                return i;
+        }
+
+        return -1;
+    }
+
+    /**
      * Gets the name safely for the given index.
      * @param id The index to get.
      * @return name

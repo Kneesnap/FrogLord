@@ -93,7 +93,7 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
     public void addChildControllers(ObservableList<Node> parentNodes) {
         for (int i = 0; i < this.childControllers.size(); i++) {
             GameUIController<?> uiController = this.childControllers.get(i);
-            if (uiController.getRootNode() != null)
+            if (uiController.getRootNode() != null && !parentNodes.contains(uiController.getRootNode()))
                 parentNodes.add(uiController.getRootNode());
         }
     }

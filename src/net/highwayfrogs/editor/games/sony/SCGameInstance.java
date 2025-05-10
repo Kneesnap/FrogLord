@@ -3,15 +3,10 @@ package net.highwayfrogs.editor.games.sony;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.utils.data.reader.ArraySource;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.reader.FileSource;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
-import net.highwayfrogs.editor.utils.data.writer.FixedArrayReceiver;
 import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.games.shared.basic.GameBuildInfo;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
@@ -23,6 +18,12 @@ import net.highwayfrogs.editor.games.sony.shared.ui.SCMainMenuUIController;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.ArraySource;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.FileSource;
+import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.writer.FixedArrayReceiver;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -717,6 +718,12 @@ public abstract class SCGameInstance extends GameInstance {
         return mwdFile;
     }
 
+    private byte[] writeConfigToExecutable(byte[] executableBytes) {
+        net.highwayfrogs.editor.system.Config rootConfig = new net.highwayfrogs.editor.system.Config(null);
+        rootConfig.addChildConfig(new GameBuildInfo<>(this).toConfig());
+        return FileUtils.saveConfigDataToExecutable(this, executableBytes, rootConfig);
+    }
+
     /**
      * Saves the cached executable bytes with any modifications applied to a file.
      * @param outputFile         The file to save to.
@@ -728,7 +735,7 @@ public abstract class SCGameInstance extends GameInstance {
             writeExecutableData(getArchiveIndex());
 
         byte[] data = getExecutableBytes();
-        data = this.getVersionConfig().applyConfigIdentifier(data);
+        data = writeConfigToExecutable(data);
 
         // Write file.
         FileUtils.deleteFile(outputFile);

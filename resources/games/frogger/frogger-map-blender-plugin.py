@@ -40,6 +40,8 @@ import random
 import re
 import io
 from datetime import datetime
+from mathutils import Vector
+import addon_utils
 
 # ImportHelper is a helper class, defines filename and
 # invoke() function which calls the file selector.
@@ -90,21 +92,37 @@ def create_material_node(nodes, node_type):
     nodes.new(type=node_type)
     return id
 
+# A note on the different rendering engines.
+# Vertex colors are great! It's really nice we finally have a good way of editing them.
+# Unfortunately, Blender uses the vertex color of 0, 0, 0 when rendering material previews.
+# Because the vertex color is multiplied against the texture color, this always results in a fully black material preview.
+# More Information: https://blenderartists.org/t/help-fixing-black-incorrect-material-preview/1592069
+
+# The solution to this really sucks, but it's to have different shaders for different rendering engines.
+# By setting the scene to render with the 'CYCLES' engine, the material previews will render with 'EEVEE', while the scene renders with 'CYCLES'.
+# By doing that, we can have a different engine used for the material previews than the one used to draw the scene.
+# I'm not entirely sure why that works, since you'd think setting the scene to use the 'CYCLES' engine would make it... render with the cycles engine in the main viewport.
+# Buuuut, it seems to work so I guess I can't really complain.
+
+# Other Options:
+# - Open Shading Language https://docs.blender.org/manual/en/latest/render/shader_nodes/osl.html (Might be able to write a custom shader?).
+#  - Perhaps there's some way we can tell if we're rendering for a material preview or not. Worst case scenario we can treat pure black as pure white.
+
 # Create shading material definition.
-def create_shaded_material(material, folder, test_file):
+def create_shaded_material(material, folder, file_name):
+    texture_file_path = os.path.join(folder, file_name)
+    if not os.path.exists(texture_file_path):
+        raise Exception("Could not find the texture file '%s', was the .ffs file moved to a folder without its textures?" % file_name)
+
     clear_material(material)
+    material.preview_render_type = 'FLAT'
     material.use_nodes = True
 
     # To understand what this function does, check out the 'Shading' tab in Blender.
     nodes = material.node_tree.nodes
     links = material.node_tree.links
-
-    # Create the nodes. (All together to avoid object reference invalidation.)
-    gouraud_mixer = create_material_node(nodes, 'ShaderNodeMix')
-    texture = create_material_node(nodes, 'ShaderNodeTexImage')
-    color_doubler = create_material_node(nodes, 'ShaderNodeMix')
-    value_two = create_material_node(nodes, 'ShaderNodeValue')
-    vertex_color_input = create_material_node(nodes, 'ShaderNodeVertexColor')
+    
+    # Get or create default nodes.
     if nodes.get('Principled BSDF') is None: # By default, this node exists.
         principled_bsdf = create_material_node(nodes, 'ShaderNodeBsdfPrincipled')
         nodes[principled_bsdf].name = 'Principled BSDF'
@@ -112,7 +130,21 @@ def create_shaded_material(material, folder, test_file):
         material_output = create_material_node(nodes, 'ShaderNodeOutputMaterial')
         nodes[material_output].name = 'Material Output'
 
+    # Create the nodes. (All together to avoid object reference invalidation.)
+    gouraud_mixer = create_material_node(nodes, 'ShaderNodeMix')
+    texture = create_material_node(nodes, 'ShaderNodeTexImage')
+    color_doubler = create_material_node(nodes, 'ShaderNodeMix')
+    value_two = create_material_node(nodes, 'ShaderNodeValue')
+    vertex_color_input = create_material_node(nodes, 'ShaderNodeVertexColor')
+    preview_output = create_material_node(nodes, 'ShaderNodeOutputMaterial')
+
     # Build the shader graph.
+    nodes.get('Material Output').location_absolute = Vector((330.0, 201.0))
+    nodes.get('Material Output').target = 'EEVEE' # See above.
+    
+    nodes[preview_output].name = 'Material Preview Output'
+    nodes[preview_output].location_absolute = Vector((330.0, -45.0))
+    nodes[preview_output].target = 'CYCLES' # See above
 
     # The purpose of this node is to allow passing a surface to the output instead of just an RGB color.
     # Or in other words, it allows us to use the texture alpha.
@@ -124,30 +156,54 @@ def create_shaded_material(material, folder, test_file):
     principled_bsdf.inputs["Metallic"].default_value = 0.0
     principled_bsdf.inputs["Roughness"].default_value = 1.0
     principled_bsdf.inputs["IOR"].default_value = 1.0
+    principled_bsdf.location_absolute = Vector((30.0, 179.0))
     links.new(principled_bsdf.outputs['BSDF'], nodes.get('Material Output').inputs['Surface'])
 
     nodes[gouraud_mixer].blend_type = 'MULTIPLY' # https://docs.blender.org/api/current/bpy_types_enum_items/ramp_blend_items.html#rna-enum-ramp-blend-items
     nodes[gouraud_mixer].data_type = 'RGBA'
     nodes[gouraud_mixer].inputs["Factor"].default_value = 1.0
+    nodes[gouraud_mixer].location_absolute = Vector((-156, 295.5))
     links.new(nodes[gouraud_mixer].outputs['Result'], principled_bsdf.inputs['Base Color'])
 
-    nodes[texture].image = bpy.data.images.load(folder + os.path.sep + test_file)
+    nodes[texture].image = bpy.data.images.load(texture_file_path)
     nodes[texture].extension = 'EXTEND' # Extend repeating edge pixels of the image.
     nodes[texture].interpolation = 'Closest' # Disable interpolation.
+    nodes[texture].location_absolute = Vector((-457.75, -79))
     links.new(nodes[texture].outputs['Color'], nodes[gouraud_mixer].inputs['B'])
     links.new(nodes[texture].outputs['Alpha'], principled_bsdf.inputs['Alpha'])
+    links.new(nodes[texture].outputs['Color'], nodes[preview_output].inputs['Surface'])
 
     nodes[color_doubler].blend_type = 'MULTIPLY' # https://docs.blender.org/api/current/bpy_types_enum_items/ramp_blend_items.html#rna-enum-ramp-blend-items
     nodes[color_doubler].data_type = 'RGBA'
     nodes[color_doubler].inputs["Factor"].default_value = 1.0
+    nodes[color_doubler].location_absolute = Vector((-360.5, 211.5))
     links.new(nodes[color_doubler].outputs['Result'], nodes[gouraud_mixer].inputs['A'])
 
     nodes[value_two].outputs["Value"].default_value = 4.0 # I'm not entirely sure why 2.0x doesn't work, but 4.0x does seem to work.
+    nodes[value_two].location_absolute = Vector((-600.25, 30.25))
     links.new(nodes[value_two].outputs["Value"], nodes[color_doubler].inputs['B'])
 
     nodes[vertex_color_input].layer_name = VERTEX_COLOR_LAYER_NAME
+    #nodes[vertex_color_input].outputs['Color'].default_value = (1.0, 1.0, 1.0, 1.0) # This doesn't fix material previews like I'd hoped, but I'll keep it here as a reminder how to set default values.
+    nodes[vertex_color_input].location_absolute = Vector((-583.5, 159.5))
     links.new(nodes[vertex_color_input].outputs['Color'], nodes[color_doubler].inputs['A'])
 
+# Gets the frogger texture ID for the given material.
+FROGGER_NO_TEXTURE_ID = -2
+FROGGER_UNKNOWN_TEXTURE_ID = -1
+def get_frogger_texture_id(material):
+    if material is None:
+        return FROGGER_NO_TEXTURE_ID
+
+    material_texture_id = material.frogger_data.texture_id
+    if material_texture_id >= 0 or material_texture_id == FROGGER_NO_TEXTURE_ID:
+        return material_texture_id
+
+    name_match = re.fullmatch(r'tex([0-9]+)(\.([0-9]+))?', material.name, flags=re.IGNORECASE)
+    if name_match is not None:
+        return int(name_match.group(1))
+
+    return FROGGER_UNKNOWN_TEXTURE_ID
 
 def swap_blender_order(array):
     # Swaps between <Frogger Polygon Data Order> <-> <Blender Data Order>
@@ -176,10 +232,20 @@ def convert_grid_flags(blender_grid_flags):
         return blender_grid_flags
 
 def load_ffs_file(operator, context, filepath):
+    is_cycles_enabled, is_cycles_loaded = addon_utils.check('cycles')
+    if not is_cycles_loaded:
+        operator.report({"INFO"}, "Attempting to automatically enable 'CYCLES' rendering engine.")
+        success = addon_utils.enable('cycles', default_set=True)
+        if success:
+            operator.report({"INFO"}, "Enabled the 'CYCLES' rendering engine.")
+        else:
+            operator.report({"ERROR"}, "Failed to enable the 'CYCLES' rendering engine.")
+            return {'CANCELLED'}
+
     # Exit edit mode.
     # Edit mode prevents editing vertex color data.
     # Reference: https://blender.stackexchange.com/questions/122202/changing-vertex-colors-through-python
-    old_mode = bpy.context.active_object.mode
+    old_mode = bpy.context.active_object.mode if bpy.context.active_object else 'OBJECT'
     bpy.ops.object.mode_set(mode = 'OBJECT')
 
     # Delete old data. This prevented crashes previously, but I've maybe fixed the crash bug.
@@ -195,6 +261,8 @@ def load_ffs_file(operator, context, filepath):
     if mesh != obj.data:
         operator.report({"ERROR"}, "The object named '%s' MUST be attached to the mesh named '%s'!" % (LEVEL_OBJECT_NAME, LEVEL_MESH_NAME))
         return {'CANCELLED'}
+
+    bpy.context.scene.render.engine = 'CYCLES' # See above for an explanation of why the scene must use the CYCLES engine.
 
     # Read FFS file into list of commands.
     folder, file_name = os.path.split(filepath)
@@ -222,10 +290,27 @@ def load_ffs_file(operator, context, filepath):
 
     # Create a material for faces without textures.
     untextured_material = bpy.data.materials[UNTEXTURED_MATERIAL_NAME] if UNTEXTURED_MATERIAL_NAME in bpy.data.materials else bpy.data.materials.new(name=UNTEXTURED_MATERIAL_NAME)
-    untextured_material.diffuse_color = (1.0, 1.0, 1.0, 1.0)
-    untextured_material.specular_intensity = 0.0
-    untextured_material.frogger_data.texture_id = -2 # Mark as different from the default 'no texture ID' value.
+    untextured_material.frogger_data.texture_id = FROGGER_NO_TEXTURE_ID # Mark as different from the default 'no texture ID' value.
     untextured_material_id = len(mesh.materials)
+    untextured_material.use_nodes = True
+    clear_material(untextured_material)
+
+    untextured_material_nodes = untextured_material.node_tree.nodes
+    untextured_material_links = untextured_material.node_tree.links
+
+    # Create the nodes. (All together to avoid object reference invalidation.)
+    vertex_color_input = create_material_node(untextured_material_nodes, 'ShaderNodeVertexColor')
+    untextured_material_nodes[vertex_color_input].layer_name = VERTEX_COLOR_LAYER_NAME
+    untextured_material_nodes[vertex_color_input].location_absolute = Vector((0.0, 0.0))
+
+    if untextured_material_nodes.get('Material Output') is None: # By default, this node exists.
+        material_output = create_material_node(untextured_material_nodes, 'ShaderNodeOutputMaterial')
+        untextured_material_nodes[material_output].name = 'Material Output'
+    untextured_material_nodes.get('Material Output').location_absolute = Vector((175.0, 20.0))
+
+    # Setup.
+    untextured_material_links.new(untextured_material_nodes[vertex_color_input].outputs['Color'], untextured_material_nodes.get('Material Output').inputs['Surface'])
+    untextured_material.preview_render_type = 'FLAT'
     mesh.materials.append(untextured_material)
 
     # Process FFS File Commands.
@@ -353,9 +438,6 @@ def load_ffs_file(operator, context, filepath):
         for color_index in range(polygon.loop_total):
             mesh.vertex_colors[VERTEX_COLOR_LAYER_NAME].data[polygon.loop_start + color_index].color = colors[color_index] if len(colors) > 1 else colors[0]
 
-    # Update mesh.
-    mesh.update(calc_edges=True)
-
     # Apply data which blender doesn't support natively.
     bm = bmesh.new()
     bm.from_mesh(mesh)
@@ -369,16 +451,20 @@ def load_ffs_file(operator, context, filepath):
 
         bm.faces[i][texture_flag_layer] = texture_flags
         bm.faces[i][grid_flag_layer] = convert_grid_flags(grid_flags)
-        #bm.faces.ensure_lookup_table() # This is marked as needing to be called after adding/removing data in the sequence. However, I don't think we're actually adding data here.
 
     bm.to_mesh(mesh)
     bm.free()
 
-    # Finish Setup:
-    if not object_already_existed:
-        bpy.context.collection.objects.link(obj) # Add object to scene.
+    # Update mesh.
+    if mesh.validate(verbose=True, clean_customdata=True):
+        operator.report({"INFO"}, "Invalid geometry was automatically corrected/removed.")
+    mesh.update(calc_edges=True)
 
-    bpy.context.view_layer.objects.active = obj # Set the active object.
+    # Finish Setup:
+    if not obj in bpy.context.collection.objects.values():
+        bpy.context.collection.objects.link(obj) # Add object to scene.
+    if obj in bpy.context.view_layer.objects.values():
+        bpy.context.view_layer.objects.active = obj # Set the active object.
     obj.select_set(True) # Select the object.
 
     # [AE] Set initial rendering modes, etc.
@@ -411,7 +497,7 @@ def save_ffs_file(operator, context, filepath):
     # Exit edit mode.
     # Edit mode prevents accessing vertex color data.
     # Reference: https://blender.stackexchange.com/questions/122202/changing-vertex-colors-through-python
-    old_mode = bpy.context.active_object.mode
+    old_mode = bpy.context.active_object.mode if bpy.context.active_object else 'OBJECT'
     bpy.ops.object.mode_set(mode = 'OBJECT')
 
     mesh = bpy.data.meshes[LEVEL_MESH_NAME]
@@ -460,10 +546,14 @@ def save_ffs_file(operator, context, filepath):
     writer.write('\n')
 
     # Write textures.
+    seen_materials = set()
     for material in mesh.materials:
-        if material.frogger_data.texture_id >= 0:
-            writer.write("texture %d\n" % (material.frogger_data.texture_id))
-    writer.write('\n')
+        material_id = get_frogger_texture_id(material)
+        if material_id >= 0 and not material_id in seen_materials:
+            writer.write("texture %d\n" % (material_id))
+            seen_materials.add(material_id)
+    if len(seen_materials) > 0:
+        writer.write('\n')
 
     # Write Vertices:
     for vert in bm.verts:
@@ -482,7 +572,7 @@ def save_ffs_file(operator, context, filepath):
 
         # Resolve material data.
         material = mesh.materials[polygon.material_index] if polygon.material_index >= 0 and len(mesh.materials) > polygon.material_index else None
-        material_texture_id = material.frogger_data.texture_id if material is not None else -1
+        material_texture_id = get_frogger_texture_id(material)
         is_textured = material_texture_id >= 0
 
         # Prepare polygon data for writing.
@@ -500,11 +590,13 @@ def save_ffs_file(operator, context, filepath):
         if is_textured:
             for i in range(polygon.loop_total):
                 uv = uv_layer.data[polygon.loop_start + i].uv
-                if uv[0] < 0 or uv[0] > 1 or uv[1] < 0 or uv[1] > 1:
-                    operator.report({"WARNING"}, "Face %d has uvs[%d] out of the range Frogger supports! (%f, %f)" % (polygon_index, i, uv[0]. uv[1]))
+                if uv[0] < -0.001 or uv[0] > 1.001 or uv[1] < -0.001 or uv[1] > 1.001:
+                    operator.report({"WARNING"}, "Face %d has uvs[%d] out of the range Frogger supports! (%f, %f)" % (polygon_index, i, uv[0], uv[1]))
 
-                uvs.append((uv[0], 1.0 - uv[1]))
+                uvs.append((max(0.0, min(1.0, uv[0])), max(0.0, min(1.0, 1.0 - uv[1]))))
             uvs = to_ffs_order(uvs)
+        elif material_texture_id != FROGGER_NO_TEXTURE_ID and material is not None:
+            operator.report({"WARNING"}, "Face %d used material %d/'%s', which was not a recognized Frogger texture! It will be exported as an untextured polygon!" % (polygon_index, polygon.material_index, material.name))
 
         # Determine polygon type.
         # <polygon_type> <show|hide> [texture] [flags] <vertexIds[]...> <textureUvs[]...> <colors[]...> [gridFlags]
@@ -555,31 +647,8 @@ def save_ffs_file(operator, context, filepath):
     bm.free()
 
     bpy.ops.object.mode_set(mode = old_mode) # Restore previous mode.
+    operator.report({"INFO"}, "Successfully exported the map!")
     return {'FINISHED'}
-
-# [AE] Panel for aggregation of polygon properties
-# TODO: Finish this.
-class PolygonPropsPanel(bpy.types.Panel):
-    bl_idname = "OBJECT_PT_polygon_props"
-    bl_label = "Polygon Props"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "object"
-
-    @classmethod
-    def poll(cls, context):
-        return (context.object is not None)
-    
-    def draw(self, context):
-        layout = self.layout
-        obj = context.object
-
-        if (obj.mode != 'EDIT'):
-            row = layout.row()
-            row.label(text="(Only available in Edit mode)")
-        else:
-            row = layout.row()
-            row.label(text="Custom properties go in here...")
 
 # Reference Blender > Text Editor > Templates > Python > Operator File Import.
 class LoadFfsOperator(bpy.types.Operator, ImportHelper):
@@ -635,7 +704,7 @@ class FroggerSceneData(bpy.types.PropertyGroup):
     game_version: bpy.props.StringProperty(name="Frogger Version")
 
 class FroggerMaterialData(bpy.types.PropertyGroup):
-    texture_id: bpy.props.IntProperty(name="Texture ID", default=-1)
+    texture_id: bpy.props.IntProperty(name="Texture ID", default=FROGGER_UNKNOWN_TEXTURE_ID)
 
 def register():
     bpy.utils.register_class(FroggerSceneData)
@@ -644,7 +713,6 @@ def register():
     bpy.utils.register_class(FroggerMaterialData)
     bpy.types.Material.frogger_data = bpy.props.PointerProperty(type=FroggerMaterialData)
 
-    bpy.utils.register_class(PolygonPropsPanel)
     bpy.utils.register_class(SaveFfsOperator)
     bpy.utils.register_class(LoadFfsOperator)
     bpy.types.VIEW3D_MT_object.append(menu_func)
@@ -656,7 +724,6 @@ def register():
 def unregister():
     bpy.utils.unregister_class(FroggerSceneData)
     bpy.utils.unregister_class(FroggerMaterialData)
-    bpy.utils.unregister_class(PolygonPropsPanel)
     bpy.utils.unregister_class(SaveFfsOperator)
     bpy.utils.unregister_class(LoadFfsOperator)
     bpy.types.VIEW3D_MT_object.remove(menu_func)

@@ -2,13 +2,13 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.desert;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataMatrix;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMeshController;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -22,7 +22,7 @@ public class FroggerEntityDataFallingRock extends FroggerEntityDataMatrix {
     private int delay = 0; // Delay until rock starts moving.
     private short bounceCount = 1; // Number of bounces.
     private int flags; // Flags
-    private int sound; // Does this rock have a sound effect? Appears unused.
+    private int sound = -1; // Does this rock have a sound effect? Appears unused.
 
     public static final int ROCK_TARGET_COUNT = 12;
     public static final int FLAG_TARGETS_RESOLVED = Constants.BIT_FLAG_0; // Believed to be a run-time flag.
@@ -31,7 +31,7 @@ public class FroggerEntityDataFallingRock extends FroggerEntityDataMatrix {
     public FroggerEntityDataFallingRock(FroggerMapFile mapFile) {
         super(mapFile);
         for (int i = 0; i < this.targets.length; i++)
-            this.targets[i] = new FallingRockTarget(i);
+            this.targets[i] = new FallingRockTarget(this, i);
     }
 
     @Override
@@ -66,10 +66,11 @@ public class FroggerEntityDataFallingRock extends FroggerEntityDataMatrix {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addUnsignedFixedShort("Delay (secs)", this.delay, newDelay -> this.delay = newDelay, 30);
+        editor.addUnsignedFixedShort("Initial Delay (secs)", this.delay, newDelay -> this.delay = newDelay, getGameInstance().getFPS())
+                .setTooltip(FXUtils.createTooltip("Controls how long the boulder will wait at the starting position before leaving for the first target."));
         if (this.flags != 0)
             editor.addSignedIntegerField("Flags", this.flags, newFlags -> this.flags = newFlags);
-        if (!getConfig().isAtOrBeforeBuild38() && this.sound != 0)
+        if (!getConfig().isAtOrBeforeBuild38() && this.sound != 0 && this.sound != -1)
             editor.addSignedIntegerField("Sound (Unused)", this.sound, newSound -> this.sound = newSound);
     }
 
@@ -81,7 +82,7 @@ public class FroggerEntityDataFallingRock extends FroggerEntityDataMatrix {
         editor.addUnsignedByteField("Bounces Before Break", this.bounceCount, newBounceCount -> newBounceCount <= ROCK_TARGET_COUNT, newBounceCount -> {
             this.bounceCount = newBounceCount;
             manager.updateEditor();
-        });
+        }).setTooltip(FXUtils.createTooltip("Controls how many bounces the boulder will make before it breaks/resets."));
 
         // Setup the editor for the enabled bounce targets.
         for (int i = 0; i < this.bounceCount; i++)
@@ -89,12 +90,15 @@ public class FroggerEntityDataFallingRock extends FroggerEntityDataMatrix {
     }
 
     @Getter
-    public static final class FallingRockTarget extends GameObject {
+    public static final class FallingRockTarget extends SCSharedGameData {
+        private final FroggerEntityDataFallingRock parentData;
         private final int index;
         private final SVector target = new SVector(); // Target Position.
         private int time = 30; // Time to reach target.
 
-        public FallingRockTarget(int index) {
+        public FallingRockTarget(FroggerEntityDataFallingRock parentData, int index) {
+            super(parentData.getGameInstance());
+            this.parentData = parentData;
             this.index = index;
         }
 
@@ -118,8 +122,10 @@ public class FroggerEntityDataFallingRock extends FroggerEntityDataMatrix {
          * @param controller the controller to use
          */
         public void setupEditor(GUIEditorGrid grid, FroggerMapMeshController controller) {
-            grid.addFloatSVector("Bounce Target #" + (this.index + 1), this.target, controller);
-            grid.addUnsignedFixedShort("Time (secs)", this.time, newTime -> this.time = newTime, 30);
+            grid.addFloatVector("Bounce Target #" + (this.index + 1), this.target, null, controller,
+                    (targetPos, bits) -> this.parentData.selectNewPosition(controller, targetPos, bits));
+            grid.addUnsignedFixedShort("Time to Target (secs)", this.time, newTime -> this.time = newTime, getGameInstance().getFPS())
+                    .setTooltip(FXUtils.createTooltip("Controls how long it will take to reach the next boulder target from the moment Target #" + (this.index + 1) + " is reached."));
         }
     }
 }

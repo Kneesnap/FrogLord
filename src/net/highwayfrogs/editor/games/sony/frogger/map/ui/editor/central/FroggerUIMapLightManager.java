@@ -42,7 +42,7 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
     @Override
     public void onSetup() {
         this.lightList = getRenderManager().createDisplayList();
-        this.lightList.add(this.specialFrogletLight); // TODO: This seems to be what breaks the rest.
+        this.lightList.add(this.specialFrogletLight);
         super.onSetup();
         updateEntityLighting();
     }
@@ -128,6 +128,7 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
             addToScope(getController().getMainLight(), getEntityGroup());
         }
 
+        getController().getGeneralManager().updatePlayerCharacterLighting();
         updateValueVisibility();
     }
 
@@ -175,20 +176,23 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
     /**
      * Applies ambient lighting to the given node.
      * @param node The node to apply to ambient lighting to
-     * @param useSpecialFrogletLighting If true, the special froglet lighting will be applied
+     * @param useSpecialLighting If true, the special froglet lighting will be applied
      */
-    public void setAmbientLightingMode(Node node, boolean useSpecialFrogletLighting) {
+    public void setAmbientLightingMode(Node node, boolean useSpecialLighting) {
+        FroggerUIMapGeneralManager generalManager = getController().getGeneralManager();
+        AmbientLight specialLight = (generalManager.getPlayerCharacterView() == node) ? generalManager.getFrogLight() : this.specialFrogletLight;
+
         // Checkpoints have special lighting applied by ent_gen.c.
-        if (isLightingAppliedToEntities() && useSpecialFrogletLighting) { // 'CHECKPOINT' is valid starting from PSX Alpha to retail.
+        if (isLightingAppliedToEntities() && useSpecialLighting) { // 'CHECKPOINT' is valid starting from PSX Alpha to retail.
             // Remove regular ambient lights from the frog.
             for (int i = 0; i < this.regularAmbientLights.size(); i++)
                 removeFromScope(this.regularAmbientLights.get(i), node);
 
             // Apply special froglet ambient light.
-            addToScope(this.specialFrogletLight, node);
+            addToScope(specialLight, node);
         } else {
             // Remove special froglet ambient light.
-            removeFromScope(this.specialFrogletLight, node);
+            removeFromScope(specialLight, node);
 
             // Add regular ambient lights to the node.
             for (int i = 0; i < this.regularAmbientLights.size(); i++)
@@ -272,8 +276,10 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
                     didChangeOccur = this.lightingManager.regularAmbientLights.remove(ambientLight);
                 }
 
-                if (didChangeOccur)
+                if (didChangeOccur) {
                     this.lightingManager.getController().getEntityManager().updateAllEntityMeshes(); // This is necessary for things to be lit properly.
+                    this.lightingManager.getController().getGeneralManager().updatePlayerCharacterLighting();
+                }
             } else {
                 // Regular lights are chucked into a group for lit entities.
                 if (visible && this.lightingManager.isLightingAppliedToEntities()) {

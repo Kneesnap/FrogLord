@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataPathInfo;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -34,6 +35,7 @@ public class FroggerEntityDataDog extends FroggerEntityDataPathInfo {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addFixedInt("Wait Delay", this.waitDelay, newWaitDelay -> this.waitDelay = newWaitDelay, 30);
+        editor.addFixedInt("Wait Delay (sec)", this.waitDelay, newWaitDelay -> this.waitDelay = newWaitDelay, getGameInstance().getFPS())
+                .setTooltip(FXUtils.createTooltip("How long to wait in the dog kennel before running out."));
     }
 }

@@ -2,15 +2,16 @@ package net.highwayfrogs.editor.games.sony.shared.mwd;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.games.shared.basic.GameBuildInfo;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.pp20.PP20Unpacker;
@@ -46,8 +47,9 @@ public class MWDFile extends SCSharedGameData {
 
     private final transient Map<FroggerMapTheme, VLOArchive> vloThemeCache = new HashMap<>();
 
-    private static final String MARKER = "DAWM";
-    private static final int BUILD_NOTES_SIZE = 2040;
+    public static final String FILE_SIGNATURE = "DAWM";
+    public static final int BUILD_NOTES_START_OFFSET = 2 * Constants.INTEGER_SIZE;
+    public static final int BUILD_NOTES_SIZE = Constants.CD_SECTOR_SIZE - BUILD_NOTES_START_OFFSET;
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("EEEE, d MMMM yyyy");
     private static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm:ss");
     public static final ImageFilterSettings VLO_ICON_SETTING = new ImageFilterSettings(ImageState.EXPORT);
@@ -72,8 +74,9 @@ public class MWDFile extends SCSharedGameData {
             progressBar.setTotalProgress(mwiEntries.size());
 
         // Read header.
-        reader.verifyString(MARKER);
+        reader.verifyString(FILE_SIGNATURE);
         reader.skipBytesRequireEmpty(Constants.INTEGER_SIZE);
+        requireReaderIndex(reader, BUILD_NOTES_START_OFFSET, "Expected MWD build notes");
         this.buildNotes = reader.readNullTerminatedFixedSizeString(BUILD_NOTES_SIZE);
         getGameInstance().getLogger().info("Build Notes: \n" + this.buildNotes + (this.buildNotes.endsWith("\n") ? "" : "\n"));
 
@@ -214,9 +217,9 @@ public class MWDFile extends SCSharedGameData {
     public <T extends SCGameFile<?>> T replaceFile(String importedFileName, byte[] fileBytes, MWIResourceEntry entry, SCGameFile<?> oldFile, boolean updateUI) {
         T newFile;
 
-        if (oldFile instanceof MOFHolder) {
-            MOFHolder oldHolder = (MOFHolder) oldFile;
-            newFile = (T) new MOFHolder(getGameInstance(), oldHolder.getTheme(), oldHolder.getCompleteMOF());
+        if (oldFile instanceof MRModel) {
+            MRModel oldModel = (MRModel) oldFile;
+            newFile = (T) new MRModel(getGameInstance(), oldModel.getTheme(), oldModel.getCompleteCounterpart());
         } else {
             newFile = this.loadFile(fileBytes, entry);
         }
@@ -243,9 +246,12 @@ public class MWDFile extends SCSharedGameData {
         // Update UI.
         if (updateUI) {
             SCMainMenuUIController<?> mainMenuUI = getGameInstance().getMainMenuController();
-            mainMenuUI.showEditor(newFile);
-            if (mainMenuUI.getFileListComponent() != null) // Update the file list.
+            if (mainMenuUI.getFileListComponent() != null) { // Update the file list.
                 mainMenuUI.getFileListComponent().getCollectionViewComponent().refreshDisplay();
+                mainMenuUI.getFileListComponent().getCollectionViewComponent().setSelectedViewEntryInUI(newFile);
+            } else {
+                mainMenuUI.showEditor(newFile.makeEditorUI());
+            }
         }
 
         return newFile;
@@ -299,17 +305,15 @@ public class MWDFile extends SCSharedGameData {
         if (progressBar != null)
             progressBar.setTotalProgress(this.files.size());
 
-        writer.writeBytes(MARKER.getBytes());
+        writer.writeBytes(FILE_SIGNATURE.getBytes());
         writer.writeInt(0);
 
         Date date = Date.from(Calendar.getInstance().toInstant());
         writer.writeNullTerminatedString("\nCreated by FrogLord"
                 + "\nCreation Date: " + DATE_FORMAT.format(date)
                 + "\nCreation Time: " + TIME_FORMAT.format(date)
-                + "\n[BuildInfo]"
-                + "\ngame=" + getGameInstance().getGameType().getIdentifier()
-                + "\ngameVersion=" + getGameInstance().getVersionConfig().getInternalName()
-                + "\nversion=1"
+                + "\n[" + GameBuildInfo.CONFIG_KEY_ROOT_NAME + "]"
+                + "\n" + new GameBuildInfo<>(getGameInstance()).toConfig()
                 + "\n");
         writer.align(Constants.CD_SECTOR_SIZE);
 

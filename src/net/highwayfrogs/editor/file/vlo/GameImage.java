@@ -5,8 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
 import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse.BlackFilter;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse.TransparencyFilter;
@@ -23,7 +21,6 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.awt.image.BufferedImage;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -36,7 +33,7 @@ import java.util.logging.Level;
  * Created by Kneesnap on 8/30/2018.
  */
 @SuppressWarnings({"unused", "lossy-conversions"})
-public class GameImage extends SCSharedGameData implements Cloneable, TextureSource, ITextureSource {
+public class GameImage extends SCSharedGameData implements Cloneable, ITextureSource {
     @Getter private final List<Consumer<BufferedImage>> imageChangeListeners;
     @Getter private final VLOArchive parent;
     @Getter @Setter private short vramX;
@@ -67,13 +64,13 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
     public static final int TOTAL_PAGES = 32; // It seems to be 32 on both PC and PS1. We can't go higher than this because it encodes only 5 bits for the page id. It appears the PC version rendering dlls only create 14 pages though.
 
     public static final int FLAG_TRANSLUCENT = Constants.BIT_FLAG_0; // Used by sprites + MOFs in the MR API to enable semi-transparent rendering mode.
-    public static final int FLAG_ROTATED = Constants.BIT_FLAG_1; // Unused in MR API + Frogger. (Is this ever set?)
-    public static final int FLAG_HIT_X = Constants.BIT_FLAG_2; //Appears to decrease width by 1? TODO: Seems to be 1:1 an indication that the in-game width is not even. Perhaps we could auto-calculate this flag.
-    public static final int FLAG_HIT_Y = Constants.BIT_FLAG_3; //Appears to decrease height by 1? TODO: Seems to be 1:1 an indication that the in-game height is not even. Perhaps we could auto-calculate this flag.
-    public static final int FLAG_REFERENCED_BY_NAME = Constants.BIT_FLAG_4; // All images have this. It means it has an entry in bmp_pointers. Images without this flag can be dynamically loaded/unloaded without having a fixed memory location which the code can access the texture info from.
+    //public static final int FLAG_ROTATED = Constants.BIT_FLAG_1; // Unused in MR API + Frogger, does not appear to be set.
+    public static final int FLAG_HIT_X = Constants.BIT_FLAG_2; // Appears to decrease width by 1?
+    public static final int FLAG_HIT_Y = Constants.BIT_FLAG_3; // Appears to decrease height by 1?
+    public static final int FLAG_REFERENCED_BY_NAME = Constants.BIT_FLAG_4; // It means it has an entry in bmp_pointers. Images without this flag can be dynamically loaded/unloaded without having a fixed memory location which the code can access the texture info from.
     public static final int FLAG_BLACK_IS_TRANSPARENT = Constants.BIT_FLAG_5; // Seems like it may not be used. Would be weird if that were the case.
     public static final int FLAG_2D_SPRITE = Constants.BIT_FLAG_15; // Indicates that an animation list should be used when the image is used to create a sprite. I dunno, it seems like every single texture in frogger has this flag set. (Though this is not confirmed, let alone confirmed for all versions)
-    // TODO: FLAG VALIDATION!
+    private static final int VALIDATION_FLAGS = FLAG_2D_SPRITE | FLAG_BLACK_IS_TRANSPARENT | FLAG_REFERENCED_BY_NAME | FLAG_HIT_Y | FLAG_HIT_X | FLAG_TRANSLUCENT;
 
     public GameImage(VLOArchive parent) {
         super(parent != null ? parent.getGameInstance() : null);
@@ -108,6 +105,9 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
             this.flags = reader.readShort();
             this.clutId = reader.readShort();
         }
+
+        if (getGameInstance().getGameType().isAtOrBefore(SCGameType.FROGGER))
+            warnAboutInvalidBitFlags(this.flags & 0xFFFF, VALIDATION_FLAGS, toString());
 
         short readU = reader.readUnsignedByteAsShort();
         short readV = reader.readUnsignedByteAsShort();
@@ -563,26 +563,6 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
         return getParent().getImages().indexOf(this);
     }
 
-    @Override
-    public BufferedImage makeTexture(TextureMap map) {
-        return toBufferedImage(map.getDisplaySettings());
-    }
-
-    @Override
-    public boolean isOverlay(TextureMap map) {
-        return false;
-    }
-
-    @Override
-    public BigInteger makeIdentifier(TextureMap map) {
-        return makeIdentifier(0x7E8BA5E, getTextureId());
-    }
-
-    @Override
-    public GameImage getGameImage(TextureMap map) {
-        return this;
-    }
-
     private BufferedImage makeUnmodifiedImage() {
         int height = getFullHeight();
         int width = getFullWidth();
@@ -635,7 +615,6 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
 
             return 0;
         }
-
 
         // PC logic.
         return ((getFullWidth() - getIngameWidth()) / 2);

@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormGrid;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.IFroggerFormEntry;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
@@ -80,6 +81,9 @@ public class FroggerMapFilePacketEntity extends FroggerMapFilePacket {
         }
 
         printInvalidEntityReadDetection(reader, lastEntity, lastEntityScriptDataStartAddress, getParentFile().getHeaderPacket().getGraphicalPacketAddress()); // Validate the last entity.
+
+        // Setup forms.
+        resolveMapFormGrids();
     }
 
     @Override
@@ -127,6 +131,28 @@ public class FroggerMapFilePacketEntity extends FroggerMapFilePacket {
                 lastEntity.setRawData(reader.readBytes(realSize));
                 reader.jumpReturn();
             }
+        }
+    }
+
+    private void resolveMapFormGrids() {
+        if (getMapConfig().isOldFormFormat())
+            return; // Old format doesn't do stuff here.
+
+        FroggerMapFilePacketForm formPacket = getParentFile().getFormPacket();
+        for (int i = 0; i < this.entities.size(); i++) {
+            FroggerMapEntity entity = this.entities.get(i);
+            IFroggerFormEntry formEntry = entity.getFormEntry();
+            if (formEntry == null)
+                continue;
+
+            // Abort if there's no form grid!
+            FroggerFormGrid formGrid = entity.getFormGrid();
+            if (formGrid == null) {
+                entity.getLogger().warning("Entity has no form grid linked!");
+                continue;
+            }
+
+            formPacket.convertLocalFormToGlobalForm(entity.getFormGridId(), formEntry);
         }
     }
 

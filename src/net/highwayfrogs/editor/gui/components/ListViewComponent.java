@@ -75,8 +75,7 @@ public abstract class ListViewComponent<TGameInstance extends GameInstance, TVie
         }
 
         if (containsOldSelectedEntry) {
-            if (getRootNode().getSelectionModel().getSelectedItem() != oldSelectedEntry)
-                getRootNode().getSelectionModel().select(oldSelectedEntry);
+            setSelectedViewEntryInUI(oldSelectedEntry);
         } else {
             getRootNode().getSelectionModel().clearSelection();
         }
@@ -85,6 +84,11 @@ public abstract class ListViewComponent<TGameInstance extends GameInstance, TVie
         boolean didChangeOccur = !activeViewEntries.equals(this.entries);
         if (didChangeOccur)
             getRootNode().requestFocus();
+    }
+
+    @Override
+    public void setSelectedViewEntryInUI(TViewEntry viewEntry) {
+        getRootNode().getSelectionModel().select(viewEntry);
     }
 
     /**

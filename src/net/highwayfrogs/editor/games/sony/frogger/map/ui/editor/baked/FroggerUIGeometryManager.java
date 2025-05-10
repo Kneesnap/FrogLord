@@ -19,6 +19,8 @@ import javafx.scene.transform.Translate;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
@@ -28,6 +30,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMeshController;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
+import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.InputManager.MouseInputState;
 import net.highwayfrogs.editor.gui.editor.BakedLandscapeUIManager;
@@ -439,7 +442,7 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
             // Polygon type information.
             this.polygonIsSemiTransparentCheckBox = grid.addCheckBox("Semi Transparent", false, null);
             this.polygonIsEnvironmentMappedCheckBox = grid.addCheckBox("Environment Mapped", false, null);
-            this.polygonIsMaxOrderTableCheckBox = grid.addCheckBox("Max Order Table", false, null);
+            this.polygonIsMaxOrderTableCheckBox = grid.addCheckBox("Water Wibble (Max OT)", false, null);
             this.polygonIsSemiTransparentCheckBox.setDisable(true);
             this.polygonIsEnvironmentMappedCheckBox.setDisable(true);
             this.polygonIsMaxOrderTableCheckBox.setDisable(true);
@@ -470,9 +473,12 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
                 this.polygonIsSemiTransparentCheckBox.setSelected(polygon != null && polygon.testFlag(FroggerMapPolygon.FLAG_SEMI_TRANSPARENT));
                 this.polygonIsEnvironmentMappedCheckBox.setSelected(polygon != null && polygon.testFlag(FroggerMapPolygon.FLAG_ENVIRONMENT_MAPPED));
                 this.polygonIsMaxOrderTableCheckBox.setSelected(polygon != null && polygon.testFlag(FroggerMapPolygon.FLAG_MAX_ORDER_TABLE));
-                this.polygonIsSemiTransparentCheckBox.setDisable(polygon == null);
-                this.polygonIsEnvironmentMappedCheckBox.setDisable(polygon == null);
-                this.polygonIsMaxOrderTableCheckBox.setDisable(polygon == null);
+
+                boolean isTextured = polygon != null && polygon.getPolygonType().isTextured(); // FT4/GT4 are the only ones where water wibble will work. However, FT3 (unknown about GT3) seems to still set max OT, even if water wibble won't apply.
+                this.polygonIsMaxOrderTableCheckBox.setText(isTextured && polygon.getPolygonType().isQuad() ? "Water Wibble (& Max OT)" : "Max OT (Draws First)");
+                this.polygonIsSemiTransparentCheckBox.setDisable(!isTextured);
+                this.polygonIsEnvironmentMappedCheckBox.setDisable(!isTextured);
+                this.polygonIsMaxOrderTableCheckBox.setDisable(!isTextured);
             }
 
             super.updateUI();
@@ -502,6 +508,38 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
             // Apply updated uv data and update the 3D view.
             polygon.getTextureUvs()[uvIndex].copyFrom(uv);
             mesh.getShadedTextureManager().updatePolygon(polygon);
+        }
+
+        @Override
+        protected void selectNewTexture(ITextureSource oldTextureSource) {
+            TextureRemapArray remapArray = getManager().getMap().getTextureRemap();
+            if (remapArray == null)
+                return;
+
+            // Resolve VLO.
+            VLOArchive vloArchive = oldTextureSource instanceof GameImage ? ((GameImage) oldTextureSource).getParent() : null;
+            if (vloArchive == null)
+                vloArchive = getManager().getMap().getVloFile();
+            if (vloArchive == null || getEditTarget() == null)
+                return;
+
+            remapArray.askUserToSelectImage(vloArchive, false, selectedImage -> {
+                FroggerMapPolygon polygon = getEditTarget();
+                if (!shouldHandleUIChanges() || !getShadeDefinition().isTextured() || polygon == null)
+                    return;
+
+                if (selectedImage != null) {
+                    int remapIndex = remapArray.getRemapIndex(selectedImage.getTextureId());
+                    if (remapIndex < 0)
+                        throw new RuntimeException("Could not find the selected image (" + selectedImage.getTextureId() + ") in the textureRemap!");
+
+                    polygon.setTextureId((short) remapIndex);
+                } else {
+                    polygon.setTextureId((short) -1);
+                }
+
+                getManager().getController().getMesh().getShadedTextureManager().updatePolygon(polygon);
+            });
         }
     }
 }

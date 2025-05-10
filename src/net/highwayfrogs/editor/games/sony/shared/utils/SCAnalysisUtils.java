@@ -2,12 +2,6 @@ package net.highwayfrogs.editor.games.sony.shared.utils;
 
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
-import net.highwayfrogs.editor.file.mof.MOFFile;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
-import net.highwayfrogs.editor.file.mof.MOFPart;
-import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnim;
-import net.highwayfrogs.editor.file.mof.poly_anim.MOFPartPolyAnimEntry;
-import net.highwayfrogs.editor.file.mof.prims.MOFPolyTexture;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
@@ -16,6 +10,12 @@ import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapAnimation;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
+import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTextureAnimation;
+import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTextureAnimationEntry;
+import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPart;
+import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPolygon;
+import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRStaticMof;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 
 import java.util.ArrayList;
@@ -36,11 +36,11 @@ public class SCAnalysisUtils {
      */
     public static void findUnusedTextures(SCGameInstance instance) {
         List<FroggerMapFile> mapFiles = instance.getMainArchive().getAllFiles(FroggerMapFile.class);
-        List<MOFHolder> mofFiles = new ArrayList<>();
+        List<MRModel> mofFiles = new ArrayList<>();
 
         instance.getMainArchive().forEachFile(WADFile.class, wad -> wad.getFiles().forEach(entry -> {
-            if (entry.getFile() instanceof MOFHolder)
-                mofFiles.add((MOFHolder) entry.getFile());
+            if (entry.getFile() instanceof MRModel)
+                mofFiles.add((MRModel) entry.getFile());
         }));
 
         Set<Short> textureIds = new HashSet<>();
@@ -55,20 +55,19 @@ public class SCAnalysisUtils {
         }
 
         // Populate MOF Ids.
-        mofFiles.forEach(holder -> {
-            MOFFile mof = holder.asStaticFile();
-
+        mofFiles.forEach(model -> {
             // Populate MOF animation.
-            for (MOFPart part : mof.getParts())
-                for (MOFPartPolyAnim partPolyAnim : part.getPartPolyAnims())
-                    for (MOFPartPolyAnimEntry entry : partPolyAnim.getEntryList().getEntries())
-                        textureIds.add((short) entry.getImageId());
+            for (MRStaticMof staticMof : model.getStaticMofs()) {
+                for (MRMofPart part : staticMof.getParts())
+                    for (MRMofTextureAnimation textureAnimation : part.getTextureAnimations())
+                        for (MRMofTextureAnimationEntry entry : textureAnimation.getEntries())
+                            textureIds.add(entry.getGlobalImageId());
 
-            // Populate MOF face textures.
-            mof.forEachPolygon(poly -> {
-                if (poly instanceof MOFPolyTexture)
-                    textureIds.add(((MOFPolyTexture) poly).getImageId());
-            });
+                for (MRMofPart part : staticMof.getParts())
+                    for (MRMofPolygon polygon : part.getOrderedPolygons())
+                        if (polygon.getPolygonType().isTextured())
+                            textureIds.add(polygon.getTextureId());
+            }
         });
 
         // Populate MAP ids.

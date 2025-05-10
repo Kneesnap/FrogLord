@@ -3,18 +3,23 @@ package net.highwayfrogs.editor.games.sony.oldfrogger.map.ui;
 import javafx.scene.input.PickResult;
 import javafx.scene.shape.MeshView;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
+import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
+import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.gui.InputManager.MouseTracker;
 import net.highwayfrogs.editor.gui.editor.BakedLandscapeUIManager;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode;
+import net.highwayfrogs.editor.gui.texture.ITextureSource;
 
 /**
  * Manages UI relating to the landscape/terrain of an old Frogger map.
@@ -126,6 +131,42 @@ public class OldFroggerLandscapeUIManager extends BakedLandscapeUIManager<OldFro
             // Apply updated uv data and update the 3D view.
             polygon.getTextureUvs()[uvIndex].copyFrom(uv);
             mesh.getShadedTextureManager().updatePolygon(polygon);
+        }
+
+        @Override
+        protected void selectNewTexture(ITextureSource oldTextureSource) {
+            OldFroggerLevelTableEntry levelTableEntry = getManager().getMap().getLevelTableEntry();
+            if (levelTableEntry == null)
+                return;
+
+            TextureRemapArray remapArray = levelTableEntry.getTextureRemap();
+            if (remapArray == null)
+                return;
+
+            // Resolve VLO.
+            VLOArchive vloArchive = oldTextureSource instanceof GameImage ? ((GameImage) oldTextureSource).getParent() : null;
+            if (vloArchive == null)
+                vloArchive = levelTableEntry.getMainVLOArchive();
+            if (vloArchive == null || getEditTarget() == null)
+                return;
+
+            remapArray.askUserToSelectImage(vloArchive, false, selectedImage -> {
+                OldFroggerMapPolygon polygon = getEditTarget();
+                if (!shouldHandleUIChanges() || !getShadeDefinition().isTextured() || polygon == null)
+                    return;
+
+                if (selectedImage != null) {
+                    int remapIndex = remapArray.getRemapIndex(selectedImage.getTextureId());
+                    if (remapIndex < 0)
+                        throw new RuntimeException("Could not find the selected image (" + selectedImage.getTextureId() + ") in the textureRemap!");
+
+                    polygon.setTextureId(remapIndex);
+                } else {
+                    polygon.setTextureId(-1);
+                }
+
+                getManager().getController().getMesh().getShadedTextureManager().updatePolygon(polygon);
+            });
         }
     }
 }

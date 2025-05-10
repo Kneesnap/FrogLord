@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataMatrix;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -34,6 +35,7 @@ public class FroggerEntityDataOutroPlinth extends FroggerEntityDataMatrix {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addSignedIntegerField("Plinth ID", this.id, newId -> newId >= 0 && newId < 8, newId -> this.id = newId);
+        editor.addSignedIntegerField("Plinth ID", this.id, newId -> newId >= 0 && newId < 8, newId -> this.id = newId)
+                .setTooltip(FXUtils.createTooltip("There should be 8 plinths in a level, each with their own unique ID.\nThe ID is supposed to correspond to the zone the plinth represents."));
     }
 }

@@ -32,6 +32,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMeshController;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygonType;
+import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGeneral;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGrid;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.baked.grid.FroggerUICollisionGridPreview;
 import net.highwayfrogs.editor.gui.GameUIController;
@@ -218,8 +219,7 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
             CheckBox newBox = new CheckBox(flag.getDisplayName());
             GridPane.setRowIndex(newBox, pos / 2);
             GridPane.setColumnIndex(newBox, pos % 2);
-            if (flag.getDescription() != null)
-                newBox.setTooltip(new Tooltip(flag.getDescription()));
+            newBox.setTooltip(FXUtils.createTooltip(flag.getDescription()));
             this.zoneFlagGrid.getChildren().add(newBox);
             this.zoneFlagMap[i] = newBox;
 
@@ -278,6 +278,7 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
             for (FroggerGridSquare gridSquare : this.collisionGridPreview.getSelectedGridSquares()) {
                 updateGridPolygonHighlighting(gridSquare, false); // Remove highlighting from old polygon.
                 gridSquare.setPolygon(poly);
+                updateGridStackIfStartPosition(gridSquare.getGridStack());
                 updateGridPolygonHighlighting(gridSquare, true); // Apply highlighting to new polygon.
                 FroggerGridStack gridStack = gridSquare.getGridStack();
                 this.collisionGridPreview.updateCanvasTile(gridStack.getX(), gridStack.getZ());
@@ -285,6 +286,12 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
 
             updateGridSquareUI(); // The displayed image may have changed.
         });
+    }
+
+    private void updateGridStackIfStartPosition(FroggerGridStack gridStack) {
+        FroggerMapFilePacketGeneral generalPacket = getMapFile().getGeneralPacket();
+        if (gridStack.getX() == generalPacket.getStartGridCoordX() && gridStack.getZ() == generalPacket.getStartGridCoordZ())
+            getMapMeshController().getGeneralManager().updatePlayerCharacter();
     }
 
     @FXML
@@ -298,6 +305,7 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
                 FroggerGridSquare newGridSquare = new FroggerGridSquare(gridStack, poly);
 
                 gridStack.getGridSquares().add(newGridSquare);
+                updateGridStackIfStartPosition(gridStack);
                 this.collisionGridPreview.selectGridSquare(newGridSquare, false);
 
                 // Deselect old squares.
@@ -320,6 +328,7 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
         this.collisionGridPreview.getMapMesh().pushBatchOperations();
         for (FroggerGridSquare gridSquare : new HashSet<>(this.collisionGridPreview.getSelectedGridSquares())) { // Avoid Concurrent modification.
             gridSquare.getGridStack().getGridSquares().remove(gridSquare); // Removed first so the updated canvas won't include it.
+            updateGridStackIfStartPosition(gridSquare.getGridStack());
             this.collisionGridPreview.deselectGridSquare(gridSquare, false);
             updateGridPolygonHighlighting(gridSquare, false);
         }
@@ -423,6 +432,7 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
     private void onResizeGrid(ActionEvent evt) {
         closeWindow(); // Without this, the grid window will show on top of the resize window, making it impossible to see.
         FroggerGridResizeController.open(this);
+        getMapMeshController().getGeneralManager().updatePlayerCharacter(); // Player character may have moved.
         Platform.runLater(this::openWindowAndWait);
     }
 
@@ -606,8 +616,7 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
                 // Create new.
                 CheckBox newCheckBox = new CheckBox(StringUtils.capitalize(flag.name()) + (flag.isUnused() ? " (Unused)" : ""));
                 newCheckBox.setAllowIndeterminate(false);
-                if (flag.getTooltipDescription() != null)
-                    newCheckBox.setTooltip(new Tooltip(flag.getTooltipDescription()));
+                newCheckBox.setTooltip(FXUtils.createTooltip(flag.getTooltipDescription()));
 
                 GridPane.setRowIndex(newCheckBox, i / columnCount);
                 GridPane.setColumnIndex(newCheckBox, i++ % columnCount);

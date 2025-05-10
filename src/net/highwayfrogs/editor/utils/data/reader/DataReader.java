@@ -202,7 +202,7 @@ public class DataReader {
      * @param verify The string to verify.
      */
     public void verifyString(String verify) {
-        String str = readTerminatedString(verify.getBytes().length);
+        String str = readTerminatedString(verify.getBytes(StandardCharsets.US_ASCII).length);
         Utils.verify(str.equals(verify), "String verify failure! \"%s\" does not match \"%s\".", str, verify);
     }
 

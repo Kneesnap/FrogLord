@@ -6,16 +6,16 @@ import javafx.scene.shape.MeshView;
 import javafx.scene.shape.TriangleMesh;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Transform;
-import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
-import net.highwayfrogs.editor.file.mof.view.MOFMesh;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.beastwars.map.data.BeastWarsMapObject;
 import net.highwayfrogs.editor.games.sony.beastwars.map.mesh.BeastWarsMapMesh;
 import net.highwayfrogs.editor.games.sony.beastwars.ui.BeastWarsMapUIManager.BeastWarsMapListManager;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
+import net.highwayfrogs.editor.games.sony.shared.mof2.ui.mesh.MRModelMesh;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
+import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 import java.util.HashMap;
@@ -27,7 +27,7 @@ import java.util.Map;
  * Created by Kneesnap on 3/5/2025.
  */
 public class BeastWarsObjectManager extends BeastWarsMapListManager<BeastWarsMapObject, MeshView> {
-    private final Map<MOFHolder, MOFMesh> meshCache = new HashMap<>();
+    private final Map<MRModel, MRModelMesh> meshCache = new HashMap<>();
 
     public BeastWarsObjectManager(MeshViewController<BeastWarsMapMesh> controller) {
         super(controller);
@@ -79,17 +79,14 @@ public class BeastWarsObjectManager extends BeastWarsMapListManager<BeastWarsMap
     }
 
     private void updateObjectMesh(BeastWarsMapObject object, MeshView objectMesh) {
-        MOFHolder holder = object.getMof();
-        if (holder != null) {
+        DynamicMesh.tryRemoveMesh(objectMesh);
 
+        MRModel model = object.getModel();
+        if (model != null) {
             // Update MeshView.
-            MOFMesh modelMesh = this.meshCache.computeIfAbsent(holder, MOFHolder::makeMofMesh);
+            MRModelMesh modelMesh = this.meshCache.computeIfAbsent(model, MRModel::createMesh);
+            modelMesh.addView(objectMesh, getSelectedValue() == object, true);
             objectMesh.setCullFace(CullFace.BACK);
-            objectMesh.setMesh(modelMesh);
-
-            // Update material.
-            TextureMap textureSheet = modelMesh.getTextureMap();
-            objectMesh.setMaterial((getSelectedValue() == object) ? textureSheet.getLitHighlightedMaterial() : textureSheet.getUnlitSharpMaterial());
             return;
         }
 

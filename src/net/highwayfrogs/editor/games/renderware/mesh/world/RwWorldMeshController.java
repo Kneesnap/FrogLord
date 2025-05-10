@@ -33,7 +33,7 @@ public class RwWorldMeshController extends MeshViewController<RwWorldCombinedMes
         this.meshViewCollection.setMesh(getMesh().getActualMesh());
 
         super.setupBindings(subScene3D, meshView);
-        getFirstPersonCamera().getCamera().setFarClip(DEFAULT_FAR_CLIP);
+        getCamera().setFarClip(DEFAULT_FAR_CLIP);
         getFirstPersonCamera().setDefaultMoveSpeed(DEFAULT_MOVEMENT_SPEED);
         getComboBoxMeshCullFace().setValue(CullFace.BACK);
         //getMainLight().getScope().add(meshView);

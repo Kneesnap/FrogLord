@@ -1,10 +1,12 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.volcano;
 
+import javafx.scene.control.ComboBox;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerEntityTriggerType;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataMatrix;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -51,8 +53,14 @@ public class FroggerEntityDataColorTrigger extends FroggerEntityDataMatrix {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addEnumSelector("Trigger Type", this.type, FroggerEntityTriggerType.values(), false, newType -> this.type = newType);
-        editor.addEnumSelector("Color", this.color, VolcanoTriggerColor.values(), false, newColor -> this.color = newColor);
+        editor.addEnumSelector("Trigger Type", this.type, FroggerEntityTriggerType.values(), false, newType -> this.type = newType)
+                .setTooltip(FXUtils.createTooltip("Controls what happens to the entities targetted by the switch."));
+
+        ComboBox<?> colorField = editor.addEnumSelector("Color (Not Working)", this.color, VolcanoTriggerColor.values(), false, newColor -> this.color = newColor);
+        colorField.setTooltip(FXUtils.createTooltip("Sets the color to use for the switch.\nThis feature doesn't appear to do anything on the PC version. (PSX Untested)"));
+        if (getGameInstance().isPC())
+            colorField.setDisable(true);
+
         for (int i = 0; i < this.uniqueIds.length; i++) {
             final int tempIndex = i;
             editor.addSignedShortField("Trigger #" + (i + 1), this.uniqueIds[i],

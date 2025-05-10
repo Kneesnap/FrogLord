@@ -1,13 +1,10 @@
 package net.highwayfrogs.editor.file.map.view;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
-import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -17,7 +14,7 @@ import java.util.function.Consumer;
  * Created by Kneesnap on 12/4/2018.
  */
 @Getter
-public class CursorVertexColor implements TextureSource, ITextureSource {
+public class CursorVertexColor implements ITextureSource {
     private final Color bodyColor;
     private final Color outlineColor;
 
@@ -26,26 +23,6 @@ public class CursorVertexColor implements TextureSource, ITextureSource {
     public CursorVertexColor(Color bodyColor, Color outlineColor) {
         this.bodyColor = bodyColor;
         this.outlineColor = outlineColor;
-    }
-
-    @Override
-    public BufferedImage makeTexture(TextureMap map) {
-        return makeImage();
-    }
-
-    @Override
-    public boolean isOverlay(TextureMap map) {
-        return true;
-    }
-
-    @Override
-    public BigInteger makeIdentifier(TextureMap map) {
-        return makeIdentifier(0x0BE1A7, this.bodyColor.getRGB(), this.outlineColor.getRGB());
-    }
-
-    @Override
-    public GameImage getGameImage(TextureMap map) {
-        return null;
     }
 
     @Override

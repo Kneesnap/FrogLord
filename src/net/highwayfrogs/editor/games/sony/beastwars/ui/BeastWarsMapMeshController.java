@@ -21,7 +21,7 @@ public class BeastWarsMapMeshController extends MeshViewController<BeastWarsMapM
     @Override
     public void setupBindings(SubScene subScene3D, MeshView meshView) {
         super.setupBindings(subScene3D, meshView);
-        getFirstPersonCamera().getCamera().setFarClip(DEFAULT_FAR_CLIP);
+        getCamera().setFarClip(DEFAULT_FAR_CLIP);
         getFirstPersonCamera().setDefaultMoveSpeed(DEFAULT_MOVEMENT_SPEED);
 
         AmbientLight mainLight = new AmbientLight(Color.WHITE);

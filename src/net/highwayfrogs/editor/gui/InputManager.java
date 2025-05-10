@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This tracks keyboard and mouse input for usage primarily in 3D environments.
@@ -43,6 +44,8 @@ public class InputManager {
     @Setter private ScrollHandler finalScrollHandler;
     private final boolean[] pressedKeys = new boolean[KeyCode.values().length];
     @Getter private final MouseTracker mouseTracker = new MouseTracker();
+    private boolean trackPadScroll;
+    private long lastFinishedTrackPadScroll;
 
     public interface KeyHandler {
         void accept(InputManager manager, KeyEvent event);
@@ -53,7 +56,7 @@ public class InputManager {
     }
 
     public interface ScrollHandler {
-        void accept(InputManager manager, ScrollEvent event);
+        void accept(InputManager manager, ScrollEvent event, boolean isTrackpadScroll);
     }
 
     /**
@@ -363,15 +366,25 @@ public class InputManager {
      * Function to process mouse input events.
      */
     private void processScrollEvents(ScrollEvent event) {
+        // Only trackpads will trigger scroll start and scroll finish.
+        if (event.getEventType() == ScrollEvent.SCROLL_STARTED) {
+            this.trackPadScroll = true;
+        } else if (event.getEventType() == ScrollEvent.SCROLL_FINISHED) {
+            this.trackPadScroll = false;
+            this.lastFinishedTrackPadScroll = System.currentTimeMillis();
+        }
+
         if (Math.abs(event.getDeltaY()) < .00001)
             return;
+
+        boolean isTrackpadScroll = this.trackPadScroll || event.isInertia() || (TimeUnit.SECONDS.toMillis(1) > System.currentTimeMillis() - this.lastFinishedTrackPadScroll);
 
         // Send out generic scroll handlers.
         for (int i = 0; i < this.scrollHandlers.size(); i++) {
             ScrollHandler handler = this.scrollHandlers.get(i);
 
             try {
-                handler.accept(this, event);
+                handler.accept(this, event, isTrackpadScroll);
             } catch (Throwable th) {
                 String errorMessage = "Failed to run ScrollHandler " + handler + ".";
                 getLogger().throwing("InputManager", "processScrollEvents", new RuntimeException(errorMessage, th));
@@ -384,7 +397,7 @@ public class InputManager {
 
         if (this.finalScrollHandler != null) {
             try {
-                this.finalScrollHandler.accept(this, event);
+                this.finalScrollHandler.accept(this, event, isTrackpadScroll);
             } catch (Throwable th) {
                 String errorMessage = "Failed to run final ScrollHandler " + this.finalScrollHandler + ".";
                 getLogger().throwing("InputManager", "processScrollEvents", new RuntimeException(errorMessage, th));

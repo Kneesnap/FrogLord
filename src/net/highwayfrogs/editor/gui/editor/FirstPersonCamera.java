@@ -260,7 +260,10 @@ public class FirstPersonCamera extends Parent {
     /**
      * Function to process scroll events.
      */
-    private void updateCameraFovFromScroll(InputManager manager, ScrollEvent event) {
+    private void updateCameraFovFromScroll(InputManager manager, ScrollEvent event, boolean isTrackpadScroll) {
+        if (isTrackpadScroll)
+            return; // Changing the FoV with a laptop trackpad looks very bad.
+
         double newFov = getCamera().fieldOfViewProperty().doubleValue();
         if (event.getDeltaY() > 0) { // Zoom In (Mouse Wheel Forward -> DeltaY is positive)
             newFov -= CAM_FOV_CHANGE_DEGREES;

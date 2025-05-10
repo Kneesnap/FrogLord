@@ -1,12 +1,13 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.script.swamp;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.script.FroggerEntityScriptData;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Holds script data for nuclear barrels.
@@ -35,7 +36,9 @@ public class FroggerEntityScriptDataNuclearBarrel extends FroggerEntityScriptDat
 
     @Override
     public void setupEditor(GUIEditorGrid editor, FroggerUIMapEntityManager manager) {
-        editor.addSignedIntegerField("Jump Distance (grid)", this.jumpDistance, newDistance -> this.jumpDistance = newDistance);
-        editor.addFixedInt("Jump Time", this.jumpTime, newTime -> this.jumpTime = newTime, 30);
+        editor.addSignedIntegerField("Jump Distance (grid)", this.jumpDistance, newDistance -> this.jumpDistance = newDistance)
+                .setTooltip(FXUtils.createTooltip("Controls how many grid squares the player will be moved."));
+        editor.addFixedInt("Jump Time (sec)", this.jumpTime, newTime -> this.jumpTime = newTime, getGameInstance().getFPS())
+                .setTooltip(FXUtils.createTooltip("Controls how long (in seconds) the jump will take."));
     }
 }

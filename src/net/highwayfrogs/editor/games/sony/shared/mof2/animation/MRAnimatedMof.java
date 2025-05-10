@@ -4,12 +4,9 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
-import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.mof2.MRBaseModelData;
@@ -22,6 +19,9 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPartCel;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRStaticMof;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,16 +29,6 @@ import java.util.List;
 /**
  * Represents the contents of an animated MOF file.
  * We usually call these "XAR files" or "XAR mofs" because in reality, "animated mofs" implies that the static mofs can't have animations, which is untrue.
- * TODO: Go through and add IPropertyList generators.
- * TODO: Go through and add javadoc header comments.
- * TODO: I'd like to buff the MOF viewer to allow previewing all of the things in this file format.
- *  -> Animations probably should be viewable independently of each other? Not sure. But can they compound? Not sure.
- *  -> Are there any xars with flipbook animations for example? Stuff we've taken for granted should be challenged.
- *  -> Add TRUE interpolation support. Eg: Don't just add MediEvil interpolation, add an option to smooth animations.
- * TODO: Rewrite handleWadEdit() and related wad functionality & UI.
- * TODO: Remove exportAlternativeFormat() features.
- * TODO: Go over all lists and ensure we have validations on save about size checks.
- * TODO: Alert for rare features more often.
  * Created by Kneesnap on 2/18/2025.
  */
 @Getter
@@ -79,12 +69,6 @@ public class MRAnimatedMof extends MRBaseModelData {
             getLogger().warning("The animated MOF had NO modelSets!?");
         if (staticMofCount <= 0)
             getLogger().warning("The animated MOF had NO static Mofs!?");
-
-        // TODO: Remove these, these are for testing purposes.
-        if (modelSetCount > 1)
-            getLogger().info("The animated MOF has %d modelSets!", modelSetCount);
-        if (staticMofCount > 1)
-            getLogger().info("The animated MOF has %d static Mofs!", staticMofCount);
 
         // Read model sets.
         this.modelSets.clear();
@@ -186,23 +170,18 @@ public class MRAnimatedMof extends MRBaseModelData {
 
     /**
      * Get an animation transform.
-     * @param part     The MOFPart to apply to.
-     * @param actionId The animation to get the transform for.
-     * @param frame    The frame id to get the transform for.
+     * @param part The MOFPart to apply to.
+     * @param xarAnimation The animation to get the transform for.
+     * @param frame The frame id to get the transform for.
      * @return transform
      */
-    public MRAnimatedMofTransform getTransform(MRMofPart part, int actionId, int frame) {
-        return this.commonData.getTransforms().get(getAnimationById(actionId).getTransformID(frame, part));
-    }
+    public MRAnimatedMofTransform getTransform(MRMofPart part, MRAnimatedMofXarAnimation xarAnimation, int frame) {
+        if (part == null)
+            throw new NullPointerException("part");
+        if (xarAnimation == null)
+            throw new NullPointerException("xarAnimation");
 
-    /**
-     * Gets the MOFAnimation cel by its action id.
-     * @param actionId The given action.
-     * @return cel
-     */
-    public MRAnimatedMofXarAnimation getAnimationById(int actionId) {
-        // TODO: How does this work with multiple modelSets?
-        return this.modelSets.get(0).getCelSet().getAnimations().get(actionId); // TODO: BAD!
+        return this.commonData.getTransforms().get(xarAnimation.getTransformID(frame, part));
     }
 
     /**
@@ -224,16 +203,19 @@ public class MRAnimatedMof extends MRBaseModelData {
         float testZ = Float.MAX_VALUE;
 
         // TODO: Revisit this method.
+        //  - TODO: Go over bounding boxes across games to see how accurate our generation of them is. Actually, compare with MR_VOID	MRCalculateMOFVertexExtremes() in MR_MOF.C
         for (MRStaticMof staticMof : this.staticMofs) {
             for (MRMofPart part : staticMof.getParts()) {
-                for (int modelSet = 0; modelSet < this.modelSets.size(); modelSet++) {
-                    for (int action = 0; action < this.modelSets.get(modelSet).getCelSet().getAnimations().size(); action++) {
-                        for (int frame = 0; frame < getModel().getFrameCount(action); frame++) {
-                            MRMofPartCel partcel = part.getCel(action, frame);
-                            MRAnimatedMofTransform transform = getTransform(part, action, frame);
+                for (int modelSetIdx = 0; modelSetIdx < this.modelSets.size(); modelSetIdx++) {
+                    MRAnimatedMofModelSet modelSet = this.modelSets.get(modelSetIdx);
+                    for (int action = 0; action < modelSet.getCelSet().getAnimations().size(); action++) {
+                        MRAnimatedMofXarAnimation animation =  modelSet.getCelSet().getAnimations().get(action);
+                        for (int frame = 0; frame < animation.getFrameCount(); frame++) {
+                            MRMofPartCel partcel = part.getPartCel(action, frame);
+                            MRAnimatedMofTransform transform = getTransform(part, animation, frame);
 
                             for (SVector sVec : partcel.getVertices()) {
-                                IVector vertex = PSXMatrix.MRApplyMatrix(transform.calculatePartTransform(getAnimationById(action).isInterpolationEnabled()), sVec, new IVector());
+                                IVector vertex = PSXMatrix.MRApplyMatrix(transform.calculatePartTransform(animation.isInterpolationEnabled()), sVec, new IVector());
 
                                 minX = Math.min(minX, vertex.getFloatX());
                                 minY = Math.min(minY, vertex.getFloatY());

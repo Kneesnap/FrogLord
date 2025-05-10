@@ -229,10 +229,8 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
      */
     public FroggerPath clone() {
         FroggerPath newPath = new FroggerPath(this.mapFile);
-        for (int i = 0; i < this.segments.size(); i++) {
-            FroggerPathSegment oldSegment = this.segments.get(i);
-            newPath.segments.add(oldSegment.clone(newPath));
-        }
+        for (int i = 0; i < this.segments.size(); i++)
+            this.segments.get(i).clone(newPath);
 
         return newPath;
     }

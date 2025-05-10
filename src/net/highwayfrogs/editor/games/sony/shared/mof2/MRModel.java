@@ -1,37 +1,30 @@
 package net.highwayfrogs.editor.games.sony.shared.mof2;
 
-import javafx.application.ConditionalFeature;
-import javafx.application.Platform;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.MRAnimatedMof;
-import net.highwayfrogs.editor.games.sony.shared.mof2.animation.flipbook.MRMofFlipbookAnimation;
-import net.highwayfrogs.editor.games.sony.shared.mof2.animation.flipbook.MRMofFlipbookAnimationList;
-import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTextureAnimation;
-import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPart;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRStaticMof;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.MRModelFileUIController;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.MRModelMeshController;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.mesh.MRModelMesh;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
+import net.highwayfrogs.editor.games.sony.shared.utils.DynamicMeshObjExporter;
+import net.highwayfrogs.editor.games.sony.shared.utils.FileUtils3D;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
-import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -39,26 +32,18 @@ import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Represents a Millennium Interactive 3D model (MOF or Animated MOF) file.
  * Because the data contained in these files can vary and be quite odd, this serves as something of a frontend for a consistent API to access of the underlying data types.
- * TODO: Wait, what's even the purpose of this class? If we're just going to have underlying stuff? Hrmm.
- *  -> I think the purpose is to serve as a frontend to hide away the differences of underlying things. Ah, yeah.
- *
- * TODO: Validate MediEvil models.
- * TODO: Validate the Frogger models which have the broken uvs / orange stripe. (psx-demo-ntsc)
- *
- * TODO LIST:
- *  1) Go over this file.
- *  2) Go over todos of other folder.
- *  3) When done, delete the old texture atlas system.
  * Created by Kneesnap on 2/18/2025.
  */
+@Getter
 public class MRModel extends SCSharedGameFile {
-    @Getter private MRStaticMof staticMof; // TODO: What about cases with multiple static mofs?
-    @Getter private MRAnimatedMof animatedMof;
+    private MRStaticMof staticMof;
+    private MRAnimatedMof animatedMof;
 
     // Frogger is the only game I'm aware of that uses this.
     // This is an EXTREMELY hacky/risky feature, one which manually stitches together two 3D models.
@@ -68,11 +53,11 @@ public class MRModel extends SCSharedGameFile {
     // So at runtime, the game has a hardcoded list of models which it will overwrite pointers within in order to avoid needing to include a full 3D model.
     // This boolean indicates whether the current model is one of those "incomplete" models.
     // There is no official term for these models that I'm aware of.
-    @Getter @Setter private boolean incomplete;
-    @Getter private MRModel completeCounterpart;
+    @Setter private boolean incomplete;
+    private MRModel completeCounterpart;
 
-    @Getter private transient FroggerMapTheme theme; // TODO: We may want to change how we track this to instead maybe know the parent WAD file and calculate it from that. This is in the interest of supporting other games.
-    @Setter @Getter private transient VLOArchive vloFile; // TODO: Change this later, I think we want to change how this is tracked.
+    private transient FroggerMapTheme theme; // TODO: We may want to change how we track this to instead maybe know the parent WAD file and calculate it from that. This is in the interest of supporting other games.
+    @Setter private transient VLOArchive vloFile; // TODO: Change this later, I think we want to change how this is tracked.
 
     public static final int FLAG_ANIMATION_FILE = Constants.BIT_FLAG_3; // This is an animation MOF file.
 
@@ -87,7 +72,7 @@ public class MRModel extends SCSharedGameFile {
     @Override
     @SneakyThrows
     public void exportAlternateFormat() {
-        // TODO: IMPLEMENT NEW.
+        // Nothing?
     }
 
     @Override
@@ -168,19 +153,14 @@ public class MRModel extends SCSharedGameFile {
     }
 
     @Override
-    public void handleWadEdit(WADFile parent) { // TODO: Needs review.
-        if (!Platform.isSupported(ConditionalFeature.SCENE3D)) { // TODO: TOSS? (New 3D viewer includes this)
-            FXUtils.makePopUp("Your version of JavaFX does not support 3D, so models cannot be previewed.", AlertType.WARNING);
-            return;
-        }
-
+    public void handleWadEdit(WADFile parent) {
         showEditor3D();
     }
 
     /**
      * Show the 3D editor.
      */
-    public void showEditor3D() { // TODO: Needs review.
+    public void showEditor3D() {
         if (getVloFile() == null) {
             // Just grab the first VLO.
             VLOArchive firstVLO = getArchive().findFirstVLO();
@@ -199,82 +179,7 @@ public class MRModel extends SCSharedGameFile {
     }
 
     /**
-     * Gets the number of animations in this mof. (Does not include texture animation).
-     * Get the maximum animation action id.
-     * TODO: Needs review.
-     * @return maxAnimation
-     */
-    public int getAnimationCount() {
-        if (isAnimatedMOF())
-            return this.animatedMof.getModelSets().get(0).getCelSet().getAnimations().size(); // TODO: This is WRONG! I just wrote it like this for a temporary compilation aid.
-
-        // Flipbook.
-        return this.staticMof.getParts().stream()
-                .map(MRMofPart::getFlipbook)
-                .map(MRMofFlipbookAnimationList::getAnimations)
-                .mapToInt(List::size)
-                .max().orElse(0);
-    }
-
-    /**
-     * Get the animation's frame count.
-     * TODO: Needs review.
-     * @return frameCount
-     */
-    public int getFrameCount(int animationId) {
-        if (isAnimatedMOF() && animationId != -1) // XAR
-            return this.animatedMof.getAnimationById(animationId).getFrameCount();
-
-        // Flipbook and Texture.
-        int maxFrame = 0;
-        for (MRMofPart part : asStaticFile().getParts()) {
-            MRMofFlipbookAnimationList flipbook = part.getFlipbook();
-
-            if (animationId == -1) {
-                for (MRMofTextureAnimation anim : part.getTextureAnimations()) {
-                    int frameCount = anim.getTotalFrameCount();
-                    if (frameCount > maxFrame)
-                        maxFrame = frameCount;
-                }
-            } else if (flipbook != null) {
-                MRMofFlipbookAnimation action = flipbook.getAction(animationId);
-                if (action != null && action.getFrameCount() > maxFrame)
-                    maxFrame = action.getFrameCount();
-            }
-        }
-
-        return Math.max(maxFrame, 1);
-    }
-
-    /**
-     * Get the forced static mof file.
-     * @return staticMof
-     */
-    public MRStaticMof asStaticFile() { // TODO: Needs review.
-        return isAnimatedMOF() ? this.animatedMof.getStaticMofs().get(0) : this.staticMof;
-    }
-
-    /**
-     * Gets the name of a particular animation ID, if there is one.
-     * @param animationId The animation ID to get.
-     * @return name
-     */
-    public String getName(int animationId) { // TODO: Needs review.
-        if (animationId == -1)
-            return asStaticFile().getTextureAnimationCount() > 0 ? "Texture Animation" : "No Animation";
-
-        NameBank bank = getConfig().getAnimationBank();
-        if (bank == null)
-            return (animationId != 0) ? "Animation " + animationId : "Default Animation";
-
-        String bankName = SCUtils.stripWin95(FileUtils.stripExtension(getFileDisplayName()));
-        NameBank childBank = bank.getChildBank(bankName);
-        return childBank != null ? childBank.getName(animationId) : getConfig().getAnimationBank().getEmptyChildNameFor(animationId, getAnimationCount());
-    }
-
-    /**
      * Export this model to .obj
-     * TODOD: Needs review.
      * @param folder The folder to export to.
      * @param vlo    The graphics pack to export.
      */
@@ -286,21 +191,21 @@ public class MRModel extends SCSharedGameFile {
         }
 
         setVloFile(vlo);
-        // TODO: FileUtils3D.exportMofToObj(asStaticFile(), folder, vlo);
+        DynamicMeshObjExporter.exportMeshToObj(getLogger(), createMesh(), folder, FileUtils.stripExtension(getFileDisplayName()), true);
 
         // Export mm3d too.
         File saveTo = new File(folder, FileUtils.stripExtension(getFileDisplayName()) + ".mm3d");
         FileUtils.deleteFile(saveTo);
 
-        // TODO: MisfitModel3DObject model = FileUtils3D.convertMofToMisfitModel(this);
+        MisfitModel3DObject model = FileUtils3D.convertMofToMisfitModel(this);
         DataWriter writer = new DataWriter(new FileReceiver(saveTo));
-        // TODO: model.save(writer);
+        if (model != null)
+            model.save(writer);
         writer.closeReceiver();
     }
 
     /**
-     * Gets the override of this MOFHolder, if there is one.
-     * TODO: Better system?
+     * Gets the override of this MRModel, if there is one.
      * @return override
      */
     public MRModel getOverride() {
@@ -325,6 +230,15 @@ public class MRModel extends SCSharedGameFile {
     }
 
     /**
+     * Create a JavaFX mesh representation of this model.
+     */
+    public MRModelMesh createMeshWithDefaultAnimation() {
+        MRModelMesh newMesh = new MRModelMesh(this);
+        newMesh.getAnimationPlayer().setDefaultAnimation();
+        return newMesh;
+    }
+
+    /**
      * Gets the FrogLord model behavior type.
      * @return modelType
      */
@@ -339,11 +253,39 @@ public class MRModel extends SCSharedGameFile {
     }
 
     /**
-     * Get whether this is an animated (XAR) MOF.
-     * TODO: Needs review.
+     * Test whether this is an animated (XAR) MOF file.
      */
-    public boolean isAnimatedMOF() {
+    public boolean isAnimatedMof() {
         return this.animatedMof != null;
+    }
+
+    /**
+     * Test whether this model is a single static (non-XAR) MOF file.
+     * NOTE: This has no relation to the static Mofs seen within an animated (XAR) MOF file.
+     */
+    public boolean isStaticMof() {
+        return this.staticMof != null;
+    }
+
+    /**
+     * Test if this is a dummy MOF.
+     */
+    public boolean isDummy() {
+        return this.animatedMof == null && this.staticMof == null;
+    }
+
+    /**
+     * Get a list containing all static mofs available.
+     * The returned list should not be modified.
+     */
+    public List<MRStaticMof> getStaticMofs() {
+        if (this.animatedMof != null) {
+            return this.animatedMof.getStaticMofs();
+        } else if (this.staticMof != null) {
+            return Collections.singletonList(this.staticMof);
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     /**

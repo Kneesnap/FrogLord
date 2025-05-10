@@ -43,9 +43,9 @@ public class FroggerEntityDataSwanOld extends FroggerEntityDataPathInfo {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addUnsignedFixedShort("Spline Delay (secs)", this.splineDelay, newValue -> this.splineDelay = newValue, 30);
-        editor.addFixedShort("Swimming Time (secs)", this.swimmingTime, newValue -> this.swimmingTime = newValue, 30);
-        editor.addFixedShort("Flap Think Time (secs)", this.flapThinkTime, newValue -> this.flapThinkTime = newValue, 30);
-        editor.addFixedShort("Flapping Time (secs)", this.flappingTime, newValue -> this.flappingTime = newValue, 30);
+        editor.addUnsignedFixedShort("Spline Delay (secs)", this.splineDelay, newValue -> this.splineDelay = newValue, getGameInstance().getFPS());
+        editor.addFixedShort("Swimming Time (secs)", this.swimmingTime, newValue -> this.swimmingTime = newValue, getGameInstance().getFPS());
+        editor.addFixedShort("Flap Think Time (secs)", this.flapThinkTime, newValue -> this.flapThinkTime = newValue, getGameInstance().getFPS());
+        editor.addFixedShort("Flapping Time (secs)", this.flappingTime, newValue -> this.flappingTime = newValue, getGameInstance().getFPS());
     }
 }

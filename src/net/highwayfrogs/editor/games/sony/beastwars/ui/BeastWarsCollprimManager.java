@@ -98,7 +98,7 @@ public class BeastWarsCollprimManager extends BeastWarsMapListManager<BeastWarsM
         if (oldAdapter != null) // Apply de-selected material.
             oldAdapter.getShape().setMaterial(MATERIAL_GREEN);
 
-        if (newAdapter != null) // Apply de-selected material.
+        if (newAdapter != null) // Apply selected material.
             newAdapter.getShape().setMaterial(MATERIAL_YELLOW);
     }
 

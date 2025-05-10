@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataMatrix;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -46,7 +47,8 @@ public class FroggerEntityDataBabyFrog extends FroggerEntityDataMatrix {
                 throw new RuntimeException("Cannot attach baby frog entity to a(n) " + foundEntity.getTypeName() + ".");
 
             return true;
-        }, newLogId -> this.logId = newLogId);
-        editor.addSignedShortField("Points (Unused?)", this.awardedPoints, newAwardedPoints -> this.awardedPoints = newAwardedPoints);
+        }, newLogId -> this.logId = newLogId).setTooltip(FXUtils.createTooltip("The unique ID of the entity which the baby frog should ride."));
+        editor.addSignedShortField("Points (Unused?)", this.awardedPoints, newAwardedPoints -> this.awardedPoints = newAwardedPoints)
+                .setDisable(true);
     }
 }

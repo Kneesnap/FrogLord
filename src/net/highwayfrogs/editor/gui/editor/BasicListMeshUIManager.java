@@ -31,6 +31,7 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
     private final boolean includeNull;
 
     // UI:
+    private UISidePanel sidePanel;
     private GUIEditorGrid mainGrid;
     private GUIEditorGrid editorGrid;
     private Label valueCountLabel;
@@ -95,6 +96,7 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
 
         // Unchanging UI Fields
         UISidePanel sidePanel = getController().createSidePanel(getTitle());
+        this.sidePanel = sidePanel;
         this.mainGrid = sidePanel.makeEditorGrid();
         this.setupMainGridEditor(sidePanel);
 
@@ -389,7 +391,7 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
     /**
      * Refreshes the underlying list of values. (Used when the list is swapped/changed.)
      */
-    protected void refreshList() {
+    public void refreshList() {
         List<TValue> newValues = getValues();
         Set<TValue> newValueSet = newValues != null && newValues.size() > 0 ? new HashSet<>(newValues) : Collections.emptySet();
 

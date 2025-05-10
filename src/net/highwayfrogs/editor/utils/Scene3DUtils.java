@@ -588,6 +588,38 @@ public class Scene3DUtils {
     }
 
     /**
+     * Updates a highlighted material
+     * @param material the material to update
+     * @param fxImage the image to apply highlighting to
+     * @return highlightedMaterial
+     */
+    public static PhongMaterial updateHighlightMaterial(PhongMaterial material, Image fxImage) {
+        if (fxImage == null)
+            throw new NullPointerException("fxImage");
+
+        // Setup graphics.
+        BufferedImage highlightedImage = SwingFXUtils.fromFXImage(fxImage, null);
+        Graphics2D g = highlightedImage.createGraphics();
+        try {
+            // Clean image.
+            g.setBackground(new Color(255, 255, 255, 0));
+            g.setColor(new Color(200, 200, 0, 127));
+            g.fillRect(0, 0, highlightedImage.getWidth(), highlightedImage.getHeight());
+        } finally {
+            g.dispose();
+        }
+
+        if (material == null) {
+            material = makeLitBlurryMaterial(FXUtils.toFXImage(highlightedImage, false));
+            return material;
+        }
+
+        // Update material image.
+        material.setDiffuseMap(FXUtils.toFXImage(highlightedImage, false));
+        return material;
+    }
+
+    /**
      * Creates a TriangleMesh (square, vertically aligned) to display a 2D sprite.
      * @param spriteSize the size of the sprite
      */

@@ -101,7 +101,18 @@ public class FroggerOldMapForm extends SCGameData<FroggerGameInstance> implement
     }
 
     @Override
-    public WADEntry getEntityModel(FroggerMapEntity entity) {
+    public FroggerFormGrid getFormGrid() {
+        return null;
+    }
+
+    @Override
+    public void setFormGrid(FroggerFormGrid formGrid) {
+        if (formGrid != null)
+            throw new UnsupportedOperationException("FroggerOldMapForm does not support setFormGrid()!");
+    }
+
+    @Override
+    public WADEntry getEntityModelWadEntry(FroggerMapEntity entity) {
         int resourceId = getGameInstance().getResourceEntryByName("MAP_RUSHED.WAD").getResourceId();
         WADFile wadFile = getGameInstance().getGameFile(resourceId);
         return wadFile.getFiles().get(this.mofId + 1);

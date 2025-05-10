@@ -1,9 +1,9 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.form;
 
-import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.games.generic.data.IGameObject;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 
 /**
@@ -22,20 +22,31 @@ public interface IFroggerFormEntry extends IGameObject {
     String getFormTypeName();
 
     /**
+     * Gets the form grid associated with the form book.
+     */
+    FroggerFormGrid getFormGrid();
+
+    /**
+     * Sets the form grid associated with the form book.
+     * @param formGrid formGrid
+     */
+    void setFormGrid(FroggerFormGrid formGrid);
+
+    /**
      * Gets the WAD entry for the 3D model file used to render the provided entity.
      * @param entity the provided entity
      * @return entityModel, or null if we failed to resolve it
      */
-    WADEntry getEntityModel(FroggerMapEntity entity);
+    WADEntry getEntityModelWadEntry(FroggerMapEntity entity);
 
     /**
      * Gets the entity model MOF file.
      * @param entity the provided entry
      * @return entityMof, or null if we failed to resolve it
      */
-    default MOFHolder getEntityModelMof(FroggerMapEntity entity) {
-        WADEntry entityModel = getEntityModel(entity);
-        return entityModel != null ? ((MOFHolder) entityModel.getFile()).getOverride() : null;
+    default MRModel getEntityModel(FroggerMapEntity entity) {
+        WADEntry entityModel = getEntityModelWadEntry(entity);
+        return entityModel != null ? ((MRModel) entityModel.getFile()).getOverride() : null;
     }
 
     /**

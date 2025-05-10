@@ -7,14 +7,13 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
-import net.highwayfrogs.editor.file.mof.MOFFile;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.pp20.PP20Packer;
 import net.highwayfrogs.editor.games.sony.shared.pp20.PP20Packer.PackResult;
@@ -166,14 +165,11 @@ public class WADFile extends SCSharedGameFile {
             if (!folder.exists())
                 folder.mkdirs();
 
-            if (vlo != null)
-                vlo.exportAllImages(folder, MOFFile.MOF_EXPORT_FILTER);
-
             setVLO(vlo);
             for (WADEntry wadEntry : this.files) {
                 SCGameFile<?> file = wadEntry.getFile();
-                if (file instanceof MOFHolder)
-                    ((MOFHolder) file).exportObject(folder, vlo);
+                if (file instanceof MRModel)
+                    ((MRModel) file).exportObject(folder, vlo);
             }
         }, true);
     }
@@ -236,8 +232,8 @@ public class WADFile extends SCSharedGameFile {
     public void setVLO(VLOArchive vloArchive) {
         for (WADEntry wadEntry : this.files) {
             SCGameFile<?> file = wadEntry.getFile();
-            if (file instanceof MOFHolder)
-                ((MOFHolder) file).setVloFile(vloArchive);
+            if (file instanceof MRModel)
+                ((MRModel) file).setVloFile(vloArchive);
         }
     }
 
@@ -272,7 +268,7 @@ public class WADFile extends SCSharedGameFile {
          * @return isDummyMOF
          */
         public boolean isDummy() {
-            return getFile() == null || ((getFile() instanceof MOFHolder) && ((MOFHolder) getFile()).isDummy());
+            return getFile() == null || ((getFile() instanceof MRModel) && ((MRModel) getFile()).isDummy());
         }
 
         /**

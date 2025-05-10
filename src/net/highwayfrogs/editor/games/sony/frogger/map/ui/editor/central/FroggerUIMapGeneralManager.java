@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central;
 
 import javafx.event.EventHandler;
 import javafx.geometry.Orientation;
+import javafx.scene.AmbientLight;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Separator;
 import javafx.scene.input.KeyEvent;
@@ -9,21 +10,29 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
+import javafx.scene.shape.CullFace;
+import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Translate;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.FroggerMapGroup;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquare;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
+import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGeneral;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGrid;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGroup;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
+import net.highwayfrogs.editor.games.sony.shared.mof2.ui.mesh.MRModelMesh;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.gui.editor.BakedLandscapeUIManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
+import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 
@@ -46,6 +55,8 @@ public class FroggerUIMapGeneralManager extends FroggerCentralUIManager {
     private Box[][] groupPreviewBoxes;
     private Box selectedMapGroupPreviewBox;
     private DisplayList gridPreviewList;
+    @Getter private MeshView playerCharacterView;
+    @Getter private AmbientLight frogLight;
 
     private static final PhongMaterial GROUP_PREVIEW_BOX_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
     private static final PhongMaterial GROUP_PREVIEW_SELECTED_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.RED);
@@ -60,6 +71,10 @@ public class FroggerUIMapGeneralManager extends FroggerCentralUIManager {
 
         this.groupPreviewList = getRenderManager().createDisplayList();
         this.gridPreviewList = getRenderManager().createDisplayList();
+
+        // Setup player display list.
+        this.frogLight = new AmbientLight(ColorUtils.fromRGB(getMap().getGeneralPacket().getAmbientFrogColorAsRgb(), 1F));
+        updatePlayerCharacter();
 
         // Setup UI Pane & Grid.
         this.sidePanel = getController().createSidePanel("General Level Settings");
@@ -80,7 +95,7 @@ public class FroggerUIMapGeneralManager extends FroggerCentralUIManager {
 
         // Remake editors.
         this.generalEditorGrid.clearEditor();
-        getMap().getGeneralPacket().setupEditor(getController(), this.generalEditorGrid);
+        getMap().getGeneralPacket().setupEditor(this, this.generalEditorGrid);
         updateMapGroupUI();
 
         // Update the 3D views.
@@ -223,5 +238,88 @@ public class FroggerUIMapGeneralManager extends FroggerCentralUIManager {
                 }
             }
         }
+    }
+
+    private String getPlayerCharacterModelName() {
+        StringBuilder modelNameBuilder = new StringBuilder("GEN");
+        if (getMap().isMultiplayer())
+            modelNameBuilder.append("M");
+        modelNameBuilder.append("_FROG");
+        if (getMap().isLowPolyMode())
+            modelNameBuilder.append("_WIN95");
+        modelNameBuilder.append(getMap().isMultiplayer() ? ".XMR" : ".XAR");
+        return modelNameBuilder.toString();
+    }
+
+    /**
+     * Update the lighting applied to the player character.
+     */
+    public void updatePlayerCharacterLighting() {
+        if (this.playerCharacterView == null)
+            return; // Can't update yet.
+
+        FroggerMapFilePacketGeneral generalPacket = getMap().getGeneralPacket();
+        getController().getLightManager().setAmbientLightingMode(this.playerCharacterView, generalPacket.isFrogColorDataActive());
+    }
+
+    /**
+     * Updates the player character 3D model view.
+     */
+    public void updatePlayerCharacter() {
+        // Create character.
+        if (this.playerCharacterView == null) {
+            this.playerCharacterView = new MeshView();
+
+            // Setup 3D model.
+            String modelName = getPlayerCharacterModelName();
+            MRModel playerModel = getGameInstance().getMainArchive().getFileByName(modelName);
+            if (playerModel == null) {
+                getLogger().warning("Failed to find the model named '%s' to use as the player character!", modelName);
+                this.playerCharacterView.setMesh(Scene3DUtils.createSpriteMesh(16F));
+                this.playerCharacterView.setMaterial(Scene3DUtils.makeLitBlurryMaterial(ImageResource.SQUARE_LETTER_E_128.getFxImage()));
+            } else {
+                MRModelMesh modelMesh = playerModel.createMesh();
+                if (getMap().isMultiplayer()) {
+                    int action = getGameInstance().getVersionConfig().getAnimationBank().getIndexForName("GENM_FROG_SIT");
+                    if (action >= 0)
+                        modelMesh.getAnimationPlayer().setFlipbookAnimationID(action, true); // GENM_FROG_SIT
+                }
+
+                this.playerCharacterView.setCullFace(CullFace.BACK);
+                modelMesh.addView(this.playerCharacterView, false, false);
+            }
+
+            // Setup lighting.
+            this.frogLight.getScope().add(this.playerCharacterView);
+        }
+
+        // Setup position.
+        FroggerMapFilePacketGeneral generalPacket = getMap().getGeneralPacket();
+        FroggerMapFilePacketGrid gridPacket = getMap().getGridPacket();
+        int startX = generalPacket.getStartGridCoordX();
+        int startZ = generalPacket.getStartGridCoordZ();
+        if (startX < 0 || startZ < 0 || startX >= gridPacket.getGridXCount() || startZ >= gridPacket.getGridZCount()) {
+            this.playerCharacterView.setVisible(false);
+            return;
+        }
+
+        FroggerGridStack startStack = gridPacket.getGridStack(startX, startZ);
+        if (startStack == null || startStack.getGridSquares().isEmpty()) {
+            this.playerCharacterView.setVisible(false);
+            return;
+        }
+
+        FroggerGridSquare gridSquare = startStack.getGridSquares().get(startStack.getGridSquares().size() - 1);
+        if (gridSquare == null || gridSquare.getPolygon() == null) {
+            this.playerCharacterView.setVisible(false);
+            return;
+        }
+
+        this.playerCharacterView.setVisible(true);
+        float gridX = DataUtils.fixedPointIntToFloat4Bit(gridPacket.getWorldXFromGridX(startX, true));
+        float baseY = DataUtils.fixedPointIntToFloat4Bit(gridSquare.calculateAverageWorldHeight());
+        float gridZ = DataUtils.fixedPointIntToFloat4Bit(gridPacket.getWorldZFromGridZ(startZ, true));
+        Scene3DUtils.setNodePosition(this.playerCharacterView, gridX, baseY, gridZ);
+        Scene3DUtils.setNodeRotation(this.playerCharacterView, 0, Math.toRadians(generalPacket.getStartRotation().getRotationInDegrees()), 0);
     }
 }

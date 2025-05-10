@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.games.renderware.game.RwGenericGameType;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 
 import java.awt.*;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
 
@@ -23,6 +24,12 @@ public class Constants {
     public static final String NEWLINE = System.lineSeparator();
 
     public static final int CD_SECTOR_SIZE = 0x800;
+
+    public static final int SONY_ISO_CD_SECTOR_SIZE = 2352; // 0x930
+    public static final String SONY_ISO_CD_SIGNATURE = "\1CD001\1";
+    public static final byte[] SONY_ISO_CD_SIGNATURE_BYTES = SONY_ISO_CD_SIGNATURE.getBytes(StandardCharsets.US_ASCII);
+    public static final int PSX_WRITABLE_START_OFFSET = 0x84;
+    public static final int PSX_WRITABLE_AREA_SIZE = CD_SECTOR_SIZE - PSX_WRITABLE_START_OFFSET;
 
     public static final int BYTE_SIZE = 1;
     public static final int SHORT_SIZE = 2;
@@ -91,7 +98,7 @@ public class Constants {
     public static final String HIGHWAY_FROGS_WEBSITE_URL = "https://highwayfrogs.net/";
     public static final String SOURCE_CODE_REPOSITORY_URL = "https://github.com/Kneesnap/FrogLord/";
 
-    public static final String FX_STYLE_INVALID_TEXT = "-fx-text-inner-color: red;";
+    public static final String FX_STYLE_INVALID_TEXT = "-fx-text-inner-color: red; -fx-focus-color: red; -fx-faint-focus-color: #ff220000";
     public static final double RECOMMENDED_TREE_VIEW_FIXED_CELL_SIZE = 24; // Recommended by https://docs.oracle.com/javase/8/javafx/api/javafx/scene/control/TreeView.html for performance, which was an issue.
 
     /**

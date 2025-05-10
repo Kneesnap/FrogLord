@@ -13,6 +13,9 @@ import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import javax.imageio.ImageIO;
@@ -797,30 +800,38 @@ public class FileUtils {
      * @return file, if successfully saved
      */
     public static File askUserToSaveImageFile(ILogger logger, GameInstance instance, BufferedImage image, String suggestedFileName) {
-        boolean hasSuggestedFileName = suggestedFileName != null && suggestedFileName.trim().length() > 0;
-        String[] extensionSuffixes = ImageIO.getWriterFileSuffixes();
+        boolean hasSuggestedFileName = suggestedFileName != null && !suggestedFileName.trim().isEmpty();
+        if (!hasSuggestedFileName)
+            suggestedFileName = "unknown";
 
         // Add extension.
-        if (hasSuggestedFileName) {
-            String providedExtension = FileUtils.getFileNameExtension(suggestedFileName);
-            if (providedExtension == null || !Utils.contains(extensionSuffixes, providedExtension.toLowerCase()))
-                suggestedFileName += "." + (Utils.contains(extensionSuffixes, "png") ? "png" : extensionSuffixes[0]);
-        }
+        String[] extensionSuffixes = ImageIO.getWriterFileSuffixes();
+        String providedExtension = FileUtils.getFileNameExtension(suggestedFileName);
+        if (providedExtension == null || !Utils.contains(extensionSuffixes, providedExtension.toLowerCase()))
+            suggestedFileName += "." + (Utils.contains(extensionSuffixes, "png") ? "png" : extensionSuffixes[0]);
 
-        File selectedFile = askUserToSaveFile(instance, EXPORT_SINGLE_IMAGE_PATH, suggestedFileName, suggestedFileName != null && suggestedFileName.trim().length() > 0);
+        File selectedFile = askUserToSaveFile(instance, EXPORT_SINGLE_IMAGE_PATH, suggestedFileName, hasSuggestedFileName);
         if (selectedFile == null)
             return null;
 
         String extension = FileUtils.getFileNameExtensionLower(selectedFile.getName());
-        if (extension == null || !Utils.contains(ImageIO.getWriterFileSuffixes(), extension)) {
+        if (extension == null || !Utils.contains(extensionSuffixes, extension)) {
             FXUtils.makePopUp("Couldn't determine which image format to use for the file extension '." + extension + "'.", AlertType.ERROR);
             return null;
         }
 
         try {
-            ImageIO.write(image, extension, selectedFile);
+            if (!ImageIO.write(image, extension, selectedFile)) {
+                FXUtils.makePopUp("No image writer was available for the ." + extension + " image type.", AlertType.ERROR);
+                return null;
+            }
         } catch (IOException ex) {
             Utils.handleError(logger, ex, true, "Failed to save image to file '%s'.", selectedFile.getName());
+            return null;
+        }
+
+        if (!selectedFile.exists() || !selectedFile.isFile()) {
+            FXUtils.makePopUp("The image was expected to have been written to the file, but wasn't!!", AlertType.ERROR);
             return null;
         }
 
@@ -867,5 +878,196 @@ public class FileUtils {
         }
 
         return true;
+    }
+
+    /**
+     * Test if the given file appears to be a PSX/PS2 CD ISO image.
+     * @param file the file to test
+     * @return true iff the iso appears to be an iso image
+     */
+    public static boolean isProbablySonyIso(File file) {
+        if (file == null)
+            throw new NullPointerException("file");
+        if (!file.isFile() || !file.exists())
+            throw new RuntimeException("Invalid file: " + file);
+
+        final int sector = 16;
+        final int signatureOffset = 24;
+
+        // Check if file has a valid ISO9660 header.
+        if (file.length() <= (sector * Constants.SONY_ISO_CD_SECTOR_SIZE) + signatureOffset + Constants.SONY_ISO_CD_SIGNATURE_BYTES.length)
+            return false;
+
+        try (RandomAccessFile fileReader = new RandomAccessFile(file, "r")) {
+            return isProbablySonyIso(fileReader);
+        } catch (Throwable th) {
+            Utils.handleError(null, th, true);
+            return false;
+        }
+    }
+
+    /**
+     * Test if the given file appears to be a PSX/PS2 CD ISO image.
+     * @param file the file to test
+     * @return true iff the iso appears to be an iso image
+     */
+    @SneakyThrows
+    public static boolean isProbablySonyIso(RandomAccessFile file) {
+        if (file == null)
+            throw new NullPointerException("file");
+
+        final int sector = 16;
+        final int signatureOffset = 24;
+
+        // Check if file has a valid ISO9660 header.
+        if (file.length() > (sector * Constants.SONY_ISO_CD_SECTOR_SIZE) + signatureOffset + Constants.SONY_ISO_CD_SIGNATURE_BYTES.length) {
+            file.seek((sector * Constants.SONY_ISO_CD_SECTOR_SIZE) + signatureOffset);
+            byte[] testSignature = new byte[Constants.SONY_ISO_CD_SIGNATURE_BYTES.length];
+
+            int bytesRead;
+            if ((bytesRead = file.read(testSignature)) != testSignature.length)
+                throw new RuntimeException("Failed to read enough bytes! (Expected " + testSignature.length + ", but actually read " + bytesRead + ".)");
+
+            return Arrays.equals(testSignature, Constants.SONY_ISO_CD_SIGNATURE_BYTES);
+        }
+
+        return false;
+    }
+
+    private static final String FROGLORD_EXECUTABLE_SIGNATURE = "FROGLORD";
+    private static final byte[] FROGLORD_EXECUTABLE_SIGNATURE_BYTES = FROGLORD_EXECUTABLE_SIGNATURE.getBytes(StandardCharsets.US_ASCII);
+    private static final String PSX_EXECUTABLE_SIGNATURE = "PS-X EXE";
+    private static final short PSX_EXE_HEADER_VERSION = 0; // Only increment this with a breaking change.
+    private static final int PSX_BASIC_HEADER_SIZE = FROGLORD_EXECUTABLE_SIGNATURE_BYTES.length + 1;
+    private static final String WINDOWS_PE_EXECUTABLE_SIGNATURE = "MZ";
+    private static final short WINDOWS_EXE_HEADER_VERSION = 0; // Only increment this with a breaking change.
+
+    /**
+     * Reads configuration data from the executable.
+     * @param executableReader the reader of executable data
+     * @param executableFileName the name of the file to read from
+     * @return parsedConfig
+     */
+    public static Config loadConfigDataFromExecutable(DataReader executableReader, String executableFileName) {
+        if (executableReader == null)
+            throw new NullPointerException("executableBytes");
+        if (executableReader.getSize() < 16)
+            throw new IllegalArgumentException("The executable is too small!");
+
+        executableReader.setIndex(0);
+        byte[] headerBytes = executableReader.readBytes(16);
+
+        // Try to read any configuration stored in the executable.
+        byte[] configBytes;
+        if (DataUtils.testSignature(headerBytes, 0, WINDOWS_PE_EXECUTABLE_SIGNATURE)) { // PC
+            // Test if the executable already has the identifier at the end.
+            executableReader.setIndex(executableReader.getSize() - Constants.INTEGER_SIZE - FROGLORD_EXECUTABLE_SIGNATURE_BYTES.length - 1);
+            byte version = executableReader.readByte();
+            if ((version & 0xFF) > PSX_EXE_HEADER_VERSION)
+                throw new RuntimeException("This executable was saved with a newer (incompatible) version of FrogLord, and is thus unsupported in this version.");
+
+            int address = executableReader.readInt();
+            byte[] signature = executableReader.readBytes(FROGLORD_EXECUTABLE_SIGNATURE_BYTES.length);
+            if (!DataUtils.testSignature(signature, FROGLORD_EXECUTABLE_SIGNATURE))
+                return null; // Nothing here.
+
+            executableReader.setIndex(address);
+            configBytes = executableReader.readBytes(executableReader.getRemaining() - Constants.INTEGER_SIZE - FROGLORD_EXECUTABLE_SIGNATURE_BYTES.length);
+        } else if (DataUtils.testSignature(headerBytes, 0, PSX_EXECUTABLE_SIGNATURE)) { // PSX
+            if (executableReader.getSize() < Constants.CD_SECTOR_SIZE)
+                throw new RuntimeException("The executable is too small to be a PSX executable!");
+
+            executableReader.setIndex(Constants.PSX_WRITABLE_START_OFFSET);
+            byte[] signature = executableReader.readBytes(FROGLORD_EXECUTABLE_SIGNATURE_BYTES.length);
+            if (!DataUtils.testSignature(signature, FROGLORD_EXECUTABLE_SIGNATURE))
+                return null; // There's no data there.
+
+            // Read after the header, but before the data begins.
+            byte version = executableReader.readByte();
+            if ((version & 0xFF) > PSX_EXE_HEADER_VERSION)
+                throw new RuntimeException("This executable was saved with a newer (incompatible) version of FrogLord, and is thus unsupported in this version.");
+
+            configBytes = executableReader.readBytes(Constants.PSX_WRITABLE_AREA_SIZE - PSX_BASIC_HEADER_SIZE);
+        } else {
+            throw new UnsupportedOperationException("loadConfigDataFromExecutable() doesn't support recognize the executable format.");
+        }
+
+        // Find the end of the string.
+        int endIndex;
+        for (endIndex = 0; endIndex < configBytes.length; endIndex++)
+            if (configBytes[endIndex] == 0)
+                break;
+
+        // Read the build info, and use that to determine the version.
+        // This only applies to versions of the game saved by FrogLord.
+        String parsedConfigText = new String(configBytes, 0, endIndex, StandardCharsets.UTF_8);
+        return Config.loadConfigFromString(parsedConfigText, executableFileName);
+    }
+
+    /**
+     * Writes configuration data to the executable.
+     * @param gameInstance the loaded game instance owning the executable
+     * @param executableBytes the executable data to update
+     * @param config the config data to write
+     * @return updatedExecutableBytes
+     */
+    public static byte[] saveConfigDataToExecutable(GameInstance gameInstance, byte[] executableBytes, Config config) {
+        if (gameInstance == null)
+            throw new NullPointerException("gameInstance");
+        if (executableBytes == null)
+            throw new NullPointerException("executableBytes");
+
+        byte[] bytes = config != null ? config.toString().getBytes(StandardCharsets.UTF_8) : new byte[0];
+
+        if (gameInstance.isPC()) {
+            // Test if the executable already has the identifier at the end.
+            byte[] realExecutable;
+            int frogLordSignatureStartIndex = executableBytes.length - FROGLORD_EXECUTABLE_SIGNATURE_BYTES.length;
+            if (DataUtils.testSignature(executableBytes, frogLordSignatureStartIndex, FROGLORD_EXECUTABLE_SIGNATURE)) {
+                // Remove previously appended executable data.
+                int address = DataUtils.readIntFromBytes(executableBytes, frogLordSignatureStartIndex - Constants.INTEGER_SIZE);
+                realExecutable = new byte[address];
+                System.arraycopy(executableBytes, 0, realExecutable, 0, address);
+            } else {
+                realExecutable = executableBytes;
+            }
+
+            ArrayReceiver receiver = new ArrayReceiver();
+            DataWriter writer = new DataWriter(receiver);
+            writer.writeBytes(bytes);
+            writer.writeByte(Constants.NULL_BYTE); // Terminate string.
+            writer.writeUnsignedByte(WINDOWS_EXE_HEADER_VERSION); // Version.
+            writer.writeInt(realExecutable.length);
+            writer.writeStringBytes(FROGLORD_EXECUTABLE_SIGNATURE);
+            writer.closeReceiver();
+
+            // Generate a new array containing the executable and the extra data.
+            byte[] appendBytes = receiver.toArray();
+            byte[] newExecutableBytes = new byte[realExecutable.length + appendBytes.length];
+            System.arraycopy(realExecutable, 0, newExecutableBytes, 0, realExecutable.length);
+            System.arraycopy(appendBytes, 0, newExecutableBytes, realExecutable.length, appendBytes.length);
+            return newExecutableBytes;
+        } else if (gameInstance.isPSX()) {
+            if (bytes.length + PSX_BASIC_HEADER_SIZE > Constants.PSX_WRITABLE_AREA_SIZE)
+                throw new RuntimeException("Cannot save configuration to executable, it is too large to fit in the available area! (" + bytes.length + " > " + Constants.PSX_WRITABLE_AREA_SIZE + ")");
+
+            // Write after the header, but before the data begins.
+            int writeOffset = Constants.PSX_WRITABLE_START_OFFSET;
+            System.arraycopy(FROGLORD_EXECUTABLE_SIGNATURE_BYTES, 0, executableBytes, writeOffset, FROGLORD_EXECUTABLE_SIGNATURE_BYTES.length);
+            writeOffset += FROGLORD_EXECUTABLE_SIGNATURE_BYTES.length;;
+
+            // Write version.
+            executableBytes[writeOffset++] = (byte) PSX_EXE_HEADER_VERSION;
+
+            // Write config.
+            System.arraycopy(bytes, 0, executableBytes, writeOffset, bytes.length);
+            writeOffset += bytes.length;
+
+            // Write padding.
+            Arrays.fill(executableBytes, writeOffset, Constants.CD_SECTOR_SIZE, Constants.NULL_BYTE);
+            return executableBytes;
+        } else {
+            throw new UnsupportedOperationException("saveConfigDataToExecutable() doesn't support the " + gameInstance.getPlatform() + " platform yet.");
+        }
     }
 }

@@ -1,14 +1,18 @@
 package net.highwayfrogs.editor.games.sony.shared;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameObject.SCSharedGameObject;
+import net.highwayfrogs.editor.gui.SelectionMenu;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Represents a texture remap array.
@@ -81,6 +85,42 @@ public class TextureRemapArray extends SCSharedGameObject {
 
         // If all else fails, resolve the texture ID from any VLO we can find it in.
         return getGameInstance().getMainArchive().getImageByTextureId(globalTextureId);
+    }
+
+    /**
+     * Gets all textures available in the remap.
+     * @param vloArchive the vlo archive to prefer to lookup textures from
+     * @return textures
+     */
+    public List<GameImage> getTextures(VLOArchive vloArchive) {
+        List<GameImage> images = new ArrayList<>();
+        for (int i = 0; i < this.textureIds.size(); i++)
+            images.add(resolveTexture(i, vloArchive));
+
+        return images;
+    }
+
+    /**
+     * Asks the user to choose an image.
+     * @param vloArchive the VLO to prefer resolving texture ids from
+     * @param allowNull if null is allowed to be selected.
+     * @param handler the handler to handle the user's selection.
+     */
+    public void askUserToSelectImage(VLOArchive vloArchive, boolean allowNull, Consumer<GameImage> handler) {
+        List<GameImage> images = getTextures(vloArchive);
+        if (images.isEmpty() && !allowNull)
+            return; // Nothing to select from.
+
+        if (allowNull)
+            images.add(0, null);
+
+        SelectionMenu.promptSelection(getGameInstance(), "Select an image.", handler, images, image -> {
+            if (image == null)
+                return "No Image";
+
+            String originalName = image.getOriginalName();
+            return "#" + image.getLocalImageID() +  " (" + (originalName != null ? originalName + ", " : "") + image.getTextureId() + ")";
+        }, image -> image != null ? image.toFXImage(VLOArchive.ICON_EXPORT) : FXUtils.toFXImage(UnknownTextureSource.MAGENTA_INSTANCE.makeImage(), true));
     }
 
     /**

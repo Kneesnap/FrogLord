@@ -64,7 +64,7 @@ public abstract class MapBook extends ExeStruct {
             return;
         }
 
-        String name = entry.hasFullFilePath() ? "txl_" + FileUtils.stripExtension(entry.getDisplayName()).toLowerCase(Locale.ROOT) + (lowPoly ? "_win95" : "") : null;
+        String name = entry.hasFullFilePath() ? "txl_" + FileUtils.stripExtension(entry.getDisplayName()).toLowerCase(Locale.ROOT) : null;
         instance.addRemap(new FroggerTextureRemap(instance, entry, name, remapPointer));
     }
 }

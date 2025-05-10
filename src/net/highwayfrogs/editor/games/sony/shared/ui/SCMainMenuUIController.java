@@ -119,7 +119,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
         }
 
         // Prevent the user from separating the files unless they really intend to.
-        if (!outputExeFile.getParentFile().equals(getGameInstance().getMwdFile()))
+        if (!outputExeFile.getParentFile().equals(outputMwdFile.getParentFile()))
             if (!FXUtils.makePopUpYesNo("Are you sure you would like to save " + outputMwdFile.getName() + " and " + outputExeFile.getName() + " to different folders?\nUnless you know what you're doing, respond 'No'."))
                 return;
 
@@ -219,7 +219,8 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
             @SuppressWarnings("unchecked")
             SCFileEditorUIController<?, ? super SCGameFile<?>> fileController = (SCFileEditorUIController<?, ? super SCGameFile<?>>) controller;
             if ((fileController.getFileClass() != null && fileController.getFileClass().isInstance(file))) {
-                fileController.setTargetFile(file);
+                if (fileController.getFile() != file)
+                    fileController.setTargetFile(file);
                 return;
             }
         }

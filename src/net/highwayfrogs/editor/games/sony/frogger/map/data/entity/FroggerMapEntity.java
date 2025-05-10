@@ -1,13 +1,11 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity;
 
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.Tooltip;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
@@ -17,13 +15,15 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEn
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataPathInfo;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.IFroggerFlySpriteData;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.script.FroggerEntityScriptData;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerMapForm;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormGrid;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerOldMapForm;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerOldMapFormData;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.IFroggerFormEntry;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathInfo;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketEntity;
+import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketForm;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
@@ -39,6 +39,7 @@ import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -102,7 +103,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
             formId = reader.readUnsignedShortAsInt();
             this.formEntry = getGameInstance().getMapFormEntry(this.mapFile.getMapTheme(), formId);
             this.flags = reader.readShort();
-            warnAboutInvalidBitFlags(this.flags, FroggerMapEntityEntityFlag.FLAG_VALIDATION_MASK);
+            warnAboutInvalidBitFlags(this.flags, FroggerMapEntityFlag.FLAG_VALIDATION_MASK);
             reader.skipBytesRequireEmpty(RUNTIME_POINTERS * Constants.POINTER_SIZE);
         }
 
@@ -140,6 +141,8 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
 
         if (this.entityData instanceof FroggerEntityDataPathInfo && getPathInfo().getPath() == null && !getMapFile().isIslandOrIslandPlaceholder())
             getLogger().warning("Entity references an invalid path ID! (%d)", getPathInfo().getPathId());
+        if (testFlag(FroggerMapEntityFlag.HIDDEN))
+            getLogger().warning("I have the HIDDEN flag, which was expected to be runtime-only!");
     }
 
     @Override
@@ -199,6 +202,21 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
     }
 
     /**
+     * Gets the form grid active for this entity, if there is one.
+     */
+    public FroggerFormGrid getFormGrid() {
+        if (this.mapFile.getMapConfig().isOldFormFormat())
+            return null; // Extremely early maps (April 97) use an outdated form system.
+
+        List<FroggerFormGrid> forms = this.mapFile.getFormPacket().getForms();
+        if (this.formGridId >= 0 && forms.size() > this.formGridId) {
+            return forms.get(this.formGridId);
+        } else { // This form is invalid, so show this as a text box.
+            return null;
+        }
+    }
+
+    /**
      * Setup the editor UI for the entity.
      * @param manager The manager for editing entities.
      * @param editor The editor used to create the UI.
@@ -217,6 +235,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
                 setFormBookEntry(newEntry);
 
                 if (manager != null) {
+                    manager.getController().getFormManager().refreshList(); // We may have added a new form to the list, so update it!
                     manager.updateEntityMesh(this);
                     manager.updateEntityPositionRotation(this);
                     manager.updateEditor();
@@ -225,7 +244,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
         } else if (this.formEntry instanceof FroggerOldMapForm) {
             FroggerOldMapForm oldFormEntry = (FroggerOldMapForm) this.formEntry;
             editor.addLabel("Entity Type", this.formEntry.getEntityTypeName());
-            WADEntry wadEntry = oldFormEntry.getEntityModel(this);
+            WADEntry wadEntry = oldFormEntry.getEntityModelWadEntry(this);
             editor.addLabel("MOF Index", oldFormEntry.getMofId() + " (" + (wadEntry != null ? wadEntry.getDisplayName() : "null") + ")");
         } else if (this.formEntry != null) {
             editor.addLabel("Unsupported Form Type", Utils.getSimpleName(this.formEntry));
@@ -241,23 +260,32 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
 
         // Show form data.
         List<FroggerOldMapFormData> oldForms = (this.formEntry instanceof FroggerOldMapForm) ? ((FroggerOldMapForm) this.formEntry).getFormDataEntries() : null;
-        List<FroggerMapForm> forms = this.mapFile.getFormPacket().getForms();
+        List<FroggerFormGrid> formGrids = this.mapFile.getFormPacket().getForms();
         if (this.mapFile.getMapConfig().isOldFormFormat() && this.formGridId >= 0 && oldForms != null && oldForms.size() > this.formGridId) {
             editor.addSelectionBox("Form Grid", oldForms.get(this.formGridId), oldForms, newForm -> this.formGridId = oldForms.indexOf(newForm))
                     .setConverter(new AbstractIndexStringConverter<>(oldForms, (index, form) -> "Form #" + index + " (" + DataUtils.fixedPointShortToFloat4Bit(form.getXMin()) + "," + DataUtils.fixedPointShortToFloat4Bit(form.getYMin()) + "," + DataUtils.fixedPointShortToFloat4Bit(form.getZMin()) + ")"));
-        } else if (!this.mapFile.getMapConfig().isOldFormFormat() && this.formGridId >= 0 && forms.size() > this.formGridId) {
-            editor.addSelectionBox("Form Grid", forms.get(this.formGridId), forms, newForm -> this.formGridId = newForm.getFormIndex())
-                    .setConverter(new AbstractIndexStringConverter<>(forms, (index, form) -> "Form #" + index + " (" + form.getXGridSquareCount() + "," + form.getZGridSquareCount() + ")"));
+        } else if (!this.mapFile.getMapConfig().isOldFormFormat() && this.formGridId >= 0 && formGrids.size() > this.formGridId) {
+            // Get a list of only the available form grids.
+            List<FroggerFormGrid> availableForms = new ArrayList<>();
+            for (int i = 0; i < formGrids.size(); i++) {
+                FroggerFormGrid formGrid = formGrids.get(i);
+                if (formGrid.getFormEntry() == null || formGrid.getFormEntry() == this.formEntry)
+                    availableForms.add(formGrid);
+            }
+
+            editor.addSelectionBox("Form Grid", formGrids.get(this.formGridId), availableForms, newForm -> setFroggerFormGrid(getFormEntry(), newForm))
+                    .setConverter(new AbstractIndexStringConverter<>(availableForms, (index, form) -> "Form #" + formGrids.indexOf(form) + " (" + form.getXGridSquareCount() + "," + form.getZGridSquareCount() + ")"));
         } else { // This form is invalid, so show this as a text box.
             editor.addUnsignedShortField("Form Grid ID", this.formGridId, newFormGridId -> this.formGridId = newFormGridId);
         }
 
         editor.addBoldLabel("Flags:");
-        for (FroggerMapEntityEntityFlag flag : FroggerMapEntityEntityFlag.values())
-            editor.addCheckBox(StringUtils.capitalize(flag.name()), testFlag(flag), newState -> {
-                setFlag(flag, newState);
-                manager.updateEntityPositionRotation(this);
-            }).setTooltip(new Tooltip(flag.getDescription()));
+        for (FroggerMapEntityFlag flag : FroggerMapEntityFlag.values())
+            if (flag.isShowInEditor())
+                editor.addCheckBox(StringUtils.capitalize(flag.name()), testFlag(flag), newState -> {
+                    setFlag(flag, newState);
+                    manager.updateEntityPositionRotation(this);
+                }).setTooltip(FXUtils.createTooltip(flag.getDescription()));
 
         // Copulate entity data editor.
         if (this.entityData != null) {
@@ -323,16 +351,16 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
      * Gets the entity model, if there is one we know how to resolve.
      * @return modelFile
      */
-    public WADEntry getEntityModel() {
-        return this.formEntry != null ? this.formEntry.getEntityModel(this) : null;
+    public WADEntry getEntityModelWadEntry() {
+        return this.formEntry != null ? this.formEntry.getEntityModelWadEntry(this) : null;
     }
 
     /**
      * Gets the entity model, if there is one we know how to resolve.
-     * @return mofHolder
+     * @return entityModel
      */
-    public MOFHolder getEntityModelMof() {
-        return this.formEntry != null ? this.formEntry.getEntityModelMof(this) : null;
+    public MRModel getEntityModel() {
+        return this.formEntry != null ? this.formEntry.getEntityModel(this) : null;
     }
 
     /**
@@ -340,7 +368,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
      * @param flag The flag to test.
      * @return hasFlag
      */
-    public boolean testFlag(FroggerMapEntityEntityFlag flag) {
+    public boolean testFlag(FroggerMapEntityFlag flag) {
         return (this.flags & flag.getBitFlagMask()) == flag.getBitFlagMask();
     }
 
@@ -349,7 +377,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
      * @param flag     The flag type.
      * @param newState The new state of the flag.
      */
-    public void setFlag(FroggerMapEntityEntityFlag flag, boolean newState) {
+    public void setFlag(FroggerMapEntityFlag flag, boolean newState) {
         boolean oldState = testFlag(flag);
         if (oldState == newState)
             return; // Prevents the ^ operation from breaking the value.
@@ -460,33 +488,69 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
             if (hadOldEntityData)
                 getMapFile().getPathPacket().addEntityToPathTracking(this);
 
-            // Attempt to find a form compatible with the new entity data.
-            if ((hadOldEntityData || this.formGridId < 0) && newEntityDataClass != null && !this.mapFile.getMapConfig().isOldFormFormat()) {
-                for (FroggerMapEntity testEntity : getMapFile().getEntityPacket().getEntities()) {
-                    if (testEntity != this && newEntry == testEntity.getFormEntry() && newEntityDataClass.isInstance(testEntity.getEntityData())) {
-                        this.formGridId = testEntity.getFormGridId();
-                        break;
-                    }
+            // Attempt to find the form compatible with the new entity data.
+            if ((hadOldEntityData || this.formGridId < 0) && newEntry != null && !this.mapFile.getMapConfig().isOldFormFormat()) {
+                // Create a shared form if one does not exist.
+                if (newEntry.getFormGrid() == null) {
+                    FroggerFormGrid newFormGrid = new FroggerFormGrid(getGameInstance());
+                    newEntry.setFormGrid(newFormGrid);
+                    newFormGrid.initFormEntry(newEntry);
                 }
+
+                setFroggerFormGrid(newEntry, newEntry.getFormGrid());
             }
         }
 
         this.formEntry = newEntry;
     }
 
+    private void setFroggerFormGrid(IFroggerFormEntry formEntry, FroggerFormGrid formGrid) {
+        if (formEntry == null)
+            throw new NullPointerException("formEntry");
+        if (formGrid == null)
+            throw new NullPointerException("formGrid");
+        if (formGrid.getMapFile() != null && formGrid.getMapFile() != this.mapFile)
+            throw new IllegalArgumentException("The formGrid was for the map '" + formGrid.getMapFile().getFileDisplayName() + "', not '" + this.mapFile.getFileDisplayName() + "'.");
+        if (formGrid.getFormEntry() != null && formGrid.getFormEntry() != formEntry)
+            throw new IllegalArgumentException("The provided form grid is for " + formGrid.getFormEntry().getFormTypeName() + ", but the provided formEntry was for " + formEntry.getFormTypeName() + ".");
+
+        FroggerMapFilePacketForm formPacket = this.mapFile.getFormPacket();
+        int formGridIndex = formPacket.getForms().indexOf(formGrid);
+        if (formGridIndex < 0) // Add the form grid to the map.
+            formGridIndex = formPacket.addFormGrid(formGrid);
+
+        this.formGridId = formGridIndex;
+        formPacket.convertLocalFormToGlobalForm(formGridIndex, formEntry);
+    }
+
+    /**
+     * Automatically called when a form grid at a particular index was removed.
+     * Do not call this unless you are the form packet.
+     * @param formGridIndex the index of the form to remove.
+     */
+    public void onFormGridRemoved(int formGridIndex) {
+        if (formGridIndex < 0)
+            throw new IllegalArgumentException("formGridIndex was " + formGridIndex);
+        if (this.formGridId == formGridIndex) // Should not occur.
+            throw new IllegalStateException("The formGridIndex of " + formGridIndex + " was removed while it was still in use by an entity! (" + getLoggerInfo() + ")");
+        if (this.formGridId > formGridIndex)
+            this.formGridId--;
+    }
+
     @Getter
     @AllArgsConstructor
-    public enum FroggerMapEntityEntityFlag {
-        NO_LIVE_ENTITY(Constants.BIT_FLAG_0, "Don't create a live entity."),
-        NO_DISPLAY(Constants.BIT_FLAG_1, "Don't display any mesh."),
-        NO_MOVEMENT(Constants.BIT_FLAG_2, "Don't allow entity movement."),
-        NO_COLLISION(Constants.BIT_FLAG_3, "Collision does not apply to this entity."),
-        ALIGN_TO_WORLD(Constants.BIT_FLAG_4, "Do not face the path's direction. (Path Entity Only)"),
-        PROJECT_ON_LAND(Constants.BIT_FLAG_5, "Snap rotation to the grid square polygon. (Path Entity Only)"),
-        LOCAL_ALIGN(Constants.BIT_FLAG_6, "Entity position matrix is calculated \"locally\" (Pipe Slugs)");
+    public enum FroggerMapEntityFlag {
+        HIDDEN(Constants.BIT_FLAG_0, false, "Don't create a live entity.\nThis is runtime only, and is used to for example, hide the checkpoint entities once collected."),
+        NO_DISPLAY(Constants.BIT_FLAG_1, true, "Don't display any 3D model in-game."),
+        NO_MOVEMENT(Constants.BIT_FLAG_2, true, "Disable entity movement."),
+        NO_COLLISION(Constants.BIT_FLAG_3, true, "Collision does not apply to this entity.\nNot used by the original game maps,\n but it is applied at runtime for entities like JUN_ROPE_BRIDGE."),
+        ALIGN_TO_WORLD(Constants.BIT_FLAG_4, true, "Do not face the path's direction. (Path Entity Only)"),
+        PROJECT_ON_LAND(Constants.BIT_FLAG_5, true, "Snap rotation to the grid square polygon. (Path Entity Only)"),
+        LOCAL_ALIGN(Constants.BIT_FLAG_6, true, "Entity position matrix is calculated \"locally\" (Pipe Slugs)");
 
         private final int bitFlagMask;
+        private final boolean showInEditor;
         private final String description;
-        public static final int FLAG_VALIDATION_MASK = 0b1111111;
+        public static final int FLAG_VALIDATION_MASK = 0b1111110;
     }
 }

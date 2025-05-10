@@ -171,7 +171,7 @@ public class FroggerMapCameraZone extends FroggerMapZone {
         ENABLE_PER_DIRECTION_OFFSETS(Constants.BIT_FLAG_0, "Multiple Offsets", "Enables unique camera settings for each camera direction."), // This flag has been guessed to be from mappy, this flag is seen in retail version maps.
         OUTRO(Constants.BIT_FLAG_1, "Outro", "[UNUSED] Special outro camera zone, doesn't seem to be used."),
         SEMI_FORCED(Constants.BIT_FLAG_2, "Lock Camera", "Prevents camera rotation", zone -> zone.getForcedCameraDirection() == null),
-        ABSOLUTE_Y(Constants.BIT_FLAG_3, "Absolute Y", "Treat camera Y positions as absolute world coordinates instead of relative to the player"),
+        ABSOLUTE_Y(Constants.BIT_FLAG_3, "Absolute Y", "Treat camera Y positions as absolute world coordinates instead of relative to the player.\nIn the original game, this is only used in Uncanny Crusher."),
         CHECKPOINT(Constants.BIT_FLAG_4, "No Chckpnt Zoom", "Skips camera zoom-in when the player collects a checkpoint.");
 
         private final short bitFlagMask;

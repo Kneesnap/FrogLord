@@ -4,6 +4,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.image.ImageView;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.sony.SCGameData;
@@ -12,7 +13,6 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquar
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.DataUtils;
-import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -20,6 +20,7 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,18 +28,17 @@ import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Parses the "FORM_DATA" struct.
+ * Represents the 'FORM_DATA' struct in Frogger, which contains the grid squares for a particular form/entity type.
  * Created by Kneesnap on 8/23/2018.
  */
-@Getter
-public class FroggerMapFormData extends SCGameData<FroggerGameInstance> {
-    private final FroggerMapForm form;
-    @Setter private short height; // This is for if heightType is one height for the entire grid.
+public class FroggerFormGridData extends SCGameData<FroggerGameInstance> {
+    @Getter @NonNull private final FroggerFormGrid form;
+    @Getter @Setter private short height; // This is for if heightType is one height for the entire grid.
     private short[][] gridFlags; // Believe this is ordered (z * xSize) + x
 
     private static final short FORM_HEIGHT_TYPE = (short) 0;
 
-    public FroggerMapFormData(FroggerMapForm form) {
+    public FroggerFormGridData(FroggerFormGrid form) {
         super(form.getGameInstance());
         this.gridFlags = new short[form.getZGridSquareCount()][form.getXGridSquareCount()];
         this.form = form;
@@ -56,7 +56,7 @@ public class FroggerMapFormData extends SCGameData<FroggerGameInstance> {
 
         // Validate expectations for grid square heights. (This is more of a sanity check)
         if (expectedGridSquareHeightsPointer != gridSquareHeightsPointer)
-            getLogger().warning("Expected the GridSquare height list to point to the single height at " + NumberUtils.toHexString(expectedGridSquareHeightsPointer) + ", but it actually pointed to " + NumberUtils.toHexString(gridSquareHeightsPointer));
+            getLogger().warning("Expected the GridSquare height list to point to the single height at 0x%08X, but it actually pointed to 0x%08X.", expectedGridSquareHeightsPointer, gridSquareHeightsPointer);
 
         // Read grid square flag list, and warn if we don't recognize them.
         requireReaderIndex(reader, gridSquareFlagsPointer, "Expected GridSquareFlag list");
@@ -65,7 +65,7 @@ public class FroggerMapFormData extends SCGameData<FroggerGameInstance> {
                 short gridSquareFlags = this.gridFlags[z][x] = reader.readShort();
                 FroggerMapFormSquareReaction reaction = FroggerMapFormSquareReaction.getReactionFromFlags(gridSquareFlags);
                 if (reaction == null)
-                    getLogger().warning("Grid Square[z=" + z + ",x=" + x + "] contains an unrecognized grid square flag reaction! (Value: " + NumberUtils.toHexString(DataUtils.shortToUnsignedInt(gridSquareFlags)) + ")");
+                    getLogger().warning("Grid Square[z=%d,x=%d] contains an unrecognized grid square flag reaction! (Value: 0x%08X)", z, x, DataUtils.shortToUnsignedInt(gridSquareFlags));
             }
         }
 
@@ -95,6 +95,35 @@ public class FroggerMapFormData extends SCGameData<FroggerGameInstance> {
         writer.align(Constants.INTEGER_SIZE); // Padding.
     }
 
+    @Override
+    public int hashCode() {
+        int hashCode = this.height;
+        for (int i = 0; i < this.gridFlags.length; i++)
+            hashCode ^= Arrays.hashCode(this.gridFlags[i]);
+        return hashCode;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof FroggerFormGridData))
+            return false;
+
+        FroggerFormGridData other = (FroggerFormGridData) obj;
+        if (this.gridFlags.length != other.gridFlags.length)
+            return false;
+
+        for (int i = 0; i < this.gridFlags.length; i++)
+            if (!Arrays.equals(this.gridFlags[i], other.gridFlags[i]))
+                return false;
+
+        return other.height == this.height;
+    }
+
+    @Override
+    public ILogger getLogger() {
+        return new LazyInstanceLogger(getGameInstance(), FroggerFormGridData::getLoggerInfo, this);
+    }
+
     /**
      * Gets the index of this form.
      */
@@ -106,12 +135,7 @@ public class FroggerMapFormData extends SCGameData<FroggerGameInstance> {
      * Gets the logger information.
      */
     public String getLoggerInfo() {
-        return this.form != null ? this.form.getLoggerInfo() + "|MapFormData{" + getFormDataIndex() + "}" : Utils.getSimpleName(this);
-    }
-
-    @Override
-    public ILogger getLogger() {
-        return new LazyInstanceLogger(getGameInstance(), FroggerMapFormData::getLoggerInfo, this);
+        return this.form.getLoggerInfo() + "|FormGridData{" + getFormDataIndex() + "}";
     }
 
     /**
@@ -159,7 +183,7 @@ public class FroggerMapFormData extends SCGameData<FroggerGameInstance> {
         if (flag == null)
             throw new NullPointerException("flag");
         if (!flag.isFormData())
-            throw new IllegalArgumentException("FroggerGridSquareFlag " + flag.name() + " is not applicable to FroggerMapFormData.");
+            throw new IllegalArgumentException("FroggerGridSquareFlag " + flag.name() + " is not applicable to FroggerFormGridData.");
 
         return (this.gridFlags[gridZ][gridX] & flag.getBitFlagMask()) == flag.getBitFlagMask();
     }
@@ -213,7 +237,7 @@ public class FroggerMapFormData extends SCGameData<FroggerGameInstance> {
         if (flag == null)
             throw new NullPointerException("flag");
         if (!flag.isFormData())
-            throw new IllegalArgumentException("FroggerGridSquareFlag " + flag.name() + " is not applicable to FroggerMapFormData.");
+            throw new IllegalArgumentException("FroggerGridSquareFlag " + flag.name() + " is not applicable to FroggerFormGridData.");
 
         if (newState) {
             this.gridFlags[gridZ][gridX] |= (short) flag.getBitFlagMask();
@@ -224,7 +248,7 @@ public class FroggerMapFormData extends SCGameData<FroggerGameInstance> {
 
     /**
      * Resize the grid to the new size, keeping old flags.
-     * This should only be called by FroggerMapForm, which is able to do it before it has its internal data update.
+     * This should only be called by FroggerFormGrid, which is able to do it before it has its internal data update.
      * @param newX the new x grid size
      * @param newZ the new z grid size
      */
@@ -248,14 +272,14 @@ public class FroggerMapFormData extends SCGameData<FroggerGameInstance> {
      * Setup a form editor.
      * @param editor The editor to setup under.
      */
-    public void setupEditor(FroggerMapForm form, GUIEditorGrid editor) {
+    public void setupEditor(GUIEditorGrid editor) {
         AtomicInteger selectedIndex = new AtomicInteger();
 
         editor.addBoldLabel("Form Data:");
-        ImageView view = getGridFlags().length > 0 ? editor.addCenteredImage(form.makeDataImage(selectedIndex.get())) : null;
+        ImageView view = (this.gridFlags != null && this.gridFlags.length > 0) ? editor.addCenteredImage(form.makeDataImage(selectedIndex.get())) : null;
 
         editor.addSignedShortField("Height", getHeight(), this::setHeight);
-        if (getGridFlags().length == 0)
+        if (this.gridFlags == null || this.gridFlags.length == 0)
             return;
 
         List<Integer> flagIndexList = Utils.getIntegerList(this.form.getXGridSquareCount() * this.form.getZGridSquareCount());
@@ -280,9 +304,9 @@ public class FroggerMapFormData extends SCGameData<FroggerGameInstance> {
 
         // Handles clicking in the form view.
         view.setOnMouseClicked(evt -> {
-            int formGridX = (int) (evt.getX() / FroggerMapForm.GRID_PIXELS);
-            int formGridZ = form.getZGridSquareCount() - 1 - (int) (evt.getY() / FroggerMapForm.GRID_PIXELS);
-            int newIndex = FroggerMapForm.getIndex(formGridX, formGridZ, form.getXGridSquareCount());
+            int formGridX = (int) (evt.getX() / FroggerFormGrid.GRID_PIXELS);
+            int formGridZ = form.getZGridSquareCount() - 1 - (int) (evt.getY() / FroggerFormGrid.GRID_PIXELS);
+            int newIndex = FroggerFormGrid.getFormGridIndex(formGridX, formGridZ, form.getXGridSquareCount());
             tileId.getSelectionModel().select(newIndex);
             tileId.setValue(newIndex);
         });

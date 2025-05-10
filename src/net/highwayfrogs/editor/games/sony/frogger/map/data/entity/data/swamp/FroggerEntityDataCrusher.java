@@ -5,6 +5,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataMatrix;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -14,7 +15,7 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
  */
 @Getter
 public class FroggerEntityDataCrusher extends FroggerEntityDataMatrix {
-    private short speed = 4 * 2184;
+    private short speed = 4 * 2184 + 2;
     private short distance = 512;
     private FroggerEntityDataCrusherDirection direction = FroggerEntityDataCrusherDirection.values()[0];
     private short delay = 30;
@@ -44,10 +45,14 @@ public class FroggerEntityDataCrusher extends FroggerEntityDataMatrix {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addFixedShort("Speed (???)", this.speed, newSpeed -> this.speed = newSpeed, 2184);
-        editor.addFixedShort("Distance (grid)", this.distance, newDistance -> this.distance = newDistance, 256);
-        editor.addEnumSelector("Movement Direction", this.direction, FroggerEntityDataCrusherDirection.values(), false, newDirection -> this.direction = newDirection);
-        editor.addFixedShort("Delay (secs)", this.delay, newDelay -> this.delay = newDelay, 30);
+        editor.addFixedShort("Speed (World Units/sec)", this.speed, newSpeed -> this.speed = newSpeed, 2184.5)
+                .setTooltip(FXUtils.createTooltip("Controls how fast the crusher moves.\nMost likely these are in world units."));
+        editor.addFixedShort("Distance (grid)", this.distance, newDistance -> this.distance = newDistance, 256)
+                .setTooltip(FXUtils.createTooltip("Controls many grid squares does the crusher has moved when it is fully extended."));
+        editor.addEnumSelector("Movement Direction", this.direction, FroggerEntityDataCrusherDirection.values(), false, newDirection -> this.direction = newDirection)
+                .setTooltip(FXUtils.createTooltip("Controls which direction the crusher moves, from its starting position."));
+        editor.addFixedShort("Delay (secs)", this.delay, newDelay -> this.delay = newDelay, getGameInstance().getFPS())
+                .setTooltip(FXUtils.createTooltip("Controls how long to wait until after the level loads to start moving."));
     }
 
     @Getter

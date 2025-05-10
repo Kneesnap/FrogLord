@@ -1,12 +1,9 @@
 package net.highwayfrogs.editor.file.map.view;
 
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
-import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -15,7 +12,7 @@ import java.util.function.Consumer;
  * Represents a texture which was not found.
  * Created by Kneesnap on 3/2/2020.
  */
-public class UnknownTextureSource implements TextureSource, ITextureSource {
+public class UnknownTextureSource implements ITextureSource {
     private final Color firstColor;
     private final Color secondColor;
     private BufferedImage cachedImage;
@@ -40,26 +37,6 @@ public class UnknownTextureSource implements TextureSource, ITextureSource {
     public UnknownTextureSource(Color firstColor, Color secondColor) {
         this.firstColor = firstColor;
         this.secondColor = secondColor;
-    }
-
-    @Override
-    public BufferedImage makeTexture(TextureMap map) {
-        return makeImage();
-    }
-
-    @Override
-    public boolean isOverlay(TextureMap map) {
-        return true;
-    }
-
-    @Override
-    public BigInteger makeIdentifier(TextureMap map) {
-        return makeIdentifier(0xFA175AFE);
-    }
-
-    @Override
-    public GameImage getGameImage(TextureMap map) {
-        return null;
     }
 
     @Override

@@ -1,10 +1,9 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
@@ -16,6 +15,8 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.Arrays;
 
@@ -39,7 +40,7 @@ public class OldFroggerMapPolygon extends SCGameData<OldFroggerGameInstance> {
     private PSXPolygonType polygonType;
     private final int[] vertices;
     private CVector[] colors;
-    private long textureId = -1;
+    @Setter private long textureId = -1;
     private SCByteTextureUV[] textureUvs;
 
     private static final SCByteTextureUV[] EMPTY_UV_ARRAY = new SCByteTextureUV[0];
@@ -103,7 +104,7 @@ public class OldFroggerMapPolygon extends SCGameData<OldFroggerGameInstance> {
      * @param mapMesh The map mesh to create the shading definition for.
      */
     public PSXShadeTextureDefinition createPolygonShadeDefinition(OldFroggerMapMesh mapMesh) {
-        OldFroggerMapFile mapFile = mapMesh.getMap();
+        OldFroggerMapFile mapFile = mapMesh != null ? mapMesh.getMap() : null;
 
         SCByteTextureUV[] uvs = null;
         if (this.polygonType.isTextured()) {

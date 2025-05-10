@@ -124,7 +124,7 @@ public class BeastWarsMapObjConverter {
         // TODO: TOSS
         // Create collprim geometry. (Temporary)
         try {
-            ImageIO.write(UnknownTextureSource.MAGENTA_INSTANCE.makeTexture(null), "png", new File(folder, "collprim.png"));
+            ImageIO.write(UnknownTextureSource.MAGENTA_INSTANCE.makeImage(), "png", new File(folder, "collprim.png"));
         } catch (IOException ex) {
             Utils.handleError(logger, ex, false, "Failed to export collprim image.");
         }
@@ -189,10 +189,10 @@ public class BeastWarsMapObjConverter {
                 imageFileName = String.valueOf(textureEntryIndex);
             } else if (textureEntryIndex == BeastWarsMapFile.TEXTURE_ID_NO_TEXTURE) {
                 imageFileName = "disabled";
-                image = UnknownTextureSource.CYAN_INSTANCE.makeTexture(null);
+                image = UnknownTextureSource.CYAN_INSTANCE.makeImage();
             } else {
                 imageFileName = "missing";
-                image = UnknownTextureSource.MAGENTA_INSTANCE.makeTexture(null);
+                image = UnknownTextureSource.MAGENTA_INSTANCE.makeImage();
             }
 
             if (image != null)

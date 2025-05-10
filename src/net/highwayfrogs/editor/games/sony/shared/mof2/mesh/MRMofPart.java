@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.shared.collprim.MRCollprim;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.flipbook.MRMofFlipbookAnimationList;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTextureAnimation;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTextureAnimationPolygonTarget;
@@ -355,21 +356,21 @@ public class MRMofPart extends SCSharedGameData {
     /**
      * Gets the part-cel id.
      * @param flipbookId The animation id.
-     * @param frame      The global frame count.
+     * @param animationTick The global frame count.
      * @return celId
      */
-    public int getCelId(int flipbookId, int frame) {
-        return this.flipbook.getPartCelIndex(flipbookId, frame);
+    public int getPartCelId(int flipbookId, int animationTick) {
+        return this.flipbook.getPartCelIndex(flipbookId, animationTick);
     }
 
     /**
      * Gets the flipbook part-cel.
      * @param flipbookId The animation id.
-     * @param frame      The global frame count.
+     * @param animationTick The global frame count.
      * @return cel
      */
-    public MRMofPartCel getCel(int flipbookId, int frame) {
-        return this.partCels.get(Math.min(this.partCels.size() - 1, getCelId(flipbookId, frame)));
+    public MRMofPartCel getPartCel(int flipbookId, int animationTick) {
+        return this.partCels.get(Math.min(this.partCels.size() - 1, getPartCelId(flipbookId, animationTick)));
     }
 
     /**
@@ -552,7 +553,9 @@ public class MRMofPart extends SCSharedGameData {
                 if (this.mofPart.getParentMof().getModel().getCompleteCounterpart() == null)
                     throw new RuntimeException("Incomplete model is missing a counterpart!!");
 
-                counterpart = this.mofPart.getParentMof().getModel().getCompleteCounterpart().asStaticFile().getParts().get(this.mofPart.getPartID());
+                MRModel modelCounterpart = this.mofPart.getParentMof().getModel().getCompleteCounterpart();
+                int staticMofId = this.mofPart.getParentMof().getModel().getStaticMofs().indexOf(this.mofPart.getParentMof());
+                counterpart = modelCounterpart.getStaticMofs().get(staticMofId).getParts().get(this.mofPart.getPartID());
             } else {
                 counterpart = null;
             }

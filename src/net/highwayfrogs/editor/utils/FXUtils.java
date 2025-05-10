@@ -2,15 +2,13 @@ package net.highwayfrogs.editor.utils;
 
 import com.sun.javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
+import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
@@ -24,6 +22,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import javafx.util.Duration;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameInstance;
@@ -85,6 +84,32 @@ public class FXUtils {
         public boolean hasExpired() {
             return (System.currentTimeMillis() - lastUpdate) > IMAGE_CACHE_EXPIRE;
         }
+    }
+
+    /**
+     * Creates a tooltip of indefinite length from the provided text.
+     * @param tooltipText the text to create the tooltip from
+     * @return tooltipText
+     */
+    public static Tooltip createTooltip(String tooltipText) {
+        return createTooltip(tooltipText, Duration.INDEFINITE);
+    }
+
+    /**
+     * Creates a tooltip which lasts for the given duration
+     * @param tooltipText the toolTip text to create the tooltip from
+     * @param duration the duration which the tooltip should display for
+     * @return tooltip
+     */
+    @SuppressWarnings("StatementWithEmptyBody")
+    public static Tooltip createTooltip(String tooltipText, Duration duration) {
+        if (StringUtils.isNullOrWhiteSpace(tooltipText))
+            return null;
+
+        Tooltip tooltip = new Tooltip(tooltipText);
+        if (duration != null) // Default value is 5000 ms.
+            ; // TODO: JavaFX 9+ tooltip.setShowDuration(duration);
+        return tooltip;
     }
 
     /**
@@ -292,11 +317,10 @@ public class FXUtils {
         double x = oldWindow.getX();
         double y = oldWindow.getY();
 
-        stage.setScene(newScene);
-
         // This function worked without the following on my machines, but other machines (whether it be system settings, differing FX versions, etc) would not resize the scene properly.
         // The following appears to fix it.
         stage.hide();
+        stage.setScene(newScene);
         stage.show();
 
         // Maintain the position the viewer Scene was at when it was closed.
@@ -335,14 +359,14 @@ public class FXUtils {
         field.setOnKeyPressed(evt -> {
             KeyCode code = evt.getCode();
             if (field.getStyle().isEmpty() && (code.isLetterKey() || code.isDigitKey() || code == KeyCode.BACK_SPACE)) {
-                field.setStyle("-fx-text-inner-color: darkgreen;");
+                field.setStyle("-fx-text-inner-color: darkgreen; -fx-focus-color: green; -fx-faint-focus-color: #ff002200");
             } else if (code == KeyCode.ESCAPE) {
                 if (field.getParent() != null)
                     field.getParent().requestFocus();
                 evt.consume(); // Don't pass further, eg: we don't want to exit the UI we're in.
                 field.setText(resetTextRef.get());
                 field.setStyle(null);
-            } else if (code == KeyCode.ENTER) {
+            } else if (code == KeyCode.ENTER || code == KeyCode.TAB) { // Tab should not only accept the value, but move to the next input field as well.
                 boolean successfullyHandled = false;
                 String newText = field.getText();
 
@@ -536,6 +560,24 @@ public class FXUtils {
             return AlertType.WARNING;
         } else { // informational messages
             return AlertType.INFORMATION;
+        }
+    }
+
+    /**
+     * Adds or removes the element in the list to ensure its presence matches the desired boolean.
+     * @param list the list to add/remove
+     * @param value the value to add/remove
+     * @param shouldBeInList if the element should be present in the list
+     */
+    public static <TElement> void setFoundInList(ObservableList<TElement> list, TElement value, boolean shouldBeInList) {
+        if (list == null)
+            throw new NullPointerException("list");
+
+        if (shouldBeInList) {
+            if (!list.contains(value))
+                list.add(value);
+        } else {
+            list.remove(value);
         }
     }
 

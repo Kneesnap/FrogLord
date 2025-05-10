@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.Color?>
+<TitledPane fx:id="paneAnim" animated="false" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="250.0" text="Preview Settings" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1">
+    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+        <Label layoutX="48.0" layoutY="49.0" style="-fx-font-weight: bold;" text="Model: " AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0" />
+        <ComboBox fx:id="animationSelector" layoutX="83.0" layoutY="6.0" prefWidth="150.0" AnchorPane.leftAnchor="40.0" AnchorPane.rightAnchor="40.0" AnchorPane.topAnchor="25.0" />
+        <CheckBox fx:id="repeatCheckbox" alignment="CENTER" contentDisplay="CENTER" layoutX="10.0" layoutY="85.0" mnemonicParsing="false" prefHeight="17.0" prefWidth="120.0" selected="true" text="Repeat Animation" AnchorPane.leftAnchor="55.0" AnchorPane.rightAnchor="55.0" AnchorPane.topAnchor="85.0" />
+        <HBox alignment="TOP_CENTER" layoutX="60.6" layoutY="139.6" prefHeight="25.0" prefWidth="139.0" spacing="5.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0" AnchorPane.topAnchor="120.0">
+            <children>
+                <Label layoutX="67.0" layoutY="112.0" prefHeight="25.0" prefWidth="25.0" text="FPS: " AnchorPane.leftAnchor="55.0" AnchorPane.rightAnchor="148.4" AnchorPane.topAnchor="125.0" />
+                <TextField fx:id="fpsField" layoutX="78.0" layoutY="106.0" prefHeight="25.0" prefWidth="30.0" text="??" AnchorPane.leftAnchor="80.0" AnchorPane.topAnchor="120.0" />
+                <Button fx:id="playButton" alignment="CENTER" contentDisplay="RIGHT" layoutX="160.0" layoutY="115.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="58.0" text="Play" AnchorPane.leftAnchor="133.4" AnchorPane.rightAnchor="55.0" AnchorPane.topAnchor="120.0" />
+            </children>
+        </HBox>
+        <Label fx:id="modelName" layoutX="48.0" layoutY="10.0" text="&lt;Model Name&gt;" AnchorPane.leftAnchor="55.0" AnchorPane.topAnchor="0.0" />
+        <Label fx:id="frameLabel" alignment="CENTER" layoutX="160.0" layoutY="6.0" prefHeight="17.0" prefWidth="80.0" text="Frame ?" AnchorPane.leftAnchor="80.0" AnchorPane.rightAnchor="80.0" AnchorPane.topAnchor="70.0" />
+        <CheckBox fx:id="brightModeCheckbox" layoutX="4.0" layoutY="96.0" mnemonicParsing="false" text="Bright Mode" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="185.0" />
+        <CheckBox fx:id="viewBoundingBoxesCheckbox" layoutX="13.0" layoutY="153.0" mnemonicParsing="false" text="Show Bounding Boxes" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="210.0" />
+        <Separator layoutX="7.0" layoutY="158.0" prefWidth="200.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="150.0" />
+        <Label layoutX="11.0" layoutY="148.0" text="Model Set: " AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="160.0" />
+        <ComboBox fx:id="animatedModelComboBox" layoutX="61.0" layoutY="142.0" prefWidth="150.0" AnchorPane.leftAnchor="60.0" AnchorPane.topAnchor="155.0" />
+        <CheckBox fx:id="textureAnimationCheckbox" alignment="CENTER" contentDisplay="CENTER" layoutX="88.0" layoutY="81.0" mnemonicParsing="false" prefHeight="17.0" prefWidth="125.0" selected="true" text="Texture Animation" AnchorPane.leftAnchor="55.0" AnchorPane.rightAnchor="55.0" AnchorPane.topAnchor="101.0" />
+        <Slider fx:id="frameSlider" layoutX="54.0" layoutY="60.0" AnchorPane.leftAnchor="40.0" AnchorPane.rightAnchor="40.0" AnchorPane.topAnchor="50.0" />
+        <Label layoutX="17.0" layoutY="266.0" text="Background Color:" underline="true" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="245.0" />
+        <Separator layoutX="14.0" layoutY="248.0" prefWidth="200.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="240.0" />
+        <ColorPicker fx:id="colorPicker" layoutX="83.0" layoutY="6.0" prefWidth="150.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="40.0" AnchorPane.topAnchor="270.0">
+            <value>
+                <Color red="0.5" green="0.5" blue="0.5" />
+            </value>
+        </ColorPicker>
+        <Separator layoutX="14.0" layoutY="248.0" prefWidth="200.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="305.0" />
+        <Label layoutX="17.0" layoutY="266.0" text="Show/Hide Parts:" underline="true" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="310.0" />
+        <ComboBox fx:id="partHideSelector" layoutX="83.0" layoutY="6.0" prefWidth="150.0" AnchorPane.leftAnchor="40.0" AnchorPane.rightAnchor="40.0" AnchorPane.topAnchor="335.0" />
+        <Separator layoutX="14.0" layoutY="248.0" prefWidth="200.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="370.0" />
+        <Label layoutX="17.0" layoutY="266.0" text="Controls:" underline="true" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="380.0" />
+        <Label layoutX="19.6" layoutY="264.6" prefHeight="90.0" prefWidth="220.0" text="Left Arrow Key: Previous Frame&#13;Right Arrow Key: Next Frame&#13;X: Toggle Wireframe Mode&#13;Ctrl + S: Save Texture Map&#13;F10: Take Screenshot&#13;Escape: Exit Viewer" wrapText="true" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="400.0" />
+    </AnchorPane>
+</TitledPane>

@@ -14,13 +14,9 @@ import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
-import net.highwayfrogs.editor.utils.data.reader.ArraySource;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
-import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
@@ -31,6 +27,10 @@ import net.highwayfrogs.editor.system.NameValuePair;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.data.reader.ArraySource;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -108,12 +108,12 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
 
         if (fileName.endsWith(".mm3d")) {
             SCGameFile<?> selectFile = this.selectedEntry.getFile();
-            if (!(selectFile instanceof MOFHolder)) {
+            if (!(selectFile instanceof MRModel)) {
                 FXUtils.makePopUp("You cannot import a model over a " + (selectFile != null ? selectFile.getClass().getSimpleName() : "null") + ".", AlertType.ERROR);
                 return;
             }
 
-            MOFHolder mofHolder = (MOFHolder) selectFile;
+            MRModel model = (MRModel) selectFile;
             MisfitModel3DObject newObject = new MisfitModel3DObject();
             DataReader reader = new DataReader(new ArraySource(newBytes));
 
@@ -125,7 +125,7 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
             }
 
             try {
-                FileUtils3D.importMofFromModel(newObject, mofHolder);
+                FileUtils3D.importMofFromModel(newObject, model);
             } catch (Exception ex) {
                 FXUtils.makeErrorPopUp("An error occurred when importing the model.", ex, true);
                 return;

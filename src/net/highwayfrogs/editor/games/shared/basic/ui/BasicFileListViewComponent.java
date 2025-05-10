@@ -33,7 +33,8 @@ public class BasicFileListViewComponent<TGameInstance extends BasicGameInstance>
 
     @Override
     protected void onDoubleClick(BasicGameFile<?> file) {
-        file.handleDoubleClick();
+        if (file != null)
+            file.handleDoubleClick();
     }
 
     @Override

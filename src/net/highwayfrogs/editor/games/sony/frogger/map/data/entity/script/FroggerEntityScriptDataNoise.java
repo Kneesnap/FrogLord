@@ -1,11 +1,12 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.script;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Loads and saves sound radius data.
@@ -36,7 +37,9 @@ public class FroggerEntityScriptDataNoise extends FroggerEntityScriptData {
 
     @Override
     public void setupEditor(GUIEditorGrid editor, FroggerUIMapEntityManager manager) {
-        editor.addFixedInt("Min Radius (grid)", this.minRadius, newMinRadius -> this.minRadius = newMinRadius, 256);
-        editor.addFixedInt("Max Radius (grid)", this.maxRadius, newMaxRadius -> this.maxRadius = newMaxRadius, 256);
+        editor.addFixedInt("Min Radius (grid)", this.minRadius, newMinRadius -> this.minRadius = newMinRadius, 256)
+                .setTooltip(FXUtils.createTooltip("The minimum distance away (in grid squares) to hear the sound from."));
+        editor.addFixedInt("Max Radius (grid)", this.maxRadius, newMaxRadius -> this.maxRadius = newMaxRadius, 256)
+                .setTooltip(FXUtils.createTooltip("The maximum distance away (in grid squares) to hear the sound from."));
     }
 }

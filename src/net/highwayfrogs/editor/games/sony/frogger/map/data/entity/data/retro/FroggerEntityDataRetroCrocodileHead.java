@@ -34,7 +34,8 @@ public class FroggerEntityDataRetroCrocodileHead extends FroggerEntityDataMatrix
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addEnumSelector("Head State", this.type, CrocodileHeadState.values(), false, newType -> this.type = newType);
+        editor.addEnumSelector("Head State (Unused)", this.type, CrocodileHeadState.values(), false, newType -> this.type = newType)
+                .setDisable(true);
     }
 
     public enum CrocodileHeadState {

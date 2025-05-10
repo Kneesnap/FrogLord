@@ -27,6 +27,7 @@ public class FroggerMapMeshController extends MeshViewController<FroggerMapMesh>
     private FroggerUIGeometryManager bakedGeometryManager;
     private FroggerUIMapAnimationManager animationManager;
     private FroggerUIMapEntityManager entityManager;
+    private FroggerUIMapFormManager formManager;
     private FroggerUIMapPathManager pathManager;
     private FroggerUIMapLightManager lightManager;
 
@@ -43,7 +44,7 @@ public class FroggerMapMeshController extends MeshViewController<FroggerMapMesh>
     public void setupBindings(SubScene subScene3D, MeshView meshView) {
         super.setupBindings(subScene3D, meshView);
         if (getMapFile().getMapTheme() == FroggerMapTheme.SKY) // Extend view area to cover SKY LAND.
-            getFirstPersonCamera().getCamera().setFarClip(getFirstPersonCamera().getCamera().getFarClip() * 1.5);
+            getCamera().setFarClip(getCamera().getFarClip() * 1.5);
         getMainLight().getScope().add(getMeshView());
         getMainLight().getScope().addAll(getAxisDisplayList().getNodes());
         this.generalManager.getSidePanel().requestFocus();
@@ -54,7 +55,7 @@ public class FroggerMapMeshController extends MeshViewController<FroggerMapMesh>
         addManager(this.generalManager = new FroggerUIMapGeneralManager(this));
         addManager(this.bakedGeometryManager = new FroggerUIGeometryManager(this));
         addManager(this.entityManager = new FroggerUIMapEntityManager(this));
-        addManager(new FroggerUIMapFormManager(this));
+        addManager(this.formManager = new FroggerUIMapFormManager(this));
         addManager(this.pathManager = new FroggerUIMapPathManager(this));
         addManager(this.lightManager = new FroggerUIMapLightManager(this));
         addManager(this.animationManager = new FroggerUIMapAnimationManager(this));
