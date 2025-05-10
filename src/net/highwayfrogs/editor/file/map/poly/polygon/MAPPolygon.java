@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.file.map.poly.MAPPrimitive;
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -14,7 +13,7 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
  * Created by Kneesnap on 8/25/2018.
  */
 @Getter
-public abstract class MAPPolygon extends MAPPrimitive implements TextureSource {
+public abstract class MAPPolygon extends MAPPrimitive {
     @Setter private MAPFile mapFile;
     private short padding;
 

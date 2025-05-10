@@ -2,18 +2,11 @@ package net.highwayfrogs.editor.file.map.poly.polygon;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
-import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
-
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.math.BigInteger;
 
 /**
  * Flat shaded polygon.
@@ -38,33 +31,6 @@ public class MAPPolyFlat extends MAPPolygon {
     public void save(DataWriter writer) {
         super.save(writer);
         this.color.save(writer);
-    }
-
-    @Override
-    public BufferedImage makeTexture(TextureMap map) {
-        BufferedImage image = new BufferedImage(MAPFile.VERTEX_COLOR_IMAGE_SIZE, MAPFile.VERTEX_COLOR_IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D graphics = image.createGraphics();
-
-        graphics.setColor(getColor().toColor());
-        graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
-
-        graphics.dispose();
-        return image;
-    }
-
-    @Override
-    public boolean isOverlay(TextureMap map) {
-        return true;
-    }
-
-    @Override
-    public BigInteger makeIdentifier(TextureMap map) {
-        return makeIdentifier(0xF1A7C010, this.color.toRGB());
-    }
-
-    @Override
-    public GameImage getGameImage(TextureMap map) {
-        return null;
     }
 
     @Override

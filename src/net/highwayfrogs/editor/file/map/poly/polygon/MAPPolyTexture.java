@@ -5,15 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.ShadingMode;
 import net.highwayfrogs.editor.file.standard.psx.ByteUV;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
-import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
@@ -159,31 +154,6 @@ public abstract class MAPPolyTexture extends MAPPolygon implements TexturedPoly 
             colorVector.save(writer);
     }
 
-
-    /**
-     * Makes the image used for shading.
-     * @return shadeImage
-     */
-    public abstract BufferedImage makeShadeImage(TextureMap map, int width, int height, boolean useRaw);
-
-    /**
-     * Makes the image used for shading.
-     * @return shadeImage
-     */
-    public BufferedImage makeShadeImage(TextureMap map, boolean useRaw) {
-        return makeShadeImage(map, MAPFile.VERTEX_COLOR_IMAGE_SIZE, MAPFile.VERTEX_COLOR_IMAGE_SIZE, useRaw);
-    }
-
-    /**
-     * Creates a texture which has shading applied.
-     * @return shadedTexture
-     */
-    public BufferedImage makeShadedTexture(TextureMap map, BufferedImage applyTo) {
-        BufferedImage normalImage = applyTo != null ? applyTo : getTreeNode(map).getImage();
-        BufferedImage shadeImage = makeShadeImage(map, normalImage.getWidth(), normalImage.getHeight(), true);
-        return makeShadedTexture(normalImage, shadeImage);
-    }
-
     private void loadUV(int id, DataReader reader) {
         this.uvs[id] = new ByteUV();
         this.uvs[id].load(reader);
@@ -237,39 +207,6 @@ public abstract class MAPPolyTexture extends MAPPolygon implements TexturedPoly 
         MAX_ORDER_TABLE(Constants.BIT_FLAG_2); // Puts at the back of the order table. Either the very lowest rendering priority, or the very highest.
 
         private final int flag;
-    }
-
-    @Override
-    public GameImage getGameImage(TextureMap map) {
-        short globalTextureId = map.getRemap(getTextureId());
-        GameImage image = map.getVloArchive() != null ? map.getVloArchive().getImageByTextureId(globalTextureId, false) : null;
-        if (image == null) { // This is probably not going to give a useful texture generally. It was added for build 20 compatibility.
-            image = map.getArchive().getImageByTextureId(globalTextureId);
-            for (int i = 0; i < 100 && image == null; i++) {
-                image = map.getArchive().getImageByTextureId(globalTextureId + i);
-                if (image == null && i > 0)
-                    image = map.getArchive().getImageByTextureId(globalTextureId - i);
-            }
-
-            if (image == null)
-                return map.getArchive().getAllFiles(VLOArchive.class).get(0).getImages().get(0);
-        }
-        if (image == null) // New froglord = we want to just use a "unknown texture" placeholder.
-            throw new RuntimeException("Could not find a texture with the id: " + getTextureId() + "/" + globalTextureId + ".");
-        return image;
-    }
-
-    @Override
-    public boolean isOverlay(TextureMap map) {
-        if (map.getMode() == ShadingMode.OVERLAY_SHADING)
-            return true;
-
-        if (map.getMode() != ShadingMode.MIXED_SHADING)
-            return false;
-
-        GameImage image = getGameImage(map);
-        long combinedArea = map.getMapTextureList().get(getTextureId()).size() * (image.getFullWidth() * image.getFullHeight());
-        return combinedArea >= ((long) map.getWidth() * map.getHeight() / 8); // Test if it's too frequent.
     }
 
     @Override

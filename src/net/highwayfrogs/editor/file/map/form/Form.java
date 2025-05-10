@@ -5,7 +5,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.file.GameObject;
 import net.highwayfrogs.editor.file.map.MAPFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerMapForm;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormGrid;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -157,7 +157,7 @@ public class Form extends GameObject {
     /**
      * Converts the form to the new map format.
      */
-    public FroggerMapForm convertToNewFormat(FroggerMapFile mapFile) {
-        return MAPFile.copyToNewViaBytes(this, new FroggerMapForm(mapFile));
+    public FroggerFormGrid convertToNewFormat(FroggerMapFile mapFile) {
+        return MAPFile.copyToNewViaBytes(this, new FroggerFormGrid(mapFile));
     }
 }

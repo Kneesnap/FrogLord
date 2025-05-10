@@ -3,10 +3,7 @@ package net.highwayfrogs.editor.file.map.poly.polygon;
 import javafx.scene.paint.Color;
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.map.MAPFile;
-import net.highwayfrogs.editor.file.map.view.TextureMap;
 import net.highwayfrogs.editor.file.standard.psx.PSXColorVector;
-import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.shading.PSXTextureShader;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
@@ -16,7 +13,6 @@ import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.awt.image.BufferedImage;
-import java.math.BigInteger;
 
 /**
  * Represents polygons with gouraud shading.
@@ -49,34 +45,6 @@ public class MAPPolyGouraud extends MAPPolygon {
         super.save(writer);
         for (PSXColorVector vector : colors)
             vector.save(writer);
-    }
-
-    @Override
-    public BufferedImage makeTexture(TextureMap map) {
-        final Color c0 = ColorUtils.fromRGB(this.colors[0].toRGB());
-        final Color c1 = ColorUtils.fromRGB(this.colors[1].toRGB());
-        final Color c2 = ColorUtils.fromRGB(this.colors[2].toRGB());
-        final Color c3 = (this.colors.length > 3 ? ColorUtils.fromRGB(this.colors[3].toRGB()) : c2);
-        return makeGouraudImage(MAPFile.VERTEX_COLOR_IMAGE_SIZE, MAPFile.VERTEX_COLOR_IMAGE_SIZE, c0, c1, c2, c3);
-    }
-
-    @Override
-    public boolean isOverlay(TextureMap map) {
-        return true;
-    }
-
-    @Override
-    public BigInteger makeIdentifier(TextureMap map) {
-        int[] colors = new int[getColors().length + 1];
-        colors[0] = 0xF0ADFACE;
-        for (int i = 0; i < getColors().length; i++)
-            colors[i] = getColors()[i].toRGB();
-        return makeIdentifier(colors);
-    }
-
-    @Override
-    public GameImage getGameImage(TextureMap map) {
-        return null;
     }
 
     @Override
