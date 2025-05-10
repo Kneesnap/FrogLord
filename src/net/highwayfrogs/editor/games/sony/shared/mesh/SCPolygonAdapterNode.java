@@ -85,7 +85,6 @@ public abstract class SCPolygonAdapterNode<TPolygon> extends DynamicMeshAdapterN
                 throw new IllegalArgumentException("Unsupported local texCoordIndex " + localTexCoordIndex);
         }
 
-
         entry.writeTexCoordValue(localTexCoordIndex, uv);
     }
 

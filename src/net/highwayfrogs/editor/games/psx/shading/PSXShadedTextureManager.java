@@ -133,8 +133,14 @@ public abstract class PSXShadedTextureManager<TPolygon> {
             throw new NullPointerException("newShadedTexture");
 
         PSXShadeTextureDefinition oldShadedTexture = this.shadedTexturesByPolygon.get(polygon);
-        if (oldShadedTexture == null)
-            return false; // Not registered.
+        if (oldShadedTexture == null) { // Not registered, so register it.
+            if (newShadedTexture != null) {
+                addPolygon(polygon, newShadedTexture);
+                return true;
+            }
+
+            return false;
+        }
 
         if (Objects.equals(oldShadedTexture, newShadedTexture)) {
             applyTextureShading(polygon, newShadedTexture); // Ensures flat textured polygons animate if their UVs change.

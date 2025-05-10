@@ -215,6 +215,25 @@ public abstract class DynamicMeshAdapterNode<TDataSource> extends DynamicMeshNod
         // Do nothing by default.
     }
 
+    /**
+     * Update all the texture coordinate values stored for a particular data source.
+     * @param source The source to update texture coordinates for.
+     */
+    public void updateFaces(TDataSource source) {
+        if (!this.mesh.isActive(this))
+            throw new RuntimeException("Cannot update mesh data on an inactive node.");
+
+        DynamicMeshTypedDataEntry entry = this.entriesByDataSource.get(source);
+        if (entry == null)
+            throw new RuntimeException("Cannot update faces for source " + Utils.getSimpleName(this) + ", because it isn't tracked as part of the mesh!");
+
+        // Update each face.
+        this.mesh.getEditableFaces().startBatchingUpdates();
+        for (int i = 0; i < entry.getWrittenFaceCount(); i++)
+            this.updateFace(entry, i);
+        this.mesh.getEditableFaces().endBatchingUpdates();
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public boolean updateFace(DynamicMeshDataEntry entry, int localFaceIndex) {

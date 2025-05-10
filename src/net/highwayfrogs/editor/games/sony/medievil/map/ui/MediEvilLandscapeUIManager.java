@@ -189,7 +189,9 @@ public class MediEvilLandscapeUIManager extends BakedLandscapeUIManager<MediEvil
                     polygon.setTextureId(-1);
                 }
 
-                getManager().getController().getMesh().getShadedTextureManager().updatePolygon(polygon);
+                setShadeDefinition(polygon, getManager().createPolygonShadeDefinition(polygon));
+                getManager().getMesh().getShadedTextureManager().updatePolygon(polygon);
+                getManager().getMesh().getMainNode().updateTexCoords(polygon);
             });
         }
     }
