@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.generic;
 
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Alert.AlertType;
 import javafx.stage.Stage;
@@ -17,6 +18,7 @@ import net.highwayfrogs.editor.utils.logging.MainGameInstanceLogger;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Represents an instance of a game. For example, a folder containing the files for a single version of a game.
@@ -82,6 +84,27 @@ public abstract class GameInstance implements IGameInstance {
             GameUIController.loadController(this, MainMenuController.MAIN_MENU_FXML_TEMPLATE_LOADER, this.mainMenuController);
             Stage stage = GameUIController.openWindow(this.mainMenuController, "FrogLord " + Constants.VERSION + " -- " + this.gameType.getDisplayName() + " " + versionName, false);
             stage.setResizable(true);
+
+            // For some reason, JavaFX fails to properly shut down when all windows are closed, despite Platform.isImplicitExit() being true.
+            // So, this is our hack for now (or indefinitely), until it's the right time to dig into JavaFX to figure out why.
+            stage.setOnCloseRequest(event -> {
+                FrogLordApplication.getActiveGameInstances().remove(this); // Window getting closed.
+                if (FrogLordApplication.getActiveGameInstances().isEmpty()) {
+                    Platform.runLater(() -> {
+                        Platform.exit(); // For some reason, this isn't enough to shut down even though it should be.
+
+                        try {
+                            Thread.sleep(TimeUnit.SECONDS.toMillis(10));
+                        } catch (InterruptedException ex) {
+                            // Don't care.
+                        }
+
+                        // Our last resort.
+                        FrogLordApplication.onShutdown();
+                        System.exit(0);
+                    });
+                }
+            });
         }
 
         return this.mainMenuController;

@@ -5,7 +5,6 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
@@ -111,12 +110,6 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
         });
 
         this.menuBarEdit.getItems().add(this.menuItemRunScript);
-    }
-
-    @Override
-    public void onSceneRemove(Scene oldScene) {
-        FrogLordApplication.getActiveGameInstances().remove(getGameInstance()); // Window getting closed.
-        super.onSceneRemove(oldScene);
     }
 
     /**

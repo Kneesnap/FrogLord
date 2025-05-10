@@ -44,6 +44,13 @@ public class FileUtils {
     private static final File[] EMPTY_FILE_ARRAY = new File[0];
 
     /**
+     * Gets the JAR file representing FrogLord.
+     */
+    public static File getFrogLordJar() {
+        return getFileFromURL(Utils.class.getProtectionDomain().getCodeSource().getLocation());
+    }
+
+    /**
      * Get a resource in the JAR.
      * @param resourcePath The resource path.
      * @param includeSubFolders if true, sub folders will be included.
@@ -60,7 +67,7 @@ public class FileUtils {
             }
 
             String localResourcePath = fullResourcePath.substring(exclamationPos + 1);
-            File frogLordJar = getFileFromURL(Utils.class.getProtectionDomain().getCodeSource().getLocation());
+            File frogLordJar = getFrogLordJar();
             if (!frogLordJar.exists())
                 throw new RuntimeException("Failed to find resource files at '" + localResourcePath + "', we resolved the FrogLord jar file to '" + frogLordJar + "', which did not exist. (" + resourcePath + ")");
 
@@ -77,7 +84,7 @@ public class FileUtils {
                     }
                 }
 
-                return foundResourceUrls;
+                return removeFolders(foundResourceUrls);
             } catch (Throwable th) {
                 Utils.handleError(null, th, false, "Failed to get the FileSystem object for the FrogLord jar: '%s'", frogLordJar);
             }
@@ -89,11 +96,17 @@ public class FileUtils {
         try {
             Path path = Paths.get(resourcePath.toURI());
             try (Stream<Path> stream = Files.walk(path, includeSubFolders ? Integer.MAX_VALUE : 1)) {
-                return getUrlsFromPaths(stream, false);
+                return removeFolders(getUrlsFromPaths(stream, false));
             }
         } catch (URISyntaxException | IOException ex) {
             throw new RuntimeException("Failed to get files in resource directory '" + resourcePath + "'", ex);
         }
+    }
+
+    private static List<URL> removeFolders(List<URL> list) {
+        return list.stream()
+                .filter(url -> url != null && !url.getPath().endsWith("/"))
+                .collect(Collectors.toList());
     }
 
     private static List<URL> getUrlsFromPaths(Stream<Path> stream, boolean remakeResources) {
@@ -354,7 +367,7 @@ public class FileUtils {
         if (folder != null && folder.exists() && folder.isDirectory())
             return folder;
 
-        return folder != null ? getValidFolder(folder.getParentFile()) : new File("./");
+        return folder != null ? getValidFolder(folder.getParentFile()) : new File(FrogLordApplication.getMainApplicationFolder(), "./");
     }
 
     /**
