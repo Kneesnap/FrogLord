@@ -854,10 +854,9 @@ public class MAPFile extends SCGameData<FroggerGameInstance> {
 
         // Forms
         this.newMapFile.getLogger().info("Converting forms...");
-        formPacket.getForms().clear();
-        formPacket.getOldForms().clear();
+        formPacket.clear();
         for (Form form : this.forms)
-            formPacket.getForms().add(form.convertToNewFormat(this.newMapFile));
+            formPacket.addFormGrid(form.convertToNewFormat(this.newMapFile));
         if (this.oldForms.size() > 0) // Untested, so there's a warning.
             this.newMapFile.getLogger().warning("Cannot convert the %d old forms, as they are not supported for conversion.", this.oldForms.size());
 
