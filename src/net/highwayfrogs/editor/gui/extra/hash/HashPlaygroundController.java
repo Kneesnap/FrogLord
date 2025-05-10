@@ -8,8 +8,8 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.extra.hash.tree.HashTreeStringGenerator;
 import net.highwayfrogs.editor.utils.FXUtils;
@@ -40,7 +40,7 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
     private HashPlaygroundController(SCGameInstance gameInstance) {
         super(gameInstance);
 
-        File dictionaryFile = new File(GUIMain.getMainApplicationFolder(), "dictionary.txt");
+        File dictionaryFile = new File(FrogLordApplication.getMainApplicationFolder(), "dictionary.txt");
         if (dictionaryFile.exists() && dictionaryFile.isFile()) {
             DictionaryStringGenerator gen = new DictionaryStringGenerator();
             gen.loadDictionaryFromFile(dictionaryFile);

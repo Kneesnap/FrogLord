@@ -11,7 +11,7 @@
 			<children>
 				<StackPane alignment="TOP_CENTER">
 					<children>
-						<ImageView fitWidth="400.0" pickOnBounds="true" preserveRatio="true" StackPane.alignment="TOP_CENTER">
+						<ImageView fitWidth="400.0" pickOnBounds="true" preserveRatio="true" StackPane.alignment="TOP_CENTER" fx:id="frogLordGameLogoView">
 							<image>
 								<Image url="@/graphics/logo-large.png" />
 							</image>

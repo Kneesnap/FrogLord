@@ -3,11 +3,11 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.zone;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.FroggerOffsetVectorType;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.function.Predicate;
 
@@ -29,7 +29,6 @@ public class FroggerMapCameraZone extends FroggerMapZone {
     private final SVector westTargetOffset = new SVector();
 
     public static final int BYTE_SIZE = (2 * Constants.SHORT_SIZE) + (8 * SVector.PADDED_BYTE_SIZE);
-    private static final short NO_FORCED_CAMERA_DIRECTION = -1;
 
     public FroggerMapCameraZone(FroggerMapFile mapFile) {
         super(mapFile, FroggerMapZoneType.CAMERA);
@@ -39,8 +38,7 @@ public class FroggerMapCameraZone extends FroggerMapZone {
     protected void loadExtensionData(DataReader reader) {
         this.flags = reader.readShort();
         warnAboutInvalidBitFlags(this.flags, FroggerMapCameraZoneFlag.FLAG_VALIDATION_MASK);
-        short cameraDirectionNum = reader.readShort();
-        this.forcedCameraDirection = (cameraDirectionNum != NO_FORCED_CAMERA_DIRECTION) ? FroggerCameraRotation.values()[cameraDirectionNum] : null;
+        this.forcedCameraDirection = FroggerCameraRotation.getCameraRotationFromID(reader.readShort());
         this.northSourceOffset.loadWithPadding(reader);
         this.northTargetOffset.loadWithPadding(reader);
         this.eastSourceOffset.loadWithPadding(reader);
@@ -63,7 +61,7 @@ public class FroggerMapCameraZone extends FroggerMapZone {
     @Override
     protected void saveExtensionData(DataWriter writer) {
         writer.writeShort(this.flags);
-        writer.writeShort(this.forcedCameraDirection != null ? (short) this.forcedCameraDirection.ordinal() : NO_FORCED_CAMERA_DIRECTION);
+        writer.writeShort(FroggerCameraRotation.getCameraRotationID(this.forcedCameraDirection));
         this.northSourceOffset.saveWithPadding(writer);
         this.northTargetOffset.saveWithPadding(writer);
         this.eastSourceOffset.saveWithPadding(writer);
@@ -106,7 +104,7 @@ public class FroggerMapCameraZone extends FroggerMapZone {
             case EAST:
                 return sourceOffset ? this.eastSourceOffset : this.eastTargetOffset;
             case SOUTH:
-                return sourceOffset ? this.southSourceOffset : this.westTargetOffset;
+                return sourceOffset ? this.southSourceOffset : this.southTargetOffset;
             case WEST:
                 return sourceOffset ? this.westSourceOffset : this.westTargetOffset;
             default:
@@ -173,7 +171,7 @@ public class FroggerMapCameraZone extends FroggerMapZone {
         ENABLE_PER_DIRECTION_OFFSETS(Constants.BIT_FLAG_0, "Multiple Offsets", "Enables unique camera settings for each camera direction."), // This flag has been guessed to be from mappy, this flag is seen in retail version maps.
         OUTRO(Constants.BIT_FLAG_1, "Outro", "[UNUSED] Special outro camera zone, doesn't seem to be used."),
         SEMI_FORCED(Constants.BIT_FLAG_2, "Lock Camera", "Prevents camera rotation", zone -> zone.getForcedCameraDirection() == null),
-        ABSOLUTE_Y(Constants.BIT_FLAG_3, "Absolute Y", "Treat camera Y positions as absolute world coordinates instead of relative to the player"),
+        ABSOLUTE_Y(Constants.BIT_FLAG_3, "Absolute Y", "Treat camera Y positions as absolute world coordinates instead of relative to the player.\nIn the original game, this is only used in Uncanny Crusher."),
         CHECKPOINT(Constants.BIT_FLAG_4, "No Chckpnt Zoom", "Skips camera zoom-in when the player collects a checkpoint.");
 
         private final short bitFlagMask;

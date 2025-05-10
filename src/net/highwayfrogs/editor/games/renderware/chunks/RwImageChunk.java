@@ -9,9 +9,7 @@ import javafx.scene.layout.VBox;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
@@ -22,6 +20,8 @@ import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.*;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
@@ -430,7 +430,7 @@ public class RwImageChunk extends RwStreamChunk implements ITextureSource {
             if (suggestedTextureName == null || suggestedTextureName.trim().isEmpty())
                 suggestedTextureName = "unknown";
 
-            FileUtils.askUserToSaveImageFile(getLogger(), getGameInstance(), this.imageChunk.getImage(), suggestedTextureName + ".png", true);
+            FileUtils.askUserToSaveImageFile(getLogger(), getGameInstance(), this.imageChunk.getImage(), suggestedTextureName);
         }
 
         /**

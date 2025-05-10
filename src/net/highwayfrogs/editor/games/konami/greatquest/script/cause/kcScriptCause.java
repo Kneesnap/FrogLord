@@ -8,6 +8,10 @@ import net.highwayfrogs.editor.games.generic.data.GameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
+import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionID;
+import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffect;
+import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffectAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
@@ -193,11 +197,12 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
      */
     public final void printWarning(ILogger logger, String warning) {
         if (!this.loadedFromGame)
-            logger.warning("The cause '" + getAsGqsStatement() + "' "
-                    + (this.userImportSource != null ? "in '" + this.userImportSource + "' " : "")
-                    + (this.userLineNumber > 0 ? "on line " + this.userLineNumber + " " : "")
-                    + "will never occur because " + warning
-                    + (warning.endsWith(".") || warning.endsWith("!") || warning.endsWith(")") ? "" : "."));
+            logger.warning("The cause '%s' %s%swill never occur because %s%s",
+                    getAsGqsStatement(),
+                    (this.userImportSource != null ? "in '" + this.userImportSource + "' " : ""),
+                    (this.userLineNumber > 0 ? "on line " + this.userLineNumber + " " : ""),
+                    warning,
+                    (warning.endsWith(".") || warning.endsWith("!") || warning.endsWith(")") ? "" : "."));
     }
 
     private kcScriptDisplaySettings createDisplaySettings() {
@@ -272,5 +277,38 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
         }
 
         return newCause;
+    }
+
+    /**
+     * Test if an entity is terminated when the given action runs.
+     * @param action the action to test
+     * @return isEntityTerminatedOnRun
+     */
+    public static boolean isEntityTerminated(kcAction action) {
+        if (action.getExecutor() instanceof kcScriptEffect) {
+            kcScriptEffect effect = (kcScriptEffect) action.getExecutor();
+            kcScriptFunction function = effect.getParentFunction();
+            if (function != null) {
+                kcCResourceEntityInst targetEntity = effect.getTargetEntityRef().getResource();
+                if (function.getCause() instanceof kcScriptCausePlayer
+                        && (targetEntity != null && function.getCause().getScriptEntity() == targetEntity)
+                        && ((kcScriptCausePlayer) function.getCause()).getAction() == kcScriptCauseEntityAction.PICKUP_ITEM)
+                    return true; // Picking up an item causes the item entity to terminate, so it would not work.
+
+                // Test for termination effect.
+                for (int i = 0; i < function.getEffects().size(); i++) {
+                    kcScriptEffect testEffect = function.getEffects().get(i);
+                    if (!(testEffect instanceof kcScriptEffectAction) || (targetEntity == null || testEffect.getTargetEntityRef().getResource() != targetEntity))
+                        continue;
+
+                    kcAction testAction = ((kcScriptEffectAction) testEffect).getAction();
+                    if (testAction.getActionID() == kcActionID.TERMINATE)
+                        return true;
+                }
+            }
+        }
+
+        // It's probably OK.
+        return false;
     }
 }

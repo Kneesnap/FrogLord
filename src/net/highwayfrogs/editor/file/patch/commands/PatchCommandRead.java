@@ -4,7 +4,7 @@ import net.highwayfrogs.editor.file.patch.PatchArgumentType;
 import net.highwayfrogs.editor.file.patch.PatchRuntime;
 import net.highwayfrogs.editor.file.patch.PatchValue;
 import net.highwayfrogs.editor.file.patch.reference.PatchValueReference;
-import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 
 import java.util.List;
 import java.util.function.BiConsumer;

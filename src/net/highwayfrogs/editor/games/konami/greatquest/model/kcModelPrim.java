@@ -2,12 +2,13 @@ package net.highwayfrogs.editor.games.konami.greatquest.model;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -19,7 +20,7 @@ import java.util.List;
 public class kcModelPrim extends GameData<GreatQuestInstance> {
     @Getter private final kcModel model;
     @Getter private final List<kcVertex> vertices = new ArrayList<>();
-    @Getter private long materialId; // uint
+    @Getter private int materialId; // uint
     @Getter private kcPrimitiveType primitiveType = kcPrimitiveType.TRIANGLE_LIST; // TRIANGLE_LIST and TRIANGLE_STRIP are the only ones used in any known build. It is unknown if the other primitive types are implemented.
     @Getter @Setter private short[] boneIds;
     private transient long loadedVertexCount = -1;
@@ -32,14 +33,14 @@ public class kcModelPrim extends GameData<GreatQuestInstance> {
 
     @Override
     public void load(DataReader reader) {
-        this.materialId = reader.readUnsignedIntAsLong();
+        this.materialId = reader.readInt();
         this.primitiveType = kcPrimitiveType.values()[reader.readInt()];
         this.loadedVertexCount = reader.readUnsignedIntAsLong();
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeUnsignedInt(this.materialId);
+        writer.writeInt(this.materialId);
         writer.writeUnsignedInt(this.primitiveType.ordinal());
         writer.writeUnsignedInt(this.vertices.size());
     }
@@ -90,5 +91,11 @@ public class kcModelPrim extends GameData<GreatQuestInstance> {
     public void saveVertices(DataWriter writer) {
         for (int i = 0; i < this.vertices.size(); i++)
             this.vertices.get(i).save(writer, this.model.getComponents(), this.model.getFvf(), true);
+    }
+
+    @Override
+    public String toString() {
+        return "kcModelPrim{" + this.primitiveType + ",material=" + this.materialId + ",vertices=" + this.vertices.size()
+                + (this.boneIds != null ? ",boneIds=" + Arrays.toString(this.boneIds) : "") + "}";
     }
 }

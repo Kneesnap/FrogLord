@@ -3,15 +3,10 @@ package net.highwayfrogs.editor.games.sony;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.file.reader.ArraySource;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.reader.FileSource;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.file.writer.ArrayReceiver;
-import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.file.writer.FixedArrayReceiver;
 import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.games.shared.basic.GameBuildInfo;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
@@ -23,6 +18,12 @@ import net.highwayfrogs.editor.games.sony.shared.ui.SCMainMenuUIController;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.ArraySource;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.FileSource;
+import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.writer.FixedArrayReceiver;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -124,6 +125,11 @@ public abstract class SCGameInstance extends GameInstance {
         // Read data. (Should occur after we know the executable header info)
         this.readOverlayTable(exeReader);
         this.readBmpPointerData(exeReader);
+    }
+
+    @Override
+    public boolean isShowSaveWarning() {
+        return getGameType() == null || getGameType().isShowSaveWarning();
     }
 
     @Override
@@ -299,6 +305,9 @@ public abstract class SCGameInstance extends GameInstance {
             reader.setIndex(reader.getIndex() - Constants.SHORT_SIZE);
         }
 
+        // Setup the number of slots available.
+        textureRemap.initTextureSlotsAvailable(Math.max(textureRemap.getTextureIds().size(), ((reader.getIndex() - textureRemap.getReaderIndex()) / Constants.SHORT_SIZE)));
+
         // Run hook (Allows adding new remaps after this one, but NOT before)
         onRemapRead(textureRemap, reader);
 
@@ -306,7 +315,7 @@ public abstract class SCGameInstance extends GameInstance {
         nextTextureRemap = this.textureRemaps.size() > index + 1 ? this.textureRemaps.get(index + 1) : null;
         int extraBytes = nextTextureRemap != null ? nextTextureRemap.getReaderIndex() - reader.getIndex() : 0;
         if (extraBytes != 0)
-            getLogger().warning(textureRemap + " has " + extraBytes + " unread bytes between it and " + nextTextureRemap + ".");
+            getLogger().warning( "%s has %d unread bytes between it and %s.", textureRemap, extraBytes, nextTextureRemap);
 
         // Return, but only after calling hook.
         reader.jumpReturn();
@@ -482,7 +491,23 @@ public abstract class SCGameInstance extends GameInstance {
      * @return fps
      */
     public int getFPS() {
-        return isPSX() ? 30 : 25;
+        if (isPC()) {
+            // Beast Wars PC has not had its frame-rate tested.
+            return 25; // Frogger's PC release is locked to 25 FPS, regardless of EU/NA.
+        } else if (isPSX()) {
+            switch (getVersionConfig().getRegion()) {
+                case UNSPECIFIED: // By default, they seemed to make NTSC builds (prototypes).
+                case USA:
+                case JAPAN:
+                    return 30; // 30 FPS.
+                case EUROPE:
+                    return 25;
+                default:
+                    throw new RuntimeException("Don't know what the FPS should be for the " + getVersionConfig().getRegion() + " region.");
+            }
+        } else {
+            throw new RuntimeException("Don't know what the frame-rate for this game is.");
+        }
     }
 
     /**
@@ -693,6 +718,12 @@ public abstract class SCGameInstance extends GameInstance {
         return mwdFile;
     }
 
+    private byte[] writeConfigToExecutable(byte[] executableBytes) {
+        net.highwayfrogs.editor.system.Config rootConfig = new net.highwayfrogs.editor.system.Config(null);
+        rootConfig.addChildConfig(new GameBuildInfo<>(this).toConfig());
+        return FileUtils.saveConfigDataToExecutable(this, executableBytes, rootConfig);
+    }
+
     /**
      * Saves the cached executable bytes with any modifications applied to a file.
      * @param outputFile         The file to save to.
@@ -704,7 +735,7 @@ public abstract class SCGameInstance extends GameInstance {
             writeExecutableData(getArchiveIndex());
 
         byte[] data = getExecutableBytes();
-        data = this.getVersionConfig().applyConfigIdentifier(data);
+        data = writeConfigToExecutable(data);
 
         // Write file.
         FileUtils.deleteFile(outputFile);

@@ -2,15 +2,16 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.cave;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerFlyScoreType;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataMatrix;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.IFroggerFlySpriteData;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Holds data for the cave bug which completely lights up the cave, aka CAV_FAT_FIRE_FLY in ent_cav.h
@@ -47,7 +48,7 @@ public class FroggerEntityDataFatFireFly extends FroggerEntityDataMatrix impleme
         editor.addEnumSelector("Fly Score Type", this.flyType, FroggerFlyScoreType.values(), false, newType -> {
             this.flyType = newType;
             manager.updateEntityMesh(getParentEntity());
-        });
+        }).setTooltip(FXUtils.createTooltip("This has never been tested as anything other than SUPER_LIGHT."));
         editor.addFloatSVector("Target (Unused)", this.target, manager.getController());
     }
 }

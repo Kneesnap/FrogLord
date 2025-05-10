@@ -170,7 +170,7 @@ public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<
 
             this.addNewChunkItem.setOnAction(event -> {
                 // TODO: PS2 PAL FIX -> Multiple TOC Support.
-                FXUtils.makePopUp("Not yet implemented.", AlertType.ERROR); // TODO: IMPLEMENT!
+                FXUtils.makePopUp("Not supported yet. Chunks can be added by loading .gqs files instead.", AlertType.ERROR); // TODO: IMPLEMENT!
             });
 
             getListComponent().getCollectionEditorComponent().addMenuItemToAddButtonLogic(this.addNewChunkItem);

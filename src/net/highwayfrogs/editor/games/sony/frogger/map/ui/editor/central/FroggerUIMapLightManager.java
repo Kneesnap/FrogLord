@@ -15,6 +15,7 @@ import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
 import net.highwayfrogs.editor.utils.ColorUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -23,10 +24,15 @@ import java.util.List;
  * TODO: For cone preview, we could just draw lines to the cone edges instead of doing a full cone inside.
  * TODO: For changing the direction of a light, a rotation gizmo is ideal.
  * TODO: We should show the lights in 3D space too? Or at least the ones with 3D data. (3D Preview! I like making a billboard sprite light icon.)
+ * TODO: Only the first 3 parallel + point lights can be handled by MRCalculateCustomInstanceLights (entities).
+ * TODO: Allow changing the frog custom light here.
+ * TODO: Only allow adding a single AMBIENT LIGHT (And added lights should be placed before the final ambient light.
  * Created by Kneesnap on 6/1/2024.
  */
 @Getter
 public class FroggerUIMapLightManager extends FroggerCentralMapListManager<FroggerMapLight, FroggerMapLightPreview> {
+    private final AmbientLight specialFrogletLight = new AmbientLight(ColorUtils.fromRGB(0xA0A0A0));
+    private final List<AmbientLight> regularAmbientLights = new ArrayList<>();
     private CheckBox applyLightingToEntitiesCheckBox;
     private DisplayList lightList;
 
@@ -37,6 +43,7 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
     @Override
     public void onSetup() {
         this.lightList = getRenderManager().createDisplayList();
+        this.lightList.add(this.specialFrogletLight);
         super.onSetup();
         updateEntityLighting();
     }
@@ -55,7 +62,7 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
     }
 
 
-        @Override
+    @Override
     public String getTitle() {
         return "Lighting";
     }
@@ -84,12 +91,13 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
 
     @Override
     protected void setVisible(FroggerMapLight light, FroggerMapLightPreview lightPreview, boolean visible) {
-        lightPreview.setVisible(visible);
+        if (lightPreview != null)
+            lightPreview.setVisible(visible);
     }
 
     @Override
     public boolean isValueVisibleByUI(FroggerMapLight light) {
-        return super.isValueVisibleByUI(light) && this.applyLightingToEntitiesCheckBox.isSelected();
+        return super.isValueVisibleByUI(light) && isLightingAppliedToEntities();
     }
 
     @Override
@@ -115,12 +123,13 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
      * Updates whether lighting is applied to entities.
      */
     public void updateEntityLighting() {
-        if (this.applyLightingToEntitiesCheckBox.isSelected()) {
+        if (isLightingAppliedToEntities()) {
             getController().getMainLight().getScope().remove(getEntityGroup());
         } else {
-            getController().getMainLight().getScope().add(getEntityGroup());
+            addToScope(getController().getMainLight(), getEntityGroup());
         }
 
+        getController().getGeneralManager().updatePlayerCharacterLighting();
         updateValueVisibility();
     }
 
@@ -163,6 +172,64 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
         return fxLight;
     }
 
+    /**
+     * Applies ambient lighting to the given node.
+     * @param node The node to apply to ambient lighting to
+     * @param useSpecialLighting If true, the special froglet lighting will be applied
+     */
+    public void setAmbientLightingMode(Node node, boolean useSpecialLighting) {
+        FroggerUIMapGeneralManager generalManager = getController().getGeneralManager();
+        AmbientLight specialLight = (generalManager.getPlayerCharacterView() == node) ? generalManager.getFrogLight() : this.specialFrogletLight;
+
+        // Checkpoints have special lighting applied by ent_gen.c.
+        if (isLightingAppliedToEntities() && useSpecialLighting) { // 'CHECKPOINT' is valid starting from PSX Alpha to retail.
+            // Remove regular ambient lights from the frog.
+            for (int i = 0; i < this.regularAmbientLights.size(); i++)
+                removeFromScope(this.regularAmbientLights.get(i), node);
+
+            // Apply special froglet ambient light.
+            addToScope(specialLight, node);
+        } else {
+            // Remove special froglet ambient light.
+            removeFromScope(specialLight, node);
+
+            // Add regular ambient lights to the node.
+            for (int i = 0; i < this.regularAmbientLights.size(); i++)
+                addToScope(this.regularAmbientLights.get(i), node);
+        }
+    }
+
+    private static void addToScope(LightBase light, Node node) {
+        if (!light.getScope().contains(node)) {
+            light.getScope().add(node);
+            light.setLightOn(true); // If we always keep it visible, it'll be active when the scope is empty, which to JavaFX means "apply everywhere", but to us means "apply nowhere"
+        }
+    }
+
+    private static void removeFromScope(LightBase light, Node node) {
+        if (light.getScope().remove(node) && light.getScope().isEmpty())
+            light.setLightOn(false); // If we always keep it visible, it'll be active when the scope is empty, which to JavaFX means "apply everywhere", but to us means "apply nowhere"
+    }
+
+    /**
+     * Remove the given node from all ambient lights which might explicitly include the given node in their scope.
+     * @param node the node to remove.
+     */
+    public void clearAmbientLighting(Node node) {
+        // Remove regular ambient lights from the frog.
+        for (int i = 0; i < this.regularAmbientLights.size(); i++)
+            removeFromScope(this.regularAmbientLights.get(i), node);
+
+        // Remove special froglet ambient light.
+        removeFromScope(this.specialFrogletLight, node);
+    }
+
+    /**
+     * Tests if lighting is applied to entities.
+     */
+    public boolean isLightingAppliedToEntities() {
+        return this.applyLightingToEntitiesCheckBox == null || this.applyLightingToEntitiesCheckBox.isSelected();
+    }
 
     public static class FroggerMapLightPreview {
         @Getter private final FroggerUIMapLightManager lightingManager;
@@ -197,10 +264,28 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
             if (this.fxLight == null)
                 return;
 
-            if (visible && this.lightingManager.getApplyLightingToEntitiesCheckBox().isSelected()) {
-                this.fxLight.getScope().add(this.lightingManager.getEntityGroup());
+            if (this.fxLight instanceof AmbientLight) {
+                // Ambient lights are tracked separately because of checkpoint lighting.
+                boolean didChangeOccur = false;
+                AmbientLight ambientLight = (AmbientLight) this.fxLight;
+                if (visible) {
+                    if (!this.lightingManager.regularAmbientLights.contains(ambientLight))
+                        didChangeOccur = this.lightingManager.regularAmbientLights.add(ambientLight);
+                } else {
+                    didChangeOccur = this.lightingManager.regularAmbientLights.remove(ambientLight);
+                }
+
+                if (didChangeOccur) {
+                    this.lightingManager.getController().getEntityManager().updateAllEntityMeshes(); // This is necessary for things to be lit properly.
+                    this.lightingManager.getController().getGeneralManager().updatePlayerCharacterLighting();
+                }
             } else {
-                this.fxLight.getScope().remove(this.lightingManager.getEntityGroup());
+                // Regular lights are chucked into a group for lit entities.
+                if (visible && this.lightingManager.isLightingAppliedToEntities()) {
+                    addToScope(this.fxLight, this.lightingManager.getEntityGroup());
+                } else {
+                    removeFromScope(this.fxLight, this.lightingManager.getEntityGroup());
+                }
             }
 
             if (visible) {

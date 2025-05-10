@@ -4,11 +4,14 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceAnimSet;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTrack;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcActorBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelMesh;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 import net.highwayfrogs.editor.utils.objects.StringNode;
 
@@ -102,6 +105,19 @@ public class kcActionSetAnimation extends kcAction {
         // Apply 'startTime' parameter.
         if (this.startTime.getAsInteger() != DEFAULT_START_TIME)
             arguments.getOrCreate(ARGUMENT_START_TIME).setAsFloat(getStartTime());
+    }
+
+    @Override
+    public void printWarnings(ILogger logger) {
+        super.printWarnings(logger);
+        kcCResourceTrack animation = this.trackRef.getResource();
+        if (animation == null && this.trackRef.getHashNumber() != 0)
+            printWarning(logger, "'" + this.trackRef.getAsGqsString(null) + "' is not a valid animation.");
+
+        kcActorBaseDesc actorDesc = getExecutor() != null ? getExecutor().getExecutingActorBaseDescription() : null;
+        kcCResourceAnimSet animSet = actorDesc != null ? actorDesc.getAnimationSet() : null;
+        if (animation != null && animSet != null && !animSet.contains(animation))
+            printWarning(logger, "the animation '" + animation.getName() + "' was not found in '" + animSet.getName() + "', the animation set configured for '" + actorDesc.getResource().getName() + "'.");
     }
 
     /**

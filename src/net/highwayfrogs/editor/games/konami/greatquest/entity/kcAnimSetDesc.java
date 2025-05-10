@@ -3,8 +3,6 @@ package net.highwayfrogs.editor.games.konami.greatquest.entity;
 import lombok.Getter;
 import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceAnimSet;
@@ -13,6 +11,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,6 +84,67 @@ public class kcAnimSetDesc extends kcBaseDesc implements IPropertyListCreator {
         }
 
         return animations;
+    }
+
+    /**
+     * Test if the animation set contains the given animation
+     * @param animation the animation to find
+     * @return true if the animation is found
+     */
+    public boolean contains(kcCResourceTrack animation) {
+        if (animation == null)
+            return false;
+
+        for (int i = 0; i < this.animationRefs.size(); i++) {
+            GreatQuestHash<kcCResourceTrack> animationRef = this.animationRefs.get(i);
+            if (animationRef.getResource() == animation)
+                return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Adds an animation to the set
+     * @param animation the animation to add
+     * @return true if it was added
+     */
+    public boolean addAnimation(kcCResourceTrack animation) {
+        if (animation == null)
+            throw new NullPointerException("animation");
+
+        for (int i = 0; i < this.animationRefs.size(); i++) {
+            GreatQuestHash<kcCResourceTrack> trackRef = this.animationRefs.get(i);
+            if (trackRef.getHashNumber() == animation.getHash()) {
+                trackRef.setResource(animation, true);
+                return false;
+            }
+        }
+
+        this.animationRefs.add(new GreatQuestHash<>(animation));
+        return true;
+    }
+
+    /**
+     * Removes an animation from the set
+     * @param animation the animation to remove
+     * @return true if it was removed
+     */
+    public boolean removeAnimation(kcCResourceTrack animation, boolean deleteEntry) {
+        if (animation == null)
+            throw new NullPointerException("animation");
+
+        for (int i = 0; i < this.animationRefs.size(); i++) {
+            GreatQuestHash<kcCResourceTrack> trackRef = this.animationRefs.get(i);
+            if (trackRef.getHashNumber() == animation.getHash()) {
+                trackRef.setResource(null, false);
+                if (deleteEntry)
+                    this.animationRefs.remove(i);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Override

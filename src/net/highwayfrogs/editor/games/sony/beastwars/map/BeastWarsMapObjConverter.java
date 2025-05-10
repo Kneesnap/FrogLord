@@ -1,12 +1,12 @@
 package net.highwayfrogs.editor.games.sony.beastwars.map;
 
 import javafx.scene.control.Alert.AlertType;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsTexFile;
 import net.highwayfrogs.editor.games.sony.beastwars.map.data.BeastWarsMapCollprim;
 import net.highwayfrogs.editor.games.sony.beastwars.map.data.MapTextureInfoEntry;
 import net.highwayfrogs.editor.games.sony.shared.collprim.MRCollprim.CollprimType;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -32,7 +32,7 @@ public class BeastWarsMapObjConverter {
      */
     public static void exportMapToObj(BeastWarsMapFile map) {
         String strippedName = FileUtils.stripExtension(map.getFileDisplayName());
-        exportMapToObj(new File(GUIMain.getWorkingDirectory(), strippedName), strippedName, map);
+        exportMapToObj(new File(FrogLordApplication.getWorkingDirectory(), strippedName), strippedName, map);
     }
 
     /**
@@ -124,7 +124,7 @@ public class BeastWarsMapObjConverter {
         // TODO: TOSS
         // Create collprim geometry. (Temporary)
         try {
-            ImageIO.write(UnknownTextureSource.MAGENTA_INSTANCE.makeTexture(null), "png", new File(folder, "collprim.png"));
+            ImageIO.write(UnknownTextureSource.MAGENTA_INSTANCE.makeImage(), "png", new File(folder, "collprim.png"));
         } catch (IOException ex) {
             Utils.handleError(logger, ex, false, "Failed to export collprim image.");
         }
@@ -189,10 +189,10 @@ public class BeastWarsMapObjConverter {
                 imageFileName = String.valueOf(textureEntryIndex);
             } else if (textureEntryIndex == BeastWarsMapFile.TEXTURE_ID_NO_TEXTURE) {
                 imageFileName = "disabled";
-                image = UnknownTextureSource.CYAN_INSTANCE.makeTexture(null);
+                image = UnknownTextureSource.CYAN_INSTANCE.makeImage();
             } else {
                 imageFileName = "missing";
-                image = UnknownTextureSource.MAGENTA_INSTANCE.makeTexture(null);
+                image = UnknownTextureSource.MAGENTA_INSTANCE.makeImage();
             }
 
             if (image != null)

@@ -148,7 +148,7 @@ public class kcModelObjWriter {
         StringBuilder objWriter = context.getObjWriter();
         StringBuilder mtlWriter = context.getMtlWriter();
 
-        long lastMaterialId = -1;
+        int lastMaterialId = -1;
         List<kcModelPrim> primitives = context.getModel().getPrimitives();
         for (int i = 0; i < primitives.size(); i++) {
             kcModelPrim prim = primitives.get(i);
@@ -165,7 +165,7 @@ public class kcModelObjWriter {
                     // TODO: !
                     context.getLogger().warning("Got material ID " + prim.getMaterialId() + ", but... there are only " + context.getModel().getMaterials().size() + " material(s) available in the model.");
                 } else {
-                    kcMaterial material = context.getModel().getMaterials().get((int) prim.getMaterialId());
+                    kcMaterial material = context.getModel().getMaterials().get(prim.getMaterialId());
                     objWriter.append("usemtl ");
                     objWriter.append(material.getMaterialName());
                     objWriter.append(Constants.NEWLINE);

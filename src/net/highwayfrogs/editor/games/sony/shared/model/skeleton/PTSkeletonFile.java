@@ -3,8 +3,8 @@ package net.highwayfrogs.editor.games.sony.shared.model.skeleton;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.model.PTModelFileUIController;
@@ -48,7 +48,7 @@ public class PTSkeletonFile extends SCSharedGameFile implements IPropertyListCre
 
         // Read bones.
         this.bones.clear();
-        reader.requireIndex(getLogger(), boneDataStartAddress, "Expected PTSkeletonBone");
+        requireReaderIndex(reader, boneDataStartAddress, "Expected PTSkeletonBone");
         for (int i = 0; i < boneCount; i++) {
             PTSkeletonBone newBone = new PTSkeletonBone(this);
             this.bones.add(newBone);

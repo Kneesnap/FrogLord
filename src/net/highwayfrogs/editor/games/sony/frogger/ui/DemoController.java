@@ -104,7 +104,12 @@ public class DemoController extends SCFileEditorUIController<FroggerGameInstance
     }
 
     private void updateFrame() {
-        basicSelector.getSelectionModel().select(this.selectedFrame.getBaseAction());
+        if (this.selectedFrame == null) {
+            this.basicSelector.getSelectionModel().clearSelection();
+            return;
+        }
+
+        this.basicSelector.getSelectionModel().select(this.selectedFrame.getBaseAction());
 
         // Update checkbox yes / no.
         for (Entry<DemoAction, CheckBox> entry : checkBoxMap.entrySet())

@@ -1,14 +1,14 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.sky;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.OldFroggerDifficultyWrapper.OldFroggerDifficultyData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.shared.PathEntityData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.sky.BiplaneBannerEntityData.BiplaneBannerDifficultyData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents data belonging to a biplane banner entity.

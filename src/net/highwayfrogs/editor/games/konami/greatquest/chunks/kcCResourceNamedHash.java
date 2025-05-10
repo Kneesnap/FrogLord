@@ -4,8 +4,6 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
@@ -21,6 +19,10 @@ import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.BasicWrappedLogger;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -126,7 +128,7 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
 
             Config config = toConfigNode(getParentFile().createScriptDisplaySettings());
             config.saveTextFile(outputFile);
-            getLogger().info("Saved " + config.getChildConfigNodes().size() + " sequence definitions to the file '" + outputFile.getName() + "'.");
+            getLogger().info("Saved %d sequence definitions to the file '%s'.", config.getChildConfigNodes().size(), outputFile.getName());
         });
 
         MenuItem clearSequencesItem = new MenuItem("Clear Sequence List");
@@ -146,8 +148,8 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
                 return;
 
             Config scriptCfg = Config.loadConfigFromTextFile(inputFile, false);
-            addSequencesFromConfigNode(scriptCfg);
-            getLogger().info("Imported " + scriptCfg.getChildConfigNodes().size() + " kcCActionSequence definitions from '" + inputFile.getName() + "'.");
+            addSequencesFromConfigNode(scriptCfg, getLogger());
+            getLogger().info("Imported %d kcCActionSequence definitions from '%s'.", scriptCfg.getChildConfigNodes().size(), inputFile.getName());
         });
     }
 
@@ -227,7 +229,7 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
      * New sequences will be created as configured.
      * @param config The config to load the script from
      */
-    public void addSequencesFromConfigNode(Config config) {
+    public void addSequencesFromConfigNode(Config config, ILogger logger) {
         if (config == null)
             throw new NullPointerException("config");
 
@@ -249,6 +251,7 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
             if (entry == null) {
                 entry = new HashTableEntry(this, sequenceName);
                 entry.getValueRef().setHash(sequenceHash);
+                entry.getValueRef().setResource(getParentFile().getResourceByHash(sequenceHash), true); // Avoid an issue where copying this file from another list will cause the same action sequence to be added twice (which throws an exception)
                 entryLookupByValueHash.put(sequenceHash, entry);
                 this.entries.add(entry);
             }
@@ -263,18 +266,23 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
                 sequence.getSelfHash().setHash(sequenceHash);
             }
 
+            ILogger sequenceLogger = new BasicWrappedLogger(logger, sequence.getName() + "@" + logger.getName());
             try {
-                sequence.loadFromConfigNode(sequenceCfg);
+                sequence.loadFromConfigNode(sequenceCfg, sequenceLogger);
             } catch (Throwable th) {
-                Utils.handleError(getLogger(), th, false, "Could not load the sequenced named '%s' as part of '%s'.", sequenceName, getName());
+                Utils.handleError(sequenceLogger, th, false, "Could not load the sequence named '%s' as part of '%s'.", sequenceName, getName());
                 continue; // Don't register anything that loaded via error.
             }
 
             // Registers the sequence if it is new, and actually has actions.
-            if (newlyCreatedSequence && sequence.getActions().size() > 0) {
+            if (newlyCreatedSequence) {
                 getParentFile().addResource(sequence);
                 entry.getValueRef().setResource(sequence, true);
             }
+
+            // I don't think this will crash the game, but this is a mistake on the user's part.
+            if (sequence.getActions().isEmpty())
+                sequenceLogger.warning("The action sequence '%s' contains no valid actions!", sequence.getName());
         }
     }
 

@@ -47,7 +47,7 @@ import java.util.regex.Pattern;
 public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourceEntityInst, GreatQuestMapEditorEntityDisplay> {
     private final Map<kcActorBaseDesc, GreatQuestModelMesh> cachedModelMeshesByDesc = new HashMap<>();
     private final Map<GreatQuestModelMesh, GreatQuestActionSequencePlayback> cachedPlaybacksByMesh = new HashMap<>();
-    private final GreatQuestModelMesh fallbackModel = new GreatQuestModelMesh((kcModelWrapper) null, false);
+    private final GreatQuestModelMesh fallbackModel = new GreatQuestModelMesh((kcModelWrapper) null);
     private final DisplayList collisionPreviewDisplayList;
     private final DisplayList boundingShapeDisplayList;
     private final List<GreatQuestMapEnvironmentCollection> waterMeshCollections = new ArrayList<>();
@@ -131,11 +131,11 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
 
             kcCResourceModel resourceModel = (kcCResourceModel) resource;
             if (isFileNameSkyDome(resource.getName())) {
-                GreatQuestModelMesh skyBoxMesh = new GreatQuestModelMesh(resourceModel, false);
+                GreatQuestModelMesh skyBoxMesh = new GreatQuestModelMesh(resourceModel);
                 this.skyBoxCollection = new GreatQuestMapEnvironmentCollection(this, false);
                 this.skyBoxCollection.setMesh(skyBoxMesh.getActualMesh());
             } else if (isFileNameWaterMesh(resource.getName())) {
-                GreatQuestModelMesh waterBoxMesh = new GreatQuestModelMesh(resourceModel, false);
+                GreatQuestModelMesh waterBoxMesh = new GreatQuestModelMesh(resourceModel);
                 GreatQuestMapEnvironmentCollection waterCollection = new GreatQuestMapEnvironmentCollection(this, true);
                 waterCollection.setMesh(waterBoxMesh.getActualMesh());
                 this.waterMeshCollections.add(waterCollection);

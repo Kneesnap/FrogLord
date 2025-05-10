@@ -1,9 +1,9 @@
 package net.highwayfrogs.editor.games.sony.shared.model.staticmesh;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.collprim.CollprimShapeAdapter;
 import net.highwayfrogs.editor.games.sony.shared.collprim.ICollprim;
@@ -39,7 +39,7 @@ public class PTModelCollprim extends PTCollprim {
         if (this.matrixAddress <= 0)
             throw new RuntimeException("Cannot read collprim matrix, the pointer " + NumberUtils.toHexString(this.matrixAddress) + " is invalid.");
 
-        reader.requireIndex(getLogger(), this.matrixAddress, "Expected PTCollprim matrix");
+        requireReaderIndex(reader, this.matrixAddress, "Expected PTCollprim matrix");
         this.matrix = new PSXMatrix();
         this.matrix.load(reader);
 

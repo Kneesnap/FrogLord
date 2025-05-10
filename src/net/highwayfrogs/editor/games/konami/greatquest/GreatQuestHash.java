@@ -1,9 +1,13 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
+import javafx.scene.control.TextField;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.data.IGameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedResource;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.lambda.Consumer5;
@@ -209,7 +213,7 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
 
         // Unlink all linked hashes.
         while (this.linkedHashes.size() > 0)
-            this.linkedHashes.get(0).onInvalidate();
+            this.linkedHashes.remove(0).onInvalidate();
 
         // Happens last so all the listeners fire before this finally occurs.
         if (!isMaster())
@@ -455,6 +459,51 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
         } else {
             return getValueRepresentingNull();
         }
+    }
+
+    /**
+     * Adds a TextField editor UI to the editor grid for changing the
+     * @param grid the grid to setup the TextField for
+     * @param chunkedFile the chunked file to resolve assets from
+     * @param label the label to show for this hash
+     * @param resourceClass the type of resource to resolve new hashes as
+     * @return textField
+     */
+    public TextField addEditorUI(GUIEditorGrid grid, GreatQuestChunkedFile chunkedFile, String label, Class<TResource> resourceClass) {
+        if (grid == null)
+            throw new NullPointerException("grid");
+        if (resourceClass != null && !kcCResource.class.isAssignableFrom(resourceClass))
+            throw new IllegalArgumentException("resourceClass " + resourceClass.getSimpleName() + " is not a " + kcCResource.class.getSimpleName() + "!");
+
+        // Master hashes can't be edited, at least not directly here. (Their names are usually set somewhere else and then applied to here)
+        if (isMaster()) {
+            TextField field = grid.addTextField(label, this.getAsGqsString(null));
+            field.setDisable(true);
+            return field;
+        }
+
+        return grid.addTextField(label, this.getAsGqsString(null), newTargetEntityText -> {
+            int hash;
+            boolean allowBadHash;
+            if (NumberUtils.isHexInteger(newTargetEntityText)) {
+                hash = NumberUtils.parseHexInteger(newTargetEntityText);
+                allowBadHash = true;
+            } else {
+                hash = GreatQuestUtils.hash(newTargetEntityText);
+                allowBadHash = false;
+            }
+
+            kcCResource resource = chunkedFile != null ? chunkedFile.getResourceByHash(hash) : null;
+            if (resourceClass != null && resourceClass.isInstance(resource)) {
+                this.setResource(resourceClass.cast(resource), false);
+                return true;
+            } else if (allowBadHash) {
+                this.setHash(hash);
+                return true;
+            } else {
+                return false;
+            }
+        });
     }
 
     @Override

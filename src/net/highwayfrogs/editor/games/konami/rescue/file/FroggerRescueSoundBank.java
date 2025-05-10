@@ -3,8 +3,6 @@ package net.highwayfrogs.editor.games.konami.rescue.file;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
 import net.highwayfrogs.editor.games.konami.rescue.FroggerRescueInstance;
@@ -15,6 +13,8 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.Proper
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.io.File;
 import java.io.IOException;
@@ -153,7 +153,7 @@ public class FroggerRescueSoundBank extends HudsonGameFile {
                 throw new RuntimeException("Cannot read file data, the file size " + NumberUtils.toHexString(this.fileSize) + " is invalid.");
 
             // There isn't actually any static entity list saved, so we'll just validate the pointer as a sanity check and continue.
-            reader.requireIndex(getLogger(), this.startAddress, "Expected raw file contents");
+            requireReaderIndex(reader, this.startAddress, "Expected raw file contents");
             this.rawFileContents = reader.readBytes(this.fileSize);
             this.startAddress = -1;
             this.fileSize = -1;

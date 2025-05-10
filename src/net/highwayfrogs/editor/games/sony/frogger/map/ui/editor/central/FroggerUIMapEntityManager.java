@@ -1,5 +1,10 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central;
 
+import javafx.geometry.Point3D;
+import javafx.scene.Node;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.PickResult;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
@@ -11,18 +16,21 @@ import lombok.Getter;
 import net.highwayfrogs.editor.file.config.exe.PickupData;
 import net.highwayfrogs.editor.file.config.exe.PickupData.PickupAnimationFrame;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
-import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
-import net.highwayfrogs.editor.file.mof.view.MOFMesh;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerFlyScoreType;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataPathInfo;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.IFroggerFormEntry;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathInfo;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerCentralUIManager.FroggerCentralMapListManager;
-import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
+import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapPathManager.FroggerPathSegmentPreview;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
+import net.highwayfrogs.editor.games.sony.shared.mof2.ui.mesh.MRModelMesh;
 import net.highwayfrogs.editor.gui.ImageResource;
+import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.MeshViewFrameTimer.MeshViewFixedFrameRateTimerTask;
@@ -40,9 +48,11 @@ import java.util.Map;
  */
 public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<FroggerMapEntity, MeshView> {
     private final float[] posCache = new float[6];
-    private final Map<MOFHolder, MOFMesh> meshCache = new HashMap<>();
+    private final float[] selectedMouseEntityPosition = new float[6];
+    private final Map<MRModel, MRModelMesh> meshCache = new HashMap<>();
     @Getter private DisplayList litEntityRenderList;
     @Getter private DisplayList unlitEntityRenderList;
+    private FroggerMapEntity selectedMouseEntity;
     private MeshViewFixedFrameRateTimerTask<FroggerUIMapEntityManager> pickupAnimationUpdateTask;
     private int pickupAnimationFrameCounter;
 
@@ -60,8 +70,12 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
         // The map renders after entities (except for sprite entities) because transparent entities are exceedingly rare in Frogger (I'm not even sure there's a single one in the retail builds).
         // Situations such as transparent water layers should show the entities under the water too.
         this.litEntityRenderList = getRenderManager().createDisplayListWithNewGroup();
+        this.litEntityRenderList.add(getController().getGeneralManager().getPlayerCharacterView());
+        this.litEntityRenderList.add(getController().getGeneralManager().getFrogLight());
         super.onSetup();
         setPickupAnimationsVisible(true);
+
+        getController().getInputManager().addMouseListener(this::handleSelectedEntityMouseInput);
     }
 
     @Override
@@ -120,9 +134,17 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
         return newView;
     }
 
+    @Override // Only handle entity clicks when the path selector is not active, to prevent deselecting an entity relating to the active selection.
+    protected void handleClick(MouseEvent event, FroggerMapEntity entity) {
+        event.consume();
+        if (!getController().getPathManager().getPathSelector().isPromptActive())
+            super.handleClick(event, entity);
+    }
+
     @Override
     protected void setVisible(FroggerMapEntity oldEntity, MeshView meshView, boolean visible) {
-        meshView.setVisible(visible);
+        if (meshView != null)
+            meshView.setVisible(visible);
     }
 
     @Override
@@ -135,7 +157,37 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
 
     @Override
     protected FroggerMapEntity createNewValue() {
-        return new FroggerMapEntity(getMap());
+        // If an entity is selected, create a clone of the current entity.
+        FroggerMapEntity selectedEntity = getSelectedValue();
+        if (selectedEntity != null)
+            return selectedEntity.clone();
+
+        // The entity ID will be automatically generated when the entity is added, so we do not need to set it here.
+        // The form grid ID will also be set (if possible) when the map form entry is created.
+        // The red checkpoint frog has been picked because it's more visually noticeable on most maps. (If the user adds an entity while zoomed out, it might be hard to see it)
+        FroggerMapEntity newEntity = new FroggerMapEntity(getMap(), getGameInstance().getMapFormEntry(FroggerMapTheme.GENERAL, 4));
+        final float angleInRadians = (float) Math.toRadians(180F);
+        newEntity.getMatrixEntityData().getMatrix().updateMatrix(angleInRadians, 0, angleInRadians); // Rotate the baby frog to face the default camera direction.
+        return newEntity;
+    }
+
+    @Override
+    protected boolean tryAddValue(FroggerMapEntity entity) {
+        if (entity == null || !getMap().getEntityPacket().addEntity(entity))
+            return false;
+
+        setSelectedMouseEntity(entity);
+        return true;
+    }
+
+    @Override
+    protected boolean tryRemoveValue(FroggerMapEntity entity) {
+        if (entity == null || !getMap().getEntityPacket().removeEntity(entity))
+            return false;
+
+        if (this.selectedMouseEntity == entity)
+            setSelectedMouseEntity(null);
+        return true;
     }
 
     @Override
@@ -148,12 +200,113 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
         if (meshView != null) {
             this.litEntityRenderList.remove(meshView);
             this.unlitEntityRenderList.remove(meshView);
+            getController().getLightManager().clearAmbientLighting(meshView);
         }
+    }
+
+    private void handleSelectedEntityMouseInput(InputManager manager, MouseEvent event, double deltaX, double deltaY) {
+        if (this.selectedMouseEntity == null)
+            return;
+
+        if (!manager.getMouseTracker().isSignificantMouseDragRecorded())
+            event.consume(); // Allow the event to go through if a mouse drag is occurring.
+
+        PickResult pickResult = event.getPickResult();
+        if (pickResult == null)
+            return;
+
+        // Tie the entity position to the cursor position.
+        Point3D intersectedPoint = pickResult.getIntersectedPoint();
+        Node intersectedNode = pickResult.getIntersectedNode();
+
+        // Prevent interacting with the MeshView itself.
+        MeshView entityMeshView = getDelegatesByValue().get(this.selectedMouseEntity);
+        if (entityMeshView == intersectedNode) {
+            entityMeshView.setMouseTransparent(true); // Prevent mouse interaction with the entity while it is selected.
+            return;
+        }
+
+        if (this.selectedMouseEntity.getPathInfo() == null && intersectedPoint != null && intersectedNode != null) {
+            Point3D newWorldPos = intersectedNode.localToScene(intersectedPoint);
+            this.selectedMouseEntityPosition[0] = (float) newWorldPos.getX();
+            this.selectedMouseEntityPosition[1] = (float) newWorldPos.getY();
+            this.selectedMouseEntityPosition[2] = (float) newWorldPos.getZ();
+            if (getController().getInputManager().isKeyPressed(KeyCode.CONTROL))
+                for (int i = 0; i < 3; i++)
+                    this.selectedMouseEntityPosition[i] = Math.round(this.selectedMouseEntityPosition[i] / 8F) * 8F;
+        }
+
+        updateEntityPositionRotation(this.selectedMouseEntity); // Update display position.
+    }
+
+    /**
+     * Sets the entity currently active for mouse-based selection.
+     * @param newEntity the entity to set active on the mouse
+     */
+    public void setSelectedMouseEntity(FroggerMapEntity newEntity) {
+        if (this.selectedMouseEntity == newEntity)
+            return; // No change.
+
+        FroggerMapEntity oldSelectedMouseEntity = this.selectedMouseEntity;
+        this.selectedMouseEntity = newEntity;
+
+        // Clean up/deselect old entity.
+        if (oldSelectedMouseEntity != null) {
+            MeshView oldMeshView = getDelegatesByValue().get(oldSelectedMouseEntity);
+            oldMeshView.setMouseTransparent(false);
+            updateEntityMesh(oldSelectedMouseEntity, oldMeshView); // Reset any visual changes.
+            updateEntityPositionRotation(oldSelectedMouseEntity, oldMeshView); // Reset the position to the new desired position.
+            updateEditor(); // Update the entity editor display, update path slider, etc.
+        }
+
+        // Select new entity.
+        if (newEntity == null)
+            return;
+
+        // We can't set the MeshView as mouse transparent yet.
+        newEntity.getPositionAndRotation(this.selectedMouseEntityPosition); // Set the temporary mouse position to be the entity's real position.
+
+        if (newEntity.getPathInfo() != null) {
+            // Listen for path clicks
+            getController().getPathManager().getPathSelector().promptPath(selection -> {
+                applyPathSelectionToMouse(selection);
+                setSelectedMouseEntity(null);
+            }, this::applyPathSelectionToMouse, () -> setSelectedMouseEntity(null));
+        } else {
+            // Listen for mouse clicks.
+            getController().getBakedGeometryManager().getPolygonSelector().activate(clickedPolygon -> {
+                this.selectedMouseEntity.getMatrixEntityData().applyPositionData(this.selectedMouseEntityPosition);
+                setSelectedMouseEntity(null);
+            }, () -> setSelectedMouseEntity(null));
+        }
+    }
+
+    private void applyPathSelectionToMouse(FroggerPathSegmentPreview selection) {
+        FroggerPathInfo pathInfo = this.selectedMouseEntity.getPathInfo();
+        boolean didPathChange = selection.getPath() != pathInfo.getPath();
+
+        if (didPathChange)
+            getMap().getPathPacket().removeEntityFromPathTracking(this.selectedMouseEntity);
+        pathInfo.setPath(selection.getPath(), selection.getPathSegment());
+        pathInfo.setSegmentDistance(selection.getSegmentDistance());
+        if (didPathChange)
+            getMap().getPathPacket().addEntityToPathTracking(this.selectedMouseEntity);
+
+        // Update the entity position.
+        this.selectedMouseEntity.getPathEntityData().getPositionAndRotation(this.selectedMouseEntityPosition);
+        updateEntityPositionRotation(this.selectedMouseEntity);
+    }
+
+    /**
+     * Update all entity meshes.
+     */
+    public void updateAllEntityMeshes() {
+        getValues().forEach(this::updateEntityMesh);
     }
 
     /**
      * Update the mesh displayed for the given entity.
-     * @param entity The entity to update the mesh for.
+     * @param entity The entity to update the mesh for.s
      */
     public void updateEntityMesh(FroggerMapEntity entity) {
         MeshView entityMesh = getDelegatesByValue().get(entity);
@@ -163,41 +316,36 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
 
     private void updateEntityMesh(FroggerMapEntity entity, MeshView entityMeshView) {
         boolean isEntitySelected = (getSelectedValue() == entity);
+        boolean isEntityHighlighted = isEntitySelected && (this.selectedMouseEntity != entity);
 
         // Reset entity scaling.
         Scene3DUtils.setNodeScale(entityMeshView, 1D, 1D, 1D);
 
         // Attempt to apply from 3D model.
         IFroggerFormEntry formEntry = entity.getFormEntry();
-        WADEntry modelEntry = entity.getEntityModel();
-        if (modelEntry != null && modelEntry.getFile() instanceof MOFHolder) {
-            MOFHolder holder = ((MOFHolder) modelEntry.getFile()).getOverride();
-
+        MRModel model = formEntry != null ? formEntry.getEntityModel(entity) : null;
+        if (model != null) {
             // Set VLO archive to the map VLO if currently unset.
-            VLOArchive vlo = getMap().getConfig().getForcedVLO(getMap().getGameInstance(), modelEntry.getDisplayName());
+            VLOArchive vlo = getMap().getConfig().getForcedVLO(getMap().getGameInstance(), model.getFileDisplayName());
             if (vlo == null) {
                 ThemeBook themeBook = getMap().getGameInstance().getThemeBook(formEntry.getTheme());
                 if (themeBook != null)
                     vlo = themeBook.getVLO(getMap());
             }
-            holder.setVloFile(vlo);
+            model.setVloFile(vlo);
 
             // Update MeshView.
-            MOFMesh modelMesh = this.meshCache.computeIfAbsent(holder, MOFHolder::makeMofMesh);
-            if (modelMesh.getFaceCount() > 0) {
+            MRModelMesh modelMesh = this.meshCache.computeIfAbsent(model, MRModel::createMeshWithDefaultAnimation);
+            if (modelMesh.getEditableFaces().size() > 0) {
                 DynamicMesh.tryRemoveMesh(entityMeshView);
-                entityMeshView.setMesh(modelMesh);
+                modelMesh.addView(entityMeshView, isEntityHighlighted, !getController().getLightManager().isLightingAppliedToEntities());
                 entityMeshView.setCullFace(CullFace.BACK);
-                // TODO: Future: Register mesh properly once we redo MOF support to use the new system. (DynamicMesh.addMeshView)
 
                 // Update entity display material and such.
-                TextureMap textureSheet = modelMesh.getTextureMap();
-                if (isEntitySelected) {
-                    entityMeshView.setMaterial(textureSheet.getDiffuseHighlightedMaterial());
+                if (isEntityHighlighted) {
                     registerUnlitEntity(entityMeshView);
                 } else {
-                    entityMeshView.setMaterial(textureSheet.getDiffuseMaterial());
-                    registerLitEntity(entityMeshView);
+                    registerLitEntity(entity, entityMeshView);
                 }
 
                 return;
@@ -212,7 +360,7 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
         PickupData pickupData = config.getPickupData(entity.getFlyScoreType());
         if (pickupData != null && pickupData.getFrames().size() > 0) {
             PickupAnimationFrame pickupAnimationFrame = pickupData.getFrames().get(Math.max(0, this.pickupAnimationFrameCounter) % pickupData.getFrames().size());
-            if (pickupAnimationFrame != null && pickupAnimationFrame.applyToMeshView(entityMeshView, isEntitySelected)) {
+            if (pickupAnimationFrame != null && pickupAnimationFrame.applyToMeshView(entityMeshView, isEntityHighlighted)) {
                 registerUnlitEntity(entityMeshView);
                 return;
             }
@@ -220,16 +368,25 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
 
         // Setup entity placeholder sprite mesh.
         entityMeshView.setMesh(ENTITY_PLACEHOLDER_SPRITE_MESH);
-        entityMeshView.setMaterial(isEntitySelected ? ENTITY_HIGHLIGHTED_PLACEHOLDER_SPRITE_MATERIAL : ENTITY_PLACEHOLDER_SPRITE_MATERIAL);
+        entityMeshView.setMaterial(isEntityHighlighted ? ENTITY_HIGHLIGHTED_PLACEHOLDER_SPRITE_MATERIAL : ENTITY_PLACEHOLDER_SPRITE_MATERIAL);
         registerUnlitEntity(entityMeshView);
     }
 
     private void registerUnlitEntity(MeshView meshView) {
+        getController().getLightManager().clearAmbientLighting(meshView);
         if (this.unlitEntityRenderList == null || this.unlitEntityRenderList.addIfMissing(meshView))
             this.litEntityRenderList.remove(meshView);
     }
 
-    private void registerLitEntity(MeshView meshView) {
+    private void registerLitEntity(FroggerMapEntity entity, MeshView meshView) {
+        FroggerUIMapLightManager lightManager = getController().getLightManager();
+        boolean lightingEnabled = lightManager.isLightingAppliedToEntities();
+        if (lightingEnabled) {
+            lightManager.setAmbientLightingMode(meshView, !entity.getConfig().isAtOrBeforeBuild40() && "CHECKPOINT".equals(entity.getTypeName())); // 'CHECKPOINT' is valid starting from PSX Alpha to retail.
+        } else {
+            lightManager.clearAmbientLighting(meshView);
+        }
+
         if (this.litEntityRenderList.addIfMissing(meshView) && this.unlitEntityRenderList != null)
             this.unlitEntityRenderList.remove(meshView);
     }
@@ -251,7 +408,20 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
         if (entity == null || entity.getEntityData() == null || entityMeshView == null)
             return; // No data to update position from.
 
-        float[] positionData = entity.getPositionAndRotation(this.posCache);
+        // Determine position to display entity at.
+        float[] positionData;
+        if (entity == this.selectedMouseEntity) { // Mouse selections are bound to the mouse entity position.
+            positionData = this.selectedMouseEntityPosition;
+        } else {
+            FroggerPathInfo pathPreview = getController().getPathManager().getPathRunnerPreviews().get(entity);
+            if (pathPreview != null && FroggerEntityDataPathInfo.evaluatePathInfoToEntityArray(pathPreview, entity, this.posCache)) {
+                // If the entity is shown as following its path currently, use the path preview position.
+                positionData = this.posCache;
+            } else {
+                // Otherwise, use the true entity position.
+                positionData = entity.getPositionAndRotation(this.posCache);
+            }
+        }
 
         float pitch = positionData != null ? positionData[3] : 0;
         float yaw = positionData != null ? positionData[4] : 0;
@@ -309,81 +479,4 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
                 updateEntityMesh(entity, entityMeshView);
         }
     }
-
-    // TODO: Here's some old code for adding new entities. We should learn from this when improving the editor to actually have a new entity.
-    /*private void addNewEntity(IFroggerFormEntry entry) {
-        FroggerMapEntity newEntity = new FroggerMapEntity(getMap(), entry);
-
-        if (newEntity.getMatrixInfo() != null) { // Lets you select a polygon to place the new entity on.
-            for (FroggerGridStack stack : getMap().getGridStacks())
-                for (FroggerGridSquare square : stack.getGridSquares())
-                    if (square.getPolygon() != null)
-                        getController().renderOverPolygon(square.getPolygon(), MapMesh.GENERAL_SELECTION);
-            MeshData data = getMesh().getManager().addMesh();
-
-            getController().getGeometryManager().selectPolygon(poly -> {
-                getMesh().getManager().removeMesh(data);
-
-                // Set entity position to the clicked polygon.
-                PSXMatrix matrix = newEntity.getMatrixInfo();
-
-                SVector pos = MAPPolygon.getCenterOfPolygon(getMesh(), poly);
-                matrix.getTransform()[0] = Utils.floatToFixedPointInt4Bit(pos.getFloatX());
-                matrix.getTransform()[1] = Utils.floatToFixedPointInt4Bit(pos.getFloatY());
-                matrix.getTransform()[2] = Utils.floatToFixedPointInt4Bit(pos.getFloatZ());
-
-                // Add entity.
-                addEntityToMap(newEntity);
-            }, () -> getMesh().getManager().removeMesh(data));
-            return;
-        }
-
-        if (newEntity.getPathState() != null) {
-            if (getMap().getPathPacket().getPaths().isEmpty()) {
-                Utils.makePopUp("Path entities cannot be added if there are no paths present! Add a path.", AlertType.WARNING);
-                return;
-            }
-
-            // User selects the path.
-            getController().getPathManager().getPathSelector().promptPath((path, segment, segDistance) -> {
-                newEntity.getPathState().setPath(path, segment);
-                newEntity.getPathState().setSegmentDistance(segDistance);
-                newEntity.getPathState().setSpeed(10); // Default speed.
-                addEntityToMap(newEntity);
-            }, null);
-            return;
-        }
-
-        addEntityToMap(newEntity);
-    }
-
-    private void addEntityToMap(FroggerMapEntity entity) {
-        if (entity.getUniqueId() == -1) { // Default entity id, update it to something new.
-            boolean isPath = entity.getMatrixInfo() != null;
-
-            // Use the largest entity id + 1.
-            for (FroggerMapEntity tempEntity : getEntities())
-                if (tempEntity.getUniqueId() >= entity.getUniqueId() && (isPath == (tempEntity.getMatrixInfo() != null)))
-                    entity.setUniqueId(tempEntity.getUniqueId() + 1);
-        }
-
-        if (entity.getFormGridId() == -1) { // Default form id, make it something.
-            int[] formCounts = new int[getForms().size()];
-            for (FroggerMapEntity testEntity : getEntities())
-                if (testEntity.getFormEntry() == entity.getFormEntry())
-                    formCounts[testEntity.getFormGridId()]++;
-
-            int maxCount = -1;
-            for (int i = 0; i < formCounts.length; i++) {
-                if (formCounts[i] > maxCount) {
-                    maxCount = formCounts[i];
-                    entity.setFormGridId(i);
-                }
-            }
-        }
-
-        getEntities().add(entity);
-        showEntityInfo(entity);
-        updateEntities();
-    }*/
 }

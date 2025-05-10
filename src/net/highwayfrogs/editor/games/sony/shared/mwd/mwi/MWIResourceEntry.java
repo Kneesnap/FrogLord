@@ -3,14 +3,14 @@ package net.highwayfrogs.editor.games.sony.shared.mwd.mwi;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.packers.PP20Packer.PackResult;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.*;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerVersionComparison;
+import net.highwayfrogs.editor.games.sony.shared.pp20.PP20Packer.PackResult;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
@@ -116,7 +116,7 @@ public class MWIResourceEntry extends SCSharedGameData implements ISCFileDefinit
             return; // No address to write the file name pointer to.
         }
 
-        reader.requireIndex(getLogger(), this.filePathPointerAddress, "Expected file path");
+        requireReaderIndex(reader, this.filePathPointerAddress, "Expected file path");
         this.filePath = reader.readNullTerminatedString();
         this.filePathPointerAddress = NO_FILE_NAME_MARKER;
         reader.align(Constants.INTEGER_SIZE);

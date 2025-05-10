@@ -6,9 +6,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Vector comprised of integers.
@@ -60,6 +60,14 @@ public class IVector extends GameObject implements Vector {
     public void saveWithPadding(DataWriter writer) {
         save(writer);
         writer.writeNull(Constants.INTEGER_SIZE);
+    }
+
+    /**
+     * Clones the IVector.
+     */
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
+    public IVector clone() {
+        return new IVector(this.x, this.y, this.z);
     }
 
     /**
@@ -151,6 +159,9 @@ public class IVector extends GameObject implements Vector {
         double tmpZ = DataUtils.fixedPointIntToFloatNBits(this.z, 12);
 
         double res = Math.sqrt((tmpX * tmpX) + (tmpY * tmpY) + (tmpZ * tmpZ));
+        if (Math.abs(res) <= .000001)
+            return this; // This is something I've added, I don't know what the actual game does here. Should probably figure that out at some point.
+
         tmpX /= res;
         tmpY /= res;
         tmpZ /= res;

@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.games.renderware;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.games.renderware.chunks.RwStructChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwUnsupportedChunk;
 import net.highwayfrogs.editor.games.renderware.struct.RwUnsupportedStruct;

@@ -1,11 +1,15 @@
 package net.highwayfrogs.editor.utils;
 
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
+import net.highwayfrogs.editor.utils.data.reader.ArraySource;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.zip.CRC32;
@@ -185,7 +189,16 @@ public class DataUtils {
      * @return shortValue
      */
     public static short floatToFixedPointShort(float floatVal, int n) {
-        return (short) (floatVal * (1 << n));
+        if (!Float.isFinite(floatVal))
+            throw new IllegalArgumentException("Cannot represent " + floatVal + " as a fixed-point value!");
+
+        int fixedPtValue = (int) (floatVal * (1 << n));
+        if (fixedPtValue < Short.MIN_VALUE || fixedPtValue > Short.MAX_VALUE) {
+            final int wholeNumberBitCount = (Constants.SHORT_SIZE * Constants.BITS_PER_BYTE) - n - 1;
+            throw new IllegalArgumentException("Cannot represent " + floatVal + " as a 1." + wholeNumberBitCount + "." + n + " fixed-point value!");
+        }
+
+        return (short) fixedPtValue;
     }
 
     /**
@@ -242,6 +255,12 @@ public class DataUtils {
      * @return intValue
      */
     public static int floatToFixedPointInt(float floatVal, int n) {
+        if (!Float.isFinite(floatVal))
+            throw new IllegalArgumentException("Cannot represent " + floatVal + " as a fixed-point value!");
+        final int wholeNumberBitCount = (Constants.INTEGER_SIZE * Constants.BITS_PER_BYTE) - n - 1;
+        if (floatVal >= (1 << wholeNumberBitCount) || floatVal < -(1 << wholeNumberBitCount))
+            throw new IllegalArgumentException("Cannot represent " + floatVal + " as a 1." + wholeNumberBitCount + "." + n + " fixed-point value!");
+
         return (int) (floatVal * (float) (1 << n));
     }
 
@@ -366,7 +385,7 @@ public class DataUtils {
      * @return hasSignature
      */
     public static boolean testSignature(byte[] data, String test) {
-        return testSignature(data, 0, test.getBytes());
+        return testSignature(data, 0, test.getBytes(StandardCharsets.US_ASCII));
     }
 
     /**
@@ -377,7 +396,7 @@ public class DataUtils {
      * @return hasSignature
      */
     public static boolean testSignature(byte[] data, int startIndex, String test) {
-        return testSignature(data, startIndex, test.getBytes());
+        return testSignature(data, startIndex, test.getBytes(StandardCharsets.US_ASCII));
     }
 
     /**
@@ -405,5 +424,35 @@ public class DataUtils {
             if (data[startIndex + i] != test[i])
                 return false;
         return true;
+    }
+
+    /**
+     * Swaps the byte-order (endian) of the given value.
+     * @param value the value to swap the byte-order for
+     * @return valueWithSwappedByteOrder
+     */
+    public static short swapShortByteOrder(short value) {
+        int lowByte = (value & 0xFF);
+        int highByte = (value & 0xFF00) >> 8;
+        return (short) ((lowByte << 8) | highByte);
+    }
+
+    /**
+     * Clones the data from one serializable object to another, by serializing the old object, and deserializing that data to the new object.
+     * @param oldObject the object to copy data from
+     * @param newObject the object to copy data to
+     * @return newObject
+     * @param <TObject> the type of object to operate on
+     */
+    public static <TObject extends IBinarySerializable> TObject cloneSerializableObject(TObject oldObject, TObject newObject) {
+        if (oldObject == null)
+            throw new NullPointerException("oldObject");
+        if (newObject == null)
+            throw new NullPointerException("newObject");
+
+        byte[] rawData = oldObject.writeDataToByteArray();
+        DataReader reader = new DataReader(new ArraySource(rawData));
+        newObject.load(reader);
+        return newObject;
     }
 }

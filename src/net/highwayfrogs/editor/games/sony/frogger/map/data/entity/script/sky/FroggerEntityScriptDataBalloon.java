@@ -1,12 +1,12 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.script.sky;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.script.FroggerEntityScriptData;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * It is unknown what these values are for.
@@ -38,8 +38,8 @@ public class FroggerEntityScriptDataBalloon extends FroggerEntityScriptData {
 
     @Override
     public void setupEditor(GUIEditorGrid editor, FroggerUIMapEntityManager manager) {
-        editor.addFixedInt("Unknown 1 (Speed?)", this.unknown1Speed, newUnknown1 -> this.unknown1Speed = newUnknown1, 2184);
-        editor.addFixedInt("Unknown 2 (Speed?)", this.unknown2Speed, newUnknown2 -> this.unknown2Speed = newUnknown2, 2184);
+        editor.addFixedInt("Unknown 1 (Speed?)", this.unknown1Speed, newUnknown1 -> this.unknown1Speed = newUnknown1, 2184.5);
+        editor.addFixedInt("Unknown 2 (Speed?)", this.unknown2Speed, newUnknown2 -> this.unknown2Speed = newUnknown2, 2184.5);
         editor.addFixedInt("Unknown 3 (Distance?)", this.unknown3Distance, newUnknown3 -> this.unknown3Distance = newUnknown3, 256);
     }
 }

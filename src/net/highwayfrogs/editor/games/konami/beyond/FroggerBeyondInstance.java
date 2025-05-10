@@ -13,6 +13,7 @@ import java.io.File;
 /**
  * Represents an instance of "Frogger Beyond".
  * TODO: Notice how all the files fail to continue loading upon reaching the '40543767' length. It's consistent across all. @T7g I think we should figure out what it doing. It looks like this might be a custom stream packet. Not sure tho.
+ * TODO: Have warnings if the user loads this game but there are no bin files found.
  * Created by Kneesnap on 8/12/2024.
  */
 public class FroggerBeyondInstance extends BasicGameInstance {
@@ -42,5 +43,10 @@ public class FroggerBeyondInstance extends BasicGameInstance {
         } else {
             return new FroggerBeyondDummyFile(fileDefinition);
         }
+    }
+
+    @Override
+    public boolean isShowSaveWarning() {
+        return true;
     }
 }

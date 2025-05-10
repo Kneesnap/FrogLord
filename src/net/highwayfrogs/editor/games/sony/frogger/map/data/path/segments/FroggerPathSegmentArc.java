@@ -1,17 +1,15 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.path.segments;
 
+import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCMath;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathInfo;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathResult;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathSegmentType;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapPathManager.FroggerPathPreview;
@@ -19,10 +17,22 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.MathUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents PATH_ARC.
  * This is accurate, even though some Arc paths don't properly connect, such as in FOR2. These disconnected paths can be experienced in-game, and are thus accurate.
+ * TODO: I figured out the issue with calculation mismatches.
+ *  - The start position and center position form a circle where center is the center of the circle, and start position is a position on the edge of the circle.
+ *  - The radius is correctly calculated by doing sqrt(x^2 + y^2 + z^2).
+ *  - Consider the plane formed covering the described circle.
+ *  - However, the angle is not correctly calculated. Most arc path segments are axis-aligned, meaning the angle base is 0 degrees.
+ *  - However, when the start position on that plane shares neither coordinate with the center position, it means it must have some offset at the beginning.
+ *  - To understand what I mean, check Path 21 & Path 23, Arc Segment ID 1, and compare the start position with the center position.
+ *  - The angle is not calculated properly because the angle is missing an offset from the unit circle base position.
+ *  - Our solution to this should is to auto-generate the base offset from the start & center & normal, and it to the expected angle on load/subtract on save.
+ *  - The solution involves the cross-product of the normal & the (start - center) vector...?
  * TODO: Allow changing start positions of each segment type as always updating the end position of the previous one. For ones which can't update the previous one (which aren't null), don't allow changing it.
  *  - This should only occur if the start/end of the segments already match exactly. Pressing a checkbox should also allow separation if they match.
  * Created by Kneesnap on 9/16/2018.
@@ -67,21 +77,33 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
             readRadius = reader.readInt();
             this.pitch = reader.readInt();
 
-            // Some paths still don't calculate cleanly, but the fact that this is a real recognized stand-in for Pi and works across a good chunk of paths makes me think it's correct.
-            // Though it's possible the ones which don't calculate cleanly were changed via GUI slider, much like what FrogLord supports.
-            // I think this is the case since many of the non-even paths don't look right if you put the clean number in.
-            this.angle = ((getLength() - Math.abs(this.pitch)) / (2 * SCMath.MAPPY_PI_HALF16 * readRadius));
+            // PSX Sony Demo (4/28) is a very special build for us, since it's the only build which includes the angle data, and calculates the length from that data.
+            // From reverse engineering EvaluatePathRunnerPosition at 800177f0, we can see that:
+            // segmentLength = (angle * radius) / 0x28C.
+            // angle * radius = segmentLength * 0x28C
+            // angle = (segmentLength * 0x28C) / radius.
+            // So what is 0x28C? It's fixed point number, with 12 decimal bits.
+            // 0x28C = toFixedPt(1F / (2 * Math.PI)),
+            // angle = (segmentLength * (1 / (2 * PI)) / radius.
+            // angle = segmentLength / (2 * PI * radius).
+
+            // ALSO! This was sensible enough of an algorithm that I managed to figure it out BEFORE checking the PSX Sony Build, just by thinking about the problem.
+            // So this leads double credibility to this being the correct algorithm.
+            float newAngle = getLength() / (2 * SCMath.MAPPY_PI_HALF16 * readRadius);
+            this.angle = Math.round(newAngle * 16F) / 16F; // Rounds to the nearest interval. This looks very good.
         }
 
         // Radius warnings.
         int calculatedRadius = calculateFixedRadius();
         int diff = readRadius - calculatedRadius;
-        if (Math.abs(diff) >= 30) // There are only 17 occurrences with a value > 1 in psx-retail-usa. These appear to be outliers, though I don't know why their values are odd.
+        // There are only 17 occurrences with a value > 1 in psx-retail-usa. It seems like Mappy calculated the segment length with the wrong radius
+        // The calculated radius if incorrect is greater than the original, because it seems there was an issue with Mappy which could cause the very end of a segment to be excluded
+        if (Math.abs(diff) >= 30)
             getLogger().warning("calculateFixedRadius() was inaccurate! (Read: " + readRadius + "/" + DataUtils.fixedPointIntToFloat4Bit(readRadius) + ", Calculated: " + calculatedRadius + "/" + DataUtils.fixedPointIntToFloat4Bit(calculatedRadius) + ", Difference: " + diff + "/" + DataUtils.fixedPointIntToFloat4Bit(diff) + ", Pitch: " + this.pitch + "/" + DataUtils.fixedPointIntToFloat4Bit(this.pitch) + ", Length: " + getLength() + "/" + DataUtils.fixedPointIntToFloat4Bit(getLength()) + ").");
 
         // Normal warnings.
         if (FroggerPathSegmentArcOrientation.getDirection(this.normal) == null)
-            getLogger().info("Unexpected Arc Normal Vector: " + this.normal + " (Wasn't one of the expected orientations.)");
+            getLogger().info("Unexpected Arc Normal Vector: %s (Wasn't one of the expected orientations.)", this.normal);
     }
 
     @Override
@@ -99,6 +121,20 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
     }
 
     @Override
+    public void moveDelta(SVector delta) {
+        this.start.add(delta);
+        this.center.add(delta);
+    }
+
+    @Override
+    public void flip() {
+        FroggerPathResult endPos = calculatePosition(getLength());
+        this.start.setValues(endPos.getPosition());
+        this.normal.setValues((short) -this.normal.getX(), (short) -this.normal.getY(), (short) -this.normal.getZ());
+        this.pitch = -this.pitch;
+    }
+
+    @Override
     protected String getCalculatedIncorrectLengthString() {
         return "Angle Slider: " + this.angle;
     }
@@ -106,13 +142,11 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
     @Override
     protected int getIncorrectLengthTolerance() {
         // There are only 16 occurrences > 6, and all of them appear to be ones where it looks like Mappy made the path too short, potentially suggesting a bug in Mappy, or potentially an intentional manual edit?
-        return 100; // (2 * pi * radius tolerance)
+        return 80; // 44 is approx (2 * pi * radius tolerance), 80 is large enough to hold all length issues we've determined to be ignorable.
     }
 
     @Override
-    public FroggerPathResult calculatePosition(FroggerPathInfo info) {
-        int segmentDistance = info.getSegmentDistance();
-
+    public FroggerPathResult calculatePosition(int segmentDistance) {
         IVector vec = new IVector(this.start.getX() - this.center.getX(), this.start.getY() - this.center.getY(), this.start.getZ() - this.center.getZ());
         final IVector vec2 = new IVector(this.normal.getX(), this.normal.getY(), this.normal.getZ());
         IVector vec3 = new IVector();
@@ -133,14 +167,15 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
         matrix.getMatrix()[2][2] = (short) -vec3.getZ();
 
         int radius = calculateFixedRadius();
-        final int c = radius * 0x6487;
-        final int t = (segmentDistance << 12) / c;
-        final int a = ((segmentDistance << 18) - (t * c)) / (radius * 0x192);
+        final int c = radius * 0x6487; // (2*PI*r << 12) Circumference
+        final int t = (segmentDistance << 12) / c; // Number of complete turns.
+        final int a = ((segmentDistance << 18) - (t * c)) / (radius * 0x192); // partial angle (0..0x1000)
 
         int cos = SCMath.rcos(a);
         int sin = SCMath.rsin(a);
+        int segLength = getLength();
         svec.setX((short) ((cos * radius) >> 12));
-        svec.setY((short) ((-getPitch() * segmentDistance) / getLength()));
+        svec.setY((short) (segLength != 0 ? (-getPitch() * segmentDistance) / segLength : 0));
         svec.setZ((short) ((sin * radius) >> 12));
 
         PSXMatrix.MRApplyRotMatrix(matrix, svec, vec);
@@ -152,8 +187,12 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
 
     @Override
     public int calculateFixedPointLength() {
-        // Length = pitch + Circumference of Partial Circle = pitch + angle * (2 * pi * radius)
-        return (int) Math.round((this.angle * 2 * SCMath.MAPPY_PI_HALF16 * calculateFixedRadius()) + Math.abs(this.pitch));
+        // So, earlier, when we solve for angle, we proved the following formula can calculate the angle:
+        // angle = segmentLength / (2 * PI * radius).
+
+        // With some re-arrangement, we can determine:
+        // segmentLength = angle * 2 * PI * radius
+        return (int) Math.round((this.angle * 2 * SCMath.MAPPY_PI_HALF16 * calculateFixedRadius()));
     }
 
     @Override
@@ -169,11 +208,11 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
         editor.addFloatVector("Start", getStart(), () -> {
             onUpdate(pathPreview);
             radiusField.setText(String.valueOf(DataUtils.fixedPointIntToFloat4Bit(calculateFixedRadius())));
-        }, pathPreview.getController());
+        }, pathPreview.getController(), (vector, bits) -> selectPathPosition(pathPreview, vector, bits, null));
         editor.addFloatVector("Center", getCenter(), () -> {
             onUpdate(pathPreview);
             radiusField.setText(String.valueOf(DataUtils.fixedPointIntToFloat4Bit(calculateFixedRadius())));
-        }, pathPreview.getController());
+        }, pathPreview.getController(), (vector, bits) -> selectPathPosition(pathPreview, vector, bits, null));
 
         // Add normal editor.
         FroggerPathSegmentArcOrientation orientation = FroggerPathSegmentArcOrientation.getDirection(this.normal);
@@ -187,18 +226,30 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
         }
 
         // Maps such as QB.MAP show Mappy was capable of making the angle go beyond 1.0, so a textbox is necessary to support this.
-        editor.addDoubleField("Angle", this.angle, newAngle -> {
+        Slider[] angleSlider = new Slider[1];
+
+        TextField angleTextField = editor.addDoubleField("Arc Length:", this.angle, newAngle -> {
             this.angle = newAngle;
             onUpdate(pathPreview);
+            if (angleSlider[0] != null) {
+                angleSlider[0].setDisable(newAngle > 1D);
+                angleSlider[0].adjustValue(newAngle);
+            }
+
         }, newAngle -> newAngle >= 1 / 16D && newAngle <= (16 - (1D / SCMath.FIXED_POINT_ONE)));
-        editor.addDoubleSlider("Angle:", this.angle, newAngle -> {
+        angleSlider[0] = editor.addDoubleSlider("Arc Length:", this.angle, newAngle -> {
+            if (angleSlider[0].isDisable())
+                return;
+
             this.angle = newAngle;
             onUpdate(pathPreview);
-        }, .01, 1, false).setDisable(this.angle > 1D);
+            angleTextField.setText(String.valueOf(newAngle));
+        }, .01, 1, false, null);
+        angleSlider[0].setDisable(this.angle > 1D);
 
         // Old paths don't support pitch.
         if (!getPath().isOldPathFormatEnabled()) {
-            editor.addFloatField("Pitch:", DataUtils.fixedPointIntToFloat4Bit(getPitch()), newValue -> {
+            editor.addFloatField("Height Change (Pitch):", DataUtils.fixedPointIntToFloat4Bit(getPitch()), newValue -> {
                 this.pitch = DataUtils.floatToFixedPointInt4Bit(newValue);
                 onUpdate(pathPreview);
             }, null);

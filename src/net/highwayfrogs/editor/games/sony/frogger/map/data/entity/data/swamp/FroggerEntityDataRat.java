@@ -2,13 +2,14 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.swamp;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataMatrix;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Implements the 'SWAMP_RAT' entity data definition in ent_swp.h
@@ -51,15 +52,20 @@ public class FroggerEntityDataRat extends FroggerEntityDataMatrix {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addFixedShort("Speed", this.speed, newSpeed -> this.speed = newSpeed, 256);
+        editor.addFixedShort("Speed (World Units/sec)", this.speed, newSpeed -> this.speed = newSpeed, 256)
+                .setTooltip(FXUtils.createTooltip("Controls how fast the rat moves"));
     }
 
     @Override
     public void setupEditor(GUIEditorGrid editor, FroggerUIMapEntityManager manager) {
         super.setupEditor(editor, manager);
-        editor.addFloatSVector("Start Target", this.startTarget, manager.getController());
-        editor.addFloatSVector("Start Run Target", this.startRunTarget, manager.getController());
-        editor.addFloatSVector("End Run Target", this.endRunTarget, manager.getController());
-        editor.addFloatSVector("End Target", this.endTarget, manager.getController());
+        editor.addFloatVector("Start Target", this.startTarget, null, manager.getController(),
+                (targetPos, bits) -> selectNewPosition(manager.getController(), targetPos, bits));
+        editor.addFloatVector("Start Run Target", this.startRunTarget, null, manager.getController(),
+                (targetPos, bits) -> selectNewPosition(manager.getController(), targetPos, bits));
+        editor.addFloatVector("End Run Target", this.endRunTarget, null, manager.getController(),
+                (targetPos, bits) -> selectNewPosition(manager.getController(), targetPos, bits));
+        editor.addFloatVector("End Target", this.endTarget, null, manager.getController(),
+                (targetPos, bits) -> selectNewPosition(manager.getController(), targetPos, bits));
     }
 }

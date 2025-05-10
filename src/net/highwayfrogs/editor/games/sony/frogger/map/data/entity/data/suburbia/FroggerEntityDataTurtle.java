@@ -1,11 +1,12 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.suburbia;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataPathInfo;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents the "SUBURBIA_TURTLE" struct from ent_sub.h
@@ -46,8 +47,11 @@ public class FroggerEntityDataTurtle extends FroggerEntityDataPathInfo {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addFixedInt("Dive Delay (secs)", this.diveDelay, newDiveDelay -> this.diveDelay = newDiveDelay, 30);
-        editor.addFixedInt("Rise Delay (secs)", this.riseDelay, newRiseDelay -> this.riseDelay = newRiseDelay, 30);
-        editor.addCheckBox("Diving Allowed", this.divingEnabled, newDivingEnabled -> this.divingEnabled = newDivingEnabled);
+        editor.addFixedInt("Dive Delay (secs)", this.diveDelay, newDiveDelay -> this.diveDelay = newDiveDelay, getGameInstance().getFPS())
+                .setTooltip(FXUtils.createTooltip("How long to wait on the surface before diving back underwater."));
+        editor.addFixedInt("Rise Delay (secs)", this.riseDelay, newRiseDelay -> this.riseDelay = newRiseDelay, getGameInstance().getFPS())
+                .setTooltip(FXUtils.createTooltip("How long to wait underwater before rising back to the surface."));
+        editor.addCheckBox("Diving Allowed", this.divingEnabled, newDivingEnabled -> this.divingEnabled = newDivingEnabled)
+                .setTooltip(FXUtils.createTooltip("Controls whether diving is allowed."));
     }
 }

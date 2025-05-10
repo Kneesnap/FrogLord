@@ -73,10 +73,12 @@ public class kcActionSetSequence extends kcAction {
                 if (sequenceTable != null) {
                     sequenceEntry = sequenceTable.getEntryByName(sequenceName);
                     if (sequenceEntry != null)
-                        foundSequence = sequenceEntry.getValueRef().getResource();
+                        foundSequence = sequenceEntry.getSequence();
                 }
 
                 // Search the chunked file where the actor definition was found, if it's not the one where this action was found.
+                // Only works for fully qualified names.
+                // Ie: "blab01" would not be found, but "Frogmother[blab01]" would be found.
                 if (foundSequence == null && getChunkedFile() != actorDesc.getParentFile()) {
                     for (kcCResource chunk : actorDesc.getParentFile().getChunks()) {
                         if (chunk instanceof kcCActionSequence && chunk.getName().equalsIgnoreCase(sequenceName)) {
@@ -87,7 +89,8 @@ public class kcActionSetSequence extends kcAction {
                 }
             }
 
-            // Last Resort: Search the chunked file.
+            // Last Resort: Search the chunked file we're in. Only works for fully qualified names.
+            // Ie: "blab01" would not be found, but "Frogmother[blab01]" would be found.
             if (foundSequence == null) {
                 for (kcCResource chunk : getChunkedFile().getChunks()) {
                     if (chunk instanceof kcCActionSequence && chunk.getName().equalsIgnoreCase(sequenceName)) {
@@ -97,7 +100,10 @@ public class kcActionSetSequence extends kcAction {
                 }
             }
 
-            setAnimationSequenceHash(foundSequence != null ? foundSequence.getHash() : (sequenceEntry != null ? sequenceEntry.getValueRef().getHashNumber() : 0));
+            // Resolve the sequence hash, while also tracking the sequence name in-case of error.
+            int newHash = foundSequence != null ? foundSequence.getHash() : (sequenceEntry != null ? sequenceEntry.getValueRef().getHashNumber() : 0);
+            this.sequenceRef.setHash(newHash, sequenceName, false);
+            setAnimationSequenceHash(newHash);
         }
 
         this.ignoreIfAlreadyActive = arguments.useFlag(ARGUMENT_IGNORE_IF_ALREADY_ACTIVE);
@@ -133,12 +139,16 @@ public class kcActionSetSequence extends kcAction {
     public void printWarnings(ILogger logger) {
         super.printWarnings(logger);
         kcActorBaseDesc actorDesc = getExecutor() != null ? getExecutor().getExecutingActorBaseDescription() : null;
+        String entityName = getExecutor() != null ? getExecutor().getName() : null;
+        String entityDescName = actorDesc != null && actorDesc.getResource() != null ? actorDesc.getResource().getName() : null;
         if (actorDesc == null) {
-            logger.warning("The action '" + getAsGqsStatement() + "' will CRASH the game, since it cannot resolve the kcEntityDesc.");
+            logger.warning("The action '%s' will CRASH the game, since the entity %s cannot resolve its kcEntityDesc.", getAsGqsStatement(), entityName);
         } else if (actorDesc.getSkeleton() == null) {
-            logger.warning("The action '" + getAsGqsStatement() + "' may CRASH the game, since it cannot resolve the skeleton.");
+            logger.warning("The action '%s' may CRASH the game, since the description %s cannot resolve its skeleton.", getAsGqsStatement(), entityDescName);
         } else if (actorDesc.getAnimationSequences() == null) {
-            logger.warning("The action '" + getAsGqsStatement() + "' may CRASH the game, since it cannot resolve the kcCResourceNamedHash.");
+            logger.warning("The action '%s' may CRASH the game, since the description %s cannot resolve its kcCResourceNamedHash.", getAsGqsStatement(), entityDescName);
+        } else if (this.sequenceRef.getResource() == null && this.sequenceEntry == null) {
+            printWarning(logger, "no sequence could be found with that name.");
         }
     }
 

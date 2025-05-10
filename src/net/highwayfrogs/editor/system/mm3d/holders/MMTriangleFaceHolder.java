@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.system.mm3d.holders;
 
-import net.highwayfrogs.editor.file.mof.prims.MOFPolygon;
+import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPolygon;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockHeader;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.system.mm3d.OffsetType;
@@ -17,14 +17,14 @@ public class MMTriangleFaceHolder extends MMDataBlockHeader<MMTriangleFaceBlock>
 
     /**
      * Adds a mof polygon face.
-     * @param mofPolygon mofPolygon
+     * @param polygon mofPolygon
      */
-    public void addMofPolygon(MOFPolygon mofPolygon) {
-        short flags = mofPolygon.getParentPart().isHiddenByConfiguration() ? MMTriangleFaceBlock.FLAG_HIDDEN : 0;
-        if (mofPolygon.isQuadFace()) {
-            addRectangle(mofPolygon.getVertexStart(), mofPolygon.getVertices(), flags);
-        } else if (mofPolygon.isTriFace()) {
-            addTriangle(mofPolygon.getVertexStart(), mofPolygon.getVertices(), flags);
+    public void addMofPolygon(MRMofPolygon polygon) {
+        short flags = polygon.getMofPart().isHiddenByConfiguration() ? MMTriangleFaceBlock.FLAG_HIDDEN : 0;
+        if (polygon.getVertexCount() == 4) {
+            // TODO: addRectangle(polygon.getVertexStart(), polygon.getVertices(), flags);
+        } else if (polygon.getVertexCount() == 3) {
+            // TODO: addTriangle(polygon.getVertexStart(), polygon.getVertices(), flags);
         } else {
             throw new RuntimeException("Failed to add MOF Face.");
         }

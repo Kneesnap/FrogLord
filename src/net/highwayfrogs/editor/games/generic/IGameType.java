@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.generic;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.gui.GameConfigController;
 import net.highwayfrogs.editor.gui.GameConfigController.GameConfigUIController;
+import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.FileUtils;
@@ -58,9 +59,15 @@ public interface IGameType {
     /**
      * Creates config UI to configure the load of a potential game instance.
      * @param controller the UI controller to create the UI under
-     * @param config the config used to load data
      */
-    GameConfigUIController setupConfigUI(GameConfigController controller, GameConfig gameConfig, Config config);
+    GameConfigUIController<?> setupConfigUI(GameConfigController controller);
+
+    /**
+     * Gets the FrogLord logo associated with this game type.
+     */
+    default ImageResource getFrogLordLogo() {
+        return ImageResource.FROGLORD_LOGO_MAIN_LARGE;
+    }
 
     /**
      * Gets an InputStream to files included for this specific game.
@@ -109,6 +116,25 @@ public interface IGameType {
         } catch (Throwable th) {
             throw new RuntimeException("Failed to read config file resource '" + embeddedResourcePath + "'.", th);
         }
+    }
+
+    /**
+     * Resolve a version config by its name.
+     * @param internalName the name to resolve
+     * @return gameConfig or null
+     */
+    default GameConfig getVersionConfigByName(String internalName) {
+        if (internalName == null)
+            return null;
+
+        List<GameConfig> versionConfigs = getVersionConfigs();
+        for (int i = 0; i < versionConfigs.size(); i++) {
+            GameConfig testGameConfig = versionConfigs.get(i);
+            if (internalName.equals(testGameConfig.getInternalName()))
+                return testGameConfig;
+        }
+
+        return null;
     }
 
     /**

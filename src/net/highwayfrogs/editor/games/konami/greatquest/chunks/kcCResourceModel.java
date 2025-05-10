@@ -1,8 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.chunks;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
@@ -13,6 +11,9 @@ import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * A reference to a 3D model.
@@ -122,13 +123,23 @@ public class kcCResourceModel extends kcCResource {
 
     private void applyCollisionMeshName() {
         // If we resolve the model successfully, our goal is to generate the name of any corresponding collision mesh.
-        String baseName = FileUtils.stripExtension(getFileName());
-        String collisionMeshName = (baseName + kcCResourceTriMesh.EXTENSION_SUFFIX.toUpperCase());
+        String collisionMeshName = getAsCollisionTriMeshFileName(getFileName());
+        kcCResource triMesh = getParentFile().getResourceByHash(GreatQuestUtils.hash(collisionMeshName));
+        if (triMesh != null && StringUtils.isNullOrEmpty(triMesh.getSelfHash().getOriginalString()))
+            triMesh.getSelfHash().setOriginalString(collisionMeshName);
+    }
+
+    /**
+     * Takes the file name and gets it as a collision file name.
+     * @param fileName the file name to generate a collision file name for
+     * @return collisionFileName
+     */
+    public static String getAsCollisionTriMeshFileName(String fileName) {
+        String baseName = FileUtils.stripExtension(fileName);
+        String collisionMeshName = (baseName + kcCResourceTriMesh.EXTENSION_SUFFIX.toLowerCase());
         if (baseName.equals(baseName.toUpperCase()))
             collisionMeshName = collisionMeshName.toUpperCase();
 
-        kcCResource triMesh = getParentFile().getResourceByHash(GreatQuestUtils.hash(collisionMeshName));
-        if (triMesh != null)
-            triMesh.getSelfHash().setOriginalString(collisionMeshName);
+        return collisionMeshName;
     }
 }

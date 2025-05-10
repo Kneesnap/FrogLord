@@ -19,6 +19,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcActionExecutor;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptEffectType;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 import net.highwayfrogs.editor.utils.objects.StringNode;
 
@@ -49,6 +50,15 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
      */
     public GreatQuestChunkedFile getChunkedFile() {
         return this.parentFunction != null ? this.parentFunction.getChunkedFile() : null;
+    }
+
+    @Override
+    public String getName() {
+        kcCResourceEntityInst entityInst = getTargetEntityRef().getResource();
+        if (entityInst == null)
+            entityInst = getParentFunction().getScript().getEntity();
+
+        return entityInst != null ? entityInst.getName() : null;
     }
 
     /**
@@ -110,7 +120,7 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
      * Loads the action arguments from the arguments provided.
      * @param arguments the arguments to load from
      */
-    public final void loadEffect(OptionalArguments arguments, int lineNumber, String fileName) {
+    public final void loadEffect(ILogger logger, OptionalArguments arguments, int lineNumber, String fileName) {
         // Apply the target entity override before loading the arguments to ensure that the action can access the entity while loading. (Happens for kcActionSetSequence, and anything else which wants to get the actor desc)
         StringNode overrideTargetEntity = arguments.use(ARGUMENT_ENTITY_RUNNER);
 
@@ -132,15 +142,15 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
         }
 
         // Print warnings.
-        printLoadWarnings(arguments);
+        printLoadWarnings(arguments, logger);
     }
 
     /**
      * Print warnings on the load of the effect.
      * @param arguments the arguments after the load occurred.
      */
-    protected void printLoadWarnings(OptionalArguments arguments) {
-        arguments.warnAboutUnusedArguments(getLogger());
+    protected void printLoadWarnings(OptionalArguments arguments, ILogger logger) {
+        arguments.warnAboutUnusedArguments(logger);
         if (getTargetEntityRef().getResource() == null) {
             kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
             getLogger().warning("The effect '" + saveEffect(settings) + "' targets an entity which was not found.");
@@ -213,7 +223,7 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
      * @param line The line of text to parse
      * @return the parsed script effect
      */
-    public static kcScriptEffect parseScriptEffect(kcScriptFunction function, String line, int lineNumber, String fileName) {
+    public static kcScriptEffect parseScriptEffect(ILogger logger, kcScriptFunction function, String line, int lineNumber, String fileName) {
         if (function == null)
             throw new NullPointerException("function");
         if (line == null)
@@ -221,19 +231,18 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
         if (line.trim().isEmpty())
             throw new RuntimeException("Cannot parse '" + line + "' as a script effect.");
 
-        OptionalArguments arguments = OptionalArguments.parse(line);
-        String commandName = arguments.useNext().getAsString();
-        kcScriptEffect newEffect = createEffectForCommandName(function, commandName);
-        if (newEffect == null)
-            throw new RuntimeException("The command name '" + commandName + "' seems invalid, no kcScriptEffect could be created for it.");
-
         try {
-            newEffect.loadEffect(arguments, lineNumber, fileName);
+            OptionalArguments arguments = OptionalArguments.parse(line);
+            String commandName = arguments.useNext().getAsString();
+            kcScriptEffect newEffect = createEffectForCommandName(function, commandName);
+            if (newEffect == null)
+                throw new RuntimeException("The command name '" + commandName + "' seems invalid, no kcScriptEffect could be created for it.");
+
+            newEffect.loadEffect(logger, arguments, lineNumber, fileName);
+            return newEffect;
         } catch (Throwable th) {
             throw new RuntimeException("Failed to parse '" + line + "' in '" + fileName + "' on line " + lineNumber + " as a script effect.", th);
         }
-
-        return newEffect;
     }
 
     /**

@@ -43,7 +43,7 @@ public class MeshUIMarkerManager<TMesh extends DynamicMesh> extends MeshUIManage
     public MeshUIMarkerManager(MeshViewController<TMesh> controller) {
         super(controller);
         this.markerList = controller.getRenderManager().createDisplayList();
-        this.gizmoMeshViews = controller.getRenderManager().createDisplayList();
+        this.gizmoMeshViews = getController().getTransparentRenderManager().createDisplayList();
     }
 
     /**

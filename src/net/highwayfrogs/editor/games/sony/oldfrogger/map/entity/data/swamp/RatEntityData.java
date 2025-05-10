@@ -1,9 +1,9 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.swamp;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.OldFroggerDifficultyWrapper.OldFroggerDifficultyData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.shared.PathEntityData;

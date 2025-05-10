@@ -4,8 +4,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
@@ -21,6 +19,8 @@ import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.List;
 
@@ -183,7 +183,7 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         List<kcCResourceTrack> animations = animSet != null ? animSet.getAnimations() : null;
 
         kcCResourceNamedHash namedHash = getAnimationSequences();
-        return new GreatQuestModelMesh(modelWrapper, skeleton, animations, namedHash, name, false);
+        return new GreatQuestModelMesh(modelWrapper, skeleton, animations, namedHash, name);
     }
 
     private static final String CONFIG_KEY_MODEL_DESC = "modelDesc";

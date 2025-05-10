@@ -28,7 +28,7 @@ public class SimpleTreeTextureAtlas extends BasicTextureAtlas<TreeAtlasTexture> 
     @Override
     protected boolean updatePositions(SortedList<TreeAtlasTexture> sortedTextureList) {
         if (sortedTextureList.size() == 0)
-            return false; // Nothing to do.
+            return true; // Nothing to do.
 
         // Clear relation information.
         for (int i = 0; i < sortedTextureList.size(); i++) {
@@ -49,11 +49,11 @@ public class SimpleTreeTextureAtlas extends BasicTextureAtlas<TreeAtlasTexture> 
         // Now, we'll calculate positions of all remaining textures by building their tree.
         for (int i = 1; i < sortedTextureList.size(); i++) {
             TreeAtlasTexture texture = sortedTextureList.get(i);
-            if (placeTexture(texture))
-                return true; // Couldn't be added (no space).
+            if (!placeTexture(texture))
+                return false; // Couldn't be added (no space).
         }
 
-        return false;
+        return true;
     }
 
     @Override

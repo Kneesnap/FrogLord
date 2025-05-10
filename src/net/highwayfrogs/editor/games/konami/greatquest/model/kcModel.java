@@ -2,8 +2,6 @@ package net.highwayfrogs.editor.games.konami.greatquest.model;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GamePlatform;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
@@ -11,6 +9,8 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPrope
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,9 +29,9 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
     private final List<kcMaterial> materials = new ArrayList<>();
     private final List<kcModelNode> nodes = new ArrayList<>();
     private final List<kcModelPrim> primitives = new ArrayList<>();
-    private long fvf;
+    private long fvf; // TODO: DEFAULT? PC only has either 0x152 or 0x156.
     private kcVertexFormatComponent[] components;
-    private int bonesPerPrimitive = 1;
+    private int bonesPerPrimitive = 1; // TODO: NOT Default.
 
     // FVF:
     // - _kcBlendMode blendMode;
@@ -249,6 +249,14 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
     }
 
     /**
+     * Test if the vertex components contain bone weight data.
+     */
+    public boolean hasBoneWeights() {
+        return hasComponent(kcVertexFormatComponent.WEIGHT1F) || hasComponent(kcVertexFormatComponent.WEIGHT2F)
+                || hasComponent(kcVertexFormatComponent.WEIGHT3F) || hasComponent(kcVertexFormatComponent.WEIGHT4F);
+    }
+
+    /**
      * Gets the primitives in an unmodifiable state.
      * We do not allow direct modification of the primitives due to their tracking in two places.
      */
@@ -336,6 +344,9 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
         } else if (weightBits != 0) {
             components.add(kcVertexFormatComponent.POSITION_XYZF);
             switch (weightBits - 2) {
+                case -1:
+                    // Indicates there are no weights.
+                    break;
                 case 1:
                     components.add(kcVertexFormatComponent.WEIGHT1F);
                     break;
@@ -348,7 +359,12 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
                 case 4:
                     components.add(kcVertexFormatComponent.WEIGHT4F);
                     break;
+                default:
+                    throw new RuntimeException("Unexpected weightBits value: " + weightBits);
             }
+        } else {
+            // This is technically supported by the engine, but I'd like to be warned if we ever have a build with it, since it's not known how this would be handled.
+            throw new RuntimeException("The kcModel had a weightBits value of zero! This may not indicate a problem, but instead warrants investigation!");
         }
 
         if ((fvf & FVF_FLAG_PC_NORMALS) == FVF_FLAG_PC_NORMALS)
@@ -463,6 +479,21 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
         propertyList.add("FvF", NumberUtils.toHexString(this.fvf));
         propertyList.add("Components", Arrays.toString(this.components));
         propertyList.add("Bones Per Primitive", this.bonesPerPrimitive);
+
+        // Nodes:
+        if (this.nodes.size() > 0) {
+            propertyList.add("", "");
+            for (int i = 0; i < this.nodes.size(); i++)
+                propertyList.add("Node " + i, this.nodes.get(i));
+        }
+
+        // Primitives:
+        if (this.primitives.size() > 0) {
+            propertyList.add("", "");
+            for (int i = 0; i < this.primitives.size(); i++)
+                propertyList.add("Primitive " + i, this.primitives.get(i));
+        }
+
         return propertyList;
     }
 }

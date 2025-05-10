@@ -23,8 +23,9 @@ public abstract class TextureAtlas extends SimpleTexture {
     @Setter(AccessLevel.PACKAGE) private int atlasHeight;
     @Setter private boolean automaticResizingEnabled;
 
-    public TextureAtlas(Function<Texture, ITextureSource> source, int width, int height, boolean allowAutomaticResizing) {
-        super(source);
+    @SuppressWarnings("unchecked")
+    public TextureAtlas(Function<Texture, ? super AtlasBuilderTextureSource> source, int width, int height, boolean allowAutomaticResizing) {
+        super((Function<Texture, ITextureSource>) source);
         if (width < 1)
             throw new IllegalArgumentException("Width of texture atlas cannot be set below one! (Got: " + width + ")");
         if (height < 1)

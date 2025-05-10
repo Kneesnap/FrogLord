@@ -48,8 +48,10 @@ public class SelectionPromptTracker<TPromptTarget> {
         this.promptActive = true;
         this.selectionHook = onSelect;
         this.cancelHook = onCancel;
-        if (this.controller != null)
+        if (this.controller != null) {
+            this.controller.getAccordionLeft().setDisable(true); // Disable 2D UI.
             this.controller.getInputManager().addKeyListener(this.keyHandler);
+        }
     }
 
     /**
@@ -165,8 +167,10 @@ public class SelectionPromptTracker<TPromptTarget> {
         this.promptActive = false;
         this.selectionHook = null;
         this.cancelHook = null;
-        if (this.controller != null)
+        if (this.controller != null) {
+            this.controller.getAccordionLeft().setDisable(false); // Enable 2D UI.
             this.controller.getInputManager().removeKeyListener(this.keyHandler);
+        }
 
         if (value != null) {
             try {

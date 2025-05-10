@@ -1,11 +1,11 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.rushedmap;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataPathInfo;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Implements the turtle data 'SUBURBIA_TURTLE' entity data from suburbia.h
@@ -43,9 +43,9 @@ public class FroggerEntityDataTurtleOld extends FroggerEntityDataPathInfo {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addFixedShort("Dive Delay (secs)", this.diveDelay, newValue -> this.diveDelay = newValue, 30);
-        editor.addFixedShort("Dive Speed (secs)", this.diveSpeed, newValue -> this.diveSpeed = newValue, 30);
+        editor.addFixedShort("Dive Delay (secs)", this.diveDelay, newValue -> this.diveDelay = newValue, getGameInstance().getFPS());
+        editor.addFixedShort("Dive Speed (secs)", this.diveSpeed, newValue -> this.diveSpeed = newValue, getGameInstance().getFPS());
         editor.addSignedShortField("Rise Delay (???)", this.riseDelay, newValue -> this.riseDelay = newValue);
-        editor.addFixedShort("Rise Speed (???)", this.riseSpeed, newValue -> this.riseSpeed = newValue, 2184);
+        editor.addFixedShort("Rise Speed (???)", this.riseSpeed, newValue -> this.riseSpeed = newValue, 2184.5);
     }
 }

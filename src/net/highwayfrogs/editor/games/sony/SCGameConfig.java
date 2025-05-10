@@ -15,6 +15,7 @@ import java.util.*;
  */
 @Getter
 public class SCGameConfig extends GameConfig {
+    private long[] executableChecksums = EMPTY_LONG_ARRAY;
     private long overrideRamOffset;
     private long overlayTableOffset;
     private int MWIOffset;
@@ -33,6 +34,7 @@ public class SCGameConfig extends GameConfig {
     private static final String CFG_FILE_NAMES = "Files";
     private static final String CFG_CHILD_IMAGE_NAMES = "ImageNames";
     private static final String CFG_CHILD_MOF_FORCE_VLO = "ForceVLO";
+    private static final long[] EMPTY_LONG_ARRAY = new long[0];
 
     public SCGameConfig(String internalName) {
         super(internalName);
@@ -56,6 +58,16 @@ public class SCGameConfig extends GameConfig {
     }
 
     private void readBasicConfigData(Config config) {
+        String checksumsString = config.getString("exeChecksum", null);
+        if (checksumsString == null || checksumsString.trim().isEmpty()) {
+            this.executableChecksums = EMPTY_LONG_ARRAY;
+        } else {
+            String[] split = checksumsString.split("\\s*,\\s*");
+            this.executableChecksums = new long[split.length];
+            for (int i = 0; i < split.length; i++)
+                this.executableChecksums[i] = Long.parseLong(split[i]);
+        }
+
         this.mwdLooseFiles = config.getBoolean("mwdLooseFiles", false);
         this.region = config.getEnum("region", SCGameRegion.UNSPECIFIED);
         this.MWIOffset = config.getInt("mwiOffset");
@@ -146,26 +158,5 @@ public class SCGameConfig extends GameConfig {
 
         String vloName = childConfig.getString(name);
         return instance.getMainArchive().resolveForEachFile(VLOArchive.class, vlo -> vlo.getFileDisplayName().startsWith(vloName) ? vlo : null);
-    }
-
-    /**
-     * Write the config identifier to the end of the executable, so it will automatically know which config to use when this is loaded.
-     */
-    public byte[] applyConfigIdentifier(byte[] oldExeBytes) {
-        if (getInternalName() == null)
-            return oldExeBytes;
-
-        // Test if the executable already has the identifier at the end.
-        byte[] identifierBytes = getInternalName().getBytes();
-        boolean hasIdentifierAlready = oldExeBytes.length >= identifierBytes.length
-                && Arrays.equals(Arrays.copyOfRange(oldExeBytes, oldExeBytes.length - identifierBytes.length, oldExeBytes.length), identifierBytes);
-        if (hasIdentifierAlready)
-            return oldExeBytes;
-
-        // Write the identifier to a new array.
-        byte[] newExeBytes = new byte[oldExeBytes.length + identifierBytes.length];
-        System.arraycopy(oldExeBytes, 0, newExeBytes, 0, oldExeBytes.length);
-        System.arraycopy(identifierBytes, 0, newExeBytes, oldExeBytes.length, identifierBytes.length);
-        return newExeBytes;
     }
 }

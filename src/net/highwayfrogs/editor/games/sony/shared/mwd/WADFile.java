@@ -1,32 +1,34 @@
 package net.highwayfrogs.editor.games.sony.shared.mwd;
 
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
-import net.highwayfrogs.editor.file.mof.MOFFile;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
-import net.highwayfrogs.editor.file.packers.PP20Packer;
-import net.highwayfrogs.editor.file.packers.PP20Packer.PackResult;
-import net.highwayfrogs.editor.file.packers.PP20Unpacker;
-import net.highwayfrogs.editor.file.packers.PP20Unpacker.UnpackResult;
-import net.highwayfrogs.editor.file.reader.ArraySource;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.file.writer.ArrayReceiver;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
+import net.highwayfrogs.editor.games.sony.shared.pp20.PP20Packer;
+import net.highwayfrogs.editor.games.sony.shared.pp20.PP20Packer.PackResult;
+import net.highwayfrogs.editor.games.sony.shared.pp20.PP20Unpacker;
+import net.highwayfrogs.editor.games.sony.shared.pp20.PP20Unpacker.UnpackResult;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.WADController;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.ArraySource;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -44,6 +46,8 @@ public class WADFile extends SCSharedGameFile {
 
     public static final int TYPE_ID = -1;
     private static final int TERMINATOR = -1;
+    private static final SavedFilePath WAD_FILE_EXPORT_PATH = new SavedFilePath("wadExportPath", "Select the directory to export WAD contents to.");
+    private static final SavedFilePath WAD_FILE_IMPORT_PATH = new SavedFilePath("wadImportPath", "Select the directory to import WAD contents from.");
 
     public WADFile(SCGameInstance instance) {
         super(instance);
@@ -114,6 +118,7 @@ public class WADFile extends SCSharedGameFile {
 
                 // Make it a dummy file instead since it failed.
                 file = new DummyFile(getGameInstance(), fileBytes.length);
+                file.setRawFileData(fileBytes);
                 newEntry.setFile(file);
                 file.load(new DataReader(new ArraySource(fileBytes)));
             }
@@ -156,24 +161,50 @@ public class WADFile extends SCSharedGameFile {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public void exportAlternateFormat() {
         getArchive().promptVLOSelection(getFroggerMapTheme(), vlo -> {
-            File folder = new File(GUIMain.getWorkingDirectory(), FileUtils.stripExtension(getFileDisplayName()).toLowerCase(Locale.ROOT) + File.separator);
+            File folder = new File(FrogLordApplication.getWorkingDirectory(), FileUtils.stripExtension(getFileDisplayName()).toLowerCase(Locale.ROOT) + File.separator);
             if (!folder.exists())
                 folder.mkdirs();
-
-            if (vlo != null)
-                vlo.exportAllImages(folder, MOFFile.MOF_EXPORT_FILTER);
 
             setVLO(vlo);
             for (WADEntry wadEntry : this.files) {
                 SCGameFile<?> file = wadEntry.getFile();
-                if (file instanceof MOFHolder)
-                    ((MOFHolder) file).exportObject(folder, vlo);
+                if (file instanceof MRModel)
+                    ((MRModel) file).exportObject(folder, vlo);
             }
         }, true);
     }
 
+    @Override
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        super.setupRightClickMenuItems(contextMenu);
+
+        MenuItem exportOriginalFiles = new MenuItem("Export Original Files");
+        contextMenu.getItems().add(exportOriginalFiles);
+        exportOriginalFiles.setOnAction(event -> exportAllFiles(true));
+
+        MenuItem exportFiles = new MenuItem("Export Files");
+        contextMenu.getItems().add(exportFiles);
+        exportFiles.setOnAction(event -> exportAllFiles(false));
+    }
+
+    /**
+     * Export all files to the destination folder.
+     */
+    public void exportAllFiles(boolean original) {
+        File selectedFolder = FileUtils.askUserToSelectFolder(getGameInstance(), WAD_FILE_EXPORT_PATH);
+        if (selectedFolder == null)
+            return; // Cancelled.
+
+        for (WADEntry wadEntry : this.files) {
+            MWIResourceEntry resourceEntry = wadEntry.getFileEntry();
+            File outputFile = FileUtils.getNonExistantFile(new File(selectedFolder, resourceEntry.getDisplayName()));
+            resourceEntry.getGameFile().saveToFile(outputFile, original, false);
+        }
+    }
+
     /**
      * Gets the Frogger map theme which the WAD corresponds to.
+     * TODO: Perhaps move to FroggerUtils.java instead?
      * Returns null if the game is not Frogger, or there is no map theme.
      * @return froggerMapTheme
      */
@@ -201,8 +232,8 @@ public class WADFile extends SCSharedGameFile {
     public void setVLO(VLOArchive vloArchive) {
         for (WADEntry wadEntry : this.files) {
             SCGameFile<?> file = wadEntry.getFile();
-            if (file instanceof MOFHolder)
-                ((MOFHolder) file).setVloFile(vloArchive);
+            if (file instanceof MRModel)
+                ((MRModel) file).setVloFile(vloArchive);
         }
     }
 
@@ -237,7 +268,7 @@ public class WADFile extends SCSharedGameFile {
          * @return isDummyMOF
          */
         public boolean isDummy() {
-            return getFile() == null || ((getFile() instanceof MOFHolder) && ((MOFHolder) getFile()).isDummy());
+            return getFile() == null || ((getFile() instanceof MRModel) && ((MRModel) getFile()).isDummy());
         }
 
         /**

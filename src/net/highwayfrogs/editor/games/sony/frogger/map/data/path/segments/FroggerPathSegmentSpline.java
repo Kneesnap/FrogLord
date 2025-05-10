@@ -1,11 +1,11 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.path.segments;
 
-import net.highwayfrogs.editor.file.reader.DataReader;
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.image.ImageView;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathInfo;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathResult;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathSegmentType;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapPathManager.FroggerPathPreview;
@@ -13,27 +13,31 @@ import net.highwayfrogs.editor.games.sony.shared.spline.MRBezierCurve;
 import net.highwayfrogs.editor.games.sony.shared.spline.MRSplineMatrix;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.util.Arrays;
 
 /**
  * Holds Spline segment data.
  * Not entirely sure how we'll edit much of this data.
- * This could be using polynomial curves to form a shape. https://en.wikipedia.org/wiki/Spline_(mathematics)
+ * This could be using polynomial curves to form a shape.
+ * Reference: <a href="https://en.wikipedia.org/wiki/Spline_(mathematics)"/>
  * Created by Kneesnap on 9/16/2018.
  */
 public class FroggerPathSegmentSpline extends FroggerPathSegment {
     private final MRSplineMatrix splineMatrix = new MRSplineMatrix(null);
     private final int[] smoothT = new int[4]; // Smooth T is the distance values to reach each point. (Translation)
     private final int[][] smoothC = new int[4][3]; // Smoothing coefficient data.
+    private final transient MRBezierCurve tempBezierCurve;
 
     private static final int SPLINE_FIX_INTERVAL = 0x200;
 
     public FroggerPathSegmentSpline(FroggerPath path) {
         super(path, FroggerPathSegmentType.SPLINE);
-    }
-
-    @Override
-    public boolean isAllowLengthEdit() {
-        return true;
+        this.tempBezierCurve = new MRBezierCurve(getGameInstance());
     }
 
     @Override
@@ -66,13 +70,14 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
     }
 
     @Override
-    public FroggerPathResult calculatePosition(FroggerPathInfo info) {
-        return new FroggerPathResult(calculateSplinePoint(info.getSegmentDistance()), calculateSplineTangent(info.getSegmentDistance()));
+    public FroggerPathResult calculatePosition(int segmentDistance) {
+        return new FroggerPathResult(calculateSplinePoint(segmentDistance), calculateSplineTangent(segmentDistance));
     }
 
     // What follows is insanely nasty, but it is what the game engine does, so we have no choice...
+    @SuppressWarnings({"CommentedOutCode", "ExtractMethodRecommender"})
     private int getSplineParamFromLength(int length) {
-        length <<= 5;
+        length <<= 5; // world shift?
         int d = length;
 
         int i;
@@ -86,6 +91,7 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
             d = length;
 
         int e = d;
+
         d = 0;
         d += (this.smoothC[i][0] >> MRSplineMatrix.SPLINE_PARAM_SHIFT);
         d *= e;
@@ -98,26 +104,30 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
         d += (this.smoothC[i][2] >> MRSplineMatrix.SPLINE_PARAM_SHIFT);
         d *= e;
         d >>= 13;
-        d >>= 5;
+        d >>= 5; // world shift.
 
         d += (i * SPLINE_FIX_INTERVAL);
-        return (d << 1) >> 1;
+        return (d << 1) >> 1; // Happens outside the function in the original.
+
+        /*
+        return (((((((
+                (((this.smoothC[i][0] >> MRSplineMatrix.SPLINE_PARAM_SHIFT) * e) >> 13)
+                + (this.smoothC[i][1] >> MRSplineMatrix.SPLINE_PARAM_SHIFT) * e) >> 13)
+                + (this.smoothC[i][2] >> MRSplineMatrix.SPLINE_PARAM_SHIFT) * e) >> 13) >> 5)
+                + (i * SPLINE_FIX_INTERVAL)) << 1) >> 1;
+         */
     }
 
-    // I hate this.
     private SVector calculateSplinePoint(int distance) {
-        // TODO: TOSS (Maybe)
         int t = getSplineParamFromLength(distance);
         return this.splineMatrix.evaluatePosition(t);
     }
 
     private SVector calculateSplinePosition(int t) {
-        // TODO: TOSS
         return this.splineMatrix.evaluatePosition(t);
     }
 
     private IVector calculateSplineTangent(int distance) {
-        // TODO: TOSS (Maybe)
         int t = getSplineParamFromLength(distance);
         return this.splineMatrix.calculateTangentLine(t);
     }
@@ -140,6 +150,7 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
      * Gets the end position of this spline segment.
      * @return endPosition
      */
+    @SuppressWarnings("unused")
     public SVector getEndPosition() {
         return getEndPosition(null);
     }
@@ -160,27 +171,29 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
 
     @Override
     public int calculateFixedPointLength() {
-        // TODO: Reimplement.
-        // We leave this up to user input, since I've yet to come up with an algorithm which is accurate enough to get this right,
-        // and it seems like just leaving it as-is even during changes will create valid results.
-        final int maxLength = 1000 * (1 << 4);
-        int bestLength = 0;
-        double bestDistance = Double.MAX_VALUE;
+        SVector positionStart = calculateSplinePoint(0);
+        SVector position1 = calculateSplinePosition(SPLINE_FIX_INTERVAL);
+        SVector position2 = calculateSplinePosition(2 * SPLINE_FIX_INTERVAL);
+        SVector position3 = calculateSplinePosition(3 * SPLINE_FIX_INTERVAL);
+        SVector positionEnd = calculateSplinePosition(4 * SPLINE_FIX_INTERVAL);
+        return DataUtils.floatToFixedPointInt4Bit((float) (Math.sqrt(positionStart.distanceSquared(position1))
+                 + Math.sqrt(position1.distanceSquared(position2))
+                 + Math.sqrt(position2.distanceSquared(position3))
+                 + Math.sqrt(position3.distanceSquared(positionEnd)))) + 32; // Without the + 32 offset, all mismatches is off by no more than 70 units, with +32, everything is off by no more than 38 units.
+    }
 
-        SVector endPoint = convertToBezierCurve().getEnd();
-        for (int testLength = 0; testLength < maxLength; testLength++) {
-            // ? this.setLength(testLength);
-            SVector point = calculateSplinePoint(testLength);
-            double distanceSq = point.distanceSquared(endPoint);
-            if (distanceSq < bestDistance) {
-                bestDistance = distanceSq;
-                bestLength = testLength;
-            } else if (bestDistance <= 10 && distanceSq > 10) {
-                break;
-            }
+    /**
+     * Calculates linear smoothing for the given path.
+     * TODO: This is not consistent with the original behavior, we need a better system.
+     */
+    public void calculateLinearSmoothing() {
+        // Generate linear smoothing curve to update the spline.
+        calculateSmoothT();
+        int newSmoothingConstant = ((SPLINE_FIX_INTERVAL << 21) / Math.max(32, getLength())) << 5;
+        for (int i = 0; i < this.smoothC.length; i++) {
+            Arrays.fill(this.smoothC[i], 0);
+            this.smoothC[i][2] = newSmoothingConstant;
         }
-
-        return bestLength;
     }
 
     @Override
@@ -190,35 +203,7 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
 
     @Override
     protected int getIncorrectLengthTolerance() {
-        // TODO: ?
-        return 5; // TODO: RANDOM
-    }
-
-    // TODO: TOSS
-    private double calculateLengthWithOffset(int increment) {
-        double hiDefLength = 0;
-        SVector lastPos = calculateSplinePosition(0);
-        for (int i = increment; i < 2048 + increment; i += increment) {
-            SVector curPos = calculateSplinePosition(i);
-            hiDefLength += Math.sqrt(curPos.distanceSquared(lastPos));
-            lastPos = curPos;
-        }
-
-        return hiDefLength;
-    }
-
-    // TODO: TOSS
-    private double test(int startT, int currentT, int segments) {
-        SVector lastPos = calculateSplinePoint(startT);
-        double fullLength = 0;
-        for (int i = 1; i <= segments; i++) {
-            int tempT = startT + (int) Math.round(((double) (currentT - startT) / segments) * i);
-            SVector currPos = calculateSplinePoint(tempT);
-            fullLength += Math.sqrt(currPos.distanceSquared(lastPos));
-            lastPos = currPos;
-        }
-
-        return fullLength;
+        return 38; // The maximum differences are off by less than 2.375 world units. (Which is just over an eighth of a grid square.)
     }
 
     @Override
@@ -226,13 +211,36 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
         super.setupEditor(pathPreview, editor);
 
         MRBezierCurve curve = convertToBezierCurve();
-        editor.addFloatVector("Start", curve.getStart(), () -> loadFromCurve(curve, pathPreview), pathPreview.getController());
-        editor.addFloatVector("Control 1", curve.getControl1(), () -> loadFromCurve(curve, pathPreview), pathPreview.getController());
-        editor.addFloatVector("Control 2", curve.getControl2(), () -> loadFromCurve(curve, pathPreview), pathPreview.getController());
-        editor.addFloatVector("End", curve.getEnd(), () -> loadFromCurve(curve, pathPreview), pathPreview.getController());
-        makeTEditor(pathPreview, editor);
+        editor.addFloatVector("Start", curve.getStart(), () -> loadFromCurve(curve, pathPreview), pathPreview.getController(),
+                (vector, bits) -> selectPathPosition(pathPreview, vector, bits, () -> loadFromCurve(curve, pathPreview)));
+        editor.addFloatVector("Control 1", curve.getControl1(), () -> loadFromCurve(curve, pathPreview), pathPreview.getController(),
+                (vector, bits) -> selectPathPosition(pathPreview, vector, bits, () -> loadFromCurve(curve, pathPreview)));
+        editor.addFloatVector("Control 2", curve.getControl2(), () -> loadFromCurve(curve, pathPreview), pathPreview.getController(),
+                (vector, bits) -> selectPathPosition(pathPreview, vector, bits, () -> loadFromCurve(curve, pathPreview)));
+        editor.addFloatVector("End", curve.getEnd(), () -> loadFromCurve(curve, pathPreview), pathPreview.getController(),
+                (vector, bits) -> selectPathPosition(pathPreview, vector, bits, () -> loadFromCurve(curve, pathPreview)));
 
-        editor.addBoldLabel("Smooth C:"); //TODO: Make a real editor.
+        makeSmoothingCurveEditor(pathPreview, editor);
+    }
+
+    @SuppressWarnings("CommentedOutCode")
+    private void makeSmoothingCurveEditor(FroggerPathPreview pathPreview, GUIEditorGrid editor) {
+        // TODO: We'll need a real smoothing curve editor in the future. Refer to Blender's RGB Curve Shader node for an example of what this should probably look like.
+        editor.addBoldLabel("Smoothing Curve (Not Editable Yet):");
+        editor.addCenteredImageView(createImageView());
+
+        /*editor.addBoldLabel("Segment Length Percentages:");
+        float[] smoothingT = calculateSmoothingAsPercentages();
+        for (int i = 0; i < this.smoothT.length; i++) {
+            final int index = i;
+            editor.addFloatField("Segment #" + (i + 1) + ":", smoothingT[i], newValue -> {
+                smoothingT[index] = newValue;
+                //loadSmoothT(smoothingT);
+                onUpdate(pathPreview);
+            }, newValue -> newValue >= 0F && newValue <= 1.1F);
+        }
+
+        editor.addBoldLabel("Smooth C:");
         for (int i = 0; i < this.smoothC.length; i++) {
             final int index1 = i;
             for (int j = 0; j < this.smoothC[i].length; j++) {
@@ -242,7 +250,103 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
                     onUpdate(pathPreview);
                 });
             }
+        }*/
+    }
+
+
+    /**
+     * Calculates T smoothing percentages.
+     * @return tPercentages
+     */
+    @SuppressWarnings("unused")
+    private float[] calculateSmoothingAsPercentages() {
+        float length = DataUtils.fixedPointIntToFloat4Bit(getLength());
+        float[] result = new float[4];
+        for (int i = 0; i < result.length; i++)
+            result[i] = DataUtils.fixedPointIntToFloatNBits(this.smoothT[i], 12) / length;
+        return result;
+    }
+
+    private ImageView createImageView() {
+        BufferedImage image = new BufferedImage(250, 250, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = image.createGraphics();
+        graphics.setBackground(Color.WHITE);
+        graphics.clearRect(0, 0, image.getWidth(), image.getHeight());
+        graphics.dispose();
+
+        int smoothTIndex = this.smoothT.length - 1;
+        int[] pixelArray = ImageWorkHorse.getPixelIntegerArray(image);
+        for (int i = 0; i < getLength(); i++) {
+            boolean isSmoothTSwitch = false;
+            if (smoothTIndex > 0 && (i << 5) > (this.smoothT[smoothTIndex - 1] >> MRSplineMatrix.SPLINE_WORLD_SHIFT)) {
+                isSmoothTSwitch = true;
+                smoothTIndex--;
+            }
+
+            int xPos = (i * image.getWidth()) / getLength();
+            int yPos = image.getHeight() - (int) ((getSplineParamFromLength(i) / 2048D) * image.getHeight()) - 1;
+            if (xPos >= 0 && yPos >= 0 && xPos < image.getWidth() && yPos < image.getHeight())
+                pixelArray[(yPos * image.getWidth()) + xPos] = isSmoothTSwitch ? 0xFFFF0000 : 0xFF000000;
         }
+
+        return new ImageView(SwingFXUtils.toFXImage(image, null));
+    }
+
+    private final SVector pendingDeltaMovement = new SVector();
+    private static final int DELTA_MOVEMENT_INTERVAL = (1 << MRSplineMatrix.SPLINE_WORLD_SHIFT); // 0.5
+
+    @Override
+    public void moveDelta(SVector delta) {
+        // NOTE: MR Bézier curves are only capable of representing decimal numbers in intervals of 0.5.
+        // So, if your delta X is -0.0625, the amount actually moved is -0.5.
+        // So, if your delta X is 0.0625, the amount actually moved is 0.
+        // So, if your delta X is 0.5625, the amount actually moved is 0.5.
+
+        // Our solution to this is to track the delta movements in a separate SVector, and apply them only as they reach 0.5 or greater.
+        this.pendingDeltaMovement.add(delta);
+        int moveX = this.pendingDeltaMovement.getX() / DELTA_MOVEMENT_INTERVAL;
+        int moveY = this.pendingDeltaMovement.getY() / DELTA_MOVEMENT_INTERVAL;
+        int moveZ = this.pendingDeltaMovement.getZ() / DELTA_MOVEMENT_INTERVAL;
+        if (moveX == 0 && moveY == 0 && moveZ == 0)
+            return; // No change yet.
+
+        // Calculate how much to move this time (and for future movements)
+        short remainderX = (short) (this.pendingDeltaMovement.getX() % DELTA_MOVEMENT_INTERVAL);
+        short remainderY = (short) (this.pendingDeltaMovement.getY() % DELTA_MOVEMENT_INTERVAL);
+        short remainderZ = (short) (this.pendingDeltaMovement.getZ() % DELTA_MOVEMENT_INTERVAL);
+        this.pendingDeltaMovement.setValues((short) (moveX * DELTA_MOVEMENT_INTERVAL),
+                (short) (moveY * DELTA_MOVEMENT_INTERVAL),
+                (short) (moveZ * DELTA_MOVEMENT_INTERVAL));
+
+        // Apply the movement to the curve.
+        MRBezierCurve bezierCurve = this.splineMatrix.toBezierCurve(this.tempBezierCurve);
+        bezierCurve.getStart().add(this.pendingDeltaMovement);
+        bezierCurve.getEnd().add(this.pendingDeltaMovement);
+        bezierCurve.getControl1().add(this.pendingDeltaMovement);
+        bezierCurve.getControl2().add(this.pendingDeltaMovement);
+        bezierCurve.toSplineMatrix(this.splineMatrix);
+
+        // Store the remainder for future movements.
+        this.pendingDeltaMovement.setValues(remainderX, remainderY, remainderZ);
+    }
+
+    @Override
+    public void flip() {
+        MRBezierCurve bezierCurve = this.splineMatrix.toBezierCurve(this.tempBezierCurve);
+        short tempX = bezierCurve.getStart().getX();
+        short tempY = bezierCurve.getStart().getY();
+        short tempZ = bezierCurve.getStart().getZ();
+        bezierCurve.getStart().setValues(bezierCurve.getEnd());
+        bezierCurve.getEnd().setValues(tempX, tempY, tempZ);
+
+        tempX = bezierCurve.getControl1().getX();
+        tempY = bezierCurve.getControl1().getY();
+        tempZ = bezierCurve.getControl1().getZ();
+        bezierCurve.getControl1().setValues(bezierCurve.getControl2());
+        bezierCurve.getControl2().setValues(tempX, tempY, tempZ);
+
+        // Convert back to spline matrix.
+        bezierCurve.toSplineMatrix(this.splineMatrix);
     }
 
     @Override
@@ -261,30 +365,23 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
         SVector cp2 = new SVector(start).add(new SVector(-400, 0, 400));
         SVector end = new SVector(start).add(new SVector(0, 0, 800));
         loadFromCurve(new MRBezierCurve(null, start, cp1, cp2, end), null);
-        loadSmoothT(new float[]{.25F, .5F, .75F, 1F});
-        //TODO: Make Smooth C. Calculate length too.
+    }
+
+    @Override
+    public void onUpdate(FroggerPathPreview pathPreview) {
+        recalculateLength(pathPreview);
+        calculateLinearSmoothing(); // Call after recalculating the length, but before updating the path preview.
+        if (pathPreview != null)
+            pathPreview.updatePath();
     }
 
     /**
-     * Calculates T smoothing percentages.
-     * @return tPercentages
+     * Recalculates smooth T values.
      */
-    public float[] calculateSmoothing() {
-        float length = DataUtils.fixedPointIntToFloat4Bit(getLength());
-        float[] result = new float[4];
-        for (int i = 0; i < result.length; i++)
-            result[i] = DataUtils.fixedPointIntToFloatNBits(this.smoothT[i], 12) / length;
-        return result;
-    }
-
-    /**
-     * Loads smooth T values, or the percentage
-     * @param smoothingT The amount of distance each segment takes up. [0,1]
-     */
-    public void loadSmoothT(float[] smoothingT) {
+    public void calculateSmoothT() {
         float length = DataUtils.fixedPointIntToFloat4Bit(getLength());
         for (int i = 0; i < this.smoothT.length; i++)
-            this.smoothT[i] = DataUtils.floatToFixedPointInt((length * smoothingT[i]), 12);
+            this.smoothT[i] = DataUtils.floatToFixedPointInt((length * (i + 1) * .25F), 12);
     }
 
     /**
@@ -292,7 +389,7 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
      * @param curve The curve to load data from.
      */
     public void loadFromCurve(MRBezierCurve curve, FroggerPathPreview pathPreview) {
-        // TODO: Better editor.
+        this.pendingDeltaMovement.clear(); // When setting values directly, pending delta movement is no longer valid.
         curve.toSplineMatrix(this.splineMatrix);
         onUpdate(pathPreview);
     }
@@ -303,20 +400,6 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
      * @return bezierCurve
      */
     public MRBezierCurve convertToBezierCurve() {
-        // TODO: Probably doesn't need to exist.
         return this.splineMatrix.toBezierCurve();
-    }
-
-    private void makeTEditor(FroggerPathPreview pathPreview, GUIEditorGrid editor) {
-        editor.addBoldLabel("Segment Length Percentages:");
-        float[] smoothingT = calculateSmoothing();
-        for (int i = 0; i < this.smoothT.length; i++) {
-            final int index = i;
-            editor.addFloatField("Segment #" + (i + 1) + ":", smoothingT[i], newValue -> {
-                smoothingT[index] = newValue;
-                loadSmoothT(smoothingT);
-                onUpdate(pathPreview);
-            }, newValue -> newValue >= 0F && newValue <= 1.1F);
-        }
     }
 }

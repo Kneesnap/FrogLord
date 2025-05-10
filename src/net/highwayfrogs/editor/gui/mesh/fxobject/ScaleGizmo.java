@@ -130,6 +130,9 @@ public class ScaleGizmo extends DynamicMesh {
         final double halfBoxSize = (BOX_SIZE / 2);
         final double barEnd = BAR_LENGTH + halfBoxSize;
 
+        // Prevent constant updates of the FX array.
+        pushBatchUpdates();
+
         // Setup X-Axis Node (Red)
         if (this.xAxisEnabled) {
             this.xAxisNode = new DynamicMeshUnmanagedNode(this);
@@ -176,6 +179,8 @@ public class ScaleGizmo extends DynamicMesh {
         this.orangeTextureUvIndex = baseNodeEntry.addTexCoordValue(orangeTextureUv);
         MeshEntryBox.createCenteredBox(baseNodeEntry, 0, 0, 0, BOX_SIZE, BOX_SIZE, BOX_SIZE, whiteTextureUvIndex);
         this.baseNode.addEntry(baseNodeEntry);
+
+        getMesh().popBatchUpdates(); // Apply to mesh buffers.
     }
 
     /**

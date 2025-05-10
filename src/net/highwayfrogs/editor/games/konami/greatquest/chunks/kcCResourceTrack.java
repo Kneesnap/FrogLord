@@ -1,11 +1,11 @@
 package net.highwayfrogs.editor.games.konami.greatquest.chunks;
 
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.kcTrack;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,13 +59,13 @@ public class kcCResourceTrack extends kcCResource implements IMultiLineInfoWrite
             boolean expectedFirstTrackFlag = (i == 0);
             boolean didHaveFirstTrackFlag = ((track.getFlags() & kcTrack.FLAG_IS_FIRST) == kcTrack.FLAG_IS_FIRST);
             if (expectedFirstTrackFlag ^ didHaveFirstTrackFlag)
-                getLogger().severe("Expected track " + i + " to have the flag identifying it as the first track? " + expectedFirstTrackFlag + ", but was: " + didHaveFirstTrackFlag);
+                getLogger().severe("Expected track %d to have the flag identifying it as the first track? %b, but was: %b", i, expectedFirstTrackFlag, didHaveFirstTrackFlag);
 
             // Validate "FLAG_HAS_NEXT"
             boolean expectedNextTrackFlag = (this.tracks.size() > i + 1);
             boolean didHaveNextTrackFlag = ((track.getFlags() & kcTrack.FLAG_HAS_NEXT) == kcTrack.FLAG_HAS_NEXT);
             if (expectedNextTrackFlag ^ didHaveNextTrackFlag)
-                getLogger().severe("Expected track " + i + " to have the flag identifying there being a next track? " + expectedNextTrackFlag + ", but was: " + didHaveNextTrackFlag);
+                getLogger().severe("Expected track %d to have the flag identifying there being a next track? %b, but was: %b", i, expectedNextTrackFlag, didHaveNextTrackFlag);
         }
     }
 
@@ -115,5 +115,14 @@ public class kcCResourceTrack extends kcCResource implements IMultiLineInfoWrite
      */
     public List<kcTrack> getTracksByTag(int tag) {
         return tag >= 0 && tag < this.tracksByTag.size() ? this.tracksByTag.get(tag) : Collections.emptyList();
+    }
+
+    @Override
+    protected void onRemovedFromChunkFile() {
+        for (kcCResource resource : getParentFile().getChunks())
+            if (resource instanceof kcCResourceAnimSet)
+                ((kcCResourceAnimSet) resource).removeAnimation(this, false);
+
+        super.onRemovedFromChunkFile();
     }
 }

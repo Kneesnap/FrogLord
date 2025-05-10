@@ -1,11 +1,12 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.swamp;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataPathInfo;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Implements the 'SWAMP_SLUG' entity data definition in ent_swp.h
@@ -34,7 +35,8 @@ public class FroggerEntityDataSlug extends FroggerEntityDataPathInfo {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addEnumSelector("Motion Type", this.motionType, FroggerEntityDataSlugMotionType.values(), false, newMotionType -> this.motionType = newMotionType);
+        editor.addEnumSelector("Motion Type", this.motionType, FroggerEntityDataSlugMotionType.values(), false, newMotionType -> this.motionType = newMotionType)
+                .setTooltip(FXUtils.createTooltip("Controls if the slug movement type is ground-based or pipe-based. (Compare Bang Bang Barrel vs Slime Sliding)"));
     }
 
     public enum FroggerEntityDataSlugMotionType {

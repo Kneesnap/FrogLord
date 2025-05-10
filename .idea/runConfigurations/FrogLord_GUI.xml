@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="FrogLord GUI" type="Application" factoryName="Application" singleton="false">
-    <option name="MAIN_CLASS_NAME" value="net.highwayfrogs.editor.gui.GUIMain" />
+    <option name="MAIN_CLASS_NAME" value="net.highwayfrogs.editor.FrogLordMain" />
     <module name="FrogLord" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/debug" />
     <method v="2">

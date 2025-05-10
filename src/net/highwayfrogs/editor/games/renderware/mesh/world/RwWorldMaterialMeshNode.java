@@ -56,7 +56,7 @@ public class RwWorldMaterialMeshNode extends DynamicMeshAdapterNode<RwAtomicSect
         }
 
         // Write face data.
-        int vtxStartIndex = entry.getVertexStartIndex();
+        int vtxStartIndex = entry.getPendingVertexStartIndex();
         List<RpTriangle> triangles = worldSector.getTriangles();
         int triangleIndex = 0;
         List<RwTexCoords> texCoordSet = getTexCoordSet(worldSector);
@@ -75,7 +75,7 @@ public class RwWorldMaterialMeshNode extends DynamicMeshAdapterNode<RwAtomicSect
                 }
             }
 
-            int uvStartIndex = entry.getTexCoordStartIndex() + (triangleIndex++ * RpTriangle.VERTEX_COUNT);
+            int uvStartIndex = entry.getPendingTexCoordStartIndex() + (triangleIndex++ * RpTriangle.VERTEX_COUNT);
             entry.addFace(vtxStartIndex + triangle.getVertexIndices()[0], uvStartIndex,
                     vtxStartIndex + triangle.getVertexIndices()[1], uvStartIndex + 1,
                     vtxStartIndex + triangle.getVertexIndices()[2], uvStartIndex + 2);

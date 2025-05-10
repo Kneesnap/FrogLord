@@ -5,13 +5,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.map.view.TextureMap.TextureSource;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse.BlackFilter;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse.TransparencyFilter;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
@@ -19,41 +15,41 @@ import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 
-import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 
 /**
  * A singular game image. MR_TXSETUP struct.
  * Created by Kneesnap on 8/30/2018.
  */
-@Getter
-@Setter
-@SuppressWarnings("unused")
-public class GameImage extends SCSharedGameData implements Cloneable, TextureSource, ITextureSource {
-    private final List<Consumer<BufferedImage>> imageChangeListeners;
-    private final VLOArchive parent;
-    private short vramX;
-    private short vramY;
-    private short fullWidth;
-    private short fullHeight;
-    private short textureId;
-    private short flags;
-    private short clutId;
+@SuppressWarnings({"unused", "lossy-conversions"})
+public class GameImage extends SCSharedGameData implements Cloneable, ITextureSource {
+    @Getter private final List<Consumer<BufferedImage>> imageChangeListeners;
+    @Getter private final VLOArchive parent;
+    @Getter @Setter private short vramX;
+    @Getter @Setter private short vramY;
+    @Getter @Setter private short fullWidth;
+    @Getter @Setter private short fullHeight;
+    @Getter @Setter private short textureId;
+    @Getter private short flags;
+    @Getter private short clutId;
     private byte ingameWidth; // In-game texture width, used to remove texture padding.
     private byte ingameHeight;
     private byte[] imageBytes;
-    private ImageClutMode clutMode; // TPF
-    private int abr; // ABR.
+    @Getter private ImageClutMode clutMode; // TPF
+    @Getter private int abr; // ABR.
 
-    private transient int tempSaveImageDataPointer;
+    private transient int tempImageDataPointer = -1;
     private transient BufferedImage cachedImage;
 
     public static final int MAX_DIMENSION = 256;
@@ -68,12 +64,13 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
     public static final int TOTAL_PAGES = 32; // It seems to be 32 on both PC and PS1. We can't go higher than this because it encodes only 5 bits for the page id. It appears the PC version rendering dlls only create 14 pages though.
 
     public static final int FLAG_TRANSLUCENT = Constants.BIT_FLAG_0; // Used by sprites + MOFs in the MR API to enable semi-transparent rendering mode.
-    public static final int FLAG_ROTATED = Constants.BIT_FLAG_1; // Unused in MR API + Frogger. (Is this ever set?)
-    public static final int FLAG_HIT_X = Constants.BIT_FLAG_2; //Appears to decrease width by 1? TODO: Seems to be 1:1 an indication that the in-game width is not even. Perhaps we could auto-calculate this flag.
-    public static final int FLAG_HIT_Y = Constants.BIT_FLAG_3; //Appears to decrease height by 1? TODO: Seems to be 1:1 an indication that the in-game height is not even. Perhaps we could auto-calculate this flag.
-    public static final int FLAG_REFERENCED_BY_NAME = Constants.BIT_FLAG_4; // All images have this. It means it has an entry in bmp_pointers. Images without this flag can be dynamically loaded/unloaded without having a fixed memory location which the code can access the texture info from.
+    //public static final int FLAG_ROTATED = Constants.BIT_FLAG_1; // Unused in MR API + Frogger, does not appear to be set.
+    public static final int FLAG_HIT_X = Constants.BIT_FLAG_2; // Appears to decrease width by 1?
+    public static final int FLAG_HIT_Y = Constants.BIT_FLAG_3; // Appears to decrease height by 1?
+    public static final int FLAG_REFERENCED_BY_NAME = Constants.BIT_FLAG_4; // It means it has an entry in bmp_pointers. Images without this flag can be dynamically loaded/unloaded without having a fixed memory location which the code can access the texture info from.
     public static final int FLAG_BLACK_IS_TRANSPARENT = Constants.BIT_FLAG_5; // Seems like it may not be used. Would be weird if that were the case.
     public static final int FLAG_2D_SPRITE = Constants.BIT_FLAG_15; // Indicates that an animation list should be used when the image is used to create a sprite. I dunno, it seems like every single texture in frogger has this flag set. (Though this is not confirmed, let alone confirmed for all versions)
+    private static final int VALIDATION_FLAGS = FLAG_2D_SPRITE | FLAG_BLACK_IS_TRANSPARENT | FLAG_REFERENCED_BY_NAME | FLAG_HIT_Y | FLAG_HIT_X | FLAG_TRANSLUCENT;
 
     public GameImage(VLOArchive parent) {
         super(parent != null ? parent.getGameInstance() : null);
@@ -88,7 +85,7 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
         this.fullWidth = reader.readShort();
         this.fullHeight = reader.readShort();
 
-        int offset = reader.readInt();
+        this.tempImageDataPointer = reader.readInt();
         this.textureId = reader.readShort();
 
         short readPage = reader.readShort();
@@ -109,13 +106,72 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
             this.clutId = reader.readShort();
         }
 
+        if (getGameInstance().getGameType().isAtOrBefore(SCGameType.FROGGER))
+            warnAboutInvalidBitFlags(this.flags & 0xFFFF, VALIDATION_FLAGS, toString());
+
         short readU = reader.readUnsignedByteAsShort();
         short readV = reader.readUnsignedByteAsShort();
         this.ingameWidth = reader.readByte();
         this.ingameHeight = reader.readByte();
 
-        reader.jumpTemp(offset);
+        if (readU != getU() || readV != getV())
+            getLogger().warning("UV Mismatch at image %d! [%d,%d] [%d,%d] -> %dx%d, %dx%d, %04X [%d, %d]",
+                    Utils.getLoadingIndex(this.parent.getImages(), this), readU, readV, getU(), getV(),
+                    getIngameWidth(), getIngameHeight(), getFullWidth(), getFullHeight(), getFlags(),
+                    (getFullWidth() - getIngameWidth()), (getFullHeight() - getIngameHeight()));
+    }
 
+    @Override
+    public void save(DataWriter writer) {
+        writer.writeShort((short) (this.vramX / getWidthMultiplier()));
+        writer.writeShort(this.vramY);
+
+        writer.writeShort((short) (this.fullWidth / getWidthMultiplier()));
+        writer.writeShort(this.fullHeight);
+        this.tempImageDataPointer = writer.writeNullPointer();
+        writer.writeShort(this.textureId);
+
+        short oldVramX = this.vramX;
+        this.vramX /= getWidthMultiplier();
+        writer.writeShort(getTexturePageShort());
+        this.vramX = oldVramX;
+
+        if (getParent().isPsxMode()) {
+            writer.writeShort(this.clutId);
+            writer.writeShort(this.flags);
+        } else {
+            writer.writeShort(this.flags);
+            writer.writeShort(this.clutId);
+        }
+
+        writer.writeUnsignedByte(getU());
+        writer.writeUnsignedByte(getV());
+        writer.writeByte(this.ingameWidth);
+        writer.writeByte(this.ingameHeight);
+    }
+
+    @Override
+    public ILogger getLogger() {
+        return this.parent != null ? this.parent.getLogger() : super.getLogger();
+    }
+
+    @Override
+    public String toString() {
+        return "GameImage{id=" + this.textureId + (this.parent != null ? "@" + this.parent.getFileDisplayName() : "") + "}";
+    }
+
+    /**
+     * Load image data.
+     * @param reader The reader to read image data from.
+     */
+    void readImageData(DataReader reader) {
+        if (this.tempImageDataPointer < 0)
+            throw new RuntimeException("Cannot read image data, the image data pointer is invalid.");
+
+        requireReaderIndex(reader, this.tempImageDataPointer, "Expected image data");
+        this.tempImageDataPointer = -1;
+
+        // Read image.
         int pixelCount = getFullWidth() * getFullHeight();
         if (getParent().isPsxMode()) {
             ByteBuffer buffer = ByteBuffer.allocate(PC_BYTES_PER_PIXEL * pixelCount);
@@ -143,63 +199,30 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
         } else {
             this.imageBytes = reader.readBytes(pixelCount * PC_BYTES_PER_PIXEL);
         }
-
-        reader.jumpReturn();
-        if (readU != getU() || readV != getV())
-            getLogger().warning("UV Mismatch at image " + Utils.getLoadingIndex(this.parent.getImages(), this) + "! [" + readU + "," + readV + "] [" + getU() + "," + getV() + "] -> " + getIngameWidth() + "x" + getIngameHeight() + ", " + getFullWidth() + "x" + getFullHeight() + ", " + getFlags());
-    }
-
-    @Override
-    public void save(DataWriter writer) {
-        writer.writeShort((short) (this.vramX / getWidthMultiplier()));
-        writer.writeShort(this.vramY);
-
-        writer.writeShort((short) (this.fullWidth / getWidthMultiplier()));
-        writer.writeShort(this.fullHeight);
-        this.tempSaveImageDataPointer = writer.writeNullPointer();
-        writer.writeShort(this.textureId);
-
-        short oldVramX = this.vramX;
-        this.vramX /= getWidthMultiplier();
-        writer.writeShort(getTexturePageShort());
-        this.vramX = oldVramX;
-
-        if (getParent().isPsxMode()) {
-            writer.writeShort(this.clutId);
-            writer.writeShort(this.flags);
-        } else {
-            writer.writeShort(this.flags);
-            writer.writeShort(this.clutId);
-        }
-
-        writer.writeUnsignedByte(getU());
-        writer.writeUnsignedByte(getV());
-        writer.writeByte(this.ingameWidth);
-        writer.writeByte(this.ingameHeight);
-    }
-
-    @Override
-    public ILogger getLogger() {
-        return this.parent != null ? this.parent.getLogger() : super.getLogger();
     }
 
     /**
      * Save extra data.
      * @param writer The writer to save data to.
      */
-    public void saveExtra(DataWriter writer) {
-        writer.writeAddressTo(this.tempSaveImageDataPointer);
+    void writeImageData(DataWriter writer) {
+        if (this.tempImageDataPointer < 0)
+            throw new RuntimeException("Cannot write image data, the image data pointer is invalid.");
+
+        writer.writeAddressTo(this.tempImageDataPointer);
         writeImageBytes(writer);
+
+        this.tempImageDataPointer = -1;
     }
 
     private void writeImageBytes(DataWriter writer) {
         if (!getParent().isPsxMode()) {
-            writer.writeBytes(getImageBytes()); // The image bytes as they are loaded are already as they should be when saved.
+            writer.writeBytes(this.imageBytes); // The image bytes as they are loaded are already as they should be when saved.
             return;
         }
 
         if (getClutMode() == ImageClutMode.MODE_15BIT_NO_CLUT) {
-            for (int i = 0; i < getImageBytes().length; i += PC_BYTES_PER_PIXEL)
+            for (int i = 0; i < this.imageBytes.length; i += PC_BYTES_PER_PIXEL)
                 PSXClutColor.fromRGBA(this.imageBytes, i).save(writer);
             return;
         }
@@ -208,7 +231,7 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
         clut.getColors().clear(); // Generate a new clut.
         int maxColors = getClut().calculateColorCount();
 
-        for (int i = 0; i < getImageBytes().length; i += PC_BYTES_PER_PIXEL) {
+        for (int i = 0; i < this.imageBytes.length; i += PC_BYTES_PER_PIXEL) {
             PSXClutColor color = PSXClutColor.fromRGBA(this.imageBytes, i);
             if (!clut.getColors().contains(color))
                 clut.getColors().add(color);
@@ -220,10 +243,10 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
         clut.getColors().sort(Comparator.comparingInt(PSXClutColor::toRGBA));
 
         if (getClutMode() == ImageClutMode.MODE_8BIT) {
-            for (int i = 0; i < getImageBytes().length; i += PC_BYTES_PER_PIXEL)
+            for (int i = 0; i < this.imageBytes.length; i += PC_BYTES_PER_PIXEL)
                 writer.writeByte((byte) clut.getColors().indexOf(PSXClutColor.fromRGBA(this.imageBytes, i)));
         } else if (getClutMode() == ImageClutMode.MODE_4BIT) {
-            for (int i = 0; i < getImageBytes().length; i += (PC_BYTES_PER_PIXEL * 2)) {
+            for (int i = 0; i < this.imageBytes.length; i += (PC_BYTES_PER_PIXEL * 2)) {
                 PSXClutColor color1 = PSXClutColor.fromRGBA(this.imageBytes, i);
                 PSXClutColor color2 = PSXClutColor.fromRGBA(this.imageBytes, i + PC_BYTES_PER_PIXEL);
                 writer.writeByte((byte) (clut.getColors().indexOf(color1) | (clut.getColors().indexOf(color2) << 4)));
@@ -294,7 +317,11 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
         short u = (short) (getVramX() % (getParent().isPsxMode() ? PSX_PAGE_WIDTH * getWidthMultiplier() : PC_PAGE_WIDTH));
 
         if (getParent().isPsxMode()) { // PS1 logic.
-            if (getFullHeight() != getIngameHeight()) // TODO: This is broken sometimes, when and why? C-12 Final Resistance
+            short fullHeight = getFullHeight();
+            short ingameHeight = getIngameHeight();
+
+            // The purpose here is not fully understood, but seems to accurately reflect the original behavior in all games.
+            if (fullHeight != ingameHeight && fullHeight != ingameHeight + 1)
                 u++;
             return u;
         }
@@ -350,28 +377,37 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
      * Replace this texture with a new one.
      * @param image The new image to use.
      */
-    public void replaceImage(BufferedImage image) {
+    public void replaceImage(BufferedImage image, ProblemResponse response) {
+        // We can only parse TYPE_INT_ARGB, so if it's not that, we must convert the image to that, so it can be parsed properly.
+        image = ImageWorkHorse.convertBufferedImageToFormat(image, BufferedImage.TYPE_INT_ARGB);
+
+        // Ensure transparent pixels are now black.
         image = ImageWorkHorse.applyFilter(image, new BlackFilter());
 
-        if (image.getType() != BufferedImage.TYPE_INT_ARGB) { // We can only parse TYPE_INT_ARGB, so if it's not that, we must convert the image to that, so it can be parsed properly.
-            BufferedImage sourceImage = image;
-            image = new BufferedImage(sourceImage.getWidth(), sourceImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
-            Graphics graphics = image.createGraphics();
-            graphics.drawImage(sourceImage, 0, 0, null);
-            graphics.dispose();
-        }
+        // Automatically generate padding if necessary.
+        /*if (getIngameWidth() == image.getWidth() && getIngameHeight() == image.getHeight()) {
+            // TODO: Automatically generate padding, and update dimensions.
 
+        }*/
+
+        // Now that the dimensions are finalized, grant easy access to them.
         short imageWidth = (short) image.getWidth();
         short imageHeight = (short) image.getHeight();
-        Utils.verify(imageWidth <= MAX_DIMENSION && imageHeight <= MAX_DIMENSION, "The imported image is too big. Frogger's engine only supports up to %dx%d.", MAX_DIMENSION, MAX_DIMENSION);
 
+        // Ensure it's not too large.
+        if (imageWidth > MAX_DIMENSION || imageHeight > MAX_DIMENSION) {
+            Utils.handleProblem(response, getLogger(), Level.SEVERE, "The imported image is too big. The maximum image dimensions supported are %dx%d.", MAX_DIMENSION, MAX_DIMENSION);
+            return;
+        }
+
+        // TODO: warn if VRAM overlap occurs, or page boundary is crossed.
         /*if ((imageWidth / getWidthMultiplier()) + getVramX() > MAX_DIMENSION)
             Utils.makePopUp("This image does not fit horizontally in VRAM. Use the VRAM editor to make it fit.", AlertType.WARNING);
+         */
 
-        if (imageWidth > getFullWidth() || imageHeight > getFullHeight())
-            Utils.makePopUp("The image you have imported is larger than the image it replaced.\nThis may cause problems if it overlaps with another texture. Click on the 'VRAM' option to make sure the texture is ok.", AlertType.WARNING);*/
 
         if (getFullWidth() != imageWidth || getFullHeight() != imageHeight) {
+            // If it's not the expected dimensions, use a default padding scheme.
             this.fullWidth = imageWidth;
             this.fullHeight = imageHeight;
             setIngameWidth((short) (imageWidth - 2));
@@ -382,7 +418,7 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
         int[] array = new int[getFullHeight() * getFullWidth()];
         image.getRGB(0, 0, getFullWidth(), getFullHeight(), array, 0, getFullWidth());
 
-        //Convert int array into byte array.
+        // Convert int array into byte array.
         ByteBuffer buffer = ByteBuffer.allocate(array.length * Constants.INTEGER_SIZE);
         buffer.asIntBuffer().put(array);
         byte[] bytes = buffer.array();
@@ -507,6 +543,13 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
                 && y >= getVramY() && y <= (getVramY() + getFullHeight());
     }
 
+    /**
+     * Gets the name configured as the original name for this image.
+     */
+    public String getOriginalName() {
+        return getConfig().getImageNames().get(this.textureId);
+    }
+
     @Override
     @SneakyThrows
     public GameImage clone() {
@@ -518,26 +561,6 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
      */
     public int getLocalImageID() {
         return getParent().getImages().indexOf(this);
-    }
-
-    @Override
-    public BufferedImage makeTexture(TextureMap map) {
-        return toBufferedImage(map.getDisplaySettings());
-    }
-
-    @Override
-    public boolean isOverlay(TextureMap map) {
-        return false;
-    }
-
-    @Override
-    public BigInteger makeIdentifier(TextureMap map) {
-        return makeIdentifier(0x7E8BA5E, getTextureId());
-    }
-
-    @Override
-    public GameImage getGameImage(TextureMap map) {
-        return this;
     }
 
     private BufferedImage makeUnmodifiedImage() {
@@ -592,7 +615,6 @@ public class GameImage extends SCSharedGameData implements Cloneable, TextureSou
 
             return 0;
         }
-
 
         // PC logic.
         return ((getFullWidth() - getIngameWidth()) / 2);

@@ -2,8 +2,6 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.form;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
@@ -12,6 +10,8 @@ import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,7 +57,7 @@ public class FroggerOldMapForm extends SCGameData<FroggerGameInstance> implement
             formDataPointerList = reader.getIndex();
             reader.jumpReturn();
 
-            reader.requireIndex(getLogger(), nextFormDataEntryStartAddress, "Expected FroggerOldMapFormData list entry " + i);
+            requireReaderIndex(reader, nextFormDataEntryStartAddress, "Expected FroggerOldMapFormData list entry " + i);
             FroggerOldMapFormData newFormDataEntry = new FroggerOldMapFormData();
             this.formDataEntries.add(newFormDataEntry);
             newFormDataEntry.load(reader);
@@ -101,7 +101,18 @@ public class FroggerOldMapForm extends SCGameData<FroggerGameInstance> implement
     }
 
     @Override
-    public WADEntry getEntityModel(FroggerMapEntity entity) {
+    public FroggerFormGrid getFormGrid() {
+        return null;
+    }
+
+    @Override
+    public void setFormGrid(FroggerFormGrid formGrid) {
+        if (formGrid != null)
+            throw new UnsupportedOperationException("FroggerOldMapForm does not support setFormGrid()!");
+    }
+
+    @Override
+    public WADEntry getEntityModelWadEntry(FroggerMapEntity entity) {
         int resourceId = getGameInstance().getResourceEntryByName("MAP_RUSHED.WAD").getResourceId();
         WADFile wadFile = getGameInstance().getGameFile(resourceId);
         return wadFile.getFiles().get(this.mofId + 1);

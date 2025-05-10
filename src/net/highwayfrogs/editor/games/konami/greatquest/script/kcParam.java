@@ -2,8 +2,6 @@ package net.highwayfrogs.editor.games.konami.greatquest.script;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton;
@@ -21,6 +19,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestM
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.objects.StringNode;
 
 import java.util.Arrays;
@@ -87,13 +87,21 @@ public class kcParam {
     }
 
     /**
+     * Gets this kcParam as a sound ID.
+     */
+    public int getAsSfxId() {
+        int value = getAsInteger();
+        return value != 0 && value != -1 ? value & ~kcActionPlaySound.BITMASK_STOP_SOUND : value;
+    }
+
+    /**
      * Get this kcParam as a sound path
      * @param instance the instance to resolve sound path from
      * @return soundPath
      */
     public String getAsSoundPath(GreatQuestInstance instance) {
         if (instance != null) {
-            return instance.getFullSoundPath(getAsInteger() & ~kcActionPlaySound.BITMASK_STOP_SOUND);
+            return instance.getFullSoundPath(getAsSfxId());
         } else {
             return String.valueOf(getAsInteger());
         }
@@ -195,7 +203,7 @@ public class kcParam {
             case SPECIAL_ACTIVATION_BIT_MASK:
                 return getEnumWarning(kcSpecialActivationMask.values());
             case SOUND:
-                if (intValue < 0 || instance == null || intValue >= instance.getNextFreeSoundId() || !instance.hasFullSoundPathFor(intValue))
+                if (instance == null || !instance.hasFullSoundPathFor(intValue))
                     return intValue + " does not appear to correspond to any named sound effects.";
                 break;
             case MILLISECONDS:

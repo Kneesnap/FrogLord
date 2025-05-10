@@ -5,21 +5,23 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
  * Vector comprised of shorts.
+ * TODO: Rename to FixedPt16Vector3
+ * TODO: Interoperability with Vector3f, via IVector3 class?
  * Created by Kneesnap on 8/22/2018.
  */
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class SVector extends GameObject implements Vector {
+public class SVector implements IBinarySerializable, Vector {
     private short x;
     private short y;
     private short z;
@@ -112,6 +114,16 @@ public class SVector extends GameObject implements Vector {
         this.x = x;
         this.y = y;
         this.z = z;
+    }
+
+    /**
+     * Set the values of this vector.
+     * @param x The x value to set.
+     * @param y The y value to set.
+     * @param z The z value to set.
+     */
+    public void setValues(float x, float y, float z) {
+        setValues(x, y, z, defaultBits());
     }
 
     /**

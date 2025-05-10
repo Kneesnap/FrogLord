@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcActionExecutor;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptEffectType;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 /**
@@ -28,14 +29,13 @@ public abstract class kcScriptEffectAction extends kcScriptEffect implements kcA
     public abstract kcAction getAction();
 
     @Override
-    protected void printLoadWarnings(OptionalArguments arguments) {
+    protected void printLoadWarnings(OptionalArguments arguments, ILogger logger) {
         kcAction action = getAction();
         if (action != null)
-            action.printWarnings(getLogger());
+            action.printWarnings(logger);
 
-        super.printLoadWarnings(arguments);
+        super.printLoadWarnings(arguments, logger);
     }
-
     @Override
     public boolean isActionApplicableToTarget() {
         kcCResourceEntityInst entity = getTargetEntityRef().getResource();

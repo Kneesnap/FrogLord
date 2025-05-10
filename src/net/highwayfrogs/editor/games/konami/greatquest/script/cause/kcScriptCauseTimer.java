@@ -63,11 +63,17 @@ public class kcScriptCauseTimer extends kcScriptCause {
     public void printAdvancedWarnings(kcScriptValidationData data) {
         super.printAdvancedWarnings(data);
         if (this.timerState == kcScriptCauseTimerState.REPEAT) {
-            if (!data.anyActionsMatch(kcActionID.SET_ALARM, (kcActionSetAlarm alarm) -> alarm.getAlarmId() == this.alarmId && alarm.getIntervalCount() > 1))
+            if (!data.anyActionsMatch(kcActionID.SET_ALARM, (kcActionSetAlarm alarm) -> alarm.getAlarmId() == this.alarmId && alarm.getIntervalCount() > 1)) {
                 printWarning(data.getLogger(), data.getEntityName() + " does not have a " + kcActionID.SET_ALARM.getFrogLordName() + " effect for alarm ID " + this.alarmId + " which repeats.");
+            } else if (!data.anyActionsMatch(kcActionID.SET_ALARM, (kcActionSetAlarm alarm) -> alarm.getAlarmId() == this.alarmId && alarm.getIntervalCount() > 1 && !isEntityTerminated(alarm))) {
+                printWarning(data.getLogger(), data.getEntityName() + " is terminated instantly (ie: before the alarm finishes)");
+            }
         } else if (this.timerState == kcScriptCauseTimerState.FINISHED) {
-            if (!data.anyActionsMatch(kcActionID.SET_ALARM, (kcActionSetAlarm alarm) -> alarm.getAlarmId() == this.alarmId))
+            if (!data.anyActionsMatch(kcActionID.SET_ALARM, (kcActionSetAlarm alarm) -> alarm.getAlarmId() == this.alarmId)) {
                 printWarning(data.getLogger(), data.getEntityName() + " does not have a " + kcActionID.SET_ALARM.getFrogLordName() + " effect for alarm ID " + this.alarmId + ".");
+            } else if (!data.anyActionsMatch(kcActionID.SET_ALARM, (kcActionSetAlarm alarm) -> alarm.getAlarmId() == this.alarmId && !isEntityTerminated(alarm))) {
+                printWarning(data.getLogger(), data.getEntityName() + " is terminated instantly (ie: before the alarm finishes)");
+            }
         }
     }
 

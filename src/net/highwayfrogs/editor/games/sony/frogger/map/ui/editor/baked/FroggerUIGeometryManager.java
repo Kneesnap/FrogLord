@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.baked;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Separator;
 import javafx.scene.input.KeyCode;
@@ -16,20 +17,22 @@ import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Translate;
 import lombok.Getter;
+import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapAnimation;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapAnimationTargetPolygon;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquare;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMeshController;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
-import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGrid;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
+import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.InputManager.MouseInputState;
 import net.highwayfrogs.editor.gui.editor.BakedLandscapeUIManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.SelectionPromptTracker;
@@ -37,21 +40,23 @@ import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode.OverlayTarget;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * Allows viewing / editing baked geometry data in a Frogger map.
- * TODO: Create some generalized selection system which integrates in 3D space allowing a smooth highlighting and selection between different types of things.
  * Created by Kneesnap on 6/6/2024.
  */
 public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMapMesh, FroggerMapPolygon> {
     private static final double VERTEX_BOX_SIZE = 1.5;
     private static final PhongMaterial VERTEX_BOX_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
     @Getter private final SelectionPromptTracker<FroggerMapPolygon> polygonSelector;
+    @Getter private FroggerUIGridManager gridEditorWindow;
 
     // UI
     private DisplayList unusedVertexBoxes;
@@ -62,6 +67,8 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
     private FroggerMapPolygon highlightedPolygon;
     private OverlayTarget highlightedPolygonTarget;
     private MeshView hoverView; // Anything we're hovering over which should allow selection instead of the cursor.
+
+    public static final CursorVertexColor GREEN_COLOR = new CursorVertexColor(java.awt.Color.GREEN, java.awt.Color.BLACK);
 
     public FroggerUIGeometryManager(FroggerMapMeshController controller) {
         super(controller);
@@ -78,6 +85,13 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
         return false;
     }
 
+    private void tryOpenGridEditor() {
+        if (this.gridEditorWindow != null && this.gridEditorWindow.isActive())
+            return; // Window is currently active.
+
+        this.gridEditorWindow = FroggerUIGridManager.openGridEditor(getController());
+    }
+
     @Override
     public void onSetup() {
         // Setup UI Pane & Grid.
@@ -86,7 +100,7 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
 
         // Setup UI.
         GUIEditorGrid mainGrid = this.sidePanel.makeEditorGrid();
-        mainGrid.addButton("Edit Collision Grid", () -> FroggerUIGridManager.openGridEditor(getController()));
+        mainGrid.addButton("Edit Collision Grid", this::tryOpenGridEditor);
         this.checkBoxShowUnusedVertices = mainGrid.addCheckBox("Show Unused Vertices", true, this::updateUnusedVertexVisibility);
         this.checkBoxHighlightInvisibleFaces = mainGrid.addCheckBox("Highlight Invisible Polygons", false, this::updateInvisiblePolygonHighlighting);
         this.sidePanel.add(new Separator(Orientation.HORIZONTAL));
@@ -99,6 +113,9 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
         });
 
         mapScene.setOnMouseMoved(evt -> {
+            if (getController().getPathManager().getPathSelector().isPromptActive())
+                return; // Don't highlight polygons while the path selector is active, it's distracting.
+
             Node node = evt.getPickResult().getIntersectedNode();
             if (node == getController().getMeshView() && !isPolygonSelected() && this.hoverView == null) {
                 FroggerMapPolygon polygon = getMesh().getMainNode().getDataSourceByFaceIndex(evt.getPickResult().getIntersectedFace());
@@ -111,44 +128,71 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
         this.checkBoxShowUnusedVertices.setOnAction(evt -> updateUnusedVertexVisibility());
 
         getController().getInputManager().addMouseListener(MouseEvent.MOUSE_CLICKED, (manager, event, deltaX, deltaY) -> {
-            Node clickedNode = manager.getMouseState().getIntersectedNode();
+            MouseInputState mouseState = manager.getMouseTracker().getMouseState();
+            Node clickedNode = mouseState.getIntersectedNode();
             if (clickedNode != getController().getMeshView() || (this.hoverView != null) || (this.highlightedPolygon == null))
                 return;
 
-            FroggerMapPolygon clickedPolygon = getMesh().getMainNode().getDataSourceByFaceIndex(manager.getMouseState().getIntersectedFaceIndex());
+            FroggerMapPolygon clickedPolygon = getMesh().getMainNode().getDataSourceByFaceIndex(mouseState.getIntersectedFaceIndex());
             if (clickedPolygon != this.highlightedPolygon)
                 return;
 
+            handleClick(event, clickedPolygon);
             event.consume();
-            handleClick(clickedPolygon);
         });
 
         updateUnusedVertexVisibility();
         super.onSetup();
     }
 
+    @Override
+    public void onRemove() {
+        super.onRemove();
+        if (this.gridEditorWindow != null) {
+            this.gridEditorWindow.closeWindow();
+            this.gridEditorWindow = null;
+        }
+    }
+
     /**
      * Handles when a polygon is clicked.
      * @param clickedPolygon the polygon which has been clicked
      */
-    protected void handleClick(FroggerMapPolygon clickedPolygon) {
+    protected void handleClick(MouseEvent event, FroggerMapPolygon clickedPolygon) {
+        if (this.polygonSelector.handleClick(event, clickedPolygon))
+            return;
+
         // If we're looking at invisible faces, toggle visibility.
         if (this.checkBoxHighlightInvisibleFaces.isSelected()) {
             clickedPolygon.setVisible(!clickedPolygon.isVisible());
+            updateInvisiblePolygonHighlight(clickedPolygon);
             return;
         }
 
         // If the animation should be applied.
         FroggerUIMapAnimationManager animationManager = getController().getAnimationManager();
-        if (animationManager != null && animationManager.getEditAnimationPolygonTargetsCheckBox().isSelected() && clickedPolygon.getPolygonType().isQuad()) {
+
+        // Animations can only be applied to textured polygons, because the game doesn't have an appropriate memory allocation otherwise.
+        // It appears triangles are valid to include animations on, as their structs all line up.
+        if (animationManager != null && animationManager.getEditAnimationPolygonTargetsCheckBox().isSelected()) {
+            if (!clickedPolygon.getPolygonType().isTextured()) {
+                FXUtils.makePopUp("The selected polygon is not textured, so it cannot be animated.", AlertType.WARNING);
+                return;
+            }
+
             FroggerMapAnimation animation = animationManager.getSelectedValue();
             if (animation != null) {
                 FroggerMapAnimationTargetPolygon existingTargetPolygon = getMap().getAnimationPacket().getAnimationTarget(clickedPolygon);
-                if (existingTargetPolygon != null && existingTargetPolygon.getAnimation() == animation) {
+                if (existingTargetPolygon != null) {
+                    if (existingTargetPolygon.getAnimation() != animation) {
+                        FXUtils.makePopUp("The polygon uses another animation.", AlertType.WARNING);
+                        return;
+                    }
+
                     existingTargetPolygon.setPolygon(null); // Removes from tracking.
                     animation.getTargetPolygons().remove(existingTargetPolygon);
                     animationManager.updateAnimatedPolygonHighlighting();
-                } else if (existingTargetPolygon == null) {
+                } else {
                     animation.getTargetPolygons().add(new FroggerMapAnimationTargetPolygon(animation, clickedPolygon));
                     animationManager.updateAnimatedPolygonHighlighting();
                 }
@@ -191,7 +235,8 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
 
     @Override
     protected SVector getVertex(int vertexId) {
-        return getMap().getVertexPacket().getVertices().get(vertexId);
+        List<SVector> vertices = getMap().getVertexPacket().getVertices();
+        return vertices.size() > vertexId && vertexId >= 0 ? vertices.get(vertexId) : null;
     }
 
     @Override
@@ -235,6 +280,7 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
     }
 
     private void updateInvisiblePolygonHighlighting(boolean visible) {
+        getMesh().pushBatchOperations();
         getMesh().getHighlightedInvisiblePolygonNode().clear();
 
         if (visible) {
@@ -242,31 +288,17 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
             for (int i = 0; i < polygons.size(); i++) {
                 FroggerMapPolygon polygon = polygons.get(i);
                 if (!polygon.isVisible())
-                    getMesh().getHighlightedInvisiblePolygonNode().add(createOverlayTarget(polygon, FroggerMapMesh.GREEN_COLOR));
+                    updateInvisiblePolygonHighlight(polygon);
             }
         }
+
+        getMesh().popBatchOperations();
     }
 
-    /**
-     * Update the grid polygon highlighting.
-     * @param visible Whether it should be visible
-     */
-    public void updateGridPolygonHighlighting(boolean visible) {
-        getMesh().getHighlightedGridPolygonNode().clear();
-
-        if (visible) {
-            FroggerMapFilePacketGrid gridPacket = getMap().getGridPacket();
-            for (int z = 0; z < gridPacket.getGridZCount(); z++) {
-                for (int x = 0; x < gridPacket.getGridXCount(); x++) {
-                    FroggerGridStack gridStack = gridPacket.getGridStack(x, z);
-                    for (int i = 0; i < gridStack.getGridSquares().size(); i++) {
-                        FroggerGridSquare gridSquare = gridStack.getGridSquares().get(i);
-                        if (gridSquare.getPolygon() != null)
-                            getMesh().getHighlightedGridPolygonNode().add(createOverlayTarget(gridSquare.getPolygon(), FroggerMapMesh.BLUE_COLOR));
-                    }
-                }
-            }
-        }
+    private void updateInvisiblePolygonHighlight(FroggerMapPolygon polygon) {
+        ITextureSource overlayTexture = polygon.isVisible() ? null : GREEN_COLOR;
+        DynamicMeshDataEntry polygonDataEntry = getMesh().getMainNode().getDataEntry(polygon);
+        getMesh().getHighlightedInvisiblePolygonNode().setOverlayTexture(polygonDataEntry, overlayTexture);
     }
 
     /**
@@ -377,6 +409,17 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
         public FroggerBakedMapPolygonSelector(FroggerUIGeometryManager manager) {
             super(manager, true);
         }
+
+        @Override
+        public FroggerUIGeometryManager getUiManager() {
+            return (FroggerUIGeometryManager) super.getUiManager();
+        }
+
+        @Override
+        public void activate(Consumer<FroggerMapPolygon> onSelect, Runnable onCancel) {
+            super.activate(onSelect, onCancel);
+            getUiManager().deselectHighlightedPolygon(); // Ensure polygon clicking is available.
+        }
     }
 
     public static class FroggerBakedPolygonShadingEditor extends BakedLandscapePolygonShadingEditor<FroggerMapPolygon> {
@@ -399,7 +442,7 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
             // Polygon type information.
             this.polygonIsSemiTransparentCheckBox = grid.addCheckBox("Semi Transparent", false, null);
             this.polygonIsEnvironmentMappedCheckBox = grid.addCheckBox("Environment Mapped", false, null);
-            this.polygonIsMaxOrderTableCheckBox = grid.addCheckBox("Max Order Table", false, null);
+            this.polygonIsMaxOrderTableCheckBox = grid.addCheckBox("Water Wibble (Max OT)", false, null);
             this.polygonIsSemiTransparentCheckBox.setDisable(true);
             this.polygonIsEnvironmentMappedCheckBox.setDisable(true);
             this.polygonIsMaxOrderTableCheckBox.setDisable(true);
@@ -430,9 +473,12 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
                 this.polygonIsSemiTransparentCheckBox.setSelected(polygon != null && polygon.testFlag(FroggerMapPolygon.FLAG_SEMI_TRANSPARENT));
                 this.polygonIsEnvironmentMappedCheckBox.setSelected(polygon != null && polygon.testFlag(FroggerMapPolygon.FLAG_ENVIRONMENT_MAPPED));
                 this.polygonIsMaxOrderTableCheckBox.setSelected(polygon != null && polygon.testFlag(FroggerMapPolygon.FLAG_MAX_ORDER_TABLE));
-                this.polygonIsSemiTransparentCheckBox.setDisable(polygon == null);
-                this.polygonIsEnvironmentMappedCheckBox.setDisable(polygon == null);
-                this.polygonIsMaxOrderTableCheckBox.setDisable(polygon == null);
+
+                boolean isTextured = polygon != null && polygon.getPolygonType().isTextured(); // FT4/GT4 are the only ones where water wibble will work. However, FT3 (unknown about GT3) seems to still set max OT, even if water wibble won't apply.
+                this.polygonIsMaxOrderTableCheckBox.setText(isTextured && polygon.getPolygonType().isQuad() ? "Water Wibble (& Max OT)" : "Max OT (Draws First)");
+                this.polygonIsSemiTransparentCheckBox.setDisable(!isTextured);
+                this.polygonIsEnvironmentMappedCheckBox.setDisable(!isTextured);
+                this.polygonIsMaxOrderTableCheckBox.setDisable(!isTextured);
             }
 
             super.updateUI();
@@ -462,6 +508,38 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
             // Apply updated uv data and update the 3D view.
             polygon.getTextureUvs()[uvIndex].copyFrom(uv);
             mesh.getShadedTextureManager().updatePolygon(polygon);
+        }
+
+        @Override
+        protected void selectNewTexture(ITextureSource oldTextureSource) {
+            TextureRemapArray remapArray = getManager().getMap().getTextureRemap();
+            if (remapArray == null)
+                return;
+
+            // Resolve VLO.
+            VLOArchive vloArchive = oldTextureSource instanceof GameImage ? ((GameImage) oldTextureSource).getParent() : null;
+            if (vloArchive == null)
+                vloArchive = getManager().getMap().getVloFile();
+            if (vloArchive == null || getEditTarget() == null)
+                return;
+
+            remapArray.askUserToSelectImage(vloArchive, false, selectedImage -> {
+                FroggerMapPolygon polygon = getEditTarget();
+                if (!shouldHandleUIChanges() || !getShadeDefinition().isTextured() || polygon == null)
+                    return;
+
+                if (selectedImage != null) {
+                    int remapIndex = remapArray.getRemapIndex(selectedImage.getTextureId());
+                    if (remapIndex < 0)
+                        throw new RuntimeException("Could not find the selected image (" + selectedImage.getTextureId() + ") in the textureRemap!");
+
+                    polygon.setTextureId((short) remapIndex);
+                } else {
+                    polygon.setTextureId((short) -1);
+                }
+
+                getManager().getController().getMesh().getShadedTextureManager().updatePolygon(polygon);
+            });
         }
     }
 }

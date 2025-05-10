@@ -5,8 +5,8 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.stage.Stage;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
@@ -20,7 +20,6 @@ import java.util.Map;
 
 /**
  * Represents an instance of a game. For example, a folder containing the files for a single version of a game.
- *  TODO: I think there's some kind of caching bug with shading. It happened on "Time Device", where none of the shading in the world was right. Then, after I toggled shading off/on, it was fine. I suspect there's probably some tracking issue then.
  * Created by Kneesnap on 4/10/2024.
  */
 public abstract class GameInstance implements IGameInstance {
@@ -113,6 +112,11 @@ public abstract class GameInstance implements IGameInstance {
     public abstract File getMainGameFolder();
 
     /**
+     * If true, a warning will be displayed when an attempt is made to save the game that saving the game is not fully supported.
+     */
+    public abstract boolean isShowSaveWarning();
+
+    /**
      * Loads the game configuration from the provided config.
      * @param configName the name of the configuration game data is loaded from
      * @param config the config object to load data from
@@ -123,8 +127,8 @@ public abstract class GameInstance implements IGameInstance {
         if (this.versionConfig != null)
             throw new IllegalStateException("Cannot load the game configuration '" + configName + "' because it has already been loaded.");
 
-        // Register to GUIMain and log.
-        GUIMain.getActiveGameInstances().add(this);
+        // Register to FrogLordApplication and log.
+        FrogLordApplication.getActiveGameInstances().add(this);
         getLogger().info("Hello! FrogLord is loading config '" + configName + "'.");
 
         // Setup.
@@ -178,8 +182,8 @@ public abstract class GameInstance implements IGameInstance {
         // Setup user config.
         this.config = instanceConfig;
 
-        // Register to GUIMain and log.
-        GUIMain.getActiveGameInstances().add(this);
+        // Register to FrogLordApplication and log.
+        FrogLordApplication.getActiveGameInstances().add(this);
         getLogger().info("Hello! FrogLord is loading config '" + config.getInternalName() + "'.");
 
         // Create & load config.

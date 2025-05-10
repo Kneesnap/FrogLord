@@ -1,11 +1,11 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.rushedmap;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataPathInfo;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Holds entity data for the swan in the old build. 'SUBURBIA_SWAN' from suburbia.h
@@ -43,9 +43,9 @@ public class FroggerEntityDataSwanOld extends FroggerEntityDataPathInfo {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addUnsignedFixedShort("Spline Delay (secs)", this.splineDelay, newValue -> this.splineDelay = newValue, 30);
-        editor.addFixedShort("Swimming Time (secs)", this.swimmingTime, newValue -> this.swimmingTime = newValue, 30);
-        editor.addFixedShort("Flap Think Time (secs)", this.flapThinkTime, newValue -> this.flapThinkTime = newValue, 30);
-        editor.addFixedShort("Flapping Time (secs)", this.flappingTime, newValue -> this.flappingTime = newValue, 30);
+        editor.addUnsignedFixedShort("Spline Delay (secs)", this.splineDelay, newValue -> this.splineDelay = newValue, getGameInstance().getFPS());
+        editor.addFixedShort("Swimming Time (secs)", this.swimmingTime, newValue -> this.swimmingTime = newValue, getGameInstance().getFPS());
+        editor.addFixedShort("Flap Think Time (secs)", this.flapThinkTime, newValue -> this.flapThinkTime = newValue, getGameInstance().getFPS());
+        editor.addFixedShort("Flapping Time (secs)", this.flappingTime, newValue -> this.flappingTime = newValue, getGameInstance().getFPS());
     }
 }

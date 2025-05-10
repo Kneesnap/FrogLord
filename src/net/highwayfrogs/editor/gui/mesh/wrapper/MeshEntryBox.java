@@ -436,7 +436,6 @@ public class MeshEntryBox {
         final float z1 = (float) Math.max(minZ, maxZ);
 
         // Add vertices.
-        entry.getMesh().getEditableVertices().startBatchInsertion();
         int bottomUpLeftVtx = entry.addVertexValue(x0, y0, z1);
         int bottomUpRightVtx = entry.addVertexValue(x1, y0, z1);
         int bottomDownLeftVtx = entry.addVertexValue(x0, y0, z0);
@@ -445,10 +444,8 @@ public class MeshEntryBox {
         int topUpRightVtx = entry.addVertexValue(x1, y1, z1);
         int topDownLeftVtx = entry.addVertexValue(x0, y1, z0);
         int topDownRightVtx = entry.addVertexValue(x1, y1, z0);
-        entry.getMesh().getEditableVertices().endBatchInsertion();
 
         // JavaFX uses counter-clockwise winding order.
-        entry.getMesh().getEditableFaces().startBatchInsertion();
         int topFace1 = entry.addFace(topDownLeftVtx, uvBottomLeftIndex, topUpRightVtx, uvTopRightIndex, topUpLeftVtx, uvTopLeftIndex);
         int topFace2 = entry.addFace(topDownLeftVtx, uvBottomLeftIndex, topDownRightVtx, uvBottomRightIndex, topUpRightVtx, uvTopRightIndex);
         int bottomFace1 = entry.addFace(bottomUpRightVtx, uvBottomRightIndex, bottomDownLeftVtx, uvTopLeftIndex, bottomUpLeftVtx, uvBottomLeftIndex);
@@ -461,7 +458,6 @@ public class MeshEntryBox {
         int polygonFacingNegativeZ2 = entry.addFace(bottomDownLeftVtx, uvBottomLeftIndex, bottomDownRightVtx, uvBottomRightIndex, topDownRightVtx, uvTopRightIndex); // Polygon Facing Negative Z #2
         int polygonFacingPositiveZ1 = entry.addFace(bottomUpRightVtx, uvBottomLeftIndex, topUpLeftVtx, uvTopRightIndex, topUpRightVtx, uvTopLeftIndex); // Polygon Facing Positive Z #1
         int polygonFacingPositiveZ2 = entry.addFace(bottomUpRightVtx, uvBottomLeftIndex, bottomUpLeftVtx, uvBottomRightIndex, topUpLeftVtx, uvTopRightIndex); // Polygon Facing Positive Z #2
-        entry.getMesh().getEditableFaces().endBatchInsertion();
 
         // Create resulting container with box information.
         if (createEntry) {
@@ -476,7 +472,7 @@ public class MeshEntryBox {
             newEntry.maxZ = z1;
 
             // Vertices
-            int vertexStartIndex = entry.getVertexStartIndex();
+            int vertexStartIndex = entry.getPendingVertexStartIndex();
             newEntry.bottomUpLeftVertex = bottomUpLeftVtx - vertexStartIndex;
             newEntry.bottomUpRightVertex = bottomUpRightVtx - vertexStartIndex;
             newEntry.bottomDownLeftVertex = bottomDownLeftVtx - vertexStartIndex;
@@ -487,14 +483,14 @@ public class MeshEntryBox {
             newEntry.topDownRightVertex = topDownRightVtx - vertexStartIndex;
 
             // UVs
-            int uvStartIndex = entry.getTexCoordStartIndex();
+            int uvStartIndex = entry.getPendingTexCoordStartIndex();
             newEntry.uvTopLeft = uvTopLeftIndex - uvStartIndex;
             newEntry.uvTopRight = uvTopRightIndex - uvStartIndex;
             newEntry.uvBottomLeft = uvBottomLeftIndex - uvStartIndex;
             newEntry.uvBottomRight = uvBottomRightIndex - uvStartIndex;
 
             // Faces:
-            int faceStartIndex = entry.getFaceStartIndex();
+            int faceStartIndex = entry.getPendingFaceStartIndex();
             newEntry.topFace1 = topFace1 - faceStartIndex;
             newEntry.topFace2 = topFace2 - faceStartIndex;
             newEntry.bottomFace1 = bottomFace1 - faceStartIndex;

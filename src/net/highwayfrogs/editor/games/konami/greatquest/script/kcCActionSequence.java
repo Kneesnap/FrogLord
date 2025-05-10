@@ -1,8 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.KCResourceID;
@@ -19,6 +17,9 @@ import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.system.Config.IllegalConfigSyntaxException;
 import net.highwayfrogs.editor.utils.StringUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.ArrayList;
@@ -140,12 +141,12 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
      * Loads the sequence from a Config node.
      * @param config The config to load the script from
      */
-    public void loadFromConfigNode(Config config) {
+    public void loadFromConfigNode(Config config, ILogger logger) {
         if (config == null)
             throw new NullPointerException("config");
 
         if (!config.getSectionName().equalsIgnoreCase(getSequenceName()))
-            getLogger().warning("Provided sequence name '" + config.getSectionName() + "' did not match the real sequence resource '" + getSequenceName() + "'.");
+            logger.warning("Provided sequence name '%s' did not match the real sequence resource '%s'.", config.getSectionName(), getSequenceName());
 
         this.actions.clear();
         getSelfHash().setHash(config.getKeyValueNodeOrError(HASH_CONFIG_FIELD).getAsInteger());
@@ -164,7 +165,7 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
             // Resolve kcActionEffect.
             kcActionID actionID = kcActionID.getActionByCommandName(commandName);
             if (actionID == null)
-                throw new IllegalArgumentException("Could not identify the action '" + commandName + "' from '" + line + "' when importing sequence " + getName() + ".");
+                throw new IllegalArgumentException("Could not identify the action '" + commandName + "' from '" + textLine + "' when importing sequence " + getName() + ".");
 
             kcAction newAction = actionID.newInstance(this);
             try {
@@ -173,7 +174,8 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
                 throw new IllegalConfigSyntaxException("Could not parse the action '" + line + "' when importing sequence " + getName() + ".", th);
             }
 
-            newAction.printWarnings(getLogger());
+            newAction.printWarnings(logger);
+            arguments.warnAboutUnusedArguments(logger);
 
             this.actions.add(newAction);
         }
@@ -200,7 +202,7 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
 
         String sequenceName = sequence.getSequenceName();
         if (!sequenceName.equalsIgnoreCase(entry.getKeyName()))
-            entry.getParentHashTable().getLogger().warning("The sequence " + sequenceName + " did not match the expected " + entry.getKeyName() + "!");
+            entry.getParentHashTable().getLogger().warning("The sequence %s did not match the expected %s!", sequenceName, entry.getKeyName());
 
         // Write actions.
         StringBuilder builder = new StringBuilder();
@@ -266,7 +268,6 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
                 }
             }
         }
-
 
         if (this.cachedActorBaseDescRef.getResource() != null) {
             kcEntity3DDesc entityDesc = this.cachedActorBaseDescRef.getResource().getAsEntityDescription();

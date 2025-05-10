@@ -5,12 +5,14 @@ import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
-import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
@@ -39,9 +41,9 @@ import java.util.Objects;
  */
 public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
     @Getter private final FroggerMapFile mapFile;
-    @Getter private FroggerMapAnimationType type = FroggerMapAnimationType.UV;
-    @Getter private byte deltaU; // Change in texture U (Each frame)
-    @Getter private byte deltaV; // Change in texture V (Each frame)
+    @Getter @Setter @NonNull private FroggerMapAnimationType type = FroggerMapAnimationType.UV;
+    @Getter @Setter private byte deltaU; // Change in texture U (Each frame)
+    @Getter @Setter private byte deltaV; // Change in texture V (Each frame)
     @Getter private int uvFrameCount = 1; // Frames before resetting.
     @Getter private int framesPerTexture = 1; // Also known as celPeriod, this is the number of frames before an animated texture advances to the next texture.
     @Getter private final List<Short> unusedTextureIds = new ArrayList<>(); // Contains texture ids which aren't used by any animation.
@@ -112,7 +114,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
         if (this.mapFile.isExtremelyEarlyMapFormat()) {
             reader.setIndex(this.textureIdListPointerAddress);
         } else {
-            reader.requireIndex(getLogger(), this.textureIdListPointerAddress, "Expected texture id list");
+            requireReaderIndex(reader, this.textureIdListPointerAddress, "Expected texture id list");
         }
 
         // Read the texture id list.
@@ -135,7 +137,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
         if (this.targetPolygonListPointerAddress <= 0)
             throw new RuntimeException("Cannot target polygon list, the pointer " + NumberUtils.toHexString(this.targetPolygonListPointerAddress) + " is invalid.");
 
-        reader.requireIndex(getLogger(), this.targetPolygonListPointerAddress, "Expected target polygon list");
+        requireReaderIndex(reader, this.targetPolygonListPointerAddress, "Expected target polygon list");
         for (int i = 0; i < this.targetPolygons.size(); i++)
             this.targetPolygons.get(i).load(reader);
 
@@ -384,25 +386,25 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
     public void setupEditor(FroggerUIMapAnimationManager manager, GUIEditorGrid editor) {
         // Animation Type:
         editor.addEnumSelector("Type", getType(), FroggerMapAnimationType.values(), false, newType -> {
-            this.type = newType;
+            setType(newType);
             manager.updateEditor(); // Refresh UI, since different UI elements may be visible now.
         });
 
         // Common controls.
         if (this.type.hasUVAnimation()) {
             editor.addSignedByteField("Pixels Per Frame (X)", this.deltaU, newDeltaU -> Math.abs(newDeltaU) <= 32, newDeltaU -> {
-                this.deltaU = newDeltaU;
+                setDeltaU(newDeltaU);
                 manager.updatePreviewImage(); // Update the preview image.
             });
             editor.addSignedByteField("Pixels Per Frame (Y)", this.deltaV, newDeltaV -> Math.abs(newDeltaV) <= 32, newDeltaV -> {
-                this.deltaV = newDeltaV;
+                setDeltaV(newDeltaV);
                 manager.updatePreviewImage(); // Update the preview image.
             });
 
             editor.addSignedIntegerField("UV Frame Count", this.uvFrameCount,
                     newUvFrameCount -> newUvFrameCount > 0 && Math.abs(newUvFrameCount * this.deltaU) < Byte.MAX_VALUE && Math.abs(newUvFrameCount * this.deltaV) < Byte.MAX_VALUE,
                     newUvFrameCount -> {
-                this.uvFrameCount = newUvFrameCount;
+                setUvFrameCount(newUvFrameCount);
                 manager.updatePreviewUI(); // Update the preview UI, since the UV frame count may have changed.
                 manager.updateEditor(); // Need to refresh the editor to change the other uv stuff.
             });
@@ -410,7 +412,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
 
         if (this.type.hasTextureAnimation()) {
             editor.addSignedIntegerField("Frames per Texture", this.framesPerTexture, newFrameCount -> newFrameCount > 0, newFrameCount -> {
-                this.framesPerTexture = newFrameCount;
+                setFramesPerTexture(newFrameCount);
                 manager.updatePreviewUI(); // Update the preview UI, since the texture frame count may have changed.
                 manager.updatePreviewImage(); // Update the preview (but don't refresh editor).
             });
@@ -495,6 +497,28 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
                 }, false);
             });
         }
+    }
+
+    /**
+     * Sets the UV animation frame count.
+     * @param newUvFrameCount the new UV animation frame count.
+     */
+    public void setUvFrameCount(int newUvFrameCount) {
+        if (this.type.hasUVAnimation() && (Math.abs(newUvFrameCount * this.deltaU) >= Byte.MAX_VALUE || Math.abs(newUvFrameCount * this.deltaV) >= Byte.MAX_VALUE || Math.abs(newUvFrameCount) > Byte.MAX_VALUE))
+            throw new IllegalArgumentException("The provided uvFrameCount (" + newUvFrameCount + ") would cause overflow!");
+
+        this.uvFrameCount = newUvFrameCount;
+    }
+
+    /**
+     * Set the duration (in frames) each texture in the texture animation will be shown for
+     * @param framesPerTexture the new frames per texture value
+     */
+    public void setFramesPerTexture(int framesPerTexture) {
+        if (framesPerTexture <= 0 && this.type.hasTextureAnimation())
+            throw new IllegalArgumentException("framesPerTexture must be >= zero. (Got: " + framesPerTexture + ")");
+
+        this.framesPerTexture = framesPerTexture;
     }
 
     /**

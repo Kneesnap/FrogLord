@@ -4,14 +4,13 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.KCResourceID;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcActorBaseDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffect;
@@ -27,6 +26,7 @@ import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.AppendInfoLoggerWrapper;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -158,8 +158,44 @@ public class kcScriptList extends kcCResource {
                 functions += rootNode.getChildConfigNodes().size();
             }
 
-            getLogger().info("Saved " + this.scripts.size() + " script" + (this.scripts.size() != 1 ? "s" : "")
-                    + " containing " + functions + " function" + (functions != 1 ? "s" : "") + " to a folder named '" + scriptFolder.getName() + "'.");
+            getLogger().info("Saved %d script%s containing %d function%s to a folder named '%s'.",
+                    this.scripts.size(), (this.scripts.size() != 1 ? "s" : ""), functions, (functions != 1 ? "s" : ""),
+                    scriptFolder.getName());
+        });
+
+        MenuItem importScriptsItem = new MenuItem("Import Scripts");
+        contextMenu.getItems().add(importScriptsItem);
+        importScriptsItem.setOnAction(event -> {
+            File scriptFolder = FileUtils.askUserToSelectFolder(getGameInstance(), SCRIPT_IMPORT_PATH);
+            if (scriptFolder == null)
+                return;
+
+            int filesImported = 0;
+            for (File file : FileUtils.listFiles(scriptFolder)) {
+                if (!file.getName().endsWith(kcScript.EXTENSION)) {
+                    getLogger().warning("Skipping %s", file.getName());
+                    continue;
+                }
+
+                Config scriptCfg = Config.loadConfigFromTextFile(file, false);
+                int entityNameHash = GreatQuestUtils.hash(scriptCfg.getSectionName());
+                kcCResourceEntityInst entity = getParentFile().getResourceByHash(entityNameHash);
+                if (entity == null) {
+                    getLogger().warning("Skipping %s, as the entity could not be resolved.", scriptCfg.getSectionName());
+                    continue;
+                }
+
+                kcEntityInst entityInst = entity.getInstance();
+                if (entityInst == null) {
+                    getLogger().warning("Skipping %s because the entity is not valid.", entity.getName());
+                    continue;
+                }
+
+                filesImported++;
+                entityInst.addScriptFunctions(this, scriptCfg, scriptCfg.getSectionName(), false);
+            }
+
+            getLogger().info("Imported %d scripts.", filesImported);
         });
 
         MenuItem clearScriptsItem = new MenuItem("Clear Scripts");
@@ -180,41 +216,6 @@ public class kcScriptList extends kcCResource {
             getLogger().info("Cleared the script list.");
         });
 
-        MenuItem importScriptsItem = new MenuItem("Import Scripts");
-        contextMenu.getItems().add(importScriptsItem);
-        importScriptsItem.setOnAction(event -> {
-            File scriptFolder = FileUtils.askUserToSelectFolder(getGameInstance(), SCRIPT_IMPORT_PATH);
-            if (scriptFolder == null)
-                return;
-
-            int filesImported = 0;
-            for (File file : FileUtils.listFiles(scriptFolder)) {
-                if (!file.getName().endsWith(kcScript.EXTENSION)) {
-                    getLogger().warning("Skipping " + file.getName());
-                    continue;
-                }
-
-                Config scriptCfg = Config.loadConfigFromTextFile(file, false);
-                int entityNameHash = GreatQuestUtils.hash(scriptCfg.getSectionName());
-                kcCResourceEntityInst entity = getParentFile().getResourceByHash(entityNameHash);
-                if (entity == null) {
-                    getLogger().warning("Skipping " + scriptCfg.getSectionName() + ", as the entity could not be resolved.");
-                    continue;
-                }
-
-                kcEntityInst entityInst = entity.getInstance();
-                if (entityInst == null) {
-                    getLogger().warning("Skipping " + entity.getName() + " because the entity is not valid.");
-                    continue;
-                }
-
-                filesImported++;
-                entityInst.addScriptFunctions(this, scriptCfg, scriptCfg.getSectionName(), false);
-            }
-
-            getLogger().info("Imported " + filesImported + " scripts.");
-        });
-
         // Apply GQS Script Group.
         MenuItem importScriptGroupItem = new MenuItem("Import GQS Script Group");
         contextMenu.getItems().add(importScriptGroupItem);
@@ -223,17 +224,17 @@ public class kcScriptList extends kcCResource {
             if (gqsGroupFile == null)
                 return;
 
+            getLogger().info("Importing GQS script group '%s'.", gqsGroupFile.getName());
             Config scriptGroupCfg = Config.loadConfigFromTextFile(gqsGroupFile, false);
             GreatQuestAssetUtils.applyGqsScriptGroup(getParentFile(), scriptGroupCfg);
-            getLogger().info("Imported GQS script group '" + gqsGroupFile.getName() + "'.");
+            getLogger().info("Finished importing the gqs.");
         });
-
     }
 
     /**
      * Writes the script list to a string builder.
-     * @param level    The level to find any extra data from.
-     * @param builder  The builder to write the script to.
+     * @param level The level to find any extra data from.
+     * @param builder The builder to write the script to.
      * @param settings The settings used to build the output.
      */
     public void toString(GreatQuestChunkedFile level, StringBuilder builder, kcScriptDisplaySettings settings) {
@@ -252,10 +253,12 @@ public class kcScriptList extends kcCResource {
         Map<kcCResourceEntityInst, kcScriptValidationData> dataMap = new HashMap<>();
         for (int i = 0; i < this.scripts.size(); i++) {
             kcScript script = this.scripts.get(i);
-            if (script.getEntity() == null)
+            kcCResourceEntityInst entity = script.getEntity();
+
+            if (entity == null)
                 throw new RuntimeException("Cannot print warnings, there's a script which doesn't have an entity linked!");
 
-            kcScriptValidationData functionData = getOrCreateValidationData(logger, dataMap, script.getEntity());
+            kcScriptValidationData functionData = getOrCreateValidationData(logger, dataMap, entity);
             for (int j = 0; j < script.getFunctions().size(); j++) {
                 kcScriptFunction function = script.getFunctions().get(j);
 
@@ -276,6 +279,29 @@ public class kcScriptList extends kcCResource {
                         validationData.getActionsByType().computeIfAbsent(action.getActionID(), key -> new ArrayList<>()).add(action);
                 }
             }
+
+            // Apply animation sequence checks.
+            kcEntityInst entityInst = entity.getInstance();
+            kcEntity3DDesc entityDesc = entityInst.getDescription();
+            kcActorBaseDesc actorBaseDesc = entityDesc instanceof kcActorBaseDesc ? (kcActorBaseDesc) entityDesc : null;
+            if (actorBaseDesc != null) {
+                kcCResourceNamedHash sequenceTable = actorBaseDesc.getAnimationSequences();
+                if (sequenceTable != null) {
+                    List<kcCActionSequence> sequences = sequenceTable.getSequences();
+                    for (int j = 0; j < sequences.size(); j++) {
+                        kcCActionSequence sequence = sequences.get(j);
+                        for (int k = 0; k < sequence.getActions().size(); k++) {
+                            kcAction action = sequence.getActions().get(k);
+
+                            // Apply it to the target entity, not to the attached script entity.
+                            kcScriptValidationData validationData = getOrCreateValidationData(logger, dataMap, entity);
+                            if (validationData != null)
+                                validationData.getActionsByType().computeIfAbsent(action.getActionID(), key -> new ArrayList<>()).add(action);
+                        }
+                    }
+                }
+            }
+
         }
 
         // Print the warnings in order.
@@ -294,11 +320,11 @@ public class kcScriptList extends kcCResource {
                 for (int k = 0; k < function.getEffects().size(); k++) {
                     kcScriptEffect effect = function.getEffects().get(k);
                     kcAction action = (effect instanceof kcScriptEffectAction) ? ((kcScriptEffectAction) effect).getAction() : null;
-                    if (action == null)
+                    if (action == null || action.isLoadedFromGame())
                         continue;
 
                     kcScriptValidationData actionData = getOrCreateValidationData(logger, dataMap, effect.getTargetEntityRef().getResource());
-                    if (actionData != null && !action.isLoadedFromGame())
+                    if (actionData != null)
                         action.printAdvancedWarnings(actionData);
                 }
             }
@@ -310,8 +336,11 @@ public class kcScriptList extends kcCResource {
             return null;
 
         kcScriptValidationData validationData = dataMap.get(entity);
-        if (validationData == null)
-            dataMap.put(entity, validationData = new kcScriptValidationData(entity, logger));
+        if (validationData == null) {
+            ILogger tempLogger = new AppendInfoLoggerWrapper(logger, entity.getName(), AppendInfoLoggerWrapper.TEMPLATE_OVERRIDE_AT_ORIGINAL);
+            System.out.println(entity.getName() + "," + tempLogger.getName() + "," + tempLogger.getLoggerInfo() + "," + logger.getLoggerInfo() + "," + logger.getName()); // TODO: TOSS
+            dataMap.put(entity, validationData = new kcScriptValidationData(entity, tempLogger));
+        }
 
         return validationData;
     }

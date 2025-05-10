@@ -8,7 +8,6 @@ import javafx.scene.shape.*;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.util.*;
 
@@ -272,12 +271,8 @@ public class DisplayList {
      * This class holds render lists.
      */
     public static class RenderListManager {
-        @Setter @Getter private Group root;
+        @Getter private final Group root;
         private final Set<DisplayList> displayListCache = new HashSet<>();
-
-        public RenderListManager() {
-            this(null);
-        }
 
         public RenderListManager(Group root) {
             this.root = root;

@@ -3,12 +3,13 @@ package net.highwayfrogs.editor.games.sony.beastwars;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.psx.CVector;
+import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.beastwars.ui.TexController;
-import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapPolygon;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.texture.BufferedImageWrapper;
@@ -17,6 +18,8 @@ import net.highwayfrogs.editor.gui.texture.atlas.TextureAtlas;
 import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -98,18 +101,16 @@ public class BeastWarsTexFile extends SCGameFile<BeastWarsInstance> {
     }
 
     private void readPsxImages(DataReader reader, int palettePointer) {
-        List<PSXClutColor[]> palettes = new ArrayList<>();
+        List<CVector[]> palettes = new ArrayList<>();
         reader.jumpTemp(palettePointer);
         reader.verifyString(PALETTE_SIGNATURE);
         int paletteDataSizeInBytes = reader.readInt();
         int paletteDataEndsAt = reader.getIndex() + paletteDataSizeInBytes;
 
         while (reader.getIndex() < paletteDataEndsAt) {
-            PSXClutColor[] palette = new PSXClutColor[PALETTE_COLOR_COUNT];
-            for (int i = 0; i < palette.length; i++) {
-                palette[i] = new PSXClutColor();
-                palette[i].load(reader);
-            }
+            CVector[] palette = new CVector[PALETTE_COLOR_COUNT];
+            for (int i = 0; i < palette.length; i++) // It seems Beast Wars uses the same color encoding as MediEvil 2.
+                palette[i] = SCMapPolygon.fromPackedShort(reader.readShort(), PSXPolygonType.POLY_GT4, false, false);
 
             palettes.add(palette);
         }
@@ -117,7 +118,7 @@ public class BeastWarsTexFile extends SCGameFile<BeastWarsInstance> {
 
         // Read images.
         while (reader.getIndex() < palettePointer) {
-            PSXClutColor[] palette = palettes.get(this.images.size());
+            CVector[] palette = palettes.get(this.images.size());
 
             BufferedImage newImage = new BufferedImage(TEXTURE_DIMENSION, TEXTURE_DIMENSION, BufferedImage.TYPE_INT_ARGB);
             for (int y = 0; y < TEXTURE_DIMENSION; y++) {
@@ -125,14 +126,17 @@ public class BeastWarsTexFile extends SCGameFile<BeastWarsInstance> {
                     short value = reader.readUnsignedByteAsShort();
                     int palIndex1 = (value & 0x0F);
                     int palIndex2 = (value >> 4);
-                    // TODO: Wrong slightly.
-                    newImage.setRGB(x++, y, palette[palIndex1].toFullARGB(false));
-                    newImage.setRGB(x, y, palette[palIndex2].toFullARGB(false));
+                    newImage.setRGB(x++, y, palette[palIndex1].toARGB());
+                    newImage.setRGB(x, y, palette[palIndex2].toARGB());
                 }
             }
 
             this.images.add(new BufferedImageWrapper(newImage));
         }
+
+        if (palettes.size() != this.images.size())
+            getLogger().warning("Read %d images, but there were %d palettes!", this.images.size(), palettes.size());
+        reader.setIndex(paletteDataEndsAt);
     }
 
     @Override
@@ -210,7 +214,14 @@ public class BeastWarsTexFile extends SCGameFile<BeastWarsInstance> {
      * @param newImage the new image to apply.
      */
     public void replaceImage(BufferedImage oldImage, BufferedImage newImage) {
-        int index = this.images.indexOf(oldImage);
+        int index = -1;
+        for (int i = 0; i < this.images.size(); i++) {
+            if (this.images.get(i).getImage() == oldImage) {
+                index = i;
+                break;
+            }
+        }
+
         if (index == -1)
             throw new RuntimeException("Couldn't find the old image to replace.");
 
@@ -267,7 +278,7 @@ public class BeastWarsTexFile extends SCGameFile<BeastWarsInstance> {
     @Override
     @SneakyThrows
     public void exportAlternateFormat() {
-        ImageIO.write(createTextureMap(), "png", new File(GUIMain.getWorkingDirectory(), FileUtils.stripExtension(getFileDisplayName()) + ".png"));
+        ImageIO.write(createTextureMap(), "png", new File(FrogLordApplication.getWorkingDirectory(), FileUtils.stripExtension(getFileDisplayName()) + ".png"));
         getLogger().info("Exported texture map Image.");
     }
 

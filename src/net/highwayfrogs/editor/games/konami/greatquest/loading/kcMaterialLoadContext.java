@@ -1,8 +1,10 @@
 package net.highwayfrogs.editor.games.konami.greatquest.loading;
 
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkTextureReference;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceModel;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestImageFile;
@@ -25,6 +27,7 @@ public class kcMaterialLoadContext {
     private final Map<String, List<GreatQuestImageFile>> globalCachedImages = new HashMap<>();
     private final Map<kcMaterial, GreatQuestArchiveFile> allMaterials = new HashMap<>();
     private final Map<kcMaterial, GreatQuestArchiveFile> multipleMatchMaterials = new HashMap<>();
+    private final List<GreatQuestChunkedFile> chunkedFiles = new ArrayList<>();
 
     public kcMaterialLoadContext(GreatQuestAssetBinFile binFile) {
         this.mainArchive = binFile;
@@ -35,6 +38,41 @@ public class kcMaterialLoadContext {
      */
     public ILogger getLogger() {
         return this.mainArchive.getLogger();
+    }
+
+    /**
+     * Get a list of chunked files.
+     */
+    public List<GreatQuestChunkedFile> getChunkedFiles() {
+        if (this.chunkedFiles.size() > 0)
+            return this.chunkedFiles;
+
+        for (int i = 0; i < this.mainArchive.getFiles().size(); i++) {
+            GreatQuestArchiveFile file = this.mainArchive.getFiles().get(i);
+            if (file instanceof GreatQuestChunkedFile)
+                this.chunkedFiles.add((GreatQuestChunkedFile) file);
+        }
+
+        return this.chunkedFiles;
+    }
+
+    /**
+     * Generate the file name of a collision mesh corresponding to the provided name, and apply it to all meshes.
+     * @param originalFileName The previous file name to convert to a collision file name.
+     */
+    public void applyFileNameAsCollisionMesh(String originalFileName) {
+        if (originalFileName == null)
+            return;
+
+        String collisionFileName = kcCResourceModel.getAsCollisionTriMeshFileName(originalFileName);
+        int collisionFileHash = GreatQuestUtils.hash(collisionFileName);
+        List<GreatQuestChunkedFile> chunkedFiles = getChunkedFiles();
+        for (int i = 0; i < chunkedFiles.size(); i++) {
+            GreatQuestChunkedFile chunkedFile = chunkedFiles.get(i);
+            kcCResource triMesh = chunkedFile.getResourceByHash(collisionFileHash);
+            if (triMesh != null && StringUtils.isNullOrEmpty(triMesh.getSelfHash().getOriginalString()))
+                triMesh.getSelfHash().setOriginalString(collisionFileName);
+        }
     }
 
     /**

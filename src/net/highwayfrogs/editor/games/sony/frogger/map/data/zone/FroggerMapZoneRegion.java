@@ -1,15 +1,15 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.zone;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.system.TriFunction;
-
-import java.util.function.BiConsumer;
+import net.highwayfrogs.editor.games.sony.SCGameData;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 /**
  * Represents a Zone Region.
@@ -17,7 +17,8 @@ import java.util.function.BiConsumer;
  */
 @Getter
 @Setter
-public class FroggerMapZoneRegion extends GameObject {
+public class FroggerMapZoneRegion extends SCGameData<FroggerGameInstance> {
+    private final FroggerMapZone parentZone;
     private short xMin;
     private short zMin;
     private short xMax;
@@ -25,12 +26,19 @@ public class FroggerMapZoneRegion extends GameObject {
 
     public static final int SIZE_IN_BYTES = 4 * Constants.SHORT_SIZE;
 
+    public FroggerMapZoneRegion(@NonNull FroggerMapZone parentZone) {
+        super(parentZone.getGameInstance());
+        this.parentZone = parentZone;
+    }
+
     @Override
     public void load(DataReader reader) {
         this.xMin = reader.readShort();
         this.zMin = reader.readShort();
         this.xMax = reader.readShort();
         this.zMax = reader.readShort();
+        // We could test that xMin <= xMax, and zMin <= zMax, but PSX Build 71 (and presumably others) have a few places where they violate this rule.
+        // The game will pretty much just ignore these, so instead of fixing them (which would save data with potentially different behavior from the real game), we ignore it keep it as-is.
     }
 
     @Override
@@ -42,6 +50,44 @@ public class FroggerMapZoneRegion extends GameObject {
     }
 
     /**
+     * Gets the string which provides context surrounding the logger.
+     */
+    public String getLoggerInfo() {
+        if (this.parentZone.getBoundingRegion() == this) {
+            return this.parentZone.getLoggerInfo() + "[boundingRegion]";
+        } else {
+            return this.parentZone.getLoggerInfo() + "[Region=" + getRegionIndex() + "]";
+        }
+    }
+
+    @Override
+    public ILogger getLogger() {
+        return new LazyInstanceLogger(getGameInstance(), FroggerMapZoneRegion::getLoggerInfo, this);
+    }
+
+    /**
+     * Gets the index of this region within the parent zone.
+     * Note that if this is the bounding region, and it is not currently used as a region, -1 will be returned.
+     */
+    public int getRegionIndex() {
+        return this.parentZone.getRegions().lastIndexOf(this);
+    }
+
+    /**
+     * Copies the data from another region.
+     * @param otherRegion the region to copy data from
+     */
+    public void copyFrom(FroggerMapZoneRegion otherRegion) {
+        if (otherRegion == null)
+            throw new NullPointerException("otherRegion");
+
+        this.xMin = otherRegion.getXMin();
+        this.zMin = otherRegion.getZMin();
+        this.xMax = otherRegion.getXMax();
+        this.zMax = otherRegion.getZMax();
+    }
+
+    /**
      * Test if this region contains a grid coordinate.
      * @param gridX The grid x coordinate to test.
      * @param gridZ The grid z coordinate to test.
@@ -50,16 +96,6 @@ public class FroggerMapZoneRegion extends GameObject {
     public boolean contains(int gridX, int gridZ) {
         return gridX >= getXMin() && gridX <= getXMax()
                 && gridZ >= getZMin() && gridZ <= getZMax();
-    }
-
-    /**
-     * Test if a grid square is one of the region corners.
-     * @param gridX The grid x coordinate to test.
-     * @param gridZ The grid z coordinate to test.
-     * @return isCorner
-     */
-    public boolean isCorner(int gridX, int gridZ) {
-        return isMinCorner(gridX, gridZ) || isMaxCorner(gridX, gridZ);
     }
 
     /**
@@ -83,43 +119,41 @@ public class FroggerMapZoneRegion extends GameObject {
     }
 
     /**
-     * Update the bounds of a region.
+     * Swaps xMin and xMax, if xMin > xMax
+     * @return if a swap occurred
      */
-    public void updateBounds() {
-        if (getXMin() > getXMax()) {
+    public boolean swapXIfNecessary() {
+        if (this.xMin > this.xMax) {
             short temp = this.xMax;
             this.xMax = this.xMin;
             this.xMin = temp;
+            return true;
         }
 
-        if (getZMin() > getZMax()) {
+        return false;
+    }
+
+    /**
+     * Swaps zMin and zMax, if zMin > zMax
+     * @return if a swap occurred
+     */
+    public boolean swapZIfNecessary() {
+        if (this.zMin > this.zMax) {
             short temp = this.zMax;
             this.zMax = this.zMin;
             this.zMin = temp;
+            return true;
         }
+
+        return false;
     }
 
-    @Getter
-    @AllArgsConstructor
-    public enum RegionEditState {
-        CHANGING_MIN(FroggerMapZoneRegion::isMinCorner, FroggerMapZoneRegion::setXMin, FroggerMapZoneRegion::setZMin),
-        CHANGING_MAX(FroggerMapZoneRegion::isMaxCorner, FroggerMapZoneRegion::setXMax, FroggerMapZoneRegion::setZMax),
-        NONE_SELECTED((region, x, z) -> false, null, null);
-
-        private final TriFunction<FroggerMapZoneRegion, Integer, Integer, Boolean> tester;
-        private final BiConsumer<FroggerMapZoneRegion, Short> xSetter;
-        private final BiConsumer<FroggerMapZoneRegion, Short> zSetter;
-
-        /**
-         * Set the coordinates of the region.
-         * @param region The region to set.
-         * @param gridX  The grid x coordinate.
-         * @param gridZ  The grid z coordinate.
-         */
-        public void setCoordinates(FroggerMapZoneRegion region, int gridX, int gridZ) {
-            this.xSetter.accept(region, (short) gridX);
-            this.zSetter.accept(region, (short) gridZ);
-            region.updateBounds();
-        }
+    /**
+     * Clones the region.
+     */
+    public FroggerMapZoneRegion clone() {
+        FroggerMapZoneRegion newRegion = new FroggerMapZoneRegion(this.parentZone);
+        newRegion.copyFrom(this);
+        return newRegion;
     }
 }

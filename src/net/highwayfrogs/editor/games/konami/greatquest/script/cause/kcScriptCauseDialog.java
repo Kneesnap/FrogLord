@@ -60,15 +60,21 @@ public class kcScriptCauseDialog extends kcScriptCause {
         if (this.stage == kcScriptDialogStage.END)
             printWarning(logger, "executes on dialog stage '" + this.stage + "', which is not supported by the game.");
         if (this.dialogRef.getResource() == null)
-            printWarning(logger, "will never occur because FrogLord cannot resolve the dialog string reference.");
-
+            printWarning(logger, "will never occur because FrogLord cannot resolve the dialog string reference '" + this.dialogRef.getAsGqsString(null) + "'.");
     }
 
     @Override
     public void printAdvancedWarnings(kcScriptValidationData data) {
         super.printAdvancedWarnings(data);
-        if (!data.anyActionsMatch(kcActionID.DIALOG, (kcActionDialog action) -> action.getDialogRef().equals(this.dialogRef)))
+        if (!data.anyActionsMatch(kcActionID.DIALOG, this::isExpectedDialogShown)) {
             printWarning(data.getLogger(), data.getEntityName() + " never shows " + this.dialogRef.getAsString() + ".");
+        } else if (!data.anyActionsMatch(kcActionID.DIALOG, (kcActionDialog action) -> isExpectedDialogShown(action) && !kcScriptCause.isEntityTerminated(action))) {
+            printWarning(data.getLogger(), data.getEntityName() + " will be terminated before '" + this.dialogRef.getAsString() + "' is advanced.");
+        }
+    }
+
+    private boolean isExpectedDialogShown(kcActionDialog action) {
+        return action != null && action.getDialogRef().equals(this.dialogRef);
     }
 
     @Override

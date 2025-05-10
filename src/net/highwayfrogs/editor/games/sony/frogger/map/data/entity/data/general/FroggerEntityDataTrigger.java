@@ -1,12 +1,14 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.general;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerEntityTriggerType;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataMatrix;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+
+import java.util.Arrays;
 
 /**
  * Represents a trigger entity 'ENTSTR_TRIGGER' in ENTLIB.H.
@@ -21,6 +23,7 @@ public class FroggerEntityDataTrigger extends FroggerEntityDataMatrix {
 
     public FroggerEntityDataTrigger(FroggerMapFile mapFile) {
         super(mapFile);
+        Arrays.fill(this.uniqueIds, (short) -1);
     }
 
     @Override
@@ -45,7 +48,15 @@ public class FroggerEntityDataTrigger extends FroggerEntityDataMatrix {
         editor.addEnumSelector("Trigger Type", this.type, FroggerEntityTriggerType.values(), false, newType -> this.type = newType);
         for (int i = 0; i < this.uniqueIds.length; i++) {
             final int tempIndex = i;
-            editor.addSignedShortField("Entity #" + (i + 1), this.uniqueIds[i], newVal -> this.uniqueIds[tempIndex] = newVal);
+            editor.addSignedShortField("Target Entity ID #" + (i + 1), this.uniqueIds[i], newId -> {
+                if (newId == -1) {
+                    return true;
+                } else if (newId < 0) {
+                    return false;
+                } else {
+                    return getMapFile().getEntityPacket().getEntityByUniqueId(newId) != null;
+                }
+            }, newVal -> this.uniqueIds[tempIndex] = newVal);
         }
     }
 }

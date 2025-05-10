@@ -2,13 +2,13 @@ package net.highwayfrogs.editor.games.sony.medievil.entity;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.overlay.SCOverlayTableEntry;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,8 +45,8 @@ public class MediEvilEntityDefinition extends SCGameData<MediEvilGameInstance> {
     /**
      * Gets the MOF file registered to this entity definition.
      */
-    public MOFHolder getMOF() {
-        return this.mofId != 0 ? getGameInstance().getGameFileByResourceID((int) this.mofId, MOFHolder.class, true) : null;
+    public MRModel getModel() {
+        return this.mofId != 0 ? getGameInstance().getGameFileByResourceID((int) this.mofId, MRModel.class, true) : null;
     }
 
     /**

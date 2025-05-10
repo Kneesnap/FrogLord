@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
-import net.highwayfrogs.editor.file.writer.ArrayReceiver;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import javafx.scene.control.Alert.AlertType;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxAttributes;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxEntry;
@@ -22,9 +21,13 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.system.Tuple2;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.MessageTrackingLogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 import net.highwayfrogs.editor.utils.objects.StringNode;
 
@@ -33,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 
 /**
  * Contains static utility functions which make exporting/importing Frogger: The Great Quest assets easier.
@@ -43,6 +47,7 @@ public class GreatQuestAssetUtils {
     private static final String CONFIG_SECTION_SOUND_EFFECTS = "SoundEffects";
     private static final String CONFIG_SECTION_COPY_RESOURCES = "CopyResources";
     private static final String CONFIG_SECTION_DELETE_RESOURCES = "DeleteResources";
+    private static final String CONFIG_SECTION_ANIMATIONS = "Animations";
     private static final String CONFIG_SECTION_ACTION_SEQUENCES = "Sequences";
     private static final String CONFIG_SECTION_DIALOG = "Dialog";
     private static final String CONFIG_SECTION_COLLISION_PROXIES = "Collision";
@@ -65,7 +70,7 @@ public class GreatQuestAssetUtils {
         if (gqsScriptGroup == null)
             throw new NullPointerException("gqsScriptGroup");
 
-        ILogger logger = chunkedFile.getLogger();
+        MessageTrackingLogger logger = new MessageTrackingLogger(chunkedFile.getLogger());
         String sourceName = gqsScriptGroup.getSectionName();
         kcScriptList scriptList = chunkedFile.getScriptList();
         if (scriptList == null)
@@ -81,18 +86,43 @@ public class GreatQuestAssetUtils {
         applyCollisionProxies(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_COLLISION_PROXIES));
         copyResources(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_COPY_RESOURCES), logger);
         deleteResources(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_DELETE_RESOURCES), logger);
-        applyActionSequences(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ACTION_SEQUENCES));
+        updateAnimationSets(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ANIMATIONS), logger);
+        applyActionSequences(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ACTION_SEQUENCES), logger);
 
         // This should occur after resource copying to ensure it can resolve resources. Copied resources shouldn't reference entity descriptions since entity instances (a resource which is not expected to be copied) are the only resource to resolve entity descriptions.
         // This should also happen before entity instances are applied.
         applyEntityDescriptions(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ENTITY_DESCRIPTIONS));
 
         // Run before scripts, but after entity descriptions.
-        applyEntityInstances(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ENTITIES), scriptList);
-        applyScripts(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_SCRIPTS), scriptList);
+        applyEntityInstances(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ENTITIES), scriptList, logger);
+        applyScripts(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_SCRIPTS), scriptList, logger);
 
         // Print advanced warnings after everything is complete.
         scriptList.printAdvancedWarnings(logger);
+
+        // Show popup.
+        int warningCount = logger.getMessageCount(Level.WARNING);
+        int errorCount = logger.getMessageCount(Level.SEVERE);
+        AlertType alertType;
+        StringBuilder builder = new StringBuilder("Imported '").append(sourceName);
+        if (errorCount > 0 || warningCount > 0) {
+            builder.append("' with ");
+            if (errorCount > 0)
+                builder.append(errorCount).append(errorCount != 1 ? " errors" : " error");
+            if (warningCount > 0) {
+                if (errorCount > 0)
+                    builder.append(" and");
+                builder.append(warningCount).append(warningCount != 1 ? " warnings" : " warning");
+            }
+
+            builder.append('.');
+            alertType = errorCount > 0 ? AlertType.ERROR : AlertType.WARNING;
+        } else {
+            builder.append("' successfully.");
+            alertType = AlertType.INFORMATION;
+        }
+
+        FXUtils.makePopUp(builder.toString(), alertType);
     }
 
     private static void applyStringResources(GreatQuestChunkedFile chunkedFile, Config dialogCfg) {
@@ -172,10 +202,10 @@ public class GreatQuestAssetUtils {
             String sourceFilePath = resourceList.getSectionName();
             GreatQuestArchiveFile sourceFile = chunkedFile.getGameInstance().getMainArchive().getOptionalFileByName(sourceFilePath);
             if (sourceFile == null) {
-                logger.warning("Skipping resource copy for '" + sourceFilePath + "' in " + sourceName + ", as the chunked file could not be found.");
+                logger.warning("Skipping resource copy for '%s' in %s, as the chunked file could not be found.", sourceFilePath, sourceName);
                 continue;
             } else if (!(sourceFile instanceof GreatQuestChunkedFile)) {
-                logger.warning("Skipping resource copy for '" + sourceFilePath + "' in " + sourceName + ", as the specified file was not a chunk file! (" + Utils.getSimpleName(sourceFile) + ")");
+                logger.warning("Skipping resource copy for '%s' in %s, as the specified file was not a chunk file! (%s)", sourceFilePath, sourceName, Utils.getSimpleName(sourceFile));
                 continue;
             }
 
@@ -192,7 +222,7 @@ public class GreatQuestAssetUtils {
                 }
 
                 if (sourceResource == null) {
-                    logger.warning("Skipping resource copy for " + resourceId + " from " + sourceChunkFile.getFilePath() + " in " + sourceName + ", as the resource was not found.");
+                    logger.warning("Skipping resource copy for %s from %s in %s, as the resource was not found.", resourceId, sourceChunkFile.getFilePath(), sourceName);
                     continue;
                 }
 
@@ -230,9 +260,8 @@ public class GreatQuestAssetUtils {
             return;
 
         String sourceName = deleteResourceCfg.getRootNode().getSectionName();
-        for (Config resourceList : deleteResourceCfg.getChildConfigNodes()) {
+        for (String resourceName : deleteResourceCfg.getTextWithoutComments()) {
             int resourceHash;
-            String resourceName = resourceList.getSectionName();
             if (NumberUtils.isHexInteger(resourceName)) {
                 resourceHash = NumberUtils.parseHexInteger(resourceName);
             } else {
@@ -322,7 +351,45 @@ public class GreatQuestAssetUtils {
         }
     }
 
-    private static void applyActionSequences(GreatQuestChunkedFile chunkedFile, Config resourceHashTableCfg) {
+    private static void updateAnimationSets(GreatQuestChunkedFile chunkedFile, Config resourceHashTableCfg, ILogger logger) {
+        if (resourceHashTableCfg == null)
+            return;
+
+        for (Config animationSetCfg : resourceHashTableCfg.getChildConfigNodes()) {
+            String animationSetName = animationSetCfg.getSectionName();
+            int animationSetNameHash = GreatQuestUtils.hash(animationSetName);
+            kcCResourceAnimSet animationSet = GreatQuestUtils.findLevelResourceByHash(chunkedFile, animationSetNameHash);
+
+            // Try to find the animation set by auto-adding the prefix.
+            if (animationSet == null && !animationSetName.endsWith(kcCResourceAnimSet.NAME_SUFFIX)) {
+                animationSetName += kcCResourceAnimSet.NAME_SUFFIX;
+                animationSetNameHash = GreatQuestUtils.hash(animationSetName);
+                animationSet = GreatQuestUtils.findLevelResourceByHash(chunkedFile, animationSetNameHash);
+            }
+
+            // Create a new animation set.
+            if (animationSet == null) {
+                animationSet = new kcCResourceAnimSet(chunkedFile);
+                animationSet.setName(animationSetName, true);
+                chunkedFile.addResource(animationSet);
+            }
+
+            // Add the animations.
+            for (String animationName : animationSetCfg.getTextWithoutComments()) {
+                int animationNameHash = GreatQuestUtils.hash(animationName);
+                kcCResourceTrack animation = GreatQuestUtils.findLevelResourceByHash(chunkedFile, animationNameHash);
+                if (animation == null) {
+                    logger.warning("Could not find animation named '%s'.", animationName);
+                    continue;
+                }
+
+                if (!animationSet.contains(animation) && !animationSet.addAnimation(animation))
+                    logger.warning("Failed to add animation '%s' to '%s'.", animation.getName(), animationSet.getName());
+            }
+        }
+    }
+
+    private static void applyActionSequences(GreatQuestChunkedFile chunkedFile, Config resourceHashTableCfg, ILogger logger) {
         if (resourceHashTableCfg == null)
             return;
 
@@ -337,7 +404,7 @@ public class GreatQuestAssetUtils {
                 chunkedFile.addResource(namedHashTable);
             }
 
-            namedHashTable.addSequencesFromConfigNode(hashTableCfg);
+            namedHashTable.addSequencesFromConfigNode(hashTableCfg, logger);
         }
     }
 
@@ -362,7 +429,7 @@ public class GreatQuestAssetUtils {
         }
     }
 
-    private static void applyEntityInstances(GreatQuestChunkedFile chunkedFile, Config entityCfg, kcScriptList scriptList) {
+    private static void applyEntityInstances(GreatQuestChunkedFile chunkedFile, Config entityCfg, kcScriptList scriptList, ILogger logger) {
         if (entityCfg == null)
             return;
 
@@ -403,10 +470,10 @@ public class GreatQuestAssetUtils {
 
         // Scripts are loaded last in order to ensure entity data is correct. (Prevents incorrect resolutions and warnings.)
         for (Entry<kcEntityInst, Config> entry : scriptCfgsPerEntity.entrySet())
-            entry.getKey().addScriptFunctions(scriptList, entry.getValue(), sourceName, true);
+            entry.getKey().addScriptFunctions(logger, scriptList, entry.getValue(), sourceName, true);
     }
 
-    private static void applyScripts(GreatQuestChunkedFile chunkedFile, Config scriptCfg, kcScriptList scriptList) {
+    private static void applyScripts(GreatQuestChunkedFile chunkedFile, Config scriptCfg, kcScriptList scriptList, ILogger logger) {
         if (scriptCfg == null)
             return;
 
@@ -422,7 +489,7 @@ public class GreatQuestAssetUtils {
                 if (entityInst == null)
                     throw new RuntimeException("The entity instance for '" + entityInstName + "' was null, so we couldn't modify its script.");
 
-                entityInst.addScriptFunctions(scriptList, entityScriptCfg, sourceName, false);
+                entityInst.addScriptFunctions(logger, scriptList, entityScriptCfg, sourceName, false);
             }
         }
     }

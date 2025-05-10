@@ -6,12 +6,12 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.NonNull;
-import net.highwayfrogs.editor.file.reader.ArraySource;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.reader.FileSource;
-import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.file.writer.FileReceiver;
-import net.highwayfrogs.editor.file.writer.LargeFileReceiver;
+import net.highwayfrogs.editor.utils.data.reader.ArraySource;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.FileSource;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
+import net.highwayfrogs.editor.utils.data.writer.LargeFileReceiver;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.generic.data.GameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
@@ -132,20 +132,28 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
      */
     public void saveFileContents(File bodyFile, File indexFile, ProgressBarComponent progressBar) {
         // Write Body first (to generate a valid index for the .IDX)
+        DataWriter bodyWriter = null;
         try {
-            DataWriter bodyWriter = new DataWriter(new LargeFileReceiver(bodyFile));
+            bodyWriter = new DataWriter(new LargeFileReceiver(bodyFile));
             this.body.save(bodyWriter, progressBar);
         } catch (Throwable th) {
             Utils.handleError(getLogger(), th, true, "Failed to write '" + this.body.getFileName() + "', aborting..!");
             return;
+        } finally {
+            if (bodyWriter != null)
+                bodyWriter.closeReceiver();
         }
 
         // Write index second, after it has been generated with correct information.
+        DataWriter indexWriter = null;
         try {
-            DataWriter indexWriter = new DataWriter(new FileReceiver(indexFile));
+            indexWriter = new DataWriter(new FileReceiver(indexFile));
             this.index.save(indexWriter, progressBar);
         } catch (Throwable th) {
             Utils.handleError(getLogger(), th, true, "Failed to write '" + this.index.getFileName() + "', aborting..!");
+        } finally {
+            if (indexWriter != null)
+                indexWriter.closeReceiver();
         }
     }
 

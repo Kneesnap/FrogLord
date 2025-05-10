@@ -3,8 +3,6 @@ package net.highwayfrogs.editor.games.konami.greatquest.model;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IFileExport;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
@@ -17,6 +15,8 @@ import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.io.File;
 import java.io.IOException;
@@ -85,6 +85,9 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
     public void afterLoad2(kcLoadContext context) {
         super.afterLoad2(context);
 
+        // Generate collision mesh names. This is done in afterLoad2() to wait for our own file path to be set.
+        context.getMaterialLoadContext().applyFileNameAsCollisionMesh(getFileName());
+
         // Generate texture file names. This is done in afterLoad2() to wait for our own file path to be set.
         context.getMaterialLoadContext().applyLevelTextureFileNames(this, getFilePath(), this.model.getMaterials());
 
@@ -119,6 +122,6 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
      * Opens the mesh viewer for the wrapped model.
      */
     public void openMeshViewer() {
-        MeshViewController.setupMeshViewer(getGameInstance(), new GreatQuestModelViewController(), new GreatQuestModelMesh(this, true));
+        MeshViewController.setupMeshViewer(getGameInstance(), new GreatQuestModelViewController(), new GreatQuestModelMesh(this));
     }
 }

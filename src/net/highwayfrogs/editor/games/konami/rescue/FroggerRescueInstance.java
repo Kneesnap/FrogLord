@@ -40,4 +40,9 @@ public class FroggerRescueInstance extends HudsonGameInstance {
             return super.createGameFile(fileDefinition, rawData);
         }
     }
+
+    @Override
+    public boolean isShowSaveWarning() {
+        return true;
+    }
 }

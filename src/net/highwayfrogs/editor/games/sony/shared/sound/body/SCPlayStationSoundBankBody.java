@@ -2,8 +2,8 @@ package net.highwayfrogs.editor.games.sony.shared.sound.body;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.NameBank;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.psx.sound.VAGUtil;
 import net.highwayfrogs.editor.games.shared.sound.EditableAudioFormat;
 import net.highwayfrogs.editor.games.shared.sound.ISoundSample;

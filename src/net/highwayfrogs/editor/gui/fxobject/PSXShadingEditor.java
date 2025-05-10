@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.FXUtils;
 
 import java.awt.image.BufferedImage;
@@ -148,6 +149,13 @@ public abstract class PSXShadingEditor<TShadeTarget> {
         if (this.registerImageView)
             grid.addCenteredImageView(this.previewImageView);
 
+        if (this.previewImageView != null) {
+            this.previewImageView.setOnMouseClicked(event -> {
+                if (shouldHandleUIChanges() && getShadeDefinition().isTextured())
+                    selectNewTexture(getShadeDefinition().getTextureSource());
+            });
+        }
+
         // Polygon type information.
         this.polygonTypeNameLabel = grid.addLabel("Polygon Type:", "None");
         this.polygonTypeIsQuadCheckBox = grid.addCheckBox("Is a Quad?", false, null);
@@ -228,4 +236,9 @@ public abstract class PSXShadingEditor<TShadeTarget> {
      * Called when the texture UV is updated.
      */
     protected abstract void onTextureUvUpdate(int uvIndex, SCByteTextureUV uv);
+
+    /**
+     * Called when the texture should be updated.
+     */
+    protected abstract void selectNewTexture(ITextureSource oldTextureSource);
 }

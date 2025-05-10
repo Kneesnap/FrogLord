@@ -76,7 +76,7 @@ public class SCVABUIController extends SCFileEditorUIController<SCGameInstance, 
             this.updateInterface();
         });
 
-        this.soundList.getSelectionModel().select(0);
+        this.soundList.getSelectionModel().selectFirst();
     }
 
     @Override
@@ -181,8 +181,13 @@ public class SCVABUIController extends SCFileEditorUIController<SCGameInstance, 
      */
     public void updateSoundInfo() {
         this.label1.setText("Internal Track ID: " + (this.selectedSoundBodyEntry != null ? this.selectedSoundBodyEntry.getInternalTrackId() : "-1"));
-        this.sampleRateField.setText(String.valueOf(this.selectedSound.getAudioFormat().getSampleRate()));
-        this.sliderSampleRate.setValue(this.selectedSound.getAudioFormat().getSampleRate());
+
+        this.sampleRateField.setDisable(this.selectedSound == null);
+        this.sliderSampleRate.setDisable(this.selectedSound == null);
+        if (this.selectedSound != null) {
+            this.sampleRateField.setText(String.valueOf(this.selectedSound.getAudioFormat().getSampleRate()));
+            this.sliderSampleRate.setValue(this.selectedSound.getAudioFormat().getSampleRate());
+        }
     }
 
     private void closeClip() {
@@ -198,6 +203,8 @@ public class SCVABUIController extends SCFileEditorUIController<SCGameInstance, 
      */
     public void updateSound() {
         closeClip();
+        if (this.selectedSound == null)
+            return;
 
         if (this.currentClip != null) {
             byte[] pcmData = this.selectedSound.getRawAudioPlaybackData();

@@ -1,11 +1,11 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.forest;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataMatrix;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Implementation of the 'FOREST_FALLING_LEAF' entity data definition in ent_for.h as well as 'for_fallingleaves' in ENTITIES.TXT
@@ -41,7 +41,7 @@ public class FroggerEntityDataFallingLeaf extends FroggerEntityDataMatrix {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addUnsignedFixedShort("Fall Speed", this.fallSpeed, newFallSpeed -> this.fallSpeed = newFallSpeed, 2184);
+        editor.addUnsignedFixedShort("Fall Speed", this.fallSpeed, newFallSpeed -> this.fallSpeed = newFallSpeed, 2184.5);
         editor.addUnsignedFixedShort("Sway (percent/frame)", this.swayDuration, newSwayDuration -> this.swayDuration = newSwayDuration, 1024, 0, 1024);
         editor.addUnsignedFixedShort("Sway Angle (degrees)", this.swayAngle, newSwayAngle -> this.swayAngle = newSwayAngle, 1, 0, 360);
     }

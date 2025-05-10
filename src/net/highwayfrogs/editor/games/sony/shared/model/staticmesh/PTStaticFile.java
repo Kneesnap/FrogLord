@@ -3,8 +3,8 @@ package net.highwayfrogs.editor.games.sony.shared.model.staticmesh;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.model.PTModel;
@@ -64,7 +64,7 @@ public class PTStaticFile extends SCSharedGameFile {
         // Read collprim.
         if (collprimAddress > 0) {
             // Verify reader position.
-            reader.requireIndex(getLogger(), collprimAddress, "Expected main collprim data");
+            requireReaderIndex(reader, collprimAddress, "Expected main collprim data");
 
             this.collprim = new PTModelCollprim(getGameInstance());
             this.collprim.load(reader);
@@ -76,7 +76,7 @@ public class PTStaticFile extends SCSharedGameFile {
         }
 
         // Verify part position.
-        reader.requireIndex(getLogger(), partDataStartAddress, "Expected PTStaticPart data");
+        requireReaderIndex(reader, partDataStartAddress, "Expected PTStaticPart data");
 
         // Read part data.
         this.parts.clear();

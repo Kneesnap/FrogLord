@@ -2,8 +2,8 @@ package net.highwayfrogs.editor.games.sony.shared.model.staticmesh;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
@@ -62,7 +62,7 @@ public class PTStaticPart extends SCSharedGameData {
         if (this.partCelStartAddress <= 0)
             throw new RuntimeException("Cannot partCel list, the pointer is invalid.");
 
-        reader.requireIndex(getLogger(), this.partCelStartAddress, "Expected PTStaticPartCel list");
+        requireReaderIndex(reader, this.partCelStartAddress, "Expected PTStaticPartCel list");
         for (int i = 0; i < this.partCels.size(); i++)
             this.partCels.get(i).load(reader);
 

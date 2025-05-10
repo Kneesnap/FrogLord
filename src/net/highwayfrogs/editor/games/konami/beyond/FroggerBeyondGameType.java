@@ -56,20 +56,24 @@ public class FroggerBeyondGameType implements IGameType {
     }
 
     @Override
-    public FroggerBeyondGameConfigUI setupConfigUI(GameConfigController controller, GameConfig gameConfig, Config config) {
-        return new FroggerBeyondGameConfigUI(controller, gameConfig, config);
+    public FroggerBeyondGameConfigUI setupConfigUI(GameConfigController controller) {
+        return new FroggerBeyondGameConfigUI(controller);
     }
 
     /**
      * The UI definition for the game.
      */
-    public static class FroggerBeyondGameConfigUI extends GameConfigUIController {
+    public static class FroggerBeyondGameConfigUI extends GameConfigUIController<GameConfig> {
         private final GameConfigFolderBrowseComponent binFileBrowseComponent;
 
-        public FroggerBeyondGameConfigUI(GameConfigController controller, GameConfig gameConfig, Config config) {
-            super(controller, gameConfig);
-            this.binFileBrowseComponent = new GameConfigFolderBrowseComponent(this, config, CONFIG_MAIN_FOLDER_PATH, "Game Data Folder", "Please locate the folder containing game data", false);
-            loadController(null);
+        public FroggerBeyondGameConfigUI(GameConfigController controller) {
+            super(controller, GameConfig.class);
+            this.binFileBrowseComponent = new GameConfigFolderBrowseComponent(this, CONFIG_MAIN_FOLDER_PATH, "Game Data Folder", "Please locate the folder containing game data", null);
+        }
+
+        @Override
+        protected void onChangeGameConfig(GameConfig oldGameConfig, Config oldEditorConfig, GameConfig newGameConfig, Config newEditorConfig) {
+            this.binFileBrowseComponent.resetFolderPath();
         }
 
         @Override

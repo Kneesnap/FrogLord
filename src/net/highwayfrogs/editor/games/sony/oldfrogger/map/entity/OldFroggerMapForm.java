@@ -2,9 +2,6 @@ package net.highwayfrogs.editor.games.sony.oldfrogger.map.entity;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerReactionType;
@@ -15,12 +12,15 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEditorUtils;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEntityManager;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerFormUIManager;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.ArrayList;
@@ -215,7 +215,7 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
     /**
      * Gets the mof file associated with the form, if it can be found.
      */
-    public WADEntry getMofFileEntry() {
+    public WADEntry getModelFileEntry() {
         if (this.map == null)
             return null;
 
@@ -243,17 +243,17 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
     /**
      * Gets the mof file associated with the form, if it can be found.
      */
-    public MOFHolder getMofFile() {
-        WADEntry wadEntry = getMofFileEntry();
+    public MRModel getModel() {
+        WADEntry wadEntry = getModelFileEntry();
         if (wadEntry == null)
             return null;
 
-        if (!(wadEntry.getFile() instanceof MOFHolder)) {
-            getLogger().warning("The form specified file '" + wadEntry.getDisplayName() + "' as its MOF, but this seems to not actually be a MOF.");
+        if (!(wadEntry.getFile() instanceof MRModel)) {
+            getLogger().warning("The form specified file '" + wadEntry.getDisplayName() + "' as its MRModel, but this seems to not actually be a MRModel.");
             return null;
         }
 
-        return (MOFHolder) wadEntry.getFile();
+        return (MRModel) wadEntry.getFile();
     }
 
     /**

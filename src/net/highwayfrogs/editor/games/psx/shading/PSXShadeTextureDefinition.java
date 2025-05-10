@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.gui.texture.Texture;
 import net.highwayfrogs.editor.system.math.Vector2f;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
     @Getter private final CVector[] colors;
     @Getter private final SCByteTextureUV[] textureUVs;
     @Getter private final boolean semiTransparentMode;
+    @Getter private final boolean enableModulation;
     @Getter @Setter private boolean debugDrawCornerMarkers;
     private Consumer<BufferedImage> onTextureSourceUpdate;
     @Getter private BufferedImage cachedImage;
@@ -47,23 +49,27 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
     public static final int GOURAUD_TEXTURE_MINIMUM_SIZE = UNTEXTURED_GOURAUD_SIZE - (2 * UNTEXTURED_PADDING_SIZE);
 
     public static final String[] QUAD_VERTEX_NAMES = {"Top Left", "Top Right", "Bottom Left", "Bottom Right"};
-    public static final String[] TRI_VERTEX_NAMES = {"1st Corner", "2nd Corner", "3rd Corner"};
+    public static final String[] TRI_VERTEX_NAMES = {"1st Corner", "2nd Corner", "3rd Corner", "Padding"};
 
-    public PSXShadeTextureDefinition(PSXShadedTextureManager<?> shadedTextureManager, PSXPolygonType polygonType, ITextureSource textureSource, CVector[] colors, SCByteTextureUV[] textureUVs, boolean semiTransparentMode) {
+    public PSXShadeTextureDefinition(PSXShadedTextureManager<?> shadedTextureManager, PSXPolygonType polygonType, ITextureSource textureSource, CVector[] colors, SCByteTextureUV[] textureUVs, boolean semiTransparentMode, boolean enableModulation) {
         this.shadedTextureManager = shadedTextureManager;
         this.polygonType = polygonType;
         this.textureSource = textureSource;
         this.colors = colors;
         this.textureUVs = textureUVs;
         this.semiTransparentMode = semiTransparentMode;
+        this.enableModulation = enableModulation;
 
         // Calculates the texture scaling needed to make the gouraud shading look ok.
         int textureScaleX = 1;
         int textureScaleY = 1;
         if (polygonType.isGouraud() && polygonType.isTextured() && textureSource != null) {
-            while (GOURAUD_TEXTURE_MINIMUM_SIZE > (textureScaleX * textureSource.getUnpaddedWidth()))
+            // Originally this used getUnpaddedWidth()/getUnpaddedHeight(), but this was a BIG mistake.
+            // On levels such as Big Boulder Alley in Frogger, there are some images with a width of 10, in-game width of 2.
+            // This means in order to reach an unpadded size of 32, the total image size would reach 160x160. All for a single-color image.
+            while (GOURAUD_TEXTURE_MINIMUM_SIZE > (textureScaleX * textureSource.getWidth()))
                 textureScaleX <<= 1;
-            while (GOURAUD_TEXTURE_MINIMUM_SIZE > (textureScaleY * textureSource.getUnpaddedHeight()))
+            while (GOURAUD_TEXTURE_MINIMUM_SIZE > (textureScaleY * textureSource.getHeight()))
                 textureScaleY <<= 1;
         }
 
@@ -80,6 +86,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
         this.polygonType = other.polygonType;
         this.textureSource = other.textureSource;
         this.semiTransparentMode = other.semiTransparentMode;
+        this.enableModulation = other.enableModulation;
         this.textureScaleX = other.textureScaleX;
         this.textureScaleY = other.textureScaleY;
 
@@ -93,6 +100,13 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
         if (other.textureUVs != null)
             for (int i = 0; i < other.textureUVs.length; i++)
                 this.textureUVs[i] = other.textureUVs[i] != null ? other.textureUVs[i].clone() : null;
+    }
+
+    /**
+     * Returns true if scaling is applied to the source image to improve the fidelity of the shading approximation.
+     */
+    public boolean isSourceImageScaled() {
+        return this.textureScaleX != 1 || this.textureScaleY != 1;
     }
 
     /**
@@ -153,9 +167,12 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
         if (this.semiTransparentMode)
             hash = (31 * hash) + 1;
 
+        if (this.enableModulation)
+            hash = (31 * hash) + 1;
+
         // Add texture.
         if (this.textureSource != null)
-            hash = (31 * hash) + this.textureSource.hashCode();
+            hash = (31 * hash) + System.identityHashCode(this.textureSource);
 
         return hash;
     }
@@ -170,14 +187,32 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
                 && Objects.equals(this.textureSource, other.textureSource)
                 && Arrays.equals(this.colors, other.colors)
                 && (!doSharedUvsMatter() || Arrays.equals(this.textureUVs, other.textureUVs))
-                && this.semiTransparentMode == other.semiTransparentMode;
+                && this.semiTransparentMode == other.semiTransparentMode
+                && this.enableModulation == other.enableModulation;
     }
 
     /**
      * Returns true if UVs should impact the texture generated.
      */
     public boolean doSharedUvsMatter() {
-        return this.polygonType == PSXPolygonType.POLY_GT3 || this.polygonType == PSXPolygonType.POLY_GT4;
+        if (this.polygonType != PSXPolygonType.POLY_GT3 && this.polygonType != PSXPolygonType.POLY_GT4)
+            return false;
+
+        return !doAllColorsMatch();
+    }
+
+    /**
+     * Returns true if all colors match.
+     */
+    public boolean doAllColorsMatch() {
+        if (this.colors == null || this.colors.length == 0)
+            return true;
+
+        for (int i = 1; i < this.colors.length; i++)
+            if (!Objects.equals(this.colors[0], this.colors[i]))
+                return false;
+
+        return true;
     }
 
     /**
@@ -195,7 +230,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
             for (int i = 0; i < this.textureUVs.length; i++)
                 copyUvs[i] = this.textureUVs[i] != null ? this.textureUVs[i].clone() : null;
 
-        return new PSXShadeTextureDefinition(this.shadedTextureManager, this.polygonType, this.textureSource, copyColors, copyUvs, this.semiTransparentMode);
+        return new PSXShadeTextureDefinition(this.shadedTextureManager, this.polygonType, this.textureSource, copyColors, copyUvs, this.semiTransparentMode, this.enableModulation);
     }
 
     /**
@@ -241,6 +276,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
         if (this.cachedImage != null && sourceImage != null && this.cachedImage.getWidth() == sourceImage.getWidth() && this.cachedImage.getHeight() == sourceImage.getHeight())
             return clearImage(this.cachedImage);
 
+        // Don't add the old cached image to the cache because its size isn't valid.
         PSXShadeTextureImageCache imageCache = this.shadedTextureManager != null ? this.shadedTextureManager.getImageCache() : null;
         return imageCache != null ? clearImage(imageCache.getTargetImage(this)) : null;
     }
@@ -285,7 +321,11 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
                 return applyImagePostFx(PSXTextureShader.makeGouraudShadedImage(targetImage, getWidth(), getHeight(), this.colors));
             case POLY_GT3:
             case POLY_GT4:
-                return applyImagePostFx(PSXTextureShader.makeTexturedGouraudShadedImage(sourceImage, targetImage, this.textureSource, this.colors, this.textureUVs, this.textureScaleX, this.textureScaleY, this.debugDrawCornerMarkers));
+                if (doAllColorsMatch()) {
+                    return applyImagePostFx(PSXTextureShader.makeTexturedFlatShadedImage(sourceImage, targetImage, this.colors[0]));
+                } else {
+                    return applyImagePostFx(PSXTextureShader.makeTexturedGouraudShadedImage(sourceImage, targetImage, this.textureSource, this.colors, this.textureUVs, this.textureScaleX, this.textureScaleY, this.debugDrawCornerMarkers, this.enableModulation));
+                }
             default:
                 throw new UnsupportedOperationException("The polygon type " + this.polygonType + " is not supported.");
         }
@@ -414,6 +454,80 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
             default:
                 throw new UnsupportedOperationException("The polygon type " + this.polygonType + " is not supported.");
         }
+    }
+
+    /**
+     * Write the details of the shade texture definition to a String.
+     * @param includeHashes if hash information should be included
+     * @param includeColorAndUvInfo if color and uv information should be included
+     */
+    public String toString(boolean includeHashes, boolean includeColorAndUvInfo) {
+        StringBuilder builder = new StringBuilder();
+        toString(builder, includeHashes, includeColorAndUvInfo);
+        return builder.toString();
+    }
+
+    /**
+     * Write the details of the shade texture definition to a StringBuilder.
+     * @param builder The StringBuilder to write the contents to
+     * @param includeHashes if hash information should be included
+     * @param includeColorAndUvInfo if color and uv information should be included
+     */
+    public void toString(StringBuilder builder, boolean includeHashes, boolean includeColorAndUvInfo) {
+        builder.append("PSXShadeTextureDef{");
+
+        if (includeHashes) {
+            builder.append(Integer.toHexString(System.identityHashCode(this)))
+                    .append(",")
+                    .append(Integer.toHexString(hashCode()))
+                    .append("|");
+        }
+
+        builder.append(this.polygonType);
+
+        builder.append(",texture=").append(this.textureSource);
+
+        if (includeColorAndUvInfo) {
+            builder.append(",colors=[");
+            for (int i = 0; i < this.colors.length; i++) {
+                if (i > 0)
+                    builder.append(',');
+
+                builder.append(NumberUtils.to0PrefixedHexString(this.colors[i].hashCode()));
+            }
+
+            builder.append(']');
+
+            builder.append(",textureUvs=[");
+            for (int i = 0; i < this.textureUVs.length; i++) {
+                if (i > 0)
+                    builder.append(',');
+
+                builder.append('[').append(Integer.toHexString(this.textureUVs[i].getU() & 0xFF))
+                        .append(',').append(Integer.toHexString(this.textureUVs[i].getV() & 0xFF))
+                        .append(']');
+            }
+
+            builder.append(']');
+        }
+
+        if (isSourceImageScaled())
+            builder.append(",scale=[").append(this.textureScaleX).append(",").append(this.textureScaleY).append("]");
+        if (this.semiTransparentMode)
+            builder.append(",semiTransparent");
+        if (this.semiTransparentMode)
+            builder.append(",semiTransparent");
+        if (this.semiTransparentMode)
+            builder.append(",semiTransparent");
+        if (this.imageChangeListeners.size() > 0)
+            builder.append(",listeners=").append(this.imageChangeListeners.size());
+
+        builder.append('}');
+    }
+
+    @Override
+    public String toString() {
+        return toString(true, false);
     }
 
     private void onTextureSourceUpdate(BufferedImage newImage) {
