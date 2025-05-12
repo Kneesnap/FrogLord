@@ -14,10 +14,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.view.RawColorTextureSource;
 import net.highwayfrogs.editor.gui.editor.FirstPersonCamera;
-import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
-import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
-import net.highwayfrogs.editor.gui.mesh.DynamicMeshNode;
-import net.highwayfrogs.editor.gui.mesh.DynamicMeshUnmanagedNode;
+import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.gui.mesh.*;
 import net.highwayfrogs.editor.gui.mesh.wrapper.MeshEntryBox;
 import net.highwayfrogs.editor.gui.texture.atlas.AtlasTexture;
 import net.highwayfrogs.editor.gui.texture.atlas.SequentialTextureAtlas;
@@ -185,20 +183,20 @@ public class ScaleGizmo extends DynamicMesh {
 
     /**
      * Adds a MeshView with extra data setup.
-     * @param view     the MeshView to add.
-     * @param camera   the camera the scene is viewed from.
+     * @param view the MeshView to add.
+     * @param meshViewController the mesh view controller to register to
      * @param listener the listener to call when the scale changes.
      */
-    public void addView(MeshView view, FirstPersonCamera camera, IScaleChangeListener listener) {
-        addView(view);
+    public void addView(MeshView view, MeshViewController<?> meshViewController, IScaleChangeListener listener) {
+        addView(view, meshViewController.getMeshTracker());
         GizmoMeshViewState state = this.meshViewStates.get(view);
-        state.setCamera(camera);
+        state.setCamera(meshViewController.getFirstPersonCamera());
         state.setChangeListener(listener);
     }
 
     @Override
-    public boolean addView(MeshView view) {
-        if (!super.addView(view))
+    public boolean addView(MeshView view, MeshTracker meshTracker) {
+        if (!super.addView(view, meshTracker))
             return false;
 
         this.meshViewStates.put(view, new GizmoMeshViewState(this, view));

@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.gui.mesh;
 import javafx.scene.shape.MeshView;
 import lombok.Getter;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
+import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
@@ -81,11 +82,13 @@ public class DynamicMeshCollection<TMesh extends DynamicMesh> {
 
     @Getter
     public static class MeshViewCollection<TMesh extends DynamicMesh> {
+        private final MeshViewController<?> controller;
         private DynamicMeshCollection<TMesh> meshCollection;
         private final List<MeshView> meshViews = new ArrayList<>();
         private final DisplayList displayList;
 
-        public MeshViewCollection(DisplayList displayList) {
+        public MeshViewCollection(MeshViewController<?> controller, DisplayList displayList) {
+            this.controller = controller;
             this.displayList = displayList;
         }
 
@@ -204,7 +207,7 @@ public class DynamicMeshCollection<TMesh extends DynamicMesh> {
 
             // Setup the mesh view.
             TMesh mesh = this.meshCollection.getMeshes().get(meshIndex);
-            if (!mesh.addView(meshView))
+            if (!mesh.addView(meshView, this.controller.getMeshTracker()))
                 return; // MeshView is already setup.
 
             try {

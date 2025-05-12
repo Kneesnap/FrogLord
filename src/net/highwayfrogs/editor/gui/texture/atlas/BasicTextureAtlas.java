@@ -43,9 +43,24 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
     }
 
     @Override
-    public void releaseTexture() {
-        super.releaseTexture();
-        this.sortedTextures.forEach(TTexture::releaseTexture);
+    public void unregisterTexture() {
+        super.unregisterTexture();
+        this.sortedTextures.forEach(TTexture::unregisterTexture);
+    }
+
+    @Override
+    public void disposeTexture() {
+        super.disposeTexture();
+        for (int i = 0; i < this.sortedTextures.size(); i++) {
+            TTexture texture = this.sortedTextures.get(i);
+            texture.getImageChangeListeners().remove(this.imageChangeListener);
+            texture.disposeTexture();
+        }
+
+        // Clear data.
+        this.texturesBySource.clear();
+        this.sortedTextures.clear();
+        this.fallbackTexture = null;
     }
 
     /**
@@ -64,6 +79,7 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
     @Override
     @SuppressWarnings("unchecked")
     public Iterable<AtlasTexture> getTextures() {
+        ensureNotDisposed();
         return (Iterable<AtlasTexture>) this.sortedTextures;
     }
 
@@ -75,16 +91,19 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
 
     @Override
     public TTexture getTextureFromSource(ITextureSource textureSource) {
+        ensureNotDisposed();
         return this.texturesBySource.getOrDefault(textureSource, this.fallbackTexture);
     }
 
     @Override
     public TTexture getNullTextureFromSource(ITextureSource textureSource) {
+        ensureNotDisposed();
         return this.texturesBySource.get(textureSource);
     }
 
     @Override // This is a duplicate method since this method inherits from Texture, instead of just TextureAtlas.
     public Texture getChildTextureBySource(ITextureSource source, boolean throwErrorIfNotFound) {
+        ensureNotDisposed();
         TTexture texture = this.texturesBySource.get(source);
         if (texture != null)
             return texture;
@@ -137,6 +156,7 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
     }
 
     private void onTextureChange(Texture texture, BufferedImage oldImage, BufferedImage newImage, boolean didOldImageHaveAnyTransparency) {
+        ensureNotDisposed();
         if (oldImage == null || (oldImage.getWidth() != newImage.getWidth()) || (oldImage.getHeight() != newImage.getHeight()))
             this.markTextureSizesDirty(false);
 
@@ -157,6 +177,7 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
 
     @Override
     public TTexture addTexture(ITextureSource textureSource) {
+        ensureNotDisposed();
         if (textureSource == null)
             throw new NullPointerException("textureSource");
 
@@ -190,6 +211,7 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
      */
     @Override
     public TTexture removeTexture(ITextureSource textureSource) {
+        ensureNotDisposed();
         if (textureSource == null)
             throw new NullPointerException("textureSource");
 
@@ -208,11 +230,12 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
     @Override
     @SuppressWarnings({"SuspiciousMethodCalls", "unchecked"})
     public boolean removeTexture(AtlasTexture texture) {
+        ensureNotDisposed();
         if (texture == null)
             throw new NullPointerException("texture");
 
         if (this.sortedTextures.remove(texture) && this.texturesBySource.remove(texture.getTextureSource(), texture)) {
-            texture.releaseTexture();
+            texture.unregisterTexture();
             texture.getImageChangeListeners().remove(this.imageChangeListener);
             if (this.fallbackTexture == texture)
                 this.fallbackTexture = null;
@@ -227,6 +250,7 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
 
     @Override
     public void rebuild() {
+        ensureNotDisposed();
         this.cachedPositionsInvalid = true;
         this.cachedTextureSizesInvalid = true;
         this.update();
@@ -237,6 +261,7 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
      */
     @Override
     public void markTextureSizesDirty(boolean fireEvents) {
+        ensureNotDisposed();
         this.cachedTextureSizesInvalid = true;
         this.cachedPositionsInvalid = true;
         if (fireEvents && !shouldDisableUpdates())
@@ -248,6 +273,7 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
      */
     @Override
     public void markPositionsDirty(boolean fireEvents) {
+        ensureNotDisposed();
         this.cachedPositionsInvalid = true;
         if (fireEvents && !shouldDisableUpdates())
             getTextureSource().fireChangeEvent();
@@ -255,6 +281,7 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
 
     @Override
     public void update(BufferedImage newImage) {
+        ensureNotDisposed();
         if (shouldDisableUpdates())
             return;
 
@@ -267,6 +294,7 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
      * Prepares the data for image generation.
      */
     public void prepareImageGeneration() {
+        ensureNotDisposed();
         boolean cachedTextureSizesInvalid = this.cachedTextureSizesInvalid;
 
         // Update texture sizes.
@@ -282,6 +310,7 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
 
     @Override
     public void rebuildTexturePositions() {
+        ensureNotDisposed();
         this.pushDisableUpdates();
 
         boolean ranOutOfSpace = !this.updatePositions(this.sortedTextures);
@@ -305,6 +334,7 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
      * @return Returns true if the atlas ran out of space.
      */
     protected boolean updatePositions(SortedList<TTexture> sortedTextureList) {
+        ensureNotDisposed();
         for (int i = 0; i < sortedTextureList.size(); i++) {
             TTexture texture = sortedTextureList.get(i);
             if (!placeTexture(texture))

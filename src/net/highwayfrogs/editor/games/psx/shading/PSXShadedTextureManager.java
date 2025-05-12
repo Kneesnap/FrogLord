@@ -297,7 +297,7 @@ public abstract class PSXShadedTextureManager<TPolygon> {
         @Override
         protected void onShadedTextureRemoved(PSXShadeTextureDefinition shadedTexture) {
             super.onShadedTextureRemoved(shadedTexture);
-            this.textureAtlas.removeTexture(shadedTexture);
+            this.textureAtlas.removeAndDisposeTexture(shadedTexture);
         }
     }
 

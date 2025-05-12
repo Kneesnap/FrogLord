@@ -37,7 +37,7 @@ public class FroggerMapMesh extends PSXShadedDynamicMesh<FroggerMapPolygon, Frog
     private final DynamicMeshOverlayNode highlightedGroupPolygonNode;
 
     public FroggerMapMesh(FroggerMapFile mapFile) {
-        super(new TreeTextureAtlas(64, 64, true), DynamicMeshTextureQuality.UNLIT_SHARP, true);
+        super(new TreeTextureAtlas(64, 64, true), DynamicMeshTextureQuality.UNLIT_SHARP, true, mapFile.getFileDisplayName());
         this.map = mapFile;
 
         // Add textures.

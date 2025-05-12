@@ -286,7 +286,7 @@ public class FroggerUIMapGeneralManager extends FroggerCentralUIManager {
                 }
 
                 this.playerCharacterView.setCullFace(CullFace.BACK);
-                modelMesh.addView(this.playerCharacterView, false, false);
+                modelMesh.addView(this.playerCharacterView, getController().getMeshTracker(), false, false);
             }
 
             // Setup lighting.

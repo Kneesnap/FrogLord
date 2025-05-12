@@ -71,7 +71,7 @@ public class SCMapSectionManager<TMapMesh extends SCMapMesh> extends SCMapListMa
         newView.setDrawMode(DrawMode.FILL);
         MeshViewController.bindMeshSceneControls(getController(), newView);
         SCMapMesh mapMesh = new SCMapMesh(sectionDef.getMapFile());
-        mapMesh.addView(newView);
+        mapMesh.addView(newView, getController().getMeshTracker());
         updateEntityPositionRotation(sectionDef, newView);
         getRenderManager().getRoot().getChildren().add(newView);
         getController().getLightingGroup().getChildren().add(newView);

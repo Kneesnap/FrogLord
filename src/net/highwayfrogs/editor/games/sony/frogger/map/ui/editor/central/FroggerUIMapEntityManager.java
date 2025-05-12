@@ -338,7 +338,7 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
             MRModelMesh modelMesh = this.meshCache.computeIfAbsent(model, MRModel::createMeshWithDefaultAnimation);
             if (modelMesh.getEditableFaces().size() > 0) {
                 DynamicMesh.tryRemoveMesh(entityMeshView);
-                modelMesh.addView(entityMeshView, isEntityHighlighted, !getController().getLightManager().isLightingAppliedToEntities());
+                modelMesh.addView(entityMeshView, getController().getMeshTracker(), isEntityHighlighted, !getController().getLightManager().isLightingAppliedToEntities());
                 entityMeshView.setCullFace(CullFace.BACK);
 
                 // Update entity display material and such.

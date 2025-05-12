@@ -67,6 +67,19 @@ public class AtlasBuilderTextureSource implements ITextureSource {
     }
 
     /**
+     * Release resources currently held.
+     */
+    public void releaseResources() {
+        this.imageChangeListeners.clear();
+        this.updatedNodes.clear();
+        this.asyncWriteTasks.forEach(Task::cancel);
+        this.asyncWriteTasks.clear();
+        this.writeTaskState.clear();
+        this.cachedImage = null;
+        this.cachedFxImage = null;
+    }
+
+    /**
      * Makes a new image containing the texture sheet entries.
      * By default, caching of the image is enabled, to avoid major updates.
      * @return newImage
@@ -242,15 +255,27 @@ public class AtlasBuilderTextureSource implements ITextureSource {
         private int index;
 
         /**
+         * Clears resources from the previous write task.
+         */
+        public void clear() {
+            this.texturesReadyToWrite.clear();
+            this.latch = null;
+            if (this.awtGraphics != null)
+                this.awtGraphics.dispose();
+            this.awtGraphics = null;
+            this.index = 0;
+        }
+
+        /**
          * Setup the task state for the next execution.
          * @param onlyWriteUpdatedTextures whether to only write updated textures
          * @param awtGraphics the awt graphics object, if there is one
          */
         public void setupNextWrite(boolean onlyWriteUpdatedTextures, Graphics awtGraphics, int taskCount) {
+            clear();
             this.onlyWriteUpdatedTextures = onlyWriteUpdatedTextures;
             this.latch = new CountDownLatch(taskCount);
             this.awtGraphics = awtGraphics;
-            this.index = 0;
         }
 
         /**
