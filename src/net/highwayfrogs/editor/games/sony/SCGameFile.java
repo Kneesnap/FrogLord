@@ -221,13 +221,6 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
     }
 
     /**
-     * Export this file in a non-Frogger format.
-     */
-    public void exportAlternateFormat() {
-        getLogger().warning("The file (" + getClass().getSimpleName() + ") does not have an alternate file-type it can export as.");
-    }
-
-    /**
      * Writes the file contents as a binary data stream to the provided DataWriter.
      * @param writer The data writer to write the data to.
      * @param progressBar The progress bar to update, if there is one.

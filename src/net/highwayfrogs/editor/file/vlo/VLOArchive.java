@@ -2,9 +2,7 @@ package net.highwayfrogs.editor.file.vlo;
 
 import javafx.scene.image.Image;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
@@ -12,7 +10,6 @@ import net.highwayfrogs.editor.games.sony.shared.ui.file.VLOController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -183,15 +180,6 @@ public class VLOArchive extends SCSharedGameFile {
     public VLOController makeEditorUI() {
         return loadEditor(getGameInstance(), "edit-file-vlo", new VLOController(getGameInstance()), this);
     }
-
-    @Override
-    @SneakyThrows
-    public void exportAlternateFormat() {
-        ImageIO.write(makeVRAMImage(), "png", new File(FrogLordApplication.getWorkingDirectory(), FileUtils.stripExtension(getFileDisplayName()) + ".png"));
-        System.out.println("Exported VRAM Image.");
-    }
-
-
 
     @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {

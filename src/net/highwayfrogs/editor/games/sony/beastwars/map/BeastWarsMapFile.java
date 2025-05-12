@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.games.sony.beastwars.map;
 
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -12,6 +14,7 @@ import net.highwayfrogs.editor.games.sony.beastwars.map.mesh.BeastWarsMapVertex;
 import net.highwayfrogs.editor.games.sony.beastwars.ui.BeastWarsMapMeshController;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
+import net.highwayfrogs.editor.games.sony.shared.utils.DynamicMeshObjExporter;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
@@ -441,8 +444,13 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
     }
 
     @Override
-    public void exportAlternateFormat() {
-        BeastWarsMapObjConverter.exportMapToObj(this);
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        super.setupRightClickMenuItems(contextMenu);
+
+        MenuItem exportAsObjFile = new MenuItem("Export as .obj file.");
+        contextMenu.getItems().add(exportAsObjFile);
+        exportAsObjFile.setOnAction(event ->
+                DynamicMeshObjExporter.askUserToMeshToObj(getGameInstance(), getLogger(), new BeastWarsMapMesh(this), FileUtils.stripExtension(getFileDisplayName()), true));
     }
 
     /**

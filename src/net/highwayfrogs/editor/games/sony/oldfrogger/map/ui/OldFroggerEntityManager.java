@@ -90,7 +90,7 @@ public class OldFroggerEntityManager extends OldFroggerMapListManager<OldFrogger
             }
 
             // Update MeshView.
-            MRModelMesh modelMesh = this.meshCache.computeIfAbsent(model, MRModel::createMesh);
+            MRModelMesh modelMesh = this.meshCache.computeIfAbsent(model, MRModel::createMeshWithDefaultAnimation);
             modelMesh.addView(entityMesh, getController().getMeshTracker(), (getSelectedValue() == entity), true);
             entityMesh.setCullFace(CullFace.BACK);
             return;

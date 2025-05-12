@@ -71,7 +71,6 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
             getLogger().info("Exported MWI.");
         });
 
-        addMenuItem(this.menuBarFile, "Export File (Alternate Format)", () -> getSelectedFileEntry().exportAlternateFormat()); // Ctrl + E
         addMenuItem(this.menuBarFile, "Export All Textures", this::exportBulkTextures);
 
         addMenuItem(this.menuBarEdit, "Open Hash Playground", () -> HashPlaygroundController.openEditor(getGameInstance()));

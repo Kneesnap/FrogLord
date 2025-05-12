@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.games.sony.shared.mof2;
 
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
@@ -67,12 +69,6 @@ public class MRModel extends SCSharedGameFile {
         super(instance);
         this.theme = theme;
         this.completeCounterpart = lastCompleteMOF;
-    }
-
-    @Override
-    @SneakyThrows
-    public void exportAlternateFormat() {
-        // Nothing?
     }
 
     @Override
@@ -153,6 +149,16 @@ public class MRModel extends SCSharedGameFile {
     }
 
     @Override
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        super.setupRightClickMenuItems(contextMenu);
+
+        MenuItem exportAsObjFile = new MenuItem("Export as .obj file.");
+        contextMenu.getItems().add(exportAsObjFile);
+        exportAsObjFile.setOnAction(event ->
+                DynamicMeshObjExporter.askUserToMeshToObj(getGameInstance(), getLogger(), createMeshWithDefaultAnimation(), FileUtils.stripExtension(getFileDisplayName()), true));
+    }
+
+    @Override
     public void handleWadEdit(WADFile parent) {
         showEditor3D();
     }
@@ -186,12 +192,12 @@ public class MRModel extends SCSharedGameFile {
     @SneakyThrows
     public void exportObject(File folder, VLOArchive vlo) {
         if (getModelType() == MRModelType.DUMMY) {
-            System.out.println("Cannot export dummy MOF.");
+            getLogger().warning("Cannot export dummy MOF.");
             return;
         }
 
         setVloFile(vlo);
-        DynamicMeshObjExporter.exportMeshToObj(getLogger(), createMesh(), folder, FileUtils.stripExtension(getFileDisplayName()), true);
+        DynamicMeshObjExporter.exportMeshToObj(getLogger(), createMeshWithDefaultAnimation(), folder, FileUtils.stripExtension(getFileDisplayName()), true);
 
         // Export mm3d too.
         File saveTo = new File(folder, FileUtils.stripExtension(getFileDisplayName()) + ".mm3d");

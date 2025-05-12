@@ -5,7 +5,6 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
@@ -20,6 +19,7 @@ import net.highwayfrogs.editor.games.sony.shared.pp20.PP20Packer.PackResult;
 import net.highwayfrogs.editor.games.sony.shared.pp20.PP20Unpacker;
 import net.highwayfrogs.editor.games.sony.shared.pp20.PP20Unpacker.UnpackResult;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.WADController;
+import net.highwayfrogs.editor.games.sony.shared.utils.DynamicMeshObjExporter;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
@@ -158,23 +158,6 @@ public class WADFile extends SCSharedGameFile {
     }
 
     @Override
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    public void exportAlternateFormat() {
-        getArchive().promptVLOSelection(getFroggerMapTheme(), vlo -> {
-            File folder = new File(FrogLordApplication.getWorkingDirectory(), FileUtils.stripExtension(getFileDisplayName()).toLowerCase(Locale.ROOT) + File.separator);
-            if (!folder.exists())
-                folder.mkdirs();
-
-            setVLO(vlo);
-            for (WADEntry wadEntry : this.files) {
-                SCGameFile<?> file = wadEntry.getFile();
-                if (file instanceof MRModel)
-                    ((MRModel) file).exportObject(folder, vlo);
-            }
-        }, true);
-    }
-
-    @Override
     public void setupRightClickMenuItems(ContextMenu contextMenu) {
         super.setupRightClickMenuItems(contextMenu);
 
@@ -185,6 +168,23 @@ public class WADFile extends SCSharedGameFile {
         MenuItem exportFiles = new MenuItem("Export Files");
         contextMenu.getItems().add(exportFiles);
         exportFiles.setOnAction(event -> exportAllFiles(false));
+
+        MenuItem exportAsObjFiles = new MenuItem("Export 3D models in .obj format.");
+        contextMenu.getItems().add(exportAsObjFiles);
+        exportAsObjFiles.setOnAction(event -> {
+            File outputBaseDir = FileUtils.askUserToSelectFolder(getGameInstance(), DynamicMeshObjExporter.OBJ_EXPORT_FOLDER_PATH);
+            if (outputBaseDir == null)
+                return;
+
+            File outputDir = new File(outputBaseDir, FileUtils.stripExtension(getFileDisplayName()).toLowerCase(Locale.ROOT));
+            FileUtils.makeDirectory(outputDir);
+
+            for (WADEntry wadEntry : this.files) {
+                SCGameFile<?> file = wadEntry.getFile();
+                if (file instanceof MRModel)
+                    ((MRModel) file).exportObject(outputDir, ((MRModel) file).getVloFile());
+            }
+        });
     }
 
     /**

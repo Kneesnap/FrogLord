@@ -165,18 +165,12 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
             MWIResourceEntry resourceEntry = wadEntry.getFileEntry();
 
             File save = FileUtils.getNonExistantFile(new File(selectedFolder, resourceEntry.getDisplayName()));
-            getLogger().info("Saving: " + resourceEntry.getDisplayName());
+            getLogger().info("Saving: %s", resourceEntry.getDisplayName());
 
             DataWriter writer = new DataWriter(new FileReceiver(save));
             wadEntry.getFile().save(writer);
             writer.closeReceiver();
         }
-    }
-
-    @FXML
-    @SneakyThrows
-    private void exportAlternate(ActionEvent event) {
-        this.selectedEntry.getFile().exportAlternateFormat();
     }
 
     @FXML

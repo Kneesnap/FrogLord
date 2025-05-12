@@ -50,7 +50,6 @@ import java.util.logging.*;
  *  -> Are there any xars with flipbook animations for example? Stuff we've taken for granted should be challenged.
  *  -> Add TRUE interpolation support. Eg: Don't just add MediEvil interpolation, add an option to smooth animations.
  * TODO: Rewrite handleWadEdit() and related wad functionality & UI.
- * TODO: Remove exportAlternativeFormat() features.
  * TODO: Is it finally time to delete the GameObject abstract class?
  */
 public class FrogLordApplication extends Application {
