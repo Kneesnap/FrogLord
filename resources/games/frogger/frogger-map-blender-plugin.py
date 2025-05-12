@@ -231,6 +231,15 @@ def convert_grid_flags(blender_grid_flags):
     else:
         return blender_grid_flags
 
+def set_object_mode(operator, mode, log_if_fail):
+    if bpy.context.active_object is not None:
+        old_mode = bpy.context.active_object.mode
+        bpy.ops.object.mode_set(mode = mode)
+        return old_mode
+    elif log_if_fail:
+        operator.report({"WARNING"}, "You did not have any object actively selected. If an error occurs, or the mesh import/export does not have the expected coloring, please select an object (such as the default cube) in the scene and try again.")
+        return 'OBJECT'
+
 def load_ffs_file(operator, context, filepath):
     is_cycles_enabled, is_cycles_loaded = addon_utils.check('cycles')
     if not is_cycles_loaded:
@@ -245,8 +254,7 @@ def load_ffs_file(operator, context, filepath):
     # Exit edit mode.
     # Edit mode prevents editing vertex color data.
     # Reference: https://blender.stackexchange.com/questions/122202/changing-vertex-colors-through-python
-    old_mode = bpy.context.active_object.mode if bpy.context.active_object else 'OBJECT'
-    bpy.ops.object.mode_set(mode = 'OBJECT')
+    old_mode = set_object_mode(operator, 'OBJECT', True)
 
     # Delete old data. This prevented crashes previously, but I've maybe fixed the crash bug.
     # It will remain here until we're confident the crash bug is fixed.
@@ -479,8 +487,8 @@ def load_ffs_file(operator, context, filepath):
         bpy.ops.outliner.orphans_purge()
 
     # Restore the previous mode before we replaced it.
-    bpy.ops.object.mode_set(mode=old_mode)
-
+    set_object_mode(operator, old_mode, False)
+    operator.report({"INFO"}, "Successfully imported the map!")
     return {'FINISHED'}
 
 def save_ffs_file(operator, context, filepath):
@@ -497,25 +505,24 @@ def save_ffs_file(operator, context, filepath):
     # Exit edit mode.
     # Edit mode prevents accessing vertex color data.
     # Reference: https://blender.stackexchange.com/questions/122202/changing-vertex-colors-through-python
-    old_mode = bpy.context.active_object.mode if bpy.context.active_object else 'OBJECT'
-    bpy.ops.object.mode_set(mode = 'OBJECT')
+    old_mode = set_object_mode(operator, 'OBJECT', True)
 
     mesh = bpy.data.meshes[LEVEL_MESH_NAME]
     obj = bpy.data.objects[LEVEL_OBJECT_NAME]
     if mesh != obj.data:
         operator.report({"ERROR"}, "The object named '%s' MUST be attached to the mesh named '%s'!" % (LEVEL_OBJECT_NAME, LEVEL_MESH_NAME))
-        bpy.ops.object.mode_set(mode = old_mode)
+        set_object_mode(operator, old_mode, False)
         return {'CANCELLED'}
 
     uv_layer = mesh.uv_layers.get(UV_LAYER_NAME)
     color_layer = mesh.vertex_colors.get(VERTEX_COLOR_LAYER_NAME)
     if uv_layer is None:
         operator.report({"ERROR"}, "Could not find mesh data layer named '%s'." % UV_LAYER_NAME)
-        bpy.ops.object.mode_set(mode = old_mode)
+        set_object_mode(operator, old_mode, False)
         return {'CANCELLED'}
     if color_layer is None:
         operator.report({"ERROR"}, "Could not find mesh data layer named '%s'." % VERTEX_COLOR_LAYER_NAME)
-        bpy.ops.object.mode_set(mode = old_mode)
+        set_object_mode(operator, old_mode, False)
         return {'CANCELLED'}
 
     bm = bmesh.new()
@@ -526,12 +533,12 @@ def save_ffs_file(operator, context, filepath):
     grid_flag_layer = bm.faces.layers.int.get(GRID_FLAG_LAYER_NAME)
     if texture_flag_layer is None:
         operator.report({"ERROR"}, "Could not find bmesh data layer named '%s'." % TEXTURE_FLAG_LAYER_NAME)
-        bpy.ops.object.mode_set(mode = old_mode)
+        set_object_mode(operator, old_mode, False)
         bm.free()
         return {'CANCELLED'}
     if grid_flag_layer is None:
         operator.report({"ERROR"}, "Could not find bmesh data layer named '%s'." % GRID_FLAG_LAYER_NAME)
-        bpy.ops.object.mode_set(mode = old_mode)
+        set_object_mode(operator, old_mode, False)
         bm.free()
         return {'CANCELLED'}
 
@@ -646,7 +653,7 @@ def save_ffs_file(operator, context, filepath):
     writer.close()
     bm.free()
 
-    bpy.ops.object.mode_set(mode = old_mode) # Restore previous mode.
+    set_object_mode(operator, old_mode, False) # Restore previous mode.
     operator.report({"INFO"}, "Successfully exported the map!")
     return {'FINISHED'}
 
