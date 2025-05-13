@@ -203,7 +203,7 @@ public class FroggerUIMapAnimationManager extends FroggerBakedMapListManager<Fro
             boolean frameCountChanged = Math.abs((this.animationPreviewFrameSlider.getMax() + 1) - newFrameCount) > .01;
             this.animationPreviewFrameSlider.setDisable(this.animationPreviewRunning || (newFrameCount == 0));
             if (frameCountChanged && newFrameCount > 0) {
-                this.animationPreviewFrameSlider.setMax(newFrameCount - 1);
+                this.animationPreviewFrameSlider.setMax(Math.max(1, newFrameCount - 1));
                 this.animationPreviewFrameSlider.setValue(0);
                 this.animationPreviewFrameSlider.setMajorTickUnit(newFrameCount / 4D);
             }

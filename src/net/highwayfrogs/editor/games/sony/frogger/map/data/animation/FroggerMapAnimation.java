@@ -447,12 +447,16 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
                     this.textureIds.set(tempIndex, (short) newIndex);
                     view.setImage(FXUtils.toFXImage(newImage.toBufferedImage(VLOArchive.ICON_EXPORT), false)); // Update the texture displayed in the UI.
                     manager.updatePreviewImage(); // Update the animation preview.
+                    if (tempIndex == 0) // Refresh the texture displayed in the animation list.
+                        manager.refreshList();
                 }));
 
                 editor.setupSecondNode(new Button("Remove " + i + (image != null ? " (" + image.getLocalImageID() + "/" + image.getTextureId() + ")" : "")), false).setOnAction(evt -> {
                     this.textureIds.remove(tempIndex);
                     manager.updatePreviewUI(); // Update the preview UI, since the texture frame count may have changed.
                     manager.updateEditor(); // Refresh the editor to remove the animation.
+                    if (tempIndex == 0) // Refresh the texture displayed in the animation list.
+                        manager.refreshList();
                 });
 
                 editor.addRow(25);
@@ -468,6 +472,8 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
                 this.textureIds.add((short) newIndex);
                 manager.updatePreviewUI(); // Update the preview UI, since the texture frame count may have changed.
                 manager.updateEditor(); // Refresh the editor to show the new texture.
+                if (this.textureIds.size() == 1) // Refresh the texture displayed in the animation list.
+                    manager.refreshList();
             })).setDisable(vlo == null);
         } else if (this.type.hasUVAnimation()) { // Allow changing the texture of all polygons affected by a UV animation.
             editor.addBoldLabel("UV Texture:");
