@@ -10,6 +10,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
@@ -305,6 +306,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
             throw new IllegalArgumentException("Shading cannot be enabled when no polygon is provided, since the polygon is where the shading data is obtained from.");
 
         // Find the base image used to preview.
+        GameImage gameImage = null;
         if (this.type.hasTextureAnimation() && this.textureIds.size() > 0 && this.framesPerTexture > 0) {
             TextureRemapArray remap = this.mapFile.getTextureRemap();
 
@@ -316,13 +318,13 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
             // Find image by the ID.
             if (remappedTextureId != null) {
                 VLOArchive vlo = this.mapFile.getVloFile();
-                textureSource = vlo != null ? vlo.getImageByTextureId(remappedTextureId) : null;
+                textureSource = gameImage = vlo != null ? vlo.getImageByTextureId(remappedTextureId) : null;
                 if (textureSource == null) // If it wasn't found in the
-                    textureSource = getArchive().getImageByTextureId(remappedTextureId);
+                    textureSource = gameImage = getArchive().getImageByTextureId(remappedTextureId);
             }
         } else if (this.type.hasUVAnimation()) {
             if (textureSource == null && this.targetPolygons.size() > 0) {
-                textureSource = this.targetPolygons.stream()
+                textureSource = gameImage = this.targetPolygons.stream()
                         .map(testPolygon -> testPolygon.getPolygon() != null ? testPolygon.getPolygon().getTexture() : null)
                         .filter(Objects::nonNull)
                         .findFirst().orElse(null);
@@ -376,7 +378,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
         if (shadingEnabled)
             resultImage = polygon.createPolygonShadeDefinition(null, true, null, -1).makeImage(resultImage, null);
 
-        return resultImage;
+        return gameImage != null && resultImage != null ? ImageWorkHorse.trimEdges(gameImage, resultImage) : resultImage;
     }
 
     /**
