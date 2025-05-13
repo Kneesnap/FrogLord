@@ -1,10 +1,7 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.packets;
 
-import javafx.scene.control.Alert.AlertType;
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.FroggerMapGroup;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
@@ -15,9 +12,10 @@ import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerU
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.DataUtils;
-import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.List;
 import java.util.logging.Level;
@@ -123,8 +121,9 @@ public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
 
         // Warn if about to save a map which will have rendering issues in-game.
         if (this.groupZCount > MAX_SAFE_GROUP_Z_COUNT)
-            FXUtils.makePopUp(getParentFile().getFileDisplayName() + " will have rendering issues in-game due to having a groupZCount of " + this.groupZCount
-                    + ".\nTo fix the issues, reduce it to " + MAX_SAFE_GROUP_Z_COUNT + ".", AlertType.WARNING);
+            getParentFile().getGameInstance().showWarning(getLogger(),
+                    "%s will have rendering issues in-game due to having a groupZCount of %d.\nTo fix the issues, reduce it to %d.",
+                    getParentFile().getFileDisplayName(), this.groupZCount, MAX_SAFE_GROUP_Z_COUNT);
 
         // Save group header.
         this.basePoint.saveWithPadding(writer);

@@ -198,7 +198,7 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
 
     @FXML
     private void makeNewMap(ActionEvent event) {
-        InputMenu.promptInput(getGameInstance(), "Please enter the grid dimensions for the cleared map.", "5,5", newText -> {
+        InputMenu.promptInput(getGameInstance(), "Please enter the grid dimensions for the new map.", "5,5", newText -> {
             String[] split = newText.split(",");
             if (split.length != 2) {
                 FXUtils.makePopUp("'" + newText + "' was invalid.\nPlease enter two numbers separated by a comma.", AlertType.ERROR);

@@ -11,7 +11,7 @@ import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
- * This holds data not present in the code, for the entity: vol_platform2.
+ * This holds data represented as 'VOL_TRIGGERED_PLATFORM', for the entity: vol_platform2.
  * Created by Kneesnap on 11/27/2018.
  */
 @Getter
@@ -40,6 +40,6 @@ public class FroggerEntityScriptDataPlatform2 extends FroggerEntityScriptData {
     @Override
     public void setupEditor(GUIEditorGrid editor, FroggerUIMapEntityManager manager) {
         editor.addCheckBox("Enabled By Default?", this.enabledByDefault, newEnabledByDefault -> this.enabledByDefault = newEnabledByDefault)
-                .setTooltip(FXUtils.createTooltip("The 'No Movement' flag should be ticked if this checkbox is not ticked."));
+                .setTooltip(FXUtils.createTooltip("This overrides the 'No Movement' flag, BUT ONLY when the entity is targetted by a color trigger entity."));
     }
 }

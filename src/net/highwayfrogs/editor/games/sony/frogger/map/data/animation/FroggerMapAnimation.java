@@ -9,10 +9,8 @@ import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
@@ -26,6 +24,8 @@ import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.MathUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
@@ -435,7 +435,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
                 view.setFitWidth(20);
                 view.setFitHeight(20);
 
-                view.setOnMouseClicked(evt -> vlo.promptImageSelection(newImage -> {
+                view.setOnMouseClicked(evt -> remap.askUserToSelectImage(vlo, false, newImage -> {
                     int newIndex = remap.getRemapIndex(newImage.getTextureId());
                     if (newIndex < 0) {
                         FXUtils.makePopUp("The selected image is not part of the map's texture remap! (" + newImage.getTextureId() + ")", AlertType.ERROR);
@@ -445,7 +445,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
                     this.textureIds.set(tempIndex, (short) newIndex);
                     view.setImage(FXUtils.toFXImage(newImage.toBufferedImage(VLOArchive.ICON_EXPORT), false)); // Update the texture displayed in the UI.
                     manager.updatePreviewImage(); // Update the animation preview.
-                }, false));
+                }));
 
                 editor.setupSecondNode(new Button("Remove " + i + (image != null ? " (" + image.getLocalImageID() + "/" + image.getTextureId() + ")" : "")), false).setOnAction(evt -> {
                     this.textureIds.remove(tempIndex);
@@ -457,7 +457,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
             }
 
             editor.addButton("Add Texture", () -> {
-                vlo.promptImageSelection(newImage -> {
+                vlo.promptImageSelection(newImage -> { // TODO: ?
                     int newIndex = remap.getRemapIndex(newImage.getTextureId());
                     if (newIndex < 0) {
                         FXUtils.makePopUp("The selected image is not part of the map's texture remap! (" + newImage.getTextureId() + ")", AlertType.ERROR);
@@ -472,7 +472,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
         } else if (this.type.hasUVAnimation()) { // Allow changing the texture of all polygons affected by a UV animation.
             editor.addBoldLabel("UV Texture:");
             editor.addButton("Change Texture", () -> {
-                vlo.promptImageSelection(newImage -> {
+                vlo.promptImageSelection(newImage -> { // TODO: !
                     int newIndex = remap.getRemapIndex(newImage.getTextureId());
                     if (newIndex < 0) {
                         FXUtils.makePopUp("The selected image is not part of the map's texture remap! (" + newImage.getTextureId() + ")", AlertType.ERROR);

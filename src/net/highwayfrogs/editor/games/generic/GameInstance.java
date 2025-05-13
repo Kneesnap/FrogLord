@@ -12,7 +12,9 @@ import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
 import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.MainGameInstanceLogger;
 
 import java.io.File;
@@ -220,5 +222,27 @@ public abstract class GameInstance implements IGameInstance {
      */
     protected void onConfigLoad(Config configObj) {
         // Does nothing by default.
+    }
+
+    /**
+     * Shows a warning to the user in the form of a popup, while also logging it to the provided logger.
+     * @param logger the logger to log the message to
+     * @param messageTemplate the message format string template to log
+     * @param arguments the arguments to log with
+     */
+    public void showWarning(ILogger logger, String messageTemplate, Object... arguments) {
+        boolean showLoggerInfo = true;
+        if (logger == null) {
+            showLoggerInfo = false;
+            logger = getLogger();
+        }
+
+        if (messageTemplate == null)
+            throw new NullPointerException("messageTemplate");
+
+        String formattedMessage = StringUtils.formatStringSafely(messageTemplate, arguments);
+
+        logger.warning(formattedMessage);
+        FXUtils.makePopUp((showLoggerInfo ? "[" + logger.getName() + "]:\n" : "") + formattedMessage, AlertType.WARNING);
     }
 }
