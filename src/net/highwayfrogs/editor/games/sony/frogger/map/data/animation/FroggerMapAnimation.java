@@ -456,46 +456,42 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
                 editor.addRow(25);
             }
 
-            editor.addButton("Add Texture", () -> {
-                vlo.promptImageSelection(newImage -> { // TODO: ?
-                    int newIndex = remap.getRemapIndex(newImage.getTextureId());
-                    if (newIndex < 0) {
-                        FXUtils.makePopUp("The selected image is not part of the map's texture remap! (" + newImage.getTextureId() + ")", AlertType.ERROR);
-                        return;
-                    }
+            editor.addButton("Add Texture", () -> remap.askUserToSelectImage(vlo, false, newImage -> {
+                int newIndex = remap.getRemapIndex(newImage.getTextureId());
+                if (newIndex < 0) {
+                    FXUtils.makePopUp("The selected image is not part of the map's texture remap! (" + newImage.getTextureId() + ")", AlertType.ERROR);
+                    return;
+                }
 
-                    this.textureIds.add((short) newIndex);
-                    manager.updatePreviewUI(); // Update the preview UI, since the texture frame count may have changed.
-                    manager.updateEditor(); // Refresh the editor to show the new texture.
-                }, false);
-            }).setDisable(vlo == null);
+                this.textureIds.add((short) newIndex);
+                manager.updatePreviewUI(); // Update the preview UI, since the texture frame count may have changed.
+                manager.updateEditor(); // Refresh the editor to show the new texture.
+            })).setDisable(vlo == null);
         } else if (this.type.hasUVAnimation()) { // Allow changing the texture of all polygons affected by a UV animation.
             editor.addBoldLabel("UV Texture:");
-            editor.addButton("Change Texture", () -> {
-                vlo.promptImageSelection(newImage -> { // TODO: !
-                    int newIndex = remap.getRemapIndex(newImage.getTextureId());
-                    if (newIndex < 0) {
-                        FXUtils.makePopUp("The selected image is not part of the map's texture remap! (" + newImage.getTextureId() + ")", AlertType.ERROR);
-                        return;
-                    }
+            editor.addButton("Change Texture", () -> remap.askUserToSelectImage(vlo, false, newImage -> {
+                int newIndex = remap.getRemapIndex(newImage.getTextureId());
+                if (newIndex < 0) {
+                    FXUtils.makePopUp("The selected image is not part of the map's texture remap! (" + newImage.getTextureId() + ")", AlertType.ERROR);
+                    return;
+                }
 
-                    manager.updatePreviewImage(); // Refresh 3D window.
+                manager.updatePreviewImage(); // Refresh 3D window.
 
-                    // Apply texture ID to all targetted polygons.
-                    FroggerMapMesh mapMesh = manager.getMesh();
-                    mapMesh.pushBatchOperations();
-                    mapMesh.getTextureAtlas().startBulkOperations();
-                    for (FroggerMapAnimationTargetPolygon targetPolygon : this.targetPolygons) {
-                        FroggerMapPolygon polygon = targetPolygon.getPolygon();
-                        if (polygon != null && polygon.getTextureId() != newIndex) {
-                            polygon.setTextureId((short) newIndex);
-                            mapMesh.getShadedTextureManager().updatePolygon(polygon);
-                        }
+                // Apply texture ID to all targetted polygons.
+                FroggerMapMesh mapMesh = manager.getMesh();
+                mapMesh.pushBatchOperations();
+                mapMesh.getTextureAtlas().startBulkOperations();
+                for (FroggerMapAnimationTargetPolygon targetPolygon : this.targetPolygons) {
+                    FroggerMapPolygon polygon = targetPolygon.getPolygon();
+                    if (polygon != null && polygon.getTextureId() != newIndex) {
+                        polygon.setTextureId((short) newIndex);
+                        mapMesh.getShadedTextureManager().updatePolygon(polygon);
                     }
-                    mapMesh.getTextureAtlas().endBulkOperations();
-                    mapMesh.pushBatchOperations();
-                }, false);
-            });
+                }
+                mapMesh.getTextureAtlas().endBulkOperations();
+                mapMesh.pushBatchOperations();
+            }));
         }
     }
 
