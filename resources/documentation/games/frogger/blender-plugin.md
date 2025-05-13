@@ -44,16 +44,20 @@ To import the map into Blender, navigate to `File > Import > Frogger Map (.ffs)`
 Navigate to the `.ffs` file exported earlier, and select it.  
 Blender may freeze during import due to shader compilation, so it is okay if it takes a little while to finish.  
 
+**Tutorial Video (Click to View):**  
+[![FrogLord Blender Tutorial Link](http://img.youtube.com/vi/5mniIS-sDQ4/0.jpg)](http://www.youtube.com/watch?v=5mniIS-sDQ4 "FrogLord Blender Tutorial")
+
+
 > [!NOTE]
 > If the map appears very dark, this is because the "Rendered" view includes scene lighting, and there is none by default.  
 > To fix this, switch to the "Material Preview" (the buttons to do this are at the top right of the viewport).
 
 ## Step 5) Making changes with Blender
 Now that the map file has been imported into Blender, it's time to start making changes to the level.  
-This guide does not cover how to use Blender to make changes to maps, but luckily there are many tutorials online for how to use Blender.  
+The following video guide is specific to using Blender for Frogger, explores how to properly use Blender.  
 
 > [!IMPORTANT]
-> Most of Blender's features are impossible to use with Frogger.  
+> Many of Blender's features are impossible to use with Frogger.  
 > Even something as ubiquitous as creating custom materials will not be compatible with Frogger.
 > This is actually a good thing, because it drastically reduces/simplifies what the user needs to understand to use Blender effectively for Frogger.  
 > Please read the following sections carefully.
