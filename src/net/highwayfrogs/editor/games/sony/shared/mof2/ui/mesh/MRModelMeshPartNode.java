@@ -116,6 +116,7 @@ public class MRModelMeshPartNode extends SCPolygonAdapterNode<MRMofPolygon> {
     public void updateAnimatedPolygons() {
         // Update texture animations.
         getMesh().pushBatchOperations();
+        this.lastVertexCacheAnimationTick = Integer.MAX_VALUE; // Because this forces an update, reset the cache.
         updateVertices();
 
         getMesh().getTextureAtlas().startBulkOperations();

@@ -120,13 +120,13 @@ public class MRModelMainUIManager extends MeshUIManager<MRModelMesh> {
             return;
 
         if (event.getCode() == KeyCode.LEFT) {
+            event.consume();
             getAnimationPlayer().applyPreviousAnimationTick();
             this.uiComponent.updateFrameText();
-            event.consume();
         } else if (event.getCode() == KeyCode.RIGHT) {
+            event.consume();
             getAnimationPlayer().applyNextAnimationTick();
             this.uiComponent.updateFrameText();
-            event.consume();
         }
     }
 
@@ -156,12 +156,20 @@ public class MRModelMainUIManager extends MeshUIManager<MRModelMesh> {
         if (!player.isAnimationPlaying())
             return;
 
-        if (!this.uiComponent.getRepeatCheckbox().isSelected() && player.getAnimationTick() + 1 >= this.uiComponent.getMaxFrame()) {
-            this.uiComponent.toggleAnimationPlayback();
-            return; // Reached end.
+        if (!this.uiComponent.getRepeatCheckbox().isSelected()) {
+            int maxFrame = this.uiComponent.getMaxFrame();
+            int normalizedTick = player.getAnimationTick() % maxFrame;
+            if (normalizedTick < 0)
+                normalizedTick += maxFrame;
+
+            if (normalizedTick + 1 >= maxFrame) {
+                this.uiComponent.toggleAnimationPlayback();
+                return; // Reached end.
+            }
         }
 
         player.setAnimationTick(player.getAnimationTick() + task.getDeltaFrames());
+        this.uiComponent.updateFrameText();
     }
 
     /**
@@ -338,8 +346,6 @@ public class MRModelMainUIManager extends MeshUIManager<MRModelMesh> {
                 node.setDisable(newState); // Set the toggle state of nodes.
 
             player.setAnimationPlaying(newState);
-            player.setAnimationTick(0); // Start playing at frame zero, or reset back to frame zero.
-            updateFrameText();
         }
 
         private void setupMeshBasedUI() {

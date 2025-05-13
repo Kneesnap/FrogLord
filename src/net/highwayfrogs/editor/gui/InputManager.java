@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.system.math.Vector3f;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 
@@ -198,8 +199,7 @@ public class InputManager {
                 try {
                     handler.accept(this, evt);
                 } catch (Throwable th) {
-                    String errorMessage = "Failed to run KeyHandler " + handler + ".";
-                    getLogger().throwing("InputManager", "processKeyEvents", new RuntimeException(errorMessage, th));
+                    Utils.handleError(getLogger(), th, false, "Failed to run KeyHandler %s.", handler);
                 }
 
                 if (evt.isConsumed()) {

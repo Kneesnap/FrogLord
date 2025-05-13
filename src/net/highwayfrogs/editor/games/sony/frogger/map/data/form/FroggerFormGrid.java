@@ -207,7 +207,8 @@ public class FroggerFormGrid extends SCGameData<FroggerGameInstance> {
             return globalFormGrid;
         } else {
             // This isn't the same as the one seen in the form grid.
-            getLogger().warning("The form grid does not match the one found in the form book. This should work fine, but is not expected. (Unless this is a modified version of the game.)");
+            if (!getMapFile().isExtremelyEarlyMapFormat())
+                getLogger().warning("The form grid does not match the one found in the form book. This should work fine, but is not expected. (Unless this is a modified version of the game.)");
             return this;
         }
     }

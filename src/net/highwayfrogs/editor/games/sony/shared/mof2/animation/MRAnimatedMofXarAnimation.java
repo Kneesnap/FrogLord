@@ -197,7 +197,11 @@ public class MRAnimatedMofXarAnimation extends SCSharedGameData {
         MRModel model = part.getParentMof().getModel();
         boolean frameStartAtZero = model.isAnimatedMof() && model.getAnimatedMof().isStartAtFrameZero();
         // This shouldn't be negative, but is for GEN_CHECKPOINT_X.XAR in Frogger build 4.
-        int actualCel = Math.max(0, this.celNumbers.get(frame % this.celNumbers.size()) - (frameStartAtZero ? 0 : 1));
+        int celNumberIndex = (frame % this.celNumbers.size());
+        if (celNumberIndex < 0)
+            celNumberIndex += this.celNumbers.size();
+
+        int actualCel = Math.max(0, this.celNumbers.get(celNumberIndex) - (frameStartAtZero ? 0 : 1));
         int partCount = this.staticMofPartCount;
         return this.transformIds.get((actualCel * partCount) + part.getPartID());
     }
