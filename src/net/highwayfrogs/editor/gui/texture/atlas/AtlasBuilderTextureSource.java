@@ -49,6 +49,7 @@ public class AtlasBuilderTextureSource implements ITextureSource {
     private BufferedImage cachedImage; // Caching the image allows for faster generation.
     private WritableImage cachedFxImage; // Caching the image allows for faster generation.
     @Setter private DynamicMesh mesh;
+    private boolean currentlyBuildingTexture;
 
     private static final int THREAD_COUNT = Math.max(1, Runtime.getRuntime().availableProcessors() - 2);
     private static final ExecutorService ATLAS_BUILDER_THREAD_POOL = Executors.newWorkStealingPool(THREAD_COUNT);
@@ -70,6 +71,9 @@ public class AtlasBuilderTextureSource implements ITextureSource {
      * Release resources currently held.
      */
     public void releaseResources() {
+        if (this.currentlyBuildingTexture)
+            throw new RuntimeException("Cannot release resources while the texture is currently building.");
+
         this.imageChangeListeners.clear();
         this.updatedNodes.clear();
         this.asyncWriteTasks.forEach(Task::cancel);
@@ -115,6 +119,11 @@ public class AtlasBuilderTextureSource implements ITextureSource {
     }
 
     private void writeImageAsyncAndWait(boolean writeOnlyChangedImages) {
+        if (this.currentlyBuildingTexture)
+            throw new IllegalStateException("Cannot build texture because it seems to already be building?!");
+
+        this.currentlyBuildingTexture = true;
+
         Graphics2D graphics = null;
         if (this.enableAwtImage) {
             graphics = this.cachedImage.createGraphics();
@@ -130,21 +139,25 @@ public class AtlasBuilderTextureSource implements ITextureSource {
         // Create and submit tasks.
         this.atlas.pushDisableUpdates();
 
-        if (SINGLE_THREADED_DEBUGGING_ENABLED) {
-            AsyncTaskWriteTexture singleTask = new AsyncTaskWriteTexture(this.writeTaskState);
-            singleTask.call();
-        } else {
-            while (THREAD_COUNT > this.asyncWriteTasks.size())
-                this.asyncWriteTasks.add(new AsyncTaskWriteTexture(this.writeTaskState));
+        try {
+            if (SINGLE_THREADED_DEBUGGING_ENABLED) {
+                AsyncTaskWriteTexture singleTask = new AsyncTaskWriteTexture(this.writeTaskState);
+                singleTask.call();
+            } else {
+                while (THREAD_COUNT > this.asyncWriteTasks.size())
+                    this.asyncWriteTasks.add(new AsyncTaskWriteTexture(this.writeTaskState));
 
-            // Submit work.
-            for (int i = 0; i < this.asyncWriteTasks.size(); i++)
-                ATLAS_BUILDER_THREAD_POOL.submit((Callable<?>) this.asyncWriteTasks.get(i));
+                // Submit work.
+                for (int i = 0; i < this.asyncWriteTasks.size(); i++)
+                    ATLAS_BUILDER_THREAD_POOL.submit((Callable<?>) this.asyncWriteTasks.get(i));
+            }
+
+            // Write textures to the atlas on the main thread.
+            this.writeTaskState.writeTextures();
+        } finally {
+            this.currentlyBuildingTexture = false;
+            this.atlas.popDisableUpdates();
         }
-
-        // Write textures to the atlas on the main thread.
-        this.writeTaskState.writeTextures();
-        this.atlas.popDisableUpdates();
 
         // NOTE:
         // We tried to build a large BufferedImage then write it to the WritableImage, but that was significantly slower than just writing directly to the FX image.
@@ -220,7 +233,8 @@ public class AtlasBuilderTextureSource implements ITextureSource {
 
     @Override
     public void fireChangeEvent(BufferedImage newImage) {
-        this.fireChangeEvent0(newImage);
+        if (!this.currentlyBuildingTexture)
+            this.fireChangeEvent0(newImage);
     }
 
     @Getter

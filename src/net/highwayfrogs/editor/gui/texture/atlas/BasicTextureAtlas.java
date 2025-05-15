@@ -156,6 +156,9 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
     }
 
     private void onTextureChange(Texture texture, BufferedImage oldImage, BufferedImage newImage, boolean didOldImageHaveAnyTransparency) {
+        if (getTextureSource().isCurrentlyBuildingTexture())
+            return; // Ignore texture changes while atlas building occurs.
+
         ensureNotDisposed();
         if (oldImage == null || (oldImage.getWidth() != newImage.getWidth()) || (oldImage.getHeight() != newImage.getHeight()))
             this.markTextureSizesDirty(false);
