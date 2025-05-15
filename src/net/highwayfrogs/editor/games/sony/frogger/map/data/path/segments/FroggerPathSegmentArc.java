@@ -216,13 +216,20 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
 
         // Add normal editor.
         FroggerPathSegmentArcOrientation orientation = FroggerPathSegmentArcOrientation.getDirection(this.normal);
-        if (orientation != null && orientation != FroggerPathSegmentArcOrientation.CUSTOM) { // If the orientation is recognized, .
+        if (orientation != null && orientation != FroggerPathSegmentArcOrientation.CUSTOM) { // If the orientation is recognized, show the pre-defined orientations.
             editor.addEnumSelector("Circle Orientation", orientation, FroggerPathSegmentArcOrientation.values(), false, newOrientation -> {
                 newOrientation.applyToVector(this.normal);
                 onUpdate(pathPreview);
+                if (newOrientation == FroggerPathSegmentArcOrientation.CUSTOM)
+                    pathPreview.getPathManager().updateEditor(); // Show the normal field.
             }).setConverter(new AbstractStringConverter<>(FroggerPathSegmentArcOrientation::getDisplayName));
         } else {
-            editor.addSVector("Normal:", 12, getNormal(), () -> onUpdate(pathPreview));
+            editor.addSVector("Normal:", 12, getNormal(), () -> {
+                onUpdate(pathPreview);
+                FroggerPathSegmentArcOrientation newOrientation = FroggerPathSegmentArcOrientation.getDirection(this.normal);
+                if (newOrientation != null && newOrientation != FroggerPathSegmentArcOrientation.CUSTOM)
+                    pathPreview.getPathManager().updateEditor(); // Show the selection box.
+            });
         }
 
         // Maps such as QB.MAP show Mappy was capable of making the angle go beyond 1.0, so a textbox is necessary to support this.
