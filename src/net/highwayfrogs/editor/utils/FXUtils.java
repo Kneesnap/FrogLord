@@ -581,6 +581,17 @@ public class FXUtils {
         }
     }
 
+    /**
+     * Opens a page in the user's web browser.
+     * @param url the url to open
+     */
+    public static void openPageInWebBrowser(String url) {
+        if (url == null)
+            throw new NullPointerException("url");
+
+        FrogLordApplication.getApplication().getHostServices().showDocument(url);
+    }
+
     private static void setupCacheTimerTask() {
         Utils.getAsyncTaskTimer().scheduleAtFixedRate(Utils.createTimerTask(() -> {
             synchronized (imageCacheMap) {
