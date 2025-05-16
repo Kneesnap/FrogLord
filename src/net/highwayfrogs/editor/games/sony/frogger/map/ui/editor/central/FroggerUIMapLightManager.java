@@ -23,9 +23,6 @@ import java.util.List;
  * TODO: For cone preview, we could just draw lines to the cone edges instead of doing a full cone inside.
  * TODO: For changing the direction of a light, a rotation gizmo is ideal.
  * TODO: We should show the lights in 3D space too? Or at least the ones with 3D data. (3D Preview! I like making a billboard sprite light icon.)
- * TODO: Only the first 3 parallel + point lights can be handled by MRCalculateCustomInstanceLights (entities).
- * TODO: Allow changing the frog custom light here.
- * TODO: Only allow adding a single AMBIENT LIGHT (And added lights should be placed before the final ambient light.
  * Created by Kneesnap on 6/1/2024.
  */
 @Getter
@@ -77,6 +74,16 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
     }
 
     @Override
+    protected boolean tryAddValue(FroggerMapLight light) {
+        return light != null && getMap().getLightPacket().addLight(light);
+    }
+
+    @Override
+    protected boolean tryRemoveValue(FroggerMapLight light) {
+        return light != null && getMap().getLightPacket().removeLight(light);
+    }
+
+    @Override
     protected FroggerMapLightPreview setupDisplay(FroggerMapLight light) {
         FroggerMapLightPreview preview = new FroggerMapLightPreview(this, light);
         preview.updateLight();
@@ -106,7 +113,15 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
 
     @Override
     protected FroggerMapLight createNewValue() {
-        return new FroggerMapLight(getMap(), MRLightType.AMBIENT);
+        // Ensure the type of light created is capable of being added to the map.
+        MRLightType lightType = MRLightType.AMBIENT;
+        if (getMap().getLightPacket().hasAmbientLight()) {
+            lightType = MRLightType.PARALLEL;
+            if (getMap().getLightPacket().hasMaxNumberOfParallelLights())
+                lightType = MRLightType.POINT;
+        }
+
+        return new FroggerMapLight(getMap(), lightType);
     }
 
     @Override

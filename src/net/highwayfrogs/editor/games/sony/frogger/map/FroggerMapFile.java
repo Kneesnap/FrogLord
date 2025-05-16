@@ -252,7 +252,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
         this.zonePacket.getZones().clear();
         this.formPacket.clear();
         this.entityPacket.clear();
-        this.lightPacket.getLights().clear();
+        this.lightPacket.clear();
         this.vertexPacket.getVertices().clear();
         this.animationPacket.getAnimations().clear();
         this.polygonPacket.clearPolygons();
@@ -312,11 +312,11 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
         FroggerMapLight light1 = new FroggerMapLight(this, MRLightType.PARALLEL);
         light1.setColor(ColorUtils.toBGR(Color.WHITE));
         light1.getDirection().setValues(-140.375F, 208.375F, 48.125F);
-        this.lightPacket.getLights().add(light1);
+        this.lightPacket.addLight(light1);
 
         FroggerMapLight light2 = new FroggerMapLight(this, MRLightType.AMBIENT);
         light2.setColor(ColorUtils.toBGR(ColorUtils.fromRGB(0x494949)));
-        this.lightPacket.getLights().add(light2);
+        this.lightPacket.addLight(light2);
 
         // Setup Group:
         this.groupPacket.generateMapGroups(ProblemResponse.CREATE_POPUP, true);
