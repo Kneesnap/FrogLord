@@ -177,6 +177,13 @@ public abstract class Texture {
     }
 
     /**
+     * Called to generate an image to use as the cached image.
+     */
+    protected BufferedImage makeImageForCache() {
+        return this.textureSource.makeImage();
+    }
+
+    /**
      * Replaces the cached image, generating the image from the source.
      */
     protected final void updateCachedImage() {
@@ -192,7 +199,7 @@ public abstract class Texture {
         this.cachedImageInvalid = false;
 
         if (newImage == null)
-            newImage = this.textureSource.makeImage();
+            newImage = makeImageForCache();
 
         BufferedImage oldImage = this.cachedImage;
         boolean wereAnyPixelsTransparent = this.hasAnyTransparentPixels;
@@ -281,11 +288,11 @@ public abstract class Texture {
             throw new UnsupportedOperationException("Cannot pop disable updates, because there's nothing to pop.");
 
         // Decrease counter.
-        if (--this.disableUpdateCount > 0)
-            return;
+        --this.disableUpdateCount;
 
-        // Upon reaching zero, update! (This will only update if the image was marked as dirty).
-        update();
+        // At one point this method was capable of updating the image.
+        // However, after some consideration, image updates should be user-facing, not implicit to functions used by the texture system itself.
+        // If the texturing system wants an update, it should call it more explicitly to avoid calling an image update during another image update.
     }
 
     /**

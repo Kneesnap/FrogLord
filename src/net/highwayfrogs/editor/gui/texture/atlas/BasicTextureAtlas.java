@@ -289,8 +289,13 @@ public abstract class BasicTextureAtlas<TTexture extends AtlasTexture> extends T
             return;
 
         // Update image.
-        prepareImageGeneration();
         super.update(newImage);
+    }
+
+    @Override
+    protected BufferedImage makeImageForCache() {
+        prepareImageGeneration();
+        return super.makeImageForCache();
     }
 
     /**
