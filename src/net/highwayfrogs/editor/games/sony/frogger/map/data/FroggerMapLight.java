@@ -24,10 +24,6 @@ import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 /**
  * Holds lighting data, or the "LIGHT" struct in mapdisp.H
- * TODO: Can I get 3D previews of the lit areas? Down to the minimum vertex height. Would make it really nice to tell.
- * TODO: Our new baked lighting system might want to do raycasting. I say this since it's clear their lighting system did. Although... I'm not sure if the JavaFX preview will support that so I dunno 100%.
- * TODO: JavaFX 17 has SpotLight & 18 adds DirectionalLight. Should be able to improve our lighting if we upgrade. (Make sure to update lights in old Frogger, camera height-field in old Frogger, lights in Beast Wars, and any other games.)
- * TODO: TODO: Use Fxyz3D's Cone mesh to highlight spot lights.
  * Created by Kneesnap on 8/24/2018.
  */
 public class FroggerMapLight extends SCGameData<FroggerGameInstance> {
@@ -37,7 +33,7 @@ public class FroggerMapLight extends SCGameData<FroggerGameInstance> {
     @Getter @Setter private int color; // BbGgRr
     @Getter private final SVector position = new SVector(); // This is probably the place in the world the light is placed in the editor.
     @Getter private final SVector direction = new SVector(); // When this is AMBIENT, I think this is arbitrary. When this is parallel, it seems to be a 12bit normalized direction vector. When this is point it is unused.
-    private int attribute0; // Umbra angle is this. Larger value seems to incidate a larger circular radius (If shined directly at a flat plane) I'd imagine this maxes out at either 90 degrees or 180 degrees. Not sure. TODO: Orr.... I'm not sure how big of an impact the height from the ground is but... CAV1.MAP seems to be lit primarily with cones from the sky.
+    @Getter private int attribute0; // Umbra angle is this. Larger value seems to incidate a larger circular radius (If shined directly at a flat plane)
     private int attribute1; // Seems unused in all cases?
     private boolean enabled = true;
 
@@ -73,9 +69,6 @@ public class FroggerMapLight extends SCGameData<FroggerGameInstance> {
     // priority = 128, parentId = Garbage?
     // position = VALID (VERY HIGH UP), direction = VALID (MAY NOT BE NORMALIZED? IT USUALY IS THO Does this suggest it's something other than direction?)
     // attribute0 = Umbra Angle (Near 300 usually. Above 256), attribute1 = ??? (Around 80) ->> IDEA: This could be outerAngle, or falloff.
-    // TODO: The size might be hardcoded, and the distance might just control how far away. Not sure. At some point we might just do our own lighting separately.
-
-    // TODO: Lights without positions should have their positions set algorithmically starting at 0, 0, 0, but under the minimum map vertex.
 
     public FroggerMapLight(FroggerMapFile mapFile) {
         super(mapFile != null ? mapFile.getGameInstance() : null);
@@ -160,6 +153,22 @@ public class FroggerMapLight extends SCGameData<FroggerGameInstance> {
      * @param editor Lighting editor.
      */
     public void makeEditor(GUIEditorGrid editor, FroggerUIMapLightManager lightManager, FroggerMapLightPreview lightPreview) {
+        if (this.lightType == MRLightType.AMBIENT || this.lightType == MRLightType.PARALLEL) {
+            editor.addBoldLabel("This light only impacts entities.");
+            editor.addNormalLabel("The original map editor (Mappy) would");
+            editor.addNormalLabel(" change the terrain vertex colors");
+            editor.addNormalLabel(" based on this light, but due to");
+            editor.addNormalLabel(" technical reasons, FrogLord cannot.");
+            editor.addSeparator();
+        } else {
+            editor.addBoldLabel("This light will do nothing ingame.");
+            editor.addNormalLabel(this.lightType + " lights only worked in Mappy,");
+            editor.addNormalLabel(" the original Frogger map editor.");
+            editor.addNormalLabel("Mappy would color the terrain based");
+            editor.addNormalLabel(" on this light, but FrogLord cannot.");
+            editor.addSeparator();
+        }
+
         // Type.
         editor.addEnumSelector("Light Type", this.lightType, MRLightType.values(), false, newType -> {
             if (this.lightType != newType) {
