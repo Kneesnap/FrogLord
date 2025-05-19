@@ -327,6 +327,7 @@ def load_ffs_file(operator, context, filepath):
     pending_face_data = []
     extra_face_data = []
     material_id_remaps = {}
+    downsized_face_count = 0
     for command, args, line_text, line_number in commands:
         arg_index = 0
 
@@ -401,8 +402,7 @@ def load_ffs_file(operator, context, filepath):
             for i in range(num_vertices):
                 vertices.append(int(args[arg_index]))
                 arg_index += 1
-
-            pending_face_data.append(to_blender_order(vertices))
+            vertices = to_blender_order(vertices)
 
             # Read texCoords.
             tex_coords = []
@@ -411,12 +411,14 @@ def load_ffs_file(operator, context, filepath):
                     uv_text = args[arg_index].split(":")
                     tex_coords.append([float(uv_text[0]), 1.0 - float(uv_text[1])])
                     arg_index += 1
+            tex_coords = to_blender_order(tex_coords)
 
             # Read colors.
             colors = []
             for i in range(num_colors):
                 colors.append(int_to_rgbaf_color(int(args[arg_index], 16)))
                 arg_index += 1
+            colors = to_blender_order(colors)
 
             # Read optional grid flags.
             grid_flags = -1
@@ -424,9 +426,37 @@ def load_ffs_file(operator, context, filepath):
                 grid_flags = int(args[arg_index])
                 arg_index += 1
 
-            extra_face_data.append((should_hide, material_index, texture_flags, to_blender_order(tex_coords), to_blender_order(colors), grid_flags))
+            # After preparing the polygon data, we have a problem.
+            # Some Frogger maps such as DES1.MAP contain quads that use the same vertex more than once, to effectively render as a triangle, while still being a quad.
+            # The purpose of this is unknown, and it appears to have been likely an oversight/remnant of how the maps were modelled.
+            # Blender does not support faces using the same vertex more than once, so we must remove those vertices to actually become the assumed type.
+            seen_vertices = []
+            duplicate_vertices = []
+            for i in range(len(vertices)):
+                vertex = vertices[i]
+                if vertex in seen_vertices:
+                    duplicate_vertices.append(i)
+                else:
+                    seen_vertices.append(vertex)
+
+            # Remove the duplicate vertices.
+            for i in duplicate_vertices:
+                vertices.pop(i)
+                if has_texture:
+                    tex_coords.pop(i)
+                if len(colors) > 1:
+                    colors.pop(i)
+            if len(duplicate_vertices) > 0:
+                downsized_face_count += 1
+
+            # Store the polygon data for later access.
+            pending_face_data.append(vertices)
+            extra_face_data.append((should_hide, material_index, texture_flags, tex_coords, colors, grid_flags))
         else:
             operator.report({"WARNING"}, "Unknown Command '%s', skipping line %d!" % (command, line_number))
+
+    if downsized_face_count > 0:
+        operator.report({"WARNING"}, "Converted down %d face(s) to remove duplicate vertex usages." % downsized_face_count)
 
     # Apply the mesh data to the mesh.
     mesh.from_pydata(pending_vertex_data, [], pending_face_data)
