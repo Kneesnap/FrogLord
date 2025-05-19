@@ -309,7 +309,7 @@ public class MRModelMainUIManager extends MeshUIManager<MRModelMesh> {
             this.frameSlider.setMin(0);
             this.frameSlider.setBlockIncrement(1);
             this.frameSlider.setMinorTickCount(1);
-            this.frameSlider.setSnapToTicks(true);
+            this.frameSlider.setSnapToTicks(this.frameSlider.getMax() <= 30); // It gets in the way of functionality if this is enabled when there are tons of
             this.frameSlider.setShowTickLabels(false);
             this.frameSlider.setShowTickMarks(true);
             this.frameSlider.valueProperty().addListener(((observable, oldValue, newValue) -> {
