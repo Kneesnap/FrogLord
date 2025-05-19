@@ -231,14 +231,24 @@ def convert_grid_flags(blender_grid_flags):
     else:
         return blender_grid_flags
 
-def set_object_mode(operator, mode, log_if_fail):
+def select_object(obj):
+    if not obj in bpy.context.collection.objects.values():
+        bpy.context.collection.objects.link(obj) # Add object to scene.
+    if obj in bpy.context.view_layer.objects.values():
+        bpy.context.view_layer.objects.active = obj # Set the active object.
+    obj.select_set(True) # Select the object.
+
+def set_object_mode(operator, object, mode, log_if_fail):
+    if bpy.context.active_object is None and object is not None:
+        select_object(object) # To avoid the failure that happens if no objects are selected, select the provided object.
+
     if bpy.context.active_object is not None:
         old_mode = bpy.context.active_object.mode
-        bpy.ops.object.mode_set(mode = mode)
+        bpy.ops.object.mode_set(mode = mode if mode is not None else 'OBJECT')
         return old_mode
     elif log_if_fail:
         operator.report({"WARNING"}, "You did not have any object actively selected. If an error occurs, or the mesh import/export does not have the expected coloring, please select an object (such as the default cube) in the scene and try again.")
-        return 'OBJECT'
+        return None
 
 def load_ffs_file(operator, context, filepath):
     is_cycles_enabled, is_cycles_loaded = addon_utils.check('cycles')
@@ -250,11 +260,6 @@ def load_ffs_file(operator, context, filepath):
         else:
             operator.report({"ERROR"}, "Failed to enable the 'CYCLES' rendering engine.")
             return {'CANCELLED'}
-
-    # Exit edit mode.
-    # Edit mode prevents editing vertex color data.
-    # Reference: https://blender.stackexchange.com/questions/122202/changing-vertex-colors-through-python
-    old_mode = set_object_mode(operator, 'OBJECT', True)
 
     # Delete old data. This prevented crashes previously, but I've maybe fixed the crash bug.
     # It will remain here until we're confident the crash bug is fixed.
@@ -269,6 +274,11 @@ def load_ffs_file(operator, context, filepath):
     if mesh != obj.data:
         operator.report({"ERROR"}, "The object named '%s' MUST be attached to the mesh named '%s'!" % (LEVEL_OBJECT_NAME, LEVEL_MESH_NAME))
         return {'CANCELLED'}
+
+    # Exit edit mode.
+    # Edit mode prevents editing vertex color data.
+    # Reference: https://blender.stackexchange.com/questions/122202/changing-vertex-colors-through-python
+    old_mode = set_object_mode(operator, obj, 'OBJECT', True)
 
     bpy.context.scene.render.engine = 'CYCLES' # See above for an explanation of why the scene must use the CYCLES engine.
 
@@ -499,11 +509,7 @@ def load_ffs_file(operator, context, filepath):
     mesh.update(calc_edges=True)
 
     # Finish Setup:
-    if not obj in bpy.context.collection.objects.values():
-        bpy.context.collection.objects.link(obj) # Add object to scene.
-    if obj in bpy.context.view_layer.objects.values():
-        bpy.context.view_layer.objects.active = obj # Set the active object.
-    obj.select_set(True) # Select the object.
+    select_object(obj)
 
     # [AE] Set initial rendering modes, etc.
     for area in context.screen.areas:
@@ -517,7 +523,7 @@ def load_ffs_file(operator, context, filepath):
         bpy.ops.outliner.orphans_purge()
 
     # Restore the previous mode before we replaced it.
-    set_object_mode(operator, old_mode, False)
+    set_object_mode(operator, obj, old_mode, False)
     operator.report({"INFO"}, "Successfully imported the map!")
     return {'FINISHED'}
 
@@ -532,27 +538,26 @@ def save_ffs_file(operator, context, filepath):
         operator.report({"ERROR"}, "Could not determine the target version of Frogger from the scene data." % LEVEL_OBJECT_NAME)
         return {'CANCELLED'}
 
-    # Exit edit mode.
-    # Edit mode prevents accessing vertex color data.
-    # Reference: https://blender.stackexchange.com/questions/122202/changing-vertex-colors-through-python
-    old_mode = set_object_mode(operator, 'OBJECT', True)
-
     mesh = bpy.data.meshes[LEVEL_MESH_NAME]
     obj = bpy.data.objects[LEVEL_OBJECT_NAME]
     if mesh != obj.data:
         operator.report({"ERROR"}, "The object named '%s' MUST be attached to the mesh named '%s'!" % (LEVEL_OBJECT_NAME, LEVEL_MESH_NAME))
-        set_object_mode(operator, old_mode, False)
         return {'CANCELLED'}
+
+    # Exit edit mode.
+    # Edit mode prevents accessing vertex color data.
+    # Reference: https://blender.stackexchange.com/questions/122202/changing-vertex-colors-through-python
+    old_mode = set_object_mode(operator, obj, 'OBJECT', True)
 
     uv_layer = mesh.uv_layers.get(UV_LAYER_NAME)
     color_layer = mesh.vertex_colors.get(VERTEX_COLOR_LAYER_NAME)
     if uv_layer is None:
         operator.report({"ERROR"}, "Could not find mesh data layer named '%s'." % UV_LAYER_NAME)
-        set_object_mode(operator, old_mode, False)
+        set_object_mode(operator, obj, old_mode, False)
         return {'CANCELLED'}
     if color_layer is None:
         operator.report({"ERROR"}, "Could not find mesh data layer named '%s'." % VERTEX_COLOR_LAYER_NAME)
-        set_object_mode(operator, old_mode, False)
+        set_object_mode(operator, obj, old_mode, False)
         return {'CANCELLED'}
 
     bm = bmesh.new()
@@ -563,12 +568,12 @@ def save_ffs_file(operator, context, filepath):
     grid_flag_layer = bm.faces.layers.int.get(GRID_FLAG_LAYER_NAME)
     if texture_flag_layer is None:
         operator.report({"ERROR"}, "Could not find bmesh data layer named '%s'." % TEXTURE_FLAG_LAYER_NAME)
-        set_object_mode(operator, old_mode, False)
+        set_object_mode(operator, obj, old_mode, False)
         bm.free()
         return {'CANCELLED'}
     if grid_flag_layer is None:
         operator.report({"ERROR"}, "Could not find bmesh data layer named '%s'." % GRID_FLAG_LAYER_NAME)
-        set_object_mode(operator, old_mode, False)
+        set_object_mode(operator, obj, old_mode, False)
         bm.free()
         return {'CANCELLED'}
 
@@ -683,7 +688,7 @@ def save_ffs_file(operator, context, filepath):
     writer.close()
     bm.free()
 
-    set_object_mode(operator, old_mode, False) # Restore previous mode.
+    set_object_mode(operator, obj, old_mode, False) # Restore previous mode.
     operator.report({"INFO"}, "Successfully exported the map!")
     return {'FINISHED'}
 
