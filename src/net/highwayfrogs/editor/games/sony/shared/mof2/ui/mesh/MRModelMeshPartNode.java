@@ -44,12 +44,12 @@ public class MRModelMeshPartNode extends SCPolygonAdapterNode<MRMofPolygon> {
         // Setup polygons.
         // First, setup the non-transparent polygons.
         for (MRMofPolygon polygon : this.mofPart.getOrderedPolygons())
-            if (polygon.isFullyOpaque())
+            if (!polygon.isSemiTransparent())
                 this.add(polygon);
 
         // Second, add the transparent polygons.
         for (MRMofPolygon polygon : this.mofPart.getOrderedPolygons())
-            if (!polygon.isFullyOpaque())
+            if (polygon.isSemiTransparent())
                 this.add(polygon);
     }
 

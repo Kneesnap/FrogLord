@@ -67,7 +67,8 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
 
     @Override
     public void onSetup() {
-        // The map renders after entities (except for sprite entities) because transparent entities are exceedingly rare in Frogger (I'm not even sure there's a single one in the retail builds).
+        // The map renders after entities (except for sprite entities) because transparent entities are exceedingly rare in Frogger.
+        // Even though there are some (such as the sky cloud patch), making them display properly would hide all entities underwater, so it's preferable to do it like this.
         // Situations such as transparent water layers should show the entities under the water too.
         this.litEntityRenderList = getRenderManager().createDisplayListWithNewGroup();
         this.litEntityRenderList.add(getController().getGeneralManager().getPlayerCharacterView());

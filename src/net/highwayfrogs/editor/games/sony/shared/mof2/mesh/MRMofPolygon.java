@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.psx.shading.PSXTextureShader;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTextureAnimation;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTextureAnimationEntry;
@@ -235,22 +236,21 @@ public class MRMofPolygon extends SCGameData<SCGameInstance> {
      * Equivalent to the behavior seen in MRWritePartPrimCodes@MR_MOF.C
      */
     public boolean isSemiTransparent() {
+        if (getGameInstance().isMediEvil())
+            return false; // MediEvil seems not to call 'MRPatchMOFTranslucency',
         if (!this.polygonType.isTextured())
+            return false;
+
+        // TODO: Some terrain is transparent which shouldn't be (Think sky zone) Actually, in prototypes, these do actually appear transparent, just of very high brightness.
+        // TODO: crap, I think we broke stuff under water.
+        // Frogger is the only other game confirmed to call 'MRPatchMOFTranslucency', although I did not test which build that was added.
+        // However, even in Frogger, it has been observed that in builds such as PSX Alpha (slugs in SWP1.MAP), the transparency is not always respected.
+        // The first build seen with semi-transparent texture patching is PSX Build 11. PSX Build 8 is the most recently seen build before that, so we'll check from there.
+        if (getGameInstance().isFrogger() && !((FroggerGameInstance) getGameInstance()).getVersionConfig().isAtOrBeforeBuild8())
             return false;
 
         GameImage image = getTexture(null, 0);
         return image != null && image.testFlag(GameImage.FLAG_TRANSLUCENT);
-    }
-
-    /**
-     * Tests if this polygon is fully opaque, all pixels having maximum alpha/opacity.
-     */
-    public boolean isFullyOpaque() {
-        GameImage image = getTexture(null, 0);
-        if (image != null)
-            return image.hasAnyTransparentPixels(null);
-
-        return !this.color.testFlag(CVector.FLAG_SEMI_TRANSPARENT); // TODO: I do not actually know if this is relevant.
     }
 
     /**
