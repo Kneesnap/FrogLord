@@ -10,7 +10,6 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.MRAnimatedMof;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.MRAnimatedMofXarAnimation;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTextureAnimationPolygonTarget;
-import net.highwayfrogs.editor.games.sony.shared.mof2.animation.transform.MRAnimatedMofTransform;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPart;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPartCel;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPolygon;
@@ -84,10 +83,9 @@ public class MRModelMeshPartNode extends SCPolygonAdapterNode<MRMofPolygon> {
         MRAnimatedMofXarAnimation xarAnimation = animationPlayer.getXarAnimation();
         if (xarAnimation != null) {
             MRAnimatedMof animatedMof = xarAnimation.getParentCelSet().getParentModelSet().getParentMof();
-            MRAnimatedMofTransform transform = animatedMof.getTransform(this.mofPart, xarAnimation, animationTick);
-            PSXMatrix partTransform = transform.calculatePartTransform(xarAnimation.isInterpolationEnabled());
+            PSXMatrix transformMatrix = animatedMof.getTransformMatrix(this.mofPart, xarAnimation, animationTick);
             for (SVector vertex : partCel.getVertices())
-                this.vertexCache.add(new SVector(PSXMatrix.MRApplyMatrix(partTransform, vertex, new IVector())));
+                this.vertexCache.add(new SVector(PSXMatrix.MRApplyMatrix(transformMatrix, vertex, new IVector())));
         } else {
             this.vertexCache.addAll(partCel.getVertices());
         }

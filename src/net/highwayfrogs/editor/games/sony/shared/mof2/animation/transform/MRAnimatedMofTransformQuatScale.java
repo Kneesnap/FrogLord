@@ -2,10 +2,12 @@ package net.highwayfrogs.editor.games.sony.shared.mof2.animation.transform;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCMath;
 import net.highwayfrogs.editor.utils.MathUtils;
+import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.Arrays;
 
@@ -22,10 +24,11 @@ public class MRAnimatedMofTransformQuatScale extends MRAnimatedMofTransform {
     private short y;
     private short z;
     private final short[] translation = new short[3];
-    private final byte[] scaling = new byte[3]; // 3.5 fixed point scaling. TODO: Might be unsigned byte?
+    private final byte[] scaling = new byte[3]; // 3.5 fixed point scaling.
     private byte flags;
 
     public static final byte FLAG_ENABLE_SCALING = Constants.BIT_FLAG_0;
+    public static final byte VALIDATION_FLAGS = FLAG_ENABLE_SCALING;
     public static final int MR_QUAT_SCALE_TRANS_FIXED_POINT = 5;
 
     @Override
@@ -125,34 +128,7 @@ public class MRAnimatedMofTransformQuatScale extends MRAnimatedMofTransform {
         matrix.getTransform()[0] = this.translation[0];
         matrix.getTransform()[1] = this.translation[1];
         matrix.getTransform()[2] = this.translation[2];
-        applyToMatrix(matrix);
-        return matrix;
-    }
-
-    private void applyToMatrix(PSXMatrix matrix) {
-        int xs = x << 1;
-        int ys = y << 1;
-        int zs = z << 1;
-        int wx = c * xs;
-        int wy = c * ys;
-        int wz = c * zs;
-        int xx = x * xs;
-        int xy = x * ys;
-        int xz = x * zs;
-        int yy = y * ys;
-        int yz = y * zs;
-        int zz = z * zs;
-
-        // Oddly, every set is bit-shifted right 0 places. Not sure what that does, maybe it does something special in C.
-        matrix.getMatrix()[0][0] = (short) (0x1000 - ((yy + zz) >> 12));
-        matrix.getMatrix()[0][1] = (short) ((xy + wz) >> 12);
-        matrix.getMatrix()[0][2] = (short) ((xz - wy) >> 12);
-        matrix.getMatrix()[1][0] = (short) ((xy - wz) >> 12);
-        matrix.getMatrix()[1][1] = (short) (0x1000 - ((xx + zz) >> 12));
-        matrix.getMatrix()[1][2] = (short) ((yz + wx) >> 12);
-        matrix.getMatrix()[2][0] = (short) ((xz + wy) >> 12);
-        matrix.getMatrix()[2][1] = (short) ((yz - wx) >> 12);
-        matrix.getMatrix()[2][2] = (short) (0x1000 - ((xx + yy) >> 12));
+        SCMath.quatToMatrix(this.c, this.x, this.y, this.z, matrix.getMatrix());
 
         if ((this.flags & FLAG_ENABLE_SCALING) == FLAG_ENABLE_SCALING) {
             int scaleX = (this.scaling[0] << (12 - MR_QUAT_SCALE_TRANS_FIXED_POINT));
@@ -160,6 +136,8 @@ public class MRAnimatedMofTransformQuatScale extends MRAnimatedMofTransform {
             int scaleZ = (this.scaling[2] << (12 - MR_QUAT_SCALE_TRANS_FIXED_POINT));
             PSXMatrix.MRScaleMatrix(matrix, scaleX, scaleY, scaleZ);
         }
+
+        return matrix;
     }
 
     @Override
@@ -167,50 +145,93 @@ public class MRAnimatedMofTransformQuatScale extends MRAnimatedMofTransform {
         return "MR_QUAT_SCALE_TRANS{c=" + this.c + ",x=" + this.x + ",y=" + this.y + ",z=" + this.z + ",tx=" + this.translation[0] + ",ty=" + this.translation[1] + ",tz=" + this.translation[2] + ",flags=" + this.flags + ",s=" + Arrays.toString(this.scaling) + "}";
     }
 
-    /*@Override TODO: I duplicated this class in 2023 when adding Frogger prototypes, I think I missed that it was already implemented. Is this code here useful for junk?
-    public PSXMatrix createMatrix() {
-        PSXMatrix matrix = new PSXMatrix();
+    /**
+     * Interpolates two quat transforms between each other, the same as the MR API.
+     * @param previousTransform the previous transform
+     * @param nextTransform     the next transform
+     * @param t                 the time factor
+     * @return interpolatedResult
+     */
+    public static PSXMatrix interpolate(MRAnimatedMofTransform previousTransform, MRAnimatedMofTransform nextTransform, int t) {
+        if (!(previousTransform instanceof MRAnimatedMofTransformQuatScale))
+            throw new ClassCastException("The provided previousTransform was a(n) " + Utils.getSimpleName(previousTransform) + ", not MRAnimatedMofTransformQuatScale!");
+        if (!(nextTransform instanceof MRAnimatedMofTransformQuatScale))
+            throw new ClassCastException("The provided nextTransform was a(n) " + Utils.getSimpleName(nextTransform) + ", not MRAnimatedMofTransformQuatScale!");
 
-        // Setup matrix.
-        applyToMatrix(matrix, this.c, this.x, this.y, this.z);
+        MRAnimatedMofTransformQuatScale prevQuat = (MRAnimatedMofTransformQuatScale) previousTransform;
+        MRAnimatedMofTransformQuatScale nextQuat = (MRAnimatedMofTransformQuatScale) nextTransform;
 
-        if ((this.flags & 1) == 1) {
-            SCALE_MATRIX.getMatrix()[0][0] = (short) (this.scale[0] << 7);
-            SCALE_MATRIX.getMatrix()[1][1] = (short) (this.scale[1] << 7);
-            SCALE_MATRIX.getMatrix()[2][2] = (short) (this.scale[2] << 7);
-            PSXMatrix.MRMulMatrixABB(SCALE_MATRIX, matrix);
+        PSXMatrix result = new PSXMatrix();
+        MRInterpolateQuaternions(prevQuat, nextQuat, result, (short) t);
+
+        if ((prevQuat.flags & FLAG_ENABLE_SCALING) == FLAG_ENABLE_SCALING || (nextQuat.flags & FLAG_ENABLE_SCALING) == FLAG_ENABLE_SCALING) {
+            // Get interpolated scaling values
+            int sp = prevQuat.scaling[0] << (12 - MR_QUAT_SCALE_TRANS_FIXED_POINT);
+            int sn = nextQuat.scaling[0] << (12 - MR_QUAT_SCALE_TRANS_FIXED_POINT);
+            int scaleX = ((sp * (0x1000 - t)) + (sn * t)) >> 12;
+            sp = prevQuat.scaling[1] << (12 - MR_QUAT_SCALE_TRANS_FIXED_POINT);
+            sn = nextQuat.scaling[1] << (12 - MR_QUAT_SCALE_TRANS_FIXED_POINT);
+            int scaleY = ((sp * (0x1000 - t)) + (sn * t)) >> 12;
+            sp = prevQuat.scaling[2] << (12 - MR_QUAT_SCALE_TRANS_FIXED_POINT);
+            sn = nextQuat.scaling[2] << (12 - MR_QUAT_SCALE_TRANS_FIXED_POINT);
+            int scaleZ = ((sp * (0x1000 - t)) + (sn * t)) >> 12;
+            PSXMatrix.MRScaleMatrix(result, scaleX, scaleY, scaleZ);
         }
 
-        // Apply transform.
-        matrix.getTransform()[0] = getTransform()[0];
-        matrix.getTransform()[1] = getTransform()[1];
-        matrix.getTransform()[2] = getTransform()[2];
-        return matrix;
+        result.getTransform()[0] = ((prevQuat.getTranslation()[0] * (0x1000 - t)) + (nextQuat.getTranslation()[0] * t)) >> 12;
+        result.getTransform()[1] = ((prevQuat.getTranslation()[1] * (0x1000 - t)) + (nextQuat.getTranslation()[1] * t)) >> 12;
+        result.getTransform()[2] = ((prevQuat.getTranslation()[2] * (0x1000 - t)) + (nextQuat.getTranslation()[2] * t)) >> 12;
+        return result;
     }
 
-    private static void applyToMatrix(PSXMatrix matrix, short c, short x, short y, short z) {
-        int xs = x << 1;
-        int ys = y << 1;
-        int zs = z << 1;
-        int wx = c * xs;
-        int wy = c * ys;
-        int wz = c * zs;
-        int xx = x * xs;
-        int xy = x * ys;
-        int xz = x * zs;
-        int yy = y * ys;
-        int yz = y * zs;
-        int zz = z * zs;
+    static void MRInterpolateQuaternions(MRAnimatedMofTransformQuatScale startq, MRAnimatedMofTransformQuatScale endq, PSXMatrix result, short t) {
+        short destC, destX, destY, destZ;
+        if (t == 0) {
+            destC = startq.c;
+            destX = startq.x;
+            destY = startq.y;
+            destZ = startq.z;
+        } else {
+            short cosOmega = (short) (((startq.c * endq.c) +
+                    (startq.x * endq.x) +
+                    (startq.y * endq.y) +
+                    (startq.z * endq.z)) >> 12);    // -0x1000..0x1000
 
-        // Oddly, every set is bit-shifted right 0 places. Not sure what that does, maybe it does something special in C.
-        matrix.getMatrix()[0][0] = (short) (0x1000 - (yy + zz));
-        matrix.getMatrix()[0][1] = (short) (xy + wz);
-        matrix.getMatrix()[0][2] = (short) (xz - wy);
-        matrix.getMatrix()[1][0] = (short) (xy - wz);
-        matrix.getMatrix()[1][1] = (short) (0x1000 - (xx + zz));
-        matrix.getMatrix()[1][2] = (short) (yz + wx);
-        matrix.getMatrix()[2][0] = (short) (xz + wy);
-        matrix.getMatrix()[2][1] = (short) (yz - wx);
-        matrix.getMatrix()[2][2] = (short) (0x1000 - (xx + yy));
-    }*/
+            // If the above dot product is negative, it would be better to go between the
+            // negative of the initial and the final, so that we take the shorter path.
+            boolean bflip = false;
+            if (cosOmega < 0) {
+                bflip = true;
+                cosOmega = (short) -cosOmega;
+            }
+
+            // Usual case
+            short endScale, startScale;
+            if ((0x1000 - cosOmega) > SCMath.MR_QUAT_EPSILON) {
+                // Usual case
+                cosOmega = (short) Math.max(-0x1000, Math.min(0x1000, cosOmega));
+                short omega = SCMath.acosRaw(cosOmega);                    // omega = acos(cosomega)
+                short sinomega = SCMath.rsin(omega);
+
+                int to = (t * omega) >> 12;
+                endScale = (short) ((SCMath.rsin(to) << 12) / sinomega);
+                startScale = (short) (SCMath.rcos(to) - ((cosOmega * endScale) >> 12));
+            } else {
+                // Ends very close
+                startScale = (short) (0x1000 - t);
+                endScale = t;
+            }
+
+            if (bflip)
+                endScale = (short) -endScale;
+
+            destC = (short) ((startScale * startq.c + endScale * endq.c) >> 12);
+            destX = (short) ((startScale * startq.x + endScale * endq.x) >> 12);
+            destY = (short) ((startScale * startq.y + endScale * endq.y) >> 12);
+            destZ = (short) ((startScale * startq.z + endScale * endq.z) >> 12);
+        }
+
+        // Now, MR_QUAT_TO_MAT/MRQuaternionToMatrix
+        SCMath.quatToMatrix(destC, destX, destY, destZ, result.getMatrix());
+    }
 }

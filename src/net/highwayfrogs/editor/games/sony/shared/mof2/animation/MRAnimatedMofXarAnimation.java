@@ -75,7 +75,7 @@ public class MRAnimatedMofXarAnimation extends SCSharedGameData {
             case FLAG_VIRTUAL_STANDARD:
                 this.interpolationEnabled = false;
                 break;
-            case FLAG_VIRTUAL_INTERPOLATION: // TODO: https://github.com/HighwayFrogs/frogger-psx/blob/main/source/API.SRC/MR_ANIM.C#L2799
+            case FLAG_VIRTUAL_INTERPOLATION:
                 this.interpolationEnabled = true;
                 break;
             default:
@@ -190,20 +190,48 @@ public class MRAnimatedMofXarAnimation extends SCSharedGameData {
     /**
      * Gets the transform ID for an animation stage.
      * @param frame The frame of this animation.
-     * @param part  The mof part to get the transform for.
+     * @param part The mof part to get the transform for.
      * @return transformId
      */
     public int getTransformID(int frame, @NonNull MRMofPart part) {
+        if (isInterpolationEnabled())
+            throw new IllegalStateException("The model is interpolated, meaning there isn't a single transformID available!");
+
+        return getTransformIDFromCelNumberIndex(getCelNumberBaseIndex(frame), part);
+    }
+
+    /**
+     * Gets the transform ID for an animation stage.
+     * @param celNumberIndex The index of the cel number to resolve.
+     * @param part The mof part to get the transform for.
+     * @return transformId
+     */
+    public int getTransformIDFromCelNumberIndex(int celNumberIndex, @NonNull MRMofPart part) {
         MRModel model = part.getParentMof().getModel();
         boolean frameStartAtZero = model.isAnimatedMof() && model.getAnimatedMof().isStartAtFrameZero();
+        // ^^ By reading the original code, the impression I get is that I should only be doing 'frame start at zero' when model interpolation is not enabled.
+        // HOWEVER, the animations do not look correct if I do this. They DO look correct (reference: DAN.XAR in MediEvil Retail USA) if I ignore interpolation here though.
+        // I am not sure why this is the case. But it gets even more obvious if we look at OPTIMUS.XAR in Beast Wars, whose turn animations don't work unless we do it this way.
+        int actualCel = Math.max(0, this.celNumbers.get(celNumberIndex) - (frameStartAtZero ? 0 : 1));
+        int transformIdIndex = ((actualCel * this.staticMofPartCount) + part.getPartID());
+        return this.transformIds.get(transformIdIndex);
+    }
+
+    /**
+     * Gets the index into the transform ID list to get the transform ID for the provided point in the animation.
+     * @param frame The frame of this animation.
+     * @return transformIdIndex
+     */
+    public int getCelNumberBaseIndex(int frame) {
+        if (isInterpolationEnabled())
+            frame *= CEL_NUMBERS_PER_FRAME_WHEN_INTERPOLATING;
+
         // This shouldn't be negative, but is for GEN_CHECKPOINT_X.XAR in Frogger build 4.
         int celNumberIndex = (frame % this.celNumbers.size());
         if (celNumberIndex < 0)
             celNumberIndex += this.celNumbers.size();
 
-        int actualCel = Math.max(0, this.celNumbers.get(celNumberIndex) - (frameStartAtZero ? 0 : 1));
-        int partCount = this.staticMofPartCount;
-        return this.transformIds.get((actualCel * partCount) + part.getPartID());
+        return celNumberIndex;
     }
 
     private int getMinimumValidStaticMofPartCount() {

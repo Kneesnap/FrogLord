@@ -169,19 +169,26 @@ public class MRAnimatedMof extends MRBaseModelData {
     }
 
     /**
-     * Get an animation transform.
+     * Get an animation transform matrix.
      * @param part The MOFPart to apply to.
      * @param xarAnimation The animation to get the transform for.
      * @param frame The frame id to get the transform for.
      * @return transform
      */
-    public MRAnimatedMofTransform getTransform(MRMofPart part, MRAnimatedMofXarAnimation xarAnimation, int frame) {
+    public PSXMatrix getTransformMatrix(MRMofPart part, MRAnimatedMofXarAnimation xarAnimation, int frame) {
         if (part == null)
             throw new NullPointerException("part");
         if (xarAnimation == null)
             throw new NullPointerException("xarAnimation");
 
-        return this.commonData.getTransforms().get(xarAnimation.getTransformID(frame, part));
+        if (!xarAnimation.isInterpolationEnabled())
+            return this.commonData.getTransforms().get(xarAnimation.getTransformID(frame, part)).createMatrix();
+
+        int baseCelIndex = xarAnimation.getCelNumberBaseIndex(frame);
+        MRAnimatedMofTransform prevTransform = this.commonData.getTransforms().get(xarAnimation.getTransformIDFromCelNumberIndex(baseCelIndex, part));
+        MRAnimatedMofTransform nextTransform = this.commonData.getTransforms().get(xarAnimation.getTransformIDFromCelNumberIndex(baseCelIndex + 1, part));
+        int t = xarAnimation.getCelNumbers().get(baseCelIndex + 2);
+        return this.transformType.interpolate(prevTransform, nextTransform, t);
     }
 
     /**
@@ -212,10 +219,10 @@ public class MRAnimatedMof extends MRBaseModelData {
                         MRAnimatedMofXarAnimation animation =  modelSet.getCelSet().getAnimations().get(action);
                         for (int frame = 0; frame < animation.getFrameCount(); frame++) {
                             MRMofPartCel partcel = part.getPartCel(action, frame);
-                            MRAnimatedMofTransform transform = getTransform(part, animation, frame);
+                            PSXMatrix transformMatrix = getTransformMatrix(part, animation, frame);
 
                             for (SVector sVec : partcel.getVertices()) {
-                                IVector vertex = PSXMatrix.MRApplyMatrix(transform.calculatePartTransform(animation.isInterpolationEnabled()), sVec, new IVector());
+                                IVector vertex = PSXMatrix.MRApplyMatrix(transformMatrix, sVec, new IVector());
 
                                 minX = Math.min(minX, vertex.getFloatX());
                                 minY = Math.min(minY, vertex.getFloatY());

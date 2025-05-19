@@ -1,10 +1,12 @@
 package net.highwayfrogs.editor.games.sony.shared.mof2.animation.transform;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.SCMath;
 import net.highwayfrogs.editor.utils.MathUtils;
+import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.Arrays;
 
@@ -103,59 +105,99 @@ public class MRAnimatedMofTransformQuatByte extends MRAnimatedMofTransform {
     }
 
     @Override
-    public PSXMatrix createInterpolatedResult() { //TODO: Move,. https://github.com/Kneesnap/Frogger/blob/a81c28bceea2f8696f9e399ee260180ae00dc7a8/source/API.SRC/MR_ANIM.C is how this is calculated. and https://github.com/Kneesnap/Frogger/blob/master/source/API.SRC/MR_QUAT.C
-        // index_ptr	= cels_ptr->ac_cel_numbers + (params->ac_cel * 3);
-        //
-        //				// index_ptr points to a group of 3 MR_USHORTs (prev actual cel index, next actual cel index, interpolation param)
-        //				quatb_prev 	= (MR_QUATB_TRANS*)(((MR_UBYTE*)env->ae_header->ah_common_data->ac_transforms) + ((cels_ptr->ac_transforms.ac_indices[(index_ptr[0] * parts) + part]) * tsize));
-        //				quatb_next 	= (MR_QUATB_TRANS*)(((MR_UBYTE*)env->ae_header->ah_common_data->ac_transforms) + ((cels_ptr->ac_transforms.ac_indices[(index_ptr[1] * parts) + part]) * tsize));
-        //				t			= index_ptr[2];
-        //				MR_INTERPOLATE_QUATB_TO_MAT(&quatb_prev->q, &quatb_next->q, (MR_MAT*)&MRTemp_matrix, t);
-
-        // ((MR_MAT34*)&MRTemp_matrix)->t[0]	= ((quatb_prev->t[0] * (0x1000 - t)) + (quatb_next->t[0] * t)) >> 12;
-        //				((MR_MAT34*)&MRTemp_matrix)->t[1]	= ((quatb_prev->t[1] * (0x1000 - t)) + (quatb_next->t[1] * t)) >> 12;
-        //				((MR_MAT34*)&MRTemp_matrix)->t[2]	= ((quatb_prev->t[2] * (0x1000 - t)) + (quatb_next->t[2] * t)) >> 12;
-        return createMatrix();
-    }
-
-    @Override
     public PSXMatrix createMatrix() {
         PSXMatrix matrix = new PSXMatrix();
         matrix.getTransform()[0] = this.translation[0];
         matrix.getTransform()[1] = this.translation[1];
         matrix.getTransform()[2] = this.translation[2];
-        applyToMatrix(matrix, this.c, this.x, this.y, this.z);
+        SCMath.quatByteToMatrix(this.c, this.x, this.y, this.z, matrix.getMatrix());
         return matrix;
-    }
-
-    private static void applyToMatrix(PSXMatrix matrix, byte c, byte x, byte y, byte z) {
-        int xs = x << 1;
-        int ys = y << 1;
-        int zs = z << 1;
-        int wx = c * xs;
-        int wy = c * ys;
-        int wz = c * zs;
-        int xx = x * xs;
-        int xy = x * ys;
-        int xz = x * zs;
-        int yy = y * ys;
-        int yz = y * zs;
-        int zz = z * zs;
-
-        // Oddly, every set is bit-shifted right 0 places. Not sure what that does, maybe it does something special in C.
-        matrix.getMatrix()[0][0] = (short) (0x1000 - (yy + zz));
-        matrix.getMatrix()[0][1] = (short) (xy + wz);
-        matrix.getMatrix()[0][2] = (short) (xz - wy);
-        matrix.getMatrix()[1][0] = (short) (xy - wz);
-        matrix.getMatrix()[1][1] = (short) (0x1000 - (xx + zz));
-        matrix.getMatrix()[1][2] = (short) (yz + wx);
-        matrix.getMatrix()[2][0] = (short) (xz + wy);
-        matrix.getMatrix()[2][1] = (short) (yz - wx);
-        matrix.getMatrix()[2][2] = (short) (0x1000 - (xx + yy));
     }
 
     @Override
     public String toString() {
         return "MR_QUATB_TRANS{c=" + this.c + ",x=" + this.x + ",y=" + this.y + ",z=" + this.z + ",tx=" + this.translation[0] + ",ty=" + this.translation[1] + ",tz=" + this.translation[2] + "}";
+    }
+
+    /**
+     * Interpolates two quat transforms between each other, the same as the MR API.
+     * @param previousTransform the previous transform
+     * @param nextTransform     the next transform
+     * @param t                 the time factor
+     * @return interpolatedResult
+     */
+    public static PSXMatrix interpolate(MRAnimatedMofTransform previousTransform, MRAnimatedMofTransform nextTransform, int t) {
+        if (!(previousTransform instanceof MRAnimatedMofTransformQuatByte))
+            throw new ClassCastException("The provided previousTransform was a(n) " + Utils.getSimpleName(previousTransform) + ", not MRAnimatedMofTransformQuatByte!");
+        if (!(nextTransform instanceof MRAnimatedMofTransformQuatByte))
+            throw new ClassCastException("The provided nextTransform was a(n) " + Utils.getSimpleName(nextTransform) + ", not MRAnimatedMofTransformQuatByte!");
+
+        MRAnimatedMofTransformQuatByte prevQuat = (MRAnimatedMofTransformQuatByte) previousTransform;
+        MRAnimatedMofTransformQuatByte nextQuat = (MRAnimatedMofTransformQuatByte) nextTransform;
+
+        PSXMatrix result = new PSXMatrix();
+        MRInterpolateQuaternionsBToMatrix(prevQuat, nextQuat, result, (short) t);
+        result.getTransform()[0] = ((prevQuat.getTranslation()[0] * (0x1000 - t)) + (nextQuat.getTranslation()[0] * t)) >> 12;
+        result.getTransform()[1] = ((prevQuat.getTranslation()[1] * (0x1000 - t)) + (nextQuat.getTranslation()[1] * t)) >> 12;
+        result.getTransform()[2] = ((prevQuat.getTranslation()[2] * (0x1000 - t)) + (nextQuat.getTranslation()[2] * t)) >> 12;
+        return result;
+    }
+
+    private static void MRInterpolateQuaternionsBToMatrix(MRAnimatedMofTransformQuatByte startq, MRAnimatedMofTransformQuatByte endq, PSXMatrix result, short t) {
+        if (t == 0) {
+            SCMath.quatByteToMatrix(startq.c, startq.x, startq.y, startq.z, result.getMatrix());
+            return;
+        }
+
+        short cosOmega = (short) ((startq.c * endq.c) +
+                (startq.x * endq.x) +
+                (startq.y * endq.y) +
+                (startq.z * endq.z));    // -0x1000..0x1000
+
+        // If the above dot product is negative, it would be better to go between the
+        // negative of the initial and the final, so that we take the shorter path.
+        boolean bflip = false;
+        if (cosOmega < 0) {
+            bflip = true;
+            cosOmega = (short) -cosOmega;
+        }
+
+        // Usual case
+        short endScale, startScale;
+        if ((0x1000 - cosOmega) > SCMath.MR_QUAT_EPSILON) {
+            // Usual case
+            cosOmega = (short) Math.max(-0x1000, Math.min(0x1000, cosOmega));
+            short omega = SCMath.acosRaw(cosOmega);                    // omega = acos(cosomega)
+            short sinomega = SCMath.rsin(omega);
+
+            int to = (t * omega) >> 12;
+            endScale = (short) ((SCMath.rsin(to) << 12) / sinomega);
+            startScale = (short) (SCMath.rcos(to) - ((cosOmega * endScale) >> 12));
+        } else {
+            // Ends very close
+            startScale = (short) (0x1000 - t);
+            endScale = t;
+        }
+
+        if (bflip)
+            endScale = (short) -endScale;
+
+        short destC = (byte) ((startScale * startq.c + endScale * endq.c) >> 6);
+        short destX = (byte) ((startScale * startq.x + endScale * endq.x) >> 6);
+        short destY = (byte) ((startScale * startq.y + endScale * endq.y) >> 6);
+        short destZ = (byte) ((startScale * startq.z + endScale * endq.z) >> 6);
+
+        if (endScale != 0) {
+            // MRNormaliseQuaternion(dest, dest, 0x20);
+            int d = MathUtils.fixedSqrt((destC * destC) + (destX * destX) + (destY * destY) + (destZ * destZ));
+            d = Math.min(0x1020, Math.max(d, 0x0FE0));
+            d = (1 << 24) / d;
+            destC = (short) ((destC * d) >> 12);
+            destX = (short) ((destX * d) >> 12);
+            destY = (short) ((destY * d) >> 12);
+            destZ = (short) ((destZ * d) >> 12);
+        }
+
+        SCMath.quatToMatrix(destC, destX, destY, destZ, result.getMatrix());
     }
 }
