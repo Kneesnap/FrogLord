@@ -181,21 +181,7 @@ public class MRAnimatedMofTransformScaleByte extends MRAnimatedMofTransform {
     }
 
     private static void MRInterpolateQuaternionsBToMatrix(MRAnimatedMofTransformScaleByte startq, MRAnimatedMofTransformScaleByte endq, PSXMatrix result, short t) {
-        // What's going on with this function?
-        // Well, in short, the interpolation is broken and I'm not sure why.
-        // RM_OPROB.XAR in Beast Wars PC is a good model to refer to, but both the start and end quaternions look okay.
-        // If we use them directly, the animation looks choppy, but correct.
-        // However, when we interpolate between them, everything breaks.
-        // This issue only seems to impact 'QUAT_SCALE_BYTE', as 'QUAT' (in MediEvil), and 'QUAT_SCALE' (Beast Wars) seem to work correctly. (I've yet to find any 'QUAT_BYTE' models with interpolation to test)
-        // I've turned off interpolation until I figure out the problem.
-        // This looks pretty decent (even if it could create in theory inaccurate 3D models I've not seen any), so that should be okay.
-        if (t >= 0x800) {
-            SCMath.quatByteToMatrix(endq.c, endq.x, endq.y, endq.z, result.getMatrix());
-        } else {
-            SCMath.quatByteToMatrix(startq.c, startq.x, startq.y, startq.z, result.getMatrix());
-        }
-
-        /*if (t == 0) {
+        if (t == 0) {
             SCMath.quatByteToMatrix(startq.c, startq.x, startq.y, startq.z, result.getMatrix());
             return;
         }
@@ -233,10 +219,10 @@ public class MRAnimatedMofTransformScaleByte extends MRAnimatedMofTransform {
         if (bflip)
             endScale = (short) -endScale;
 
-        short destC = (byte) ((startScale * startq.c + endScale * endq.c) >> 6);
-        short destX = (byte) ((startScale * startq.x + endScale * endq.x) >> 6);
-        short destY = (byte) ((startScale * startq.y + endScale * endq.y) >> 6);
-        short destZ = (byte) ((startScale * startq.z + endScale * endq.z) >> 6);
+        short destC = (short) ((startScale * startq.c + endScale * endq.c) >> 6);
+        short destX = (short) ((startScale * startq.x + endScale * endq.x) >> 6);
+        short destY = (short) ((startScale * startq.y + endScale * endq.y) >> 6);
+        short destZ = (short) ((startScale * startq.z + endScale * endq.z) >> 6);
 
         if (endScale != 0) {
             // MRNormaliseQuaternion(dest, dest, 0x20);
@@ -250,6 +236,6 @@ public class MRAnimatedMofTransformScaleByte extends MRAnimatedMofTransform {
         }
 
         // Now, MR_QUATB_TO_MAT/MRQuaternionBToMatrix
-        SCMath.quatToMatrix(destC, destX, destY, destZ, result.getMatrix());*/
+        SCMath.quatToMatrix(destC, destX, destY, destZ, result.getMatrix());
     }
 }

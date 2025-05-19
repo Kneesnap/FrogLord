@@ -182,10 +182,10 @@ public class MRAnimatedMofTransformQuatByte extends MRAnimatedMofTransform {
         if (bflip)
             endScale = (short) -endScale;
 
-        short destC = (byte) ((startScale * startq.c + endScale * endq.c) >> 6);
-        short destX = (byte) ((startScale * startq.x + endScale * endq.x) >> 6);
-        short destY = (byte) ((startScale * startq.y + endScale * endq.y) >> 6);
-        short destZ = (byte) ((startScale * startq.z + endScale * endq.z) >> 6);
+        short destC = (short) ((startScale * startq.c + endScale * endq.c) >> 6);
+        short destX = (short) ((startScale * startq.x + endScale * endq.x) >> 6);
+        short destY = (short) ((startScale * startq.y + endScale * endq.y) >> 6);
+        short destZ = (short) ((startScale * startq.z + endScale * endq.z) >> 6);
 
         if (endScale != 0) {
             // MRNormaliseQuaternion(dest, dest, 0x20);
