@@ -207,14 +207,23 @@ public class MRAnimatedMofXarAnimation extends SCSharedGameData {
      * @return transformId
      */
     public int getTransformIDFromCelNumberIndex(int celNumberIndex, @NonNull MRMofPart part) {
+        return this.transformIds.get(getTransformIDIndexFromCelNumberIndex(celNumberIndex, part));
+    }
+
+    /**
+     * Gets the transform ID for an animation stage.
+     * @param celNumberIndex The index of the cel number to resolve.
+     * @param part The mof part to get the transform for.
+     * @return transformId
+     */
+    public int getTransformIDIndexFromCelNumberIndex(int celNumberIndex, @NonNull MRMofPart part) {
         MRModel model = part.getParentMof().getModel();
         boolean frameStartAtZero = model.isAnimatedMof() && model.getAnimatedMof().isStartAtFrameZero();
         // ^^ By reading the original code, the impression I get is that I should only be doing 'frame start at zero' when model interpolation is not enabled.
         // HOWEVER, the animations do not look correct if I do this. They DO look correct (reference: DAN.XAR in MediEvil Retail USA) if I ignore interpolation here though.
         // I am not sure why this is the case. But it gets even more obvious if we look at OPTIMUS.XAR in Beast Wars, whose turn animations don't work unless we do it this way.
         int actualCel = Math.max(0, this.celNumbers.get(celNumberIndex) - (frameStartAtZero ? 0 : 1));
-        int transformIdIndex = ((actualCel * this.staticMofPartCount) + part.getPartID());
-        return this.transformIds.get(transformIdIndex);
+        return ((actualCel * this.staticMofPartCount) + part.getPartID());
     }
 
     /**

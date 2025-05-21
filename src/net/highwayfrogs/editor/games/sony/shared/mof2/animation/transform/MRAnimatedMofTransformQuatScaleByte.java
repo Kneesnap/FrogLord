@@ -16,7 +16,7 @@ import java.util.Arrays;
  * Created by Kneesnap on 1/5/2019.
  */
 @Getter
-public class MRAnimatedMofTransformScaleByte extends MRAnimatedMofTransform {
+public class MRAnimatedMofTransformQuatScaleByte extends MRAnimatedMofTransform {
     private byte c; // 'real'.
     private byte x; // Angle.
     private byte y;
@@ -62,10 +62,10 @@ public class MRAnimatedMofTransformScaleByte extends MRAnimatedMofTransform {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof MRAnimatedMofTransformScaleByte))
+        if (!(obj instanceof MRAnimatedMofTransformQuatScaleByte))
             return false;
 
-        MRAnimatedMofTransformScaleByte other = (MRAnimatedMofTransformScaleByte) obj;
+        MRAnimatedMofTransformQuatScaleByte other = (MRAnimatedMofTransformQuatScaleByte) obj;
         return this.c == other.c && this.x == other.x && this.y == other.y && this.z == other.z &&
                 Arrays.equals(this.translation, other.translation) && Arrays.equals(this.scaling, other.scaling)
                 && this.flags == other.flags;
@@ -149,13 +149,13 @@ public class MRAnimatedMofTransformScaleByte extends MRAnimatedMofTransform {
      * @return interpolatedResult
      */
     public static PSXMatrix interpolate(MRAnimatedMofTransform previousTransform, MRAnimatedMofTransform nextTransform, int t) {
-        if (!(previousTransform instanceof MRAnimatedMofTransformScaleByte))
-            throw new ClassCastException("The provided previousTransform was a(n) " + Utils.getSimpleName(previousTransform) + ", not MRAnimatedMofTransformScaleByte!");
-        if (!(nextTransform instanceof MRAnimatedMofTransformScaleByte))
-            throw new ClassCastException("The provided nextTransform was a(n) " + Utils.getSimpleName(nextTransform) + ", not MRAnimatedMofTransformScaleByte!");
+        if (!(previousTransform instanceof MRAnimatedMofTransformQuatScaleByte))
+            throw new ClassCastException("The provided previousTransform was a(n) " + Utils.getSimpleName(previousTransform) + ", not MRAnimatedMofTransformQuatScaleByte!");
+        if (!(nextTransform instanceof MRAnimatedMofTransformQuatScaleByte))
+            throw new ClassCastException("The provided nextTransform was a(n) " + Utils.getSimpleName(nextTransform) + ", not MRAnimatedMofTransformQuatScaleByte!");
 
-        MRAnimatedMofTransformScaleByte prevQuat = (MRAnimatedMofTransformScaleByte) previousTransform;
-        MRAnimatedMofTransformScaleByte nextQuat = (MRAnimatedMofTransformScaleByte) nextTransform;
+        MRAnimatedMofTransformQuatScaleByte prevQuat = (MRAnimatedMofTransformQuatScaleByte) previousTransform;
+        MRAnimatedMofTransformQuatScaleByte nextQuat = (MRAnimatedMofTransformQuatScaleByte) nextTransform;
 
         PSXMatrix result = new PSXMatrix();
         MRInterpolateQuaternionsBToMatrix(prevQuat, nextQuat, result, (short) t);
@@ -180,7 +180,7 @@ public class MRAnimatedMofTransformScaleByte extends MRAnimatedMofTransform {
         return result;
     }
 
-    private static void MRInterpolateQuaternionsBToMatrix(MRAnimatedMofTransformScaleByte startq, MRAnimatedMofTransformScaleByte endq, PSXMatrix result, short t) {
+    private static void MRInterpolateQuaternionsBToMatrix(MRAnimatedMofTransformQuatScaleByte startq, MRAnimatedMofTransformQuatScaleByte endq, PSXMatrix result, short t) {
         if (t == 0) {
             SCMath.quatByteToMatrix(startq.c, startq.x, startq.y, startq.z, result.getMatrix());
             return;

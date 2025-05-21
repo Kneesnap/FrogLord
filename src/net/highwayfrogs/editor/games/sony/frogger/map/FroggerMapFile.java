@@ -22,12 +22,12 @@ import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygonType
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.*;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGeneral.FroggerMapStartRotation;
 import net.highwayfrogs.editor.games.sony.frogger.ui.FroggerMapInfoUIController;
+import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerUtils;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.misc.MRLightType;
-import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
@@ -148,7 +148,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
     }
 
     @Override
-    public void handleWadEdit(WADFile parent) {
+    public void performDefaultUIAction() {
         MeshViewController.setupMeshViewer(getGameInstance(), new FroggerMapMeshController(getGameInstance()), new FroggerMapMesh(this));
     }
 
@@ -227,7 +227,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
      * @return isMultiplayer
      */
     public boolean isMultiplayer() {
-        return getFileDisplayName().startsWith(this.generalPacket.getMapTheme().getInternalName() + "M");
+        return FroggerUtils.isMultiplayerFile(this, this.generalPacket.getMapTheme());
     }
 
     /**
@@ -236,7 +236,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
      * @return isLowPolyMode
      */
     public boolean isLowPolyMode() {
-        return getGameInstance().isPC() && getFileDisplayName().contains("_WIN95");
+        return FroggerUtils.isLowPolyMode(this);
     }
 
     /**

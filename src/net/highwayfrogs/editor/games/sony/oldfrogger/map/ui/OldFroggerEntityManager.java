@@ -5,7 +5,6 @@ import javafx.scene.shape.*;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Transform;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
-import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapForm;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapMesh;
@@ -81,13 +80,6 @@ public class OldFroggerEntityManager extends OldFroggerMapListManager<OldFrogger
         MRModel model = form.getModel();
         if (model != null) {
             DynamicMesh.tryRemoveMesh(entityMesh);
-
-            // Set VLO archive to the map VLO if currently unset.
-            if (model.getVloFile() == null) {
-                OldFroggerLevelTableEntry levelTableEntry = entity.getMap().getLevelTableEntry();
-                if (levelTableEntry != null)
-                    model.setVloFile(levelTableEntry.getMainVLOArchive());
-            }
 
             // Update MeshView.
             MRModelMesh modelMesh = this.meshCache.computeIfAbsent(model, MRModel::createMeshWithDefaultAnimation);

@@ -27,19 +27,12 @@ import java.util.logging.*;
 /**
  * The entry point to FrogLord.
  * TODO: At some point we want to:
- *  -> Make a better logging system, one which can dynamically create its information portion without creating memory leaks. One which can log per-game instance, and only log to that instance's main window. Also, it should be able to use format messages.
- *  -> Allow automatic version selection when selecting a game.
  *  -> PropertyList with nested portions.
  *  -> Add a scripting console + a way to run scripts for each game, as well as an actual mod system definition.
  *  -> Use new config system in existing code parts?
  *  -> Improve the file path system by thinking about all the places we use it, and if we want to combine any usages.
  *   -> Also, I don't like FrogLordApplication.getWorkingDirectory(), we should allow paths to specify their default directories.
  *   -> I also don't like how having multiple instances of FrogLord can break the configuration. Is there some way we can handle this better? Perhaps reloading configs which are not for the active game instance when we go to save and the file was unexpectedly changed?
- *
- * TODO: Solve TODOs in:
- *  - FrogLordApplication.java
- *  - GameInstance.java
- *  - GroupedCollectionViewComponent.java
  *
  * TODO: Globus's computer seems to have different text settings than mine, so many of the UI buttons are just too small for the text.
  *  -> What do I need to make the FrogLord UI appear consistent across systems?
@@ -49,7 +42,6 @@ import java.util.logging.*;
  *  -> Animations probably should be viewable independently of each other? Not sure. But can they compound? Not sure.
  *  -> Are there any xars with flipbook animations for example? Stuff we've taken for granted should be challenged.
  *  -> Add TRUE interpolation support. Eg: Don't just add MediEvil interpolation, add an option to smooth animations.
- * TODO: Rewrite handleWadEdit() and related wad functionality & UI.
  * TODO: Is it finally time to delete the GameObject abstract class?
  */
 public class FrogLordApplication extends Application {

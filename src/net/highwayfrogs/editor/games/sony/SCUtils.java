@@ -126,7 +126,7 @@ public class SCUtils {
             completeModel = lastCompleteMOF;
         }
 
-        return new MRModel(resourceEntry.getGameInstance(), null, completeModel);
+        return new MRModel(resourceEntry.getGameInstance(), completeModel);
     }
 
     /**

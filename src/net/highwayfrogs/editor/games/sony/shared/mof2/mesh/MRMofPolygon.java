@@ -73,13 +73,19 @@ public class MRMofPolygon extends SCGameData<SCGameInstance> {
             this.textureUvs[i] = new SCByteTextureUV();
     }
 
+    /**
+     * Gets the logger name.
+     */
+    public String getLoggerName() {
+        return "MRMofPolygon{" + this.polygonType + "," + NumberUtils.toHexString(this.lastReadAddress) + "}";
+    }
+
     @Override
     public ILogger getLogger() {
-        String name = "MRMofPolygon{" + this.polygonType + "," + NumberUtils.toHexString(this.lastReadAddress) + "}";
         if (this.mofPart != null) {
-            return new AppendInfoLoggerWrapper(this.mofPart.getLogger(), name, AppendInfoLoggerWrapper.TEMPLATE_OVERRIDE_AT_ORIGINAL);
+            return new AppendInfoLoggerWrapper(this.mofPart.getLogger(), getLoggerName(), AppendInfoLoggerWrapper.TEMPLATE_OVERRIDE_AT_ORIGINAL);
         } else {
-            return new LazyInstanceLogger(getGameInstance(), name);
+            return new LazyInstanceLogger(getGameInstance(), getLoggerName());
         }
     }
 
@@ -156,7 +162,7 @@ public class MRMofPolygon extends SCGameData<SCGameInstance> {
             if (this.textureId < 0) {
                 getLogger().severe("A textured MRMofPolygon had an invalid texture ID! (%d) This polygon will not render correctly in-game and may even cause crashes!");
             } else {
-                GameImage image = getTexture(null, 0); // Get the texture without any animation.
+                GameImage image = getDefaultTexture();
                 if (image == null)
                     getLogger().severe("A textured MRMofPolygon had an unresolvable texture ID! (%d) This polygon will not render correctly in-game and may even cause crashes!");
             }
@@ -197,6 +203,13 @@ public class MRMofPolygon extends SCGameData<SCGameInstance> {
         writer.writeUnsignedShort(0); // The "texture ID" is always zero.
         this.textureUvs[3].save(writer); // This swap can be seen in MR_MESH.C/MRUpdateViewportMeshInstancesAnimatedPolys.
         this.textureUvs[2].save(writer);
+    }
+
+    /**
+     * Gets the active texture on this polygon if no texture animation is applied.
+     */
+    public GameImage getDefaultTexture() {
+        return getTexture(null, 0);
     }
 
     /**
@@ -242,14 +255,13 @@ public class MRMofPolygon extends SCGameData<SCGameInstance> {
             return false;
 
         // TODO: Some terrain is transparent which shouldn't be (Think sky zone) Actually, in prototypes, these do actually appear transparent, just of very high brightness.
-        // TODO: crap, I think we broke stuff under water.
         // Frogger is the only other game confirmed to call 'MRPatchMOFTranslucency', although I did not test which build that was added.
         // However, even in Frogger, it has been observed that in builds such as PSX Alpha (slugs in SWP1.MAP), the transparency is not always respected.
         // The first build seen with semi-transparent texture patching is PSX Build 11. PSX Build 8 is the most recently seen build before that, so we'll check from there.
         if (getGameInstance().isFrogger() && !((FroggerGameInstance) getGameInstance()).getVersionConfig().isAtOrBeforeBuild8())
             return false;
 
-        GameImage image = getTexture(null, 0);
+        GameImage image = getDefaultTexture();
         return image != null && image.testFlag(GameImage.FLAG_TRANSLUCENT);
     }
 

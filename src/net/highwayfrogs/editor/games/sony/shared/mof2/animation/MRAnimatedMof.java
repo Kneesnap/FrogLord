@@ -169,6 +169,29 @@ public class MRAnimatedMof extends MRBaseModelData {
     }
 
     /**
+     * Gets a model by its staticModelID/static mof index (getStaticModelID()), if it can be found.
+     * @param modelId the model id to resolve
+     * @return mofModel, or null
+     */
+    public MRAnimatedMofModel getModelByID(int modelId) {
+        // Resolve that mofIndex to an animated model.
+        int tempModelId = 0;
+        MRAnimatedMofModel mofModel = null;
+        for (int i = 0; i < this.modelSets.size(); i++) {
+            MRAnimatedMofModelSet modelSet = this.modelSets.get(i);
+            int newTempIndex = tempModelId + modelSet.getModels().size();
+            if (newTempIndex > modelId) {
+                mofModel = modelSet.getModels().get(modelId - tempModelId);
+                break;
+            } else {
+                tempModelId = newTempIndex;
+            }
+        }
+
+        return mofModel;
+    }
+
+    /**
      * Get an animation transform matrix.
      * @param part The MOFPart to apply to.
      * @param xarAnimation The animation to get the transform for.

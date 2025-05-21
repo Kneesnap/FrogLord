@@ -15,8 +15,6 @@ import javafx.scene.transform.Transform;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.exe.PickupData;
 import net.highwayfrogs.editor.file.config.exe.PickupData.PickupAnimationFrame;
-import net.highwayfrogs.editor.file.config.exe.ThemeBook;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerFlyScoreType;
@@ -326,15 +324,6 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
         IFroggerFormEntry formEntry = entity.getFormEntry();
         MRModel model = formEntry != null ? formEntry.getEntityModel(entity) : null;
         if (model != null) {
-            // Set VLO archive to the map VLO if currently unset.
-            VLOArchive vlo = getMap().getConfig().getForcedVLO(getMap().getGameInstance(), model.getFileDisplayName());
-            if (vlo == null) {
-                ThemeBook themeBook = getMap().getGameInstance().getThemeBook(formEntry.getTheme());
-                if (themeBook != null)
-                    vlo = themeBook.getVLO(getMap());
-            }
-            model.setVloFile(vlo);
-
             // Update MeshView.
             MRModelMesh modelMesh = this.meshCache.computeIfAbsent(model, MRModel::createMeshWithDefaultAnimation);
             if (modelMesh.getEditableFaces().size() > 0) {

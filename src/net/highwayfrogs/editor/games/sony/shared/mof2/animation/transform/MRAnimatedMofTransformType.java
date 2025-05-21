@@ -17,7 +17,7 @@ public enum MRAnimatedMofTransformType {
     BYTE((byte) 0x31, MRAnimatedMofTransformMatrixByte::new, null), // '1'
     QUAT_BYTE((byte) 0x32, MRAnimatedMofTransformQuatByte::new, MRAnimatedMofTransformQuatByte::interpolate), // '2'
     QUAT((byte) 0x33, MRAnimatedMofTransformQuat::new, MRAnimatedMofTransformQuat::interpolate), // '3'
-    QUAT_SCALE_BYTE((byte) 0x34, MRAnimatedMofTransformScaleByte::new, MRAnimatedMofTransformScaleByte::interpolate), // '4'
+    QUAT_SCALE_BYTE((byte) 0x34, MRAnimatedMofTransformQuatScaleByte::new, MRAnimatedMofTransformQuatScaleByte::interpolate), // '4'
     QUAT_SCALE((byte) 0x35, MRAnimatedMofTransformQuatScale::new, MRAnimatedMofTransformQuatScale::interpolate); // '5'
 
     @Getter private final byte opcode;

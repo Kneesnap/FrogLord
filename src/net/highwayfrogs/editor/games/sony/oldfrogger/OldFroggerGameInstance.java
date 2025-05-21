@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.games.sony.oldfrogger;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
@@ -11,14 +11,19 @@ import net.highwayfrogs.editor.games.sony.SCUtils.SCForcedLoadSoundFileType;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerConfig;
 import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapVersion;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapEntity;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapForm;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.OldFroggerMapEntityMarkerPacket;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 
 import java.io.File;
 import java.util.*;
@@ -119,6 +124,31 @@ public class OldFroggerGameInstance extends SCGameInstance {
             remapsByPointer.put(remapPointer, remap);
             addRemap(remap);
         }
+    }
+
+    @Override
+    protected void resolveModelVloFiles() {
+        for (OldFroggerMapFile mapFile : getMainArchive().getAllFiles(OldFroggerMapFile.class)) {
+            if (mapFile.getFormatVersion() != OldFroggerMapVersion.MILESTONE3)
+                continue;
+
+            OldFroggerLevelTableEntry levelTableEntry = mapFile.getLevelTableEntry();
+            if (levelTableEntry == null)
+                continue;
+
+            VLOArchive mainVloArchive = levelTableEntry.getMainVLOArchive();
+            if (mainVloArchive == null)
+                continue;
+
+            for (OldFroggerMapEntity entity : mapFile.getEntityMarkerPacket().getEntities()) {
+                OldFroggerMapForm form = entity.getForm();
+                MRModel model = form != null ? form.getModel() : null;
+                if (model != null && model.getVloFile() == null)
+                    model.setVloFile(mainVloArchive);
+            }
+        }
+
+        super.resolveModelVloFiles();
     }
 
     @Override

@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.sony.shared.mof2;
 
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
@@ -7,32 +8,37 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
-import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.MRAnimatedMof;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRStaticMof;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.MRModelFileUIController;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.MRModelMeshController;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.mesh.MRModelMesh;
-import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.games.sony.shared.mof2.utils.MRMofAndMisfitModelConverter;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.utils.DynamicMeshObjExporter;
-import net.highwayfrogs.editor.games.sony.shared.utils.FileUtils3D;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.ArraySource;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
-import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
+import net.highwayfrogs.editor.utils.logging.MessageTrackingLogger;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -58,16 +64,14 @@ public class MRModel extends SCSharedGameFile {
     @Setter private boolean incomplete;
     private MRModel completeCounterpart;
 
-    private transient FroggerMapTheme theme; // TODO: We may want to change how we track this to instead maybe know the parent WAD file and calculate it from that. This is in the interest of supporting other games.
-    @Setter private transient VLOArchive vloFile; // TODO: Change this later, I think we want to change how this is tracked.
+    @Setter private transient VLOArchive vloFile;
 
     public static final int FLAG_ANIMATION_FILE = Constants.BIT_FLAG_3; // This is an animation MOF file.
 
     public static final byte[] DUMMY_DATA = "DUMY".getBytes();
 
-    public MRModel(SCGameInstance instance, FroggerMapTheme theme, MRModel lastCompleteMOF) {
+    public MRModel(SCGameInstance instance, MRModel lastCompleteMOF) {
         super(instance);
-        this.theme = theme;
         this.completeCounterpart = lastCompleteMOF;
     }
 
@@ -137,6 +141,7 @@ public class MRModel extends SCSharedGameFile {
         propertyList = super.addToPropertyList(propertyList);
 
         propertyList.add("Type", getModelType() + (this.incomplete ? " (Incomplete)" : ""));
+        propertyList.add("Main VLO", this.vloFile != null ? this.vloFile.getFileDisplayName() : "None");
         if (this.incomplete)
             propertyList.add("Complete Counterpart", this.completeCounterpart.getFileDisplayName());
 
@@ -159,7 +164,7 @@ public class MRModel extends SCSharedGameFile {
     }
 
     @Override
-    public void handleWadEdit(WADFile parent) {
+    public void performDefaultUIAction() {
         showEditor3D();
     }
 
@@ -167,47 +172,84 @@ public class MRModel extends SCSharedGameFile {
      * Show the 3D editor.
      */
     public void showEditor3D() {
-        if (getVloFile() == null) {
-            // Just grab the first VLO.
-            VLOArchive firstVLO = getArchive().findFirstVLO();
-            if (firstVLO != null) {
-                setVloFile(firstVLO);
-            } else {
-                getArchive().promptVLOSelection(getTheme(), vlo -> {
-                    setVloFile(vlo);
-                    showEditor3D();
-                }, false);
+        MeshViewController.setupMeshViewer(getGameInstance(), new MRModelMeshController(getGameInstance()), createMesh());
+    }
+
+    @Override
+    public void askUserToImportFile() {
+        File inputFile = FileUtils.askUserToOpenFile(getGameInstance(), SINGLE_FILE_IMPORT_PATH);
+        if (inputFile == null)
+            return;
+
+        String fileName = inputFile.getName().toLowerCase();
+        if (fileName.endsWith(".mm3d")) {
+            MessageTrackingLogger importLogger = new MessageTrackingLogger(getLogger());
+            importLogger.info("Importing '%s'...", inputFile.getName());
+
+            byte[] rawFileBytes;
+            try {
+                rawFileBytes = Files.readAllBytes(inputFile.toPath());
+            } catch (IOException ex) {
+                Utils.handleError(getLogger(), ex, true, "Failed to read contents of '%s'.", inputFile.getName());
                 return;
             }
-        }
 
-        MeshViewController.setupMeshViewer(getGameInstance(), new MRModelMeshController(getGameInstance()), createMesh());
+            MisfitModel3DObject newObject = new MisfitModel3DObject();
+            DataReader reader = new DataReader(new ArraySource(rawFileBytes));
+
+            try {
+                newObject.load(reader);
+            } catch (Exception ex) {
+                Utils.handleError(importLogger, ex, true, "An error occurred loading '%s'.", inputFile.getName());
+                return;
+            }
+
+            try {
+                MRMofAndMisfitModelConverter.importMofFromModel(importLogger, newObject, this);
+            } catch (Exception ex) {
+                Utils.handleError(importLogger, ex, true, "An error occurred while importing '%s'.", inputFile.getName());
+                return;
+            }
+
+            importLogger.showPopup("successfully", "Imported '%s' [problem=with ][summary].", inputFile.getName());
+        } else if (fileName.endsWith(".vlo") || fileName.endsWith(".xar") || fileName.endsWith(".xmr")) {
+            super.askUserToImportFile();
+        } else {
+            FXUtils.makePopUp("Don't know how to import this file type. Aborted.", AlertType.WARNING);
+        }
     }
 
     /**
      * Export this model to .obj
      * @param folder The folder to export to.
-     * @param vlo    The graphics pack to export.
      */
     @SneakyThrows
-    public void exportObject(File folder, VLOArchive vlo) {
-        if (getModelType() == MRModelType.DUMMY) {
-            getLogger().warning("Cannot export dummy MOF.");
+    public void exportObject(File folder) {
+        if (getModelType() == MRModelType.DUMMY)
             return;
-        }
 
-        setVloFile(vlo);
         DynamicMeshObjExporter.exportMeshToObj(getLogger(), createMeshWithDefaultAnimation(), folder, FileUtils.stripExtension(getFileDisplayName()), true);
+    }
+
+    /**
+     * Export this model to maverick model 3d format (.mm3d).
+     * @param folder The folder to export to.
+     * @param textureExportFolder if not null, any required textures will be exported to this folder
+     */
+    public void exportMaverickModel(File folder, String relativeMofTexturePath, File textureExportFolder) {
+        if (getModelType() == MRModelType.DUMMY)
+            return;
 
         // Export mm3d too.
-        File saveTo = new File(folder, FileUtils.stripExtension(getFileDisplayName()) + ".mm3d");
-        FileUtils.deleteFile(saveTo);
+        List<MRStaticMof> staticMofs = getStaticMofs();
+        for (int i = 0; i < staticMofs.size(); i++) {
+            String suffix = (staticMofs.size() > 1 ? "-" + i : "");
+            File saveTo = new File(folder, FileUtils.stripExtension(getFileDisplayName()) + suffix + ".mm3d");
+            FileUtils.deleteFile(saveTo);
 
-        MisfitModel3DObject model = FileUtils3D.convertMofToMisfitModel(this);
-        DataWriter writer = new DataWriter(new FileReceiver(saveTo));
-        if (model != null)
-            model.save(writer);
-        writer.closeReceiver();
+            MisfitModel3DObject model = MRMofAndMisfitModelConverter.convertMofToMisfitModel(staticMofs.get(i), relativeMofTexturePath, textureExportFolder);
+            model.writeDataToFile(getLogger(), saveTo, true);
+        }
     }
 
     /**
@@ -318,5 +360,23 @@ public class MRModel extends SCSharedGameFile {
         boolean isGoldenFrog = "GEN_GOLD_FROG.XMR".equals(name);
 
         return isFroglet || (isGoldenFrog && !frogger.getVersionConfig().isAtOrBeforeBuild20());
+    }
+
+    /**
+     * Gets the name of an animation from a preconfigured list by its ID, if there is one
+     * @param animationNameId The ID of the animation name to get.
+     * @return name
+     */
+    public String getConfiguredAnimationName(int animationNameId) {
+        if (animationNameId < 0)
+            return null;
+
+        NameBank bank = getGameInstance().getVersionConfig().getAnimationBank();
+        if (bank == null)
+            return null;
+
+        String bankName = SCUtils.stripWin95(FileUtils.stripExtension(getFileDisplayName()));
+        NameBank childBank = bank.getChildBank(bankName);
+        return childBank != null ? childBank.getName(animationNameId) : null;
     }
 }

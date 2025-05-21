@@ -22,8 +22,12 @@ import java.util.Calendar;
  */
 public class DynamicMeshObjExporter {
     public static final BrowserFileType OBJ_FILE_TYPE = new BrowserFileType("Wavefront Obj", "obj");
-    public static final SavedFilePath OBJ_EXPORT_FILE_PATH = new SavedFilePath("objExportFilePath", "Please select the folder to save the .obj file to.", OBJ_FILE_TYPE);
+    public static final SavedFilePath OBJ_EXPORT_FILE_PATH = new SavedFilePath("objExportFilePath", "Please select the file to save the .obj as.", OBJ_FILE_TYPE);
     public static final SavedFilePath OBJ_EXPORT_FOLDER_PATH = new SavedFilePath("objExportFolderPath", "Please select the folder to save the .obj file to.");
+    public static final BrowserFileType MM3D_FILE_TYPE = new BrowserFileType("Maverick Model 3D", "mm3d");
+    public static final SavedFilePath MM3D_EXPORT_FILE_PATH = new SavedFilePath("mm3dExportFilePath", "Please select the file to save the .mm3d as.", MM3D_FILE_TYPE);
+    public static final SavedFilePath MM3D_EXPORT_FOLDER_PATH = new SavedFilePath("mm3dExportFolderPath", "Please select the folder to save the .mm3d file(s) to.");
+
 
     /**
      * Asks the user where they would like to export a DynamicMesh to wavefront .obj, then exports it.

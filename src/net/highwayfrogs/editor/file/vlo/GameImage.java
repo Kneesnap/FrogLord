@@ -612,7 +612,11 @@ public class GameImage extends SCSharedGameData implements Cloneable, ITextureSo
     @Override
     public int getLeftPadding() {
         if (getParent().isPsxMode()) {
-            if (getFullHeight() != getIngameHeight()) // TODO: This is broken when getU() is broken.
+            short fullHeight = getFullHeight();
+            short ingameHeight = getIngameHeight();
+
+            // The purpose here is not fully understood, but seems to accurately reflect the original behavior in all games.
+            if (fullHeight != ingameHeight && fullHeight != ingameHeight + 1)
                 return 1;
 
             return 0;

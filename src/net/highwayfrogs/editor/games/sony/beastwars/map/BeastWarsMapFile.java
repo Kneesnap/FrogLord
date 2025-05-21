@@ -12,7 +12,6 @@ import net.highwayfrogs.editor.games.sony.beastwars.map.data.*;
 import net.highwayfrogs.editor.games.sony.beastwars.map.mesh.BeastWarsMapMesh;
 import net.highwayfrogs.editor.games.sony.beastwars.map.mesh.BeastWarsMapVertex;
 import net.highwayfrogs.editor.games.sony.beastwars.ui.BeastWarsMapMeshController;
-import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.utils.DynamicMeshObjExporter;
 import net.highwayfrogs.editor.gui.GameUIController;
@@ -403,7 +402,7 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
     }
 
     @Override
-    public void handleWadEdit(WADFile parent) {
+    public void performDefaultUIAction() {
         MeshViewController.setupMeshViewer(getGameInstance(), new BeastWarsMapMeshController(), new BeastWarsMapMesh(this));
     }
 

@@ -65,7 +65,7 @@ public class MRModelMeshPartNode extends SCPolygonAdapterNode<MRMofPolygon> {
         if (!polygon.getPolygonType().isTextured())
             return false; // No textured -> Can't get the UVs from here.
 
-        polygon.getTextureUvs()[index].toVector(result);
+        polygon.getTextureUvs()[index].toSnappedVector(polygon.getDefaultTexture(), result);
         return true;
     }
 

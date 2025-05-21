@@ -9,7 +9,6 @@ import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Transform;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
-import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.medievil.map.entity.MediEvilMapEntity;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMesh;
 import net.highwayfrogs.editor.games.sony.medievil.map.ui.MediEvilMapUIManager.MediEvilMapListManager;
@@ -84,13 +83,6 @@ public class MediEvilEntityManager extends MediEvilMapListManager<MediEvilMapEnt
         MRModel model = entity.getModel();
         if (model != null) {
             DynamicMesh.tryRemoveMesh(entityMesh);
-
-            // Set VLO archive to the map VLO if currently unset.
-            if (model.getVloFile() == null) {
-                MediEvilLevelTableEntry levelTableEntry = entity.getMap().getLevelTableEntry();
-                if (levelTableEntry != null)
-                    model.setVloFile(levelTableEntry.getVloFile());
-            }
 
             // Update MeshView.
             MRModelMesh modelMesh = this.meshCache.computeIfAbsent(model, MRModel::createMeshWithDefaultAnimation);

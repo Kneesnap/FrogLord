@@ -2,8 +2,6 @@ package net.highwayfrogs.editor.system.mm3d;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.system.mm3d.blocks.*;
 import net.highwayfrogs.editor.system.mm3d.holders.MMExternalTextureHolder;
@@ -12,6 +10,8 @@ import net.highwayfrogs.editor.system.mm3d.holders.MMTextureCoordinateHolder;
 import net.highwayfrogs.editor.system.mm3d.holders.MMTriangleFaceHolder;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.*;
 
@@ -26,7 +26,7 @@ import java.util.*;
 @Getter
 public class MisfitModel3DObject implements IBinarySerializable {
     @Setter private short majorVersion = 1;
-    @Setter private short minorVersion = 6;
+    @Setter private short minorVersion = 7;
     private short modelFlags;
     private final List<MMDataBlockHeader<?>> segments = new ArrayList<>();
     private final MMExternalTextureHolder externalTextures = new MMExternalTextureHolder(this);

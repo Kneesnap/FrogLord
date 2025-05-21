@@ -27,7 +27,7 @@ public class SCMapFileUIController<TGameFile extends SCMapFile<TGameInstance>, T
         getLeftSidePanelTopBox().getChildren().add(this.viewButton);
         this.viewButton.setOnMouseClicked(evt -> {
             if (getFile() != null)
-                getFile().handleWadEdit(null);
+                getFile().performDefaultUIAction();
         });
         this.viewButton.setDisable(getFile() == null || getFile().getPolygonPacket() == null);
     }

@@ -246,9 +246,7 @@ public class MRModelMesh extends PSXShadedDynamicMesh<MRMofPolygon, MRMofShadedT
             case DUMMY:
                 return null;
             case ANIMATED:
-                return this.activeMofModel != null
-                        ? this.model.getAnimatedMof().getStaticMofs().get(this.activeMofModel.getStaticModelID())
-                        : null;
+                return this.activeMofModel != null ? this.activeMofModel.getStaticMof() : null;
             case STATIC:
                 return this.model.getStaticMof();
             default:
