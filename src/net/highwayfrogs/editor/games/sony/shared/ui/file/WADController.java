@@ -176,6 +176,7 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
                 WADEntry wadEntry = ((ListCell<WADEntry>) event.getSource()).getItem();
                 if (wadEntry != null && wadEntry.getFile() != null) {
                     wadEntry.getFile().setupRightClickMenuItems(contextMenu);
+                    FXUtils.disableMnemonicParsing(contextMenu);
                     if (!contextMenu.getItems().isEmpty())
                         contextMenu.show((Node) event.getSource(), event.getScreenX(), event.getScreenY());
                 }

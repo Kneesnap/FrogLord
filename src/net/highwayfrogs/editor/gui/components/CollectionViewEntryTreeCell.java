@@ -6,6 +6,7 @@ import javafx.scene.control.TreeCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 /**
  * Applies collection view entry display properties to a JavaFX TreeCell.
@@ -35,6 +36,7 @@ public class CollectionViewEntryTreeCell<TViewEntry extends ICollectionViewEntry
         setOnContextMenuRequested(evt -> {
             ContextMenu contextMenu = new ContextMenu();
             viewEntry.setupRightClickMenuItems(contextMenu);
+            FXUtils.disableMnemonicParsing(contextMenu);
             if (!contextMenu.getItems().isEmpty())
                 contextMenu.show((Node) evt.getSource(), evt.getScreenX(), evt.getScreenY());
         });

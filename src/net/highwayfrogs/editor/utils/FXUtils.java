@@ -592,6 +592,23 @@ public class FXUtils {
         FrogLordApplication.getApplication().getHostServices().showDocument(url);
     }
 
+    /**
+     * Disables mnemonic parsing for all items of the ContextMenu.
+     * Enables underscores to work.
+     * @param contextMenu the context menu to update
+     */
+    public static void disableMnemonicParsing(ContextMenu contextMenu) {
+        if (contextMenu == null)
+            return;
+
+        ObservableList<MenuItem> menuItems = contextMenu.getItems();
+        for (int i = 0; i < menuItems.size(); i++) {
+            MenuItem menuItem = menuItems.get(i);
+            if (menuItem != null)
+                menuItem.setMnemonicParsing(false);
+        }
+    }
+
     private static void setupCacheTimerTask() {
         Utils.getAsyncTaskTimer().scheduleAtFixedRate(Utils.createTimerTask(() -> {
             synchronized (imageCacheMap) {
