@@ -510,7 +510,7 @@ public class GreatQuestUtils {
             return true;
         } else {
             if (warnIfNotFound && hash != 0 && hash != -1)
-                gameObj.getLogger().warning("Failed to resolve " + resourceClass.getSimpleName() + " by its " + Utils.getSimpleName(gameObj) + " hash: " + hashObj.getHashNumberAsString() + ".");
+                gameObj.getLogger().warning("Failed to resolve %s by its %s hash: %s.", resourceClass.getSimpleName(), Utils.getSimpleName(gameObj), hashObj.getHashNumberAsString());
             return false;
         }
     }
