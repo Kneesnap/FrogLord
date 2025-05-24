@@ -738,10 +738,11 @@ public class Config implements IBinarySerializable {
 
     private static Config loadConfigFromString(BadStringReader stringReader, int layer, String fileName, String sectionName, String sectionComment) {
         Config config = new Config(sectionName);
-        config.setOriginalLineNumber(stringReader.getLineNumber());
+        config.setOriginalLineNumber(stringReader.getLineNumber() - 1);
         config.setSectionComment(sectionComment);
 
         while (true) {
+            int lineNumber = stringReader.getLineNumber(); // The value is one-indexed, so getting this before we read the line gives us the proper line number.
             String line = stringReader.readLine();
             if (line == null)
                 return config; // Reached end of file?
@@ -772,7 +773,7 @@ public class Config implements IBinarySerializable {
 
                 // This is the start of a new section.
                 if (sectionLine.charAt(sectionLine.length() - 1) != ']')
-                    throw new IllegalConfigSyntaxException("Invalid section identifier. (Line: '" + sectionLine + "')");
+                    throw new IllegalConfigSyntaxException("Invalid section identifier. (Line " + lineNumber + ": '" + sectionLine + "')");
 
                 int leftLayer = 0;
                 for (int i = 0; i < sectionLine.length(); i++) {
@@ -794,15 +795,15 @@ public class Config implements IBinarySerializable {
 
                 // Verify layer.
                 if (leftLayer != rightLayer)
-                    throw new IllegalConfigSyntaxException("Section identifier had mismatched tags! (Line: '" + sectionLine + "', Left: " + leftLayer + ", Right: " + rightLayer + ")");
+                    throw new IllegalConfigSyntaxException("This section had a different number of square brackets on the left-side vs the right-side! (Line " + lineNumber + ": '" + sectionLine + "', Left: " + leftLayer + ", Right: " + rightLayer + ")");
 
                 int sectionLayer = leftLayer;
                 if (sectionLayer > layer + 1)
-                    throw new IllegalConfigSyntaxException("Section identifier has too many brackets to connect to its parent! (Line: '" + sectionLine + "', Parent: " + layer + ", New Layer: " + sectionLayer + ")");
+                    throw new IllegalConfigSyntaxException("The section is likely misplaced as it has too many square bracket layers! (Line " + lineNumber + ": '" + sectionLine + "', Parent: " + layer + ", New Layer: " + sectionLayer + ")");
 
                 int nameLength = sectionLine.length() - rightLayer - leftLayer;
                 if (nameLength == 0)
-                    throw new IllegalConfigSyntaxException("Section identifier had no name! (Line: '" + sectionLine + "')");
+                    throw new IllegalConfigSyntaxException("The section had no name! (Line " + lineNumber + ": '" + sectionLine + "')");
 
                 // Determine super-section and section name.
                 String newSectionName = unescapeComment(sectionLine.substring(leftLayer, leftLayer + nameLength));
@@ -880,7 +881,7 @@ public class Config implements IBinarySerializable {
             }
 
             // Setup the new node.
-            newNode.setOriginalLineNumber(stringReader.getLineNumber());
+            newNode.setOriginalLineNumber(lineNumber);
             newNode.setOriginalFileName(fileName);
         }
     }
@@ -1040,19 +1041,19 @@ public class Config implements IBinarySerializable {
 
     // This is scuffed, but it works.
     private static class BadStringReader implements Closeable {
-        private final StringReader _internalReader;
+        private final StringReader internalReader;
         private final StringBuilder stringBuilder = new StringBuilder();
         public String cachedNextLine;
-        @Getter private int lineNumber; // The line number of the line which was just read.
+        @Getter private int lineNumber = 1; // The line number of the line which was just read.
 
         public BadStringReader(StringReader reader) {
-            this._internalReader = reader;
+            this.internalReader = reader;
         }
 
         @Override
         public void close() {
-            if (this._internalReader != null)
-                this._internalReader.close();
+            if (this.internalReader != null)
+                this.internalReader.close();
         }
 
         /**
@@ -1069,7 +1070,7 @@ public class Config implements IBinarySerializable {
             try {
                 int temp;
                 char tempChar;
-                while ((temp = _internalReader.read()) != -1 && (tempChar = (char) temp) != '\n')
+                while ((temp = this.internalReader.read()) != -1 && (tempChar = (char) temp) != '\n')
                     if (tempChar != '\r')
                         this.stringBuilder.append(tempChar);
 
