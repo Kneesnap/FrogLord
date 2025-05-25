@@ -113,7 +113,7 @@ ShowDialog "FFM 0 prompt 1" # Shows a dialog box containing "Fairy Frog Mother: 
 
 The code up there will allow the player to interact with Fairy Frogmother (FFM), and she'll say "Hello, Frogger!".  
 But if the player tries to interact with her again, she will completely ignore the player.  
-This was possible because of how the exampled used "entity variables".  
+This was possible because of how the example used "entity variables".  
 
 ### Entity Variables
 Each entity has 8 variable slots available, and are zero-indexed. In other words, the first slot is called 'slot 0', the second slot is called 'slot 1', up until reaching 'slot 7'.
@@ -121,7 +121,7 @@ Any whole number can be put in each slot, despite there being only 8 slots per e
 Variables are extremely powerful when used with the `SendNumber` command.  
 Think of `SendNumber` like a postal service, but a crappy one which only delivers a piece of paper containing a single number written on it.  
 Each entity can use the `SendNumber` postal service to send one number to themselves or to other entities.  
-Then, the entity who receives the number from the postal service might do something, by using the `OnReceiveNumber` cause.  
+Then, the entity who receives the number from the postal service will execute its functions caused by `OnReceiveNumber`, if the number they got from the postal service matches the cause.  
 
 For example:
 ```PowerShell
@@ -241,13 +241,15 @@ See `ShowDialog` for more details.
 **Supported Entity Types:** All  
 **Ghidra Reference (Ignore):** `kcCEntity::OnNumber`  
 **Usage:** `OnReceiveNumber <operation> <number>`  
-This will only execute when a number matching the specified criteria is sent to the script owner using the `SendNumber` effect.  
-The most common operation will be `EQUAL_TO`, which will allow specifying behavior upon receiving a specific number.  
+Using the postal system analogy described earlier, `OnReceiveNumber` is for an entity waiting for a number to be sent from the postal system with `SendNumber`.  
+Whenever a number is received from the postal system, the entity will check if the number it got matches the criteria it's waiting for.  
+In most cases, the criteria/operation is if the number is `EQUAL_TO` the number listened for.  
+For example, `OnReceiveNumber EQUAL_TO 12` will make the function run every time the number 12 is received from the postal system, but NOT any other number.  
 Only whole numbers (integers) are supported by this cause.  
 
 **Valid Operations:**  
 ```properties
-EQUAL_TO # The received number is equal to <number>
+EQUAL_TO # The received number is equal to <number>. (This is almost always what you'll want to use.)
 NOT_EQUAL_TO # The received number is not equal to <number>
 LESS_THAN # Received number < <number>
 GREATER_THAN # Received number > <number>
@@ -665,7 +667,7 @@ The only way to use a variable is with the `SendNumber` effect.
 **Usage:** `SendNumber <LITERAL_NUMBER|ENTITY_VARIABLE|RANDOM> <number>`  
 Think of `SendNumber` like a postal service, but a crappy one which only delivers a piece of paper containing a single number written on it.  
 Each entity can use the `SendNumber` postal service to send one number to themselves or to other entities.  
-Then, the entity who receives the number from the postal service might do something, by using the `OnReceiveNumber` cause.  
+Then, the entity who receives the number from the postal service will execute its functions caused by `OnReceiveNumber`, if the number they got from the postal service matches the cause.
 
 ```properties
 LITERAL_NUMBER # The number sent with the postal service is the argument named <number> in the above example.
