@@ -8,7 +8,7 @@ A simple example of what a FrogLord config looks like:
 [SectionName1] # All of the data seen between this line and [SectionName2] is part of a section named 'SectionName1'.
 key1=123 # This could be anything, ie: a number, text, etc
 key2=Hello World!
-Anything after the key=value section is treated as plain text, and could be interpretted by FrogLord differently based on the context.
+Anything after the key=value section is treated as plain text, and could be interpreted by FrogLord differently based on the context.
 For example, if this configuration section was being used to configure information about a mod, the text here could be treated as the mod description.
 
 [SectionName2] # Another section
@@ -23,7 +23,7 @@ The name to give to a section often depends on what it is used for, so refer to 
 
 > [!NOTE]
 > For the purposes of this simple example, only one layer of square brackets have been used.
-> However there can be more layers of square brackets, such as `[[[Example]]]`.  
+> However, there can be more layers of square brackets, such as `[[[Example]]]`.  
 > This has a special purpose and will be explained in more detail later.
 
 ### Properties
@@ -43,12 +43,12 @@ No properties can be made once the text starts.
 How FrogLord interprets this text can differ based on what kind of configuration file is being read. Refer to the documentation of that specific file for more information.  
 
 ### Comments  
-The `#` character is the comment character, meaning all text after `#` will be ignored by FrogLord.
-This is used so write notes for yourself and others.  
+The `#` character is the comment character, meaning all text after `#` on that line will be ignored by FrogLord.
+This is used to write notes for yourself and others.  
 
 **Example:**  
 ```ini
-Hello # All the text after the '#' character will be ignored by FrogLord, so FrogLord will only see 'Hello'.
+Hello # All the text after the '#' character on this line will be ignored by FrogLord, so FrogLord will only see 'Hello'.
 ```
 
 > [!TIP]
@@ -61,8 +61,8 @@ Hello # All the text after the '#' character will be ignored by FrogLord, so Fro
 As described before, **sections** are used to organize different parts of a configuration file into groups.  
 But it is very common to attach different sections to each other, creating something resembling a **family tree**.  
 When creating a section, the way to choose where to attach it is by choosing the number of square brackets (`[` and `]`) to surround the section name with.
-This is called the "layer". So for example, `[Example]` is considered to be on layer one but `[[[Example]]]` is considered to be on layer three.  
-In order to specify which section to attach a new section to, use more layer of square brackets than the section you'd like to attach to.  
+This is called the "layer". So for example, `[Example]` is considered to be on layer one, but `[[[Example]]]` is considered to be on layer three.  
+In order to specify which section to attach a new section to, use one more layer of square brackets than the section you'd like to attach to.  
 Please refer to the example to understand how this works in practice.  
 
 **Example (Think of it like a family tree):**  
