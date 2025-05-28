@@ -22,7 +22,7 @@ public class HashTreeStringGenerator implements IHashStringGenerator {
 
 
         for (int i = 0; i < Integer.MAX_VALUE; i++) {
-            int currHash = targetLinkerHash + (FroggerHashUtil.LINKER_HASH_TABLE_SIZE * i);
+            int currHash = targetLinkerHash + (FroggerHashUtil.PSYQ_LINKER_HASH_TABLE_SIZE * i);
             if (currHash > lookupTree.getMaxSum())
                 break; // Reached end.
 

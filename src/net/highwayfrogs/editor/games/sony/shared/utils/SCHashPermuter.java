@@ -298,9 +298,9 @@ public class SCHashPermuter {
      * @param words         The list of words to permute. (Each word can have multiple "permutation words", to allow for variations.)
      */
     public static void findLinkerHash(int minLinkerHash, int maxLinkerHash, String prefix, String suffix, List<Word> words) {
-        if (minLinkerHash < 0 || minLinkerHash >= FroggerHashUtil.LINKER_HASH_TABLE_SIZE)
+        if (minLinkerHash < 0 || minLinkerHash >= FroggerHashUtil.PSYQ_LINKER_HASH_TABLE_SIZE)
             throw new IllegalArgumentException("The provided minimum linker hash was not in the expected range of a linker hash. (" + minLinkerHash + ")");
-        if (maxLinkerHash < 0 || maxLinkerHash >= FroggerHashUtil.LINKER_HASH_TABLE_SIZE)
+        if (maxLinkerHash < 0 || maxLinkerHash >= FroggerHashUtil.PSYQ_LINKER_HASH_TABLE_SIZE)
             throw new IllegalArgumentException("The provided maximum linker hash was not in the expected range of a linker hash. (" + maxLinkerHash + ")");
         if (words == null || words.isEmpty())
             throw new IllegalArgumentException("Cannot find linker hash when no words were specified.");
@@ -336,7 +336,7 @@ public class SCHashPermuter {
 
             // b) Check result against linker hash.
             String result = builder.toString();
-            int linkerHash = FroggerHashUtil.getLinkerHash(result);
+            int linkerHash = FroggerHashUtil.getPsyQLinkerHash(result);
             if (linkerHash >= minLinkerHash && linkerHash <= maxLinkerHash && shouldShowWord(result, words, wordIndices))
                 printResult(result); // Frogger global variables always start with a capital letter, (Although PSX SDK ones do not), so we can skip ones that don't.
 
@@ -358,9 +358,9 @@ public class SCHashPermuter {
         System.out.print("Result '");
         System.out.print(result);
         System.out.print("', Linker Hash: ");
-        System.out.print(FroggerHashUtil.getLinkerHash(result));
+        System.out.print(FroggerHashUtil.getPsyQLinkerHash(result));
         System.out.print(", Assembler Hash: ");
-        System.out.println(FroggerHashUtil.getAssemblerHash(result));
+        System.out.println(FroggerHashUtil.getPsyQAssemblerHash(result));
     }
 
     public static abstract class Word {

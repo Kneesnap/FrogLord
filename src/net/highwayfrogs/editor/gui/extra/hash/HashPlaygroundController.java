@@ -20,6 +20,10 @@ import java.util.List;
 
 /**
  * Manages the hash playground.
+ * TODO Plans:
+ *  - Add word generator in addition to the dictionary, which brute-forces [a-z_] characters together. (Should result in approximately one match)
+ *  - Integrate with MSVC hashing.
+ *  - Add a suffix generator for [_][0-9][0-9[a-f]] 2 * 10 * 10 * 16, maybe (This might be too intense)
  * Created by Kneesnap on 2/24/2022.
  */
 public class HashPlaygroundController extends GameUIController<SCGameInstance> {
@@ -60,6 +64,7 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
         this.searchFilterField.textProperty().addListener((observable, oldValue, newValue) -> this.generateStrings(null));
         this.targetLinkerHashField.textProperty().addListener((observable, oldValue, newValue) -> this.generateStrings(null));
         this.maxWordSizeField.textProperty().addListener((observable, oldValue, newValue) -> this.generateStrings(null));
+        this.stringGenerator.onSetup(this);
     }
 
     private void generateNewString() {
@@ -69,10 +74,10 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
         if (this.suffixTextField.getText() != null && this.suffixTextField.getText().length() > 0)
             fullStr += this.suffixTextField.getText();
 
-        this.assemblerHashLabel.setText(String.valueOf(FroggerHashUtil.getAssemblerHash(fullStr)));
-        this.fullAssemblerHashLabel.setText(String.valueOf(FroggerHashUtil.getFullAssemblerHash(fullStr)));
-        this.linkerHashLabel.setText(String.valueOf(FroggerHashUtil.getLinkerHash(fullStr)));
-        this.fullLinkerHashLabel.setText(String.valueOf(FroggerHashUtil.getFullLinkerHash(fullStr)));
+        this.assemblerHashLabel.setText(String.valueOf(FroggerHashUtil.getPsyQAssemblerHash(fullStr)));
+        this.fullAssemblerHashLabel.setText(String.valueOf(FroggerHashUtil.getPsyQFullAssemblerHash(fullStr)));
+        this.linkerHashLabel.setText(String.valueOf(FroggerHashUtil.getPsyQLinkerHash(fullStr)));
+        this.fullLinkerHashLabel.setText(String.valueOf(FroggerHashUtil.getPsyQFullLinkerHash(fullStr)));
         this.currentStringLabel.setText("Input: '" + fullStr + "'");
         this.generateStrings(null);
     }
@@ -83,8 +88,8 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
             return;
 
         int targetLinkerHash = Integer.parseInt(this.targetLinkerHashField.getText());
-        if (targetLinkerHash < 0 || targetLinkerHash >= FroggerHashUtil.LINKER_HASH_TABLE_SIZE) {
-            FXUtils.makePopUp("The target linker hash must be within the range [0, " + FroggerHashUtil.LINKER_HASH_TABLE_SIZE + ").", AlertType.WARNING);
+        if (targetLinkerHash < 0 || targetLinkerHash >= FroggerHashUtil.PSYQ_LINKER_HASH_TABLE_SIZE) {
+            FXUtils.makePopUp("The target linker hash must be within the range [0, " + FroggerHashUtil.PSYQ_LINKER_HASH_TABLE_SIZE + ").", AlertType.WARNING);
             return;
         }
 
@@ -93,9 +98,9 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
         String prefix = this.prefixTextField.getText();
         String suffix = this.suffixTextField.getText();
         if (prefix != null)
-            targetLinkerHash = FroggerHashUtil.getLinkerHashWithoutSubstring(prefix, targetLinkerHash);
+            targetLinkerHash = FroggerHashUtil.getPsyQLinkerHashWithoutSubstring(prefix, targetLinkerHash);
         if (suffix != null)
-            targetLinkerHash = FroggerHashUtil.getLinkerHashWithoutSubstring(suffix, targetLinkerHash);
+            targetLinkerHash = FroggerHashUtil.getPsyQLinkerHashWithoutSubstring(suffix, targetLinkerHash);
 
         List<String> output = this.stringGenerator.generateStrings(targetLinkerHash, this.searchFilterField.getText());
         if (maxWordSize > 0)

@@ -71,7 +71,7 @@ public class DictionaryStringGenerator implements IHashStringGenerator {
 
         wordsByHash.values().forEach(List::clear);
         for (String word : allLoadedWords)
-            wordsByHash.computeIfAbsent(FroggerHashUtil.getLinkerHash(word), key -> new ArrayList<>()).add(word);
+            wordsByHash.computeIfAbsent(FroggerHashUtil.getPsyQLinkerHash(word), key -> new ArrayList<>()).add(word);
 
 
     }
