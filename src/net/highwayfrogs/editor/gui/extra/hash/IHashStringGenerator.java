@@ -9,15 +9,14 @@ import java.util.List;
 public interface IHashStringGenerator {
     /**
      * Generates strings
-     * @param targetLinkerHash The hash to target the generation of.
-     * @param searchQuery      The query to use to restrict what is displayed. Behavior can vary with different generators.
+     * @param controller the controller to generate strings for
      * @return Generated strings.
      */
-    public List<String> generateStrings(int targetLinkerHash, String searchQuery);
+    List<String> generateStrings(HashPlaygroundController controller);
 
     /**
-     * Called to setup the string generator.
+     * Called to set up the string generator.
      * @param controller The UI controller which is using this generator. Null should be supported.
      */
-    public void onSetup(HashPlaygroundController controller);
+    void onSetup(HashPlaygroundController controller);
 }

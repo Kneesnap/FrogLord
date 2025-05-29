@@ -79,6 +79,22 @@ public class FroggerHashUtil {
     }
 
     /**
+     * Gets the linker hash without the prefix/suffixes provided.
+     * @param targetLinkerHash the target PsyQ linker hash to modify
+     * @param prefix the prefix to remove
+     * @param suffix the suffix to remove
+     * @return updatedLinkerHash
+     */
+    public static int getPsyQLinkerHashWithoutPrefixSuffix(int targetLinkerHash, String prefix, String suffix) {
+        if (prefix != null && !prefix.isEmpty())
+            targetLinkerHash = getPsyQLinkerHashWithoutSubstring(prefix, targetLinkerHash);
+        if (suffix != null && !suffix.isEmpty())
+            targetLinkerHash = getPsyQLinkerHashWithoutSubstring(suffix, targetLinkerHash);
+
+        return targetLinkerHash;
+    }
+
+    /**
      * Gets the full hash of a string in accordance with the hashing algorithm seen in Microsoft Visual Studio '97.
      * The executables reverse-engineered were found in the Frogger 2 development backup, specifically C1.DLL which had a last modified date of 4/24/1997.
      * The MSVC 1997 Compilation Overview is as follows:
@@ -148,13 +164,6 @@ public class FroggerHashUtil {
         return getMsvcCompilerC1HashTableKey(getMsvcCompilerC116BitHash(input));
     }
 
-    public static void debugHash(String input) {
-        int fullHash = getMsvcCompilerC1FullHash(input);
-        short hash16Bit = getMsvcCompilerC116BitHash(fullHash);
-        int hashKey = getMsvcCompilerC1HashTableKey(hash16Bit);
-        System.out.printf("'%s' -> %08X -> %04X -> %d/%03X%n", input, fullHash, hash16Bit & 0xFFFF, hashKey, hashKey);
-    }
-
     private static void validateMsvcC2Hash(String input, int fullHash, int hash16Bit, int hashTableKeyCode) {
         int calculatedFullHash = getMsvcCompilerC1FullHash(input);
         short calculated16BitHash = getMsvcCompilerC116BitHash(calculatedFullHash);
@@ -174,7 +183,7 @@ public class FroggerHashUtil {
         validateMsvcC2Hash("A20", 0x52b, 0x52b,299);
         validateMsvcC2Hash("im_img0", 0x99139, 0x9130, 304);
         validateMsvcC2Hash("im_img2", 0x9913b, 0x9132, 306);
-        validateMsvcC2Hash("im_img1", 0x9913a, 0x9133, 307); // TODO: What's the tiebreaker behavior? (It seems like the tiebreaker being wrong will screw things up)
+        validateMsvcC2Hash("im_img1", 0x9913a, 0x9133, 307);
         validateMsvcC2Hash("B00", 0x533, 0x533, 307);
         validateMsvcC2Hash("C00", 0x544, 0x544, 324);
         validateMsvcC2Hash("A_", 0x167, 0x167, 359);
@@ -187,7 +196,7 @@ public class FroggerHashUtil {
         validateMsvcC2Hash("im_opts_exit", 0x2964ad61, 0x8405, 5);
         validateMsvcC2Hash("im_total_score_i", 0xee4a0e4f, 0xe005, 5);
         validateMsvcC2Hash("im_go_get_em_g", 0xaa742a71, 0x8005, 5);
-        validateMsvcC2Hash("im_fly_25", 0x9de09b, 0xe006, 6); // TODO: How are these in ascending order when the others appear to be in descending order?
+        validateMsvcC2Hash("im_fly_25", 0x9de09b, 0xe006, 6);
 
         // And even more!
         validateMsvcC2Hash("ifndef", 0x256f7, 0x56f5, 757);
