@@ -253,8 +253,8 @@ EQUAL_TO # The received number is equal to <number>. (This is almost always what
 NOT_EQUAL_TO # The received number is not equal to <number>
 LESS_THAN # Received number < <number>
 GREATER_THAN # Received number > <number>
-LESS_THAN_OR_EQUAL # Received number <= <number>
-GREATER_THAN_OR_EQUAL # Received number >= <number>
+LESS_THAN_OR_EQUAL_TO # Received number <= <number>
+GREATER_THAN_OR_EQUAL_TO # Received number >= <number>
 ```
 
 ### OnReceivePlayerHasItem
