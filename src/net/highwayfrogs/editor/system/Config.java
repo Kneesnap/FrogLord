@@ -872,8 +872,14 @@ public class Config implements IBinarySerializable {
             if (splitAt != -1) { // It's a key-value pair.
                 String key = unescapeKey(text.substring(0, splitAt));
                 String value = unescapeValue(text.substring(splitAt + 1));
-                if (config.keyValuePairs.put(key, newNode = new ConfigValueNode(value, commentText, commentSeparator)) == null)
+                ConfigValueNode oldNode;
+                if ((oldNode = config.keyValuePairs.putIfAbsent(key, newNode = new ConfigValueNode(value, commentText, commentSeparator))) == null) {
                     config.orderedKeyValuePairs.add(key);
+                } else {
+                    throw new IllegalConfigSyntaxException("The KeyValuePair on line #" + lineNumber + " conflicts the one defined on line #" + oldNode.getOriginalLineNumber() + "."
+                            + "\nLine #" + oldNode.getOriginalLineNumber() + ": " + escapeKey(key) + "=" + oldNode.getAsStringLiteral()
+                            + "\nLine #" + lineNumber + ": " + escapeKey(key) + "=" + escapeValue(value));
+                }
             } else { // It's raw text.
                 newNode = new ConfigValueNode(text, commentText, commentSeparator);
                 newNode.setAsString(text); // Ensure it is not escaped, as escaped text isn't supported here.
