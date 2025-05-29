@@ -482,12 +482,8 @@ public class SCUtils {
         for (int i = 0; i < orderedImages.size(); i++) {
             GameImage image = orderedImages.get(i);
             String originalName = image.getOriginalName();
-            if (originalName == null) {
-                lastHash = -1;
-                lastImage = null;
-                lastName = null;
+            if (originalName == null)
                 continue;
-            }
 
             int hash = calculateHash(instance, originalName);
             results[image.getTextureId() & 0xFFFF] = hash;
@@ -499,7 +495,7 @@ public class SCUtils {
                     int lastAssemblerHash = FroggerHashUtil.getPsyQAssemblerHash(lastName);
                     if (currAssemblerHash > lastAssemblerHash) {
                         instance.getLogger().warning("Symbols '%s' (%d) and '%s' (%d) appear to be ordered improperly due to string length/assembler hash.", lastName, lastAssemblerHash, originalName, currAssemblerHash);
-                    } else if (originalName.length() == lastName.length() && lastImage.getTextureId() <= image.getTextureId()) {
+                    } else if (currAssemblerHash == lastAssemblerHash && lastImage.getTextureId() <= image.getTextureId()) {
                         instance.getLogger().warning("Symbols '%s' (%d) and '%s' (%d) appear to be ordered improperly due to texture ID ordering.", lastName, lastImage.getTextureId(), originalName, image.getTextureId());
                     }
                 } else if (instance.isPC() && lastImage.getTextureId() <= image.getTextureId()) {
