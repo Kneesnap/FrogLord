@@ -495,8 +495,10 @@ public class SCUtils {
                 instance.getLogger().warning("Symbols '%s' (%d) and '%s' (%d) appear to be improperly ordered due to detecting improper hash ordering.", lastName, lastHash, originalName, hash);
             } else if (i > 0 && hash == lastHash && lastImage != null) {
                 if (instance.isPSX()) {
-                    if (originalName.length() < lastName.length()) {
-                        instance.getLogger().warning("Symbols '%s' and '%s' appear to be ordered improperly due to string length.", lastName, originalName);
+                    int currAssemblerHash = FroggerHashUtil.getPsyQAssemblerHash(originalName);
+                    int lastAssemblerHash = FroggerHashUtil.getPsyQAssemblerHash(lastName);
+                    if (currAssemblerHash > lastAssemblerHash) {
+                        instance.getLogger().warning("Symbols '%s' (%d) and '%s' (%d) appear to be ordered improperly due to string length/assembler hash.", lastName, lastAssemblerHash, originalName, currAssemblerHash);
                     } else if (originalName.length() == lastName.length() && lastImage.getTextureId() <= image.getTextureId()) {
                         instance.getLogger().warning("Symbols '%s' (%d) and '%s' (%d) appear to be ordered improperly due to texture ID ordering.", lastName, lastImage.getTextureId(), originalName, image.getTextureId());
                     }
