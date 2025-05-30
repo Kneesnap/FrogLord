@@ -519,13 +519,15 @@ public class SCUtils {
                 continue;
 
             // Apply hash to all entries in-between.
-            if (lastIndex >= 0 && lastHash == hash)
+            if (lastHash == hash)
                 for (int j = lastIndex; j < i; j++)
                     results[orderedImages.get(j).getTextureId() & 0xFFFF] = hash;
 
             lastHash = hash;
             lastIndex = i;
         }
+
+        // TODO: Test assembler hash.
 
         return results;
     }
