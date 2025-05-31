@@ -372,7 +372,7 @@ public class Utils {
 
         // Create popup window.
         if (showWindow)
-            FXUtils.makeErrorPopUp(formattedMessage, th, false);
+            FXUtils.makeErrorPopUp(formattedMessage, formattedMessage != null ? null : th, false);
     }
 
     /**

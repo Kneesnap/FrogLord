@@ -104,7 +104,7 @@ public class FrogLordApplication extends Application {
 
     private static void handleFxThreadError(Thread thread, Throwable throwable) {
         if (Platform.isFxApplicationThread()) {
-            Utils.handleError(null, throwable, true, "An unhandled error occurred in the user interface.");
+            Utils.handleError(null, throwable, true, "An unhandled error occurred in the user interface.%s", (throwable != null ? "\n" + throwable.getMessage() : ""));
         } else {
             // This method shouldn't be possible to call from outside the FX thread.
             Utils.handleError(null, throwable, true, "An unhandled error occurred on %s. (SHOULDN'T OCCUR????)", thread);
