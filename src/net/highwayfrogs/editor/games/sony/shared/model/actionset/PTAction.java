@@ -2,8 +2,8 @@ package net.highwayfrogs.editor.games.sony.shared.model.actionset;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
@@ -53,7 +53,7 @@ public class PTAction extends SCSharedGameData {
         if (this.keyFrameIndexListPointer <= 0)
             throw new RuntimeException("Cannot read key frame list, the pointer is invalid.");
 
-        reader.requireIndex(getLogger(), this.keyFrameIndexListPointer, "Expected key frame index list");
+        requireReaderIndex(reader, this.keyFrameIndexListPointer, "Expected key frame index list");
         for (int i = 0; i < this.virtualFrames.length; i++)
             this.virtualFrames[i] = reader.readInt();
 
@@ -68,7 +68,7 @@ public class PTAction extends SCSharedGameData {
         if (this.transformIndexListPointer <= 0)
             throw new RuntimeException("Cannot read transform index list, the pointer is invalid.");
 
-        reader.requireIndex(getLogger(), this.transformIndexListPointer, "Expected transform index list");
+        requireReaderIndex(reader, this.transformIndexListPointer, "Expected transform index list");
         for (int keyFrame = 0; keyFrame < this.transformationIndices.length; keyFrame++) {
             short[] transformIndicesInKeyFrame = this.transformationIndices[keyFrame];
             for (int i = 0; i < transformIndicesInKeyFrame.length; i++)

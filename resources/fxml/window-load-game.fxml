@@ -11,7 +11,7 @@
 			<children>
 				<StackPane alignment="TOP_CENTER">
 					<children>
-						<ImageView fitWidth="400.0" pickOnBounds="true" preserveRatio="true" StackPane.alignment="TOP_CENTER">
+						<ImageView fitWidth="400.0" pickOnBounds="true" preserveRatio="true" StackPane.alignment="TOP_CENTER" fx:id="frogLordGameLogoView">
 							<image>
 								<Image url="@/graphics/logo-large.png" />
 							</image>
@@ -20,7 +20,7 @@
 				</StackPane>
 				<HBox alignment="CENTER" spacing="3.0">
 					<children>
-						<Label text="By Kneesnap (&amp; Contributors)" />
+						<Label text="By Kneesnap (&amp; contributors)" />
 						<Hyperlink onAction="#openTechSupportLink" text="Tech Support (Highway Frogs)" />
 						<Hyperlink onAction="#openSourceCodeLink" text="Source Code" />
 					</children>

@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.sony.frogger.map.mesh;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapAnimation;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapAnimationTargetPolygon;
@@ -57,7 +58,16 @@ public class FroggerMapMeshNode extends SCPolygonAdapterNode<FroggerMapPolygon> 
         if (!polygon.getPolygonType().isTextured())
             return false; // No textured -> Can't get the UVs from here.
 
-        result = polygon.getTextureUvs()[index].toVector(result);
+        // This shortcut will only work on gouraud polygons, because non-gouraud won't track the UVs.
+        if (polygon.getPolygonType().isGouraud()) {
+            PSXShadeTextureDefinition shadeDef = getTextureSource(polygon);
+            if (shadeDef != null && !shadeDef.doAllColorsMatch()) {
+                shadeDef.getTextureUVs()[index].toSnappedVector(polygon.getTexture(), result);
+                return true;
+            }
+        }
+
+        result = polygon.getTextureUvs()[index].toSnappedVector(polygon.getTexture(), result);
 
         // Apply the animation uv offset.
         FroggerMapAnimation animation = getMesh().getAnimation(polygon);
@@ -92,8 +102,8 @@ public class FroggerMapMeshNode extends SCPolygonAdapterNode<FroggerMapPolygon> 
     /**
      * Ticks the map animations.
      */
-    public void tickMapAnimations() {
-        this.animationTickCounter++;
+    public void tickMapAnimations(int deltaFrames) {
+        this.animationTickCounter += deltaFrames;
         updateAnimatedPolygons();
     }
 

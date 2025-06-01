@@ -220,6 +220,14 @@ public class FirstPersonCamera extends Parent {
     }
 
     /**
+     * Assign (setup) the control event handlers on the supplied scene object.
+     * @param scene The subscene to receive and process the keyboard and mouse events, etc.
+     */
+    public void removeSceneControls(Stage stage, Scene scene) {
+        this.inputManager.removeSceneControls(stage, scene);
+    }
+
+    /**
      * Function to process mouse input events.
      */
     private void updateCameraViewFromMouseMovement(InputManager manager, MouseEvent evt, double mouseDeltaX, double mouseDeltaY) {
@@ -252,7 +260,10 @@ public class FirstPersonCamera extends Parent {
     /**
      * Function to process scroll events.
      */
-    private void updateCameraFovFromScroll(InputManager manager, ScrollEvent event) {
+    private void updateCameraFovFromScroll(InputManager manager, ScrollEvent event, boolean isTrackpadScroll) {
+        if (isTrackpadScroll)
+            return; // Changing the FoV with a laptop trackpad looks very bad.
+
         double newFov = getCamera().fieldOfViewProperty().doubleValue();
         if (event.getDeltaY() > 0) { // Zoom In (Mouse Wheel Forward -> DeltaY is positive)
             newFov -= CAM_FOV_CHANGE_DEGREES;

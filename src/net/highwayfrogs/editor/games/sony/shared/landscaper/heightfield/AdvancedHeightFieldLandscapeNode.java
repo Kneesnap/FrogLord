@@ -1,11 +1,11 @@
 package net.highwayfrogs.editor.games.sony.shared.landscaper.heightfield;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.shared.landscaper.Landscape;
 import net.highwayfrogs.editor.games.sony.shared.landscaper.LandscapeNode;
 import net.highwayfrogs.editor.games.sony.shared.landscaper.LandscapePolygon;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents a height-field with advanced editing capabilities.

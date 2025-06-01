@@ -289,13 +289,16 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
             kcScriptEffect effect = (kcScriptEffect) action.getExecutor();
             kcScriptFunction function = effect.getParentFunction();
             if (function != null) {
-                if (function.getCause() instanceof kcScriptCausePlayer && ((kcScriptCausePlayer) function.getCause()).getAction() == kcScriptCauseEntityAction.PICKUP_ITEM)
+                kcCResourceEntityInst targetEntity = effect.getTargetEntityRef().getResource();
+                if (function.getCause() instanceof kcScriptCausePlayer
+                        && (targetEntity != null && function.getCause().getScriptEntity() == targetEntity)
+                        && ((kcScriptCausePlayer) function.getCause()).getAction() == kcScriptCauseEntityAction.PICKUP_ITEM)
                     return true; // Picking up an item causes the item entity to terminate, so it would not work.
 
                 // Test for termination effect.
                 for (int i = 0; i < function.getEffects().size(); i++) {
                     kcScriptEffect testEffect = function.getEffects().get(i);
-                    if (!(testEffect instanceof kcScriptEffectAction))
+                    if (!(testEffect instanceof kcScriptEffectAction) || (targetEntity == null || testEffect.getTargetEntityRef().getResource() != targetEntity))
                         continue;
 
                     kcAction testAction = ((kcScriptEffectAction) testEffect).getAction();

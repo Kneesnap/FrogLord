@@ -58,7 +58,7 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
         // Add mesh click listener.
         getController().getInputManager().addMouseListener(MouseEvent.MOUSE_CLICKED, (manager, event, deltaX, deltaY) -> {
             PickResult result = event.getPickResult();
-            if (result == null || !(result.getIntersectedNode() instanceof MeshView) || manager.isSignificantMouseDragRecorded())
+            if (result == null || !(result.getIntersectedNode() instanceof MeshView) || manager.getMouseTracker().isSignificantMouseDragRecorded())
                 return; // No pick result, or the thing that was clicked was not the main mesh.
 
             Mesh mesh = ((MeshView) result.getIntersectedNode()).getMesh();
@@ -81,7 +81,7 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
 
         MeshView meshView = new MeshView();
         this.mapCollisionMesh = new GreatQuestMapCollisionMesh(this, getMap().getSceneManager().getCollisionMeshes(), "Map Collision");
-        this.mapCollisionMesh.addView(meshView);
+        this.mapCollisionMesh.addView(meshView, getController().getMeshTracker());
         setupMeshView(meshView);
         meshView.setVisible(false);
         getMainGrid().addCheckBox("Show Map Collision", false, meshView::setVisible);
@@ -116,7 +116,7 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
     @Override
     protected MeshView setupDisplay(kcCResourceTriMesh triMesh) {
         MeshView meshView = new MeshView();
-        new GreatQuestMapCollisionMesh(this, triMesh).addView(meshView);
+        new GreatQuestMapCollisionMesh(this, triMesh).addView(meshView, getController().getMeshTracker());
         meshView.setOnMouseClicked(event -> handleClick(event, triMesh));
         setupMeshView(meshView);
         return meshView;
@@ -302,7 +302,7 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
             }
 
             // Vertice IDs are the same IDs seen in the map data.
-            int vertexStartIndex = newEntry.getVertexStartIndex();
+            int vertexStartIndex = newEntry.getPendingVertexStartIndex();
             for (int i = 0; i < triMesh.getFaces().size(); i++) {
                 kcCFace face = triMesh.getFaces().get(i);
                 int baseTexCoordIndex = getBaseTextureCoordinateIndex(getMesh(), triMesh, face);

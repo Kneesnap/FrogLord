@@ -13,13 +13,13 @@ import java.util.Map;
  */
 @Getter
 public class ImageFilterSettings {
-    private ImageState state;
+    private final ImageState state;
     private boolean trimEdges;
     private boolean allowTransparency;
     private boolean allowFlip;
     private boolean allowScrunch;
     private boolean scaleToMaxSize;
-    private Map<BufferedImage, BufferedImage> renderCache = new HashMap<>();
+    private final Map<BufferedImage, BufferedImage> renderCache = new HashMap<>();
 
     public ImageFilterSettings(ImageState state) {
         this.state = state;

@@ -182,10 +182,10 @@ public class LandscapeMapMeshNode extends DynamicMeshAdapterNode<LandscapePolygo
             int uvIndex4 = texCoordEntry.addTexCoordValue(getTextureCoordinate(polygon, textureSource, texture, 3, Vector2f.ONE)); // uvBottomRight, 1F, 1F
 
             // Vertice IDs are the same IDs seen in the map data.
-            int vtxIndex1 = this.vertexEntry.getVertexStartIndex() + polygonVertex0.getVertexId();
-            int vtxIndex2 = this.vertexEntry.getVertexStartIndex() + polygonVertex1.getVertexId();
-            int vtxIndex3 = this.vertexEntry.getVertexStartIndex() + polygonVertex2.getVertexId();
-            int vtxIndex4 = this.vertexEntry.getVertexStartIndex() + polygonVertex3.getVertexId();
+            int vtxIndex1 = this.vertexEntry.getPendingVertexStartIndex() + polygonVertex0.getVertexId();
+            int vtxIndex2 = this.vertexEntry.getPendingVertexStartIndex() + polygonVertex1.getVertexId();
+            int vtxIndex3 = this.vertexEntry.getPendingVertexStartIndex() + polygonVertex2.getVertexId();
+            int vtxIndex4 = this.vertexEntry.getPendingVertexStartIndex() + polygonVertex3.getVertexId();
 
             // JavaFX uses counter-clockwise winding order.
             faceEntry.addFace(vtxIndex3, uvIndex3, vtxIndex2, uvIndex2, vtxIndex1, uvIndex1);
@@ -196,9 +196,9 @@ public class LandscapeMapMeshNode extends DynamicMeshAdapterNode<LandscapePolygo
             int uvIndex3 = texCoordEntry.addTexCoordValue(getTextureCoordinate(polygon, textureSource, texture, 2, Vector2f.UNIT_Y)); // uvBottomLeft, 0F, 1F
 
             // Vertice IDs are the same IDs seen in the map data.
-            int vtxIndex1 = this.vertexEntry.getVertexStartIndex() + polygonVertex0.getVertexId();
-            int vtxIndex2 = this.vertexEntry.getVertexStartIndex() + polygonVertex1.getVertexId();
-            int vtxIndex3 = this.vertexEntry.getVertexStartIndex() + polygonVertex2.getVertexId();
+            int vtxIndex1 = this.vertexEntry.getPendingVertexStartIndex() + polygonVertex0.getVertexId();
+            int vtxIndex2 = this.vertexEntry.getPendingVertexStartIndex() + polygonVertex1.getVertexId();
+            int vtxIndex3 = this.vertexEntry.getPendingVertexStartIndex() + polygonVertex2.getVertexId();
 
             // JavaFX uses counter-clockwise winding order.
             faceEntry.addFace(vtxIndex3, uvIndex3, vtxIndex2, uvIndex2, vtxIndex1, uvIndex1);

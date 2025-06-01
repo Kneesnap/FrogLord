@@ -14,28 +14,37 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.file.config.data.MAPLevel;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapLevelID;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMeshController;
+import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.baked.FroggerGridResizeController;
+import net.highwayfrogs.editor.games.sony.frogger.utils.FFSUtil;
+import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerUtils;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.SelectionMenu.AttachmentListCell;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
+import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.List;
 
@@ -55,6 +64,11 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
     @FXML private Button loadFromFFS;
     @FXML private Button saveToFFS;
     @FXML private Button saveToObj;
+
+    private static final BrowserFileType FFS_FILE_TYPE = new BrowserFileType("Frogger File Sync", "ffs");
+    private static final SavedFilePath FFS_IMPORT_PATH = new SavedFilePath("ffsImportPath", "Please select the map ffs file to import.", FFS_FILE_TYPE);
+    private static final SavedFilePath FFS_EXPORT_FOLDER = new SavedFilePath("ffsExportPath", "Please select the folder to export the .ffs map into");
+    private static final SavedFilePath OBJ_EXPORT_FOLDER = new SavedFilePath("mapObjExportPath", "Please select the folder to export the map .obj into");
 
     public FroggerMapInfoUIController(FroggerGameInstance instance) {
         super(instance);
@@ -93,7 +107,7 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
         this.propertyListViewer.showProperties(mapFile.createPropertyList());
 
         // Apply level name & screenshot to UI, if found.
-        MAPLevel level = MAPLevel.getByName(mapFile.getFileDisplayName());
+        FroggerMapLevelID level = mapFile.getMapLevelID();
         if (level != null && !mapFile.getGameInstance().getLevelInfoMap().isEmpty()) {
             LevelInfo info = mapFile.getGameInstance().getLevelInfoMap().get(level);
             if (info != null) {
@@ -138,12 +152,12 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
 
                 // With shading:
                 mapMesh.setShadingEnabled(true);
-                File file = new File(GUIMain.getWorkingDirectory(), getFile().getFileDisplayName() + "-shaded.png");
+                File file = new File(FrogLordApplication.getWorkingDirectory(), getFile().getFileDisplayName() + "-shaded.png");
                 ImageIO.write(mapMesh.getTextureAtlas().getImage(), "png", file);
 
                 // Without shading:
                 mapMesh.setShadingEnabled(false);
-                file = new File(GUIMain.getWorkingDirectory(), getFile().getFileDisplayName() + "-unshaded.png");
+                file = new File(FrogLordApplication.getWorkingDirectory(), getFile().getFileDisplayName() + "-unshaded.png");
                 ImageIO.write(mapMesh.getTextureAtlas().getImage(), "png", file);
             } catch (IOException e) {
                 handleError(e, true, "Failed to save all images.");
@@ -184,7 +198,7 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
 
     @FXML
     private void makeNewMap(ActionEvent event) {
-        InputMenu.promptInput(getGameInstance(), "Please enter the grid dimensions for the cleared map.", "5,5", newText -> {
+        InputMenu.promptInput(getGameInstance(), "Please enter the grid dimensions for the new map.", "5,5", newText -> {
             String[] split = newText.split(",");
             if (split.length != 2) {
                 FXUtils.makePopUp("'" + newText + "' was invalid.\nPlease enter two numbers separated by a comma.", AlertType.ERROR);
@@ -203,25 +217,38 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
 
             int x = Integer.parseInt(split[0]);
             int z = Integer.parseInt(split[1]);
-            if (x < 0 || z < 0) {
-                FXUtils.makePopUp("Dimensions cannot be less than zero.", AlertType.ERROR);
-                return;
-            }
-
-            if (x > 255 || z > 255) { // Frogger limitation.
-                FXUtils.makePopUp("The collision grid cannot go larger than 255x255.", AlertType.ERROR);
-                return;
-            }
-
-            getFile().randomizeMap(x, z);
+            if (FroggerGridResizeController.isGridSizeValid(x, z))
+                getFile().randomizeMap(x, z);
         });
     }
 
     @FXML
     @SneakyThrows
     private void exportToObj(ActionEvent event) {
-        // TODO: IMPLEMENT
-        FXUtils.makePopUp("Exporting to obj is not currently supported.", AlertType.ERROR);
-        // TODO: FileUtils3D.exportMapToObj(getFile(), Utils.promptChooseDirectory(getGameInstance(), "Choose the directory to save the map to.", false));
+        File outputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), OBJ_EXPORT_FOLDER);
+        if (outputFolder != null)
+            FroggerUtils.exportMapToObj(getFile(), outputFolder);
+    }
+
+    @FXML
+    @SneakyThrows
+    private void loadFromFFS(ActionEvent event) {
+        File importFile = FileUtils.askUserToOpenFile(getGameInstance(), FFS_IMPORT_PATH);
+        if (importFile != null)
+            FFSUtil.importFFSToMap(getFile(), importFile, ProblemResponse.CREATE_POPUP);
+    }
+
+    @FXML
+    @SneakyThrows
+    private void exportToFFS(ActionEvent event) {
+        File outputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), FFS_EXPORT_FOLDER);
+        if (outputFolder == null)
+            return;
+
+        FFSUtil.saveMapAsFFS(getFile(), outputFolder, ProblemResponse.CREATE_POPUP);
+
+        InputStream blenderScriptStream = getGameInstance().getGameType().getEmbeddedResourceStream(FFSUtil.BLENDER_ADDON_FILE_NAME);
+        if (blenderScriptStream != null)
+            Files.write(new File(outputFolder, FFSUtil.BLENDER_ADDON_FILE_NAME).toPath(), FileUtils.readBytesFromStream(blenderScriptStream));
     }
 }

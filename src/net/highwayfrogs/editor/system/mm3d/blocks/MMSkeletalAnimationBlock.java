@@ -5,12 +5,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.system.mm3d.OffsetType;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +27,7 @@ public class MMSkeletalAnimationBlock extends MMDataBlockBody {
     private float fps;
     private final List<List<MMSkeletalAnimationFrame>> frames = new ArrayList<>();
 
-    public static final int FLAG_LOOPING = Constants.BIT_FLAG_0; // 1.7+
+    public static final short FLAG_LOOPING = Constants.BIT_FLAG_0; // 1.7+
 
     public MMSkeletalAnimationBlock(MisfitModel3DObject parent) {
         super(OffsetType.SKELETAL_ANIMATIONS, parent);
@@ -76,26 +76,26 @@ public class MMSkeletalAnimationBlock extends MMDataBlockBody {
     public static class MMSkeletalAnimationFrame implements IBinarySerializable {
         private int jointIndex;
         private MMAnimationKeyframeType keyframeType;
-        private float posX; // In radians, might be transform, might be rotation.
-        private float posY;
-        private float posZ;
+        private float x; // Could be a transform, could be a rotation (radians).
+        private float y;
+        private float z;
 
         @Override
         public void load(DataReader reader) {
             this.jointIndex = reader.readInt();
             this.keyframeType = MMAnimationKeyframeType.values()[reader.readByte()];
-            this.posX = reader.readFloat();
-            this.posY = reader.readFloat();
-            this.posZ = reader.readFloat();
+            this.x = reader.readFloat();
+            this.y = reader.readFloat();
+            this.z = reader.readFloat();
         }
 
         @Override
         public void save(DataWriter writer) {
             writer.writeInt(this.jointIndex);
             writer.writeByte((byte) this.keyframeType.ordinal());
-            writer.writeFloat(this.posX);
-            writer.writeFloat(this.posY);
-            writer.writeFloat(this.posZ);
+            writer.writeFloat(this.x);
+            writer.writeFloat(this.y);
+            writer.writeFloat(this.z);
         }
     }
 

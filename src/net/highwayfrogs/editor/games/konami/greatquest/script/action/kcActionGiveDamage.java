@@ -60,7 +60,7 @@ public class kcActionGiveDamage extends kcActionTemplate {
             printWarning(logger, "the attackStrength is zero!");
         } else if (weaponMask == 0) { // This even occurs when negative attack strength (healing) provided.
             // kcCActor::OnDamage() verifies that weaponMask != 0 before applying or healing.
-            printWarning(logger, "the weaponMask is zero!");
+            printWarning(logger, "no weaponMask (damage flags) were specified!");
         } else if (attackStrength >= 0) { // When the attackStrength is less than zero, it will cause healing, which doesn't do the immunity test. (But the weaponMask still must not be zero!)
             // Test that the target entity can even receive the damage.
             kcActorBaseDesc actorDesc = getExecutor() != null ? getExecutor().getExecutingActorBaseDescription() : null;

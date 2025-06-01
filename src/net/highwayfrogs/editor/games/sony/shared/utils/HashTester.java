@@ -37,12 +37,12 @@ public class HashTester {
         System.out.print("Input '");
         System.out.print(input);
         System.out.print("', Linker Hash: ");
-        System.out.print(FroggerHashUtil.getLinkerHash(input));
+        System.out.print(FroggerHashUtil.getPsyQLinkerHash(input));
         System.out.print(", Assembler Hash: ");
-        System.out.print(FroggerHashUtil.getAssemblerHash(input));
+        System.out.print(FroggerHashUtil.getPsyQAssemblerHash(input));
         if (targetHash >= 0) {
             System.out.print(", Target Offset: ");
-            System.out.print(((FroggerHashUtil.LINKER_HASH_TABLE_SIZE + targetHash) - FroggerHashUtil.getLinkerHash(input)) % FroggerHashUtil.LINKER_HASH_TABLE_SIZE);
+            System.out.print(((FroggerHashUtil.PSYQ_LINKER_HASH_TABLE_SIZE + targetHash) - FroggerHashUtil.getPsyQLinkerHash(input)) % FroggerHashUtil.PSYQ_LINKER_HASH_TABLE_SIZE);
         }
 
         System.out.println();

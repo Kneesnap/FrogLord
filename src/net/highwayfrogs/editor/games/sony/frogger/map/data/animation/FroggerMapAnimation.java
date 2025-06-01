@@ -5,12 +5,13 @@ import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
@@ -24,6 +25,8 @@ import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.MathUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
@@ -39,9 +42,9 @@ import java.util.Objects;
  */
 public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
     @Getter private final FroggerMapFile mapFile;
-    @Getter private FroggerMapAnimationType type = FroggerMapAnimationType.UV;
-    @Getter private byte deltaU; // Change in texture U (Each frame)
-    @Getter private byte deltaV; // Change in texture V (Each frame)
+    @Getter @Setter @NonNull private FroggerMapAnimationType type = FroggerMapAnimationType.UV;
+    @Getter @Setter private byte deltaU; // Change in texture U (Each frame)
+    @Getter @Setter private byte deltaV; // Change in texture V (Each frame)
     @Getter private int uvFrameCount = 1; // Frames before resetting.
     @Getter private int framesPerTexture = 1; // Also known as celPeriod, this is the number of frames before an animated texture advances to the next texture.
     @Getter private final List<Short> unusedTextureIds = new ArrayList<>(); // Contains texture ids which aren't used by any animation.
@@ -112,7 +115,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
         if (this.mapFile.isExtremelyEarlyMapFormat()) {
             reader.setIndex(this.textureIdListPointerAddress);
         } else {
-            reader.requireIndex(getLogger(), this.textureIdListPointerAddress, "Expected texture id list");
+            requireReaderIndex(reader, this.textureIdListPointerAddress, "Expected texture id list");
         }
 
         // Read the texture id list.
@@ -135,7 +138,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
         if (this.targetPolygonListPointerAddress <= 0)
             throw new RuntimeException("Cannot target polygon list, the pointer " + NumberUtils.toHexString(this.targetPolygonListPointerAddress) + " is invalid.");
 
-        reader.requireIndex(getLogger(), this.targetPolygonListPointerAddress, "Expected target polygon list");
+        requireReaderIndex(reader, this.targetPolygonListPointerAddress, "Expected target polygon list");
         for (int i = 0; i < this.targetPolygons.size(); i++)
             this.targetPolygons.get(i).load(reader);
 
@@ -303,6 +306,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
             throw new IllegalArgumentException("Shading cannot be enabled when no polygon is provided, since the polygon is where the shading data is obtained from.");
 
         // Find the base image used to preview.
+        GameImage gameImage = null;
         if (this.type.hasTextureAnimation() && this.textureIds.size() > 0 && this.framesPerTexture > 0) {
             TextureRemapArray remap = this.mapFile.getTextureRemap();
 
@@ -314,13 +318,13 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
             // Find image by the ID.
             if (remappedTextureId != null) {
                 VLOArchive vlo = this.mapFile.getVloFile();
-                textureSource = vlo != null ? vlo.getImageByTextureId(remappedTextureId) : null;
+                textureSource = gameImage = vlo != null ? vlo.getImageByTextureId(remappedTextureId) : null;
                 if (textureSource == null) // If it wasn't found in the
-                    textureSource = getArchive().getImageByTextureId(remappedTextureId);
+                    textureSource = gameImage = getArchive().getImageByTextureId(remappedTextureId);
             }
         } else if (this.type.hasUVAnimation()) {
             if (textureSource == null && this.targetPolygons.size() > 0) {
-                textureSource = this.targetPolygons.stream()
+                textureSource = gameImage = this.targetPolygons.stream()
                         .map(testPolygon -> testPolygon.getPolygon() != null ? testPolygon.getPolygon().getTexture() : null)
                         .filter(Objects::nonNull)
                         .findFirst().orElse(null);
@@ -374,7 +378,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
         if (shadingEnabled)
             resultImage = polygon.createPolygonShadeDefinition(null, true, null, -1).makeImage(resultImage, null);
 
-        return resultImage;
+        return gameImage != null && resultImage != null ? ImageWorkHorse.trimEdges(gameImage, resultImage) : resultImage;
     }
 
     /**
@@ -384,25 +388,25 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
     public void setupEditor(FroggerUIMapAnimationManager manager, GUIEditorGrid editor) {
         // Animation Type:
         editor.addEnumSelector("Type", getType(), FroggerMapAnimationType.values(), false, newType -> {
-            this.type = newType;
+            setType(newType);
             manager.updateEditor(); // Refresh UI, since different UI elements may be visible now.
         });
 
         // Common controls.
         if (this.type.hasUVAnimation()) {
             editor.addSignedByteField("Pixels Per Frame (X)", this.deltaU, newDeltaU -> Math.abs(newDeltaU) <= 32, newDeltaU -> {
-                this.deltaU = newDeltaU;
+                setDeltaU(newDeltaU);
                 manager.updatePreviewImage(); // Update the preview image.
             });
             editor.addSignedByteField("Pixels Per Frame (Y)", this.deltaV, newDeltaV -> Math.abs(newDeltaV) <= 32, newDeltaV -> {
-                this.deltaV = newDeltaV;
+                setDeltaV(newDeltaV);
                 manager.updatePreviewImage(); // Update the preview image.
             });
 
             editor.addSignedIntegerField("UV Frame Count", this.uvFrameCount,
                     newUvFrameCount -> newUvFrameCount > 0 && Math.abs(newUvFrameCount * this.deltaU) < Byte.MAX_VALUE && Math.abs(newUvFrameCount * this.deltaV) < Byte.MAX_VALUE,
                     newUvFrameCount -> {
-                this.uvFrameCount = newUvFrameCount;
+                setUvFrameCount(newUvFrameCount);
                 manager.updatePreviewUI(); // Update the preview UI, since the UV frame count may have changed.
                 manager.updateEditor(); // Need to refresh the editor to change the other uv stuff.
             });
@@ -410,7 +414,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
 
         if (this.type.hasTextureAnimation()) {
             editor.addSignedIntegerField("Frames per Texture", this.framesPerTexture, newFrameCount -> newFrameCount > 0, newFrameCount -> {
-                this.framesPerTexture = newFrameCount;
+                setFramesPerTexture(newFrameCount);
                 manager.updatePreviewUI(); // Update the preview UI, since the texture frame count may have changed.
                 manager.updatePreviewImage(); // Update the preview (but don't refresh editor).
             });
@@ -433,7 +437,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
                 view.setFitWidth(20);
                 view.setFitHeight(20);
 
-                view.setOnMouseClicked(evt -> vlo.promptImageSelection(newImage -> {
+                view.setOnMouseClicked(evt -> remap.askUserToSelectImage(vlo, false, newImage -> {
                     int newIndex = remap.getRemapIndex(newImage.getTextureId());
                     if (newIndex < 0) {
                         FXUtils.makePopUp("The selected image is not part of the map's texture remap! (" + newImage.getTextureId() + ")", AlertType.ERROR);
@@ -443,58 +447,82 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
                     this.textureIds.set(tempIndex, (short) newIndex);
                     view.setImage(FXUtils.toFXImage(newImage.toBufferedImage(VLOArchive.ICON_EXPORT), false)); // Update the texture displayed in the UI.
                     manager.updatePreviewImage(); // Update the animation preview.
-                }, false));
+                    if (tempIndex == 0) // Refresh the texture displayed in the animation list.
+                        manager.refreshList();
+                }));
 
                 editor.setupSecondNode(new Button("Remove " + i + (image != null ? " (" + image.getLocalImageID() + "/" + image.getTextureId() + ")" : "")), false).setOnAction(evt -> {
                     this.textureIds.remove(tempIndex);
                     manager.updatePreviewUI(); // Update the preview UI, since the texture frame count may have changed.
                     manager.updateEditor(); // Refresh the editor to remove the animation.
+                    if (tempIndex == 0) // Refresh the texture displayed in the animation list.
+                        manager.refreshList();
                 });
 
                 editor.addRow(25);
             }
 
-            editor.addButton("Add Texture", () -> {
-                vlo.promptImageSelection(newImage -> {
-                    int newIndex = remap.getRemapIndex(newImage.getTextureId());
-                    if (newIndex < 0) {
-                        FXUtils.makePopUp("The selected image is not part of the map's texture remap! (" + newImage.getTextureId() + ")", AlertType.ERROR);
-                        return;
-                    }
+            editor.addButton("Add Texture", () -> remap.askUserToSelectImage(vlo, false, newImage -> {
+                int newIndex = remap.getRemapIndex(newImage.getTextureId());
+                if (newIndex < 0) {
+                    FXUtils.makePopUp("The selected image is not part of the map's texture remap! (" + newImage.getTextureId() + ")", AlertType.ERROR);
+                    return;
+                }
 
-                    this.textureIds.add((short) newIndex);
-                    manager.updatePreviewUI(); // Update the preview UI, since the texture frame count may have changed.
-                    manager.updateEditor(); // Refresh the editor to show the new texture.
-                }, false);
-            }).setDisable(vlo == null);
+                this.textureIds.add((short) newIndex);
+                manager.updatePreviewUI(); // Update the preview UI, since the texture frame count may have changed.
+                manager.updateEditor(); // Refresh the editor to show the new texture.
+                if (this.textureIds.size() == 1) // Refresh the texture displayed in the animation list.
+                    manager.refreshList();
+            })).setDisable(vlo == null);
         } else if (this.type.hasUVAnimation()) { // Allow changing the texture of all polygons affected by a UV animation.
             editor.addBoldLabel("UV Texture:");
-            editor.addButton("Change Texture", () -> {
-                vlo.promptImageSelection(newImage -> {
-                    int newIndex = remap.getRemapIndex(newImage.getTextureId());
-                    if (newIndex < 0) {
-                        FXUtils.makePopUp("The selected image is not part of the map's texture remap! (" + newImage.getTextureId() + ")", AlertType.ERROR);
-                        return;
-                    }
+            editor.addButton("Change Texture", () -> remap.askUserToSelectImage(vlo, false, newImage -> {
+                int newIndex = remap.getRemapIndex(newImage.getTextureId());
+                if (newIndex < 0) {
+                    FXUtils.makePopUp("The selected image is not part of the map's texture remap! (" + newImage.getTextureId() + ")", AlertType.ERROR);
+                    return;
+                }
 
-                    manager.updatePreviewImage(); // Refresh 3D window.
+                manager.updatePreviewImage(); // Refresh 3D window.
 
-                    // Apply texture ID to all targetted polygons.
-                    FroggerMapMesh mapMesh = manager.getMesh();
-                    mapMesh.pushBatchOperations();
-                    mapMesh.getTextureAtlas().startBulkOperations();
-                    for (FroggerMapAnimationTargetPolygon targetPolygon : this.targetPolygons) {
-                        FroggerMapPolygon polygon = targetPolygon.getPolygon();
-                        if (polygon != null && polygon.getTextureId() != newIndex) {
-                            polygon.setTextureId((short) newIndex);
-                            mapMesh.getShadedTextureManager().updatePolygon(polygon);
-                        }
+                // Apply texture ID to all targetted polygons.
+                FroggerMapMesh mapMesh = manager.getMesh();
+                mapMesh.pushBatchOperations();
+                mapMesh.getTextureAtlas().startBulkOperations();
+                for (FroggerMapAnimationTargetPolygon targetPolygon : this.targetPolygons) {
+                    FroggerMapPolygon polygon = targetPolygon.getPolygon();
+                    if (polygon != null && polygon.getTextureId() != newIndex) {
+                        polygon.setTextureId((short) newIndex);
+                        mapMesh.getShadedTextureManager().updatePolygon(polygon);
                     }
-                    mapMesh.getTextureAtlas().endBulkOperations();
-                    mapMesh.pushBatchOperations();
-                }, false);
-            });
+                }
+                mapMesh.getTextureAtlas().endBulkOperations();
+                mapMesh.pushBatchOperations();
+            }));
         }
+    }
+
+    /**
+     * Sets the UV animation frame count.
+     * @param newUvFrameCount the new UV animation frame count.
+     */
+    public void setUvFrameCount(int newUvFrameCount) {
+        if (this.type.hasUVAnimation() && (Math.abs(newUvFrameCount * this.deltaU) >= Byte.MAX_VALUE || Math.abs(newUvFrameCount * this.deltaV) >= Byte.MAX_VALUE || Math.abs(newUvFrameCount) > Byte.MAX_VALUE))
+            throw new IllegalArgumentException("The provided uvFrameCount (" + newUvFrameCount + ") would cause overflow!");
+
+        this.uvFrameCount = newUvFrameCount;
+    }
+
+    /**
+     * Set the duration (in frames) each texture in the texture animation will be shown for
+     * @param framesPerTexture the new frames per texture value
+     */
+    public void setFramesPerTexture(int framesPerTexture) {
+        if (framesPerTexture <= 0 && this.type.hasTextureAnimation())
+            throw new IllegalArgumentException("framesPerTexture must be >= zero. (Got: " + framesPerTexture + ")");
+
+        this.framesPerTexture = framesPerTexture;
     }
 
     /**

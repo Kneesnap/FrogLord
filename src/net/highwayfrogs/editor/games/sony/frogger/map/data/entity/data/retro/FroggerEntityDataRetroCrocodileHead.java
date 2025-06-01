@@ -1,11 +1,11 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.retro;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataMatrix;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Implements the 'ORG_CROC_HEAD' entity data definition in ent_org.h
@@ -34,7 +34,8 @@ public class FroggerEntityDataRetroCrocodileHead extends FroggerEntityDataMatrix
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addEnumSelector("Head State", this.type, CrocodileHeadState.values(), false, newType -> this.type = newType);
+        editor.addEnumSelector("Head State (Unused)", this.type, CrocodileHeadState.values(), false, newType -> this.type = newType)
+                .setDisable(true);
     }
 
     public enum CrocodileHeadState {

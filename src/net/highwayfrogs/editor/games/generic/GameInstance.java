@@ -1,26 +1,29 @@
 package net.highwayfrogs.editor.games.generic;
 
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Alert.AlertType;
 import javafx.stage.Stage;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
 import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.MainGameInstanceLogger;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Represents an instance of a game. For example, a folder containing the files for a single version of a game.
- *  TODO: I think there's some kind of caching bug with shading. It happened on "Time Device", where none of the shading in the world was right. Then, after I toggled shading off/on, it was fine. I suspect there's probably some tracking issue then.
  * Created by Kneesnap on 4/10/2024.
  */
 public abstract class GameInstance implements IGameInstance {
@@ -83,6 +86,27 @@ public abstract class GameInstance implements IGameInstance {
             GameUIController.loadController(this, MainMenuController.MAIN_MENU_FXML_TEMPLATE_LOADER, this.mainMenuController);
             Stage stage = GameUIController.openWindow(this.mainMenuController, "FrogLord " + Constants.VERSION + " -- " + this.gameType.getDisplayName() + " " + versionName, false);
             stage.setResizable(true);
+
+            // For some reason, JavaFX fails to properly shut down when all windows are closed, despite Platform.isImplicitExit() being true.
+            // So, this is our hack for now (or indefinitely), until it's the right time to dig into JavaFX to figure out why.
+            stage.setOnCloseRequest(event -> {
+                FrogLordApplication.getActiveGameInstances().remove(this); // Window getting closed.
+                if (FrogLordApplication.getActiveGameInstances().isEmpty()) {
+                    Platform.runLater(() -> {
+                        Platform.exit(); // For some reason, this isn't enough to shut down even though it should be.
+
+                        try {
+                            Thread.sleep(TimeUnit.SECONDS.toMillis(10));
+                        } catch (InterruptedException ex) {
+                            // Don't care.
+                        }
+
+                        // Our last resort.
+                        FrogLordApplication.onShutdown();
+                        System.exit(0);
+                    });
+                }
+            });
         }
 
         return this.mainMenuController;
@@ -113,6 +137,11 @@ public abstract class GameInstance implements IGameInstance {
     public abstract File getMainGameFolder();
 
     /**
+     * If true, a warning will be displayed when an attempt is made to save the game that saving the game is not fully supported.
+     */
+    public abstract boolean isShowSaveWarning();
+
+    /**
      * Loads the game configuration from the provided config.
      * @param configName the name of the configuration game data is loaded from
      * @param config the config object to load data from
@@ -123,8 +152,8 @@ public abstract class GameInstance implements IGameInstance {
         if (this.versionConfig != null)
             throw new IllegalStateException("Cannot load the game configuration '" + configName + "' because it has already been loaded.");
 
-        // Register to GUIMain and log.
-        GUIMain.getActiveGameInstances().add(this);
+        // Register to FrogLordApplication and log.
+        FrogLordApplication.getActiveGameInstances().add(this);
         getLogger().info("Hello! FrogLord is loading config '" + configName + "'.");
 
         // Setup.
@@ -178,8 +207,8 @@ public abstract class GameInstance implements IGameInstance {
         // Setup user config.
         this.config = instanceConfig;
 
-        // Register to GUIMain and log.
-        GUIMain.getActiveGameInstances().add(this);
+        // Register to FrogLordApplication and log.
+        FrogLordApplication.getActiveGameInstances().add(this);
         getLogger().info("Hello! FrogLord is loading config '" + config.getInternalName() + "'.");
 
         // Create & load config.
@@ -193,5 +222,27 @@ public abstract class GameInstance implements IGameInstance {
      */
     protected void onConfigLoad(Config configObj) {
         // Does nothing by default.
+    }
+
+    /**
+     * Shows a warning to the user in the form of a popup, while also logging it to the provided logger.
+     * @param logger the logger to log the message to
+     * @param messageTemplate the message format string template to log
+     * @param arguments the arguments to log with
+     */
+    public void showWarning(ILogger logger, String messageTemplate, Object... arguments) {
+        boolean showLoggerInfo = true;
+        if (logger == null) {
+            showLoggerInfo = false;
+            logger = getLogger();
+        }
+
+        if (messageTemplate == null)
+            throw new NullPointerException("messageTemplate");
+
+        String formattedMessage = StringUtils.formatStringSafely(messageTemplate, arguments);
+
+        logger.warning(formattedMessage);
+        FXUtils.makePopUp((showLoggerInfo ? "[" + logger.getName() + "]:\n" : "") + formattedMessage, AlertType.WARNING);
     }
 }

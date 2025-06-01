@@ -143,6 +143,7 @@ public interface IDynamicMeshHelper {
 
     /**
      * Gets the tracked data entry corresponding to the provided face index.
+     * This will not search pending operations, it will only search the currently written data.
      * @param faceIndex The index of the face.
      * @return dataEntry, or null.
      */
@@ -154,10 +155,67 @@ public interface IDynamicMeshHelper {
         while (left <= right) {
             int mid = (left + right) / 2;
             DynamicMeshDataEntry midEntry = dataEntries.get(mid);
+            int midStartIndex = midEntry.getCurrentFaceStartIndex();
 
-            if (faceIndex >= midEntry.getFaceStartIndex() && faceIndex < midEntry.getFaceStartIndex() + midEntry.getWrittenFaceCount()) {
+            if (faceIndex >= midStartIndex && faceIndex < midStartIndex + midEntry.getWrittenFaceCount()) {
                 return midEntry;
-            } else if (midEntry.getFaceStartIndex() > faceIndex) {
+            } else if (midStartIndex > faceIndex) {
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Gets the tracked data entry corresponding to the provided vertex index.
+     * This will not search pending operations, it will only search the currently written data.
+     * @param vertexIndex The index of the vertex.
+     * @return dataEntry, or null.
+     */
+    default DynamicMeshDataEntry getDataEntryByVertexIndex(int vertexIndex) {
+        List<DynamicMeshDataEntry> dataEntries = getDataEntries();
+        int left = 0;
+        int right = dataEntries.size() - 1;
+
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            DynamicMeshDataEntry midEntry = dataEntries.get(mid);
+            int midStartIndex = midEntry.getCurrentVertexStartIndex();
+
+            if (vertexIndex >= midStartIndex && vertexIndex < midStartIndex + midEntry.getWrittenVertexCount()) {
+                return midEntry;
+            } else if (midStartIndex > vertexIndex) {
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Gets the tracked data entry corresponding to the provided texCoord index.
+     * This will not search pending operations, it will only search the currently written data.
+     * @param texCoordIndex The index of the texCoord.
+     * @return dataEntry, or null.
+     */
+    default DynamicMeshDataEntry getDataEntryByTexCoordIndex(int texCoordIndex) {
+        List<DynamicMeshDataEntry> dataEntries = getDataEntries();
+        int left = 0;
+        int right = dataEntries.size() - 1;
+
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            DynamicMeshDataEntry midEntry = dataEntries.get(mid);
+            int midStartIndex = midEntry.getCurrentTexCoordStartIndex();
+
+            if (texCoordIndex >= midStartIndex && texCoordIndex < midStartIndex + midEntry.getWrittenTexCoordCount()) {
+                return midEntry;
+            } else if (midStartIndex > texCoordIndex) {
                 right = mid - 1;
             } else {
                 left = mid + 1;

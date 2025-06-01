@@ -25,7 +25,7 @@ public class RwWorldMesh extends PSXShadedDynamicMesh<RpTriangle, RwShadedTextur
     private final RwWorldMeshNode mainNode;
 
     public RwWorldMesh(RwWorldChunk worldChunk) {
-        super(new TreeTextureAtlas(64, 64, true), DynamicMeshTextureQuality.LIT_BLURRY, false);
+        super(new TreeTextureAtlas(64, 64, true), DynamicMeshTextureQuality.LIT_BLURRY, false, worldChunk.getCollectionViewDisplayName());
         this.world = worldChunk;
 
         // Add textures.

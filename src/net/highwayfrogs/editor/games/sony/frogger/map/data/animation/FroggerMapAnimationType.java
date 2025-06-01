@@ -42,6 +42,6 @@ public enum FroggerMapAnimationType {
                 return type;
         }
 
-        throw new RuntimeException("Unknown MAPAnimationType value: " + typeValue);
+        throw new RuntimeException("Unknown FroggerMapAnimationType value: " + typeValue);
     }
 }

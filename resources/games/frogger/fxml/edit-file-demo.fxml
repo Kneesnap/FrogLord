@@ -22,7 +22,7 @@
                                             prefWidth="130.0" VBox.vgrow="NEVER">
                                     <children>
                                         <Label layoutX="52.0" layoutY="12.0" prefHeight="40.0" prefWidth="240.0"
-                                               text="Demo File" AnchorPane.bottomAnchor="0.0"
+                                               text="Recorded Demo Sequence" AnchorPane.bottomAnchor="0.0"
                                                AnchorPane.leftAnchor="8.0" AnchorPane.rightAnchor="0.0"
                                                AnchorPane.topAnchor="0.0">
                                             <font>

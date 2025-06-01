@@ -30,7 +30,6 @@ public class MeshUtils {
         // If the pyramid has height less than zero, the pyramid is facing the inverse direction.
         // And as such, the winding order should be inverted.
         // JavaFX uses counter-clockwise winding order.
-        entry.getMesh().getEditableFaces().startBatchInsertion();
         if (invertWinding) {
             // Flip winding order.
             entry.addFace(baseBottomLeftVtx, uvIndex, baseTopRightVtx, uvIndex, baseTopLeftVtx, uvIndex); // Base Face #1
@@ -47,7 +46,6 @@ public class MeshUtils {
             entry.addFace(baseTopLeftVtx, uvIndex, baseBottomLeftVtx, uvIndex, pyramidTipVtx, uvIndex); // Pyramid Side Facing Positive Z
             entry.addFace(baseBottomRightVtx, uvIndex, baseTopRightVtx, uvIndex, pyramidTipVtx, uvIndex); // Pyramid Side Facing Negative Z
         }
-        entry.getMesh().getEditableFaces().endBatchInsertion();
     }
 
     /**
@@ -73,13 +71,11 @@ public class MeshUtils {
 
         // Add vertices.
         // The names here assume a hypothetical a positive height, with a camera facing positive, aligned to the X axis.
-        entry.getMesh().getEditableVertices().startBatchInsertion();
         int baseTopLeftVtx = entry.addVertexValue(baseX, baseMaxY, baseMaxZ);
         int baseTopRightVtx = entry.addVertexValue(baseX, baseMaxY, baseMinZ);
         int baseBottomLeftVtx = entry.addVertexValue(baseX, baseMinY, baseMaxZ);
         int baseBottomRightVtx = entry.addVertexValue(baseX, baseMinY, baseMinZ);
         int pyramidTipVtx = entry.addVertexValue(tipX, (float) y, (float) z);
-        entry.getMesh().getEditableVertices().endBatchInsertion();
 
         addPyramidFaces(entry, height < 0, baseTopLeftVtx, baseTopRightVtx, baseBottomLeftVtx, baseBottomRightVtx, pyramidTipVtx, uvIndex);
     }
@@ -107,13 +103,11 @@ public class MeshUtils {
 
         // Add vertices.
         // The names here assume a hypothetical a positive height, with a camera facing positive, aligned to the y-axis.
-        entry.getMesh().getEditableVertices().startBatchInsertion();
         int baseTopLeftVtx = entry.addVertexValue(baseMinX, baseY, baseMinZ);
         int baseTopRightVtx = entry.addVertexValue(baseMaxX, baseY, baseMinZ);
         int baseBottomLeftVtx = entry.addVertexValue(baseMinX, baseY, baseMaxZ);
         int baseBottomRightVtx = entry.addVertexValue(baseMaxX, baseY, baseMaxZ);
         int pyramidTipVtx = entry.addVertexValue((float) x, tipY, (float) z);
-        entry.getMesh().getEditableVertices().endBatchInsertion();
 
         addPyramidFaces(entry, height > 0, baseTopLeftVtx, baseTopRightVtx, baseBottomLeftVtx, baseBottomRightVtx, pyramidTipVtx, uvIndex);
     }
@@ -141,13 +135,11 @@ public class MeshUtils {
 
         // Add vertices.
         // The names here assume a hypothetical a positive height, with a camera facing positive, aligned to the z-axis.
-        entry.getMesh().getEditableVertices().startBatchInsertion();
         int baseTopLeftVtx = entry.addVertexValue(baseMinX, baseMinY, baseZ);
         int baseTopRightVtx = entry.addVertexValue(baseMaxX, baseMinY, baseZ);
         int baseBottomLeftVtx = entry.addVertexValue(baseMinX, baseMaxY, baseZ);
         int baseBottomRightVtx = entry.addVertexValue(baseMaxX, baseMaxY, baseZ);
         int pyramidTipVtx = entry.addVertexValue((float) x, (float) y, tipZ);
-        entry.getMesh().getEditableVertices().endBatchInsertion();
 
         addPyramidFaces(entry, height < 0, baseTopLeftVtx, baseTopRightVtx, baseBottomLeftVtx, baseBottomRightVtx, pyramidTipVtx, uvIndex);
     }

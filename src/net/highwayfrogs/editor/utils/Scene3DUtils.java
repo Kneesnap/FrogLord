@@ -13,8 +13,8 @@ import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameInstance;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.editor.FirstPersonCamera;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh.DynamicMeshTextureQuality;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo;
@@ -588,16 +588,65 @@ public class Scene3DUtils {
     }
 
     /**
-     * Creates a TriangleMesh (square, vertically aligned), often display a 2D sprite.
+     * Updates a highlighted material
+     * @param material the material to update
+     * @param fxImage the image to apply highlighting to
+     * @return highlightedMaterial
+     */
+    public static PhongMaterial updateHighlightMaterial(PhongMaterial material, Image fxImage) {
+        if (fxImage == null)
+            throw new NullPointerException("fxImage");
+
+        // Setup graphics.
+        BufferedImage highlightedImage = SwingFXUtils.fromFXImage(fxImage, null);
+        Graphics2D g = highlightedImage.createGraphics();
+        try {
+            // Clean image.
+            g.setBackground(new Color(255, 255, 255, 0));
+            g.setColor(new Color(200, 200, 0, 127));
+            g.fillRect(0, 0, highlightedImage.getWidth(), highlightedImage.getHeight());
+        } finally {
+            g.dispose();
+        }
+
+        if (material == null) {
+            material = makeLitBlurryMaterial(FXUtils.toFXImage(highlightedImage, false));
+            return material;
+        }
+
+        // Update material image.
+        material.setDiffuseMap(FXUtils.toFXImage(highlightedImage, false));
+        return material;
+    }
+
+    /**
+     * Creates a TriangleMesh (square, vertically aligned) to display a 2D sprite.
      * @param spriteSize the size of the sprite
      */
     public static TriangleMesh createSpriteMesh(float spriteSize) {
         // NOTE: Maybe this could be a single tri mesh, local to this manager, and we just update its points in updateEntities().
         TriangleMesh triMesh = new TriangleMesh(VertexFormat.POINT_TEXCOORD);
-        triMesh.getPoints().addAll(-spriteSize * 0.5f, spriteSize * 0.5f, 0, -spriteSize * 0.5f, -spriteSize * 0.5f, 0, spriteSize * 0.5f, -spriteSize * 0.5f, 0, spriteSize * 0.5f, spriteSize * 0.5f, 0);
-        triMesh.getTexCoords().addAll(0, 1, 0, 0, 1, 0, 1, 1);
-        triMesh.getFaces().addAll(0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 0, 0);
-        return triMesh;
+        return applySpriteMeshData(triMesh, spriteSize);
+    }
+
+    /**
+     * Configures a TriangleMesh (square, vertically aligned) to display a 2D sprite.
+     * @param triangleMesh the mesh to configure
+     * @param spriteSize the size of the sprite
+     */
+    public static TriangleMesh applySpriteMeshData(TriangleMesh triangleMesh, float spriteSize) {
+        if (triangleMesh == null)
+            throw new NullPointerException("triangleMesh");
+        if (!Float.isFinite(spriteSize) || spriteSize <= 0)
+            throw new IllegalArgumentException("Invalid spriteSize: " + spriteSize);
+        if (triangleMesh.getVertexFormat() != VertexFormat.POINT_TEXCOORD)
+            throw new RuntimeException("The give vertex format is not currently supported!");
+
+        // NOTE: Maybe this could be a single tri mesh, local to this manager, and we just update its points in updateEntities().
+        triangleMesh.getPoints().setAll(-spriteSize * 0.5f, spriteSize * 0.5f, 0, -spriteSize * 0.5f, -spriteSize * 0.5f, 0, spriteSize * 0.5f, -spriteSize * 0.5f, 0, spriteSize * 0.5f, spriteSize * 0.5f, 0);
+        triangleMesh.getTexCoords().setAll(0, 1, 0, 0, 1, 0, 1, 1);
+        triangleMesh.getFaces().setAll(0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 0, 0);
+        return triangleMesh;
     }
 
     /**
@@ -758,7 +807,7 @@ public class Scene3DUtils {
             String fileName = (namePrefix != null && namePrefix.length() > 0 ? namePrefix + "-" : "")
                     + StringUtils.padStringLeft(Integer.toString(id), 4, '0') + ".png";
 
-            File testFile = new File(GUIMain.getWorkingDirectory(), fileName);
+            File testFile = new File(FrogLordApplication.getWorkingDirectory(), fileName);
             if (!testFile.exists()) {
                 try {
                     ImageIO.write(sceneImage, "png", testFile);

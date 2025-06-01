@@ -22,7 +22,9 @@ import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -51,6 +53,13 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
     private final Map<Integer, CheckBox> flagCheckBoxMap = new HashMap<>();
     private final ImageFilterSettings imageFilterSettings = new ImageFilterSettings(ImageState.EXPORT);
 
+    private static final ImageFilterSettings IMAGE_EXPORT_SETTINGS = new ImageFilterSettings(ImageState.EXPORT)
+            .setTrimEdges(false)
+            .setAllowTransparency(true);
+
+    private static final SavedFilePath IMAGE_EXPORT_DIRECTORY = new SavedFilePath("vlo-bulk-export", "Select the folder to export images to...");
+    private static final SavedFilePath IMAGE_IMPORT_DIRECTORY = new SavedFilePath("vlo-bulk-import", "Select the folder to import images from...");
+
     private static final int SCALE_DIMENSION = 256;
 
     public VLOController(SCGameInstance instance) {
@@ -72,8 +81,8 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
             if (image == null)
                 return null;
 
-            String imageName = getConfig().getImageNames().getOrDefault(image.getTextureId(), "");
-            return index + ": " + imageName + " [" + image.getFullWidth() + ", " + image.getFullHeight() + "] (ID: " + image.getTextureId() + ")";
+            String imageName = image.getOriginalName();
+            return index + ": " + (imageName != null ? imageName : "") + " [" + image.getFullWidth() + ", " + image.getFullHeight() + "] (ID: " + image.getTextureId() + ")";
         }));
 
         imageList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> selectImage(newValue, false));
@@ -89,17 +98,17 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
         this.sizeChoiceBox.setConverter(new AbstractStringConverter<>(ImageControllerViewSetting::getDescription));
         this.sizeChoiceBox.setValue(ImageControllerViewSetting.SCALED_NEAREST_NEIGHBOR);
 
-        addFlag("Translucent", GameImage.FLAG_TRANSLUCENT);
-        addFlag("Rotated", GameImage.FLAG_ROTATED);
-        addFlag("Hit X", GameImage.FLAG_HIT_X);
-        addFlag("Hit Y", GameImage.FLAG_HIT_Y);
-        addFlag("Name Reference", GameImage.FLAG_REFERENCED_BY_NAME);
-        addFlag("Black is Transparent", GameImage.FLAG_BLACK_IS_TRANSPARENT);
-        addFlag("2D Sprite", GameImage.FLAG_2D_SPRITE);
+        addFlag("Translucent", GameImage.FLAG_TRANSLUCENT, "Marks the entire texture as partially transparent.\nOnly applicable when drawn as a sprite or part of a MOF.\nDoes not impact per-game rendering such as map rendering, SKY_LAND, etc.");
+        //addFlag("Rotated", GameImage.FLAG_ROTATED, "This flag is unused, and does not appear to be set.");
+        addFlag("Hit X", GameImage.FLAG_HIT_X, "Treats the last column of pixels on the image as padding.");
+        addFlag("Hit Y", GameImage.FLAG_HIT_Y, "Treats the last row of pixels on the image as padding.");
+        addFlag("Name Reference", GameImage.FLAG_REFERENCED_BY_NAME, "If this checkbox is selected, there is assumed to be hardcoded space available in the executable for this texture.\nOtherwise, the texture data will be allocated at runtime.");
+        addFlag("Black is Transparent", GameImage.FLAG_BLACK_IS_TRANSPARENT, "Indicates the black (color=000000) pixels in the image should be treated as fully transparent.");
+        addFlag("2D Sprite", GameImage.FLAG_2D_SPRITE, "Indicates this texture can be drawn as a sprite.\nA sprite is either as a 3D billboard image like the Frogger score insects, or 2D UI).\nSprites can also be used as 3D textures, so there's no downside to selecting this flag.\nFailing to enable this flag when the game uses it as a sprite will cause crashes.");
         this.updateFlags();
 
         Button cloneButton = new Button("Clone Image");
-        cloneButton.setOnAction(evt -> getFile().getArchive().promptVLOSelection(null, this::promptCloneVlo, false));
+        cloneButton.setOnAction(evt -> getFile().getArchive().promptVLOSelection(this::promptCloneVlo, false));
         flagBox.getChildren().add(cloneButton);
     }
 
@@ -117,7 +126,7 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
         }, true);
     }
 
-    private void addFlag(String display, int flag) {
+    private CheckBox addFlag(String display, int flag, String toolTipText) {
         CheckBox checkbox = new CheckBox(display);
 
         checkbox.selectedProperty().addListener((observable, oldValue, newValue) -> {
@@ -127,8 +136,11 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
             this.updateDisplay();
         });
 
+        checkbox.setTooltip(FXUtils.createTooltip(toolTipText));
+
         flagBox.getChildren().add(checkbox);
         flagCheckBoxMap.put(flag, checkbox);
+        return checkbox;
     }
 
     private void updateFlags() {
@@ -140,36 +152,34 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
     @FXML
     @SneakyThrows
     private void exportImage(ActionEvent event) {
-        File selectedFile = FXUtils.promptFileSave(getGameInstance(), "Specify the file to export this image as...", null, "Image Files", "png");
-        if (selectedFile != null)
-            ImageIO.write(toBufferedImage(this.selectedImage), "png", selectedFile);
+        String originalName = this.selectedImage.getOriginalName();
+        BufferedImage image = this.selectedImage.toBufferedImage(IMAGE_EXPORT_SETTINGS);
+        FileUtils.askUserToSaveImageFile(getLogger(), getGameInstance(), image, originalName != null ? originalName : String.valueOf(this.selectedImage.getTextureId()));
     }
 
     @FXML
     @SneakyThrows
     private void importImage(ActionEvent event) {
-        File selectedFile = FXUtils.promptFileOpen(getGameInstance(), "Select the image to import...", "Image Files", "png");
-        if (selectedFile == null)
-            return; // Cancelled.
-
-        this.selectedImage.replaceImage(ImageIO.read(selectedFile));
-        updateDisplay();
+        BufferedImage loadedImage = FileUtils.askUserToOpenImageFile(getLogger(), getGameInstance());
+        if (loadedImage != null) {
+            this.selectedImage.replaceImage(loadedImage, ProblemResponse.CREATE_POPUP);
+            updateDisplay();
+        }
     }
 
     @FXML
     private void exportAllImages(ActionEvent event) {
-        File selectedFolder = FXUtils.promptChooseDirectory(getGameInstance(), "Select the directory to export images to.", true);
+        File selectedFolder = FileUtils.askUserToSelectFolder(getGameInstance(), IMAGE_EXPORT_DIRECTORY);
         if (selectedFolder == null)
             return; // Cancelled.
 
-        updateFilter();
-        getFile().exportAllImages(selectedFolder, imageFilterSettings);
+        getFile().exportAllImages(selectedFolder, IMAGE_EXPORT_SETTINGS);
     }
 
     @FXML
     @SneakyThrows
     private void importAllImages(ActionEvent event) {
-        File selectedFolder = FXUtils.promptChooseDirectory(getGameInstance(), "Select the directory to import images from.", true);
+        File selectedFolder = FileUtils.askUserToSelectFolder(getGameInstance(), IMAGE_IMPORT_DIRECTORY);
         if (selectedFolder == null)
             return; // Cancelled.
 
@@ -182,13 +192,12 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
 
             int id = Integer.parseInt(name);
             if (id >= 0 && id < getFile().getImages().size()) {
-                getFile().getImages().get(id).replaceImage(ImageIO.read(file));
+                getFile().getImages().get(id).replaceImage(ImageIO.read(file), ProblemResponse.CREATE_POPUP);
                 importedFiles++;
             }
-
         }
 
-        getLogger().info("Imported " + importedFiles + " images.");
+        getLogger().info("Imported %d images.", importedFiles);
         updateDisplay();
     }
 

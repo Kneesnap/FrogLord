@@ -1,12 +1,10 @@
 package net.highwayfrogs.editor.games.sony.medievil.map.mesh;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
@@ -18,6 +16,8 @@ import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.ColorUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.Arrays;
 
@@ -38,7 +38,7 @@ import java.util.Arrays;
 @Getter
 public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
     private final int[] vertices = new int[INTERNAL_VERTEX_COUNT];
-    private int textureId = -1;
+    @Setter private int textureId = -1;
     private int flags;
     private final SCByteTextureUV[] textureUvs = new SCByteTextureUV[INTERNAL_VERTEX_COUNT];
 
@@ -126,7 +126,7 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
     public boolean isSemiTransparent(MediEvilLevelTableEntry levelTableEntry) {
         GameImage image = getTexture(levelTableEntry);
         if (image != null && image.testFlag(GameImage.FLAG_TRANSLUCENT))
-            return true;
+            return true; // For proof of the necessity of checking this flag, see how GY1.MAP's river looks when this is removed.
 
         return (this.flags & FLAG_SEMI_TRANSPARENT) == FLAG_SEMI_TRANSPARENT;
     }
@@ -198,26 +198,7 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
             return null; // Don't have the ability to look anything up.
 
         TextureRemapArray textureRemap = levelTableEntry.getRemap();
-        if (textureRemap == null)
-            return null; // Failed to get the texture remap.
-
-        Short globalTextureId = textureRemap.getRemappedTextureId(this.textureId);
-        if (globalTextureId == null)
-            return null; // This texture wasn't found in the remap.
-
-        // Lookup image source.
-        GameImage imageSource = null;
-
-        // Try in the main VLO first.
-        VLOArchive mainArchive = levelTableEntry.getVloFile();
-        if (mainArchive != null)
-            imageSource = mainArchive.getImageByTextureId(globalTextureId);
-
-        // Otherwise, search globally.
-        if (imageSource == null)
-            imageSource = levelTableEntry.getArchive().getImageByTextureId(globalTextureId);
-
-        return imageSource;
+        return textureRemap != null ? textureRemap.resolveTexture(this.textureId, levelTableEntry.getVloFile()) : null;
     }
 
     /**
@@ -254,7 +235,7 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
 
         // Create definition.
         ITextureSource textureSource = polygonType.isTextured() ? getTexture(levelTableEntry) : null;
-        return new PSXShadeTextureDefinition(mapMesh.getShadedTextureManager(), polygonType, textureSource, colors, uvs, isSemiTransparent);
+        return new PSXShadeTextureDefinition(mapMesh.getShadedTextureManager(), polygonType, textureSource, colors, uvs, isSemiTransparent, true);
     }
 
     private static CVector fromPackedShort(short packedColor, PSXPolygonType polygonType, boolean isSemiTransparent) {

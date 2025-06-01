@@ -1,11 +1,12 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.jungle;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataMatrix;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Implements JUN_PLANT entity data from ent_jun.h
@@ -37,7 +38,9 @@ public class FroggerEntityDataEvilPlant extends FroggerEntityDataMatrix {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addFixedShort("Snap Time (sec)", this.snapTime, newSnapTime -> this.snapTime = newSnapTime, 30);
-        editor.addFixedShort("Snap Delay (sec)", this.snapDelay, newSnapDelay -> this.snapDelay = newSnapDelay, 30);
+        editor.addFixedShort("Snap Time (sec)", this.snapTime, newSnapTime -> this.snapTime = newSnapTime, getGameInstance().getFPS())
+                .setTooltip(FXUtils.createTooltip("How long to wait to start snapping after the player enters aggro range."));
+        editor.addFixedShort("Snap Delay (sec)", this.snapDelay, newSnapDelay -> this.snapDelay = newSnapDelay, getGameInstance().getFPS())
+                .setTooltip(FXUtils.createTooltip("After the snap animation ends, the plant will be incapacitated until this delay ends."));
     }
 }

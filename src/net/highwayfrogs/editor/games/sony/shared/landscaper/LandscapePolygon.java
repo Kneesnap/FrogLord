@@ -3,8 +3,8 @@ package net.highwayfrogs.editor.games.sony.shared.landscaper;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
@@ -344,7 +344,7 @@ public abstract class LandscapePolygon extends SCSharedGameData implements ILand
         }
 
         PSXShadedTextureManager<LandscapePolygon> shadedTextureManager = mesh != null ? mesh.getShadedTextureManager() : null;
-        return new PSXShadeTextureDefinition(shadedTextureManager, getPolygonType(), textureSource, colors, uvs, isSemiTransparent());
+        return new PSXShadeTextureDefinition(shadedTextureManager, getPolygonType(), textureSource, colors, uvs, isSemiTransparent(), true);
     }
 
     /**

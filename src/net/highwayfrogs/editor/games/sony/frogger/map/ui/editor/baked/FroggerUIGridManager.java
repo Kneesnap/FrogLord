@@ -5,61 +5,72 @@ import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
+import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
+import net.highwayfrogs.editor.file.map.view.RawColorTextureSource;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.FroggerOffsetVectorType;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquare;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquareFlag;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquareReaction;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.zone.FroggerCameraRotation;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.zone.FroggerMapCameraZone;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.zone.FroggerMapCameraZone.FroggerMapCameraZoneFlag;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.zone.FroggerMapZone;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.zone.FroggerMapZoneRegion;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.zone.FroggerMapZoneRegion.RegionEditState;
+import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMeshController;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
+import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygonType;
+import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGeneral;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGrid;
+import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.baked.grid.FroggerUICollisionGridPreview;
 import net.highwayfrogs.editor.gui.GameUIController;
-import net.highwayfrogs.editor.gui.texture.ITextureSource;
-import net.highwayfrogs.editor.gui.texture.atlas.AtlasTexture;
+import net.highwayfrogs.editor.gui.InputManager;
+import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
+import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.fx.wrapper.LazyFXListCell;
 
 import java.util.*;
 import java.util.function.Consumer;
 
 /**
  * This manages a window displaying the collision grid in a baked Frogger map.
- * TODO: Fix "Forced Camera Direction" selection null selection failing.
- * TODO: Replace hide option with better selector null selection failing.
- * TODO: "Add Square" breaks the MeshView (Gotta debug mesh array management.)
- * TODO: Future, make a 3D version of the zone editor. Be able to preview everything in 3D space.
+ * Water tiles aren't always super visible because they are hidden by the transparent water layer.
+ *  -> The easiest way to see clearly is to toggle wireframe mode.
  * Created by Kneesnap on 6/6/2024.
  */
 public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> {
-    private GraphicsContext graphics;
+    @Getter private final FroggerMapMeshController mapMeshController;
+    @Getter private final InputManager inputManager;
+    @Getter private FroggerUICollisionGridPreview collisionGridPreview;
+    private final CheckBox[] gridSquareFlagCheckBoxes = new CheckBox[FroggerGridSquareFlag.values().length];
+    private final CheckBox[] zoneFlagMap = new CheckBox[FroggerMapCameraZoneFlag.values().length];
+    private final TextField[][] cameraOffsetFields = new TextField[FroggerCameraRotation.values().length][FroggerOffsetVectorType.values().length];
+    @Getter private FroggerMapZone selectedZone;
+    private int selectedRegion;
 
     // Main Controls:
     @FXML private Label collisionGridMainLabel;
-    @FXML private CheckBox shadingEnabledCheckBox;
-    @FXML private ComboBox<Integer> layerSelector;
+    @Getter @FXML private CheckBox shadingEnabledCheckBox;
+    @Getter @FXML private ComboBox<Integer> layerSelector;
     @FXML private Canvas gridCanvas;
 
     // Grid Stack Area:
@@ -74,43 +85,45 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
     @FXML private Button changePolygonButton;
     @FXML private ImageView selectedImage;
     @FXML private Label polygonTypeLabel;
+    @FXML private ComboBox<FroggerGridSquareReaction> flagReactionSelector;
     @FXML private GridPane flagTable;
+    private boolean uiUpdateInProgressSquare;
 
     // Zones:
-    @FXML private ComboBox<FroggerMapZone> zoneSelector;
+    @Getter @FXML private ComboBox<FroggerMapZone> zoneSelector;
     @FXML private Button addZoneButton;
     @FXML private Button removeZoneButton;
-    @FXML private CheckBox highlightZonesCheckBox;
+    @Getter @FXML private CheckBox highlightZonesCheckBox;
     @FXML private Label forcedCameraDirectionLabel;
     @FXML private ComboBox<FroggerCameraRotation> forcedCameraDirectionComboBox;
     @FXML private GridPane zoneFlagGrid;
     @FXML private GridPane cameraPane;
 
     // Zone Regions:
-    @FXML private ComboBox<Integer> regionSelector;
+    @Getter@FXML private ComboBox<Integer> regionSelector;
     @FXML private Button addRegionButton;
     @FXML private Button removeRegionButton;
-    @FXML private CheckBox regionEditorCheckBox;
+    @Getter @FXML private CheckBox regionEditorCheckBox;
 
-    private final FroggerMapMeshController mapMeshController;
-    private RegionEditState editState = RegionEditState.NONE_SELECTED;
-    private FroggerMapZone selectedZone;
-    private int selectedRegion;
-    private int lastSelectionX = -1;
-    private int lastSelectionZ = -1;
-    private List<FroggerGridStack> selectedStacks = new ArrayList<>();
-    private final List<FroggerGridSquare> cachedSelectedSquares = new ArrayList<>();
-    private double tileWidth;
-    private double tileHeight;
-    private final CheckBox[] gridSquareFlagCheckBoxes = new CheckBox[FroggerGridSquareFlag.values().length];
-    private final CheckBox[] zoneFlagMap = new CheckBox[FroggerMapCameraZoneFlag.values().length];
-    private final TextField[][] cameraOffsetFields = new TextField[FroggerCameraRotation.values().length][FroggerOffsetVectorType.values().length];
-
-    private static final int DEFAULT_REGION_ID = 0;
+    public static final RawColorTextureSource MATERIAL_HIGHLIGHT_GRID_DARK_RED = new RawColorTextureSource(Color.rgb(139, 0, 0, .75F));
+    public static final RawColorTextureSource MATERIAL_HIGHLIGHT_GRID_RED = new RawColorTextureSource(Color.rgb(255, 0, 0, .65F));
+    public static final RawColorTextureSource MATERIAL_HIGHLIGHT_GRID_PINK = new RawColorTextureSource(Color.rgb(255, 105, 180, .5F));
+    public static final RawColorTextureSource MATERIAL_HIGHLIGHT_GRID_HOT_PINK = new RawColorTextureSource(Color.rgb(255, 0, 255, .75F));
+    public static final RawColorTextureSource MATERIAL_HIGHLIGHT_GRID_PURPLE = new RawColorTextureSource(Color.rgb(255, 0, 255, .35F));
+    public static final RawColorTextureSource MATERIAL_HIGHLIGHT_GRID_GREEN = new RawColorTextureSource(Color.rgb(57, 255, 20, .333F));
+    public static final RawColorTextureSource MATERIAL_HIGHLIGHT_GRID_LIME_GREEN = new RawColorTextureSource(Color.rgb(57, 255, 20, .5F));
+    public static final RawColorTextureSource MATERIAL_HIGHLIGHT_GRID_AQUA = new RawColorTextureSource(Color.rgb(0, 255, 255, .75F));
+    public static final RawColorTextureSource MATERIAL_HIGHLIGHT_GRID_DARK_BLUE = new RawColorTextureSource(Color.rgb(0, 0, 255, .333F));
+    public static final RawColorTextureSource MATERIAL_HIGHLIGHT_GRID_YELLOW = new RawColorTextureSource(Color.rgb(255, 255, 0, .65F));
+    public static final RawColorTextureSource MATERIAL_HIGHLIGHT_GRID_GOLD = new RawColorTextureSource(Color.rgb(255, 165, 0, .65F));
+    public static final RawColorTextureSource MATERIAL_HIGHLIGHT_GRID_ORANGE = new RawColorTextureSource(Color.rgb(255, 69, 0, .65F));
+    public static final RawColorTextureSource MATERIAL_HIGHLIGHT_GREY = new RawColorTextureSource(Color.rgb(255, 255, 255, .333F));
+    public static final RawColorTextureSource MATERIAL_HIGHLIGHT_LIGHT_GREY = new RawColorTextureSource(Color.rgb(255, 255, 255, .5F));
 
     private FroggerUIGridManager(FroggerMapMeshController controller) {
         super(controller.getMapFile().getGameInstance());
         this.mapMeshController = controller;
+        this.inputManager = new InputManager(controller.getGameInstance());
     }
 
     /**
@@ -125,108 +138,76 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
     }
 
     @Override
+    public void onSceneAdd(Scene scene) {
+        super.onSceneAdd(scene);
+        setGridPolygonHighlightingVisible(true);
+        this.collisionGridPreview.onSceneAdd();
+        this.inputManager.assignSceneControls(getStage(), scene);
+    }
+
+    @Override
+    public void onSceneRemove(Scene scene) {
+        super.onSceneRemove(scene);
+        setGridPolygonHighlightingVisible(false);
+        this.collisionGridPreview.onSceneRemove();
+        this.inputManager.removeSceneControls(getStage(), scene);
+    }
+
+    @Override
     protected void onControllerLoad(Node rootNode) {
+        setStageAlwaysOnTop(true);
+        this.collisionGridPreview = new FroggerUICollisionGridPreview(this, this.gridCanvas);
+        this.collisionGridPreview.setupCanvas();
+
         // Update canvas view.
-        this.shadingEnabledCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> updateCanvas());
+        this.shadingEnabledCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> this.collisionGridPreview.redrawEntireCanvas());
         updateCollisionGridSizeLabel();
 
-        this.layerSelector.valueProperty().addListener(((observable, oldValue, newValue) -> {
-            updateGridSquareUI(); // This changes the selected grid squares.
-            updateCanvas(); // This changes the canvas.
-        }));
+        // Setup flag selector.
+        this.flagReactionSelector.setConverter(new AbstractStringConverter<>(FroggerGridSquareReaction::getDisplayName, "Custom"));
+        this.flagReactionSelector.setCellFactory(listView
+                -> new LazyFXListCell<>(FroggerGridSquareReaction::getDisplayName, "Custom")
+                .setWithoutIndexTooltipHandler(FroggerGridSquareReaction::getTooltip));
 
-        this.highlightZonesCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> updateCanvas());
+        List<FroggerGridSquareReaction> reactionList = new ArrayList<>(FroggerGridSquareReaction.DISPLAY_ORDER);
+        reactionList.add(null);
+        this.flagReactionSelector.setItems(FXCollections.observableArrayList(reactionList));
+        this.flagReactionSelector.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (this.uiUpdateInProgressSquare || !this.flagReactionSelector.isVisible() || (oldValue == newValue))
+                return;
+
+            if (newValue != null) {
+                this.collisionGridPreview.getMapMesh().pushBatchOperations();
+                boolean badCliffDeathData = false;
+                Vector3f temp = new Vector3f();
+                for (FroggerGridSquare gridSquare : this.collisionGridPreview.getSelectedGridSquares()) {
+                    gridSquare.setReaction(newValue);
+                    updateGridPolygonHighlighting(gridSquare, true);
+
+                    // This isn't perfect, but should work well enough.
+                    FroggerMapPolygon polygon = gridSquare.getPolygon();
+                    if (polygon != null && newValue == FroggerGridSquareReaction.CLIFF_DEATH && !badCliffDeathData) {
+                        float testY = polygon.getCenterOfPolygon(temp).getY();
+                        if (testY <= FroggerGridStack.CLIFF_Y_THRESHOLD_MAX || testY > FroggerGridStack.CLIFF_Y_THRESHOLD_MIN)
+                            badCliffDeathData = true;
+                    }
+                }
+
+                this.collisionGridPreview.getMapMesh().popBatchOperations();
+                if (badCliffDeathData)
+                    FXUtils.makePopUp("Cliff deaths do not work correctly below Y=" + FroggerGridStack.CLIFF_Y_THRESHOLD_MIN + " or above Y=" + FroggerGridStack.CLIFF_Y_THRESHOLD_MAX + ".", AlertType.WARNING);
+            }
+
+            updateGridFlagsUI(false);
+        });
 
         this.layerSelector.setConverter(new AbstractStringConverter<>(id -> "Layer #" + (id + 1)));
+        this.layerSelector.valueProperty().addListener(((observable, oldValue, newValue) -> {
+            updateGridSquareUI(); // This changes the selected grid squares.
+            this.collisionGridPreview.redrawEntireCanvas(); // This changes the canvas.
+        }));
 
-        this.gridCanvas.setOnMousePressed(evt -> {
-            int gridX = (int) (evt.getX() / this.tileWidth);
-            int gridZ = (int) (evt.getY() / this.tileHeight);
-            FroggerGridStack stack = getMapFile().getGridPacket().getGridStack(gridX, getMapFile().getGridPacket().getGridZCount() - gridZ - 1);
-            if (stack == null)
-                return;
-
-            if (this.selectedStacks != null && this.selectedStacks.size() > 0) {
-                if (evt.isControlDown()) { // Toggle grid stacks one at a time.
-                    if (!this.selectedStacks.remove(stack))
-                        this.selectedStacks.add(stack);
-                } else if (evt.isShiftDown()) { // Cover a range.
-                    this.selectedStacks.clear();
-                    int minGridX = Math.min(gridX, this.lastSelectionX);
-                    int minGridZ = Math.min(gridZ, this.lastSelectionZ);
-                    int maxGridX = Math.max(gridX, this.lastSelectionX);
-                    int maxGridZ = Math.max(gridZ, this.lastSelectionZ);
-                    for (int x = minGridX; x <= maxGridX; x++)
-                        for (int z = minGridZ; z <= maxGridZ; z++)
-                            this.selectedStacks.add(getMapFile().getGridPacket().getGridStack(x, getMapFile().getGridPacket().getGridZCount() - z - 1));
-
-                } else {
-                    this.selectedStacks.clear();
-                    this.selectedStacks.add(stack);
-                }
-            } else {
-                this.selectedStacks = new ArrayList<>();
-                this.selectedStacks.add(stack);
-            }
-
-            setSelectedStacks(this.selectedStacks);
-
-            if (!evt.isShiftDown() || this.lastSelectionX == -1) {
-                this.lastSelectionX = gridX;
-                this.lastSelectionZ = gridZ;
-            }
-
-            if (this.regionEditorCheckBox.isSelected()) {
-                gridZ = stack.getZ();
-
-                if (this.editState == RegionEditState.NONE_SELECTED) {
-                    if (getCurrentRegion() == null)
-                        return;
-
-                    for (RegionEditState state : RegionEditState.values()) {
-                        if (state.getTester().apply(getCurrentRegion(), gridX, gridZ)) {
-                            this.editState = state;
-                            updateCanvas();
-                            break;
-                        }
-                    }
-
-                } else {
-                    this.editState.setCoordinates(getCurrentRegion(), gridX, gridZ);
-                    this.editState = RegionEditState.NONE_SELECTED;
-                    updateCanvas();
-                }
-
-                return;
-            }
-
-            // Selects zones while highlighted.
-            if (this.highlightZonesCheckBox.isSelected()) {
-                gridZ = stack.getZ();
-
-                for (FroggerMapZone zone : getMapFile().getZonePacket().getZones()) {
-                    if (zone.contains(gridX, gridZ)) {
-                        this.zoneSelector.valueProperty().setValue(zone);
-                        this.zoneSelector.getSelectionModel().select(zone);
-
-                        int index = zone.getRegions().indexOf(zone.getRegion(gridX, gridZ)) + 1;
-                        if (index >= 1) {
-                            this.regionSelector.getSelectionModel().select(index);
-                            this.regionSelector.setValue(index);
-                        }
-
-                        return;
-                    }
-                }
-
-                return;
-            }
-
-            if (evt.isSecondaryButtonDown()) { // Remove.
-                stack.getGridSquares().clear();
-                updateCanvas();
-            }
-        });
+        this.highlightZonesCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> this.collisionGridPreview.redrawEntireCanvas());
 
         // Setup zone flags.
         int pos = 0;
@@ -238,8 +219,7 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
             CheckBox newBox = new CheckBox(flag.getDisplayName());
             GridPane.setRowIndex(newBox, pos / 2);
             GridPane.setColumnIndex(newBox, pos % 2);
-            if (flag.getDescription() != null)
-                newBox.setTooltip(new Tooltip(flag.getDescription()));
+            newBox.setTooltip(FXUtils.createTooltip(flag.getDescription()));
             this.zoneFlagGrid.getChildren().add(newBox);
             this.zoneFlagMap[i] = newBox;
 
@@ -272,216 +252,99 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
         updateZoneList();
         this.zoneSelector.valueProperty().addListener(((observable, oldValue, newValue) -> setSelectedZone(newValue)));
 
-        this.regionSelector.setConverter(new AbstractStringConverter<>(value -> value == DEFAULT_REGION_ID ? "Main Region" : "Region " + value));
-        this.regionSelector.valueProperty().addListener((observable, oldValue, newValue) -> setSelectedRegion(newValue == null ? DEFAULT_REGION_ID : newValue));
-        this.regionEditorCheckBox.selectedProperty().addListener(((observable, oldValue, newValue) -> updateCanvas()));
+        this.regionSelector.setConverter(new AbstractStringConverter<>(value -> "Region " + value));
+        this.regionSelector.valueProperty().addListener((observable, oldValue, newValue) -> onRegionSelected(newValue == null ? 0 : newValue));
+        this.regionEditorCheckBox.selectedProperty().addListener(((observable, oldValue, newValue) -> this.collisionGridPreview.redrawEntireCanvas()));
 
         // Setup canvas and update everything.
-        this.graphics = this.gridCanvas.getGraphicsContext2D();
         updateLayerSelectorValues();
-        setSelectedStacks(null);
         setSelectedZone(null);
-        setSelectedRegion(DEFAULT_REGION_ID);
+        onRegionSelected(0);
     }
 
-    private void updateCanvas() {
-        // If shading is not enabled on the map, we can't pull from the shaded textures.
-        this.shadingEnabledCheckBox.setDisable(!this.mapMeshController.getCheckBoxEnablePsxShading().isSelected());
-
-        FroggerMapFilePacketGrid gridPacket = getMapFile().getGridPacket();
-        this.tileWidth = this.gridCanvas.getWidth() / gridPacket.getGridXCount();
-        this.tileHeight = this.gridCanvas.getHeight() / gridPacket.getGridZCount();
-
-        this.graphics.clearRect(0, 0, this.gridCanvas.getWidth(), this.gridCanvas.getHeight());
-
-        Map<ITextureSource, Image> cachedImageMap = new HashMap<>();
-        Image textureImage = this.mapMeshController.getMesh().getMaterialFxImage();
-
-        int selectedLayer = getSelectedLayer();
-        FroggerMapZoneRegion currentRegion = getCurrentRegion();
-        for (int z = 0; z < gridPacket.getGridZCount(); z++) {
-            for (int x = 0; x < gridPacket.getGridXCount(); x++) {
-                FroggerGridStack stack = gridPacket.getGridStack(x, z);
-
-                double xPos = this.tileWidth * x;
-                double yPos = this.tileHeight * (gridPacket.getGridZCount() - z - 1);
-
-                Color fillColor;
-                if (this.selectedStacks != null && this.selectedStacks.contains(stack)) {
-                    fillColor = Color.AQUA;
-                } else if (currentRegion != null && currentRegion.contains(x, z)) {
-                    fillColor = Color.YELLOW;
-                    if (this.regionEditorCheckBox.isSelected() && currentRegion.isCorner(x, z))
-                        fillColor = this.editState.getTester().apply(currentRegion, x, z) ? Color.RED : Color.YELLOW;
-                } else if (this.highlightZonesCheckBox.isSelected() && getMapZone(x, z) != null) {
-                    fillColor = Color.MAGENTA;
-                } else if (stack.getGridSquares().size() > 0) {
-                    fillColor = Color.DARKGRAY;
-
-                    // Find best square.
-                    for (int i = Math.min(selectedLayer, stack.getGridSquares().size() - 1); i >= 0; i--) {
-                        FroggerGridSquare square = stack.getGridSquares().get(i);
-                        FroggerMapPolygon polygon = square.getPolygon();
-                        if (polygon == null)
-                            continue;
-
-                        if (!polygon.getPolygonType().isTextured() || (this.shadingEnabledCheckBox.isSelected() && this.mapMeshController.getCheckBoxEnablePsxShading().isSelected())) {
-                            PSXShadeTextureDefinition textureDefinition = this.mapMeshController.getMesh().getShadedTextureManager().getShadedTexture(square.getPolygon());
-                            AtlasTexture texture = this.mapMeshController.getMesh().getTextureAtlas().getTextureFromSourceOrFallback(textureDefinition);
-                            // TODO: STRETCH THE IMAGE. (Both here and below. I'm confident this is possible using the same method the PSXTextureShader uses to draw triangles)
-                            //  - We find the minimum X, Y, Z vertex, and since we know which vertices are connected, we can use that to deterministically form which vertex goes to each corner in a rectangle.
-                            //  - Then, we use scanline interpolation (left to right) drawing lines on the image to scale it to be a quad.
-                            this.graphics.drawImage(textureImage, texture.getX(), texture.getY(), textureDefinition.getUnpaddedWidth(), textureDefinition.getUnpaddedHeight(), xPos, yPos, this.tileWidth, this.tileHeight);
-                        } else {
-                            ITextureSource textureSource = polygon.getTexture();
-                            if (textureSource == null)
-                                textureSource = UnknownTextureSource.MAGENTA_INSTANCE;
-
-                            Image fxImage = cachedImageMap.computeIfAbsent(textureSource, texSource -> FXUtils.toFXImage(texSource.makeImage(), false));
-                            this.graphics.drawImage(fxImage, textureSource.getLeftPadding(), textureSource.getUpPadding(), textureSource.getUnpaddedWidth(), textureSource.getUnpaddedHeight(), xPos, yPos, this.tileWidth, this.tileHeight);
-                        }
-
-                        fillColor = null;
-                        break;
-                    }
-                } else {
-                    fillColor = Color.GRAY;
-                }
-
-                if (fillColor != null) {
-                    this.graphics.setFill(fillColor);
-                    this.graphics.fillRect(xPos, yPos, this.tileWidth, this.tileHeight);
-                }
-            }
-        }
-
-        this.graphics.setStroke(Color.BLACK);
-        for (int x = 0; x <= gridPacket.getGridXCount(); x++)
-            this.graphics.strokeLine(x * this.tileWidth, 0, x * this.tileWidth, this.gridCanvas.getHeight());
-
-        for (int z = 0; z <= gridPacket.getGridZCount(); z++)
-            this.graphics.strokeLine(0, z * this.tileHeight, this.gridCanvas.getWidth(), z * this.tileHeight);
-
-        // Draw outline of start square.
-        this.graphics.setStroke(Color.RED);
-        this.graphics.strokeRect(getMapFile().getGeneralPacket().getStartGridCoordX() * this.tileWidth, (gridPacket.getGridZCount() - getMapFile().getGeneralPacket().getStartGridCoordZ() - 1) * this.tileHeight, this.tileWidth, this.tileHeight);
-    }
-
-    private FroggerMapZone getMapZone(int x, int z) {
-        List<FroggerMapZone> zones = getMapFile().getZonePacket().getZones();
-        for (int i = 0; i < zones.size(); i++) {
-            FroggerMapZone zone = zones.get(i);
-            if (zone.getBoundingRegion().contains(x, z))
-                return zone;
-        }
-
-        return null;
-    }
-
-    private void selectSquare(Consumer<FroggerMapPolygon> onSelect) {
+    private void askUserToSelectPolygon(Consumer<FroggerMapPolygon> onSelect) {
         closeWindow();
+        setGridPolygonHighlightingVisible(true); // Force highlighting to be visible.
 
-        this.mapMeshController.getBakedGeometryManager().updateGridPolygonHighlighting(true);
         this.mapMeshController.getBakedGeometryManager().getPolygonSelector().activate(poly -> {
-            this.mapMeshController.getBakedGeometryManager().updateGridPolygonHighlighting(false);
             onSelect.accept(poly);
-            updateCanvas();
             Platform.runLater(this::openWindowAndWait);
-        }, () -> {
-            this.mapMeshController.getBakedGeometryManager().updateGridPolygonHighlighting(false);
-            Platform.runLater(this::openWindowAndWait);
-        });
+        }, () -> Platform.runLater(this::openWindowAndWait));
     }
 
     @FXML
     private void changePolygon(ActionEvent evt) {
-        if (this.selectedStacks == null)
-            return;
-
-        selectSquare(poly -> {
-            int selectedLayer = getSelectedLayer();
-            for (FroggerGridStack gridStack : this.selectedStacks) {
-                if (gridStack.getGridSquares().isEmpty())
-                    continue;
-
-                FroggerGridSquare gridSquare = gridStack.getGridSquares().get(Math.min(selectedLayer, gridStack.getGridSquares().size() - 1));
+        askUserToSelectPolygon(poly -> {
+            for (FroggerGridSquare gridSquare : this.collisionGridPreview.getSelectedGridSquares()) {
+                updateGridPolygonHighlighting(gridSquare, false); // Remove highlighting from old polygon.
                 gridSquare.setPolygon(poly);
+                updateGridStackIfStartPosition(gridSquare.getGridStack());
+                updateGridPolygonHighlighting(gridSquare, true); // Apply highlighting to new polygon.
+                FroggerGridStack gridStack = gridSquare.getGridStack();
+                this.collisionGridPreview.updateCanvasTile(gridStack.getX(), gridStack.getZ());
             }
 
             updateGridSquareUI(); // The displayed image may have changed.
-            updateCanvas(); // Polygons may have changed.
         });
     }
 
-    @FXML
-    private void selectGridStackByPolygon(ActionEvent evt) {
-        selectSquare(poly -> {
-            int foundLayer = -1;
-            List<FroggerGridStack> foundStacks = new ArrayList<>();
-            for (int z = 0; z < getMapFile().getGridPacket().getGridZCount(); z++) {
-                for (int x = 0; x < getMapFile().getGridPacket().getGridXCount(); x++) {
-                    FroggerGridStack stack = getMapFile().getGridPacket().getGridStack(x, z);
-                    if (stack.getGridSquares().isEmpty())
-                        continue;
-
-                    for (int layer = 0; layer < stack.getGridSquares().size(); layer++) {
-                        FroggerGridSquare gridSquare = stack.getGridSquares().get(layer);
-                        if (gridSquare.getPolygon() == poly) {
-                            if (foundLayer != -1 && (layer > foundLayer || (layer < foundLayer && layer != stack.getGridSquares().size() - 1))) {
-                                //
-                                getLogger().warning("Skipped selecting grid square by polygon at unusable layer.");
-                                continue;
-                            }
-
-                            foundStacks.add(stack);
-                            foundLayer = layer;
-                        }
-                    }
-                }
-            }
-
-            setSelectedStacks(foundStacks);
-            if (foundLayer >= 0)
-                this.layerSelector.getSelectionModel().select(foundLayer);
-        });
+    private void updateGridStackIfStartPosition(FroggerGridStack gridStack) {
+        FroggerMapFilePacketGeneral generalPacket = getMapFile().getGeneralPacket();
+        if (gridStack.getX() == generalPacket.getStartGridCoordX() && gridStack.getZ() == generalPacket.getStartGridCoordZ())
+            getMapMeshController().getGeneralManager().updatePlayerCharacter();
     }
 
     @FXML
     private void addGridSquare(ActionEvent evt) {
-        if (this.selectedStacks == null)
-            return;
+        askUserToSelectPolygon(poly -> {
+            if (this.collisionGridPreview.getSelectedGridStacks().size() != 1)
+                return;
 
-        selectSquare(poly -> {
-            this.selectedStacks.forEach(stack -> stack.getGridSquares().add(new FroggerGridSquare(stack, poly)));
+            this.collisionGridPreview.getMapMesh().pushBatchOperations();
+            for (FroggerGridStack gridStack : this.collisionGridPreview.getSelectedGridStacks()) { // Be careful to avoid ConcurrentModificationException.
+                FroggerGridSquare newGridSquare = new FroggerGridSquare(gridStack, poly);
+
+                gridStack.getGridSquares().add(newGridSquare);
+                updateGridStackIfStartPosition(gridStack);
+                this.collisionGridPreview.selectGridSquare(newGridSquare, false);
+
+                // Deselect old squares.
+                for (FroggerGridSquare oldSquare : gridStack.getGridSquares())
+                    if (oldSquare != newGridSquare)
+                        this.collisionGridPreview.deselectGridSquare(oldSquare, false);
+
+                updateGridPolygonHighlighting(newGridSquare, true);
+            }
+            this.collisionGridPreview.getMapMesh().popBatchOperations();
+
             updateLayerSelectorValues();
             updateGridStackUI();
+            updateGridSquareUI();
         });
     }
 
     @FXML
     private void removeGridSquare(ActionEvent evt) {
-        if (this.selectedStacks == null || this.selectedStacks.isEmpty())
-            return;
-
-        this.selectedStacks.forEach(stack -> {
-            if (stack.getGridSquares().isEmpty())
-                return;
-
-            stack.getGridSquares().remove(Math.min(getSelectedLayer(), stack.getGridSquares().size() - 1));
-        });
+        this.collisionGridPreview.getMapMesh().pushBatchOperations();
+        for (FroggerGridSquare gridSquare : new HashSet<>(this.collisionGridPreview.getSelectedGridSquares())) { // Avoid Concurrent modification.
+            gridSquare.getGridStack().getGridSquares().remove(gridSquare); // Removed first so the updated canvas won't include it.
+            updateGridStackIfStartPosition(gridSquare.getGridStack());
+            this.collisionGridPreview.deselectGridSquare(gridSquare, false);
+            updateGridPolygonHighlighting(gridSquare, false);
+        }
+        this.collisionGridPreview.getMapMesh().popBatchOperations();
 
         updateLayerSelectorValues();
         updateGridStackUI();
         updateGridSquareUI();
-        updateCanvas();
     }
 
-    @FXML
+    @FXML // This is no longer accessible to the average user. It has been kept around for debugging purposes, but most users will never need to edit this.
     private void onUpdateHeight(ActionEvent evt) {
         String text = this.stackHeightField.getText();
         if (NumberUtils.isNumber(text)) {
             this.stackHeightField.setStyle(null);
-            this.selectedStacks.forEach(stack -> stack.setAverageWorldHeight(Float.parseFloat(text)));
+            this.collisionGridPreview.getSelectedGridStacks().forEach(stack -> stack.setCliffHeight(Float.parseFloat(text)));
         } else {
             this.stackHeightField.setStyle(Constants.FX_STYLE_INVALID_TEXT);
         }
@@ -512,8 +375,38 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
 
     @FXML
     private void addRegion(ActionEvent evt) {
-        FroggerMapZoneRegion newRegion = new FroggerMapZoneRegion();
-        this.selectedZone.getRegions().add(newRegion);
+        FroggerMapFilePacketGrid gridPacket = getMapFile().getGridPacket();
+
+        // Create new region and generate default position.
+        FroggerMapZoneRegion newRegion = new FroggerMapZoneRegion(this.selectedZone);
+        if (this.collisionGridPreview.getSelectedGridStacks().isEmpty()) {
+            // Place it in the center.
+            int baseX = gridPacket.getGridXCount() / 2;
+            int baseZ = gridPacket.getGridZCount() / 2;
+            newRegion.setXMin((short) (baseX - 1));
+            newRegion.setXMax((short) (baseX + 1));
+            newRegion.setZMin((short) (baseZ - 1));
+            newRegion.setZMax((short) (baseZ + 1));
+        } else {
+            newRegion.setXMin((short) (gridPacket.getGridXCount() - 1)); // If we don't put it here, it'll always place the min at x=0.
+            newRegion.setZMin((short) (gridPacket.getGridZCount() - 1)); // If we don't put it here, it'll always place the min at z=0.
+            for (FroggerGridStack gridStack : this.collisionGridPreview.getSelectedGridStacks()) {
+                int x = Math.min(Math.max(1, gridStack.getX()), gridPacket.getGridXCount() - 1);
+                int z = Math.min(Math.max(1, gridStack.getZ()), gridPacket.getGridZCount() - 1);
+                if (x <= newRegion.getXMin())
+                    newRegion.setXMin((short) (x - 1));
+                if (x >= newRegion.getXMax())
+                    newRegion.setXMax((short) (x + 1));
+                if (z <= newRegion.getZMin())
+                    newRegion.setZMin((short) (z - 1));
+                if (z >= newRegion.getZMax())
+                    newRegion.setZMax((short) (z + 1));
+            }
+        }
+
+        this.selectedZone.addRegion(newRegion);
+
+        // Update UI.
         int newId = this.regionSelector.getItems().size();
         this.regionSelector.getItems().add(newId);
         this.regionSelector.getSelectionModel().select(newId);
@@ -521,17 +414,26 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
 
     @FXML
     private void deleteRegion(ActionEvent evt) {
-        this.selectedZone.getRegions().remove(this.selectedRegion - 1);
+        this.selectedZone.removeRegion(getCurrentRegion());
         this.regionSelector.getItems().remove(this.selectedRegion);
-        for (int i = this.selectedRegion + 1; i < this.regionSelector.getItems().size(); i++)
-            this.regionSelector.getItems().set(i, this.regionSelector.getItems().get(i) - 1);
+        for (int i = this.selectedRegion; i < this.regionSelector.getItems().size(); i++)
+            this.regionSelector.getItems().set(i, i);
 
-        this.regionSelector.getSelectionModel().select(--this.selectedRegion);
+        int oldRegion = this.selectedRegion;
+        if (--this.selectedRegion < 0)
+            this.selectedRegion = 0;
+
+        this.regionSelector.getSelectionModel().select(this.selectedRegion);
+        if (oldRegion == this.selectedRegion) // Seems the change listener doesn't fire if there's no change, so we'll call it manually.
+            onRegionSelected(this.selectedRegion);
     }
 
     @FXML
     private void onResizeGrid(ActionEvent evt) {
+        closeWindow(); // Without this, the grid window will show on top of the resize window, making it impossible to see.
         FroggerGridResizeController.open(this);
+        getMapMeshController().getGeneralManager().updatePlayerCharacter(); // Player character may have moved.
+        Platform.runLater(this::openWindowAndWait);
     }
 
     /**
@@ -540,35 +442,6 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
     public int getSelectedLayer() {
         Integer layer = this.layerSelector.getValue();
         return layer != null ? layer : -1;
-    }
-
-    /**
-     * Gets the currently selected grid squares.
-     */
-    public List<FroggerGridSquare> getSelectedGridSquares() {
-        this.cachedSelectedSquares.clear();
-        if (this.selectedStacks == null || this.selectedStacks.isEmpty())
-            return this.cachedSelectedSquares;
-
-        int selectedLayer = getSelectedLayer();
-        for (int i = 0; i < this.selectedStacks.size(); i++) {
-            FroggerGridStack gridStack = this.selectedStacks.get(i);
-            if (gridStack.getGridSquares().size() > 0)
-                this.cachedSelectedSquares.add(gridStack.getGridSquares().get(Math.min(selectedLayer, gridStack.getGridSquares().size() - 1)));
-        }
-
-        return this.cachedSelectedSquares;
-    }
-
-    /**
-     * Select the stacks currently being edited.
-     * @param stacks The stacks to select.
-     */
-    public void setSelectedStacks(List<FroggerGridStack> stacks) {
-        this.selectedStacks = stacks != null && stacks.size() > 0 ? stacks : null;
-        updateGridStackUI();
-        updateGridSquareUI();
-        updateCanvas();
     }
 
     private void updateLayerSelectorValues() {
@@ -597,30 +470,90 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
     }
 
     /**
+     * Gets the highlight texture source for a given grid square.
+     * @param gridSquare the grid square to get the highlight texture source for
+     * @return highlightColorTextureSource
+     */
+    public RawColorTextureSource getOverlayColorTextureSource(FroggerGridSquare gridSquare) {
+        if (gridSquare == null)
+            return null;
+
+        if (this.collisionGridPreview.getSelectedGridSquares().contains(gridSquare))
+            return MATERIAL_HIGHLIGHT_GRID_AQUA;
+
+        FroggerGridSquareReaction reaction = gridSquare.getReaction();
+        return reaction != null ? reaction.getHighlightTextureSource() : MATERIAL_HIGHLIGHT_GRID_HOT_PINK;
+    }
+
+    /**
+     * Set the visibility of grid polygon highlighting.
+     * @param visible Whether it should be visible
+     */
+    public void setGridPolygonHighlightingVisible(boolean visible) {
+        FroggerMapMesh mesh = this.mapMeshController.getMesh();
+        mesh.pushBatchOperations();
+        mesh.getHighlightedGridPolygonNode().clear();
+
+        if (visible) {
+            FroggerMapFilePacketGrid gridPacket = getMapFile().getGridPacket();
+            for (int z = 0; z < gridPacket.getGridZCount(); z++) {
+                for (int x = 0; x < gridPacket.getGridXCount(); x++) {
+                    FroggerGridStack gridStack = gridPacket.getGridStack(x, z);
+                    for (int i = 0; i < gridStack.getGridSquares().size(); i++) {
+                        FroggerGridSquare gridSquare = gridStack.getGridSquares().get(i);
+                        updateGridPolygonHighlighting(gridSquare, true);
+                    }
+                }
+            }
+        }
+
+        mesh.popBatchOperations();
+    }
+
+    /**
+     * Set the visibility of grid polygon highlighting.
+     * @param showHighlighting Whether the grid highlighting should be visible
+     */
+    public void updateGridPolygonHighlighting(FroggerGridSquare gridSquare, boolean showHighlighting) {
+        if (gridSquare == null)
+            throw new NullPointerException("gridSquare");
+        if (gridSquare.getPolygon() == null)
+            return;
+
+        // NOTE: Consider highlighting if the square is selected.
+
+        FroggerMapMesh mesh = this.mapMeshController.getMesh();
+        RawColorTextureSource highlightColor = showHighlighting ? getOverlayColorTextureSource(gridSquare) : null;
+        DynamicMeshDataEntry polygonEntry = mesh.getMainNode().getDataEntry(gridSquare.getPolygon());
+        mesh.getHighlightedGridPolygonNode().setOverlayTexture(polygonEntry, highlightColor);
+    }
+
+    /**
      * Updates the UI for the selected grid stack(s).
      */
     public void updateGridStackUI() {
-        int gridStackCount = this.selectedStacks != null ? this.selectedStacks.size() : 0;
+        List<FroggerGridStack> selectedStacks = this.collisionGridPreview.getSelectedGridStacks();
+        int gridStackCount = selectedStacks.size();
 
         // Update main UI components.
         this.gridStackSelectedLabel.setDisable(gridStackCount == 0);
         this.stackHeightLabel.setDisable(gridStackCount == 0);
-        this.stackHeightField.setDisable(gridStackCount == 0);
-        this.addGridSquareButton.setDisable(gridStackCount == 0);
-        this.removeGridSquareButton.setDisable(gridStackCount == 0 || this.selectedStacks.stream().mapToInt(gridStack -> gridStack.getGridSquares().size()).sum() == 0);
+        this.stackHeightField.setDisable(true); // This will work if enabled, but this should not be necessary to edit by hand.
+        this.addGridSquareButton.setDisable(gridStackCount != 1);
+        this.removeGridSquareButton.setDisable(gridStackCount == 0 || selectedStacks.stream().mapToInt(gridStack -> gridStack.getGridSquares().size()).sum() == 0);
 
         // Update stack display.
         if (gridStackCount > 1) {
             this.gridStackSelectedLabel.setText(gridStackCount + " stacks selected");
-            if (sameHeight(this.selectedStacks)) {
-                this.stackHeightField.setText(String.valueOf(this.selectedStacks.get(0).getAverageWorldHeightAsFloat()));
+            if (sameHeight(selectedStacks)) {
+                this.stackHeightField.setText(String.valueOf(selectedStacks.get(0).getCliffHeightAsFloat()));
             } else {
                 this.stackHeightField.setText("");
             }
         } else if (gridStackCount == 1) {
-            FroggerGridStack gridStack = this.selectedStacks.get(0);
-            this.gridStackSelectedLabel.setText("Stack[x=" + gridStack.getX() + ",x=" + gridStack.getZ() + "]");
-            this.stackHeightField.setText(String.valueOf(gridStack.getAverageWorldHeightAsFloat()));
+            FroggerGridStack gridStack = selectedStacks.get(0);
+            this.gridStackSelectedLabel.setText("Stack[x=" + gridStack.getX() + ",z=" + gridStack.getZ() + "]");
+            this.stackHeightField.setText(String.valueOf(gridStack.getCliffHeightAsFloat()));
         }
     }
 
@@ -628,36 +561,50 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
      * Updates the UI for the selected grid square.
      */
     public void updateGridSquareUI() {
-        List<FroggerGridSquare> gridSquares = getSelectedGridSquares();
+        this.uiUpdateInProgressSquare = true;
+
+        // Toggle visibility of square UI.
+        Set<FroggerGridSquare> gridSquares = this.collisionGridPreview.getSelectedGridSquares();
         boolean hasGridSquare = gridSquares.size() > 0;
         this.gridSquareLabel.setVisible(hasGridSquare);
         this.selectedImage.setVisible(hasGridSquare);
         this.changePolygonButton.setVisible(hasGridSquare);
+        this.changePolygonButton.setDisable(gridSquares.size() != 1);
+        this.flagReactionSelector.setVisible(hasGridSquare);
         this.flagTable.setVisible(hasGridSquare);
 
         // Update image preview.
-        FroggerGridSquare firstSquare = gridSquares.size() > 0 ? gridSquares.get(0) : null;
-        FroggerGridSquare singleSquare = gridSquares.size() == 1 ? gridSquares.get(0) : null;
+        FroggerGridSquare firstSquare = gridSquares.size() > 0 ? gridSquares.iterator().next() : null;
+        FroggerGridSquare singleSquare = gridSquares.size() == 1 ? firstSquare : null;
         if (singleSquare != null && singleSquare.getPolygon() != null && singleSquare.getPolygon().getTexture() != null) {
             this.selectedImage.setImage(singleSquare.getPolygon().getTexture().toFXImage());
         } else {
             this.selectedImage.setImage(null);
         }
 
-        // Update polygon label.
-        this.polygonTypeLabel.setText(singleSquare != null && singleSquare.getPolygon() != null ? singleSquare.getPolygon().getPolygonType().name() : "");
-        this.polygonTypeLabel.setVisible(singleSquare != null);
+        // Update square UI. Must run last as it will set this.uiUpdateInProgressSquare to false.
+        updateGridFlagsUI(true);
+    }
 
-        int x = 1;
-        int y = 0;
+    private void updateGridFlagsUI(boolean updateFlagSelector) {
+        this.uiUpdateInProgressSquare = true;
+        Set<FroggerGridSquare> gridSquares = this.collisionGridPreview.getSelectedGridSquares();
+        FroggerGridSquare firstSquare = gridSquares.size() > 0 ? gridSquares.iterator().next() : null;
+
+        // Determine reaction.
+        FroggerGridSquareReaction firstReaction = firstSquare != null ? firstSquare.getReaction() : null;
+        boolean reactionsMatch = firstSquare != null && gridSquares.stream()
+                .map(FroggerGridSquare::getReaction)
+                .allMatch(reaction -> reaction == firstReaction);
+        FroggerGridSquareReaction sharedReaction = reactionsMatch ? firstReaction : null;
+        if (updateFlagSelector)
+            this.flagReactionSelector.getSelectionModel().select(sharedReaction);
+
+        int i = 0;
+        final int columnCount = 2;
         for (FroggerGridSquareFlag flag : FroggerGridSquareFlag.values()) {
             if (!flag.isLandGridData())
                 continue;
-
-            if (x == 2) {
-                x = 0;
-                y++;
-            }
 
             CheckBox checkBox = this.gridSquareFlagCheckBoxes[flag.ordinal()];
             boolean isFlagSet = firstSquare != null && firstSquare.testFlag(flag);
@@ -667,18 +614,25 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
 
             if (checkBox == null) {
                 // Create new.
-                CheckBox newCheckBox = new CheckBox(StringUtils.capitalize(flag.name()));
+                CheckBox newCheckBox = new CheckBox(StringUtils.capitalize(flag.name()) + (flag.isUnused() ? " (Unused)" : ""));
                 newCheckBox.setAllowIndeterminate(false);
-                if (flag.getTooltipDescription() != null)
-                    newCheckBox.setTooltip(new Tooltip(flag.getTooltipDescription()));
+                newCheckBox.setTooltip(FXUtils.createTooltip(flag.getTooltipDescription()));
 
-                GridPane.setRowIndex(newCheckBox, y);
-                GridPane.setColumnIndex(newCheckBox, x++);
+                GridPane.setRowIndex(newCheckBox, i / columnCount);
+                GridPane.setColumnIndex(newCheckBox, i++ % columnCount);
                 this.flagTable.getChildren().add(newCheckBox);
                 this.gridSquareFlagCheckBoxes[flag.ordinal()] = newCheckBox;
                 newCheckBox.selectedProperty().addListener(((observable, oldValue, newValue) -> {
-                    if (!newCheckBox.isIndeterminate())
-                        getSelectedGridSquares().forEach(square -> square.setFlag(flag, newValue));
+                    if (newCheckBox.isIndeterminate() || this.uiUpdateInProgressSquare)
+                        return;
+
+                    this.collisionGridPreview.getMapMesh().pushBatchOperations();
+                    for (FroggerGridSquare gridSquare : this.collisionGridPreview.getSelectedGridSquares()) {
+                        gridSquare.setFlag(flag, newValue);
+                        updateGridPolygonHighlighting(gridSquare, true);
+                    }
+
+                    this.collisionGridPreview.getMapMesh().popBatchOperations();
                 }));
 
                 checkBox = newCheckBox;
@@ -686,7 +640,8 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
 
             // Update check box.
             // To avoid changing the flags, we're going to enable indeterminate mode.
-            checkBox.setVisible(hasGridSquare);
+            checkBox.setVisible(gridSquares.size() > 0);
+            checkBox.setDisable(flag.isPartOfSimpleReaction() && sharedReaction != null && this.flagReactionSelector.getValue() != null);
             checkBox.setIndeterminate(true); // Ensure updates to the grid square will be skipped.
             if (statesMatch) {
                 checkBox.setSelected(isFlagSet);
@@ -695,11 +650,30 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
                 checkBox.setSelected(false);
             }
         }
+
+        this.uiUpdateInProgressSquare = false;
+
+        // Update polygon label.
+        int layerID = firstSquare != null ? firstSquare.getLayerID() : -1;
+        boolean layersMatch = firstSquare != null && gridSquares.stream()
+                .allMatch(square -> square.getLayerID() == layerID);
+        String layerText = layersMatch ? "Layer #" + (layerID + 1) : null;
+
+        FroggerMapPolygonType polygonType = firstSquare != null && firstSquare.getPolygon() != null
+                ? firstSquare.getPolygon().getPolygonType() : null;
+        boolean polygonTypesMatch = polygonType != null && gridSquares.stream()
+                .allMatch(square -> square.getPolygon() == null || square.getPolygon().getPolygonType() == polygonType);
+        String polygonTypeText = polygonTypesMatch ? polygonType.name() : null;
+
+        // If we add more here, consider splitting this label into multiple labels which can be set independently.
+        this.polygonTypeLabel.setVisible(polygonTypeText != null || layerText != null);
+        this.polygonTypeLabel.setText((polygonTypeText != null ? polygonTypeText : "")
+                +(polygonTypeText != null ? ", " : "") + (layerText != null ? layerText : ""));
     }
 
     private static boolean sameHeight(Collection<FroggerGridStack> stacks) {
         return stacks.stream()
-                .mapToInt(FroggerGridStack::getAverageWorldHeight)
+                .mapToInt(FroggerGridStack::getRawCliffHeightValue)
                 .distinct().count() == 1;
     }
 
@@ -711,14 +685,14 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
         this.selectedZone = newZone;
 
         if (newZone != null) {
-            List<Integer> regionIds = new ArrayList<>(Utils.getIntegerList(newZone.getRegionCount() + 1));
+            List<Integer> regionIds = new ArrayList<>(Utils.getIntegerList(newZone.getRegionCount()));
             this.regionSelector.setItems(FXCollections.observableArrayList(regionIds));
             if (regionIds.size() > 0)
-                this.regionSelector.getSelectionModel().select(DEFAULT_REGION_ID); // Automatically calls setRegion
+                this.regionSelector.getSelectionModel().selectFirst(); // Automatically calls setRegion
         }
 
         updateCameraZoneUI();
-        updateCanvas();
+        this.collisionGridPreview.redrawEntireCanvas();
     }
 
     /**
@@ -831,12 +805,10 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
      * Set the selected region.
      * @param id   The id of the new region.
      */
-    public void setSelectedRegion(int id) {
+    private void onRegionSelected(int id) {
         this.selectedRegion = id;
-
-        boolean hasRegion = (id != DEFAULT_REGION_ID);
-        this.removeRegionButton.setDisable(!hasRegion);
-        updateCanvas();
+        this.removeRegionButton.setDisable(id == 0 && (this.selectedZone == null || this.selectedZone.isBoundingRegionTreatedAsRegion()));
+        this.collisionGridPreview.redrawEntireCanvas();
     }
 
     /**
@@ -844,12 +816,7 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
      * @return currentRegion
      */
     public FroggerMapZoneRegion getCurrentRegion() {
-        if (this.selectedZone == null)
-            return null;
-
-        return this.selectedRegion == DEFAULT_REGION_ID
-                ? this.selectedZone.getBoundingRegion()
-                : this.selectedZone.getRegions().get(this.selectedRegion - 1);
+        return this.selectedZone != null ? this.selectedZone.getRegions().get(this.selectedRegion) : null;
     }
 
     /**
@@ -866,21 +833,28 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
         for (int z = 0; z < newZ; z++) {
             for (int x = 0; x < newX; x++) {
                 FroggerGridStack newStack = getMapFile().getGridPacket().getGridStack(x, z);
-                if (this.selectedStacks != null && this.selectedStacks.contains(newStack))
+                if (this.collisionGridPreview.getSelectedGridStacks().contains(newStack))
                     newStacks.add(newStack);
             }
         }
 
         // Apply changes.
         updateLayerSelectorValues();
-        setSelectedStacks(newStacks);
+        this.collisionGridPreview.getMapMesh().pushBatchOperations();
+        this.collisionGridPreview.clearSelection();
+        newStacks.forEach(gridStack -> this.collisionGridPreview.selectGridStack(gridStack, false));
+        this.collisionGridPreview.getMapMesh().popBatchOperations();
+        updateGridStackUI();
+        updateGridSquareUI();
     }
 
     /**
      * Open the collision grid viewer.
      * @param controller The mesh manager.
      */
-    public static void openGridEditor(FroggerMapMeshController controller) {
-        FXUtils.createWindowFromFXMLTemplate("window-edit-map-collision-grid", new FroggerUIGridManager(controller), "Grid Editor", true);
+    public static FroggerUIGridManager openGridEditor(FroggerMapMeshController controller) {
+        FroggerUIGridManager newManager = new FroggerUIGridManager(controller);
+        FXUtils.createWindowFromFXMLTemplate("window-edit-map-collision-grid", newManager, "Grid Editor", false);
+        return newManager;
     }
 }

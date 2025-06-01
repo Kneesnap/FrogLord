@@ -1,8 +1,5 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
-import javafx.scene.control.Alert.AlertType;
-import net.highwayfrogs.editor.file.writer.ArrayReceiver;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxAttributes;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxEntry;
@@ -23,9 +20,10 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.system.Tuple2;
-import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.MessageTrackingLogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
@@ -36,7 +34,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.logging.Level;
 
 /**
  * Contains static utility functions which make exporting/importing Frogger: The Great Quest assets easier.
@@ -101,28 +98,7 @@ public class GreatQuestAssetUtils {
         scriptList.printAdvancedWarnings(logger);
 
         // Show popup.
-        int warningCount = logger.getMessageCount(Level.WARNING);
-        int errorCount = logger.getMessageCount(Level.SEVERE);
-        AlertType alertType;
-        StringBuilder builder = new StringBuilder("Imported '").append(sourceName);
-        if (errorCount > 0 || warningCount > 0) {
-            builder.append("' with ");
-            if (errorCount > 0)
-                builder.append(errorCount).append(errorCount != 1 ? " errors" : " error");
-            if (warningCount > 0) {
-                if (errorCount > 0)
-                    builder.append(" and");
-                builder.append(warningCount).append(warningCount != 1 ? " warnings" : " warning");
-            }
-
-            builder.append('.');
-            alertType = errorCount > 0 ? AlertType.ERROR : AlertType.WARNING;
-        } else {
-            builder.append("' successfully.");
-            alertType = AlertType.INFORMATION;
-        }
-
-        FXUtils.makePopUp(builder.toString(), alertType);
+        logger.showPopup("successfully", "Imported '%s' [problem=with ][summary].", sourceName);
     }
 
     private static void applyStringResources(GreatQuestChunkedFile chunkedFile, Config dialogCfg) {

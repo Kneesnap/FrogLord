@@ -152,13 +152,13 @@ public class CameraHeightFieldMeshNode extends DynamicMeshNode {
                 int baseIndex = getMeshIndex(x, z);
 
                 // Calculate UV indices.
-                int uvBottomLeftIndex = entry.getTexCoordStartIndex() + baseIndex;
+                int uvBottomLeftIndex = entry.getPendingTexCoordStartIndex() + baseIndex;
                 int uvBottomRightIndex = uvBottomLeftIndex + 1;
                 int uvTopLeftIndex = uvBottomLeftIndex + getMapPacket().getXSquareCount();
                 int uvTopRightIndex = uvTopLeftIndex + 1;
 
                 // Calculate vertices.
-                int vtxBottomLeftIndex = entry.getVertexStartIndex() + baseIndex;
+                int vtxBottomLeftIndex = entry.getPendingVertexStartIndex() + baseIndex;
                 int vtxBottomRightIndex = vtxBottomLeftIndex + 1;
                 int vtxTopLeftIndex = vtxBottomLeftIndex + getMapPacket().getXSquareCount();
                 int vtxTopRightIndex = vtxTopLeftIndex + 1;
@@ -180,16 +180,16 @@ public class CameraHeightFieldMeshNode extends DynamicMeshNode {
      */
     public void updateFace(int x, int z) {
         int baseIndex = getMeshIndex(x, z);
-        int faceIndex = this.mainEntry.getFaceStartIndex() + getFaceIndex(x, z);
+        int faceIndex = this.mainEntry.getCurrentFaceStartIndex() + getFaceIndex(x, z);
 
         // Calculate UV indices.
-        int uvBottomLeftIndex = this.mainEntry.getTexCoordStartIndex() + baseIndex;
+        int uvBottomLeftIndex = this.mainEntry.getCurrentTexCoordStartIndex() + baseIndex;
         int uvBottomRightIndex = uvBottomLeftIndex + 1;
         int uvTopLeftIndex = uvBottomLeftIndex + getMapPacket().getXSquareCount();
         int uvTopRightIndex = uvTopLeftIndex + 1;
 
         // Calculate vertices.
-        int vtxBottomLeftIndex = this.mainEntry.getVertexStartIndex() + baseIndex;
+        int vtxBottomLeftIndex = this.mainEntry.getCurrentVertexStartIndex() + baseIndex;
         int vtxBottomRightIndex = vtxBottomLeftIndex + 1;
         int vtxTopLeftIndex = vtxBottomLeftIndex + getMapPacket().getXSquareCount();
         int vtxTopRightIndex = vtxTopLeftIndex + 1;

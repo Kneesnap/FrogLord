@@ -4,17 +4,16 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.*;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Transform;
-import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
-import net.highwayfrogs.editor.file.mof.view.MOFMesh;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
-import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapForm;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapUIManager.OldFroggerMapListManager;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
+import net.highwayfrogs.editor.games.sony.shared.mof2.ui.mesh.MRModelMesh;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
+import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,7 +25,7 @@ import java.util.Map;
  */
 public class OldFroggerEntityManager extends OldFroggerMapListManager<OldFroggerMapEntity, MeshView> {
     private final float[] posCache = new float[6];
-    private final Map<MOFHolder, MOFMesh> meshCache = new HashMap<>();
+    private final Map<MRModel, MRModelMesh> meshCache = new HashMap<>();
 
     public OldFroggerEntityManager(MeshViewController<OldFroggerMapMesh> controller) {
         super(controller);
@@ -78,24 +77,14 @@ public class OldFroggerEntityManager extends OldFroggerMapListManager<OldFrogger
 
     private void updateEntityMesh(OldFroggerMapEntity entity, MeshView entityMesh) {
         OldFroggerMapForm form = entity.getForm();
-        MOFHolder holder = form.getMofFile();
-        if (holder != null) {
-
-            // Set VLO archive to the map VLO if currently unset.
-            if (holder.getVloFile() == null) {
-                OldFroggerLevelTableEntry levelTableEntry = entity.getMap().getLevelTableEntry();
-                if (levelTableEntry != null)
-                    holder.setVloFile(levelTableEntry.getMainVLOArchive());
-            }
+        MRModel model = form.getModel();
+        if (model != null) {
+            DynamicMesh.tryRemoveMesh(entityMesh);
 
             // Update MeshView.
-            MOFMesh modelMesh = this.meshCache.computeIfAbsent(holder, MOFHolder::makeMofMesh);
+            MRModelMesh modelMesh = this.meshCache.computeIfAbsent(model, MRModel::createMeshWithDefaultAnimation);
+            modelMesh.addView(entityMesh, getController().getMeshTracker(), (getSelectedValue() == entity), true);
             entityMesh.setCullFace(CullFace.BACK);
-            entityMesh.setMesh(modelMesh);
-
-            // Update material.
-            TextureMap textureSheet = modelMesh.getTextureMap();
-            entityMesh.setMaterial((getSelectedValue() == entity) ? textureSheet.getDiffuseHighlightedMaterial() : textureSheet.getDiffuseMaterial());
             return;
         }
 

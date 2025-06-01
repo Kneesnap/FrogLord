@@ -4,21 +4,18 @@ import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.file.writer.FileReceiver;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.ui.PaletteController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.FXUtils;
-import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -127,30 +124,5 @@ public class FroggerPaletteFile extends SCSharedGameFile {
         graphics.dispose();
 
         return FXUtils.toFXImage(image, false);
-    }
-
-    /**
-     * Save palette data to an .act file for processing in Photoshop.
-     */
-    @Override
-    public void exportAlternateFormat() {
-        File file = FXUtils.promptFileSave(getGameInstance(), "Save the Color Palette.", FileUtils.stripExtension(getFileDisplayName()), "ACT File", "act");
-        if (file != null) {
-            final int redMask = 0xFF0000, greenMask = 0xFF00, blueMask = 0xFF;
-
-            DataWriter writer = new DataWriter(new FileReceiver(file));
-            for (Color color : colors) {
-                final int intColor = ColorUtils.toRGB(color);
-                writer.writeByte((byte)((intColor & redMask) >> 16));
-                writer.writeByte((byte)((intColor & greenMask) >> 8));
-                writer.writeByte((byte)(intColor & blueMask));
-            }
-            writer.closeReceiver();
-
-            System.out.println("Exported PAL file to '" + file.getName() + "'.");
-        }
-        else {
-            System.out.println("Aborted export of PAL file.");
-        }
     }
 }

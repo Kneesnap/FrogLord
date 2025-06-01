@@ -1,59 +1,21 @@
 # Frogger: The Great Quest Modding Guide
-This guide will go over the basics of creating mods for Frogger: The Great Quest.
-If you are just trying to install mods, navigate [here](installing-mods.md) instead.  
-**NOTE:** This guide is specific to Frogger: The Great Quest, and the information here may not be valid for other games.  
+This guide will go over the basics of creating mods for Frogger: The Great Quest.  
+Please make sure to read the [setup guide](./modding-setup-guide.md) before following this guide.
+If you are just trying to install mods, navigate [here](installing-mods.md) instead.
+> [!NOTE]
+> This guide is specific to Frogger: The Great Quest, and the information here may not be valid for other games.
 
-## A note for developers (Optional)
-Frogger: The Great Quest's PS2 builds contain exhaustive debug symbols (DWARFv1) for everything except the skeletal animation library.  
-This means we are often using the original data structure names, and very often mention original function names for reference.
-If you'd like to get Ghidra setup to use these symbols and poke around in the original game, reach out in the discord server.
-I'd like to document how to setup Ghidra at some point, but it's low priority.
-
-## 1) Download FrogLord
-Instructions: [here](../../download-froglord.md)
-TODO: CREATE!
-
-## 2) Getting the right version(s) of the game.
-It may be tempting to jump straight into FrogLord and start making changes, but I urge reading this guide first.
-Before getting started, you'll need a legally obtained copy of Frogger: The Great Quest.
-For modding purposes, you'll want both the PC version and (optionally) the PS2 NTSC version.
-
-**PS2 NTSC (Recommended):**  
-The PS2 NTSC version is the recommended version to make mods for, since it is stable, has debug symbols, and is playable on PC via emulation.  
-
-**PC Version (Discouraged, but good for testing):**  
-The PC version has issues that make it not desirable for modding such as:
- - Requiring a frame-limiter to function. (Asks more from players)
- - Frequent crashes even with a frame-limiter.
- - No Vertex Coloring
- - Entities visibly T-Posing.
- - Entities deactivating at a much shorter range than the PS2 version.
-
-However, this version is very good for quickly testing changes since it does not need to build a PS2 CD image for every build.
-
-**PS2 PAL (Highly Discouraged):**  
-This version is discouraged for modding due to its multi-language capabilities, which are a pain to deal with.
-Additionally, it is capped to 50 FPS.
-
-## 3) Creating your first mod
-It may appear that FrogLord is the place to start making mods, and when you're done you can just hit save.
-Doing that is completely fine for development & testing purposes, but sharing your data.bin file (even if it is modified) is copyright infringement.
-Instead, we create .zip files (Renamed to .mod) which contain the files necessary to transform an original copy of the game into your modded version.
-This .zip/.mod file (or the unpacked folder it is created from) is usually referred to as just "the mod" or "a mod".
-
-Organizing mods like this comes with other benefits too:
-- Enabling mods to support multiple versions/platforms.
-- Prevents accidentally corrupting your entire mod due to bugs/human error.
-- Allows collaboration with multiple people by using version control software such as Git.
-- In certain cases, multiple mods may be possible to apply together.
+## 1) Creating mods the proper way
+As mentioned in the [setup guide](./modding-setup-guide.md), each mod gets its own folder.
+Create a folder with the desired mod name at `<root folder>\<name of mod>`.
+This folder is known as the "mod folder" (not to be confused with the root folder established in the setup guide.)  
 
 **Instructions:**  
-Create a folder somewhere on your computer, this folder will be the root folder of the mod.
-There are two required files, `script.ndl` and `main.cfg`.
+There are two required files to create in the mod folder: `script.ndl` and `main.cfg`.
 
 **main.cfg:**  
-Create a file called `main.cfg`, and copy the following into it. Then, fill it out.  
-```batch
+Create a file named `main.cfg`, paste the following into it, then fill it out.
+```ini
 name=My Cool Mod # The name of the mod.
 game=greatquest # Which game is this mod for?
 id=00000000-0000-0000-0000-000000000000 # Replace this with a randomly generated UUIDv4, such as from: https://www.uuidgenerator.net/ This will uniquely identify your mod, allowing other mods to require your mod to be installed.
@@ -61,46 +23,52 @@ version=1.0.0 # The mod version. (Should be increased with every release)
 author=Kneesnap # Who made the mod?
 minFrogLordVersion=1.0.0 # The earliest version of FrogLord which can apply the mod.
 #likelyCompatibleWithOtherMods=false # (Optional, default = false), this indicates if this mod is likely to be compatible with other mods.
-#icon=image.bmp # (Optional) This is the path to a square image icon representing the mod.
+#icon=image.bmp # (Optional) This is the path to a square image icon representing the mod. This may be displayed in multiple places, so high resolutions are preferred.
 Text written here or on subsequent lines is treated as a description of the mod.
 ```
 
 **script.ndl**  
-Create a file called `script.ndl`. This is a [Noodle](scripting.md) script, which will instruct FrogLord how to modify the game.  
-Noodle is easily the most complicated part of making mods, which is why it is strongly recommended to refer to other mods such as [this one](https://github.com/Kneesnap/frogger-tgq-project-puck/blob/main/script.ndl).  
+Create a file named `script.ndl`, and leave it empty for now.
+This is a [Noodle](scripting.md) script which will instruct FrogLord on which files to import/apply changes from.  
+This will be the most complex part of making mods, so it is strongly recommended to refer to other mods such as [this one](https://github.com/Kneesnap/frogger-tgq-project-puck/blob/main/script.ndl), or asking for help in the [Highway Frogs discord server](https://discord.gg/XZH9Wa5rMV).  
+These scripts can be run in FrogLord with `Edit > Run Noodle Script`.  
 
-TODO: Noodle link needs documentation.
+To avoid the complexity of Noodle for now, you can safely leave this file empty until the mod is ready to be shared.
 
 **Everything Else:**  
-Other files/folders may be included however you like, although it is recommended to follow the following directory structure as it will simplify your work in Noodle quite a bit.
+Other files/folders may be included in the mod folder in any organization, although it is recommended to follow the following directory structure.
+
+> [!NOTE]
+> Each of the follow folders corresponds to a level in the game and follows the level folder structure described below.
 
 ```
-level01/ Level Data for "Rolling Rapids Creek". (Follows the level folder structure seen below)
-level02/ Level Data for "Bog Town". (Follows the level folder structure seen below)
-level03/ Level Data for "Slick Willy's River Boat". (Follows the level folder structure seen below)
-level04/ Level Data for "River Town". (Follows the level folder structure seen below)
-level05/ Level Data for "Mushroom Valley". (Follows the level folder structure seen below)
-level06/ Level Data for "Fairy Town Spring". (Follows the level folder structure seen below)
-level07/ Level Data for "The Tree of Knowledge". (Follows the level folder structure seen below)
-level08/ Level Data for "Fairy Town Summer". (Follows the level folder structure seen below)
-level09/ Level Data for "The Cat Dragon's Lair". (Follows the level folder structure seen below)
-level10/ Level Data for "Fairy Town Fall". (Follows the level folder structure seen below)
-level11/ Level Data for "The Dark Trail". (PC Only) (Follows the level folder structure seen below)
-level11A/ Level Data for "The Dark Trail Ruins". (Follows the level folder structure seen below)
-level12/ Level Data for "Dr. Starkenstein's Castle". (Follows the level folder structure seen below)
-level13/ Level Data for "The Catacombs". (Follows the level folder structure seen below)
-level14/ Level Data for "The Goblin Trail". (Follows the level folder structure seen below)
-level15/ Level Data for "The Goblin Fort". (Follows the level folder structure seen below)
-level16/ Level Data for "The Ruins of Joy Town". (PC Only) (Follows the level folder structure seen below)
-level17/ Level Data for "Joy Castle". (Follows the level folder structure seen below)
-level18/ Level Data for "The Towers of Joy Castle". (Follows the level folder structure seen below)
+Folders:
+level01/   ← Level Data for "Rolling Rapids Creek"
+level02/   ← Level Data for "Bog Town"
+level03/   ← Level Data for "Slick Willy's River Boat"
+level04/   ← Level Data for "River Town"
+level05/   ← Level Data for "Mushroom Valley"
+level06/   ← Level Data for "Fairy Town Spring"
+level07/   ← Level Data for "The Tree of Knowledge"
+level08/   ← Level Data for "Fairy Town Summer"
+level09/   ← Level Data for "The Cat Dragon's Lair"
+level10/   ← Level Data for "Fairy Town Fall"
+level11/   ← Level Data for "The Dark Trail" (PC Only)
+level11A/  ← Level Data for "The Dark Trail Ruins"
+level12/   ← Level Data for "Dr. Starkenstein's Castle"
+level13/   ← Level Data for "The Catacombs"
+level14/   ← Level Data for "The Goblin Trail"
+level15/   ← Level Data for "The Goblin Fort"
+level16/   ← Level Data for "The Ruins of Joy Town" (PC Only)
+level17/   ← Level Data for "Joy Castle"
+level18/   ← Level Data for "The Towers of Joy Castle"
 
-Level Folder Structure:
- sfx/ Contains the sound effects (as .wav with the )
- entity-descriptions/ Contains descriptions of entities
- entities/ Contains entity definitions, and scripts which are isolated relatively to individual entities.
- scripts/ Contains files that define scripts which may target multiple entities, but overall are related. (This is just an organization tactic.)
- script.ndl The script to apply the changes for this particular level.
+Standard level folder layout:
+  sfx/                 ← Contains the sound effects (as .wav files)
+  entity-descriptions/ ← Contains descriptions of entities
+  entities/            ← Contains entity definitions and scripts (isolated relative to individual entities)
+  scripts/             ← Contains files that define scripts which may target multiple entities, but overall are related. (This is just an organization tactic.)
+  script.ndl           ← The script to apply the changes for this particular level
  
 TODO: 3D Models, 3D Model Animations, 3D Model Skeletons, 3D Model Collision
 TODO: Map Terrain, Map Terrain Collision, etc
@@ -108,23 +76,58 @@ TODO: Textures
 TODO: More probably.
 ```
 
-## 4) Testing your first mod.
-For the purposes of testing your first mod, we'll keep it simple. `script.ndl` should have this pasted into it:
-```js
-TODO: ADD!!
+### Overall Mod Folder Structure
+```
+<Root Folder>/
+├── <Mod Folder>/                 ← Mod folder
+│   ├── main.cfg                  ← Mod description (name, UUID, author, etc.)
+│   ├── script.ndl                ← Script for applying mod to FrogLord
+│   ├── level01/                  ← Level-specific data (e.g. Rolling Rapids Creek)
+│   │   ├── sfx/
+│   │   ├── entity-descriptions/
+│   │   ├── entities/
+│   │   ├── scripts/
+│   │   ├── script.ndl            ← Level-specific Noodle script
+│   ├── level02/
+│   │   ├── ...
+│   ├── ... more levels ...
 ```
 
-Once that's done, it's time to test your mod.
+## 4) Making an example mod.
+The biggest key to modding Frogger: The Great Quest is the .gqs file, which can be thought of as a "Great Quest Data Set".
+It contains a list of changes to apply to a chunked file (such as a level).  
 
-TODO: Tell the user how to setup for testing.
+As an example, save the following as a file named `ModdingExample.gqs`:  
+```PowerShell
+[DeleteResources]
+FrogmotherInst001
+```
 
+After saving the .gqs file:
+1. Open FrogLord and select `01.dat` (Rolling Rapids Creek).
+2. Right-click the `scriptdata` resource chunk.
+3. Choose "Import GQS Script Group" and select the `ModdingExample.gqs` file.
+4. Save the mod (`File > Save` or `Ctrl + S`)
 
-## 5) Expanding your mod
-Now that you've made your first mod, you're ready to take this in whatever direction you like!
-This section is here to teach about how Frogger: The Great Quest works, and how to modify.
-This section is here to link resources and provide information on things you should know about while modding.
-If you run into any issues or need help, we're always available in the Highway Frogs discord server. TODO: Link
+That's it! To test your changes, run `PC\GreatQuest.exe`, load Rolling Rapids Creek, and confirm that Fairy Frogmother is missing from the tutorial.
 
-TODO: Guide to hashes and how the game loads files.
+To make further changes to the GQS file, read [the documentation](./modding-gqs-file.md).  
 
-TODO: Asset Information [Maps, 3D Models, SFX Info, Textures]
+## 5) Next Steps
+Now that you've created a modified version of the game, you're ready to take that mod in whatever direction you like!  
+From here, read through the [game file guide](./modding-game-files.md) for detailed information on modding the different kinds of files available in the game.  
+
+If you run into any issues or need help, we're always available in the [Highway Frogs discord server](https://discord.gg/XZH9Wa5rMV).
+
+## 6) Sharing Mods
+When it becomes time to share the mod, the following steps are performed.  
+Do not share `data.bin` file directly, this would be copyright infringement.
+Instead, compress the mod folder into a `.zip` file, before renaming it to `.mod` instead.  
+Make sure the `.zip` file contains the mod files directly in the root folder — not in a sub-folder. Afterward, rename the `.zip` to be a `.mod` file instead.  
+Ensure installation of the `.mod` file succeeds using FrogLord, and then you're able to share the mod wherever! (It is recommended to share it with [Highway Frogs](https://highwayfrogs.net/) of course!)  
+
+## A note for developers (Optional)
+Frogger: The Great Quest's PS2 builds contain exhaustive debug symbols (DWARFv1) for everything except the skeletal animation library.  
+This means we are often using the original data structure names, and very often mention original function names for reference.
+If you'd like to get Ghidra setup to use these symbols and poke around in the original game, reach out in the discord server.
+I'd like to document how to setup Ghidra at some point, but it's low priority.

@@ -21,4 +21,17 @@ public class GreatQuestConfig extends GameConfig {
         super.readConfigData(config);
         this.hostRootPath = config.getString("hostRootPath", this.hostRootPath);
     }
+
+    /**
+     * Gets the host root path with the protocol (eg: 'host:') part of the path stripped out.
+     * @return strippedHostRootPath
+     */
+    public String getStrippedHostRootPath() {
+        String strippedPath = this.hostRootPath;
+        int colonIndex = strippedPath.indexOf(':');
+        if (colonIndex >= 0 && colonIndex < 10)
+            strippedPath = strippedPath.substring(colonIndex + 1);
+
+        return strippedPath;
+    }
 }

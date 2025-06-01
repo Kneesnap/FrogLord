@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.games.sony.shared.sound.body;
 
 import javafx.scene.control.Alert.AlertType;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.sound.body.SCWindowsPreReleaseSoundBankBody.SCWindowsPreReleaseSoundBodyEntry;
 import net.highwayfrogs.editor.games.sony.shared.sound.body.SCWindowsRetailSoundBankBody.SCWindowsSoundBodyEntry;

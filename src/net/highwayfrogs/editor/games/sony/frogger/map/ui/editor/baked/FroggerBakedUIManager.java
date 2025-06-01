@@ -36,7 +36,7 @@ public class FroggerBakedUIManager extends MeshUIManager<FroggerMapMesh> {
      */
     public static abstract class FroggerBakedMapListManager<TValue, T3DDelegate> extends BasicListMeshUIManager<FroggerMapMesh, TValue, T3DDelegate> {
         public FroggerBakedMapListManager(MeshViewController<FroggerMapMesh> controller) {
-            super(controller);
+            super(controller, true);
         }
 
         /**

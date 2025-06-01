@@ -9,19 +9,22 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import lombok.Getter;
+import lombok.NonNull;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameInstance;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.GameConfigController;
 import net.highwayfrogs.editor.gui.GameConfigController.GameConfigUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
-import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.StringUtils;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.io.File;
 import java.util.Objects;
-import java.util.function.Consumer;
+import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 
 /**
@@ -34,11 +37,11 @@ public abstract class FolderBrowseComponent extends GameUIController<GameInstanc
     private final TextField folderPathField;
     private final Button browseButton;
 
-    public FolderBrowseComponent(GameInstance instance, String folderLabel, String folderPromptTitle, boolean saveDirectory) {
+    public FolderBrowseComponent(GameInstance instance, String folderLabel, String folderPromptTitle) {
         super(instance);
         this.folderLabel = createLabel(folderLabel);
         this.folderPathField = createFilePathField(folderPromptTitle);
-        this.browseButton = createBrowseButton(folderPromptTitle, saveDirectory);
+        this.browseButton = createBrowseButton(folderPromptTitle);
         loadController(createContainerBox());
     }
 
@@ -63,17 +66,19 @@ public abstract class FolderBrowseComponent extends GameUIController<GameInstanc
         return folderPathField;
     }
 
-    private Button createBrowseButton(String folderPromptTitle, boolean saveDirectory) {
+    private Button createBrowseButton(String folderPromptTitle) {
         Button browseButton = new Button("Browse");
         browseButton.setOnMouseClicked(event -> {
             event.consume();
-            String oldFilePath = getCurrentFolderPath();
-            File selectedFile = FXUtils.promptChooseDirectory(null, folderPromptTitle, saveDirectory);
-            if (selectedFile != null) {
-                String newFilePath = selectedFile.getAbsolutePath();
-                if (!Objects.equals(oldFilePath, newFilePath)) {
-                    this.folderPathField.setText(newFilePath);
-                    onSetFolderPath(newFilePath);
+            String oldFolderPath = getCurrentFolderPath();
+            SavedFilePath pathConfig = new SavedFilePath(this.folderLabel.getText(), folderPromptTitle);
+            File selectedFolder = FileUtils.askUserToSelectFolder(null, pathConfig);
+            if (selectedFolder != null) {
+                String newFolderPath = selectedFolder.getAbsolutePath();
+                if (!Objects.equals(oldFolderPath, newFolderPath)) {
+                    this.folderPathField.setText(newFolderPath);
+                    if (!onSetFolderPath(newFolderPath, selectedFolder))
+                        this.folderPathField.setText(oldFolderPath);
                 }
             }
         });
@@ -121,23 +126,40 @@ public abstract class FolderBrowseComponent extends GameUIController<GameInstanc
     }
 
     /**
+     * Set whether the component is disabled or not
+     * @param disable if true, the component is disabled
+     */
+    public void setDisable(boolean disable) {
+        this.folderPathField.setDisable(disable);
+        this.browseButton.setDisable(disable);
+    }
+
+    /**
+     * Resets the folder path to assume its starting value.
+     */
+    public void resetFolderPath() {
+        this.folderPathField.setText(getStartingFolderPath());
+    }
+
+    /**
      * Called when a new folder path has been set.
      * @param newFolderPath the new folder path
+     * @param newFolder the new folder
      */
-    protected abstract void onSetFolderPath(String newFolderPath);
+    protected abstract boolean onSetFolderPath(String newFolderPath, File newFolder);
 
     /**
      * Allows implementing the file open browser without requiring a new class.
      */
     public static class LazyFolderBrowseComponent extends FolderBrowseComponent {
         private final Supplier<String> startFolderPathSource;
-        private final Consumer<String> newFolderPathHandler;
-        public LazyFolderBrowseComponent(GameInstance instance, Consumer<String> newFilePathHandler, String folderLabel, String folderPromptTitle, boolean saveDirectory) {
-            this(instance, null, newFilePathHandler, folderLabel, folderPromptTitle, saveDirectory);
+        private final BiPredicate<String, File> newFolderPathHandler;
+        public LazyFolderBrowseComponent(GameInstance instance, BiPredicate<String, File> newFolderPathHandler, String folderLabel, String folderPromptTitle) {
+            this(instance, null, newFolderPathHandler, folderLabel, folderPromptTitle);
         }
 
-        public LazyFolderBrowseComponent(GameInstance instance, Supplier<String> startFolderPathSource, Consumer<String> newFolderPathHandler, String folderLabel, String folderPromptTitle, boolean saveDirectory) {
-            super(instance, folderLabel, folderPromptTitle, saveDirectory);
+        public LazyFolderBrowseComponent(GameInstance instance, Supplier<String> startFolderPathSource, BiPredicate<String, File> newFolderPathHandler, String folderLabel, String folderPromptTitle) {
+            super(instance, folderLabel, folderPromptTitle);
             this.startFolderPathSource = startFolderPathSource;
             this.newFolderPathHandler = newFolderPathHandler;
         }
@@ -148,9 +170,8 @@ public abstract class FolderBrowseComponent extends GameUIController<GameInstanc
         }
 
         @Override
-        protected void onSetFolderPath(String newFilePath) {
-            if (this.newFolderPathHandler != null)
-                this.newFolderPathHandler.accept(newFilePath);
+        protected boolean onSetFolderPath(String newFolderPath, File newFolder) {
+            return (this.newFolderPathHandler == null) || this.newFolderPathHandler.test(newFolderPath, newFolder);
         }
     }
 
@@ -158,32 +179,51 @@ public abstract class FolderBrowseComponent extends GameUIController<GameInstanc
      * A file open browse component used for selecting game files for configuring a game instance.
      */
     public static class GameConfigFolderBrowseComponent extends FolderBrowseComponent {
-        private final GameConfigUIController controller;
-        private final Config gameConfig; // TODO: Get config from controller instead?
+        @NonNull private final GameConfigUIController<?> controller;
+        private final BiPredicate<String, File> validityTest;
         private final String configKey;
 
-        public GameConfigFolderBrowseComponent(GameConfigUIController controller, Config config, String configKey, String folderLabel, String folderPromptTitle, boolean saveDirectory) {
-            super(null, folderLabel, folderPromptTitle, saveDirectory);
+        public GameConfigFolderBrowseComponent(@NonNull GameConfigUIController<?> controller, String configKey, String folderLabel, String folderPromptTitle, BiPredicate<String, File> validityTest) {
+            super(null, folderLabel, folderPromptTitle);
             this.controller = controller;
-            this.gameConfig = config;
+            this.validityTest = validityTest;
             this.configKey = configKey;
         }
 
         @Override
         public String getStartingFolderPath() {
-            ConfigValueNode valueNode = this.gameConfig != null ? this.gameConfig.getOptionalKeyValueNode(this.configKey) : null;
+            Config editorConfig = this.controller.getActiveEditorConfig();
+            ConfigValueNode valueNode = editorConfig != null ? editorConfig.getOptionalKeyValueNode(this.configKey) : null;
             return valueNode != null ? valueNode.getAsString() : null;
         }
 
         @Override
-        protected void onSetFolderPath(String newFilePath) {
-            if (this.gameConfig != null) {
-                this.gameConfig.getOrCreateKeyValueNode(this.configKey).setAsString(newFilePath);
-                if (GUIMain.getWorkingDirectory() != null)
-                    this.gameConfig.getOrCreateKeyValueNode(GameConfigController.CONFIG_GAME_LAST_FOLDER).setAsString(GUIMain.getWorkingDirectory().getAbsolutePath());
+        protected boolean onSetFolderPath(String newFolderPath, File newFolder) {
+            Config oldEditorConfig = this.controller.getActiveEditorConfig();
+
+            if (this.validityTest != null) {
+                try {
+                    if (!this.validityTest.test(newFolderPath, newFolder))
+                        return false;
+                } catch (Throwable th) {
+                    Utils.handleError(null, th, true, "An error occurred while validating the folder path.");
+                    return false;
+                }
             }
 
+            Config editorConfig = this.controller.getActiveEditorConfig();
+            if (editorConfig != null) {
+                editorConfig.getOrCreateKeyValueNode(this.configKey).setAsString(newFolderPath);
+                if (FrogLordApplication.getWorkingDirectory() != null)
+                    editorConfig.getOrCreateKeyValueNode(GameConfigController.CONFIG_GAME_LAST_FOLDER).setAsString(FrogLordApplication.getWorkingDirectory().getAbsolutePath());
+            }
+
+            // Apply the new value.
+            if (oldEditorConfig != editorConfig)
+                resetFolderPath();
+
             this.controller.updateLoadButton();
+            return true;
         }
     }
 }

@@ -18,6 +18,6 @@ public class MMExternalTextureHolder extends MMDataBlockHeader<MMExternalTexture
      * Add a texture with a given path.
      */
     public void addTexture(String path) {
-        addNewElement().setPath(path);
+        addNewElement().setRelativeFilePath(path);
     }
 }

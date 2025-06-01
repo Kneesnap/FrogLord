@@ -14,8 +14,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.utils.ColorUtils;
@@ -328,5 +329,29 @@ public class PSXColorVector extends GameObject {
     @SuppressWarnings("MethodDoesntCallSuperMethod")
     public PSXColorVector clone() {
         return new PSXColorVector(this.red, this.green, this.blue, this.cd);
+    }
+
+    /**
+     * Convert this object to the newer CVector object.
+     * @return cvector
+     */
+    public CVector toCVector() {
+        return toCVector(null);
+    }
+
+    /**
+     * Convert this object to the newer CVector object.
+     * @param cvec cvectorObject
+     * @return cvector
+     */
+    public CVector toCVector(CVector cvec) {
+        if (cvec == null)
+            cvec = new CVector();
+
+        cvec.setRed(this.red);
+        cvec.setGreen(this.green);
+        cvec.setBlue(this.blue);
+        cvec.setCode(this.cd);
+        return cvec;
     }
 }

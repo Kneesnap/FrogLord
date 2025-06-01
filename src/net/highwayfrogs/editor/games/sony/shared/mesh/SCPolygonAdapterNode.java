@@ -85,7 +85,6 @@ public abstract class SCPolygonAdapterNode<TPolygon> extends DynamicMeshAdapterN
                 throw new IllegalArgumentException("Unsupported local texCoordIndex " + localTexCoordIndex);
         }
 
-
         entry.writeTexCoordValue(localTexCoordIndex, uv);
     }
 
@@ -110,6 +109,24 @@ public abstract class SCPolygonAdapterNode<TPolygon> extends DynamicMeshAdapterN
             // Do nothing else, no other entries are given vertices. If we do this in a subclass, override this method.
             throw new RuntimeException("Cannot update vertex for vertex entry: " + entry);
         }
+    }
+
+    @Override
+    public boolean updateVertex(DynamicMeshDataEntry entry, int localVertexIndex) {
+        if (super.updateVertex(entry, localVertexIndex))
+            return true;
+
+        if (entry == this.vertexEntry) {
+            List<SVector> vertices = getAllVertices();
+            if (vertices == null || localVertexIndex >= vertices.size())
+                throw new RuntimeException("Invalid vertex ID: " + localVertexIndex);
+
+            SVector vertexPos = vertices.get(localVertexIndex);
+            entry.writeVertexXYZ(localVertexIndex, vertexPos.getFloatX(), vertexPos.getFloatY(), vertexPos.getFloatZ());
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -169,10 +186,10 @@ public abstract class SCPolygonAdapterNode<TPolygon> extends DynamicMeshAdapterN
             int uvIndex4 = texCoordEntry.addTexCoordValue(getTextureCoordinate(polygon, textureSource, texture, 3, Vector2f.ONE)); // uvBottomRight, 1F, 1F
 
             // Vertice IDs are the same IDs seen in the map data.
-            int vtxIndex1 = this.vertexEntry.getVertexStartIndex() + polygonVertices[0];
-            int vtxIndex2 = this.vertexEntry.getVertexStartIndex() + polygonVertices[1];
-            int vtxIndex3 = this.vertexEntry.getVertexStartIndex() + polygonVertices[2];
-            int vtxIndex4 = this.vertexEntry.getVertexStartIndex() + polygonVertices[3];
+            int vtxIndex1 = this.vertexEntry.getPendingVertexStartIndex() + polygonVertices[0];
+            int vtxIndex2 = this.vertexEntry.getPendingVertexStartIndex() + polygonVertices[1];
+            int vtxIndex3 = this.vertexEntry.getPendingVertexStartIndex() + polygonVertices[2];
+            int vtxIndex4 = this.vertexEntry.getPendingVertexStartIndex() + polygonVertices[3];
 
             // JavaFX uses counter-clockwise winding order.
             faceEntry.addFace(vtxIndex3, uvIndex3, vtxIndex2, uvIndex2, vtxIndex1, uvIndex1);
@@ -183,9 +200,9 @@ public abstract class SCPolygonAdapterNode<TPolygon> extends DynamicMeshAdapterN
             int uvIndex3 = texCoordEntry.addTexCoordValue(getTextureCoordinate(polygon, textureSource, texture, 2, Vector2f.UNIT_Y)); // uvBottomLeft, 0F, 1F
 
             // Vertice IDs are the same IDs seen in the map data.
-            int vtxIndex1 = this.vertexEntry.getVertexStartIndex() + polygonVertices[0];
-            int vtxIndex2 = this.vertexEntry.getVertexStartIndex() + polygonVertices[1];
-            int vtxIndex3 = this.vertexEntry.getVertexStartIndex() + polygonVertices[2];
+            int vtxIndex1 = this.vertexEntry.getPendingVertexStartIndex() + polygonVertices[0];
+            int vtxIndex2 = this.vertexEntry.getPendingVertexStartIndex() + polygonVertices[1];
+            int vtxIndex3 = this.vertexEntry.getPendingVertexStartIndex() + polygonVertices[2];
 
             // JavaFX uses counter-clockwise winding order.
             faceEntry.addFace(vtxIndex3, uvIndex3, vtxIndex2, uvIndex2, vtxIndex1, uvIndex1);
@@ -234,7 +251,7 @@ public abstract class SCPolygonAdapterNode<TPolygon> extends DynamicMeshAdapterN
      * @param polygon the polygon to get the texture source from
      * @return textureSourceOrNull
      */
-    protected ITextureSource getTextureSource(TPolygon polygon) {
+    protected PSXShadeTextureDefinition getTextureSource(TPolygon polygon) {
         PSXShadedTextureManager<TPolygon> textureManager = getShadedTextureManager();
         if (textureManager == null)
             throw new RuntimeException("Cannot resolve TextureSource from " + Utils.getSimpleName(polygon) + " in " + Utils.getSimpleName(this) + ", because there is no shaded texture manager! Override the method if necessary.");

@@ -2,33 +2,37 @@ package net.highwayfrogs.editor.games.sony.shared.mwd;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
-import net.highwayfrogs.editor.file.packers.PP20Unpacker;
-import net.highwayfrogs.editor.file.packers.PP20Unpacker.UnpackResult;
-import net.highwayfrogs.editor.file.reader.ArraySource;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.games.shared.basic.GameBuildInfo;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
+import net.highwayfrogs.editor.games.sony.shared.pp20.PP20Unpacker;
+import net.highwayfrogs.editor.games.sony.shared.pp20.PP20Unpacker.UnpackResult;
+import net.highwayfrogs.editor.games.sony.shared.ui.SCMainMenuUIController;
 import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.ArraySource;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -43,10 +47,9 @@ public class MWDFile extends SCSharedGameData {
     private String buildNotes;
     private final List<SCGameFile<?>> files = new ArrayList<>();
 
-    private final transient Map<FroggerMapTheme, VLOArchive> vloThemeCache = new HashMap<>();
-
-    private static final String MARKER = "DAWM";
-    private static final int BUILD_NOTES_SIZE = 2040;
+    public static final String FILE_SIGNATURE = "DAWM";
+    public static final int BUILD_NOTES_START_OFFSET = 2 * Constants.INTEGER_SIZE;
+    public static final int BUILD_NOTES_SIZE = Constants.CD_SECTOR_SIZE - BUILD_NOTES_START_OFFSET;
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("EEEE, d MMMM yyyy");
     private static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm:ss");
     public static final ImageFilterSettings VLO_ICON_SETTING = new ImageFilterSettings(ImageState.EXPORT);
@@ -71,8 +74,9 @@ public class MWDFile extends SCSharedGameData {
             progressBar.setTotalProgress(mwiEntries.size());
 
         // Read header.
-        reader.verifyString(MARKER);
+        reader.verifyString(FILE_SIGNATURE);
         reader.skipBytesRequireEmpty(Constants.INTEGER_SIZE);
+        requireReaderIndex(reader, BUILD_NOTES_START_OFFSET, "Expected MWD build notes");
         this.buildNotes = reader.readNullTerminatedFixedSizeString(BUILD_NOTES_SIZE);
         getGameInstance().getLogger().info("Build Notes: \n" + this.buildNotes + (this.buildNotes.endsWith("\n") ? "" : "\n"));
 
@@ -86,7 +90,7 @@ public class MWDFile extends SCSharedGameData {
 
             // Validate position.
             if (lastFileLoadSuccess) {
-                reader.requireIndex(getLogger(), entry.getArchiveOffset(), "Expected file contents for '" + entry.getDisplayName() + "'");
+                requireReaderIndex(reader, entry.getArchiveOffset(), "Expected file contents for '" + entry.getDisplayName() + "'");
             } else {
                 reader.setIndex(entry.getArchiveOffset());
             }
@@ -132,7 +136,7 @@ public class MWDFile extends SCSharedGameData {
             String localFilePath = FileUtils.ensureValidPathSeparator(entry.getFullFilePath(), true);
             File localFile = new File(getGameInstance().getMainGameFolder(), localFilePath);
             if (!localFile.exists() || !localFile.isFile()) {
-                getLogger().severe("Could not find the file '" + localFilePath + "'. If you are on Linux");
+                getLogger().severe("Could not find the file '%s'. If you are on Linux", localFilePath);
                 getLogger().severe("If you are using Linux and have the file, rename the folders & files to match the exact case (test vs TEST).");
                 if (progressBar != null)
                     progressBar.addCompletedProgress(1);
@@ -180,7 +184,7 @@ public class MWDFile extends SCSharedGameData {
         }
 
         if (mwiEntry.getUnpackedSize() != fileBytes.length)
-            getLogger().severe("ERROR: File is marked as being " + mwiEntry.getUnpackedSize() + " bytes large, but is actually " + fileBytes.length + " bytes large.");
+            getLogger().severe("ERROR: File is marked as being %d bytes large, but is actually %d bytes large.", mwiEntry.getUnpackedSize(), fileBytes.length);
 
         mwiEntry.onLoadData(fileBytes, compressedBytes, safetyMarginWordCount);
         SCGameFile<?> file = loadFile(fileBytes, mwiEntry);
@@ -191,7 +195,7 @@ public class MWDFile extends SCSharedGameData {
             DataReader singleFileReader = new DataReader(new ArraySource(fileBytes));
             file.load(singleFileReader);
             if (singleFileReader.hasMore() && file.warnIfEndNotReached()) // Warn if the full file is not read.
-                file.getLogger().warning("File contents were read to index " + NumberUtils.toHexString(singleFileReader.getIndex()) + ", leaving " + singleFileReader.getRemaining() + " bytes unread. (Length: " + NumberUtils.toHexString(fileBytes.length) + ")");
+                file.getLogger().warning("File contents were read to index 0x%08X, leaving %d bytes unread. (Length: 0x%08X)", singleFileReader.getIndex(), singleFileReader.getRemaining(), fileBytes.length);
         } catch (Exception ex) {
             success = false;
             Utils.handleError(getLogger(), ex, false, "Failed to load %s (%d)", mwiEntry.getDisplayName(), mwiEntry.getResourceId());
@@ -210,39 +214,65 @@ public class MWDFile extends SCSharedGameData {
      * @return replacementFile
      */
     @SuppressWarnings("unchecked")
-    public <T extends SCGameFile<?>> T replaceFile(byte[] fileBytes, MWIResourceEntry entry, SCGameFile<?> oldFile, boolean isInsideWadFile) {
+    public <T extends SCGameFile<?>> T replaceFile(String importedFileName, byte[] fileBytes, MWIResourceEntry entry, SCGameFile<?> oldFile, boolean updateUI) {
         T newFile;
 
-        if (oldFile instanceof MOFHolder) {
-            MOFHolder oldHolder = (MOFHolder) oldFile;
-            newFile = (T) new MOFHolder(getGameInstance(), oldHolder.getTheme(), oldHolder.getCompleteMOF());
+        if (oldFile instanceof MRModel) {
+            MRModel oldModel = (MRModel) oldFile;
+            MRModel newModel = new MRModel(getGameInstance(), oldModel.getCompleteCounterpart());
+            newModel.setVloFile(oldModel.getVloFile());
+            newFile = (T) newModel;
         } else {
             newFile = this.loadFile(fileBytes, entry);
         }
 
-        if (oldFile != null) {
-            getGameInstance().getFileObjectsByFileEntries().remove(entry, oldFile);
-            oldFile.setFileDefinition(null);
-        }
-
-        getGameInstance().getFileObjectsByFileEntries().put(entry, newFile);
-        newFile.setFileDefinition(entry);
-
         // Replace file.
-        if (!isInsideWadFile) {
-            int fileIndex = this.files.indexOf(oldFile);
-            if (fileIndex >= 0)
-                this.files.set(fileIndex, newFile);
-        }
+        int fileIndex = this.files.indexOf(oldFile);
+        WADEntry wadEntry = getWadEntry(oldFile);
+        newFile.setWadFileEntry(wadEntry);
+        swapFileRegistry(entry, fileIndex, wadEntry, oldFile, newFile);
 
         // Load new file data.
         try {
             newFile.load(new DataReader(new ArraySource(fileBytes)));
         } catch (Exception ex) {
-            Utils.handleError(getLogger(), ex, true, "Failed to load %s (%d)", entry.getDisplayName(), entry.getResourceId());
+            Utils.handleError(getLogger(), ex, false, "Failed to import replacement for %s (%d)", entry.getDisplayName(), entry.getResourceId());
+            swapFileRegistry(entry, fileIndex, wadEntry, newFile, oldFile); // Restore old file.
+            return null;
+        }
+
+        // Handle load.
+        String fileDisplayName = entry.getDisplayName();
+        newFile.onImport(oldFile, fileDisplayName, importedFileName);
+        getLogger().info("Successfully replaced the existing file '%s' with the imported contents of '%s'.", fileDisplayName, importedFileName);
+
+        // Update UI.
+        if (updateUI) {
+            SCMainMenuUIController<?> mainMenuUI = getGameInstance().getMainMenuController();
+            if (mainMenuUI.getFileListComponent() != null) { // Update the file list.
+                mainMenuUI.getFileListComponent().getCollectionViewComponent().refreshDisplay();
+                mainMenuUI.getFileListComponent().getCollectionViewComponent().setSelectedViewEntryInUI(newFile);
+            } else {
+                mainMenuUI.showEditor(newFile.makeEditorUI());
+            }
         }
 
         return newFile;
+    }
+
+    private void swapFileRegistry(MWIResourceEntry resourceEntry, int fileIndex, WADEntry wadEntry, SCGameFile<?> oldFile, SCGameFile<?> newFile) {
+        if (oldFile != null) {
+            getGameInstance().getFileObjectsByFileEntries().remove(resourceEntry, oldFile);
+            oldFile.setFileDefinition(null);
+        }
+
+        getGameInstance().getFileObjectsByFileEntries().put(resourceEntry, newFile);
+        newFile.setFileDefinition(resourceEntry);
+
+        if (fileIndex >= 0) // Found in MWD.
+            this.files.set(fileIndex, newFile);
+        if (wadEntry != null)
+            wadEntry.setFile(newFile);
     }
 
     /**
@@ -278,17 +308,15 @@ public class MWDFile extends SCSharedGameData {
         if (progressBar != null)
             progressBar.setTotalProgress(this.files.size());
 
-        writer.writeBytes(MARKER.getBytes());
+        writer.writeBytes(FILE_SIGNATURE.getBytes());
         writer.writeInt(0);
 
         Date date = Date.from(Calendar.getInstance().toInstant());
         writer.writeNullTerminatedString("\nCreated by FrogLord"
                 + "\nCreation Date: " + DATE_FORMAT.format(date)
                 + "\nCreation Time: " + TIME_FORMAT.format(date)
-                + "\n[BuildInfo]"
-                + "\ngame=" + getGameInstance().getGameType().getIdentifier()
-                + "\ngameVersion=" + getGameInstance().getVersionConfig().getInternalName()
-                + "\nversion=1"
+                + "\n[" + GameBuildInfo.CONFIG_KEY_ROOT_NAME + "]"
+                + "\n" + new GameBuildInfo<>(getGameInstance()).toConfig()
                 + "\n");
         writer.align(Constants.CD_SECTOR_SIZE);
 
@@ -302,8 +330,9 @@ public class MWDFile extends SCSharedGameData {
             entry.setSectorOffset(currentSector);
 
             file.saveFile(writer, progressBar);
+            writer.align(Constants.CD_SECTOR_SIZE);
         }
-        getLogger().info("MWD Built. Total Time: " + (System.currentTimeMillis() - mwdStart) + " ms.");
+        getLogger().info("MWD Built. Total Time: %d ms.", (System.currentTimeMillis() - mwdStart));
 
         // Fill the rest of the file with null bytes.
         writer.align(Constants.CD_SECTOR_SIZE);
@@ -323,36 +352,16 @@ public class MWDFile extends SCSharedGameData {
 
     /**
      * Get the VLO for a given map theme.
-     * @param theme     The theme to get it for. Can be null, will prompt user then.
-     * @param handler   The handler for when the VLO is determined.
+     * @param handler The handler for when the VLO is determined.
      * @param allowNull Are null VLOs allowed?
      */
-    public void promptVLOSelection(FroggerMapTheme theme, Consumer<VLOArchive> handler, boolean allowNull) {
+    public void promptVLOSelection(Consumer<VLOArchive> handler, boolean allowNull) {
         List<VLOArchive> allVLOs = getAllFiles(VLOArchive.class);
 
         if (allowNull)
             allVLOs.add(0, null);
 
-        if (theme != null) {
-            List<VLOArchive> movedVLOs = allVLOs.stream()
-                    .filter(vlo -> {
-                        MWIResourceEntry entry = vlo != null ? vlo.getIndexEntry() : null;
-                        return entry != null && entry.getDisplayName().startsWith(theme.getInternalName());
-                    })
-                    .collect(Collectors.toList());
-            allVLOs.removeAll(movedVLOs);
-            allVLOs.addAll(0, movedVLOs);
-        }
-
-        VLOArchive cachedVLO = this.vloThemeCache.get(theme); // Move cached vlo to the top.
-        if (cachedVLO != null && allVLOs.remove(cachedVLO))
-            allVLOs.add(0, cachedVLO);
-
-        SelectionMenu.promptSelection(getGameInstance(), "Select " + (theme != null ? theme.name() + "'s" : "a") + " VLO.", vlo -> {
-                    if (vlo != null && theme != null)
-                        this.vloThemeCache.put(theme, vlo);
-                    handler.accept(vlo);
-                }, allVLOs,
+        SelectionMenu.promptSelection(getGameInstance(), "Select VLO.", handler, allVLOs,
                 vlo -> vlo != null ? vlo.getFileDisplayName() : "No Textures",
                 vlo -> vlo.getImages().get(0).toFXImage(VLO_ICON_SETTING));
     }
@@ -467,14 +476,33 @@ public class MWDFile extends SCSharedGameData {
     }
 
     /**
+     * Gets the WAD entry which holds the given file, if there is one.
+     * @param gameFile The game file to find the WAD entry for
+     * @return wadEntry, or null
+     */
+    public WADEntry getWadEntry(SCGameFile<?> gameFile) {
+        for (int i = 0; i < this.files.size(); i++) {
+            SCGameFile<?> testFile = this.files.get(i);
+            if (!(testFile instanceof WADFile))
+                continue;
+
+            WADFile wadFile = (WADFile) testFile;
+            for (int j = 0; j < wadFile.getFiles().size(); j++) {
+                WADEntry wadEntry = wadFile.getFiles().get(j);
+                if (wadEntry.getFile() == gameFile)
+                    return wadEntry;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Gets an image by the given texture ID.
      * @param textureId The texture ID to get.
      * @return gameImage
      */
     public GameImage getImageByTextureId(int textureId) {
-        if (textureId < 0)
-            textureId = 0; // This is a hack to allow for loading maps without remaps on build 20. In new FrogLord, this should be null / return blank texture.
-
         for (VLOArchive vlo : getAllFiles(VLOArchive.class))
             for (GameImage testImage : vlo.getImages())
                 if (testImage.getTextureId() == textureId)

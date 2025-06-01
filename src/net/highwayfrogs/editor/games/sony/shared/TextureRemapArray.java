@@ -1,15 +1,18 @@
 package net.highwayfrogs.editor.games.sony.shared;
 
 import lombok.Getter;
-import lombok.Setter;
+import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameObject.SCSharedGameObject;
+import net.highwayfrogs.editor.gui.SelectionMenu;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Represents a texture remap array.
@@ -17,9 +20,10 @@ import java.util.List;
  */
 @Getter
 public class TextureRemapArray extends SCSharedGameObject {
-    @Setter private long loadAddress;
+    private long loadAddress;
     private String name;
     private final List<Short> textureIds = new ArrayList<>();
+    private int textureIdSlotsAvailable = -1;
 
     public TextureRemapArray(SCGameInstance instance) {
         super(instance);
@@ -40,12 +44,83 @@ public class TextureRemapArray extends SCSharedGameObject {
     }
 
     /**
+     * Initialize the number of texture slots available.
+     * @param slotsAvailable the number of texture slots available.
+     */
+    public void initTextureSlotsAvailable(int slotsAvailable) {
+        if (this.textureIdSlotsAvailable != -1)
+            throw new IllegalStateException("The slots available count has already been initialized.");
+        if (slotsAvailable < 0)
+            throw new IllegalArgumentException("Cannot apply texture slot value of " + slotsAvailable + ".");
+
+        this.textureIdSlotsAvailable = slotsAvailable;
+    }
+
+    /**
      * Gets the remapped texture id.
      * @param localTextureId The local texture id to remap.
      * @return The remapped (global) texture id, or null if this is not in the remap.
      */
     public Short getRemappedTextureId(int localTextureId) {
         return localTextureId >= 0 && localTextureId < this.textureIds.size() ? this.textureIds.get(localTextureId) : null;
+    }
+
+    /**
+     * Resolves the local remap index to a texture.
+     * @param localTextureId the local remap texture ID
+     * @param vloArchive If provided, the texture will first attempt to be resolved here before resolving elsewhere.
+     * @return gameImageOrNull
+     */
+    public GameImage resolveTexture(int localTextureId, VLOArchive vloArchive) {
+        Short globalTextureId = getRemappedTextureId(localTextureId);
+        if (globalTextureId == null)
+            return null;
+
+        // First try the one the user supplied.
+        if (vloArchive != null) {
+            GameImage gameImage = vloArchive.getImageByTextureId(globalTextureId, false);
+            if (gameImage != null)
+                return gameImage;
+        }
+
+        // If all else fails, resolve the texture ID from any VLO we can find it in.
+        return getGameInstance().getMainArchive().getImageByTextureId(globalTextureId);
+    }
+
+    /**
+     * Gets all textures available in the remap.
+     * @param vloArchive the vlo archive to prefer to lookup textures from
+     * @return textures
+     */
+    public List<GameImage> getTextures(VLOArchive vloArchive) {
+        List<GameImage> images = new ArrayList<>();
+        for (int i = 0; i < this.textureIds.size(); i++)
+            images.add(resolveTexture(i, vloArchive));
+
+        return images;
+    }
+
+    /**
+     * Asks the user to choose an image.
+     * @param vloArchive the VLO to prefer resolving texture ids from
+     * @param allowNull if null is allowed to be selected.
+     * @param handler the handler to handle the user's selection.
+     */
+    public void askUserToSelectImage(VLOArchive vloArchive, boolean allowNull, Consumer<GameImage> handler) {
+        List<GameImage> images = getTextures(vloArchive);
+        if (images.isEmpty() && !allowNull)
+            return; // Nothing to select from.
+
+        if (allowNull)
+            images.add(0, null);
+
+        SelectionMenu.promptSelection(getGameInstance(), "Select an image.", handler, images, image -> {
+            if (image == null)
+                return "No Image";
+
+            String originalName = image.getOriginalName();
+            return "#" + image.getLocalImageID() +  " (" + (originalName != null ? originalName + ", " : "") + image.getTextureId() + ")";
+        }, image -> image != null ? image.toFXImage(VLOArchive.ICON_EXPORT) : FXUtils.toFXImage(UnknownTextureSource.MAGENTA_INSTANCE.makeImage(), true));
     }
 
     /**

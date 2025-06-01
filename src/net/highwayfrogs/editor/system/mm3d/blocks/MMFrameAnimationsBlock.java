@@ -4,13 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.standard.Vector;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.system.mm3d.OffsetType;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +29,8 @@ public class MMFrameAnimationsBlock extends MMDataBlockBody {
     private String name;
     private float framesPerSecond;
     private List<MMAnimationFrame> frames = new ArrayList<>();
+
+    public static final short FLAG_LOOPING = Constants.BIT_FLAG_0; // 1.7+
 
     public MMFrameAnimationsBlock(MisfitModel3DObject parent) {
         super(OffsetType.FRAME_ANIMATIONS, parent);
@@ -98,7 +101,7 @@ public class MMFrameAnimationsBlock extends MMDataBlockBody {
         private float z;
 
         public MMFloatVertex(Vector vec) {
-            this(vec.getExportFloatX(), vec.getExportFloatY(), vec.getExportFloatZ());
+            this(-vec.getFloatX(), -vec.getFloatY(), vec.getFloatZ());
         }
 
         @Override

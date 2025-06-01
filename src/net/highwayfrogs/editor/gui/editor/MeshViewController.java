@@ -21,13 +21,14 @@ import javafx.scene.shape.MeshView;
 import javafx.stage.Stage;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.psx.shading.IPSXShadedMesh;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList.RenderListManager;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
+import net.highwayfrogs.editor.gui.mesh.MeshTracker;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
@@ -65,6 +66,8 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     @FXML private Accordion accordionLeft;
 
     // Control Settings Pane.
+    @FXML private TitledPane cameraSettings;
+    @FXML private GridPane cameraSettingsPane;
     @FXML private Label meshNameLabel;
     @FXML private CheckBox checkBoxShowAxis;
     @FXML private CheckBox checkBoxShowMesh;
@@ -99,22 +102,19 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     @FXML private VBox viewSettingsBox;
     @FXML private GridPane viewSettingsPane;
 
-    // Camera Settings.
-    @FXML private TitledPane cameraSettings;
-    @FXML private GridPane cameraSettingsPane;
-
     // Managers:
     private MeshUIMarkerManager<TMesh> markerManager;
     private final List<MeshUIManager<TMesh>> managers = new ArrayList<>();
     private final Map<Class<? extends MeshUIManager<TMesh>>, MeshUIManager<TMesh>> managersByType = new HashMap<>();
     private final List<MeshUISelector<TMesh, ?>> selectors = new ArrayList<>();
-    private final RenderListManager renderManager = new RenderListManager();
-    private final RenderListManager transparentRenderManager = new RenderListManager();
+    private final RenderListManager renderManager = new RenderListManager(new Group());
+    private final RenderListManager transparentRenderManager = new RenderListManager(new Group());
     private final MeshViewFrameTimer frameTimer = new MeshViewFrameTimer(this);
     private final InputManager inputManager;
     private final FirstPersonCamera firstPersonCamera;
 
     // Instance Data:
+    private final MeshTracker meshTracker = new MeshTracker();
     private TMesh mesh;
     private DisplayList axisDisplayList;
 
@@ -223,6 +223,20 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     }
 
     /**
+     * Returns the camera used for this scene.
+     */
+    public PerspectiveCamera getCamera() {
+        return this.firstPersonCamera.getCamera();
+    }
+
+    /**
+     * Returns true if the scene is using the default camera scheme.
+     */
+    public boolean isDefaultCamera() {
+        return this.firstPersonCamera.getCamera() == getCamera();
+    }
+
+    /**
      * Sets up the mesh controller.
      * @param dynamicMesh     The dynamic mesh which the controller displays.
      * @param stageToOverride The stage to replace with a 3D mesh view.
@@ -235,22 +249,22 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         // Setup MeshView
         this.meshView = new MeshView();
         this.meshView.setCullFace(CullFace.BACK);
-        dynamicMesh.addView(this.meshView);
+        dynamicMesh.addView(this.meshView, this.meshTracker);
 
         // Create the 3D elements and use them within a subscene.
         this.root3D = new Group();
+        if (!isDefaultCamera())
+            this.root3D.getChildren().add(getCamera());
+
+        // Setup subScene.
         SubScene subScene3D = new SubScene(this.root3D, stageToOverride.getScene().getWidth() - uiRootPaneWidth(), stageToOverride.getScene().getHeight(), true, SceneAntialiasing.DISABLED);
         subScene3D.setFill(Color.BLACK);
-        subScene3D.setCamera(this.firstPersonCamera.getCamera());
+        subScene3D.setCamera(getCamera());
         subScene3D.setManaged(false); // Prevents the SubScene from impacting its parent node size.
 
         // Ensure that the render manager has access to the root node
-        Group normalGroup = new Group();
-        Group transparentGroup = new Group();
-        this.root3D.getChildren().add(normalGroup);
-        this.root3D.getChildren().add(transparentGroup);
-        this.renderManager.setRoot(normalGroup);
-        this.transparentRenderManager.setRoot(transparentGroup);
+        this.root3D.getChildren().add(this.renderManager.getRoot());
+        this.root3D.getChildren().add(this.transparentRenderManager.getRoot());
 
         // Using a BorderPane attempts to size it properly.
         BorderPane borderPane3D = new BorderPane();
@@ -279,7 +293,8 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
 
         // Associate camera controls with the scene.
         this.firstPersonCamera.assignSceneControls(stageToOverride, this.meshScene);
-        this.firstPersonCamera.startThreadProcessing();
+        if (isDefaultCamera())
+            this.firstPersonCamera.startThreadProcessing();
 
         this.inputManager.setFinalKeyHandler((manager, event) -> {
             if (onKeyPress(event) || event.getEventType() != KeyEvent.KEY_PRESSED)
@@ -288,7 +303,9 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
             if (event.getCode() == KeyCode.ESCAPE) { // Exit the viewer.
                 // Stop camera processing and clear up the render manager
                 this.textureSheetDebugView.imageProperty().unbind();
-                this.firstPersonCamera.stopThreadProcessing();
+                if (isDefaultCamera())
+                    this.firstPersonCamera.stopThreadProcessing();
+                this.firstPersonCamera.removeSceneControls(stageToOverride, this.meshScene);
                 this.renderManager.removeAllDisplayLists();
                 this.transparentRenderManager.removeAllDisplayLists();
                 this.inputManager.shutdown();
@@ -306,9 +323,9 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                     getLogger().throwing("MeshViewController", null, new RuntimeException(errorMessage, th));
                 }
 
-                getMesh().removeView(getMeshView()); // Remove view from mesh.
+                this.meshTracker.disposeMeshes(); // Prevent memory leaks by ensuring texture sheets remove any listeners from static textures sources (which would then keep the texture sheet in memory).
+                this.root3D.getChildren().clear(); // Clear data just in-case there's a memory leak.
                 FXUtils.setSceneKeepPosition(this.overwrittenStage, this.originalScene);
-                this.root3D.getChildren().clear(); // Clear data to avoid memory leak.
             } else if (event.getCode() == KeyCode.F9) { // Print mesh information.
                 getMesh().printDebugMeshInfo();
             } else if (event.getCode() == KeyCode.F10) { // Take screenshot.
@@ -318,7 +335,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                 if (getMesh().getTextureAtlas().getTextureSource().isEnableAwtImage()) {
                     getLogger().info("Saving main mesh texture sheet to 'texture-sheet-awt.png'...");
                     try {
-                        ImageIO.write(getMesh().getTextureAtlas().getImage(), "png", new File(GUIMain.getWorkingDirectory(), "texture-sheet-awt.png"));
+                        ImageIO.write(getMesh().getTextureAtlas().getImage(), "png", new File(FrogLordApplication.getWorkingDirectory(), "texture-sheet-awt.png"));
                     } catch (IOException ex) {
                         FXUtils.makeErrorPopUp("Failed to save 'texture-sheet-awt.png'.", ex, true);
                     }
@@ -327,7 +344,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                 if (getMesh().getTextureAtlas().getTextureSource().isEnableFxImage()) {
                     getLogger().info("Saving main mesh texture sheet to 'texture-sheet-fx.png'...");
                     try {
-                        ImageIO.write(SwingFXUtils.fromFXImage(getMesh().getTextureAtlas().getFxImage(), null), "png", new File(GUIMain.getWorkingDirectory(), "texture-sheet-fx.png"));
+                        ImageIO.write(SwingFXUtils.fromFXImage(getMesh().getTextureAtlas().getFxImage(), null), "png", new File(FrogLordApplication.getWorkingDirectory(), "texture-sheet-fx.png"));
                     } catch (IOException ex) {
                         FXUtils.makeErrorPopUp("Failed to save 'texture-sheet-fx.png'.", ex, true);
                     }
@@ -342,17 +359,12 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         // Setup managers.
         this.managers.clear();
         List<TitledPane> startingPanes = new ArrayList<>(this.accordionLeft.getPanes());
-        this.accordionLeft.getPanes().clear();
+        if (!isDefaultCamera())
+            startingPanes.remove(this.cameraSettings);
 
+        this.accordionLeft.getPanes().clear();
         addManager(this.markerManager = new MeshUIMarkerManager<>(this));
         setupManagers();
-
-        // Move default panes to the bottom.
-        this.accordionLeft.getPanes().addAll(startingPanes);
-
-        // Select Manager
-        if (this.accordionLeft.getPanes().size() > 0)
-            this.accordionLeft.getPanes().get(0).setExpanded(true);
 
         setDefaultCameraPosition();
         setupBasicLighting();
@@ -369,7 +381,14 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         if (!mapRendersFirst())
             this.transparentRenderManager.getRoot().getChildren().add(this.meshView);
 
-        runForEachManager(MeshUIManager::setupNodesWhichRenderLast, "setupNodesWhichRenderLast,"); // Setup all the nodes which render last.
+        runForEachManager(MeshUIManager::setupNodesWhichRenderLast, "setupNodesWhichRenderLast"); // Setup all the nodes which render last.
+
+        // Move default panes to the bottom. (Should happen after setup occurs.)
+        this.accordionLeft.getPanes().addAll(startingPanes);
+
+        // Select Manager
+        if (this.accordionLeft.getPanes().size() > 0)
+            this.accordionLeft.getPanes().get(0).setExpanded(true);
 
         // Start the task timer.
         this.frameTimer.start();
@@ -449,7 +468,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         setupAxis();
 
         // Setup camera.
-        PerspectiveCamera camera = this.firstPersonCamera.getCamera();
+        PerspectiveCamera camera = getCamera();
         camera.setNearClip(MAP_VIEW_NEAR_CLIP);
         camera.setFarClip(MAP_VIEW_FAR_CLIP);
         camera.setFieldOfView(MAP_VIEW_FOV);
@@ -696,6 +715,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         } finally {
             fxmlLoader.setController(null);
             fxmlLoader.setRoot(null);
+            fxmlLoader.getNamespace().clear(); // In FX8, this seems to cause memory leaks if I don't clear it...
         }
 
         // Setup UI.

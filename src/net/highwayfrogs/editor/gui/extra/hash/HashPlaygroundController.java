@@ -5,51 +5,59 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import lombok.Getter;
+import lombok.SneakyThrows;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.gui.GUIMain;
+import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.gui.GameUIController;
-import net.highwayfrogs.editor.gui.extra.hash.tree.HashTreeStringGenerator;
+import net.highwayfrogs.editor.gui.extra.hash.HashRange.HashRangeType;
 import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
+import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Manages the hash playground.
  * Created by Kneesnap on 2/24/2022.
  */
 public class HashPlaygroundController extends GameUIController<SCGameInstance> {
+    private final DictionaryStringGenerator dictionaryGenerator = new DictionaryStringGenerator();
+    private final PermutationStringGenerator characterGenerator = new PermutationStringGenerator(4, PermutationStringGenerator.ALLOWED_CHARACTERS_ALPHANUMERIC);
+    private final PermutationStringGenerator hexadecimalGenerator = new PermutationStringGenerator(4, PermutationStringGenerator.ALLOWED_CHARACTERS_HEXADECIMAL);
     @FXML private Label assemblerHashLabel;
-    @FXML private Label fullAssemblerHashLabel;
     @FXML private Label linkerHashLabel;
-    @FXML private Label fullLinkerHashLabel;
+    @FXML private Label compilerHashLabel;
     @FXML private Label currentStringLabel;
     @FXML private TextField prefixTextField;
     @FXML private TextField suffixTextField;
     @FXML private TextField targetLinkerHashField;
+    @FXML private TextField targetCompilerHashField;
+    @FXML private CheckBox showPermutations;
     @FXML private TextField maxWordSizeField;
     @FXML private TextField searchFilterField;
     @FXML private Label stringListLabel;
     @FXML private ListView<String> stringsListView;
-    private final IHashStringGenerator stringGenerator;
+    @Getter private HashRange psyqTargetHashRange;
+    @Getter private HashRange msvcTargetHashRange;
+
+    private static final BrowserFileType TABLE_EXPORT_FILE_TYPE = new BrowserFileType("Exported BSS Table", "c");
+    private static final SavedFilePath TABLE_EXPORT_FILE_PATH = new SavedFilePath("bssTableExport", "Please select the file to save the BSS table export as...", TABLE_EXPORT_FILE_TYPE);
 
     private HashPlaygroundController(SCGameInstance gameInstance) {
         super(gameInstance);
-
-        File dictionaryFile = new File(GUIMain.getMainApplicationFolder(), "dictionary.txt");
-        if (dictionaryFile.exists() && dictionaryFile.isFile()) {
-            DictionaryStringGenerator gen = new DictionaryStringGenerator();
-            gen.loadDictionaryFromFile(dictionaryFile);
-            this.stringGenerator = gen;
-        } else {
-            FXUtils.makePopUp("Could not file 'dictionary.txt'. No dictionary will be used for autocompletes.\n"
-                    + "Any text file with one word per line can be used as dictionary.txt.", AlertType.ERROR);
-            this.stringGenerator = new HashTreeStringGenerator();
-        }
     }
 
     @Override
@@ -58,8 +66,46 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
         this.prefixTextField.textProperty().addListener((observable, oldValue, newValue) -> this.generateNewString());
         this.suffixTextField.textProperty().addListener((observable, oldValue, newValue) -> this.generateNewString());
         this.searchFilterField.textProperty().addListener((observable, oldValue, newValue) -> this.generateStrings(null));
-        this.targetLinkerHashField.textProperty().addListener((observable, oldValue, newValue) -> this.generateStrings(null));
+        this.targetLinkerHashField.textProperty().addListener((observable, oldValue, newValue) -> this.updatePsyQTargetHashRange());
+        this.targetCompilerHashField.textProperty().addListener((observable, oldValue, newValue) -> this.updateMsvcTargetHashRange());
         this.maxWordSizeField.textProperty().addListener((observable, oldValue, newValue) -> this.generateStrings(null));
+        this.showPermutations.selectedProperty().addListener((observable, oldValue, newValue) -> this.generateStrings(null));
+
+        this.dictionaryGenerator.onSetup(this);
+        File dictionaryFile = new File(FrogLordApplication.getMainApplicationFolder(), "dictionary.txt");
+        if (dictionaryFile.exists() && dictionaryFile.isFile()) {
+            this.dictionaryGenerator.loadDictionaryFromFile(getLogger(), dictionaryFile);
+        } else {
+            FXUtils.makePopUp("Could not file 'dictionary.txt'. No dictionary will be used for autocompletes.\n"
+                    + "Any text file with one word per line can be used as dictionary.txt.", AlertType.ERROR);
+        }
+
+        this.characterGenerator.onSetup(this);
+        this.hexadecimalGenerator.onSetup(this);
+    }
+
+    private void updatePsyQTargetHashRange() {
+        try {
+            this.psyqTargetHashRange = HashRange.parseRange(this.targetLinkerHashField.getText(), HashRangeType.PSYQ);
+        } catch (Throwable th) {
+            this.psyqTargetHashRange = null;
+            FXUtils.makePopUp(th.getMessage(), AlertType.ERROR);
+            return;
+        }
+
+        this.generateStrings(null);
+    }
+
+    private void updateMsvcTargetHashRange() {
+        try {
+            this.msvcTargetHashRange = HashRange.parseRange(this.targetCompilerHashField.getText(), HashRangeType.MSVC);
+        } catch (Throwable th) {
+            this.msvcTargetHashRange = null;
+            FXUtils.makePopUp(th.getMessage(), AlertType.ERROR);
+            return;
+        }
+
+        this.generateStrings(null);
     }
 
     private void generateNewString() {
@@ -69,54 +115,69 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
         if (this.suffixTextField.getText() != null && this.suffixTextField.getText().length() > 0)
             fullStr += this.suffixTextField.getText();
 
-        this.assemblerHashLabel.setText(String.valueOf(FroggerHashUtil.getAssemblerHash(fullStr)));
-        this.fullAssemblerHashLabel.setText(String.valueOf(FroggerHashUtil.getFullAssemblerHash(fullStr)));
-        this.linkerHashLabel.setText(String.valueOf(FroggerHashUtil.getLinkerHash(fullStr)));
-        this.fullLinkerHashLabel.setText(String.valueOf(FroggerHashUtil.getFullLinkerHash(fullStr)));
+        this.assemblerHashLabel.setText(String.valueOf(FroggerHashUtil.getPsyQAssemblerHash(fullStr)));
+        this.linkerHashLabel.setText(String.valueOf(FroggerHashUtil.getPsyQLinkerHash(fullStr)));
+        this.compilerHashLabel.setText(String.valueOf(FroggerHashUtil.getMsvcCompilerC1HashTableKey(fullStr)));
         this.currentStringLabel.setText("Input: '" + fullStr + "'");
         this.generateStrings(null);
     }
 
     @FXML
+    @SneakyThrows
+    private void exportTable(ActionEvent evt) {
+        File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), TABLE_EXPORT_FILE_PATH, "bss-export.c", false);
+        if (outputFile != null)
+            Files.write(outputFile.toPath(), SCUtils.saveImageOrderingTable(getGameInstance(), null));
+    }
+
+    @FXML
     private void generateStrings(ActionEvent evt) {
-        if (!NumberUtils.isInteger(this.targetLinkerHashField.getText()))
-            return;
-
-        int targetLinkerHash = Integer.parseInt(this.targetLinkerHashField.getText());
-        if (targetLinkerHash < 0 || targetLinkerHash >= FroggerHashUtil.LINKER_HASH_TABLE_SIZE) {
-            FXUtils.makePopUp("The target linker hash must be within the range [0, " + FroggerHashUtil.LINKER_HASH_TABLE_SIZE + ").", AlertType.WARNING);
-            return;
-        }
-
+        String searchQuery = this.searchFilterField.getText();
         int maxWordSize = NumberUtils.isInteger(this.maxWordSizeField.getText()) ? Integer.parseInt(this.maxWordSizeField.getText()) : 0;
 
-        String prefix = this.prefixTextField.getText();
-        String suffix = this.suffixTextField.getText();
-        if (prefix != null)
-            targetLinkerHash = FroggerHashUtil.getLinkerHashWithoutSubstring(prefix, targetLinkerHash);
-        if (suffix != null)
-            targetLinkerHash = FroggerHashUtil.getLinkerHashWithoutSubstring(suffix, targetLinkerHash);
-
-        List<String> output = this.stringGenerator.generateStrings(targetLinkerHash, this.searchFilterField.getText());
-        if (maxWordSize > 0)
-            output.removeIf(word -> word.length() > maxWordSize);
+        List<String> output = new ArrayList<>();
+        Set<String> seenAlready = new HashSet<>();
+        generateStrings(output, seenAlready, this.dictionaryGenerator, maxWordSize, searchQuery);
+        if (this.showPermutations.isSelected())
+            generateStrings(output, seenAlready, this.characterGenerator, maxWordSize, searchQuery);
+        generateStrings(output, seenAlready, this.hexadecimalGenerator, maxWordSize, searchQuery);
         this.stringsListView.setItems(FXCollections.observableArrayList(output));
     }
 
+    private void generateStrings(List<String> results, Set<String> seenAlready, IHashStringGenerator generator, int maxWordSize, String searchQuery) {
+        List<String> newStrings = generator.generateStrings(this);
+        if (newStrings == null || newStrings.isEmpty())
+            return;
 
-    // TODO - Feature Target (Priority):
-    // - Dictionary & String List (w/Search)
-    // - Load precomputed hash file.
-    // - Apply nice query search & strings from precomputed dictionary.
-    // - Maybe eventually a way to select an image, view valid hash range, and verify order is followed.
+        for (int i = 0; i < newStrings.size(); i++) {
+            String word = newStrings.get(i);
+            if (seenAlready.add(word) && (searchQuery == null || searchQuery.isEmpty() || word.contains(searchQuery)) && (maxWordSize <= 0 || word.length() <= maxWordSize))
+                results.add(word);
+        }
+    }
 
-    // TODO: Here's how to perform a search well. This effectively doubles our target string length.
-    // If the hashsum has a precomputed string table, you don't need anything fancy.
-    // If the hashsum does not have a precomputed list of count maps, get all of the pairs where both of the sums do have precomputed hashes.
-    // Instead of an O(n ^ 2) operation where we'll try each count map from one with one count map from the other,
-    // we'll put all of the count maps into two hash maps (one for each of the sums). The key will be a countmap that describes the parts of the query which have been found.
-    // Thus, for each count map, we can determine the count map which the other count map(s) matching must be.
-    // This is more accurate the more query was provided.
+    /**
+     * Gets the configured search query for string generation.
+     */
+    public String getSearchQuery() {
+        return this.searchFilterField.getText();
+    }
+
+    /**
+     * Gets the configured prefix for string generation.
+     */
+    public String getPrefix() {
+        String prefixText = this.prefixTextField != null ? this.prefixTextField.getText() : null;
+        return prefixText != null ? prefixText : "";
+    }
+
+    /**
+     * Gets the configured suffix for string generation.
+     */
+    public String getSuffix() {
+        String suffixText = this.suffixTextField != null ? this.suffixTextField.getText() : null;
+        return suffixText != null ? suffixText : "";
+    }
 
     /**
      * Open the level info controller.

@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.games.sony.medievil;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.file.reader.DataReader;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
@@ -11,7 +11,10 @@ import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
 import net.highwayfrogs.editor.games.sony.medievil.entity.MediEvilEntityTable;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
+import net.highwayfrogs.editor.games.sony.medievil.map.entity.MediEvilMapEntity;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitVBFile;
@@ -19,7 +22,9 @@ import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitVHFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.LazySCGameFileListGroup;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,6 +69,55 @@ public class MediEvilGameInstance extends SCGameInstance {
 
         // TODO FILE_TYPE_VLO
         return SCUtils.createSharedGameFile(resourceEntry, fileData);
+    }
+
+    @Override
+    protected void resolveModelVloFiles() {
+        super.resolveModelVloFiles();
+
+        // Resolve based on maps after resolving for easier options.
+        for (MediEvilMapFile mapFile : getMainArchive().getAllFiles(MediEvilMapFile.class)) {
+            MediEvilLevelTableEntry levelTableEntry = mapFile.getLevelTableEntry();
+            if (levelTableEntry == null)
+                continue;
+
+            VLOArchive mainVloFile = levelTableEntry.getVloFile();
+            if (mainVloFile == null)
+                continue;
+
+            for (MediEvilMapEntity entity : mapFile.getEntitiesPacket().getEntities()) {
+                MRModel model = entity.getModel();
+                if (model != null && model.getVloFile() == null)
+                    model.setVloFile(mainVloFile);
+            }
+        }
+    }
+
+    @Override
+    protected VLOArchive resolveMainVlo(MRModel model) {
+        // Set VLO archive to the map VLO if currently unset.
+        WADFile wadFile = model.getParentWadFile();
+        if (wadFile != null) {
+            String wadFileName = wadFile.getFileDisplayName();
+            String searchFileName = FileUtils.stripExtension(wadFileName) + ".VLO";
+            if ("FIX_MOFS.WAD".equals(wadFileName)) {
+                searchFileName = "FIXEDVRM.VLO";
+            } else if (searchFileName.contains("_MEMDEBUG")) {
+                searchFileName = searchFileName.replace("_MEMDEBUG", "_VRAM");
+            } if (searchFileName.contains("_MEM3")) {
+                searchFileName = searchFileName.replace("_MEM3", "_VRAM");
+            } else if (searchFileName.contains("_MEM2")) {
+                searchFileName = searchFileName.replace("_MEM2", "_VRAM");
+            } else if (searchFileName.contains("_MEM")) {
+                searchFileName = searchFileName.replace("_MEM", "_VRAM");
+            }
+
+            VLOArchive foundVlo = getMainArchive().getFileByName(searchFileName);
+            if (foundVlo != null)
+                return foundVlo;
+        }
+
+        return super.resolveMainVlo(model);
     }
 
     @Override

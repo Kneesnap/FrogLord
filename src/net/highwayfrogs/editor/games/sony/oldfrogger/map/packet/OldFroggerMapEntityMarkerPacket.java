@@ -2,8 +2,6 @@ package net.highwayfrogs.editor.games.sony.oldfrogger.map.packet;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapForm;
@@ -11,6 +9,8 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -101,7 +101,7 @@ public class OldFroggerMapEntityMarkerPacket extends OldFroggerMapPacket {
                 if (form == null)
                     continue;
 
-                formIdsByMof.computeIfAbsent(entity.getFormTypeId(), key -> new HashSet<>()).add(form.getMofFileEntry().getFileEntry());
+                formIdsByMof.computeIfAbsent(entity.getFormTypeId(), key -> new HashSet<>()).add(form.getModelFileEntry().getFileEntry());
             }
         }
 
@@ -141,7 +141,7 @@ public class OldFroggerMapEntityMarkerPacket extends OldFroggerMapPacket {
 
         // Load form.
         OldFroggerMapForm form = entity.getForm();
-        WADEntry mofEntry = form != null ? form.getMofFileEntry() : null;
+        WADEntry mofEntry = form != null ? form.getModelFileEntry() : null;
 
         // Display message.
         getLogger().warning("[INVALID/"

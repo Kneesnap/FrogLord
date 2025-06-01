@@ -3,9 +3,6 @@ package net.highwayfrogs.editor.games.shared.basic.ui;
 import javafx.scene.Node;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
-import net.highwayfrogs.editor.file.writer.DataWriter;
-import net.highwayfrogs.editor.file.writer.FileReceiver;
-import net.highwayfrogs.editor.file.writer.LargeFileReceiver;
 import net.highwayfrogs.editor.games.shared.basic.BasicGameInstance;
 import net.highwayfrogs.editor.games.shared.basic.file.BasicGameFile;
 import net.highwayfrogs.editor.gui.MainMenuController;
@@ -13,6 +10,9 @@ import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
+import net.highwayfrogs.editor.utils.data.writer.LargeFileReceiver;
 
 import java.io.File;
 

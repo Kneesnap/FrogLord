@@ -4,9 +4,11 @@ import javafx.scene.image.Image;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.gui.texture.SimpleTexture;
 import net.highwayfrogs.editor.gui.texture.Texture;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.objects.SortedList;
 
 import java.util.function.Function;
@@ -23,8 +25,9 @@ public abstract class TextureAtlas extends SimpleTexture {
     @Setter(AccessLevel.PACKAGE) private int atlasHeight;
     @Setter private boolean automaticResizingEnabled;
 
-    public TextureAtlas(Function<Texture, ITextureSource> source, int width, int height, boolean allowAutomaticResizing) {
-        super(source);
+    @SuppressWarnings("unchecked")
+    public TextureAtlas(Function<Texture, ? super AtlasBuilderTextureSource> source, int width, int height, boolean allowAutomaticResizing) {
+        super((Function<Texture, ITextureSource>) source);
         if (width < 1)
             throw new IllegalArgumentException("Width of texture atlas cannot be set below one! (Got: " + width + ")");
         if (height < 1)
@@ -40,10 +43,29 @@ public abstract class TextureAtlas extends SimpleTexture {
         return (AtlasBuilderTextureSource) super.getTextureSource();
     }
 
+    @Override
+    public void disposeTexture() {
+        super.disposeTexture();
+        getTextureSource().releaseResources();
+    }
+
+    @Override
+    protected void ensureNotDisposed() {
+        if (!isDisposed())
+            return;
+
+        DynamicMesh mesh = getTextureSource().getMesh();
+        if (mesh != null)
+            mesh.getLogger().severe("The associated %s has been freed, but something is still using it!", Utils.getSimpleName(this));
+
+        super.ensureNotDisposed();
+    }
+
     /**
      * Gets the updated JavaFX image containing the full texture sheet.
      */
     public Image getFxImage() {
+        ensureNotDisposed();
         return getTextureSource().getCachedFxImage();
     }
 
@@ -84,11 +106,38 @@ public abstract class TextureAtlas extends SimpleTexture {
     public abstract AtlasTexture removeTexture(ITextureSource textureSource);
 
     /**
+     * Removes a texture from this atlas and disposes it.
+     * @param textureSource The texture source to remove.
+     * @return Whether the texture was removed.
+     */
+    public boolean removeAndDisposeTexture(ITextureSource textureSource) {
+        AtlasTexture texture = removeTexture(textureSource);
+        if (texture == null)
+            return false;
+
+        texture.disposeTexture();
+        return true;
+    }
+
+    /**
      * Removes a texture from this atlas.
      * @param texture The texture to remove.
      * @return Whether the texture was removed.
      */
     public abstract boolean removeTexture(AtlasTexture texture);
+
+    /**
+     * Removes a texture from this atlas, and disposes it.
+     * @param texture The texture to remove.
+     * @return Whether the texture was removed.
+     */
+    public boolean removeAndDisposeTexture(AtlasTexture texture) {
+        if (!removeTexture(texture))
+            return false;
+
+        texture.disposeTexture();
+        return true;
+    }
 
     /**
      * Gets the texture which is returned if a texture is not found.
@@ -123,6 +172,7 @@ public abstract class TextureAtlas extends SimpleTexture {
      * @return The texture, if it is found. If the source does not have anything tracked, the fallback texture is provided.
      */
     public AtlasTexture getTextureFromSourceOrFallback(ITextureSource textureSource) {
+        ensureNotDisposed();
         AtlasTexture texture = getNullTextureFromSource(textureSource);
         return texture != null ? texture : getFallbackTexture();
     }

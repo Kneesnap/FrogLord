@@ -93,8 +93,8 @@ public class HashSumLookupTree {
             }
 
             // Apply additions from this pass.
-            int[] firstLength = new int[FroggerHashUtil.MAX_SYMBOL_NAME_LENGTH];
-            int[] secondLength = new int[FroggerHashUtil.MAX_SYMBOL_NAME_LENGTH];
+            int[] firstLength = new int[FroggerHashUtil.PSYQ_MAX_SYMBOL_NAME_LENGTH];
+            int[] secondLength = new int[FroggerHashUtil.PSYQ_MAX_SYMBOL_NAME_LENGTH];
             for (Entry<Integer, Set<HashSumPair>> entry : additionsThisPass.entrySet()) {
                 HashSum newNode = newTree.getOrCreate(entry.getKey());
 

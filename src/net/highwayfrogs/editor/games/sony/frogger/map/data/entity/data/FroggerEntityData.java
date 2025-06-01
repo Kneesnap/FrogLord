@@ -1,7 +1,9 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data;
 
+import javafx.geometry.Point3D;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
@@ -29,8 +31,11 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.swamp.*;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.volcano.FroggerEntityDataColorTrigger;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.volcano.FroggerEntityDataTriggeredPlatform;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.IFroggerFormEntry;
+import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMeshController;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.InputManager;
+import net.highwayfrogs.editor.gui.InputManager.MouseInputState;
 import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
@@ -91,6 +96,24 @@ public abstract class FroggerEntityData extends SCGameData<FroggerGameInstance> 
     }
 
     /**
+     * Handles selecting a new position.
+     * @param controller the controller to get the position from
+     * @param position the position to update
+     * @param bits the precision bit count
+     */
+    protected void selectNewPosition(FroggerMapMeshController controller, Vector position, int bits) {
+        controller.getBakedGeometryManager().getPolygonSelector().activate(clickedPolygon -> {
+            InputManager inputManager = controller.getInputManager();
+            MouseInputState mouseState = inputManager.getMouseTracker().getMouseState();
+            Point3D intersectedPoint = new Point3D(mouseState.getIntersectedPoint().getX(), mouseState.getIntersectedPoint().getY(), mouseState.getIntersectedPoint().getZ());
+            Point3D newWorldPos = mouseState.getIntersectedNode().localToScene(intersectedPoint);
+            position.setFloatX((float) newWorldPos.getX(), bits);
+            position.setFloatY((float) newWorldPos.getY(), bits);
+            position.setFloatZ((float) newWorldPos.getZ(), bits);
+        }, null);
+    }
+
+    /**
      * Sets up the entity data for editing.
      * @param manager The entity manager.
      * @param editor  The editor to apply to.
@@ -101,24 +124,24 @@ public abstract class FroggerEntityData extends SCGameData<FroggerGameInstance> 
 
     /**
      * Make FroggerEntityData for the given form.
-     * @param mapFile The map file to create data for.
-     * @param entity   The entity to make data for.
+     * @param entity The entity to make the data for.
+     * @param formEntry The form entry to apply.
      * @return entityData
      */
     @SneakyThrows
-    public static FroggerEntityData makeData(FroggerMapFile mapFile, FroggerMapEntity entity) {
-        if (entity == null)
+    public static FroggerEntityData makeData(FroggerMapEntity entity, IFroggerFormEntry formEntry) {
+        if (entity == null || formEntry == null)
             return null;
 
-        String dataClassName = mapFile.getConfig().getEntityBank().getConfig().getString(entity.getTypeName(), null);
+        String dataClassName = entity.getConfig().getEntityBank().getConfig().getString(formEntry.getEntityTypeName(), null);
         if (dataClassName == null)
             return null;
 
         Tuple2<Class<? extends FroggerEntityData>, ? extends Constructor<? extends FroggerEntityData>> entityDataFactory = getEntityDataFactory(dataClassName);
         if (entityDataFactory == null)
-            throw new RuntimeException("Failed to find FroggerEntityData class for the type: " + entity.getTypeName() + ", " + dataClassName);
+            throw new RuntimeException("Failed to find FroggerEntityData class for the type: " + formEntry.getEntityTypeName() + ", " + dataClassName);
 
-        FroggerEntityData newData = entityDataFactory.getB().newInstance(mapFile);
+        FroggerEntityData newData = entityDataFactory.getB().newInstance(entity.getMapFile());
         newData.parentEntity = entity;
         return newData;
     }

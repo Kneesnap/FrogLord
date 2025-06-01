@@ -1,8 +1,10 @@
 package net.highwayfrogs.editor.utils.fx.wrapper;
 
 import javafx.scene.control.ListCell;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.function.BiFunction;
@@ -18,6 +20,9 @@ public class LazyFXListCell<T> extends ListCell<T> {
     private final Function<T, Image> withoutIndexGraphicHandler;
     private final BiFunction<T, Integer, Image> withIndexGraphicHandler;
     private final String nullDisplay;
+    private Function<T, Tooltip> withoutIndexTooltipHandler;
+    private BiFunction<T, Integer, Tooltip> withIndexTooltipHandler;
+    private Tooltip nullTooltip;
 
     private LazyFXListCell(Function<T, String> withoutIndexTextHandler,
                            BiFunction<T, Integer, String> withIndexTextHandler,
@@ -63,6 +68,31 @@ public class LazyFXListCell<T> extends ListCell<T> {
         this(null, textResolver, null, imageResolver, nullDisplay);
     }
 
+    /**
+     * Sets the handler for creating a toolTip without using the list item index.
+     * @param withoutIndexTooltipHandler the handler to apply
+     * @return this
+     */
+    public LazyFXListCell<T> setWithoutIndexTooltipHandler(Function<T, Tooltip> withoutIndexTooltipHandler) {
+        this.withoutIndexTooltipHandler = withoutIndexTooltipHandler;
+        return this;
+    }
+
+    /**
+     * Sets the handler for creating a toolTip using the list item index.
+     * @param withIndexTooltipHandler the handler to apply
+     * @return this
+     */
+    public LazyFXListCell<T> setWithIndexTooltipHandler(BiFunction<T, Integer, Tooltip> withIndexTooltipHandler) {
+        this.withIndexTooltipHandler = withIndexTooltipHandler;
+        return this;
+    }
+
+    public LazyFXListCell<T> setNullTooltip(Tooltip nullTooltip) {
+        this.nullTooltip = nullTooltip;
+        return this;
+    }
+
     @Override
     public void updateItem(T selection, boolean empty) {
         super.updateItem(selection, empty);
@@ -94,7 +124,26 @@ public class LazyFXListCell<T> extends ListCell<T> {
             Utils.handleError(null, th, false);
             applyText = "<ERROR: " + Utils.getSimpleName(th) + "/" + getIndex() + "/" + selection + ">";
         }
-        
+
         setText(applyText);
+
+        // Update tooltip.
+        Tooltip tooltip;
+        try {
+            if (selection == null) {
+                tooltip = this.nullTooltip;
+            } else if (this.withIndexTooltipHandler != null) {
+                tooltip = this.withIndexTooltipHandler.apply(selection, getIndex());
+            } else if (this.withoutIndexTooltipHandler != null) {
+                tooltip = this.withoutIndexTooltipHandler.apply(selection);
+            } else {
+                tooltip = null;
+            }
+        } catch (Throwable th) {
+            Utils.handleError(null, th, false);
+            tooltip = FXUtils.createTooltip("<ERROR: " + Utils.getSimpleName(th) + "/" + getIndex() + "/" + selection + ">");
+        }
+
+        setTooltip(tooltip);
     }
 }

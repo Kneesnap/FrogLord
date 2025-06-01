@@ -1,16 +1,17 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.script.volcano;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.script.FroggerEntityScriptData;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
- * This holds data not present in the code, for the entity: vol_platform2.
+ * This holds data represented as 'VOL_TRIGGERED_PLATFORM', for the entity: vol_platform2.
  * Created by Kneesnap on 11/27/2018.
  */
 @Getter
@@ -38,6 +39,7 @@ public class FroggerEntityScriptDataPlatform2 extends FroggerEntityScriptData {
 
     @Override
     public void setupEditor(GUIEditorGrid editor, FroggerUIMapEntityManager manager) {
-        editor.addCheckBox("Enabled By Default?", this.enabledByDefault, newEnabledByDefault -> this.enabledByDefault = newEnabledByDefault);
+        editor.addCheckBox("Enabled By Default?", this.enabledByDefault, newEnabledByDefault -> this.enabledByDefault = newEnabledByDefault)
+                .setTooltip(FXUtils.createTooltip("This overrides the 'No Movement' flag, BUT ONLY when the entity is targetted by a color trigger entity."));
     }
 }

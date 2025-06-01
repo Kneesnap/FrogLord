@@ -1,12 +1,15 @@
 package net.highwayfrogs.editor.games.sony;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.config.NameBank;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.generic.GameConfig;
+import net.highwayfrogs.editor.utils.StringUtils;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -15,6 +18,7 @@ import java.util.*;
  */
 @Getter
 public class SCGameConfig extends GameConfig {
+    private long[] executableChecksums = EMPTY_LONG_ARRAY;
     private long overrideRamOffset;
     private long overlayTableOffset;
     private int MWIOffset;
@@ -29,10 +33,12 @@ public class SCGameConfig extends GameConfig {
     private final Map<String, String> mofParentOverrides = new HashMap<>();
     private final List<String> fallbackFileNames = new ArrayList<>();
     private final Map<Short, String> imageNames = new HashMap<>();
+    private final Map<Integer, SCBssSymbol> bssSymbols = new HashMap<>();
 
     private static final String CFG_FILE_NAMES = "Files";
     private static final String CFG_CHILD_IMAGE_NAMES = "ImageNames";
-    private static final String CFG_CHILD_MOF_FORCE_VLO = "ForceVLO";
+    private static final String CFG_CHILD_BSS_SYMBOLS = "BssSymbols";
+    private static final long[] EMPTY_LONG_ARRAY = new long[0];
 
     public SCGameConfig(String internalName) {
         super(internalName);
@@ -44,6 +50,7 @@ public class SCGameConfig extends GameConfig {
         readBasicConfigData(config);
         loadBanks(config);
         readFallbackFileNames(config);
+        readBssSymbols(config);
         readHiddenParts(config);
         readMofOverrides(config);
         readMofParentOverrides(config);
@@ -56,6 +63,16 @@ public class SCGameConfig extends GameConfig {
     }
 
     private void readBasicConfigData(Config config) {
+        String checksumsString = config.getString("exeChecksum", null);
+        if (checksumsString == null || checksumsString.trim().isEmpty()) {
+            this.executableChecksums = EMPTY_LONG_ARRAY;
+        } else {
+            String[] split = checksumsString.split("\\s*,\\s*");
+            this.executableChecksums = new long[split.length];
+            for (int i = 0; i < split.length; i++)
+                this.executableChecksums[i] = Long.parseLong(split[i]);
+        }
+
         this.mwdLooseFiles = config.getBoolean("mwdLooseFiles", false);
         this.region = config.getEnum("region", SCGameRegion.UNSPECIFIED);
         this.MWIOffset = config.getInt("mwiOffset");
@@ -72,6 +89,26 @@ public class SCGameConfig extends GameConfig {
         this.fallbackFileNames.clear();
         if (config.hasChild(CFG_FILE_NAMES))
             this.fallbackFileNames.addAll(config.getChild(CFG_FILE_NAMES).getText());
+    }
+
+    private void readBssSymbols(Config config) {
+        this.bssSymbols.clear();
+        if (!config.hasChild(CFG_CHILD_BSS_SYMBOLS))
+            return;
+
+        Config hiddenPartsCfg = config.getChild(CFG_CHILD_BSS_SYMBOLS);
+        for (String line : hiddenPartsCfg.getText()) {
+            if (StringUtils.isNullOrWhiteSpace(line))
+                continue;
+
+            SCBssSymbol newSymbol = SCBssSymbol.parseBssSymbol(line);
+            if (newSymbol == null) {
+                getLogger().warning("Could not interpret '%s' as a BSS symbol.", line);
+                continue;
+            }
+
+            this.bssSymbols.put(newSymbol.getAddress(), newSymbol);
+        }
     }
 
     private void readHiddenParts(Config config) {
@@ -126,46 +163,32 @@ public class SCGameConfig extends GameConfig {
         }
     }
 
-    /**
-     * Get the forced VLO file for a given string.
-     * @param name The name to get the vlo for.
-     * @return forcedVLO
-     */
-    public VLOArchive getForcedVLO(SCGameInstance instance, String name) {
-        if (instance == null)
-            throw new RuntimeException("Cannot find the overridden VLO file for '" + name + "' since a null instance was given.");
-        if (instance.getMainArchive() == null)
-            throw new RuntimeException("Cannot find the overridden VLO file for '" + name + "' since the file archive has not been loaded yet.");
+    @Getter
+    @RequiredArgsConstructor
+    public static class SCBssSymbol {
+        private final int address;
+        private final String name;
+        private final int size;
 
-        if (!getConfig().hasChild(CFG_CHILD_MOF_FORCE_VLO))
-            return null;
+        private static final Pattern REGEX_PATTERN = Pattern.compile("0x([a-fA-F0-9]{8}),([a-zA-Z_][a-zA-Z0-9_]+),([0-9]+)");
 
-        Config childConfig = getConfig().getChild(CFG_CHILD_MOF_FORCE_VLO);
-        if (!childConfig.has(name))
-            return null;
+        /**
+         * Parses the bss symbol from a line of text.
+         * @param input the line of text to read
+         * @return bssSymbol
+         */
+        public static SCBssSymbol parseBssSymbol(String input) {
+            if (StringUtils.isNullOrEmpty(input))
+                throw new NullPointerException("input");
 
-        String vloName = childConfig.getString(name);
-        return instance.getMainArchive().resolveForEachFile(VLOArchive.class, vlo -> vlo.getFileDisplayName().startsWith(vloName) ? vlo : null);
-    }
+            Matcher matcher = REGEX_PATTERN.matcher(input);
+            if (!matcher.matches())
+                return null;
 
-    /**
-     * Write the config identifier to the end of the executable, so it will automatically know which config to use when this is loaded.
-     */
-    public byte[] applyConfigIdentifier(byte[] oldExeBytes) {
-        if (getInternalName() == null)
-            return oldExeBytes;
-
-        // Test if the executable already has the identifier at the end.
-        byte[] identifierBytes = getInternalName().getBytes();
-        boolean hasIdentifierAlready = oldExeBytes.length >= identifierBytes.length
-                && Arrays.equals(Arrays.copyOfRange(oldExeBytes, oldExeBytes.length - identifierBytes.length, oldExeBytes.length), identifierBytes);
-        if (hasIdentifierAlready)
-            return oldExeBytes;
-
-        // Write the identifier to a new array.
-        byte[] newExeBytes = new byte[oldExeBytes.length + identifierBytes.length];
-        System.arraycopy(oldExeBytes, 0, newExeBytes, 0, oldExeBytes.length);
-        System.arraycopy(identifierBytes, 0, newExeBytes, oldExeBytes.length, identifierBytes.length);
-        return newExeBytes;
+            int address = (int) Long.parseLong(matcher.group(1), 16);
+            String name = matcher.group(2);
+            int size = Integer.parseInt(matcher.group(3));
+            return new SCBssSymbol(address, name, size);
+        }
     }
 }

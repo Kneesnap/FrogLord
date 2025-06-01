@@ -4,6 +4,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import lombok.Getter;
+import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
@@ -11,6 +12,7 @@ import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.FXUtils;
 
 import java.awt.image.BufferedImage;
@@ -120,7 +122,10 @@ public abstract class PSXShadingEditor<TShadeTarget> {
     }
 
     protected void updatePreviewImage(BufferedImage newShadedImage) {
-        if (this.shadeDefinition != null && newShadedImage != null) {
+        if (this.shadeDefinition != null) {
+            if (newShadedImage == null) // If this isn't displayed, it's not possible to assign new textures to untextured polygons.
+                newShadedImage = UnknownTextureSource.MAGENTA_INSTANCE.makeImage();
+
             this.previewImageView.setImage(FXUtils.toFXImage(ImageWorkHorse.resizeImage(newShadedImage, (int) this.previewImageView.getFitWidth(), (int) this.previewImageView.getFitHeight(), true), false));
         } else {
             this.previewImageView.setImage(null);
@@ -147,6 +152,13 @@ public abstract class PSXShadingEditor<TShadeTarget> {
 
         if (this.registerImageView)
             grid.addCenteredImageView(this.previewImageView);
+
+        if (this.previewImageView != null) {
+            this.previewImageView.setOnMouseClicked(event -> {
+                if (shouldHandleUIChanges() && getShadeDefinition().isTextured())
+                    selectNewTexture(getShadeDefinition().getTextureSource());
+            });
+        }
 
         // Polygon type information.
         this.polygonTypeNameLabel = grid.addLabel("Polygon Type:", "None");
@@ -228,4 +240,9 @@ public abstract class PSXShadingEditor<TShadeTarget> {
      * Called when the texture UV is updated.
      */
     protected abstract void onTextureUvUpdate(int uvIndex, SCByteTextureUV uv);
+
+    /**
+     * Called when the texture should be updated.
+     */
+    protected abstract void selectNewTexture(ITextureSource oldTextureSource);
 }

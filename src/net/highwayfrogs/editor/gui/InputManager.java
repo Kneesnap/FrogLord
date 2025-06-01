@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.gui;
 
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.system.math.Vector3f;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 
@@ -19,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This tracks keyboard and mouse input for usage primarily in 3D environments.
@@ -29,6 +32,9 @@ public class InputManager {
     private final GameInstance gameInstance;
     private final Map<KeyCode, List<KeyHandler>> keySpecificHandlers = new HashMap<>();
     private final ChangeListener<? super Boolean> stageInputListener = this::onStageFocusChange;
+    private final EventHandler<? super KeyEvent> mainKeyEventListener = this::processKeyEvents;
+    private final EventHandler<? super MouseEvent> mainMouseEventListener = this::processMouseEvents;
+    private final EventHandler<? super ScrollEvent> mainScrollEventListener = this::processScrollEvents;
     private final List<KeyHandler> keyHandlers = new ArrayList<>();
     private Stage stage;
     @Setter private KeyHandler finalKeyHandler;
@@ -38,10 +44,9 @@ public class InputManager {
     private final List<ScrollHandler> scrollHandlers = new ArrayList<>();
     @Setter private ScrollHandler finalScrollHandler;
     private final boolean[] pressedKeys = new boolean[KeyCode.values().length];
-    @Getter private final MouseInputState lastDragStartMouseState = new MouseInputState();
-    @Getter private final MouseInputState lastMouseState = new MouseInputState();
-    @Getter private final MouseInputState mouseState = new MouseInputState();
-    @Getter private boolean significantMouseDragRecorded;
+    @Getter private final MouseTracker mouseTracker = new MouseTracker();
+    private boolean trackPadScroll;
+    private long lastFinishedTrackPadScroll;
 
     public interface KeyHandler {
         void accept(InputManager manager, KeyEvent event);
@@ -52,7 +57,7 @@ public class InputManager {
     }
 
     public interface ScrollHandler {
-        void accept(InputManager manager, ScrollEvent event);
+        void accept(InputManager manager, ScrollEvent event, boolean isTrackpadScroll);
     }
 
     /**
@@ -60,13 +65,28 @@ public class InputManager {
      * @param scene The subscene to receive and process the keyboard and mouse events, etc.
      */
     public void assignSceneControls(Stage stage, Scene scene) {
-        scene.addEventHandler(KeyEvent.ANY, this::processKeyEvents);
-        scene.addEventHandler(MouseEvent.ANY, this::processMouseEvents);
-        scene.addEventHandler(ScrollEvent.ANY, this::processScrollEvents);
+        scene.addEventHandler(KeyEvent.ANY, this.mainKeyEventListener);
+        scene.addEventHandler(MouseEvent.ANY, this.mainMouseEventListener);
+        scene.addEventHandler(ScrollEvent.ANY, this.mainScrollEventListener);
 
         // Reset keys when focus is lost.
         stage.focusedProperty().addListener(this.stageInputListener);
         this.stage = stage;
+    }
+
+    /**
+     * Assign (setup) the control event handlers on the supplied scene object.
+     * @param scene The subscene to receive and process the keyboard and mouse events, etc.
+     */
+    public void removeSceneControls(Stage stage, Scene scene) {
+        scene.removeEventHandler(KeyEvent.ANY, this.mainKeyEventListener);
+        scene.removeEventHandler(MouseEvent.ANY, this.mainMouseEventListener);
+        scene.removeEventHandler(ScrollEvent.ANY, this.mainScrollEventListener);
+
+        // Reset keys when focus is lost.
+        stage.focusedProperty().removeListener(this.stageInputListener);
+        resetKeys(); // No longer active, isn't tracking keys.
+        this.stage = null;
     }
 
     /**
@@ -137,6 +157,16 @@ public class InputManager {
     }
 
     /**
+     * Removes a mouse listener listening for a specific mouse event type.
+     * @param eventType The event type to remove.
+     * @param listener The listener to add.
+     */
+    public boolean removeMouseListener(EventType<? super MouseEvent> eventType, MouseHandler listener) {
+        List<MouseHandler> handlerList = this.mouseHandlersByType.get(eventType);
+        return handlerList != null && handlerList.remove(listener);
+    }
+
+    /**
      * Adds a scroll listener for all scroll events.
      * @param listener The listener to add.
      */
@@ -151,14 +181,6 @@ public class InputManager {
      */
     public boolean isKeyPressed(KeyCode keyCode) {
         return keyCode != null && this.pressedKeys[keyCode.ordinal()];
-    }
-
-    /**
-     * Tests if the mouse has moved meaningfully since the drag started.
-     */
-    public boolean hasMouseMovedSinceDragStart() {
-        return Math.abs(this.mouseState.getX() - this.lastDragStartMouseState.getX()) >= 5
-                || Math.abs(this.mouseState.getY() - this.lastDragStartMouseState.getY()) >= 5;
     }
 
     /**
@@ -177,8 +199,7 @@ public class InputManager {
                 try {
                     handler.accept(this, evt);
                 } catch (Throwable th) {
-                    String errorMessage = "Failed to run KeyHandler " + handler + ".";
-                    getLogger().throwing("InputManager", "processKeyEvents", new RuntimeException(errorMessage, th));
+                    Utils.handleError(getLogger(), th, false, "Failed to run KeyHandler %s.", handler);
                 }
 
                 if (evt.isConsumed()) {
@@ -285,20 +306,12 @@ public class InputManager {
      * Function to process mouse input events.
      */
     private void processMouseEvents(MouseEvent evt) {
+        this.mouseTracker.handle(evt);
         double mouseDeltaX = 0;
         double mouseDeltaY = 0;
-        if (evt.getEventType().equals(MouseEvent.MOUSE_PRESSED)) {
-            this.significantMouseDragRecorded = false;
-            this.lastDragStartMouseState.apply(evt);
-            this.lastMouseState.apply(evt);
-            this.mouseState.apply(evt);
-        } else if (evt.getEventType().equals(MouseEvent.MOUSE_DRAGGED)) {
-            this.lastMouseState.apply(this.mouseState);
-            this.mouseState.apply(evt);
-            mouseDeltaX = (this.mouseState.getX() - this.lastMouseState.getX());
-            mouseDeltaY = (this.mouseState.getY() - this.lastMouseState.getY());
-            if (Math.abs(this.mouseState.getX() - this.lastDragStartMouseState.getX()) >= 4 || Math.abs(this.mouseState.getY() - this.lastDragStartMouseState.getY()) >= 4)
-                this.significantMouseDragRecorded = true;
+        if (evt.getEventType().equals(MouseEvent.MOUSE_DRAGGED)) {
+            mouseDeltaX = this.mouseTracker.getDeltaXSinceLastMouseMove();
+            mouseDeltaY = this.mouseTracker.getDeltaYSinceLastMouseMove();
         }
 
         // Send out mouse event handlers for the specific mouse event.
@@ -344,21 +357,34 @@ public class InputManager {
                 getLogger().throwing("InputManager", "processMouseEvents", new RuntimeException(errorMessage, th));
             }
         }
+
+        // Mark drag as inactive after the listener is called.
+        this.mouseTracker.markDragInactiveIfComplete();
     }
 
     /**
      * Function to process mouse input events.
      */
     private void processScrollEvents(ScrollEvent event) {
+        // Only trackpads will trigger scroll start and scroll finish.
+        if (event.getEventType() == ScrollEvent.SCROLL_STARTED) {
+            this.trackPadScroll = true;
+        } else if (event.getEventType() == ScrollEvent.SCROLL_FINISHED) {
+            this.trackPadScroll = false;
+            this.lastFinishedTrackPadScroll = System.currentTimeMillis();
+        }
+
         if (Math.abs(event.getDeltaY()) < .00001)
             return;
+
+        boolean isTrackpadScroll = this.trackPadScroll || event.isInertia() || (TimeUnit.SECONDS.toMillis(1) > System.currentTimeMillis() - this.lastFinishedTrackPadScroll);
 
         // Send out generic scroll handlers.
         for (int i = 0; i < this.scrollHandlers.size(); i++) {
             ScrollHandler handler = this.scrollHandlers.get(i);
 
             try {
-                handler.accept(this, event);
+                handler.accept(this, event, isTrackpadScroll);
             } catch (Throwable th) {
                 String errorMessage = "Failed to run ScrollHandler " + handler + ".";
                 getLogger().throwing("InputManager", "processScrollEvents", new RuntimeException(errorMessage, th));
@@ -371,7 +397,7 @@ public class InputManager {
 
         if (this.finalScrollHandler != null) {
             try {
-                this.finalScrollHandler.accept(this, event);
+                this.finalScrollHandler.accept(this, event, isTrackpadScroll);
             } catch (Throwable th) {
                 String errorMessage = "Failed to run final ScrollHandler " + this.finalScrollHandler + ".";
                 getLogger().throwing("InputManager", "processScrollEvents", new RuntimeException(errorMessage, th));
@@ -393,8 +419,10 @@ public class InputManager {
      */
     @Getter
     public static class MouseInputState {
-        private double x; // The x position of the mouse.
-        private double y; // The y position of the mouse.
+        private double x; // The x position of the mouse relative to the node.
+        private double y; // The y position of the mouse relative to the node.
+        private double sceneX; // The x position of the mouse.
+        private double sceneY; // The y position of the mouse.
         private final Vector3f intersectedPoint = new Vector3f();
         private int intersectedFaceIndex = -1;
         private Node intersectedNode;
@@ -404,8 +432,10 @@ public class InputManager {
          * @param event The event to apply information from.
          */
         public void apply(MouseEvent event) {
-            this.x = event.getSceneX();
-            this.y = event.getSceneY();
+            this.x = event.getX();
+            this.y = event.getY();
+            this.sceneX = event.getSceneX();
+            this.sceneY = event.getSceneY();
 
             // Reset information to a default state.
             this.intersectedPoint.setXYZ(0F, 0F, 0F);
@@ -429,9 +459,95 @@ public class InputManager {
         public void apply(MouseInputState other) {
             this.x = other.getX();
             this.y = other.getY();
+            this.sceneX = other.getSceneX();
+            this.sceneY = other.getSceneY();
             this.intersectedPoint.setXYZ(other.getIntersectedPoint());
             this.intersectedFaceIndex = other.getIntersectedFaceIndex();
             this.intersectedNode = other.getIntersectedNode();
         }
+    }
+
+    @Getter
+    public static class MouseTracker {
+        private final MouseInputState lastDragStartMouseState = new MouseInputState();
+        private final MouseInputState lastMouseState = new MouseInputState();
+        private final MouseInputState mouseState = new MouseInputState();
+        private MouseDragState dragState = MouseDragState.INACTIVE;
+        @Setter private boolean significantMouseDragRecorded;
+
+        public static final int SIZABLE_DRAG_THRESHOLD = 4;
+
+        /**
+         * Handles the mouse event.
+         * @param event the mouse event to handle
+         */
+        public void handle(MouseEvent event) {
+            if (MouseEvent.MOUSE_PRESSED.equals(event.getEventType())) {
+                this.dragState = MouseDragState.START;
+                this.significantMouseDragRecorded = false;
+                this.lastDragStartMouseState.apply(event);
+                this.lastMouseState.apply(event);
+                this.mouseState.apply(event);
+            } else if (MouseEvent.MOUSE_DRAGGED.equals(event.getEventType())) {
+                this.dragState = MouseDragState.IN_PROGRESS;
+                this.lastMouseState.apply(this.mouseState);
+                this.mouseState.apply(event);
+                if (Math.abs(getDeltaXSinceDragStart()) >= SIZABLE_DRAG_THRESHOLD || Math.abs(getDeltaYSinceDragStart()) >= SIZABLE_DRAG_THRESHOLD)
+                    this.significantMouseDragRecorded = true;
+            } else if (MouseEvent.MOUSE_RELEASED.equals(event.getEventType())) {
+                this.dragState = MouseDragState.COMPLETE;
+                this.lastMouseState.apply(this.mouseState);
+                this.mouseState.apply(event);
+                if (Math.abs(getDeltaXSinceDragStart()) >= SIZABLE_DRAG_THRESHOLD || Math.abs(getDeltaYSinceDragStart()) >= SIZABLE_DRAG_THRESHOLD)
+                    this.significantMouseDragRecorded = true;
+            }
+        }
+
+        /**
+         * Gets the delta X change since the last mouse movement.
+         */
+        public double getDeltaXSinceLastMouseMove() {
+            return this.mouseState.getSceneX() - this.lastMouseState.getSceneX();
+        }
+
+        /**
+         * Gets the delta Y change since the last mouse movement.
+         */
+        public double getDeltaYSinceLastMouseMove() {
+            return this.mouseState.getSceneY() - this.lastMouseState.getSceneY();
+        }
+
+        /**
+         * Gets the delta X change since the last mouse drag began.
+         */
+        public double getDeltaXSinceDragStart() {
+            return this.mouseState.getSceneX() - this.lastDragStartMouseState.getSceneX();
+        }
+
+        /**
+         * Gets the delta Y change since the last mouse drag began.
+         */
+        public double getDeltaYSinceDragStart() {
+            return this.mouseState.getSceneY() - this.lastDragStartMouseState.getSceneY();
+        }
+
+        /**
+         * Marks the drag state as inactive if the drag is complete.
+         * This only needs to be called by the mouse dragging systems, and not mouse drag listeners.
+         */
+        public void markDragInactiveIfComplete() {
+            if (this.dragState == MouseDragState.COMPLETE)
+                this.dragState = MouseDragState.INACTIVE;
+        }
+    }
+
+    /**
+     * Represents the current state of the drag.
+     */
+    public enum MouseDragState {
+        INACTIVE, // The drag is not currently active.
+        START, // The first stage of the drag.
+        IN_PROGRESS, // The drag started previously and is currently updating.
+        COMPLETE, // The drag is processing its final update before returning to inactive.
     }
 }

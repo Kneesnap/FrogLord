@@ -2,8 +2,8 @@ package net.highwayfrogs.editor.games.sony.beastwars;
 
 import javafx.scene.paint.Color;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.file.FroggerPaletteFile;
 import net.highwayfrogs.editor.utils.ColorUtils;
 
@@ -28,15 +28,29 @@ public class PLTFile extends FroggerPaletteFile {
 
     @Override
     public void load(DataReader reader) {
-        int count = reader.readInt(); // Actually, we should just get the lowest 8 bits as the count, it seems they're usually correct.
+        // The first four bytes are supposed to be the color count, but they are not behaviorally consistent.
+        // This likely suggests exporting with an earlier version of their tools.
+        // Most files include the colorCount readable as a u32.
+        // Others write it as a u8 and have non-zeroed garbage data for the remaining 3 bytes.
+        // The final two (MPLAYER8.PLT and MS3_M_IB.PLT) write the first u8 correctly, but are off by one. (Write 128 when 127 is the real color count).
+        // As such, it makes the most sense to just skip the value, as we can determine the color count by how much data is present in the file.
+        reader.skipInt();
+
+        // Color format is RGBA888, where the alpha is always zero. Maybe it's BGRA8888, I can't easily tell.
         while (reader.getRemaining() >= Constants.INTEGER_SIZE)
-            getColors().add(ColorUtils.fromRGB(reader.readInt(), 1D));
+            getColors().add(ColorUtils.fromRGB(reader.readInt() >>> 8, 1D));
+
+        reader.skipBytesRequireEmpty(1);
     }
 
     @Override
     public void save(DataWriter writer) {
         writer.writeInt(getColors().size());
+
+        // Color format is RGBA888, where the alpha is always zero.
         for (Color color : getColors())
-            writer.writeInt(ColorUtils.toRGB(color));
+            writer.writeInt(ColorUtils.toRGB(color) << 8);
+
+        writer.writeByte(Constants.NULL_BYTE);
     }
 }

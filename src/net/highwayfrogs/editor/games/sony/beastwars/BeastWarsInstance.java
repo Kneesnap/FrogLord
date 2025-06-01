@@ -1,29 +1,39 @@
 package net.highwayfrogs.editor.games.sony.beastwars;
 
-import net.highwayfrogs.editor.file.reader.DataReader;
+import lombok.Getter;
+import net.highwayfrogs.editor.file.config.Config;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.beastwars.map.BeastWarsMapFile;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents a loaded instance of the Beast Wars: Transformers game files.
  * TODO: Many animated mofs have broken animations.
- * TODO: SFX on PC plays very poorly. PSX is fine.
- * TODO: .BPP, .DAT
- * TODO: PSX .TEX files need some work.
- * TODO: May be a level select in the PC version, also there are potentially names for the unknown map file names.
- * TODO: .PLT files cannot be viewed.
+ * TODO: .DAT
  * TODO: Collprims need finished preview in MOF editor + MAP Editor.
+ * TODO: Light UI manager.
  * Created by Kneesnap on 9/8/2023.
  */
+@Getter
 public class BeastWarsInstance extends SCGameInstance {
+    private final List<Integer> modelRemaps = new ArrayList<>();
+
+    public static final int FILE_TYPE_STD = 0;
     public static final int FILE_TYPE_VLO = 1;
     public static final int FILE_TYPE_MOF = 3;
     public static final int FILE_TYPE_MAP = 4;
@@ -36,6 +46,11 @@ public class BeastWarsInstance extends SCGameInstance {
     }
 
     @Override
+    public BeastWarsConfig getVersionConfig() {
+        return (BeastWarsConfig) super.getVersionConfig();
+    }
+
+    @Override
     public SCGameFile<?> createFile(MWIResourceEntry resourceEntry, byte[] fileData) {
         if (resourceEntry.getTypeId() == FILE_TYPE_MAP || DataUtils.testSignature(fileData, BeastWarsMapFile.FILE_SIGNATURE))
             return new BeastWarsMapFile(this);
@@ -43,9 +58,34 @@ public class BeastWarsInstance extends SCGameInstance {
             return new BeastWarsTexFile(this);
         if (resourceEntry.getTypeId() == FILE_TYPE_PLT || resourceEntry.hasExtension("plt"))
             return new PLTFile(this);
-
+        if (resourceEntry.getTypeId() == FILE_TYPE_STD && resourceEntry.hasExtension("bpp"))
+            return new BeastWarsBPPImageFile(this);
 
         return SCUtils.createSharedGameFile(resourceEntry, fileData);
+    }
+
+    @Override
+    protected void onConfigLoad(Config configObj) {
+        super.onConfigLoad(configObj);
+
+        DataReader exeReader = getExecutableReader();
+        readModelRemaps(exeReader);
+    }
+
+    @Override
+    protected VLOArchive resolveMainVlo(MRModel model) {
+        WADFile wadFile = model.getParentWadFile();
+        if (wadFile != null) {
+            String searchFileName = FileUtils.stripExtension(wadFile.getFileDisplayName()) + ".VLO";
+            if (searchFileName.startsWith("MD"))
+                searchFileName = "MS" + searchFileName.substring(2);
+
+            VLOArchive foundVlo = getMainArchive().getFileByName(searchFileName);
+            if (foundVlo != null)
+                return foundVlo;
+        }
+
+        return super.resolveMainVlo(model);
     }
 
     @Override
@@ -61,5 +101,15 @@ public class BeastWarsInstance extends SCGameInstance {
         fileListView.addGroup(new SCGameFileListTypeIdGroup("Map Texture", FILE_TYPE_TEX));
         fileListView.addGroup(new SCGameFileListTypeIdGroup("TIM [PSX Image]", FILE_TYPE_TIM));
         fileListView.addGroup(new SCGameFileListTypeIdGroup("PLT [Palette]", FILE_TYPE_PLT));
+    }
+
+    private void readModelRemaps(DataReader reader) {
+        this.modelRemaps.clear();
+        if (getVersionConfig().getModelRemapTablePointer() <= 0 || getVersionConfig().getModelRemapTableLength() <= 0)
+            return;
+
+        reader.setIndex(getVersionConfig().getModelRemapTablePointer());
+        for (int i = 0; i < getVersionConfig().getModelRemapTableLength(); i++)
+            this.modelRemaps.add(reader.readInt());
     }
 }

@@ -13,7 +13,6 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.*;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapController;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
-import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
@@ -84,7 +83,7 @@ public class OldFroggerMapFile extends SCChunkedFile<OldFroggerGameInstance> {
     }
 
     @Override
-    public void handleWadEdit(WADFile parent) {
+    public void performDefaultUIAction() {
         MeshViewController.setupMeshViewer(getGameInstance(), new OldFroggerMapMeshController(), new OldFroggerMapMesh(this));
     }
 

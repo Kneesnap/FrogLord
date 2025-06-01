@@ -2,15 +2,13 @@ package net.highwayfrogs.editor.utils;
 
 import com.sun.javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
+import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
@@ -24,9 +22,10 @@ import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import javafx.util.Duration;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameInstance;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.gui.GameUIController;
 
 import java.awt.image.BufferedImage;
@@ -34,14 +33,14 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.logging.Level;
 
 /**
  * Contains static utilities used to interact with JavaFX.
@@ -88,6 +87,32 @@ public class FXUtils {
     }
 
     /**
+     * Creates a tooltip of indefinite length from the provided text.
+     * @param tooltipText the text to create the tooltip from
+     * @return tooltipText
+     */
+    public static Tooltip createTooltip(String tooltipText) {
+        return createTooltip(tooltipText, Duration.INDEFINITE);
+    }
+
+    /**
+     * Creates a tooltip which lasts for the given duration
+     * @param tooltipText the toolTip text to create the tooltip from
+     * @param duration the duration which the tooltip should display for
+     * @return tooltip
+     */
+    @SuppressWarnings("StatementWithEmptyBody")
+    public static Tooltip createTooltip(String tooltipText, Duration duration) {
+        if (StringUtils.isNullOrWhiteSpace(tooltipText))
+            return null;
+
+        Tooltip tooltip = new Tooltip(tooltipText);
+        if (duration != null) // Default value is 5000 ms.
+            ; // TODO: JavaFX 9+ tooltip.setShowDuration(duration);
+        return tooltip;
+    }
+
+    /**
      * Prompt the user to select a file.
      * TODO: Replace with FileUtils.askUserToOpenFile()
      * @param title      The title of the window to display.
@@ -116,11 +141,11 @@ public class FXUtils {
         }
         fileChooser.getExtensionFilters().add(new ExtensionFilter(typeInfo, allExtensions));
 
-        fileChooser.setInitialDirectory(FileUtils.getValidFolder(GUIMain.getWorkingDirectory()));
+        fileChooser.setInitialDirectory(FileUtils.getValidFolder(FrogLordApplication.getWorkingDirectory()));
 
         File selectedFile = fileChooser.showOpenDialog(instance != null ? instance.getMainStage() : null);
         if (selectedFile != null)
-            GUIMain.setWorkingDirectory(selectedFile.getParentFile());
+            FrogLordApplication.setWorkingDirectory(selectedFile.getParentFile());
 
         return selectedFile;
     }
@@ -165,7 +190,7 @@ public class FXUtils {
             }
         }
 
-        fileChooser.setInitialDirectory(FileUtils.getValidFolder(GUIMain.getWorkingDirectory()));
+        fileChooser.setInitialDirectory(FileUtils.getValidFolder(FrogLordApplication.getWorkingDirectory()));
         if (suggestName != null) {
             String initialName = suggestName;
             if (extension != null && !extension.equals("*") && !initialName.endsWith("." + extension))
@@ -176,7 +201,7 @@ public class FXUtils {
 
         File selectedFile = fileChooser.showSaveDialog(instance != null ? instance.getMainStage() : null);
         if (selectedFile != null)
-            GUIMain.setWorkingDirectory(selectedFile.getParentFile());
+            FrogLordApplication.setWorkingDirectory(selectedFile.getParentFile());
 
         return selectedFile;
     }
@@ -192,11 +217,11 @@ public class FXUtils {
     public static File promptChooseDirectory(GameInstance instance, String title, boolean saveDirectory) {
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle(title);
-        chooser.setInitialDirectory(FileUtils.getValidFolder(GUIMain.getWorkingDirectory()));
+        chooser.setInitialDirectory(FileUtils.getValidFolder(FrogLordApplication.getWorkingDirectory()));
 
         File selectedFolder = chooser.showDialog(instance != null ? instance.getMainStage() : null);
         if (selectedFolder != null && saveDirectory)
-            GUIMain.setWorkingDirectory(selectedFolder);
+            FrogLordApplication.setWorkingDirectory(selectedFolder);
 
         return selectedFolder;
     }
@@ -292,11 +317,10 @@ public class FXUtils {
         double x = oldWindow.getX();
         double y = oldWindow.getY();
 
-        stage.setScene(newScene);
-
         // This function worked without the following on my machines, but other machines (whether it be system settings, differing FX versions, etc) would not resize the scene properly.
         // The following appears to fix it.
         stage.hide();
+        stage.setScene(newScene);
         stage.show();
 
         // Maintain the position the viewer Scene was at when it was closed.
@@ -315,11 +339,12 @@ public class FXUtils {
      * @return convertedImage
      */
     public static Image toFXImage(BufferedImage image, boolean useCache) {
-        imageCacheMap.entrySet().removeIf(entry -> entry.getValue().hasExpired());
         if (!useCache)
             return SwingFXUtils.toFXImage(image, null);
 
-        return imageCacheMap.computeIfAbsent(image, bufferedImage -> new TextureCache(SwingFXUtils.toFXImage(bufferedImage, null))).getImage();
+        synchronized (imageCacheMap) {
+            return imageCacheMap.computeIfAbsent(image, bufferedImage -> new TextureCache(SwingFXUtils.toFXImage(bufferedImage, null))).getImage();
+        }
     }
 
     /**
@@ -334,14 +359,14 @@ public class FXUtils {
         field.setOnKeyPressed(evt -> {
             KeyCode code = evt.getCode();
             if (field.getStyle().isEmpty() && (code.isLetterKey() || code.isDigitKey() || code == KeyCode.BACK_SPACE)) {
-                field.setStyle("-fx-text-inner-color: darkgreen;");
+                field.setStyle("-fx-text-inner-color: darkgreen; -fx-focus-color: green; -fx-faint-focus-color: #ff002200");
             } else if (code == KeyCode.ESCAPE) {
                 if (field.getParent() != null)
                     field.getParent().requestFocus();
                 evt.consume(); // Don't pass further, eg: we don't want to exit the UI we're in.
                 field.setText(resetTextRef.get());
                 field.setStyle(null);
-            } else if (code == KeyCode.ENTER) {
+            } else if (code == KeyCode.ENTER || code == KeyCode.TAB) { // Tab should not only accept the value, but move to the next input field as well.
                 boolean successfullyHandled = false;
                 String newText = field.getText();
 
@@ -410,14 +435,37 @@ public class FXUtils {
         } else {
             String errorMessage = stringWriter.toString();
 
-            Alert alert = new Alert(AlertType.ERROR, errorMessage, ButtonType.OK);
-            if (ex != null) {
-                alert.setResizable(true);
-                alert.setWidth(1000);
-                alert.setHeight(750);
-            }
+            showPopUpAndWait(() -> {
+                Alert alert = new Alert(AlertType.ERROR, errorMessage, ButtonType.OK);
+                if (ex != null) {
+                    alert.setResizable(true);
+                    alert.setWidth(1000);
+                    alert.setHeight(750);
+                }
 
-            alert.showAndWait();
+                return alert;
+            });
+        }
+    }
+
+    // Shows a popup and waits for a response, even if async.
+    private static Optional<ButtonType> showPopUpAndWait(Supplier<Alert> alertMaker) {
+        if (Platform.isFxApplicationThread())
+            return alertMaker.get().showAndWait();
+
+        CountDownLatch tempLatch = new CountDownLatch(1);
+        AtomicReference<Optional<ButtonType>> resultingButtonType = new AtomicReference<>();
+        Platform.runLater(() -> {
+            resultingButtonType.set(alertMaker.get().showAndWait());
+            tempLatch.countDown();
+        });
+
+        try {
+            tempLatch.await();
+            return resultingButtonType.get();
+        } catch (InterruptedException ex) {
+            Utils.handleError(null, ex, false);
+            return Optional.empty();
         }
     }
 
@@ -426,7 +474,7 @@ public class FXUtils {
      * @param message The message to display.
      */
     public static void makePopUp(String message, AlertType type) {
-        new Alert(type, message, ButtonType.OK).showAndWait();
+        showPopUpAndWait(() -> new Alert(type, message, ButtonType.OK));
     }
 
     /**
@@ -434,7 +482,8 @@ public class FXUtils {
      * @param message The message to display.
      */
     public static boolean makePopUpYesNo(String message) {
-        return new Alert(AlertType.CONFIRMATION, message, ButtonType.YES, ButtonType.NO).showAndWait().orElse(ButtonType.NO) == ButtonType.YES;
+        return showPopUpAndWait(() -> new Alert(AlertType.CONFIRMATION, message, ButtonType.YES, ButtonType.NO))
+                .orElse(ButtonType.NO) == ButtonType.YES;
     }
 
     /**
@@ -494,5 +543,81 @@ public class FXUtils {
         } else {
             throw new RuntimeException("Unsupported JavaFX Node: " + Utils.getSimpleName(node));
         }
+    }
+
+    /**
+     * Gets the appropriate AlertType for a given logging Level.
+     * @param level the logging level to get an AlertType for
+     * @return alertType
+     */
+    public static AlertType getAlertTypeFromLogLevel(Level level) {
+        if (level == null)
+            throw new NullPointerException("level");
+
+        if (level.intValue() >= Level.SEVERE.intValue()) { // serious failure
+            return AlertType.ERROR;
+        } else if (level.intValue() >= Level.WARNING.intValue()) { // potential problem
+            return AlertType.WARNING;
+        } else { // informational messages
+            return AlertType.INFORMATION;
+        }
+    }
+
+    /**
+     * Adds or removes the element in the list to ensure its presence matches the desired boolean.
+     * @param list the list to add/remove
+     * @param value the value to add/remove
+     * @param shouldBeInList if the element should be present in the list
+     */
+    public static <TElement> void setFoundInList(ObservableList<TElement> list, TElement value, boolean shouldBeInList) {
+        if (list == null)
+            throw new NullPointerException("list");
+
+        if (shouldBeInList) {
+            if (!list.contains(value))
+                list.add(value);
+        } else {
+            list.remove(value);
+        }
+    }
+
+    /**
+     * Opens a page in the user's web browser.
+     * @param url the url to open
+     */
+    public static void openPageInWebBrowser(String url) {
+        if (url == null)
+            throw new NullPointerException("url");
+
+        FrogLordApplication.getApplication().getHostServices().showDocument(url);
+    }
+
+    /**
+     * Disables mnemonic parsing for all items of the ContextMenu.
+     * Enables underscores to work.
+     * @param contextMenu the context menu to update
+     */
+    public static void disableMnemonicParsing(ContextMenu contextMenu) {
+        if (contextMenu == null)
+            return;
+
+        ObservableList<MenuItem> menuItems = contextMenu.getItems();
+        for (int i = 0; i < menuItems.size(); i++) {
+            MenuItem menuItem = menuItems.get(i);
+            if (menuItem != null)
+                menuItem.setMnemonicParsing(false);
+        }
+    }
+
+    private static void setupCacheTimerTask() {
+        Utils.getAsyncTaskTimer().scheduleAtFixedRate(Utils.createTimerTask(() -> {
+            synchronized (imageCacheMap) {
+                imageCacheMap.entrySet().removeIf(entry -> entry.getValue().hasExpired());
+            }
+        }), 0, TimeUnit.MINUTES.toMillis(1));
+    }
+
+    static {
+        setupCacheTimerTask();
     }
 }

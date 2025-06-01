@@ -2,10 +2,7 @@ package net.highwayfrogs.editor.games.sony.medievil.map.entity;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
@@ -13,9 +10,12 @@ import net.highwayfrogs.editor.games.sony.medievil.entity.MediEvilEntityDefiniti
 import net.highwayfrogs.editor.games.sony.medievil.entity.MediEvilEntityDefinition.MediEvilModelEntityData;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.medievil.map.ui.MediEvilEntityManager;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo.IPositionChangeListener;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.UUID;
 
@@ -126,29 +126,29 @@ public class MediEvilMapEntity extends SCGameData<MediEvilGameInstance> {
     /**
      * Gets the mof file associated with the form, if it can be found.
      */
-    public MOFHolder getMof() {
+    public MRModel getModel() {
         MediEvilEntityDefinition definition = getEntityDefinition();
         if (definition != null) {
             // Attempt to get the model from the model lists.
             if (definition.getModelData().size() > this.subFormId && this.subFormId != 0xFF) {
                 MediEvilModelEntityData data = definition.getModelData().get(this.subFormId);
                 if (data.getMofIndex() != 0) {
-                    MOFHolder holder = getGameInstance().getGameFileByResourceID(data.getMofIndex(), MOFHolder.class, true);
-                    if (holder != null) {
-                        return holder;
+                    MRModel model = getGameInstance().getGameFileByResourceID(data.getMofIndex(), MRModel.class, true);
+                    if (model != null) {
+                        return model;
                     } else {
-                        getLogger().warning("Failed to find MOF from Model List's resource ID " + definition.getMofId() + "...");
+                        getLogger().warning("Failed to find MOF from Model List's resource ID %d...", data.getMofIndex());
                     }
                 }
             }
 
             // Attempt to use this as a MOF file directly.
-            if (definition.getMofId() != 0) {
-                MOFHolder holder = definition.getMOF();
-                if (holder != null) {
-                    return holder;
+            if (definition.getMofId() != 0 && definition.getMofId() != -1) {
+                MRModel model = definition.getModel();
+                if (model != null) {
+                    return model;
                 } else {
-                    getLogger().warning("Failed to find MOF from resource ID " + definition.getMofId() + "...");
+                    getLogger().warning("Failed to find MOF from resource ID %d...", definition.getMofId());
                 }
             }
         }

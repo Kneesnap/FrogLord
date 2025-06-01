@@ -19,15 +19,18 @@ Need help? Want to find/share mods? Talk with other Frogger fans? Join our [disc
 ![MOF Viewer](/_repository/model-screenshot.png)
 
 ## Supported Games
-| Name                     | # of Supported Builds | Support Notes                  |
-|--------------------------|-----------------------|--------------------------------|
-| Beast Wars: Transformers | PC: 1, PSX: 1         | Support WIP.                   |
-| C-12 Final Resistance    | PSX: 16               | Support WIP.                   |
-| Frogger He's Back        | PC: 6, PSX: 67        | Map editing not yet finalized. |
-| Frogger: The Great Quest | PC: 1, PS2: 3         | Support WIP.                   |
-| MediEvil                 | PSX: 38               | Support WIP.                   |
-| MediEvil II              | PSX: 16               | Support WIP.                   |
-| Moon Warrior             | PSX: 1                | Support WIP.                   |
+| Name                     | # of Supported Builds         | Support Notes                                 |
+|--------------------------|-------------------------------|-----------------------------------------------|
+| Beast Wars: Transformers | PC: 2, PSX: 4                 | All game data viewable, only some editable.   |
+| C-12 Final Resistance    | PSX: 16                       | View/edit most game data. Saving is untested. |
+| Frogger He's Back        | PC: 8, PSX: 67                | Full support (Custom Levels are available.)   |
+| Frogger: The Great Quest | PC: 1, PS2: 3                 | Almost full support. (Cannot import 3D mesh)  |
+| Frogger Beyond           | GC: 3, PC: 1, PS2: 2, Xbox: 1 | Extremely rudimentary viewer, no modding yet. |
+| Frogger Rescue           | GC: 1, PC: 1, PS2: 3          | Extremely rudimentary viewer, no modding yet. |
+| Frogger Ancient Shadow   | GC: 1, PC: 1, PS2: 1, Xbox: 1 | Extremely rudimentary viewer, no modding yet. |
+| MediEvil                 | PSX: 38                       | View/edit most game data. Saving is untested. |
+| MediEvil II              | PSX: 16                       | View/edit most game data. Saving is untested. |
+| Moon Warrior             | PSX: 1                        | View/edit most game data. Saving is untested. |
 
 ## Can I Contribute?
 Yes! Pull requests are welcome.  
@@ -46,29 +49,6 @@ Yes! Pull requests are welcome.
 **Building:**
 1. ``Build > Build Artifacts... > FrogLord > Build``
 
-### Using Maven
-
-**Requirements:**
-1. Maven:
-    - Download the latest version of [maven](https://maven.apache.org/download.cgi)
-    - Follow the [installation guide](https://maven.apache.org/install.html)
-2. Java JDK:
-    - Make an Oracle account (Unfortunately required for the next step)
-    - Download Java 8 [Java Development Kit](https://www.oracle.com/java/technologies/javase/javase8u211-later-archive-downloads.html)
-    - If you downloaded a bin file run that, otherwise install according to the instructions
-
-**Setup:**
-1. ``git clone https://github.com/Kneesnap/FrogLord.git``
-2. ``cd FrogLord``
-3. ``mvn compile`` - Verify code compiles
-
-**Building:**
-1. ``mvn package``
-
-**Running:**
-1. ``java -jar target/editor-{version}-jar-with-dependencies.jar`` 
-    * `{version}` is the current release
-
 ## Special Thanks:
  - Andy Eder (Frogger 2 Programmer, Significant FrogLord contributor)
  - Mysteli (Highway Frogs Creator, Documented demo replay file format)
@@ -76,3 +56,4 @@ Yes! Pull requests are welcome.
  - Shakotay2 (XeNTax, Helped us figure out how 3D geometry was stored)
  - Everyone involved with Frogger's creation who we've spoken with.
  - yohoat (FrogLord Logo)
+ - archᵗʰ (BW/M1 FrogLord Logos & Beast Wars game info help)

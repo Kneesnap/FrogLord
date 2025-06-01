@@ -1,11 +1,11 @@
 package net.highwayfrogs.editor.games.sony.frogger;
 
 import javafx.scene.Node;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.ui.*;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerVersionComparison;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCMainMenuUIController;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.utils.objects.IndexBitArray;
 
 /**
@@ -21,7 +21,7 @@ public class FroggerMainMenuUIController extends SCMainMenuUIController<FroggerG
     protected void onControllerLoad(Node rootNode) {
         super.onControllerLoad(rootNode);
 
-        addMenuItem(this.menuBarEdit, "Generate Header Files", () -> getGameInstance().exportCode(GUIMain.getWorkingDirectory()));
+        addMenuItem(this.menuBarEdit, "Generate Header Files", () -> getGameInstance().exportCode(FrogLordApplication.getWorkingDirectory()));
         addMenuItem(this.menuBarEdit, "Edit Level Info", () -> LevelInfoController.openEditor(getGameInstance()));
         addMenuItem(this.menuBarEdit, "Edit Form Library", () -> FormEntryController.openEditor(getGameInstance()));
         addMenuItem(this.menuBarEdit, "Edit Scripts", () -> ScriptEditorController.openEditor(getGameInstance()));

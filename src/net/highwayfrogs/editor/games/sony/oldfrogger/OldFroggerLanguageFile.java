@@ -2,8 +2,8 @@ package net.highwayfrogs.editor.games.sony.oldfrogger;
 
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorPropertyListUIController;
 import net.highwayfrogs.editor.gui.GameUIController;

@@ -5,12 +5,12 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.StringUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.StringNode;
@@ -738,10 +738,11 @@ public class Config implements IBinarySerializable {
 
     private static Config loadConfigFromString(BadStringReader stringReader, int layer, String fileName, String sectionName, String sectionComment) {
         Config config = new Config(sectionName);
-        config.setOriginalLineNumber(stringReader.getLineNumber());
+        config.setOriginalLineNumber(stringReader.getLineNumber() - 1);
         config.setSectionComment(sectionComment);
 
         while (true) {
+            int lineNumber = stringReader.getLineNumber(); // The value is one-indexed, so getting this before we read the line gives us the proper line number.
             String line = stringReader.readLine();
             if (line == null)
                 return config; // Reached end of file?
@@ -772,7 +773,7 @@ public class Config implements IBinarySerializable {
 
                 // This is the start of a new section.
                 if (sectionLine.charAt(sectionLine.length() - 1) != ']')
-                    throw new IllegalConfigSyntaxException("Invalid section identifier. (Line: '" + sectionLine + "')");
+                    throw new IllegalConfigSyntaxException("Invalid section identifier. (Line " + lineNumber + ": '" + sectionLine + "')");
 
                 int leftLayer = 0;
                 for (int i = 0; i < sectionLine.length(); i++) {
@@ -794,15 +795,15 @@ public class Config implements IBinarySerializable {
 
                 // Verify layer.
                 if (leftLayer != rightLayer)
-                    throw new IllegalConfigSyntaxException("Section identifier had mismatched tags! (Line: '" + sectionLine + "', Left: " + leftLayer + ", Right: " + rightLayer + ")");
+                    throw new IllegalConfigSyntaxException("This section had a different number of square brackets on the left-side vs the right-side! (Line " + lineNumber + ": '" + sectionLine + "', Left: " + leftLayer + ", Right: " + rightLayer + ")");
 
                 int sectionLayer = leftLayer;
                 if (sectionLayer > layer + 1)
-                    throw new IllegalConfigSyntaxException("Section identifier has too many brackets to connect to its parent! (Line: '" + sectionLine + "', Parent: " + layer + ", New Layer: " + sectionLayer + ")");
+                    throw new IllegalConfigSyntaxException("The section is likely misplaced as it has too many square bracket layers! (Line " + lineNumber + ": '" + sectionLine + "', Parent: " + layer + ", New Layer: " + sectionLayer + ")");
 
                 int nameLength = sectionLine.length() - rightLayer - leftLayer;
                 if (nameLength == 0)
-                    throw new IllegalConfigSyntaxException("Section identifier had no name! (Line: '" + sectionLine + "')");
+                    throw new IllegalConfigSyntaxException("The section had no name! (Line " + lineNumber + ": '" + sectionLine + "')");
 
                 // Determine super-section and section name.
                 String newSectionName = unescapeComment(sectionLine.substring(leftLayer, leftLayer + nameLength));
@@ -871,8 +872,14 @@ public class Config implements IBinarySerializable {
             if (splitAt != -1) { // It's a key-value pair.
                 String key = unescapeKey(text.substring(0, splitAt));
                 String value = unescapeValue(text.substring(splitAt + 1));
-                if (config.keyValuePairs.put(key, newNode = new ConfigValueNode(value, commentText, commentSeparator)) == null)
+                ConfigValueNode oldNode;
+                if ((oldNode = config.keyValuePairs.putIfAbsent(key, newNode = new ConfigValueNode(value, commentText, commentSeparator))) == null) {
                     config.orderedKeyValuePairs.add(key);
+                } else {
+                    throw new IllegalConfigSyntaxException("The KeyValuePair on line #" + lineNumber + " conflicts the one defined on line #" + oldNode.getOriginalLineNumber() + "."
+                            + "\nLine #" + oldNode.getOriginalLineNumber() + ": " + escapeKey(key) + "=" + oldNode.getAsStringLiteral()
+                            + "\nLine #" + lineNumber + ": " + escapeKey(key) + "=" + escapeValue(value));
+                }
             } else { // It's raw text.
                 newNode = new ConfigValueNode(text, commentText, commentSeparator);
                 newNode.setAsString(text); // Ensure it is not escaped, as escaped text isn't supported here.
@@ -880,7 +887,7 @@ public class Config implements IBinarySerializable {
             }
 
             // Setup the new node.
-            newNode.setOriginalLineNumber(stringReader.getLineNumber());
+            newNode.setOriginalLineNumber(lineNumber);
             newNode.setOriginalFileName(fileName);
         }
     }
@@ -1040,19 +1047,19 @@ public class Config implements IBinarySerializable {
 
     // This is scuffed, but it works.
     private static class BadStringReader implements Closeable {
-        private final StringReader _internalReader;
+        private final StringReader internalReader;
         private final StringBuilder stringBuilder = new StringBuilder();
         public String cachedNextLine;
-        @Getter private int lineNumber; // The line number of the line which was just read.
+        @Getter private int lineNumber = 1; // The line number of the line which was just read.
 
         public BadStringReader(StringReader reader) {
-            this._internalReader = reader;
+            this.internalReader = reader;
         }
 
         @Override
         public void close() {
-            if (this._internalReader != null)
-                this._internalReader.close();
+            if (this.internalReader != null)
+                this.internalReader.close();
         }
 
         /**
@@ -1069,7 +1076,7 @@ public class Config implements IBinarySerializable {
             try {
                 int temp;
                 char tempChar;
-                while ((temp = _internalReader.read()) != -1 && (tempChar = (char) temp) != '\n')
+                while ((temp = this.internalReader.read()) != -1 && (tempChar = (char) temp) != '\n')
                     if (tempChar != '\r')
                         this.stringBuilder.append(tempChar);
 

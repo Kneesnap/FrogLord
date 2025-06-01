@@ -3,7 +3,9 @@ package net.highwayfrogs.editor.gui.extra.hash.tree;
 import lombok.Getter;
 import net.highwayfrogs.editor.gui.extra.hash.FroggerHashUtil;
 import net.highwayfrogs.editor.gui.extra.hash.HashPlaygroundController;
+import net.highwayfrogs.editor.gui.extra.hash.HashRange;
 import net.highwayfrogs.editor.gui.extra.hash.IHashStringGenerator;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.*;
 
@@ -13,29 +15,46 @@ import java.util.*;
  */
 public class HashTreeStringGenerator implements IHashStringGenerator {
     @Getter private static HashSumLookupTree lookupTree;
-    @Getter
     private static Map<HashSum, Set<HashStringCountMap>> sumCountMaps;
 
     @Override
-    public List<String> generateStrings(int targetLinkerHash, String searchQuery) {
+    public List<String> generateStrings(HashPlaygroundController controller) {
         Set<HashStringCountMap> allResults = new HashSet<>();
 
+        HashRange psyqRange = controller.getPsyqTargetHashRange();
+        HashRange msvcRange = controller.getMsvcTargetHashRange();
+        String prefix = controller.getPrefix();
+        String suffix = controller.getSuffix();
 
-        for (int i = 0; i < Integer.MAX_VALUE; i++) {
-            int currHash = targetLinkerHash + (FroggerHashUtil.LINKER_HASH_TABLE_SIZE * i);
-            if (currHash > lookupTree.getMaxSum())
-                break; // Reached end.
+        if (psyqRange != null) {
+            int hash = -1;
+            while ((hash = psyqRange.getNextValue(hash)) >= 0) {
+                int targetLinkerHash = FroggerHashUtil.getPsyQLinkerHashWithoutPrefixSuffix(hash, prefix, suffix);
+                for (int i = 0; i < Integer.MAX_VALUE; i++) {
+                    int currHash = targetLinkerHash + (FroggerHashUtil.PSYQ_LINKER_HASH_TABLE_SIZE * i);
+                    if (currHash > lookupTree.getMaxSum())
+                        break; // Reached end.
 
-            HashSum sum = lookupTree.get(currHash);
-            if (sum != null && sumCountMaps.containsKey(sum))
-                allResults.addAll(sumCountMaps.get(sum));
+                    HashSum sum = lookupTree.get(currHash);
+                    if (sum != null && sumCountMaps.containsKey(sum))
+                        allResults.addAll(sumCountMaps.get(sum));
+                }
+            }
         }
 
+
+
         List<String> results = new ArrayList<>();
+        String searchQuery = controller.getSearchQuery();
         HashStringCountMap queryMap = searchQuery != null && searchQuery.length() > 0 ? HashStringCountMap.createCountMap(searchQuery) : null;
-        for (HashStringCountMap countMap : allResults)
-            if (countMap.contains(queryMap))
-                results.add(countMap.generateString());
+        for (HashStringCountMap countMap : allResults) {
+            if (!countMap.contains(queryMap))
+                continue;
+
+            String newString = countMap.generateString();
+            if (msvcRange == null || msvcRange.isInRange(FroggerHashUtil.getMsvcCompilerC1HashTableKey(newString)))
+                results.add(newString);
+        }
 
         return results;
 
@@ -47,36 +66,36 @@ public class HashTreeStringGenerator implements IHashStringGenerator {
             lookupTree = HashSumLookupTree.buildTree();
 
         if (sumCountMaps == null)
-            buildSumCountMaps();
+            buildSumCountMaps(controller.getLogger());
     }
 
-    private static void buildSumCountMaps() {
+    private static void buildSumCountMaps(ILogger logger) {
         List<HashSum> allSums = new ArrayList<>(lookupTree.getAllSums());
-        System.out.println("Sums: " + allSums.size() + ", " + lookupTree.getMaxSum());
+        logger.info("Generated %d sums. (Max: %d)", allSums.size(), lookupTree.getMaxSum());
         allSums.removeIf(sum -> sum.getSum() >= 512); // TODO: TOSS
 
         // 1. Build hash sum mappings.
-        Map<HashSumPair, HashSum> sumUsingPair = mapPairsToSum(allSums);
-        Map<HashSum, List<HashSumPair>> pairsPerSum = mapSumToPairsWhichUseIt(allSums);
+        Map<HashSumPair, HashSum> sumUsingPair = mapPairsToSum(logger, allSums);
+        Map<HashSum, List<HashSumPair>> pairsPerSum = mapSumToPairsWhichUseIt(logger, allSums);
 
         // 2. Get the sums in order.
-        List<HashSum> remainingSums = orderSumsByPairAvailability(allSums);
+        List<HashSum> remainingSums = orderSumsByPairAvailability(logger, allSums);
 
         // 3. Resolve count maps. (This is slow.)
         sumCountMaps = resolveCountMaps(sumUsingPair, pairsPerSum, remainingSums);
     }
 
-    private static Map<HashSumPair, HashSum> mapPairsToSum(List<HashSum> allSums) {
+    private static Map<HashSumPair, HashSum> mapPairsToSum(ILogger logger, List<HashSum> allSums) {
         Map<HashSumPair, HashSum> sumUsingPair = new HashMap<>();
         for (HashSum sum : allSums)
             for (HashSumPair pair : sum.getPairs())
                 sumUsingPair.put(pair, sum);
 
-        System.out.println("Linked " + sumUsingPair.size() + " pairs to the sums which they are used by.");
+        logger.info("Linked %d pairs to the sums which they are used by.", sumUsingPair.size());
         return sumUsingPair;
     }
 
-    private static Map<HashSum, List<HashSumPair>> mapSumToPairsWhichUseIt(List<HashSum> allSums) {
+    private static Map<HashSum, List<HashSumPair>> mapSumToPairsWhichUseIt(ILogger logger, List<HashSum> allSums) {
         List<HashSumPair> allPairs = new ArrayList<>();
         for (HashSum sum : allSums)
             allPairs.addAll(sum.getPairs());
@@ -93,12 +112,12 @@ public class HashTreeStringGenerator implements IHashStringGenerator {
                 pairsPerSum.computeIfAbsent(pair.getSecond(), key -> new ArrayList<>()).add(pair);
         }
 
-        System.out.println("Found " + allSums.size() + " sums and " + allPairs.size() + " pairs.");
-        System.out.println("Linked " + pairsPerSum.size() + " sums to the pairs which they are used by.");
+        logger.info("Found %d sums and %d pairs.", allSums.size(), allPairs.size());
+        logger.info("Linked %d sums to the pairs which they are used by.", pairsPerSum.size());
         return pairsPerSum;
     }
 
-    private static List<HashSum> orderSumsByPairAvailability(List<HashSum> allSums) {
+    private static List<HashSum> orderSumsByPairAvailability(ILogger logger, List<HashSum> allSums) {
         // Determine the round which each sum should be handled in.
         List<HashSum> remainingSums = new ArrayList<>(allSums);
         Map<HashSum, Integer> sumRound = new HashMap<>();
@@ -128,7 +147,7 @@ public class HashTreeStringGenerator implements IHashStringGenerator {
             }
         }
 
-        System.out.println("Setup sum rounds for " + sumRound.size() + " sums.");
+        logger.info("Setup sum rounds for %d sums.", sumRound.size());
 
         // Final step.
         remainingSums.addAll(allSums);

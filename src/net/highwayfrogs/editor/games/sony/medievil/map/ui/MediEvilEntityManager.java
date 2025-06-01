@@ -1,21 +1,24 @@
 package net.highwayfrogs.editor.games.sony.medievil.map.ui;
 
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.*;
+import javafx.scene.shape.CullFace;
+import javafx.scene.shape.DrawMode;
+import javafx.scene.shape.MeshView;
+import javafx.scene.shape.TriangleMesh;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Transform;
-import net.highwayfrogs.editor.file.map.view.TextureMap;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
-import net.highwayfrogs.editor.file.mof.view.MOFMesh;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
-import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.medievil.map.entity.MediEvilMapEntity;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMesh;
 import net.highwayfrogs.editor.games.sony.medievil.map.ui.MediEvilMapUIManager.MediEvilMapListManager;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
+import net.highwayfrogs.editor.games.sony.shared.mof2.ui.mesh.MRModelMesh;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
+import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,7 +29,7 @@ import java.util.Map;
  * Created by Kneesnap on 12/12/2023.
  */
 public class MediEvilEntityManager extends MediEvilMapListManager<MediEvilMapEntity, MeshView> {
-    private final Map<MOFHolder, MOFMesh> meshCache = new HashMap<>();
+    private final Map<MRModel, MRModelMesh> meshCache = new HashMap<>();
     public MediEvilEntityManager(MeshViewController<MediEvilMapMesh> controller) {
         super(controller);
     }
@@ -77,24 +80,14 @@ public class MediEvilEntityManager extends MediEvilMapListManager<MediEvilMapEnt
     }
 
     private void updateEntityMesh(MediEvilMapEntity entity, MeshView entityMesh) {
-        MOFHolder holder = entity.getMof();
-        if (holder != null) {
-
-            // Set VLO archive to the map VLO if currently unset.
-            if (holder.getVloFile() == null) {
-                MediEvilLevelTableEntry levelTableEntry = entity.getMap().getLevelTableEntry();
-                if (levelTableEntry != null)
-                    holder.setVloFile(levelTableEntry.getVloFile());
-            }
+        MRModel model = entity.getModel();
+        if (model != null) {
+            DynamicMesh.tryRemoveMesh(entityMesh);
 
             // Update MeshView.
-            MOFMesh modelMesh = this.meshCache.computeIfAbsent(holder, MOFHolder::makeMofMesh);
+            MRModelMesh modelMesh = this.meshCache.computeIfAbsent(model, MRModel::createMeshWithDefaultAnimation);
+            modelMesh.addView(entityMesh, getController().getMeshTracker(), (getSelectedValue() == entity), true);
             entityMesh.setCullFace(CullFace.BACK);
-            entityMesh.setMesh(modelMesh);
-
-            // Update material.
-            TextureMap textureSheet = modelMesh.getTextureMap();
-            entityMesh.setMaterial((getSelectedValue() == entity) ? textureSheet.getDiffuseHighlightedMaterial() : textureSheet.getDiffuseMaterial());
             return;
         }
 
@@ -105,10 +98,7 @@ public class MediEvilEntityManager extends MediEvilMapListManager<MediEvilMapEnt
         PhongMaterial material = FroggerUIMapEntityManager.ENTITY_PLACEHOLDER_SPRITE_MATERIAL;
 
         // NOTE: Maybe this could be a single tri mesh, local to this manager, and we just update its points in updateEntities().
-        TriangleMesh triMesh = new TriangleMesh(VertexFormat.POINT_TEXCOORD);
-        triMesh.getPoints().addAll(-entityIconSize * 0.5f, entityIconSize * 0.5f, 0, -entityIconSize * 0.5f, -entityIconSize * 0.5f, 0, entityIconSize * 0.5f, -entityIconSize * 0.5f, 0, entityIconSize * 0.5f, entityIconSize * 0.5f, 0);
-        triMesh.getTexCoords().addAll(0, 1, 0, 0, 1, 0, 1, 1);
-        triMesh.getFaces().addAll(0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 0, 0);
+        TriangleMesh triMesh = Scene3DUtils.createSpriteMesh(entityIconSize);
 
         // Update mesh.
         entityMesh.setMesh(triMesh);
@@ -166,7 +156,6 @@ public class MediEvilEntityManager extends MediEvilMapListManager<MediEvilMapEnt
         entityMeshView.setTranslateZ(DataUtils.fixedPointIntToFloat4Bit(position.getZ()));
     }
 
-
     @Override
     protected void updateEditor(MediEvilMapEntity entity) {
         entity.setupEditor(this, getEditorGrid());
@@ -182,7 +171,8 @@ public class MediEvilEntityManager extends MediEvilMapListManager<MediEvilMapEnt
 
     @Override
     protected void setVisible(MediEvilMapEntity medievilMapEntity, MeshView meshView, boolean visible) {
-        meshView.setVisible(visible);
+        if (meshView != null)
+            meshView.setVisible(visible);
     }
 
     @Override

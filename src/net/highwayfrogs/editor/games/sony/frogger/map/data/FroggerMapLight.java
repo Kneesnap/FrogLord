@@ -1,11 +1,11 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data;
 
+import javafx.scene.control.Alert.AlertType;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
@@ -15,27 +15,27 @@ import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerU
 import net.highwayfrogs.editor.games.sony.shared.misc.MRLightType;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.ColorUtils;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 /**
  * Holds lighting data, or the "LIGHT" struct in mapdisp.H
- * TODO: Can I get 3D previews of the lit areas? Down to the minimum vertex height. Would make it really nice to tell.
- * TODO: Our new baked lighting system might want to do raycasting. I say this since it's clear their lighting system did. Although... I'm not sure if the JavaFX preview will support that so I dunno 100%.
- * TODO: JavaFX 17 has SpotLight & 18 adds DirectionalLight. Should be able to improve our lighting if we upgrade. (Make sure to update lights in old Frogger, camera height-field in old Frogger, lights in Beast Wars, and any other games.)
- * TODO: TODO: Use Fxyz3D's Cone mesh to highlight spot lights.
  * Created by Kneesnap on 8/24/2018.
  */
 public class FroggerMapLight extends SCGameData<FroggerGameInstance> {
     @Getter private final FroggerMapFile mapFile;
     private int parentId; // I believe this value was originally intended for use outside of LIGHT_TYPE_STATIC, for example, specifying which entity the light is attached to. However, this value seems to be complete garbage (unallocated data?) as I've been unable to find any meaningful pattern.
-    @Getter private MRLightType lightType = MRLightType.AMBIENT;
+    @Getter @Setter @NonNull private MRLightType lightType = MRLightType.AMBIENT;
     @Getter @Setter private int color; // BbGgRr
     @Getter private final SVector position = new SVector(); // This is probably the place in the world the light is placed in the editor.
     @Getter private final SVector direction = new SVector(); // When this is AMBIENT, I think this is arbitrary. When this is parallel, it seems to be a 12bit normalized direction vector. When this is point it is unused.
-    private int attribute0; // Umbra angle is this. Larger value seems to incidate a larger circular radius (If shined directly at a flat plane) I'd imagine this maxes out at either 90 degrees or 180 degrees. Not sure. TODO: Orr.... I'm not sure how big of an impact the height from the ground is but... CAV1.MAP seems to be lit primarily with cones from the sky.
-    private int attribute1; // TODO: Document this better.
+    @Getter private int attribute0; // Umbra angle is this. Larger value seems to incidate a larger circular radius (If shined directly at a flat plane)
+    private int attribute1; // Seems unused in all cases?
+    private boolean enabled = true;
 
     // attribute0 seems to be zero for PARALLEL.
     // attribute1 seems to be zero for PARALLEL.
@@ -69,9 +69,6 @@ public class FroggerMapLight extends SCGameData<FroggerGameInstance> {
     // priority = 128, parentId = Garbage?
     // position = VALID (VERY HIGH UP), direction = VALID (MAY NOT BE NORMALIZED? IT USUALY IS THO Does this suggest it's something other than direction?)
     // attribute0 = Umbra Angle (Near 300 usually. Above 256), attribute1 = ??? (Around 80) ->> IDEA: This could be outerAngle, or falloff.
-    // TODO: The size might be hardcoded, and the distance might just control how far away. Not sure. At some point we might just do our own lighting separately.
-
-    // TODO: Lights without positions should have their positions set algorithmically starting at 0, 0, 0, but under the minimum map vertex.
 
     public FroggerMapLight(FroggerMapFile mapFile) {
         super(mapFile != null ? mapFile.getGameInstance() : null);
@@ -101,20 +98,24 @@ public class FroggerMapLight extends SCGameData<FroggerGameInstance> {
         reader.skipBytesRequireEmpty(2 * Constants.POINTER_SIZE); // Runtime pointers.
 
         // Validate priority.
-        /*short expectedPriority = getPriority(this.lightType);
-        if (priority != expectedPriority) // TODO: There are lights disabled in SWP2.MAP (And probably other builds besides PSX retail). It does appear these lights exist but are disabled.
-            getLogger().warning("Expected a priority value of " + expectedPriority + " for " + this.lightType + ", but we read a priority of " + priority);
+        short expectedPriorityEnabled = getPriority(this.lightType, true);
+        short expectedPriorityDisabled = getPriority(this.lightType, false);
+        if (priority == expectedPriorityEnabled) {
+            this.enabled = true;
+        } else if (priority == expectedPriorityDisabled) {
+            this.enabled = false;
+        } else {
+            getLogger().warning("Expected a priority value of %d or %d for %s, but we read a priority of %d.", expectedPriorityEnabled, expectedPriorityDisabled, this.lightType,  priority);
+        }
 
         if (this.lightType == MRLightType.POINT)
-            getLogger().warning("Found a point light!");
-        if (this.lightType == MRLightType.SPOT && this.attribute0 > 1204)
-            getLogger().warning("Found a really large umbra angle! (" + this.attribute0 + ")");*/ // TODO: Debug later.
+            getLogger().warning("Found a point light! These have not been observed to exist in Frogger!");
     }
 
     @Override
     public void save(DataWriter writer) {
         writer.writeUnsignedByte((short) 1); // Light type. Always LIGHT_TYPE_STATIC.
-        writer.writeUnsignedByte(getPriority(this.lightType));
+        writer.writeUnsignedByte(getPriority(this.lightType, this.enabled));
         writer.writeUnsignedShort(this.parentId);
         writer.writeUnsignedByte((short) this.lightType.getBitFlagMask());
         writer.align(Constants.INTEGER_SIZE); // Padding
@@ -152,8 +153,40 @@ public class FroggerMapLight extends SCGameData<FroggerGameInstance> {
      * @param editor Lighting editor.
      */
     public void makeEditor(GUIEditorGrid editor, FroggerUIMapLightManager lightManager, FroggerMapLightPreview lightPreview) {
+        if (this.lightType == MRLightType.AMBIENT || this.lightType == MRLightType.PARALLEL) {
+            editor.addBoldLabel("This light only impacts entities.");
+            editor.addNormalLabel("The original map editor (Mappy) would");
+            editor.addNormalLabel(" change the terrain vertex colors");
+            editor.addNormalLabel(" based on this light, but due to");
+            editor.addNormalLabel(" technical reasons, FrogLord cannot.");
+            editor.addSeparator();
+        } else {
+            editor.addBoldLabel("This light will do nothing ingame.");
+            editor.addNormalLabel(this.lightType + " lights only worked in Mappy,");
+            editor.addNormalLabel(" the original Frogger map editor.");
+            editor.addNormalLabel("Mappy would color the terrain based");
+            editor.addNormalLabel(" on this light, but FrogLord cannot.");
+            editor.addSeparator();
+        }
+
         // Type.
         editor.addEnumSelector("Light Type", this.lightType, MRLightType.values(), false, newType -> {
+            if (this.lightType != newType) {
+                if (newType == MRLightType.AMBIENT) {
+                    if (lightManager.getMap().getLightPacket().hasAmbientLight()) {
+                        FXUtils.makePopUp("This map already contains an ambient light, so a new one cannot be added.", AlertType.ERROR);
+                        lightManager.updateEditor(); // Ensure the editor shows the previous value instead of the new one.
+                        return;
+                    }
+                } else if (newType == MRLightType.PARALLEL) {
+                    if (lightManager.getMap().getLightPacket().hasMaxNumberOfParallelLights()) {
+                        FXUtils.makePopUp("This map already contains the maximum number of parallel lights.", AlertType.ERROR);
+                        lightManager.updateEditor(); // Ensure the editor shows the previous value instead of the new one.
+                        return;
+                    }
+                }
+            }
+
             this.lightType = newType;
             lightPreview.updateLight();
             lightManager.updateEditor(); // Rebuild the editor since the light type may impact which fields are used, such as the attribute names.
@@ -169,8 +202,8 @@ public class FroggerMapLight extends SCGameData<FroggerGameInstance> {
         // TODO: Restrict editor to show (but not allow edit) of stuff which isn't compatible with the given light type.
         editor.addFloatVector("Position", this.position, lightPreview::updateLight, lightManager.getController());
         editor.addFloatVector("Direction", this.direction, lightPreview::updateLight, lightManager.getController(), 12); // TODO: Proper editor. Perhaps have a mesh node which can be calculated as an arrow from one position to another.
-        editor.addUnsignedShortField(getAttribute0Name(), this.attribute0, newValue -> this.attribute0 = newValue);
-        editor.addUnsignedShortField("Attribute 1", this.attribute1, newValue -> this.attribute1 = newValue);
+        editor.addUnsignedShortField(getAttribute0Name(), this.attribute0, newValue -> this.attribute0 = newValue).setDisable(this.lightType != MRLightType.POINT && this.lightType != MRLightType.SPOT);
+        editor.addUnsignedShortField("Attribute 1", this.attribute1, newValue -> this.attribute1 = newValue).setDisable(true);
     }
 
     /**
@@ -192,7 +225,7 @@ public class FroggerMapLight extends SCGameData<FroggerGameInstance> {
      * @param lightType the MRLightType to get the priority from
      * @return priority
      */
-    public static short getPriority(MRLightType lightType) {
+    public static short getPriority(MRLightType lightType, boolean enabled) {
         // This light data structure is unchanged from pre-recode.
         // And it has some weird design remnants such as the "priority".
         // The pre-recode game seemed to want this value as some kind of LOD option.
@@ -208,7 +241,7 @@ public class FroggerMapLight extends SCGameData<FroggerGameInstance> {
             case POINT:
                 return (short) 0b10000010; // 130
             case SPOT:
-                return (short) 0b10000000; // 128
+                return enabled ? (short) 0b10000000 : (short) 4; // 128 or 4 when disabled.
             default:
                 throw new RuntimeException("Unsupported MRLightType: " + lightType);
         }

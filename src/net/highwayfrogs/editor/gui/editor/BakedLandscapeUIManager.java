@@ -49,7 +49,8 @@ public abstract class BakedLandscapeUIManager<TMesh extends DynamicMesh, TPolygo
     public static final PhongMaterial[] VERTEX_MATERIALS = {MATERIAL_YELLOW, MATERIAL_GREEN, MATERIAL_RED, MATERIAL_BLUE};
 
     public static final UUID VERTEX_POSITION_EDITOR_ID = UUID.randomUUID();
-    public static final RawColorTextureSource MATERIAL_POLYGON_HIGHLIGHT = new RawColorTextureSource(javafx.scene.paint.Color.rgb(255, 255, 0, .333F));
+    public static final javafx.scene.paint.Color POLYGON_HIGHLIGHT_COLOR = javafx.scene.paint.Color.rgb(255, 255, 0, .333F);
+    public static final RawColorTextureSource MATERIAL_POLYGON_HIGHLIGHT = new RawColorTextureSource(POLYGON_HIGHLIGHT_COLOR);
 
     public BakedLandscapeUIManager(MeshViewController<TMesh> controller) {
         super(controller);
@@ -240,8 +241,11 @@ public abstract class BakedLandscapeUIManager<TMesh extends DynamicMesh, TPolygo
                 for (int i = 0; i < vertexIds.length; i++) {
                     int vertexId = vertexIds[i];
                     SVector vertexPos = getManager().getVertex(vertexId);
-                    if (vertexPos != null)
+                    if (vertexPos != null) {
                         getManager().getVertexGizmos()[i] = grid.addPositionEditor(controller, VERTEX_POSITION_EDITOR_ID, vertexNames[i] + " (" + vertexId + ")", vertexPos, this.vertexPositionChangeListener);
+                    } else {
+                        grid.addLabel(vertexNames[i] + " (" + vertexId + ")", "Invalid Vertex ID");
+                    }
                 }
             }
         }
@@ -261,6 +265,9 @@ public abstract class BakedLandscapeUIManager<TMesh extends DynamicMesh, TPolygo
                     }
                 }
             }
+
+            if (vertexIndex == -1)
+                throw new RuntimeException("Could not identify vertexIndex to update.");
 
             // Update sphere position.
             if (sphere != null) {

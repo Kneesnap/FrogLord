@@ -93,7 +93,7 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
     public void addChildControllers(ObservableList<Node> parentNodes) {
         for (int i = 0; i < this.childControllers.size(); i++) {
             GameUIController<?> uiController = this.childControllers.get(i);
-            if (uiController.getRootNode() != null)
+            if (uiController.getRootNode() != null && !parentNodes.contains(uiController.getRootNode()))
                 parentNodes.add(uiController.getRootNode());
         }
     }
@@ -107,6 +107,17 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
      */
     public void handleError(Throwable th, boolean showWindow, String message, Object... arguments) {
         Utils.handleError(getLogger(), th, showWindow, 2, message, arguments);
+    }
+
+    /**
+     * Returns true while the UI Controller is not just active in the scene, but the scene is active in the stage.
+     */
+    public boolean isActive() {
+        if (!this.loadingComplete || !this.sceneActive)
+            return false;
+
+        Stage stage = getStage();
+        return stage != null && stage.isShowing();
     }
 
     /**
@@ -138,6 +149,25 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
             throw new IllegalStateException("Unexpected situation! The scene's Window is a(n) " + Utils.getSimpleName(sceneWindow) + ", and not a Stage.");
 
         return (Stage) sceneWindow;
+    }
+
+    /**
+     * Configure Stage.alwaysOnTop in a manner safe to use even during load.
+     * @param newState the state to apply to the stage
+     */
+    public void setStageAlwaysOnTop(boolean newState) {
+        if (!this.loadingComplete) {
+            Platform.runLater(() -> setStageAlwaysOnTop(newState));
+            return;
+        }
+
+        Stage stage = getStage();
+        if (stage == null) {
+            getLogger().warning("Could not setStageAlwaysOnTop, since the Stage was null!");
+            return;
+        }
+
+        stage.setAlwaysOnTop(newState);
     }
 
     /**
@@ -207,7 +237,7 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
      */
     public void onSceneRemove(Scene oldScene) {
         if (!this.sceneActive)
-            throw new IllegalStateException("Called onSceneAdd() while there was no scene active.");
+            throw new IllegalStateException("Called onSceneRemove() while there was no scene active.");
 
         this.sceneActive = false;
         for (int i = 0; i < this.childControllers.size(); i++)
@@ -249,6 +279,7 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
         } finally {
             fxmlLoader.setController(null); // Prevent potential leak.
             fxmlLoader.setRoot(null);
+            fxmlLoader.getNamespace().clear(); // FX8 seems to have a memory leak if we don't clear this.
         }
 
         controller.loadController(rootNode);
@@ -310,12 +341,21 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
         } else {
             newStage.show();
 
-            // When the window is shut, run the removal hook.
-            newStage.setOnCloseRequest(event -> {
+            // When the window is hidden (with the possibility of opening later), run the removal hook.
+            newStage.setOnHiding(event -> {
                 try {
                     controller.onSceneRemove(newScene);
                 } catch (Throwable th) {
                     Utils.handleError(controller.getLogger(), th, true, "Failed to cleanup the UI controller %s for the scene.", Utils.getSimpleName(controller));
+                }
+            });
+
+            // If the window is re-opened after it is show, run the scene add hook again.
+            newStage.setOnShowing(event -> {
+                try {
+                    controller.onSceneAdd(newScene);
+                } catch (Throwable th) {
+                    Utils.handleError(controller.getLogger(), th, true, "Failed to setup the UI controller %s for the scene.", Utils.getSimpleName(controller));
                 }
             });
         }

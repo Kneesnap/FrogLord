@@ -9,9 +9,6 @@ import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.ArraySource;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedResource;
@@ -28,6 +25,9 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.Proper
 import net.highwayfrogs.editor.utils.*;
 import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
+import net.highwayfrogs.editor.utils.data.reader.ArraySource;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
@@ -222,7 +222,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
 
             // Warn if not all data is read.
             if (chunkReader.hasMore())
-                getLogger().warning("GreatQuest Resource " + StringUtils.stripAlphanumeric(getChunkIdentifier()) + "/'" + getName() + "' in '" + getParentFile().getDebugName() + "' had " + chunkReader.getRemaining() + " remaining unread bytes.");
+                getLogger().warning("GreatQuest Resource %s/'%s' in '%s' had %d remaining unread bytes.", StringUtils.stripAlphanumeric(getChunkIdentifier()), getName(), getParentFile().getDefaultFolderName(), chunkReader.getRemaining());
         } catch (Throwable th) {
             Utils.handleError(getLogger(), th, false, "Failed to read %s chunk from '%s'.", getChunkType(), getParentFile().getDebugName());
         }
@@ -414,7 +414,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
     protected void onRemovedFromChunkFile() {
         int linkedUsages = getSelfHash().getLinkedHashes().size();
         if (linkedUsages > 0)
-            getLogger().warning("Resource removed from chunk file despite " + linkedUsages + " remaining usage" + (linkedUsages != 1 ? "s." : "."));
+            getLogger().warning("Resource removed from chunk file despite %d remaining usage%s.", linkedUsages, (linkedUsages != 1 ? "s" : ""));
 
         getSelfHash().invalidate(); // Anything references to this hash should be unlinked.
     }

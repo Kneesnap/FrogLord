@@ -34,7 +34,7 @@ public class SCGameFileGroupedListViewComponent<TGameInstance extends SCGameInst
 
     @Override
     protected void onDoubleClick(SCGameFile<?> file) {
-        file.handleWadEdit(null);
+        file.performDefaultUIAction();
     }
 
     @Override

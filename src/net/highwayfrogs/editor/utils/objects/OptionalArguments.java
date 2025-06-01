@@ -273,7 +273,7 @@ public class OptionalArguments {
             if (fullLineStr == null)
                 fullLineStr = toString();
 
-            logger.warning("Ignoring unsupported argument " + value.getAsStringLiteral() + " in '" + fullLineStr + "'.");
+            logger.warning("Ignoring unsupported argument %s in '%s'.", value.getAsStringLiteral(), fullLineStr);
         }
 
         this.orderedArgumentReaderIndex = this.orderedArguments.size();
@@ -288,7 +288,7 @@ public class OptionalArguments {
             if (fullLineStr == null)
                 fullLineStr = toString();
 
-            logger.warning("Ignoring unsupported argument named '" + argumentName + "' in '" + fullLineStr + "'.");
+            logger.warning("Ignoring unsupported argument named '%s' in '%s'.", argumentName, fullLineStr);
         }
 
         this.remainingNamedArgumentsUser.clear();

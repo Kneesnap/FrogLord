@@ -41,4 +41,9 @@ public class RwGenericGameInstance extends BasicGameInstance {
             return new RwGenericDummyFile(fileDefinition);
         }
     }
+
+    @Override
+    public boolean isShowSaveWarning() {
+        return true;
+    }
 }

@@ -1,13 +1,14 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.swamp;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataMatrix;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Implements the 'SWAMP_SQUIRT' entity data definition in ent_swp.h
@@ -42,13 +43,16 @@ public class FroggerEntityDataSquirt extends FroggerEntityDataMatrix {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addFixedShort("Time Delay (secs)", this.timeDelay, newTimeDelay -> this.timeDelay = newTimeDelay, 30);
-        editor.addFixedShort("Drop Time (secs)", this.dropTime, newDropTime -> this.dropTime = newDropTime, 30);
+        editor.addFixedShort("Load Delay (secs)", this.timeDelay, newTimeDelay -> this.timeDelay = newTimeDelay, getGameInstance().getFPS())
+                .setTooltip(FXUtils.createTooltip("Controls how long to wait from when the level is loaded to start falling."));
+        editor.addFixedShort("Drop Time (secs)", this.dropTime, newDropTime -> this.dropTime = newDropTime, getGameInstance().getFPS())
+                .setTooltip(FXUtils.createTooltip("Controls how long the squirt falls before it resets to its initial height."));
     }
 
     @Override
     public void setupEditor(GUIEditorGrid editor, FroggerUIMapEntityManager manager) {
         super.setupEditor(editor, manager);
-        editor.addFloatSVector("Target", this.target, manager.getController());
+        editor.addFloatVector("Target", this.target, null, manager.getController(),
+                (targetPos, bits) -> selectNewPosition(manager.getController(), targetPos, bits));
     }
 }

@@ -5,12 +5,12 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
@@ -112,12 +112,6 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
         this.menuBarEdit.getItems().add(this.menuItemRunScript);
     }
 
-    @Override
-    public void onSceneRemove(Scene oldScene) {
-        GUIMain.getActiveGameInstances().remove(getGameInstance()); // Window getting closed.
-        super.onSceneRemove(oldScene);
-    }
-
     /**
      * Adds a message to the console
      * @param message the message to add
@@ -174,7 +168,7 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
 
     @FXML
     private void actionLoadMain(ActionEvent evt) {
-        GUIMain.openLoadGameSettingsMenu();
+        FrogLordApplication.openLoadGameSettingsMenu();
     }
 
     @FXML
@@ -183,6 +177,13 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
         if (baseFolder == null || !baseFolder.canWrite()) {
             FXUtils.makePopUp("Can't write to the game folder." + Constants.NEWLINE + "Does FrogLord need admin permissions to save to this folder?", AlertType.ERROR);
             return;
+        }
+
+        if (getGameInstance().isShowSaveWarning()) {
+            boolean saveAnyways = FXUtils.makePopUpYesNo("Saving files for " + getGameInstance().getGameType().getDisplayName() + " is not officially supported yet.\n"
+                    + "It is likely the game will crash if the modified files are used. Would you like to continue?");
+            if (!saveAnyways)
+                return;
         }
 
         try {

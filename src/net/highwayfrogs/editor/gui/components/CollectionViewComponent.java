@@ -72,6 +72,12 @@ public abstract class CollectionViewComponent<TGameInstance extends GameInstance
     }
 
     /**
+     * Sets the selected view entry in the UI.
+     * @param viewEntry The view entry to select
+     */
+    public abstract void setSelectedViewEntryInUI(TViewEntry viewEntry);
+
+    /**
      * Test if the viewEntry matches the search query
      * @param viewEntry the view query to test
      * @return true if the search query is matched

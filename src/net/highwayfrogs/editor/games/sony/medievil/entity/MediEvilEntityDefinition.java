@@ -2,13 +2,13 @@ package net.highwayfrogs.editor.games.sony.medievil.entity;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.mof.MOFHolder;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.overlay.SCOverlayTableEntry;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +24,7 @@ public class MediEvilEntityDefinition extends SCGameData<MediEvilGameInstance> {
     private final List<MediEvilModelEntityData> modelData = new ArrayList<>();
     private String name;
     private int subtypeCount;
-    private long mofId = -1;
+    private int mofId = -1;
 
     public MediEvilEntityDefinition(MediEvilGameInstance instance, SCOverlayTableEntry overlay) {
         super(instance);
@@ -45,8 +45,8 @@ public class MediEvilEntityDefinition extends SCGameData<MediEvilGameInstance> {
     /**
      * Gets the MOF file registered to this entity definition.
      */
-    public MOFHolder getMOF() {
-        return this.mofId != 0 ? getGameInstance().getGameFileByResourceID((int) this.mofId, MOFHolder.class, true) : null;
+    public MRModel getModel() {
+        return this.mofId != 0 && this.mofId != -1 ? getGameInstance().getGameFileByResourceID(this.mofId, MRModel.class, true) : null;
     }
 
     /**
@@ -71,11 +71,12 @@ public class MediEvilEntityDefinition extends SCGameData<MediEvilGameInstance> {
         else {
             reader.skipBytes(170); // TODO: Read more of this instead of skipping.
         }
-        this.mofId = reader.readUnsignedIntAsLong();
+        this.mofId = reader.readInt();
+        long largeMofId =  (this.mofId & 0xFFFFFFFFL);
         // Read model data.
         this.modelData.clear();
-        if (getGameInstance().isValidLookingPointer(this.mofId)) {
-            reader.jumpTemp((int) (this.mofId - offset));
+        if (getGameInstance().isValidLookingPointer(largeMofId)) {
+            reader.jumpTemp((int) (largeMofId - offset));
 
             // Assume there is at least one entry if subtype count is zero
             int iterator = this.subtypeCount > 0 ? this.subtypeCount : 1;

@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.utils.logging;
 
+import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameInstance;
-import net.highwayfrogs.editor.gui.GUIMain;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.GameInstanceLogRecord;
 
 import java.util.logging.ErrorManager;
@@ -52,7 +52,7 @@ public class UIConsoleHandler extends StreamHandler {
      * @param message The message to print.
      */
     public static void logMessage(String message) {
-        for (GameInstance gameInstance : GUIMain.getActiveGameInstances())
+        for (GameInstance gameInstance : FrogLordApplication.getActiveGameInstances())
             gameInstance.addConsoleLogEntry(message);
     }
 }

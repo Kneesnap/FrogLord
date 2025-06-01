@@ -1,13 +1,14 @@
 package net.highwayfrogs.editor.system.mm3d.blocks;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.system.mm3d.OffsetType;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Defines a material.
@@ -17,8 +18,8 @@ import net.highwayfrogs.editor.system.mm3d.OffsetType;
 @Setter
 public class MMMaterialsBlock extends MMDataBlockBody {
     private short flags;
-    private int texture; // This can expand past normal texture count, as long as we increase texture count saved.
-    private String name = "";
+    private int textureIndex;
+    @NonNull private String name = "";
     private final float[] ambient = new float[4];
     private final float[] diffuse = new float[4]; // Diffuse color.
     private final float[] specular = new float[4];
@@ -31,25 +32,17 @@ public class MMMaterialsBlock extends MMDataBlockBody {
 
     public MMMaterialsBlock(MisfitModel3DObject parent) {
         super(OffsetType.MATERIALS, parent);
-
         // Setup default values.
-        this.ambient[0] = .2F;
-        this.ambient[1] = .2F;
-        this.ambient[2] = .2F;
+        this.ambient[0] = 1F;
+        this.ambient[1] = 1F;
+        this.ambient[2] = 1F;
         this.ambient[3] = 1F;
-
-        this.diffuse[0] = 1F;
-        this.diffuse[1] = 1F;
-        this.diffuse[2] = 1F;
-        this.diffuse[3] = 1F;
-
-        this.specular[this.specular.length - 1] = 1F;
     }
 
     @Override
     public void load(DataReader reader) {
         this.flags = reader.readShort();
-        this.texture = reader.readInt();
+        this.textureIndex = reader.readInt();
         this.name = reader.readNullTerminatedString();
         readFloatArray(reader, this.ambient);
         readFloatArray(reader, this.diffuse);
@@ -61,7 +54,7 @@ public class MMMaterialsBlock extends MMDataBlockBody {
     @Override
     public void save(DataWriter writer) {
         writer.writeShort(this.flags);
-        writer.writeInt(this.texture);
+        writer.writeInt(this.textureIndex);
         writer.writeNullTerminatedString(this.name);
         writeFloatArray(writer, this.ambient);
         writeFloatArray(writer, this.diffuse);

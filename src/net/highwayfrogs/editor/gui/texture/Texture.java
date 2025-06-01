@@ -32,6 +32,7 @@ public abstract class Texture {
     @Getter private int downPadding;
     @Getter private int leftPadding;
     @Getter private int rightPadding;
+    @Getter private boolean disposed; // The texture should never be used again.
 
     /**
      * Whether bulk mode is enabled.
@@ -45,6 +46,14 @@ public abstract class Texture {
      * Whether the texture has even a single pixel which is not full alpha.
      */
     @Getter private boolean hasAnyTransparentPixels;
+
+    /**
+     * This method performs a sanity check that the atlas is currently not in a state of disposal.
+     */
+    protected void ensureNotDisposed() {
+        if (this.disposed)
+            throw new RuntimeException("A(n) " + Utils.getSimpleName(this) + " has been freed, but something is still using it!");
+    }
 
     /**
      * Whether updates should be disabled for now.
@@ -72,6 +81,7 @@ public abstract class Texture {
      * This can return null if updates are disabled and the image has not been generated before.
      */
     public BufferedImage getImage() {
+        ensureNotDisposed();
         if (this.cachedImage == null)
             this.cachedImageInvalid = true;
 
@@ -85,6 +95,7 @@ public abstract class Texture {
      * The image represented by this texture without padding.
      */
     public BufferedImage getImageWithoutPadding() {
+        ensureNotDisposed();
         if (this.cachedImage == null)
             this.cachedImageInvalid = true;
 
@@ -143,16 +154,33 @@ public abstract class Texture {
      * Registers the texture to the texture source.
      */
     public void registerTexture() {
+        ensureNotDisposed();
         if (this.textureSource != null && !this.textureSource.getImageChangeListeners().contains(this.updateHook))
             this.textureSource.getImageChangeListeners().add(this.updateHook);
     }
 
     /**
-     * Called when the texture is removed.
+     * Called when the texture is unregistered.
      */
-    public void releaseTexture() {
+    public void unregisterTexture() {
         if (this.textureSource != null)
             this.textureSource.getImageChangeListeners().remove(this.updateHook);
+    }
+
+    /**
+     * Called when the texture should be disposed, never to be used again.
+     */
+    public void disposeTexture() {
+        unregisterTexture();
+        this.disposed = true;
+        this.cachedImage = this.cachedImageWithoutPadding = null;
+    }
+
+    /**
+     * Called to generate an image to use as the cached image.
+     */
+    protected BufferedImage makeImageForCache() {
+        return this.textureSource.makeImage();
     }
 
     /**
@@ -167,10 +195,11 @@ public abstract class Texture {
      * @param newImage The new image.
      */
     protected void updateCachedImage(BufferedImage newImage) {
+        ensureNotDisposed();
         this.cachedImageInvalid = false;
 
         if (newImage == null)
-            newImage = this.textureSource.makeImage();
+            newImage = makeImageForCache();
 
         BufferedImage oldImage = this.cachedImage;
         boolean wereAnyPixelsTransparent = this.hasAnyTransparentPixels;
@@ -200,6 +229,7 @@ public abstract class Texture {
      * @param newImage The image to update.
      */
     public void update(BufferedImage newImage) {
+        ensureNotDisposed();
         if (newImage != null) // If an image was provided, the image must be dirty.
             this.cachedImageInvalid = true; // We set this to true so that if updates are disabled this will still be considered dirty when the updates are re-enabled.
 
@@ -211,6 +241,7 @@ public abstract class Texture {
      * Marks the image dirty for rebuilding.
      */
     public void markImageDirty() {
+        ensureNotDisposed();
         if (this.cachedImage != null) // Don't consider an image which doesn't exist yet to be "dirty".
             this.cachedImageInvalid = true;
     }
@@ -220,6 +251,7 @@ public abstract class Texture {
      * @throws UnsupportedOperationException Thrown if bulk operation mode is already enabled.
      */
     public void startBulkOperations() {
+        ensureNotDisposed();
         if (this.bulkMode)
             throw new UnsupportedOperationException("BulkMode is already enabled!");
 
@@ -231,6 +263,7 @@ public abstract class Texture {
      * @throws UnsupportedOperationException Thrown if bulk operation mode is not currently enabled.
      */
     public void endBulkOperations() {
+        ensureNotDisposed();
         if (!this.bulkMode)
             throw new UnsupportedOperationException("BulkMode was not enabled!");
 
@@ -241,23 +274,25 @@ public abstract class Texture {
     /**
      * Pushes a signal to disable updates, until popped.
      */
-    protected final void pushDisableUpdates() {
+    public final void pushDisableUpdates() {
+        ensureNotDisposed();
         this.disableUpdateCount++;
     }
 
     /**
      * Pops a signal to disable updates.
      */
-    protected final void popDisableUpdates() {
+    public final void popDisableUpdates() {
+        ensureNotDisposed();
         if (this.disableUpdateCount <= 0)
             throw new UnsupportedOperationException("Cannot pop disable updates, because there's nothing to pop.");
 
         // Decrease counter.
-        if (--this.disableUpdateCount > 0)
-            return;
+        --this.disableUpdateCount;
 
-        // Upon reaching zero, update! (This will only update if the image was marked as dirty).
-        update();
+        // At one point this method was capable of updating the image.
+        // However, after some consideration, image updates should be user-facing, not implicit to functions used by the texture system itself.
+        // If the texturing system wants an update, it should call it more explicitly to avoid calling an image update during another image update.
     }
 
     /**
@@ -307,6 +342,7 @@ public abstract class Texture {
      * @return childTexture
      */
     public Texture getChildTextureBySource(ITextureSource source, boolean throwErrorIfNotFound) {
+        ensureNotDisposed();
         if (source == this.textureSource)
             return this;
         if (throwErrorIfNotFound)

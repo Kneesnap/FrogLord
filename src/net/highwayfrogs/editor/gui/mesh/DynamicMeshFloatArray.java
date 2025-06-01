@@ -23,15 +23,17 @@ public class DynamicMeshFloatArray extends FXFloatArrayBatcher {
     private final int vertexSize;
     private final int vertexOffset;
     private final int elementsPerUnit;
+    private final Runnable indexUpdateCallback;
     private static final int FACE_ELEMENT_BATCH_REMOVAL_WARNING_LIMIT = 3;
 
-    public DynamicMeshFloatArray(DynamicMesh mesh, String unitName, ObservableFloatArray meshArray, int vertexOffset, int elementsPerUnit) {
+    public DynamicMeshFloatArray(DynamicMesh mesh, String unitName, ObservableFloatArray meshArray, int vertexOffset, int elementsPerUnit, Runnable indexUpdateCallback) {
         super(new FXFloatArray(), meshArray);
         this.mesh = mesh;
         this.unitName = unitName;
         this.vertexSize = mesh.getVertexFormat().getVertexIndexSize();
         this.vertexOffset = vertexOffset;
         this.elementsPerUnit = elementsPerUnit;
+        this.indexUpdateCallback = indexUpdateCallback;
     }
 
     /**
@@ -42,19 +44,25 @@ public class DynamicMeshFloatArray extends FXFloatArrayBatcher {
     }
 
     @Override
+    @SuppressWarnings("ExtractMethodRecommender")
     protected void onRangeInsertionComplete(int startIndex, int insertedDataAmount) {
         super.onRangeInsertionComplete(startIndex, insertedDataAmount);
         if ((insertedDataAmount % this.elementsPerUnit) != 0)
-            throw new IllegalStateException("A range insertion occurred which inserted a number of elements which was not divisible by " + this.elementsPerUnit + ", a requirement for a single " + this.unitName + ".");
+            throw new IllegalStateException("A range insertion occurred which inserted a number of elements which was not divisible by " + this.elementsPerUnit + ", a requirement for a single " + this.unitName + ". (Amount: " + insertedDataAmount + ")");
+
+        // Update indices to reflect the data has been written.
+        if (this.indexUpdateCallback != null)
+            this.indexUpdateCallback.run();
 
         int newSize = size();
         int insertionEnd = startIndex + insertedDataAmount;
         if (insertionEnd >= newSize)
-            return; // The elements were inserted at the end, so there shouldn't have been any faces accessing the data.
+            return; // The elements were inserted at the end, so there shouldn't have been any faces accessing the data. (Or if there were, they were likely pre-emptively referencing the inserted values.)
 
         // Update faces to use updated indices.
         int insertedElementAmount = (insertedDataAmount / this.elementsPerUnit);
         FXIntArrayBatcher faceData = this.mesh.getEditableFaces();
+        faceData.startBatchingUpdates();
         for (int i = this.vertexOffset; i < faceData.size(); i += this.vertexSize) {
             int oldDataIndex = faceData.get(i);
             int oldElementIndex = (oldDataIndex * this.elementsPerUnit);
@@ -64,74 +72,106 @@ public class DynamicMeshFloatArray extends FXFloatArrayBatcher {
                 faceData.set(i, oldDataIndex + insertedElementAmount);
         }
 
-        getMesh().updateEntryStartIndices();
+        faceData.endBatchingUpdates();
     }
 
     @Override
-    protected void onBatchInsertionComplete(FXIntArray indices, FXFloatArray values) {
-        super.onBatchInsertionComplete(indices, values);
-        if ((indices.size() % this.elementsPerUnit) != 0)
-            throw new IllegalStateException("A batch insertion occurred which inserted a number of elements which was not divisible by " + this.elementsPerUnit + ", a requirement for a single " + this.unitName + ".");
+    protected void onBatchInsertionComplete(FXIntArray indices, FXIntArray insertionLengths) {
+        super.onBatchInsertionComplete(indices, insertionLengths);
 
-        // Update faces to use updated indices.
+        int totalInsertionCount = insertionLengths.sum();
+        if ((totalInsertionCount % this.elementsPerUnit) != 0)
+            throw new IllegalStateException("A batch insertion occurred which inserted a number of elements which was not divisible by " + this.elementsPerUnit + ", a requirement for a single " + this.unitName + ". (Inserted Elements: " + totalInsertionCount + ")");
+
+        // Update indices to reflect the data has been written.
+        if (this.indexUpdateCallback != null)
+            this.indexUpdateCallback.run();
+
+        // Update insertion lengths array to instead represent the full amount of insertions for a given position.
+        // The array is cleared immediately after this function runs, so it's okay to modify the input.
+        int insertedValueSum = 0;
+        for (int i = 0; i < insertionLengths.size(); i++) {
+            int temp = insertionLengths.get(i);
+            insertionLengths.set(i, insertedValueSum / this.elementsPerUnit);
+            insertedValueSum += temp;
+        }
+        insertionLengths.add(insertedValueSum);
+
+        // Update faces to use updated indices. O(n log(n))
         FXIntArrayBatcher faceData = this.mesh.getEditableFaces();
+        faceData.startBatchingUpdates();
         for (int i = this.vertexOffset; i < faceData.size(); i += this.vertexSize) {
             int oldDataIndex = faceData.get(i);
             int oldElementIndex = oldDataIndex * this.elementsPerUnit;
-            int insertedValueCount = indices.getInsertionPoint(oldElementIndex); // The array is sorted, so this should work.
+            int lookupIndex = indices.getInsertionPoint(oldElementIndex);
+            int insertedValueCount = insertionLengths.get(lookupIndex);
 
             // Save new value.
             if (insertedValueCount > 0)
-                faceData.set(i, oldDataIndex + (insertedValueCount / this.elementsPerUnit));
+                faceData.set(i, oldDataIndex + insertedValueCount);
         }
 
-        getMesh().updateEntryStartIndices();
+        faceData.endBatchingUpdates();
     }
 
     @Override
     protected void onRangeRemovalComplete(int startIndex, int removedDataAmount) {
         super.onRangeRemovalComplete(startIndex, removedDataAmount);
         if ((removedDataAmount % this.elementsPerUnit) != 0)
-            throw new IllegalStateException("A range removal occurred which removed a number of elements which was not divisible by " + this.elementsPerUnit + ", a requirement for a single " + this.unitName + ".");
+            throw new IllegalStateException("A range removal occurred which removed a number of elements which was not divisible by " + this.elementsPerUnit + ", a requirement for a single " + this.unitName + ". (Amount: " + removedDataAmount + ")");
 
-        if (startIndex >= size())
-            return; // The elements were removed from the end, so the behavior for what to do with any faces that used this data is undefined.
+        // Update indices to reflect the data has been removed.
+        if (this.indexUpdateCallback != null)
+            this.indexUpdateCallback.run();
 
         // Update faces to use updated indices.
+        int facesUsingRemovedIndices = 0;
         int removedElementAmount = (removedDataAmount / this.elementsPerUnit);
         FXIntArrayBatcher faceData = this.mesh.getEditableFaces();
+        faceData.startBatchingUpdates();
         for (int i = this.vertexOffset; i < faceData.size(); i += this.vertexSize) {
             int oldDataIndex = faceData.get(i);
             int oldElementIndex = oldDataIndex * this.elementsPerUnit;
 
             // Reduce the element index value by the amount which was removed, assuming it is impacted by the removed values.
-            if (oldElementIndex >= startIndex)
+            if (oldElementIndex >= startIndex) {
+                if (startIndex + removedDataAmount > oldElementIndex && !getMesh().getEditableFaces().isQueuedForRemoval(i))
+                    facesUsingRemovedIndices++;
+
                 faceData.set(i, Math.max(0, oldDataIndex - removedElementAmount));
+            }
         }
 
-        getMesh().updateEntryStartIndices();
+        faceData.endBatchingUpdates();
+        if (facesUsingRemovedIndices > 0) // Won't warn if the faceData in question is queued for removal.
+            getLogger().warning("%d total face element(s) referenced newly range-removed %s values. This will probably create visual corruption, so make sure to remove the faces first next time.", facesUsingRemovedIndices, this.unitName);
     }
 
     @Override
     protected void onBatchRemovalComplete(IndexBitArray indices) {
         super.onBatchRemovalComplete(indices);
         if ((indices.getBitCount() % this.elementsPerUnit) != 0)
-            throw new IllegalStateException("A batch removal occurred which removed a number of elements which was not divisible by " + this.elementsPerUnit + ", a requirement for a single " + this.unitName + ".");
+            throw new IllegalStateException("A batch removal occurred which removed a number of " + this.unitName + " elements which was not divisible by " + this.elementsPerUnit + ", a requirement for a single " + this.unitName + ". (Indices: " + indices.getBitCount() + ")");
+
+        // Update indices to reflect the data has been removed.
+        if (this.indexUpdateCallback != null)
+            this.indexUpdateCallback.run();
 
         // Update faces to use updated indices.
         FXIntArrayBatcher faceData = this.mesh.getEditableFaces();
+        faceData.startBatchingUpdates();
         int errorCount = 0;
         for (int i = this.vertexOffset; i < faceData.size(); i += this.vertexSize) {
             int oldDataIndex = faceData.get(i);
             int oldElementIndex = oldDataIndex * this.elementsPerUnit;
 
             // Show warnings if the face array is seen to be using data that was just removed.
-            if (indices.getBit(oldElementIndex) && ++errorCount <= FACE_ELEMENT_BATCH_REMOVAL_WARNING_LIMIT)
-                getLogger().warning("Face Element " + i + " referenced index " + oldDataIndex + ", which was just removed. This will probably create visual corruption.");
+            if (indices.getBit(oldElementIndex) && !getMesh().getEditableFaces().isQueuedForRemoval(i) && ++errorCount <= FACE_ELEMENT_BATCH_REMOVAL_WARNING_LIMIT)
+                getLogger().warning("Face Element %d referenced %s index %d, which was just removed. This will probably create visual corruption.", i, this.unitName, oldDataIndex);
 
             // Calculate the number of indices removed at/before the current index.
             int removedElements = 0;
-            int previousBit = oldDataIndex;
+            int previousBit = oldElementIndex;
             while ((previousBit = indices.getPreviousBitIndex(previousBit)) >= 0)
                 removedElements++;
 
@@ -140,9 +180,8 @@ public class DynamicMeshFloatArray extends FXFloatArrayBatcher {
                 faceData.set(i, oldDataIndex - (removedElements / this.elementsPerUnit));
         }
 
-        if (errorCount > FACE_ELEMENT_BATCH_REMOVAL_WARNING_LIMIT)
-            getLogger().warning(errorCount + " total face elements referenced newly removed indices. This will probably create visual corruption.");
-
-        getMesh().updateEntryStartIndices();
+        faceData.endBatchingUpdates();
+        if (errorCount > FACE_ELEMENT_BATCH_REMOVAL_WARNING_LIMIT) // Won't warn if the faceData in question is queued for removal.
+            getLogger().warning("%d total face element(s) referenced newly batch-removed %s values. This will probably create visual corruption, so make sure to remove the faces first next time.", errorCount, this.unitName);
     }
 }

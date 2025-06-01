@@ -1,11 +1,12 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.retro;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataPathInfo;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Implements the 'ORG_BEAVER_DATA' entity data definition from ent_org.h
@@ -34,6 +35,7 @@ public class FroggerEntityDataBeaver extends FroggerEntityDataPathInfo {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        editor.addFixedShort("Delay (secs)", this.delay, newDelay -> this.delay = newDelay, 30);
+        editor.addFixedShort("Delay (secs)", this.delay, newDelay -> this.delay = newDelay, getGameInstance().getFPS())
+                .setTooltip(FXUtils.createTooltip("The beaver will only start swimming from an idle state after it spends this amount of time without colliding with any entity."));
     }
 }

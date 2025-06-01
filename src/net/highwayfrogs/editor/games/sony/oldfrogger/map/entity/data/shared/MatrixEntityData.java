@@ -1,15 +1,15 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.shared;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.OldFroggerDifficultyWrapper.OldFroggerDifficultyData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.OldFroggerEntityData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.function.Function;
 
@@ -40,7 +40,7 @@ public class MatrixEntityData<TDifficultyData extends OldFroggerDifficultyData> 
 
     @Override
     public void setupMainEntityDataEditor(OldFroggerEntityManager manager, GUIEditorGrid editor) {
-        editor.addMeshMatrix(this.matrix, manager.getController(), () -> manager.updateEntityPositionRotation(getEntity()), true);
+        editor.addMeshMatrix(this.matrix, manager.getController(), () -> manager.updateEntityPositionRotation(getEntity()), true, null);
     }
 
     @Override

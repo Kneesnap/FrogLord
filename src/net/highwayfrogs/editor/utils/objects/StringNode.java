@@ -418,7 +418,7 @@ public class StringNode {
         while (reader.hasNext()) {
             char tempChar = reader.read();
 
-            if (result.length() == 0 && tempChar == '"') { // First character.
+            if (result.length() == 0 && !isEscape && tempChar == '"') { // First character.
                 isQuotationString = isQuotationOpen = true;
             } else if (isQuotationOpen) {
                 if (isEscape) {
@@ -464,7 +464,7 @@ public class StringNode {
             if (displayStr.length() > 16)
                 displayStr = displayStr.substring(0, 16) + "...";
 
-            throw new RuntimeException("The " + Utils.getSimpleName(this) + " beginning with '" + displayStr + "' is never terminated!");
+            throw new RuntimeException("The " + Utils.getSimpleName(this) + " beginning with '" + displayStr + "' is never finished/terminated!");
         }
 
         if (isQuotationString || !"null".contentEquals(result)) {

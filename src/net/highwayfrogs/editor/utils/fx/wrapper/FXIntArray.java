@@ -33,6 +33,17 @@ public class FXIntArray {
     }
 
     /**
+     * Calculates a sum of all values in the array.
+     */
+    public int sum() {
+        int sum = 0;
+        for (int i = 0; i < this.length; i++)
+            sum += this.array[i];
+
+        return sum;
+    }
+
+    /**
      * Applies the array contents to an ObservableFXArray
      * @param array The array to apply the contents to.
      */
@@ -199,11 +210,12 @@ public class FXIntArray {
         rangeCheck(index);
 
         // Shift all elements to make room for the inserted ones.
-        int shiftedElements = Math.max(0, this.length - index - 1);
+        int shiftedElements = this.length - index;
         if (shiftedElements > 0)
             System.arraycopy(this.array, index, this.array, index + 1, shiftedElements);
 
-        this.array[this.length++] = value;
+        this.array[index] = value;
+        this.length++;
     }
 
     /**
@@ -249,14 +261,15 @@ public class FXIntArray {
     }
 
     /**
-     * Inserts values into the array.
+     * Inserts buffered values into the array.
+     * This reduces the time complexity of inserting many different values from O(n^2) to O(n) by taking advantage of the properties of sorted arrays.
      * @param indices A sorted array of integer indices.
      * @param values  An array of values, the size should match.
      */
     public void insertValues(FXIntArray indices, FXIntArray values) {
         // Ensure the number of values matches the number of indices.
         if (indices.size() != values.size())
-            throw new IllegalStateException("There were " + indices.size() + " indices corresponding to " + values.size() + " values.");
+            throw new IllegalArgumentException("There were " + indices.size() + " indices corresponding to " + values.size() + " values.");
 
         // Abort if there aren't any values to add.
         int valueCount = values.size();
@@ -269,6 +282,8 @@ public class FXIntArray {
             int currentIndex = indices.get(i);
             if (currentIndex < lastIndex)
                 throw new IllegalArgumentException("The indices array was not sorted! [" + Arrays.toString(indices.toArray(null)) + "]");
+            if (currentIndex == lastIndex)
+                throw new IllegalArgumentException("The indices array contained a duplicate index! [" + Arrays.toString(indices.toArray(null)) + "]");
         }
 
         // Ensure enough room exists for the inserted values.
@@ -293,6 +308,69 @@ public class FXIntArray {
 
         // Increase size of array.
         this.length += valueCount;
+    }
+
+    /**
+     * Inserts buffered values into the array.
+     * This reduces the time complexity of inserting many different values from O(n^2) to O(n) by taking advantage of the properties of sorted arrays.
+     * Building the arrays to pass to this function may still be O(n^2) in worst-case, but unless horribly misused will in practice be O(n log n).
+     * @param insertionIndices A sorted array of integer indices representing the (before insertion) insertion indices.
+     * @param sourceIndices An array of indices representing the source index to copy data from. Each array element must correspond to the corresponding destination index in the insertionIndices array.
+     * @param insertionLengths An array of indices representing the amount of data to insert from the data buffer. Each array element must correspond to the corresponding destination index in the insertionIndices array.
+     * @param values  An array of values to insert data from
+     */
+    public void insertValues(FXIntArray insertionIndices, FXIntArray sourceIndices, FXIntArray insertionLengths, FXIntArray values) {
+        // Ensure the number of values matches the number of indices.
+        if (insertionIndices.size() != sourceIndices.size())
+            throw new IllegalArgumentException("There were " + insertionIndices.size() + " destination indices corresponding to " + sourceIndices.size() + " source indices.");
+        if (insertionIndices.size() != insertionLengths.size())
+            throw new IllegalArgumentException("There were " + insertionIndices.size() + " destination indices corresponding to " + insertionLengths.size() + " source size values.");
+
+        // Abort if there aren't any values to add.
+        if (values.size() == 0)
+            return;
+
+        // Ensure the index array is sorted.
+        int lastInsertionIndex = -1;
+        int totalElementCount = 0;
+        for (int i = 0; i < insertionIndices.size(); i++) {
+            int insertionIndex = insertionIndices.get(i);
+            int insertionLength = insertionLengths.get(i);
+            int sourceIndex = sourceIndices.get(i);
+            if (sourceIndex + insertionLength > values.size())
+                throw new IllegalArgumentException("The insertion values array did not contain enough elements for the specified insertions. (Had: " + values.size() + ", Needed at least: " + (sourceIndex + insertionLength) + ")");
+            if (insertionIndex < lastInsertionIndex)
+                throw new IllegalArgumentException("The insertion indices array was not sorted! [" + Arrays.toString(insertionIndices.toArray(null)) + "]");
+
+            totalElementCount += insertionLength;
+        }
+
+        // Ensure enough room exists for the inserted values.
+        growCapacityIfNecessary(totalElementCount);
+
+        // Shift the array elements and add in the new values to their slots.
+        lastInsertionIndex = this.length;
+        int elementsRemaining = totalElementCount;
+        for (int i = insertionIndices.size() - 1; i >= 0; i--) {
+            int insertionIndex = insertionIndices.get(i);
+            int insertionLength = insertionLengths.get(i);
+            int sourceIndex = sourceIndices.get(i);
+
+            // Shift old values.
+            int copyAmount = (lastInsertionIndex - insertionIndex);
+            if (copyAmount > 0)
+                System.arraycopy(this.array, insertionIndex, this.array, insertionIndex + elementsRemaining, copyAmount);
+
+            // Insert values.
+            System.arraycopy(values.array, sourceIndex, this.array, insertionIndex + elementsRemaining - insertionLength, insertionLength);
+
+            // Prepare for next.
+            lastInsertionIndex = insertionIndex;
+            elementsRemaining -= insertionLength;
+        }
+
+        // Increase size of array.
+        this.length += totalElementCount;
     }
 
     /**

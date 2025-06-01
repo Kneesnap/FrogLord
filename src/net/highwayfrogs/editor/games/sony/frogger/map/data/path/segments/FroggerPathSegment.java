@@ -1,10 +1,11 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.path.segments;
 
+import javafx.geometry.Point3D;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.writer.DataWriter;
+import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
@@ -12,11 +13,18 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathInfo;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathResult;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathSegmentType;
+import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMeshController;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapPathManager.FroggerPathPreview;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.InputManager;
+import net.highwayfrogs.editor.gui.InputManager.MouseInputState;
+import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.ArraySource;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
@@ -53,7 +61,7 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
             if (Math.abs(diffLength) > getIncorrectLengthTolerance()) {
                 String extraMessage = getCalculatedIncorrectLengthString();
                 getLogger().warning("calculateFixedPointLength() was inaccurate! [Read Length: " + this.length + "/" + DataUtils.fixedPointIntToFloat4Bit(this.length)
-                        + ", Calculated Length: " + newLength + "/" + DataUtils.fixedPointIntToFloat4Bit(this.length)
+                        + ", Calculated Length: " + newLength + "/" + DataUtils.fixedPointIntToFloat4Bit(newLength)
                         + ", Diff: " + diffLength + "/" + DataUtils.fixedPointIntToFloat4Bit(diffLength)
                         + (extraMessage != null && extraMessage.length() > 0 ? ", " + extraMessage : "") + "]");
             }
@@ -88,6 +96,31 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
     }
 
     /**
+     * Helper method to copy this segment to a new segment
+     */
+    public FroggerPathSegment clone(FroggerPath newPath) {
+        byte[] rawData = writeDataToByteArray();
+        FroggerPathSegment newSegment = this.type.makeNew(newPath);
+        newPath.getSegments().add(newSegment);
+
+        DataReader reader = new DataReader(new ArraySource(rawData));
+        reader.skipInt(); // Skip the type.
+        newSegment.load(reader);
+
+        return newSegment;
+    }
+
+    /**
+     * Helper method to move the segment according to the delta. Used with the "Move All" control.
+     */
+    public abstract void moveDelta(SVector delta);
+
+    /**
+     * Helper method to reverse the segment so its end-point becomes its start point.
+     */
+    public abstract void flip();
+
+    /**
      * Setup this segment at the end of the given path.
      */
     public abstract void setupNewSegment();
@@ -106,21 +139,21 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
 
     /**
      * Calculate the position after a path is completed.
-     * @param info The info to calculate with.
+     * @param segmentDistance The segment distance to calculate.
      * @return finishPosition
      */
-    public abstract FroggerPathResult calculatePosition(FroggerPathInfo info);
+    public abstract FroggerPathResult calculatePosition(int segmentDistance);
 
     /**
-     * Calculate the position along this segment.
-     * @param distance The distance along this segment.
-     * @return pathResult
+     * Calculate the position after a path is completed.
+     * @param pathInfo The info to calculate with.
+     * @return finishPosition
      */
-    public FroggerPathResult calculatePosition(int distance) {
-        FroggerPathInfo fakeInfo = new FroggerPathInfo(this.path.getMapFile());
-        fakeInfo.setPath(this.path, this);
-        fakeInfo.setSegmentDistance(distance);
-        return calculatePosition(fakeInfo);
+    public FroggerPathResult calculatePosition(FroggerPathInfo pathInfo) {
+        if (pathInfo == null)
+            throw new NullPointerException("pathInfo");
+
+        return calculatePosition(pathInfo.getSegmentDistance());
     }
 
     /**
@@ -163,8 +196,12 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
             onManualLengthUpdate(pathPreview, editor);
             updateDisplay(pathPreview); // Don't call onUpdate because that will recalculate length.
         } : null, null); // Read-Only.
-        segmentLengthField.setDisable(true);
         pathPreview.setPathSegmentLengthField(segmentLengthField);
+
+        editor.addButton("Flip", () -> {
+            flip();
+            onUpdate(pathPreview);
+        });
     }
 
     /**
@@ -177,21 +214,51 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
             updateDisplay(pathPreview);
     }
 
-    private void updateDisplay(FroggerPathPreview pathPreview) {
+    public void updateDisplay(FroggerPathPreview pathPreview) {
         pathPreview.updatePath();
         updateSegmentEntities(pathPreview.getController().getEntityManager());
     }
 
     private void updateSegmentEntities(FroggerUIMapEntityManager entityManager) {
-        int pathIndex = getPath().getPathIndex();
         int segmentIndex = getPathSegmentIndex();
-        List<FroggerMapEntity> mapEntities = entityManager.getMap().getEntityPacket().getEntities();
-        for (int i = 0; i < mapEntities.size(); i++) {
-            FroggerMapEntity entity = mapEntities.get(i);
+        List<FroggerMapEntity> pathEntities = getPath().getPathEntities();
+        for (int i = 0; i < pathEntities.size(); i++) {
+            FroggerMapEntity entity = pathEntities.get(i);
             FroggerPathInfo pathInfo = entity.getPathInfo();
-            if (pathInfo != null && pathInfo.getPathId() == pathIndex && pathInfo.getSegmentId() == segmentIndex)
+            if (pathInfo != null && pathInfo.getSegmentId() == segmentIndex)
                 entityManager.updateEntityPositionRotation(entity);
         }
+    }
+
+    /**
+     * Allows using the 'Select' button to update a position.
+     * @param pathPreview the pathPreview to update
+     * @param vector the vector to reposition
+     * @param bits the number bits of precision.
+     */
+    protected void selectPathPosition(FroggerPathPreview pathPreview, Vector vector, int bits, Runnable onFinish) {
+        FroggerMapMeshController frogController = pathPreview.getController();
+        frogController.getBakedGeometryManager().getPolygonSelector().activate(polygon -> {
+            InputManager inputManager = pathPreview.getController().getInputManager();
+            if (inputManager.isKeyPressed(KeyCode.CONTROL)) {
+                MouseInputState mouseState = inputManager.getMouseTracker().getMouseState();
+                Point3D intersectedPoint = new Point3D(mouseState.getIntersectedPoint().getX(), mouseState.getIntersectedPoint().getY(), mouseState.getIntersectedPoint().getZ());
+                Point3D newWorldPos = mouseState.getIntersectedNode().localToScene(intersectedPoint);
+                vector.setFloatX(Math.round(newWorldPos.getX() / 4F) * 4F, bits);
+                vector.setFloatY(Math.round(newWorldPos.getY() / 4F) * 4F, bits);
+                vector.setFloatZ(Math.round(newWorldPos.getZ() / 4F) * 4F, bits);
+            } else {
+                Vector3f centerOfPolygon = polygon.getCenterOfPolygon(null);
+                vector.setFloatX(centerOfPolygon.getX(), bits);
+                vector.setFloatY(centerOfPolygon.getY(), bits);
+                vector.setFloatZ(centerOfPolygon.getZ(), bits);
+            }
+
+            onUpdate(pathPreview);
+            frogController.getPathManager().updateEditor();
+            if (onFinish != null)
+                onFinish.run();
+        }, null);
     }
 
     /**

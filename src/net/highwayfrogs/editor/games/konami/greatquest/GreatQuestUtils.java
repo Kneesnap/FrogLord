@@ -6,9 +6,7 @@ import javafx.scene.transform.Transform;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.file.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
-import net.highwayfrogs.editor.file.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.IGameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedResource;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
@@ -17,6 +15,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.entity.kcBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.utils.*;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.objects.StringNode;
 
 import java.awt.image.BufferedImage;
@@ -510,7 +510,7 @@ public class GreatQuestUtils {
             return true;
         } else {
             if (warnIfNotFound && hash != 0 && hash != -1)
-                gameObj.getLogger().warning("Failed to resolve " + resourceClass.getSimpleName() + " by its " + Utils.getSimpleName(gameObj) + " hash: " + hashObj.getHashNumberAsString() + ".");
+                gameObj.getLogger().warning("Failed to resolve %s by its %s hash: %s.", resourceClass.getSimpleName(), Utils.getSimpleName(gameObj), hashObj.getHashNumberAsString());
             return false;
         }
     }

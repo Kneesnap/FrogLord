@@ -21,10 +21,7 @@ import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.gui.InputManager.KeyHandler;
 import net.highwayfrogs.editor.gui.editor.FirstPersonCamera;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
-import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
-import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
-import net.highwayfrogs.editor.gui.mesh.DynamicMeshNode;
-import net.highwayfrogs.editor.gui.mesh.DynamicMeshUnmanagedNode;
+import net.highwayfrogs.editor.gui.mesh.*;
 import net.highwayfrogs.editor.gui.mesh.wrapper.MeshEntryBox;
 import net.highwayfrogs.editor.gui.texture.atlas.AtlasTexture;
 import net.highwayfrogs.editor.gui.texture.atlas.SequentialTextureAtlas;
@@ -133,6 +130,9 @@ public class TranslationGizmo extends DynamicMesh {
         final double halfBoxSize = (BOX_SIZE / 2);
         final double barEnd = BAR_LENGTH + halfBoxSize;
 
+        // Prevent constant updates of the FX array.
+        pushBatchUpdates();
+
         // Setup X-Axis Node (Red)
         if (this.xAxisEnabled) {
             this.xAxisNode = new DynamicMeshUnmanagedNode(this);
@@ -179,6 +179,8 @@ public class TranslationGizmo extends DynamicMesh {
         this.orangeTextureUvIndex = baseNodeEntry.addTexCoordValue(orangeTextureUv);
         MeshEntryBox.createCenteredBox(baseNodeEntry, 0, 0, 0, BOX_SIZE, BOX_SIZE, BOX_SIZE, this.whiteTextureUvIndex);
         this.baseNode.addEntry(baseNodeEntry);
+
+        popBatchUpdates(); // Apply to mesh buffers.
     }
 
     /**
@@ -188,7 +190,7 @@ public class TranslationGizmo extends DynamicMesh {
      * @param listener the listener to call when the position changes.
      */
     public void addView(MeshView view, MeshViewController<?> controller, IPositionChangeListener listener) {
-        addView(view);
+        addView(view, controller.getMeshTracker());
         GizmoMeshViewState state = this.meshViewStates.get(view);
         state.setController(controller);
         state.setCamera(controller.getFirstPersonCamera());
@@ -197,8 +199,8 @@ public class TranslationGizmo extends DynamicMesh {
     }
 
     @Override
-    public boolean addView(MeshView view) {
-        if (!super.addView(view))
+    public boolean addView(MeshView view, MeshTracker meshTracker) {
+        if (!super.addView(view, meshTracker))
             return false;
 
         this.meshViewStates.put(view, new GizmoMeshViewState(this, view));

@@ -3,11 +3,9 @@ package net.highwayfrogs.editor.gui.fxobject;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.SubScene;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.shape.Rectangle;
-import lombok.Setter;
-import net.highwayfrogs.editor.gui.InputManager;
+import lombok.NonNull;
 import net.highwayfrogs.editor.gui.InputManager.MouseInputState;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 
@@ -15,18 +13,14 @@ import net.highwayfrogs.editor.gui.editor.MeshViewController;
  * Manages a selection rectangle.
  * Created by Kneesnap on 1/12/2024.
  */
-public class SelectionRectangle {
-    private final MeshViewController<?> controller;
-    private final Node node;
+public class SelectionRectangle extends FXDragListener {
+    @NonNull private final MeshViewController<?> controller;
     private final Rectangle rectangle;
-    private boolean selectionActive;
-    @Setter private IMouseDragRectangleListener listener;
 
-    public SelectionRectangle(MeshViewController<?> controller, Node node) {
+    public SelectionRectangle(@NonNull MeshViewController<?> controller, Node node) {
+        super(controller.getInputManager().getMouseTracker(), node);
         this.controller = controller;
-        this.node = node;
         this.rectangle = setupRectangle();
-        applyListeners();
     }
 
     private Rectangle setupRectangle() {
@@ -36,78 +30,53 @@ public class SelectionRectangle {
         return rectangle;
     }
 
-    private void applyListeners() {
-        this.node.setOnMousePressed(this::onMousePressed);
-        this.node.setOnMouseDragged(this::onMouseDragged);
-        this.node.setOnMouseReleased(this::onMouseReleased);
+    @Override
+    protected boolean shouldStartDrag(MouseEvent event) {
+        // In 3D space, dragging the mouse normally will move the camera view or rotate the model.
+        // So, we need a key to enable it instead.
+        return super.shouldStartDrag(event) && event.isShiftDown();
     }
 
-    private void onMousePressed(MouseEvent event) {
-        InputManager manager = this.controller.getInputManager();
-        if (!manager.isKeyPressed(KeyCode.SHIFT))
-            return;
+    @Override
+    protected boolean onMousePressed(MouseEvent event) {
+        if (!super.onMousePressed(event))
+            return false;
 
-        // Start dragging.
-        event.consume();
-        this.selectionActive = true;
-        manager.getLastDragStartMouseState().apply(event);
-        manager.getLastMouseState().apply(event);
-        manager.getMouseState().apply(event);
         this.rectangle.setX(0);
         this.rectangle.setY(0);
         this.rectangle.setWidth(0);
         this.rectangle.setHeight(0);
         this.controller.getRoot2D().getChildren().add(this.rectangle);
+        return true;
     }
 
-    private void onMouseDragged(MouseEvent event) {
-        if (!this.selectionActive)
-            return;
+    @Override
+    protected boolean onMouseDragged(MouseEvent event) {
+        if (!super.onMouseDragged(event))
+            return false;
 
-        // Update preview.
-        event.consume();
-        InputManager manager = this.controller.getInputManager();
         SubScene subScene = this.controller.getSubScene();
         Point2D uiMinOffset = subScene.localToScene(0, 0); // Min corner of 3D view.
         Point2D uiMaxOffset = subScene.localToScene(subScene.getWidth() - 1, subScene.getHeight() - 1); // Max corner of 3D view.
 
-        double minX = Math.max(uiMinOffset.getX(), Math.min(event.getSceneX(), manager.getLastDragStartMouseState().getX()));
-        double maxX = Math.min(uiMaxOffset.getX(), Math.max(event.getSceneX(), manager.getLastDragStartMouseState().getX()));
-        double minY = Math.max(uiMinOffset.getY(), Math.min(event.getSceneY(), manager.getLastDragStartMouseState().getY()));
-        double maxY = Math.min(uiMaxOffset.getY(), Math.max(event.getSceneY(), manager.getLastDragStartMouseState().getY()));
+        MouseInputState lastDragStartMouseState = this.controller.getInputManager().getMouseTracker().getLastDragStartMouseState();
+        double minX = Math.max(uiMinOffset.getX(), Math.min(event.getSceneX(), lastDragStartMouseState.getSceneX()));
+        double maxX = Math.min(uiMaxOffset.getX(), Math.max(event.getSceneX(), lastDragStartMouseState.getSceneX()));
+        double minY = Math.max(uiMinOffset.getY(), Math.min(event.getSceneY(), lastDragStartMouseState.getSceneY()));
+        double maxY = Math.min(uiMaxOffset.getY(), Math.max(event.getSceneY(), lastDragStartMouseState.getSceneY()));
         this.rectangle.setX(minX);
         this.rectangle.setY(minY);
         this.rectangle.setWidth(maxX - minX);
         this.rectangle.setHeight(maxY - minY);
-
-        // Update InputManager.
-        manager.getLastMouseState().apply(manager.getMouseState());
-        manager.getMouseState().apply(event);
+        return true;
     }
 
-    private void onMouseReleased(MouseEvent event) {
-        if (!this.selectionActive)
-            return;
+    @Override
+    protected boolean onMouseReleased(MouseEvent event) {
+        if (!super.onMouseReleased(event))
+            return false;
 
-        // Stop selecting.
-        event.consume();
-        this.selectionActive = false;
         this.controller.getRoot2D().getChildren().remove(this.rectangle);
-
-        // Update InputManager.
-        InputManager manager = this.controller.getInputManager();
-        manager.getLastMouseState().apply(manager.getMouseState());
-        manager.getMouseState().apply(event);
-
-        // Alert listener.
-        if (this.listener != null)
-            this.listener.handle(manager.getLastDragStartMouseState(), manager.getMouseState());
-    }
-
-    /**
-     * Represents a listener for the rectangle mouse drag.
-     */
-    public interface IMouseDragRectangleListener {
-        void handle(MouseInputState dragStart, MouseInputState dragEnd);
+        return true;
     }
 }
