@@ -302,7 +302,7 @@ public class TreeTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
                 if (texture == null) { // There's no texture we intend to apply right now.
                     synchronized (this.textureAtlas.listLock) {
                         addToLists();
-                        tryMergeChildNodes();
+                        //tryMergeChildNodes(); // This still seems to not only produce less efficient trees, but also cause errors. (Perhaps the less efficient trees are due to the errors...)
                     }
                     return true;
                 }

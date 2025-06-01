@@ -137,18 +137,18 @@ public class MediEvilMapEntity extends SCGameData<MediEvilGameInstance> {
                     if (model != null) {
                         return model;
                     } else {
-                        getLogger().warning("Failed to find MOF from Model List's resource ID " + definition.getMofId() + "...");
+                        getLogger().warning("Failed to find MOF from Model List's resource ID %d...", data.getMofIndex());
                     }
                 }
             }
 
             // Attempt to use this as a MOF file directly.
-            if (definition.getMofId() != 0) {
+            if (definition.getMofId() != 0 && definition.getMofId() != -1) {
                 MRModel model = definition.getModel();
                 if (model != null) {
                     return model;
                 } else {
-                    getLogger().warning("Failed to find MOF from resource ID " + definition.getMofId() + "...");
+                    getLogger().warning("Failed to find MOF from resource ID %d...", definition.getMofId());
                 }
             }
         }

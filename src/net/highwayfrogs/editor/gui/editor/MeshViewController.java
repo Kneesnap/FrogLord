@@ -28,6 +28,7 @@ import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList.RenderListManager;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
+import net.highwayfrogs.editor.gui.mesh.MeshTracker;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
@@ -113,6 +114,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     private final FirstPersonCamera firstPersonCamera;
 
     // Instance Data:
+    private final MeshTracker meshTracker = new MeshTracker();
     private TMesh mesh;
     private DisplayList axisDisplayList;
 
@@ -247,7 +249,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         // Setup MeshView
         this.meshView = new MeshView();
         this.meshView.setCullFace(CullFace.BACK);
-        dynamicMesh.addView(this.meshView);
+        dynamicMesh.addView(this.meshView, this.meshTracker);
 
         // Create the 3D elements and use them within a subscene.
         this.root3D = new Group();
@@ -321,8 +323,8 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                     getLogger().throwing("MeshViewController", null, new RuntimeException(errorMessage, th));
                 }
 
-                getMesh().removeView(getMeshView()); // Remove view from mesh.
-                this.root3D.getChildren().clear(); // Clear data to avoid memory leak.
+                this.meshTracker.disposeMeshes(); // Prevent memory leaks by ensuring texture sheets remove any listeners from static textures sources (which would then keep the texture sheet in memory).
+                this.root3D.getChildren().clear(); // Clear data just in-case there's a memory leak.
                 FXUtils.setSceneKeepPosition(this.overwrittenStage, this.originalScene);
             } else if (event.getCode() == KeyCode.F9) { // Print mesh information.
                 getMesh().printDebugMeshInfo();
@@ -713,6 +715,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         } finally {
             fxmlLoader.setController(null);
             fxmlLoader.setRoot(null);
+            fxmlLoader.getNamespace().clear(); // In FX8, this seems to cause memory leaks if I don't clear it...
         }
 
         // Setup UI.

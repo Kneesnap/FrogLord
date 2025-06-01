@@ -175,25 +175,21 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
     }
 
     public static class GreatQuestMapMeshCollection extends MeshViewCollection<GreatQuestMapMaterialMesh> {
-        private final MeshViewController<?> viewController;
-
         public GreatQuestMapMeshCollection(MeshViewController<?> viewController) {
-            super(viewController.getRenderManager().createDisplayListWithNewGroup());
-            this.viewController = viewController;
-        }
+            super(viewController, viewController.getRenderManager().createDisplayListWithNewGroup());}
 
         @Override
         protected void onMeshViewSetup(int meshIndex, GreatQuestMapMaterialMesh mesh, MeshView meshView) {
             super.onMeshViewSetup(meshIndex, mesh, meshView);
-            MeshViewController.bindMeshSceneControls(this.viewController, meshView);
-            this.viewController.getMainLight().getScope().add(meshView);
+            MeshViewController.bindMeshSceneControls(getController(), meshView);
+            getController().getMainLight().getScope().add(meshView);
         }
 
         @Override
         protected void onMeshViewCleanup(int meshIndex, GreatQuestMapMaterialMesh mesh, MeshView meshView) {
             super.onMeshViewCleanup(meshIndex, mesh, meshView);
-            MeshViewController.unbindMeshSceneControls(this.viewController, meshView);
-            this.viewController.getMainLight().getScope().remove(meshView);
+            MeshViewController.unbindMeshSceneControls(getController(), meshView);
+            getController().getMainLight().getScope().remove(meshView);
         }
     }
 }

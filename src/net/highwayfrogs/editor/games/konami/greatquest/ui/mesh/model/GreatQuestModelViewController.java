@@ -129,7 +129,7 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
         getRenderManager().getRoot().getChildren().add(this.skeletonMeshView);
         getMainLight().getScope().add(this.skeletonMeshView);
         if (getMesh().getSkeletonMesh() != null)
-            getMesh().getSkeletonMesh().addView(this.skeletonMeshView);
+            getMesh().getSkeletonMesh().addView(this.skeletonMeshView, getMeshTracker());
 
         // Tick animations.
         getFrameTimer().addPerFrameTask(this::onTick);
@@ -200,18 +200,16 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
      * Tracks the viewers for the model.
      */
     public static class GreatQuestModelMeshViewCollection extends MeshViewCollection<GreatQuestModelMaterialMesh> {
-        private final MeshViewController<?> viewController;
 
         public GreatQuestModelMeshViewCollection(MeshViewController<?> viewController) {
-            super(viewController.getRenderManager().createDisplayList());
-            this.viewController = viewController;
+            super(viewController, viewController.getRenderManager().createDisplayList());
         }
 
         @Override
         protected void onMeshViewSetup(int meshIndex, GreatQuestModelMaterialMesh mesh, MeshView meshView) {
             super.onMeshViewSetup(meshIndex, mesh, meshView);
-            MeshViewController.bindMeshSceneControls(this.viewController, meshView);
-            this.viewController.getMainLight().getScope().add(meshView);
+            MeshViewController.bindMeshSceneControls(getController(), meshView);
+            getController().getMainLight().getScope().add(meshView);
             if (mesh.isSkeletonAxisRotationApplied())
                 GreatQuestUtils.setEntityRotation(meshView, 0, 0, 0, true);
         }
@@ -219,8 +217,8 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
         @Override
         protected void onMeshViewCleanup(int meshIndex, GreatQuestModelMaterialMesh mesh, MeshView meshView) {
             super.onMeshViewCleanup(meshIndex, mesh, meshView);
-            MeshViewController.unbindMeshSceneControls(this.viewController, meshView);
-            this.viewController.getMainLight().getScope().remove(meshView);
+            MeshViewController.unbindMeshSceneControls(getController(), meshView);
+            getController().getMainLight().getScope().remove(meshView);
             if (mesh.isSkeletonAxisRotationApplied())
                 GreatQuestUtils.setEntityRotation(meshView, 0, 0, 0, false);
         }

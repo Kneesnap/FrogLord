@@ -15,8 +15,6 @@ import javafx.scene.transform.Transform;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.exe.PickupData;
 import net.highwayfrogs.editor.file.config.exe.PickupData.PickupAnimationFrame;
-import net.highwayfrogs.editor.file.config.exe.ThemeBook;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerFlyScoreType;
@@ -67,7 +65,8 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
 
     @Override
     public void onSetup() {
-        // The map renders after entities (except for sprite entities) because transparent entities are exceedingly rare in Frogger (I'm not even sure there's a single one in the retail builds).
+        // The map renders after entities (except for sprite entities) because transparent entities are exceedingly rare in Frogger.
+        // Even though there are some (such as the sky cloud patch), making them display properly would hide all entities underwater, so it's preferable to do it like this.
         // Situations such as transparent water layers should show the entities under the water too.
         this.litEntityRenderList = getRenderManager().createDisplayListWithNewGroup();
         this.litEntityRenderList.add(getController().getGeneralManager().getPlayerCharacterView());
@@ -325,20 +324,11 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
         IFroggerFormEntry formEntry = entity.getFormEntry();
         MRModel model = formEntry != null ? formEntry.getEntityModel(entity) : null;
         if (model != null) {
-            // Set VLO archive to the map VLO if currently unset.
-            VLOArchive vlo = getMap().getConfig().getForcedVLO(getMap().getGameInstance(), model.getFileDisplayName());
-            if (vlo == null) {
-                ThemeBook themeBook = getMap().getGameInstance().getThemeBook(formEntry.getTheme());
-                if (themeBook != null)
-                    vlo = themeBook.getVLO(getMap());
-            }
-            model.setVloFile(vlo);
-
             // Update MeshView.
             MRModelMesh modelMesh = this.meshCache.computeIfAbsent(model, MRModel::createMeshWithDefaultAnimation);
             if (modelMesh.getEditableFaces().size() > 0) {
                 DynamicMesh.tryRemoveMesh(entityMeshView);
-                modelMesh.addView(entityMeshView, isEntityHighlighted, !getController().getLightManager().isLightingAppliedToEntities());
+                modelMesh.addView(entityMeshView, getController().getMeshTracker(), isEntityHighlighted, !getController().getLightManager().isLightingAppliedToEntities());
                 entityMeshView.setCullFace(CullFace.BACK);
 
                 // Update entity display material and such.

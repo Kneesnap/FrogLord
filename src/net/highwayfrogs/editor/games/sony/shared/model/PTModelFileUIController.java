@@ -27,7 +27,7 @@ public class PTModelFileUIController<TGameFile extends SCGameFile<TGameInstance>
         getLeftSidePanelTopBox().getChildren().add(this.viewButton);
         this.viewButton.setOnMouseClicked(evt -> {
             if (getFile() != null)
-                getFile().handleWadEdit(null);
+                getFile().performDefaultUIAction();
         });
         this.viewButton.setDisable(getFile() == null);
     }

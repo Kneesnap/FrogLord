@@ -11,7 +11,6 @@ import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapEntityPacket;
 import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapHeaderPacket;
 import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapPolygonPacket;
 import net.highwayfrogs.editor.games.sony.shared.map.ui.SCMapFileUIController;
-import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
@@ -102,7 +101,8 @@ public abstract class SCMapFile<TGameInstance extends SCGameInstance> extends SC
     }
 
     @Override
-    public void handleWadEdit(WADFile parent) {
+    public void performDefaultUIAction() {
+        super.performDefaultUIAction();
         MeshViewController.setupMeshViewer(getGameInstance(), new SCMapMeshController<>(), new SCMapMesh(this));
     }
 

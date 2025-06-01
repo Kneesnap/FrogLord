@@ -7,23 +7,24 @@ import lombok.Setter;
  * Allows reading a string.
  * Created by Kneesnap on 10/29/2024.
  */
+@Getter
 public class SequentialStringReader {
-    private final String str;
-    @Getter @Setter private int index;
+    private final String input;
+    @Setter private int index;
 
     /**
      * Creates a new string reader.
      * @param input The String to read.
      */
     public SequentialStringReader(String input) {
-        this.str = input;
+        this.input = input;
     }
 
     /**
      * Returns true iff there are remaining characters in the string.
      */
     public boolean hasNext() {
-        return this.str != null && this.str.length() > this.index;
+        return this.input != null && this.input.length() > this.index;
     }
 
     /**
@@ -31,10 +32,10 @@ public class SequentialStringReader {
      * @return nextChar
      */
     public char read() {
-        if (this.str == null || this.index >= this.str.length())
+        if (this.input == null || this.index >= this.input.length())
             throw new RuntimeException("The end of the string has been reached.");
 
-        return this.str.charAt(this.index++);
+        return this.input.charAt(this.index++);
     }
 
     /**
@@ -42,10 +43,10 @@ public class SequentialStringReader {
      * @return nextChar
      */
     public char peek() {
-        if (this.str == null || this.index >= this.str.length())
+        if (this.input == null || this.index >= this.input.length())
             throw new RuntimeException("The end of the string has been reached.");
 
-        return this.str.charAt(this.index);
+        return this.input.charAt(this.index);
     }
 
     /**
@@ -60,9 +61,9 @@ public class SequentialStringReader {
      * Gets the part of the string which had been previously read.
      */
     public String getPreviouslyReadPartOfString() {
-        if (this.str == null)
+        if (this.input == null)
             return null;
 
-        return this.str.substring(0, this.index);
+        return this.input.substring(0, this.index);
     }
 }

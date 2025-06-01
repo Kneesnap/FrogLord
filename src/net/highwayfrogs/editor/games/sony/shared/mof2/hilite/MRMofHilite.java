@@ -23,7 +23,7 @@ import net.highwayfrogs.editor.utils.logging.InstanceLogger.AppendInfoLoggerWrap
 public class MRMofHilite extends SCSharedGameData {
     @Getter private final transient MRMofPart parentPart;
     @Getter @Setter private short hiliteType;
-    @NonNull @Getter @Setter private HiliteAttachType attachType = HiliteAttachType.NONE;
+    @NonNull @Getter private HiliteAttachType attachType = HiliteAttachType.NONE;
     @Getter private SVector vertex;
     @Getter private MRMofPolygon polygon;
     private int tempAttachIndex = -1;

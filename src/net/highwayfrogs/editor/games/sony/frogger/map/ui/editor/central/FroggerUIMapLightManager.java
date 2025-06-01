@@ -4,54 +4,71 @@ import javafx.geometry.Point3D;
 import javafx.scene.*;
 import javafx.scene.control.CheckBox;
 import javafx.scene.image.Image;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.CullFace;
+import javafx.scene.shape.Cylinder;
+import javafx.scene.shape.MeshView;
+import javafx.scene.shape.TriangleMesh;
 import lombok.Getter;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.FroggerMapLight;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquare;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
+import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGrid;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerCentralUIManager.FroggerCentralMapListManager;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapLightManager.FroggerMapLightPreview;
 import net.highwayfrogs.editor.games.sony.shared.misc.MRLightType;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
+import net.highwayfrogs.editor.gui.mesh.fxobject.Cone3D;
+import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.ColorUtils;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Manages map lighting for Frogger.
- * TODO: Go over FroggerMapLight values.
- * TODO: For cone preview, we could just draw lines to the cone edges instead of doing a full cone inside.
  * TODO: For changing the direction of a light, a rotation gizmo is ideal.
- * TODO: We should show the lights in 3D space too? Or at least the ones with 3D data. (3D Preview! I like making a billboard sprite light icon.)
- * TODO: Only the first 3 parallel + point lights can be handled by MRCalculateCustomInstanceLights (entities).
- * TODO: Allow changing the frog custom light here.
- * TODO: Only allow adding a single AMBIENT LIGHT (And added lights should be placed before the final ambient light.
  * Created by Kneesnap on 6/1/2024.
  */
 @Getter
 public class FroggerUIMapLightManager extends FroggerCentralMapListManager<FroggerMapLight, FroggerMapLightPreview> {
     private final AmbientLight specialFrogletLight = new AmbientLight(ColorUtils.fromRGB(0xA0A0A0));
     private final List<AmbientLight> regularAmbientLights = new ArrayList<>();
+    private final DisplayList lightList;
+    private DisplayList coneList;
     private CheckBox applyLightingToEntitiesCheckBox;
-    private DisplayList lightList;
+    private CheckBox showPreviewsCheckBox;
 
     public FroggerUIMapLightManager(MeshViewController<FroggerMapMesh> controller) {
         super(controller);
+        this.lightList = getRenderManager().createDisplayList();
     }
 
     @Override
     public void onSetup() {
-        this.lightList = getRenderManager().createDisplayList();
         this.lightList.add(this.specialFrogletLight);
         super.onSetup();
         updateEntityLighting();
     }
 
     @Override
+    public void setupNodesWhichRenderLast() {
+        super.setupNodesWhichRenderLast();
+        this.coneList = getTransparentRenderManager().createDisplayListWithNewGroup();
+        update3DLightPreviews();
+    }
+
+    @Override
     protected void setupMainGridEditor(UISidePanel sidePanel) {
         super.setupMainGridEditor(sidePanel);
         this.applyLightingToEntitiesCheckBox = getMainGrid().addCheckBox("Apply Lighting to Entities", true, newValue -> updateEntityLighting());
+        this.showPreviewsCheckBox = getMainGrid().addCheckBox("Show Spotlights", false, newValue -> update3DLightPreviews());
         getValueDisplaySetting().setValue(ListDisplayType.ALL); // All lights should show by default.
     }
 
@@ -75,6 +92,16 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
     @Override
     public List<FroggerMapLight> getValues() {
         return getMap().getLightPacket().getLights();
+    }
+
+    @Override
+    protected boolean tryAddValue(FroggerMapLight light) {
+        return light != null && getMap().getLightPacket().addLight(light);
+    }
+
+    @Override
+    protected boolean tryRemoveValue(FroggerMapLight light) {
+        return light != null && getMap().getLightPacket().removeLight(light);
     }
 
     @Override
@@ -102,12 +129,27 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
 
     @Override
     protected void onSelectedValueChange(FroggerMapLight oldLight, FroggerMapLightPreview oldLightPreview, FroggerMapLight newLight, FroggerMapLightPreview newLightPreview) {
-        // TODO: Position in 3D space display?
+        // Nothing for now.
+    }
+
+    /**
+     * Update the 3D representations of lights in 3D space.
+     */
+    public void update3DLightPreviews() {
+        getDelegatesByValue().values().forEach(FroggerMapLightPreview::updateShapes);
     }
 
     @Override
     protected FroggerMapLight createNewValue() {
-        return new FroggerMapLight(getMap(), MRLightType.AMBIENT);
+        // Ensure the type of light created is capable of being added to the map.
+        MRLightType lightType = MRLightType.AMBIENT;
+        if (getMap().getLightPacket().hasAmbientLight()) {
+            lightType = MRLightType.PARALLEL;
+            if (getMap().getLightPacket().hasMaxNumberOfParallelLights())
+                lightType = MRLightType.POINT;
+        }
+
+        return new FroggerMapLight(getMap(), lightType);
     }
 
     @Override
@@ -236,8 +278,10 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
         @Getter private final FroggerMapLight mapLight;
         @Getter private LightBase fxLight;
         @Getter private boolean visible;
+        @Getter private Cylinder directionalLine;
         private Image colorPreviewImage;
         private int lastColorPreviewColorValue;
+        private MeshView meshView;
 
         public FroggerMapLightPreview(FroggerUIMapLightManager lightingManager, FroggerMapLight mapLight) {
             this.mapLight = mapLight;
@@ -261,6 +305,12 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
          */
         public void setVisible(boolean visible) {
             this.visible = visible;
+
+            if (this.meshView != null)
+                this.meshView.setVisible(visible);
+            if (this.directionalLine != null)
+                this.directionalLine.setVisible(visible);
+
             if (this.fxLight == null)
                 return;
 
@@ -308,6 +358,153 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
                 this.fxLight = newLight;
                 setVisible(wasVisible);
             }
+
+            updateShapes();
+        }
+
+        /**
+         * Update the 3D preview shapes.
+         */
+        public void updateShapes() {
+            if (this.lightingManager.showPreviewsCheckBox == null || !this.lightingManager.showPreviewsCheckBox.isSelected()) {
+                removeShapes();
+                return;
+            }
+
+            // Remove the line before adding the updated one to ensure there aren't multiple lines for the same light.
+            if (this.directionalLine != null) {
+                this.lightingManager.getLightList().remove(this.directionalLine);
+                this.directionalLine = null;
+            }
+
+            if (this.mapLight.getLightType() == MRLightType.PARALLEL) {
+                float startX, startY, startZ;
+                startY = 0;
+                startX = DataUtils.fixedPointShortToFloat4Bit(this.mapLight.getMapFile().getGridPacket().getBaseGridX());
+                startZ = DataUtils.fixedPointShortToFloat4Bit(this.mapLight.getMapFile().getGridPacket().getBaseGridZ());
+
+                SVector direction = this.mapLight.getDirection();
+                this.directionalLine = this.lightingManager.getLightList().addLine(startX, startY, startZ,
+                        startX + (10 * FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH_FLOAT * direction.getFloatX(12)),
+                        startY + (10 * FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH_FLOAT * direction.getFloatY(12)),
+                        startZ + (10 * FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH_FLOAT * direction.getFloatZ(12)),
+                        3, Scene3DUtils.makeUnlitSharpMaterial(Color.RED));
+                this.directionalLine.setOnMouseClicked(event -> this.lightingManager.getValueSelectionBox().getSelectionModel().select(this.mapLight));
+            }
+
+            if (this.lightingManager.getConeList() != null) {
+                if (this.mapLight.getLightType() == MRLightType.SPOT) {
+                    if (this.meshView == null) {
+                        this.meshView = new MeshView();
+                        this.meshView.setCullFace(CullFace.BACK);
+                        this.lightingManager.getConeList().add(this.meshView);
+                        this.meshView.setOnMouseClicked(event -> this.lightingManager.getValueSelectionBox().getSelectionModel().select(this.mapLight));
+                    }
+
+                    TriangleMesh mesh = (TriangleMesh) this.meshView.getMesh();
+                    if (mesh == null)
+                        this.meshView.setMesh(mesh = new TriangleMesh());
+
+                    float height = calculateLightConeHeightViaRaycasting();
+                    float radius = (float) Math.tan(Math.PI * (this.mapLight.getAttribute0() / 4096F)) * height;
+                    Cone3D.createCone(mesh, 30, radius, height);
+                    Scene3DUtils.setNodePosition(this.meshView, this.mapLight.getPosition().getFloatX(), this.mapLight.getPosition().getFloatY(), this.mapLight.getPosition().getFloatZ());
+                    Scene3DUtils.setNodeRotation(this.meshView, (float) Math.asin(this.mapLight.getDirection().getFloatZ(12)), 0, (float) -Math.asin(this.mapLight.getDirection().getFloatX(12)));
+                    this.meshView.setMaterial(Scene3DUtils.makeUnlitSharpMaterial(ColorUtils.fromRGB(ColorUtils.swapRedBlue(this.mapLight.getColor()), .333F)));
+                } else if (this.meshView != null) {
+                    this.meshView.setMesh(null);
+                }
+            }
+        }
+
+        private float calculateLightConeHeightViaRaycasting() {
+            float startX = this.mapLight.getPosition().getFloatX();
+            float startY = this.mapLight.getPosition().getFloatY();
+            float startZ = this.mapLight.getPosition().getFloatZ();
+            float dirX = this.mapLight.getDirection().getFloatX(12);
+            float dirY = this.mapLight.getDirection().getFloatY(12);
+            float dirZ = this.mapLight.getDirection().getFloatZ(12);
+
+            int gridSquaresMissed = 0;
+            float currX = startX, currY = startY, currZ = startZ;
+            Vector3f tempVector = new Vector3f();
+            FroggerMapFilePacketGrid gridPacket = this.mapLight.getMapFile().getGridPacket();
+            int attempts = 0;
+            while (gridSquaresMissed < 20 && ++attempts < 1000) { // TODO: Is this right?
+                if (gridSquaresMissed > 0) {
+                    currX += FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH_FLOAT * dirX;
+                    currY += FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH_FLOAT * dirY;
+                    currZ += FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH_FLOAT * dirZ;
+                } else {
+                    currX += dirX;
+                    currY += dirY;
+                    currZ += dirZ;
+                }
+
+                int gridX = gridPacket.getGridXFromWorldX(currX);
+                int gridZ = gridPacket.getGridZFromWorldZ(currZ);
+                if (gridX < 0 || gridZ < 0 || gridX >= gridPacket.getGridXCount() || gridZ >= gridPacket.getGridZCount()) {
+                    gridSquaresMissed++;
+                    continue;
+                }
+
+                FroggerGridStack gridStack = gridPacket.getGridStack(gridX, gridZ);
+                gridSquaresMissed = 0;
+                for (int i = 0; i < gridStack.getGridSquares().size(); i++) {
+                    FroggerGridSquare gridSquare = gridStack.getGridSquares().get(i);
+                    float polygonY = gridSquare.getPolygon().getCenterOfPolygon(tempVector).getY();
+                    if (Math.abs(polygonY - currY) < dirY)
+                        return Math.abs(polygonY - startY) + (FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH_FLOAT * .5F);
+                }
+            }
+
+            // Couldn't find, so here's a default.
+            return 15 * FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH_FLOAT;
+        }
+
+        private float calculateLightConeHeightViaRaycastingWorkingBackup() { // TODO: TOSS
+            float startX = this.mapLight.getPosition().getFloatX();
+            float startY = this.mapLight.getPosition().getFloatY();
+            float startZ = this.mapLight.getPosition().getFloatZ();
+            float dirX = this.mapLight.getDirection().getFloatX(12);
+            float dirY = this.mapLight.getDirection().getFloatY(12);
+            float dirZ = this.mapLight.getDirection().getFloatZ(12);
+
+            int gridSquaresMissed = 0;
+            float currX = startX, currY = startY, currZ = startZ;
+            Vector3f tempVector = new Vector3f();
+            FroggerMapFilePacketGrid gridPacket = this.mapLight.getMapFile().getGridPacket();
+            int attempts = 0;
+            while (gridSquaresMissed < 20 && ++attempts < 1000) { // TODO: Is this right?
+                if (gridSquaresMissed > 0) {
+                    currX += FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH_FLOAT * dirX;
+                    currY += FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH_FLOAT * dirY;
+                    currZ += FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH_FLOAT * dirZ;
+                } else {
+                    currX += dirX;
+                    currY += dirY;
+                    currZ += dirZ;
+                }
+
+                int gridX = gridPacket.getGridXFromWorldX(currX);
+                int gridZ = gridPacket.getGridZFromWorldZ(currZ);
+                if (gridX < 0 || gridZ < 0 || gridX >= gridPacket.getGridXCount() || gridZ >= gridPacket.getGridZCount()) {
+                    gridSquaresMissed++;
+                    continue;
+                }
+
+                FroggerGridStack gridStack = gridPacket.getGridStack(gridX, gridZ);
+                gridSquaresMissed = 0;
+                for (int i = 0; i < gridStack.getGridSquares().size(); i++) {
+                    FroggerGridSquare gridSquare = gridStack.getGridSquares().get(i);
+                    float polygonY = gridSquare.getPolygon().getCenterOfPolygon(tempVector).getY();
+                    if (Math.abs(polygonY - currY) < dirY)
+                        return Math.abs(polygonY - startY) + (FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH_FLOAT * .5F);
+                }
+            }
+
+            // Couldn't find, so here's a default.
+            return 15 * FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH_FLOAT;
         }
 
         /**
@@ -316,6 +513,21 @@ public class FroggerUIMapLightManager extends FroggerCentralMapListManager<Frogg
         private void onRemove() {
             setVisible(false);
             this.fxLight = null;
+            removeShapes();
+        }
+
+        /**
+         * Removes the 3D preview.
+         */
+        private void removeShapes() {
+            if (this.directionalLine != null) {
+                this.lightingManager.getLightList().remove(this.directionalLine);
+                this.directionalLine = null;
+            }
+            if (this.meshView != null) {
+                this.lightingManager.getConeList().remove(this.meshView);
+                this.meshView = null;
+            }
         }
     }
 }

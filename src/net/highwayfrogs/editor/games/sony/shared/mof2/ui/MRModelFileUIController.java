@@ -26,7 +26,7 @@ public class MRModelFileUIController extends DefaultFileUIController<SCGameInsta
         getLeftSidePanelTopBox().getChildren().add(this.viewButton);
         this.viewButton.setOnMouseClicked(evt -> {
             if (getFile() != null)
-                getFile().handleWadEdit(null);
+                getFile().performDefaultUIAction();
         });
         this.viewButton.setDisable(getFile() == null || getFile().getModelType() == MRModelType.DUMMY);
     }

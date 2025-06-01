@@ -322,6 +322,8 @@ public class FroggerPathInfo extends SCGameData<FroggerGameInstance> {
                 manager.updateEntityPositionRotation(entity);
                 manager.updateEditor(); // Update the entity editor display, update path slider, etc.
             });
+            editorGrid.addBoldLabelButton("Or alternatively: ", "Select Path", 25,
+                    () -> manager.setSelectedMouseEntity(entity));
         } else { // Otherwise, show it as a selection box!
             editorGrid.addBoldLabelButton("Path " + this.pathId, "Select Path", 25,
                     () -> manager.setSelectedMouseEntity(entity));
@@ -353,7 +355,7 @@ public class FroggerPathInfo extends SCGameData<FroggerGameInstance> {
             txtFieldMaxTravel.setDisable(true);
         } else {
             editorGrid.addBoldLabel("Error: Invalid Path ID!");
-            editorGrid.addNormalLabel("The path data is not valid until a proper path ID is selected.");
+            editorGrid.addNormalLabel("Please select a valid path.");
         }
 
         // Motion Data:

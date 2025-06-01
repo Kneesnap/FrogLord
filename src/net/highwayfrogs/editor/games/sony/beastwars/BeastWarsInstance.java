@@ -2,16 +2,20 @@ package net.highwayfrogs.editor.games.sony.beastwars;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.Config;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.beastwars.map.BeastWarsMapFile;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 
 import java.util.ArrayList;
@@ -66,6 +70,22 @@ public class BeastWarsInstance extends SCGameInstance {
 
         DataReader exeReader = getExecutableReader();
         readModelRemaps(exeReader);
+    }
+
+    @Override
+    protected VLOArchive resolveMainVlo(MRModel model) {
+        WADFile wadFile = model.getParentWadFile();
+        if (wadFile != null) {
+            String searchFileName = FileUtils.stripExtension(wadFile.getFileDisplayName()) + ".VLO";
+            if (searchFileName.startsWith("MD"))
+                searchFileName = "MS" + searchFileName.substring(2);
+
+            VLOArchive foundVlo = getMainArchive().getFileByName(searchFileName);
+            if (foundVlo != null)
+                return foundVlo;
+        }
+
+        return super.resolveMainVlo(model);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.ui;
 
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.input.PickResult;
 import javafx.scene.shape.MeshView;
 import net.highwayfrogs.editor.file.standard.SVector;
@@ -20,6 +21,7 @@ import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
+import net.highwayfrogs.editor.utils.FXUtils;
 
 /**
  * Manages UI relating to the landscape/terrain of an old Frogger map.
@@ -136,18 +138,22 @@ public class OldFroggerLandscapeUIManager extends BakedLandscapeUIManager<OldFro
         @Override
         protected void selectNewTexture(ITextureSource oldTextureSource) {
             OldFroggerLevelTableEntry levelTableEntry = getManager().getMap().getLevelTableEntry();
-            if (levelTableEntry == null)
+            if (levelTableEntry == null) {
+                FXUtils.makePopUp("There is no level table entry available to resolve the texture remap from.", AlertType.ERROR);
                 return;
+            }
 
             TextureRemapArray remapArray = levelTableEntry.getTextureRemap();
-            if (remapArray == null)
+            if (remapArray == null) {
+                FXUtils.makePopUp("There is no texture remap available to assign textures from.", AlertType.ERROR);
                 return;
+            }
 
             // Resolve VLO.
             VLOArchive vloArchive = oldTextureSource instanceof GameImage ? ((GameImage) oldTextureSource).getParent() : null;
             if (vloArchive == null)
                 vloArchive = levelTableEntry.getMainVLOArchive();
-            if (vloArchive == null || getEditTarget() == null)
+            if (getEditTarget() == null)
                 return;
 
             remapArray.askUserToSelectImage(vloArchive, false, selectedImage -> {
@@ -165,7 +171,9 @@ public class OldFroggerLandscapeUIManager extends BakedLandscapeUIManager<OldFro
                     polygon.setTextureId(-1);
                 }
 
-                getManager().getController().getMesh().getShadedTextureManager().updatePolygon(polygon);
+                setShadeDefinition(polygon, getManager().createPolygonShadeDefinition(polygon));
+                getManager().getMesh().getShadedTextureManager().updatePolygon(polygon);
+                getManager().getMesh().getMainNode().updateTexCoords(polygon);
             });
         }
     }

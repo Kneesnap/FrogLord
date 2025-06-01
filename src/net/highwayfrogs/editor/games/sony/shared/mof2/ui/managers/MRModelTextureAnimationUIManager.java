@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.sony.shared.mof2.ui.managers;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.scene.Node;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
@@ -156,10 +157,18 @@ public class MRModelTextureAnimationUIManager extends BasicListMeshUIManager<MRM
             view.setFitWidth(20);
             view.setFitHeight(20);
 
-            view.setOnMouseClicked(evt -> getMesh().getModel().getVloFile().promptImageSelection(newImage -> {
-                entry.setGlobalImageId(newImage.getTextureId());
-                updateEditor();
-            }, false));
+            view.setOnMouseClicked(evt -> {
+                VLOArchive vlo = getMesh().getModel().getVloFile();
+                if (vlo == null) {
+                    FXUtils.makePopUp("There is no VLO file associated with this model.\nSo, FrogLord doesn't know what textures it should let you pick from.", AlertType.WARNING);
+                    return;
+                }
+
+                vlo.promptImageSelection(newImage -> {
+                    entry.setGlobalImageId(newImage.getTextureId());
+                    updateEditor();
+                }, false);
+            });
 
             HBox hbox = new HBox();
             hbox.setSpacing(5);
@@ -193,10 +202,18 @@ public class MRModelTextureAnimationUIManager extends BasicListMeshUIManager<MRM
             toDisable.add(removeButton);
         }
 
-        toDisable.add(grid.addButton("Add Texture", () -> getMesh().getModel().getVloFile().promptImageSelection(newImage -> {
-            textureAnimation.getEntries().add(new MRMofTextureAnimationEntry(newImage.getTextureId(), 1));
-            updateEditor();
-        }, false)));
+        toDisable.add(grid.addButton("Add Texture", () -> {
+            VLOArchive vlo = getMesh().getModel().getVloFile();
+            if (vlo == null) {
+                FXUtils.makePopUp("There is no VLO file associated with this model.\nSo, FrogLord doesn't know what textures it should let you pick from.", AlertType.WARNING);
+                return;
+            }
+
+            vlo.promptImageSelection(newImage -> {
+                textureAnimation.getEntries().add(new MRMofTextureAnimationEntry(newImage.getTextureId(), 1));
+                updateEditor();
+            }, false);
+        }));
     }
 
     @Override

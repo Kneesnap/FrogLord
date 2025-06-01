@@ -4,8 +4,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
@@ -13,6 +11,8 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.collision.MRMofBoundingBox
 import net.highwayfrogs.editor.games.sony.shared.mof2.collision.MRMofBoundingBoxSet;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRStaticMof;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.AppendInfoLoggerWrapper;
 
@@ -84,8 +84,9 @@ public class MRAnimatedMofModel extends SCSharedGameData {
 
         this.tempPartCount = reader.readUnsignedShortAsInt(); // Appears to match the real part count.
         int staticModelId = reader.readUnsignedShortAsInt();
-        if (staticModelId != getStaticModelID())
-            getLogger().severe("Invalid MRAnimatedMofModel Static Model ID! (Got %d, but expected %d!)", staticModelId, getStaticModelID());
+        int expectedStaticModelId = getStaticModelID();
+        if (staticModelId != expectedStaticModelId)
+            getLogger().severe("Invalid MRAnimatedMofModel Static Model ID! (Got %d, but expected %d!)", staticModelId, expectedStaticModelId);
 
         this.tempCelSetPointerAddress = reader.readInt(); // Right after BBOX
         this.tempBBoxPointerAddress = reader.readInt(); // Right after model data.

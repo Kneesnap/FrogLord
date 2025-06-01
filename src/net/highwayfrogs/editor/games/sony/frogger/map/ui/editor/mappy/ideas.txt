@@ -1,6 +1,5 @@
 PT Model Support + Animations
 Saving PSX game wads / non-frogger games.
-Rewrite Frogger file support.
 Map Editor MVP
  - Track Polygons per vertex.
  - The grid is the most fundamental concept.
@@ -25,19 +24,12 @@ Future Features:
 
 v1.0 Release:
  - Editor MVP
- - Automatic version detection + Drag & Drop support on game selection menu.
- - Fix the memory leak seen displaying MediEvil (MediEvil 2?) maps.
- - Ensure TGQ saves a playable version of the game.
- - Make those UI buttons on the main menu do something.
- - UI Todos.
- - Make it more user friendly.
  - Figure out a basic workflow for integration with decomp.
   - Ideally we can setup one-click run.
   - Manually editing the executable may no longer be necessary / desirable.
   - Do we want an extracted style-system, where we can configure a list of files to apply, or actions like importing images from directory?
   - We should probably include searchable written documentation too.
 
-How do the sky maps work? Eg: What's the behavior for when there's no grid square? Fall off map?
 Consider water wibble, and what considerations we need to support that.
 
 General Data:
@@ -59,18 +51,9 @@ Forms:
  - Allow selecting between all unique model files which are seen to be used by the given form.
  - I'd like to allow saving forms on a per-mof basis. Eg: All unique forms should be saved somewhere, so they can be used independently of level.
 
-Group:
- - I'd like to make groups as automated as possible, and as close to the original as possible.
- - This means spending some time trying different algorithms to generate groups and comparing the outputs to the original, both in terms of bytes, but also in terms of parsed data (which will be faster to debug).
- - Potentially change the preview of this into a mesh, instead of a bunch of boxes. (Improve performance)
- -
-
 Grid:
- - Change the preview of this into a mesh, instead of a bunch of boxes. (Improve performance)
- - Make sure to look at the collision grid to understand what we're up against. (Usage of tris?)
  - The grid will be the core of the terrain mesh editor.
- - At the start, we will have very tools for adding terrain inside a grid, and working with grid edges is preferred instead. Make sure to communicate this to the user.
- - There's still the question of how the square height is calculated, but with it only being used for cliff height it may not desperately matter.
+ - At the start, we will have very tools for adding terrain inside a grid.
 
 Light:
  - New editor needs to be 3D based.

@@ -5,12 +5,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.math.Vector2f;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents a texture UV pair stored as bytes in a Sony Cambridge game.
@@ -63,8 +64,18 @@ public class SCByteTextureUV implements IBinarySerializable {
      * @param v the float value to apply
      */
     public void setFloatUV(float u, float v) {
-        this.u = floatToByte(u);
-        this.v = floatToByte(v);
+        this.u = DataUtils.floatToByte(u);
+        this.v = DataUtils.floatToByte(v);
+    }
+
+    /**
+     * Set UV values as snapped floats ranging from 0 to 1.
+     * @param u the float value to apply
+     * @param v the float value to apply
+     */
+    public void setSnappedFloatUV(GameImage image, float u, float v) {
+        setSnappedFloatU(image, u);
+        setSnappedFloatV(image, v);
     }
 
     /**
@@ -76,11 +87,39 @@ public class SCByteTextureUV implements IBinarySerializable {
     }
 
     /**
+     * Get U as a float ranging from 0 to 1.
+     * This value is snapped to the nearest pixel, just as seen in both MR API MOF setup code and Frogger map rendering code.
+     * In other words, this should yield a more accurate UV value than getFloatV() in most situations.
+     * @return floatU
+     */
+    public float getSnappedFloatU(GameImage image) {
+        if (image == null)
+            return getFloatU();
+
+        return getSnappedFloat(this.u, image.getIngameWidth());
+    }
+
+    /**
      * Set U as a float ranging from 0 to 1.
      * @param value the float value to apply
      */
     public void setFloatU(float value) {
-        this.u = floatToByte(value);
+        this.u = DataUtils.floatToByte(value);
+    }
+
+    /**
+     * Set U as a float ranging from 0 to 1.
+     * This value is snapped to the nearest pixel, just as seen in both MR API MOF setup code and Frogger map rendering code.
+     * In other words, this should never change the underlying 'u' value when setSnappedFloatU(image, getSnappedFloatU(image)) is called.
+     * @param image the image to use to snap the value
+     * @param newU the float value to apply
+     */
+    public void setSnappedFloatU(GameImage image, float newU) {
+        if (image != null) {
+            this.u = calculateByteForSnappedFloat(newU, image.getIngameWidth());
+        } else {
+            setFloatU(newU);
+        }
     }
 
     /**
@@ -92,11 +131,39 @@ public class SCByteTextureUV implements IBinarySerializable {
     }
 
     /**
+     * Get V as a float ranging from 0 to 1.
+     * This value is snapped to the nearest pixel, just as seen in both MR API MOF setup code and Frogger map rendering code.
+     * In other words, this should yield a more accurate UV value than getFloatV() in most situations.
+     * @return floatV
+     */
+    public float getSnappedFloatV(GameImage image) {
+        if (image == null)
+            return getFloatV();
+
+        return getSnappedFloat(this.v, image.getIngameHeight());
+    }
+
+    /**
      * Set V as a float ranging from 0 to 1.
      * @param value the float value to apply
      */
     public void setFloatV(float value) {
-        this.v = floatToByte(value);
+        this.v = DataUtils.floatToByte(value);
+    }
+
+    /**
+     * Set V as a float ranging from 0 to 1.
+     * This value is snapped to the nearest pixel, just as seen in both MR API MOF setup code and Frogger map rendering code.
+     * In other words, this should never change the underlying 'v' value when setSnappedFloatV(image, getSnappedFloatV(image)) is called.
+     * @param image the image to use to snap the value
+     * @param newV the float value to apply
+     */
+    public void setSnappedFloatV(GameImage image, float newV) {
+        if (image != null) {
+            this.v = calculateByteForSnappedFloat(newV, image.getIngameHeight());
+        } else {
+            setFloatV(newV);
+        }
     }
 
     /**
@@ -107,6 +174,20 @@ public class SCByteTextureUV implements IBinarySerializable {
     public Vector2f toVector(Vector2f instance) {
         instance.setX(getFloatU());
         instance.setY(getFloatV());
+        return instance;
+    }
+
+    /**
+     * Apply uv coordinates to a vector.
+     * @param instance The vector to save float values to.
+     * @return floatVector
+     */
+    public Vector2f toSnappedVector(GameImage image, Vector2f instance) {
+        if (image == null)
+            return toVector(instance);
+
+        instance.setX(getSnappedFloatU(image));
+        instance.setY(getSnappedFloatV(image));
         return instance;
     }
 
@@ -186,13 +267,33 @@ public class SCByteTextureUV implements IBinarySerializable {
         });
     }
 
-    /**
-     * Converts a floating point value between 0 and 1 to a value between 0 and 255, stored in a signed byte.
-     * @param floatValue The value to convert to a byte.
-     * @return byteValue
-     */
-    private static byte floatToByte(float floatValue) {
-        short small = (short) Math.round(floatValue * 0xFF);
-        return small >= 128 ? ((byte) (small - 256)) : (byte) small;
+    private static float getSnappedFloat(byte value, int imageLength) {
+        int newValue = ((value & 0xFF) * imageLength) / 255; // MR_STAT.C/MRStaticResolveMOFTextures
+        return (float) newValue / imageLength;
+    }
+
+    private static byte calculateByteForSnappedFloat(float value, int imageLength) {
+        if (value < 0)
+            value = 0;
+        if (value > 1)
+            value = 1;
+
+        // We round at the part that we do, since the actual game has a whole number at that exact moment.
+        // This allows us to ensure that when we do setSnappedFloatV(image, getSnappedFloatV(image)), it will apply the correct value for certain.
+        byte testValue = (byte) Math.max(0, Math.min(0xFF, (0xFF * Math.round(value * imageLength)) / imageLength));
+        float testFloat = getSnappedFloat(testValue, imageLength);
+
+        // Increase the value until we have the best match.
+        while (0xFF > (testValue & 0xFF)) {
+            byte nextValue = (byte) ((testValue & 0xFF) + 1);
+            float nextFloat = getSnappedFloat(nextValue, imageLength);
+            if (Math.abs(nextFloat - value) > Math.abs(testFloat - value))
+                break; // If increasing the value would make the uv float value become less accurate, stop!
+
+            testValue = nextValue;
+            testFloat = nextFloat;
+        }
+
+        return testValue;
     }
 }

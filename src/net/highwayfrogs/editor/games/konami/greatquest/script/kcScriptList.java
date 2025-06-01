@@ -4,8 +4,6 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
@@ -25,6 +23,8 @@ import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.AppendInfoLoggerWrapper;
 
@@ -255,8 +255,12 @@ public class kcScriptList extends kcCResource {
             kcScript script = this.scripts.get(i);
             kcCResourceEntityInst entity = script.getEntity();
 
-            if (entity == null)
-                throw new RuntimeException("Cannot print warnings, there's a script which doesn't have an entity linked!");
+            if (entity == null) {
+                for (int j = 0; j < script.getFunctions().size(); j++)
+                    script.getFunctions().get(j).getCause().printWarning(logger, "the function/script was not attached to a valid entity");
+
+                throw new RuntimeException("Cannot print warnings, there's a script which doesn't have an entity linked! (Line Number: " + script.getFunctions().get(0).getCause().getUserLineNumber());
+            }
 
             kcScriptValidationData functionData = getOrCreateValidationData(logger, dataMap, entity);
             for (int j = 0; j < script.getFunctions().size(); j++) {
@@ -338,7 +342,6 @@ public class kcScriptList extends kcCResource {
         kcScriptValidationData validationData = dataMap.get(entity);
         if (validationData == null) {
             ILogger tempLogger = new AppendInfoLoggerWrapper(logger, entity.getName(), AppendInfoLoggerWrapper.TEMPLATE_OVERRIDE_AT_ORIGINAL);
-            System.out.println(entity.getName() + "," + tempLogger.getName() + "," + tempLogger.getLoggerInfo() + "," + logger.getLoggerInfo() + "," + logger.getName()); // TODO: TOSS
             dataMap.put(entity, validationData = new kcScriptValidationData(entity, tempLogger));
         }
 

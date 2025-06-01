@@ -33,7 +33,7 @@ public class BeastWarsMapMesh extends PSXShadedDynamicMesh<BeastWarsMapVertex, B
     public static final CursorVertexColor PINK_COLOR = new CursorVertexColor(Color.PINK, Color.BLACK);
 
     public BeastWarsMapMesh(BeastWarsMapFile mapFile) {
-        super(new SequentialTextureAtlas(64, 64, true), DynamicMeshTextureQuality.UNLIT_SHARP, mapFile.shouldMapViewerEnableShadingByDefault());
+        super(new SequentialTextureAtlas(64, 64, true), DynamicMeshTextureQuality.UNLIT_SHARP, mapFile.shouldMapViewerEnableShadingByDefault(), mapFile.getFileDisplayName());
         this.map = mapFile;
 
         // Add textures.

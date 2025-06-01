@@ -115,25 +115,22 @@ public class RwWorldMeshController extends MeshViewController<RwWorldCombinedMes
     }
 
     public static class RwWorldMeshCollection extends MeshViewCollection<RwWorldMaterialMesh> {
-        private final MeshViewController<?> viewController;
-
         public RwWorldMeshCollection(MeshViewController<?> viewController) {
-            super(viewController.getRenderManager().createDisplayListWithNewGroup());
-            this.viewController = viewController;
+            super(viewController, viewController.getRenderManager().createDisplayListWithNewGroup());
         }
 
         @Override
         protected void onMeshViewSetup(int meshIndex, RwWorldMaterialMesh mesh, MeshView meshView) {
             super.onMeshViewSetup(meshIndex, mesh, meshView);
-            MeshViewController.bindMeshSceneControls(this.viewController, meshView);
-            this.viewController.getMainLight().getScope().add(meshView);
+            MeshViewController.bindMeshSceneControls(getController(), meshView);
+            getController().getMainLight().getScope().add(meshView);
         }
 
         @Override
         protected void onMeshViewCleanup(int meshIndex, RwWorldMaterialMesh mesh, MeshView meshView) {
             super.onMeshViewCleanup(meshIndex, mesh, meshView);
-            MeshViewController.unbindMeshSceneControls(this.viewController, meshView);
-            this.viewController.getMainLight().getScope().remove(meshView);
+            MeshViewController.unbindMeshSceneControls(getController(), meshView);
+            getController().getMainLight().getScope().remove(meshView);
         }
     }
 }

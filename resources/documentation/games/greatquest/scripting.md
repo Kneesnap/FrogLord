@@ -6,15 +6,14 @@ Instead, `kcScript` is a term we made for the scripting system found in the orig
 
 ## The Basics
 Each entity in a level can have a script, for example Frogger, coins, etc.
-Each script is broken up into any number of functions, which contain the actual script behavior.
-A function has two parts, the cause (conditions for running/trigger) and the effects.
-An example of a script cause would be `OnLevel BEGIN`, which indicates that the function should run when the level begins.
-On the other hand, effects are the commands which can impact the game, such as by playing a sound, making entities invisible, etc.  
+These scripts are broken up into any number of functions, which contain a cause (what triggers it), and the effects to apply.  
+For example, `OnLevel BEGIN` is a cause which indicates the function should be run when the level begins.
+When the function runs, its effects will impact the game such as playing a sound, making entities invisible, etc.  
 The following example would play a sound effect when the level loads.
 
 **Example:**  
 ```powershell
-[Function] # When writing scripts, make sure the correct number of square brackets are used. (It'll usually be more than the one used here)
+[Function] # When writing scripts, make sure the correct number of square brackets are used. (For more information, refer to the config file documentation and GQS documentation.)
 cause=OnLevel BEGIN
 PlaySound "sfx/level_start_sfx"
 # More script effects could be written here if desired.
@@ -22,17 +21,20 @@ PlaySound "sfx/level_start_sfx"
 
 Since scripts belong to individual entities, they execute *as* that entity.
 For example, if you use the `SetSequence` effect to cause an entity to animate, by default it will apply the animation to the entity which the script is written for.
-In order to specify you'd like to run it on a different entity, supply an extra flag `--AsEntity <String: entityName>`.
+In order to specify you'd like to run it on a different entity, add `--AsEntity <String: entityName>`.
 For example, `SetSequence "NrmIdle01" --AsEntity "FrogInst001"` will run `SetSequence` as the player character, instead of the script owner.
 Up until this point, the term "script owner" has meant the entity which the script runs as/was written for.  
-But with the addition of `--AsEntity`, the term "script owner" now may instead refer to the `--AsEntity` entity (if `--AsEntity` is used) unless otherwise indicated.  
+But since it's possible to use `--AsEntity` to run effects as other entities, the "script owner" will be treated as the `--AsEntity` target if `--AsEntity` is used.  
 
 ## Getting started by creating/modifying scripts
-The easiest way to get started is by looking at examples. To export scripts from the original game, select a level in FrogLord, and find the chunk named `scriptdata`.
-By right-clicking it and selecting "Export Scripts" you'll be able to specify a folder to save the scripts to.
-Make sure to use a different folder for each level you export scripts for to avoid confusion and overriding files with the same name.
-Scripts can be re-imported back into FrogLord by writing them in [GQS Files](./modding-gqs-file.md), and importing them like any other GQS file.  
-It is recommended to split up the scripts for a level into multiple different files for organizational purposes.
+The easiest way to get started is by looking at examples.
+
+To export scripts from the original game:
+1) Select a level in FrogLord, and find the chunk named `scriptdata`.  
+2) Right-click `scriptdata` and select "Export Scripts".
+3) Use a different folder for each level when exporting to avoid overwriting files.
+
+To import new/modified scripts back into FrogLord, the scripts must be written in [GQS Files](./modding-gqs-file.md).  
 
 ### GQS Example
 ```PowerShell
@@ -73,16 +75,55 @@ ShowDialog "FFM_DIALOG_001" # Shows the dialog defined earlier to the player.
 > The number of brackets corresponds to how deeply nested the data is, similar to folders within folders.  
 > For further information on writing configuration files see [the documentation](../../froglord/config-files.md).
 
+> [!TIP]
+> Create multiple `.gqs` files instead of a single large `.gqs` file for better organization.
+
 ## Design Quirks
-There is no concept of an if statement, so controlling execution flow can be a bit annoying.
-Instead, any code which should only run conditionally should be split into multiple script functions, and features such as entity variables can be used to control which script function(s) are run.
+Unlike every other scripting system/programming language, there is no such thing as an "if statement".
+
+The following example is very easy in most scripting languages, but it is more complex in The Great Quest.
+```python
+def on_player_interact():
+  if not playerHasTalkedToFairyFrogMother:
+     start_tutorial() # Only happens if the player hasn't talked to FFM yet.
+```
+
+In The Great Quest, it would look like:
+```PowerShell
+[Entities]
+[[FrogmotherInst001]] # Creates a new entity called FrogmotherInst001.
+# ... Frogmother's entity data goes here like where she is in the world, what 3D model to use for her, etc.
+# It has been skipped because it is not relevant to this example.
+
+[[[Script]]]
+
+# This function will be called when the player interacts with Fairy Frogmother.
+[[[[Function]]]]
+cause=OnPlayer INTERACT
+# The following effect will make FFM send the number currently in entity variable slot zero to herself.
+# Therefore, if the number in slot 0 is zero, then FFM will 
+SendNumber ENTITY_VARIABLE 0
+
+# This function will run ONLY when FFM receives the number zero.
+[[[[Function]]]]
+cause=OnReceiveNumber EQUAL_TO 0
+SetVariable 0 1 # By setting the value in slot 0 to one, we prevent FFM from talking the next time the player interacts with her.
+ShowDialog "FFM 0 prompt 1" # Shows a dialog box containing "Fairy Frog Mother: Hello, Frogger!"
+```
+
+The code up there will allow the player to interact with Fairy Frogmother (FFM), and she'll say "Hello, Frogger!".  
+But if the player tries to interact with her again, she will completely ignore the player.  
+This was possible because of how the example used "entity variables".  
 
 ### Entity Variables
-Each entity has 8 variables available (accessible via IDs 0 through 7).
-These variables can be set to any whole number.
-They can be used as a way to control which code gets run, as the `SendNumber` command can send an entity variable.  
-For example:
+Each entity has 8 variable slots available, and are zero-indexed. In other words, the first slot is called 'slot 0', the second slot is called 'slot 1', up until reaching 'slot 7'.
+Any whole number can be put in each slot, despite there being only 8 slots per entity.
+Variables are extremely powerful when used with the `SendNumber` command.  
+Think of `SendNumber` like a postal service, but a crappy one which only delivers a piece of paper containing a single number written on it.  
+Each entity can use the `SendNumber` postal service to send one number to themselves or to other entities.  
+Then, the entity who receives the number from the postal service will execute its functions caused by `OnReceiveNumber`, if the number they got from the postal service matches the cause.  
 
+For example:
 ```PowerShell
 [Function]
 cause=OnReceiveNumber EQUAL_TO 1
@@ -200,18 +241,20 @@ See `ShowDialog` for more details.
 **Supported Entity Types:** All  
 **Ghidra Reference (Ignore):** `kcCEntity::OnNumber`  
 **Usage:** `OnReceiveNumber <operation> <number>`  
-This will only execute when a number matching the specified criteria is sent to the script owner using the `SendNumber` effect.  
-The most common operation will be `EQUAL_TO`, which will allow specifying behavior upon receiving a specific number.  
+Using the postal system analogy described earlier, `OnReceiveNumber` is for an entity waiting for a number to be sent from the postal system with `SendNumber`.  
+Whenever a number is received from the postal system, the entity will check if the number it got matches the criteria it's waiting for.  
+In most cases, the criteria/operation is if the number is `EQUAL_TO` the number listened for.  
+For example, `OnReceiveNumber EQUAL_TO 12` will make the function run every time the number 12 is received from the postal system, but NOT any other number.  
 Only whole numbers (integers) are supported by this cause.  
 
 **Valid Operations:**  
 ```properties
-EQUAL_TO # The received number is equal to <number>
+EQUAL_TO # The received number is equal to <number>. (This is almost always what you'll want to use.)
 NOT_EQUAL_TO # The received number is not equal to <number>
 LESS_THAN # Received number < <number>
 GREATER_THAN # Received number > <number>
-LESS_THAN_OR_EQUAL # Received number <= <number>
-GREATER_THAN_OR_EQUAL # Received number >= <number>
+LESS_THAN_OR_EQUAL_TO # Received number <= <number>
+GREATER_THAN_OR_EQUAL_TO # Received number >= <number>
 ```
 
 ### OnReceivePlayerHasItem
@@ -622,11 +665,15 @@ The only way to use a variable is with the `SendNumber` effect.
 **Supported Entity Types:** All  
 **Ghidra Reference (Ignore):** `kcCEntity::OnCommand`  
 **Usage:** `SendNumber <LITERAL_NUMBER|ENTITY_VARIABLE|RANDOM> <number>`  
+Think of `SendNumber` like a postal service, but a crappy one which only delivers a piece of paper containing a single number written on it.  
+Each entity can use the `SendNumber` postal service to send one number to themselves or to other entities.  
+Then, the entity who receives the number from the postal service will execute its functions caused by `OnReceiveNumber`, if the number they got from the postal service matches the cause.
+
 ```properties
-LITERAL_NUMBER # The number sent will be the number provided as an argument.
-ENTITY_VARIABLE # The number sent will be the value of the entity variable at the provided ID.
-RANDOM # The number sent will be a random number between 0 and the number provided.
-# When using RANDOM, the number provided is exclusive, so if 'RANDOM 5' is provided, the random numbers generated are between 0 and 4.
+LITERAL_NUMBER # The number sent with the postal service is the argument named <number> in the above example.
+ENTITY_VARIABLE # The number sent with the postal service is the value in the provided entity variable slot.
+RANDOM # The number sent with the postal service is a random number between 0 and provided number.
+# When using RANDOM, the number provided is exclusive, so for 'SendNumber RANDOM 5' the random numbers generated are between 0 and 4.
 ```
 
 If the `--AsEntity` flag is included, the number will be sent to the `--AsEntity` target instead of the script owner.  

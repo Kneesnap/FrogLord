@@ -152,7 +152,7 @@ public class MeshUIMarkerManager<TMesh extends DynamicMesh> extends MeshUIManage
         MeshView newView = new MeshView();
         newView.setDepthTest(DepthTest.DISABLE);
         ScaleGizmo newGizmo = new ScaleGizmo();
-        newGizmo.addView(newView, getController().getFirstPersonCamera(), listener);
+        newGizmo.addView(newView, getController(), listener);
         Scene3DUtils.setNodePosition(newView, x, y, z);
         Scene3DUtils.setNodeScale(newView, scale, scale, scale);
         newGizmo.setScaleX(scaleX, false);

@@ -3,13 +3,12 @@ package net.highwayfrogs.editor.file.config.exe.pc;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXThemeBook;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
-import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.function.Function;
 
@@ -64,26 +63,26 @@ public class PCThemeBook extends ThemeBook {
     }
 
     @Override
-    public VLOArchive getVLO(FroggerMapFile map) {
+    public VLOArchive getVLO(boolean isMultiplayer, boolean isLowPolyMode) {
         if (!isValid())
             return null;
 
-        if (map.isMultiplayer()) {
-            return getGameInstance().getGameFile(map.isLowPolyMode() ? getLowMultiplayerVloId() : getHighMultiplayerVloId());
+        if (isMultiplayer) {
+            return getGameInstance().getGameFile(isLowPolyMode ? getLowMultiplayerVloId() : getHighMultiplayerVloId());
         } else {
-            return getGameInstance().getGameFile(map.isLowPolyMode() ? getLowVloId() : getHighVloId());
+            return getGameInstance().getGameFile(isLowPolyMode ? getLowVloId() : getHighVloId());
         }
     }
 
     @Override
-    public WADFile getWAD(FroggerMapFile map) {
+    public WADFile getWAD(boolean isMultiplayer, boolean isLowPolyMode) {
         if (!isValid())
             return null;
 
-        if (map.isMultiplayer()) {
-            return getGameInstance().getGameFile(map.isLowPolyMode() ? getLowMultiplayerWadId() : getHighMultiplayerWadId());
+        if (isMultiplayer) {
+            return getGameInstance().getGameFile(isLowPolyMode ? getLowMultiplayerWadId() : getHighMultiplayerWadId());
         } else {
-            return getGameInstance().getGameFile(map.isLowPolyMode() ? getLowWadId() : getHighWadId());
+            return getGameInstance().getGameFile(isLowPolyMode ? getLowWadId() : getHighWadId());
         }
     }
 

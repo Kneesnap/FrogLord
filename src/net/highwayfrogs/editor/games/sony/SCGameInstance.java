@@ -9,7 +9,9 @@ import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.shared.basic.GameBuildInfo;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.overlay.SCOverlayTable;
@@ -113,6 +115,7 @@ public abstract class SCGameInstance extends GameInstance {
 
         this.archiveIndex = this.readMWI();
         this.mainArchive = this.readMWD(progressBar);
+        resolveModelVloFiles();
     }
 
     @Override
@@ -191,6 +194,43 @@ public abstract class SCGameInstance extends GameInstance {
      * @param wadIndex   The index to use for file access.
      */
     protected abstract void setupTextureRemaps(DataReader exeReader, MillenniumWadIndex wadIndex);
+
+    /**
+     * Resolves the .VLO files used by each model in the game.
+     */
+    protected void resolveModelVloFiles() {
+        int missingCount = 0;
+        for (MRModel model : this.mainArchive.getAllFiles(MRModel.class)) {
+            if (model.getVloFile() != null)
+                continue;
+
+            VLOArchive mainVlo = resolveMainVlo(model);
+            if (mainVlo != null) {
+                model.setVloFile(mainVlo);
+            } else {
+                missingCount++;
+            }
+        }
+
+        if (missingCount > 0)
+            getLogger().warning("Unable to resolve main VLO for %d model file(s).", missingCount);
+    }
+
+    /**
+     * Resolves the main VLO file used by a particular model.
+     * @param model the model to resolve
+     * @return modelVlo
+     */
+    protected VLOArchive resolveMainVlo(MRModel model) {
+        // Attempt to resolve a VLO with the same name as the .WAD file which holds the file.
+        WADFile wadFile = model.getParentWadFile();
+        if (wadFile != null) {
+            String searchFileName = FileUtils.stripExtension(wadFile.getFileDisplayName()) + ".VLO";
+            return getMainArchive().getFileByName(searchFileName);
+        }
+
+        return null;
+    }
 
     /**
      * Reads texture remap data.

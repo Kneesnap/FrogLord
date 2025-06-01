@@ -45,30 +45,10 @@ public interface Vector {
         return 4;
     }
 
-    default float getExportFloatX() {
-        return -getFloatX();
-    }
-
-    default float getExportFloatY() {
-        return -getFloatY();
-    }
-
-    default float getExportFloatZ() {
-        return getFloatZ();
-    }
-
     /**
      * Creates a copy of the vector object.
      */
     Vector clone();
-
-    /**
-     * Get this vector as a Wavefront-OBJ vertex command.
-     * @return vertexCommandString
-     */
-    default String toOBJString() {
-        return "v " + getExportFloatX() + " " + getExportFloatY() + " " + getExportFloatZ();
-    }
 
     /**
      * Get a decimal coordinate string for this float vector.

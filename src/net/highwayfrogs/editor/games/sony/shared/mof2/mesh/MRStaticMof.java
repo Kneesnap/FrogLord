@@ -8,6 +8,8 @@ import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.shared.mof2.MRBaseModelData;
 import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
+import net.highwayfrogs.editor.games.sony.shared.mof2.animation.MRAnimatedMof;
+import net.highwayfrogs.editor.games.sony.shared.mof2.animation.MRAnimatedMofModel;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPart.MRMofPartHeader;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -182,6 +184,42 @@ public class MRStaticMof extends MRBaseModelData {
         // TODO: Recursively go through and add properties.
         // TODO: I'd like to finally add the sub-category properly-list building API. I'd like to have some stats here about the static MOF as a whole, then break down into individual parts.
         return propertyList;
+    }
+
+
+    /**
+     * Gets the index of the static mof.
+     */
+    public int getStaticMofIndex() {
+        return getModel().getStaticMofs().indexOf(this);
+    }
+
+    /**
+     * Gets the animated mof model which corresponds to this static mof, if there is such a mof model.
+     * @return animatedMofModel, or null
+     */
+    public MRAnimatedMofModel getAnimatedMofModel() {
+        MRModel model = getModel();
+        MRAnimatedMof animatedMof = model.getAnimatedMof();
+        if (animatedMof == null)
+            return null;
+
+        // Find the index of the static mof.
+        int mofIndex = model.getStaticMofs().indexOf(this);
+        if (mofIndex < 0)
+            return null;
+
+        // Resolve that mofIndex to an animated model.
+        MRAnimatedMofModel mofModel = animatedMof.getModelByID(mofIndex);
+
+        // Run a sanity check to ensure the model we found looks right.
+        if (mofModel != null) {
+            int sanityCheckModelID = mofModel.getStaticModelID();
+            if (sanityCheckModelID != mofIndex)
+                throw new IllegalStateException("Expected to find staticMof index " + mofIndex + ", but actually found staticMof index " + sanityCheckModelID + ".");
+        }
+
+        return mofModel;
     }
 
     /**

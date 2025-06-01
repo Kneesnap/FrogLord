@@ -154,7 +154,7 @@ public class kcScriptDisplaySettings extends GameObject<GreatQuestInstance> {
         if (hashObj == null || hashObj.getHashNumber() == 0 || hashObj.getHashNumber() == -1) {
             node.setNull();
         } else if (hashObj.getOriginalString() != null) {
-            node.setAsString(hashObj.getAsString(), true);
+            node.setAsString(hashObj.getAsString(false), true);
         } else if (settings != null) {
             settings.applyGqsHashDisplay(node, hashObj.getHashNumber());
         } else {

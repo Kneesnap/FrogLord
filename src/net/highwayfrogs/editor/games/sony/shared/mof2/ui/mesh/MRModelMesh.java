@@ -25,6 +25,7 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.ui.mesh.MRModelMesh.MRMofS
 import net.highwayfrogs.editor.gui.editor.BakedLandscapeUIManager;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode;
+import net.highwayfrogs.editor.gui.mesh.MeshTracker;
 import net.highwayfrogs.editor.gui.mesh.PSXShadedDynamicMesh;
 import net.highwayfrogs.editor.gui.texture.atlas.TreeTextureAtlas;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
@@ -55,7 +56,7 @@ public class MRModelMesh extends PSXShadedDynamicMesh<MRMofPolygon, MRMofShadedT
     public static final CursorVertexColor BLUE_COLOR = new CursorVertexColor(Color.BLUE, Color.BLACK);
 
     public MRModelMesh(MRModel model) {
-        super(new TreeTextureAtlas(16, 16, true), DynamicMeshTextureQuality.UNLIT_SHARP, true);
+        super(new TreeTextureAtlas(16, 16, true), DynamicMeshTextureQuality.UNLIT_SHARP, true, model.getFileDisplayName());
         this.model = model;
         this.animationPlayer = new MRModelAnimationPlayer(this);
 
@@ -131,8 +132,8 @@ public class MRModelMesh extends PSXShadedDynamicMesh<MRMofPolygon, MRMofShadedT
      * @param preferUnlitSharp If the sharp unit material should be preferred.
      * @return if the meshView was successfully added
      */
-    public boolean addView(MeshView view, boolean useHighlight, boolean preferUnlitSharp) {
-        if (!addView(view))
+    public boolean addView(MeshView view, MeshTracker meshTracker, boolean useHighlight, boolean preferUnlitSharp) {
+        if (!addView(view, meshTracker))
             return false;
 
         PhongMaterial material;
@@ -245,9 +246,7 @@ public class MRModelMesh extends PSXShadedDynamicMesh<MRMofPolygon, MRMofShadedT
             case DUMMY:
                 return null;
             case ANIMATED:
-                return this.activeMofModel != null
-                        ? this.model.getAnimatedMof().getStaticMofs().get(this.activeMofModel.getStaticModelID())
-                        : null;
+                return this.activeMofModel != null ? this.activeMofModel.getStaticMof() : null;
             case STATIC:
                 return this.model.getStaticMof();
             default:

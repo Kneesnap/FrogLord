@@ -2,11 +2,11 @@ package net.highwayfrogs.editor.system.mm3d.blocks;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.system.mm3d.MMDataBlockBody;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.system.mm3d.OffsetType;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Holds the normals for each face of the model.
@@ -14,7 +14,7 @@ import net.highwayfrogs.editor.system.mm3d.OffsetType;
  */
 public class MMTriangleNormalsBlock extends MMDataBlockBody {
     private int unusedFlags;
-    @Getter @Setter private int index; // Triangle index (0 based)
+    @Getter @Setter private int triangleIndex; // Triangle index (0 based)
     @Getter private final float[] v1Normals = new float[3];
     @Getter private final float[] v2Normals = new float[3];
     @Getter private final float[] v3Normals = new float[3];
@@ -26,7 +26,7 @@ public class MMTriangleNormalsBlock extends MMDataBlockBody {
     @Override
     public void load(DataReader reader) {
         this.unusedFlags = reader.readUnsignedShortAsInt();
-        this.index = reader.readInt();
+        this.triangleIndex = reader.readInt();
         readFloatArray(reader, this.v1Normals);
         readFloatArray(reader, this.v2Normals);
         readFloatArray(reader, this.v3Normals);
@@ -35,7 +35,7 @@ public class MMTriangleNormalsBlock extends MMDataBlockBody {
     @Override
     public void save(DataWriter writer) {
         writer.writeUnsignedShort(this.unusedFlags);
-        writer.writeInt(this.index);
+        writer.writeInt(this.triangleIndex);
         writeFloatArray(writer, this.v1Normals);
         writeFloatArray(writer, this.v2Normals);
         writeFloatArray(writer, this.v3Normals);

@@ -59,7 +59,7 @@ public class NameBank {
      * @return defaultName
      */
     public String getDefaultNameFor(int id) {
-        return unknownMaker != null ? unknownMaker.apply(this, id) : "???? (Entry #" + id + " is not configured)";
+        return unknownMaker != null ? unknownMaker.apply(this, id) : "???? (Entry #" + id + " has not been named)";
     }
 
     /**

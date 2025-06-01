@@ -35,7 +35,7 @@ public class OldFroggerMapMesh extends PSXShadedDynamicMesh<OldFroggerMapPolygon
     public static final CursorVertexColor GREEN_COLOR = new CursorVertexColor(Color.GREEN, Color.BLACK);
 
     public OldFroggerMapMesh(OldFroggerMapFile mapFile) {
-        super(new SequentialTextureAtlas(64, 64, true), DynamicMeshTextureQuality.UNLIT_SHARP, true);
+        super(new SequentialTextureAtlas(64, 64, true), DynamicMeshTextureQuality.UNLIT_SHARP, true, mapFile.getFileDisplayName());
         this.map = mapFile;
 
         // Add textures.

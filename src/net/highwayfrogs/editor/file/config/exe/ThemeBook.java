@@ -5,13 +5,13 @@ import lombok.Setter;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.config.exe.pc.PCThemeBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXThemeBook;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,14 +65,34 @@ public abstract class ThemeBook extends ExeStruct {
      * @param file The map file to get the vlo from.
      * @return vloArchive
      */
-    public abstract VLOArchive getVLO(FroggerMapFile file);
+    public VLOArchive getVLO(FroggerMapFile file) {
+        return getVLO(file != null && file.isMultiplayer(), file != null && file.isLowPolyMode());
+    }
+
+    /**
+     * Get the VLO of this book.
+     * @param isMultiplayer whether the VLO used for multiplayer mode is returned
+     * @param isLowPolyMode whether the VLO used for low-poly mode is returned
+     * @return vloArchive
+     */
+    public abstract VLOArchive getVLO(boolean isMultiplayer, boolean isLowPolyMode);
 
     /**
      * Get the wad of this book.
      * @param file The map file to get the vlo from.
      * @return vloArchive
      */
-    public abstract WADFile getWAD(FroggerMapFile file);
+    public WADFile getWAD(FroggerMapFile file) {
+        return getWAD(file != null && file.isMultiplayer(), file != null && file.isLowPolyMode());
+    }
+
+    /**
+     * Get the wad of this book.
+     * @param isMultiplayer whether the VLO used for multiplayer mode is returned
+     * @param isLowPolyMode whether the VLO used for low-poly mode is returned
+     * @return vloArchive
+     */
+    public abstract WADFile getWAD(boolean isMultiplayer, boolean isLowPolyMode);
 
     /**
      * Tests if this is a valid theme.

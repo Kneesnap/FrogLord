@@ -34,6 +34,7 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
      * This represents the length and width of a grid stack/square. Is equivalent to 16.0F in floating point.
      */
     public static final short GRID_STACK_WORLD_LENGTH = (short) 256;
+    public static final float GRID_STACK_WORLD_LENGTH_FLOAT = DataUtils.fixedPointShortToFloat4Bit(GRID_STACK_WORLD_LENGTH); // 16F
 
     public static final int MAX_GRID_SQUARE_COUNT_X = 255;
     public static final int MAX_GRID_SQUARE_COUNT_Z = 255;

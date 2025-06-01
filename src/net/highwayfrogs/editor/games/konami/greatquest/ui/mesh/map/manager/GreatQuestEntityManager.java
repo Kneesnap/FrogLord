@@ -264,7 +264,7 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
                 if (newCachedMesh != null) {
                     newMeshView.setMaterial(newCachedMesh.getHighlightedMaterial());
                     if (newCachedMesh.getFullMesh().getSkeletonMesh() != null) {
-                        newCachedMesh.getFullMesh().getSkeletonMesh().addView(this.selectedSkeletonMeshView);
+                        newCachedMesh.getFullMesh().getSkeletonMesh().addView(this.selectedSkeletonMeshView, getController().getMeshTracker());
                         newDisplay.setupNode(this.selectedSkeletonMeshView);
                     }
                 }
@@ -367,7 +367,7 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
         private final kcCResourceEntityInst entityInst;
 
         public GreatQuestMapModelMeshCollection(GreatQuestEntityManager manager, kcCResourceEntityInst entityInst) {
-            super(manager.getRenderManager().createDisplayList());
+            super(manager.getController(), manager.getRenderManager().createDisplayList());
             this.manager = manager;
             this.entityInst = entityInst;
         }
@@ -406,7 +406,7 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
         private final boolean noCulling;
 
         public GreatQuestMapEnvironmentCollection(GreatQuestEntityManager manager, boolean noCulling) {
-            super(manager.getTransparentRenderManager().createDisplayListWithNewGroup());
+            super(manager.getController(), manager.getTransparentRenderManager().createDisplayListWithNewGroup());
             this.manager = manager;
             this.noCulling = noCulling;
         }

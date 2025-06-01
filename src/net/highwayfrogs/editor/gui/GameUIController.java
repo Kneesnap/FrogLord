@@ -279,6 +279,7 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
         } finally {
             fxmlLoader.setController(null); // Prevent potential leak.
             fxmlLoader.setRoot(null);
+            fxmlLoader.getNamespace().clear(); // FX8 seems to have a memory leak if we don't clear this.
         }
 
         controller.loadController(rootNode);

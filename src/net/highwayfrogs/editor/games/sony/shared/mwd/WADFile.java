@@ -5,14 +5,9 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.FrogLordApplication;
-import net.highwayfrogs.editor.file.config.exe.ThemeBook;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
-import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.pp20.PP20Packer;
@@ -20,10 +15,10 @@ import net.highwayfrogs.editor.games.sony.shared.pp20.PP20Packer.PackResult;
 import net.highwayfrogs.editor.games.sony.shared.pp20.PP20Unpacker;
 import net.highwayfrogs.editor.games.sony.shared.pp20.PP20Unpacker.UnpackResult;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.WADController;
+import net.highwayfrogs.editor.games.sony.shared.utils.DynamicMeshObjExporter;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
-import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.ArraySource;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -68,12 +63,12 @@ public class WADFile extends SCSharedGameFile {
             int fileSizeInBytes = reader.readInt();
             int fileCount = reader.readInt(); // The number of files in the wad, until the last one which is zero. (But all of them are zero)
             if (this.files.size() > 0 && lastFileCount != -1 && lastFileCount != fileCount)
-                getLogger().warning("The WAD 'fileCount' value " + fileCount + " did not match the previously seen value of " + lastFileCount + ". (This probably won't cause problems, but it does indicate our understanding of this value is wrong.)");
+                getLogger().warning("The WAD 'fileCount' value %d did not match the previously seen value of %d. (This probably won't cause problems, but it does indicate our understanding of this value is wrong.)", fileCount, lastFileCount);
 
             MWIResourceEntry fileMwiEntry = getGameInstance().getResourceEntryByID(resourceId);
             String fileName = fileMwiEntry.getDisplayName();
             if (fileTypeId != fileMwiEntry.getTypeId())
-                getLogger().severe("The MWI file entry for '" + fileName + "' had a type ID of " + fileMwiEntry.getTypeId() + ", but the WAD Entry had a type ID of " + fileTypeId);
+                getLogger().severe("The MWI file entry for '%s' had a type ID of %d, but the WAD Entry had a type ID of %d.", fileName, fileMwiEntry.getTypeId(), fileTypeId);
 
             // Read file contents.
             byte[] fileBytes = reader.readBytes(fileSizeInBytes);
@@ -84,7 +79,7 @@ public class WADFile extends SCSharedGameFile {
             int safetyMarginWordCount = 0;
             boolean dataAppearsCompressed = PP20Unpacker.isCompressed(fileBytes);
             if (dataAppearsCompressed != fileMwiEntry.isCompressed())
-                getLogger().severe("The wad entry '" + fileMwiEntry.getDisplayName() + "' appears" + (dataAppearsCompressed ? "" : " NOT") + " to be compressed, but the MWI entry disagrees.");
+                getLogger().severe("The wad entry '%s' appears%s to be compressed, but the MWI entry disagrees.", fileMwiEntry.getDisplayName(), (dataAppearsCompressed ? "" : " NOT"));
             if (dataAppearsCompressed) {
                 compressedFileBytes = fileBytes;
                 UnpackResult unpackResult = PP20Unpacker.unpackData(fileBytes);
@@ -99,11 +94,12 @@ public class WADFile extends SCSharedGameFile {
             SCGameFile<?> file = getGameInstance().createFile(fileMwiEntry, fileBytes);
             if (file == null) {
                 file = new DummyFile(getGameInstance(), fileBytes.length);
-                getLogger().warning("File '" + fileName + "' was of an unknown file type. (" + fileMwiEntry.getTypeId() + ")");
+                getLogger().warning("File '%s' was of an unknown file type. (%d)", fileName, fileMwiEntry.getTypeId());
             }
 
             // Setup file.
-            WADEntry newEntry = new WADEntry(getGameInstance(), resourceId, dataAppearsCompressed, null);
+            WADEntry newEntry = new WADEntry(this, resourceId, dataAppearsCompressed, null);
+            file.setWadFileEntry(newEntry);
             newEntry.setFile(file);
             this.files.add(newEntry);
             file.setRawFileData(fileBytes);
@@ -112,7 +108,7 @@ public class WADFile extends SCSharedGameFile {
                 DataReader wadFileReader = new DataReader(new ArraySource(fileBytes));
                 file.load(wadFileReader);
                 if (wadFileReader.hasMore() && file.warnIfEndNotReached())
-                    file.getLogger().warning("File contents were read to index " + NumberUtils.toHexString(wadFileReader.getIndex()) + ", leaving " + wadFileReader.getRemaining() + " bytes unread. (Length: " + NumberUtils.toHexString(wadFileReader.getSize()) + ")");
+                    file.getLogger().warning("File contents were read to index 0x%08X, leaving %d bytes unread. (Length: 0x%08X)", wadFileReader.getIndex(), wadFileReader.getRemaining(), wadFileReader.getSize());
             } catch (Exception ex) {
                 Utils.handleError(getLogger(), ex, false, "Failed to load %s. (%d)", fileName, resourceId);
 
@@ -158,23 +154,6 @@ public class WADFile extends SCSharedGameFile {
     }
 
     @Override
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    public void exportAlternateFormat() {
-        getArchive().promptVLOSelection(getFroggerMapTheme(), vlo -> {
-            File folder = new File(FrogLordApplication.getWorkingDirectory(), FileUtils.stripExtension(getFileDisplayName()).toLowerCase(Locale.ROOT) + File.separator);
-            if (!folder.exists())
-                folder.mkdirs();
-
-            setVLO(vlo);
-            for (WADEntry wadEntry : this.files) {
-                SCGameFile<?> file = wadEntry.getFile();
-                if (file instanceof MRModel)
-                    ((MRModel) file).exportObject(folder, vlo);
-            }
-        }, true);
-    }
-
-    @Override
     public void setupRightClickMenuItems(ContextMenu contextMenu) {
         super.setupRightClickMenuItems(contextMenu);
 
@@ -185,6 +164,44 @@ public class WADFile extends SCSharedGameFile {
         MenuItem exportFiles = new MenuItem("Export Files");
         contextMenu.getItems().add(exportFiles);
         exportFiles.setOnAction(event -> exportAllFiles(false));
+
+        MenuItem exportAsObjFiles = new MenuItem("Export 3D models in .obj format.");
+        contextMenu.getItems().add(exportAsObjFiles);
+        exportAsObjFiles.setOnAction(event -> {
+            File outputBaseDir = FileUtils.askUserToSelectFolder(getGameInstance(), DynamicMeshObjExporter.OBJ_EXPORT_FOLDER_PATH);
+            if (outputBaseDir == null)
+                return;
+
+            File outputDir = new File(outputBaseDir, FileUtils.stripExtension(getFileDisplayName()).toLowerCase(Locale.ROOT));
+            FileUtils.makeDirectory(outputDir);
+
+            for (WADEntry wadEntry : this.files) {
+                SCGameFile<?> file = wadEntry.getFile();
+                if (file instanceof MRModel)
+                    ((MRModel) file).exportObject(outputDir);
+            }
+        });
+
+        MenuItem exportAsMm3dFiles = new MenuItem("Export 3D models in .mm3d format.");
+        contextMenu.getItems().add(exportAsMm3dFiles);
+        exportAsMm3dFiles.setOnAction(event -> {
+            File outputBaseDir = FileUtils.askUserToSelectFolder(getGameInstance(), DynamicMeshObjExporter.MM3D_EXPORT_FOLDER_PATH);
+            if (outputBaseDir == null)
+                return;
+
+            File outputDir = new File(outputBaseDir, FileUtils.stripExtension(getFileDisplayName()).toLowerCase(Locale.ROOT));
+            FileUtils.makeDirectory(outputDir);
+
+            String relativeMofTexturePath = "mof_textures/";
+            File textureFolder = new File(outputDir, relativeMofTexturePath);
+            FileUtils.makeDirectory(textureFolder);
+
+            for (WADEntry wadEntry : this.files) {
+                SCGameFile<?> file = wadEntry.getFile();
+                if (file instanceof MRModel)
+                    ((MRModel) file).exportMaverickModel(outputDir, relativeMofTexturePath, textureFolder);
+            }
+        });
     }
 
     /**
@@ -202,41 +219,6 @@ public class WADFile extends SCSharedGameFile {
         }
     }
 
-    /**
-     * Gets the Frogger map theme which the WAD corresponds to.
-     * TODO: Perhaps move to FroggerUtils.java instead?
-     * Returns null if the game is not Frogger, or there is no map theme.
-     * @return froggerMapTheme
-     */
-    public FroggerMapTheme getFroggerMapTheme() {
-        if (!getGameInstance().isFrogger())
-            return null;
-
-        ThemeBook themeBook = null;
-        for (ThemeBook book : ((FroggerGameInstance) getGameInstance()).getThemeLibrary()) {
-            if (book != null && book.isEntry(this)) {
-                themeBook = book;
-                if (themeBook.getTheme() != null)
-                    break;
-            }
-        }
-
-        return themeBook != null && themeBook.getTheme() != null
-                ? themeBook.getTheme() : FroggerMapTheme.getTheme(getFileDisplayName());
-    }
-
-    /**
-     * Set the VLO file of the mof files inside this wad.
-     * @param vloArchive The new VLO archive.
-     */
-    public void setVLO(VLOArchive vloArchive) {
-        for (WADEntry wadEntry : this.files) {
-            SCGameFile<?> file = wadEntry.getFile();
-            if (file instanceof MRModel)
-                ((MRModel) file).setVloFile(vloArchive);
-        }
-    }
-
     @Override
     public WADController makeEditorUI() {
         return loadEditor(getGameInstance(), "edit-file-wad", new WADController(getGameInstance()), this);
@@ -244,12 +226,14 @@ public class WADFile extends SCSharedGameFile {
 
     @Getter
     public static class WADEntry extends SCSharedGameObject {
+        private final WADFile wadFile;
         private final int resourceId;
         private final boolean compressed;
         private SCGameFile<?> file;
 
-        public WADEntry(SCGameInstance instance, int resourceId, boolean compressed, SCGameFile<?> file) {
-            super(instance);
+        public WADEntry(WADFile wadFile, int resourceId, boolean compressed, SCGameFile<?> file) {
+            super(wadFile.getGameInstance());
+            this.wadFile = wadFile;
             this.resourceId = resourceId;
             this.compressed = compressed;
             this.file = file;

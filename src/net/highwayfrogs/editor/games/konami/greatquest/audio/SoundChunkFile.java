@@ -6,12 +6,6 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.NonNull;
-import net.highwayfrogs.editor.utils.data.reader.ArraySource;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.reader.FileSource;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
-import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
-import net.highwayfrogs.editor.utils.data.writer.LargeFileReceiver;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.generic.data.GameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
@@ -25,6 +19,12 @@ import net.highwayfrogs.editor.gui.components.DefaultFileEditorUISoundListCompon
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.*;
+import net.highwayfrogs.editor.utils.data.reader.ArraySource;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.FileSource;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
+import net.highwayfrogs.editor.utils.data.writer.LargeFileReceiver;
 
 import javax.sound.sampled.Clip;
 import java.io.File;
@@ -561,7 +561,7 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
 
                 getFile().getEntries().add(newSound);
                 getSoundListComponent().addViewEntry(newSound, 1);
-                getLogger().info("Imported '" + inputFile.getName() + "' into the SoundChunkFile as sound ID " + newSound.getId() + ".");
+                getLogger().info("Imported '%s' into the SoundChunkFile as sound ID %d.", inputFile.getName(), newSound.getId());
 
                 // TODO: Implement file-name management. (And ensure a sound with that path isn't already registered)
                 //  -> Setup the removal of file names by path on removal? not sure.

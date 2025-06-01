@@ -62,12 +62,12 @@ public class FroggerMapMeshNode extends SCPolygonAdapterNode<FroggerMapPolygon> 
         if (polygon.getPolygonType().isGouraud()) {
             PSXShadeTextureDefinition shadeDef = getTextureSource(polygon);
             if (shadeDef != null && !shadeDef.doAllColorsMatch()) {
-                shadeDef.getTextureUVs()[index].toVector(result);
+                shadeDef.getTextureUVs()[index].toSnappedVector(polygon.getTexture(), result);
                 return true;
             }
         }
 
-        result = polygon.getTextureUvs()[index].toVector(result);
+        result = polygon.getTextureUvs()[index].toSnappedVector(polygon.getTexture(), result);
 
         // Apply the animation uv offset.
         FroggerMapAnimation animation = getMesh().getAnimation(polygon);

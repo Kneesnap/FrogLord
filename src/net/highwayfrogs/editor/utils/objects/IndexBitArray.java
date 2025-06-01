@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * An array of indices, stored using bits.
@@ -277,5 +278,59 @@ public class IndexBitArray implements IBinarySerializable {
      */
     public static int getArraySize(int bitCount) {
         return ((bitCount + BITS_PER_ELEMENT - 1) >> ELEMENT_BIT_SHIFT);
+    }
+
+    /**
+     * Calculates the amount of elements to remove for any given index.
+     */
+    public int[] calculateRemovalAmountLookupBuffer(int minimumSize) {
+        int[] results = new int[Math.max(minimumSize, getLastBitIndex() + 1)];
+
+        // Remove Elements.
+        int lastIndex = -1, tempIndex = -1;
+        int removeCount = 0;
+        while ((tempIndex = getNextBitIndex(tempIndex)) >= 0) {
+            Arrays.fill(results, lastIndex + 1, tempIndex + 1, removeCount++);
+            lastIndex = tempIndex;
+        }
+
+        Arrays.fill(results, lastIndex + 1, results.length, removeCount);
+        return results;
+    }
+
+    /**
+     * Removes the values at the given indices from the list.
+     * @param list the list to remove the values from
+     */
+    public <T> void removeValuesFromList(List<T> list) {
+        if (list == null)
+            throw new NullPointerException("list");
+
+        // Remove Elements.
+        int totalIndexCount = getBitCount();
+        int removedGroups = 0;
+        int currentIndex = getFirstBitIndex();
+        for (int i = 0; i < totalIndexCount; i++) {
+            int nextIndex = ((totalIndexCount > i + 1) ? getNextBitIndex(currentIndex) : list.size() - 1);
+            int copyLength = (nextIndex - currentIndex);
+
+            // If copy length is 0, that means there is a duplicate index (impossible), and we can just safely skip it.
+            if (copyLength > 0) {
+                int removeIndex = currentIndex - removedGroups; // This works because TestRemovals is sorted.
+                removedGroups++;
+
+                // System.arraycopy(src: list, srcPos: removeIndex + removedGroups, dst: list, dstPos: removeIndex, copyLength);
+                for (int j = 0; j < copyLength; j++)
+                    list.set(removeIndex + j, list.get(removeIndex + removedGroups + j));
+            } else if (i == totalIndexCount - 1) { // Edge-case, if we're at the end of the array, copyLength can be zero because there would be nothing to copy. This should still be counted as a removal.
+                removedGroups++;
+            }
+
+            currentIndex = nextIndex;
+        }
+
+        // Remove invalid elements from the end.
+        while (totalIndexCount-- > 0)
+            list.remove(list.size() - 1);
     }
 }
