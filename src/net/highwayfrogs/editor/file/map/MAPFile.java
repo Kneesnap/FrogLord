@@ -863,23 +863,16 @@ public class MAPFile extends SCGameData<FroggerGameInstance> {
         // Entities
         this.newMapFile.getLogger().info("Converting entities...");
         entityPacket.clear();
-        for (Entity entity : this.entities) {
-            int baseId = entity.getUniqueId();
-
-            // Ensure unique IDs are used.
-            for (int i = 0; i < 250; i++) {
-                entity.setUniqueId(baseId + i);
-                if (entityPacket.addEntity(entity.convertToNewFormat(this.newMapFile)))
-                    break;
-            }
-        }
+        for (Entity entity : this.entities)
+            if (!entityPacket.addEntity(entity.convertToNewFormat(this.newMapFile)))
+                entity.getLogger().severe("Failed to copy entity to the new map.");
         pathPacket.recalculateAllPathEntityLists();
 
         // Lights
         this.newMapFile.getLogger().info("Converting lights...");
-        lightPacket.getLights().clear();
+        lightPacket.clear();
         for (Light light : this.lights)
-            lightPacket.getLights().add(light.convertToNewFormat(this.newMapFile));
+            lightPacket.addLight(light.convertToNewFormat(this.newMapFile));
 
         // Vertices
         this.newMapFile.getLogger().info("Converting vertices...");

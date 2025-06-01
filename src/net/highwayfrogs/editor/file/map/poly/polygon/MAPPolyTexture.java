@@ -12,7 +12,6 @@ import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
-import net.highwayfrogs.editor.system.TexturedPoly;
 import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -26,7 +25,7 @@ import java.awt.image.BufferedImage;
  */
 @Getter
 @Setter
-public abstract class MAPPolyTexture extends MAPPolygon implements TexturedPoly {
+public abstract class MAPPolyTexture extends MAPPolygon {
     private static final ImageFilterSettings SHOW_SETTINGS = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(true);
     private short flags;
     private ByteUV[] uvs;
@@ -173,7 +172,6 @@ public abstract class MAPPolyTexture extends MAPPolygon implements TexturedPoly 
         return (this.flags & flag.getFlag()) == flag.getFlag();
     }
 
-    @Override
     public void performSwap() {
         if (this.uvs.length == 4) {
             ByteUV temp = this.uvs[3];

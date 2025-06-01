@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.map.entity.data.MatrixData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerEntityTriggerType;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.volcano.FroggerEntityDataColorTrigger.FroggerEntityColorTriggerType;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -15,7 +15,7 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 @Getter
 @Setter
 public class EntityColorTrigger extends MatrixData {
-    private FroggerEntityTriggerType type = FroggerEntityTriggerType.BEGIN;
+    private FroggerEntityColorTriggerType type = FroggerEntityColorTriggerType.FREEZE;
     private VolcanoTriggerColor color = VolcanoTriggerColor.RED;
     private short[] uniqueIds = new short[COLOR_TRIGGER_MAX_IDS];
 
@@ -28,7 +28,7 @@ public class EntityColorTrigger extends MatrixData {
     @Override
     public void load(DataReader reader) {
         super.load(reader);
-        this.type = FroggerEntityTriggerType.values()[reader.readUnsignedShortAsInt()];
+        this.type = FroggerEntityColorTriggerType.values()[reader.readUnsignedShortAsInt()];
         this.color = VolcanoTriggerColor.values()[reader.readUnsignedShortAsInt()];
 
         for (int i = 0; i < uniqueIds.length; i++)
