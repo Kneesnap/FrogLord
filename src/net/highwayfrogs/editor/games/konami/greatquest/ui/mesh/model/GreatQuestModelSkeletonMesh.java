@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleto
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
+import net.highwayfrogs.editor.gui.mesh.MeshTracker;
 import net.highwayfrogs.editor.gui.texture.BufferedImageWrapper;
 import net.highwayfrogs.editor.gui.texture.atlas.AtlasTexture;
 import net.highwayfrogs.editor.gui.texture.atlas.SequentialTextureAtlas;
@@ -59,8 +60,8 @@ public class GreatQuestModelSkeletonMesh extends DynamicMesh {
     }
 
     @Override
-    public boolean addView(MeshView view) {
-        boolean success = super.addView(view);
+    public boolean addView(MeshView view, MeshTracker meshTracker) {
+        boolean success = super.addView(view, meshTracker);
         if (success && view.getOnMouseClicked() == null)
             view.setOnMouseClicked(this.mouseEventHandler);
 

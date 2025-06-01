@@ -202,7 +202,7 @@ public class GreatQuestMapEditorEntityDisplay {
                 GreatQuestMapCollisionMesh collisionMesh = new GreatQuestMapCollisionMesh(null, triMesh);
                 MeshView view = new MeshView();
                 view.setCullFace(CullFace.NONE);
-                collisionMesh.addView(view);
+                collisionMesh.addView(view, this.entityManager.getController().getMeshTracker());
                 result = view;
             }
         }

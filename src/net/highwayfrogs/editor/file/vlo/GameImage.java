@@ -63,7 +63,9 @@ public class GameImage extends SCSharedGameData implements Cloneable, ITextureSo
     public static final int PSX_Y_PAGES = 2;
     public static final int TOTAL_PAGES = 32; // It seems to be 32 on both PC and PS1. We can't go higher than this because it encodes only 5 bits for the page id. It appears the PC version rendering dlls only create 14 pages though.
 
-    public static final int FLAG_TRANSLUCENT = Constants.BIT_FLAG_0; // Used by sprites + MOFs in the MR API to enable semi-transparent rendering mode.
+    public static final int FLAG_TRANSLUCENT = Constants.BIT_FLAG_0; // Used by sprites in the MR API to enable semi-transparent rendering mode.
+    // Even though there is code to patch MOFs to render based on the translucent flag, the function (MRPatchMOFTranslucency) is only be called by Frogger, not MediEvil. (Other games untested)
+
     //public static final int FLAG_ROTATED = Constants.BIT_FLAG_1; // Unused in MR API + Frogger, does not appear to be set.
     public static final int FLAG_HIT_X = Constants.BIT_FLAG_2; // Appears to decrease width by 1?
     public static final int FLAG_HIT_Y = Constants.BIT_FLAG_3; // Appears to decrease height by 1?
@@ -585,7 +587,7 @@ public class GameImage extends SCSharedGameData implements Cloneable, ITextureSo
 
     @Override
     public boolean hasAnyTransparentPixels(BufferedImage image) {
-        return testFlag(FLAG_TRANSLUCENT) || testFlag(FLAG_BLACK_IS_TRANSPARENT);
+        return testFlag(FLAG_BLACK_IS_TRANSPARENT);
     }
 
     @Override
@@ -610,7 +612,11 @@ public class GameImage extends SCSharedGameData implements Cloneable, ITextureSo
     @Override
     public int getLeftPadding() {
         if (getParent().isPsxMode()) {
-            if (getFullHeight() != getIngameHeight()) // TODO: This is broken when getU() is broken.
+            short fullHeight = getFullHeight();
+            short ingameHeight = getIngameHeight();
+
+            // The purpose here is not fully understood, but seems to accurately reflect the original behavior in all games.
+            if (fullHeight != ingameHeight && fullHeight != ingameHeight + 1)
                 return 1;
 
             return 0;

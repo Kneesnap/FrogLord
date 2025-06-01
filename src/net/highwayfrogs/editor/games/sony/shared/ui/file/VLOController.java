@@ -108,7 +108,7 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
         this.updateFlags();
 
         Button cloneButton = new Button("Clone Image");
-        cloneButton.setOnAction(evt -> getFile().getArchive().promptVLOSelection(null, this::promptCloneVlo, false));
+        cloneButton.setOnAction(evt -> getFile().getArchive().promptVLOSelection(this::promptCloneVlo, false));
         flagBox.getChildren().add(cloneButton);
     }
 

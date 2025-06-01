@@ -39,7 +39,7 @@ public class SCMapMesh extends PSXShadedDynamicMesh<SCMapPolygon, SCShadedTextur
     public static final CursorVertexColor GREEN_COLOR = new CursorVertexColor(Color.GREEN, Color.BLACK);
 
     public SCMapMesh(SCMapFile<?> mapFile) {
-        super(new TreeTextureAtlas(64, 64, true), DynamicMeshTextureQuality.UNLIT_SHARP, false);
+        super(new TreeTextureAtlas(64, 64, true), DynamicMeshTextureQuality.UNLIT_SHARP, false, mapFile.getFileDisplayName());
         this.map = mapFile;
 
         // Add textures.

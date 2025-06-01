@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.psx.shading.PSXTextureShader;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTextureAnimation;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTextureAnimationEntry;
@@ -72,13 +73,19 @@ public class MRMofPolygon extends SCGameData<SCGameInstance> {
             this.textureUvs[i] = new SCByteTextureUV();
     }
 
+    /**
+     * Gets the logger name.
+     */
+    public String getLoggerName() {
+        return "MRMofPolygon{" + this.polygonType + "," + NumberUtils.toHexString(this.lastReadAddress) + "}";
+    }
+
     @Override
     public ILogger getLogger() {
-        String name = "MRMofPolygon{" + this.polygonType + "," + NumberUtils.toHexString(this.lastReadAddress) + "}";
         if (this.mofPart != null) {
-            return new AppendInfoLoggerWrapper(this.mofPart.getLogger(), name, AppendInfoLoggerWrapper.TEMPLATE_OVERRIDE_AT_ORIGINAL);
+            return new AppendInfoLoggerWrapper(this.mofPart.getLogger(), getLoggerName(), AppendInfoLoggerWrapper.TEMPLATE_OVERRIDE_AT_ORIGINAL);
         } else {
-            return new LazyInstanceLogger(getGameInstance(), name);
+            return new LazyInstanceLogger(getGameInstance(), getLoggerName());
         }
     }
 
@@ -155,7 +162,7 @@ public class MRMofPolygon extends SCGameData<SCGameInstance> {
             if (this.textureId < 0) {
                 getLogger().severe("A textured MRMofPolygon had an invalid texture ID! (%d) This polygon will not render correctly in-game and may even cause crashes!");
             } else {
-                GameImage image = getTexture(null, 0); // Get the texture without any animation.
+                GameImage image = getDefaultTexture();
                 if (image == null)
                     getLogger().severe("A textured MRMofPolygon had an unresolvable texture ID! (%d) This polygon will not render correctly in-game and may even cause crashes!");
             }
@@ -199,6 +206,13 @@ public class MRMofPolygon extends SCGameData<SCGameInstance> {
     }
 
     /**
+     * Gets the active texture on this polygon if no texture animation is applied.
+     */
+    public GameImage getDefaultTexture() {
+        return getTexture(null, 0);
+    }
+
+    /**
      * Gets the active texture on this polygon.
      */
     public GameImage getTexture(MRMofTextureAnimation animation, int animationTick) {
@@ -235,22 +249,20 @@ public class MRMofPolygon extends SCGameData<SCGameInstance> {
      * Equivalent to the behavior seen in MRWritePartPrimCodes@MR_MOF.C
      */
     public boolean isSemiTransparent() {
+        if (getGameInstance().isMediEvil())
+            return false; // MediEvil seems not to call 'MRPatchMOFTranslucency',
         if (!this.polygonType.isTextured())
             return false;
 
-        GameImage image = getTexture(null, 0);
+        // TODO: Some terrain is transparent which shouldn't be (Think sky zone) Actually, in prototypes, these do actually appear transparent, just of very high brightness.
+        // Frogger is the only other game confirmed to call 'MRPatchMOFTranslucency', although I did not test which build that was added.
+        // However, even in Frogger, it has been observed that in builds such as PSX Alpha (slugs in SWP1.MAP), the transparency is not always respected.
+        // The first build seen with semi-transparent texture patching is PSX Build 11. PSX Build 8 is the most recently seen build before that, so we'll check from there.
+        if (getGameInstance().isFrogger() && !((FroggerGameInstance) getGameInstance()).getVersionConfig().isAtOrBeforeBuild8())
+            return false;
+
+        GameImage image = getDefaultTexture();
         return image != null && image.testFlag(GameImage.FLAG_TRANSLUCENT);
-    }
-
-    /**
-     * Tests if this polygon is fully opaque, all pixels having maximum alpha/opacity.
-     */
-    public boolean isFullyOpaque() {
-        GameImage image = getTexture(null, 0);
-        if (image != null)
-            return image.hasAnyTransparentPixels(null);
-
-        return !this.color.testFlag(CVector.FLAG_SEMI_TRANSPARENT); // TODO: I do not actually know if this is relevant.
     }
 
     /**

@@ -46,7 +46,7 @@ public class Constants {
 
     public static final String SKY_LAND_PREFIX = "SKY_LAND";
 
-    public static final String VERSION = "v1.0.0 Omega";
+    public static final String VERSION = "v1.0.1 Omega";
     public static final int UPDATE_VERSION = 1; // Update this with every release.
 
     public static final int BIT_FLAG_0 = 1;

@@ -9,6 +9,8 @@ import net.highwayfrogs.editor.games.sony.shared.model.skeleton.PTSkeletonFile;
 import net.highwayfrogs.editor.games.sony.shared.model.staticmesh.PTStaticFile;
 import net.highwayfrogs.editor.games.sony.shared.model.staticmesh.PTStaticPart;
 import net.highwayfrogs.editor.games.sony.shared.model.staticmesh.PTStaticPartCel;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +43,21 @@ public class PTModel extends SCSharedGameObject {
         this.partData = new ArrayList<>();
         for (int i = 0; i < staticMeshFile.getParts().size(); i++)
             this.partData.add(new PTPartInstanceData(staticMeshFile.getParts().get(i)));
+    }
+
+    /**
+     * Gets the name of the model.
+     */
+    public String getName() {
+        String name = null;
+        if (this.staticMeshFile != null)
+            name = FileUtils.stripExtension(this.staticMeshFile.getFileDisplayName());
+        if (this.actionSetFile != null && StringUtils.isNullOrWhiteSpace(name))
+            name = FileUtils.stripExtension(this.actionSetFile.getFileDisplayName());
+        if (this.skeletonFile != null && StringUtils.isNullOrWhiteSpace(name))
+            name = FileUtils.stripExtension(this.skeletonFile.getFileDisplayName());
+
+        return name;
     }
 
     /**

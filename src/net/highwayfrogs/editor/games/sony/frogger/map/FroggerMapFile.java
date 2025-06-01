@@ -25,12 +25,12 @@ import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygonType
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.*;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGeneral.FroggerMapStartRotation;
 import net.highwayfrogs.editor.games.sony.frogger.ui.FroggerMapInfoUIController;
+import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerUtils;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.misc.MRLightType;
-import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
@@ -157,7 +157,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
     }
 
     @Override
-    public void handleWadEdit(WADFile parent) {
+    public void performDefaultUIAction() {
         MeshViewController.setupMeshViewer(getGameInstance(), new FroggerMapMeshController(getGameInstance()), new FroggerMapMesh(this));
     }
 
@@ -236,7 +236,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
      * @return isMultiplayer
      */
     public boolean isMultiplayer() {
-        return getFileDisplayName().startsWith(this.generalPacket.getMapTheme().getInternalName() + "M");
+        return FroggerUtils.isMultiplayerFile(this, this.generalPacket.getMapTheme());
     }
 
     /**
@@ -245,7 +245,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
      * @return isLowPolyMode
      */
     public boolean isLowPolyMode() {
-        return getGameInstance().isPC() && getFileDisplayName().contains("_WIN95");
+        return FroggerUtils.isLowPolyMode(this);
     }
 
     /**
@@ -261,7 +261,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
         this.zonePacket.getZones().clear();
         this.formPacket.clear();
         this.entityPacket.clear();
-        this.lightPacket.getLights().clear();
+        this.lightPacket.clear();
         this.vertexPacket.getVertices().clear();
         this.animationPacket.getAnimations().clear();
         this.polygonPacket.clearPolygons();
@@ -321,11 +321,11 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
         FroggerMapLight light1 = new FroggerMapLight(this, MRLightType.PARALLEL);
         light1.setColor(ColorUtils.toBGR(Color.WHITE));
         light1.getDirection().setValues(-140.375F, 208.375F, 48.125F);
-        this.lightPacket.getLights().add(light1);
+        this.lightPacket.addLight(light1);
 
         FroggerMapLight light2 = new FroggerMapLight(this, MRLightType.AMBIENT);
         light2.setColor(ColorUtils.toBGR(ColorUtils.fromRGB(0x494949)));
-        this.lightPacket.getLights().add(light2);
+        this.lightPacket.addLight(light2);
 
         // Setup Group:
         this.groupPacket.generateMapGroups(ProblemResponse.CREATE_POPUP, true);

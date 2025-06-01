@@ -117,7 +117,8 @@ public abstract class GroupedCollectionViewComponent<TGameInstance extends GameI
 
         if (displayedGroup.getTitledPane() != null)
             getRootNode().setExpandedPane(displayedGroup.getTitledPane());
-        displayedGroup.getListView().getSelectionModel().select(viewEntry);
+        if (displayedGroup.getListView() != null && displayedGroup.getListView().getSelectionModel() != null)
+            displayedGroup.getListView().getSelectionModel().select(viewEntry);
     }
 
     /**

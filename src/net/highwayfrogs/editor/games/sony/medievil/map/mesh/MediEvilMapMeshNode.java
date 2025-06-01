@@ -45,7 +45,7 @@ public class MediEvilMapMeshNode extends SCPolygonAdapterNode<MediEvilMapPolygon
         if (!polygon.getPolygonType().isTextured())
             return false;
 
-        polygon.getTextureUvs()[index].toVector(result);
+        polygon.getTextureUvs()[index].toSnappedVector(polygon.getTexture(getMap().getLevelTableEntry()), result);
         return true;
     }
 

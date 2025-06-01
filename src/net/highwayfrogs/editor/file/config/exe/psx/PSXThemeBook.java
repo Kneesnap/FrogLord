@@ -3,13 +3,12 @@ package net.highwayfrogs.editor.file.config.exe.psx;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.pc.PCThemeBook;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
-import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.function.Function;
 
@@ -58,13 +57,19 @@ public class PSXThemeBook extends ThemeBook {
     }
 
     @Override
-    public VLOArchive getVLO(FroggerMapFile map) {
-        return isValid() ? getGameInstance().getGameFile(map.isMultiplayer() ? getMultiplayerVloId() : getVloId()) : null;
+    public VLOArchive getVLO(boolean isMultiplayer, boolean isLowPolyMode) {
+        if (isLowPolyMode)
+            throw new UnsupportedOperationException("PSXThemeBook doesn't understand what isLowPolygonMode=true means.");
+
+        return isValid() ? getGameInstance().getGameFile(isMultiplayer ? getMultiplayerVloId() : getVloId()) : null;
     }
 
     @Override
-    public WADFile getWAD(FroggerMapFile map) {
-        return isValid() ? getGameInstance().getGameFile(map.isMultiplayer() ? getMultiplayerWadId() : getWadId()) : null;
+    public WADFile getWAD(boolean isMultiplayer, boolean isLowPolyMode) {
+        if (isLowPolyMode)
+            throw new UnsupportedOperationException("PSXThemeBook doesn't understand what isLowPolygonMode=true means.");
+
+        return isValid() ? getGameInstance().getGameFile(isMultiplayer ? getMultiplayerWadId() : getWadId()) : null;
     }
 
     @Override

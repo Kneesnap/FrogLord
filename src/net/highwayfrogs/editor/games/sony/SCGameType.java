@@ -221,8 +221,10 @@ public enum SCGameType implements IGameType {
         }
 
         private boolean shouldEnableMwdFileBrowser() {
+            // When the game config is null, we choose to disable the MWD file path, because it can't always identify which version of the game to load.
+            // So, by requiring the user to start with the exe, we'll ensure it will choose a version for them.
             SCGameConfig gameConfig = getActiveGameConfig();
-            return gameConfig == null || !gameConfig.isMwdLooseFiles();
+            return gameConfig != null && !gameConfig.isMwdLooseFiles();
         }
 
         @Override

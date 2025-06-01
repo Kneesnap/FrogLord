@@ -138,7 +138,7 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
             kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
             OptionalArguments savedEffect = saveEffect(settings);
             kcScriptDisplaySettings.applyGqsSyntaxHashDisplay(savedEffect.getOrCreate(ARGUMENT_ENTITY_RUNNER), settings, this.targetEntityRef);
-            getLogger().warning("The effect '" + savedEffect + "' should not include --" + ARGUMENT_ENTITY_RUNNER + " because it already runs as that entity.");
+            logger.warning("The effect '%s' should not include --%s because it already runs as that entity.", savedEffect, ARGUMENT_ENTITY_RUNNER);
         }
 
         // Print warnings.
@@ -153,13 +153,13 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
         arguments.warnAboutUnusedArguments(logger);
         if (getTargetEntityRef().getResource() == null) {
             kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
-            getLogger().warning("The effect '" + saveEffect(settings) + "' targets an entity which was not found.");
+            logger.warning("The effect '%s' targets an entity which was not found.", saveEffect(settings));
         } else if (getTargetEntityRef().getResource().getInstance() == null || getTargetEntityRef().getResource().getInstance().getDescription() == null) {
             kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
-            getLogger().warning("The effect '" + saveEffect(settings) + "' targets an entity (" + getTargetEntityRef().getAsString() + ") who did not have an entity description!");
+            logger.warning("The effect '%s' targets an entity (%s) who did not have an entity description!", saveEffect(settings), getTargetEntityRef().getAsString());
         } else if (!isActionApplicableToTarget()) {
             kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
-            getLogger().warning("The effect '" + saveEffect(settings) + "' targets an entity (" + this.targetEntityRef.getAsGqsString(settings) + ") which is unable to execute the effect.");
+            logger.warning("The effect '%s' targets an entity (%s) which is unable to execute the effect.", saveEffect(settings), this.targetEntityRef.getAsGqsString(settings));
         }
     }
 

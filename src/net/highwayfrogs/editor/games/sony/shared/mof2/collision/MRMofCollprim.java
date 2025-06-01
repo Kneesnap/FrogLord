@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.sony.shared.collprim.MRCollprim;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPart;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MeshUIManager;
+import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.logging.ILogger;
@@ -75,6 +76,15 @@ public class MRMofCollprim extends MRCollprim {
             this.parentPart.getCollPrimMatrices().remove(oldMatrix);
 
         this.matrixIndex = -1;
+    }
+
+    /**
+     * Creates a clone of this object, attached to a new parent part.
+     * @param parentPart the parent part the cloned object should attach to
+     * @return clone
+     */
+    public MRMofCollprim clone(MRMofPart parentPart) {
+        return DataUtils.cloneSerializableObject(this, new MRMofCollprim(parentPart));
     }
 
     @Override

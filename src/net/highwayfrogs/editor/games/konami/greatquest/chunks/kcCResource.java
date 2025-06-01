@@ -222,7 +222,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
 
             // Warn if not all data is read.
             if (chunkReader.hasMore())
-                getLogger().warning("GreatQuest Resource " + StringUtils.stripAlphanumeric(getChunkIdentifier()) + "/'" + getName() + "' in '" + getParentFile().getDebugName() + "' had " + chunkReader.getRemaining() + " remaining unread bytes.");
+                getLogger().warning("GreatQuest Resource %s/'%s' in '%s' had %d remaining unread bytes.", StringUtils.stripAlphanumeric(getChunkIdentifier()), getName(), getParentFile().getDefaultFolderName(), chunkReader.getRemaining());
         } catch (Throwable th) {
             Utils.handleError(getLogger(), th, false, "Failed to read %s chunk from '%s'.", getChunkType(), getParentFile().getDebugName());
         }
@@ -414,7 +414,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
     protected void onRemovedFromChunkFile() {
         int linkedUsages = getSelfHash().getLinkedHashes().size();
         if (linkedUsages > 0)
-            getLogger().warning("Resource removed from chunk file despite " + linkedUsages + " remaining usage" + (linkedUsages != 1 ? "s." : "."));
+            getLogger().warning("Resource removed from chunk file despite %d remaining usage%s.", linkedUsages, (linkedUsages != 1 ? "s" : ""));
 
         getSelfHash().invalidate(); // Anything references to this hash should be unlinked.
     }

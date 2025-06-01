@@ -186,6 +186,14 @@ public class FroggerConfig extends SCGameConfig {
     }
 
     /**
+     * Tests if the build is at/before build 8.
+     * @return isBuildAtOrBeforeBuild8
+     */
+    public boolean isAtOrBeforeBuild8() {
+        return (this.build >= 0 && this.build <= 8) || isBeforeBuild1();
+    }
+
+    /**
      * Tests if the build is at/before build 11.
      * @return isBuildAtOrBeforeBuild11
      */

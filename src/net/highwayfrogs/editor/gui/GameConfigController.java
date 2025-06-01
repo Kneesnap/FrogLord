@@ -10,6 +10,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
@@ -73,6 +74,8 @@ public class GameConfigController extends GameUIController<GameInstance> {
             "Those games will need to be extracted first with software such as ISOBuster, PowerISO, etc.",
             "Once all the information is ready, press the 'Load' button to load the game data.");
 
+    private static final String GUIDE_URL = "https://github.com/Kneesnap/FrogLord/blob/master/resources/documentation/froglord/setup-guide.md#4-configuring-the-game";
+
     private static final URL FXML_TEMPLATE_URL = FileUtils.getResourceURL("fxml/window-load-game.fxml");
     private static final FXMLLoader FXML_TEMPLATE_LOADER = new FXMLLoader(FXML_TEMPLATE_URL);
 
@@ -108,12 +111,12 @@ public class GameConfigController extends GameUIController<GameInstance> {
 
     @FXML
     private void openTechSupportLink(ActionEvent event) {
-        FrogLordApplication.getApplication().getHostServices().showDocument(Constants.HIGHWAY_FROGS_WEBSITE_URL);
+        FXUtils.openPageInWebBrowser(Constants.HIGHWAY_FROGS_WEBSITE_URL);
     }
 
     @FXML
     private void openSourceCodeLink(ActionEvent event) {
-        FrogLordApplication.getApplication().getHostServices().showDocument(Constants.SOURCE_CODE_REPOSITORY_URL);
+        FXUtils.openPageInWebBrowser(Constants.SOURCE_CODE_REPOSITORY_URL);
     }
 
     @FXML
@@ -246,6 +249,11 @@ public class GameConfigController extends GameUIController<GameInstance> {
             addHelpText(SELECT_GAME_TEXT);
         } else {
             addHelpText(SELECT_GAME_VERSION_TEXT);
+
+            Hyperlink guideLink = new Hyperlink("View setup guide");
+            guideLink.setAlignment(Pos.CENTER_LEFT);
+            guideLink.setOnAction(event -> FXUtils.openPageInWebBrowser(GUIDE_URL));
+            this.topBox.getChildren().add(guideLink);
         }
 
         // Create new game-specific UI.

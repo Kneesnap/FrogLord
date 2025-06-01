@@ -2,8 +2,12 @@ package net.highwayfrogs.editor.games.sony.shared.utils;
 
 import javafx.embed.swing.SwingFXUtils;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
+import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 
@@ -17,34 +21,76 @@ import java.util.Calendar;
  * Created by Kneesnap on 5/2/2025.
  */
 public class DynamicMeshObjExporter {
+    public static final BrowserFileType OBJ_FILE_TYPE = new BrowserFileType("Wavefront Obj", "obj");
+    public static final SavedFilePath OBJ_EXPORT_FILE_PATH = new SavedFilePath("objExportFilePath", "Please select the file to save the .obj as.", OBJ_FILE_TYPE);
+    public static final SavedFilePath OBJ_EXPORT_FOLDER_PATH = new SavedFilePath("objExportFolderPath", "Please select the folder to save the .obj file to.");
+    public static final BrowserFileType MM3D_FILE_TYPE = new BrowserFileType("Maverick Model 3D", "mm3d");
+    public static final SavedFilePath MM3D_EXPORT_FILE_PATH = new SavedFilePath("mm3dExportFilePath", "Please select the file to save the .mm3d as.", MM3D_FILE_TYPE);
+    public static final SavedFilePath MM3D_EXPORT_FOLDER_PATH = new SavedFilePath("mm3dExportFolderPath", "Please select the folder to save the .mm3d file(s) to.");
+
+
+    /**
+     * Asks the user where they would like to export a DynamicMesh to wavefront .obj, then exports it.
+     * This export process is not intended for mesh editing, and cannot be re-imported.
+     * This will export the model with vertex colors baked into the texture, if possible.
+     * @param logger The logger to print messages with
+     * @param mesh The mesh to export
+     * @param outputName The name to export the mesh as
+     * @param exportTextures If true, textures will be exported
+     */
+    public static void askUserToMeshToObj(GameInstance instance, ILogger logger, DynamicMesh mesh, String outputName, boolean exportTextures) {
+        if (StringUtils.isNullOrWhiteSpace(outputName))
+            throw new NullPointerException("instance");
+        if (mesh == null)
+            throw new NullPointerException("mesh");
+        if (StringUtils.isNullOrWhiteSpace(outputName))
+            throw new NullPointerException("outputName");
+
+        String suggestedName = FileUtils.stripExtension(outputName) + ".obj";
+        File outputFile = FileUtils.askUserToSaveFile(instance, OBJ_EXPORT_FILE_PATH, suggestedName);
+        if (outputFile != null)
+            exportMeshToObj(logger, mesh, outputFile, FileUtils.stripExtension(outputFile.getName()), exportTextures);
+    }
+
     /**
      * Exports a DynamicMesh to wavefront obj file.
      * This export process is not intended for mesh editing, and cannot be re-imported.
      * This will export the model with vertex colors baked into the texture, if possible.
      * @param logger The logger to print messages with
      * @param mesh The mesh to export
-     * @param directory The directory to export to
+     * @param output The directory/file to export to
      * @param outputName The name to export the mesh as
      * @param exportTextures If true, textures will be exported
      */
-    public static void exportMeshToObj(ILogger logger, DynamicMesh mesh, File directory, String outputName, boolean exportTextures) {
+    public static void exportMeshToObj(ILogger logger, DynamicMesh mesh, File output, String outputName, boolean exportTextures) {
         if (mesh == null)
             throw new NullPointerException("mesh");
         if (logger == null)
             logger = mesh.getLogger();
-        if (directory == null)
+        if (output == null)
             throw new NullPointerException("directory");
-        if (!directory.isDirectory())
-            throw new IllegalArgumentException("The provided destination was not a directory!");
-        if (outputName == null)
-            throw new NullPointerException("outputName");
-        if (!FileUtils.isUntrustedInputValidFileName(outputName))
-            throw new IllegalArgumentException("The provided outputName '" + outputName + "' was non alphanumeric!");
+
+        File outputDirectory;
+        if (output.isDirectory()) {
+            if (outputName == null)
+                throw new NullPointerException("outputName");
+            if (!FileUtils.isUntrustedInputValidFileName(outputName))
+                throw new IllegalArgumentException("The provided outputName '" + outputName + "' was non alphanumeric!");
+
+            outputDirectory = output;
+            if (!output.exists())
+                throw new RuntimeException("The given output directory '" + output + "' does not exist!");
+        } else if (output.isFile() || !output.exists()) {
+            outputName = FileUtils.stripExtension(output.getName());
+            outputDirectory = output.getParentFile();
+        } else {
+            throw new IllegalArgumentException("Not sure what the path '" + output + "' is, wasn't either a file or a folder!");
+        }
 
         logger.info("Exporting %s as %s.obj.", mesh.getMeshName(), outputName);
 
         String mtlName = outputName + ".mtl";
-        File objFile = new File(directory, outputName + ".obj");
+        File objFile = new File(outputDirectory, outputName + ".obj");
         StringBuilder objWriter = new StringBuilder();
 
         objWriter.append("# FrogLord Map Export").append(Constants.NEWLINE);
@@ -115,7 +161,7 @@ public class DynamicMeshObjExporter {
             String mainTextureSheetFileName = outputName + ".png";
 
             try {
-                ImageIO.write(SwingFXUtils.fromFXImage(mesh.getTextureAtlas().getFxImage(), null), "png", new File(directory, mainTextureSheetFileName));
+                ImageIO.write(SwingFXUtils.fromFXImage(mesh.getTextureAtlas().getFxImage(), null), "png", new File(outputDirectory, mainTextureSheetFileName));
             } catch (IOException ex) {
                 Utils.handleError(logger, ex, true, "Failed to save texture sheet %s for .obj file.", mainTextureSheetFileName);
                 return;
@@ -129,7 +175,7 @@ public class DynamicMeshObjExporter {
             mtlWriter.append(Constants.NEWLINE);
 
             // Write MTL File.
-            if (!FileUtils.writeStringToFile(logger, new File(directory, mtlName), mtlWriter.toString(), true))
+            if (!FileUtils.writeStringToFile(logger, new File(outputDirectory, mtlName), mtlWriter.toString(), true))
                 return;
         }
 

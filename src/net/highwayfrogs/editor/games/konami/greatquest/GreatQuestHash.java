@@ -109,8 +109,16 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
      * Gets the string guaranteed to be the inverse of GreatQuest.parseHash(String), making it user-editable.
      */
     public String getAsString() {
+        return getAsString(true);
+    }
+
+    /**
+     * Gets the string guaranteed to be the inverse of GreatQuest.parseHash(String), making it user-editable.
+     * NOTE: If escaping is disabled, the caller must handle escaping themselves, otherwise the string may not be a valid inverse!
+     */
+    public String getAsString(boolean allowEscaping) {
         if (this.originalString != null) {
-            if (shouldBeEscaped(this.originalString)) {
+            if (allowEscaping && shouldBeEscaped(this.originalString)) {
                 return "\"" + escape(this.originalString) + "\"";
             } else {
                 return this.originalString;

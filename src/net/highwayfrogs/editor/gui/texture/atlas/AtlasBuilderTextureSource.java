@@ -33,7 +33,7 @@ import java.util.function.Consumer;
  * Back-ported from ModToolFramework.
  * Caching is utilized to avoid intensive operations for each update.
  * This class has been profiled heavily.
- * TODO: In JavaFX 13+, try converting to PixelBuffer for even better performance (Potentially multithreaded image writing can come back?). Example: https://foojay.io/today/high-performance-rendering-in-javafx/
+ * TODO: In JavaFX 13+, try converting to PixelBuffer for even better performance (Potentially multithreaded image writing can come back?). Example: <a href="https://foojay.io/today/high-performance-rendering-in-javafx/"/>
  * Created by Kneesnap on 9/23/2023.
  */
 @Getter
@@ -49,6 +49,8 @@ public class AtlasBuilderTextureSource implements ITextureSource {
     private BufferedImage cachedImage; // Caching the image allows for faster generation.
     private WritableImage cachedFxImage; // Caching the image allows for faster generation.
     @Setter private DynamicMesh mesh;
+    private boolean currentlyBuildingTexture;
+    private volatile boolean writerThreadShouldPrintTrace;
 
     private static final int THREAD_COUNT = Math.max(1, Runtime.getRuntime().availableProcessors() - 2);
     private static final ExecutorService ATLAS_BUILDER_THREAD_POOL = Executors.newWorkStealingPool(THREAD_COUNT);
@@ -64,6 +66,24 @@ public class AtlasBuilderTextureSource implements ITextureSource {
         this.enableFxImage = enableFxImage;
         this.writeTaskState = new AsyncTaskWriteTextureState(this);
         this.asyncWriteTasks = new ArrayList<>(THREAD_COUNT);
+    }
+
+    /**
+     * Release resources currently held.
+     */
+    public void releaseResources() {
+        if (this.currentlyBuildingTexture) {
+            this.writerThreadShouldPrintTrace = true;
+            throw new RuntimeException("Cannot release resources while the texture is currently building.");
+        }
+
+        this.imageChangeListeners.clear();
+        this.updatedNodes.clear();
+        this.asyncWriteTasks.forEach(Task::cancel);
+        this.asyncWriteTasks.clear();
+        this.writeTaskState.clear();
+        this.cachedImage = null;
+        this.cachedFxImage = null;
     }
 
     /**
@@ -102,6 +122,13 @@ public class AtlasBuilderTextureSource implements ITextureSource {
     }
 
     private void writeImageAsyncAndWait(boolean writeOnlyChangedImages) {
+        if (this.currentlyBuildingTexture) {
+            this.writerThreadShouldPrintTrace = true;
+            throw new IllegalStateException("Cannot build texture because it seems to already be building?!");
+        }
+
+        this.currentlyBuildingTexture = true;
+
         Graphics2D graphics = null;
         if (this.enableAwtImage) {
             graphics = this.cachedImage.createGraphics();
@@ -111,27 +138,40 @@ public class AtlasBuilderTextureSource implements ITextureSource {
             graphics.setComposite(AlphaComposite.Src); // If we write a transparent image, it will still delete whatever image data is there already.
         }
 
-        this.writeTaskState.setupNextWrite(writeOnlyChangedImages, graphics, this.asyncWriteTasks.size());
+        this.writeTaskState.setupNextWrite(writeOnlyChangedImages, graphics);
         this.atlas.prepareImageGeneration();
 
         // Create and submit tasks.
         this.atlas.pushDisableUpdates();
 
-        if (SINGLE_THREADED_DEBUGGING_ENABLED) {
-            AsyncTaskWriteTexture singleTask = new AsyncTaskWriteTexture(this.writeTaskState);
-            singleTask.call();
-        } else {
-            while (THREAD_COUNT > this.asyncWriteTasks.size())
-                this.asyncWriteTasks.add(new AsyncTaskWriteTexture(this.writeTaskState));
+        try {
+            if (SINGLE_THREADED_DEBUGGING_ENABLED) {
+                AsyncTaskWriteTexture singleTask = new AsyncTaskWriteTexture(this.writeTaskState);
+                this.writeTaskState.latch = new CountDownLatch(1);
+                singleTask.call();
+            } else {
+                while (THREAD_COUNT > this.asyncWriteTasks.size())
+                    this.asyncWriteTasks.add(new AsyncTaskWriteTexture(this.writeTaskState));
 
-            // Submit work.
-            for (int i = 0; i < this.asyncWriteTasks.size(); i++)
-                ATLAS_BUILDER_THREAD_POOL.submit((Callable<?>) this.asyncWriteTasks.get(i));
+                // Creating the latch of the right count must happen BEFORE the tasks run (as ones that exit immediately will pull the latch immediately.)
+                this.writeTaskState.latch = new CountDownLatch(this.asyncWriteTasks.size());
+
+                // Submit work.
+                for (int i = 0; i < this.asyncWriteTasks.size(); i++)
+                    ATLAS_BUILDER_THREAD_POOL.submit((Callable<?>) this.asyncWriteTasks.get(i));
+            }
+
+            // Write textures to the atlas on the main thread.
+            this.writeTaskState.writeTextures();
+        } finally {
+            this.currentlyBuildingTexture = false;
+            this.atlas.popDisableUpdates();
+
+            if (this.writerThreadShouldPrintTrace) {
+                Utils.printStackTrace();
+                this.writerThreadShouldPrintTrace = false;
+            }
         }
-
-        // Write textures to the atlas on the main thread.
-        this.writeTaskState.writeTextures();
-        this.atlas.popDisableUpdates();
 
         // NOTE:
         // We tried to build a large BufferedImage then write it to the WritableImage, but that was significantly slower than just writing directly to the FX image.
@@ -207,7 +247,8 @@ public class AtlasBuilderTextureSource implements ITextureSource {
 
     @Override
     public void fireChangeEvent(BufferedImage newImage) {
-        this.fireChangeEvent0(newImage);
+        if (!this.currentlyBuildingTexture)
+            this.fireChangeEvent0(newImage);
     }
 
     @Getter
@@ -242,15 +283,26 @@ public class AtlasBuilderTextureSource implements ITextureSource {
         private int index;
 
         /**
+         * Clears resources from the previous write task.
+         */
+        public void clear() {
+            this.texturesReadyToWrite.clear();
+            this.latch = null;
+            if (this.awtGraphics != null)
+                this.awtGraphics.dispose();
+            this.awtGraphics = null;
+            this.index = 0;
+        }
+
+        /**
          * Setup the task state for the next execution.
          * @param onlyWriteUpdatedTextures whether to only write updated textures
          * @param awtGraphics the awt graphics object, if there is one
          */
-        public void setupNextWrite(boolean onlyWriteUpdatedTextures, Graphics awtGraphics, int taskCount) {
+        public void setupNextWrite(boolean onlyWriteUpdatedTextures, Graphics awtGraphics) {
+            clear();
             this.onlyWriteUpdatedTextures = onlyWriteUpdatedTextures;
-            this.latch = new CountDownLatch(taskCount);
             this.awtGraphics = awtGraphics;
-            this.index = 0;
         }
 
         /**

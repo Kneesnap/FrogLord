@@ -291,11 +291,14 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
     /**
      * Adds a view as actively displaying this mesh.
      * @param view The view to add.
+     * @param meshTracker The mesh tracker which will eventually dispose this mesh.
      * @return true if added successfully
      */
-    public boolean addView(MeshView view) {
+    public boolean addView(MeshView view, MeshTracker meshTracker) {
         if (view == null)
             throw new NullPointerException("view");
+        if (meshTracker != null)
+            meshTracker.trackMesh(this);
 
         if (this.meshViews.contains(view))
             return false; // Already registered.
@@ -326,18 +329,20 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
         view.setMaterial(null);
 
         // Attempt to free the texture.
-        if (this.meshViews.isEmpty())
-            onFree();
+        if (this.meshViews.isEmpty() && this.textureAtlas != null)
+            this.textureAtlas.unregisterTexture();
 
         return true;
     }
 
     /**
-     * Called when the mesh has been free'd.
+     * Called when the mesh should be fully disposed.
      */
-    protected void onFree() {
+    public void dispose() {
+        if (this.meshViews.size() > 0)
+            throw new RuntimeException("There is still " + this.meshViews + " MeshView(s) using this mesh!");
         if (this.textureAtlas != null)
-            this.textureAtlas.releaseTexture();
+            this.textureAtlas.disposeTexture();
     }
 
     /**

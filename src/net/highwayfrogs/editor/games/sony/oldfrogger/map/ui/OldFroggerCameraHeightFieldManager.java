@@ -87,7 +87,7 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
         // Create the height-field display mesh.
         this.mesh = new CameraHeightFieldMesh(this);
         this.meshView = new MeshView();
-        this.mesh.addView(this.meshView);
+        this.mesh.addView(this.meshView, getController().getMeshTracker());
         this.meshView.setVisible(false);
         this.meshView.setCullFace(CullFace.NONE);
         getController().getLightManager().getLightingGroup().getChildren().add(this.meshView);
@@ -140,15 +140,6 @@ public class OldFroggerCameraHeightFieldManager extends OldFroggerMapUIManager {
     private void moveSelectionRelative(KeyEvent event, int x, int z) {
         if (this.meshView.isVisible() && moveSelectionRelative(x, z))
             event.consume();
-    }
-
-    @Override
-    public void onRemove() {
-        super.onRemove();
-
-        // Unregister the mesh.
-        if (this.mesh != null && this.meshView != null)
-            this.mesh.removeView(this.meshView);
     }
 
     @SuppressWarnings("StatementWithEmptyBody") // It's an else-if that prevents other if statements from running.

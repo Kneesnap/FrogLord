@@ -126,7 +126,7 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
     public boolean isSemiTransparent(MediEvilLevelTableEntry levelTableEntry) {
         GameImage image = getTexture(levelTableEntry);
         if (image != null && image.testFlag(GameImage.FLAG_TRANSLUCENT))
-            return true;
+            return true; // For proof of the necessity of checking this flag, see how GY1.MAP's river looks when this is removed.
 
         return (this.flags & FLAG_SEMI_TRANSPARENT) == FLAG_SEMI_TRANSPARENT;
     }

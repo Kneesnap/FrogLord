@@ -3,9 +3,9 @@ package net.highwayfrogs.editor.games.sony.shared.mof2.animation;
 import lombok.Getter;
 import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
-import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.AppendInfoLoggerWrapper;
 
@@ -21,7 +21,7 @@ import java.util.List;
 public class MRAnimatedMofCelSet extends SCSharedGameData {
     @NonNull private final MRAnimatedMofModelSet parentModelSet;
     @NonNull private final List<MRAnimatedMofXarAnimation> animations = new ArrayList<>(); // Each entry is called "Cels" by the game, but I think that's a confusing name, so I'm calling it animations instead.
-    private short padding;
+    private short padding; // TODO: What is this?
 
     public MRAnimatedMofCelSet(@NonNull MRAnimatedMofModelSet modelSet) {
         super(modelSet.getGameInstance());

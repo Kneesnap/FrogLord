@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity;
 
-import javafx.scene.control.Alert.AlertType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -148,14 +147,10 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
     @Override
     public void save(DataWriter writer) {
         // Warnings!
-        if (this.formGridId < 0 || this.formGridId >= Math.max(getMapFile().getFormPacket().getOldForms().size(), getMapFile().getFormPacket().getForms().size())) {
-            getLogger().warning("The entity uses an invalid form grid ID! (%d).", this.formGridId);
-            FXUtils.makePopUp("[" + getLoggerInfo() + "] uses an invalid form grid ID! (" + this.formGridId + ")\nThis may cause issues!", AlertType.WARNING);
-        }
-        if (this.entityData instanceof FroggerEntityDataPathInfo && getPathInfo().getPath() == null && !getMapFile().isIslandOrIslandPlaceholder()) {
-            getLogger().warning("Entity references an invalid path ID! (%d)", getPathInfo().getPathId());
-            FXUtils.makePopUp("[" + getLoggerInfo() + "] uses an invalid path ID! (" + getPathInfo().getPathId() + ")\nThis may cause issues!", AlertType.WARNING);
-        }
+        if (this.formGridId < 0 || this.formGridId >= Math.max(getMapFile().getFormPacket().getOldForms().size(), getMapFile().getFormPacket().getForms().size()))
+            getGameInstance().showWarning(getLogger(), "The entity uses an invalid form grid ID! (%d).\nThis may cause issues in-game!", this.formGridId);
+        if (this.entityData instanceof FroggerEntityDataPathInfo && getPathInfo().getPath() == null && !getMapFile().isIslandOrIslandPlaceholder())
+            getGameInstance().showWarning(getLogger(), "The entity references an invalid path ID! (%d).\nThis may cause issues in-game!", getPathInfo().getPathId());
 
         writer.writeUnsignedShort(this.formGridId);
         writer.writeUnsignedShort(this.uniqueId);

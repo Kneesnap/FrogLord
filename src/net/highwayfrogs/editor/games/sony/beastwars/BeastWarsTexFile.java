@@ -1,9 +1,9 @@
 package net.highwayfrogs.editor.games.sony.beastwars;
 
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.Getter;
-import lombok.SneakyThrows;
-import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
@@ -21,9 +21,7 @@ import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -276,10 +274,13 @@ public class BeastWarsTexFile extends SCGameFile<BeastWarsInstance> {
     }
 
     @Override
-    @SneakyThrows
-    public void exportAlternateFormat() {
-        ImageIO.write(createTextureMap(), "png", new File(FrogLordApplication.getWorkingDirectory(), FileUtils.stripExtension(getFileDisplayName()) + ".png"));
-        getLogger().info("Exported texture map Image.");
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        super.setupRightClickMenuItems(contextMenu);
+
+        MenuItem exportTextureSheet = new MenuItem("Export texture sheet.");
+        contextMenu.getItems().add(exportTextureSheet);
+        exportTextureSheet.setOnAction(event ->
+                FileUtils.askUserToSaveImageFile(getLogger(), getGameInstance(), createTextureMap(), FileUtils.stripExtension(getFileDisplayName())));
     }
 
     @Override

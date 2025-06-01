@@ -84,8 +84,8 @@ public class BeastWarsObjectManager extends BeastWarsMapListManager<BeastWarsMap
         MRModel model = object.getModel();
         if (model != null) {
             // Update MeshView.
-            MRModelMesh modelMesh = this.meshCache.computeIfAbsent(model, MRModel::createMesh);
-            modelMesh.addView(objectMesh, getSelectedValue() == object, true);
+            MRModelMesh modelMesh = this.meshCache.computeIfAbsent(model, MRModel::createMeshWithDefaultAnimation);
+            modelMesh.addView(objectMesh, getController().getMeshTracker(), getSelectedValue() == object, true);
             objectMesh.setCullFace(CullFace.BACK);
             return;
         }

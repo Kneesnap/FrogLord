@@ -20,7 +20,7 @@ public class HashSum {
     public HashSum(int sum) {
         this.sum = sum;
         this.pairs = new HashSet<>();
-        this.stringLengths = new FlagTracker(FroggerHashUtil.MAX_SYMBOL_NAME_LENGTH);
+        this.stringLengths = new FlagTracker(FroggerHashUtil.PSYQ_MAX_SYMBOL_NAME_LENGTH);
     }
 
     @Override

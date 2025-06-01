@@ -231,6 +231,25 @@ def convert_grid_flags(blender_grid_flags):
     else:
         return blender_grid_flags
 
+def select_object(obj):
+    if not obj in bpy.context.collection.objects.values():
+        bpy.context.collection.objects.link(obj) # Add object to scene.
+    if obj in bpy.context.view_layer.objects.values():
+        bpy.context.view_layer.objects.active = obj # Set the active object.
+    obj.select_set(True) # Select the object.
+
+def set_object_mode(operator, object, mode, log_if_fail):
+    if bpy.context.active_object is None and object is not None:
+        select_object(object) # To avoid the failure that happens if no objects are selected, select the provided object.
+
+    if bpy.context.active_object is not None:
+        old_mode = bpy.context.active_object.mode
+        bpy.ops.object.mode_set(mode = mode if mode is not None else 'OBJECT')
+        return old_mode
+    elif log_if_fail:
+        operator.report({"WARNING"}, "You did not have any object actively selected. If an error occurs, or the mesh import/export does not have the expected coloring, please select an object (such as the default cube) in the scene and try again.")
+        return None
+
 def load_ffs_file(operator, context, filepath):
     is_cycles_enabled, is_cycles_loaded = addon_utils.check('cycles')
     if not is_cycles_loaded:
@@ -241,12 +260,6 @@ def load_ffs_file(operator, context, filepath):
         else:
             operator.report({"ERROR"}, "Failed to enable the 'CYCLES' rendering engine.")
             return {'CANCELLED'}
-
-    # Exit edit mode.
-    # Edit mode prevents editing vertex color data.
-    # Reference: https://blender.stackexchange.com/questions/122202/changing-vertex-colors-through-python
-    old_mode = bpy.context.active_object.mode if bpy.context.active_object else 'OBJECT'
-    bpy.ops.object.mode_set(mode = 'OBJECT')
 
     # Delete old data. This prevented crashes previously, but I've maybe fixed the crash bug.
     # It will remain here until we're confident the crash bug is fixed.
@@ -261,6 +274,11 @@ def load_ffs_file(operator, context, filepath):
     if mesh != obj.data:
         operator.report({"ERROR"}, "The object named '%s' MUST be attached to the mesh named '%s'!" % (LEVEL_OBJECT_NAME, LEVEL_MESH_NAME))
         return {'CANCELLED'}
+
+    # Exit edit mode.
+    # Edit mode prevents editing vertex color data.
+    # Reference: https://blender.stackexchange.com/questions/122202/changing-vertex-colors-through-python
+    old_mode = set_object_mode(operator, obj, 'OBJECT', True)
 
     bpy.context.scene.render.engine = 'CYCLES' # See above for an explanation of why the scene must use the CYCLES engine.
 
@@ -319,6 +337,7 @@ def load_ffs_file(operator, context, filepath):
     pending_face_data = []
     extra_face_data = []
     material_id_remaps = {}
+    downsized_face_count = 0
     for command, args, line_text, line_number in commands:
         arg_index = 0
 
@@ -393,8 +412,7 @@ def load_ffs_file(operator, context, filepath):
             for i in range(num_vertices):
                 vertices.append(int(args[arg_index]))
                 arg_index += 1
-
-            pending_face_data.append(to_blender_order(vertices))
+            vertices = to_blender_order(vertices)
 
             # Read texCoords.
             tex_coords = []
@@ -403,12 +421,14 @@ def load_ffs_file(operator, context, filepath):
                     uv_text = args[arg_index].split(":")
                     tex_coords.append([float(uv_text[0]), 1.0 - float(uv_text[1])])
                     arg_index += 1
+            tex_coords = to_blender_order(tex_coords)
 
             # Read colors.
             colors = []
             for i in range(num_colors):
                 colors.append(int_to_rgbaf_color(int(args[arg_index], 16)))
                 arg_index += 1
+            colors = to_blender_order(colors)
 
             # Read optional grid flags.
             grid_flags = -1
@@ -416,9 +436,37 @@ def load_ffs_file(operator, context, filepath):
                 grid_flags = int(args[arg_index])
                 arg_index += 1
 
-            extra_face_data.append((should_hide, material_index, texture_flags, to_blender_order(tex_coords), to_blender_order(colors), grid_flags))
+            # After preparing the polygon data, we have a problem.
+            # Some Frogger maps such as DES1.MAP contain quads that use the same vertex more than once, to effectively render as a triangle, while still being a quad.
+            # The purpose of this is unknown, and it appears to have been likely an oversight/remnant of how the maps were modelled.
+            # Blender does not support faces using the same vertex more than once, so we must remove those vertices to actually become the assumed type.
+            seen_vertices = []
+            duplicate_vertices = []
+            for i in range(len(vertices)):
+                vertex = vertices[i]
+                if vertex in seen_vertices:
+                    duplicate_vertices.append(i)
+                else:
+                    seen_vertices.append(vertex)
+
+            # Remove the duplicate vertices.
+            for i in duplicate_vertices:
+                vertices.pop(i)
+                if has_texture:
+                    tex_coords.pop(i)
+                if len(colors) > 1:
+                    colors.pop(i)
+            if len(duplicate_vertices) > 0:
+                downsized_face_count += 1
+
+            # Store the polygon data for later access.
+            pending_face_data.append(vertices)
+            extra_face_data.append((should_hide, material_index, texture_flags, tex_coords, colors, grid_flags))
         else:
             operator.report({"WARNING"}, "Unknown Command '%s', skipping line %d!" % (command, line_number))
+
+    if downsized_face_count > 0:
+        operator.report({"WARNING"}, "Converted down %d face(s) to remove duplicate vertex usages." % downsized_face_count)
 
     # Apply the mesh data to the mesh.
     mesh.from_pydata(pending_vertex_data, [], pending_face_data)
@@ -461,11 +509,7 @@ def load_ffs_file(operator, context, filepath):
     mesh.update(calc_edges=True)
 
     # Finish Setup:
-    if not obj in bpy.context.collection.objects.values():
-        bpy.context.collection.objects.link(obj) # Add object to scene.
-    if obj in bpy.context.view_layer.objects.values():
-        bpy.context.view_layer.objects.active = obj # Set the active object.
-    obj.select_set(True) # Select the object.
+    select_object(obj)
 
     # [AE] Set initial rendering modes, etc.
     for area in context.screen.areas:
@@ -479,8 +523,8 @@ def load_ffs_file(operator, context, filepath):
         bpy.ops.outliner.orphans_purge()
 
     # Restore the previous mode before we replaced it.
-    bpy.ops.object.mode_set(mode=old_mode)
-
+    set_object_mode(operator, obj, old_mode, False)
+    operator.report({"INFO"}, "Successfully imported the map!")
     return {'FINISHED'}
 
 def save_ffs_file(operator, context, filepath):
@@ -494,28 +538,26 @@ def save_ffs_file(operator, context, filepath):
         operator.report({"ERROR"}, "Could not determine the target version of Frogger from the scene data." % LEVEL_OBJECT_NAME)
         return {'CANCELLED'}
 
-    # Exit edit mode.
-    # Edit mode prevents accessing vertex color data.
-    # Reference: https://blender.stackexchange.com/questions/122202/changing-vertex-colors-through-python
-    old_mode = bpy.context.active_object.mode if bpy.context.active_object else 'OBJECT'
-    bpy.ops.object.mode_set(mode = 'OBJECT')
-
     mesh = bpy.data.meshes[LEVEL_MESH_NAME]
     obj = bpy.data.objects[LEVEL_OBJECT_NAME]
     if mesh != obj.data:
         operator.report({"ERROR"}, "The object named '%s' MUST be attached to the mesh named '%s'!" % (LEVEL_OBJECT_NAME, LEVEL_MESH_NAME))
-        bpy.ops.object.mode_set(mode = old_mode)
         return {'CANCELLED'}
+
+    # Exit edit mode.
+    # Edit mode prevents accessing vertex color data.
+    # Reference: https://blender.stackexchange.com/questions/122202/changing-vertex-colors-through-python
+    old_mode = set_object_mode(operator, obj, 'OBJECT', True)
 
     uv_layer = mesh.uv_layers.get(UV_LAYER_NAME)
     color_layer = mesh.vertex_colors.get(VERTEX_COLOR_LAYER_NAME)
     if uv_layer is None:
         operator.report({"ERROR"}, "Could not find mesh data layer named '%s'." % UV_LAYER_NAME)
-        bpy.ops.object.mode_set(mode = old_mode)
+        set_object_mode(operator, obj, old_mode, False)
         return {'CANCELLED'}
     if color_layer is None:
         operator.report({"ERROR"}, "Could not find mesh data layer named '%s'." % VERTEX_COLOR_LAYER_NAME)
-        bpy.ops.object.mode_set(mode = old_mode)
+        set_object_mode(operator, obj, old_mode, False)
         return {'CANCELLED'}
 
     bm = bmesh.new()
@@ -526,12 +568,12 @@ def save_ffs_file(operator, context, filepath):
     grid_flag_layer = bm.faces.layers.int.get(GRID_FLAG_LAYER_NAME)
     if texture_flag_layer is None:
         operator.report({"ERROR"}, "Could not find bmesh data layer named '%s'." % TEXTURE_FLAG_LAYER_NAME)
-        bpy.ops.object.mode_set(mode = old_mode)
+        set_object_mode(operator, obj, old_mode, False)
         bm.free()
         return {'CANCELLED'}
     if grid_flag_layer is None:
         operator.report({"ERROR"}, "Could not find bmesh data layer named '%s'." % GRID_FLAG_LAYER_NAME)
-        bpy.ops.object.mode_set(mode = old_mode)
+        set_object_mode(operator, obj, old_mode, False)
         bm.free()
         return {'CANCELLED'}
 
@@ -646,7 +688,7 @@ def save_ffs_file(operator, context, filepath):
     writer.close()
     bm.free()
 
-    bpy.ops.object.mode_set(mode = old_mode) # Restore previous mode.
+    set_object_mode(operator, obj, old_mode, False) # Restore previous mode.
     operator.report({"INFO"}, "Successfully exported the map!")
     return {'FINISHED'}
 

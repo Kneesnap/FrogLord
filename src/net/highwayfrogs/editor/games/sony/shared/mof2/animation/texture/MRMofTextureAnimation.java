@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPart;
+import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -30,8 +31,8 @@ public class MRMofTextureAnimation implements IBinarySerializable {
         int entryCount = reader.readInt();
         for (int i = 0; i < entryCount; i++) {
             MRMofTextureAnimationEntry entry = new MRMofTextureAnimationEntry();
-            entry.load(reader);
             this.entries.add(entry);
+            entry.load(reader);
         }
     }
 
@@ -77,5 +78,14 @@ public class MRMofTextureAnimation implements IBinarySerializable {
             frameCount += this.entries.get(i).getDuration();
 
         return frameCount;
+    }
+
+    /**
+     * Creates a clone of this object, attached to a new parent part.
+     * @param parentPart the parent part the cloned object should attach to
+     * @return clone
+     */
+    public MRMofTextureAnimation clone(MRMofPart parentPart) {
+        return DataUtils.cloneSerializableObject(this, new MRMofTextureAnimation(parentPart));
     }
 }

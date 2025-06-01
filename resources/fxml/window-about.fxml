@@ -20,7 +20,7 @@
         <VBox layoutX="85.0" layoutY="149.0" prefHeight="125.0" prefWidth="315.0">
             <children>
                 <Label fx:id="versionLabel" style="-fx-font-weight: bold;" text="FrogLord v?.?.?"/>
-                <Label prefWidth="127.0" text="By Kneesnap (&amp; Others)"/>
+                <Label prefWidth="127.0" text="By Kneesnap (&amp; other contributors)"/>
                 <Label/>
                 <Label fx:id="javaVersionLabel" text="Java Version: "/>
                 <Label fx:id="javaRuntimeName" text="Java Runtime:"/>

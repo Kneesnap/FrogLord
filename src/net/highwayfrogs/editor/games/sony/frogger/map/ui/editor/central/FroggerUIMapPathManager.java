@@ -497,7 +497,9 @@ public class FroggerUIMapPathManager extends FroggerCentralMapListManager<Frogge
                 return;
 
             // Select clicked path.
-            this.pathManager.getValueSelectionBox().getSelectionModel().select(path);
+            this.pathManager.getValueSelectionBox().getSelectionModel().select(this.path);
+            if (this.path != null) // Ensure the path UI gets selected regardless of if the path was already selected or not.
+                expandTitlePaneFrom(this.pathManager.getValueSelectionBox());
         }
     }
 

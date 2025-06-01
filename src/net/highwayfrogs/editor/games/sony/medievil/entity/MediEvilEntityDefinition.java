@@ -24,7 +24,7 @@ public class MediEvilEntityDefinition extends SCGameData<MediEvilGameInstance> {
     private final List<MediEvilModelEntityData> modelData = new ArrayList<>();
     private String name;
     private int subtypeCount;
-    private long mofId = -1;
+    private int mofId = -1;
 
     public MediEvilEntityDefinition(MediEvilGameInstance instance, SCOverlayTableEntry overlay) {
         super(instance);
@@ -46,7 +46,7 @@ public class MediEvilEntityDefinition extends SCGameData<MediEvilGameInstance> {
      * Gets the MOF file registered to this entity definition.
      */
     public MRModel getModel() {
-        return this.mofId != 0 ? getGameInstance().getGameFileByResourceID((int) this.mofId, MRModel.class, true) : null;
+        return this.mofId != 0 && this.mofId != -1 ? getGameInstance().getGameFileByResourceID(this.mofId, MRModel.class, true) : null;
     }
 
     /**
@@ -71,11 +71,12 @@ public class MediEvilEntityDefinition extends SCGameData<MediEvilGameInstance> {
         else {
             reader.skipBytes(170); // TODO: Read more of this instead of skipping.
         }
-        this.mofId = reader.readUnsignedIntAsLong();
+        this.mofId = reader.readInt();
+        long largeMofId =  (this.mofId & 0xFFFFFFFFL);
         // Read model data.
         this.modelData.clear();
-        if (getGameInstance().isValidLookingPointer(this.mofId)) {
-            reader.jumpTemp((int) (this.mofId - offset));
+        if (getGameInstance().isValidLookingPointer(largeMofId)) {
+            reader.jumpTemp((int) (largeMofId - offset));
 
             // Assume there is at least one entry if subtype count is zero
             int iterator = this.subtypeCount > 0 ? this.subtypeCount : 1;

@@ -31,8 +31,11 @@ import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapLevelID;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerFlyScoreType;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketHeader;
+import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerUtils;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerVersionComparison;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
@@ -40,6 +43,7 @@ import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewCom
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -118,6 +122,35 @@ public class FroggerGameInstance extends SCGameInstance {
         } else {
             return SCUtils.createSharedGameFile(resourceEntry, fileData);
         }
+    }
+
+    @Override
+    protected VLOArchive resolveMainVlo(MRModel model) {
+        WADFile wadFile = model.getParentWadFile();
+        if (wadFile != null) {
+            FroggerMapTheme theme = FroggerUtils.getFroggerMapTheme(wadFile);
+            ThemeBook themeBook = getThemeBook(theme);
+            if (themeBook != null) {
+                VLOArchive themeVlo = themeBook.getVLO(FroggerUtils.isMultiplayerFile(wadFile, theme), FroggerUtils.isLowPolyMode(wadFile));
+                if (themeVlo != null)
+                    return themeVlo;
+            }
+
+            // Attempt to search by WAD name. (Failsafe)
+            String wadFileName = wadFile.getFileDisplayName();
+            String searchFileName = FileUtils.stripExtension(wadFileName) + ".VLO";
+            if (searchFileName.startsWith("THEME_")) {
+                searchFileName = searchFileName.substring("THEME_".length());
+            } else if ("OPTIONSL.WAD".equals(wadFileName) || "OPTIONSH.WAD".equals(wadFileName) || "OPTIONS.WAD".equals(wadFileName)) {
+                searchFileName = "OPT_VRAM.VLO";
+            }
+
+            VLOArchive foundVlo = getMainArchive().getFileByName(searchFileName);
+            if (foundVlo != null)
+                return foundVlo;
+        }
+
+        return super.resolveMainVlo(model);
     }
 
     @Override

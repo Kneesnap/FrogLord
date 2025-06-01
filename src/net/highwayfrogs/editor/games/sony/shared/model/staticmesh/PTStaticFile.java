@@ -3,8 +3,6 @@ package net.highwayfrogs.editor.games.sony.shared.model.staticmesh;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.model.PTModel;
@@ -13,7 +11,6 @@ import net.highwayfrogs.editor.games.sony.shared.model.actionset.PTActionSetFile
 import net.highwayfrogs.editor.games.sony.shared.model.meshview.PTModelMesh;
 import net.highwayfrogs.editor.games.sony.shared.model.meshview.PTModelMeshController;
 import net.highwayfrogs.editor.games.sony.shared.model.skeleton.PTSkeletonFile;
-import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
@@ -21,6 +18,8 @@ import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -167,7 +166,7 @@ public class PTStaticFile extends SCSharedGameFile {
     }
 
     @Override
-    public void handleWadEdit(WADFile parent) {
+    public void performDefaultUIAction() {
         PTSkeletonFile skeletonFile = getGameInstance().getMainArchive().getFileByName(FileUtils.stripExtension(getFileDisplayName()) + ".SKEL");
         PTActionSetFile animationFile = getGameInstance().getMainArchive().getFileByName(FileUtils.stripExtension(getFileDisplayName()) + ".ANIM");
         PTModel model = new PTModel(this, skeletonFile, animationFile);

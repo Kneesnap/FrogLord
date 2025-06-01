@@ -8,6 +8,7 @@ import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.ISCFileDefinition;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.pp20.PP20Packer;
@@ -42,6 +43,7 @@ import java.nio.file.Files;
 public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends SCGameData<TGameInstance> implements ICollectionViewEntry, IPropertyListCreator {
     private byte[] rawFileData;
     private ISCFileDefinition fileDefinition;
+    private WADEntry wadFileEntry;
 
     public static final SavedFilePath SINGLE_FILE_IMPORT_PATH = new SavedFilePath("singleFileImportPath", "Choose the file to import.", BrowserFileType.ALL_FILES);
     public static final SavedFilePath SINGLE_FILE_EXPORT_PATH = new SavedFilePath("singleFileExportPath", "Choose the file to save the data as.", BrowserFileType.ALL_FILES);
@@ -133,17 +135,22 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
     }
 
     /**
-     * WAD files are capable of containing any file.
-     * This method is called when this file has the "Edit" button pressed from inside a WAD file.
-     * Examples of how this can be used include: Opening a new UI area (Such as for viewing a 3D model) or replacing the WAD UI with the normal UI of the file created by makeEditor().
-     * @param parent The wad file this is edited from.
+     * Gets the wad file which contains this file, if there is one.
      */
-    public void handleWadEdit(WADFile parent) {
+    public WADFile getParentWadFile() {
+        return this.wadFileEntry != null ? this.wadFileEntry.getWadFile() : null;
+    }
+
+    /**
+     * Performs the default UI action for interacting with this file.
+     * Generally this means opening more advanced UI such as a 3D preview.
+     */
+    public void performDefaultUIAction() {
         GameUIController<?> uiController = makeEditorUI();
         if (uiController != null) {
             getGameInstance().getMainMenuController().showEditor(uiController);
             if (uiController instanceof SCFileEditorUIController<?, ?>)
-                ((SCFileEditorUIController<?, ?>) uiController).setParentWadFile(parent);
+                ((SCFileEditorUIController<?, ?>) uiController).setParentWadFile(getParentWadFile());
         } else {
             FXUtils.makePopUp("There is no editor available for " + Utils.getSimpleName(this), AlertType.ERROR);
         }
@@ -218,13 +225,6 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
      */
     public String getFileDisplayName() {
         return getFileDefinition().getDisplayName();
-    }
-
-    /**
-     * Export this file in a non-Frogger format.
-     */
-    public void exportAlternateFormat() {
-        getLogger().warning("The file (" + getClass().getSimpleName() + ") does not have an alternate file-type it can export as.");
     }
 
     /**

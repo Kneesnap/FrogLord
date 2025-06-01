@@ -13,7 +13,6 @@ import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapGraphic
 import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapHeaderPacket;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
-import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
@@ -61,7 +60,7 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> {
     }
 
     @Override
-    public void handleWadEdit(WADFile parent) {
+    public void performDefaultUIAction() {
         MeshViewController.setupMeshViewer(getGameInstance(), new MediEvilMapMeshController(), new MediEvilMapMesh(this));
     }
 

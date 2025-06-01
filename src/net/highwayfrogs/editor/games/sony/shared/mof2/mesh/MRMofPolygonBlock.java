@@ -2,10 +2,10 @@ package net.highwayfrogs.editor.games.sony.shared.mof2.mesh;
 
 import lombok.Getter;
 import lombok.NonNull;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.shared.mof2.hilite.MRMofHilite;
 import net.highwayfrogs.editor.games.sony.shared.mof2.hilite.MRMofHilite.HiliteAttachType;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -61,7 +61,9 @@ public class MRMofPolygonBlock {
         if (polygon == null)
             throw new NullPointerException("polygon");
         if (polygon.getPolygonType() != this.polygonType)
-            throw new RuntimeException("Cannot add a polygon of type " + polygon.getPolygonType() + " to a block which only holds " + this.polygonType + " polygons.");
+            throw new IllegalArgumentException("Cannot add a polygon of type " + polygon.getPolygonType() + " to a block which only holds " + this.polygonType + " polygons.");
+        if (polygon.getMofPart() != this.parentPart)
+            throw new IllegalArgumentException("Cannot add a polygon attached to the wrong mofPart (" + getMofPartName(polygon.getMofPart()) + "), as the polygon block is designated for " + getMofPartName(this.parentPart) + ".");
 
         if (this.polygons.contains(polygon))
             return false; // Already registered.
@@ -69,6 +71,10 @@ public class MRMofPolygonBlock {
         this.parentPart.markPolygonListDirty();
         this.polygons.add(polygon);
         return true;
+    }
+
+    private static String getMofPartName(MRMofPart mofPart) {
+        return mofPart != null ? mofPart.getLogger().getName() : "<NULL MOF PART>";
     }
 
     /**
@@ -80,7 +86,7 @@ public class MRMofPolygonBlock {
         if (polygon == null)
             throw new NullPointerException("polygon");
         if (polygon.getPolygonType() != this.polygonType)
-            throw new RuntimeException("Cannot remove a polygon of type " + polygon.getPolygonType() + " from a block which only holds " + this.polygonType + " polygons.");
+            throw new IllegalArgumentException("Cannot remove a polygon of type " + polygon.getPolygonType() + " from a block which only holds " + this.polygonType + " polygons.");
 
         if (!this.polygons.remove(polygon))
             return false; // Wasn't registered.

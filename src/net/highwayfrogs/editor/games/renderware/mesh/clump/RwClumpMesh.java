@@ -25,7 +25,7 @@ public class RwClumpMesh extends PSXShadedDynamicMesh<RpTriangle, RwShadedTextur
     private final RwClumpMeshNode mainNode;
 
     public RwClumpMesh(RwClumpChunk clumpChunk) {
-        super(new TreeTextureAtlas(64, 64, true), DynamicMeshTextureQuality.LIT_BLURRY, false);
+        super(new TreeTextureAtlas(64, 64, true), DynamicMeshTextureQuality.LIT_BLURRY, false, clumpChunk.getCollectionViewDisplayName());
         this.clump = clumpChunk;
 
         // Add textures.
