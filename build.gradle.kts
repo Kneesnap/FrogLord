@@ -1,5 +1,5 @@
 group = "net.highwayfrogs"
-version = "1.0.0"
+version = "1.0.1"
 description = "An editor for Frogger: He's Back (1997)"
 // To build a Windows exe, install the following things:
 // Current Java Version: JDK 17 - https://www.oracle.com/java/technologies/downloads/#jdk17-windows
@@ -9,7 +9,7 @@ description = "An editor for Frogger: He's Back (1997)"
 // If anyone wants to submit a PR to streamline the ability to run FrogLord for these systems I'd be happy to take it.
 
 // "--add-opens", "javafx.controls/javafx.scene.control.skin=ALL-UNNAMED" -> Adds reflection capability for modulename/package.
-val sharedJvmArgs = listOf("--add-opens", "javafx.controls/javafx.scene.control.skin=ALL-UNNAMED")
+val sharedJvmArgs = listOf("--add-opens", "javafx.controls/javafx.scene.control.skin=ALL-UNNAMED", "--add-opens", "javafx.controls/javafx.scene.control.skin=FrogLord")
 val sharedPackageArgs = listOf("--copyright", "Kneesnap (Licensed w/MIT License)", "--description", description, "--vendor", "Highway Frogs")
 val targetOs: org.gradle.internal.os.OperatingSystem = org.gradle.internal.os.OperatingSystem.current()
 val enableStdOut = false
