@@ -15,9 +15,12 @@ import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
 import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.games.sony.shared.utils.DynamicMeshObjExporter;
 import net.highwayfrogs.editor.gui.editor.FirstPersonCamera;
+import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh.DynamicMeshTextureQuality;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -783,6 +786,38 @@ public class Scene3DUtils {
 
     /**
      * Takes a screenshot of a given SubScene.
+     * @param instance The subScene to take a screenshot of.
+     * @param logger The logger to write messages to, if there is one
+     * @param mesh The mesh to export as a .obj.
+     * @param namePrefix The file name prefix to save the image as.
+     */
+    public static void take3DScreenshot(GameInstance instance, ILogger logger, DynamicMesh mesh, String namePrefix) {
+        if (instance == null)
+            throw new NullPointerException("instance");
+        if (mesh == null)
+            throw new NullPointerException("mesh");
+        if (logger == null)
+            logger = instance.getLogger();
+
+        // Write to file.
+        int id = -1;
+        while (++id < 10000) {
+            String fileName = (namePrefix != null && namePrefix.length() > 0 ? namePrefix + "-" : "")
+                    + StringUtils.padStringLeft(Integer.toString(id), 4, '0') + ".obj";
+
+            File testFile = new File(FrogLordApplication.getWorkingDirectory(), fileName);
+            if (!testFile.exists()) {
+                DynamicMeshObjExporter.exportMeshToObj(logger, mesh, testFile, null, true);
+                return;
+            }
+        }
+
+        // Let user pick a directory (in case current working directory is not writeable)
+        DynamicMeshObjExporter.askUserToMeshToObj(instance, logger, mesh, namePrefix, true);
+    }
+
+    /**
+     * Takes a screenshot of a given SubScene.
      * @param subScene   The subScene to take a screenshot of.
      * @param namePrefix The file name prefix to save the image as.
      */
@@ -803,7 +838,7 @@ public class Scene3DUtils {
 
         // Write to file.
         int id = -1;
-        while (id++ < 10000) {
+        while (++id < 10000) {
             String fileName = (namePrefix != null && namePrefix.length() > 0 ? namePrefix + "-" : "")
                     + StringUtils.padStringLeft(Integer.toString(id), 4, '0') + ".png";
 

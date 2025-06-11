@@ -36,6 +36,6 @@
         <ComboBox fx:id="partHideSelector" layoutX="83.0" layoutY="6.0" prefWidth="150.0" AnchorPane.leftAnchor="40.0" AnchorPane.rightAnchor="40.0" AnchorPane.topAnchor="335.0" />
         <Separator layoutX="14.0" layoutY="248.0" prefWidth="200.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="370.0" />
         <Label layoutX="17.0" layoutY="266.0" text="Controls:" underline="true" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="380.0" />
-        <Label layoutX="19.6" layoutY="264.6" prefHeight="90.0" prefWidth="220.0" text="Left Arrow Key: Previous Frame&#13;Right Arrow Key: Next Frame&#13;X: Toggle Wireframe Mode&#13;Ctrl + S: Save Texture Map&#13;F10: Take Screenshot&#13;Escape: Exit Viewer" wrapText="true" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="400.0" />
+        <Label layoutX="19.6" layoutY="264.6" prefHeight="90.0" prefWidth="220.0" text="Left Arrow Key: Previous Frame&#13;Right Arrow Key: Next Frame&#13;X: Toggle Wireframe Mode&#13;Ctrl + S: Save Texture Map&#13;F9: Take 3D Screenshot&#13;F10: Take Screenshot&#13;Escape: Exit Viewer" wrapText="true" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="400.0" />
     </AnchorPane>
 </TitledPane>

@@ -326,8 +326,10 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                 this.meshTracker.disposeMeshes(); // Prevent memory leaks by ensuring texture sheets remove any listeners from static textures sources (which would then keep the texture sheet in memory).
                 this.root3D.getChildren().clear(); // Clear data just in-case there's a memory leak.
                 FXUtils.setSceneKeepPosition(this.overwrittenStage, this.originalScene);
-            } else if (event.getCode() == KeyCode.F9) { // Print mesh information.
+            } else if (event.getCode() == KeyCode.F8) { // Print mesh information.
                 getMesh().printDebugMeshInfo();
+            } else if (event.getCode() == KeyCode.F9) { // 3D screenshot.
+                Scene3DUtils.take3DScreenshot(getGameInstance(), getLogger(), this.mesh, this.mesh.getMeshName());
             } else if (event.getCode() == KeyCode.F10) { // Take screenshot.
                 Scene3DUtils.takeScreenshot(null, this.subScene, getMeshScene(), FileUtils.stripExtension(getMeshDisplayName()), false);
             } else if (event.getCode() == KeyCode.F12 && getMesh().getTextureAtlas() != null) {
