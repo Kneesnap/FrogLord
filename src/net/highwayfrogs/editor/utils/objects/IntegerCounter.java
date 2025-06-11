@@ -20,9 +20,10 @@ public class IntegerCounter {
 
     /**
      * Increments the counter.
+     * Returns the new counter value.
      */
-    public void increment() {
-        this.counter++;
+    public int increment() {
+        return ++this.counter;
     }
 
     /**

@@ -1,10 +1,9 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.path;
 
+import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.spline.MRSplineHermite;
@@ -12,6 +11,8 @@ import net.highwayfrogs.editor.games.sony.shared.spline.MRSplineMatrix;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.Arrays;
 
@@ -19,6 +20,7 @@ import java.util.Arrays;
  * Represents a spline in old Frogger.
  * Created by Kneesnap on 12/12/2023.
  */
+@Getter
 public class OldFroggerSpline extends SCSharedGameData {
     private final MRSplineHermite splineHermite;
     private final int[] smoothT = new int[4]; // Smooth T is the distance values to reach each point. (Translation)

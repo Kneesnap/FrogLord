@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.desert;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
@@ -17,6 +18,7 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
+@Setter
 public class FroggerEntityDataFallingRock extends FroggerEntityDataMatrix {
     private final FallingRockTarget[] targets = new FallingRockTarget[ROCK_TARGET_COUNT];
     private int delay = 0; // Delay until rock starts moving.
@@ -94,7 +96,7 @@ public class FroggerEntityDataFallingRock extends FroggerEntityDataMatrix {
         private final FroggerEntityDataFallingRock parentData;
         private final int index;
         private final SVector target = new SVector(); // Target Position.
-        private int time = 30; // Time to reach target.
+        @Setter private int time = 30; // Time to reach target.
 
         public FallingRockTarget(FroggerEntityDataFallingRock parentData, int index) {
             super(parentData.getGameInstance());

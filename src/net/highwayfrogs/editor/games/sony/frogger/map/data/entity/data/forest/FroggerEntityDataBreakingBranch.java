@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.forest;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataMatrix;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
@@ -13,6 +14,7 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
  * Created by Kneesnap on 11/26/2018.
  */
 @Getter
+@Setter
 public class FroggerEntityDataBreakingBranch extends FroggerEntityDataMatrix {
     private int breakDelay = 150; // 5.0
     private int fallSpeed = 21845; // 10.0

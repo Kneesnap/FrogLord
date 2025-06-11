@@ -118,18 +118,10 @@ public class OldFroggerMapPolygon extends SCGameData<OldFroggerGameInstance> {
 
         // Clone colors.
         CVector[] colors = null;
-        if (this.colors.length > 0) {
-            colors = new CVector[this.colors.length];
-            for (int i = 0; i < colors.length; i++)
-                colors[i] = this.colors[i].clone();
+        if (this.colors.length > 0)
+            colors = copyColors(mapFile, this.colors, null);
 
-            // Enable max brightness for cave levels. (The game lights areas with code)
-            if (isCaveLightingEnabledOnLoadedColors(mapFile, colors))
-                for (int i = 0; i < colors.length; i++)
-                    colors[i].fromRGB(0xFFFFFF);
-        }
-
-        ITextureSource textureSource = this.polygonType.isTextured() ? getTexture(mapFile.getLevelTableEntry()) : null;
+        ITextureSource textureSource = this.polygonType.isTextured() && mapFile != null ? getTexture(mapFile.getLevelTableEntry()) : null;
         PSXShadedTextureManager<OldFroggerMapPolygon> shadedTextureManager = mapMesh != null ? mapMesh.getShadedTextureManager() : null;
         return new PSXShadeTextureDefinition(shadedTextureManager, this.polygonType, textureSource, colors, uvs, false, true);
     }
@@ -197,8 +189,26 @@ public class OldFroggerMapPolygon extends SCGameData<OldFroggerGameInstance> {
         }
     }
 
+    public static CVector[] copyColors(OldFroggerMapFile mapFile, CVector[] oldColors, CVector[] newColors) {
+        if (oldColors == null)
+            throw new NullPointerException("oldColors");
+        if (newColors != null && newColors.length != oldColors.length)
+            throw new IllegalArgumentException("newColors.length was expected to be " + oldColors.length + ", but was actually " + newColors.length + "!");
+        if (newColors == null)
+            newColors = new CVector[oldColors.length];
+        for (int i = 0; i < newColors.length; i++)
+            newColors[i] = oldColors[i].clone();
+
+        // Enable max brightness for cave levels. (The game lights areas with code)
+        if (isCaveLightingEnabledOnLoadedColors(mapFile, newColors))
+            for (int i = 0; i < newColors.length; i++)
+                newColors[i].fromRGB(0xFFFFFF);
+
+        return newColors;
+    }
+
     private static boolean isCaveLightingEnabledOnLoadedColors(OldFroggerMapFile mapFile, CVector[] colors) {
-        if (!mapFile.getMapConfig().isCaveLightingEnabled())
+        if (mapFile == null || !mapFile.getMapConfig().isCaveLightingEnabled())
             return false; // Only the cave map has cave lighting.
 
         for (int i = 0; i < colors.length; i++) {

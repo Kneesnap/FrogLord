@@ -225,19 +225,10 @@ public class FroggerUIMapGeneralManager extends FroggerCentralUIManager {
         float baseZ = DataUtils.fixedPointIntToFloat4Bit(gridPacket.getBaseGridZ());
         float xSize = gridPacket.getGridXSizeAsFloat();
         float zSize = gridPacket.getGridZSizeAsFloat();
-        boolean enableCliffHeightPreview = gridPacket.doGridStacksHaveCliffHeights();
         PhongMaterial gridMaterial = Scene3DUtils.makeUnlitSharpMaterial(Color.RED);
-        PhongMaterial heightMaterial = Scene3DUtils.makeUnlitSharpMaterial(Color.GREEN);
-        for (int x = 0; x < gridPacket.getGridXCount(); x++) {
-            for (int z = 0; z < gridPacket.getGridZCount(); z++) {
+        for (int x = 0; x < gridPacket.getGridXCount(); x++)
+            for (int z = 0; z < gridPacket.getGridZCount(); z++)
                 this.gridPreviewList.addBoundingBoxFromMinMax(baseX + (x * xSize), 0, baseZ + (z * zSize), baseX + ((x + 1) * xSize), 0, baseZ + ((z + 1) * zSize), gridMaterial, true);
-                FroggerGridStack stack = gridPacket.getGridStack(x, z);
-                if (enableCliffHeightPreview) {
-                    float floatPos = stack.getCliffHeightAsFloat();
-                    this.gridPreviewList.addBoundingBoxFromMinMax(baseX + (x * xSize), -1 - floatPos, baseZ + (z * zSize), baseX + ((x + 1) * xSize), -1 - floatPos, baseZ + ((z + 1) * zSize), heightMaterial, true);
-                }
-            }
-        }
     }
 
     private String getPlayerCharacterModelName() {
@@ -280,7 +271,7 @@ public class FroggerUIMapGeneralManager extends FroggerCentralUIManager {
             } else {
                 MRModelMesh modelMesh = playerModel.createMesh();
                 if (getMap().isMultiplayer()) {
-                    int action = getGameInstance().getVersionConfig().getAnimationBank().getIndexForName("GENM_FROG_SIT");
+                    int action = getGameInstance().getVersionConfig().getAnimationBank().getIndexForName("GENM_FROG_SIT", true);
                     if (action >= 0)
                         modelMesh.getAnimationPlayer().setFlipbookAnimationID(action, true); // GENM_FROG_SIT
                 }

@@ -2,10 +2,10 @@ package net.highwayfrogs.editor.games.sony.oldfrogger.map.packet;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents the header packet in a pre-recode Frogger map.
@@ -45,10 +45,10 @@ public class OldFroggerMapHeaderPacket extends OldFroggerMapPacket {
 
         // Verify data
         if (fileLengthInBytes != reader.getSize())
-            getLogger().warning("The amount of bytes reported by the file '" + getParentFile().getFileDisplayName() + "' was " + fileLengthInBytes + ", but the actual amount was " + reader.getSize() + ".");
+            getLogger().warning("The amount of bytes reported by the file '%s' was %d, but the actual amount was %d.", getParentFile().getFileDisplayName(), fileLengthInBytes, reader.getSize());
 
         if ((mofsAddr & 0xFFFFFFFFL) != EXPECTED_MOF_ADDRESS)
-            getLogger().warning("MofsAddress was " + NumberUtils.toHexString(mofsAddr) + ", but " + NumberUtils.toHexString(EXPECTED_MOF_ADDRESS) + " was expected.");
+            getLogger().warning("MofsAddress was %s, but %s was expected.",  NumberUtils.toHexString(mofsAddr), NumberUtils.toHexString(EXPECTED_MOF_ADDRESS));
     }
 
     @Override

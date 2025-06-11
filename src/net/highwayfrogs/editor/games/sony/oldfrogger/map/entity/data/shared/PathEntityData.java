@@ -1,11 +1,9 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.shared;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
-import net.highwayfrogs.editor.file.standard.Vector;
+import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.OldFroggerDifficultyWrapper.OldFroggerDifficultyData;
@@ -15,6 +13,9 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.path.OldFroggerP
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.path.OldFroggerSpline;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.function.Function;
 
@@ -48,8 +49,7 @@ public class PathEntityData<TDifficultyData extends OldFroggerDifficultyData> ex
         this.pathData.setupEditor(controller, getEntity(), editor);
     }
 
-    @Override
-    public float[] getPosition(float[] position) {
+    public PSXMatrix calculatePosition() {
         OldFroggerMapFile map = getEntity().getMap();
         if (this.pathData.getPathId() < 0 || this.pathData.getPathId() >= map.getPathPacket().getPaths().size())
             return null; // Invalid path.
@@ -67,11 +67,19 @@ public class PathEntityData<TDifficultyData extends OldFroggerDifficultyData> ex
         vec_x.normalise();
         IVector.MROuterProduct12(vec_z, vec_x, vec_y);
         PSXMatrix matrix = PSXMatrix.WriteAxesAsMatrix(new PSXMatrix(), vec_x, vec_y, vec_z);
+        SVector endVec = spline.calculateSplinePoint(this.pathData.getSplinePosition());
+        matrix.getTransform()[0] = endVec.getX();
+        matrix.getTransform()[1] = endVec.getY();
+        matrix.getTransform()[2] = endVec.getZ();
+        return matrix;
+    }
 
-        Vector endVec = spline.calculateSplinePoint(this.pathData.getSplinePosition());
-        position[0] = endVec.getFloatX();
-        position[1] = endVec.getFloatY();
-        position[2] = endVec.getFloatZ();
+    @Override
+    public float[] getPosition(float[] position) {
+        PSXMatrix matrix = calculatePosition();
+        position[0] = DataUtils.fixedPointIntToFloat4Bit(matrix.getTransform()[0]);
+        position[1] = DataUtils.fixedPointIntToFloat4Bit(matrix.getTransform()[1]);
+        position[2] = DataUtils.fixedPointIntToFloat4Bit(matrix.getTransform()[2]);
         position[3] = (float) matrix.getPitchAngle();
         position[4] = (float) matrix.getYawAngle();
         position[5] = (float) matrix.getRollAngle();

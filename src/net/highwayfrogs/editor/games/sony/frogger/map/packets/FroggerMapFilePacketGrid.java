@@ -599,7 +599,7 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
         int polygonGridZ = getGridZFromWorldZ(temp.getZ());
 
         if (polygonGridX < 0 || polygonGridX >= this.gridXCount || polygonGridZ < 0 || polygonGridZ >= this.gridZCount)
-            throw new IllegalArgumentException("The provided polygon corresponds to the gridStack at [" + polygonGridX + ", " + polygonGridZ + "], which is outside the grid.");
+            throw new IllegalArgumentException("The provided polygon corresponds to the gridStack at [" + polygonGridX + ", " + polygonGridZ + "], which is outside the grid. (Position: " + temp + ", Grid Size: " + this.gridXCount + "x" + this.gridZCount + ")");
 
         float insertionY = temp.getY();
         FroggerGridStack gridStack = getGridStack(polygonGridX, polygonGridZ);

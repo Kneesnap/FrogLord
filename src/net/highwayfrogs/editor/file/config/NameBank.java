@@ -31,9 +31,18 @@ public class NameBank {
      * @param name The name to get the index from.
      * @return index, or -1
      */
-    public int getIndexForName(String name) {
+    public int getIndexForName(String name, boolean useSubBankLocalIds) {
         if (name == null)
             throw new NullPointerException("name");
+
+        if (useSubBankLocalIds && this.subBanks.size() > 0) {
+            for (NameBank nameBank : this.subBanks.values()) {
+                int testIndex = nameBank.getIndexForName(name, true);
+                if (testIndex >= 0)
+                    return testIndex;
+            }
+        }
+
 
         for (int i = 0; i < this.names.size(); i++) {
             String testName = this.names.get(i);

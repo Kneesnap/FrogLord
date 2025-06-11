@@ -1,13 +1,15 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.packet;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.OldFroggerMapGridHeaderPacket.OldFroggerMapGrid;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.HashMap;
 import java.util.List;
@@ -17,15 +19,14 @@ import java.util.Map;
  * Holds information about quad polygons.
  * Created by Kneesnap on 12/9/2023.
  */
-@Getter
-public class OldFroggerMapQuadPacket extends OldFroggerMapPacket {
+public class OldFroggerMapQuadPacket extends OldFroggerMapPacket implements IPropertyListCreator {
     public static final String IDENTIFIER = "QUAD";
 
-    private int xSize;
-    private int zSize;
-    private int xCount;
-    private int zCount;
-    private int textureCount;
+    @Getter private int xSize;
+    @Getter private int zSize;
+    @Getter private int xCount;
+    @Getter private int zCount;
+    @Getter private int textureCount;
 
     private final Map<OldFroggerMapPolygon, Integer> polygonFileOffsets = new HashMap<>();
     private final Map<OldFroggerMapGrid, Map<PSXPolygonType, Integer>> gridPolygonFileOffsets = new HashMap<>();
@@ -141,5 +142,13 @@ public class OldFroggerMapQuadPacket extends OldFroggerMapPacket {
     public int getKnownStartAddress() {
         OldFroggerMapGraphicalHeaderPacket graphicalPacket = getParentFile().getGraphicalHeaderPacket();
         return graphicalPacket != null ? graphicalPacket.getQuadChunkAddress() : -1;
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList.add("Quad Size", this.xSize + "x" + this.zSize);
+        propertyList.add("Quad Count", this.xCount + "x" + this.zCount);
+        propertyList.add("Quad Texture Count", this.textureCount);
+        return propertyList;
     }
 }

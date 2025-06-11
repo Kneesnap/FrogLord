@@ -264,6 +264,7 @@ public class GreatQuestInstance extends GameInstance {
 
         try {
             getMainArchive().save(writer, progressBar);
+            getLogger().info("Successfully wrote game data to '%s'.", outputBinFile.getName());
         } catch (Throwable th) {
             // Bubble the error upwards.
             throw new RuntimeException("Failed to save game data.", th);

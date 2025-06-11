@@ -647,7 +647,7 @@ public class FileUtils {
             if (!StringUtils.isNullOrWhiteSpace(node.getAsString())) {
                 prevFile = new File(node.getAsString());
             } else {
-                prevFile = FrogLordApplication.getWorkingDirectory();
+                prevFile = instance.getMainGameFolder();
             }
 
             return prevFile;

@@ -99,6 +99,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
 
     public FroggerMapFile(FroggerGameInstance instance, MWIResourceEntry resourceEntry) {
         super(instance, true);
+        setFileDefinition(resourceEntry);
         addFilePacket(this.headerPacket = new FroggerMapFilePacketHeader(this));
         addFilePacket(this.generalPacket = new FroggerMapFilePacketGeneral(this));
         addFilePacket(this.pathPacket = new FroggerMapFilePacketPath(this));

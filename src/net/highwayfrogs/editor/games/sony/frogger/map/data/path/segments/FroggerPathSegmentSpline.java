@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathResult;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathSegmentType;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapPathManager.FroggerPathPreview;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.path.OldFroggerSpline;
 import net.highwayfrogs.editor.games.sony.shared.spline.MRBezierCurve;
 import net.highwayfrogs.editor.games.sony.shared.spline.MRSplineMatrix;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
@@ -401,5 +402,26 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
      */
     public MRBezierCurve convertToBezierCurve() {
         return this.splineMatrix.toBezierCurve();
+    }
+
+    /**
+     * Copies the spline data from an old Frogger spline to the object.
+     * @param oldFroggerSpline the spline to copy data from
+     */
+    public void copyFrom(OldFroggerSpline oldFroggerSpline) {
+        if (oldFroggerSpline == null)
+            throw new NullPointerException("oldFroggerSpline");
+
+        setLength(null, oldFroggerSpline.calculateLength());
+        System.arraycopy(oldFroggerSpline.getSmoothT(), 0, this.smoothT, 0, this.smoothT.length);
+        for (int i = 0; i < this.smoothC.length; i++)
+            System.arraycopy(this.smoothC[i], 0, this.smoothC[i], 0, this.smoothC[i].length);
+
+        // Converting directly produces a matrix which is broken for spline calculations.
+        // However, the Bézier curve created from that matrix looks good.
+        // So, we'll calculate a new matrix from the curve, and we're left with a valid spline matrix.
+        // There's probably a less hacky way to do this, but I don't think it's worth figuring that out.
+        MRSplineMatrix tempMatrix = oldFroggerSpline.toMatrix(this.splineMatrix);
+        loadFromCurve(tempMatrix.toBezierCurve(), null);
     }
 }

@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map;
 
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
@@ -11,6 +13,7 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapMeshController;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.*;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapController;
+import net.highwayfrogs.editor.games.sony.oldfrogger.utils.OldFroggerMapConverter;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
 import net.highwayfrogs.editor.gui.ImageResource;
@@ -125,6 +128,15 @@ public class OldFroggerMapFile extends SCChunkedFile<OldFroggerGameInstance> {
     @Override
     public OldFroggerConfig getConfig() {
         return (OldFroggerConfig) super.getConfig();
+    }
+
+    @Override
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        super.setupRightClickMenuItems(contextMenu);
+
+        MenuItem convertToNewFormatItem = new MenuItem("Convert to post-recode map.");
+        contextMenu.getItems().add(convertToNewFormatItem);
+        convertToNewFormatItem.setOnAction(event -> OldFroggerMapConverter.convertToNewFormatUI(this));
     }
 
     /**

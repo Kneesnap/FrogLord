@@ -208,7 +208,7 @@ public class MWDFile extends SCSharedGameData {
     }
 
     /**
-     * Create a replacement file. (Does not actually update MWD)
+     * Create a replacement file, updating the MWD as necessary.
      * @param fileBytes The bytes to replace the file with.
      * @param oldFile   The file to replace.
      * @return replacementFile
@@ -258,6 +258,35 @@ public class MWDFile extends SCSharedGameData {
         }
 
         return newFile;
+    }
+
+    /**
+     * Replace the file in the MWD with a new one.
+     * @param oldFile   The file to replace.
+     * @param newFile   The file to use as replacement.
+     */
+    public void replaceFile(String importedFileName, MWIResourceEntry entry, SCGameFile<?> oldFile, SCGameFile<?> newFile, boolean updateUI) {
+        // Replace file.
+        int fileIndex = this.files.indexOf(oldFile);
+        WADEntry wadEntry = getWadEntry(oldFile);
+        newFile.setWadFileEntry(wadEntry);
+        swapFileRegistry(entry, fileIndex, wadEntry, oldFile, newFile);
+
+        // Handle load.
+        String fileDisplayName = entry.getDisplayName();
+        newFile.onImport(oldFile, fileDisplayName, importedFileName);
+        getLogger().info("Successfully replaced the existing file '%s' with the imported contents of '%s'.", fileDisplayName, importedFileName);
+
+        // Update UI.
+        if (updateUI) {
+            SCMainMenuUIController<?> mainMenuUI = getGameInstance().getMainMenuController();
+            if (mainMenuUI.getFileListComponent() != null) { // Update the file list.
+                mainMenuUI.getFileListComponent().getCollectionViewComponent().refreshDisplay();
+                mainMenuUI.getFileListComponent().getCollectionViewComponent().setSelectedViewEntryInUI(newFile);
+            } else {
+                mainMenuUI.showEditor(newFile.makeEditorUI());
+            }
+        }
     }
 
     private void swapFileRegistry(MWIResourceEntry resourceEntry, int fileIndex, WADEntry wadEntry, SCGameFile<?> oldFile, SCGameFile<?> newFile) {
