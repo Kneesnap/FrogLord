@@ -50,6 +50,8 @@ public enum ImageResource {
     FROGLORD_LOGO_GAME_BEASTWARS_LARGE("graphics/per-game-logos/bw-logo-large.png"),
     FROGLORD_LOGO_GAME_MEDIEVIL_LARGE("graphics/per-game-logos/md-logo-large.png"),
     FROGLORD_LOGO_GAME_GREAT_QUEST_LARGE("graphics/per-game-logos/gq-logo-large.png"),
+    FROGLORD_LOGO_RENDERWARE_LARGE("graphics/per-game-logos/rw-logo-large.png"),
+    FROGLORD_LOGO_GAME_ANCIENT_SHADOW_LARGE("graphics/per-game-logos/fas-logo-large.png"),
     FROGLORD_LOGO_MAIN_SQUARE_ICON("graphics/logo-small.png"),
     FROGLORD_LOGO_SQUARE_ICON("graphics/icon.png"),
 

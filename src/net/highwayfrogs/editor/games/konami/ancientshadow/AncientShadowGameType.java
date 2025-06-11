@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.generic.GamePlatform;
 import net.highwayfrogs.editor.games.generic.IGameType;
 import net.highwayfrogs.editor.gui.GameConfigController;
 import net.highwayfrogs.editor.gui.GameConfigController.GameConfigUIController;
+import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.FileOpenBrowseComponent.GameConfigFileOpenBrowseComponent;
 import net.highwayfrogs.editor.gui.components.FolderBrowseComponent.GameConfigFolderBrowseComponent;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
@@ -66,6 +67,11 @@ public class AncientShadowGameType implements IGameType {
     @Override
     public AncientShadowGameConfigUI setupConfigUI(GameConfigController controller) {
         return new AncientShadowGameConfigUI(controller);
+    }
+
+    @Override
+    public ImageResource getFrogLordLogo() {
+        return ImageResource.FROGLORD_LOGO_GAME_ANCIENT_SHADOW_LARGE;
     }
 
     /**

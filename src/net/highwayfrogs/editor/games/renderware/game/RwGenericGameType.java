@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.generic.IGameType;
 import net.highwayfrogs.editor.gui.GameConfigController;
 import net.highwayfrogs.editor.gui.GameConfigController.GameConfigUIController;
+import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.FolderBrowseComponent.GameConfigFolderBrowseComponent;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.Config;
@@ -35,6 +36,11 @@ public class RwGenericGameType implements IGameType {
     @Override
     public RwGenericGameInstance createGameInstance() {
         return new RwGenericGameInstance();
+    }
+
+    @Override
+    public ImageResource getFrogLordLogo() {
+        return ImageResource.FROGLORD_LOGO_RENDERWARE_LARGE;
     }
 
     @Override
