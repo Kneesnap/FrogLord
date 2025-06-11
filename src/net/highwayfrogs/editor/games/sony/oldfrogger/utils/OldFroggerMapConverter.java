@@ -30,10 +30,12 @@ import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygonType;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGeneral;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGrid;
+import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerReactionType;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapForm;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.OldFroggerDifficultyWrapper;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.OldFroggerDifficultyWrapper.OldFroggerDifficultyData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.OldFroggerEntityData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.desert.FallingRockEntityData.FallingRockDifficultyData;
@@ -425,6 +427,13 @@ public class OldFroggerMapConverter {
 
     @SuppressWarnings("unchecked")
     private static <TDifficultyData extends OldFroggerDifficultyData> TDifficultyData getDifficultyData(OldFroggerEntityData<?> oldEntityData) {
-        return ((OldFroggerEntityData<TDifficultyData>) oldEntityData).getDifficultyData().getDifficultyData(0);
+        OldFroggerDifficultyWrapper<TDifficultyData> wrapper = ((OldFroggerEntityData<TDifficultyData>) oldEntityData).getDifficultyData();
+        for (int i = 0; i < OldFroggerGameInstance.DIFFICULTY_LEVELS; i++) {
+            TDifficultyData difficultyData = wrapper.getDifficultyData(i);
+            if (difficultyData != null)
+                return difficultyData;
+        }
+
+        throw new IllegalArgumentException("There is no difficulty data present for " + Utils.getSimpleName(oldEntityData) + ".");
     }
 }
