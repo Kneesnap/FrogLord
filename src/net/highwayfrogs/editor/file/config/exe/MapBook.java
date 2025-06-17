@@ -45,7 +45,14 @@ public abstract class MapBook extends ExeStruct {
      * @param map The map to get the wad file for.
      * @return wadFile
      */
-    public abstract WADFile getWad(FroggerMapFile map);
+    public abstract WADFile getLevelWad(FroggerMapFile map);
+
+    /**
+     * Gets the wad file for a given map.
+     * @param map The map to get the wad file for.
+     * @return wadFile
+     */
+    public abstract WADFile getThemeWad(FroggerMapFile map);
 
     /**
      * Add a texture remap for a level.

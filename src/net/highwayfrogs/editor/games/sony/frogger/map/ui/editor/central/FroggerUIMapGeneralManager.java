@@ -171,6 +171,9 @@ public class FroggerUIMapGeneralManager extends FroggerCentralUIManager {
         event.consume();
         FroggerMapFilePacketGroup groupPacket = getMap().getGroupPacket();
         FroggerMapGroup oldGroup = getMapGroupFromBox(this.selectedMapGroupPreviewBox);
+        if (oldGroup == null)
+            return;
+
         int newX = oldGroup.getX() + deltaX;
         int newZ = oldGroup.getZ() + deltaZ;
         if (newX >= 0 && newX < groupPacket.getGroupXCount() && newZ >= 0 && newZ < groupPacket.getGroupZCount())
@@ -202,6 +205,9 @@ public class FroggerUIMapGeneralManager extends FroggerCentralUIManager {
         }
 
         FroggerMapGroup mapGroup = getMapGroupFromBox(newBox);
+        if (mapGroup == null)
+            return;
+
         this.selectedMapGroupPreviewBox = newBox;
         newBox.setMaterial(GROUP_PREVIEW_SELECTED_MATERIAL);
 

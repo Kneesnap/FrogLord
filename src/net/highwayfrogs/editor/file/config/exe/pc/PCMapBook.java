@@ -3,14 +3,14 @@ package net.highwayfrogs.editor.file.config.exe.pc;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.function.Function;
 
@@ -101,7 +101,7 @@ public class PCMapBook extends MapBook {
     }
 
     @Override
-    public WADFile getWad(FroggerMapFile map) {
+    public WADFile getLevelWad(FroggerMapFile map) {
         int fileResourceId = map.getFileResourceId();
         if (this.lowMapId == fileResourceId)
             return getGameInstance().getGameFile(this.lowWadId);
@@ -110,6 +110,11 @@ public class PCMapBook extends MapBook {
             return getGameInstance().getGameFile(this.highWadId);
 
         return null;
+    }
+
+    @Override
+    public WADFile getThemeWad(FroggerMapFile map) {
+        return null; // The PC version does not have theme wads.
     }
 
     @Override

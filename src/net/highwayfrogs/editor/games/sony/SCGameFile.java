@@ -94,9 +94,11 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
     public void setupRightClickMenuItems(ContextMenu contextMenu) {
         String fileName = getFileDisplayName();
 
-        MenuItem exportOriginalFile = new MenuItem("Export Original " + fileName);
-        contextMenu.getItems().add(exportOriginalFile);
-        exportOriginalFile.setOnAction(event -> askUserToSaveToFile(true));
+        if (this.rawFileData != null) {
+            MenuItem exportOriginalFile = new MenuItem("Export Original " + fileName);
+            contextMenu.getItems().add(exportOriginalFile);
+            exportOriginalFile.setOnAction(event -> askUserToSaveToFile(true));
+        }
 
         MenuItem exportFile = new MenuItem("Export " + fileName);
         contextMenu.getItems().add(exportFile);
@@ -161,8 +163,17 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
      */
     public void askUserToImportFile() {
         File inputFile = FileUtils.askUserToOpenFile(getGameInstance(), SINGLE_FILE_IMPORT_PATH);
+        if (inputFile != null)
+            importFile(inputFile);
+    }
+
+    /**
+     * Imports the given file.
+     * @param inputFile the file to import over the existing file.
+     */
+    public void importFile(File inputFile) {
         if (inputFile == null)
-            return;
+            throw new NullPointerException("inputFile");
 
         byte[] rawFileBytes;
         try {

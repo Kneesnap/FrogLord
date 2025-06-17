@@ -583,6 +583,18 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
     }
 
     /**
+     * Gets a grid square representing the given polygon, at the right position.
+     * Returns null if there is no grid square corresponding to the polygon.
+     * The logic for this has been as matching the original by checking on-load warnings.
+     * @param polygon the polygon to get/add a grid square for.
+     * @param temp the temporary vector to store calculation data within. If null, a new one will be allocated.
+     * @return gridSquare
+     */
+    public FroggerGridSquare getGridSquare(FroggerMapPolygon polygon, Vector3f temp) {
+        return getOrAddGridSquare(polygon, temp, true);
+    }
+
+    /**
      * Gets or creates a grid square representing the given polygon, at the right position.
      * Throws an Exception if the polygon is located outside the grid.
      * The logic for this has been as matching the original by checking on-load warnings.
@@ -591,6 +603,18 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
      * @return gridSquare
      */
     public FroggerGridSquare getOrAddGridSquare(FroggerMapPolygon polygon, Vector3f temp) {
+        return getOrAddGridSquare(polygon, temp, false);
+    }
+
+    /**
+     * Gets or creates a grid square representing the given polygon, at the right position.
+     * Throws an Exception if the polygon is located outside the grid.
+     * The logic for this has been as matching the original by checking on-load warnings.
+     * @param polygon the polygon to get/add a grid square for.
+     * @param temp the temporary vector to store calculation data within. If null, a new one will be allocated.
+     * @return gridSquare
+     */
+    private FroggerGridSquare getOrAddGridSquare(FroggerMapPolygon polygon, Vector3f temp, boolean allowNull) {
         if (polygon == null)
             throw new NullPointerException("polygon");
 
@@ -598,8 +622,12 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
         int polygonGridX = getGridXFromWorldX(temp.getX());
         int polygonGridZ = getGridZFromWorldZ(temp.getZ());
 
-        if (polygonGridX < 0 || polygonGridX >= this.gridXCount || polygonGridZ < 0 || polygonGridZ >= this.gridZCount)
+        if (polygonGridX < 0 || polygonGridX >= this.gridXCount || polygonGridZ < 0 || polygonGridZ >= this.gridZCount) {
+            if (allowNull)
+                return null;
+
             throw new IllegalArgumentException("The provided polygon corresponds to the gridStack at [" + polygonGridX + ", " + polygonGridZ + "], which is outside the grid. (Position: " + temp + ", Grid Size: " + this.gridXCount + "x" + this.gridZCount + ")");
+        }
 
         float insertionY = temp.getY();
         FroggerGridStack gridStack = getGridStack(polygonGridX, polygonGridZ);
@@ -616,8 +644,12 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
             }
         }
 
-        FroggerGridSquare newGridSquare = new FroggerGridSquare(gridStack, polygon);
-        gridStack.getGridSquares().add(i, newGridSquare);
-        return newGridSquare;
+        if (allowNull) {
+            return null;
+        } else {
+            FroggerGridSquare newGridSquare = new FroggerGridSquare(gridStack, polygon);
+            gridStack.getGridSquares().add(i, newGridSquare);
+            return newGridSquare;
+        }
     }
 }

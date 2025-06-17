@@ -76,14 +76,25 @@ public class PSXMapBook extends MapBook {
     }
 
     @Override
-    public WADFile getWad(FroggerMapFile map) {
+    public WADFile getLevelWad(FroggerMapFile map) {
+        int wadId = this.wadId;
+
+        WADFile wadFile = wadId >= 0 ? getGameInstance().getGameFile(wadId) : null;
+        if (wadFile != null)
+            return wadFile;
+
+        throw new RuntimeException("Could not resolve wad file for '" + map.getFileDisplayName() + "'.");
+    }
+
+    @Override
+    public WADFile getThemeWad(FroggerMapFile map) {
         int wadId = this.wadId;
 
         // When the map reports a particular theme, I think it's reliable.
         if (map != null && map.getMapTheme() != null && getConfig().getPlatform() == GamePlatform.PLAYSTATION && !map.isMultiplayer()) {
             PSXThemeBook themeBook = ((PSXThemeBook) getGameInstance().getThemeBook(map.getMapTheme()));
             if (themeBook != null && themeBook.getWadId() != wadId)
-                wadId = themeBook.getWadId();
+                return getGameInstance().getGameFile(themeBook.getWadId());
         }
 
         return getGameInstance().getGameFile(wadId);

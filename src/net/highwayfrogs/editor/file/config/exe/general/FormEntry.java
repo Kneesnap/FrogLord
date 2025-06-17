@@ -163,25 +163,44 @@ public class FormEntry extends SCGameData<FroggerGameInstance> implements IFrogg
         }
     }
 
-    /**
-     * Gets the wad file which the form entry points to a WAD within.
-     * @param mapFile the map file to resolve the wad file for
-     * @return wadFile
-     */
-    public WADFile getWadFile(FroggerMapFile mapFile) {
-        WADFile wadFile;
+    private WADFile resolveWadFile(FroggerMapFile mapFile, boolean checkThemeBooks) {
         boolean isGeneralTheme = getTheme() == FroggerMapTheme.GENERAL;
 
         // The game will not use the map book if general is the theme.
         if (!isGeneralTheme && mapFile.getIndexEntry() != null) { // There is an MWI entry, so try to do what the game does.
             for (MapBook mapBook : getGameInstance().getMapLibrary()) {
                 if (mapBook != null && mapBook.isEntry(mapFile)) {
-                    wadFile = mapBook.getWad(mapFile);
+                    WADFile wadFile;
+                    if (checkThemeBooks) {
+                        wadFile = mapBook.getThemeWad(mapFile);
+                    } else {
+                        wadFile = mapBook.getLevelWad(mapFile);
+                    }
                     if (wadFile != null)
                         return wadFile;
                 }
             }
         }
+
+        return null;
+    }
+
+    /**
+     * Gets the wad file which the form entry points to a WAD within.
+     * @param mapFile the map file to resolve the wad file for
+     * @return wadFile
+     */
+    public WADFile getWadFile(FroggerMapFile mapFile) {
+        boolean isGeneralTheme = getTheme() == FroggerMapTheme.GENERAL;
+
+        // The game will not use the map book if general is the theme.
+        WADFile wadFile = resolveWadFile(mapFile, false);
+        if (wadFile != null)
+            return wadFile;
+
+        wadFile = resolveWadFile(mapFile, true);
+        if (wadFile != null)
+            return wadFile;
 
         // If the theme is GENERAL, the game will use the general theme book.
         // But, we also are using this as a fallback option for if there's no way to find the map book.
@@ -204,7 +223,7 @@ public class FormEntry extends SCGameData<FroggerGameInstance> implements IFrogg
     /**
      * Gets the MOF for this particular form.
      */
-    public WADEntry getModel(FroggerMapFile mapFile) {
+    public WADEntry getModel(FroggerMapFile mapFile, boolean tryImportIfMissing) {
         if (testFlag(FormLibFlag.NO_MODEL))
             return null;
 
@@ -212,8 +231,23 @@ public class FormEntry extends SCGameData<FroggerGameInstance> implements IFrogg
         int wadIndex = getWadIndex();
         if (wadFile != null && wadFile.getFiles().size() > wadIndex && wadIndex >= 0) { // Test if there's an associated WAD.
             WADEntry wadEntry = wadFile.getFiles().get(wadIndex);
-            if (!wadEntry.isDummy() && (wadEntry.getFile() instanceof MRModel))
-                return wadEntry;
+            if (wadEntry.getFile() instanceof MRModel) {
+                MRModel model = (MRModel) wadEntry.getFile();
+                if (!model.isDummy()) {
+                    return wadEntry;
+                } else if (tryImportIfMissing) {
+                    // Try to import from the main theme WAD file if there is one.
+                    WADFile themeWad = resolveWadFile(mapFile, true);
+                    if (themeWad != null && themeWad.getFiles().size() > wadIndex) {
+                        WADEntry themeWadEntry = themeWad.getFiles().get(wadIndex);
+                        if (themeWadEntry.getFile() instanceof MRModel) {
+                            byte[] rawData = themeWadEntry.getFile().writeDataToByteArray();
+                            if (getArchive().replaceFile(themeWadEntry.getDisplayName(), rawData, wadEntry.getFileEntry(), wadEntry.getFile(), false) != null)
+                                return wadEntry;
+                        }
+                    }
+                }
+            }
         }
 
         return null;
@@ -221,7 +255,7 @@ public class FormEntry extends SCGameData<FroggerGameInstance> implements IFrogg
 
     @Override
     public WADEntry getEntityModelWadEntry(FroggerMapEntity entity) {
-        return getModel(entity.getMapFile());
+        return getModel(entity.getMapFile(), true);
     }
 
     @Getter

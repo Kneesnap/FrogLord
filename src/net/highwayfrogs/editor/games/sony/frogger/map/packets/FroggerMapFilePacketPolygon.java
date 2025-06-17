@@ -142,6 +142,8 @@ public class FroggerMapFilePacketPolygon extends FroggerMapFilePacket {
     }
 
     private void savePolygonList(DataWriter writer, FroggerMapGroup mapGroup, FroggerMapPolygonType polygonType) {
+        if (mapGroup == null)
+            throw new NullPointerException("mapGroup");
         List<FroggerMapPolygon> polygons = mapGroup.getPolygonsByType(polygonType);
         for (int i = 0; i < polygons.size(); i++)
             polygons.get(i).save(writer);

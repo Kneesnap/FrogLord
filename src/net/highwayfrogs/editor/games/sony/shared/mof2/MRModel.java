@@ -213,7 +213,7 @@ public class MRModel extends SCSharedGameFile {
 
             importLogger.showPopup("successfully", "Imported '%s' [problem=with ][summary].", inputFile.getName());
         } else if (fileName.endsWith(".vlo") || fileName.endsWith(".xar") || fileName.endsWith(".xmr")) {
-            super.askUserToImportFile();
+            importFile(inputFile);
         } else {
             FXUtils.makePopUp("Don't know how to import this file type. Aborted.", AlertType.WARNING);
         }

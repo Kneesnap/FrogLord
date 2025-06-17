@@ -5,12 +5,14 @@ import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.FroggerMapGroup;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquare;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.segments.FroggerPathSegment;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapGeneralManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
@@ -201,7 +203,7 @@ public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
         if (this.mapGroups == null || this.mapGroups.length != this.groupZCount || this.mapGroups[0].length == 0 || this.mapGroups[0].length != this.groupXCount)
             throw new IllegalStateException("The current map group tracking is outdated, so it is not valid to obtain a mapGroup until they are updated.");
         if (z < 0 || z >= this.groupZCount || x < 0 || x >= this.groupXCount)
-            throw new ArrayIndexOutOfBoundsException("Invalid group coordinates [" + z + "][" + x + "], must be within [" + this.groupZCount + "][" + this.groupXCount + "].");
+            return null;
 
         return this.mapGroups[z][x];
     }
@@ -419,10 +421,16 @@ public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
         // Put polygons into the group they belong within.
         int failureCount = 0;
         this.mapGroups = newMapGroups; // Must do this before calling getMapGroup()
+        Vector3f temp = new Vector3f();
+        FroggerMapFilePacketGrid gridPacket = getParentFile().getGridPacket();
         for (FroggerMapPolygon polygon : getParentFile().getPolygonPacket().getPolygons()) {
             FroggerMapGroup mapGroup = getMapGroup(polygon);
-            if (!mapGroup.addPolygon(polygon))
+            if (mapGroup == null || !mapGroup.addPolygon(polygon)) {
                 failureCount++;
+                FroggerGridSquare gridSquare = gridPacket.getGridSquare(polygon, temp);
+                if (gridSquare != null)
+                    gridSquare.getGridStack().getGridSquares().remove(gridSquare);
+            }
         }
 
         // Seen in PSX Build 02 (SKY5.MAP).

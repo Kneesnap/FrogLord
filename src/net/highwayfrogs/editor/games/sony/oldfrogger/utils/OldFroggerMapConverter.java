@@ -59,6 +59,7 @@ import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.IntegerCounter;
 
@@ -206,6 +207,7 @@ public class OldFroggerMapConverter {
         }
 
         newGridPacket.recalculateAllCliffHeights();
+        newMapFile.getGroupPacket().generateMapGroups(ProblemResponse.CREATE_POPUP, true);
         return newMapFile;
     }
 
@@ -218,6 +220,7 @@ public class OldFroggerMapConverter {
         if (oldPolygon.getTextureUvs().length != newPolygon.getTextureUvs().length)
             throw new RuntimeException("Polygon textureUv mismatch for " + oldPolygon.getPolygonType() + " [" + oldPolygon.getTextureUvs().length + " vs " + newPolygon.getTextureUvs().length + "]");
 
+        newPolygon.setVisible(true);
         newPolygon.setTextureId((short) oldPolygon.getTextureId());
         System.arraycopy(oldPolygon.getVertices(), 0, newPolygon.getVertices(), 0, newPolygon.getVertexCount());
         OldFroggerMapPolygon.copyColors(oldMapFile, oldPolygon.getColors(), newPolygon.getColors());

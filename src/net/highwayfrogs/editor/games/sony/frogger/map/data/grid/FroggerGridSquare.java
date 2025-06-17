@@ -2,9 +2,7 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.grid;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
@@ -12,6 +10,8 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.FroggerMapGroup;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
@@ -70,6 +70,8 @@ public class FroggerGridSquare extends SCGameData<FroggerGameInstance> {
 
         // Ensure the polygon was written.
         FroggerMapGroup mapGroup = getMapFile().getGroupPacket().getMapGroup(this.polygon);
+        if (mapGroup == null)
+            throw new RuntimeException("No FroggerMapGroup exists which can hold the FroggerGridSquare's polygon! (" + getLoggerInfo() + ")");
         if (Collections.binarySearch(mapGroup.getPolygonsByType(this.polygon.getPolygonType()), this.polygon, Comparator.comparingInt(FroggerMapPolygon::getLastWriteAddress)) < 0)
             throw new RuntimeException("A FroggerGridSquare's polygon was not saved! Most likely it was not registered to the map! (" + getLoggerInfo() + ")");
 
