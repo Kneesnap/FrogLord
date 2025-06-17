@@ -108,7 +108,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
 
         if (this.formEntry == null) {
             this.entityData = new FroggerEntityDataMatrix(this.mapFile);
-            getLogger().warning("Failed to find form for entity " + this.uniqueId + "/Form: " + formId + "/" + this.formGridId + ".");
+            getLogger().warning("Failed to find form for entity %d/Form: %d|%d.", this.uniqueId, formId, this.formGridId);
         }
     }
 
@@ -482,20 +482,21 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
             // If old entity data was present (entity isn't loading), then update the path to point to the new data
             if (hadOldEntityData)
                 getMapFile().getPathPacket().addEntityToPathTracking(this);
-
-            // Attempt to find the form compatible with the new entity data.
-            if ((hadOldEntityData || this.formGridId < 0) && newEntry != null && !this.mapFile.getMapConfig().isOldFormFormat()) {
-                // Create a shared form if one does not exist.
-                if (newEntry.getFormGrid() == null) {
-                    FroggerFormGrid newFormGrid = new FroggerFormGrid(getGameInstance());
-                    newEntry.setFormGrid(newFormGrid);
-                    newFormGrid.initFormEntry(newEntry);
-                }
-
-                setFroggerFormGrid(newEntry, newEntry.getFormGrid());
-            }
         }
 
+        // Attempt to find the form grid compatible with the new form entry.
+        if (newEntry != null && !this.mapFile.getMapConfig().isOldFormFormat()) {
+            // Create a shared form if one does not exist.
+            if (newEntry.getFormGrid() == null) {
+                FroggerFormGrid newFormGrid = new FroggerFormGrid(getGameInstance());
+                newEntry.setFormGrid(newFormGrid);
+                newFormGrid.initFormEntry(newEntry);
+            }
+
+            setFroggerFormGrid(newEntry, newEntry.getFormGrid());
+        }
+
+        // Finally apply the form entry.
         this.formEntry = newEntry;
     }
 
