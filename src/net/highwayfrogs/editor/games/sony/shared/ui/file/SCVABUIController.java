@@ -122,7 +122,7 @@ public class SCVABUIController extends SCFileEditorUIController<SCGameInstance, 
 
         for (ISoundSample sound : getFile().getBody().getEntries()) {
             sound.saveToImportableFile(new File(selectedFolder, sound.getSoundName() + ".wav"));
-            getLogger().info("Exported sound: " + sound.getSoundName());
+            getLogger().info("Exported sound: %s", sound.getSoundName());
         }
     }
 

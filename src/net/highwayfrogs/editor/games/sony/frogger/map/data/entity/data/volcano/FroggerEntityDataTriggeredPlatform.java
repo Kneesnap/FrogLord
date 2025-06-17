@@ -26,7 +26,7 @@ public class FroggerEntityDataTriggeredPlatform extends FroggerEntityDataPathInf
         int initialMovement = reader.readInt();
         this.movingByDefault = (initialMovement != 1);
         if (initialMovement != 0 && initialMovement != 1)
-            getLogger().warning("The initial movement state was " + initialMovement + ", but only 0 or 1 was expected.");
+            getLogger().warning("The initial movement state was %d, but only 0 or 1 was expected.", initialMovement);
     }
 
     @Override

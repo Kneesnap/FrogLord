@@ -6,9 +6,6 @@ import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.ArraySource;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.GameData.SharedGameData;
 import net.highwayfrogs.editor.games.renderware.chunks.RwExtensionChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwStringChunk;
@@ -20,6 +17,9 @@ import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.*;
+import net.highwayfrogs.editor.utils.data.reader.ArraySource;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
@@ -66,12 +66,12 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
         this.version = reader.readInt();
 
         if (!RwVersion.doesVersionAppearValid(this.version))
-            getLogger().warning("The version " + RwVersion.getDebugString(this.version) + " was read from " + NumberUtils.toHexString(versionDataIndex) + ", and does not appear valid!");
+            getLogger().warning("The version %s was read from 0x%X, and does not appear valid!", RwVersion.getDebugString(this.version), versionDataIndex);
 
         if (readSize > reader.getRemaining())
             throw new RuntimeException("Cannot read chunk " + Utils.getSimpleName(this) + " of size " + readSize + " when there are only " + reader.getRemaining() + " bytes left.");
         if (this.parentChunk != null && this.parentChunk.getVersion() != this.version) // This can happen, but doesn't necessarily seem to indicate a problem, unless it doesn't look like a valid version.
-            getLogger().info("The chunk version is " + RwVersion.getDebugString(this.version) + ", but its parent was " + RwVersion.getDebugString(this.parentChunk.getVersion()) + ".");
+            getLogger().info("The chunk version is %s, but its parent was %s.", RwVersion.getDebugString(this.version), RwVersion.getDebugString(this.parentChunk.getVersion()));
 
         /*if (this.parentChunk != null && this.parentChunk.getReadSize() == this.readSize) {
             loadChunkData(reader);
@@ -84,7 +84,7 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
         try {
             loadChunkData(chunkReader, readSize, this.version);
             if (chunkReader.hasMore()) { // Warn if we're leaving data unread.
-                getLogger().warning("The chunk left " + chunkReader.getRemaining() + " bytes of data unread!");
+                getLogger().warning("The chunk left %d bytes of data unread!", chunkReader.getRemaining());
                 this.readResult = ChunkReadResult.DID_NOT_REACH_END;
             } else {
                 this.readResult = ChunkReadResult.SUCCESSFUL;
@@ -496,7 +496,7 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
             default:
                 ImageResource icon = this.chunkType.getIcon();
                 if (icon == null) {
-                    getLogger().warning("chunkType (" + this.chunkType + ") did not return a(n) ImageResource icon!");
+                    getLogger().warning("chunkType (%s) did not return a(n) ImageResource icon!", this.chunkType);
                     icon = ImageResource.GHIDRA_ICON_QUESTION_MARK_16;
                 }
 

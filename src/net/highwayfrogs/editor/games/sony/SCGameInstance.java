@@ -306,7 +306,7 @@ public abstract class SCGameInstance extends GameInstance {
             if (nextTextureRemap != null) {
                 int availableSlots = (int) ((nextTextureRemap.getLoadAddress() - textureRemap.getLoadAddress()) / Constants.SHORT_SIZE);
                 if (textureRemap.getTextureIds().size() > availableSlots) {
-                    getLogger().warning("'" + textureRemap.getDebugName() + "' has been skipped because it has " + textureRemap.getTextureIds().size() + "texture ids, but there is only room for " + availableSlots + ".");
+                    getLogger().warning("'%s' has been skipped because it has %d texture ids, but there is only room for %d.", textureRemap.getDebugName(), textureRemap.getTextureIds().size(), availableSlots);
                     continue;
                 }
             }
@@ -402,7 +402,7 @@ public abstract class SCGameInstance extends GameInstance {
             LinkedTextureRemap<?> linkedRemap = (LinkedTextureRemap<?>) remap;
             LinkedTextureRemap<?> oldLinkedRemap = this.linkedTextureMaps.put(linkedRemap.getResourceEntry(), linkedRemap);
             if (oldLinkedRemap != null)
-                getLogger().warning("A remap (" + oldLinkedRemap + ") that was previously linked to '" + linkedRemap.getResourceEntry().getDisplayName() + "' has been overwritten by " + linkedRemap + ".");
+                getLogger().warning("A remap (%s) that was previously linked to '%s' has been overwritten by %s.", oldLinkedRemap, linkedRemap.getResourceEntry().getDisplayName(), linkedRemap);
         }
     }
 
@@ -646,7 +646,7 @@ public abstract class SCGameInstance extends GameInstance {
         reader.jumpTemp((int) this.getVersionConfig().getOverlayTableOffset());
         this.overlayTable.load(reader);
         reader.jumpReturn();
-        getLogger().info("Read " + this.overlayTable.getEntries().size() + " overlay entries from the table.");
+        getLogger().info("Read %d overlay entries from the table.", this.overlayTable.getEntries().size());
     }
 
     // Beyond here are functions for handling game data from game files, and potentially also configuration data.
@@ -675,7 +675,7 @@ public abstract class SCGameInstance extends GameInstance {
         // Another option for this is that texture remap tables appear to occur immediately after the texture array.
         // In the interest of cross-game compatibility, it was easier to do it this way.
         if (highestTextureId >= 0 && highestTextureId + 1 != this.bmpTexturePointers.size())
-            getLogger().warning("We found pointers to " + this.bmpTexturePointers.size() + " textures, but only the highest texture ID we saw suggests there should have been " + (highestTextureId + 1) + ".");
+            getLogger().warning("We found pointers to %d textures, but only the highest texture ID we saw suggests there should have been %d.", this.bmpTexturePointers.size(), highestTextureId + 1);
     }
 
     private void writeBmpPointerData(DataWriter exeWriter) {

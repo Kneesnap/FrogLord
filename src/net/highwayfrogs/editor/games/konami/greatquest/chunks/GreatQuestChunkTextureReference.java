@@ -58,7 +58,7 @@ public class GreatQuestChunkTextureReference extends kcCResource {
     public GreatQuestImageFile getReferencedImage() {
         GreatQuestArchiveFile texRefFile = getGameInstance().getMainArchive().getFileByName(getParentFile(), this.fullPath);
         if (texRefFile != null && !(texRefFile instanceof GreatQuestImageFile)) {
-            getLogger().warning(Utils.getSimpleName(this) + " pointed to path '" + this.fullPath + "', which yielded a " + Utils.getSimpleName(texRefFile) + " instead of an image???");
+            getLogger().warning("%s pointed to path '%s', which yielded a(n) %s instead of an image???", Utils.getSimpleName(this), this.fullPath, Utils.getSimpleName(texRefFile));
             return null;
         }
 

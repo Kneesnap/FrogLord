@@ -1,14 +1,14 @@
 package net.highwayfrogs.editor.games.konami.greatquest.animation.key;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.kcControlType;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton.kcNode;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * A single track key.
@@ -43,7 +43,7 @@ public abstract class kcTrackKey<TSelf extends kcTrackKey<TSelf>> extends GameDa
         int endIndex = reader.getIndex();
         if (expectedEndIndex != reader.getIndex()) {
             int readByteCount = endIndex - startIndex;
-            getLogger().severe("Failed to read track key '" + Utils.getSimpleName(this) + "', which read " + readByteCount + " bytes, but was supposed to read " + expectedByteLength + ".");
+            getLogger().severe("Failed to read track key '%s', which read %d byte(s), but was supposed to read %d.", Utils.getSimpleName(this), readByteCount, expectedByteLength);
             reader.setIndex(expectedEndIndex);
         }
     }
@@ -69,7 +69,7 @@ public abstract class kcTrackKey<TSelf extends kcTrackKey<TSelf>> extends GameDa
         int realEndIndex = writer.getIndex();
         int writtenByteCount = realEndIndex - startIndex;
         if (expectedKeyDataLength != writtenByteCount) {
-            getLogger().severe("The '" + this + "' was expected to be " + expectedKeyDataLength + " bytes, but " + writtenByteCount + " were written.");
+            getLogger().severe("The '%s' was expected to be %d byte(s), but %d were written.", this, expectedKeyDataLength, writtenByteCount);
             writer.setIndex(expectedEndIndex);
         }
     }

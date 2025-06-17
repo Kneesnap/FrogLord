@@ -1,14 +1,14 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.packet;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.path.OldFroggerSpline;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerPathManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,8 +40,9 @@ public class OldFroggerMapPathPacket extends OldFroggerMapPacket {
         }
 
         // Verify count.
-        if (getSplineCount() != totalSplineCount)
-            getLogger().warning("The number of path splines read was " + getSplineCount() + ", but " + totalSplineCount + " were expected.");
+        int realSplineCount = getSplineCount();
+        if (realSplineCount != totalSplineCount)
+            getLogger().warning("The number of path splines read was %d, but %d were expected.", realSplineCount, totalSplineCount);
 
         reader.skipBytes(OldFroggerSpline.SIZE_IN_BYTES * totalSplineCount);
     }

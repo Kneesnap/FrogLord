@@ -2,10 +2,10 @@ package net.highwayfrogs.editor.games.sony.oldfrogger.map.packet;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapForm;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,12 +53,12 @@ public class OldFroggerMapFormInstancePacket extends OldFroggerMapPacket {
 
             // Check forms are sorted.
             if (lastFormTypeId >= newForm.getFormType())
-                getLogger().warning("Form " + newForm.getFormType() + " was defined after Form " + lastFormTypeId + ".");
+                getLogger().warning("Form %s was defined after Form %d.", newForm.getFormType(), lastFormTypeId);
             lastFormTypeId = newForm.getFormType();
         }
 
         if (this.forms.size() != activeFormCount)
-            getLogger().warning("Expected to read " + activeFormCount + " forms, but " + this.forms.size() + " were found.");
+            getLogger().warning("Expected to read %d form(s), but %d were found.", activeFormCount, this.forms.size());
 
         // Set the reader position to the end of the form data.
         reader.setIndex(endPosition);

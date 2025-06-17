@@ -70,13 +70,13 @@ public class kcCResourceGeneric extends kcCResource {
         // Create & load the resource data object.
         kcCResourceGenericType resourceType = kcCResourceGenericType.getType(tag, true);
         if (resourceType == null) {
-            getLogger().warning("Couldn't identify the kcCResourceGenericType for the tag " + NumberUtils.toHexString(tag) + ".");
+            getLogger().warning("Couldn't identify the kcCResourceGenericType for the tag 0x%X.", tag);
             this.resourceData = new kcCResourceGenericDummy(this, tag, rawData);
         } else {
             this.resourceData = createResourceDataObject(resourceType, rawData);
             if (this.resourceData != null) {
                 if (this.resourceData.getResourceType() != resourceType)
-                    getLogger().warning("Attempted to create a resource of type " + resourceType + ", but the resulting resource reported itself as " + this.resourceData.getResourceType() + "!");
+                    getLogger().warning("Attempted to create a resource of type %s, but the resulting resource reported itself as %s!", resourceType, this.resourceData.getResourceType());
 
                 // Load the resource data.
                 DataReader resourceReader = new DataReader(new ArraySource(rawData));
@@ -88,7 +88,7 @@ public class kcCResourceGeneric extends kcCResource {
                 }
 
                 if (resourceReader.hasMore())
-                    getLogger().warning("Resource '" + getName() + "'/" + resourceType + " read only " + resourceReader.getIndex() + " bytes, leaving " + resourceReader.getRemaining() + " unread.");
+                    getLogger().warning("Resource '%s'/%s read only %d bytes, leaving %d unread.", getName(), resourceType, resourceReader.getIndex(), resourceReader.getRemaining());
             } else {
                 // The resource was recognized, but couldn't be created, usually because it's in an outdated format.
                 this.resourceData = new kcCResourceGenericDummy(this, tag, rawData);

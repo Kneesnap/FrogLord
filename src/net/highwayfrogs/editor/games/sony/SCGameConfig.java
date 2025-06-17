@@ -155,7 +155,7 @@ public class SCGameConfig extends GameConfig {
             try {
                 textureId = Short.parseShort(key);
             } catch (NumberFormatException nfe) {
-                getLogger().warning("Skipping non-integer key '" + key + "' as texture ID / image file name pair in version config '" + getInternalName() + "'.");
+                getLogger().warning("Skipping non-integer key '%s' as texture ID / image file name pair in version config '%s'.", key, getInternalName());
                 continue;
             }
 

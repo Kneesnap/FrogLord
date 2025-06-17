@@ -317,7 +317,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
         }
 
         if (totalEffects != toc.getEffectCount())
-            interim.getLogger().warning("Script TOC listed a total of " + toc.getEffectCount() + " script effect(s), but we actually loaded " + totalEffects + ".");
+            interim.getLogger().warning("Script TOC listed a total of %d script effect(s), but we actually loaded %d.", toc.getEffectCount(), totalEffects);
 
         // Verify calculated cause types are correct.
         int calculatedCauseTypes = newScript.calculateCauseTypes();

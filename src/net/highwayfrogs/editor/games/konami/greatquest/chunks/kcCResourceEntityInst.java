@@ -57,7 +57,7 @@ public class kcCResourceEntityInst extends kcCResource {
             this.instance.load(reader);
         } else {
             // TODO: Let's reverse engineer this.
-            getLogger().severe("Couldn't identify the entity type for '" + getName() + "' from the byte size of " + sizeInBytes + ".");
+            getLogger().severe("Couldn't identify the entity type for '%s' from the byte size of %d.", getName(), sizeInBytes);
             this.dummyBytes = reader.readBytes(sizeInBytes);
         }
     }
@@ -89,7 +89,7 @@ public class kcCResourceEntityInst extends kcCResource {
             File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), ENTITY_EXPORT_PATH, getName() + "." + Config.DEFAULT_EXTENSION, true);
             if (outputFile != null) {
                 this.instance.toConfig().saveTextFile(outputFile);
-                getLogger().info("Saved '" + getName() + "' as '" + outputFile.getName() + "'.");
+                getLogger().info("Saved '%s' as '%s'.", getName(), outputFile.getName());
             }
         });
         exportEntityItem.setDisable(this.instance == null);
@@ -106,7 +106,7 @@ public class kcCResourceEntityInst extends kcCResource {
                 this.instance = new kcEntity3DInst(this);
 
             this.instance.fromConfig(entityCfg);
-            getLogger().info("Loaded '" + getName() + "' from '" + inputFile.getName() + "'.");
+            getLogger().info("Loaded '%s from '%s'.", getName(), inputFile.getName());
         });
     }
 }

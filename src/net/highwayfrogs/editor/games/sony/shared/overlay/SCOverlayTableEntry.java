@@ -2,12 +2,11 @@ package net.highwayfrogs.editor.games.sony.shared.overlay;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.reader.FileSource;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
-import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
-import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,7 +51,7 @@ public class SCOverlayTableEntry extends SCSharedGameData {
 
         reader.skipBytesRequireEmpty(EMPTY_BYTES);
         if (this.filePath != null || this.overlayStartPointer != 0)
-            getLogger().fine(" - Overlay Entry '" + this.filePath + "', Address: " + NumberUtils.toHexString(this.overlayStartPointer));
+            getLogger().fine(" - Overlay Entry '%s', Address: 0x%X", this.filePath, this.overlayStartPointer);
     }
 
     @Override

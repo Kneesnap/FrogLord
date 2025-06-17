@@ -60,10 +60,11 @@ public abstract class FroggerPathSegment extends SCGameData<FroggerGameInstance>
             int diffLength = newLength - this.length;
             if (Math.abs(diffLength) > getIncorrectLengthTolerance()) {
                 String extraMessage = getCalculatedIncorrectLengthString();
-                getLogger().warning("calculateFixedPointLength() was inaccurate! [Read Length: " + this.length + "/" + DataUtils.fixedPointIntToFloat4Bit(this.length)
-                        + ", Calculated Length: " + newLength + "/" + DataUtils.fixedPointIntToFloat4Bit(newLength)
-                        + ", Diff: " + diffLength + "/" + DataUtils.fixedPointIntToFloat4Bit(diffLength)
-                        + (extraMessage != null && extraMessage.length() > 0 ? ", " + extraMessage : "") + "]");
+                getLogger().warning("calculateFixedPointLength() was inaccurate! [Read Length: %d/%f, Calculated Length: %d/%f, Diff: %d/%f%s]",
+                        this.length, DataUtils.fixedPointIntToFloat4Bit(this.length),
+                        newLength, DataUtils.fixedPointIntToFloat4Bit(newLength),
+                        diffLength, DataUtils.fixedPointIntToFloat4Bit(diffLength),
+                        extraMessage != null && extraMessage.length() > 0 ? ", " + extraMessage : "");
             }
         }
     }

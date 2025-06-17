@@ -20,7 +20,6 @@ import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
-import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 import java.util.HashSet;
@@ -82,11 +81,11 @@ public class SCMapMeshController<TMapMesh extends SCMapMesh> extends MeshViewCon
 
             if (entry instanceof DynamicMeshAdapterNode.DynamicMeshTypedDataEntry) { // TODO: Replace with a polygon editor later.
                 SCMapPolygon mapPolygon = ((DynamicMeshAdapterNode<SCMapPolygon>.DynamicMeshTypedDataEntry) entry).getDataSource();
-                getLogger().info("Face " + result.getIntersectedFace() + ":");
+                getLogger().info("Face %d:", result.getIntersectedFace());
                 for (int localVtxId = 0; localVtxId < mapPolygon.getVertexCount(); localVtxId++) {
                     int mapVertexId = mapPolygon.getVertices()[localVtxId];
                     SVector vertex = mapMesh.getMap().getPolygonPacket().getVertices().get(mapVertexId);
-                    getLogger().info(" Vertex " + localVtxId + "/" + mapVertexId + " -> Pad: " + NumberUtils.toHexString(vertex.getUnsignedPadding()));
+                    getLogger().info(" Vertex %d/%d -> Pad: 0x%X", localVtxId, mapVertexId, vertex.getUnsignedPadding());
                 }
             }
         });

@@ -19,7 +19,10 @@ import net.highwayfrogs.editor.games.renderware.struct.types.RwImage;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
-import net.highwayfrogs.editor.utils.*;
+import net.highwayfrogs.editor.utils.ColorUtils;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -79,12 +82,12 @@ public class RwImageChunk extends RwStreamChunk implements ITextureSource {
                 } else {
                     //noinspection ReassignedVariable,SuspiciousNameCombination
                     imageHeight = imageWidth; // This is definitely wrong, but we're unable to calculate the correct answer, so this will just have to do.
-                    getLogger().warning("Failed to calculate missing image height! " + imageDef);
+                    getLogger().warning("Failed to calculate missing image height! %s", imageDef);
                 }
             } else {
                 //noinspection ReassignedVariable,SuspiciousNameCombination
                 imageHeight = imageWidth; // This is definitely wrong, but we're unable to calculate the correct answer, so this will just have to do.
-                getLogger().warning("Image definition had height of zero! " + imageDef);
+                getLogger().warning("Image definition had height of zero! %s", imageDef);
             }
         }
 
@@ -103,11 +106,11 @@ public class RwImageChunk extends RwStreamChunk implements ITextureSource {
                     bitDepth = 8;
                     //getLogger().info("Calculated missing image bitDepth to be " + bitDepth + ". " + imageDef);
                 } else {
-                    getLogger().warning("Failed to calculate missing image bitDepth! Defaulting to four! " + imageDef);
+                    getLogger().warning("Failed to calculate missing image bitDepth! Defaulting to four! %s", imageDef);
                     bitDepth = 4;
                 }
             } else {
-                getLogger().warning("Image definition had a bit-depth of zero! Defaulting to four! " + imageDef);
+                getLogger().warning("Image definition had a bit-depth of zero! Defaulting to four! %s", imageDef);
                 bitDepth = 4;
             }
         }
@@ -117,7 +120,7 @@ public class RwImageChunk extends RwStreamChunk implements ITextureSource {
             //getLogger().info("Calculated missing stride and got " + calculatedStride + ". " + imageDef);
             stride = calculatedStride;
         } else if (calculatedStride != stride) {
-            getLogger().warning("Incorrectly calculated missing stride as " + calculatedStride + ". (" + imageDef + ")");
+            getLogger().warning("Incorrectly calculated missing stride as %d. (%s)", calculatedStride, imageDef);
         }
 
         if (bitDepth != 4 && bitDepth != 8 && bitDepth != 32) // Asserted in RwImageCreate, these appear to be the only supported bit depths.
@@ -161,8 +164,9 @@ public class RwImageChunk extends RwStreamChunk implements ITextureSource {
         reader.skipBytes(getPaletteSize(bitDepth) * COLOR_SIZE_IN_BYTES); // Skip the palette.
 
         // Calculation of bitDepth should happen last, since it relies upon the image.
-        if (getBitDepth() != bitDepth)
-            getLogger().warning("Calculated incorrect bitDepth! Real: " + bitDepth + ", Calculated: " + getBitDepth());
+        int calculatedBitDepth = getBitDepth();
+        if (calculatedBitDepth != bitDepth)
+            getLogger().warning("Calculated incorrect bitDepth! Real: %d, Calculated: %d", bitDepth, calculatedBitDepth);
     }
 
     private IndexColorModel readPalette(DataReader reader, int bitDepth) {
@@ -331,7 +335,7 @@ public class RwImageChunk extends RwStreamChunk implements ITextureSource {
         int y = bytePos / stride;
         if (x >= image.getWidth()) {
             if (((bitDepth == 32) || (bitDepth == 4 && (value & 0xF0) != 0) || (bitDepth == 8 && value != (PADDING_BYTE & 0xFF))) && (image.getWidth() > 4 || image.getHeight() > 4)) // Frogger's Adventures The Rescue seems to have garbage data for extremely tiny images. No clue why.
-                getLogger().warning("Unusual padding value at [" + x + ", " + y + "]. Value: " + NumberUtils.toHexString(value));
+                getLogger().warning("Unusual padding value at [%d, %d]. Value: 0x%X", x, y, value);
             return;
         }
 

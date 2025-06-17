@@ -148,7 +148,7 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
 
         // If there were unhandled arguments, warn about it.
         if (this.unhandledArguments != null && this.unhandledArguments.length > 0)
-            getLogger().warning("There were unhandled arguments present for '" + arguments + "'.");
+            getLogger().warning("There were unhandled arguments present for '%s'.", arguments);
 
         // Ensure it looks ok.
         kcArgument[] argumentTemplates = getArgumentTemplate(null);

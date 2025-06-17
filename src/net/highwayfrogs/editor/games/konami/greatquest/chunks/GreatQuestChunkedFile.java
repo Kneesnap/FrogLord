@@ -115,7 +115,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             if (!(chunk instanceof kcCResourceTOC)) {
                 chunk.loadFromRawBytes(cachedRawDataMap.remove(chunk));
                 if (lastChunk != null && RESOURCE_ORDERING.compare(chunk, lastChunk) < 0)
-                    getLogger().warning("The chunk '" + chunk.getName() + "'/" + chunk.getHashAsHexString() + " was expected to be sorted before '" + lastChunk.getName() + "'/" + lastChunk.getHashAsHexString() + ", but it was found after it!");
+                    getLogger().warning("The chunk '%s'/%s was expected to be sorted before '%s'/%s, but it was found after it!", chunk.getName(), chunk.getHashAsHexString(), lastChunk.getName(), lastChunk.getHashAsHexString());
 
                 lastChunk = chunk;
             }
@@ -125,7 +125,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         for (int i = 0; i < this.chunks.size(); i++) {
             kcCResource chunk = this.chunks.get(i);
             if (chunk.getSelfHash().getOriginalString() == null && !(chunk instanceof kcCActionSequence) && !kcCResource.DEFAULT_RESOURCE_NAME.equals(chunk.getName())) // Action sequences are skipped because at this point they are unburdened by reality.
-                chunk.getLogger().warning("Name hash mismatch! Calculated: " + NumberUtils.to0PrefixedHexString(chunk.calculateHash()) + ", Real: " + chunk.getHashAsHexString());
+                chunk.getLogger().warning("Name hash mismatch! Calculated: %08X, Real: %s", chunk.calculateHash(), chunk.getHashAsHexString());
         }
 
         // Now that all the data is prepared, load the scripts.
@@ -555,7 +555,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             entityInst.getInstance().fromConfigIncludeScripts(entityCfg);
         }
 
-        getLogger().info("Imported " + importConfigs.size() + " entity instances.");
+        getLogger().info("Imported %d entity instance(s).", importConfigs.size());
     }
 
     /**
@@ -573,7 +573,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
             kcCResourceEntityInst entity = (kcCResourceEntityInst) testChunk;
             if (entity.getInstance() == null) {
-                getLogger().warning("Skipping '" + entity.getName() + "', as the entity instance was null.");
+                getLogger().warning("Skipping '%s', as the entity instance was null.", entity.getName());
                 continue;
             }
 
@@ -585,7 +585,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             entityCount++;
         }
 
-        getLogger().info("Exported " + entityCount + " entity instances.");
+        getLogger().info("Exported %d entity instance(s).", entityCount);
     }
 
     /**
@@ -708,7 +708,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             importCount++;
         }
 
-        getLogger().info("Imported " + importCount + " entity descriptions.");
+        getLogger().info("Imported %d entity description(s).", importCount);
     }
 
     /**
@@ -732,7 +732,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             }
         }
 
-        getLogger().info("Exported " + exportCount + " entity descriptions.");
+        getLogger().info("Exported %d entity description(s).", exportCount);
     }
 
     /**
@@ -767,7 +767,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             importCount++;
         }
 
-        getLogger().info("Imported " + importCount + " collision proxies.");
+        getLogger().info("Imported %d collision proxies.", importCount);
     }
 
 
@@ -792,7 +792,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             }
         }
 
-        getLogger().info("Exported " + exportCount + " collision proxies.");
+        getLogger().info("Exported %d collision proxies.", exportCount);
     }
 
     /**
@@ -1065,7 +1065,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             // Check there is data.
             String fileName = NumberUtils.padNumberString(count, 3);
             if (chunk.getRawData() == null) {
-                getLogger().warning("Skipping chunk with null data: '" + signature + "-" + fileName + "'.");
+                getLogger().warning("Skipping chunk with null data: '%s-%s'.", signature, fileName);
                 continue;
             }
 
@@ -1220,7 +1220,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             newChunk = readType.getMaker().apply(this);
         } else {
             newChunk = new GreatQuestDummyFileChunk(this, identifier);
-            getLogger().warning("Reading unsupported chunk with identifier '" + identifier + "'.");
+            getLogger().warning("Reading unsupported chunk with identifier '%s'.", identifier);
         }
 
         return newChunk;

@@ -8,7 +8,6 @@ import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygonType;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.DataUtils;
-import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -52,7 +51,7 @@ public class FroggerMapFilePacketPolygon extends FroggerMapFilePacket {
         // Warn if G2 polygon data is seen, but it's not expected.
         int g2PolygonOffset = polygonOffsets[FroggerMapPolygonType.G2.ordinal()];
         if (g2PolygonOffset != 0 && !g2Enabled)
-            getLogger().warning("There appears to be G2 polygon data at " + NumberUtils.toHexString(g2PolygonOffset) + ", but G2 polygon support is disabled for this build. (Perhaps enable it?)");
+            getLogger().warning("There appears to be G2 polygon data at 0x%X, but G2 polygon support is disabled for this build. (Perhaps enable it?)", g2PolygonOffset);
 
         // Read polygon blocks.
         for (int i = 0; i < FroggerMapPolygonType.values().length; i++) {

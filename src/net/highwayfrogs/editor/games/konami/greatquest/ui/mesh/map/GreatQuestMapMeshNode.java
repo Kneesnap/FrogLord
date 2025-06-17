@@ -61,7 +61,7 @@ public class GreatQuestMapMeshNode extends DynamicMeshAdapterNode<kcVtxBufFileSt
                 writeTriangleStrip(entry, uvStartIndex, vtxStartIndex, vtxBuf.getVertexCount());
                 break;
             default:
-                getLogger().severe("kcCResOctTreeSceneMgr had a prim of type '" + vtxBuf.getPrimitiveType() + "', which was supposed because it was unsupported.");
+                getLogger().severe("kcCResOctTreeSceneMgr had a prim of type '%s', which was supposed because it was unsupported.", vtxBuf.getPrimitiveType());
         }
 
         return entry;

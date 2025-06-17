@@ -96,7 +96,7 @@ public class GreatQuestModelSkeletonMesh extends DynamicMesh {
         if (bone == null)
             return;
 
-        getLogger().info("Clicked on bone '" + bone.getName() + "', tag=" + bone.getTag());
+        getLogger().info("Clicked on bone '%s', tag=%d", bone.getName(), bone.getTag());
         this.selectedBone = bone;
         updateTexCoords();
     }

@@ -18,7 +18,6 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.utils.FileUtils;
-import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
@@ -73,7 +72,7 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
             OldFroggerMapFormDataEntry newEntry = new OldFroggerMapFormDataEntry(getGameInstance());
 
             if (i > 0 && endPointer != formEntryDataStartAddress)
-                getLogger().warning("Form " + i + " starts at " + NumberUtils.toHexString(formEntryDataStartAddress) + ", but the form ended at " + NumberUtils.toHexString(endPointer));
+                getLogger().warning("Form %d starts at 0x%X, but the form ended at 0x%X.", i, formEntryDataStartAddress, endPointer);
 
             reader.jumpTemp(formEntryDataStartAddress);
             newEntry.load(reader);
@@ -232,7 +231,7 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
         }
 
         if (this.mofId < 0 || this.mofId >= wadFile.getFiles().size()) {
-            getLogger().warning("Couldn't get file " + this.mofId + " from the WAD file '" + wadFile.getFileDisplayName() + "', which prevents getting the mof file for a form.");
+            getLogger().warning("Couldn't get file %d from the WAD file '%s', which prevents getting the mof file for a form.", this.mofId, wadFile.getFileDisplayName());
             return null;
         }
 
@@ -249,7 +248,7 @@ public class OldFroggerMapForm extends SCGameData<OldFroggerGameInstance> {
             return null;
 
         if (!(wadEntry.getFile() instanceof MRModel)) {
-            getLogger().warning("The form specified file '" + wadEntry.getDisplayName() + "' as its MRModel, but this seems to not actually be a MRModel.");
+            getLogger().warning("The form specified file '%s' as its MRModel, but this seems to not actually be a MRModel.", wadEntry.getDisplayName());
             return null;
         }
 

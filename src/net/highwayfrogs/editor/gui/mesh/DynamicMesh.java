@@ -406,23 +406,23 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
     @SuppressWarnings("CommentedOutCode")
     public void printDebugMeshInfo() {
         ILogger logger = getLogger();
-        logger.info("Mesh Information" + (this.meshName != null ? "[" + this.meshName + "]:" : ":"));
-        logger.info(" Texture Atlas: " + (this.textureAtlas != null ? this.textureAtlas.getAtlasWidth() + "x" + this.textureAtlas.getAtlasHeight() + " (" + this.textureAtlas.getSortedTextureList().size() + " entries)" : "None"));
-        logger.info(" Vertices[EditableSize=" + this.editableVertices.size() + ",EditablePendingSize=" + this.editableVertices.pendingSize() + ",FxArraySize=" + getPoints().size() + "]");
-        logger.info(" TexCoords[EditableSize=" + this.editableTexCoords.size() + ",EditablePendingSize=" + this.editableTexCoords.pendingSize() + ",FxArraySize=" + getTexCoords().size() + "]");
-        logger.info(" Faces[EditableSize=" + this.editableFaces.size() + ",EditablePendingSize=" + this.editableFaces.pendingSize() + ",FxArraySize=" + getFaces().size() + "]");
-        logger.info(" Active MeshViews: " + this.meshViews.size());
-        logger.info(" DynamicMeshDataEntry Count: " + this.dataEntries.size());
-        logger.info(" Nodes[" + this.nodes.size() + "]:");
+        logger.info("Mesh Information%s", (this.meshName != null ? "[" + this.meshName + "]:" : ":"));
+        logger.info(" Texture Atlas: %s", (this.textureAtlas != null ? this.textureAtlas.getAtlasWidth() + "x" + this.textureAtlas.getAtlasHeight() + " (" + this.textureAtlas.getSortedTextureList().size() + " entries)" : "None"));
+        logger.info(" Vertices[EditableSize=%d,EditablePendingSize=%d,FxArraySize=%d]", this.editableVertices.size(), this.editableVertices.pendingSize(), getPoints().size());
+        logger.info(" TexCoords[EditableSize=%d,EditablePendingSize=%d,FxArraySize=%d]", this.editableTexCoords.size(), this.editableTexCoords.pendingSize(), getTexCoords().size());
+        logger.info(" Faces[EditableSize=%d,EditablePendingSize=%d,FxArraySize=%d]", this.editableFaces.size(), this.editableFaces.pendingSize(), getFaces().size());
+        logger.info(" Active MeshViews: %d", this.meshViews.size());
+        logger.info(" DynamicMeshDataEntry Count: %d", this.dataEntries.size());
+        logger.info(" Nodes[%d]:", this.nodes.size());
         for (int i = 0; i < this.nodes.size(); i++) {
             DynamicMeshNode node = this.nodes.get(i);
             node.printDebugMeshNodeInfo(logger, "  - ");
         }
 
         // This is disabled by default, since it spams the console, but it can be helpful for debugging.
-        //logger.info(" Vertices: " + Arrays.toString(this.editableVertices.getArray().toArray()));
-        //logger.info(" TexCoords: " + Arrays.toString(this.editableTexCoords.getArray().toArray()));
-        //logger.info(" Faces: " + Arrays.toString(this.editableFaces.getArray().toArray()));
+        //logger.info(" Vertices: %s", Arrays.toString(this.editableVertices.getArray().toArray()));
+        //logger.info(" TexCoords: %s", Arrays.toString(this.editableTexCoords.getArray().toArray()));
+        //logger.info(" Faces: %s", Arrays.toString(this.editableFaces.getArray().toArray()));
     }
 
     /**

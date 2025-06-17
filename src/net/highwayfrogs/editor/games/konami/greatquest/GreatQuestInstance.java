@@ -155,14 +155,14 @@ public class GreatQuestInstance extends GameInstance {
         this.soundPathsById.clear();
         for (Entry<String, ConfigValueNode> keyValuePair : config.getKeyValuePairs().entrySet()) {
             if (!NumberUtils.isInteger(keyValuePair.getKey())) {
-                getLogger().warning("sound-list key '" + keyValuePair.getKey() + "' is not an integer, skipping!");
+                getLogger().warning("sound-list key '%s' is not an integer, skipping!", keyValuePair.getKey());
                 continue;
             }
 
             int soundId = Integer.parseInt(keyValuePair.getKey());
             String soundPath = keyValuePair.getValue().getAsString();
             if (soundPath == null || soundPath.trim().isEmpty()) {
-                getLogger().warning("sound-list key '" + keyValuePair.getKey() + "' has not associated value, skipping!");
+                getLogger().warning("sound-list key '%s' has not associated value, skipping!", keyValuePair.getKey());
                 continue;
             }
 
@@ -171,7 +171,7 @@ public class GreatQuestInstance extends GameInstance {
 
             // Warn if there are any duplicate file paths.
             if (oldSoundId != null)
-                getLogger().warning("Both SFX ID " + oldSoundId + " & " + soundId + " share the path '" + soundPath + "'! This will cause issues trying to export all sounds at once!");
+                getLogger().warning("Both SFX ID %d & %d share the path '%s'! This will cause issues trying to export all sounds at once!", oldSoundId, soundId, soundPath);
         }
     }
 
@@ -191,7 +191,7 @@ public class GreatQuestInstance extends GameInstance {
                 gameFile = new SBRFile(this, sndFile);
             } else if (soundFileName.endsWith(".idx")) {
                 if (idxFile != null) {
-                    getLogger().warning("There was more than one index file! '" + idxFile + "', '" + sndFile.getName() + "'");
+                    getLogger().warning("There was more than one index file! '%s', '%s'", idxFile, sndFile.getName());
                     continue;
                 }
 
@@ -203,7 +203,7 @@ public class GreatQuestInstance extends GameInstance {
                 }
             } else if (soundFileName.endsWith("sck")) {
                 if (sckFile != null) {
-                    getLogger().warning("There was more than sound chunk file! '" + sckFile + "', '" + sndFile.getName() + "'");
+                    getLogger().warning("There was more than sound chunk file! '%s', '%s'", sckFile, sndFile.getName());
                     continue;
                 }
 
@@ -215,7 +215,7 @@ public class GreatQuestInstance extends GameInstance {
                 }
             } else { // Unrecognized file.
                 if (sndFile.isFile())
-                    getLogger().warning("Skipping unrecognized file in the sound folder: '" + sndFile.getName() + "'");
+                    getLogger().warning("Skipping unrecognized file in the sound folder: '%s'", sndFile.getName());
                 continue;
             }
 

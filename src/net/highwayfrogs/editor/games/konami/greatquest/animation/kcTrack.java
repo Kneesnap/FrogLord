@@ -2,14 +2,14 @@ package net.highwayfrogs.editor.games.konami.greatquest.animation;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcTrackKey;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTrack;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.ArrayList;
@@ -98,7 +98,7 @@ public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineI
             int readStartIndex = keyListDataStartIndex + dataOffset;
             reader.jumpTemp(readStartIndex);
             if (lastEndPosition >= 0 && readStartIndex != lastEndPosition)
-                getLogger().severe("The ending position of " + this.keyList.get(this.keyList.size() - 1) + " was expected to be " + NumberUtils.toHexString(readStartIndex) + ", but was actually " + NumberUtils.toHexString(lastEndPosition) + ".");
+                getLogger().severe("The ending position of %s was expected to be 0x%X, but was actually 0x%X.", this.keyList.get(this.keyList.size() - 1), readStartIndex, lastEndPosition);
 
             kcTrackKey<?> newKey = controlType.createKey(getGameInstance());
             newKey.load(reader);
@@ -116,7 +116,7 @@ public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineI
         }
 
         if (lastEndPosition >= 0 && lastEndPosition != keyListDataEndIndex)
-            getLogger().severe("The ending position of the keyList data (" + this.keyList.get(this.keyList.size() - 1) + ") was expected to be " + NumberUtils.toHexString(keyListDataEndIndex) + ", but we actually stopped reading at " + NumberUtils.toHexString(lastEndPosition) + ".");
+            getLogger().severe("The ending position of the keyList data (%s) was expected to be 0x%X, but we actually stopped reading at 0x%X.", this.keyList.get(this.keyList.size() - 1), keyListDataEndIndex, lastEndPosition);
         reader.setIndex(keyListDataEndIndex);
 
         // Validate flags.
@@ -127,7 +127,7 @@ public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineI
 
         int mode = getTrackMode();
         if (mode != 0 && mode != 1 && mode != 2) // 17 is seen in the PS2 NTSC prototype.
-            getLogger().severe("Encountered unexpected track mode of: " + mode);
+            getLogger().severe("Encountered unexpected track mode of: %s", mode);
     }
 
     @Override

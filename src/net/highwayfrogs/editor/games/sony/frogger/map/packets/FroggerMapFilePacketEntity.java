@@ -121,7 +121,9 @@ public class FroggerMapFilePacketEntity extends FroggerMapFilePacket {
 
             IFroggerFormEntry formEntry = lastEntity.getFormEntry();
             if (!getParentFile().isIslandOrIslandPlaceholder() && !getParentFile().isQB()) { // No need to print these errors on island placeholders.
-                getLogger().warning("INVALID ENTITY[" + this.entities.indexOf(lastEntity) + "/" + Integer.toHexString(entityDataStartPointer) + "/" + lastEntity.getFormGridId() + "], REAL: " + realSize + ", READ: " + readerSize + (formEntry != null ? ", " + formEntry.getFormTypeName() + ", " + formEntry.getEntityTypeName() : ", " + lastEntity.getTypeName()));
+                getLogger().warning("INVALID ENTITY[%d/%x/%d], REAL: %d, READ: %d%s",
+                        this.entities.indexOf(lastEntity), entityDataStartPointer,  lastEntity.getFormGridId(), realSize, readerSize,
+                        formEntry != null ? ", " + formEntry.getFormTypeName() + ", " + formEntry.getEntityTypeName() : ", " + lastEntity.getTypeName());
                 reader.setIndex(endPointer);
             }
 

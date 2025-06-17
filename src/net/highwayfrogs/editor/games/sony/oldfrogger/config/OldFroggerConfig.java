@@ -45,7 +45,7 @@ public class OldFroggerConfig extends SCGameConfig {
                 this.remapTableCount = Integer.parseInt(split[0]);
                 this.remapTableAddress = NumberUtils.parseHexInteger(split[1]);
             } else {
-                getLogger().warning("Invalid remapTable data specified '" + remapTableStr + "'.");
+                getLogger().warning("Invalid remapTable data specified '%s'.", remapTableStr);
             }
         }
     }
@@ -58,7 +58,7 @@ public class OldFroggerConfig extends SCGameConfig {
                 this.levelTableCount = Integer.parseInt(split[0]);
                 this.levelTableAddress = NumberUtils.parseHexInteger(split[1]);
             } else {
-                getLogger().warning("Invalid levelTable data specified '" + levelTableStr + "'");
+                getLogger().warning("Invalid levelTable data specified '%s'", levelTableStr);
             }
         }
     }

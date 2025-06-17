@@ -38,7 +38,7 @@ public class FroggerEntityDataCrocodileHead extends FroggerEntityDataMatrix {
         // Parse snap or not.
         this.shouldSnap = (snapOrNot == 1);
         if (snapOrNot != 0 && snapOrNot != 1)
-            getLogger().warning("ch_snap_or_not_to_snap was expected to be either 0 or 1, but was actually " + snapOrNot + ".");
+            getLogger().warning("ch_snap_or_not_to_snap was expected to be either 0 or 1, but was actually %d.", snapOrNot);
     }
 
     @Override

@@ -1,13 +1,13 @@
 package net.highwayfrogs.editor.games.konami.greatquest.animation.key;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.kcControlType;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton.kcNode;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents a cubic Bézier curve.
@@ -40,11 +40,11 @@ public abstract class kcTrackKeyBezier extends kcTrackKey<kcTrackKeyBezier> {
         warnAboutInvalidBitFlags(this.flags, FLAG_VALIDATION, "kcTrackKeyBezier");
 
         if (this.endPosition.getW() != 1)
-            getLogger().severe("Unexpected End Position W: " + this.endPosition.getW());
+            getLogger().severe("Unexpected End Position W: %f", this.endPosition.getW());
         if (this.startPosition.getW() != 1)
-            getLogger().severe("Unexpected Start Position W: " + this.startPosition.getW());
+            getLogger().severe("Unexpected Start Position W: %f", this.startPosition.getW());
         if (this.controlPosition.getW() != 1)
-            getLogger().severe("Unexpected Control Position W: " + this.controlPosition.getW());
+            getLogger().severe("Unexpected Control Position W: %f", this.controlPosition.getW());
     }
 
     @Override

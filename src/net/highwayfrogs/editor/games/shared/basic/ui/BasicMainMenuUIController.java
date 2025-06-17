@@ -38,7 +38,7 @@ public class BasicMainMenuUIController<TGameInstance extends BasicGameInstance> 
             try {
                 for (BasicGameFile<?> file : getGameInstance().getFiles()) {
                     if (file.getFileDefinition().getFile() == null) {
-                        getLogger().severe("File '" + file.getDisplayName() + "' was defined by a(n) " + Utils.getSimpleName(file) + ", which should not have been possible.");
+                        getLogger().severe("File '%s' was defined by a(n) %s, which should not have been possible.", file.getDisplayName(), Utils.getSimpleName(file));
                         continue;
                     }
 
@@ -65,7 +65,7 @@ public class BasicMainMenuUIController<TGameInstance extends BasicGameInstance> 
 
             for (BasicGameFile<?> file : getGameInstance().getFiles()) {
                 if (file.getFileDefinition().getFile() == null) {
-                    getLogger().severe("File '" + file.getDisplayName() + "' was defined by a(n) " + Utils.getSimpleName(file) + ", which should not have been possible.");
+                    getLogger().severe("File '%s' was defined by a(n) %s, which should not have been possible.", file.getDisplayName(), Utils.getSimpleName(file));
                     continue;
                 }
 

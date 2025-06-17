@@ -1,15 +1,15 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.config;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents an entry in the level table.
@@ -126,7 +126,7 @@ public class OldFroggerLevelTableEntry extends SCGameData<OldFroggerGameInstance
 
         String[] split = levelTableEntryStr.split(",");
         if (split.length != 5) {
-            instance.getLogger().warning("Failed to parse level table entry from '" + levelTableEntryStr + "'.");
+            instance.getLogger().warning("Failed to parse level table entry from '%s'.", levelTableEntryStr);
             return null;
         }
 
@@ -141,7 +141,7 @@ public class OldFroggerLevelTableEntry extends SCGameData<OldFroggerGameInstance
             wadResourceId = Integer.parseInt(split[2]);
             ulrResourceId = Integer.parseInt(split[3]);
         } catch (NumberFormatException ex) {
-            instance.getLogger().warning("Failed to parse number / resource ids from '" + levelTableEntryStr + "'.");
+            instance.getLogger().warning("Failed to parse number / resource ids from '%s'.", levelTableEntryStr);
             return null;
         }
 

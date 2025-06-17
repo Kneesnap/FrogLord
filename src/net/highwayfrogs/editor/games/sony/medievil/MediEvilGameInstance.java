@@ -23,7 +23,6 @@ import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewCom
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.LazySCGameFileListGroup;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
 import net.highwayfrogs.editor.utils.FileUtils;
-import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 
 import java.util.ArrayList;
@@ -174,7 +173,7 @@ public class MediEvilGameInstance extends SCGameInstance {
     @Override
     protected void onRemapRead(TextureRemapArray remap, DataReader reader) {
         super.onRemapRead(remap, reader);
-        getLogger().info("Added remap " + remap.getDebugName() + " at " + NumberUtils.toHexString(remap.getReaderIndex()) + " with " + remap.getTextureIds().size() + " entries. (" + NumberUtils.toHexString(reader.getIndex()) + ")");
+        getLogger().info("Added remap %s at 0x%X with %d entries. (0x%X)", remap.getDebugName(), remap.getReaderIndex(), remap.getTextureIds().size(), reader.getIndex());
     }
 
     @Override

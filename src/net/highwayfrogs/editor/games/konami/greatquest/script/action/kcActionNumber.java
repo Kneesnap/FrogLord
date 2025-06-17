@@ -6,7 +6,6 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCaus
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
-import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
@@ -50,7 +49,7 @@ public class kcActionNumber extends kcAction {
         if (this.operation == NumberOperation.ENTITY_VARIABLE) {
             int entityHash = reader.next().getAsInteger();
             if (entityHash != 0)
-                getLogger().warning("kcActionNumber had an non-zero entity hash set! (Value: " + NumberUtils.toHexString(entityHash) + ") This value is has been determined to be ignored by the retail game!");
+                getLogger().warning("kcActionNumber had an non-zero entity hash set! (Value: %08X) This value is has been determined to be ignored by the retail game!", entityHash);
         }
     }
 

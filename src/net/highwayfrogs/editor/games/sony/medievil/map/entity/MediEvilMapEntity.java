@@ -63,7 +63,7 @@ public class MediEvilMapEntity extends SCGameData<MediEvilGameInstance> {
         this.position.loadWithPadding(reader);
         SVector runtimePosition = SVector.readWithPadding(reader);
         if (!this.position.equals(runtimePosition))
-            getLogger().warning("Entity had a different 'runtimePosition' from initialPosition. (Initial: " + this.position + ", Runtime: " + runtimePosition + ")");
+            getLogger().warning("Entity had a different 'runtimePosition' from initialPosition. (Initial: %s, Runtime: %s)", this.position, runtimePosition);
 
         // Read remaining data.
         this.triggerData = reader.readUnsignedIntAsLong();

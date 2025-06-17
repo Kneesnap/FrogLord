@@ -78,7 +78,7 @@ public class MWDFile extends SCSharedGameData {
         reader.skipBytesRequireEmpty(Constants.INTEGER_SIZE);
         requireReaderIndex(reader, BUILD_NOTES_START_OFFSET, "Expected MWD build notes");
         this.buildNotes = reader.readNullTerminatedFixedSizeString(BUILD_NOTES_SIZE);
-        getGameInstance().getLogger().info("Build Notes: \n" + this.buildNotes + (this.buildNotes.endsWith("\n") ? "" : "\n"));
+        getGameInstance().getLogger().info("Build Notes: \n%s%s", this.buildNotes, (this.buildNotes.endsWith("\n") ? "" : "\n"));
 
         boolean lastFileLoadSuccess = false;
         for (MWIResourceEntry entry : mwiEntries) {
@@ -121,14 +121,14 @@ public class MWDFile extends SCSharedGameData {
             }
 
             if (!entry.hasFullFilePath() || entry.getFullFilePath().isEmpty()) {
-                getLogger().warning("When loading files by file name, the MWIResourceEntry with resource ID " + entry.getResourceId() + " did not have a file path!");
+                getLogger().warning("When loading files by file name, the MWIResourceEntry with resource ID %d did not have a file path!", entry.getResourceId());
                 if (progressBar != null)
                     progressBar.addCompletedProgress(1);
                 continue; // This file is part of a WAD archive, and isn't a file entry in the MWD, so we can't load it here.
             }
 
             if (entry.getArchiveOffset() != 0)
-                getLogger().warning("Expected archiveOffset to be zero for entry '" + entry.getDisplayName() + "', but it was: " + entry.getSectorOffset() + "/" + NumberUtils.toHexString(entry.getArchiveOffset()) + ".");
+                getLogger().warning("Expected archiveOffset to be zero for entry '%s', but it was: %d/0x%X.", entry.getDisplayName(), entry.getSectorOffset(), entry.getArchiveOffset());
 
             // NOTE: The file names are fully upper-case in the MWI, which may not match the correct file casing.
             // So, on case-sensitive file-systems (eg: Linux), this will fail to find the files. Not sure what we can do about that.

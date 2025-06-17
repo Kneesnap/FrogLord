@@ -166,7 +166,7 @@ public abstract class DynamicMeshNode implements IDynamicMeshHelper {
      * Prints debug information to the logger.
      */
     public void printDebugMeshNodeInfo(ILogger logger, String leftPadding) {
-        logger.info(leftPadding + Utils.getSimpleName(this) + "[" + this.dataEntries.size() + " entries]:");
+        logger.info("%s%s[%d entries]:", leftPadding, Utils.getSimpleName(this), this.dataEntries.size());
         for (int i = 0; i < this.dataEntries.size(); i++)
             this.dataEntries.get(i).printDebugInformation(logger, " " + leftPadding);
     }

@@ -2,14 +2,13 @@ package net.highwayfrogs.editor.games.sony.medievil.map.packet;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapPolygon;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,7 +53,7 @@ public class MediEvilMapGraphicsPacket extends MediEvilMapPacket implements IPro
         }
 
         if (reader.getIndex() != vertexListPtr)
-            getLogger().warning("The polygon data ended at " + NumberUtils.toHexString(reader.getIndex()) + ", which was not when the vertex data started! (" + NumberUtils.toHexString(vertexListPtr) + ")");
+            getLogger().warning("The polygon data ended at 0x%X, which was not when the vertex data started! (0x%X)", reader.getIndex(), vertexListPtr);
 
         reader.jumpReturn();
 
@@ -67,7 +66,7 @@ public class MediEvilMapGraphicsPacket extends MediEvilMapPacket implements IPro
             this.vertices.add(vertex);
         }
         if (reader.getIndex() != vertexGridOffsetTablePtr)
-            getLogger().warning("The vertex data ended at " + NumberUtils.toHexString(reader.getIndex()) + ", which was not when the grid offset table started! (" + NumberUtils.toHexString(vertexGridOffsetTablePtr) + ")");
+            getLogger().warning("The vertex data ended at 0x%X, which was not when the grid offset table started! (0x%X)", reader.getIndex(), vertexGridOffsetTablePtr);
 
         // Read grid offset table.
         // TODO: !

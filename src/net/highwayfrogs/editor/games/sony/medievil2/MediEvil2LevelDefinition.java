@@ -1,9 +1,7 @@
 package net.highwayfrogs.editor.games.sony.medievil2;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
@@ -12,8 +10,9 @@ import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.utils.FileUtils;
-import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,10 +82,10 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
         }
 
         // Write section info.
-        getLogger().info("Read level definition " + (this.levelRelocName != null ? "'" + this.levelRelocName + "'" : "") + ":");
-        getLogger().info(" Resources: " + this.vloResourceId + ", " + this.wadResourceId + ", " + this.timResourceId + ", " + this.levelNameId + ", Sections: " + sectionCount);
+        getLogger().info("Read level definition %s:", (this.levelRelocName != null ? "'" + this.levelRelocName + "'" : ""));
+        getLogger().info(" Resources: %d, %d, %d, %d, Sections: %d", this.vloResourceId, this.wadResourceId, this.timResourceId, this.levelNameId, sectionCount);
         for (MediEvil2LevelSectionDefinition sectionDefinition : this.levelSections)
-            getLogger().info(" Section: " + sectionDefinition.getMapResourceId() + ", " + sectionDefinition.getVloResourceId() + " -> " + NumberUtils.toHexString(sectionDefinition.getTextureRemapPointer()));
+            getLogger().info(" Section: %d, %d -> 0x%X", sectionDefinition.getMapResourceId(), sectionDefinition.getVloResourceId(), sectionDefinition.getTextureRemapPointer());
         getLogger().info("");
     }
 
@@ -135,7 +134,7 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
         if (gameFile instanceof MediEvil2Map) {
             return (MediEvil2Map) gameFile;
         } else {
-            getLogger().warning("Don't know how to interpret " + Utils.getSimpleName(gameFile) + "/" + gameFile.getFileDisplayName() + " as a map file.");
+            getLogger().warning("Don't know how to interpret %s/%s as a map file.", Utils.getSimpleName(gameFile), gameFile.getFileDisplayName());
         }
 
         // Couldn't find.

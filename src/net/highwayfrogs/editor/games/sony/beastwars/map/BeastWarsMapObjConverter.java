@@ -158,7 +158,7 @@ public class BeastWarsMapObjConverter {
         try {
             Files.write(new File(folder, "Map.obj").toPath(), Arrays.asList(objWriter.toString().split("\n")));
             Files.write(new File(folder, "Map.mtl").toPath(), Arrays.asList(mtlWriter.toString().split("\n")));
-            logger.info("Exported '" + map.getFileDisplayName() + " to " + exportName + "/Map.obj");
+            logger.info("Exported '%s' to %s/Map.obj", map.getFileDisplayName(), exportName);
         } catch (IOException ex) {
             throw new RuntimeException("Failed to export " + map.getFileDisplayName() + " to " + exportName + "/Map.obj", ex);
         }
@@ -167,7 +167,7 @@ public class BeastWarsMapObjConverter {
         for (int i = 0; i < map.getTextureInfoEntries().length; i++) {
             MapTextureInfoEntry infoEntry = map.getTextureInfoEntries()[i];
             if (infoEntry.isActive() && infoEntry.getFlags() > 0)
-                logger.info("Texture Entry #" + i + ": " + infoEntry.getTextureId() + ", " + infoEntry.getFlags());
+                logger.info("Texture Entry #%d: %d, %d", i, infoEntry.getTextureId(), infoEntry.getFlags());
         }
     }
 

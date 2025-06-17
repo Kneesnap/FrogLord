@@ -128,14 +128,14 @@ public class GreatQuestAssetUtils {
         String sourceName = soundEffectsCfg.getRootNode().getSectionName();
         SBRFile sbrFile = chunkedFile.getSoundBankFile();
         if (sbrFile == null) {
-            logger.warning("Skipping sound file references in " + sourceName + ", as the sound bank file could not be resolved.");
+            logger.warning("Skipping sound file references in %s, as the sound bank file could not be resolved.", sourceName);
         } else {
             for (String line : soundEffectsCfg.getTextWithoutComments()) {
                 OptionalArguments arguments = OptionalArguments.parse(line);
                 String filePath = arguments.useNext().getAsString();
                 int sfxId = chunkedFile.getGameInstance().getSfxIdFromFullSoundPath(filePath);
                 if (sfxId < 0) {
-                    logger.warning("Skipping sound file reference '" + filePath + "' in " + sourceName + ", it could not be resolved.");
+                    logger.warning("Skipping sound file reference '%s' in %s, it could not be resolved.", filePath, sourceName);
                     continue;
                 }
 
@@ -271,10 +271,10 @@ public class GreatQuestAssetUtils {
 
             GreatQuestArchiveFile foundFile = chunkedFile.getGameInstance().getMainArchive().getOptionalFileByName(filePath);
             if (foundFile == null) {
-                logger.warning("Skipping model reference '" + filePath + "' in " + sourceName + ", it could not be resolved.");
+                logger.warning("Skipping model reference '%s' in %s, it could not be resolved.", filePath, sourceName);
                 continue;
             } else if (!(foundFile instanceof kcModelWrapper)) {
-                logger.warning("Skipping model reference '" + filePath + "' in " + sourceName + ", it was not a 3D model.");
+                logger.warning("Skipping model reference '%s' in %s, it was not a 3D model.", filePath, sourceName);
                 continue;
             }
 

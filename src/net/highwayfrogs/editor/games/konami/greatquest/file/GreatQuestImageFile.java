@@ -108,13 +108,13 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
                 if ("fuelIcon_old.img".equalsIgnoreCase(getFileName())) {
                     bitsPerPixel = 32; // The PC version has a broken image. Every single other image in the game uses 32 BPP, and processing this image as 32 BPP does seem to mostly render correctly, so likely this was some kind of bugged export. To avoid FrogLord errors, we'll just treat it as 32BPP.
                 } else {
-                    getLogger().warning("The image reported as having " + bitsPerPixel + " bits per pixel, but the PC version only supports 32 bits per pixel!");
+                    getLogger().warning("The image reported as having %d bits per pixel, but the PC version only supports 32 bits per pixel!", bitsPerPixel);
                 }
             }
 
             int mipLod = reader.readInt();
             if (mipLod != EXPECTED_MIP_LOD)
-                getLogger().warning("The image '" + getDebugName() + "'was read with an LOD of " + mipLod + ", but " + EXPECTED_MIP_LOD + " was expected!");
+                getLogger().warning("The image '%s' was read with an LOD of %d, but %d was expected!", getDebugName(), mipLod, EXPECTED_MIP_LOD);
 
             // kcImagePrepare()/kcImageSave() has some weird behavior here, this recreates it.
             reader.skipPointer(); // p->data. Assigned by kcImagePrepare()
@@ -132,7 +132,7 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
 
         // Warn about any unexpectedly large files.
         if (reader.getRemaining() > 0 && !(getGameInstance().isPC() && PC_IGNORED_IMAGES_WITH_EXTRA_DATA.contains(getFileName())))
-            getLogger().warning(" - The image '" + getDebugName() + "' (Format: " + this.fileFormat + ") has " + reader.getRemaining() + " unread bytes.");
+            getLogger().warning(" - The image '%s' (Format: %s) has %d unread byte(s).", getDebugName(), this.fileFormat, reader.getRemaining());
     }
 
     private void kcLoad8BitImageHeader(DataReader reader) { // TGA File.

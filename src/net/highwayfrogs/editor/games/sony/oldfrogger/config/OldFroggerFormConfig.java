@@ -77,7 +77,7 @@ public class OldFroggerFormConfig {
 
             String[] split = text.split("=");
             if (split.length != 2) {
-                getLogger().warning("Missing equals sign in form config entry '" + text + "'.");
+                getLogger().warning("Missing equals sign in form config entry '%s'.", text);
                 return null;
             }
 
@@ -85,7 +85,7 @@ public class OldFroggerFormConfig {
             try {
                 formType = Integer.parseInt(split[0]);
             } catch (NumberFormatException nfe) {
-                getLogger().warning("Invalid form type number '" + split[0] + "' in '" + text + "'.");
+                getLogger().warning("Invalid form type number '%s' in '%s'.", split[0], text);
                 return null;
             }
 
@@ -93,13 +93,13 @@ public class OldFroggerFormConfig {
             String displayName;
             OldFroggerEntityDataFactory entityDataFactory;
             if (split.length > 2 || split.length == 0) {
-                getLogger().warning("Improperly formatted form config entry '" + text + "'.");
+                getLogger().warning("Improperly formatted form config entry '%s'.", text);
                 return null;
             } else if (split.length == 2) {
                 displayName = split[0];
                 entityDataFactory = OldFroggerEntityData.getEntityDataFactory(split[1]);
                 if (entityDataFactory == null)
-                    getLogger().warning("Failed to find entity data factory named '" + split[1] + "'.");
+                    getLogger().warning("Failed to find entity data factory named '%s'.", split[1]);
             } else {
                 displayName = split[0];
                 entityDataFactory = null;

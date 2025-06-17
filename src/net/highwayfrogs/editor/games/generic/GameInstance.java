@@ -154,7 +154,7 @@ public abstract class GameInstance implements IGameInstance {
 
         // Register to FrogLordApplication and log.
         FrogLordApplication.getActiveGameInstances().add(this);
-        getLogger().info("Hello! FrogLord is loading config '" + configName + "'.");
+        getLogger().info("Hello! FrogLord is loading config '%s'.", configName);
 
         // Setup.
         this.config = userConfig;
@@ -209,7 +209,7 @@ public abstract class GameInstance implements IGameInstance {
 
         // Register to FrogLordApplication and log.
         FrogLordApplication.getActiveGameInstances().add(this);
-        getLogger().info("Hello! FrogLord is loading config '" + config.getInternalName() + "'.");
+        getLogger().info("Hello! FrogLord is loading config '%s'.", config.getInternalName());
 
         // Create & load config.
         this.versionConfig = config;

@@ -125,7 +125,7 @@ public class SCUtils {
             if (replaceEntry != null)
                 completeModel = instance.getGameFile(replaceEntry.getResourceId());
             if (completeModel == null)
-                resourceEntry.getLogger().warning("MOF Parent Override for '" + otherMofFile + "' was not found. Entry: " + replaceEntry);
+                resourceEntry.getLogger().warning("MOF Parent Override for '%s' was not found. Entry: %s", otherMofFile, replaceEntry);
         } else {
             MRModel lastCompleteMOF = null;
             for (int i = resourceEntry.getResourceId() - 1; i >= 0; i--) {

@@ -326,12 +326,12 @@ public class NoodleScriptEngine extends SharedGameObject {
     public void exportFunctionsAndObjectDescriptions() {
         getLogger().info("Global Functions:");
         for (NoodleFunction function : this.functionMap.values())
-            getLogger().info(" - " + function.getLabel() + ": " + function.getUsage());
+            getLogger().info(" - %s: %s", function.getLabel(), function.getUsage());
         getLogger().info("");
 
         getLogger().info("Object Types:");
         for (NoodleObjectTemplate<?> template : this.templates) {
-            getLogger().info(" - " + template.getName() + ":");
+            getLogger().info(" - %s:", template.getName());
             template.printFunctionList();
             getLogger().info("");
         }

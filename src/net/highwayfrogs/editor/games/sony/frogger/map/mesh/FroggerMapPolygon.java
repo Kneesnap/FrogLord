@@ -160,7 +160,7 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
 
             SCByteTextureUV copyUv = this.textureUvs[2];
             if ((this.polygonType == FroggerMapPolygonType.GT3) ? (u != 0 || v != 0) : (u != copyUv.getU() || v != copyUv.getV()))
-                getLogger().warning(String.format("UV3 was <u=%02X,v=%02x>, but we expected %s.", u, v, copyUv));
+                getLogger().warning("UV3 was <u=%02X,v=%02x>, but we expected %s.", u, v, copyUv);
         }
     }
 

@@ -214,7 +214,7 @@ public class DataReader {
      */
     public void requireIndex(ILogger logger, int desiredIndex, String messagePrefix) {
         if (getIndex() != desiredIndex) {
-            logger.warning(messagePrefix + " at " + NumberUtils.toHexString(getIndex()) + ", but it actually started at " + NumberUtils.toHexString(desiredIndex) + ".");
+            logger.warning("%s at 0x%X, but it actually started at 0x%X.", messagePrefix, getIndex(), desiredIndex);
             setIndex(desiredIndex);
         }
     }

@@ -36,7 +36,7 @@ public class FroggerMainMenuUIController extends SCMainMenuUIController<FroggerG
             IndexBitArray unusedVertices = mapFile.findUnusedVertexIds();
             int vertexCount = unusedVertices.getBitCount();
             if (vertexCount > 1)
-                getLogger().info(" - " + mapFile.getFileDisplayName() + " has " + vertexCount + " unused vertices.");
+                getLogger().info(" - %s has %d unused vertices.", mapFile.getFileDisplayName(), vertexCount);
         });
     }
 }

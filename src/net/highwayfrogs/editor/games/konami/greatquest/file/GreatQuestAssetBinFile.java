@@ -305,7 +305,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
 
         int hash = GreatQuestUtils.hashFilePath(filePath);
         if (showMessageIfNotFound)
-            getLogger().warning("Attempted to apply the file path '" + filePath + "', but no file matched the hash " + NumberUtils.to0PrefixedHexString(hash) + ".");
+            getLogger().warning("Attempted to apply the file path '%s', but no file matched the hash %08X.", filePath, hash);
         return null;
     }
 
@@ -318,7 +318,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
     public GreatQuestArchiveFile getFileByName(GreatQuestArchiveFile searchFrom, String filePath) {
         GreatQuestArchiveFile file = getOptionalFileByName(filePath);
         if (file == null)
-            getLogger().warning("Failed to find file " + filePath + (searchFrom != null ? " referenced in " + searchFrom.getExportName() : "") + ". (" + GreatQuestUtils.getFileIdFromPath(filePath) + ")");
+            getLogger().warning("Failed to find file %s. (%s)", filePath + (searchFrom != null ? " referenced in " + searchFrom.getExportName() : ""), GreatQuestUtils.getFileIdFromPath(filePath));
         return file;
     }
 

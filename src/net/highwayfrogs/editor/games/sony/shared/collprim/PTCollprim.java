@@ -48,7 +48,6 @@ public abstract class PTCollprim extends SCSharedGameData implements ICollprim {
 
     @Override
     public void load(DataReader reader) {
-        getLogger().info("Reading PTCollprim at " + NumberUtils.toHexString(reader.getIndex())); // TODO: TOSS
         this.type = CollprimType.values()[reader.readInt()];
         this.flags = reader.readShort();
         this.xLength = DataUtils.fixedPointIntToFloatNBits(reader.readUnsignedShortAsInt(), 4);

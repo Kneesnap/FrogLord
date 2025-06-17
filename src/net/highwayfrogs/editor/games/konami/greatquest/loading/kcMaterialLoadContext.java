@@ -234,7 +234,7 @@ public class kcMaterialLoadContext {
             if (material.getTexture() != null)
                 continue; // A material has been set.
 
-            getLogger().warning("No image file was identified for file '" + material.getTextureFileName() + "' from the material named '" + material.getMaterialName() + "' in " + entry.getValue().getDebugName() + ".");
+            getLogger().warning("No image file was identified for file '%s' from the material named '%s' in %s.", material.getTextureFileName(), material.getMaterialName(), entry.getValue().getDebugName());
         }
 
         // Find materials which had multiple possibilities.
@@ -264,10 +264,10 @@ public class kcMaterialLoadContext {
             }
 
             // Print output.
-            getLogger().warning(foundImageCount + " image file(s) were identified for file '" + material.getTextureFileName() + "' from the material named '" + material.getMaterialName() + "' in " + file.getDebugName() + (foundImageCount > 0 ? ":" : "."));
+            getLogger().warning("%d image file(s) were identified for file '%s' from the material named '%s' in %s", foundImageCount, material.getTextureFileName(), material.getMaterialName(), file.getDebugName() + (foundImageCount > 0 ? ":" : "."));
             if (foundImages != null && foundImageCount > 0)
                 for (GreatQuestImageFile foundImage : foundImages)
-                    getLogger().warning(" - " + foundImage.getDebugName());
+                    getLogger().warning(" - %s", foundImage.getDebugName());
         }
     }
 

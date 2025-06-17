@@ -219,7 +219,7 @@ public class MeshViewFrameTimer extends AnimationTimer {
         private void tick(long now) {
             // Handle system time change / overflow.
             if (now < this.lastUpdateNanos) {
-                this.frameTimer.getLogger().warning("Did the system time change? The last update for the task list with " + this.framesPerSecond + " FPS was seen at timestamp " + this.lastUpdateNanos + ", but it's currently " + now + ", which is before that time.");
+                this.frameTimer.getLogger().warning("Did the system time change? The last update for the task list with %d FPS was seen at timestamp %d, but it's currently %d, which is before that time.", this.framesPerSecond, this.lastUpdateNanos, now);
                 this.lastUpdateNanos = now; // Make the previous time negative.
             }
 

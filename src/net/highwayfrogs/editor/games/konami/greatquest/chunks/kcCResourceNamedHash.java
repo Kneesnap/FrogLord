@@ -66,7 +66,7 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
         int reserved2 = reader.readInt();
 
         if (version != 0 || reserved1 != 0 || reserved2 != 0)
-            getLogger().warning("Unexpected non-zero value in named hash chunk! [" + version + ", " + reserved1 + ", " + reserved2 + "]");
+            getLogger().warning("Unexpected non-zero value in named hash chunk! [%d, %d, %d]", version, reserved1, reserved2);
 
         // Read entries.
         this.entries.clear();
@@ -78,7 +78,7 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
 
         // Check nothing remains.
         if (reader.hasMore())
-            getLogger().warning("There are " + reader.getRemaining() + " unread bytes in " + getParentFile().getDebugName());
+            getLogger().warning("There are %d unread bytes in %s.", reader.getRemaining(), getParentFile().getDebugName());
     }
 
     @Override

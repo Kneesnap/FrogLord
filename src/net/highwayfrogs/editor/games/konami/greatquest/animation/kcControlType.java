@@ -99,7 +99,7 @@ public enum kcControlType {
             return this.trackKeyCreator.apply(gameInstance, this);
         } else {
             if (!this.warningShown) {
-                gameInstance.getLogger().warning("The kcControlType '" + name() + "' is used but unimplemented!");
+                gameInstance.getLogger().warning("The kcControlType '%s' is used but unimplemented!", name());
                 this.warningShown = true;
             }
 

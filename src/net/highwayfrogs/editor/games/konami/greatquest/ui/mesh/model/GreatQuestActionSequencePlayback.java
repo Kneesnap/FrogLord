@@ -117,9 +117,9 @@ public class GreatQuestActionSequencePlayback {
             default:
                 if (action.getActionID().isEnableForActionSequences()) {
                     // These actions are valid for action sequences, but may not have been implemented in FrogLord, likely due to the base game not using them.
-                    this.activeSequence.getLogger().warning("Wanted to run '" + action.getAsGqsStatement() + "', but FrogLord does not support this action!");
+                    this.activeSequence.getLogger().warning("Wanted to run '%s', but FrogLord does not support this action!", action.getAsGqsStatement());
                 } else {
-                    this.activeSequence.getLogger().warning("Wanted to run '" + action.getAsGqsStatement() + "', but that action is not supported in an action sequence!");
+                    this.activeSequence.getLogger().warning("Wanted to run '%s', but that action is not supported in an action sequence!", action.getAsGqsStatement());
                 }
 
                 break;

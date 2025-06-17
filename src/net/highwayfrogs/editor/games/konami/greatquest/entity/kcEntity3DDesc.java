@@ -103,7 +103,7 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
             File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), ENTITY_DESC_EXPORT_PATH, getResource().getName() + "." + Config.DEFAULT_EXTENSION, true);
             if (outputFile != null) {
                 toConfig().saveTextFile(outputFile);
-                getLogger().info("Saved '" + getResource().getName() + "' as '" + outputFile.getName() + "'.");
+                getLogger().info("Saved '%s' as '%s'.", getResource().getName(), outputFile.getName());
             }
         });
 
@@ -116,7 +116,7 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
 
             Config entityCfg = Config.loadConfigFromTextFile(inputFile, false);
             this.fromConfig(entityCfg);
-            getLogger().info("Loaded '" + getResource().getName() + "' from '" + inputFile.getName() + "'.");
+            getLogger().info("Loaded '%s' from '%s'.", getResource().getName(), inputFile.getName());
         });
     }
 

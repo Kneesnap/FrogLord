@@ -99,7 +99,7 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
 
             // Create a thread to run the script.
             NoodleThread<NoodleScript> thread = new NoodleThread<>(getGameInstance(), script);
-            thread.setOnFinishHook(() -> getLogger().info("Reached the end of the script '" + script.getName() + "'."));
+            thread.setOnFinishHook(() -> getLogger().info("Reached the end of the script '%s'.", script.getName()));
             thread.addObjectInstanceArgument(getGameInstance());
 
             try {

@@ -132,7 +132,7 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
         for (int i = 0; i < this.nodes.size(); i++)
             primitiveIndex = this.nodes.get(i).loadPrimsFromList(this.primitives, primitiveIndex);
         if (primitiveIndex != this.primitives.size())
-            getLogger().warning("Expected " + this.primitives.size() + " nodes to be part of nodes, but " + primitiveIndex + " were instead.");
+            getLogger().warning("Expected %d nodes to be part of nodes, but %d were found instead.", this.primitives.size(), primitiveIndex);
 
         // 6. Read Bone Bytes.
         for (kcModelPrim prim : this.primitives) {
@@ -173,7 +173,7 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
             loadedVertices += this.primitives.get(i).loadVertices(reader);
 
         if (reader.hasMore() || vertexCount != loadedVertices)
-            getLogger().warning("3D Model had unread data! (Remaining: " + reader.getRemaining() + ", Position: " + Integer.toHexString(reader.getIndex()) + ", Vertices: " + loadedVertices + "/" + vertexCount + ")");
+            getLogger().warning("3D Model had unread data! (Remaining: %d, Position: 0x%X, Vertices: %d/%d)", reader.getRemaining(), reader.getIndex(), loadedVertices, vertexCount);
     }
 
     @Override

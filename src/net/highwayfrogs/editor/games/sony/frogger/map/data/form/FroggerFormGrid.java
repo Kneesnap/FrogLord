@@ -70,7 +70,7 @@ public class FroggerFormGrid extends SCGameData<FroggerGameInstance> {
         // The game only supports 1 form data in the retail build even if the data structure can hold more. It appears more than 1 was supported in build 20 though.
         // I don't know if them being supported means the game used them though.
         if (formDataEntryCount != 0 && formDataEntryCount != 1)
-            getLogger().warning("Form has " + formDataEntryCount + " FroggerFormGridData entries. Later builds of Frogger will ignore them.");
+            getLogger().warning("Form has %d FroggerFormGridData entries. Later builds of Frogger will ignore them.", formDataEntryCount);
 
         // Skip pointer table.
         int formDataPointerList = reader.getIndex();

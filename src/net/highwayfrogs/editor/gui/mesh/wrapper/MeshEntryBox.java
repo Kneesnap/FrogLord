@@ -58,11 +58,11 @@ public class MeshEntryBox {
     private void stopVertexUpdates() {
         if (this.entry.getMesh().getEditableVertices().endBatchingUpdates()) {
             if (this.minX > this.maxX)
-                getLogger().warning("The MeshEntryBox may not be visible because the minX was greater than the maxX. (MinX: " + this.minX + ", MaxX: " + this.maxX + ")");
+                getLogger().warning("The MeshEntryBox may not be visible because the minX was greater than the maxX. (MinX: %f, MaxX: %f)", this.minX, this.maxX);
             if (this.minY > this.maxY)
-                getLogger().warning("The MeshEntryBox may not be visible because the minY was greater than the maxY. (MinY: " + this.minY + ", MaxY: " + this.maxY + ")");
+                getLogger().warning("The MeshEntryBox may not be visible because the minY was greater than the maxY. (MinY: %f, MaxY: %f)", this.minY, this.maxY);
             if (this.minZ > this.maxZ)
-                getLogger().warning("The MeshEntryBox may not be visible because the minZ was greater than the maxZ. (MinZ: " + this.minZ + ", MaxZ: " + this.maxZ + ")");
+                getLogger().warning("The MeshEntryBox may not be visible because the minZ was greater than the maxZ. (MinZ: %f, MaxZ: %f)", this.minZ, this.maxZ);
         }
     }
 

@@ -1,8 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.animation.key;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.kcControlType;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton.kcNode;
@@ -11,6 +9,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector3;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.system.math.Vector4f;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents a TCB animation track key. (Tension, Continuity, Bias)
@@ -79,9 +79,9 @@ public abstract class kcTrackKeyTcb extends kcTrackKey<kcTrackKeyTcb> {
         this.vector0E.load(reader);
         this.vector12.load(reader);
         if (this.unused.getY() != 0 || this.unused.getZ() != 0)
-            getLogger().warning("Expected unused vector to be all zeros, but actually was: " + this.unused);
+            getLogger().warning("Expected unused vector to be all zeros, but actually was: %s", this.unused);
         if (this.easeFrom != 0 || this.easeTo != 0)
-            getLogger().warning("Expected TCB ease values to be 0.0, but found [Value 1: " + this.easeFrom + ", Value 2: " + this.easeTo + "]");
+            getLogger().warning("Expected TCB ease values to be 0.0, but found [Value 1: %f, Value 2: %f]", this.easeFrom, this.easeTo);
     }
 
     @Override

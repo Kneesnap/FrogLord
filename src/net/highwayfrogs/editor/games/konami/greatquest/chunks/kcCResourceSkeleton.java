@@ -116,7 +116,7 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
                 nodeQueue.addAll(0, tempNode.children);
 
             if (tempNode.getTag() != expectedTag) {
-                getLogger().warning("kcNode['" + tempNode.getName() + "',tag=" + tempNode.getTag() + "] was expected to have tag " + expectedTag + ".");
+                getLogger().warning("kcNode['%s',tag=%d] was expected to have tag %d.", tempNode.getName(), tempNode.getTag(), expectedTag);
                 expectedTag = tempNode.getTag() + 1;
             } else {
                 expectedTag++;

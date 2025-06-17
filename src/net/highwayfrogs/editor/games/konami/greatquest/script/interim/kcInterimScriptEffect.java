@@ -66,7 +66,7 @@ public class kcInterimScriptEffect extends GameData<GreatQuestInstance> {
         int readSize = reader.getIndex() - startIndex;
         if (readSize != storedSize) {
             this.unhandledRawBytes = reader.readBytes(storedSize - readSize);
-            getLogger().warning("Script Effect [" + this + "] was loaded from " + readSize + " bytes, but " + storedSize + " were supposed to be read.");
+            getLogger().warning("Script Effect [%s] was loaded from %d bytes, but %d were supposed to be read.", this, readSize, storedSize);
         } else {
             this.unhandledRawBytes = null;
         }
@@ -127,7 +127,7 @@ public class kcInterimScriptEffect extends GameData<GreatQuestInstance> {
         // Store unused arguments.
         if (lastUnusedArgument >= 0) {
             int unusedCount = lastUnusedArgument - lastReadArgument;
-            getLogger().warning("There was a " + this.effectType + "/" + this.effectID + " effect with at least " + unusedCount + " unread arguments.");
+            getLogger().warning("There was a(n) %s/%d effect with at least %d unread argument(s).", this.effectType, this.effectID, unusedCount);
         }
 
         return newEffect;

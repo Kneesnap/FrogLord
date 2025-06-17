@@ -60,7 +60,7 @@ public abstract class MapBook extends ExeStruct {
 
         MWIResourceEntry entry = instance.getResourceEntryByID(mapResourceId);
         if (entry == null) {
-            instance.getLogger().warning("Couldn't find map with resource ID " + mapResourceId);
+            instance.getLogger().warning("Couldn't find map with resource ID: %d.", mapResourceId);
             return;
         }
 

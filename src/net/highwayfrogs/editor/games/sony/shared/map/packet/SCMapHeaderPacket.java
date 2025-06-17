@@ -1,8 +1,6 @@
 package net.highwayfrogs.editor.games.sony.shared.map.packet;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
@@ -10,6 +8,8 @@ import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
 import net.highwayfrogs.editor.games.sony.shared.map.SCMapFilePacket;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents the header packet in a Sony Cambridge map file. (v1999)
@@ -47,10 +47,10 @@ public class SCMapHeaderPacket<TGameInstance extends SCGameInstance> extends SCM
 
         // Verify data
         if (versionCode != VERSION_CODE)
-            getLogger().warning("File is version " + versionCode + ", but only version " + VERSION_CODE + " is supported!");
+            getLogger().warning("File is version %d, but only version %d is supported!", versionCode, VERSION_CODE);
 
         if (fileLengthInBytes != reader.getSize())
-            getLogger().warning("The amount of bytes reported by the file '" + getParentFile().getFileDisplayName() + "' was " + fileLengthInBytes + ", but the actual amount was " + reader.getSize() + ".");
+            getLogger().warning("The amount of bytes reported by the file '%s' was %d, but the actual amount was %d.", getParentFile().getFileDisplayName(), fileLengthInBytes, reader.getSize());
     }
 
     @Override

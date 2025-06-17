@@ -160,11 +160,11 @@ public class MRMofPolygon extends SCGameData<SCGameInstance> {
         // Write texture data.
         if (this.polygonType.isTextured()) {
             if (this.textureId < 0) {
-                getLogger().severe("A textured MRMofPolygon had an invalid texture ID! (%d) This polygon will not render correctly in-game and may even cause crashes!");
+                getLogger().severe("A textured MRMofPolygon had an invalid texture ID! (%d) This polygon will not render correctly in-game and may even cause crashes!", this.textureId);
             } else {
                 GameImage image = getDefaultTexture();
                 if (image == null)
-                    getLogger().severe("A textured MRMofPolygon had an unresolvable texture ID! (%d) This polygon will not render correctly in-game and may even cause crashes!");
+                    getLogger().severe("A textured MRMofPolygon had an unresolvable texture ID! (%d) This polygon will not render correctly in-game and may even cause crashes!", this.textureId);
             }
 
             if (this.polygonType == MRMofPolygonType.FT4) { // Not sure why this is different.

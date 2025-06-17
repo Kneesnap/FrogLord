@@ -2,9 +2,7 @@ package net.highwayfrogs.editor.games.sony.shared.map.data;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
@@ -13,6 +11,8 @@ import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
 import net.highwayfrogs.editor.games.sony.shared.map.ui.SCMapEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo.IPositionChangeListener;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.UUID;
 
@@ -70,7 +70,7 @@ public class SCMapEntity extends SCSharedGameData {
         this.position.loadWithPadding(reader);
         SVector runtimePosition = SVector.readWithPadding(reader);
         if (!this.position.equals(runtimePosition))
-            getLogger().warning("Entity had a different 'runtimePosition' from initialPosition. (Initial: " + this.position + ", Runtime: " + runtimePosition + ")");
+            getLogger().warning("Entity had a different 'runtimePosition' from initialPosition. (Initial: %s, Runtime: %s)", this.position, runtimePosition);
 
         // Read remaining data.
         this.initFlags = reader.readInt();

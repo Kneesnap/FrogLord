@@ -45,7 +45,7 @@ public class kcModelDesc extends kcBaseDesc implements IInfoWriter, kcIGenericRe
 
         // Warn if things look wrong.
         if (materialHash != EXPECTED_MATERIAL_HASH)
-            getLogger().warning("Expected material hash to be " + EXPECTED_MATERIAL_HASH + ", but was actually " + NumberUtils.to0PrefixedHexString(materialHash));
+            getLogger().warning("Expected material hash to be %d, but was actually %08X.", EXPECTED_MATERIAL_HASH, materialHash);
         if (hThis != this.parentHash.getHashNumber())
             throw new RuntimeException("The kcModelDesc reported the parent chunk as " + NumberUtils.to0PrefixedHexString(hThis) + ", but it was expected to be " + this.parentHash.getHashNumberAsString() + ".");
     }

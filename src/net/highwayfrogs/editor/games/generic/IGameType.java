@@ -150,7 +150,7 @@ public interface IGameType {
         ILogger logger = ClassNameLogger.getLogger(null, getClass());
         List<URL> versionConfigFiles = FileUtils.getInternalResourceFilesInDirectory(getEmbeddedResourceURL("versions"), true);
         if (versionConfigFiles.isEmpty())
-            logger.severe("Did not find any version configs for the game type " + getIdentifier() + "/'" + getDisplayName() + "'. This seems like a bug.");
+            logger.severe("Did not find any version configs for the game type %s/'%s'. This seems like a bug.", getIdentifier(), getDisplayName());
 
         for (URL url : versionConfigFiles) {
             String versionConfigName = FileUtils.getFileNameWithoutExtension(url);

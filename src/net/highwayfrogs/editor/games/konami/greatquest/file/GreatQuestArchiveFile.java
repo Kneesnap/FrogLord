@@ -155,7 +155,7 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
 
         // If we already have a path, we shouldn't be replacing it, and we should warn if the path differs.
         if (this.filePath != null && !this.filePath.isEmpty() && !this.filePath.equalsIgnoreCase(filePath)) {
-            getLogger().warning("Attempted to replace file name '" + this.filePath + "' with '" + filePath + "'. Not sure how to handle.");
+            getLogger().warning("Attempted to replace file name '%s' with '%s'. Not sure how to handle.", this.filePath, filePath);
             return;
         }
 

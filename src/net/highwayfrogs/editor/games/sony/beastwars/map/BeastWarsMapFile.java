@@ -19,7 +19,6 @@ import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.FileUtils;
-import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.ArraySource;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -203,13 +202,13 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
             } else if (signature == SIGNATURE_LIGHTS) {
                 readLights(reader, size);
             } else {
-                getLogger().warning("Skipping unsupported section '" + Utils.toIdentifierString(signature) + "' (" + size + " bytes).");
+                getLogger().warning("Skipping unsupported section '%s' (%d bytes).", Utils.toIdentifierString(signature), size);
                 reader.skipBytes(size);
             }
 
             reader.align(4); // Automatically align to the next section.
             if (endPos != reader.getIndex()) {
-                getLogger().warning("Didn't end at the right position for '" + Utils.toIdentifierString(signature) + "'. (Expected: " + NumberUtils.toHexString(endPos) + ", Actual: " + NumberUtils.toHexString(reader.getIndex()) + ")");
+                getLogger().warning("Didn't end at the right position for '%s'. (Expected: 0x%X, Actual: 0x%X)", Utils.toIdentifierString(signature), endPos, reader.getIndex());
                 reader.setIndex(endPos);
             }
         }
@@ -242,7 +241,7 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
 
     private void readEmptySection(int signature, int size) {
         if (size != 0)
-            getLogger().warning("Section '" + Utils.toIdentifierString(signature) + "' was expected to be empty, but reporting having " + size + " bytes.");
+            getLogger().warning("Section '%s' was expected to be empty, but reporting having %d bytes.", Utils.toIdentifierString(signature), size);
     }
 
     private void readInfoSection(DataReader reader) {

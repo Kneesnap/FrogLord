@@ -337,7 +337,7 @@ public class kcParam {
                         setValue(node.getAsInteger());
                     } else {
                         int newHash = GreatQuestUtils.hash(boneName);
-                        skeleton.getLogger().warning("Could not resolve a bone named '" + boneName + "', storing its hash so it can still be identified as " + NumberUtils.to0PrefixedHexString(newHash) + ".");
+                        skeleton.getLogger().warning("Could not resolve a bone named '%s', storing its hash so it can still be identified as %08X.", boneName, newHash);
                         setValue(newHash);
                     }
                 } else {

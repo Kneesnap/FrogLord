@@ -95,7 +95,7 @@ public class TexController extends SCFileEditorUIController<BeastWarsInstance, B
             for (int i = 0; i < getFile().getImages().size(); i++) {
                 File output = new File(directory, i + ".png");
                 ImageIO.write(getFile().getImages().get(i).getImage(), "png", output);
-                getLogger().info("Exported image #" + i + ".");
+                getLogger().info("Exported image #%d.", i);
             }
         } catch (IOException ex) {
             handleError(ex, true, "Failed to export all images.");
@@ -127,7 +127,7 @@ public class TexController extends SCFileEditorUIController<BeastWarsInstance, B
 
         }
 
-        getLogger().info("Imported " + importedFiles + " images.");
+        getLogger().info("Imported %d image(s).", importedFiles);
         updateDisplay();
     }
 

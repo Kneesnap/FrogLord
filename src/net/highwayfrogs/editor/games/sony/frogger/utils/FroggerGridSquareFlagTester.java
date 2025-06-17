@@ -94,19 +94,19 @@ public class FroggerGridSquareFlagTester extends SCGameObject<FroggerGameInstanc
         getLogger().info("Flags NOT Seen Together:");
         for (int i = 0; i < FroggerGridSquareFlag.values().length; i++)
             if (flagsNotSeenWithFlag[i] != null)
-                getLogger().info(" - " + FroggerGridSquareFlag.values()[i].name() + ": [" + (flagsNotSeenWithFlag[i] != null ? flagsNotSeenWithFlag[i] : "") + "]");
+                getLogger().info(" - %s: [%s]",  FroggerGridSquareFlag.values()[i].name(), flagsNotSeenWithFlag[i]);
         getLogger().info("");
 
         getLogger().info("Flags Sometimes Seen Together:");
         for (int i = 0; i < FroggerGridSquareFlag.values().length; i++)
             if (flagsSeenWithFlag[i] != null)
-                getLogger().info(" - " + FroggerGridSquareFlag.values()[i].name() + ": [" + (flagsSeenWithFlag[i] != null ? flagsSeenWithFlag[i] : "") + "]");
+                getLogger().info(" - %s: [%s]",  FroggerGridSquareFlag.values()[i].name(), flagsSeenWithFlag[i]);
         getLogger().info("");
 
         getLogger().info("Flags Always Seen Together:");
         for (int i = 0; i < FroggerGridSquareFlag.values().length; i++)
             if (flagsAlwaysSeenWithFlag[i] != null)
-                getLogger().info(" - " + FroggerGridSquareFlag.values()[i].name() + ": [" + (flagsAlwaysSeenWithFlag[i] != null ? flagsAlwaysSeenWithFlag[i] : "") + "]");
+                getLogger().info(" - %s: [%s]",  FroggerGridSquareFlag.values()[i].name(), flagsAlwaysSeenWithFlag[i]);
         getLogger().info("");
     }
 

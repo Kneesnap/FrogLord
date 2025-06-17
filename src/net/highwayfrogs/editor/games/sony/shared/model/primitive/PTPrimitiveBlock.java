@@ -2,10 +2,10 @@ package net.highwayfrogs.editor.games.sony.shared.model.primitive;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,11 +44,12 @@ public class PTPrimitiveBlock extends SCSharedGameData {
         }
 
         // Validate final.
-        if (calculateBlockSize() != blockSize)
-            getLogger().warning("Calculated the PTPrimitiveBlock as having " + calculateBlockSize() + " bytes, but the actual amount was " + blockSize + ".");
+        int calculatedBlockSize = calculateBlockSize();
+        if (calculatedBlockSize != blockSize)
+            getLogger().warning("Calculated the PTPrimitiveBlock as having %d bytes, but the actual amount was %d.", calculatedBlockSize, blockSize);
         int readSize = reader.getIndex() - readStartIndex;
         if (readSize != blockSize)
-            getLogger().warning("Read " + readSize + " bytes for a(n) " + this.primitiveType + " PTPrimitiveBlock when there were actually " + blockSize + " bytes.");
+            getLogger().warning("Read %d byte(s) for a(n) %s PTPrimitiveBlock when there were actually %d bytes.", readSize, this.primitiveType, blockSize);
     }
 
     @Override

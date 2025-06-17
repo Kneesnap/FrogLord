@@ -1,10 +1,10 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.packets;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.nio.charset.StandardCharsets;
 
@@ -36,7 +36,7 @@ public class FroggerMapFilePacketHeader extends FroggerMapFilePacket {
     protected void loadBody(DataReader reader, int endIndex) {
         int mapFileSize = reader.readInt();
         if (mapFileSize != reader.getSize())
-            getLogger().warning("The file reported having a length of " + mapFileSize + " bytes, but it actually was " + reader.getSize() + " bytes.");
+            getLogger().warning("The file reported having a length of %d bytes, but it actually was %d bytes.", mapFileSize, reader.getSize());
 
         // Read version.
         String versionString = reader.readTerminatedString(VERSION.length());

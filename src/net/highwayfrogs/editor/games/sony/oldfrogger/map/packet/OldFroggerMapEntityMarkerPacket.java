@@ -8,7 +8,6 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapFor
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.utils.FileUtils;
-import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -41,7 +40,7 @@ public class OldFroggerMapEntityMarkerPacket extends OldFroggerMapPacket {
     public OldFroggerMapEntity getEntityByFileOffset(int fileOffset) {
         OldFroggerMapEntity entity = this.entitiesByFileOffsets.get(fileOffset);
         if (entity == null)
-            getLogger().warning("Couldn't find map entity at " + NumberUtils.toHexString(fileOffset) + " in " + getParentFile().getFileDisplayName() + ".");
+            getLogger().warning("Couldn't find map entity at 0x%X in %s.", fileOffset, getParentFile().getFileDisplayName());
         return entity;
     }
 
@@ -53,7 +52,7 @@ public class OldFroggerMapEntityMarkerPacket extends OldFroggerMapPacket {
     public int getEntityFileOffset(OldFroggerMapEntity entity) {
         Integer fileOffset = this.entityFileOffsets.get(entity);
         if (fileOffset == null) {
-            getLogger().warning("Couldn't find map entity file offset for entity in " + getParentFile().getFileDisplayName() + ".");
+            getLogger().warning("Couldn't find map entity file offset for entity in %s.", getParentFile().getFileDisplayName());
             return -1;
         }
 
@@ -144,13 +143,11 @@ public class OldFroggerMapEntityMarkerPacket extends OldFroggerMapPacket {
         WADEntry mofEntry = form != null ? form.getModelFileEntry() : null;
 
         // Display message.
-        getLogger().warning("[INVALID/"
-                + (mofEntry != null ? mofEntry.getDisplayName() : "")
-                + "] Entity " + this.entities.indexOf(entity)
-                + "/" + entity.getDifficulty()
-                + (form != null ? "/" + form.getFormType() : "")
-                + "/" + entity.getFormTypeId()
-                + " REAL: " + realSize + ", READ: " + readSize);
+        getLogger().warning("[INVALID/%s] Entity %d/%d%s/%d REAL: %d, READ: %d",
+                mofEntry != null ? mofEntry.getDisplayName() : "",
+                this.entities.indexOf(entity), entity.getDifficulty(),
+                form != null ? "/" + form.getFormType() : "", entity.getFormTypeId(),
+                realSize, readSize);
 
         return true;
     }

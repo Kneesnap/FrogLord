@@ -199,7 +199,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
             }
 
             for (GameImage image : images)
-                getLogger().info("Found " + texId + " as texture #" + image.getLocalImageID() + " in " + FileUtils.stripExtension(image.getParent().getFileDisplayName()) + ".");
+                getLogger().info("Found %d as texture #%d in %s.", texId, image.getLocalImageID(), FileUtils.stripExtension(image.getParent().getFileDisplayName()));
 
             GameImage image = images.get(0);
             VLOController controller = image.getParent().makeEditorUI();

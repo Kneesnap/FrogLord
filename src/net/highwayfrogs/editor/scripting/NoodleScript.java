@@ -42,7 +42,7 @@ public class NoodleScript {
     public void printDisassembly(ILogger logger) {
         StringBuilder builder = new StringBuilder();
         disassemble(builder, true);
-        logger.info(String.format("Script '%s':%n%s", getName(), builder));
+        logger.info("Script '%s':%n%s", getName(), builder);
     }
 
     /**

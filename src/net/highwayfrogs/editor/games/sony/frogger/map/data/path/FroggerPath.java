@@ -130,7 +130,7 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
             arrayBuilder.append(entityPathIds.get(i));
         }
 
-        getLogger().warning(" - List in Map File (" + entityPathIds.size() + "): " + arrayBuilder.append(']'));
+        getLogger().warning(" - List in Map File (%d): %s", entityPathIds.size(), arrayBuilder.append(']'));
 
         // Generate FrogLord one:
         arrayBuilder.setLength(1);
@@ -140,7 +140,7 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
             arrayBuilder.append(this.pathEntities.get(i).getEntityIndex());
         }
 
-        getLogger().warning(" - FrogLord's List (" + this.pathEntities.size() + "):  " + arrayBuilder.append(']'));
+        getLogger().warning(" - FrogLord's List (%d): %s", this.pathEntities.size(), arrayBuilder.append(']'));
     }
 
     @Override

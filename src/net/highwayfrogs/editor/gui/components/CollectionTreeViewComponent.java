@@ -107,7 +107,7 @@ public abstract class CollectionTreeViewComponent<TGameInstance extends GameInst
                     throw new IllegalStateException("No tree node was returned for the view entry '" + viewEntry + "'.");
 
                 if (treeNodeEntry.getParent().removeChildNode(viewEntry) == null)
-                    getLogger().severe("Failed to remove the child node for view entry '" + viewEntry + "'.");
+                    getLogger().severe("Failed to remove the child node for view entry '%s'.", viewEntry);
             }
         }
 

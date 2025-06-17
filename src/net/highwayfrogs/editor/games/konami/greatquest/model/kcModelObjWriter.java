@@ -163,7 +163,7 @@ public class kcModelObjWriter {
             if (lastMaterialId != prim.getMaterialId() && mtlWriter != null) {
                 if (context.getModel().getMaterials().size() <= prim.getMaterialId()) {
                     // TODO: !
-                    context.getLogger().warning("Got material ID " + prim.getMaterialId() + ", but... there are only " + context.getModel().getMaterials().size() + " material(s) available in the model.");
+                    context.getLogger().warning("Got material ID %d, but... there are only %d material(s) available in the model.", prim.getMaterialId(), context.getModel().getMaterials().size());
                 } else {
                     kcMaterial material = context.getModel().getMaterials().get(prim.getMaterialId());
                     objWriter.append("usemtl ");
@@ -219,7 +219,7 @@ public class kcModelObjWriter {
             if (lastMaterialId != vtxBuf.getMaterialId() && mtlWriter != null) {
                 if (context.getMap().getMaterials().size() <= vtxBuf.getMaterialId()) {
                     // TODO: !
-                    context.getLogger().warning("Got material ID " + vtxBuf.getMaterialId() + ", but... there are only " + context.getMap().getMaterials().size() + " material(s) available in the model.");
+                    context.getLogger().warning("Got material ID %d, but... there are only %d material(s) available in the model.", vtxBuf.getMaterialId(), context.getMap().getMaterials().size());
                 } else {
                     kcMaterial material = context.getMap().getMaterials().get(vtxBuf.getMaterialId());
                     objWriter.append("usemtl ");
@@ -307,7 +307,7 @@ public class kcModelObjWriter {
                 writeTriangleStrip(context, (int) prim.getVertexCount());
                 break;
             default:
-                context.getLogger().warning("kcModel had a prim of type '" + prim.getPrimitiveType() + "', which was supposed because it was unsupported.");
+                context.getLogger().warning("kcModel had a prim of type '%s', which was supposed because it was unsupported.", prim.getPrimitiveType());
         }
     }
 
@@ -320,7 +320,7 @@ public class kcModelObjWriter {
                 writeTriangleStrip(context, vtxBuf.getVertexCount());
                 break;
             default:
-                context.getLogger().warning("kcCResOctTreeSceneMgr had a prim of type '" + vtxBuf.getPrimitiveType() + "', which was supposed because it was unsupported.");
+                context.getLogger().warning("kcCResOctTreeSceneMgr had a prim of type '%s', which was supposed because it was unsupported.", vtxBuf.getPrimitiveType());
         }
     }
 

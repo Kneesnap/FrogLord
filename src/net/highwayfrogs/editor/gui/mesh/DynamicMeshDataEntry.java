@@ -730,12 +730,15 @@ public class DynamicMeshDataEntry {
      * Print debug information about this entry.
      */
     public void printDebugInformation(ILogger logger, String leftPadding) {
-        logger.info(leftPadding + "Mesh Entry (" + Utils.getSimpleName(this) + " for " + Utils.getSimpleName(this.mesh) + "):");
-        logger.info(leftPadding + "Faces [Start: " + this.faceStartIndex + ", Written: " + this.writtenFaceCount + ", Pending: " + this.pendingFaceCount
-                + ", Array Size: " + this.mesh.getEditableFaces().size() + "/" + this.mesh.getEditableFaces().pendingSize() + "/" + this.mesh.getFaces().size() + "]");
-        logger.info(leftPadding + "TexCoords [Start: " + this.texCoordStartIndex + ", Written: " + this.writtenTexCoordCount + ", Pending: " + this.pendingTexCoordCount
-                + ", Array Size: " + this.mesh.getEditableTexCoords().size() + "/" + this.mesh.getEditableTexCoords().pendingSize() + "/" + this.mesh.getTexCoords().size() + "]");
-        logger.info(leftPadding + "Vertex [Start: " + this.vertexStartIndex + ", Written: " + this.writtenVertexCount + ", Pending: " + this.pendingVertexCount
-                + ", Array Size: " + this.mesh.getEditableVertices().size() + "/" + this.mesh.getEditableVertices().pendingSize() + "/" + this.mesh.getPoints().size() + "]");
+        logger.info("%sMesh Entry (%s for %s):", leftPadding, Utils.getSimpleName(this), Utils.getSimpleName(this.mesh));
+        logger.info("%sFaces [Start: %d, Written: %d, Pending: %d, Array Size: %d/%d/%d]",
+                leftPadding, this.faceStartIndex, this.writtenFaceCount, this.pendingFaceCount,
+                this.mesh.getEditableFaces().size(), this.mesh.getEditableFaces().pendingSize(), this.mesh.getFaces().size());
+        logger.info("%sTexCoords [Start: %d, Written: %d, Pending: %d, Array Size: %d/%d/%d]",
+                leftPadding, this.texCoordStartIndex, this.writtenTexCoordCount, this.pendingTexCoordCount,
+                this.mesh.getEditableTexCoords().size(), this.mesh.getEditableTexCoords().pendingSize(), this.mesh.getTexCoords().size());
+        logger.info("%sVertex [Start: %d, Written: %d, Pending: %d, Array Size: %d/%d/%d]",
+                leftPadding, this.vertexStartIndex, this.writtenVertexCount, this.pendingVertexCount,
+                this.mesh.getEditableVertices().size(), this.mesh.getEditableVertices().pendingSize(), this.mesh.getPoints().size());
     }
 }

@@ -99,7 +99,12 @@ public class FroggerPathSegmentArc extends FroggerPathSegment {
         // There are only 17 occurrences with a value > 1 in psx-retail-usa. It seems like Mappy calculated the segment length with the wrong radius
         // The calculated radius if incorrect is greater than the original, because it seems there was an issue with Mappy which could cause the very end of a segment to be excluded
         if (Math.abs(diff) >= 30)
-            getLogger().warning("calculateFixedRadius() was inaccurate! (Read: " + readRadius + "/" + DataUtils.fixedPointIntToFloat4Bit(readRadius) + ", Calculated: " + calculatedRadius + "/" + DataUtils.fixedPointIntToFloat4Bit(calculatedRadius) + ", Difference: " + diff + "/" + DataUtils.fixedPointIntToFloat4Bit(diff) + ", Pitch: " + this.pitch + "/" + DataUtils.fixedPointIntToFloat4Bit(this.pitch) + ", Length: " + getLength() + "/" + DataUtils.fixedPointIntToFloat4Bit(getLength()) + ").");
+            getLogger().warning("calculateFixedRadius() was inaccurate! (Read: %d/%f, Calculated: %d/%f, Difference: %d/%f, Pitch: %d/%f, Length: %d/%f).",
+                    readRadius, DataUtils.fixedPointIntToFloat4Bit(readRadius),
+                    calculatedRadius, DataUtils.fixedPointIntToFloat4Bit(calculatedRadius),
+                    diff, DataUtils.fixedPointIntToFloat4Bit(diff),
+                    this.pitch, DataUtils.fixedPointIntToFloat4Bit(this.pitch),
+                    getLength(), DataUtils.fixedPointIntToFloat4Bit(getLength()));
 
         // Normal warnings.
         if (FroggerPathSegmentArcOrientation.getDirection(this.normal) == null)

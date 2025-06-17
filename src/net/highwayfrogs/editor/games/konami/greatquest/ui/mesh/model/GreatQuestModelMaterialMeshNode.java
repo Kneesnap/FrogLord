@@ -70,7 +70,7 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
                 writeTriangleStrip(entry, uvStartIndex, vtxStartIndex, (int) modelPrim.getVertexCount());
                 break;
             default:
-                getLogger().severe("kcModel had a primitive of type '" + modelPrim.getPrimitiveType() + "', which was supposed because it was unsupported.");
+                getLogger().severe("kcModel had a primitive of type '%s', which was supposed because it was unsupported.", modelPrim.getPrimitiveType());
         }
 
         return entry;

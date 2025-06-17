@@ -7,7 +7,6 @@ import net.highwayfrogs.editor.games.sony.*;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerVersionComparison;
 import net.highwayfrogs.editor.games.sony.shared.pp20.PP20Packer.PackResult;
-import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -97,7 +96,7 @@ public class MWIResourceEntry extends SCSharedGameData implements ISCFileDefinit
         if (testFlag(FLAG_MANUAL_COMPRESSION) && testFlag(FLAG_AUTOMATIC_COMPRESSION))
             getLogger().warning("Entry has BOTH the manual compression flag and the automatic compression flag.");
         if (testFlag(FLAG_IS_GROUP) && (testFlag(FLAG_SINGLE_ACCESS) || testFlag(FLAG_GROUP_ACCESS))) {
-            getLogger().warning("Entry has group indicator flag set in addition in addition to an incompatible flag. (Single Access: " + testFlag(FLAG_SINGLE_ACCESS) + ", " + testFlag(FLAG_GROUP_ACCESS) + ")");
+            getLogger().warning("Entry has group indicator flag set in addition in addition to an incompatible flag. (Single Access: %b, %b)", testFlag(FLAG_SINGLE_ACCESS), testFlag(FLAG_GROUP_ACCESS));
         } else if (testFlag(FLAG_SINGLE_ACCESS) && testFlag(FLAG_GROUP_ACCESS)) {
             getLogger().warning("Entry has BOTH the single access flag and the group access flag set.");
         }
@@ -320,11 +319,11 @@ public class MWIResourceEntry extends SCSharedGameData implements ISCFileDefinit
             byte[] rawBytes = compressedFileBytes != null ? compressedFileBytes : fileBytes;
             int calculatedChecksum = SCUtils.calculateChecksum(rawBytes);
             if (calculatedChecksum != this.checksum)
-                getLogger().warning("Checksum Mismatch!! MWI Checksum: " + NumberUtils.toHexString(this.checksum) + ", Calculated Checksum: " + NumberUtils.toHexString(calculatedChecksum) + " [Compressed: " + isCompressed() + "]");
+                getLogger().warning("Checksum Mismatch!! MWI Checksum: 0x%X, Calculated Checksum: 0x%X [Compressed: %b]", this.checksum, calculatedChecksum, isCompressed());
         }
 
         if (safetyMarginWordCount != this.safetyMarginWordCount)
-            getLogger().warning("Safety Margin mismatch!! Read Safety Margin: " + this.safetyMarginWordCount + ", Calculated Safety Margin: " + safetyMarginWordCount);
+            getLogger().warning("Safety Margin mismatch!! Read Safety Margin: %d, Calculated Safety Margin: %d", this.safetyMarginWordCount, safetyMarginWordCount);
 
         // Calculate the SHA1 hash.
         if (FroggerVersionComparison.isEnabled() && this.sha1Hash == null)

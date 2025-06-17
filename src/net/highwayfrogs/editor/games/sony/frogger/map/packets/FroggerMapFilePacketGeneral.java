@@ -79,7 +79,7 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
         // This value is unused.
         short unusedPerspective = reader.readShort();
         if (unusedPerspective != GAME_PERSPECTIVE && !getParentFile().isEarlyMapFormat()) // Sanity check.
-            getLogger().warning("Map files are expected to have the unused perspective value set to " + GAME_PERSPECTIVE + ", but this one was " + unusedPerspective + ".");
+            getLogger().warning("Map files are expected to have the unused perspective value set to %d, but this one was %d.", GAME_PERSPECTIVE, unusedPerspective);
 
         if (hasCameraData()) {
             this.defaultCameraSourceOffset.loadWithPadding(reader);

@@ -33,7 +33,7 @@ public class FroggerEntityDataTurtle extends FroggerEntityDataPathInfo {
         int turtleType = reader.readInt();
         this.divingEnabled = (turtleType == TYPE_DIVING);
         if (turtleType != TYPE_DIVING && turtleType != TYPE_NOT_DIVING)
-            getLogger().warning("st_turtle_type was expected to be either 0 or 1, but was actually " + turtleType);
+            getLogger().warning("st_turtle_type was expected to be either 0 or 1, but was actually %d.", turtleType);
     }
 
     @Override

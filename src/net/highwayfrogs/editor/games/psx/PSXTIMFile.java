@@ -4,11 +4,7 @@ import javafx.scene.image.Image;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.ArraySource;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
-import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.TIMController;
@@ -17,6 +13,10 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.Proper
 import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.ArraySource;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
@@ -81,7 +81,7 @@ public class PSXTIMFile extends SCSharedGameFile {
             // Ensure the reader position is in the expected spot.
             int clutEndPos = clutStartPos + clutSize;
             if (reader.getIndex() != clutEndPos) {
-                getLogger().warning("CLUT Position Mismatch for " + getFileDisplayName() + ", expected " + NumberUtils.toHexString(clutEndPos) + ", but got " + NumberUtils.toHexString(reader.getIndex()) + ".");
+                getLogger().warning("CLUT Position Mismatch for %s, expected 0x%X, but got 0x%X.", getFileDisplayName(), clutEndPos, reader.getIndex());
                 reader.setIndex(clutEndPos);
             }
         }

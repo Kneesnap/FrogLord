@@ -140,7 +140,7 @@ public class FroggerMapGroup extends SCGameData<FroggerGameInstance> {
             int polygonIndex = Utils.binarySearch(globalPolygonsByType, polygonPointerAddress, FroggerMapPolygon::getLastReadAddress);
             if (polygonIndex < 0) {
                 if (!isEarlyJulyPointerFormat())
-                    getLogger().severe("Failed to resolve map group polygon block " + polygonType + " at " + NumberUtils.toHexString(polygonPointerAddress) + " with " + polygonCount + " polygons.");
+                    getLogger().severe("Failed to resolve map group polygon block %s at 0x%X with %d polygon(s).", polygonType, polygonPointerAddress, polygonCount);
                 continue;
             }
 

@@ -97,11 +97,11 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
 
         int remainingDataInBytes = reader.readInt() - Constants.INTEGER_SIZE;
         if (reader.getRemaining() != remainingDataInBytes)
-            getLogger().warning("OctTree file in '" + getParentFile().getDebugName() + "' said it had " + remainingDataInBytes + " remaining bytes, but it actually had " + reader.getRemaining() + ".");
+            getLogger().warning("OctTree file in '%s' said it had %d remaining byte(s), but it actually had %d.", getParentFile().getDebugName(), remainingDataInBytes, reader.getRemaining());
 
         int version = reader.readInt();
         if (version != SUPPORTED_VERSION)
-            getLogger().severe("OctTree file in '" + getParentFile().getDebugName() + "' identified as version " + version + ", but we only understand version " + SUPPORTED_VERSION + ".");
+            getLogger().severe("OctTree file in '%s' identified as version %d, but we only understand version %d.", getParentFile().getDebugName(), version, SUPPORTED_VERSION);
 
         int meshCount = reader.readInt();
         int treeEntityDataSize = reader.readInt();
@@ -157,7 +157,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
         // However, I'm not really sure why we'd ever want this, since collision meshes aren't generally going to be shared.
         // So, we'll leave this unimplemented unless we see it actually used.
         if (sourcePathMeshCount != 0 || sourcePathVisualCount != 0)
-            getLogger().severe("The sourcePath counts were not zero!! This feature was not added since it was not seen in any versions at the time of writing! (Source Path Mesh Count: " + sourcePathMeshCount + ", Source Path Visual Count: " + sourcePathVisualCount + ")");
+            getLogger().severe("The sourcePath counts were not zero!! This feature was not added since it was not seen in any versions at the time of writing! (Source Path Mesh Count: %d, Source Path Visual Count: %d)", sourcePathMeshCount, sourcePathVisualCount);
     }
 
     private GamePlatform getLoadPlatform() {

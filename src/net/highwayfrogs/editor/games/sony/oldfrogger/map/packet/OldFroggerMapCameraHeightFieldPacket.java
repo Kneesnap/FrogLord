@@ -1,12 +1,12 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.packet;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerCameraHeightFieldManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.Arrays;
 
@@ -42,7 +42,7 @@ public class OldFroggerMapCameraHeightFieldPacket extends OldFroggerMapPacket {
         this.startPositionZ = reader.readShort();
 
         if (heightFieldEntryCount != (this.xSquareCount * this.zSquareCount))
-            getLogger().warning("HeightField EntryCount was " + heightFieldEntryCount + " bytes with dimensions: [" + this.xSquareCount + ", " + this.zSquareCount + "]");
+            getLogger().warning("HeightField EntryCount was %d bytes with dimensions: [%d, %d]", heightFieldEntryCount, this.xSquareCount, this.zSquareCount);
 
         // Read height map.
         if (this.xSquareCount > 0 && this.zSquareCount > 0) {

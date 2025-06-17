@@ -46,12 +46,12 @@ public class MoonWarriorLevelTableEntry implements ISCLevelTableEntry {
                 this.vloArchive = this.mapFile.getArchive().getFileByName("WAREHOUSE2.VLO");
                 break;
             default:
-                this.mapFile.getLogger().severe("Unrecognized map file to get a VLO from: '" + this.mapFile.getFileDisplayName() + "'.");
+                this.mapFile.getLogger().severe("Unrecognized map file to get a VLO from: '%s'.", this.mapFile.getFileDisplayName());
                 return null;
         }
 
         if (this.vloArchive == null)
-            this.mapFile.getLogger().severe("Failed to get VLO for map file '" + this.mapFile.getFileDisplayName() + "'.");
+            this.mapFile.getLogger().severe("Failed to get VLO for map file '%s'.", this.mapFile.getFileDisplayName());
 
         return this.vloArchive;
     }

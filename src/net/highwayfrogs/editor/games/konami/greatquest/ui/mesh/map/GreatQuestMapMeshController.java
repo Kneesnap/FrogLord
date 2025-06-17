@@ -70,7 +70,7 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
             kcMaterial material = materialMesh.getMapMaterial();
             if (material != null) {
                 List<?> vertexBuffers = getMap().getSceneManager().getVertexBuffersForMaterial(material);
-                getLogger().info("Clicked on " + "'" + material.getMaterialName() + "'/'" + material.getTextureFileName() + "' (" + (vertexBuffers != null ? vertexBuffers.size() : 0) + " buffers)");
+                getLogger().info("Clicked on '%s'/'%s' (%s buffers)", material.getMaterialName(), material.getTextureFileName(), (vertexBuffers != null ? vertexBuffers.size() : 0));
             }
 
             kcVtxBufFileStruct vtxBuf = materialMesh.getMainNode().getDataSourceByFaceIndex(result.getIntersectedFace());

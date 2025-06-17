@@ -44,7 +44,6 @@ import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewCom
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
-import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -290,7 +289,7 @@ public class FroggerGameInstance extends SCGameInstance {
             for (GameImage image : vlo.getImages())
                 maxTexId = Math.max(maxTexId, image.getTextureId());
 
-        getLogger().info("Maximum Texture ID: " + maxTexId);
+        getLogger().info("Maximum Texture ID: %d", maxTexId);
 
         String[] imageNames = new String[maxTexId + 1];
         for (int i = 0; i < imageNames.length; i++)
@@ -571,7 +570,7 @@ public class FroggerGameInstance extends SCGameInstance {
             int byteSize = this.getVersionConfig().isAtOrBeforeBuild4() ? FormEntry.OLD_BYTE_SIZE : FormEntry.BYTE_SIZE;
             int entryCount = (int) (currentBook.getFormLibraryPointer() - lastBook.getFormLibraryPointer()) / byteSize;
             if (entryCount != nameCount)
-                getLogger().warning(lastTheme + " has " + nameCount + " configured form names but " + entryCount + " calculated form entries in the form library.");
+                getLogger().warning("%s has %d configured form names but %d calculated form entries in the form library.", lastTheme, nameCount, entryCount);
 
             // Load form library.
             lastBook.loadFormLibrary(this, nameCount);
@@ -645,7 +644,7 @@ public class FroggerGameInstance extends SCGameInstance {
             }
 
             this.getVersionConfig().setDemoTableAddress(findIndex);
-            getLogger().info("Found the demo table address at " + NumberUtils.toHexString(findIndex));
+            getLogger().info("Found the demo table address at 0x%X", findIndex);
         }
 
         reader.setIndex(this.getVersionConfig().getDemoTableAddress());
@@ -710,7 +709,7 @@ public class FroggerGameInstance extends SCGameInstance {
 
             FroggerScript script = this.scripts.get(i);
             if (script.isTooLarge())
-                getLogger().warning("Saving " + script.getName() + ", which is larger than what is considered safe!");
+                getLogger().warning("Saving %s, which is larger than what is considered safe!", script.getName());
 
             exeWriter.setIndex((int) (address - getRamOffset()));
             script.save(exeWriter);

@@ -70,18 +70,18 @@ public class kcOctTree extends GameData<GreatQuestInstance> implements IMultiLin
         reader.skipBytes(RUNTIME_VALUE_COUNT * Constants.INTEGER_SIZE);
 
         if (rootBranch != DEFAULT_ROOT_BRANCH)
-            getLogger().warning("Read the default rootBranch as " + rootBranch + ", but " + DEFAULT_ROOT_BRANCH + " was expected.");
+            getLogger().warning("Read the default rootBranch as %d, but %d was expected.", rootBranch, DEFAULT_ROOT_BRANCH);
 
         // Validate treeSize/treeDepth.
         if (maxTreeSize != getTreeSize())
-            getLogger().severe("The maxTreeSize was not (1 << treeDepth)! (" + maxTreeSize + " != (1 << " + this.treeDepth + "))");
+            getLogger().severe("The maxTreeSize was not (1 << treeDepth)! (%d != (1 << %d))", maxTreeSize, this.treeDepth);
         String failureMessage = validateTreeDepth(this.treeDepth);
         if (failureMessage != null)
             getLogger().severe(failureMessage);
 
         // Validate smallestNodeSize/smallestNodeDepth.
         if (smallestNodeSize != getSmallestNodeSize())
-            getLogger().severe("The smallestNodeSize was not (1 << (treeDepth - smallestNodeDepth))! (" + smallestNodeSize + " != (1 << (" + this.treeDepth + " - " + this.smallestNodeDepth + ")))");
+            getLogger().severe("The smallestNodeSize was not (1 << (treeDepth - smallestNodeDepth))! (%d != (1 << (%d - %d)))", smallestNodeSize, this.treeDepth, this.smallestNodeDepth);
         failureMessage = validateSmallestNodeDepth(this.smallestNodeDepth);
         if (failureMessage != null)
             getLogger().severe(failureMessage);
