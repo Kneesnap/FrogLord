@@ -386,6 +386,16 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
     }
 
     /**
+     * Test if the given coordinates are part of the grid.
+     * @param gridX the grid x coordinate to test
+     * @param gridZ the grid z coordinate to test
+     * @return true iff the grid coordinates are valid.
+     */
+    public boolean isValidGridCoordinate(int gridX, int gridZ) {
+        return gridX >= 0 && gridX < this.gridXCount && gridZ >= 0 && gridZ < this.gridZCount;
+    }
+
+    /**
      * Gets a grid stack from grid coordinates, or throws an error if the desired grid stack is out of bounds.
      * @param gridX The grid x coordinate.
      * @param gridZ The grid z coordinate.

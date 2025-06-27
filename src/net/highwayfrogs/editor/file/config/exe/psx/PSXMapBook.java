@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.file.config.exe.psx;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
-import net.highwayfrogs.editor.games.generic.GamePlatform;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
@@ -83,6 +82,13 @@ public class PSXMapBook extends MapBook {
         if (wadFile != null)
             return wadFile;
 
+        // PSX Build 6 is the first build seen to have per-level wad files.
+        if (getGameInstance().getVersionConfig().isAtOrBeforeBuild4()) {
+            wadFile = getThemeWad(map);
+            if (wadFile != null)
+                return wadFile;
+        }
+
         throw new RuntimeException("Could not resolve wad file for '" + map.getFileDisplayName() + "'.");
     }
 
@@ -91,7 +97,7 @@ public class PSXMapBook extends MapBook {
         int wadId = this.wadId;
 
         // When the map reports a particular theme, I think it's reliable.
-        if (map != null && map.getMapTheme() != null && getConfig().getPlatform() == GamePlatform.PLAYSTATION && !map.isMultiplayer()) {
+        if (map != null && map.getMapTheme() != null && !map.isMultiplayer()) {
             PSXThemeBook themeBook = ((PSXThemeBook) getGameInstance().getThemeBook(map.getMapTheme()));
             if (themeBook != null && themeBook.getWadId() != wadId)
                 return getGameInstance().getGameFile(themeBook.getWadId());

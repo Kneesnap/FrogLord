@@ -245,16 +245,23 @@ public class FroggerPathInfo extends SCGameData<FroggerGameInstance> {
         IVector vecZ = new IVector(result.getRotation());
         if (entity != null && entity.testFlag(FroggerMapEntityFlag.PROJECT_ON_LAND)) { // Example: Hedgehogs and many of the jungle entities.
             FroggerMapFilePacketGrid gridPacket = getMapFile().getGridPacket();
-            FroggerGridStack gridStack = gridPacket.getGridStack(gridPacket.getGridXFromWorldX(pathPosition.getX()), gridPacket.getGridZFromWorldZ(pathPosition.getZ()));
-            FroggerGridStackInfo stackInfo = gridStack != null ? gridStack.getGridStackInfo() : null;
-            if (stackInfo != null) {
-                int dx = stackInfo.getXSlope().dotProduct(vecZ) >> 12;
-                int dz = stackInfo.getZSlope().dotProduct(vecZ) >> 12;
-                if (position != null)
-                    position.setY(stackInfo.getY() >> 4); // Snap to the ground.
-                vecZ.setX(((stackInfo.getXSlope().getX() * dx) + (stackInfo.getZSlope().getX() * dz)) >> 12);
-                vecZ.setY(((stackInfo.getXSlope().getY() * dx) + (stackInfo.getZSlope().getY() * dz)) >> 12);
-                vecZ.setZ(((stackInfo.getXSlope().getZ() * dx) + (stackInfo.getZSlope().getZ() * dz)) >> 12);
+            int gridX = gridPacket.getGridXFromWorldX(pathPosition.getX());
+            int gridZ = gridPacket.getGridZFromWorldZ(pathPosition.getZ());
+
+            if (gridPacket.isValidGridCoordinate(gridX, gridZ)) {
+                FroggerGridStack gridStack = gridPacket.getGridStack(gridX, gridZ);
+                FroggerGridStackInfo stackInfo = gridStack != null ? gridStack.getGridStackInfo() : null;
+                if (stackInfo != null) {
+                    int dx = stackInfo.getXSlope().dotProduct(vecZ) >> 12;
+                    int dz = stackInfo.getZSlope().dotProduct(vecZ) >> 12;
+                    if (position != null)
+                        position.setY(stackInfo.getY() >> 4); // Snap to the ground.
+                    vecZ.setX(((stackInfo.getXSlope().getX() * dx) + (stackInfo.getZSlope().getX() * dz)) >> 12);
+                    vecZ.setY(((stackInfo.getXSlope().getY() * dx) + (stackInfo.getZSlope().getY() * dz)) >> 12);
+                    vecZ.setZ(((stackInfo.getXSlope().getZ() * dx) + (stackInfo.getZSlope().getZ() * dz)) >> 12);
+                }
+            } else {
+                entity.getLogger().warning("I'm located outside of the collision grid, but snap to the grid! This may crash the game!");
             }
         }
 
