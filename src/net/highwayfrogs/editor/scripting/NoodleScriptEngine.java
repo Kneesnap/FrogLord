@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.scripting.functions.*;
 import net.highwayfrogs.editor.scripting.runtime.NoodleObjectInstance;
 import net.highwayfrogs.editor.scripting.runtime.NoodlePrimitive;
 import net.highwayfrogs.editor.scripting.runtime.NoodleRuntimeException;
+import net.highwayfrogs.editor.scripting.runtime.templates.NoodleArrayTemplate;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleObjectTemplate;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleWrapperTemplate;
 import net.highwayfrogs.editor.scripting.runtime.templates.utils.NoodleLoggerTemplate;
@@ -154,6 +155,9 @@ public class NoodleScriptEngine extends SharedGameObject {
         Class<?> tempClass = object.getClass();
         if (tempClass.isPrimitive() || String.class.equals(tempClass))
             return null;
+
+        if (tempClass.isArray())
+            return (NoodleObjectTemplate<? extends T>) NoodleArrayTemplate.INSTANCE;
 
         while (tempClass != null && !Object.class.equals(tempClass)) {
             List<NoodleObjectTemplate<?>> templates = this.templatesByClass.get(tempClass);
@@ -300,6 +304,7 @@ public class NoodleScriptEngine extends SharedGameObject {
         // A bunch of classes which are generally useful, and good to expose to any script.
         // For the interface/abstract classes added here, they are a temporary measure so that isRepresentable() can return true.
         // Consider revisiting them at a later date once the scripting system has been used more.
+        addTemplate(NoodleArrayTemplate.INSTANCE);
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(Collection.class));
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(List.class));
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(ArrayList.class));
@@ -307,6 +312,7 @@ public class NoodleScriptEngine extends SharedGameObject {
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(HashSet.class));
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(Map.class));
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(HashMap.class));
+        addTemplate(NoodleWrapperTemplate.getCachedTemplate(Arrays.class));
         addTemplate(NoodleLoggerTemplate.INSTANCE);
         addTemplate(NoodleStringTemplate.INSTANCE);
 

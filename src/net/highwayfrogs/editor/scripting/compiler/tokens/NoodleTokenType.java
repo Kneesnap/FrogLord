@@ -8,6 +8,8 @@ public enum NoodleTokenType {
     OPERATOR, // + - * / %
     PAR_OPEN, // (
     PAR_CLOSE, // )
+    SBR_OPEN,  // [
+    SBR_CLOSE,  // ]
     NUMBER,  // 37
     IDENTIFIER, // some
     COMMA, // ,

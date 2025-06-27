@@ -34,7 +34,8 @@ public enum NoodleInstructionType {
     JUMP_PUSH(NoodleInstructionJumpPush::new), // (pos): js.push(pc); pc = pos
     JUMP_POP(NoodleInstructionJumpPop::new), // (): pc = js.pop()
     DUP(NoodleInstructionDuplicate::new), // push(top())
-    SWITCH_JUMP(NoodleInstructionSwitchJump::new); // (pos): if (pop() == peek()) { pop(); pc = pos; }
+    SWITCH_JUMP(NoodleInstructionSwitchJump::new), // (pos): if (pop() == peek()) { pop(); pc = pos; }
+    CREATE_ARRAY(NoodleInstructionCreateArray::new);
 
     private final Supplier<NoodleInstruction> instructionMaker;
 }

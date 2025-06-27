@@ -34,5 +34,6 @@ public enum NoodleNodeType {
     POSTFIX, // (node, delta) x++/x--
     ADJFIX, // (node, delta) x+=1/x-=1 (statement)
     SWITCH, // (expr, case_values, case_exprs, ?default_node)
-    EVALUATION_CHAIN
+    EVALUATION_CHAIN,
+    ARRAY_DEFINITION,
 }

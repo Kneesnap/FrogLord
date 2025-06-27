@@ -125,7 +125,7 @@ public abstract class NoodleObjectTemplate<TType> {
      * @return If the object is supported.
      */
     public final boolean isObjectSupported(Object object) {
-        return object != null && this.wrappedClass.isInstance(object) && this.isSupported(this.wrappedClass.cast(object));
+        return this.wrappedClass.isInstance(object) && this.isSupported(this.wrappedClass.cast(object));
     }
 
     /**

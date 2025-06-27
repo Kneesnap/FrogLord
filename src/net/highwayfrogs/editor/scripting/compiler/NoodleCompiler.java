@@ -191,6 +191,14 @@ public class NoodleCompiler {
 
                 out.add(new NoodleInstructionCall(pos, func.getFunctionName(), argCount));
                 break;
+            case ARRAY_DEFINITION:
+                NoodleNodeArrayDefinition arrayDefNode = (NoodleNodeArrayDefinition) node;
+                int arrayElementCount = arrayDefNode.getArrayElements().size();
+                for (int i = 0; i < arrayElementCount; i++)
+                    compileExpression(context, arrayDefNode.getArrayElements().get(i));
+
+                out.add(new NoodleInstructionCreateArray(pos, arrayElementCount));
+                break;
             case BLOCK:
                 NoodleNodeBlock block = (NoodleNodeBlock) node;
                 for (int i = 0; i < block.getNodes().size(); i++)
@@ -634,6 +642,7 @@ public class NoodleCompiler {
      * Builds a statement AST node from the tokens.
      * @param context The context to build from.
      */
+    @SuppressWarnings("LocalVariableUsedAndDeclaredInDifferentSwitchBranches")
     public static void buildStatement(NoodleCompileContext context) {
         NoodleToken tkn;
         NoodleToken tk = context.getCurrentTokenIncrement();
@@ -894,6 +903,7 @@ public class NoodleCompiler {
      * @param context The context to build from.
      * @param flags The flags to build with.
      */
+    @SuppressWarnings({"UnnecessaryLocalVariable", "SwitchStatementWithTooFewBranches"})
     public static void buildExpression(NoodleCompileContext context, int flags) {
         NoodleToken tk = context.getCurrentTokenIncrement();
 
@@ -954,6 +964,10 @@ public class NoodleCompiler {
                 tk = context.getCurrentTokenIncrement();
                 if (tk.getTokenType() != NoodleTokenType.PAR_CLOSE)
                     throw new NoodleSyntaxException("Expected a `)`, but got '%s' instead.", tk, tk);
+                break;
+            case SBR_OPEN: // [value...]
+                List<NoodleNode> arrayNodes = buildArrayDefinition(context);
+                context.setNode(new NoodleNodeArrayDefinition(tk.getCodeLocation(), arrayNodes));
                 break;
             case OPERATOR: // -value, +value
                 switch (((NoodleTokenOperator) tk).getOperator()) {
@@ -1045,6 +1059,25 @@ public class NoodleCompiler {
             throw new NoodleSyntaxException("Unclosed function arguments `(`.", tk);
 
         return args;
+    }
+
+    private static List<NoodleNode> buildArrayDefinition(NoodleCompileContext context) {
+        List<NoodleNode> elements = new ArrayList<>();
+
+        NoodleToken tk = context.getCurrentToken();
+        if (tk.getTokenType() == NoodleTokenType.SBR_CLOSE) {
+            context.incrementToken();
+            return elements; // Empty array definition.
+        }
+
+        do {
+            buildExpression(context, 0);
+            elements.add(context.getNode());
+        } while ((tk = context.getCurrentTokenIncrement()).getTokenType() == NoodleTokenType.COMMA);
+        if (tk.getTokenType() != NoodleTokenType.SBR_CLOSE)
+            throw new NoodleSyntaxException("Expected a `]`, but got '%s' instead.", tk, tk);
+
+        return elements;
     }
 
     /**
@@ -1221,6 +1254,12 @@ public class NoodleCompiler {
                     break;
                 case ')':
                     out.add(new NoodleToken(NoodleTokenType.PAR_CLOSE, codeLoc));
+                    break;
+                case '[':
+                    out.add(new NoodleToken(NoodleTokenType.SBR_OPEN, codeLoc));
+                    break;
+                case ']':
+                    out.add(new NoodleToken(NoodleTokenType.SBR_CLOSE, codeLoc));
                     break;
                 case '{':
                     out.add(new NoodleToken(NoodleTokenType.CUB_OPEN, codeLoc));
