@@ -3,8 +3,6 @@ package net.highwayfrogs.editor.games.sony.oldfrogger.map.packet;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerReactionType;
@@ -15,6 +13,8 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerZoneManage
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerZoneManager.ZoneRegionEditor;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerZoneManager.ZoneRegionPreview3D;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,6 +71,11 @@ public class OldFroggerMapZonePacket extends OldFroggerMapPacket {
             writer.writeAddressTo(zonePointerStartIndex + (i * Constants.INTEGER_SIZE));
             this.zones.get(i).save(writer);
         }
+    }
+
+    @Override
+    public void clear() {
+        this.zones.clear();
     }
 
     /**

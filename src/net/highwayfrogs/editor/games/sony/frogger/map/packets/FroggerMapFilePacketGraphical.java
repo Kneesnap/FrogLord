@@ -1,10 +1,14 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.packets;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
-import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 
 /**
  * Implements the graphical header packet.
@@ -66,6 +70,30 @@ public class FroggerMapFilePacketGraphical extends FroggerMapFilePacket {
         this.gridPacketAddress = getParentFile().getGridPacket().getLastValidWriteHeaderAddress();
         if (getParentFile().isMapAnimationEnabled())
             this.animationPacketAddress = getParentFile().getAnimationPacket().getLastValidWriteHeaderAddress();
+    }
+
+    @Override
+    public void clear() {
+        this.lightPacketAddress = -1;
+        this.groupPacketAddress = -1;
+        this.polygonPacketAddress = -1;
+        this.vertexPacketAddress = -1;
+        this.gridPacketAddress = -1;
+        this.animationPacketAddress = -1;
+    }
+
+    @Override
+    public void copyAndConvertData(SCFilePacket<? extends SCChunkedFile<FroggerGameInstance>, FroggerGameInstance> newChunk) {
+        if (!(newChunk instanceof FroggerMapFilePacketGraphical))
+            throw new ClassCastException("The provided chunk was of type " + Utils.getSimpleName(newChunk) + " when " + FroggerMapFilePacketGraphical.class.getSimpleName() + " was expected.");
+
+        FroggerMapFilePacketGraphical newGraphicalChunk = (FroggerMapFilePacketGraphical) newChunk;
+        newGraphicalChunk.lightPacketAddress = this.lightPacketAddress;
+        newGraphicalChunk.groupPacketAddress = this.groupPacketAddress;
+        newGraphicalChunk.polygonPacketAddress = this.polygonPacketAddress;
+        newGraphicalChunk.vertexPacketAddress = this.vertexPacketAddress;
+        newGraphicalChunk.gridPacketAddress = this.gridPacketAddress;
+        newGraphicalChunk.animationPacketAddress = this.animationPacketAddress;
     }
 
     @Override

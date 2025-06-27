@@ -8,10 +8,13 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapGeneralManager;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
@@ -32,7 +35,7 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
     public static final String IDENTIFIER = "GENE";
     @Setter private int startGridCoordX;
     @Setter private int startGridCoordZ;
-    @Setter private FroggerMapStartRotation startRotation = FroggerMapStartRotation.NORTH;
+    @NonNull @Setter private FroggerMapStartRotation startRotation = FroggerMapStartRotation.NORTH;
     @NonNull @Setter private FroggerMapTheme mapTheme = FroggerMapTheme.SUBURBIA;
     @Setter private int startingTimeLimit = 99;
     private final SVector defaultCameraSourceOffset = new SVector(); // Applied when there is no ZONE for the active area. (If there is a zone, the source/target of the zone will be used.)
@@ -111,7 +114,7 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
 
         writer.writeUnsignedShort(this.startGridCoordX);
         writer.writeUnsignedShort(this.startGridCoordZ);
-        writer.writeShort((short) (this.startRotation != null ? this.startRotation : FroggerMapStartRotation.NORTH).ordinal());
+        writer.writeShort((short) this.startRotation.ordinal());
         if (isAprilFormat()) {
             // The early format is cut off extremely early.
             writer.writeNull(Constants.SHORT_SIZE); // Padding.
@@ -146,6 +149,37 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
     }
 
     @Override
+    public void clear() {
+        this.startGridCoordX = 0;
+        this.startGridCoordZ = 0;
+        this.startRotation = FroggerMapStartRotation.NORTH;
+        this.mapTheme = FroggerMapTheme.SUBURBIA;
+        this.defaultCameraSourceOffset.setValues((short) 0, (short) 0, (short) 0);
+        this.defaultCameraTargetOffset.setValues((short) 0, (short) 0, (short) 0);
+        this.frogRedLighting = -0x80; // (0x80 when treated as unsigned)
+        this.frogGreenLighting = -0x80; // (0x80 when treated as unsigned)
+        this.frogBlueLighting = -0x80; // (0x80 when treated as unsigned)
+    }
+
+    @Override
+    public void copyAndConvertData(SCFilePacket<? extends SCChunkedFile<FroggerGameInstance>, FroggerGameInstance> newChunk) {
+        if (!(newChunk instanceof FroggerMapFilePacketGeneral))
+            throw new ClassCastException("The provided chunk was of type " + Utils.getSimpleName(newChunk) + " when " + FroggerMapFilePacketGeneral.class.getSimpleName() + " was expected.");
+
+        FroggerMapFilePacketGeneral newGeneralChunk = (FroggerMapFilePacketGeneral) newChunk;
+        newGeneralChunk.setStartGridCoordX(this.startGridCoordX);
+        newGeneralChunk.setStartGridCoordZ(this.startGridCoordZ);
+        newGeneralChunk.setStartRotation(this.startRotation);
+        newGeneralChunk.setMapTheme(this.mapTheme);
+        newGeneralChunk.setStartingTimeLimit(this.startingTimeLimit);
+        newGeneralChunk.getDefaultCameraSourceOffset().setValues(this.defaultCameraSourceOffset);
+        newGeneralChunk.getDefaultCameraTargetOffset().setValues(this.defaultCameraTargetOffset);
+        newGeneralChunk.frogRedLighting = this.frogRedLighting;
+        newGeneralChunk.frogGreenLighting = this.frogGreenLighting;
+        newGeneralChunk.frogBlueLighting = this.frogBlueLighting;
+    }
+
+    @Override
     public int getKnownStartAddress() {
         return getParentFile().getHeaderPacket().getGeneralPacketAddress();
     }
@@ -158,7 +192,7 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
         }
 
         propertyList.add("Start Grid Coordinates", "[" + this.startGridCoordX + ", " + this.startGridCoordZ + "]");
-        propertyList.add("Start Grid Rotation", (this.startRotation != null ? this.startRotation.name() + " (" + this.startRotation.getArrow() + ")" : "null"));
+        propertyList.add("Start Grid Rotation", this.startRotation.name() + " (" + this.startRotation.getArrow() + ")");
         if (hasFrogColorData())
             propertyList.add("Frog Ambient Lighting", "<red=" + (this.frogRedLighting & 0xFF) + ",green=" + (this.frogGreenLighting & 0xFF) + ",blue=" + (this.frogBlueLighting & 0xFF) + ">");
         return propertyList;

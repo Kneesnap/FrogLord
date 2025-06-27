@@ -29,6 +29,11 @@ public abstract class FroggerMapFilePacket extends SCFilePacket<FroggerMapFile, 
     }
 
     @Override
+    public FroggerGameInstance getGameInstance() {
+        return (FroggerGameInstance) super.getGameInstance();
+    }
+
+    @Override
     public FroggerConfig getConfig() {
         return (FroggerConfig) super.getConfig();
     }

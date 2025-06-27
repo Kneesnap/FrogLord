@@ -1,14 +1,16 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.packet;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerReactionType;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEditorUtils;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+
+import java.util.Arrays;
 
 /**
  * Contains level-specific data.
@@ -56,6 +58,16 @@ public class OldFroggerMapLevelSpecificPacket extends OldFroggerMapPacket {
         writer.writeShort((short) 0); // Padding
         for (int i = 0; i < this.genericLevelData.length; i++)
             writer.writeInt(this.genericLevelData[i]);
+    }
+
+    @Override
+    public void clear() {
+        this.froggerStartPosition.clear();
+        this.defaultReactionType = OldFroggerReactionType.Nothing;
+        Arrays.fill(this.defaultReactionData, 0);
+        Arrays.fill(this.levelTimers, 0);
+        this.preCalculatedLowestLandscapeHeight = 0;
+        Arrays.fill(this.genericLevelData, 0);
     }
 
     /**

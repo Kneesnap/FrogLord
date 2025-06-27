@@ -3,9 +3,7 @@ package net.highwayfrogs.editor.games.sony.oldfrogger.map.packet;
 import javafx.scene.control.Alert.AlertType;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
@@ -17,6 +15,8 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.*;
 
@@ -122,6 +122,17 @@ public class OldFroggerMapGridHeaderPacket extends OldFroggerMapPacket {
         super.saveBodySecondPass(writer, fileSizeInBytes);
         for (int i = 0; i < this.grids.size(); i++)
             this.grids.get(i).savePolygonAddresses(writer);
+    }
+
+    @Override
+    public void clear() {
+        this.grids.clear();
+        this.type = OldFroggerGridType.DEFORMED;
+        this.xSize = 0;
+        this.zSize = 0;
+        this.xCount = 0;
+        this.zCount = 0;
+        this.basePoint.setValues((short) 0, (short) 0, (short) 0);
     }
 
     @Override

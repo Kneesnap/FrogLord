@@ -59,6 +59,11 @@ public class SCMapEntityPacket<TGameInstance extends SCGameInstance> extends SCM
     }
 
     @Override
+    public void clear() {
+        this.entities.clear();
+    }
+
+    @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {
         propertyList.add("Entity Count", this.entities.size());
         return propertyList;

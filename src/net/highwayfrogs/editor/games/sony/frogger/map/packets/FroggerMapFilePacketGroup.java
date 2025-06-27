@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.sony.frogger.map.packets;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.FroggerMapGroup;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
@@ -10,6 +11,8 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.segments.FroggerPathSegment;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapGeneralManager;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.system.math.Vector3f;
@@ -123,7 +126,7 @@ public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
 
         // Warn if about to save a map which will have rendering issues in-game.
         if (this.groupZCount > MAX_SAFE_GROUP_Z_COUNT)
-            getParentFile().getGameInstance().showWarning(getLogger(),
+            getGameInstance().showWarning(getLogger(),
                     "%s will have rendering issues in-game due to having a groupZCount of %d.\nTo fix the issues, reduce it to %d.",
                     getParentFile().getFileDisplayName(), this.groupZCount, MAX_SAFE_GROUP_Z_COUNT);
 
@@ -152,6 +155,33 @@ public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
 
         // Write path entity lists. Why are path lists stored here? Hard to say.
         getParentFile().getPathPacket().saveEntityLists(writer);
+    }
+
+    @Override
+    public void clear() {
+        this.groupXSize = 1;
+        this.groupZSize = 1;
+        this.groupXSize = GROUP_WORLD_LENGTH;
+        this.groupZSize = GROUP_WORLD_LENGTH;
+        this.invisibleMapGroup.clear();
+        if (this.mapGroups != null)
+            for (int z = 0; z < this.mapGroups.length; z++)
+                for (int x = 0; x < this.mapGroups[z].length; x++)
+                    this.mapGroups[z][x].clear();
+    }
+
+    @Override
+    public void copyAndConvertData(SCFilePacket<? extends SCChunkedFile<FroggerGameInstance>, FroggerGameInstance> newChunk) {
+        if (!(newChunk instanceof FroggerMapFilePacketGroup))
+            throw new ClassCastException("The provided chunk was of type " + Utils.getSimpleName(newChunk) + " when " + FroggerMapFilePacketGroup.class.getSimpleName() + " was expected.");
+
+        FroggerMapFilePacketGroup newGroupChunk = (FroggerMapFilePacketGroup) newChunk;
+        newGroupChunk.basePoint.setValues(this.basePoint);
+        newGroupChunk.groupXCount = this.groupXCount;
+        newGroupChunk.groupZCount = this.groupZCount;
+        newGroupChunk.groupXSize = this.groupXSize;
+        newGroupChunk.groupZSize = this.groupZSize;
+        newGroupChunk.generateMapGroups(ProblemResponse.THROW_EXCEPTION, false);
     }
 
     /**
@@ -289,7 +319,7 @@ public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
     }
 
     private boolean useFrogLordGroupAlgorithm() {
-        return !getParentFile().getGameInstance().getVersionConfig().isAtOrBeforeBuild2();
+        return !getGameInstance().getVersionConfig().isAtOrBeforeBuild2();
     }
 
     /**

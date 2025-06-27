@@ -3,15 +3,19 @@ package net.highwayfrogs.editor.games.sony.frogger.map.packets;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquare;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquareFlag;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquareReaction;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -223,6 +227,51 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
     }
 
     @Override
+    public void clear() {
+        for (int z = 0; z < this.gridZCount; z++)
+            for (int x = 0; x < this.gridXCount; x++)
+                this.gridStacks[z][x].clear();
+    }
+
+    @Override
+    public void copyAndConvertData(SCFilePacket<? extends SCChunkedFile<FroggerGameInstance>, FroggerGameInstance> newChunk) {
+        if (!(newChunk instanceof FroggerMapFilePacketGrid))
+            throw new ClassCastException("The provided chunk was of type " + Utils.getSimpleName(newChunk) + " when " + FroggerMapFilePacketGrid.class.getSimpleName() + " was expected.");
+
+        FroggerMapFilePacketGrid newGridChunk = (FroggerMapFilePacketGrid) newChunk;
+        newGridChunk.gridXSize = this.gridXSize;
+        newGridChunk.gridZSize = this.gridZSize;
+        newGridChunk.resizeGrid(this.gridXCount, this.gridZCount);
+    }
+
+    /**
+     * Copies/converts animations to the new chunk.
+     * @param newChunk the new chunk to copy to
+     * @param oldPolygonMappings the polygon mappings to use.
+     */
+    public void copyGridTo(FroggerMapFilePacketGrid newChunk, Map<FroggerMapPolygon, FroggerMapPolygon> oldPolygonMappings) {
+        if (newChunk == null)
+            throw new NullPointerException("newChunk");
+
+        copyAndConvertData(newChunk);
+        for (int z = 0; z < this.gridZCount; z++) {
+            for (int x = 0; x < this.gridXCount; x++) {
+                FroggerGridStack oldGridStack = getGridStack(x, z);
+                FroggerGridStack newGridStack = newChunk.getGridStack(x, z);
+                for (int i = 0; i < oldGridStack.getGridSquares().size(); i++) {
+                    FroggerGridSquare oldGridSquare = oldGridStack.getGridSquares().get(i);
+
+                    FroggerMapPolygon newPolygon = oldPolygonMappings != null ? oldPolygonMappings.get(oldGridSquare.getPolygon()) : null;
+                    if (newPolygon != null)
+                        newGridStack.getGridSquares().add(new FroggerGridSquare(newGridStack, newPolygon, oldGridSquare.getFlags()));
+                }
+            }
+        }
+
+        recalculateAllCliffHeights();
+    }
+
+    @Override
     public int getKnownStartAddress() {
         return getParentFile().getGraphicalPacket().getGridPacketAddress();
     }
@@ -248,15 +297,6 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
         }
 
         return propertyList;
-    }
-
-    /**
-     * Clears the contents of all grid squares.
-     */
-    public void clear() {
-        for (int z = 0; z < this.gridZCount; z++)
-            for (int x = 0; x < this.gridXCount; x++)
-                this.gridStacks[z][x].clear();
     }
 
     /**

@@ -79,6 +79,12 @@ public class MediEvilMapHeaderPacket extends MediEvilMapPacket implements IPrope
     }
 
     @Override
+    public void clear() {
+        this.levelString = DEFAULT_LEVEL_STRING;
+        this.headerIdentifiers = EMPTY_STRING_ARRAY;
+    }
+
+    @Override
     protected void saveBodySecondPass(DataWriter writer, long sizeInBytes) {
         super.saveBodySecondPass(writer, sizeInBytes);
         writer.skipBytes(FILE_TYPE.length());

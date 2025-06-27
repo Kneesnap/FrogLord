@@ -228,7 +228,14 @@ public class FroggerPath extends SCGameData<FroggerGameInstance> {
      * Creates a copy of the path. Does not keep any of the attached entities.
      */
     public FroggerPath clone() {
-        FroggerPath newPath = new FroggerPath(this.mapFile);
+        return clone(this.mapFile);
+    }
+
+    /**
+     * Creates a copy of the path. Does not keep any of the attached entities.
+     */
+    public FroggerPath clone(FroggerMapFile mapFile) {
+        FroggerPath newPath = new FroggerPath(mapFile);
         for (int i = 0; i < this.segments.size(); i++)
             this.segments.get(i).clone(newPath);
 

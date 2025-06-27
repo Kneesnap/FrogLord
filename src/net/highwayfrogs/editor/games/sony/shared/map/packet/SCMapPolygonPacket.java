@@ -2,9 +2,7 @@ package net.highwayfrogs.editor.games.sony.shared.map.packet;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
@@ -13,9 +11,12 @@ import net.highwayfrogs.editor.games.sony.shared.map.SCMapFilePacket;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -93,7 +94,7 @@ public class SCMapPolygonPacket<TGameInstance extends SCGameInstance> extends SC
 
         this.uvs.clear();
         for (int i = 0; i < uvCount; i++) {
-            SCMapPolygonUV newUv = new SCMapPolygonUV(getParentFile().getGameInstance());
+            SCMapPolygonUV newUv = new SCMapPolygonUV(getGameInstance());
             newUv.load(reader);
             this.uvs.add(newUv);
         }
@@ -139,6 +140,17 @@ public class SCMapPolygonPacket<TGameInstance extends SCGameInstance> extends SC
         writer.writeAddressTo(uvDataStartIndex);
         for (int i = 0; i < this.uvs.size(); i++)
             this.uvs.get(i).save(writer);
+    }
+
+    @Override
+    public void clear() {
+        this.polygons.clear();
+        this.vertices.clear();
+        this.uvs.clear();
+        for (int i = 0; i < this.vertexGridOffsetTable.length; i++)
+            Arrays.fill(this.vertexGridOffsetTable[i], (short) 0);
+        for (int i = 0; i < this.vertexGridLengthTable.length; i++)
+            Arrays.fill(this.vertexGridLengthTable[i], (short) 0);
     }
 
     /**
@@ -209,7 +221,7 @@ public class SCMapPolygonPacket<TGameInstance extends SCGameInstance> extends SC
     /**
      * Get the dimensions of the vertex grid.
      * @param mapFile The map file to get the dimensions for.
-     * @return vertexGridimensions
+     * @return vertexGridDimensions
      */
     private static int getVertexGridDimensions(SCMapFile<? extends SCGameInstance> mapFile, ILogger logger) {
         switch (mapFile.getGameInstance().getGameType()) {

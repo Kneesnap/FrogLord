@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.sony.oldfrogger.map.packet;
 
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
 
 /**
@@ -23,5 +24,15 @@ public abstract class OldFroggerMapPacket extends SCFilePacket<OldFroggerMapFile
 
     public OldFroggerMapPacket(OldFroggerMapFile parentFile, String identifier, boolean required, PacketSizeType sizeType) {
         super(parentFile, identifier, required, sizeType);
+    }
+
+    @Override
+    public OldFroggerGameInstance getGameInstance() {
+        return (OldFroggerGameInstance) super.getGameInstance();
+    }
+
+    @Override
+    public void copyAndConvertData(SCFilePacket<? extends SCChunkedFile<OldFroggerGameInstance>, OldFroggerGameInstance> newChunk) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

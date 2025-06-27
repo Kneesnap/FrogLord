@@ -57,6 +57,11 @@ public class MediEvilMapCollprimsPacket extends MediEvilMapPacket implements IPr
     }
 
     @Override
+    public void clear() {
+        this.collprims.clear();
+    }
+
+    @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {
         propertyList.add("Collision Primitives", this.collprims.size());
         return propertyList;

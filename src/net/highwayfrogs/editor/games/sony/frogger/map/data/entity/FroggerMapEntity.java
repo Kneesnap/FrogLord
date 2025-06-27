@@ -437,11 +437,18 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
     }
 
     /**
-     * Creates a clone of the FroggerMapEntity.
+     * Creates a clone of the FroggerMapEntity for the current map file.
      */
     public FroggerMapEntity clone() {
+        return this.clone(this.mapFile);
+    }
+
+    /**
+     * Creates a clone of the FroggerMapEntity for the provided map file.
+     */
+    public FroggerMapEntity clone(FroggerMapFile mapFile) {
         byte[] entityData = writeDataToByteArray();
-        FroggerMapEntity clonedEntity = new FroggerMapEntity(this.mapFile);
+        FroggerMapEntity clonedEntity = new FroggerMapEntity(mapFile);
         DataReader reader = new DataReader(new ArraySource(entityData));
         clonedEntity.load(reader);
         clonedEntity.loadEntityData(reader);

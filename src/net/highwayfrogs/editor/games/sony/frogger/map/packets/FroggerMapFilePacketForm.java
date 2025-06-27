@@ -3,13 +3,17 @@ package net.highwayfrogs.editor.games.sony.frogger.map.packets;
 import javafx.scene.control.Alert.AlertType;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormGrid;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerOldMapForm;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.IFroggerFormEntry;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -86,6 +90,24 @@ public class FroggerMapFilePacketForm extends FroggerMapFilePacket {
     }
 
     @Override
+    public void clear() {
+        this.forms.clear();
+        this.oldForms.clear();
+    }
+
+    @Override
+    public void copyAndConvertData(SCFilePacket<? extends SCChunkedFile<FroggerGameInstance>, FroggerGameInstance> newChunk) {
+        if (!(newChunk instanceof FroggerMapFilePacketForm))
+            throw new ClassCastException("The provided chunk was of type " + Utils.getSimpleName(newChunk) + " when " + FroggerMapFilePacketForm.class.getSimpleName() + " was expected.");
+
+        FroggerMapFilePacketForm newFormChunk = (FroggerMapFilePacketForm) newChunk;
+        for (int i = 0; i < this.forms.size(); i++) {
+            FroggerFormGrid oldFormGrid = this.forms.get(i);
+            newFormChunk.addFormGrid(oldFormGrid.clone(newFormChunk.getParentFile()));
+        }
+    }
+
+    @Override
     public int getKnownStartAddress() {
         return getParentFile().getHeaderPacket().getFormPacketAddress();
     }
@@ -101,14 +123,6 @@ public class FroggerMapFilePacketForm extends FroggerMapFilePacket {
      */
     public List<FroggerFormGrid> getForms() {
         return this.immutableForms;
-    }
-
-    /**
-     * Clears the forms tracked in the packet.
-     */
-    public void clear() {
-        this.forms.clear();
-        this.oldForms.clear();
     }
 
     /**

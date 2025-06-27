@@ -227,6 +227,40 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
     }
 
     /**
+     * Copies and converts the data from all chunks to another file.
+     * @param targetFile the file to copy data to
+     * @return operation was successful without errors
+     */
+    public boolean copyAndConvertData(SCChunkedFile<TGameInstance> targetFile) {
+        if (targetFile == null)
+            throw new NullPointerException("targetFile");
+
+        // Clear destination chunks.
+        for (int i = 0; i < targetFile.getFilePackets().size(); i++)
+            targetFile.getFilePackets().get(i).clear();
+
+        boolean noErrors = true;
+        getLogger().info("Copying/converting file chunk data to '%s'.", targetFile.getFileDisplayName());
+        for (int i = 0; i < this.filePackets.size(); i++) {
+            SCFilePacket<? extends SCChunkedFile<TGameInstance>, TGameInstance> srcChunk = this.filePackets.get(i);
+            SCFilePacket<? extends SCChunkedFile<TGameInstance>, TGameInstance> dstChunk = targetFile.getFilePacketByIdentifier(srcChunk.getIdentifierInteger());
+            if (dstChunk == null) {
+                getLogger().warning("Skipping chunk '%s' because that chunk was not found in '%s'.", srcChunk.getIdentifierString(), targetFile.getFileDisplayName());
+                continue;
+            }
+
+            try {
+                srcChunk.copyAndConvertData(dstChunk);
+            } catch (Throwable th) {
+                noErrors = false;
+                Utils.handleError(srcChunk.getLogger(), th, false, "Failed to copyAndConvert chunk data.");
+            }
+        }
+
+        return noErrors;
+    }
+
+    /**
      * Represents a packet of data within this file.
      * Data used at the start of a packet which is used by the packet system (behavior shared between different packets) is considered header data.
      * Data used by individual packets which is not shared by the system is considered body data.
@@ -257,6 +291,13 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
             this.identifierInteger = Utils.makeIdentifierInteger(identifier);
             this.active = this.required = required;
             this.sizeType = sizeType;
+        }
+
+        /**
+         * Gets the game instance.
+         */
+        public SCGameInstance getGameInstance() {
+            return this.parentFile.getGameInstance();
         }
 
         /**
@@ -461,6 +502,17 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
         }
 
         /**
+         * Clears packet data.
+         */
+        public abstract void clear();
+
+        /**
+         * Copies chunk data from the current version of the file to another.
+         * @param newChunk the chunk to copy data to
+         */
+        public abstract void copyAndConvertData(SCFilePacket<? extends SCChunkedFile<TGameInstance>, TGameInstance> newChunk);
+
+        /**
          * Gets the address the chunk is known to start at. Negative values indicate that the start is not currently known.
          * This function is only defined for reading data, and is unlikely to provide the right data in the write step.
          * @return knownStartAddress
@@ -517,6 +569,19 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
         protected void saveBodyFirstPass(DataWriter writer) {
             if (this.rawData != null)
                 writer.writeBytes(this.rawData);
+        }
+
+        @Override
+        public void clear() {
+            this.rawData = null;
+        }
+
+        @Override
+        public void copyAndConvertData(SCFilePacket<? extends SCChunkedFile<TGameInstance>, TGameInstance> newChunk) {
+            if (!(newChunk instanceof DummyFilePacket))
+                throw new ClassCastException("The provided chunk was of type " + Utils.getSimpleName(newChunk) + " when " + DummyFilePacket.class.getSimpleName() + " was expected.");
+
+            ((DummyFilePacket<?, ?>) newChunk).rawData = this.rawData;
         }
     }
 }

@@ -1,11 +1,8 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.utils;
 
-import javafx.scene.control.Alert.AlertType;
-import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
-import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
@@ -30,6 +27,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygonType;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGeneral;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGrid;
+import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerUtils;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerReactionType;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
@@ -57,7 +55,6 @@ import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.system.math.Vector3f;
-import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 import net.highwayfrogs.editor.utils.logging.ILogger;
@@ -78,23 +75,9 @@ public class OldFroggerMapConverter {
      * @param oldMapFile the map file to convert
      */
     public static void convertToNewFormatUI(OldFroggerMapFile oldMapFile) {
-        FroggerGameInstance instance = null;
-        for (GameInstance testInstance : FrogLordApplication.getActiveGameInstances()) {
-            if (!(testInstance instanceof FroggerGameInstance))
-                continue;
-
-            if (instance != null) {
-                FXUtils.makePopUp("There is more than one copy of Frogger open at once,\n so FrogLord is unable to choose which version to convert the map to.", AlertType.ERROR);
-                return;
-            }
-
-            instance = (FroggerGameInstance) testInstance;
-        }
-
-        if (instance == null) {
-            FXUtils.makePopUp("Please open a copy of Frogger to save the map file to.", AlertType.ERROR);
+        FroggerGameInstance instance = FroggerUtils.getOtherFroggerInstanceOrWarnUser(oldMapFile.getGameInstance());
+        if (instance == null)
             return;
-        }
 
         SelectionMenu.promptSelection(instance, "Select the map file to import over.", mapFile -> {
             FroggerMapFile newMapFile = convertToNewFormat(mapFile.getIndexEntry(), oldMapFile);

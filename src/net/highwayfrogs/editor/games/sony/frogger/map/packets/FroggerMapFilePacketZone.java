@@ -2,10 +2,14 @@ package net.highwayfrogs.editor.games.sony.frogger.map.packets;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.zone.FroggerMapCameraZone;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.zone.FroggerMapZone;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -71,6 +75,21 @@ public class FroggerMapFilePacketZone extends FroggerMapFilePacket {
             // Write zone data.
             this.zones.get(i).save(writer);
         }
+    }
+
+    @Override
+    public void clear() {
+        this.zones.clear();
+    }
+
+    @Override
+    public void copyAndConvertData(SCFilePacket<? extends SCChunkedFile<FroggerGameInstance>, FroggerGameInstance> newChunk) {
+        if (!(newChunk instanceof FroggerMapFilePacketZone))
+            throw new ClassCastException("The provided chunk was of type " + Utils.getSimpleName(newChunk) + " when " + FroggerMapFilePacketZone.class.getSimpleName() + " was expected.");
+
+        FroggerMapFilePacketZone newZoneChunk = (FroggerMapFilePacketZone) newChunk;
+        for (int i = 0; i < this.zones.size(); i++)
+            newZoneChunk.getZones().add(this.zones.get(i).clone(newZoneChunk.getParentFile()));
     }
 
     @Override

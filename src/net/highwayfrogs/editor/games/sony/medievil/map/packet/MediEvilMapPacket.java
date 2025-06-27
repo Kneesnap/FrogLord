@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.sony.medievil.map.packet;
 
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
 
 /**
@@ -23,5 +24,15 @@ public abstract class MediEvilMapPacket extends SCFilePacket<MediEvilMapFile, Me
 
     public MediEvilMapPacket(MediEvilMapFile parentFile, String identifier, boolean required, PacketSizeType sizeType) {
         super(parentFile, identifier, required, sizeType);
+    }
+
+    @Override
+    public void copyAndConvertData(SCFilePacket<? extends SCChunkedFile<MediEvilGameInstance>, MediEvilGameInstance> newChunk) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public MediEvilGameInstance getGameInstance() {
+        return (MediEvilGameInstance) super.getGameInstance();
     }
 }

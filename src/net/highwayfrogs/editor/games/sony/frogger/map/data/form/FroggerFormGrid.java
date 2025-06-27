@@ -322,6 +322,15 @@ public class FroggerFormGrid extends SCGameData<FroggerGameInstance> {
     }
 
     /**
+     * Creates a copy of the form grid for the given map file.
+     * @param newMapFile the new map file to copy the data to
+     * @return clonedFormGrid
+     */
+    public FroggerFormGrid clone(FroggerMapFile newMapFile) {
+        return DataUtils.cloneSerializableObject(this, new FroggerFormGrid(newMapFile));
+    }
+
+    /**
      * Make a display for this form.
      * @param selectedIndex The selected index.
      * @return image

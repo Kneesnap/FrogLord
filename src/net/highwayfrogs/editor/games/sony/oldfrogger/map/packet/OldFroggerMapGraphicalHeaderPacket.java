@@ -1,9 +1,9 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.packet;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
-import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 
 /**
  * The graphical map header contains pointers to graphical packets.
@@ -27,13 +27,7 @@ public class OldFroggerMapGraphicalHeaderPacket extends OldFroggerMapPacket {
     @Override
     public void clearReadWriteData() {
         super.clearReadWriteData();
-        this.standardChunkAddress = -1;
-        this.lightChunkAddress = -1;
-        this.gridChunkAddress = -1;
-        this.quadChunkAddress = -1;
-        this.vertexChunkAddress = -1;
-        this.animChunkAddress = -1;
-        this.cameraHeightFieldChunkAddress = -1;
+        clear();
     }
 
     @Override
@@ -69,5 +63,16 @@ public class OldFroggerMapGraphicalHeaderPacket extends OldFroggerMapPacket {
         writer.writeInt(getParentFile().getAnimPacket().getLastValidWriteHeaderAddress());
         if (getParentFile().getCameraHeightFieldPacket() != null && getParentFile().getCameraHeightFieldPacket().isActive())
             writer.writeInt(getParentFile().getCameraHeightFieldPacket().getLastValidWriteHeaderAddress());
+    }
+
+    @Override
+    public void clear() {
+        this.standardChunkAddress = -1;
+        this.lightChunkAddress = -1;
+        this.gridChunkAddress = -1;
+        this.quadChunkAddress = -1;
+        this.vertexChunkAddress = -1;
+        this.animChunkAddress = -1;
+        this.cameraHeightFieldChunkAddress = -1;
     }
 }

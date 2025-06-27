@@ -2,10 +2,13 @@ package net.highwayfrogs.editor.games.sony.frogger.map.packets;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathInfo;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -85,6 +88,26 @@ public class FroggerMapFilePacketPath extends FroggerMapFilePacket {
             // Write path data.
             this.paths.get(i).save(writer);
         }
+    }
+
+    @Override
+    public void clear() {
+        this.paths.clear();
+    }
+
+    @Override
+    public void copyAndConvertData(SCFilePacket<? extends SCChunkedFile<FroggerGameInstance>, FroggerGameInstance> newChunk) {
+        if (!(newChunk instanceof FroggerMapFilePacketPath))
+            throw new ClassCastException("The provided chunk was of type " + Utils.getSimpleName(newChunk) + " when " + FroggerMapFilePacketPath.class.getSimpleName() + " was expected.");
+
+        FroggerMapFilePacketPath newPathChunk = (FroggerMapFilePacketPath) newChunk;
+        for (int i = 0; i < this.paths.size(); i++) {
+            FroggerPath oldPath = this.paths.get(i);
+            FroggerPath newPath = oldPath.clone(newPathChunk.getParentFile());
+            newPathChunk.getPaths().add(newPath);
+        }
+
+        recalculateAllPathEntityLists();
     }
 
     /**

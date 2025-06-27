@@ -1,8 +1,12 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.packets;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -85,6 +89,32 @@ public class FroggerMapFilePacketHeader extends FroggerMapFilePacket {
         this.entityPacketAddress = getParentFile().getEntityPacket().getLastValidWriteHeaderAddress();
         this.zonePacketAddress = getParentFile().getZonePacket().getLastValidWriteHeaderAddress();
         this.pathPacketAddress = getParentFile().getPathPacket().getLastValidWriteHeaderAddress();
+    }
+
+    @Override
+    public void clear() {
+        this.comment = DEFAULT_COMMENT;
+        this.generalPacketAddress = 0;
+        this.graphicalPacketAddress = 0;
+        this.formPacketAddress = 0;
+        this.entityPacketAddress = 0;
+        this.zonePacketAddress = 0;
+        this.pathPacketAddress = 0;
+    }
+
+    @Override
+    public void copyAndConvertData(SCFilePacket<? extends SCChunkedFile<FroggerGameInstance>, FroggerGameInstance> newChunk) {
+        if (!(newChunk instanceof FroggerMapFilePacketHeader))
+            throw new ClassCastException("The provided chunk was of type " + Utils.getSimpleName(newChunk) + " when " + FroggerMapFilePacketHeader.class.getSimpleName() + " was expected.");
+
+        FroggerMapFilePacketHeader newHeaderChunk = (FroggerMapFilePacketHeader) newChunk;
+        newHeaderChunk.comment = this.comment;
+        newHeaderChunk.generalPacketAddress = this.generalPacketAddress;
+        newHeaderChunk.graphicalPacketAddress = this.graphicalPacketAddress;
+        newHeaderChunk.formPacketAddress = this.formPacketAddress;
+        newHeaderChunk.entityPacketAddress = this.entityPacketAddress;
+        newHeaderChunk.zonePacketAddress = this.zonePacketAddress;
+        newHeaderChunk.pathPacketAddress = this.pathPacketAddress;
     }
 
     @Override

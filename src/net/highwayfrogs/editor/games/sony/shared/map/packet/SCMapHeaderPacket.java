@@ -73,4 +73,10 @@ public class SCMapHeaderPacket<TGameInstance extends SCGameInstance> extends SCM
         super.saveBodySecondPass(writer, sizeInBytes);
         writer.writeUnsignedInt(sizeInBytes);
     }
+
+    @Override
+    public void clear() {
+        this.sectionId = 0;
+        this.headerIdentifiers = EMPTY_STRING_ARRAY;
+    }
 }

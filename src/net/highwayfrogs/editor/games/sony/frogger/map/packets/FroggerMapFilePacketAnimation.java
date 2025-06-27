@@ -2,13 +2,17 @@ package net.highwayfrogs.editor.games.sony.frogger.map.packets;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapAnimation;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapAnimationTargetPolygon;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
@@ -79,6 +83,40 @@ public class FroggerMapFilePacketAnimation extends FroggerMapFilePacket {
         // Write animation id lists.
         for (int i = 0; i < this.animations.size(); i++)
             this.animations.get(i).writeTargetPolygonList(writer);
+    }
+
+    @Override
+    public void clear() {
+        this.animations.clear();
+        this.unusedTextureIds.clear();
+        this.animationTargetsByPolygon.clear();
+    }
+
+    @Override
+    public void copyAndConvertData(SCFilePacket<? extends SCChunkedFile<FroggerGameInstance>, FroggerGameInstance> newChunk) {
+        if (!(newChunk instanceof FroggerMapFilePacketAnimation))
+            throw new ClassCastException("The provided chunk was of type " + Utils.getSimpleName(newChunk) + " when " + FroggerMapFilePacketAnimation.class.getSimpleName() + " was expected.");
+
+        FroggerMapFilePacketAnimation newAnimationChunk = (FroggerMapFilePacketAnimation) newChunk;
+        newAnimationChunk.unusedTextureIds.addAll(this.unusedTextureIds);
+
+        // Animations are only handled once polygons are loaded.
+    }
+
+    /**
+     * Copies/converts animations to the new chunk.
+     * @param newChunk the new chunk to copy to
+     * @param oldPolygonMappings the polygon mappings to use.
+     */
+    public void copyAnimationsTo(FroggerMapFilePacketAnimation newChunk, Map<FroggerMapPolygon, FroggerMapPolygon> oldPolygonMappings) {
+        if (newChunk == null)
+            throw new NullPointerException("newChunk");
+
+        for (int i = 0; i < this.animations.size(); i++) {
+            FroggerMapAnimation oldAnimation = this.animations.get(i);
+            FroggerMapAnimation newAnimation = oldAnimation.clone(newChunk.getParentFile(), oldPolygonMappings);
+            newChunk.getAnimations().add(newAnimation);
+        }
     }
 
     @Override

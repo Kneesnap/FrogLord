@@ -117,6 +117,13 @@ public abstract class FroggerMapZone extends SCGameData<FroggerGameInstance> {
     protected abstract void saveExtensionData(DataWriter writer);
 
     /**
+     * Creates a clone/copy of the map zone.
+     * @param mapFile the file to attach the cloned zone to
+     * @return clonedZone
+     */
+    public abstract FroggerMapZone clone(FroggerMapFile mapFile);
+
+    /**
      * Gets the list of regions found within the map zone.
      * Note that this list cannot be modified, and contains the bounding region when it is treated as a regular region.
      */

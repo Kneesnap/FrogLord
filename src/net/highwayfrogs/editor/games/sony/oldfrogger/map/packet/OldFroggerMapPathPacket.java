@@ -34,7 +34,7 @@ public class OldFroggerMapPathPacket extends OldFroggerMapPacket {
         // Read paths.
         this.paths.clear();
         for (int i = 0; i < pathCount; i++) {
-            OldFroggerMapPath newPath = new OldFroggerMapPath(getParentFile().getGameInstance(), i);
+            OldFroggerMapPath newPath = new OldFroggerMapPath(getGameInstance(), i);
             newPath.load(reader);
             this.paths.add(newPath);
         }
@@ -66,6 +66,11 @@ public class OldFroggerMapPathPacket extends OldFroggerMapPacket {
         // Save spline data.
         for (int i = 0; i < this.paths.size(); i++)
             this.paths.get(i).saveSplines(writer);
+    }
+
+    @Override
+    public void clear() {
+        this.paths.clear();
     }
 
     /**

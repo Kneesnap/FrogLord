@@ -1,11 +1,11 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.packet;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapVersion;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +44,11 @@ public class OldFroggerMapVertexPacket extends OldFroggerMapPacket {
         writer.writeUnsignedShort(0); // Padding
         for (int i = 0; i < this.vertices.size(); i++)
             this.vertices.get(i).saveWithPadding(writer);
+    }
+
+    @Override
+    public void clear() {
+        this.vertices.clear();
     }
 
     @Override

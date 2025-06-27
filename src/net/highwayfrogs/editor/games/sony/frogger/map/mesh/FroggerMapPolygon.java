@@ -65,7 +65,6 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
 
     private static final SCByteTextureUV[] EMPTY_UV_ARRAY = new SCByteTextureUV[0];
     private static final CVector[] EMPTY_COLOR_ARRAY = new CVector[0];
-    private static final CVector[] UNSHADED_SINGLE_COLOR_ARRAY = new CVector[] {PSXTextureShader.UNSHADED_COLOR};
 
     public FroggerMapPolygon(FroggerMapFile mapFile, FroggerMapPolygonType polygonType) {
         super(mapFile != null ? mapFile.getGameInstance() : null);
@@ -477,5 +476,27 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
         }
 
         return output.setXYZ(x, y, z);
+    }
+
+    /**
+     * Creates a copy of the polygon object.
+     * @param mapFile the map file to associate the polygon with
+     * @return clonedPolygon
+     */
+    public FroggerMapPolygon clone(FroggerMapFile mapFile) {
+        FroggerMapPolygon newPolygon = new FroggerMapPolygon(mapFile, this.polygonType);
+        System.arraycopy(this.vertices, 0, newPolygon.vertices, 0, this.vertices.length);
+        for (int i = 0; i < this.colors.length; i++)
+            newPolygon.colors[i] = this.colors[i].clone();
+
+        newPolygon.flags = this.flags;
+        newPolygon.textureId = this.textureId;
+        for (int i = 0; i < this.textureUvs.length; i++)
+            newPolygon.textureUvs[i] = this.textureUvs[i].clone();
+
+        newPolygon.loadedPaddingVertex = this.loadedPaddingVertex;
+        newPolygon.visible = this.visible;
+        newPolygon.skyLand = this.skyLand;
+        return newPolygon;
     }
 }

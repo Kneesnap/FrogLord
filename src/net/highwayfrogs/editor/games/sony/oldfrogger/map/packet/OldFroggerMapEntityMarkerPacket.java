@@ -132,6 +132,13 @@ public class OldFroggerMapEntityMarkerPacket extends OldFroggerMapPacket {
         }
     }
 
+    @Override
+    public void clear() {
+        this.entities.clear();
+        this.entitiesByFileOffsets.clear();
+        this.entityFileOffsets.clear();
+    }
+
     private boolean showIncorrectEntityDataSize(OldFroggerMapEntity entity, int startPosition, int actualEndPosition, int expectedPosition) {
         int realSize = (expectedPosition - startPosition);
         int readSize = (actualEndPosition - startPosition);

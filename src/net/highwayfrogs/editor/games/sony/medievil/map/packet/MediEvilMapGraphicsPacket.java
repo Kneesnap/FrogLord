@@ -47,7 +47,7 @@ public class MediEvilMapGraphicsPacket extends MediEvilMapPacket implements IPro
         reader.jumpTemp(polygonListPtr);
         int polygonCount = g3PolyCount + g4PolyCount + gt3PolyCount + gt4PolyCount;
         for (int i = 0; i < polygonCount; i++) {
-            MediEvilMapPolygon polygon = new MediEvilMapPolygon(getParentFile().getGameInstance());
+            MediEvilMapPolygon polygon = new MediEvilMapPolygon(getGameInstance());
             polygon.load(reader);
             this.polygons.add(polygon);
         }
@@ -80,6 +80,12 @@ public class MediEvilMapGraphicsPacket extends MediEvilMapPacket implements IPro
     @Override
     protected void saveBodyFirstPass(DataWriter writer) {
         // TODO: Implement.
+    }
+
+    @Override
+    public void clear() {
+        this.polygons.clear();
+        this.vertices.clear();
     }
 
     @Override

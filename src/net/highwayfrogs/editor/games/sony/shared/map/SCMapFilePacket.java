@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.sony.shared.map;
 
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
 
 /**
@@ -22,5 +23,10 @@ public abstract class SCMapFilePacket<TMapFile extends SCMapFile<TGameInstance>,
 
     public SCMapFilePacket(TMapFile parentFile, String identifier, boolean required, PacketSizeType sizeType) {
         super(parentFile, identifier, required, sizeType);
+    }
+
+    @Override
+    public void copyAndConvertData(SCFilePacket<? extends SCChunkedFile<TGameInstance>, TGameInstance> newChunk) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

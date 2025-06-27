@@ -7,9 +7,7 @@ import net.highwayfrogs.editor.file.config.FroggerMapConfig;
 import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.games.sony.SCGameConfig;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -18,7 +16,6 @@ import java.util.Map;
  */
 @Getter
 public class FroggerConfig extends SCGameConfig {
-    private final List<Short> islandRemap = new ArrayList<>();
     private int build;
     private int mapBookAddress;
     private int themeBookAddress;

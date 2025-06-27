@@ -1,13 +1,13 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.packet;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerGeneralDataManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -65,6 +65,20 @@ public class OldFroggerMapStandardPacket extends OldFroggerMapPacket {
         writer.writeShort(this.cameraMaximumTop);
         for (int i = 0; i < this.racePathID.length; i++)
             writer.writeInt(this.racePathID[i]);
+    }
+
+    @Override
+    public void clear() {
+        this.cameraOffset.setValues((short) 0, (short) 0, (short) 0);
+        this.halfHeight = 0;
+        this.frontClipPlane = 0;
+        this.backClipPlane = 0;
+        this.horizClipPlaneOffset = 0;
+        this.cameraMaximumLeft = 0;
+        this.cameraMaximumBottom = 0;
+        this.cameraMaximumRight = 0;
+        this.cameraMaximumTop = 0;
+        Arrays.fill(this.racePathID, 0);
     }
 
     /**

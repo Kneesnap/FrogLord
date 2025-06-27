@@ -2,19 +2,21 @@ package net.highwayfrogs.editor.games.sony.frogger.map.packets;
 
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.FroggerMapConfig;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.FroggerMapGroup;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygonType;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Represents map polygons.
@@ -141,6 +143,35 @@ public class FroggerMapFilePacketPolygon extends FroggerMapFilePacket {
         getParentFile().getGroupPacket().saveGroupPolygonLists(writer, polygonOffsets);
     }
 
+    @Override
+    public void clear() {
+        this.polygons.clear();
+        for (int i = 0; i < this.polygonsByType.length; i++)
+            this.polygonsByType[i].clear();
+    }
+
+    @Override
+    public void copyAndConvertData(SCFilePacket<? extends SCChunkedFile<FroggerGameInstance>, FroggerGameInstance> newChunk) {
+        if (!(newChunk instanceof FroggerMapFilePacketPolygon))
+            throw new ClassCastException("The provided chunk was of type " + Utils.getSimpleName(newChunk) + " when " + FroggerMapFilePacketPolygon.class.getSimpleName() + " was expected.");
+
+        newChunk.clear();
+        FroggerMapFilePacketPolygon newPolygonChunk = (FroggerMapFilePacketPolygon) newChunk;
+        FroggerMapFile newMapFile = newPolygonChunk.getParentFile();
+        Map<FroggerMapPolygon, FroggerMapPolygon> polygonMapping = new HashMap<>();
+        for (int i = 0; i < this.polygons.size(); i++) {
+            FroggerMapPolygon oldPolygon = this.polygons.get(i);
+            FroggerMapPolygon newPolygon = oldPolygon.clone(newMapFile);
+            polygonMapping.put(oldPolygon, newPolygon);
+            newPolygonChunk.addPolygon(newPolygon);
+        }
+
+        // Load data from other packets relying on polygon conversions.
+        getParentFile().getAnimationPacket().copyAnimationsTo(newMapFile.getAnimationPacket(), polygonMapping);
+        getParentFile().getGridPacket().copyGridTo(newMapFile.getGridPacket(), polygonMapping);
+        getParentFile().getGroupPacket().generateMapGroups(ProblemResponse.THROW_EXCEPTION, false);
+    }
+
     private void savePolygonList(DataWriter writer, FroggerMapGroup mapGroup, FroggerMapPolygonType polygonType) {
         if (mapGroup == null)
             throw new NullPointerException("mapGroup");
@@ -186,15 +217,6 @@ public class FroggerMapFilePacketPolygon extends FroggerMapFilePacket {
     }
 
     /**
-     * Clears the polygons.
-     */
-    public void clearPolygons() {
-        this.polygons.clear();
-        for (int i = 0; i < this.polygonsByType.length; i++)
-            this.polygonsByType[i].clear();
-    }
-
-    /**
      * Registers a new polygon to the packet.
      * @param polygon The polygon to add.
      * @return added successfully
@@ -202,6 +224,8 @@ public class FroggerMapFilePacketPolygon extends FroggerMapFilePacket {
     public boolean addPolygon(FroggerMapPolygon polygon) {
         if (polygon == null || polygon.getPolygonType() == null || this.polygons.contains(polygon))
             return false; // Already contained or null
+        if (polygon.getMapFile() != getParentFile())
+            throw new IllegalArgumentException("Cannot add polygon which belongs to a different map file!");
 
         this.polygons.add(polygon);
         this.polygonsByType[polygon.getPolygonType().ordinal()].add(polygon);

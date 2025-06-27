@@ -1,9 +1,13 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.packets;
 
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.FroggerMapLight;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
 import net.highwayfrogs.editor.games.sony.shared.misc.MRLightType;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -49,6 +53,23 @@ public class FroggerMapFilePacketLight extends FroggerMapFilePacket {
     }
 
     @Override
+    public void clear() {
+        this.lights.clear();
+    }
+
+    @Override
+    public void copyAndConvertData(SCFilePacket<? extends SCChunkedFile<FroggerGameInstance>, FroggerGameInstance> newChunk) {
+        if (!(newChunk instanceof FroggerMapFilePacketLight))
+            throw new ClassCastException("The provided chunk was of type " + Utils.getSimpleName(newChunk) + " when " + FroggerMapFilePacketLight.class.getSimpleName() + " was expected.");
+
+        FroggerMapFilePacketLight newLightChunk = (FroggerMapFilePacketLight) newChunk;
+        for (int i = 0; i < this.lights.size(); i++) {
+            FroggerMapLight oldLight = this.lights.get(i);
+            newLightChunk.addLight(oldLight.clone(newLightChunk.getParentFile()));
+        }
+    }
+
+    @Override
     public int getKnownStartAddress() {
         return getParentFile().getGraphicalPacket().getLightPacketAddress();
     }
@@ -88,13 +109,6 @@ public class FroggerMapFilePacketLight extends FroggerMapFilePacket {
                 parallelLightCount++;
 
         return parallelLightCount >= MAX_NON_AMBIENT_LIGHT_COUNT; // Reached the limit for number of parallel lights.
-    }
-
-    /**
-     * Clears the lights tracked in this packet.
-     */
-    public void clear() {
-        this.lights.clear();
     }
 
     /**

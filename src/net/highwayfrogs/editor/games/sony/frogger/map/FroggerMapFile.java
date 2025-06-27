@@ -1,5 +1,8 @@
 package net.highwayfrogs.editor.games.sony.frogger.map;
 
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import lombok.Getter;
@@ -9,6 +12,7 @@ import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.FroggerMapLight;
@@ -31,6 +35,7 @@ import net.highwayfrogs.editor.games.sony.shared.misc.MRLightType;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
+import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.FXUtils;
@@ -153,6 +158,30 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
         MeshViewController.setupMeshViewer(getGameInstance(), new FroggerMapMeshController(getGameInstance()), new FroggerMapMesh(this));
     }
 
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        super.setupRightClickMenuItems(contextMenu);
+
+        List<FroggerGameInstance> instances = FroggerUtils.getAllFroggerInstancesExcept(getGameInstance());
+        for (int i = 0; i < instances.size(); i++) {
+            FroggerGameInstance instance = instances.get(i);
+            MenuItem transferFile = new MenuItem("Transfer to '" + instance.getVersionConfig().getDisplayName() + "'");
+            contextMenu.getItems().add(transferFile);
+            transferFile.setOnAction(event -> transferToOtherInstance(instance));
+        }
+    }
+
+    private void transferToOtherInstance(FroggerGameInstance otherInstance) {
+        SelectionMenu.promptSelection(getGameInstance(), "Select the map file to replace.", targetMap -> {
+            FroggerMapFile newMapFile = new FroggerMapFile(targetMap.getGameInstance(), targetMap.getIndexEntry());
+            if (!copyAndConvertData(newMapFile)) {
+                FXUtils.makePopUp("Failed to convert map file data.", AlertType.WARNING);
+                return;
+            }
+
+            targetMap.getArchive().replaceFile(getFileDisplayName(), targetMap.getIndexEntry(), targetMap, newMapFile, true);
+        }, otherInstance.getMainArchive().getAllFiles(FroggerMapFile.class), SCGameFile::getFileDisplayName, FroggerMapFile::getCollectionViewIcon);
+    }
+
     /**
      * Gets the remap table for this map.
      * @return remapTable
@@ -256,7 +285,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
         this.lightPacket.clear();
         this.vertexPacket.getVertices().clear();
         this.animationPacket.getAnimations().clear();
-        this.polygonPacket.clearPolygons();
+        this.polygonPacket.clear();
         this.gridPacket.clear(); // The resized grid should be empty.
         this.gridPacket.resizeGrid(xTileCount, zTileCount); // Add two, so we can have a border surrounding the map.
         xTileCount = this.gridPacket.getGridXCount(); // Ensure we use what's actually been applied.

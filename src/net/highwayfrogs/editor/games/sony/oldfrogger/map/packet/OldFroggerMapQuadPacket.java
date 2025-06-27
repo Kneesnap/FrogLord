@@ -139,6 +139,17 @@ public class OldFroggerMapQuadPacket extends OldFroggerMapPacket implements IPro
     }
 
     @Override
+    public void clear() {
+        this.xSize = 0;
+        this.zSize = 0;
+        this.xCount = 0;
+        this.zCount = 0;
+        this.textureCount = 0;
+        this.polygonFileOffsets.clear();
+        this.gridPolygonFileOffsets.clear();
+    }
+
+    @Override
     public int getKnownStartAddress() {
         OldFroggerMapGraphicalHeaderPacket graphicalPacket = getParentFile().getGraphicalHeaderPacket();
         return graphicalPacket != null ? graphicalPacket.getQuadChunkAddress() : -1;

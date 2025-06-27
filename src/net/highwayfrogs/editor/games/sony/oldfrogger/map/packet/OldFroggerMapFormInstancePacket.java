@@ -84,6 +84,11 @@ public class OldFroggerMapFormInstancePacket extends OldFroggerMapPacket {
         }
     }
 
+    @Override
+    public void clear() {
+        this.forms.clear();
+    }
+
     /**
      * Finds a form by its ID.
      * @param formId The form ID to lookup.

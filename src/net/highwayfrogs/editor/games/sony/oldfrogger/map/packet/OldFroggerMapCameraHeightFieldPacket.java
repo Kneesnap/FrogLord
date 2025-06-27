@@ -73,6 +73,17 @@ public class OldFroggerMapCameraHeightFieldPacket extends OldFroggerMapPacket {
     }
 
     @Override
+    public void clear() {
+        this.xSquareCount = 0;
+        this.zSquareCount = 0;
+        this.xSquareSize = 0;
+        this.zSquareSize = 0;
+        this.startPositionX = 0;
+        this.startPositionZ = 0;
+        this.heightMap = null;
+    }
+
+    @Override
     public int getKnownStartAddress() {
         OldFroggerMapGraphicalHeaderPacket graphicalPacket = getParentFile().getGraphicalHeaderPacket();
         return graphicalPacket != null ? graphicalPacket.getCameraHeightFieldChunkAddress() : -1;

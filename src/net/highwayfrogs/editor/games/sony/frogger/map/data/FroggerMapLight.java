@@ -15,6 +15,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerU
 import net.highwayfrogs.editor.games.sony.shared.misc.MRLightType;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.ColorUtils;
+import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -146,6 +147,15 @@ public class FroggerMapLight extends SCGameData<FroggerGameInstance> {
     @Override
     public ILogger getLogger() {
         return new LazyInstanceLogger(getGameInstance(), FroggerMapLight::getLoggerInfo, this);
+    }
+
+    /**
+     * Creates a copy of the map light attached to the given map file.
+     * @param mapFile the map file to clone the map file for
+     * @return clonedLightObject
+     */
+    public FroggerMapLight clone(FroggerMapFile mapFile) {
+        return DataUtils.cloneSerializableObject(this, new FroggerMapLight(mapFile));
     }
 
     /**

@@ -1,11 +1,11 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.packet;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +40,7 @@ public class OldFroggerMapAnimPacket extends OldFroggerMapPacket {
         this.uvAnimations.clear();
         reader.setIndex(uvAnimPtr);
         for (int i = 0; i < uvAnimCount; i++) {
-            OldFroggerMapAnimUV newAnimation = new OldFroggerMapAnimUV(getParentFile().getGameInstance());
+            OldFroggerMapAnimUV newAnimation = new OldFroggerMapAnimUV(getGameInstance());
             newAnimation.load(reader);
             this.uvAnimations.add(newAnimation);
         }
@@ -65,6 +65,11 @@ public class OldFroggerMapAnimPacket extends OldFroggerMapPacket {
 
         // Write extra data.
         writer.writeAddressTo(extraDataPtr);
+    }
+
+    @Override
+    public void clear() {
+        this.uvAnimations.clear();
     }
 
     /**

@@ -5,9 +5,7 @@ import javafx.scene.LightBase;
 import javafx.scene.PointLight;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
@@ -16,6 +14,8 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerLightManag
 import net.highwayfrogs.editor.games.sony.shared.misc.MRLightType;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.ColorUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +38,7 @@ public class OldFroggerMapLightPacket extends OldFroggerMapPacket {
         this.lights.clear();
         int lightCount = reader.readInt();
         for (int i = 0; i < lightCount; i++) {
-            OldFroggerMapLight newLight = new OldFroggerMapLight(getParentFile().getGameInstance());
+            OldFroggerMapLight newLight = new OldFroggerMapLight(getGameInstance());
             newLight.load(reader);
             this.lights.add(newLight);
         }
@@ -49,6 +49,11 @@ public class OldFroggerMapLightPacket extends OldFroggerMapPacket {
         writer.writeInt(this.lights.size());
         for (int i = 0; i < this.lights.size(); i++)
             this.lights.get(i).save(writer);
+    }
+
+    @Override
+    public void clear() {
+        this.lights.clear();
     }
 
     @Override

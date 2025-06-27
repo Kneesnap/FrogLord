@@ -34,6 +34,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -156,7 +157,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
         this.textureIdListPointerAddress = writer.writeNullPointer();
         writer.writeUnsignedShort(this.framesPerTexture);
         writer.writeNull(Constants.SHORT_SIZE); // Runtime.
-        writer.writeUnsignedShort((this.type != null ? this.type : FroggerMapAnimationType.UV).getFlagBitMask());
+        writer.writeUnsignedShort(this.type.getFlagBitMask());
         writer.writeUnsignedShort(this.targetPolygons.size());
         writer.writeNullPointer(); // Runtime texture pointer.
         this.targetPolygonListPointerAddress = writer.writeNullPointer();
@@ -544,5 +545,29 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
         } else {
             throw new RuntimeException("Unsupported animation type: " + this.type);
         }
+    }
+
+    /**
+     * Creates a cloned copy of the animation object.
+     * @param newMapFile the map file
+     * @return newMapAnimation
+     */
+    public FroggerMapAnimation clone(FroggerMapFile newMapFile, Map<FroggerMapPolygon, FroggerMapPolygon> polygonMap) {
+        FroggerMapAnimation newMapAnimation = new FroggerMapAnimation(newMapFile);
+        newMapAnimation.type = this.type;
+        newMapAnimation.deltaU = this.deltaU;
+        newMapAnimation.deltaV = this.deltaV;
+        newMapAnimation.uvFrameCount = this.uvFrameCount;
+        newMapAnimation.framesPerTexture = this.framesPerTexture;
+        newMapAnimation.unusedTextureIds.addAll(this.unusedTextureIds);
+        newMapAnimation.textureIds.addAll(this.textureIds);
+        for (int i = 0; i < this.targetPolygons.size(); i++) {
+            FroggerMapPolygon oldPolygon = this.targetPolygons.get(i).getPolygon();
+            FroggerMapPolygon newPolygon = polygonMap != null ? polygonMap.get(oldPolygon) : null;
+            if (newPolygon != null)
+                newMapAnimation.getTargetPolygons().add(new FroggerMapAnimationTargetPolygon(newMapAnimation, newPolygon));
+        }
+
+        return newMapAnimation;
     }
 }

@@ -2,11 +2,14 @@ package net.highwayfrogs.editor.games.sony.frogger.map.packets;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormGrid;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.IFroggerFormEntry;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
+import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -110,6 +113,29 @@ public class FroggerMapFilePacketEntity extends FroggerMapFilePacket {
         }
     }
 
+    @Override
+    public void clear() {
+        this.entities.clear();
+        this.nextFreeEntityId = 0;
+        for (FroggerPath path : getParentFile().getPathPacket().getPaths())
+            path.getPathEntities().clear();
+    }
+
+    @Override
+    public void copyAndConvertData(SCFilePacket<? extends SCChunkedFile<FroggerGameInstance>, FroggerGameInstance> newChunk) {
+        if (!(newChunk instanceof FroggerMapFilePacketEntity))
+            throw new ClassCastException("The provided chunk was of type " + Utils.getSimpleName(newChunk) + " when " + FroggerMapFilePacketEntity.class.getSimpleName() + " was expected.");
+
+        FroggerMapFilePacketEntity newEntityChunk = (FroggerMapFilePacketEntity) newChunk;
+        for (int i = 0; i < this.entities.size(); i++) {
+            FroggerMapEntity oldEntity = this.entities.get(i);
+            FroggerMapEntity newEntity = oldEntity.clone(newEntityChunk.getParentFile());
+            newEntityChunk.addEntity(newEntity);
+        }
+
+        getParentFile().getPathPacket().recalculateAllPathEntityLists();
+    }
+
     private void printInvalidEntityReadDetection(DataReader reader, FroggerMapEntity lastEntity, int entityDataStartPointer, int endPointer) {
         if (lastEntity == null || entityDataStartPointer < 0)
             return;
@@ -174,16 +200,6 @@ public class FroggerMapFilePacketEntity extends FroggerMapFilePacket {
      */
     public List<FroggerMapEntity> getEntities() {
         return this.unmodifiableEntities;
-    }
-
-    /**
-     * Clears the list of tracked entities.
-     */
-    public void clear() {
-        this.entities.clear();
-        this.nextFreeEntityId = 0;
-        for (FroggerPath path : getParentFile().getPathPacket().getPaths())
-            path.getPathEntities().clear();
     }
 
     /**

@@ -2,8 +2,6 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.animation;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
@@ -11,6 +9,8 @@ import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePack
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.List;
 
@@ -69,6 +69,8 @@ public class FroggerMapAnimationTargetPolygon extends SCGameData<FroggerGameInst
     public void setPolygon(FroggerMapPolygon polygon) {
         if (this.polygon == polygon)
             return; // No change.
+        if (polygon.getMapFile() != null && this.animation.getMapFile() != null && polygon.getMapFile() != this.animation.getMapFile())
+            throw new IllegalArgumentException("The provided polygon was for '" + polygon.getMapFile().getFileDisplayName() + "', so it cannot be added to an animation for '" + this.animation.getMapFile() + "'.");
 
         FroggerMapPolygon oldPolygon = this.polygon;
         this.polygon = polygon;

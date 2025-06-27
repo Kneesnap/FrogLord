@@ -278,7 +278,7 @@ public class FFSUtil {
         // 4) Apply new polygon data, and prepare to calculate the size of the new collision grid.
         // Register new polygons, and determine the minimum grid size we need.
         FroggerMapFilePacketPolygon polygonPacket = map.getPolygonPacket();
-        polygonPacket.clearPolygons();
+        polygonPacket.clear();
         for (FroggerMapPolygon polygon : context.getNewPolygons()) {
             polygonPacket.addPolygon(polygon);
 

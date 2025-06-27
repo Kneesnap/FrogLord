@@ -85,4 +85,9 @@ public class OldFroggerMapHeaderPacket extends OldFroggerMapPacket {
         writer.writeUnsignedInt(getParentFile().getZonePacket().getLastValidReadHeaderAddress());
         writer.writeUnsignedInt(getParentFile().getPathPacket().getLastValidReadHeaderAddress());
     }
+
+    @Override
+    public void clear() {
+        this.comment = DEFAULT_COMMENT;
+    }
 }
