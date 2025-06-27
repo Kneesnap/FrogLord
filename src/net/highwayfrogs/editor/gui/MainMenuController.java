@@ -87,7 +87,7 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
         this.menuItemRunScript.setOnMenuValidation(event
                 -> ((MenuItem) event.getTarget()).setDisable(getGameInstance().getScriptEngine() == null));
         this.menuItemRunScript.setOnAction(event -> {
-            File noodleScript = FXUtils.promptFileOpen(getGameInstance(), "Please select the script to run", NoodleConstants.NOODLE_CODE_TYPE_INFO, NoodleConstants.NOODLE_CODE_EXTENSION);
+            File noodleScript = FileUtils.askUserToOpenFile(getGameInstance(), NoodleConstants.NOODLE_SCRIPT_FILE_PATH);
             if (noodleScript == null)
                 return;
 
