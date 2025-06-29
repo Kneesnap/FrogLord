@@ -42,8 +42,10 @@ public class NoodleThread<T extends NoodleScript> extends SharedGameObject {
     // Jsonable Program State:
     @Setter private int position;
     private final Stack<Integer> jumpStack = new Stack<>();
+    private Throwable errorTrace;
     private NoodleThreadStatus status = NoodleThreadStatus.NONE; // The status of the thread.
     @Setter private transient Runnable onFinishHook;
+    @Setter private transient Runnable onCancelHook;
     @Setter private transient NoodleYieldReference lastSkipSupportingDelay;
 
     public NoodleThread(GameInstance instance, T script) {
@@ -133,6 +135,7 @@ public class NoodleThread<T extends NoodleScript> extends SharedGameObject {
             return; // Already has error, no need to handle another!
 
         // Cancel the thread.
+        this.errorTrace = th;
         cancel();
         this.status = NoodleThreadStatus.ERROR;
         fireHeapObjectShutdownHooks();
@@ -293,6 +296,11 @@ public class NoodleThread<T extends NoodleScript> extends SharedGameObject {
         builder.append(Constants.NEWLINE)
                 .append(" - Address: ")
                 .append(this.position);
+        if (this.position > 0 && this.position <= this.script.getInstructions().size()) {
+            NoodleInstruction lastInstruction = this.script.getInstructions().get(this.position - 1);
+            if (lastInstruction != null)
+                builder.append(Constants.NEWLINE).append(" - Location: ").append(NoodleUtils.getErrorPositionText(lastInstruction));
+        }
 
         // Write current function.
         NoodleScriptFunction function = this.script.getFunctionContainingAddress(this.position);
@@ -300,6 +308,24 @@ public class NoodleThread<T extends NoodleScript> extends SharedGameObject {
             builder.append(Constants.NEWLINE)
                     .append(" - Function: ");
             function.writeSignature(builder, true);
+        }
+
+        // Print error traces.
+        if (this.errorTrace != null) {
+            builder.append(Constants.NEWLINE)
+                    .append(Constants.NEWLINE)
+                    .append("Messages: ");
+
+            Throwable temp = this.errorTrace;
+            while (temp != null) {
+                if (temp.getMessage() != null) {
+                    builder.append(Constants.NEWLINE)
+                            .append(" - ")
+                            .append(temp.getMessage());
+                }
+
+                temp = temp.getCause();
+            }
         }
     }
 
@@ -326,7 +352,9 @@ public class NoodleThread<T extends NoodleScript> extends SharedGameObject {
      * Called upon cancelling the cutscene.
      */
     protected void onCancel() {
-
+        // Run finish hook.
+        if (this.onCancelHook != null)
+            this.onCancelHook.run();
     }
 
     /**
