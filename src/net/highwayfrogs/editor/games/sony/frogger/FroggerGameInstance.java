@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.file.DemoFile;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.config.TargetPlatform;
+import net.highwayfrogs.editor.file.config.data.FroggerMapWorldID;
 import net.highwayfrogs.editor.file.config.data.MusicTrack;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
@@ -17,6 +18,8 @@ import net.highwayfrogs.editor.file.config.exe.PickupData;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.general.DemoTableEntry;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
+import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
+import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.file.config.script.FroggerScript;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
@@ -230,7 +233,9 @@ public class FroggerGameInstance extends SCGameInstance {
     @Override
     protected void setupScriptEngine(NoodleScriptEngine engine) {
         super.setupScriptEngine(engine);
-        engine.addWrapperTemplates(FroggerGameInstance.class, FroggerTextureRemap.class, FroggerMapFile.class);
+        engine.addWrapperTemplates(FroggerGameInstance.class, FroggerTextureRemap.class, FroggerMapFile.class,
+                LevelInfo.class, FroggerMapLevelID.class, FroggerMapWorldID.class, PCMapBook.class, FroggerMapTheme.class,
+                PSXMapBook.class, MapBook.class);
     }
 
     /**
@@ -440,10 +445,7 @@ public class FroggerGameInstance extends SCGameInstance {
      * @return levelInfo
      */
     public LevelInfo getLevel(FroggerMapLevelID level) {
-        for (LevelInfo info : this.allLevelInfo)
-            if (info.getLevel() == level)
-                return info;
-        return null;
+        return this.levelInfoMap.get(level);
     }
 
     /**
