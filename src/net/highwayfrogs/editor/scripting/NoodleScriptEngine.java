@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.scripting.runtime.NoodleObjectInstance;
 import net.highwayfrogs.editor.scripting.runtime.NoodlePrimitive;
 import net.highwayfrogs.editor.scripting.runtime.NoodleRuntimeException;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleArrayTemplate;
+import net.highwayfrogs.editor.scripting.runtime.templates.NoodleFileTemplate;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleObjectTemplate;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleWrapperTemplate;
 import net.highwayfrogs.editor.scripting.runtime.templates.utils.NoodleLoggerTemplate;
@@ -22,6 +23,7 @@ import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.function.BiFunction;
 
@@ -40,6 +42,7 @@ public class NoodleScriptEngine extends SharedGameObject {
     private final Map<String, NoodleFunction> functionMap = new HashMap<>(); // <label, function>
     private final Map<String, NoodlePrimitive> constantMap = new HashMap<>(); // <name, constant>
     @Getter private boolean sealed; // No longer ready for changes.
+    private final List<File> allowedDirectories = new ArrayList<>();
     private ILogger logger;
 
     public NoodleScriptEngine(GameInstance instance, String name) {
@@ -229,13 +232,13 @@ public class NoodleScriptEngine extends SharedGameObject {
      * Loads the script file.
      * @param scriptFile The file to load.
      */
-    public NoodleScript loadScriptFile(File scriptFile) {
+    public NoodleScript loadScriptFile(File scriptFile, boolean whitelistScriptFolder) {
         throwIfNotSealed();
         if (scriptFile == null)
             throw new NullPointerException("sourceCodeFile");
 
         String scriptName = FileUtils.stripExtension(scriptFile.getName());
-        return loadScript(scriptFile, scriptName, new NoodleScript(this, scriptName));
+        return loadScript(scriptFile, scriptName, new NoodleScript(this, scriptName), whitelistScriptFolder);
     }
 
     /**
@@ -243,7 +246,7 @@ public class NoodleScriptEngine extends SharedGameObject {
      * @param scriptFile The file to load.
      * @param maker The script object maker.
      */
-    public <T extends NoodleScript> T loadScriptFile(File scriptFile, BiFunction<NoodleScriptEngine, String, T> maker) {
+    public <T extends NoodleScript> T loadScriptFile(File scriptFile, BiFunction<NoodleScriptEngine, String, T> maker, boolean whitelistScriptFolder) {
         throwIfNotSealed();
         if (scriptFile == null)
             throw new NullPointerException("sourceCodeFile");
@@ -251,13 +254,13 @@ public class NoodleScriptEngine extends SharedGameObject {
             throw new NullPointerException("scriptName");
 
         String scriptName = FileUtils.stripExtension(scriptFile.getName());
-        return loadScript(scriptFile, scriptName, maker.apply(this, scriptName));
+        return loadScript(scriptFile, scriptName, maker.apply(this, scriptName), whitelistScriptFolder);
     }
 
     /**
      * Loads a script from disk.
      */
-    public <T extends NoodleScript> T loadScript(File sourceCodeFile, String scriptName, T script) {
+    public <T extends NoodleScript> T loadScript(File sourceCodeFile, String scriptName, T script, boolean whitelistScriptFolder) {
         throwIfNotSealed();
         if (sourceCodeFile == null)
             throw new NullPointerException("sourceCodeFile");
@@ -278,7 +281,10 @@ public class NoodleScriptEngine extends SharedGameObject {
             Utils.handleError(getLogger(), th, false, "Failed to compile script: '%s'.", scriptName);
             return null;
         }
-        
+
+        if (whitelistScriptFolder)
+            addWhitelistedFolder(script.getScriptFolder());
+
         return script;
     }
 
@@ -315,6 +321,7 @@ public class NoodleScriptEngine extends SharedGameObject {
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(Arrays.class));
         addTemplate(NoodleLoggerTemplate.INSTANCE);
         addTemplate(NoodleStringTemplate.INSTANCE);
+        addTemplate(NoodleFileTemplate.INSTANCE);
 
         // Various utility components of FrogLord.
         addWrapperTemplates(Matrix4x4f.class, Vector2f.class, Vector3f.class, Vector4f.class, Quaternion.class);
@@ -368,6 +375,48 @@ public class NoodleScriptEngine extends SharedGameObject {
             return true;
 
         return this.templatesByClass.get(testClass) != null;
+    }
+
+    /**
+     * Adds a directory to the whitelisted file paths where a script can modify.
+     * @param file the file path to add
+     */
+    public File addWhitelistedFolder(File file) {
+        if (file == null)
+            throw new NullPointerException("file");
+        if (!file.isDirectory())
+            throw new IllegalArgumentException("The file provided was not a directory!");
+
+        File canonicalFile;
+
+        try {
+            canonicalFile = file.getCanonicalFile();
+        } catch (IOException ex) {
+            throw new IllegalArgumentException("Cannot resolve '" + file + "' to a canonical file path.", ex);
+        }
+
+        if (!this.allowedDirectories.contains(canonicalFile))
+            this.allowedDirectories.add(canonicalFile);
+
+        return canonicalFile;
+    }
+
+    /**
+     * Test if the provided file is within the allowed directory paths.
+     * @param file the file to test
+     * @return isWhitelistedFilePath
+     */
+    public boolean isWhitelistedFilePath(File file) {
+        if (file == null)
+            throw new NullPointerException("file");
+
+        for (int i = 0; i < this.allowedDirectories.size(); i++) {
+            File testDir = this.allowedDirectories.get(i);
+            if (FileUtils.isFileWithinParent(file, testDir))
+                return true;
+        }
+
+        return false;
     }
 
     private void registerConstants() {

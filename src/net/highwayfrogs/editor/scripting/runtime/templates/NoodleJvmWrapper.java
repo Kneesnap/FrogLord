@@ -225,17 +225,28 @@ public class NoodleJvmWrapper<TWrappedType> {
                 }
             }
 
+            // Add corresponding accessors for 'X' in the case of 'getX()' and 'setX()'.
             if (methods.size() > 0 && methodName.length() >= 4 && (methodName.charAt(1) == 'e') && (methodName.charAt(2) == 't') && Character.isUpperCase(methodName.charAt(3)) && (methodName.charAt(0) == 's' || methodName.charAt(0) == 'g')) {
                 String fieldName = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
                 CachedMethod method = methods.get(0);
 
                 // Create a getter binding.
-                if (method.getParameterCount() == 0 && methodName.charAt(0) == 'g')
+                if (method.getParameterCount() == 0 && methodName.charAt(0) == 'g' && template.getGetter(fieldName) == null)
                     template.addGetter(fieldName, (thread, object) -> thread.getStack().pushObject(executeMethod(methodName, object, EMPTY_ARGUMENTS)));
 
                 // Create a setter binding.
-                if (method.getParameterCount() == 1 && methodName.charAt(0) == 's')
+                if (method.getParameterCount() == 1 && methodName.charAt(0) == 's' && template.getSetter(fieldName) == null)
                     template.addSetter(fieldName, (thread, object, newValue) -> executeMethod(methodName, object, new NoodlePrimitive[] {newValue}));
+            }
+
+            // Add corresponding accessor for 'X' in the case of 'isX()'.
+            if (methods.size() > 0 && methodName.length() >= 3 && methodName.charAt(0) == 'i' && methodName.charAt(1) == 's' && Character.isUpperCase(methodName.charAt(2))) {
+                String fieldName = Character.toLowerCase(methodName.charAt(2)) + methodName.substring(3);
+                CachedMethod method = methods.get(0);
+
+                // Create a getter binding.
+                if (method.getParameterCount() == 0 && template.getGetter(fieldName) == null)
+                    template.addGetter(fieldName, (thread, object) -> thread.getStack().pushObject(executeMethod(methodName, object, EMPTY_ARGUMENTS)));
             }
         }
     }
