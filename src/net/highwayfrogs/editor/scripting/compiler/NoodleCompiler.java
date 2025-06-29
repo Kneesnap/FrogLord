@@ -938,10 +938,15 @@ public class NoodleCompiler {
                         throw new NoodleSyntaxException("Expected an IDENTIFIER for the static function name under %s. (Instead got: '%s')", tkn, identValue, tkn);
 
                     String functionName = ((NoodleTokenString) tkn).getStringData();
-                    List<NoodleNode> arguments = buildFunctionArguments(context);
+                    NoodleToken nextToken = context.getCurrentToken();
+                    if (nextToken.getTokenType() == NoodleTokenType.PAR_OPEN) {
+                        List<NoodleNode> arguments = buildFunctionArguments(context);
 
-                    // Create static function call node.
-                    context.setNode(new NoodleNodeFunctionCallStatic(tk.getCodeLocation(), staticTemplate, functionName, arguments));
+                        // Create static function call node.
+                        context.setNode(new NoodleNodeFunctionCallStatic(tk.getCodeLocation(), staticTemplate, functionName, arguments));
+                    } else {
+                        context.setNode(new NoodleNodeString(NoodleNodeType.IDENTIFIER, tk.getCodeLocation(), identValue + "." + functionName));
+                    }
                 } else { // An actual identifier.
                     context.setNode(new NoodleNodeString(NoodleNodeType.IDENTIFIER, tk.getCodeLocation(), ((NoodleTokenString) tk).getStringData()));
                 }

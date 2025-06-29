@@ -23,6 +23,8 @@ public class NoodleJvmWrapper<TWrappedType> {
     private final List<CachedConstructor<TWrappedType>> cachedConstructors = new ArrayList<>();
     private final Set<Constructor<TWrappedType>> registeredConstructors = new HashSet<>();
     private final Map<String, List<CachedMethod>> cachedMethods = new HashMap<>();
+    private final Map<String, Enum<?>> cachedEnumValues = new HashMap<>();
+    private final Map<String, CachedField> cachedFields = new HashMap<>();
     private final Set<Method> registeredMethods = new HashSet<>();
 
     private static final NoodlePrimitive[] EMPTY_ARGUMENTS = new NoodlePrimitive[0];
@@ -50,6 +52,20 @@ public class NoodleJvmWrapper<TWrappedType> {
         // Add constructors.
         for (Constructor<?> constructor : this.wrappedClass.getConstructors()) // getConstructors() only includes public methods.
             addConstructor((Constructor<TWrappedType>) constructor);
+
+        // Add enum values.
+        Object[] enumValues = this.wrappedClass.getEnumConstants();
+        if (enumValues != null) {
+            for (Object constructor : enumValues) {
+                Enum<?> value = (Enum<?>) constructor;
+                this.cachedEnumValues.put(value.name(), value);
+            }
+        }
+
+        // Add static fields.
+        for (Field field : this.wrappedClass.getFields())
+            if (field.isAccessible())
+                this.cachedFields.put(field.getName(), new CachedField(field));
 
         // Add public methods. (Including inherited ones)
         for (Method method : this.wrappedClass.getMethods()) { // getMethods() only includes public methods.
@@ -188,6 +204,26 @@ public class NoodleJvmWrapper<TWrappedType> {
                 template.addStaticFunction(new NoodleJvmConstructor<>(this, tempArgumentCount));
                 lastArgumentCount = tempArgumentCount;
             }
+        }
+
+        // Register enum fields.
+        for (Entry<String, Enum<?>> entry : this.cachedEnumValues.entrySet()) {
+            Enum<?> value = entry.getValue();
+            template.addStaticGetter(entry.getKey(),
+                    thread -> thread.getStack().pushObject(value));
+        }
+
+        // Register static fields.
+        for (Entry<String, CachedField> entry : this.cachedFields.entrySet()) {
+            CachedField field = entry.getValue();
+            if (!field.isStaticallyAccessible())
+                continue;
+
+            template.addStaticGetter(entry.getKey(),
+                    thread -> thread.getStack().pushObject(field.get(null)));
+            if (field.isAllowSetter())
+                template.addStaticSetter(entry.getKey(),
+                        (thread, value) -> field.set(null, value.getAsRawObject()));
         }
 
         // Register methods:
@@ -531,6 +567,37 @@ public class NoodleJvmWrapper<TWrappedType> {
         @Override
         protected NoodlePrimitive executeImpl(NoodleThread<?> thread, NoodlePrimitive[] args) {
             return thread.getStack().pushObject(this.jvmWrapper.invokeConstructor(args));
+        }
+    }
+
+    @Getter
+    private static class CachedField {
+        private final String fieldName;
+        private final Field field;
+        private final boolean allowSetter;
+        private final boolean staticallyAccessible;
+
+        public CachedField(Field field) {
+            this.fieldName = field.getName();
+            this.field = field;
+            this.allowSetter = !Modifier.isFinal(field.getModifiers());
+            this.staticallyAccessible = Modifier.isStatic(field.getModifiers());
+        }
+
+        public Object get(Object instance) {
+            try {
+                return this.field.get(instance);
+            } catch (IllegalAccessException iae) {
+                throw new NoodleRuntimeException(iae, "Failed to get the value of field %s for instance %s.", this.fieldName, instance);
+            }
+        }
+
+        public void set(Object instance, Object value) {
+            try {
+                this.field.set(instance, value);
+            } catch (IllegalAccessException iae) {
+                throw new NoodleRuntimeException(iae, "Failed to set the value of field %s for instance %s to %s.", this.fieldName, instance, value);
+            }
         }
     }
 

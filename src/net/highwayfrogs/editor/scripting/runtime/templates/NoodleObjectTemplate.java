@@ -18,7 +18,9 @@ import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * An object template is effectively Noodle's concept of a class.
@@ -29,7 +31,9 @@ public abstract class NoodleObjectTemplate<TType> {
     @Getter private final Class<TType> wrappedClass;
     @Getter private final NoodleJvmWrapper<TType> jvmWrapper;
     private final Map<String, BiFunction<NoodleThread<?>, TType, NoodlePrimitive>> getters = new HashMap<>();
+    private final Map<String, Function<NoodleThread<?>, NoodlePrimitive>> staticGetters = new HashMap<>();
     private final Map<String, Consumer3<NoodleThread<?>, TType, NoodlePrimitive>> setters = new HashMap<>();
+    private final Map<String, BiConsumer<NoodleThread<?>, NoodlePrimitive>> staticSetters = new HashMap<>();
     private final NoodleCallHolder<NoodleTemplateFunction<TType>> instanceFunctions = new NoodleCallHolder<>();
     private final NoodleCallHolder<NoodleStaticTemplateFunction<TType>> staticFunctions = new NoodleCallHolder<>();
     private boolean setupHasOccurred;
@@ -181,6 +185,19 @@ public abstract class NoodleObjectTemplate<TType> {
     }
 
     /**
+     * Registers a field getter.
+     * @param fieldName The name of the field.
+     * @param getter The getter logic.
+     */
+    public void addStaticGetter(String fieldName, Function<NoodleThread<?>, NoodlePrimitive> getter) {
+        Object existingGetter = this.staticGetters.put(fieldName, getter);
+        if (existingGetter != null) {
+            warn("NoodleObjectTemplate-%s.%s already had a static getter! It has been replaced.", this.name, fieldName);
+            Utils.printStackTrace();
+        }
+    }
+
+    /**
      * Registers a field setter.
      * @param fieldName The name of the field.
      * @param setter The setter logic.
@@ -194,6 +211,19 @@ public abstract class NoodleObjectTemplate<TType> {
     }
 
     /**
+     * Registers a field setter.
+     * @param fieldName The name of the field.
+     * @param setter The setter logic.
+     */
+    public void addStaticSetter(String fieldName, BiConsumer<NoodleThread<?>, NoodlePrimitive> setter) {
+        Object existingSetter = this.staticSetters.put(fieldName, setter);
+        if (existingSetter != null) {
+            warn("NoodleObjectTemplate-%s.%s already had a static setter! It has been replaced.", this.name, fieldName);
+            Utils.printStackTrace();
+        }
+    }
+
+    /**
      * Registers a field getter.
      * @param fieldName The name of the field.
      * @param getter The getter logic.
@@ -202,6 +232,17 @@ public abstract class NoodleObjectTemplate<TType> {
     public void addGetterAndSetter(String fieldName, BiFunction<NoodleThread<?>, TType, NoodlePrimitive> getter, Consumer3<NoodleThread<?>, TType, NoodlePrimitive> setter) {
         addGetter(fieldName, getter);
         addSetter(fieldName, setter);
+    }
+
+    /**
+     * Registers a field getter.
+     * @param fieldName The name of the field.
+     * @param getter The getter logic.
+     * @param setter The setter logic.
+     */
+    public void addStaticGetterAndSetter(String fieldName, Function<NoodleThread<?>, NoodlePrimitive> getter, BiConsumer<NoodleThread<?>, NoodlePrimitive> setter) {
+        addStaticGetter(fieldName, getter);
+        addStaticSetter(fieldName, setter);
     }
 
     /**
@@ -356,6 +397,10 @@ public abstract class NoodleObjectTemplate<TType> {
                 info("  - Getter for %s.%s: ", getName(), fieldName));
         this.setters.keySet().forEach(fieldName ->
                 info("  - Setter for %s.%s: ", getName(), fieldName));
+        this.staticGetters.keySet().forEach(fieldName ->
+                info("  - Static Getter for %s.%s: ", getName(), fieldName));
+        this.staticSetters.keySet().forEach(fieldName ->
+                info("  - Static Setter for %s.%s: ", getName(), fieldName));
     }
 
     private static void writeArguments(StringBuilder builder, NoodlePrimitive[] arguments) {
@@ -399,12 +444,30 @@ public abstract class NoodleObjectTemplate<TType> {
     }
 
     /**
+     * Gets the static getter function for a given field name.
+     * @param fieldName The name of the field to lookup.
+     * @return getter, or null if one does not exist.
+     */
+    public Function<NoodleThread<?>, NoodlePrimitive> getStaticGetter(String fieldName) {
+        return this.staticGetters.get(fieldName);
+    }
+
+    /**
      * Gets the setter function for a given field name.
      * @param fieldName The name of the field to lookup.
      * @return setter, or null if one does not exist.
      */
     public Consumer3<NoodleThread<?>, TType, NoodlePrimitive> getSetter(String fieldName) {
         return this.setters.get(fieldName);
+    }
+
+    /**
+     * Gets the setter function for a given field name.
+     * @param fieldName The name of the field to lookup.
+     * @return setter, or null if one does not exist.
+     */
+    public BiConsumer<NoodleThread<?>, NoodlePrimitive> getStaticSetter(String fieldName) {
+        return this.staticSetters.get(fieldName);
     }
 
     /**
