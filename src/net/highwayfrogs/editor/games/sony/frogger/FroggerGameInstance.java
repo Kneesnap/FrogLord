@@ -42,6 +42,7 @@ import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewCom
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.LazySCGameFileListGroup;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
+import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -226,6 +227,12 @@ public class FroggerGameInstance extends SCGameInstance {
         fileListView.addGroup(new SCGameFileListTypeIdGroup("Unused Palettes (.PAL)", FILE_TYPE_PAL));
     }
 
+    @Override
+    protected void setupScriptEngine(NoodleScriptEngine engine) {
+        super.setupScriptEngine(engine);
+        engine.addWrapperTemplates(FroggerGameInstance.class, FroggerTextureRemap.class, FroggerMapFile.class);
+    }
+
     /**
      * Gets this MWD's FroggerSkyLand file.
      * @return skyLand
@@ -398,7 +405,6 @@ public class FroggerGameInstance extends SCGameInstance {
         for (Entry<Short, String> entry : this.getVersionConfig().getImageNames().entrySet())
             writer.append(String.valueOf(entry.getKey())).append("=").append(entry.getValue()).append(Constants.NEWLINE);
     }
-
 
     /**
      * Get the form book for the given formBookId and MapTheme.
