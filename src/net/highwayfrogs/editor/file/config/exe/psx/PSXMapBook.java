@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.config.exe.psx;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
@@ -18,6 +19,7 @@ import java.util.function.Function;
  * Created by Kneesnap on 1/27/2019.
  */
 @Getter
+@Setter
 public class PSXMapBook extends MapBook {
     private int mapId;
     private long remapPointer;

@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.file.config.exe;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.config.data.WorldId;
+import net.highwayfrogs.editor.file.config.data.FroggerMapWorldID;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapLevelID;
@@ -18,7 +18,7 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 @Setter
 public class LevelInfo extends ExeStruct {
     private int level;
-    private WorldId world;
+    private FroggerMapWorldID world;
     private int stackPosition; // 0 = Top of level stack.
     private int theme;
     private int localLevelId; // 0 -> 4 (Level 1 -> 5)
@@ -40,7 +40,7 @@ public class LevelInfo extends ExeStruct {
     @Override
     public void load(DataReader reader) {
         this.level = reader.readInt();
-        this.world = WorldId.values()[reader.readInt()];
+        this.world = FroggerMapWorldID.values()[reader.readInt()];
         if (!getConfig().isAtOrBeforeBuild20()) // TODO: Flip these checks so they make more sense. Eg: "isAtLeastBuild21" or "isAfterBuild20".
             this.stackPosition = reader.readInt();
         if (!getConfig().isAtOrBeforeBuild21())

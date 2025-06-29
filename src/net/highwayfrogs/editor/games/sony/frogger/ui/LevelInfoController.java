@@ -7,8 +7,8 @@ import javafx.scene.Node;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import lombok.Getter;
+import net.highwayfrogs.editor.file.config.data.FroggerMapWorldID;
 import net.highwayfrogs.editor.file.config.data.MusicTrack;
-import net.highwayfrogs.editor.file.config.data.WorldId;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapLevelID;
@@ -30,7 +30,7 @@ public class LevelInfoController extends GameUIController<FroggerGameInstance> {
     @FXML private ComboBox<FroggerMapLevelID> levelSelector;
     @FXML private ComboBox<FroggerMapLevelID> mapFileSelector;
     @FXML private ComboBox<FroggerMapTheme> themeSelector;
-    @FXML private ComboBox<WorldId> worldSelector;
+    @FXML private ComboBox<FroggerMapWorldID> worldSelector;
     @FXML private ComboBox<MusicTrack> musicSelector;
     @FXML private TextField stackPosField;
     @FXML private TextField localLevelField;
@@ -55,7 +55,7 @@ public class LevelInfoController extends GameUIController<FroggerGameInstance> {
         levelSelector.setItems(FXCollections.observableArrayList(levelInfo));
         mapFileSelector.setItems(FXCollections.observableArrayList(FroggerMapLevelID.values()));
         themeSelector.setItems(FXCollections.observableArrayList(FroggerMapTheme.values()));
-        worldSelector.setItems(FXCollections.observableArrayList(WorldId.values()));
+        worldSelector.setItems(FXCollections.observableArrayList(FroggerMapWorldID.values()));
         musicSelector.setItems(FXCollections.observableArrayList(MusicTrack.values()));
 
         // Handlers:

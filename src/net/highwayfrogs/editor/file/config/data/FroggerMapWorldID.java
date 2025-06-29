@@ -4,7 +4,7 @@ package net.highwayfrogs.editor.file.config.data;
  * World identifiers.
  * Created by Kneesnap on 2/1/2019.
  */
-public enum WorldId {
+public enum FroggerMapWorldID {
     SUBURBIA,
     ORIGINAL,
     SEWER,
