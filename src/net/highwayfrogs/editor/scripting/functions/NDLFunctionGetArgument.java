@@ -17,7 +17,7 @@ public class NDLFunctionGetArgument extends NoodleFunction {
 
     @Override
     public NoodlePrimitive execute(NoodleThread<? extends NoodleScript> thread, NoodlePrimitive[] args) {
-        int index = args[0].getIntegerValue();
+        int index = args[0].getInteger();
         if (index < 0 || index >= thread.getArguments().size())
             throw new NoodleRuntimeException("Tried to get argument %d, which does not exist. (Argument Count: %d)", index, thread.getArguments().size());
 

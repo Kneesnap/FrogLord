@@ -2,9 +2,10 @@ package net.highwayfrogs.editor.scripting.compiler.preprocessor.builtins;
 
 import net.highwayfrogs.editor.scripting.compiler.preprocessor.NoodlePreprocessorContext;
 import net.highwayfrogs.editor.scripting.compiler.tokens.NoodleToken;
-import net.highwayfrogs.editor.scripting.compiler.tokens.NoodleTokenNumber;
+import net.highwayfrogs.editor.scripting.compiler.tokens.NoodleTokenPrimitive;
 import net.highwayfrogs.editor.scripting.compiler.tokens.NoodleTokenString;
 import net.highwayfrogs.editor.scripting.compiler.tokens.NoodleTokenType;
+import net.highwayfrogs.editor.scripting.runtime.NoodlePrimitive;
 
 import java.util.Collections;
 import java.util.List;
@@ -24,6 +25,6 @@ public class NoodleBuiltinDefined extends NoodleBuiltin {
 
         boolean isDefined = context.getCompileContext().getMacros().hasByName(name)
                 || context.getCompileContext().getEngine().getBuiltinManager().getBuiltins().hasByName(name);
-        return Collections.singletonList(new NoodleTokenNumber(NoodleTokenType.NUMBER, identToken.getCodeLocation(), isDefined ? 1 : 0));
+        return Collections.singletonList(new NoodleTokenPrimitive(NoodleTokenType.PRIMITIVE, identToken.getCodeLocation(), new NoodlePrimitive(isDefined)));
     }
 }

@@ -15,6 +15,7 @@ import net.highwayfrogs.editor.scripting.compiler.tokens.*;
 import net.highwayfrogs.editor.scripting.functions.NoodleFunction;
 import net.highwayfrogs.editor.scripting.instructions.*;
 import net.highwayfrogs.editor.scripting.runtime.NoodlePrimitive;
+import net.highwayfrogs.editor.scripting.runtime.NoodlePrimitiveType;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleObjectTemplate;
 import net.highwayfrogs.editor.scripting.tracking.NoodleCodeLocation;
 import net.highwayfrogs.editor.scripting.tracking.NoodleCodeSource;
@@ -128,8 +129,8 @@ public class NoodleCompiler {
             case NULL:
                 out.add(new NoodleInstructionPushNull(pos));
                 break;
-            case NUMBER:
-                out.add(new NoodleInstructionPushConstantNumber(pos, ((NoodleNodeNumber) node).getNumberValue()));
+            case PRIMITIVE:
+                out.add(new NoodleInstructionPushPrimitive(pos, ((NoodleNodePrimitive) node).getNumberValue()));
                 break;
             case STRING:
                 out.add(new NoodleInstructionPushConstantString(pos, ((NoodleNodeString) node).getStringValue()));
@@ -309,14 +310,14 @@ public class NoodleCompiler {
             case ADJFIX: // a++; -> get a; push 1; add; set a
                 NoodleNodePrePostOperator adjFix = (NoodleNodePrePostOperator) node;
                 NoodleInstruction adjfixSetter = compileGetterAndSetter(context, adjFix.getNode(), pos);
-                out.add(new NoodleInstructionPushConstantNumber(pos, adjFix.getValue()));
+                out.add(new NoodleInstructionPushPrimitive(pos, adjFix.getValue()));
                 out.add(new NoodleInstructionBinaryOperation(pos, NoodleOperator.ADD));
                 out.add(adjfixSetter);
                 break;
             case PREFIX: // ++a; -> get a; push 1; add; dup; set a
                 NoodleNodePrePostOperator prefix = (NoodleNodePrePostOperator) node;
                 NoodleInstruction prefixSetter = compileGetterAndSetter(context, prefix.getNode(), pos);
-                out.add(new NoodleInstructionPushConstantNumber(pos, prefix.getValue()));
+                out.add(new NoodleInstructionPushPrimitive(pos, prefix.getValue()));
                 out.add(new NoodleInstructionBinaryOperation(pos, NoodleOperator.ADD));
                 out.add(new NoodleInstructionDuplicate(pos));
                 out.add(prefixSetter);
@@ -325,7 +326,7 @@ public class NoodleCompiler {
                 NoodleNodePrePostOperator postfix = (NoodleNodePrePostOperator) node;
                 NoodleInstruction postfixSetter = compileGetterAndSetter(context, postfix.getNode(), pos);
                 out.add(new NoodleInstructionDuplicate(pos));
-                out.add(new NoodleInstructionPushConstantNumber(pos, postfix.getValue()));
+                out.add(new NoodleInstructionPushPrimitive(pos, postfix.getValue()));
                 out.add(new NoodleInstructionBinaryOperation(pos, NoodleOperator.ADD));
                 out.add(postfixSetter);
                 break;
@@ -502,10 +503,10 @@ public class NoodleCompiler {
         String strValue = ((NoodleNodeString) node).getStringValue();
         NoodlePrimitive constant = context.getEngine().getConstantByName(strValue);
         if (constant != null) {
-            if (constant.isString()) {
+            if (constant.isObjectReference()) {
                 out.add(new NoodleInstructionPushConstantString(pos, constant.getStringValue()));
             } else {
-                out.add(new NoodleInstructionPushConstantNumber(pos, constant.getNumberValue()));
+                out.add(new NoodleInstructionPushPrimitive(pos, constant));
             }
         } else if (context.getEngine().getBuiltinManager().hasSystemMacroNamed(strValue)) {
             context.getEngine().getBuiltinManager().generateSystemMacroInstructions(strValue, pos, out);
@@ -911,8 +912,8 @@ public class NoodleCompiler {
             case NULL:
                 context.setNode(new NoodleNodeNull(tk.getCodeLocation()));
                 break;
-            case NUMBER:
-                context.setNode(new NoodleNodeNumber(tk.getCodeLocation(), ((NoodleTokenNumber) tk).getNumber()));
+            case PRIMITIVE:
+                context.setNode(new NoodleNodePrimitive(tk.getCodeLocation(), ((NoodleTokenPrimitive) tk).getPrimitive()));
                 break;
             case STRING:
                 context.setNode(new NoodleNodeString(NoodleNodeType.STRING, tk.getCodeLocation(), ((NoodleTokenString) tk).getStringData()));
@@ -1002,7 +1003,7 @@ public class NoodleCompiler {
                 break;
             case ADJFIX: // ++value
                 buildExpression(context, FLAG_NO_OPERATORS);
-                context.setNode(new NoodleNodePrePostOperator(NoodleNodeType.PREFIX, tk.getCodeLocation(), context.getNode(), ((NoodleTokenNumber) tk).getNumber()));
+                context.setNode(new NoodleNodePrePostOperator(NoodleNodeType.PREFIX, tk.getCodeLocation(), context.getNode(), ((NoodleTokenPrimitive) tk).getPrimitive()));
                 break;
             default:
                 throw new NoodleSyntaxException("Expected an expression token, but got '%s' instead.", tk, tk);
@@ -1012,7 +1013,7 @@ public class NoodleCompiler {
         tk = context.getCurrentToken();
         if (tk.getTokenType() == NoodleTokenType.ADJFIX) {
             context.incrementToken();
-            context.setNode(new NoodleNodePrePostOperator(NoodleNodeType.POSTFIX, tk.getCodeLocation(), context.getNode(), ((NoodleTokenNumber) tk).getNumber()));
+            context.setNode(new NoodleNodePrePostOperator(NoodleNodeType.POSTFIX, tk.getCodeLocation(), context.getNode(), ((NoodleTokenPrimitive) tk).getPrimitive()));
         }
 
         // value + ...?
@@ -1281,7 +1282,7 @@ public class NoodleCompiler {
                             break;
                         case '+': // ++
                             pos++;
-                            out.add(new NoodleTokenNumber(NoodleTokenType.ADJFIX, codeLoc, 1));
+                            out.add(new NoodleTokenPrimitive(NoodleTokenType.ADJFIX, codeLoc, new NoodlePrimitive(1)));
                             break;
                         default:
                             out.add(new NoodleTokenOperator(NoodleTokenType.OPERATOR, codeLoc, NoodleOperator.ADD));
@@ -1295,7 +1296,7 @@ public class NoodleCompiler {
                             break;
                         case '-': // --
                             pos++;
-                            out.add(new NoodleTokenNumber(NoodleTokenType.ADJFIX, codeLoc, -1));
+                            out.add(new NoodleTokenPrimitive(NoodleTokenType.ADJFIX, codeLoc, new NoodlePrimitive(-1)));
                             break;
                         default:
                             out.add(new NoodleTokenOperator(NoodleTokenType.OPERATOR, codeLoc, NoodleOperator.SUB));
@@ -1466,10 +1467,12 @@ public class NoodleCompiler {
                 default:
                     if (Character.isDigit(currentChar) || currentChar == '.') {
                         boolean preDot = true;
+                        NoodlePrimitiveType primitiveType = NoodlePrimitiveType.INTEGER;
                         while (pos <= len) {
                             char tempChar = scriptText.charAt(pos - 1);
                             if (tempChar == '.') {
                                 if (preDot) { // First dot we've found.
+                                    primitiveType = NoodlePrimitiveType.FLOAT;
                                     preDot = false;
                                     pos++;
                                 } else { // Not the first dot we've found. Exit.
@@ -1477,6 +1480,14 @@ public class NoodleCompiler {
                                 }
                             } else if (Character.isDigit(tempChar)) {
                                 pos++; // This is part of the number, so continue reading.
+                            } else if (!preDot && (tempChar == 'd' || tempChar == 'D')) {
+                                primitiveType = NoodlePrimitiveType.DOUBLE;
+                                pos++;
+                                break;
+                            } else if (!preDot && (tempChar == 'f' || tempChar == 'F')) {
+                                primitiveType = NoodlePrimitiveType.FLOAT;
+                                pos++;
+                                break;
                             } else { // Found a character which is not contributing to the number. That means we've reached the end of the number.
                                 break;
                             }
@@ -1488,7 +1499,23 @@ public class NoodleCompiler {
                             out.add(new NoodleToken(NoodleTokenType.PERIOD, codeLoc));
                         } else {
                             // It's a number.
-                            out.add(new NoodleTokenNumber(NoodleTokenType.NUMBER, codeLoc, Double.parseDouble(readNumber)));
+                            NoodlePrimitive primitive;
+                            if (primitiveType == NoodlePrimitiveType.DOUBLE) {
+                                primitive = new NoodlePrimitive(Double.parseDouble(readNumber));
+                            } else if (primitiveType == NoodlePrimitiveType.FLOAT) {
+                                primitive = new NoodlePrimitive(Float.parseFloat(readNumber));
+                            } else if (primitiveType == NoodlePrimitiveType.INTEGER) {
+                                long parsedValue = Long.parseLong(readNumber);
+                                if ((int) parsedValue == parsedValue) {
+                                    primitive = new NoodlePrimitive((int) parsedValue);
+                                } else {
+                                    primitive = new NoodlePrimitive(parsedValue);
+                                }
+                            } else {
+                                throw new NoodleCompilerException("Failed to parse number of primitiveType: %s from '%s'.", codeLoc, primitiveType, readNumber);
+                            }
+
+                            out.add(new NoodleTokenPrimitive(NoodleTokenType.PRIMITIVE, codeLoc, primitive));
                         }
                     } else if (currentChar == '_' || Character.isLetter(currentChar)) {
                         while (pos <= len) {
@@ -1503,10 +1530,10 @@ public class NoodleCompiler {
                         String name = scriptText.substring(start - 1, pos - 1);
                         switch (name) {
                             case "true":
-                                out.add(new NoodleTokenNumber(NoodleTokenType.NUMBER, codeLoc, 1));
+                                out.add(new NoodleTokenPrimitive(NoodleTokenType.PRIMITIVE, codeLoc, new NoodlePrimitive(true)));
                                 break;
                             case "false":
-                                out.add(new NoodleTokenNumber(NoodleTokenType.NUMBER, codeLoc, 0));
+                                out.add(new NoodleTokenPrimitive(NoodleTokenType.PRIMITIVE, codeLoc, new NoodlePrimitive(false)));
                                 break;
                             case "if":
                                 out.add(new NoodleToken(NoodleTokenType.IF, codeLoc));

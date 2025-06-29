@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.scripting.runtime.templates;
 import lombok.Getter;
 import lombok.NonNull;
 import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
-import net.highwayfrogs.editor.scripting.runtime.NoodleObjectInstance;
 import net.highwayfrogs.editor.scripting.runtime.NoodlePrimitive;
 import net.highwayfrogs.editor.scripting.runtime.NoodleRuntimeException;
 import net.highwayfrogs.editor.scripting.runtime.NoodleThread;
@@ -363,14 +362,14 @@ public class NoodleJvmWrapper<TWrappedType> {
             if (clazz == null)
                 return null;
 
-            if (boolean.class.equals(clazz)) {
+            if (!clazz.isPrimitive()) {
+                return REFERENCE_TYPE;
+            } else if (boolean.class.equals(clazz)) {
                 return BOOLEAN;
             } else if (float.class.equals(clazz) || double.class.equals(clazz)) {
                 return FLOAT;
-            } else if (byte.class.equals(clazz) || short.class.equals(clazz) || int.class.equals(clazz) || long.class.equals(clazz)) {
+            } else if (byte.class.equals(clazz) || short.class.equals(clazz) || int.class.equals(clazz) || long.class.equals(clazz) || char.class.equals(clazz)) {
                 return INTEGER;
-            } else if (!clazz.isPrimitive()) {
-                return REFERENCE_TYPE;
             } else {
                 return null;
             }
@@ -380,36 +379,32 @@ public class NoodleJvmWrapper<TWrappedType> {
     /**
      * Test if the given NoodlePrimitive is at least as specialized as the previously chosen target.
      * @param currTarget The current parameter type
-     * @param prevTarget The previous parameter type
+     * @param prevTarget The previous parameter type which the current one must be a better match than
      * @param value the value to test
      * @return true iff the current parameter is at least as specific to the given primitive as the previous one.
      */
     private static boolean isPrimitiveAtLeastAsSpecific(Class<?> currTarget, Class<?> prevTarget, NoodlePrimitive value) {
         if (value == null || value.isNull()) {
             return !currTarget.isPrimitive();
-        } else if (value.isString()) {
-            return String.class.equals(currTarget);
-        } else if (value.isNumber()) {
-            JvmPrimitiveGroup currTargetGroup = JvmPrimitiveGroup.getType(currTarget);
-            switch (currTargetGroup) {
-                case BOOLEAN:
-                    return value.isBoolean();
-                case FLOAT:
-                    return true; // value.isNumber() must be true in order to reach this.
-                case INTEGER:
-                    return value.isInteger();
-                default:
-                    return false;
-            }
-        } else if (value.isObjectReference()) {
-            Object refObject = value.getObjectReference().getObject();
+        } else if (!currTarget.isPrimitive()) {
+            Object refObject = value.getAsRawObject(); // Autoboxes primitives when appropriate.
             if (!currTarget.isInstance(refObject))
                 return false;
 
             // Prefer more explicitly typed options.
             return (prevTarget == null) || !prevTarget.isInstance(refObject) || prevTarget.isAssignableFrom(currTarget);
         } else {
-            throw new NoodleRuntimeException("Unsupported PrimitiveType for %s.", value);
+            JvmPrimitiveGroup currTargetGroup = JvmPrimitiveGroup.getType(currTarget);
+            switch (currTargetGroup) {
+                case BOOLEAN:
+                    return value.isBoolean();
+                case FLOAT:
+                    return value.isDecimalNumber();
+                case INTEGER:
+                    return value.isIntegerNumber();
+                default:
+                    throw new NoodleRuntimeException("Unsupported PrimitiveType for %s.", value);
+            }
         }
     }
 
@@ -422,124 +417,68 @@ public class NoodleJvmWrapper<TWrappedType> {
         } else if (String.class.equals(target)) {
             return input.getAsString();
         } else if (target.isPrimitive()) {
-            if (!input.isNumber())
-                throw new NoodleRuntimeException("Tried to obtain the %s as a(n) %s, but the primitive was not a number!", input, target);
-
-            if (int.class.equals(target)) {
-                return input.getAsIntegerValue();
-            } else if (float.class.equals(target)) {
-                return (float) input.getNumberValue();
-            } else if (boolean.class.equals(target)) {
-                return input.isTrueValue();
-            } else if (long.class.equals(target)) {
-                return input.getAsIntegerValue();
-            } else if (double.class.equals(target)) {
-                return input.getNumberValue();
-            } else if (short.class.equals(target)) {
-                return (short) input.getAsIntegerValue();
-            } else if (byte.class.equals(target)) {
-                return (byte) input.getAsIntegerValue();
-            } else if (char.class.equals(target)) {
-                return (char) input.getAsIntegerValue();
-            } else {
-                throw new NoodleRuntimeException("Unsupported primitive type: '%s'", target.getSimpleName());
-            }
+            return getPrimitiveAsObject(target, input);
         } else if (target.isArray()) {
-            return loadArray(target, input);
+            return NoodleArrayTemplate.unboxArray(target, input);
         } else {
-            if (!input.isObjectReference())
+            if (!input.isObjectReference()) {
+                Object rawObject = input.getAsRawObject();
+                if (rawObject != null)
+                    return rawObject;
+
                 throw new NoodleRuntimeException("Tried to obtain the %s as a(n) %s, but the primitive was not an object reference!", input, target);
+            }
 
             return input.getObjectReference().getRequiredObjectInstance(target);
         }
     }
 
-    @SuppressWarnings("SuspiciousSystemArraycopy")
-    private static Object loadArray(Class<?> target, NoodlePrimitive input) {
-        if (!input.isObjectReference())
-            throw new NoodleRuntimeException("Tried to obtain an array %s but received a non-array primitive (%s).", target.getSimpleName(), input);
-
-        NoodleObjectInstance objectInstance = input.getObjectReference();
-        Object inputObj = objectInstance != null ? objectInstance.getObject() : null;
-        if (inputObj == null)
-            return null; // Return null as array.
-        if (target.isInstance(inputObj))
-            return inputObj;
-
-        Class<?> targetElementType = target.getComponentType();
-
-        Class<?> inputObjClass = inputObj.getClass();
-        if (!inputObjClass.isArray())
-            throw new NoodleRuntimeException("Tried to obtain an array %s but the primitive (%s) was not an array!", target.getSimpleName(), input);
-
-        // Attempt to auto-convert object instances.
-        int arrayLength = Array.getLength(inputObj);
-        Class<?> realElementType = inputObjClass.getComponentType();
-        if (targetElementType.isAssignableFrom(realElementType)) {
-           Object newArray = Array.newInstance(targetElementType, arrayLength);
-           System.arraycopy(inputObj, 0, newArray, 0, arrayLength);
-           return newArray;
-        }
-
-        // Work with primitives.
-        if (inputObj instanceof NoodlePrimitive[]) {
-            NoodlePrimitive[] args = (NoodlePrimitive[]) inputObj;
-            if (!targetElementType.isPrimitive()) {
-                Object newArray = Array.newInstance(inputObjClass.getComponentType(), arrayLength);
-                for (int i = 0; i < arrayLength; i++) {
-                    NoodlePrimitive arg = args[i];
-                    NoodleObjectInstance objInstance = arg.isObjectReference() ? arg.getObjectReference() : null;
-                    if (objInstance != null)
-                        Array.set(newArray, i, targetElementType.cast(objInstance.getObject()));
-                }
-
-                return newArray;
-            } else if (int.class.equals(targetElementType)) {
-                int[] array = new int[arrayLength];
-                for (int i = 0; i < arrayLength; i++)
-                    array[i] = args[i].getAsIntegerValue();
-                return array;
-            } else if (float.class.equals(targetElementType)) {
-                float[] array = new float[arrayLength];
-                for (int i = 0; i < arrayLength; i++)
-                    array[i] = (float) args[i].getNumberValue();
-                return array;
-            } else if (boolean.class.equals(targetElementType)) {
-                boolean[] array = new boolean[arrayLength];
-                for (int i = 0; i < arrayLength; i++)
-                    array[i] = args[i].isTrueValue();
-                return array;
-            } else if (long.class.equals(targetElementType)) {
-                long[] array = new long[arrayLength];
-                for (int i = 0; i < arrayLength; i++)
-                    array[i] = args[i].getIntegerValue();
-                return array;
-            } else if (double.class.equals(targetElementType)) {
-                double[] array = new double[arrayLength];
-                for (int i = 0; i < arrayLength; i++)
-                    array[i] = args[i].getNumberValue();
-                return array;
-            } else if (short.class.equals(targetElementType)) {
-                short[] array = new short[arrayLength];
-                for (int i = 0; i < arrayLength; i++)
-                    array[i] = (short) args[i].getIntegerValue();
-                return array;
-            } else if (byte.class.equals(targetElementType)) {
-                byte[] array = new byte[arrayLength];
-                for (int i = 0; i < arrayLength; i++)
-                    array[i] = (byte) args[i].getIntegerValue();
-                return array;
-            } else if (char.class.equals(targetElementType)) {
-                char[] array = new char[arrayLength];
-                for (int i = 0; i < arrayLength; i++)
-                    array[i] = (char) args[i].getIntegerValue();
-                return array;
+    private static Object getPrimitiveAsObject(Class<?> target, NoodlePrimitive input) {
+        if (!target.isPrimitive()) {
+            if (Object.class.equals(target)) { // Generic types could be anything, so allow more complex options.
+                return input.getAsRawObject();
+            } else if (Integer.class.equals(target)) {
+                return input.getInteger();
+            } else if (Float.class.equals(target)) {
+                return input.getFloat();
+            } else if (Boolean.class.equals(target)) {
+                return input.getBoolean();
+            } else if (Long.class.equals(target)) {
+                return input.getLong();
+            } else if (Double.class.equals(target)) {
+                return input.getDouble();
+            } else if (Short.class.equals(target)) {
+                return input.getShort();
+            } else if (Byte.class.equals(target)) {
+                return input.getByte();
+            } else if (Character.class.equals(target)) {
+                return input.getChar();
             } else {
-                throw new NoodleRuntimeException("Unsupported primitive type: '%s'", targetElementType.getSimpleName());
+                // isPrimitive() is false so it might be valid for this to not be a number.
+                return null;
             }
         }
 
-        throw new NoodleRuntimeException("Tried to obtain an array %s but the primitive (%s) could not be converted to a compatible array!", target.getSimpleName(), input);
+        // isPrimitive() is true, so this is expected to work.
+        if (int.class.equals(target)) {
+            return input.getInteger();
+        } else if (float.class.equals(target)) {
+            return input.getFloat();
+        } else if (boolean.class.equals(target)) {
+            return input.isTrueValue();
+        } else if (long.class.equals(target)) {
+            return input.getLong();
+        } else if (double.class.equals(target)) {
+            return input.getDouble();
+        } else if (short.class.equals(target)) {
+            return input.getShort();
+        } else if (byte.class.equals(target)) {
+            return input.getByte();
+        } else if (char.class.equals(target)) {
+            return input.getChar();
+        } else {
+            throw new NoodleRuntimeException("Unsupported primitive type: '%s' for %s.", target.getSimpleName(), input);
+        }
     }
 
     private static Object[] getInvocationArguments(Class<?>[] parameterTypes, NoodlePrimitive[] args) {

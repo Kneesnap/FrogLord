@@ -246,12 +246,10 @@ public class NoodlePreprocessor {
         if (!hasParameterParenthesis) {
             NoodlePrimitive constant = this.compileContext.getEngine().getConstantByName(functionName);
             if (constant != null) {
-                if (constant.isNumber()) {
-                    return Collections.singletonList(new NoodleTokenNumber(NoodleTokenType.NUMBER, nameToken.getCodeLocation(), constant.getNumberValue()));
-                } else if (constant.isString()) {
+                if (constant.isObjectReference()) {
                     return Collections.singletonList(new NoodleTokenString(NoodleTokenType.STRING, nameToken.getCodeLocation(), constant.getStringValue()));
                 } else {
-                    throw new NoodleSyntaxException("Cannot use constant %s/%s, its type is unsupported.", nameToken, functionName, constant);
+                    return Collections.singletonList(new NoodleTokenPrimitive(NoodleTokenType.PRIMITIVE, nameToken.getCodeLocation(), constant));
                 }
             }
         }
@@ -289,7 +287,7 @@ public class NoodlePreprocessor {
      * @return Whether the node is true or false.
      */
     public boolean evaluateExpressionToBoolean(NoodlePreprocessorContext context, List<NoodleToken> tokens) {
-        return tokens != null && tokens.size() > 0 && evaluateExpression(context, tokens).getBooleanValue();
+        return tokens != null && tokens.size() > 0 && evaluateExpression(context, tokens).getBoolean();
     }
 
     /**
@@ -331,8 +329,8 @@ public class NoodlePreprocessor {
 
         NoodlePreprocessorMathNode result;
         switch (tk.getTokenType()) {
-            case NUMBER:
-                result = new NoodlePreprocessorMathValueNode(new NoodlePrimitive(((NoodleTokenNumber) tk).getNumber()));
+            case PRIMITIVE:
+                result = new NoodlePreprocessorMathValueNode(((NoodleTokenPrimitive) tk).getPrimitive().clone());
                 break;
             case STRING:
                 result = new NoodlePreprocessorMathValueNode(new NoodlePrimitive(((NoodleTokenString) tk).getStringData()));
@@ -476,9 +474,9 @@ public class NoodlePreprocessor {
 
             switch (this.operator) {
                 case NEGATE:
-                    return new NoodlePrimitive(-value.getNumberValue());
+                    return new NoodlePrimitive(-(value.isIntegerNumber() ? value.getWholeNumber() : value.getDecimal()));
                 case INVERT:
-                    return new NoodlePrimitive(!value.getBooleanValue());
+                    return new NoodlePrimitive(!value.getBoolean());
                 default:
                     throw new NoodleSyntaxException("The preprocessor does not support the %s unary operator yet!", this.positionCounter, this.operator);
             }

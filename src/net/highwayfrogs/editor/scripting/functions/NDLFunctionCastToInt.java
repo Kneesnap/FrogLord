@@ -17,6 +17,6 @@ public class NDLFunctionCastToInt extends NoodleFunction {
     @Override
     public NoodlePrimitive execute(NoodleThread<? extends NoodleScript> thread, NoodlePrimitive[] args) {
         NoodlePrimitive num = args[0];
-        return thread.getStack().pushNumber((int) num.getNumberValue());
+        return thread.getStack().pushNumber((int) num.getDecimal());
     }
 }

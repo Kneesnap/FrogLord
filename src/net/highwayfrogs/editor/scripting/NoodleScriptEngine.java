@@ -15,7 +15,6 @@ import net.highwayfrogs.editor.scripting.runtime.templates.NoodleFileTemplate;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleObjectTemplate;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleWrapperTemplate;
 import net.highwayfrogs.editor.scripting.runtime.templates.utils.NoodleLoggerTemplate;
-import net.highwayfrogs.editor.scripting.runtime.templates.utils.NoodleStringTemplate;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.math.*;
 import net.highwayfrogs.editor.utils.*;
@@ -130,19 +129,10 @@ public class NoodleScriptEngine extends SharedGameObject {
     /**
      * Adds a constant value to noodle scripts.
      * @param constantName  The name of the constant.
-     * @param constantValue The constant value.
+     * @param primitive The primitive to apply.
      */
-    public void addConstant(String constantName, double constantValue) {
-        this.constantMap.put(constantName, new NoodlePrimitive(constantValue));
-    }
-
-    /**
-     * Adds a constant value to noodle scripts.
-     * @param constantName  The name of the constant.
-     * @param constantValue The constant value.
-     */
-    public void addConstant(String constantName, String constantValue) {
-        this.constantMap.put(constantName, new NoodlePrimitive(constantValue));
+    public void addConstant(String constantName, NoodlePrimitive primitive) {
+        this.constantMap.put(constantName, primitive);
     }
 
     /**
@@ -156,8 +146,11 @@ public class NoodleScriptEngine extends SharedGameObject {
             return null;
 
         Class<?> tempClass = object.getClass();
-        if (tempClass.isPrimitive() || String.class.equals(tempClass))
+        if (tempClass.isPrimitive())
             return null;
+
+        if (String.class.equals(tempClass))
+            return (NoodleObjectTemplate<? extends T>) NoodleWrapperTemplate.getCachedTemplate(String.class);
 
         if (tempClass.isArray())
             return (NoodleObjectTemplate<? extends T>) NoodleArrayTemplate.INSTANCE;
@@ -311,6 +304,7 @@ public class NoodleScriptEngine extends SharedGameObject {
         // For the interface/abstract classes added here, they are a temporary measure so that isRepresentable() can return true.
         // Consider revisiting them at a later date once the scripting system has been used more.
         addTemplate(NoodleArrayTemplate.INSTANCE);
+        addTemplate(NoodleWrapperTemplate.getCachedTemplate(String.class));
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(Collection.class));
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(List.class));
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(ArrayList.class));
@@ -320,7 +314,6 @@ public class NoodleScriptEngine extends SharedGameObject {
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(HashMap.class));
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(Arrays.class));
         addTemplate(NoodleLoggerTemplate.INSTANCE);
-        addTemplate(NoodleStringTemplate.INSTANCE);
         addTemplate(NoodleFileTemplate.INSTANCE);
 
         // Various utility components of FrogLord.
@@ -420,8 +413,8 @@ public class NoodleScriptEngine extends SharedGameObject {
     }
 
     private void registerConstants() {
-        addConstant("true", 1D);
-        addConstant("false", 0D);
-        addConstant("null", null);
+        addConstant("true", new NoodlePrimitive(true));
+        addConstant("false", new NoodlePrimitive(false));
+        addConstant("null", new NoodlePrimitive());
     }
 }

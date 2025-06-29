@@ -5,7 +5,7 @@ package net.highwayfrogs.editor.scripting.compiler.nodes;
  */
 public enum NoodleNodeType {
     NULL,
-    NUMBER, // (val:number)
+    PRIMITIVE, // (val:number)
     IDENTIFIER, // (name:string)
     PREPROCESSOR_DIRECTIVE,
     UNARY_OPERATOR, // (unop, node)

@@ -30,6 +30,6 @@ public class NoodleInstructionPushConstantString extends NoodleInstruction {
 
     @Override
     public void execute(NoodleThread<? extends NoodleScript> thread) {
-        thread.getStack().pushString(this.stringValue);
+        thread.getStack().pushObject(this.stringValue);
     }
 }

@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.scripting.compiler.nodes;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.scripting.runtime.NoodlePrimitive;
 import net.highwayfrogs.editor.scripting.tracking.NoodleCodeLocation;
 
 /**
@@ -9,9 +10,9 @@ import net.highwayfrogs.editor.scripting.tracking.NoodleCodeLocation;
 @Getter
 public class NoodleNodePrePostOperator extends NoodleNode {
     private final NoodleNode node;
-    private final double value;
+    private final NoodlePrimitive value;
 
-    public NoodleNodePrePostOperator(NoodleNodeType nodeType, NoodleCodeLocation codeLocation, NoodleNode node, double value) {
+    public NoodleNodePrePostOperator(NoodleNodeType nodeType, NoodleCodeLocation codeLocation, NoodleNode node, NoodlePrimitive value) {
         super(nodeType, codeLocation);
         this.node = node;
         this.value = value;

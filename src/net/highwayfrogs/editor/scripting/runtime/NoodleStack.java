@@ -51,17 +51,6 @@ public class NoodleStack {
     }
 
     /**
-     * Pushes a numeric value onto the stack.
-     * @param value The value to push on the stack.
-     * @return pushedPrimitive
-     */
-    public NoodlePrimitive pushNumber(double value) {
-        NoodlePrimitive primitive = new NoodlePrimitive(value);
-        this.stack.add(primitive);
-        return primitive;
-    }
-
-    /**
      * Pushes a boolean value onto the stack.
      * @param value The value to push on the stack.
      * @return pushedPrimitive
@@ -73,12 +62,36 @@ public class NoodleStack {
     }
 
     /**
-     * Pushes a string value onto the stack.
-     * @param value The value to push on the stack.
+     * Pushes a numeric value onto the stack.
+     * @param number The number to push on the stack.
      * @return pushedPrimitive
      */
-    public NoodlePrimitive pushString(String value) {
-        NoodlePrimitive primitive = new NoodlePrimitive(value);
+    public NoodlePrimitive pushNumber(Number number) {
+        NoodlePrimitive primitive = new NoodlePrimitive(number);
+        this.stack.add(primitive);
+        return primitive;
+    }
+
+    /**
+     * Pushes a numeric value onto the stack.
+     * @param numberType The primitive type to push.
+     * @param value The number to push on the stack.
+     * @return pushedPrimitive
+     */
+    public NoodlePrimitive pushNumber(NoodlePrimitiveType numberType, double value) {
+        NoodlePrimitive primitive = new NoodlePrimitive(numberType, value);
+        this.stack.add(primitive);
+        return primitive;
+    }
+
+    /**
+     * Pushes a numeric value onto the stack.
+     * @param numberType The primitive type to push.
+     * @param value The number to push on the stack.
+     * @return pushedPrimitive
+     */
+    public NoodlePrimitive pushNumber(NoodlePrimitiveType numberType, long value) {
+        NoodlePrimitive primitive = new NoodlePrimitive(numberType, value);
         this.stack.add(primitive);
         return primitive;
     }
@@ -90,7 +103,7 @@ public class NoodleStack {
      * @param <E> The enum type.
      */
     public <E extends Enum<E>> NoodlePrimitive pushEnum(E enumValue) {
-        return pushString(enumValue != null ? enumValue.name() : null);
+        return pushObject(enumValue != null ? enumValue.name() : null);
     }
 
     /**
@@ -121,10 +134,10 @@ public class NoodleStack {
     public NoodlePrimitive pushObject(Object object, boolean errorIfMissingTemplate) {
         if (object == null)
             return pushNull();
-        if (object instanceof String)
-            return pushString((String) object);
         if (object instanceof Number)
-            return pushNumber(((Number) object).doubleValue());
+            return pushNumber((Number) object);
+        if (object instanceof Character)
+            return pushPrimitive(new NoodlePrimitive((Character) object));
         if (object instanceof Boolean)
             return pushBoolean((Boolean) object);
         if (object instanceof NoodlePrimitive)

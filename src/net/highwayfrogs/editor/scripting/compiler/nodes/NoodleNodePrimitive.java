@@ -1,17 +1,18 @@
 package net.highwayfrogs.editor.scripting.compiler.nodes;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.scripting.runtime.NoodlePrimitive;
 import net.highwayfrogs.editor.scripting.tracking.NoodleCodeLocation;
 
 /**
  * A noodle node that keeps track of a number.
  */
 @Getter
-public class NoodleNodeNumber extends NoodleNode {
-    private final double numberValue;
+public class NoodleNodePrimitive extends NoodleNode {
+    private final NoodlePrimitive numberValue;
 
-    public NoodleNodeNumber(NoodleCodeLocation codeLocation, double numValue) {
-        super(NoodleNodeType.NUMBER, codeLocation);
+    public NoodleNodePrimitive(NoodleCodeLocation codeLocation, NoodlePrimitive numValue) {
+        super(NoodleNodeType.PRIMITIVE, codeLocation);
         this.numberValue = numValue;
     }
 

@@ -10,7 +10,7 @@ public enum NoodleTokenType {
     PAR_CLOSE, // )
     SBR_OPEN,  // [
     SBR_CLOSE,  // ]
-    NUMBER,  // 37
+    PRIMITIVE,  // 37
     IDENTIFIER, // some
     COMMA, // ,
     RETURN, // return

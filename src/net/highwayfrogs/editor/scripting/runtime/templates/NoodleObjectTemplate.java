@@ -83,7 +83,7 @@ public abstract class NoodleObjectTemplate<TType> {
         this.onSetup();
         this.instanceFunctions.registerCallable(new NoodleTemplateEqualsFunction<>(this));
         this.instanceFunctions.registerCallable(new NoodleTemplateToStringFunction<>(this));
-        addGetter("template", (thread, value) -> thread.getStack().pushString(getName()));
+        addGetter("template", (thread, value) -> thread.getStack().pushObject(getName()));
     }
 
     /**
@@ -488,7 +488,7 @@ public abstract class NoodleObjectTemplate<TType> {
 
         @Override
         protected NoodlePrimitive executeImpl(NoodleThread<?> thread, TType thisRef, NoodlePrimitive[] args) {
-            return thread.getStack().pushString(thisRef.toString());
+            return thread.getStack().pushObject(thisRef.toString());
         }
     }
 }

@@ -33,13 +33,27 @@ public class NoodleInstructionUnaryOperation extends NoodleInstruction {
     @Override
     public void execute(NoodleThread<? extends NoodleScript> thread) {
         NoodlePrimitive primitive = thread.getStack().popWithGC();
-        if (this.operator == NoodleUnaryOperator.INVERT) {
-            thread.getStack().pushBoolean(!primitive.isTrueValue());
-        } else {
-            if (!primitive.isNumber())
-                throw new NoodleRuntimeException("Can only apply unary negate to a number.");
-
-            thread.getStack().pushNumber(-primitive.getNumberValue());
+        switch (this.operator) {
+            case INVERT:
+                if (primitive.isBoolean()) {
+                    thread.getStack().pushBoolean(!primitive.getBoolean());
+                } else if (primitive.isIntegerNumber()) {
+                    thread.getStack().pushNumber(primitive.getPrimitiveType(), ~primitive.getWholeNumber());
+                } else {
+                    throw new NoodleRuntimeException("Cannot apply the unary invert operation to %s.", primitive);
+                }
+                break;
+            case NEGATE:
+                if (primitive.isDecimalNumber()) {
+                    thread.getStack().pushNumber(primitive.getPrimitiveType(), -primitive.getDecimal());
+                } else if (primitive.isIntegerNumber()) {
+                    thread.getStack().pushNumber(primitive.getPrimitiveType(), -primitive.getWholeNumber());
+                } else {
+                    throw new NoodleRuntimeException("Cannot apply the unary negate operation to %s.", primitive);
+                }
+                break;
+            default:
+                throw new NoodleRuntimeException("Unsupported UnaryOp: '%s'.", this.operator);
         }
     }
 }

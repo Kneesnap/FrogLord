@@ -11,7 +11,7 @@ import java.util.function.Supplier;
 @Getter
 @AllArgsConstructor
 public enum NoodleInstructionType {
-    PUSHNUM(NoodleInstructionPushConstantNumber::new), // (value): push(value)
+    PUSHPRIM(NoodleInstructionPushPrimitive::new), // (value): push(value)
     PUSHVAR(NoodleInstructionPushIdentifier::new), // (name): push(self[name])
     PUSHARG(NoodleInstructionPushArgument::new), // push(args[arg_num])
     PUSHFIELD(NoodleInstructionPushField::new), // push(pop().name)

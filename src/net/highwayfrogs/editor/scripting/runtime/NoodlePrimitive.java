@@ -3,7 +3,10 @@ package net.highwayfrogs.editor.scripting.runtime;
 import lombok.Getter;
 import net.highwayfrogs.editor.scripting.NoodleUtils;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleObjectTemplate;
+import net.highwayfrogs.editor.scripting.runtime.templates.NoodleWrapperTemplate;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
+import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.Objects;
 
@@ -11,8 +14,8 @@ import java.util.Objects;
  * Represents a noodle primitive.
  */
 public class NoodlePrimitive {
-    private double numberValue;
-    private String stringValue;
+    private long integerValue;
+    private double decimalValue;
     private NoodleObjectInstance objectInstance;
     @Getter private NoodlePrimitiveType primitiveType;
 
@@ -20,39 +23,74 @@ public class NoodlePrimitive {
         setNull();
     }
 
-    public NoodlePrimitive(String str) {
-        setString(str);
+    public NoodlePrimitive(char num) {
+        setChar(num);
+    }
+
+    public NoodlePrimitive(byte num) {
+        setByte(num);
+    }
+
+    public NoodlePrimitive(short num) {
+        setShort(num);
+    }
+
+    public NoodlePrimitive(int num) {
+        setInteger(num);
+    }
+
+    public NoodlePrimitive(long num) {
+        setLong(num);
+    }
+
+    public NoodlePrimitive(float num) {
+        setFloat(num);
     }
 
     public NoodlePrimitive(double num) {
-        setNumber(num);
+        setDouble(num);
     }
 
     public NoodlePrimitive(boolean boolState) {
-        this(boolState ? 1D : 0D);
+        setBoolean(boolState);
+    }
+
+    public NoodlePrimitive(Number number) {
+        setNumber(number);
+    }
+
+    public NoodlePrimitive(NoodlePrimitiveType numberType, long value) {
+        setWholeNumber(numberType, value);
+    }
+
+    public NoodlePrimitive(NoodlePrimitiveType numberType, double value) {
+        setDecimal(numberType, value);
     }
 
     public NoodlePrimitive(NoodleObjectInstance objectInstance) {
         setObjectReference(objectInstance);
     }
 
+    public NoodlePrimitive(String value) {
+        if (value != null) {
+            setObjectReference(new NoodleObjectInstance(null, value, NoodleWrapperTemplate.getCachedTemplate(String.class)));
+        } else {
+            setNull();
+        }
+    }
+
     /**
      * Gets the display name of the type.
      */
     public String getTypeDisplayName() {
-        switch (this.primitiveType) {
-            case NUMBER:
-                return "Number";
-            case STRING:
-                return "String";
-            case OBJECT_REFERENCE:
-                if (this.objectInstance == null)
-                    return "Null";
+        if (Objects.requireNonNull(this.primitiveType) == NoodlePrimitiveType.OBJECT_REFERENCE) {
+            if (this.objectInstance == null)
+                return "Null";
 
-                return this.objectInstance.getTemplate().getName();
-            default:
-                throw new NoodleRuntimeException("Don't know how to get the primitive type %s (of %s) as a string!", this.primitiveType, this);
+            return this.objectInstance.getTemplate().getName();
         }
+
+        return StringUtils.capitalize(this.primitiveType.name());
     }
 
     /**
@@ -60,63 +98,90 @@ public class NoodlePrimitive {
      */
     public NoodlePrimitive clone() {
         NoodlePrimitive newPrimitive = new NoodlePrimitive();
-        newPrimitive.numberValue = this.numberValue;
-        newPrimitive.stringValue = this.stringValue;
+        newPrimitive.integerValue = this.integerValue;
+        newPrimitive.decimalValue = this.decimalValue;
         newPrimitive.objectInstance = this.objectInstance; // Do not increase ref count here.
         newPrimitive.primitiveType = this.primitiveType;
         return newPrimitive;
     }
 
     private void reset() {
-        this.numberValue = 0;
-        this.stringValue = null;
+        this.integerValue = 0;
+        this.decimalValue = 0;
         this.objectInstance = null;
-    }
-
-    /**
-     * Gets the string value.
-     */
-    public String getStringValue() {
-        if (isNull())
-            return null;
-        if (!isString())
-            throw new NoodleRuntimeException("Tried to get [%s] as a string value!", this);
-        return this.stringValue;
     }
 
     /**
      * Gets the value as a boolean.
      */
-    public boolean getBooleanValue() {
-        return isNumber() && Math.abs(getNumberValue()) >= .00001D;
+    public boolean getBoolean() {
+        if (!isBoolean())
+            throw new NoodleRuntimeException("Tried to use non-boolean [%s] as if it were a boolean!", this);
+
+        return this.integerValue != 0;
     }
 
     /**
-     * Gets the numeric value.
+     * Gets the primitive value as a char.
      */
-    public double getNumberValue() {
-        if (!isNumber())
-            throw new NoodleRuntimeException("Tried to get [%s] as a numeric value!", this);
-        return this.numberValue;
+    public char getChar() {
+        if (!isIntegerNumber())
+            throw new NoodleRuntimeException("Tried to use non-integer [%s] as if it were a char!", this);
+        return (char) this.integerValue;
     }
 
     /**
-     * Gets the numeric value as an integer.
-     * Throws if the value does not appear to be an integer.
+     * Gets the primitive value as a byte.
      */
-    public int getIntegerValue() {
-        double number = getNumberValue();
-        int intNumber = (int) Math.round(number);
-        if (!isValidInteger(this.numberValue, intNumber))
-            throw new NoodleRuntimeException("Tried to get [%s] as a numeric integer value!", this);
-        return intNumber;
+    public byte getByte() {
+        if (!isIntegerNumber())
+            throw new NoodleRuntimeException("Tried to use non-integer [%s] as if it were a byte!", this);
+        return (byte) this.integerValue;
     }
 
     /**
-     * Gets the numeric value as an integer.
+     * Gets the primitive value as a short.
      */
-    public int getAsIntegerValue() {
-        return (int) Math.round(getNumberValue());
+    public short getShort() {
+        if (!isIntegerNumber())
+            throw new NoodleRuntimeException("Tried to use non-integer [%s] as if it were a short!", this);
+        return (short) this.integerValue;
+    }
+
+    /**
+     * Gets the primitive value as an int.
+     */
+    public int getInteger() {
+        if (!isIntegerNumber())
+            throw new NoodleRuntimeException("Tried to use non-integer [%s] as if it were an integer!", this);
+        return (int) this.integerValue;
+    }
+
+    /**
+     * Gets the primitive value as a long.
+     */
+    public long getLong() {
+        if (!isIntegerNumber())
+            throw new NoodleRuntimeException("Tried to use non-integer [%s] as if it were a long!", this);
+        return this.integerValue;
+    }
+
+    /**
+     * Gets the primitive value as a float.
+     */
+    public float getFloat() {
+        if (!isDecimalNumber())
+            throw new NoodleRuntimeException("Tried to get non-decimal [%s] as if it were a double!", this);
+        return (float) this.decimalValue;
+    }
+
+    /**
+     * Gets the primitive value as a double.
+     */
+    public double getDouble() {
+        if (!isDecimalNumber())
+            throw new NoodleRuntimeException("Tried to get non-decimal [%s] as if it were a double!", this);
+        return this.decimalValue;
     }
 
     /**
@@ -152,6 +217,35 @@ public class NoodlePrimitive {
     public void onThreadStartAsArgument(NoodleThread<?> thread) {
         if (isObjectReference() && this.objectInstance != null)
             this.objectInstance.onThreadStartAsArgument(thread);
+    }
+
+    /**
+     * Gets the contents of the primitive as a java Object.
+     * @return rawObject
+     */
+    public Object getAsRawObject() {
+        switch (this.primitiveType) {
+            case BOOLEAN:
+                return getBoolean();
+            case CHAR:
+                return getChar();
+            case BYTE:
+                return getByte();
+            case SHORT:
+                return getShort();
+            case INTEGER:
+                return getInteger();
+            case LONG:
+                return getLong();
+            case FLOAT:
+                return getFloat();
+            case DOUBLE:
+                return getDouble();
+            case OBJECT_REFERENCE:
+                return this.objectInstance != null ? this.objectInstance.getObject() : null;
+            default:
+                throw new NoodleRuntimeException("Cannot get rawObject for %s.");
+        }
     }
 
     /**
@@ -208,6 +302,13 @@ public class NoodlePrimitive {
     }
 
     /**
+     * Gets the string value of the primitive.
+     */
+    public String getStringValue() {
+        return getOptionalObjectInstance(NoodleWrapperTemplate.getCachedTemplate(String.class));
+    }
+
+    /**
      * Gets the string value (if this is a string value) as an enum.
      * @param enumClass The enum class to get the value form.
      * @return enumValue
@@ -241,28 +342,110 @@ public class NoodlePrimitive {
     }
 
     /**
-     * Sets this as a string and sets the string value.
-     * @param strValue The string value.
+     * Sets the value represented by this primitive object to the provided boolean.
+     * @param value The value to apply.
      */
-    public void setString(String strValue) {
-        if (strValue == null) {
-            setNull();
-            return;
-        }
-
+    public void setBoolean(boolean value) {
         reset();
-        this.primitiveType = NoodlePrimitiveType.STRING;
-        this.stringValue = strValue;
+        this.primitiveType = NoodlePrimitiveType.BOOLEAN;
+        this.integerValue = value ? 1 : 0;
     }
 
     /**
-     * Sets this as a number and sets the numeric value.
-     * @param numValue The numeric value.
+     * Sets the value represented by this primitive object to the provided char.
+     * @param value The value to apply.
      */
-    public void setNumber(double numValue) {
+    public void setChar(char value) {
         reset();
-        this.primitiveType = NoodlePrimitiveType.NUMBER;
-        this.numberValue = numValue;
+        this.primitiveType = NoodlePrimitiveType.CHAR;
+        this.integerValue = value;
+    }
+
+    /**
+     * Sets the value represented by this primitive object to the provided byte.
+     * @param value The value to apply.
+     */
+    public void setByte(byte value) {
+        reset();
+        this.primitiveType = NoodlePrimitiveType.BYTE;
+        this.integerValue = value;
+    }
+
+    /**
+     * Sets the value represented by this primitive object to the provided short.
+     * @param value The value to apply.
+     */
+    public void setShort(short value) {
+        reset();
+        this.primitiveType = NoodlePrimitiveType.SHORT;
+        this.integerValue = value;
+    }
+
+    /**
+     * Sets the value represented by this primitive object to the provided int.
+     * @param value The value to apply.
+     */
+    public void setInteger(int value) {
+        reset();
+        this.primitiveType = NoodlePrimitiveType.INTEGER;
+        this.integerValue = value;
+    }
+
+    /**
+     * Sets the value represented by this primitive object to the provided long.
+     * @param value The value to apply.
+     */
+    public void setLong(long value) {
+        reset();
+        this.primitiveType = NoodlePrimitiveType.LONG;
+        this.integerValue = value;
+    }
+
+    /**
+     * Sets the value represented by this primitive object to the provided float.
+     * @param value The value to apply.
+     */
+    public void setFloat(float value) {
+        reset();
+        this.primitiveType = NoodlePrimitiveType.FLOAT;
+        this.decimalValue = value;
+    }
+
+    /**
+     * Sets the value represented by this primitive object to the provided double.
+     * @param value The value to apply.
+     */
+    public void setDouble(double value) {
+        reset();
+        this.primitiveType = NoodlePrimitiveType.DOUBLE;
+        this.decimalValue = value;
+    }
+
+    /**
+     * Sets the number represented by this primitive object.
+     * @param number the number to apply
+     */
+    public void setNumber(Number number) {
+        if (number == null) {
+            setObjectReference(null);
+            return;
+        }
+
+        if (number instanceof Integer) {
+            setInteger((Integer) number);
+        } else if (number instanceof Long) {
+            setLong((Long) number);
+        } else if (number instanceof Float) {
+            setFloat((Float) number);
+        } else if (number instanceof Double) {
+            setDouble((Double) number);
+        } else if (number instanceof Short) {
+            setShort((Short) number);
+        } else if (number instanceof Byte) {
+            setByte((Byte) number);
+        } else {
+            throw new NoodleRuntimeException("Unsupported Number type: %s.", Utils.getSimpleName(number));
+        }
     }
 
     /**
@@ -276,6 +459,85 @@ public class NoodlePrimitive {
     }
 
     /**
+     * Gets the NoodlePrimitive as a decimal number of the largest type.
+     */
+    public double getDecimal() {
+        switch (this.primitiveType) {
+            case FLOAT:
+                return (float) this.decimalValue;
+            case DOUBLE:
+                return this.decimalValue;
+            default:
+                throw new NoodleRuntimeException("Don't know how to interpret %s as a decimal number.", this);
+        }
+    }
+
+    /**
+     * Sets the represented value to be the provided whole number.
+     * @param numberType the type of number to track
+     * @param value the value to apply
+     */
+    public void setDecimal(NoodlePrimitiveType numberType, double value) {
+        switch (numberType) {
+            case FLOAT:
+                setFloat((float) value);
+                break;
+            case DOUBLE:
+                setDouble(value);
+                break;
+            default:
+                throw new NoodleRuntimeException("Don't know how to interpret %s as a decimal primitive type.", numberType);
+        }
+    }
+
+    /**
+     * Gets the NoodlePrimitive as a whole number of the largest type.
+     */
+    public long getWholeNumber() {
+        switch (this.primitiveType) {
+            case CHAR:
+                return (char) this.integerValue;
+            case BYTE:
+                return (byte) this.integerValue;
+            case SHORT:
+                return (short) this.integerValue;
+            case INTEGER:
+                return (int) this.integerValue;
+            case LONG:
+                return this.integerValue;
+            default:
+                throw new NoodleRuntimeException("Don't know how to interpret %s as a whole-number.", this);
+        }
+    }
+
+    /**
+     * Sets the represented value to be the provided whole number.
+     * @param numberType the type of number to track
+     * @param value the value to apply
+     */
+    public void setWholeNumber(NoodlePrimitiveType numberType, long value) {
+        switch (numberType) {
+            case CHAR:
+                setChar((char) value);
+                break;
+            case BYTE:
+                setByte((byte) value);
+                break;
+            case SHORT:
+                setShort((short) value);
+                break;
+            case INTEGER:
+                setInteger((int) value);
+                break;
+            case LONG:
+                setLong(value);
+                break;
+            default:
+                throw new NoodleRuntimeException("Don't know how to interpret %s as a whole-number primitive type.", numberType);
+        }
+    }
+
+    /**
      * Sets the NoodlePrimitive as representing null.
      */
     public void setNull() {
@@ -283,35 +545,26 @@ public class NoodlePrimitive {
     }
 
     /**
-     * Tests if the value this primitive represents is a string.
-     */
-    public boolean isString() {
-        return this.primitiveType == NoodlePrimitiveType.STRING;
-    }
-
-    /**
-     * Tests if the value this primitive represents is a number.
-     */
-    public boolean isNumber() {
-        return this.primitiveType == NoodlePrimitiveType.NUMBER;
-    }
-
-    /**
-     * Tests if the value this primitive represents is an integer.
-     */
-    public boolean isInteger() {
-        return isNumber() && isValidInteger(this.numberValue);
-    }
-
-    /**
      * Tests if the value this primitive represents is a boolean.
      */
     public boolean isBoolean() {
-        if (!isInteger())
-            return false;
+        return this.primitiveType == NoodlePrimitiveType.BOOLEAN;
+    }
 
-        int intValue = getIntegerValue();
-        return (intValue == 0) || (intValue == 1);
+    /**
+     * Tests if the value this primitive represents is an integer type.
+     */
+    public boolean isIntegerNumber() {
+        return this.primitiveType == NoodlePrimitiveType.CHAR || this.primitiveType == NoodlePrimitiveType.BYTE
+                || this.primitiveType == NoodlePrimitiveType.SHORT || this.primitiveType == NoodlePrimitiveType.INTEGER
+                || this.primitiveType == NoodlePrimitiveType.LONG;
+    }
+
+    /**
+     * Test if the value this primitive represents is a decimal integer type.
+     */
+    public boolean isDecimalNumber() {
+        return this.primitiveType == NoodlePrimitiveType.FLOAT || this.primitiveType == NoodlePrimitiveType.DOUBLE;
     }
 
     /**
@@ -328,42 +581,54 @@ public class NoodlePrimitive {
         return this.primitiveType == NoodlePrimitiveType.OBJECT_REFERENCE && (this.objectInstance == null);
     }
 
-    private static boolean isValidInteger(double numberValue) {
-        int intNumber = (int) Math.round(numberValue);
-        return isValidInteger(numberValue, intNumber);
-    }
-
-    private static boolean isValidInteger(double numberValue, int intNumber) {
-        return Math.abs(numberValue - intNumber) <= .00001;
-    }
-
     /**
      * Gets the string of this which can be added to another string.
      * @return addString
      */
     public String getAsString() {
-        if (isString())
-            return this.stringValue;
-
-        if (isNumber())
-            return NumberUtils.doubleToCleanString(this.numberValue);
-
-        if (isObjectReference())
-            return this.objectInstance != null && this.objectInstance.getObject() != null ? this.objectInstance.getObject().toString() : "null";
-
-        return super.toString();
+        switch (this.primitiveType) {
+            case CHAR:
+                return String.valueOf(getChar());
+            case BOOLEAN:
+            case BYTE:
+            case SHORT:
+            case INTEGER:
+            case LONG:
+                return String.valueOf(this.integerValue);
+            case FLOAT:
+            case DOUBLE:
+                return NumberUtils.doubleToCleanString(this.decimalValue);
+            case OBJECT_REFERENCE:
+                Object object = this.objectInstance != null ? this.objectInstance.getObject() : null;
+                return object != null ? object.toString() : null;
+            default:
+                throw new NoodleRuntimeException("Don't know how to toString() %s.", this.primitiveType);
+        }
     }
 
     @Override
     public String toString() {
-        if (isString()) {
-            return "STRING=\"" + NoodleUtils.compiledStringToCodeString(this.stringValue) + "\"";
-        } else if (isNumber()) {
-            return "NUMBER=" + NumberUtils.doubleToCleanString(this.numberValue);
-        } else if (isObjectReference()) {
-            return "OBJECT=" + (this.objectInstance != null && this.objectInstance.getObject() != null ? this.objectInstance.getObject().toString() : "null");
-        } else {
-            throw new NoodleRuntimeException("Don't know how to toString() %s.", this.primitiveType);
+        switch (this.primitiveType) {
+            case CHAR:
+                return "CHAR='" + getChar() + "'";
+            case BOOLEAN:
+            case BYTE:
+            case SHORT:
+            case INTEGER:
+            case LONG:
+                return this.primitiveType + "=" + this.integerValue;
+            case FLOAT:
+            case DOUBLE:
+                return this.primitiveType + "=" + this.decimalValue;
+            case OBJECT_REFERENCE:
+                Object object = this.objectInstance != null ? this.objectInstance.getObject() : null;
+                if (object instanceof String) {
+                    return "STRING=\"" + NoodleUtils.compiledStringToCodeString((String) object) + "\"";
+                } else {
+                    return "OBJECT=" + object;
+                }
+            default:
+                throw new NoodleRuntimeException("Don't know how to toString() %s.", this.primitiveType);
         }
     }
 
@@ -403,10 +668,10 @@ public class NoodlePrimitive {
         if (otherPrim.getPrimitiveType() != getPrimitiveType())
             return false; // Make sure match.
 
-        if (isString()) {
-            return Objects.equals(this.stringValue, otherPrim.stringValue); // We use Objects.equals so this check is null-safe.
-        } else if (isNumber()) {
-            return this.numberValue == otherPrim.numberValue;
+        if (isDecimalNumber()) {
+            return this.decimalValue == otherPrim.decimalValue;
+        } else if (isIntegerNumber() || isBoolean()) {
+            return this.integerValue == otherPrim.integerValue;
         } else if (isObjectReference()) {
             return this.objectInstance == otherPrim.objectInstance;
         } else {
@@ -419,16 +684,17 @@ public class NoodlePrimitive {
      * @return isTrue
      */
     public boolean isTrueValue() {
-        if (isString())
-            return this.stringValue != null;
-
-        if (isNumber())
-            return this.numberValue != 0D;
-
-        if (isObjectReference())
+        if (isBoolean()) {
+            return getBoolean();
+        } else if (isDecimalNumber()) {
+            return Double.isFinite(this.decimalValue) && Math.abs(this.decimalValue) >= 0.5;
+        } else if (isIntegerNumber()) {
+            return this.integerValue != 0;
+        } else if (isObjectReference()) {
             return this.objectInstance != null;
-
-        return false;
+        } else {
+            return false;
+        }
     }
 
     /**
