@@ -38,8 +38,10 @@
                                         </Label>
                                         <Button fx:id="viewMapBtn" layoutX="188.0" layoutY="8.0"
                                                 mnemonicParsing="false" onAction="#onView" text="View"/>
+                                        <Label fx:id="remapListLabel" alignment="CENTER" contentDisplay="CENTER" layoutY="142.0" prefHeight="17.0" prefWidth="200.0" text="Remap[???] (? Textures)" underline="true" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="142.0" />
                                     </children>
                                 </AnchorPane>
+                                <ListView fx:id="remapList" prefHeight="305.0" prefWidth="200.0" VBox.vgrow="ALWAYS" />
                             </children>
                         </VBox>
                     </children>

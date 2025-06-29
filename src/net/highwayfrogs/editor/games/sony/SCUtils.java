@@ -376,7 +376,7 @@ public class SCUtils {
                 ? NumberUtils.getDigitCount(FroggerHashUtil.MSVC_SYMBOL_HASH_TABLE_SIZE)
                 : NumberUtils.getDigitCount(FroggerHashUtil.PSYQ_LINKER_HASH_TABLE_SIZE);
         int targetCommentPosition = C_IMAGE_TYPE_PREFIX.length() + maxNameLength + 1;
-        for (int i = 0; i < instance.getBmpTexturePointers().size(); i++) {
+        for (int i = 0; i < bssOrderedImages.size(); i++) {
             GameImage image = bssOrderedImages.get(i);
             long currAddress = instance.getBmpTexturePointers().get(image.getTextureId());
 

@@ -66,6 +66,17 @@ public class TextureRemapArray extends SCSharedGameObject {
     }
 
     /**
+     * Allows changing the remapped texture id.
+     * @param localTextureId the index of the texture to update
+     * @param remappedTextureId the remapped texture id to apply
+     */
+    public void setRemappedTextureId(int localTextureId, short remappedTextureId) {
+        if (localTextureId < 0 || localTextureId >= this.textureIds.size())
+            throw new IllegalArgumentException("The provided localTextureId (" + localTextureId + ") was not valid!");
+        this.textureIds.set(localTextureId, remappedTextureId);
+    }
+
+    /**
      * Resolves the local remap index to a texture.
      * @param localTextureId the local remap texture ID
      * @param vloArchive If provided, the texture will first attempt to be resolved here before resolving elsewhere.

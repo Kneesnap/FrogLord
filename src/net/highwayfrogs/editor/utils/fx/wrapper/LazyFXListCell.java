@@ -23,6 +23,9 @@ public class LazyFXListCell<T> extends ListCell<T> {
     private Function<T, Tooltip> withoutIndexTooltipHandler;
     private BiFunction<T, Integer, Tooltip> withIndexTooltipHandler;
     private Tooltip nullTooltip;
+    private int forcedGraphicSize = DEFAULT_GRAPHIC_SIZE;
+
+    private static final int DEFAULT_GRAPHIC_SIZE = 25;
 
     private LazyFXListCell(Function<T, String> withoutIndexTextHandler,
                            BiFunction<T, Integer, String> withIndexTextHandler,
@@ -88,8 +91,24 @@ public class LazyFXListCell<T> extends ListCell<T> {
         return this;
     }
 
+    /**
+     * Sets the tooltip displayed for a cell with a null value.
+     * @param nullTooltip the tooltip to apply
+     * @return this
+     */
     public LazyFXListCell<T> setNullTooltip(Tooltip nullTooltip) {
         this.nullTooltip = nullTooltip;
+        return this;
+    }
+
+    /**
+     * Sets the image dimensions displayed for a cell with a graphic.
+     * A value less than zero will let JavaFX determine the size.
+     * @param forcedGraphicSize the image dimensions to apply
+     * @return this
+     */
+    public LazyFXListCell<T> setNullTooltip(int forcedGraphicSize) {
+        this.forcedGraphicSize = forcedGraphicSize;
         return this;
     }
 
@@ -106,7 +125,17 @@ public class LazyFXListCell<T> extends ListCell<T> {
         } else {
             iconImage = null;
         }
-        setGraphic(iconImage != null ? new ImageView(iconImage) : null);
+
+        ImageView imageView = null;
+        if (iconImage != null) {
+            imageView = new ImageView(iconImage);
+            if (this.forcedGraphicSize > 0) {
+                imageView.setFitWidth(this.forcedGraphicSize);
+                imageView.setFitHeight(this.forcedGraphicSize);
+            }
+        }
+
+        setGraphic(imageView);
 
         // Update text.
         String applyText;

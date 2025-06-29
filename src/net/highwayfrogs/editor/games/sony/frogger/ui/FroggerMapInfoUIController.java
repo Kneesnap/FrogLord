@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.games.sony.frogger.ui;
 
-import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -9,7 +8,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import lombok.Getter;
@@ -17,7 +15,6 @@ import lombok.SneakyThrows;
 import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapLevelID;
@@ -26,11 +23,9 @@ import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMeshControl
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.baked.FroggerGridResizeController;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FFSUtil;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerUtils;
-import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
-import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
+import net.highwayfrogs.editor.games.sony.shared.ui.SCRemapEditor;
 import net.highwayfrogs.editor.gui.InputMenu;
-import net.highwayfrogs.editor.gui.SelectionMenu.AttachmentListCell;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.FXUtils;
@@ -45,8 +40,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Sets up the map editor.
@@ -64,6 +57,7 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
     @FXML private Button loadFromFFS;
     @FXML private Button saveToFFS;
     @FXML private Button saveToObj;
+    private SCRemapEditor<FroggerMapFile> remapEditor;
 
     private static final BrowserFileType FFS_FILE_TYPE = new BrowserFileType("Frogger File Sync", "ffs");
     private static final SavedFilePath FFS_IMPORT_PATH = new SavedFilePath("ffsImportPath", "Please select the map ffs file to import.", FFS_FILE_TYPE);
@@ -78,6 +72,7 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
     @Override
     protected void onControllerLoad(Node rootNode) {
         super.onControllerLoad(rootNode);
+        this.remapEditor = new SCRemapEditor<>(this.remapListLabel, this.remapList, this::getFile, FroggerMapFile::getVloFile, FroggerMapFile::getTextureRemap);
         if (this.contentBox != null) {
             Node propertyListViewRootNode = this.propertyListViewer.getRootNode();
             HBox.setHgrow(propertyListViewRootNode, Priority.ALWAYS);
@@ -121,30 +116,8 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
         }
 
         // Setup Remap Editor.
-        TextureRemapArray textureRemap = mapFile.getTextureRemap();
-
-        if (textureRemap != null) {
-            List<Short> textureRemapIdList = textureRemap.getTextureIds() != null ? textureRemap.getTextureIds() : Collections.emptyList();
-            this.remapListLabel.setText(textureRemap.getDebugName() + " (" + textureRemapIdList.size() + " texture" + (textureRemapIdList.size() != 1 ? "s" : "") + ")");
-            this.remapList.setDisable(false);
-            this.remapList.setItems(FXCollections.observableArrayList(textureRemapIdList));
-            this.remapList.getSelectionModel().selectFirst();
-            this.remapList.setCellFactory(param -> new AttachmentListCell<>(num -> "#" + num, num -> {
-                GameImage temp = getFile().getVloFile() != null ? getFile().getVloFile().getImageByTextureId(num, false) : null;
-                if (temp == null)
-                    temp = getFile().getArchive().getImageByTextureId(num);
-
-                return temp != null ? temp.toFXImage(MWDFile.VLO_ICON_SETTING) : null;
-            }));
-
-            // Handle double-click to change.
-            this.remapList.setOnMouseClicked(event -> {
-                if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
-                    promptChangeTexture();
-                    event.consume();
-                }
-            });
-        }
+        if (this.remapEditor != null)
+            this.remapEditor.setupEditor(getFile());
 
         this.saveTextureButton.setOnAction(evt -> {
             try {
@@ -163,32 +136,6 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
                 handleError(e, true, "Failed to save all images.");
             }
         });
-    }
-
-    private void promptChangeTexture() {
-        TextureRemapArray textureRemap = getFile().getTextureRemap();
-        if (textureRemap == null)
-            return;
-
-        // Validate selection index.
-        int selectionIndex = this.remapList.getSelectionModel().getSelectedIndex();
-        if (selectionIndex < 0 || selectionIndex >= textureRemap.getTextureIds().size())
-            return;
-
-        // Ensure we've got the VLO to find textures from.
-        VLOArchive vloFile = getFile().getVloFile();
-        if (vloFile == null) {
-            FXUtils.makePopUp("Cannot edit remaps for a map which has no associated VLO!", AlertType.WARNING);
-            return;
-        }
-
-        // Ask the user which texture to apply.
-        vloFile.promptImageSelection(newImage -> {
-            int index = this.remapList.getSelectionModel().getSelectedIndex();
-            getFile().getTextureRemap().getTextureIds().set(index, newImage.getTextureId());
-            this.remapList.setItems(FXCollections.observableArrayList(getFile().getTextureRemap().getTextureIds())); // Refresh remap.
-            this.remapList.getSelectionModel().select(index);
-        }, false);
     }
 
     @FXML
