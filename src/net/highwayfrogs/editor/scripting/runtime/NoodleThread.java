@@ -256,7 +256,7 @@ public class NoodleThread<T extends NoodleScript> extends SharedGameObject {
             try {
                 instruction.execute(this);
             } catch (Throwable th) {
-                Utils.handleError(getLogger(), th, false, "Error running script instruction: `%s`. [%s]\n%s\n\n%s", instruction, NoodleUtils.getErrorPositionText(instruction), Utils.getErrorMessagesString(th), this.buildScriptInformation());
+                Utils.handleError(getLogger(), th, false, "Error running script instruction: `%s`. [%s]\n%s\n\n%s", instruction, NoodleUtils.getErrorPositionText(instruction), Utils.getOrderedErrorMessagesString(th), this.buildScriptInformation());
                 handleError(th);
                 return this.status;
             }

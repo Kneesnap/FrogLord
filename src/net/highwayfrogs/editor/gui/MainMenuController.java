@@ -91,7 +91,7 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
             if (noodleScript == null)
                 return;
 
-            NoodleScript script = getGameInstance().getScriptEngine().loadScriptFile(noodleScript, true);
+            NoodleScript script = getGameInstance().getScriptEngine().loadScriptFile(noodleScript, true, true);
             if (script == null) {
                 FXUtils.makePopUp("The script was not compiled successfully, so it will not be run.", AlertType.ERROR);
                 return;

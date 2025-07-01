@@ -207,7 +207,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
             } catch (Throwable th) {
                 // We must print exception causes, because if we don't, they won't be visible to the user.
                 String entityName = getEntity() != null ? "'" + getEntity().getName() + "'" : "null";
-                Utils.handleError(logger, th, false, "Failed to load script function for entity %s from '%s'.\n%s", entityName, sourceName, Utils.getErrorMessagesString(th));
+                Utils.handleError(logger, th, false, "Failed to load script function for entity %s from '%s'.\n%s", entityName, sourceName, Utils.getOrderedErrorMessagesString(th));
                 continue; // Skip registration.
             }
 

@@ -225,13 +225,13 @@ public class NoodleScriptEngine extends SharedGameObject {
      * Loads the script file.
      * @param scriptFile The file to load.
      */
-    public NoodleScript loadScriptFile(File scriptFile, boolean whitelistScriptFolder) {
+    public NoodleScript loadScriptFile(File scriptFile, boolean whitelistScriptFolder, boolean throwExceptionOnFailure) {
         throwIfNotSealed();
         if (scriptFile == null)
             throw new NullPointerException("sourceCodeFile");
 
         String scriptName = FileUtils.stripExtension(scriptFile.getName());
-        return loadScript(scriptFile, scriptName, new NoodleScript(this, scriptName), whitelistScriptFolder);
+        return loadScript(scriptFile, scriptName, new NoodleScript(this, scriptName), whitelistScriptFolder, throwExceptionOnFailure);
     }
 
     /**
@@ -239,7 +239,7 @@ public class NoodleScriptEngine extends SharedGameObject {
      * @param scriptFile The file to load.
      * @param maker The script object maker.
      */
-    public <T extends NoodleScript> T loadScriptFile(File scriptFile, BiFunction<NoodleScriptEngine, String, T> maker, boolean whitelistScriptFolder) {
+    public <T extends NoodleScript> T loadScriptFile(File scriptFile, BiFunction<NoodleScriptEngine, String, T> maker, boolean whitelistScriptFolder, boolean throwExceptionOnFailure) {
         throwIfNotSealed();
         if (scriptFile == null)
             throw new NullPointerException("sourceCodeFile");
@@ -247,13 +247,13 @@ public class NoodleScriptEngine extends SharedGameObject {
             throw new NullPointerException("scriptName");
 
         String scriptName = FileUtils.stripExtension(scriptFile.getName());
-        return loadScript(scriptFile, scriptName, maker.apply(this, scriptName), whitelistScriptFolder);
+        return loadScript(scriptFile, scriptName, maker.apply(this, scriptName), whitelistScriptFolder, throwExceptionOnFailure);
     }
 
     /**
      * Loads a script from disk.
      */
-    public <T extends NoodleScript> T loadScript(File sourceCodeFile, String scriptName, T script, boolean whitelistScriptFolder) {
+    public <T extends NoodleScript> T loadScript(File sourceCodeFile, String scriptName, T script, boolean whitelistScriptFolder, boolean throwExceptionOnFailure) {
         throwIfNotSealed();
         if (sourceCodeFile == null)
             throw new NullPointerException("sourceCodeFile");
@@ -271,6 +271,9 @@ public class NoodleScriptEngine extends SharedGameObject {
         try {
             NoodleCompiler.compileScript(this, sourceCodeFile, script);
         } catch (Throwable th) {
+            if (throwExceptionOnFailure)
+                throw new RuntimeException("Failed to compile script '" + sourceCodeFile.getName() + "'. (" + scriptName + ")", th);
+
             Utils.handleError(getLogger(), th, false, "Failed to compile script: '%s'.", scriptName);
             return null;
         }

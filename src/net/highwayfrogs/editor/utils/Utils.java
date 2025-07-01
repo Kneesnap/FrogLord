@@ -11,8 +11,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.ToIntBiFunction;
 import java.util.function.ToIntFunction;
 import java.util.function.ToLongBiFunction;
@@ -673,6 +673,29 @@ public class Utils {
      * @return errorMessages
      */
     public static String getErrorMessagesString(Throwable throwable) {
+        StringBuilder builder = new StringBuilder();
+
+        while (throwable != null) {
+            if (builder.length() > 0)
+                builder.append(Constants.NEWLINE);
+
+            String message = throwable.getMessage();
+            if (message == null)
+                message = throwable.getLocalizedMessage();
+            builder.append(message);
+
+            throwable = throwable.getCause();
+        }
+
+        return builder.toString();
+    }
+
+    /**
+     * Get the error messages as a newline separated string.
+     * @param throwable The error to get messages from.
+     * @return errorMessages
+     */
+    public static String getOrderedErrorMessagesString(Throwable throwable) {
         StringBuilder builder = new StringBuilder();
         List<Throwable> errors = new ArrayList<>();
         while (throwable != null) {
