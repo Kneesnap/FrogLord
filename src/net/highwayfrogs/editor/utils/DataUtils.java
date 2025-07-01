@@ -453,6 +453,22 @@ public class DataUtils {
         byte[] rawData = oldObject.writeDataToByteArray();
         DataReader reader = new DataReader(new ArraySource(rawData));
         newObject.load(reader);
+        if (reader.hasMore())
+            throw new RuntimeException("The cloned object left " + rawData.length + " bytes of data unread!");
+
         return newObject;
+    }
+
+    /**
+     * Serializes object data and gets a DataReader for it.
+     * @param oldObject the object to copy data from
+     * @return reader
+     */
+    public static DataReader serializeAndGetReader(IBinarySerializable oldObject) {
+        if (oldObject == null)
+            throw new NullPointerException("oldObject");
+
+        byte[] rawData = oldObject.writeDataToByteArray();
+        return new DataReader(new ArraySource(rawData));
     }
 }

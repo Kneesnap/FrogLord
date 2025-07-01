@@ -6,7 +6,6 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.FroggerOffsetVectorType;
-import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -71,11 +70,6 @@ public class FroggerMapCameraZone extends FroggerMapZone {
         this.southTargetOffset.saveWithPadding(writer);
         this.westSourceOffset.saveWithPadding(writer);
         this.westTargetOffset.saveWithPadding(writer);
-    }
-
-    @Override
-    public FroggerMapZone clone(FroggerMapFile mapFile) {
-        return DataUtils.cloneSerializableObject(this, new FroggerMapCameraZone(mapFile));
     }
 
     /**

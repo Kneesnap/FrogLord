@@ -5,6 +5,7 @@ import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketZone;
+import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -121,7 +122,10 @@ public abstract class FroggerMapZone extends SCGameData<FroggerGameInstance> {
      * @param mapFile the file to attach the cloned zone to
      * @return clonedZone
      */
-    public abstract FroggerMapZone clone(FroggerMapFile mapFile);
+    public FroggerMapZone clone(FroggerMapFile mapFile) {
+        DataReader reader = DataUtils.serializeAndGetReader(this);
+        return readFroggerMapZone(reader, mapFile);
+    }
 
     /**
      * Gets the list of regions found within the map zone.
