@@ -171,7 +171,7 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
      * Imports the given file.
      * @param inputFile the file to import over the existing file.
      */
-    public void importFile(File inputFile) {
+    public SCGameFile<?> importFile(File inputFile) {
         if (inputFile == null)
             throw new NullPointerException("inputFile");
 
@@ -180,11 +180,14 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
             rawFileBytes = Files.readAllBytes(inputFile.toPath());
         } catch (IOException ex) {
             Utils.handleError(getLogger(), ex, true, "Failed to read contents of '%s'.", inputFile.getName());
-            return;
+            return null;
         }
 
-        if (getArchive().replaceFile(inputFile.getName(), rawFileBytes, getIndexEntry(), this, true) == null)
+        SCGameFile<?> newFile = getArchive().replaceFile(inputFile.getName(), rawFileBytes, getIndexEntry(), this, true);
+        if (newFile == null)
             FXUtils.makePopUp("An error was encountered while reading the replacement file.", AlertType.ERROR);
+
+        return newFile;
     }
 
     /**

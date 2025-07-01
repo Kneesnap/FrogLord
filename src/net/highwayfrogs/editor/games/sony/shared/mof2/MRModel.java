@@ -271,6 +271,15 @@ public class MRModel extends SCSharedGameFile {
     }
 
     /**
+     * Clears this model to make it a dummy.
+     */
+    public void setDummy() {
+        this.animatedMof = null;
+        this.staticMof = null;
+        this.incomplete = false;
+    }
+
+    /**
      * Create a JavaFX mesh representation of this model.
      */
     public MRModelMesh createMesh() {

@@ -9,7 +9,9 @@ import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.games.sony.shared.utils.DynamicMeshObjExporter;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
@@ -130,5 +132,53 @@ public class FroggerUtils {
         }
 
         return foundInstance;
+    }
+
+    /**
+     * Clears a .WAD file and prepares it for use with a new level.
+     * @param template The template .WAD file to copy wad entries from
+     * @param target the target .WAD file to set up (the per-level wad file)
+     */
+    @SuppressWarnings("unused") // Used by Noodle scripts.
+    public static void setupPerLevelWad(WADFile template, WADFile target) {
+        if (template == null)
+            throw new NullPointerException("template");
+        if (target == null)
+            throw new NullPointerException("target");
+        if (template.getGameInstance() != target.getGameInstance())
+            throw new IllegalArgumentException("The provided WAD files do not belong to the same game instance!");
+
+        // Clear the tracking for the old wad file entries.
+        for (int i = 0; i < target.getFiles().size(); i++) {
+            WADEntry testEntry = target.getFiles().get(i);
+            testEntry.setFile(null);
+        }
+
+        // Copy/create new wad entries.
+        target.getFiles().clear();
+        for (int i = 0; i < template.getFiles().size(); i++) {
+            WADEntry copyEntry = template.getFiles().get(i);
+
+            SCGameFile<?> newFile;
+            if (copyEntry.getFile() instanceof MRModel) {
+                MRModel oldModel = (MRModel) copyEntry.getFile();
+                MRModel model = new MRModel(copyEntry.getGameInstance(), null);
+                model.setDummy();
+                model.setRawFileData(MRModel.DUMMY_DATA);
+                model.setVloFile(oldModel.getVloFile());
+                newFile = model;
+            } else {
+                byte[] rawData = copyEntry.getFile().writeDataToByteArray();
+                newFile = copyEntry.getArchive().replaceFile(copyEntry.getDisplayName(), rawData, copyEntry.getFileEntry(), copyEntry.getFile(), false);
+                newFile.setRawFileData(rawData);
+            }
+
+            newFile.setFileDefinition(copyEntry.getFileEntry());
+
+            WADEntry newEntry = new WADEntry(target, copyEntry.getResourceId(), copyEntry.isCompressed());
+            newFile.setWadFileEntry(newEntry);
+            newEntry.setFile(newFile);
+            target.getFiles().add(newEntry);
+        }
     }
 }

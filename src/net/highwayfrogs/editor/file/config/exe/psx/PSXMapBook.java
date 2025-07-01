@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerTextureRemap;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.utils.NumberUtils;
@@ -18,14 +19,14 @@ import java.util.function.Function;
  * A PSX MapBook implementation.
  * Created by Kneesnap on 1/27/2019.
  */
-@Getter
-@Setter
+
 public class PSXMapBook extends MapBook {
-    private int mapId;
-    private long remapPointer;
-    private boolean useCaveLights;
-    private long environmentTexturePointer = -1;
-    private int wadId = -1;
+    @Getter @Setter private int mapId;
+    @Getter @Setter private boolean useCaveLights;
+    @Getter @Setter private long environmentTexturePointer = -1;
+    @Getter @Setter private int wadId = -1;
+    @Getter @Setter private FroggerTextureRemap textureRemap;
+    private long tempRemapPointer;
 
     public PSXMapBook(FroggerGameInstance instance) {
         super(instance);
@@ -34,30 +35,34 @@ public class PSXMapBook extends MapBook {
     @Override
     public void load(DataReader reader) {
         this.mapId = reader.readInt();
-        this.remapPointer = reader.readUnsignedIntAsLong();
+        this.tempRemapPointer = reader.readUnsignedIntAsLong();
         this.useCaveLights = (reader.readInt() == 1);
 
         if (!getConfig().isBeforeBuild1())
             this.environmentTexturePointer = reader.readUnsignedIntAsLong();
 
-        if (!getConfig().isAtOrBeforeBuild4())
+        if (hasPerLevelWadFiles())
             this.wadId = reader.readInt();
     }
 
     @Override
     public void save(DataWriter writer) {
         writer.writeInt(this.mapId);
-        writer.writeUnsignedInt(this.remapPointer);
+        writer.writeUnsignedInt(this.textureRemap != null ? this.textureRemap.getLoadAddress() : this.tempRemapPointer);
         writer.writeInt(this.useCaveLights ? 1 : 0);
         if (!getConfig().isBeforeBuild1())
             writer.writeUnsignedInt(this.environmentTexturePointer);
-        if (!getConfig().isAtOrBeforeBuild4())
+        if (hasPerLevelWadFiles())
             writer.writeInt(this.wadId);
     }
 
     @Override
     public void addTextureRemaps(FroggerGameInstance instance) {
-        addRemap(instance, this.mapId, this.remapPointer, false);
+        FroggerTextureRemap remap = addRemap(instance, this.mapId, this.tempRemapPointer, false);
+        if (remap != null) {
+            this.textureRemap = remap;
+            this.tempRemapPointer = -1;
+        }
     }
 
     @Override
@@ -68,7 +73,7 @@ public class PSXMapBook extends MapBook {
 
     @Override
     public boolean isDummy() {
-        return this.remapPointer <= 0;
+        return this.tempRemapPointer < 0 && this.textureRemap == null;
     }
 
     @Override
@@ -85,7 +90,7 @@ public class PSXMapBook extends MapBook {
             return wadFile;
 
         // PSX Build 6 is the first build seen to have per-level wad files.
-        if (getGameInstance().getVersionConfig().isAtOrBeforeBuild4()) {
+        if (!hasPerLevelWadFiles()) {
             wadFile = getThemeWad(map);
             if (wadFile != null)
                 return wadFile;
@@ -111,8 +116,15 @@ public class PSXMapBook extends MapBook {
     @Override
     public void handleCorrection(String[] args) {
         this.mapId = Integer.parseInt(args[0]);
-        this.remapPointer = Long.decode(args[1]) + getGameInstance().getRamOffset();
+        this.tempRemapPointer = Long.decode(args[1]) + getGameInstance().getRamOffset();
         this.wadId = Integer.parseInt(args[2]);
+    }
+
+    /**
+     * Gets the pointer to the texture remap.
+     */
+    public long getRemapPointer() {
+        return this.textureRemap != null ? this.textureRemap.getLoadAddress() : this.tempRemapPointer;
     }
 
     /**

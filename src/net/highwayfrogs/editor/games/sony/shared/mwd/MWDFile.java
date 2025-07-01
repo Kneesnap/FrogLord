@@ -228,16 +228,17 @@ public class MWDFile extends SCSharedGameData {
 
         // Replace file.
         int fileIndex = this.files.indexOf(oldFile);
-        WADEntry wadEntry = getWadEntry(oldFile);
+        WADEntry wadEntry = oldFile.getWadFileEntry();
         newFile.setWadFileEntry(wadEntry);
-        swapFileRegistry(entry, fileIndex, wadEntry, oldFile, newFile);
+        int oldResourceId = wadEntry != null ? wadEntry.getResourceId() : -1;
+        swapFileRegistry(entry, fileIndex, wadEntry, oldFile, newFile, entry.getResourceId());
 
         // Load new file data.
         try {
             newFile.load(new DataReader(new ArraySource(fileBytes)));
         } catch (Exception ex) {
             Utils.handleError(getLogger(), ex, false, "Failed to import replacement for %s (%d)", entry.getDisplayName(), entry.getResourceId());
-            swapFileRegistry(entry, fileIndex, wadEntry, newFile, oldFile); // Restore old file.
+            swapFileRegistry(entry, fileIndex, wadEntry, newFile, oldFile, oldResourceId); // Restore old file.
             return null;
         }
 
@@ -268,9 +269,9 @@ public class MWDFile extends SCSharedGameData {
     public void replaceFile(String importedFileName, MWIResourceEntry entry, SCGameFile<?> oldFile, SCGameFile<?> newFile, boolean updateUI) {
         // Replace file.
         int fileIndex = this.files.indexOf(oldFile);
-        WADEntry wadEntry = getWadEntry(oldFile);
+        WADEntry wadEntry = oldFile.getWadFileEntry();
         newFile.setWadFileEntry(wadEntry);
-        swapFileRegistry(entry, fileIndex, wadEntry, oldFile, newFile);
+        swapFileRegistry(entry, fileIndex, wadEntry, oldFile, newFile, entry.getResourceId());
 
         // Handle load.
         String fileDisplayName = entry.getDisplayName();
@@ -289,7 +290,7 @@ public class MWDFile extends SCSharedGameData {
         }
     }
 
-    private void swapFileRegistry(MWIResourceEntry resourceEntry, int fileIndex, WADEntry wadEntry, SCGameFile<?> oldFile, SCGameFile<?> newFile) {
+    private void swapFileRegistry(MWIResourceEntry resourceEntry, int fileIndex, WADEntry wadEntry, SCGameFile<?> oldFile, SCGameFile<?> newFile, int resourceId) {
         if (oldFile != null) {
             getGameInstance().getFileObjectsByFileEntries().remove(resourceEntry, oldFile);
             oldFile.setFileDefinition(null);
@@ -300,8 +301,11 @@ public class MWDFile extends SCSharedGameData {
 
         if (fileIndex >= 0) // Found in MWD.
             this.files.set(fileIndex, newFile);
-        if (wadEntry != null)
+        if (wadEntry != null) {
             wadEntry.setFile(newFile);
+            if (resourceId >= 0)
+                wadEntry.setResourceId(resourceId);
+        }
     }
 
     /**
@@ -502,28 +506,6 @@ public class MWDFile extends SCSharedGameData {
 
         String fullFilePath = resourceEntry.getFullFilePath();
         return fullFilePath != null && fullFilePath.equalsIgnoreCase(fileName);
-    }
-
-    /**
-     * Gets the WAD entry which holds the given file, if there is one.
-     * @param gameFile The game file to find the WAD entry for
-     * @return wadEntry, or null
-     */
-    public WADEntry getWadEntry(SCGameFile<?> gameFile) {
-        for (int i = 0; i < this.files.size(); i++) {
-            SCGameFile<?> testFile = this.files.get(i);
-            if (!(testFile instanceof WADFile))
-                continue;
-
-            WADFile wadFile = (WADFile) testFile;
-            for (int j = 0; j < wadFile.getFiles().size(); j++) {
-                WADEntry wadEntry = wadFile.getFiles().get(j);
-                if (wadEntry.getFile() == gameFile)
-                    return wadEntry;
-            }
-        }
-
-        return null;
     }
 
     /**

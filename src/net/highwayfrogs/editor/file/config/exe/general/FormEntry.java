@@ -42,6 +42,7 @@ public class FormEntry extends SCGameData<FroggerGameInstance> implements IFrogg
     private transient final int localFormId;
     private transient FroggerFormGrid formGrid; // Null by default, gets setup as part of load process.
 
+    public static final int PROJECT_MAX_THEME_MOFS = 128;
     public static final int FLAG_GENERAL = 0x8000;
     public static final int BYTE_SIZE = (8 * Constants.INTEGER_SIZE);
     public static final int OLD_BYTE_SIZE = (7 * Constants.INTEGER_SIZE);
@@ -117,7 +118,7 @@ public class FormEntry extends SCGameData<FroggerGameInstance> implements IFrogg
      */
     public int getMapFormId() {
         int id = this.localFormId;
-        if (theme == FroggerMapTheme.GENERAL)
+        if (this.theme == FroggerMapTheme.GENERAL)
             id |= FLAG_GENERAL;
         return id;
     }
@@ -127,9 +128,9 @@ public class FormEntry extends SCGameData<FroggerGameInstance> implements IFrogg
      * @return wadFile
      */
     public int getWadIndex() {
-        int wadIndex = getId();
-        if (getTheme() == FroggerMapTheme.GENERAL) {
-            wadIndex -= getTheme().getFormOffset();
+        int wadIndex = this.id;
+        if (getTheme() == FroggerMapTheme.GENERAL || wadIndex >= PROJECT_MAX_THEME_MOFS) {
+            wadIndex -= PROJECT_MAX_THEME_MOFS;
             if (!getConfig().isAtLeastRetailWindows() && !getConfig().isAtOrBeforeBuild21())
                 wadIndex++; // Some builds have GEN_VRAM.VLO in THEME_GEN.WAD, which requires this offset.
         }
@@ -191,8 +192,6 @@ public class FormEntry extends SCGameData<FroggerGameInstance> implements IFrogg
      * @return wadFile
      */
     public WADFile getWadFile(FroggerMapFile mapFile) {
-        boolean isGeneralTheme = getTheme() == FroggerMapTheme.GENERAL;
-
         // The game will not use the map book if general is the theme.
         WADFile wadFile = resolveWadFile(mapFile, false);
         if (wadFile != null)
@@ -227,22 +226,31 @@ public class FormEntry extends SCGameData<FroggerGameInstance> implements IFrogg
         if (testFlag(FormLibFlag.NO_MODEL))
             return null;
 
-        WADFile wadFile = getWadFile(mapFile);
+        // Attempt to resolve GENERAL models first.
         int wadIndex = getWadIndex();
+        if (this.theme == FroggerMapTheme.GENERAL || this.id >= PROJECT_MAX_THEME_MOFS) {
+            ThemeBook themeBook = getGameInstance().getThemeBook(FroggerMapTheme.GENERAL);
+            WADFile wadFile = themeBook != null ? themeBook.getWAD(mapFile) : null;
+            if (wadFile != null)
+                return wadFile.getFiles().get(wadIndex);
+        }
+
+        WADFile wadFile = getWadFile(mapFile);
         if (wadFile != null && wadFile.getFiles().size() > wadIndex && wadIndex >= 0) { // Test if there's an associated WAD.
             WADEntry wadEntry = wadFile.getFiles().get(wadIndex);
             if (wadEntry.getFile() instanceof MRModel) {
                 MRModel model = (MRModel) wadEntry.getFile();
-                if (!model.isDummy()) {
-                    return wadEntry;
-                } else if (tryImportIfMissing) {
+                if (!model.isDummy())
+                    return wadEntry; // There's already a model here so return it.
+
+                if (tryImportIfMissing) {
                     // Try to import from the main theme WAD file if there is one.
                     WADFile themeWad = resolveWadFile(mapFile, true);
                     if (themeWad != null && themeWad.getFiles().size() > wadIndex) {
                         WADEntry themeWadEntry = themeWad.getFiles().get(wadIndex);
                         if (themeWadEntry.getFile() instanceof MRModel) {
                             byte[] rawData = themeWadEntry.getFile().writeDataToByteArray();
-                            if (getArchive().replaceFile(themeWadEntry.getDisplayName(), rawData, wadEntry.getFileEntry(), wadEntry.getFile(), false) != null)
+                            if (getArchive().replaceFile(themeWadEntry.getDisplayName(), rawData, themeWadEntry.getFileEntry(), wadEntry.getFile(), false) != null)
                                 return wadEntry;
                         }
                     }

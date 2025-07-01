@@ -33,6 +33,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapLevelID;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerFlyScoreType;
+import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketEntity;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketHeader;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerUtils;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerVersionComparison;
@@ -235,7 +236,7 @@ public class FroggerGameInstance extends SCGameInstance {
         super.setupScriptEngine(engine);
         engine.addWrapperTemplates(FroggerGameInstance.class, FroggerTextureRemap.class, FroggerMapFile.class,
                 LevelInfo.class, FroggerMapLevelID.class, FroggerMapWorldID.class, PCMapBook.class, FroggerMapTheme.class,
-                PSXMapBook.class, MapBook.class);
+                PSXMapBook.class, MapBook.class, FroggerUtils.class, FroggerMapFilePacketEntity.class, MusicTrack.class);
     }
 
     /**
@@ -264,7 +265,7 @@ public class FroggerGameInstance extends SCGameInstance {
      * @return mapBook
      */
     public MapBook getMapBook(FroggerMapLevelID level) {
-        return this.mapLibrary.size() > 0 ? this.mapLibrary.get(level.ordinal()) : null;
+        return this.mapLibrary.size() > 0 && this.mapLibrary.size() > level.ordinal() ? this.mapLibrary.get(level.ordinal()) : null;
     }
 
     /**

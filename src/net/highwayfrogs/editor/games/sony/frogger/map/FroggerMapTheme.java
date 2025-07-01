@@ -10,20 +10,19 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum FroggerMapTheme {
-    GENERAL("GEN", 128),
-    CAVE("CAV", 0),
-    DESERT("DES", 2),
-    FOREST("FOR", 0),
-    JUNGLE("JUN", 8),
-    ORIGINAL("ORG", 0),
-    RUINS("ARN", 0),
-    SWAMP("SWP", 0),
-    SKY("SKY", 0),
-    SUBURBIA("SUB", 0),
-    VOLCANO("VOL", 8); // Also sometimes called Industrial or IND.
+    GENERAL("GEN"),
+    CAVE("CAV"),
+    DESERT("DES"),
+    FOREST("FOR"),
+    JUNGLE("JUN"),
+    ORIGINAL("ORG"),
+    RUINS("ARN"),
+    SWAMP("SWP"),
+    SKY("SKY"),
+    SUBURBIA("SUB"),
+    VOLCANO("VOL"); // Also sometimes called Industrial or IND.
 
     private final String internalName;
-    private final int formOffset;
 
     /**
      * Gets the theme from a file name.

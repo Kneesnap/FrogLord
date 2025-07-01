@@ -61,17 +61,27 @@ public abstract class MapBook extends ExeStruct {
      * @param remapPointer  The runtime pointer address to the remap.
      * @param lowPoly       If win95 low poly mode is enabled.
      */
-    protected static void addRemap(FroggerGameInstance instance, int mapResourceId, long remapPointer, boolean lowPoly) {
+    protected static FroggerTextureRemap addRemap(FroggerGameInstance instance, int mapResourceId, long remapPointer, boolean lowPoly) {
         if (mapResourceId <= 0 || remapPointer <= 0)
-            return; // Invalid.
+            return null; // Invalid.
 
         MWIResourceEntry entry = instance.getResourceEntryByID(mapResourceId);
         if (entry == null) {
             instance.getLogger().warning("Couldn't find map with resource ID: %d.", mapResourceId);
-            return;
+            return null;
         }
 
         String name = entry.hasFullFilePath() ? "txl_" + FileUtils.stripExtension(entry.getDisplayName()).toLowerCase(Locale.ROOT) : null;
-        instance.addRemap(new FroggerTextureRemap(instance, entry, name, remapPointer));
+        FroggerTextureRemap newRemap = new FroggerTextureRemap(instance, entry, name, remapPointer);
+        instance.addRemap(newRemap);
+        return newRemap;
+    }
+
+    /**
+     * Tests if the MapBook has per-level wad files.
+     * PSX Build 6 is the first build seen to have per-level wad files.
+     */
+    public boolean hasPerLevelWadFiles() {
+        return !getGameInstance().getVersionConfig().isAtOrBeforeBuild4();
     }
 }

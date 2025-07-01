@@ -4,6 +4,7 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
@@ -98,7 +99,7 @@ public class WADFile extends SCSharedGameFile {
             }
 
             // Setup file.
-            WADEntry newEntry = new WADEntry(this, resourceId, dataAppearsCompressed, null);
+            WADEntry newEntry = new WADEntry(this, resourceId, dataAppearsCompressed);
             file.setWadFileEntry(newEntry);
             newEntry.setFile(file);
             this.files.add(newEntry);
@@ -227,16 +228,15 @@ public class WADFile extends SCSharedGameFile {
     @Getter
     public static class WADEntry extends SCSharedGameObject {
         private final WADFile wadFile;
-        private final int resourceId;
         private final boolean compressed;
         private SCGameFile<?> file;
+        @Setter private int resourceId;
 
-        public WADEntry(WADFile wadFile, int resourceId, boolean compressed, SCGameFile<?> file) {
+        public WADEntry(WADFile wadFile, int resourceId, boolean compressed) {
             super(wadFile.getGameInstance());
             this.wadFile = wadFile;
-            this.resourceId = resourceId;
             this.compressed = compressed;
-            this.file = file;
+            this.resourceId = resourceId;
         }
 
         /**
@@ -279,9 +279,10 @@ public class WADFile extends SCSharedGameFile {
             }
 
             this.file = newFile;
-            getGameInstance().getFileObjectsByFileEntries().put(mwiEntry, newFile);
-            if (newFile != null)
+            if (newFile != null) {
+                getGameInstance().getFileObjectsByFileEntries().putIfAbsent(mwiEntry, newFile);
                 newFile.setFileDefinition(mwiEntry);
+            }
         }
     }
 }

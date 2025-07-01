@@ -1,7 +1,12 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.packets;
 
+import javafx.scene.control.Alert.AlertType;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.file.config.exe.MapBook;
+import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
+import net.highwayfrogs.editor.file.config.exe.general.FormEntry.FormLibFlag;
+import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
@@ -10,7 +15,11 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.form.IFroggerFormEntr
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
+import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -111,6 +120,8 @@ public class FroggerMapFilePacketEntity extends FroggerMapFilePacket {
             // Write entity data.
             this.entities.get(i).save(writer);
         }
+
+        ensureValidLevelWadFile(true);
     }
 
     @Override
@@ -249,5 +260,83 @@ public class FroggerMapFilePacketEntity extends FroggerMapFilePacket {
         }
 
         return null;
+    }
+
+    /**
+     * Each level has its own WAD file containing models for the specific level.
+     * If these wad files do not contain the models used by entities in the level, the game will crash when the level loads.
+     * This method attempts to update the per-level WAD to contain the necessary models, or warn if it can't be done.
+     */
+    public void ensureValidLevelWadFile(boolean showPopup) {
+        // PSX Build 6 is the first build seen to have per-level wad files.
+        if (getGameInstance().getVersionConfig().isAtOrBeforeBuild4())
+            return;
+
+        FroggerMapFile map = getParentFile();
+        MapBook mapBook = getGameInstance().getMapBook(map.getMapLevelID());
+        if (mapBook == null) {
+            if (getParentFile().isIsland() || getParentFile().isQB())
+                return; // These maps don't have mapBook entries.
+
+            throw new RuntimeException("Could not resolve mapBook for '" + map.getFileDisplayName() + "'.");
+        }
+
+        if (!mapBook.hasPerLevelWadFiles())
+            return; // There's no per-level wad files, so there's nothing to do.
+
+        WADFile levelWad = mapBook.getLevelWad(map);
+        if (levelWad == null)
+            throw new RuntimeException("Could not resolve the per-level WAD file for '" + map.getFileDisplayName() + "'.");
+
+        // Add missing entries.
+        boolean showWarning = false;
+        StringBuilder warningBuilder = new StringBuilder("Level: ").append(levelWad.getFileDisplayName()).append(Constants.NEWLINE)
+                .append("WAD: ").append(levelWad.getFileDisplayName()).append(Constants.NEWLINE)
+                .append("Issues: ").append(Constants.NEWLINE);
+        Set<WADEntry> usedWadEntries = new HashSet<>();
+        for (int i = 0; i < this.entities.size(); i++) {
+            FroggerMapEntity entity = this.entities.get(i);
+            IFroggerFormEntry rawFormEntry = entity.getFormEntry();
+            if (!(rawFormEntry instanceof FormEntry)) {
+                warningBuilder.append("- ").append(entity.getLoggerInfo()).append(" has an unsupported form entry!").append(Constants.NEWLINE);
+                showWarning = true;
+                continue;
+            }
+
+            FormEntry formEntry = (FormEntry) rawFormEntry;
+            if (formEntry.testFlag(FormLibFlag.NO_MODEL))
+                continue; // The NO_MODEL flags means the wadFile will not be resolved, and thus we should skip it.
+
+            // Attempt to resolve the wadEntry.
+            WADEntry wadEntry = formEntry.getModel(map, true);
+            if (wadEntry != null) {
+                usedWadEntries.add(wadEntry);
+            } else {
+                warningBuilder.append("- ").append(entity.getLoggerInfo()).append(" is missing from ")
+                        .append(levelWad.getFileDisplayName()).append("! This will cause the game to crash.").append(Constants.NEWLINE);
+                showWarning = true;
+            }
+        }
+
+        if (showWarning) {
+            String warningMessage = warningBuilder.toString();
+            getLogger().warning("Unable to fully validate the level WAD file.%n%s", warningMessage);
+            if (showPopup)
+                FXUtils.makePopUp(warningMessage, AlertType.ERROR);
+        }
+
+        // Remove unused entries.
+        for (int i = 0; i < levelWad.getFiles().size(); i++) {
+            WADEntry testWadEntry = levelWad.getFiles().get(i);
+            if (usedWadEntries.contains(testWadEntry))
+                continue;
+
+            SCGameFile<?> file = testWadEntry.getFile();
+            if (!(file instanceof MRModel) || ((MRModel) file).isDummy())
+                continue;
+
+            levelWad.getLogger().info("Cleared file '%s' which went unused by '%s'.", file.getFileDisplayName(), map.getFileDisplayName());
+            ((MRModel) file).setDummy();
+        }
     }
 }
