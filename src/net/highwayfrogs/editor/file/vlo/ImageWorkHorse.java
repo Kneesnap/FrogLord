@@ -17,7 +17,6 @@ import java.util.Arrays;
  * Created by Kneesnap on 12/1/2018.
  */
 public class ImageWorkHorse {
-
     /**
      * Trim the padding off of this image.
      * @param gameImage The GameImage to get trimming data from.

@@ -18,9 +18,11 @@ import net.highwayfrogs.editor.scripting.runtime.templates.utils.NoodleLoggerTem
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.math.*;
 import net.highwayfrogs.editor.utils.*;
+import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -292,6 +294,7 @@ public class NoodleScriptEngine extends SharedGameObject {
         addGlobalFunction(NDLFunctionLogWarning.INSTANCE);
         addGlobalFunction(NDLFunctionPresetPrompt.INSTANCE);
         addGlobalFunction(NDLFunctionMakePopup.INSTANCE);
+        addGlobalFunction(NDLFunctionReadImage.INSTANCE);
 
         // Functions which we also register as macros.
         registerGlobalFunctionAndBuiltinMacro("argumentCount", NDLFunctionGetArgumentCount.INSTANCE);
@@ -322,7 +325,8 @@ public class NoodleScriptEngine extends SharedGameObject {
         // Various utility components of FrogLord.
         addWrapperTemplates(Matrix4x4f.class, Vector2f.class, Vector3f.class, Vector4f.class, Quaternion.class);
         addWrapperTemplates(AudioUtils.class, ColorUtils.class, DataUtils.class, FileUtils.class, MathUtils.class,
-                NumberUtils.class, StringUtils.class, TimeUtils.class, Utils.class);
+                NumberUtils.class, StringUtils.class, TimeUtils.class, Utils.class, ProblemResponse.class);
+        addWrapperTemplates(BufferedImage.class);
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(Config.class));
 
         // DataReader/DataWriter is considered not very helpful to Noodle, as its data types are somewhat bizarre.
