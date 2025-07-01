@@ -68,7 +68,7 @@ public class NoodleCompiler {
      * @return compiledScript
      */
     public static <T extends NoodleScript> T compileScript(NoodleScriptEngine engine, Config codeConfig, T scriptToLoad) {
-        int startLineNumber = codeConfig.getOriginalLineNumber();
+        int startLineNumber = codeConfig.getOriginalLineNumber() + 1; // We want to get the line after the [SectionName]. For config nodes in the root section, this is the non-existent line 0, and we want line 1.
         String codeText = String.join(Constants.NEWLINE, codeConfig.getTextWithComments()) + Constants.NEWLINE; // Adding the extra newline makes it easier on the token parser, aka if we don't it'll error.
         scriptToLoad.clearScript(); // Reset the script object before compiling anything into it.
         scriptToLoad.setConfig(codeConfig);

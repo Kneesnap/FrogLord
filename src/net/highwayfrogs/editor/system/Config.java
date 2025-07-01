@@ -747,12 +747,8 @@ public class Config implements IBinarySerializable {
             if (line == null)
                 return config; // Reached end of file?
 
-            if (StringUtils.isNullOrWhiteSpace(line))
-                continue; // Empty lines are skipped.
-
             String trimmedLine = line.trim();
-
-            if (trimmedLine.charAt(0) == '[') {
+            if (trimmedLine.length() > 0 && trimmedLine.charAt(0) == '[') {
                 String comment = "";
                 String sectionLine = trimmedLine;
 
@@ -848,9 +844,6 @@ public class Config implements IBinarySerializable {
                 text = StringUtils.trimEnd(rawText);
                 commentSeparator = rawText.substring(text.length()) + COMMENT_CHARACTER + rawCommentText.substring(0, rawText.length() - text.length());
             }
-
-            if (StringUtils.isNullOrWhiteSpace(text) && StringUtils.isNullOrWhiteSpace(commentText))
-                continue; // If there is no text, and no comment on a line, skip it.
 
             // Determine if this is a key-value pair.
             int splitAt = -1;
