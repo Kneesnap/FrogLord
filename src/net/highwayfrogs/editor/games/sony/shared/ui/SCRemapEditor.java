@@ -38,7 +38,7 @@ public class SCRemapEditor<TFile extends SCGameFile<?>> {
         if (this.remapList.getItems() != null)
             this.remapList.getItems().clear();
 
-        TextureRemapArray textureRemap = this.remapGetter.apply(file);
+        TextureRemapArray textureRemap = file != null ? this.remapGetter.apply(file) : null;
 
         // Setup Remap Editor.
         if (textureRemap != null) {
