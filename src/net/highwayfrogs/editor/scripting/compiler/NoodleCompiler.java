@@ -1473,6 +1473,8 @@ public class NoodleCompiler {
                     if (Character.isDigit(currentChar) || currentChar == '.') {
                         boolean preDot = true;
                         NoodlePrimitiveType primitiveType = NoodlePrimitiveType.INTEGER;
+                        boolean skipCharacter = false;
+                        boolean hasAnyDigits = false;
                         while (pos <= len) {
                             char tempChar = scriptText.charAt(pos - 1);
                             if (tempChar == '.') {
@@ -1485,12 +1487,15 @@ public class NoodleCompiler {
                                 }
                             } else if (Character.isDigit(tempChar)) {
                                 pos++; // This is part of the number, so continue reading.
-                            } else if (!preDot && (tempChar == 'd' || tempChar == 'D')) {
+                                hasAnyDigits = true;
+                            } else if (hasAnyDigits && (tempChar == 'd' || tempChar == 'D')) {
                                 primitiveType = NoodlePrimitiveType.DOUBLE;
+                                skipCharacter = true;
                                 pos++;
                                 break;
-                            } else if (!preDot && (tempChar == 'f' || tempChar == 'F')) {
+                            } else if (hasAnyDigits && (tempChar == 'f' || tempChar == 'F')) {
                                 primitiveType = NoodlePrimitiveType.FLOAT;
+                                skipCharacter = true;
                                 pos++;
                                 break;
                             } else { // Found a character which is not contributing to the number. That means we've reached the end of the number.
@@ -1498,7 +1503,7 @@ public class NoodleCompiler {
                             }
                         }
 
-                        String readNumber = scriptText.substring(start - 1, pos - 1);
+                        String readNumber = scriptText.substring(start - 1, pos - (skipCharacter ? 2 : 1));
                         if (readNumber.equals(".")) {
                             // It's just a period.
                             out.add(new NoodleToken(NoodleTokenType.PERIOD, codeLoc));
