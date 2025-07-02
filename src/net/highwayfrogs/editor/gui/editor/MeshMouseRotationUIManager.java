@@ -56,7 +56,7 @@ public class MeshMouseRotationUIManager<TMesh extends DynamicMesh> extends MeshU
     }
 
     private void updateCameraDistanceFromMouseScroll(InputManager manager, ScrollEvent event, boolean isTrackpadScroll) {
-        if (!isTrackpadScroll)
+        if (!isTrackpadScroll && !event.isInertia())
             this.camera.setTranslateZ(this.camera.getTranslateZ() + (event.getDeltaY() * .25));
     }
 

@@ -57,3 +57,4 @@ Yes! Pull requests are welcome.
  - Everyone involved with Frogger's creation who we've spoken with.
  - yohoat (FrogLord Logo)
  - archᵗʰ (BW/M1 FrogLord Logos & Beast Wars game info help)
+ - StarmanUltra (Frogger font recreation)

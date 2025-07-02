@@ -326,7 +326,7 @@ public class NoodleScriptEngine extends SharedGameObject {
         addWrapperTemplates(Matrix4x4f.class, Vector2f.class, Vector3f.class, Vector4f.class, Quaternion.class);
         addWrapperTemplates(AudioUtils.class, ColorUtils.class, DataUtils.class, FileUtils.class, MathUtils.class,
                 NumberUtils.class, StringUtils.class, TimeUtils.class, Utils.class, ProblemResponse.class);
-        addWrapperTemplates(BufferedImage.class);
+        addWrapperTemplates(BufferedImage.class, java.awt.Color.class);
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(Config.class));
 
         // DataReader/DataWriter is considered not very helpful to Noodle, as its data types are somewhat bizarre.

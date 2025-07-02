@@ -135,7 +135,7 @@ public class ImageFilterSettings {
 
         boolean transparencyGoal = isAllowTransparency() && gameImage.testFlag(GameImage.FLAG_BLACK_IS_TRANSPARENT);
         if (transparencyGoal)
-            image = ImageWorkHorse.applyFilter(image, new TransparencyFilter());
+            image = ImageWorkHorse.applyFilter(image, TransparencyFilter.INSTANCE);
 
         this.renderCache.put(firstImage, image);
         return image;

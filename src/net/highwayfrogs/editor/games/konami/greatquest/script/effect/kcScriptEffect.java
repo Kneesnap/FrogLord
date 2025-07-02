@@ -236,7 +236,7 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
             String commandName = arguments.useNext().getAsString();
             kcScriptEffect newEffect = createEffectForCommandName(function, commandName);
             if (newEffect == null)
-                throw new RuntimeException("The command name '" + commandName + "' seems invalid, no kcScriptEffect could be created for it.");
+                throw new RuntimeException("The command name '" + commandName + "' is incorrect, make sure it has been spelled correctly.");
 
             newEffect.loadEffect(logger, arguments, lineNumber, fileName);
             return newEffect;

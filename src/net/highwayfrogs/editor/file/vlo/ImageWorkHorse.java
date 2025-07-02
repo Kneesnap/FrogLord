@@ -174,6 +174,8 @@ public class ImageWorkHorse {
 
     // Black -> Transparency
     public static class TransparencyFilter extends RGBImageFilter {
+        public static TransparencyFilter INSTANCE = new TransparencyFilter();
+
         @Override
         public int filterRGB(int x, int y, int argb) {
             int colorWOAlpha = argb & 0x00FFFFFF;
@@ -183,6 +185,8 @@ public class ImageWorkHorse {
 
     // Transparency -> Black
     public static class BlackFilter extends RGBImageFilter {
+        public static BlackFilter INSTANCE = new BlackFilter();
+
         @Override
         public int filterRGB(int x, int y, int rgb) {
             int alpha = rgb >>> (3 * Constants.BITS_PER_BYTE);

@@ -52,6 +52,15 @@ public class ColorUtils {
     }
 
     /**
+     * Get the red value from an ARGB8888 value.
+     * @param rgb The int value to get the color from.
+     * @return colorValue
+     */
+    public static float getRedFloat(int rgb) {
+        return ((rgb >> 16) & 0xFF) / (float) 0xFF;
+    }
+
+    /**
      * Get the green value from an ARGB8888 value.
      * @param rgb The int value to get the color from.
      * @return colorByte
@@ -70,6 +79,15 @@ public class ColorUtils {
     }
 
     /**
+     * Get the green value from an ARGB8888 value.
+     * @param rgb The int value to get the color from.
+     * @return colorValue
+     */
+    public static float getGreenFloat(int rgb) {
+        return ((rgb >> 8) & 0xFF) / (float) 0xFF;
+    }
+
+    /**
      * Get the blue value from an ARGB8888 value.
      * @param rgb The int value to get the color from.
      * @return colorByte
@@ -85,6 +103,15 @@ public class ColorUtils {
      */
     public static int getBlueInt(int rgb) {
         return (rgb & 0xFF);
+    }
+
+    /**
+     * Get the blue value from an ARGB8888 value.
+     * @param rgb The int value to get the color from.
+     * @return colorValue
+     */
+    public static float getBlueFloat(int rgb) {
+        return (rgb & 0xFF) / (float) 0xFF;
     }
 
     /**
@@ -232,6 +259,15 @@ public class ColorUtils {
         graphics.fillRect(0, 0, colorImage.getWidth(), colorImage.getHeight());
         graphics.dispose();
         return FXUtils.toFXImage(colorImage, false);
+    }
+
+    /**
+     * Convert a JavaFX color to an AWT color.
+     * @param argbColor The fx color to convert.
+     * @return awtColor
+     */
+    public static java.awt.Color toAwtColorARGB(int argbColor) {
+        return new java.awt.Color(argbColor, true);
     }
 
     /**

@@ -384,7 +384,7 @@ public class GameImage extends SCSharedGameData implements Cloneable, ITextureSo
         image = ImageWorkHorse.convertBufferedImageToFormat(image, BufferedImage.TYPE_INT_ARGB);
 
         // Ensure transparent pixels are now black.
-        image = ImageWorkHorse.applyFilter(image, new BlackFilter());
+        image = ImageWorkHorse.applyFilter(image, BlackFilter.INSTANCE);
 
         // Automatically generate padding if necessary.
         /*if (getIngameWidth() == image.getWidth() && getIngameHeight() == image.getHeight()) {
@@ -594,7 +594,7 @@ public class GameImage extends SCSharedGameData implements Cloneable, ITextureSo
     public BufferedImage makeImage() {
         BufferedImage image = makeUnmodifiedImage();
         if (testFlag(FLAG_BLACK_IS_TRANSPARENT))
-            image = ImageWorkHorse.applyFilter(image, new TransparencyFilter());
+            image = ImageWorkHorse.applyFilter(image, TransparencyFilter.INSTANCE);
 
         return image;
     }

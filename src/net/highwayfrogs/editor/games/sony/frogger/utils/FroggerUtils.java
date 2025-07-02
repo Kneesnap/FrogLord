@@ -3,8 +3,10 @@ package net.highwayfrogs.editor.games.sony.frogger.utils;
 import javafx.scene.control.Alert;
 import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
+import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
+import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
@@ -13,10 +15,17 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.games.sony.shared.utils.DynamicMeshObjExporter;
+import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.Utils;
 
+import java.awt.*;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +35,9 @@ import java.util.List;
  * Created by Kneesnap on 5/2/2025.
  */
 public class FroggerUtils {
+    public static final int DEFAULT_TEXT_COLOR_RGB = 0xFFE8E8A0;
+    public static final Color DEFAULT_TEXT_AWT_COLOR = ColorUtils.toAwtColorARGB(DEFAULT_TEXT_COLOR_RGB);
+
     /**
      * Exports a map file to wavefront obj.
      * @param map The map to export.
@@ -180,5 +192,115 @@ public class FroggerUtils {
             newEntry.setFile(newFile);
             target.getFiles().add(newEntry);
         }
+    }
+
+    private static Font froggerFont;
+
+    /**
+     * Writes Frogger text to the image with the given settings.
+     * @param image the image to write the text to
+     * @param width the expected width of the image
+     * @param height the expected height of the image
+     * @param text the text to write
+     * @param fontSize the size of the font to use when writing the text.
+     * @return imageWithText
+     */
+    public static BufferedImage writeFroggerText(BufferedImage image, int width, int height, String text, float fontSize, Color textColor, boolean isFourBitMode) {
+        if (text == null)
+            throw new NullPointerException("text");
+        if (textColor == null)
+            textColor = DEFAULT_TEXT_AWT_COLOR;
+        if (image == null || image.getWidth() != width || image.getHeight() != height)
+            image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+
+        Font font = getFroggerFont().deriveFont(fontSize);
+        Graphics2D graphics = image.createGraphics();
+
+        if (text.contains("\r"))
+            text = text.replace("\r", "");
+
+        String[] split = text.split("\n");
+
+        try {
+            graphics.setColor(Color.BLACK);
+            graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
+
+            graphics.setFont(font);
+            graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR); // May or may not improve the output. Unclear.
+            graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            graphics.setColor(textColor);
+
+            double y = -4;
+            for (int i = 0; i < split.length; i++) {
+                String textLine = split[i];
+                Rectangle2D bounds = font.getStringBounds(textLine, graphics.getFontRenderContext());
+                y += bounds.getHeight();
+                graphics.drawString(textLine, (float) ((image.getWidth() - bounds.getWidth()) * .5), (float) y);
+            }
+
+            graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+        } finally {
+            graphics.dispose();
+        }
+
+        if (isFourBitMode) {
+            // Create the palette to pull colors from
+            final int colorCount = 16;
+            int[] colorPalette = new int[colorCount];
+            int baseRed = textColor.getRed();
+            int baseGreen = textColor.getGreen();
+            int baseBlue = textColor.getBlue();
+            for (int i = 1; i < colorCount; i++) {
+                double scaleAmount = (double) i / (colorCount - 1);
+                byte red = (byte) (baseRed * scaleAmount);
+                byte green = (byte) (baseGreen * scaleAmount);
+                byte blue = (byte) (baseBlue * scaleAmount);
+                colorPalette[i] = ColorUtils.toARGB(red, green, blue, (byte) 0xFF);
+            }
+
+            // Snap pixel values to the palette.
+            int[] rawPixelData = ImageWorkHorse.getPixelIntegerArray(image);
+            float averageMultiple = 1 / 3F;
+            for (int i = 0; i < rawPixelData.length; i++) {
+                int rgb = rawPixelData[i];
+                float red = (float) ColorUtils.getRedInt(rgb) / textColor.getRed();
+                float green = (float) ColorUtils.getGreenInt(rgb) / textColor.getGreen();
+                float blue = (float) ColorUtils.getBlueInt(rgb) / textColor.getBlue();
+                float averageValue = (red + green + blue) * averageMultiple;
+                int index = Math.min(colorCount - 1, Math.round(averageValue * (colorCount - 1)));
+                rawPixelData[i] = colorPalette[index];
+            }
+        } else {
+            // Ensure transparency.
+            int[] rawPixelData = ImageWorkHorse.getPixelIntegerArray(image);
+            for (int i = 0; i < rawPixelData.length; i++) {
+                if ((rawPixelData[i] & 0xFFFFFF) == 0) {
+                    rawPixelData[i] &= 0x00FFFFFF;
+                } else {
+                    rawPixelData[i] |= 0xFF000000;
+                }
+            }
+        }
+
+        return image;
+    }
+
+    /**
+     * Gets the font used to create text.
+     * The font has been provided by StarmanUltra, thank you.
+     */
+    public static Font getFroggerFont() {
+        if (froggerFont != null)
+            return froggerFont;
+
+        InputStream fontStream = SCGameType.FROGGER.getEmbeddedResourceStream("font-main-text.otf");
+        try {
+            froggerFont = Font.createFont(Font.TRUETYPE_FONT, fontStream);
+        } catch (FontFormatException | IOException ex) {
+            Utils.handleError(null, ex, true, "Failed to load Frogger font. Using system default...");
+            froggerFont = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()[0];
+        }
+
+        return froggerFont;
     }
 }

@@ -87,6 +87,7 @@ public class NumberUtils {
      */
     public static boolean isNumber(String input) {
         boolean hasDecimal = false;
+        boolean validNumber = false;
         for (int i = 0; i < input.length(); i++) {
             char test = input.charAt(i);
             if (test == '-' && i == 0)
@@ -103,9 +104,11 @@ public class NumberUtils {
 
             if (!Character.isDigit(test))
                 return false; // Character isn't a digit, so it can't be a number.
+
+            validNumber = true;
         }
 
-        return true;
+        return validNumber;
     }
 
     /**
