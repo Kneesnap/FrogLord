@@ -165,7 +165,7 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
      * Opens the mesh viewer using the actor description.
      */
     public void openMeshViewer() {
-        MeshViewController.setupMeshViewer(getGameInstance(), new GreatQuestModelViewController(), createModelMesh());
+        MeshViewController.setupMeshViewer(getGameInstance(), new GreatQuestModelViewController(getGameInstance()), createModelMesh());
     }
 
     /**

@@ -5,6 +5,7 @@ import javafx.scene.SubScene;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.MeshView;
 import lombok.Getter;
+import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsInstance;
 import net.highwayfrogs.editor.games.sony.beastwars.map.BeastWarsMapFile;
 import net.highwayfrogs.editor.games.sony.beastwars.map.mesh.BeastWarsMapMesh;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
@@ -17,6 +18,10 @@ import net.highwayfrogs.editor.gui.editor.MeshViewController;
 public class BeastWarsMapMeshController extends MeshViewController<BeastWarsMapMesh> {
     private static final double DEFAULT_FAR_CLIP = 5000;
     private static final double DEFAULT_MOVEMENT_SPEED = 400;
+
+    public BeastWarsMapMeshController(BeastWarsInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void setupBindings(SubScene subScene3D, MeshView meshView) {

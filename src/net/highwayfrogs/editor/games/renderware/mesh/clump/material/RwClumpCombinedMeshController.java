@@ -6,6 +6,7 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.MeshView;
 import lombok.Getter;
+import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.chunks.RwClumpChunk;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshCollection.MeshViewCollection;
@@ -21,6 +22,10 @@ public class RwClumpCombinedMeshController extends MeshViewController<RwClumpCom
 
     private static final PhongMaterial VERTEX_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
     private static final PhongMaterial CONNECTION_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.LIMEGREEN);
+
+    public RwClumpCombinedMeshController(GameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void setupBindings(SubScene subScene3D, MeshView meshView) {

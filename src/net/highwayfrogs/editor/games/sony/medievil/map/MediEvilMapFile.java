@@ -61,7 +61,7 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> {
 
     @Override
     public void performDefaultUIAction() {
-        MeshViewController.setupMeshViewer(getGameInstance(), new MediEvilMapMeshController(), new MediEvilMapMesh(this));
+        MeshViewController.setupMeshViewer(getGameInstance(), new MediEvilMapMeshController(getGameInstance()), new MediEvilMapMesh(this));
     }
 
     /**

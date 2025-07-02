@@ -5,8 +5,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.layout.VBox;
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
@@ -20,6 +18,8 @@ import net.highwayfrogs.editor.games.renderware.struct.types.RwStructInt32;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -129,7 +129,7 @@ public class RwClumpChunk extends RwStreamChunk {
      * Opens the mesh viewer for the clump.
      */
     public void openMeshViewer() {
-        MeshViewController.setupMeshViewer(getGameInstance(), new RwClumpCombinedMeshController(), new RwClumpCombinedMesh(this));
+        MeshViewController.setupMeshViewer(getGameInstance(), new RwClumpCombinedMeshController(getGameInstance()), new RwClumpCombinedMesh(this));
     }
 
     /**

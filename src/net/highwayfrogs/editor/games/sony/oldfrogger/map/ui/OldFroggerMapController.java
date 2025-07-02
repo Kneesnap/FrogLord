@@ -55,6 +55,6 @@ public class OldFroggerMapController extends SCFileEditorUIController<OldFrogger
 
     @FXML
     private void onView(ActionEvent evt) {
-        MeshViewController.setupMeshViewer(getGameInstance(), new OldFroggerMapMeshController(), new OldFroggerMapMesh(getFile()));
+        MeshViewController.setupMeshViewer(getGameInstance(), new OldFroggerMapMeshController(getGameInstance()), new OldFroggerMapMesh(getFile()));
     }
 }

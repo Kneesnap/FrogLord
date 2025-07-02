@@ -5,8 +5,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.layout.VBox;
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
@@ -20,6 +18,8 @@ import net.highwayfrogs.editor.games.renderware.mesh.world.RwWorldMeshController
 import net.highwayfrogs.editor.games.renderware.struct.types.RpWorldChunkInfo;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,7 +82,7 @@ public class RwWorldChunk extends RwStreamChunk implements IRwWorldProvider {
      * Opens the MeshView for the mesh.
      */
     public void openMeshView() {
-        MeshViewController.setupMeshViewer(getGameInstance(), new RwWorldMeshController(), new RwWorldCombinedMesh(this));
+        MeshViewController.setupMeshViewer(getGameInstance(), new RwWorldMeshController(getGameInstance()), new RwWorldCombinedMesh(this));
     }
 
     @SuppressWarnings("FieldCanBeLocal")

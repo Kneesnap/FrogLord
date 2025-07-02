@@ -87,7 +87,7 @@ public class OldFroggerMapFile extends SCChunkedFile<OldFroggerGameInstance> {
 
     @Override
     public void performDefaultUIAction() {
-        MeshViewController.setupMeshViewer(getGameInstance(), new OldFroggerMapMeshController(), new OldFroggerMapMesh(this));
+        MeshViewController.setupMeshViewer(getGameInstance(), new OldFroggerMapMeshController(getGameInstance()), new OldFroggerMapMesh(this));
     }
 
     @Override

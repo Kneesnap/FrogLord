@@ -13,7 +13,6 @@ import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
-import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.sony.shared.utils.DynamicMeshObjExporter;
 import net.highwayfrogs.editor.gui.editor.FirstPersonCamera;
@@ -805,7 +804,7 @@ public class Scene3DUtils {
             String fileName = (namePrefix != null && namePrefix.length() > 0 ? namePrefix + "-" : "")
                     + StringUtils.padStringLeft(Integer.toString(id), 4, '0') + ".obj";
 
-            File testFile = new File(FrogLordApplication.getWorkingDirectory(), fileName);
+            File testFile = new File(instance.getMainGameFolder(), fileName);
             if (!testFile.exists()) {
                 DynamicMeshObjExporter.exportMeshToObj(logger, mesh, testFile, null, true);
                 return;
@@ -842,16 +841,18 @@ public class Scene3DUtils {
             String fileName = (namePrefix != null && namePrefix.length() > 0 ? namePrefix + "-" : "")
                     + StringUtils.padStringLeft(Integer.toString(id), 4, '0') + ".png";
 
-            File testFile = new File(FrogLordApplication.getWorkingDirectory(), fileName);
+            File testFile = new File(instance.getMainGameFolder(), fileName);
             if (!testFile.exists()) {
                 try {
                     ImageIO.write(sceneImage, "png", testFile);
+                    instance.getLogger().info("Saving screenshot as '%s'.", testFile.getName());
                     break;
                 } catch (IOException ex) {
                     try {
                         // Let user pick a directory (in case current working directory is not writeable)
                         File targetDirectory = FXUtils.promptChooseDirectory(instance, "Save Screenshot", true);
                         ImageIO.write(sceneImage, "png", new File(targetDirectory, fileName));
+                        instance.getLogger().info("Saving screenshot as '%s'.", fileName);
                         break;
                     } catch (IOException ex2) {
                         Utils.handleError(instance.getLogger(), ex2, true, "Failed to write screenshot to '%s'. (No permissions to write here?)", fileName);

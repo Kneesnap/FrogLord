@@ -39,6 +39,10 @@ public class SCMapMeshController<TMapMesh extends SCMapMesh> extends MeshViewCon
     private static final PhongMaterial VERTEX_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
     private static final PhongMaterial CONNECTION_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.LIMEGREEN);
 
+    public SCMapMeshController(SCGameInstance instance) {
+        super(instance);
+    }
+
     @Override
     public void setupBindings(SubScene subScene3D, MeshView meshView) {
         super.setupBindings(subScene3D, meshView);

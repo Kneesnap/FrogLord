@@ -7,6 +7,7 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.MeshView;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.entity.MediEvilEntityDefinition;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.medievil.map.entity.MediEvilMapEntity;
@@ -32,6 +33,10 @@ public class MediEvilMapMeshController extends MeshViewController<MediEvilMapMes
 
     private static final PhongMaterial VERTEX_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
     private static final PhongMaterial CONNECTION_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.LIMEGREEN);
+
+    public MediEvilMapMeshController(MediEvilGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void setupBindings(SubScene subScene3D, MeshView meshView) {

@@ -7,6 +7,7 @@ import javafx.scene.shape.MeshView;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.*;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
@@ -19,6 +20,10 @@ public class OldFroggerMapMeshController extends MeshViewController<OldFroggerMa
     private static final double DEFAULT_FAR_CLIP = 5000;
     private static final double DEFAULT_MOVEMENT_SPEED = 400;
     @Getter private OldFroggerLightManager lightManager;
+
+    public OldFroggerMapMeshController(OldFroggerGameInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void setupBindings(SubScene subScene3D, MeshView meshView) {

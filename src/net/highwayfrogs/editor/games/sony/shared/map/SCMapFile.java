@@ -103,7 +103,7 @@ public abstract class SCMapFile<TGameInstance extends SCGameInstance> extends SC
     @Override
     public void performDefaultUIAction() {
         super.performDefaultUIAction();
-        MeshViewController.setupMeshViewer(getGameInstance(), new SCMapMeshController<>(), new SCMapMesh(this));
+        MeshViewController.setupMeshViewer(getGameInstance(), new SCMapMeshController<>(getGameInstance()), new SCMapMesh(this));
     }
 
     /**

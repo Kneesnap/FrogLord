@@ -23,6 +23,7 @@ public class GreatQuestSkeletonController extends MeshViewController<DynamicMesh
     private DisplayList skeletonDisplayList;
 
     public GreatQuestSkeletonController(@NonNull kcCResourceSkeleton skeleton) {
+        super(skeleton.getGameInstance());
         this.skeleton = skeleton;
     }
 

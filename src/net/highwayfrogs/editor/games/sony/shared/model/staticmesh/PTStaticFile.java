@@ -173,7 +173,7 @@ public class PTStaticFile extends SCSharedGameFile {
         model.updateStaticModel();
         model.updateAnimation();
         model.updateMimeAndSkin();
-        MeshViewController.setupMeshViewer(getGameInstance(), new PTModelMeshController(), new PTModelMesh(model));
+        MeshViewController.setupMeshViewer(getGameInstance(), new PTModelMeshController(getGameInstance()), new PTModelMesh(model));
     }
 
     @Override

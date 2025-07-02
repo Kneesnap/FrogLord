@@ -13,6 +13,7 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.MeshView;
 import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
@@ -44,6 +45,10 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
 
     private static final PhongMaterial VERTEX_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
     private static final PhongMaterial CONNECTION_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.LIMEGREEN);
+
+    public GreatQuestModelViewController(GreatQuestInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void setupBindings(SubScene subScene3D, MeshView meshView) {

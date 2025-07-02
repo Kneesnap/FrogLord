@@ -131,10 +131,6 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     private static final NumberStringConverter NUM_TO_STRING_CONVERTER = new NumberStringConverter(new DecimalFormat("####0.000000"));
     private static final FXMLLoader BASIC_MESH_VIEW_FXML_LOADER = new FXMLLoader(MeshViewController.class.getResource("/fxml/scene-basic-3d.fxml"));
 
-    protected MeshViewController() {
-        this(null);
-    }
-
     protected MeshViewController(GameInstance instance) {
         this.gameInstance = instance;
         this.inputManager = new InputManager(instance);
@@ -331,7 +327,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
             } else if (event.getCode() == KeyCode.F9) { // 3D screenshot.
                 Scene3DUtils.take3DScreenshot(getGameInstance(), getLogger(), this.mesh, this.mesh.getMeshName());
             } else if (event.getCode() == KeyCode.F10) { // Take screenshot.
-                Scene3DUtils.takeScreenshot(null, this.subScene, getMeshScene(), FileUtils.stripExtension(getMeshDisplayName()), false);
+                Scene3DUtils.takeScreenshot(getGameInstance(), this.subScene, getMeshScene(), FileUtils.stripExtension(getMeshDisplayName()), false);
             } else if (event.getCode() == KeyCode.F12 && getMesh().getTextureAtlas() != null) {
 
                 if (getMesh().getTextureAtlas().getTextureSource().isEnableAwtImage()) {

@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.sony.shared.model.meshview;
 
 import javafx.scene.SubScene;
 import javafx.scene.shape.MeshView;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 
 /**
@@ -9,6 +10,10 @@ import net.highwayfrogs.editor.gui.editor.MeshViewController;
  * Created by Kneesnap on 5/22/2024.
  */
 public class PTModelMeshController extends MeshViewController<PTModelMesh> {
+    public PTModelMeshController(SCGameInstance instance) {
+        super(instance);
+    }
+
     @Override
     public void setupBindings(SubScene subScene3D, MeshView meshView) {
         super.setupBindings(subScene3D, meshView);

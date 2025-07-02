@@ -286,7 +286,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
      */
     public boolean openMeshViewer() {
         if (getSceneManager() != null) {
-            MeshViewController.setupMeshViewer(getGameInstance(), new GreatQuestMapMeshController(), new GreatQuestMapMesh(this));
+            MeshViewController.setupMeshViewer(getGameInstance(), new GreatQuestMapMeshController(getGameInstance()), new GreatQuestMapMesh(this));
             return true;
         } else {
             return false;

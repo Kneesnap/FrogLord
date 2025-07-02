@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.renderware.mesh.clump;
 import javafx.scene.SubScene;
 import javafx.scene.shape.CullFace;
 import javafx.scene.shape.MeshView;
+import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.chunks.RwClumpChunk;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 
@@ -11,6 +12,10 @@ import net.highwayfrogs.editor.gui.editor.MeshViewController;
  * Created by Kneesnap on 8/18/2024.
  */
 public class RwClumpMeshController extends MeshViewController<RwClumpMesh> {
+    public RwClumpMeshController(GameInstance instance) {
+        super(instance);
+    }
+
     @Override
     public void setupBindings(SubScene subScene3D, MeshView meshView) {
         super.setupBindings(subScene3D, meshView);

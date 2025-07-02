@@ -402,7 +402,7 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
 
     @Override
     public void performDefaultUIAction() {
-        MeshViewController.setupMeshViewer(getGameInstance(), new BeastWarsMapMeshController(), new BeastWarsMapMesh(this));
+        MeshViewController.setupMeshViewer(getGameInstance(), new BeastWarsMapMeshController(getGameInstance()), new BeastWarsMapMesh(this));
     }
 
     @Override

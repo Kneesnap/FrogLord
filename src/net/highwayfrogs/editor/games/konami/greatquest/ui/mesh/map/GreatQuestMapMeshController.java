@@ -7,6 +7,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.*;
 import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResOctTreeSceneMgr;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResOctTreeSceneMgr.kcVtxBufFileStruct;
@@ -43,6 +44,10 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
     private static final double DEFAULT_MOVEMENT_SPEED = 25;
 
     private static final PhongMaterial BOUNDING_BOX_OUTLINE = Scene3DUtils.makeUnlitSharpMaterial(Color.RED);
+
+    public GreatQuestMapMeshController(GreatQuestInstance instance) {
+        super(instance);
+    }
 
     @Override
     public void setupBindings(SubScene subScene3D, MeshView meshView) {
