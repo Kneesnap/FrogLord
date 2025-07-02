@@ -255,7 +255,7 @@ public class FroggerUtils {
                 byte red = (byte) (baseRed * scaleAmount);
                 byte green = (byte) (baseGreen * scaleAmount);
                 byte blue = (byte) (baseBlue * scaleAmount);
-                colorPalette[i] = ColorUtils.toARGB(red, green, blue, (byte) 0xFF);
+                colorPalette[i] = ColorUtils.toARGB(red, green, blue, (byte) 0x7F);
             }
 
             // Snap pixel values to the palette.
@@ -277,7 +277,8 @@ public class FroggerUtils {
                 if ((rawPixelData[i] & 0xFFFFFF) == 0) {
                     rawPixelData[i] &= 0x00FFFFFF;
                 } else {
-                    rawPixelData[i] |= 0xFF000000;
+                    rawPixelData[i] &= ~0x80000000;
+                    rawPixelData[i] |= 0x7F000000;
                 }
             }
         }
