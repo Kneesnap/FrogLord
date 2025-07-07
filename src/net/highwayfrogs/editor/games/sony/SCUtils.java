@@ -495,7 +495,8 @@ public class SCUtils {
                     int currAssemblerHash = FroggerHashUtil.getPsyQAssemblerHash(originalName);
                     int lastAssemblerHash = FroggerHashUtil.getPsyQAssemblerHash(lastName);
                     if (currAssemblerHash > lastAssemblerHash) {
-                        instance.getLogger().warning("Symbols '%s' (%d) and '%s' (%d) appear to be ordered improperly due to string length/assembler hash.", lastName, lastAssemblerHash, originalName, currAssemblerHash);
+                        if (!"im_gatso".equals(originalName)) // im_gatso is special because of its first use being in main.obj, the only game .obj to be linked before sprdata.obj. Thus, its ordering is not consistent with the others.
+                            instance.getLogger().warning("Symbols '%s' (%d) and '%s' (%d) appear to be ordered improperly due to string length/assembler hash.", lastName, lastAssemblerHash, originalName, currAssemblerHash);
                     } else if (currAssemblerHash == lastAssemblerHash && lastImage.getTextureId() <= image.getTextureId()) {
                         instance.getLogger().warning("Symbols '%s' (%d) and '%s' (%d) appear to be ordered improperly due to texture ID ordering.", lastName, lastImage.getTextureId(), originalName, image.getTextureId());
                     }
