@@ -1,11 +1,14 @@
 package net.highwayfrogs.editor.games.sony;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.standard.MRTexture;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
 import net.highwayfrogs.editor.games.sony.SCGameConfig.SCBssSymbol;
+import net.highwayfrogs.editor.games.sony.SCGameConfig.SCBssSymbolType;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.model.actionset.PTActionSetFile;
 import net.highwayfrogs.editor.games.sony.shared.model.skeleton.PTSkeletonFile;
@@ -364,7 +367,6 @@ public class SCUtils {
                 maxNameLength = symbolName.length();
         }
 
-        List<String> results = new ArrayList<>();
         List<String> linesAtEnd = new ArrayList<>();
         StringBuilder lineBuilder = new StringBuilder();
 
@@ -376,6 +378,7 @@ public class SCUtils {
                 ? NumberUtils.getDigitCount(FroggerHashUtil.MSVC_SYMBOL_HASH_TABLE_SIZE)
                 : NumberUtils.getDigitCount(FroggerHashUtil.PSYQ_LINKER_HASH_TABLE_SIZE);
         int targetCommentPosition = C_IMAGE_TYPE_PREFIX.length() + maxNameLength + 1;
+        List<OutputSymbol> symbols = new ArrayList<>();
         for (int i = 0; i < bssOrderedImages.size(); i++) {
             GameImage image = bssOrderedImages.get(i);
             long currAddress = instance.getBmpTexturePointers().get(image.getTextureId());
@@ -396,13 +399,20 @@ public class SCUtils {
 
                 lineBuilder.setLength(0);
                 lineBuilder.append("// ").append(symbolName);
+                int hash = -1;
                 if (symbol != null) {
-                    int hash = calculateHash(instance, symbolName);
+                    hash = calculateHash(instance, symbolName);
                     if (lastHash > hash)
                         instance.getLogger().warning("Non-Image Symbol '%s' (%d) appears to be improperly ordered due to improper hash ordering. (Last Hash: %d)", symbolName, hash, lastHash);
 
                     writeHashComment(lineBuilder, targetCommentPosition, hashDigitCount, hash);
-                    lineBuilder.append(" (START/END)");
+                    if (symbol.getType() == SCBssSymbolType.PSYQ || symbol.getType() == SCBssSymbolType.GAME_LIB) {
+                        lineBuilder.append(" (END)");
+                    } else if (symbol.getType() == SCBssSymbolType.GAME) {
+                        lineBuilder.append(" (START)");
+                    } else {
+                        lineBuilder.append(" (START/END)");
+                    }
                     lastHash = hash;
                     lastWasImageSymbol = false;
                 } else {
@@ -412,7 +422,7 @@ public class SCUtils {
                 lineBuilder.append(" [Size: ").append(gapSize).append(']');
 
                 // Prepare for the next one.
-                results.add(lineBuilder.toString());
+                symbols.add(new OutputSymbol(null, symbol, symbolName, lineBuilder.toString(), hash));
                 lastAddress += gapSize;
                 i--;
                 continue;
@@ -437,10 +447,67 @@ public class SCUtils {
                 lastWasImageSymbol = true;
             }
 
-            results.add(lineBuilder.toString());
+            symbols.add(new OutputSymbol(image, null, imageName, lineBuilder.toString(), hash));
 
             // Prepare for next iteration.
             lastAddress = currAddress + MRTexture.SIZE_IN_BYTES;
+        }
+
+        // Write results.
+        List<String> results = new ArrayList<>();
+
+        OutputSymbol lastSymbolWithHash = null;
+        OutputSymbol nextSymbolWithHash = null;
+        int lastSymbolWithHashIndex = -1;
+        int nextSymbolWithHashIndex = -1;
+        for (int i = 0; i < symbols.size(); i++) {
+            OutputSymbol symbol = symbols.get(i);
+            if (symbol.hash != -1) {
+                results.add(symbol.getTextLine());
+                lastSymbolWithHash = symbol;
+                lastSymbolWithHashIndex = i;
+                continue;
+            }
+
+            if (i >= nextSymbolWithHashIndex) {
+                nextSymbolWithHash = null;
+                for (nextSymbolWithHashIndex = i + 1; nextSymbolWithHashIndex < symbols.size(); nextSymbolWithHashIndex++) {
+                    OutputSymbol testSymbol = symbols.get(nextSymbolWithHashIndex);
+                    if (testSymbol.hash != -1) {
+                        nextSymbolWithHash = testSymbol;
+                        break;
+                    }
+                }
+            }
+
+            int minHash = 0;
+            if (lastSymbolWithHash != null) {
+                minHash = lastSymbolWithHash.hash;
+                OutputSymbol testSymbol = symbols.get(lastSymbolWithHashIndex + 1);
+                if (lastSymbolWithHash.shouldIncreaseHash(instance, testSymbol))
+                    minHash++;
+            }
+
+            int maxHash = instance.isPC() ? FroggerHashUtil.MSVC_SYMBOL_HASH_TABLE_SIZE - 1 : FroggerHashUtil.PSYQ_LINKER_HASH_TABLE_SIZE - 1;
+            if (nextSymbolWithHash != null) {
+                maxHash = nextSymbolWithHash.hash;
+                OutputSymbol testSymbol = symbols.get(nextSymbolWithHashIndex - 1);
+                if (testSymbol.shouldIncreaseHash(instance, nextSymbolWithHash))
+                    maxHash--;
+            }
+
+            if (minHash > maxHash)
+                instance.getLogger().warning("Calculated an invalid minHash/maxHash pair of %d-%d for symbol %s!", minHash, maxHash, symbol.getName());
+
+            lineBuilder.setLength(0);
+            lineBuilder.append(symbol.getTextLine());
+            if (minHash == maxHash) {
+                writeHashComment(lineBuilder, targetCommentPosition, hashDigitCount, minHash);
+            } else {
+                writeHashComment(lineBuilder, targetCommentPosition, NumberUtils.padNumberString(minHash, hashDigitCount) + "-" + NumberUtils.padNumberString(maxHash, hashDigitCount));
+            }
+
+            results.add(lineBuilder.toString());
         }
 
         if (linesAtEnd.size() > 0) {
@@ -450,6 +517,31 @@ public class SCUtils {
 
         instance.getLogger().info("Export complete, %d/%d textures had names configured. (%d left)", instance.getVersionConfig().getImageNames().size(), bssOrderedImages.size(), bssOrderedImages.size() - instance.getVersionConfig().getImageNames().size());
         return results;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    private static class OutputSymbol {
+        private final GameImage image;
+        private final SCBssSymbol symbol;
+        private final String name;
+        private final String textLine;
+        private int hash; // the hash known for the symbol, if there is one.
+
+        public boolean shouldIncreaseHash(SCGameInstance instance, OutputSymbol nextSymbol) {
+            GameImage nextImage = nextSymbol.getImage();
+            if (instance.isPSX()) {
+                return (this.symbol != null && (this.symbol.getType() == SCBssSymbolType.PSYQ || this.symbol.getType() == SCBssSymbolType.GAME_LIB))
+                        || (nextSymbol.getSymbol() != null && nextSymbol.getSymbol().getType() == SCBssSymbolType.GAME);
+            } else if (instance.isPC()) {
+                if (this.image == null || nextImage == null)
+                    throw new IllegalStateException("The PC versions were not expected to have non-image symbols in the image bss chunk!");
+
+                return nextImage.getTextureId() > this.image.getTextureId();
+            } else {
+                throw new UnsupportedOperationException("The " + instance.getPlatform() + " platform is not currently supported.");
+            }
+        }
     }
 
     private static int calculateHash(SCGameInstance instance, String symbolName) {
@@ -535,12 +627,16 @@ public class SCUtils {
     }
 
     private static void writeHashComment(StringBuilder builder, int targetCommentPosition, int hashDigitCount, int hash) {
+        writeHashComment(builder, targetCommentPosition, NumberUtils.padNumberString(hash, hashDigitCount));
+    }
+
+    private static void writeHashComment(StringBuilder builder, int targetCommentPosition, String hashComment) {
         // Pad to a consistent width.
         while (targetCommentPosition > builder.length())
             builder.append(' ');
         builder.append(" // ");
 
-        builder.append(NumberUtils.padNumberString(hash, hashDigitCount));
+        builder.append(hashComment);
     }
 
     /**

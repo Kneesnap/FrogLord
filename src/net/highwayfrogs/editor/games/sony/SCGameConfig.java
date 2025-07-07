@@ -163,14 +163,23 @@ public class SCGameConfig extends GameConfig {
         }
     }
 
+    public enum SCBssSymbolType {
+        UNKNOWN,
+        IMAGE,
+        PSYQ,
+        GAME,
+        GAME_LIB
+    }
+
     @Getter
     @RequiredArgsConstructor
     public static class SCBssSymbol {
         private final int address;
         private final String name;
         private final int size;
+        private final SCBssSymbolType type;
 
-        private static final Pattern REGEX_PATTERN = Pattern.compile("0x([a-fA-F0-9]{8}),([a-zA-Z_][a-zA-Z0-9_]+),([0-9]+)");
+        private static final Pattern REGEX_PATTERN = Pattern.compile("0x([a-fA-F0-9]{8}),([a-zA-Z_][a-zA-Z0-9_]+),([0-9]+)(,[a-zA-Z_][a-zA-Z0-9_]+)?");
 
         /**
          * Parses the bss symbol from a line of text.
@@ -188,7 +197,10 @@ public class SCGameConfig extends GameConfig {
             int address = (int) Long.parseLong(matcher.group(1), 16);
             String name = matcher.group(2);
             int size = Integer.parseInt(matcher.group(3));
-            return new SCBssSymbol(address, name, size);
+
+            String symbolTypeStr = matcher.group(4);
+            SCBssSymbolType symbolType = symbolTypeStr != null ? SCBssSymbolType.valueOf(symbolTypeStr.substring(1)) : SCBssSymbolType.UNKNOWN;
+            return new SCBssSymbol(address, name, size, symbolType);
         }
     }
 }
