@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.entity.kcActorBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
+import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCause;
 import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffect;
 import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffectAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcInterimScriptEffect;
@@ -29,10 +30,7 @@ import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.AppendInfoLoggerWrapper;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Represents a list of scripts.
@@ -309,16 +307,30 @@ public class kcScriptList extends kcCResource {
         }
 
         // Print the warnings in order.
+        Set<kcScriptCause> seenCauses = new HashSet<>();
         for (int i = 0; i < this.scripts.size(); i++) {
             kcScript script = this.scripts.get(i);
             kcScriptValidationData functionCauseData = getOrCreateValidationData(logger, dataMap, script.getEntity());
 
+            seenCauses.clear();
             for (int j = 0; j < script.getFunctions().size(); j++) {
                 kcScriptFunction function = script.getFunctions().get(j);
+                kcScriptCause cause = function.getCause();
 
                 // Add cause.
-                if (functionCauseData != null && function.getCause() != null && !function.getCause().isLoadedFromGame())
-                    function.getCause().printAdvancedWarnings(functionCauseData);
+                if (functionCauseData != null && cause != null && !cause.isLoadedFromGame())
+                    cause.printAdvancedWarnings(functionCauseData);
+
+                // This shouldn't really ever occur because kcScript.addFunctionsFromConfigNode() should handle it first.
+                // But, this has been added as a safety check, just in case we ever load functions through some other way such as a gui.
+                if (functionCauseData != null && cause != null && !seenCauses.add(cause))
+                    cause.printWarning(logger, functionCauseData.getEntityName() + " contains multiple functions using the same cause! Only one of them will run! (Cause: '" + cause.getAsGqsStatement() + "')");
+
+                if (function.getEffects().isEmpty() && cause != null && !cause.isLoadedFromGame()) {
+                    logger.warning("The function on line %d in %s is pointless because it has no commands (kcScriptEffects)!",
+                            cause.getUserLineNumber(), cause.getUserImportSource());
+                    continue;
+                }
 
                 // Process effects.
                 for (int k = 0; k < function.getEffects().size(); k++) {

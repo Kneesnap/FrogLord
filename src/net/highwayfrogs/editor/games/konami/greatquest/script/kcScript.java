@@ -198,6 +198,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
             functionsByCause.computeIfAbsent(function.getCause(), key -> new ArrayList<>()).add(function);
         }
 
+        Map<kcScriptCause, kcScriptCause> addedCauses = new HashMap<>();
         for (Config nestedFunction : baseConfigNode.getChildConfigNodes()) {
             kcScriptFunction newFunction = new kcScriptFunction(this, null);
 
@@ -232,12 +233,18 @@ public class kcScript extends GameObject<GreatQuestInstance> {
                 kcScriptFunction functionToReplace = getFunctionToReplace(functionsToReplace, newFunctionUserImportSource, behavior);
 
                 if (functionToReplace != null) {
+                    newFunction = functionToReplace;
                     functionToReplace.loadFromConfigNode(nestedFunction, logger);
                 } else {
                     // Add the new function.
                     this.functions.add(newFunction);
                     functionsByCause.computeIfAbsent(newFunction.getCause(), key -> new ArrayList<>()).add(newFunction);
                 }
+
+                kcScriptCause oldMatchingCause = addedCauses.putIfAbsent(newFunction.getCause(), newFunction.getCause());
+                if (oldMatchingCause != null) // I never bothered to figure out the exact resolution order for which function will be seen first, but only the first function seen to have an applicable cause will be run.
+                    logger.warning("The function in %s on line %d reuses 'cause=%s', which was previously used on line %d.",
+                            sourceName, newFunction.getCause().getUserLineNumber(), newFunction.getCause().getAsGqsStatement(), oldMatchingCause.getUserLineNumber());
             }
         }
     }

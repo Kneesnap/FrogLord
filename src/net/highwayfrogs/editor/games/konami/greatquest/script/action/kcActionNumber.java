@@ -86,6 +86,11 @@ public class kcActionNumber extends kcAction {
     public void printAdvancedWarnings(kcScriptValidationData data) {
         super.printAdvancedWarnings(data);
 
+        if (!data.anyCausesMatch(kcScriptCauseType.NUMBER, (kcScriptCauseNumber cause) -> true)) {
+            printWarning(data.getLogger(), data.getEntityName() + " does not have an " + kcScriptCauseType.NUMBER.getDisplayName() + " script cause for handling numbers sent to it by " + getActionID().getFrogLordName() + "!");
+            return;
+        }
+
         // Ensure there is a cause listening for this number.
         if (this.operation == NumberOperation.LITERAL_NUMBER) {
             if (!data.anyCausesMatch(kcScriptCauseType.NUMBER, (kcScriptCauseNumber cause) -> cause.doesValueMatch(this.number)))
