@@ -133,7 +133,7 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
     @FXML
     private void generateStrings(ActionEvent evt) {
         String searchQuery = this.searchFilterField.getText();
-        int maxWordSize = NumberUtils.isInteger(this.maxWordSizeField.getText()) ? Integer.parseInt(this.maxWordSizeField.getText()) : 0;
+        int maxWordSize = getMaxWordLength();
 
         List<String> output = new ArrayList<>();
         Set<String> seenAlready = new HashSet<>();
@@ -154,6 +154,13 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
             if (seenAlready.add(word) && (searchQuery == null || searchQuery.isEmpty() || word.contains(searchQuery)) && (maxWordSize <= 0 || word.length() <= maxWordSize))
                 results.add(word);
         }
+    }
+
+    /**
+     * Gets the user-specified maximum word length.
+     */
+    public int getMaxWordLength() {
+        return NumberUtils.isInteger(this.maxWordSizeField.getText()) ? Integer.parseInt(this.maxWordSizeField.getText()) : 0;
     }
 
     /**

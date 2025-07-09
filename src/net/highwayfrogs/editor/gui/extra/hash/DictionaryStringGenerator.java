@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.gui.extra.hash;
 
+import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 
@@ -13,7 +14,7 @@ import java.util.List;
  * Created by Kneesnap on 2/27/2022.
  */
 public class DictionaryStringGenerator implements IHashStringGenerator {
-    private final List<String> allLoadedWords = new ArrayList<>();
+    @Getter private final List<String> allLoadedWords = new ArrayList<>();
     @SuppressWarnings("unchecked") private final List<String>[] wordsByPsyQHash = new List[FroggerHashUtil.PSYQ_LINKER_HASH_TABLE_SIZE];
     private final List<String> cachedGeneratedList = new ArrayList<>();
 
