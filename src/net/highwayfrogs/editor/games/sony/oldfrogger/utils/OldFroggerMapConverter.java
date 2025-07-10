@@ -298,8 +298,7 @@ public class OldFroggerMapConverter {
             OldFroggerSpline oldSpline = path.getSplines().get(i);
             FroggerPathSegmentSpline newSegment = new FroggerPathSegmentSpline(newPath);
             newPath.getSegments().add(newSegment);
-            newSegment.copyFrom(oldSpline);
-            newSegment.moveDelta(worldOffset);
+            newSegment.copyFrom(oldSpline, worldOffset);
         }
 
         return newPath;

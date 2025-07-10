@@ -408,14 +408,11 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
      * Copies the spline data from an old Frogger spline to the object.
      * @param oldFroggerSpline the spline to copy data from
      */
-    public void copyFrom(OldFroggerSpline oldFroggerSpline) {
+    public void copyFrom(OldFroggerSpline oldFroggerSpline, SVector worldOffset) {
         if (oldFroggerSpline == null)
             throw new NullPointerException("oldFroggerSpline");
 
         setLength(null, oldFroggerSpline.calculateLength());
-        System.arraycopy(oldFroggerSpline.getSmoothT(), 0, this.smoothT, 0, this.smoothT.length);
-        for (int i = 0; i < this.smoothC.length; i++)
-            System.arraycopy(this.smoothC[i], 0, this.smoothC[i], 0, this.smoothC[i].length);
 
         // Converting directly produces a matrix which is broken for spline calculations.
         // However, the Bézier curve created from that matrix looks good.
@@ -423,5 +420,13 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
         // There's probably a less hacky way to do this, but I don't think it's worth figuring that out.
         MRSplineMatrix tempMatrix = oldFroggerSpline.toMatrix(this.splineMatrix);
         loadFromCurve(tempMatrix.toBezierCurve(), null);
+
+        if (worldOffset != null)
+            moveDelta(worldOffset);
+
+        // Copy the data after conversion after moving.
+        System.arraycopy(oldFroggerSpline.getSmoothT(), 0, this.smoothT, 0, this.smoothT.length);
+        for (int i = 0; i < this.smoothC.length; i++)
+            System.arraycopy(oldFroggerSpline.getSmoothC()[i], 0, this.smoothC[i], 0, this.smoothC[i].length);
     }
 }
