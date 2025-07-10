@@ -549,7 +549,7 @@ public class GameImage extends SCSharedGameData implements Cloneable, ITextureSo
      * Gets the name configured as the original name for this image.
      */
     public String getOriginalName() {
-        return getConfig().getImageNames().get(this.textureId);
+        return getConfig().getImageNamesById().get(this.textureId);
     }
 
     @Override

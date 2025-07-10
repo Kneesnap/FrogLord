@@ -515,7 +515,7 @@ public class SCUtils {
             results.addAll(linesAtEnd);
         }
 
-        instance.getLogger().info("Export complete, %d/%d textures had names configured. (%d left)", instance.getVersionConfig().getImageNames().size(), bssOrderedImages.size(), bssOrderedImages.size() - instance.getVersionConfig().getImageNames().size());
+        instance.getLogger().info("Export complete, %d/%d textures had names configured. (%d left)", instance.getVersionConfig().getImageNamesById().size(), bssOrderedImages.size(), bssOrderedImages.size() - instance.getVersionConfig().getImageNamesById().size());
         return results;
     }
 

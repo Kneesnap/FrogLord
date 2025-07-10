@@ -234,7 +234,7 @@ public class FroggerGameInstance extends SCGameInstance {
     @Override
     protected void setupScriptEngine(NoodleScriptEngine engine) {
         super.setupScriptEngine(engine);
-        engine.addWrapperTemplates(FroggerGameInstance.class, FroggerTextureRemap.class, FroggerMapFile.class,
+        engine.addWrapperTemplates(FroggerGameInstance.class, FroggerConfig.class, FroggerTextureRemap.class, FroggerMapFile.class,
                 LevelInfo.class, FroggerMapLevelID.class, FroggerMapWorldID.class, PCMapBook.class, FroggerMapTheme.class,
                 PSXMapBook.class, MapBook.class, FroggerUtils.class, FroggerMapFilePacketEntity.class, MusicTrack.class);
     }
@@ -309,8 +309,8 @@ public class FroggerGameInstance extends SCGameInstance {
             imageNames[i] = "im_img" + i;
 
         // Apply image names.
-        if (this.getVersionConfig().getImageNames().size() > 0)
-            for (Entry<Short, String> imageEntry : this.getVersionConfig().getImageNames().entrySet())
+        if (this.getVersionConfig().getImageNamesById().size() > 0)
+            for (Entry<Short, String> imageEntry : this.getVersionConfig().getImageNamesById().entrySet())
                 imageNames[imageEntry.getKey()] = imageEntry.getValue();
 
         // Write start of .H file.
@@ -408,7 +408,7 @@ public class FroggerGameInstance extends SCGameInstance {
     }
 
     private void saveTextureCfg(PrintWriter writer) {
-        for (Entry<Short, String> entry : this.getVersionConfig().getImageNames().entrySet())
+        for (Entry<Short, String> entry : this.getVersionConfig().getImageNamesById().entrySet())
             writer.append(String.valueOf(entry.getKey())).append("=").append(entry.getValue()).append(Constants.NEWLINE);
     }
 

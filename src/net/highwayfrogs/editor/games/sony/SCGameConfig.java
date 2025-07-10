@@ -32,7 +32,8 @@ public class SCGameConfig extends GameConfig {
     private final Map<String, String> mofRenderOverrides = new HashMap<>();
     private final Map<String, String> mofParentOverrides = new HashMap<>();
     private final List<String> fallbackFileNames = new ArrayList<>();
-    private final Map<Short, String> imageNames = new HashMap<>();
+    private final Map<Short, String> imageNamesById = new HashMap<>();
+    private final Map<String, Short> imageIdsByName = new HashMap<>();
     private final Map<Integer, SCBssSymbol> bssSymbols = new HashMap<>();
 
     private static final String CFG_FILE_NAMES = "Files";
@@ -145,7 +146,8 @@ public class SCGameConfig extends GameConfig {
     }
 
     private void readConfiguredImageNames(Config config) {
-        this.imageNames.clear();
+        this.imageNamesById.clear();
+        this.imageIdsByName.clear();
         if (!config.hasChild(CFG_CHILD_IMAGE_NAMES))
             return;
 
@@ -159,7 +161,9 @@ public class SCGameConfig extends GameConfig {
                 continue;
             }
 
-            this.imageNames.put(textureId, imageNameCfg.getString(key));
+            String imageName = imageNameCfg.getString(key);
+            this.imageNamesById.put(textureId, imageName);
+            this.imageIdsByName.put(imageName, textureId);
         }
     }
 

@@ -162,7 +162,7 @@ public abstract class SCGameInstance extends GameInstance {
     @Override
     protected void setupScriptEngine(NoodleScriptEngine engine) {
         super.setupScriptEngine(engine);
-        engine.addWrapperTemplates(SCGameData.class, SCGameFile.class, SCGameInstance.class, SCGameObject.class);
+        engine.addWrapperTemplates(SCGameData.class, SCGameFile.class, SCGameInstance.class, SCGameObject.class, SCGameConfig.class);
         engine.addWrapperTemplates(SCMath.class, SCUtils.class, MWDFile.class, MWIResourceEntry.class, TextureRemapArray.class, SCChunkedFile.class, SCByteTextureUV.class, LinkedTextureRemap.class);
         engine.addWrapperTemplates(VLOArchive.class, GameImage.class, MRModel.class, MRStaticMof.class, MRAnimatedMof.class);
     }
