@@ -23,7 +23,6 @@ public class NoodleJvmWrapper<TWrappedType> {
     private final List<CachedConstructor<TWrappedType>> cachedConstructors = new ArrayList<>();
     private final Set<Constructor<TWrappedType>> registeredConstructors = new HashSet<>();
     private final Map<String, List<CachedMethod>> cachedMethods = new HashMap<>();
-    private final Map<String, Enum<?>> cachedEnumValues = new HashMap<>();
     private final Map<String, CachedField> cachedFields = new HashMap<>();
     private final Set<Method> registeredMethods = new HashSet<>();
 
@@ -53,19 +52,9 @@ public class NoodleJvmWrapper<TWrappedType> {
         for (Constructor<?> constructor : this.wrappedClass.getConstructors()) // getConstructors() only includes public methods.
             addConstructor((Constructor<TWrappedType>) constructor);
 
-        // Add enum values.
-        Object[] enumValues = this.wrappedClass.getEnumConstants();
-        if (enumValues != null) {
-            for (Object constructor : enumValues) {
-                Enum<?> value = (Enum<?>) constructor;
-                this.cachedEnumValues.put(value.name(), value);
-            }
-        }
-
-        // Add static fields.
+        // Add static fields. (Includes enum constants)
         for (Field field : this.wrappedClass.getFields())
-            if (field.isAccessible())
-                this.cachedFields.put(field.getName(), new CachedField(field));
+            this.cachedFields.put(field.getName(), new CachedField(field));
 
         // Add public methods. (Including inherited ones)
         for (Method method : this.wrappedClass.getMethods()) { // getMethods() only includes public methods.
@@ -204,13 +193,6 @@ public class NoodleJvmWrapper<TWrappedType> {
                 template.addStaticFunction(new NoodleJvmConstructor<>(this, tempArgumentCount));
                 lastArgumentCount = tempArgumentCount;
             }
-        }
-
-        // Register enum fields.
-        for (Entry<String, Enum<?>> entry : this.cachedEnumValues.entrySet()) {
-            Enum<?> value = entry.getValue();
-            template.addStaticGetter(entry.getKey(),
-                    thread -> thread.getStack().pushObject(value));
         }
 
         // Register static fields.

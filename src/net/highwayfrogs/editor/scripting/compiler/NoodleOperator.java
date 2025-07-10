@@ -15,6 +15,7 @@ public enum NoodleOperator {
     MOD(0x03, "%"),
     ADD(0x10, "+"),
     SUB(0x11, "-"),
+    NOT(0x12, "~"),
     SHL(0x20, "<<"),
     SHR(0x21, ">>"),
     LAND(0x30, "&"),

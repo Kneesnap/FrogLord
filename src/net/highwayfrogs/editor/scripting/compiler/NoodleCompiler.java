@@ -975,11 +975,15 @@ public class NoodleCompiler {
                 List<NoodleNode> arrayNodes = buildArrayDefinition(context);
                 context.setNode(new NoodleNodeArrayDefinition(tk.getCodeLocation(), arrayNodes));
                 break;
-            case OPERATOR: // -value, +value
+            case OPERATOR: // -value, +value, ~value
                 switch (((NoodleTokenOperator) tk).getOperator()) {
                     case SUB: // SUB is both a binary operator and a unary operator, so we need to listen for the '-', and in this situation, it's a unary operator.
                         buildExpression(context, FLAG_NO_OPERATORS);
                         context.setNode(new NoodleNodeUnary(tk.getCodeLocation(), NoodleUnaryOperator.NEGATE, context.getNode()));
+                        break;
+                    case NOT:
+                        buildExpression(context, FLAG_NO_OPERATORS);
+                        context.setNode(new NoodleNodeUnary(tk.getCodeLocation(), NoodleUnaryOperator.NOT, context.getNode()));
                         break;
                     default:
                         throw new NoodleSyntaxException("Unsupported unary operator '%s'.", tk, tk);
@@ -1370,6 +1374,9 @@ public class NoodleCompiler {
                     } else { // Normal.
                         out.add(new NoodleTokenUnary(NoodleTokenType.UNARY_OPERATOR, codeLoc, NoodleUnaryOperator.INVERT));
                     }
+                    break;
+                case '~':
+                    out.add(new NoodleTokenUnary(NoodleTokenType.UNARY_OPERATOR, codeLoc, NoodleUnaryOperator.NOT));
                     break;
                 case '=':
                     if (scriptText.charAt(pos - 1) == '=') { // ==

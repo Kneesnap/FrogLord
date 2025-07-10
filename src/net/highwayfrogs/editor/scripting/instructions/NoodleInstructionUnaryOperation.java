@@ -34,11 +34,22 @@ public class NoodleInstructionUnaryOperation extends NoodleInstruction {
     public void execute(NoodleThread<? extends NoodleScript> thread) {
         NoodlePrimitive primitive = thread.getStack().popWithGC();
         switch (this.operator) {
-            case INVERT:
+            case NOT:
                 if (primitive.isBoolean()) {
                     thread.getStack().pushBoolean(!primitive.getBoolean());
                 } else if (primitive.isIntegerNumber()) {
                     thread.getStack().pushNumber(primitive.getPrimitiveType(), ~primitive.getWholeNumber());
+                } else {
+                    throw new NoodleRuntimeException("Cannot apply the unary logical NOT operation to %s.", primitive);
+                }
+                break;
+            case INVERT:
+                if (primitive.isNull()) {
+                    thread.getStack().pushBoolean(true);
+                } else if (primitive.isBoolean()) {
+                    thread.getStack().pushBoolean(!primitive.getBoolean());
+                } else if (primitive.isIntegerNumber()) {
+                    thread.getStack().pushBoolean(!primitive.isTrueValue());
                 } else {
                     throw new NoodleRuntimeException("Cannot apply the unary invert operation to %s.", primitive);
                 }
