@@ -13,7 +13,7 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.games.sony.SCUtils;
+import net.highwayfrogs.editor.games.sony.shared.utils.SCImageTableGenerator;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.extra.hash.HashRange.HashRangeType;
 import net.highwayfrogs.editor.utils.FXUtils;
@@ -127,7 +127,7 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
     private void exportTable(ActionEvent evt) {
         File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), TABLE_EXPORT_FILE_PATH, "bss-export.c", false);
         if (outputFile != null)
-            Files.write(outputFile.toPath(), SCUtils.saveImageOrderingTable(getGameInstance(), null));
+            Files.write(outputFile.toPath(), SCImageTableGenerator.saveImageOrderingTable(getGameInstance(), null));
     }
 
     @FXML

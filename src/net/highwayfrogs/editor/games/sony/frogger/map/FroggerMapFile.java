@@ -158,6 +158,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
         MeshViewController.setupMeshViewer(getGameInstance(), new FroggerMapMeshController(getGameInstance()), new FroggerMapMesh(this));
     }
 
+    @Override
     public void setupRightClickMenuItems(ContextMenu contextMenu) {
         super.setupRightClickMenuItems(contextMenu);
 
