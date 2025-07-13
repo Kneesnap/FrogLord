@@ -138,6 +138,18 @@ public class MRStaticMof extends MRBaseModelData {
     }
 
     /**
+     * Gets the number of polygons/faces this model has.
+     * @return faceCount
+     */
+    public int getPolygonCount() {
+        int totalPolygons = 0;
+        for (int i = 0; i < this.parts.size(); i++)
+            totalPolygons += this.parts.get(i).getOrderedPolygons().size();
+
+        return totalPolygons;
+    }
+
+    /**
      * Gets the number of collprims in this model.
      * @return collprimCount
      */
@@ -179,7 +191,10 @@ public class MRStaticMof extends MRBaseModelData {
         propertyList.add("Flipbook Animations", getFlipbookAnimationCount());
         propertyList.add("Texture Animations", getTextureAnimationCount());
         propertyList.add("Hilites", getHiliteCount());
+        propertyList.add("Polygons", getPolygonCount());
         propertyList.add("Collprims", getCollprimCount());
+
+
 
         // TODO: Recursively go through and add properties.
         // TODO: I'd like to finally add the sub-category properly-list building API. I'd like to have some stats here about the static MOF as a whole, then break down into individual parts.
