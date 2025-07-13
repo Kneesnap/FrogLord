@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.sony.shared.mof2.mesh;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
@@ -27,7 +28,7 @@ import java.util.List;
 public class MRStaticMof extends MRBaseModelData {
     private final List<MRMofPart> parts = new ArrayList<>();
     // TODO: WHAT IS UNKNOWN VALUE??
-    private int unknownValue; // As far as I can tell, this value is unused. Highest bytes are always 0x0A 00, but the others are idk. It might be a checksum of some kind, really I have no information to go off. Keeping it at zero should be fine for most purposes.
+    @Setter private int unknownValue; // As far as I can tell, this value is unused. Highest bytes are always 0x0A 00, but the others are idk. It might be a checksum of some kind, really I have no information to go off. Keeping it at zero should be fine for most purposes.
 
     public static final String OLD_SIGNATURE = "\0\0\0\0";
     public static final byte[] OLD_SIGNATURE_BYTES = OLD_SIGNATURE.getBytes(StandardCharsets.US_ASCII);

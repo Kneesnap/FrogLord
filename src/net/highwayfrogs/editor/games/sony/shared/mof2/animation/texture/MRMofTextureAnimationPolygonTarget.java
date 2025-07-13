@@ -3,13 +3,13 @@ package net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture;
 import lombok.Getter;
 import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPart;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPolygon;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPolygonType;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.Map;
 
@@ -116,6 +116,21 @@ public class MRMofTextureAnimationPolygonTarget implements IBinarySerializable {
             throw new RuntimeException("Failed to resolve MOF Polygon by ID: " + polygonIndex);
         if (this.polygon.getPolygonType() != polygonType)
             throw new RuntimeException("The resolved MOF polygon was of type " + this.polygon.getPolygonType() + ", but a(n) " + polygonType + " polygon was expected?!");
+    }
+
+    /**
+     * Sets the targeted polygon.
+     * @param newTargetPolygon the new polygon to target
+     */
+    public void setPolygon(MRMofPolygon newTargetPolygon) {
+        if (newTargetPolygon == null)
+            throw new NullPointerException("newTargetPolygon");
+        if (newTargetPolygon.getMofPart() != this.parentPart)
+            throw new IllegalArgumentException("The provided targetPolygon does not belong to the parent mofPart!");
+        if (this.tempPolygonIndex >= 0 || this.tempPolygonType != null)
+            resolvePolygonID();
+
+        this.polygon = newTargetPolygon;
     }
 
     /**

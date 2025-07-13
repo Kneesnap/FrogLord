@@ -287,6 +287,23 @@ public class MRMofPolygon extends SCGameData<SCGameInstance> {
         return new PSXShadeTextureDefinition(shadedTextureManager, this.polygonType.getInternalType(), textureSource, colors, uvs, isSemiTransparent(), true);
     }
 
+    /**
+     * Creates a clone of the polygon object for the new mofPart.
+     * @param mofPart the mofPart to create the polygon for
+     * @return clonedPolygon
+     */
+    public MRMofPolygon clone(MRMofPart mofPart) {
+        MRMofPolygon newPolygon = new MRMofPolygon(mofPart, this.polygonType);
+        System.arraycopy(this.vertices, 0, newPolygon.vertices, 0, this.vertices.length);
+        System.arraycopy(this.environmentNormals, 0, newPolygon.environmentNormals, 0, this.environmentNormals.length);
+        System.arraycopy(this.normals, 0, newPolygon.normals, 0, this.normals.length);
+        for (int i = 0; i < this.textureUvs.length; i++)
+            newPolygon.textureUvs[i].copyFrom(this.textureUvs[i]);
+        newPolygon.textureId = this.textureId;
+        newPolygon.color.copyFrom(this.color);
+        return newPolygon;
+    }
+
     private static void readSwappedArray(DataReader reader, int[] array) {
         if (array.length == 4) {
             array[0] = reader.readUnsignedShortAsInt();

@@ -20,6 +20,7 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRStaticMof;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.MRModelFileUIController;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.MRModelMeshController;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.mesh.MRModelMesh;
+import net.highwayfrogs.editor.games.sony.shared.mof2.utils.MRModelUtils;
 import net.highwayfrogs.editor.games.sony.shared.mof2.utils.MRMofAndMisfitModelConverter;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.utils.DynamicMeshObjExporter;
@@ -161,6 +162,15 @@ public class MRModel extends SCSharedGameFile {
         contextMenu.getItems().add(exportAsObjFile);
         exportAsObjFile.setOnAction(event ->
                 DynamicMeshObjExporter.askUserToMeshToObj(getGameInstance(), getLogger(), createMeshWithDefaultAnimation(), FileUtils.stripExtension(getFileDisplayName()), true));
+
+        if (isAnimatedMof()) {
+            MenuItem bakeToStaticMof = new MenuItem("Bake to Static MOF.");
+            contextMenu.getItems().add(bakeToStaticMof);
+            bakeToStaticMof.setOnAction(event -> {
+                MRModel newModel = MRModelUtils.bakeAndReplaceAnimatedMof(this);
+                FXUtils.makePopUp("Successfully baked '" + newModel.getFileDisplayName() + "' into a staticMof!", AlertType.INFORMATION);
+            });
+        }
     }
 
     @Override
@@ -173,6 +183,31 @@ public class MRModel extends SCSharedGameFile {
      */
     public void showEditor3D() {
         MeshViewController.setupMeshViewer(getGameInstance(), new MRModelMeshController(getGameInstance()), createMesh());
+    }
+
+    /**
+     * Sets the static mof represented by this model.
+     * @param staticMof the static mof to apply
+     */
+    public void setStaticMof(MRStaticMof staticMof) {
+        if (staticMof == null)
+            throw new NullPointerException("staticMof");
+
+        this.animatedMof = null;
+        this.staticMof = staticMof;
+    }
+
+    /**
+     * Sets the animated mof represented by this model.
+     * @param animatedMof the animated mof to apply
+     */
+    @SuppressWarnings("unused")
+    public void setAnimatedMof(MRAnimatedMof animatedMof) {
+        if (animatedMof == null)
+            throw new NullPointerException("animatedMof");
+
+        this.animatedMof = animatedMof;
+        this.staticMof = null;
     }
 
     @Override

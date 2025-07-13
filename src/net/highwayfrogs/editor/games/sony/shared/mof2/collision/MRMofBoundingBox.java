@@ -1,10 +1,10 @@
 package net.highwayfrogs.editor.games.sony.shared.mof2.collision;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.Arrays;
 
@@ -23,16 +23,21 @@ public class MRMofBoundingBox implements IBinarySerializable {
             this.vertices[i] = new SVector();
     }
 
+    public MRMofBoundingBox(short minX, short minY, short minZ, short maxX, short maxY, short maxZ) {
+        this();
+        setBoundaries(minX, minY, minZ, maxX, maxY, maxZ);
+    }
+
     @Override
     public void load(DataReader reader) {
-        for (SVector vector : this.vertices)
-            vector.loadWithPadding(reader);
+        for (int i = 0; i < this.vertices.length; i++)
+            this.vertices[i].loadWithPadding(reader);
     }
 
     @Override
     public void save(DataWriter writer) {
-        for (SVector vector : this.vertices)
-            vector.saveWithPadding(writer);
+        for (int i = 0; i < this.vertices.length; i++)
+            this.vertices[i].saveWithPadding(writer);
     }
 
     @Override
@@ -46,10 +51,48 @@ public class MRMofBoundingBox implements IBinarySerializable {
             return false;
 
         MRMofBoundingBox otherBox = (MRMofBoundingBox) other;
-        for (int i = 0; i < getVertices().length; i++)
-            if (!getVertices()[i].equals(otherBox.getVertices()[i]))
+        for (int i = 0; i < this.vertices.length; i++)
+            if (!this.vertices[i].equals(otherBox.getVertices()[i]))
                 return false;
         return true;
+    }
+
+    /**
+     * Creates a new bounding box based on the provided box coordinates.
+     * @param minX the minimum x value
+     * @param minY the minimum y value
+     * @param minZ the minimum z value
+     * @param maxX the maximum x value
+     * @param maxY the maximum y value
+     * @param maxZ the maximum z value
+     */
+    public void setBoundaries(short minX, short minY, short minZ, short maxX, short maxY, short maxZ) {
+        if (minX > maxX) {
+            short temp = minX;
+            minX = maxX;
+            maxX = temp;
+        }
+
+        if (minY > maxY) {
+            short temp = minY;
+            minY = maxY;
+            maxY = temp;
+        }
+
+        if (minZ > maxZ) {
+            short temp = minZ;
+            minZ = maxZ;
+            maxZ = temp;
+        }
+
+        this.vertices[0].setValues(minX, minY, minZ);
+        this.vertices[1].setValues(minX, minY, maxZ);
+        this.vertices[2].setValues(minX, maxY, minZ);
+        this.vertices[3].setValues(minX, maxY, maxZ);
+        this.vertices[4].setValues(maxX, minY, minZ);
+        this.vertices[5].setValues(maxX, minY, maxZ);
+        this.vertices[6].setValues(maxX, maxY, minZ);
+        this.vertices[7].setValues(maxX, maxY, maxZ);
     }
 
     /**

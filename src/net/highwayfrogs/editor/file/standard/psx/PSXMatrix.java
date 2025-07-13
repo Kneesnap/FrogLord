@@ -4,12 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.Arrays;
 
@@ -20,7 +20,7 @@ import java.util.Arrays;
 @Getter
 @Setter
 @AllArgsConstructor
-public class PSXMatrix extends GameObject {
+public class PSXMatrix implements IBinarySerializable {
     private short[][] matrix = new short[DIMENSION][DIMENSION]; // 3x3 Rotation Matrix.
     private int[] transform = new int[DIMENSION]; // Transform vector.
     private short padding;
@@ -64,13 +64,18 @@ public class PSXMatrix extends GameObject {
 
     @Override
     public void save(DataWriter writer) {
-        for (short[] aMatrix : this.matrix)
-            for (short aShort : aMatrix)
-                writer.writeShort(aShort);
+        for (int i = 0; i < this.matrix.length; i++)
+            for (int j = 0; j < this.matrix[i].length; j++)
+                writer.writeShort(this.matrix[i][j]);
 
         writer.writeShort(this.padding);
-        for (int aTransfer : this.transform)
-            writer.writeInt(aTransfer);
+        for (int i = 0; i < this.transform.length; i++)
+            writer.writeInt(this.transform[i]);
+    }
+
+    @Override
+    public PSXMatrix clone() {
+        return DataUtils.cloneSerializableObject(this, new PSXMatrix());
     }
 
     /**
