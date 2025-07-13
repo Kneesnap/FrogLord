@@ -16,6 +16,7 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.animation.MRAnimatedMof;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRStaticMof;
 import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.overlay.SCOverlayTable;
@@ -164,7 +165,7 @@ public abstract class SCGameInstance extends GameInstance {
         super.setupScriptEngine(engine);
         engine.addWrapperTemplates(SCGameData.class, SCGameFile.class, SCGameInstance.class, SCGameObject.class, SCGameConfig.class);
         engine.addWrapperTemplates(SCMath.class, SCUtils.class, MWDFile.class, MWIResourceEntry.class, TextureRemapArray.class, SCChunkedFile.class, SCByteTextureUV.class, LinkedTextureRemap.class);
-        engine.addWrapperTemplates(VLOArchive.class, GameImage.class, MRModel.class, MRStaticMof.class, MRAnimatedMof.class);
+        engine.addWrapperTemplates(VLOArchive.class, GameImage.class, MRModel.class, MRStaticMof.class, MRAnimatedMof.class, WADFile.class, WADEntry.class);
     }
 
     @Override
