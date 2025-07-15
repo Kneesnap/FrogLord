@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.standard.MRTexture;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.games.sony.SCGameConfig.SCBssSymbol;
 import net.highwayfrogs.editor.games.sony.SCGameConfig.SCBssSymbolType;
+import net.highwayfrogs.editor.games.sony.SCGameConfig.SCImageList;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.gui.extra.hash.FroggerHashUtil;
@@ -203,7 +204,9 @@ public class SCImageTableGenerator {
             results.addAll(linesAtEnd);
         }
 
-        instance.getLogger().info("Export complete, %d/%d textures had names configured. (%d left)", instance.getVersionConfig().getImageNamesById().size(), bssOrderedImages.size(), bssOrderedImages.size() - instance.getVersionConfig().getImageNamesById().size());
+        SCImageList imageList = instance.getVersionConfig().getImageList();
+        instance.getLogger().info("Export complete, %d/%d textures had names configured. (%d left)",
+                imageList.getImageNamesById().size(), bssOrderedImages.size(), bssOrderedImages.size() - imageList.getImageNamesById().size());
         return results;
     }
 

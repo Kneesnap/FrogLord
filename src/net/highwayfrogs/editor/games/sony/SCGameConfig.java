@@ -32,8 +32,7 @@ public class SCGameConfig extends GameConfig {
     private final Map<String, String> mofRenderOverrides = new HashMap<>();
     private final Map<String, String> mofParentOverrides = new HashMap<>();
     private final List<String> fallbackFileNames = new ArrayList<>();
-    private final Map<Short, String> imageNamesById = new HashMap<>();
-    private final Map<String, Short> imageIdsByName = new HashMap<>();
+    private final SCImageList imageList;
     private final Map<Integer, SCBssSymbol> bssSymbols = new HashMap<>();
 
     private static final String CFG_FILE_NAMES = "Files";
@@ -43,6 +42,7 @@ public class SCGameConfig extends GameConfig {
 
     public SCGameConfig(String internalName) {
         super(internalName);
+        this.imageList = new SCImageList(this);
     }
 
     @Override
@@ -146,24 +146,14 @@ public class SCGameConfig extends GameConfig {
     }
 
     private void readConfiguredImageNames(Config config) {
-        this.imageNamesById.clear();
-        this.imageIdsByName.clear();
-        if (!config.hasChild(CFG_CHILD_IMAGE_NAMES))
-            return;
-
-        Config imageNameCfg = config.getChild(CFG_CHILD_IMAGE_NAMES);
-        for (String key : imageNameCfg.keySet()) {
-            short textureId;
-            try {
-                textureId = Short.parseShort(key);
-            } catch (NumberFormatException nfe) {
-                getLogger().warning("Skipping non-integer key '%s' as texture ID / image file name pair in version config '%s'.", key, getInternalName());
-                continue;
-            }
-
-            String imageName = imageNameCfg.getString(key);
-            this.imageNamesById.put(textureId, imageName);
-            this.imageIdsByName.put(imageName, textureId);
+        if (config.hasChild(CFG_CHILD_IMAGE_NAMES)) {
+            this.imageList.loadList(config.getChild(CFG_CHILD_IMAGE_NAMES));
+        } else if (config.has("imageList")) {
+            String imageListName = config.getString("imageList");
+            Config imageListCfg = new Config(getGameType().getEmbeddedResourceStream( "images/" + imageListName + ".cfg"));
+            this.imageList.loadList(imageListCfg);
+        } else {
+            this.imageList.loadList(null);
         }
     }
 
@@ -205,6 +195,57 @@ public class SCGameConfig extends GameConfig {
             String symbolTypeStr = matcher.group(4);
             SCBssSymbolType symbolType = symbolTypeStr != null ? SCBssSymbolType.valueOf(symbolTypeStr.substring(1)) : SCBssSymbolType.UNKNOWN;
             return new SCBssSymbol(address, name, size, symbolType);
+        }
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    public static class SCImageList {
+        private final SCGameConfig parentConfig;
+        private final Map<Short, String> imageNamesById = new HashMap<>();
+        private final Map<String, Short> imageIdsByName = new HashMap<>();
+
+        /**
+         * Loads the image list from the config.
+         * @param config the config to load data from
+         */
+        public void loadList(Config config) {
+            this.imageNamesById.clear();
+            this.imageIdsByName.clear();
+            if (config == null)
+                return;
+
+            for (String key : config.keySet()) {
+                short textureId;
+                try {
+                    textureId = Short.parseShort(key);
+                } catch (NumberFormatException nfe) {
+                    this.parentConfig.getLogger().warning("Skipping non-integer key '%s' as texture ID / image file name pair in version config '%s'.", key, this.parentConfig.getInternalName());
+                    continue;
+                }
+
+                String imageName = config.getString(key);
+                this.imageNamesById.put(textureId, imageName);
+                this.imageIdsByName.put(imageName, textureId);
+            }
+        }
+
+        /**
+         * Gets the image name for the given texture ID.
+         * @param textureId the texture ID to resolve the name for
+         * @return textureName, if there is one
+         */
+        public String getImageNameFromID(short textureId) {
+            return this.imageNamesById.get(textureId);
+        }
+
+        /**
+         * Gets the texture ID corresponding to the given texture name
+         * @param textureName the texture name to resolve to an ID
+         * @return the texture ID, or null if none was tracked for the name.
+         */
+        public Short getTextureIDFromName(String textureName) {
+            return this.imageIdsByName.get(textureName);
         }
     }
 }

@@ -23,6 +23,7 @@ import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.file.config.script.FroggerScript;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.games.sony.SCGameConfig.SCImageList;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
@@ -309,8 +310,9 @@ public class FroggerGameInstance extends SCGameInstance {
             imageNames[i] = "im_img" + i;
 
         // Apply image names.
-        if (this.getVersionConfig().getImageNamesById().size() > 0)
-            for (Entry<Short, String> imageEntry : this.getVersionConfig().getImageNamesById().entrySet())
+        SCImageList imageList = getVersionConfig().getImageList();
+        if (imageList.getImageNamesById().size() > 0)
+            for (Entry<Short, String> imageEntry : imageList.getImageNamesById().entrySet())
                 imageNames[imageEntry.getKey()] = imageEntry.getValue();
 
         // Write start of .H file.
@@ -408,7 +410,7 @@ public class FroggerGameInstance extends SCGameInstance {
     }
 
     private void saveTextureCfg(PrintWriter writer) {
-        for (Entry<Short, String> entry : this.getVersionConfig().getImageNamesById().entrySet())
+        for (Entry<Short, String> entry : getVersionConfig().getImageList().getImageNamesById().entrySet())
             writer.append(String.valueOf(entry.getKey())).append("=").append(entry.getValue()).append(Constants.NEWLINE);
     }
 
