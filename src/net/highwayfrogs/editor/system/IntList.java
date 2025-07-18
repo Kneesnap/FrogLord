@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.system;
 
+import net.highwayfrogs.editor.utils.objects.IndexBitArray;
+
 import java.util.Arrays;
 
 /**
@@ -66,6 +68,39 @@ public class IntList {
         System.arraycopy(array, index + 1, array, index, array.length - (index + 1));
         this.size--;
         return val;
+    }
+
+    // Copied from IndexBitArray.removeValuesFromList()
+    public void removeIndices(IndexBitArray indices) {
+        if (indices == null)
+            throw new NullPointerException("indices");
+
+        // Remove Elements.
+        int totalIndexCount = indices.getBitCount();
+        int removedGroups = 0;
+        int currentIndex = indices.getFirstBitIndex();
+        for (int i = 0; i < totalIndexCount; i++) {
+            int nextIndex = ((totalIndexCount > i + 1) ? indices.getNextBitIndex(currentIndex) : size() - 1);
+            int copyLength = (nextIndex - currentIndex);
+
+            // If copy length is 0, that means there is a duplicate index (impossible), and we can just safely skip it.
+            if (copyLength > 0) {
+                int removeIndex = currentIndex - removedGroups; // This works because TestRemovals is sorted.
+                removedGroups++;
+
+                // System.arraycopy(src: list, srcPos: removeIndex + removedGroups, dst: list, dstPos: removeIndex, copyLength);
+                for (int j = 0; j < copyLength; j++)
+                    set(removeIndex + j, get(removeIndex + removedGroups + j));
+            } else if (i == totalIndexCount - 1) { // Edge-case, if we're at the end of the array, copyLength can be zero because there would be nothing to copy. This should still be counted as a removal.
+                removedGroups++;
+            }
+
+            currentIndex = nextIndex;
+        }
+
+        // Remove invalid elements from the end.
+        while (totalIndexCount-- > 0)
+            remove(size() - 1);
     }
 
     public void clear() {

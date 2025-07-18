@@ -1,8 +1,7 @@
 package net.highwayfrogs.editor.gui.extra.hash;
 
-import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import net.highwayfrogs.editor.games.sony.shared.utils.SCMsvcHashReverser.MsvcHashTarget;
 import net.highwayfrogs.editor.gui.extra.hash.HashRange.HashRangeType;
 
 import java.io.File;
@@ -38,7 +37,7 @@ public class DictionaryPermutationStringGenerator implements IHashStringGenerato
 
         String prefix = controller.getPrefix();
         String suffix = controller.getSuffix();
-        return generateStrings(prefix, maxWordLength, new SuffixTarget(suffix, psyqRange, msvcRange));
+        return generateStrings(prefix, maxWordLength, new MsvcHashTarget(suffix, psyqRange, msvcRange));
     }
 
     @Override
@@ -54,7 +53,7 @@ public class DictionaryPermutationStringGenerator implements IHashStringGenerato
      * @param suffixTargets the suffix targets the valid words must validate
      * @return words
      */
-    public List<String> generateStrings(String prefix, int wordLength, SuffixTarget... suffixTargets) {
+    private List<String> generateStrings(String prefix, int wordLength, MsvcHashTarget... suffixTargets) {
         if (prefix == null)
             throw new NullPointerException("prefix");
         if (wordLength <= 0)
@@ -77,10 +76,10 @@ public class DictionaryPermutationStringGenerator implements IHashStringGenerato
 
                     boolean allMatch = true;
                     for (int k = 0; k < suffixTargets.length; k++) {
-                        SuffixTarget target = suffixTargets[k];
+                        MsvcHashTarget target = suffixTargets[k];
                         String testWord = prefix + compound + target.getSuffix();
-                        if (!target.msvcRange.isInRange(FroggerHashUtil.getMsvcCompilerC1HashTableKey(testWord))
-                                || !target.psyqRange.isInRange(FroggerHashUtil.getPsyQLinkerHash(testWord))) {
+                        if (!target.getMsvcRange().isInRange(FroggerHashUtil.getMsvcCompilerC1HashTableKey(testWord))
+                                || !target.getPsyqRange().isInRange(FroggerHashUtil.getPsyQLinkerHash(testWord))) {
                             allMatch = false;
                             break;
                         }
@@ -122,14 +121,6 @@ public class DictionaryPermutationStringGenerator implements IHashStringGenerato
         }
     }
 
-    @Getter
-    @RequiredArgsConstructor
-    private static class SuffixTarget {
-        @NonNull private final String suffix;
-        @NonNull private final HashRange psyqRange;
-        @NonNull private final HashRange msvcRange;
-    }
-
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
@@ -141,10 +132,10 @@ public class DictionaryPermutationStringGenerator implements IHashStringGenerato
         System.out.println("Please enter a comma-separated list of entries of the form 'suffix:psyqHashRange:msvcHashRange': ");
         String entryText = scanner.nextLine();
         String[] split = entryText.split(",");
-        SuffixTarget[] targets = new SuffixTarget[split.length];
+        MsvcHashTarget[] targets = new MsvcHashTarget[split.length];
         for (int i = 0; i < split.length; i++) {
             String[] split2 = split[i].split(":");
-            targets[i] = new SuffixTarget(split2[0], HashRange.parseRange(split2[1], HashRangeType.PSYQ), HashRange.parseRange(split2[2], HashRangeType.MSVC));
+            targets[i] = new MsvcHashTarget(split2[0], HashRange.parseRange(split2[1], HashRangeType.PSYQ), HashRange.parseRange(split2[2], HashRangeType.MSVC));
         }
 
         DictionaryStringGenerator dictionaryGenerator = new DictionaryStringGenerator();
@@ -163,8 +154,6 @@ public class DictionaryPermutationStringGenerator implements IHashStringGenerato
             System.out.println("Results (" + results.size() + "):");
             for (int i = 0; i < results.size(); i++)
                 System.out.println(" - " + results.get(i));
-
-            ;
         }
     }
 }

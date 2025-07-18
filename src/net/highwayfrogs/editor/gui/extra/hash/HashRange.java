@@ -13,8 +13,8 @@ import net.highwayfrogs.editor.utils.StringUtils;
 @RequiredArgsConstructor
 public class HashRange {
     @Getter @NonNull private final HashRangeType rangeType;
-    private final int minValue;
-    private final int maxValue;
+    @Getter private final int minValue;
+    @Getter private final int maxValue;
 
     /**
      * Tests if the given value is found within the provided range.
@@ -27,6 +27,24 @@ public class HashRange {
         } else {
             return value >= this.minValue || value <= this.maxValue;
         }
+    }
+
+    /**
+     * Returns true iff the minimum value matches the maximum value.
+     */
+    public boolean isMinValueSameAsMaxValue() {
+        return this.minValue == this.maxValue;
+    }
+
+    /**
+     * Gets the singular range value, if the range represents a single value.
+     * @return singleValue
+     */
+    public int getSingleValue() {
+        if (!isMinValueSameAsMaxValue())
+            throw new RuntimeException("The minimum value (" + this.minValue + ") did not match the maximum value (" + this.maxValue + ")!");
+
+        return this.minValue;
     }
 
     /**
@@ -61,7 +79,7 @@ public class HashRange {
         if (rangeType == null)
             throw new NullPointerException("rangeType");
         if (StringUtils.isNullOrWhiteSpace(input))
-            return null;
+            throw new NullPointerException("input");
 
         String[] split = input.trim().split("-");
         if (split.length != 1 && split.length != 2)
@@ -85,6 +103,12 @@ public class HashRange {
         } else {
             return new HashRange(rangeType, values[0], values[1]);
         }
+    }
+
+    @Override
+    public String toString() {
+        return "HashRange{" + this.rangeType + ","
+                + (this.minValue != this.maxValue ? this.minValue + "-" + this.maxValue : this.minValue) + "}";
     }
 
     @Getter

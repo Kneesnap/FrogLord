@@ -112,10 +112,31 @@ public class FroggerHashUtil {
      * @return fullHash
      */
     public static int getMsvcCompilerC1FullHash(String input) {
+        return getMsvcCompilerC1FullHash(input, 0);
+    }
+
+    /**
+     * Gets the full hash of a string in accordance with the hashing algorithm seen in Microsoft Visual Studio '97.
+     * The executables reverse-engineered were found in the Frogger 2 development backup, specifically C1.DLL which had a last modified date of 4/24/1997.
+     * The MSVC 1997 Compilation Overview is as follows:
+     *  - MSDEV.EXE (Development Studio / Visual Studio IDE)
+     *   -> CL.EXE (Manages code compilation across several programs.)
+     *    -> CL1.DLL (Reads C source code, performs preprocessing, and compiles to an intermediary format, saved as a temporary file, which will be passed along to C2.EXE)
+     *    -> C2.EXE (Optimizing compiler, creates the resulting .obj and .asm files)
+     *
+     * The executable reverse engineered was C1.DLL, which is the main compiler. (CL.EXE is the equivalent of GCC in the sense that it just calls compilation steps in other executables.)
+     * C2.EXE fully respects the ordering of symbols as they are provided in the temporary files from C1.DLL.
+     * The function starting at 0x10603DEC in C1.DLL (in the previously mentioned version) prepares the symbols to put in the global hash table.
+     * As part of that, it calculates a hash of each symbol, based on the symbol name.
+     * The following function re-implements the reverse-engineered algorithm.
+     * @param input the string to calculate the hash from
+     * @return fullHash
+     */
+    public static int getMsvcCompilerC1FullHash(String input, int startHash) {
         if (input == null)
             throw new NullPointerException("input");
 
-        int hash = 0; // >>> is necessary because the original algorithm uses u32 instead of s32.
+        int hash = startHash; // >>> is necessary because the original algorithm uses u32 instead of s32.
         for (int i = 0; i < input.length(); i++)
             hash = input.charAt(i) + (hash >>> 4) + (hash * 4);
 

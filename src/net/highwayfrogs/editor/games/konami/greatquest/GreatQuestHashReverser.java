@@ -53,6 +53,7 @@ public class GreatQuestHashReverser {
     private static final int NIBBLE_COUNT = 8; // The number of nibbles in a hash. (32 bits / 4 bits per nibble = 8 nibbles)
     private static boolean UPPER_CASE_SUPPORTED;
     private static final int MAXIMUM_UNKNOWN_CHARACTERS_PER_NIBBLE = 2; // 3 is probably feasible but will probably use > 10GB of RAM, and take several minutes to calculate.
+    public static final Comparator<String> HEURISTIC_COMPARISON = Comparator.comparingDouble(GreatQuestHashReverser::calculateSortingScore).reversed();
 
     private static final Map<Character, String> LIKELIHOOD_MAP = new HashMap<Character, String>() { // Used for finding what strings look like english text.
         {
@@ -220,7 +221,7 @@ public class GreatQuestHashReverser {
      * @return score
      */
     @SuppressWarnings({"StatementWithEmptyBody"})
-    private static double calculateScore(String str) {
+    public static double calculateSortingScore(String str) {
         int readStart = 0;
 
         // Skip the directory prefix Eg: "S00lI" standing for "\GameSource\Level00Global\Interface\".
@@ -340,7 +341,7 @@ public class GreatQuestHashReverser {
         }
 
         List<String> sortedResults = new ArrayList<>(results);
-        sortedResults.sort(Comparator.comparingDouble(GreatQuestHashReverser::calculateScore).reversed());
+        sortedResults.sort(HEURISTIC_COMPARISON);
         return sortedResults;
     }
 
@@ -363,7 +364,7 @@ public class GreatQuestHashReverser {
             }
 
             List<String> sortedResults = new ArrayList<>(results);
-            sortedResults.sort(Comparator.comparingDouble(GreatQuestHashReverser::calculateScore).reversed());
+            sortedResults.sort(HEURISTIC_COMPARISON);
             return sortedResults;
         }
 
@@ -479,7 +480,7 @@ public class GreatQuestHashReverser {
             temp.guessNextCharacter(queue);
         }
 
-        results.sort(Comparator.comparingDouble(GreatQuestHashReverser::calculateScore).reversed());
+        results.sort(HEURISTIC_COMPARISON);
         return results;
     }
 
