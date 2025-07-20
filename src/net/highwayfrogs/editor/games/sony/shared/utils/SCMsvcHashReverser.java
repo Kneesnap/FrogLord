@@ -647,18 +647,13 @@ public class SCMsvcHashReverser {
         // This means that the sorted suffix hashes only differ by intervals of 1024 (the number of unique msvc hash table keys) due to how the hashing algorithm works.
         // More specifically, only the first 10 bits and 10 bits after bit 16 are used to calculate the final msvc hash table key from the full msvc hash value.
         // And because the lookup table entries only contains full msvc hashes yielding a specific final msvc hash table key, it means they can only increment in intervals of 1024.
+        // Bits 16-25 XOR with bits 0-9 to create the final msvc hash table key from the full MSVC hash, but this doesn't seem to cause any issues with the group-based ordering.
         // This pattern of incrementing in intervals of 1024 remains REGARDLESS OF THE STARTING HASH, although it means comparing only hashes of similar magnitudes together!
         // So we can consider all suffixes that have the same empty-prefix hash value as part of a single group.
         // We can even bake a static secondary lookup table to indicate where each group starts in the suffix array, and how many suffixes are in the group.
-        // The result is that if we can find a hash which is roughly (1024 * groupNumber), and groupNumber is any valid group ID, we only need to search the strings for that particular group.
-        // And thus we've efficiently eliminated most of the suffixes to search.
-
-        // I mentioned earlier, bits 16-25 XOR with bits 0-9 to create the final msvc hash table key.
-        // But luckily, it does not appear like this matters at all, although I've not mathematically proved it yet.
-
-        // TODO: Continue explanation.
-
-
+        // Therefore, if we can efficiently identify the group ID which contains the suffixes relevant to the target hash with the specified prefix, most suffixes can easily be skipped.
+        // That's what this next function (getHashGroupIndex) does, calculates the group ID containing the relevant suffixes.
+        // It came as a shock when I discovered this O(1) algorithm, it came as a shock as I was only hoping for an O(log n) algorithm instead.
         int hashGroupIndex = getHashGroupIndex(lookupTableEntry, paddedStartHash, targetHash);
 
         // Add suffixes from the current group.
