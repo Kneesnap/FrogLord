@@ -20,6 +20,15 @@ import java.util.*;
 /**
  * Allows solving/reversing MSVC hashes (combined with PsyQ hashes) back to a string form.
  * Further documentation explaining how this works will come separately as part of markdown at a later date, due to the complexity of this process.
+ * TODO:
+ *  - Implement the ability to remove a suffix from MSVC hash, and toy around with how useful that is.
+ *  - Run in parallel for each 32-bit hash.
+ *  - Rules for invalid character sequences like:
+ *   - two underscores next to each other.
+ *   - q, v, w, x, y, z should have characters which cannot follow it.
+ *   - numbers should not occur if there are >= 3 characters left, unless one is an underscore.
+ *   - Allow running the program without a restart for lookup table reuse.
+ *   - There should be a function to handle these invalid characters both for suffix lookup table creation and hash brute forcing.
  * Created by Kneesnap on 7/17/2025.
  */
 public class SCMsvcHashReverser {
@@ -35,8 +44,18 @@ public class SCMsvcHashReverser {
     @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
     public static class MsvcSuffixLookupTable {
         @NonNull private final char[] availableCharacters;
-        @NonNull private final String[][] suffixes;
+        @NonNull private final MsvcSuffixLookupTableEntry[] entries;
         private final int suffixLength;
+
+        private static final int LOOKUP_TABLE_SIZE = FroggerHashUtil.PSYQ_LINKER_HASH_TABLE_SIZE * FroggerHashUtil.MSVC_SYMBOL_HASH_TABLE_SIZE;
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    public static class MsvcSuffixLookupTableEntry {
+        @NonNull private final String[] suffixes;
+        @NonNull private final int[] suffixGroupInfo; // upper 16 bits = index of first suffix in group, lower 16 bits = number of suffixes in group.
+        private final int startingHashGroupId; // the ID of the first group in the array.
     }
 
     public static void main(String[] args) {
@@ -59,9 +78,9 @@ public class SCMsvcHashReverser {
             System.out.println("Generating for length=" + tempLength + "...");
 
             int suffixTableLength = -1;
-            if (tempLength >= 6) {
+            if (tempLength >= 5) {
                 suffixTableLength = 4;
-            } else if (tempLength >= 4) {
+            } else if (tempLength == 4) {
                 suffixTableLength = 3;
             }
 
@@ -80,7 +99,7 @@ public class SCMsvcHashReverser {
                     long generationTimeStart = System.currentTimeMillis();
                     List<String> substrings = generateMiddleSubstrings(prefix, tempLength, hashTargets, fullHashes.get(i), suffixLookupTable);
                     long generationTimeEnd = System.currentTimeMillis();
-                    if (substrings != null && substrings.size() > 0) {
+                    if (substrings.size() > 0) {
                         substrings = sortResultsForDisplay(prefix, substrings, dictionarySet);
                         System.out.println();
                         System.out.println("- Hash: " + fullHashes.get(i) + "/" + NumberUtils.to0PrefixedHexString(fullHashes.get(i)) + " (" + substrings.size() + " results in " + (generationTimeEnd - generationTimeStart) + " ms) [" + (i + 1) + "/" + fullHashes.size() + "]:");
@@ -108,7 +127,7 @@ public class SCMsvcHashReverser {
      * @param prefix a prefix representing the beginning of the symbol to reverse. Usually "im_cav_" or something to that effect.
      * @param middleSubstringLength The length of the substring of unknown contents sitting between the prefix and any suffixes provided as part of the targets.
      * @param targets the hash targets which are to be reversed back into strings.
-     * @return dirtyFullMsvcHashes (Note: Many of the returned hashes will not
+     * @return dirtyFullMsvcHashes (Note: Many of the returned hashes will not correspond to any valid substrings)
      */
     public static IntList calculateFullMsvcHashes(String prefix, int middleSubstringLength, MsvcHashTarget[] targets) {
         if (prefix == null || prefix.isEmpty() || targets == null || targets.length == 0)
@@ -116,6 +135,7 @@ public class SCMsvcHashReverser {
         if (middleSubstringLength < 0)
             throw new IllegalArgumentException("middleSubstringLength must be greater than or equal to zero! (Was: " + middleSubstringLength + ")");
 
+        // TODO: Can we calculate a proper bit amount, and account for the offset?
         int shiftBits = getPrefixShiftAmount(middleSubstringLength);
         if (shiftBits <= 0 || shiftBits > 30)
             return null; // There are too many options, probably around 524288 (Depending on how many targets are used to narrow it down). It will be very slow to calculate this, and it will create unusable results.
@@ -136,8 +156,9 @@ public class SCMsvcHashReverser {
     // This is because there is a complex overflow from the lower bits in the hash.
     // This value here is a rough pick that works for most hashes.
     // 8 and 10 seemed fine until I ran the 'im_swp_ripple' test, which required bit 11.
+    // Then, im_cav_sekpool showed it needs to be at least 12.
     // We want to keep this value as low as possible, because every increment roughly doubles the number of results.
-    private static final int LEEWAY_BITS = 11;
+    private static final int LEEWAY_BITS = 12;
 
     /**
      * Calculates and returns the number of bits to shift in a full 32-bit MSVC hash to
@@ -320,7 +341,7 @@ public class SCMsvcHashReverser {
 
             // Try to use the suffix table to quickly solve the ways to end the string.
             int suffixTableLength = suffixLookupTable.getSuffixLength();
-            if (suffixLookupTable.getSuffixes().length > 0 && suffixTableLength > 2 && lastSubstring.length() + suffixTableLength == targetLength) {
+            if (suffixLookupTable.getEntries().length > 0 && suffixTableLength > 2 && lastSubstring.length() + suffixTableLength == targetLength) {
                 // Find the first target hash which we can solve.
                 int targetPsyqHash = -1;
                 for (int i = 0; i < hashTargets.length; i++) {
@@ -333,20 +354,12 @@ public class SCMsvcHashReverser {
                     break;
                 }
 
-                // If we've found any possible PsyQ hashes, validate that they all look good.
-                if (targetPsyqHash >= 0) {
-                    // TODO: IMPLEMENT!
-                }
-
                 // Scan each of the lookup table entries for any that solve our hash.
                 if (targetPsyqHash >= 0) {
                     int baseIndex = targetPsyqHash * FroggerHashUtil.MSVC_SYMBOL_HASH_TABLE_SIZE;
                     for (int localIndex = 0; localIndex < FroggerHashUtil.MSVC_SYMBOL_HASH_TABLE_SIZE; localIndex++) {
-                        String[] suffixes = suffixLookupTable.getSuffixes()[baseIndex + localIndex];
-                        if (suffixes.length == 0)
-                            continue;
-
-                        List<String> usableSuffixes = findSuffixes(suffixes, lastFullHash, targetFullMsvcHash, lastSubstring);
+                        MsvcSuffixLookupTableEntry lookupTableEntry = suffixLookupTable.getEntries()[baseIndex + localIndex];
+                        List<String> usableSuffixes = findSuffixes(lookupTableEntry, lastFullHash, targetFullMsvcHash, lastSubstring);
                         if (usableSuffixes != null)
                             results.addAll(usableSuffixes);
                     }
@@ -474,10 +487,10 @@ public class SCMsvcHashReverser {
         return newResults;
     }
 
-    // With 37 characters, it might be feasible to do 5 characters in 2-8GB of RAM. (5GB is the estimate if we use 80 bytes per string, instead of the 34 that I think is correct, which would yield 2.2GB)
-    // With 27, characters, it might be feasible to do 6 characters on a machine with 64GB RAM?
-    //  - 36 bytes per string estimate puts it at 12.98GB, so 64GB is generous.
-    //  - Removing the '_' brings it down to 10.35GB
+    // With 37 characters available, a substring length of 5 characters uses 8.6GB of RAM.
+    //  - My 36 bytes per string estimate put memory usable only at 2.2GB, so there's something wrong with my calculation.
+    // With 27 characters available, a substring length of 6 characters uses 33-41 GB of RAM.
+    //  - My 36 bytes per string estimate put memory usable only at 12.98GB, so there's something wrong with my calculation.
     /**
      * Generates a suffix lookup table with suffixes created by the given characters.
      * @param suffixLength the length of the suffixes to generate. Specify 0 to indicate an empty suffix lookup table.
@@ -500,8 +513,7 @@ public class SCMsvcHashReverser {
         }
 
         // Create storage for string permutations.
-        @SuppressWarnings("unchecked") List<String>[] suffixTable
-                = new List[FroggerHashUtil.MSVC_SYMBOL_HASH_TABLE_SIZE * FroggerHashUtil.PSYQ_LINKER_HASH_TABLE_SIZE];
+        @SuppressWarnings("unchecked") List<String>[] suffixTable = new List[MsvcSuffixLookupTable.LOOKUP_TABLE_SIZE];
         for (int i = 0; i < suffixTable.length; i++)
             suffixTable[i] = new ArrayList<>();
 
@@ -531,22 +543,73 @@ public class SCMsvcHashReverser {
         }
 
         // Convert list of strings to arrays.
-        String[] emptyArray = new String[0];
-        String[][] bakedSuffixTable = new String[suffixTable.length][];
+        String[] emptyStringArray = new String[0];
+        int[] emptyIntArray = new int[0];
+
+        MsvcSuffixLookupTableEntry[] lookupTableEntries = new MsvcSuffixLookupTableEntry[suffixTable.length];
+        Comparator<String> sortLogic = Comparator.comparingInt(FroggerHashUtil::getMsvcCompilerC1FullHash);
         for (int i = 0; i < suffixTable.length; i++) {
-            String[] suffixes = suffixTable[i].toArray(emptyArray);
-            Arrays.sort(suffixes); // Refer to binarySearchSuffixes() for an explanation of why we sort this.
-            bakedSuffixTable[i] = suffixes;
+            String[] suffixes = suffixTable[i].toArray(emptyStringArray);
+            suffixTable[i] = null; // Clear just in-case we need this memory to GC before the loop ends.
+            Arrays.sort(suffixes, sortLogic); // Refer to findSuffixes() for an explanation of why we sort this.
+
+            // Generate hash group info.
+            int minimumHashGroupIndex = -1;
+            int[] hashGroupInfo = emptyIntArray;
+            if (suffixes.length > 0) {
+                minimumHashGroupIndex = Integer.MAX_VALUE;
+                int maximumHashGroupIndex = Integer.MIN_VALUE;
+                for (int j = 0; j < suffixes.length; j++) {
+                    int msvcHash = FroggerHashUtil.getMsvcCompilerC1FullHash(suffixes[j], 0);
+                    int hashGroupIndex = getMsvcHashGroupFromFullMsvcHash(msvcHash);
+                    if (hashGroupIndex < minimumHashGroupIndex)
+                        minimumHashGroupIndex = hashGroupIndex;
+                    if (hashGroupIndex > maximumHashGroupIndex)
+                        maximumHashGroupIndex = hashGroupIndex;
+                }
+
+                hashGroupInfo = new int[(maximumHashGroupIndex - minimumHashGroupIndex) + 1];
+            }
+
+            int lastHashGroupIndex = -1;
+            Arrays.fill(hashGroupInfo, -1);
+            for (int j = 0; j < suffixes.length; j++) {
+                int msvcHash = FroggerHashUtil.getMsvcCompilerC1FullHash(suffixes[j], 0);
+                int hashGroupIndex = getMsvcHashGroupFromFullMsvcHash(msvcHash);
+
+                // Because the suffix is sorted by msvcHash, and hashGroupIndex is created by shifting right msvcHash, the hashGroupIndex values are guaranteed to be sorted too.
+                if (hashGroupIndex > lastHashGroupIndex)
+                    hashGroupInfo[hashGroupIndex - minimumHashGroupIndex] = (j << 16); // Store the index the group starts.
+                hashGroupInfo[hashGroupIndex - minimumHashGroupIndex]++; // Increment the element count for the group.
+
+                lastHashGroupIndex = hashGroupIndex;
+            }
+
+            // Store lookup table entry.
+            lookupTableEntries[i] = new MsvcSuffixLookupTableEntry(suffixes, hashGroupInfo, minimumHashGroupIndex);
         }
 
-        return new MsvcSuffixLookupTable(availableCharacters, bakedSuffixTable, suffixLength);
+        return new MsvcSuffixLookupTable(availableCharacters, lookupTableEntries, suffixLength);
     }
 
-    private static List<String> findSuffixes(String[] suffixes, int startHash, int targetHash, String prefix) {
+    /**
+     * Gets the conceptual "hash group" which we use to search suffixes efficiently.
+     * Note that the provided hash should always be created with an empty prefix.
+     * @param fullHashEmptyPrefix the hash to get the group from
+     * @return hashGroup
+     */
+    private static int getMsvcHashGroupFromFullMsvcHash(int fullHashEmptyPrefix) {
+        // Shift left by exactly 10 since we've constructed the lookup table in a way to ensure different groups are always incremented by 1024 (bit 11).
+        return fullHashEmptyPrefix >>> 10;
+    }
+
+    private static List<String> findSuffixes(MsvcSuffixLookupTableEntry lookupTableEntry, int startHash, int targetHash, String prefix) {
+        String[] suffixes = lookupTableEntry.getSuffixes();
         if (suffixes.length == 0)
             return Collections.emptyList();
 
-        if (suffixes.length < 1000) { // Probably faster to search it like this.
+        // It's faster to search linearly when there aren't many suffixes.
+        if (suffixes.length < 50 || lookupTableEntry.getSuffixGroupInfo().length <= 3) {
             List<String> results = new ArrayList<>(suffixes.length);
             for (int i = 0; i < suffixes.length; i++) {
                 String suffix = suffixes[i];
@@ -562,24 +625,44 @@ public class SCMsvcHashReverser {
         // Due to how the MSVC hashing algorithm works, sorting the suffixes by their ASCII IDs produces an array of suffixes sorted in the order of their hash, MOST OF THE TIME.
         // When finding the suffixes with a startHash of 0, the suffix array is perfectly sorted by the resulting full MSVC hash number.
 
-        // However, when the startHash is not zero, a small number of suffixes meeting very specific criteria break the sorting.
+        // Because the array is sorted by hash, and we're looking for suffixes for our target hash, binary search is an obvious pick right?
+        // Almost. The sorting occurs for suffixes without any kind of prefix / a startHash of zero.
+        // But when we're solving for a hash, we often want to append the suffix to some substring characters we've already chosen.
+        // In other words, the startHash is not zero.
+        // And when this happens, some suffixes will hash in a way which breaks the sorting order!
         // Example:
         // "apin" and "biwf" are two strings which hash to both the same PsyQ hash and the same MSVC hash.
         // However, when treating them as a suffix, such as the full strings "1apin" and "1biwf", the MSVC hash of those two strings differ.
         // The reason for this is a bit complex, but basically the hashing algorithm for the first characters "a" and "b" produce an interim hash which is very close together.
         // Then, because the letter "p" has a much greater ASCII code than "i", "apin" is able to grow larger than "biwf" when "p" and "i" are added to each hash.
+        // Refer to the actual hash algorithms {@code FroggerHashUtil#getMsvcCompilerC1FullHash} to see exactly why the characters might influence the MSVC hash like this.
 
-        // TODO: Implement something of a binary search.
-        // TODO: Find the suffixes which aren't right. Are they ever what we're looking for?
-        // TODO: Note - Calculate the last hash in the array, as if it's lower than the current hash, it means the array resets somewhere, which can be binary searched.
+        // Instead of binary search, I took advantage of some quirks of the MSVC hash.
+        // The lookup table is organized in a way so that each lookup table entry is resolved by providing a combination of a psyq hash number and a msvc hash number.
+        // This means that the sorted suffix hashes only differ by intervals of 1024 (the number of unique msvc hash table keys) due to how the hashing algorithm works.
+        // More specifically, only the first 10 bits and 10 bits after bit 16 are used to calculate the final msvc hash table key from the full msvc hash value.
+        // And because the lookup table entries only contains full msvc hashes yielding a specific final msvc hash table key, it means they can only increment in intervals of 1024.
+        // This pattern of incrementing in intervals of 1024 remains REGARDLESS OF THE STARTING HASH, although it means comparing only hashes of similar magnitudes together!
+        // So we can consider all suffixes that have the same empty-prefix hash value as part of a single group.
+        // We can even bake a static secondary lookup table to indicate where each group starts in the suffix array, and how many suffixes are in the group.
+        // The result is that if we can find a hash which is roughly (1024 * groupNumber), and groupNumber is any valid group ID, we only need to search the strings for that particular group.
+        // And thus we've efficiently eliminated most of the suffixes to search.
 
-        // TODO: Describe a logical flow which will be efficient for larger lookup tables.
-        //  - It's okay if it's not 100% perfect, since it will still show most results, and the speed increase is worth it, taking things from impossible to semi-possible.
-        // Example:
-        // MISMATCH FOUND! 38 (Largest Size: 1090519036)
-        // Hashes: [541, 541, 541, 541, 541, 1090519577, 541, 541, 541, 1090519577, 1090519577, 541, 541, 541, 1090519577, 1090519577, 1090519577, 541, 541, 541, 1090519577, 1090519577, 541, 541, 2586, 2586, 2586, 2586, 2586, 3609, 3609, 3609, 3609, 3610, 3609, 3609, 3610, 3609, 3609, 3609, 3609, 3609, 3609, 3609, 3609, 3609, 3609, 3609, 3610, 3609, 3609]
+        // I mentioned earlier, bits 16-25 XOR with bits 0-9 to create the final msvc hash table key.
+        // But luckily, it does not appear like this matters at all, although I've not mathematically proved it.
 
-        return null;
+        // TODO:
+        //  Step 1) Find the first entry some multiple of 1024 away from the hash we're trying to solve for.
+        //   - Ideas:
+        //    - Randomly select suffixes.
+        //    - Start at suffix 0
+        //    - Start at the suffix with the most number of entries.
+        //   - What does a good solution look like?
+        //    - One which is likely to find the desired prefix in the fewest number of searches.
+        //    - I think we might just need to do some statistical analysis.
+        //  Step 2) Use this to calculate which group(s) to read values from.
+
+        throw new UnsupportedOperationException("The optimized suffix resolution has not been implemented yet.");
     }
 
     private static DictionaryStringGenerator getDefaultDictionaryStringGenerator() {
@@ -631,6 +714,11 @@ public class SCMsvcHashReverser {
         // b_0:123:523,c_0:124:538,b_1:124:522,c_1:125:537,b_2:125:521,c_2:126:536
         runTest("im_swp_", 6, "b_0:123:523,c_0:124:538,b_1:124:522,c_1:125:537,b_2:125:521,c_2:126:536", suffixLookupTable4, "ripple");
         runTest("im_swp_", 6, "b_0:123:523,c_0:124:538,b_1:124:522,c_1:125:537,b_2:125:521,c_2:126:536", suffixLookupTable3, "ripple");
+
+        // im_cav_ -> I'm not sure what the real solution is, but one viable solution is "sekpool". hash = -1442661551
+        // im_cav_, size: 7
+        // 1:11:896-898,2:12:895-897,3:13:900-903,4:14:899-902
+        runTest("im_cav_", 7, "1:11:896-898,2:12:895-897,3:13:900-903,4:14:899-902", suffixLookupTable4, "sekpool");
 
         System.out.println("Tests Complete.");
         System.out.println();
