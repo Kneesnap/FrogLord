@@ -32,6 +32,9 @@ import java.util.*;
  * Created by Kneesnap on 7/17/2025.
  */
 public class SCMsvcHashReverser {
+    private static final int MAXIMUM_LOOKUP_TABLE_SUFFIX_LENGTH = 6; // 6 takes up 30-40GB, use 4-5 if this is too much. Make sure to add JVM argument -Xmx50G when running it with 6.
+    private static final char[] DEFAULT_ALLOWED_CHARACTERS = PermutationStringGenerator.ALLOWED_CHARACTERS_ALPHABET; // This can be upgraded to something with numbers if at 4-5 characters (and on a machine with that much memory available)
+
     @Getter
     @RequiredArgsConstructor
     public static class MsvcHashTarget {
@@ -84,19 +87,10 @@ public class SCMsvcHashReverser {
             System.out.println();
             System.out.println("Generating for length=" + tempLength + "...");
 
-            int suffixTableLength = -1;
-            if (tempLength >= 7) {
-                suffixTableLength = 6;
-            } else if (tempLength == 6) {
-                suffixTableLength = 5;
-            } else if (tempLength == 5) {
-                suffixTableLength = 4;
-            } else if (tempLength == 4) {
-                suffixTableLength = 3;
-            }
+            int suffixTableLength = tempLength >= 3 ? Math.min(MAXIMUM_LOOKUP_TABLE_SUFFIX_LENGTH, tempLength) : -1;
 
             long generationStart = System.currentTimeMillis();
-            MsvcSuffixLookupTable suffixLookupTable = generateMsvcSuffixTable(suffixTableLength, PermutationStringGenerator.ALLOWED_CHARACTERS_ALPHABET);
+            MsvcSuffixLookupTable suffixLookupTable = generateMsvcSuffixTable(suffixTableLength, DEFAULT_ALLOWED_CHARACTERS);
             System.out.println("Suffix table generated in " + (System.currentTimeMillis() - generationStart) + " ms.");
             System.out.println();
 
@@ -732,7 +726,7 @@ public class SCMsvcHashReverser {
         // Tests:
         System.out.println("Running MSVC Hash Tests...");
 
-        char[] availableChars = PermutationStringGenerator.ALLOWED_CHARACTERS_ALPHANUMERIC;
+        char[] availableChars = PermutationStringGenerator.ALLOWED_CHARACTERS_ALPHABET;
         MsvcSuffixLookupTable suffixLookupTable0 = generateMsvcSuffixTable(0, availableChars);
         MsvcSuffixLookupTable suffixLookupTable3 = generateMsvcSuffixTable(3, availableChars);
         MsvcSuffixLookupTable suffixLookupTable4 = generateMsvcSuffixTable(4, availableChars);
