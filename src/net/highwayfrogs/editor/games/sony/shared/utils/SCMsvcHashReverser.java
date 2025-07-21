@@ -142,9 +142,6 @@ public class SCMsvcHashReverser {
 
         // TODO: Can we calculate a proper bit amount, and account for the offset?
         int shiftBits = getPrefixShiftAmount(middleSubstringLength);
-        if (shiftBits <= 0 || shiftBits > 30)
-            return null; // There are too many options, probably around 524288 (Depending on how many targets are used to narrow it down). It will be very slow to calculate this, and it will create unusable results.
-
         int shiftedHash = getFixedSizeHash(prefix, middleSubstringLength) >>> shiftBits;
 
         // Now that we've narrowed down some amount of the highest bits in the 32-bit hash, we can test every single possible 32-bit hash which had those higher bits.
@@ -157,13 +154,12 @@ public class SCMsvcHashReverser {
         return hashes;
     }
 
-    // The exact number of bits we check vary.
-    // This is because there is a complex overflow from the lower bits in the hash.
-    // This value here is a rough pick that works for most hashes.
-    // 8 and 10 seemed fine until I ran the 'im_swp_ripple' test, which required bit 11.
-    // Then, im_cav_sekpool showed it needs to be at least 12.
-    // We want to keep this value as low as possible, because every increment roughly doubles the number of results.
-    private static final int LEEWAY_BITS = 12;
+    // MINIMUM_SHIFT_AMOUNT represents the number of bits which are always going to change from future characters.
+    // Subtract one to get the bit as an index.
+    // It's 7 because the 7th bit is the highest bit written by any 7-bit ASCII character.
+    // It seems highly improbable that any other kind of character would be seen, as these are symbol names written in source code.
+    private static final int MINIMUM_SHIFT_AMOUNT = 7;
+    private static final int EXTRA_PREFIX_SHIFT_PADDING = 5;
 
     /**
      * Calculates and returns the number of bits to shift in a full 32-bit MSVC hash to
@@ -174,7 +170,7 @@ public class SCMsvcHashReverser {
         if (substringLength == 0)
             return 0;
 
-        return LEEWAY_BITS + (substringLength * 2);
+        return MINIMUM_SHIFT_AMOUNT + EXTRA_PREFIX_SHIFT_PADDING + (substringLength * 2);
     }
 
     /**
@@ -424,11 +420,7 @@ public class SCMsvcHashReverser {
      * @return nextCharacterLowBitIndex
      */
     private static int getNextCharacterLowBitIndex(int remainingChars) {
-        // 6 represents the number of bits which are still going to change from future characters.
-        // It's 6 because the 7th bit (represented as the number 6) is the highest bit written by any 7-bit ASCII character.
-        // It seems highly improbable that any non-7bit ASCII would be used in this, as these are symbol names written in source code.
-        // 2 is the number of bits shifted left every new character causes, and thus, the number of bits which will no longer change.
-        return 6 + (2 * remainingChars);
+        return (MINIMUM_SHIFT_AMOUNT - 1) + (2 * remainingChars);
     }
 
     /**
@@ -508,12 +500,14 @@ public class SCMsvcHashReverser {
         if (availableCharacters == null || availableCharacters.length == 0)
             throw new NullPointerException("charTable");
 
-        long memoryUsage = (suffixLength * 2L) + 24; // Memory used per string: ((character count per string * size of each character) + array length (4) + pointer to array (8) + size of hash integer (4) + pointer to string in parent array (8))
+        // object template = array class/type pointer (8) + ref count (4) = 12
+        // array template = array length (4) + object template (12) = 16
+        long memoryUsage = (suffixLength * 2L) + 48; // Memory used per string: ((character count per string * size of each character) + array template (16) + pointer to array (8) + size of hash integer (4) + pointer to string in parent array (8) + object template (12))
         final long dataSize128MB = 128 * 1024 * 1024; // A buffer of data just to be safe.
         long availableMemory = Runtime.getRuntime().maxMemory() - dataSize128MB;
         for (int i = 0; i < suffixLength; i++) { // pow(charTable.length, size).
             memoryUsage *= availableCharacters.length;
-            if (memoryUsage > availableMemory)
+            if (memoryUsage > availableMemory) // TODO: Improve calculation to avoid issues.
                 throw new OutOfMemoryError("The suffix table is too large to fit in memory. Try reducing the suffixLength from " + suffixLength + " to something lower.");
         }
 
