@@ -1,5 +1,8 @@
 package net.highwayfrogs.editor.gui.extra.hash;
 
+import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.system.IntList;
+
 /**
  * Contains utilities for symbol name hashing for Frogger. (PsyQ 4.0's Assembler & Linker)
  * Created by Kneesnap on 2/24/2022.
@@ -9,6 +12,8 @@ public class FroggerHashUtil {
     public static final int PSYQ_ASSEMBLER_HASH_TABLE_SIZE = 256;
     public static final int PSYQ_MAX_SYMBOL_NAME_LENGTH = 255;
     public static final int MSVC_SYMBOL_HASH_TABLE_SIZE = 1024;
+    public static final int MSVC_SHIFT_LEFT = 2;
+    public static final int MSVC_SHIFT_RIGHT = 4;
 
     /**
      * Gets the 'full' hash of the supplied string using the linker's algorithm.
@@ -111,8 +116,8 @@ public class FroggerHashUtil {
      * @param input the string to calculate the hash from
      * @return fullHash
      */
-    public static int getMsvcCompilerC1FullHash(String input) {
-        return getMsvcCompilerC1FullHash(input, 0);
+    public static int getMsvcC1FullHash(String input) {
+        return getMsvcC1FullHash(input, 0);
     }
 
     /**
@@ -132,15 +137,96 @@ public class FroggerHashUtil {
      * @param input the string to calculate the hash from
      * @return fullHash
      */
-    public static int getMsvcCompilerC1FullHash(String input, int startHash) {
+    public static int getMsvcC1FullHash(String input, int startHash) {
         if (input == null)
             throw new NullPointerException("input");
 
         int hash = startHash; // >>> is necessary because the original algorithm uses u32 instead of s32.
         for (int i = 0; i < input.length(); i++)
-            hash = input.charAt(i) + (hash >>> 4) + (hash * 4);
+            hash = input.charAt(i) + (hash >>> MSVC_SHIFT_RIGHT) + (hash << MSVC_SHIFT_LEFT);
 
         return hash;
+    }
+
+    /**
+     * Takes a full MSVC hash, and generates an earlier iteration of the hash, with the final characters of the hash having been removed.
+     * Example: getFullMsvcHashWithoutSuffix(getMsvcC1FullHash("hello"), "llo") == getMsvcC1FullHash("he").
+     * This function may or may not end up being useful, it was added for exploratory purposes.
+     * The following function re-implements the reverse-engineered algorithm.
+     * @param startHash the hash to remove the suffix from
+     * @param suffix the suffix to remove from the hash
+     * @return fullMsvcHashes which could have turned into the described hash
+     */
+    public static int[] getFullMsvcHashesWithoutSuffix(int startHash, String suffix) {
+        if (suffix == null)
+            throw new NullPointerException("suffix");
+
+        IntList hashes = new IntList();
+        IntList nextHashes = new IntList();
+        nextHashes.add(startHash);
+        for (int i = suffix.length() - 1; i >= 0; i--) {
+            char suffixChar = suffix.charAt(i);
+
+            IntList temp = hashes;
+            hashes = nextHashes;
+            nextHashes = temp;
+            nextHashes.clear();
+            for (int j = 0; j < hashes.size(); j++) {
+                int oldHash = hashes.get(j);
+
+                int[] newHashes = getPreviousFullMsvcHashes(oldHash - suffixChar);
+                for (int k = 0; k < newHashes.length; k++) {
+                    int nextHash = newHashes[k];
+                    if (!nextHashes.contains(nextHash))
+                        nextHashes.add(nextHash);
+                }
+            }
+        }
+
+        return nextHashes.getArray();
+    }
+
+    /**
+     * Takes a full MSVC hash which has had its final character ASCII code subtracted, and generates the previous hash iteration.
+     * Example: getPreviousFullMsvcHash(getMsvcC1FullHash("hello") - 'o') == getMsvcC1FullHash("hell").
+     * This function may or may not end up being useful, it was added for exploratory purposes.
+     * Each 32-bit number has somewhere between zero and five possible hashes which could have preceded it.
+     * The probabilities of getting each number of predecessors is mapped by the following table:
+     *  0 Predecessors: 3035385540 Occurrences (70.673%)
+     *  1 Predecessors: 132152840 Occurrences (3.076%)
+     *  2 Predecessors: 132152840 Occurrences (3.076%)
+     *  3 Predecessors: 132152840 Occurrences (3.076%)
+     *  4 Predecessors: 813565924 Occurrences (18.942%)
+     *  5 Predecessors: 49557312 Occurrences (1.153%)
+     * @param hash the hash to calculate the previous iteration for
+     * @return lastIterationFullMsvcHash
+     */
+    public static int[] getPreviousFullMsvcHashes(int hash) {
+        if (hash == 0) // 0 is what we use in finishPreviousHash() as a placeholder value, so we'll hardcode the correct result to avoid it breaking.
+            return new int[] {0};
+
+        int lastHashStart = ((hash & ((1 << MSVC_SHIFT_LEFT) - 1)) << MSVC_SHIFT_RIGHT); // The last two bits are directly from the previous hash.
+        int maxAmount = (1 << MSVC_SHIFT_RIGHT);
+        IntList results = new IntList();
+        for (int i = 0; i < maxAmount; i++) {
+            int resultHash = finishPreviousHash(hash, lastHashStart | i);
+            if (resultHash != 0 && !results.contains(resultHash))
+                results.add(resultHash);
+        }
+
+        return results.getArray();
+    }
+
+    private static int finishPreviousHash(int hash, int previousHash) {
+        // Bits 0-5 have been set in previousHash, so it's time to solve for bits 4-31
+
+        for (int i = MSVC_SHIFT_LEFT; i < Constants.BITS_PER_INTEGER - MSVC_SHIFT_RIGHT; i++) {
+            int testHash = (previousHash >>> MSVC_SHIFT_RIGHT) + (previousHash << MSVC_SHIFT_LEFT);
+            if (((testHash >>> i) & 1) != ((hash >>> i) & 1))
+                previousHash |= 1 << (i + MSVC_SHIFT_RIGHT);
+        }
+
+        return getMsvcC1FullHash("\0", previousHash) == hash ? previousHash : 0;
     }
 
     /**
@@ -149,7 +235,7 @@ public class FroggerHashUtil {
      * @param fullHash the full 32-bit hash to reduce
      * @return 16BitHash
      */
-    public static short getMsvcCompilerC116BitHash(int fullHash) {
+    public static short getMsvcC116BitHash(int fullHash) {
         return (short) ((fullHash & 0xFFFF) ^ (fullHash >>> 16));
     }
 
@@ -159,8 +245,8 @@ public class FroggerHashUtil {
      * @param input the string to calculate the hash from
      * @return 16BitHash
      */
-    public static short getMsvcCompilerC116BitHash(String input) {
-        return getMsvcCompilerC116BitHash(getMsvcCompilerC1FullHash(input));
+    public static short getMsvcC116BitHash(String input) {
+        return getMsvcC116BitHash(getMsvcC1FullHash(input));
     }
 
     /**
@@ -170,7 +256,7 @@ public class FroggerHashUtil {
      * @param hash16Bit the 16-bit hash to reduce further
      * @return hashTableKeyCode
      */
-    public static int getMsvcCompilerC1HashTableKey(short hash16Bit) {
+    public static int getMsvcC1HashTableKey(short hash16Bit) {
         return (hash16Bit & (MSVC_SYMBOL_HASH_TABLE_SIZE - 1));
     }
 
@@ -181,14 +267,14 @@ public class FroggerHashUtil {
      * @param input the string to calculate the hash from
      * @return 16BitHash
      */
-    public static int getMsvcCompilerC1HashTableKey(String input) {
-        return getMsvcCompilerC1HashTableKey(getMsvcCompilerC116BitHash(input));
+    public static int getMsvcC1HashTableKey(String input) {
+        return getMsvcC1HashTableKey(getMsvcC116BitHash(input));
     }
 
     private static void validateMsvcC2Hash(String input, int fullHash, int hash16Bit, int hashTableKeyCode) {
-        int calculatedFullHash = getMsvcCompilerC1FullHash(input);
-        short calculated16BitHash = getMsvcCompilerC116BitHash(calculatedFullHash);
-        int calculatedHashTableKey = getMsvcCompilerC1HashTableKey(calculated16BitHash);
+        int calculatedFullHash = getMsvcC1FullHash(input);
+        short calculated16BitHash = getMsvcC116BitHash(calculatedFullHash);
+        int calculatedHashTableKey = getMsvcC1HashTableKey(calculated16BitHash);
         if (calculatedFullHash != fullHash || calculated16BitHash != (short) hash16Bit || hashTableKeyCode != calculatedHashTableKey)
             System.err.printf("MSVC Hash Failure '%s':%n Expected: %08X -> %04X -> %04d%n   Actual: %08X -> %04X -> %04d%n", input, fullHash, hash16Bit, hashTableKeyCode, calculated16BitHash, calculated16BitHash & 0xFFFF, calculatedHashTableKey);
     }

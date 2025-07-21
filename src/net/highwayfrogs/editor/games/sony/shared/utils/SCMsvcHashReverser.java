@@ -185,9 +185,9 @@ public class SCMsvcHashReverser {
      */
     private static int getFixedSizeHash(String input, int missingCharCount) {
         // Calculate the bits of the hash we'd like to use, based on the given number of unknown characters (middle length).
-        int msvcPrefixHash = FroggerHashUtil.getMsvcCompilerC1FullHash(input);
+        int msvcPrefixHash = FroggerHashUtil.getMsvcC1FullHash(input);
         for (int i = 0; i < missingCharCount; i++)
-            msvcPrefixHash = FroggerHashUtil.getMsvcCompilerC1FullHash("\0", msvcPrefixHash);
+            msvcPrefixHash = FroggerHashUtil.getMsvcC1FullHash("\0", msvcPrefixHash);
 
         return msvcPrefixHash;
     }
@@ -202,8 +202,8 @@ public class SCMsvcHashReverser {
     private static boolean doesMsvcHashMatchTargets(int hash, MsvcHashTarget[] targets) {
         for (int i = 0; i < targets.length; i++) {
             MsvcHashTarget target = targets[i];
-            int fullMsvcHash = FroggerHashUtil.getMsvcCompilerC1FullHash(target.suffix, hash);
-            int msvcHash = FroggerHashUtil.getMsvcCompilerC1HashTableKey(FroggerHashUtil.getMsvcCompilerC116BitHash(fullMsvcHash));
+            int fullMsvcHash = FroggerHashUtil.getMsvcC1FullHash(target.suffix, hash);
+            int msvcHash = FroggerHashUtil.getMsvcC1HashTableKey(FroggerHashUtil.getMsvcC116BitHash(fullMsvcHash));
             if (!target.msvcRange.isInRange(msvcHash))
                 return false;
         }
@@ -219,7 +219,7 @@ public class SCMsvcHashReverser {
      * @return areHashesMatchedByString
      */
     private static boolean doesStringMatchBothMsvcAndPsyqTargets(String input, MsvcHashTarget[] targets) {
-        int fullMsvcHash = FroggerHashUtil.getMsvcCompilerC1FullHash(input);
+        int fullMsvcHash = FroggerHashUtil.getMsvcC1FullHash(input);
         if (!doesMsvcHashMatchTargets(fullMsvcHash, targets))
             return false;
 
@@ -340,7 +340,7 @@ public class SCMsvcHashReverser {
         boolean testingIfFullHashAppearsValid = timeoutMs > 0;
         while (queue.size() > 0 && (!testingIfFullHashAppearsValid || (results.size() == startSize && System.currentTimeMillis() > startTime + timeoutMs))) {
             String lastSubstring = testingIfFullHashAppearsValid ? queue.removeLast() : queue.removeFirst(); // If testing the msvc hash validity, we want to use an order which will get us as close to the end as possible.
-            int lastFullHash = FroggerHashUtil.getMsvcCompilerC1FullHash(prefix + lastSubstring);
+            int lastFullHash = FroggerHashUtil.getMsvcC1FullHash(prefix + lastSubstring);
             int lastPaddedHash = getFixedSizeHash(prefix + lastSubstring, targetLength - lastSubstring.length());
             int lastMatchingBitCount = getMatchingBitLength(targetFullMsvcHash, lastPaddedHash);
 
@@ -528,7 +528,7 @@ public class SCMsvcHashReverser {
         Arrays.fill(characters, availableCharacters[0]);
         while (true) {
             String suffix = new String(characters);
-            int msvcHash = FroggerHashUtil.getMsvcCompilerC1HashTableKey(suffix);
+            int msvcHash = FroggerHashUtil.getMsvcC1HashTableKey(suffix);
             int psyqHash = FroggerHashUtil.getPsyQLinkerHash(suffix);
             int tableKey = (psyqHash * FroggerHashUtil.MSVC_SYMBOL_HASH_TABLE_SIZE) + msvcHash;
             suffixTable[tableKey].add(suffix);
@@ -552,7 +552,7 @@ public class SCMsvcHashReverser {
         int[] emptyIntArray = new int[0];
 
         MsvcSuffixLookupTableEntry[] lookupTableEntries = new MsvcSuffixLookupTableEntry[suffixTable.length];
-        Comparator<String> sortLogic = Comparator.comparingInt(FroggerHashUtil::getMsvcCompilerC1FullHash);
+        Comparator<String> sortLogic = Comparator.comparingInt(FroggerHashUtil::getMsvcC1FullHash);
         for (int i = 0; i < suffixTable.length; i++) {
             String[] suffixes = suffixTable[i].toArray(emptyStringArray);
             suffixTable[i] = null; // Clear just in-case we need this memory to GC before the loop ends.
@@ -565,7 +565,7 @@ public class SCMsvcHashReverser {
                 minimumHashGroupIndex = Integer.MAX_VALUE;
                 int maximumHashGroupIndex = Integer.MIN_VALUE;
                 for (int j = 0; j < suffixes.length; j++) {
-                    int msvcHash = FroggerHashUtil.getMsvcCompilerC1FullHash(suffixes[j]);
+                    int msvcHash = FroggerHashUtil.getMsvcC1FullHash(suffixes[j]);
                     int hashGroupIndex = getMsvcHashGroupFromFullMsvcHash(msvcHash);
                     if (hashGroupIndex < minimumHashGroupIndex)
                         minimumHashGroupIndex = hashGroupIndex;
@@ -579,7 +579,7 @@ public class SCMsvcHashReverser {
             int lastHashGroupIndex = -1;
             Arrays.fill(hashGroupInfo, -1);
             for (int j = 0; j < suffixes.length; j++) {
-                int msvcHash = FroggerHashUtil.getMsvcCompilerC1FullHash(suffixes[j]);
+                int msvcHash = FroggerHashUtil.getMsvcC1FullHash(suffixes[j]);
                 int hashGroupIndex = getMsvcHashGroupFromFullMsvcHash(msvcHash);
 
                 // Because the suffix is sorted by msvcHash, and hashGroupIndex is created by shifting right msvcHash, the hashGroupIndex values are guaranteed to be sorted too.
@@ -618,7 +618,7 @@ public class SCMsvcHashReverser {
             List<String> results = new ArrayList<>(suffixes.length);
             for (int i = 0; i < suffixes.length; i++) {
                 String suffix = suffixes[i];
-                int suffixTestMsvcHash = FroggerHashUtil.getMsvcCompilerC1FullHash(suffix, startHash);
+                int suffixTestMsvcHash = FroggerHashUtil.getMsvcC1FullHash(suffix, startHash);
                 if (suffixTestMsvcHash == targetHash)
                     results.add(suffix);
             }
@@ -680,7 +680,7 @@ public class SCMsvcHashReverser {
         // Since the increase with each group is constant, we can just divide the distance between targetHash and the 'paddedStartHash + baseSuffixHash', and that will give us how many groups away we are from the correct group.
 
         String suffix = lookupTableEntry.getSuffixes()[0]; // Any of the suffixes could be used here as long as we accounted for their group ID.
-        int suffixHash = FroggerHashUtil.getMsvcCompilerC1FullHash(suffix);
+        int suffixHash = FroggerHashUtil.getMsvcC1FullHash(suffix);
         int hashGroupIndex = getMsvcHashGroupFromFullMsvcHash(suffixHash) - lookupTableEntry.getStartingHashGroupId();
 
         int hashDistance = targetHash - startHash - suffixHash;
@@ -703,7 +703,7 @@ public class SCMsvcHashReverser {
         String[] suffixes = lookupTableEntry.getSuffixes();
         for (int i = 0; i < groupSize; i++) {
             String suffix = suffixes[groupStartIndex + i];
-            int msvcHash = FroggerHashUtil.getMsvcCompilerC1FullHash(suffix, startHash);
+            int msvcHash = FroggerHashUtil.getMsvcC1FullHash(suffix, startHash);
             if (msvcHash == targetHash)
                 results.add(suffix);
         }

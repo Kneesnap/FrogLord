@@ -78,7 +78,7 @@ public class DictionaryPermutationStringGenerator implements IHashStringGenerato
                     for (int k = 0; k < suffixTargets.length; k++) {
                         MsvcHashTarget target = suffixTargets[k];
                         String testWord = prefix + compound + target.getSuffix();
-                        if (!target.getMsvcRange().isInRange(FroggerHashUtil.getMsvcCompilerC1HashTableKey(testWord))
+                        if (!target.getMsvcRange().isInRange(FroggerHashUtil.getMsvcC1HashTableKey(testWord))
                                 || !target.getPsyqRange().isInRange(FroggerHashUtil.getPsyQLinkerHash(testWord))) {
                             allMatch = false;
                             break;
