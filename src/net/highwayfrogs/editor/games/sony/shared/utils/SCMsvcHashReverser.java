@@ -87,7 +87,7 @@ public class SCMsvcHashReverser {
             System.out.println();
             System.out.println("Generating for length=" + tempLength + "...");
 
-            int suffixTableLength = tempLength >= 3 ? Math.min(MAXIMUM_LOOKUP_TABLE_SUFFIX_LENGTH, tempLength) : -1;
+            int suffixTableLength = tempLength >= 3 ? Math.min(MAXIMUM_LOOKUP_TABLE_SUFFIX_LENGTH, tempLength) : 0;
 
             long generationStart = System.currentTimeMillis();
             MsvcSuffixLookupTable suffixLookupTable = generateMsvcSuffixTable(suffixTableLength, DEFAULT_ALLOWED_CHARACTERS);
@@ -147,7 +147,7 @@ public class SCMsvcHashReverser {
         // Now that we've narrowed down some amount of the highest bits in the 32-bit hash, we can test every single possible 32-bit hash which had those higher bits.
         // If the hash appears to be valid at a glance, it is added to the list.
         IntList hashes = new IntList(16); // 16 is arbitrary.
-        for (int i = shiftedHash << shiftBits; i < (shiftedHash + 1) << shiftBits; i++)
+        for (int i = shiftedHash << shiftBits; i < (shiftedHash + 1) << shiftBits; i++) // TODO: Won't this fail if shiftBits >= 30? (substringLength >= 9)
             if (doesMsvcHashMatchTargets(i, targets))
                 hashes.add(i);
 
@@ -182,10 +182,22 @@ public class SCMsvcHashReverser {
     private static int getFixedSizeHash(String input, int missingCharCount) {
         // Calculate the bits of the hash we'd like to use, based on the given number of unknown characters (middle length).
         int msvcPrefixHash = FroggerHashUtil.getMsvcC1FullHash(input);
-        for (int i = 0; i < missingCharCount; i++)
-            msvcPrefixHash = FroggerHashUtil.getMsvcC1FullHash("\0", msvcPrefixHash);
+        return getPaddedHash(msvcPrefixHash, missingCharCount);
+    }
 
-        return msvcPrefixHash;
+    /**
+     * Takes a full MSVC prefix hash, and appends the specified number of null characters to it.
+     * This is called a "padded hash", or sometimes a "fixed size hash, which is useful for reasoning about unknown characters in a hash.
+     * @param startHash the hash to apply the padding to
+     * @param paddedCharCount the number of characters to pad
+     * @return paddedHash
+     */
+    private static int getPaddedHash(int startHash, int paddedCharCount) {
+        int hash = startHash;
+        for (int i = 0; i < paddedCharCount; i++)
+            hash = FroggerHashUtil.getMsvcC1FullHash("\0", hash);
+
+        return hash;
     }
 
     /**
