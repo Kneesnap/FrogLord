@@ -68,57 +68,64 @@ public class SCMsvcHashReverser {
         }
     }
 
+    @SuppressWarnings("InfiniteLoopStatement")
     public static void main(String[] args) {
+        Set<String> dictionarySet = new HashSet<>(getDefaultDictionaryStringGenerator().getAllLoadedWords());
+        MsvcSuffixLookupTable[] lookupTables = new MsvcSuffixLookupTable[MAXIMUM_LOOKUP_TABLE_SUFFIX_LENGTH + 1];
+
         Scanner scanner = new Scanner(System.in);
 
-        System.out.print("Please enter the prefix. Example 'im_sub_': ");
-        String prefix = scanner.nextLine();
-        System.out.print("Please enter the length of the substrings to generate. ");
-        String substringLengthRangeStr = scanner.nextLine();
-        System.out.println("Please enter a comma-separated list of entries of the form 'suffix:psyqHashRange:msvcHashRange': ");
-        String hashTargetText = scanner.nextLine();
+        while (true) {
+            System.out.print("Please enter the prefix. Example 'im_sub_': ");
+            String prefix = scanner.nextLine();
+            System.out.print("Please enter the length of the substrings to generate. ");
+            String substringLengthRangeStr = scanner.nextLine();
+            System.out.println("Please enter a comma-separated list of entries of the form 'suffix:psyqHashRange:msvcHashRange': ");
+            String hashTargetText = scanner.nextLine();
 
-        HashRange substringLengthRange = HashRange.parseRange(substringLengthRangeStr, HashRangeType.PSYQ);
-        MsvcHashTarget[] hashTargets = parseHashTargets(hashTargetText);
-        Set<String> dictionarySet = new HashSet<>(getDefaultDictionaryStringGenerator().getAllLoadedWords());
+            HashRange substringLengthRange = HashRange.parseRange(substringLengthRangeStr, HashRangeType.PSYQ);
+            MsvcHashTarget[] hashTargets = parseHashTargets(hashTargetText);
 
-        int tempLength = -1;
-        while ((tempLength = substringLengthRange.getNextValue(tempLength)) > 0) {
-            System.out.println();
-            System.out.println("Generating for length=" + tempLength + "...");
+            int tempLength = -1;
+            while ((tempLength = substringLengthRange.getNextValue(tempLength)) > 0) {
+                int suffixTableLength = tempLength >= 3 ? Math.min(MAXIMUM_LOOKUP_TABLE_SUFFIX_LENGTH, tempLength) : 0;
 
-            int suffixTableLength = tempLength >= 3 ? Math.min(MAXIMUM_LOOKUP_TABLE_SUFFIX_LENGTH, tempLength) : 0;
-
-            long generationStart = System.currentTimeMillis();
-            MsvcSuffixLookupTable suffixLookupTable = generateMsvcSuffixTable(suffixTableLength, DEFAULT_ALLOWED_CHARACTERS);
-            System.out.println("Suffix table generated in " + (System.currentTimeMillis() - generationStart) + " ms.");
-            System.out.println();
-
-            IntList fullHashes = calculateFullMsvcHashes(prefix, tempLength, hashTargets);
-            if (fullHashes != null) {
-                System.out.println();
-                System.out.println("Found " + fullHashes.size() + " MSVC 32-bit hash" + (fullHashes.size() == 1 ? "" : "es") + ".");
-                long fullGenerationTimeStart = System.currentTimeMillis();
-                long resultCount = 0;
-                for (int i = 0; i < fullHashes.size(); i++) {
-                    long generationTimeStart = System.currentTimeMillis();
-                    List<String> substrings = generateMiddleSubstrings(prefix, tempLength, hashTargets, fullHashes.get(i), suffixLookupTable);
-                    long generationTimeEnd = System.currentTimeMillis();
-                    if (substrings.size() > 0) {
-                        substrings = sortResultsForDisplay(prefix, substrings, dictionarySet);
-                        System.out.println();
-                        System.out.println("- Hash: " + fullHashes.get(i) + "/" + NumberUtils.to0PrefixedHexString(fullHashes.get(i)) + " (" + substrings.size() + " results in " + (generationTimeEnd - generationTimeStart) + " ms) [" + (i + 1) + "/" + fullHashes.size() + "]:");
-                        for (int j = 0; j < substrings.size(); j++)
-                            System.out.println("  - " + prefix + substrings.get(j) + " (" + substrings.get(j) + ")");
-                        resultCount += substrings.size();
-                    } else {
-                        if (generationTimeEnd - generationTimeStart >= 15)
-                            System.out.println("- Finished Hash " + fullHashes.get(i) + "/" + NumberUtils.to0PrefixedHexString(fullHashes.get(i)) + " in " + (generationTimeEnd - generationTimeStart) + " ms [" + (i + 1) + "/" + fullHashes.size() + "].");
-                    }
+                MsvcSuffixLookupTable suffixLookupTable = lookupTables[suffixTableLength];
+                if (suffixLookupTable == null) {
+                    System.out.println();
+                    System.out.println("Generating lookup table for length=" + suffixTableLength + "...");
+                    long generationStart = System.currentTimeMillis();
+                    suffixLookupTable = lookupTables[suffixTableLength] = generateMsvcSuffixTable(suffixTableLength, DEFAULT_ALLOWED_CHARACTERS);
+                    System.out.println("Lookup table generated in " + (System.currentTimeMillis() - generationStart) + " ms.");
+                    System.out.println();
                 }
-                long fullGenerationTimeEnd = System.currentTimeMillis();
-                System.out.println();
-                System.out.println("Generation of " + resultCount + " hashes complete in " + (fullGenerationTimeEnd - fullGenerationTimeStart) + " ms.");
+
+                IntList fullHashes = calculateFullMsvcHashes(prefix, tempLength, hashTargets);
+                if (fullHashes != null) {
+                    System.out.println();
+                    System.out.println("Found " + fullHashes.size() + " MSVC 32-bit hash" + (fullHashes.size() == 1 ? "" : "es") + ".");
+                    long fullGenerationTimeStart = System.currentTimeMillis();
+                    long resultCount = 0;
+                    for (int i = 0; i < fullHashes.size(); i++) {
+                        long generationTimeStart = System.currentTimeMillis();
+                        List<String> substrings = generateMiddleSubstrings(prefix, tempLength, hashTargets, fullHashes.get(i), suffixLookupTable);
+                        long generationTimeEnd = System.currentTimeMillis();
+                        if (substrings.size() > 0) {
+                            substrings = sortResultsForDisplay(prefix, substrings, dictionarySet);
+                            System.out.println();
+                            System.out.println("- Hash: " + fullHashes.get(i) + "/" + NumberUtils.to0PrefixedHexString(fullHashes.get(i)) + " (" + substrings.size() + " results in " + (generationTimeEnd - generationTimeStart) + " ms) [" + (i + 1) + "/" + fullHashes.size() + "]:");
+                            for (int j = 0; j < substrings.size(); j++)
+                                System.out.println("  - " + prefix + substrings.get(j) + " (" + substrings.get(j) + ")");
+                            resultCount += substrings.size();
+                        } else {
+                            if (generationTimeEnd - generationTimeStart >= 15)
+                                System.out.println("- Finished Hash " + fullHashes.get(i) + "/" + NumberUtils.to0PrefixedHexString(fullHashes.get(i)) + " in " + (generationTimeEnd - generationTimeStart) + " ms [" + (i + 1) + "/" + fullHashes.size() + "].");
+                        }
+                    }
+                    long fullGenerationTimeEnd = System.currentTimeMillis();
+                    System.out.println();
+                    System.out.println("Generation of " + resultCount + " hashes complete in " + (fullGenerationTimeEnd - fullGenerationTimeStart) + " ms.");
+                }
             }
         }
     }
