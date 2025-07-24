@@ -81,7 +81,7 @@ public class GreatQuestMainMenuUIController extends MainMenuController<GreatQues
         // A user either doesn't understand the consequences or doesn't think it's a big deal, until it becomes a problem.
         if (outputFile.equals(getGameInstance().getMainArchiveBinFile())
                 && !FXUtils.makePopUpYesNo("Frogger: The Great Quest is best modded by applying changes to an unmodified copy of the game."
-                + "\nTherefore, it is not STRONGLY DISCOURAGED to overwrite the '.bin' file loaded by FrogLord."
+                + "\nTherefore, it is STRONGLY DISCOURAGED to overwrite the '.bin' file loaded by FrogLord."
                 + "\nUnless you absolutely FOR SURE know what you are doing, turn back now and refer to the Great Quest modding guide." // I'd like to link it here, but I'm not sure that's possible.
                 + "\nDo you wish to continue?")) {
             return;
