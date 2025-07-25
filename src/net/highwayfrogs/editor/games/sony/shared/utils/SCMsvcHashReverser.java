@@ -32,6 +32,9 @@ import java.util.*;
  * Created by Kneesnap on 7/17/2025.
  */
 public class SCMsvcHashReverser {
+    private static final int MAXIMUM_LOOKUP_TABLE_SUFFIX_LENGTH = 6; // 6 takes up 30-40GB, use 4-5 if this is too much. Make sure to add JVM argument -Xmx50G when running it with 6.
+    private static final char[] DEFAULT_ALLOWED_CHARACTERS = PermutationStringGenerator.ALLOWED_CHARACTERS_ALPHABET; // This can be upgraded to something with numbers if at 4-5 characters (and on a machine with that much memory available)
+
     @Getter
     @RequiredArgsConstructor
     public static class MsvcHashTarget {
@@ -56,6 +59,13 @@ public class SCMsvcHashReverser {
         @NonNull private final String[] suffixes;
         @NonNull private final int[] suffixGroupInfo; // upper 16 bits = index of first suffix in group, lower 16 bits = number of suffixes in group.
         private final int startingHashGroupId; // the ID of the first group in the array.
+
+        /**
+         * Gets the number of hash groups found within this lookup table entry.
+         */
+        public int getHashGroupCount() {
+            return this.suffixGroupInfo.length;
+        }
     }
 
     public static void main(String[] args) {
@@ -77,15 +87,10 @@ public class SCMsvcHashReverser {
             System.out.println();
             System.out.println("Generating for length=" + tempLength + "...");
 
-            int suffixTableLength = -1;
-            if (tempLength >= 5) {
-                suffixTableLength = 4;
-            } else if (tempLength == 4) {
-                suffixTableLength = 3;
-            }
+            int suffixTableLength = tempLength >= 3 ? Math.min(MAXIMUM_LOOKUP_TABLE_SUFFIX_LENGTH, tempLength) : -1;
 
             long generationStart = System.currentTimeMillis();
-            MsvcSuffixLookupTable suffixLookupTable = generateMsvcSuffixTable(suffixTableLength, PermutationStringGenerator.ALLOWED_CHARACTERS_ALPHANUMERIC);
+            MsvcSuffixLookupTable suffixLookupTable = generateMsvcSuffixTable(suffixTableLength, DEFAULT_ALLOWED_CHARACTERS);
             System.out.println("Suffix table generated in " + (System.currentTimeMillis() - generationStart) + " ms.");
             System.out.println();
 
@@ -180,7 +185,7 @@ public class SCMsvcHashReverser {
      */
     private static int getFixedSizeHash(String input, int missingCharCount) {
         // Calculate the bits of the hash we'd like to use, based on the given number of unknown characters (middle length).
-        int msvcPrefixHash = FroggerHashUtil.getMsvcCompilerC1FullHash(input, 0);
+        int msvcPrefixHash = FroggerHashUtil.getMsvcCompilerC1FullHash(input);
         for (int i = 0; i < missingCharCount; i++)
             msvcPrefixHash = FroggerHashUtil.getMsvcCompilerC1FullHash("\0", msvcPrefixHash);
 
@@ -359,9 +364,9 @@ public class SCMsvcHashReverser {
                     int baseIndex = targetPsyqHash * FroggerHashUtil.MSVC_SYMBOL_HASH_TABLE_SIZE;
                     for (int localIndex = 0; localIndex < FroggerHashUtil.MSVC_SYMBOL_HASH_TABLE_SIZE; localIndex++) {
                         MsvcSuffixLookupTableEntry lookupTableEntry = suffixLookupTable.getEntries()[baseIndex + localIndex];
-                        List<String> usableSuffixes = findSuffixes(lookupTableEntry, lastFullHash, targetFullMsvcHash, lastSubstring);
-                        if (usableSuffixes != null)
-                            results.addAll(usableSuffixes);
+                        List<String> usableSuffixes = findSuffixes(lookupTableEntry, lastFullHash, lastPaddedHash, targetFullMsvcHash);
+                        for (int i = 0; i < usableSuffixes.size(); i++)
+                            results.add(lastSubstring.length() > 0 ? lastSubstring + usableSuffixes.get(i) : usableSuffixes.get(i));
                     }
                 }
 
@@ -560,7 +565,7 @@ public class SCMsvcHashReverser {
                 minimumHashGroupIndex = Integer.MAX_VALUE;
                 int maximumHashGroupIndex = Integer.MIN_VALUE;
                 for (int j = 0; j < suffixes.length; j++) {
-                    int msvcHash = FroggerHashUtil.getMsvcCompilerC1FullHash(suffixes[j], 0);
+                    int msvcHash = FroggerHashUtil.getMsvcCompilerC1FullHash(suffixes[j]);
                     int hashGroupIndex = getMsvcHashGroupFromFullMsvcHash(msvcHash);
                     if (hashGroupIndex < minimumHashGroupIndex)
                         minimumHashGroupIndex = hashGroupIndex;
@@ -574,7 +579,7 @@ public class SCMsvcHashReverser {
             int lastHashGroupIndex = -1;
             Arrays.fill(hashGroupInfo, -1);
             for (int j = 0; j < suffixes.length; j++) {
-                int msvcHash = FroggerHashUtil.getMsvcCompilerC1FullHash(suffixes[j], 0);
+                int msvcHash = FroggerHashUtil.getMsvcCompilerC1FullHash(suffixes[j]);
                 int hashGroupIndex = getMsvcHashGroupFromFullMsvcHash(msvcHash);
 
                 // Because the suffix is sorted by msvcHash, and hashGroupIndex is created by shifting right msvcHash, the hashGroupIndex values are guaranteed to be sorted too.
@@ -603,19 +608,19 @@ public class SCMsvcHashReverser {
         return fullHashEmptyPrefix >>> 10;
     }
 
-    private static List<String> findSuffixes(MsvcSuffixLookupTableEntry lookupTableEntry, int startHash, int targetHash, String prefix) {
+    private static List<String> findSuffixes(MsvcSuffixLookupTableEntry lookupTableEntry, int startHash, int paddedStartHash, int targetHash) {
         String[] suffixes = lookupTableEntry.getSuffixes();
         if (suffixes.length == 0)
             return Collections.emptyList();
 
         // It's faster to search linearly when there aren't many suffixes.
-        if (suffixes.length < 50 || lookupTableEntry.getSuffixGroupInfo().length <= 3) {
+        if (suffixes.length < 100 || lookupTableEntry.getHashGroupCount() <= 3) {
             List<String> results = new ArrayList<>(suffixes.length);
             for (int i = 0; i < suffixes.length; i++) {
                 String suffix = suffixes[i];
                 int suffixTestMsvcHash = FroggerHashUtil.getMsvcCompilerC1FullHash(suffix, startHash);
                 if (suffixTestMsvcHash == targetHash)
-                    results.add(prefix != null && prefix.length() > 0 ? prefix + suffix : suffix);
+                    results.add(suffix);
             }
 
             return results;
@@ -642,27 +647,66 @@ public class SCMsvcHashReverser {
         // This means that the sorted suffix hashes only differ by intervals of 1024 (the number of unique msvc hash table keys) due to how the hashing algorithm works.
         // More specifically, only the first 10 bits and 10 bits after bit 16 are used to calculate the final msvc hash table key from the full msvc hash value.
         // And because the lookup table entries only contains full msvc hashes yielding a specific final msvc hash table key, it means they can only increment in intervals of 1024.
+        // Bits 16-25 XOR with bits 0-9 to create the final msvc hash table key from the full MSVC hash, but this doesn't seem to cause any issues with the group-based ordering.
         // This pattern of incrementing in intervals of 1024 remains REGARDLESS OF THE STARTING HASH, although it means comparing only hashes of similar magnitudes together!
         // So we can consider all suffixes that have the same empty-prefix hash value as part of a single group.
         // We can even bake a static secondary lookup table to indicate where each group starts in the suffix array, and how many suffixes are in the group.
-        // The result is that if we can find a hash which is roughly (1024 * groupNumber), and groupNumber is any valid group ID, we only need to search the strings for that particular group.
-        // And thus we've efficiently eliminated most of the suffixes to search.
+        // Therefore, if we can efficiently identify the group ID which contains the suffixes relevant to the target hash with the specified prefix, most suffixes can easily be skipped.
+        // That's what this next function (getHashGroupIndex) does, calculates the group ID containing the relevant suffixes.
+        // It came as a shock when I discovered this O(1) algorithm, it came as a shock as I was only hoping for an O(log n) algorithm instead.
+        int hashGroupIndex = getHashGroupIndex(lookupTableEntry, paddedStartHash, targetHash);
 
-        // I mentioned earlier, bits 16-25 XOR with bits 0-9 to create the final msvc hash table key.
-        // But luckily, it does not appear like this matters at all, although I've not mathematically proved it.
+        // Add suffixes from the suffix hash group.
+        // Only ONE group is capable of producing the target hash.
+        // This is because each hash group is separated by how large the no-prefix hash is.
+        // Because the lookup table is separated by the output MSVC hash, the only way to achieve the same MSVC hash from an empty hash prefix is to increase bit 10 onward, not bits 0-9.
+        // And there's no way to do that without changing the full MSVC output hash. So therefore, it's impossible to change the hash group without also changing full MSVC hash by 1 << 10 (or however many bits we choose).
+        if (hashGroupIndex >= 0 && hashGroupIndex < lookupTableEntry.getSuffixGroupInfo().length) {
+            List<String> results = new ArrayList<>();
+            applySuffixesFromGroup(results, lookupTableEntry, startHash, targetHash, hashGroupIndex);
+            return results;
+        }
 
-        // TODO:
-        //  Step 1) Find the first entry some multiple of 1024 away from the hash we're trying to solve for.
-        //   - Ideas:
-        //    - Randomly select suffixes.
-        //    - Start at suffix 0
-        //    - Start at the suffix with the most number of entries.
-        //   - What does a good solution look like?
-        //    - One which is likely to find the desired prefix in the fewest number of searches.
-        //    - I think we might just need to do some statistical analysis.
-        //  Step 2) Use this to calculate which group(s) to read values from.
+        return Collections.emptyList();
+    }
 
-        throw new UnsupportedOperationException("The optimized suffix resolution has not been implemented yet.");
+    private static int getHashGroupIndex(MsvcSuffixLookupTableEntry lookupTableEntry, int startHash, int targetHash) {
+        // Why does this work?
+        // The short answer is that each group increases the full MSVC hash by a certain number, currently 1024.
+        // This is by design/how the suffix array has been sorted to create these "groups".
+        // Because each group increases the hash by a constant number, and we're trying to get the hash to a target number, the group we're looking for is the one that makes the hash as close as possible to the target.
+        // Normally when we hash(suffix, startHash), we're likely to get something wildly different from the target number.
+        // So instead, we'll take 'paddedStartHash + baseSuffixHash', which due to the way the hashes have been sorted, gets closer to targetHash the closer the group ID is to correct.
+        // Since the increase with each group is constant, we can just divide the distance between targetHash and the 'paddedStartHash + baseSuffixHash', and that will give us how many groups away we are from the correct group.
+
+        String suffix = lookupTableEntry.getSuffixes()[0]; // Any of the suffixes could be used here as long as we accounted for their group ID.
+        int suffixHash = FroggerHashUtil.getMsvcCompilerC1FullHash(suffix);
+        int hashGroupIndex = getMsvcHashGroupFromFullMsvcHash(suffixHash) - lookupTableEntry.getStartingHashGroupId();
+
+        int hashDistance = targetHash - startHash - suffixHash;
+        int groupDistance = hashDistance / FroggerHashUtil.MSVC_SYMBOL_HASH_TABLE_SIZE; // TODO: Change this if I change the lookup table size specification. (1024)
+
+        int newGroupIndex = hashGroupIndex + groupDistance;
+        return newGroupIndex >= 0 && newGroupIndex <= lookupTableEntry.getHashGroupCount() ? newGroupIndex : Integer.MIN_VALUE;
+    }
+
+    private static void applySuffixesFromGroup(List<String> results, MsvcSuffixLookupTableEntry lookupTableEntry, int startHash, int targetHash, int hashGroupIndex) {
+        int groupInfo = lookupTableEntry.getSuffixGroupInfo()[hashGroupIndex];
+        if (groupInfo == -1)
+            return;
+
+        int groupStartIndex = groupInfo >>> 16;
+        int groupSize = groupInfo & 0xFFFF;
+        if (groupSize == 0)
+            return;
+
+        String[] suffixes = lookupTableEntry.getSuffixes();
+        for (int i = 0; i < groupSize; i++) {
+            String suffix = suffixes[groupStartIndex + i];
+            int msvcHash = FroggerHashUtil.getMsvcCompilerC1FullHash(suffix, startHash);
+            if (msvcHash == targetHash)
+                results.add(suffix);
+        }
     }
 
     private static DictionaryStringGenerator getDefaultDictionaryStringGenerator() {
@@ -681,7 +725,7 @@ public class SCMsvcHashReverser {
         // Tests:
         System.out.println("Running MSVC Hash Tests...");
 
-        char[] availableChars = PermutationStringGenerator.ALLOWED_CHARACTERS_ALPHANUMERIC;
+        char[] availableChars = PermutationStringGenerator.ALLOWED_CHARACTERS_ALPHABET;
         MsvcSuffixLookupTable suffixLookupTable0 = generateMsvcSuffixTable(0, availableChars);
         MsvcSuffixLookupTable suffixLookupTable3 = generateMsvcSuffixTable(3, availableChars);
         MsvcSuffixLookupTable suffixLookupTable4 = generateMsvcSuffixTable(4, availableChars);
@@ -689,10 +733,10 @@ public class SCMsvcHashReverser {
         // im_select -> hash = 10358682
         // im_sele, size: 2 (Suffix Tables Disabled due to small size)
         // im_sel, size: 3 (Suffix Tables Disabled due to small size.)
-        // im_se, size: 4 (Suffix Tables Enabled: 26ms, Disabled: 1.4s)
-        // im_s, size: 5 (Suffix Tables Enabled: 315ms, Disabled: 20s)
-        // im_, size: 6 (Suffix Tables Enabled: 4s, Disabled: 351.88s)
-        // im, size: 7 (This works, but it's too slow for me to want to make it into a test actually run.)
+        // im_se, size: 4 (Suffix Tables Enabled: 26ms, Disabled: 1.4s), 37 hashes
+        // im_s, size: 5 (Suffix Tables Enabled: 315ms, Disabled: 20s), 217 hashes, Ryzen 9 7900X: 37ms
+        // im_, size: 6 (Suffix Tables Enabled: 4s, Disabled: 351.88s), 1036 hashes, Ryzen 9 7900X: 103ms
+        // im, size: 7 (This works, but it's too slow for me to want to make it into a test actually run.), 14788 hashes complete (Ryzen 9 7900X, Disabled: 339s, Enabled: 2s)
         // 1:496:272,2:497:273,3:498:278,4:499:279,5:500:276
         runTest("im_sele", 2, "1:496:272,2:497:273,3:498:278,4:499:279,5:500:276", suffixLookupTable0, "ct");
         runTest("im_sel", 3, "1:496:272,2:497:273,3:498:278,4:499:279,5:500:276", suffixLookupTable3, "ect");
@@ -704,19 +748,19 @@ public class SCMsvcHashReverser {
         runTest("im_", 6, "1:496:272,2:497:273,3:498:278,4:499:279,5:500:276", suffixLookupTable3, "select");
 
         // im_cav_flash -> hash = 693301698
-        // im_cav_, size: 5 (Suffix Tables Enabled: 250ms, Disabled: 24s)
+        // im_cav_, size: 5 (Suffix Tables Enabled: 250ms, Disabled: 24s), 194 hashes, Ryzen 9 7900X: 25ms
         // 1:282:437,2:283:438,3:284:439,4:285:440,5:286:441
         runTest("im_cav_", 5, "1:282:437,2:283:438,3:284:439,4:285:440,5:286:441", suffixLookupTable3, "flash");
         runTest("im_cav_", 5, "1:282:437,2:283:438,3:284:439,4:285:440,5:286:441", suffixLookupTable4, "flash");
 
         // im_swp_ripple -> hash = A841D101
-        // im_swp_, size: 6 (Suffix Tables Enabled: 1.4s, Disabled: 54s)
+        // im_swp_, size: 6 (Suffix Tables Enabled: 1.4s, Disabled: 54s), 523 hashes, 75ms
         // b_0:123:523,c_0:124:538,b_1:124:522,c_1:125:537,b_2:125:521,c_2:126:536
         runTest("im_swp_", 6, "b_0:123:523,c_0:124:538,b_1:124:522,c_1:125:537,b_2:125:521,c_2:126:536", suffixLookupTable4, "ripple");
         runTest("im_swp_", 6, "b_0:123:523,c_0:124:538,b_1:124:522,c_1:125:537,b_2:125:521,c_2:126:536", suffixLookupTable3, "ripple");
 
         // im_cav_ -> I'm not sure what the real solution is, but one viable solution is "sekpool". hash = -1442661551
-        // im_cav_, size: 7
+        // im_cav_, size: 7, 31527 hashes
         // 1:11:896-898,2:12:895-897,3:13:900-903,4:14:899-902
         runTest("im_cav_", 7, "1:11:896-898,2:12:895-897,3:13:900-903,4:14:899-902", suffixLookupTable4, "sekpool");
 
