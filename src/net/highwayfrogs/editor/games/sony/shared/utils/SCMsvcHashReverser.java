@@ -21,14 +21,7 @@ import java.util.*;
  * Allows solving/reversing MSVC hashes (combined with PsyQ hashes) back to a string form.
  * Further documentation explaining how this works will come separately as part of markdown at a later date, due to the complexity of this process.
  * TODO:
- *  - Implement the ability to remove a suffix from MSVC hash, and toy around with how useful that is.
  *  - Run in parallel for each 32-bit hash.
- *  - Rules for invalid character sequences like:
- *   - two underscores next to each other.
- *   - q, v, w, x, y, z should have characters which cannot follow it.
- *   - numbers should not occur if there are >= 3 characters left, unless one is an underscore.
- *   - Allow running the program without a restart for lookup table reuse.
- *   - There should be a function to handle these invalid characters both for suffix lookup table creation and hash brute forcing.
  * Created by Kneesnap on 7/17/2025.
  */
 public class SCMsvcHashReverser {
@@ -380,8 +373,11 @@ public class SCMsvcHashReverser {
                     for (int localIndex = 0; localIndex < FroggerHashUtil.MSVC_SYMBOL_HASH_TABLE_SIZE; localIndex++) {
                         MsvcSuffixLookupTableEntry lookupTableEntry = suffixLookupTable.getEntries()[baseIndex + localIndex];
                         List<String> usableSuffixes = findSuffixes(lookupTableEntry, lastFullHash, lastPaddedHash, targetFullMsvcHash);
-                        for (int i = 0; i < usableSuffixes.size(); i++)
-                            results.add(lastSubstring.length() > 0 ? lastSubstring + usableSuffixes.get(i) : usableSuffixes.get(i));
+                        for (int i = 0; i < usableSuffixes.size(); i++) {
+                            String tempSubstring = lastSubstring.length() > 0 ? lastSubstring + usableSuffixes.get(i) : usableSuffixes.get(i);
+                            if (!shouldSubstringBeSkipped(prefix, tempSubstring))
+                                results.add(tempSubstring);
+                        }
                     }
                 }
 
@@ -422,9 +418,9 @@ public class SCMsvcHashReverser {
                         continue; // Even if the nextZeroBit could be set to 1 via overflow, it would be impossible to overflow it a second time, as required to ultimately flip situation #2's bit 0 to bit 1.
                 }
 
-                if (targetFullMsvcHash == newHash && doesStringMatchBothMsvcAndPsyqTargets(fullString, hashTargets)) {
+                if (targetFullMsvcHash == newHash && doesStringMatchBothMsvcAndPsyqTargets(fullString, hashTargets) && !shouldSubstringBeSkipped(prefix, nextSubstring)) {
                     results.add(nextSubstring);
-                } else if (targetLength > nextSubstring.length()) {
+                } else if (targetLength > nextSubstring.length() && !shouldSubstringBeSkipped(prefix, nextSubstring)) {
                     queue.add(nextSubstring);
                 }
             }
@@ -541,10 +537,12 @@ public class SCMsvcHashReverser {
         Arrays.fill(characters, availableCharacters[0]);
         while (true) {
             String suffix = new String(characters);
-            int msvcHash = FroggerHashUtil.getMsvcC1HashTableKey(suffix);
-            int psyqHash = FroggerHashUtil.getPsyQLinkerHash(suffix);
-            int tableKey = (psyqHash * FroggerHashUtil.MSVC_SYMBOL_HASH_TABLE_SIZE) + msvcHash;
-            suffixTable[tableKey].add(suffix);
+            if (!shouldSubstringBeSkipped(null, suffix)) {
+                int msvcHash = FroggerHashUtil.getMsvcC1HashTableKey(suffix);
+                int psyqHash = FroggerHashUtil.getPsyQLinkerHash(suffix);
+                int tableKey = (psyqHash * FroggerHashUtil.MSVC_SYMBOL_HASH_TABLE_SIZE) + msvcHash;
+                suffixTable[tableKey].add(suffix);
+            }
 
             // Increment to next suffix.
             int index = 0;
@@ -720,6 +718,43 @@ public class SCMsvcHashReverser {
             if (msvcHash == targetHash)
                 results.add(suffix);
         }
+    }
+
+    /**
+     * Some substrings produce valid hashes, but aren't ever going to be a valid symbol name.
+     * In this case, due to the number of collisions, we'd prefer to skip/hide them from the user.
+     * This function determines if a substring (in combination with its prefix) creates a symbol name which should be skipped.
+     * Criteria for returning true:
+     *  - If two underscores are next to each other.
+     *  - If the last digit in a sequence of digits is 2+ characters away from the end, and is not followed by an underscore.
+     *  - Characters in the group [q, v, w, x, y, z] must not be followed by another character in that group.
+     * @param prefix the substring prefix
+     * @param substring  the substring to text
+     * @return true if the substring should be hidden
+     */
+    public static boolean shouldSubstringBeSkipped(String prefix, String substring) {
+        if (substring == null)
+            throw new NullPointerException("substring");
+        if (substring.isEmpty())
+            return false;
+
+        char lastChar = prefix != null && prefix.length() > 0 ? prefix.charAt(prefix.length() - 1) : '\0';
+        char nextChar = substring.charAt(0);
+        for (int i = 0; i < substring.length(); i++) {
+            char currChar = nextChar;
+            nextChar = substring.length() > i + 1 ? substring.charAt(i + 1) : '\0';
+            if (currChar == '_' && (lastChar == '_' || nextChar == '_')) {
+                return true;
+            } else if (Character.isDigit(currChar) && !Character.isDigit(nextChar) && nextChar != '_' && (substring.length() - i >= 3)) {
+                return true;
+            } else if ((currChar == 'q' || (currChar >= 'v' && currChar <= 'z')) && (nextChar == 'q' || (nextChar >= 'v' && nextChar <= 'z'))) {
+                return true;
+            }
+
+            lastChar = currChar;
+        }
+
+        return false;
     }
 
     private static DictionaryStringGenerator getDefaultDictionaryStringGenerator() {
