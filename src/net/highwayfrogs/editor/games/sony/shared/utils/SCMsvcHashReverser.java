@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHashReverser;
 import net.highwayfrogs.editor.gui.extra.hash.DictionaryStringGenerator;
 import net.highwayfrogs.editor.gui.extra.hash.FroggerHashUtil;
@@ -140,16 +141,29 @@ public class SCMsvcHashReverser {
         if (middleSubstringLength < 0)
             throw new IllegalArgumentException("middleSubstringLength must be greater than or equal to zero! (Was: " + middleSubstringLength + ")");
 
-        // TODO: Can we calculate a proper bit amount, and account for the offset?
         int shiftBits = getPrefixShiftAmount(middleSubstringLength);
         int shiftedHash = getFixedSizeHash(prefix, middleSubstringLength) >>> shiftBits;
 
         // Now that we've narrowed down some amount of the highest bits in the 32-bit hash, we can test every single possible 32-bit hash which had those higher bits.
         // If the hash appears to be valid at a glance, it is added to the list.
-        IntList hashes = new IntList(16); // 16 is arbitrary.
-        for (int i = shiftedHash << shiftBits; i < (shiftedHash + 1) << shiftBits; i++) // TODO: Won't this fail if shiftBits >= 30? (substringLength >= 9)
-            if (doesMsvcHashMatchTargets(i, targets))
-                hashes.add(i);
+        // The minimum possible value is (shiftedHash << shiftBits), since the only possible variance from the current prefix is if the shiftedHash were to grow by 1.
+        // That's also why we add two before shifting shiftedHash to create the maximum, because it's possible for an overflow to occur, adding one to shiftHash, in addition to the +1 required to create the base search range.
+        long maxUpperHash = (((long) (shiftedHash + 2)) << shiftBits);
+        IntList hashes = new IntList(16); // 16 is arbitrary, although we could probably calculate the upperbound via Math.max(1, pow(2, Math.min(32, shiftBits) - 13));
+        if (maxUpperHash >= (1L << Constants.BITS_PER_INTEGER)) {
+            // This is slow, but at least it doesn't get slower with larger suffixes, and it's tolerable enough.
+            // TODO: In the future, we might try solving individual bits to find the ones that bring us closest to the MSVC hash range using the reversal method.
+            for (int i = Integer.MIN_VALUE; i < Integer.MAX_VALUE; i++)
+                if (doesMsvcHashMatchTargets(i, targets))
+                    hashes.add(i);
+            if (doesMsvcHashMatchTargets(Integer.MAX_VALUE, targets))
+                hashes.add(Integer.MAX_VALUE);
+        } else {
+            // If the shift amount is low enough, we can eliminate a large amount of the search space for faster generation.
+            for (int i = shiftedHash << shiftBits; i < maxUpperHash; i++)
+                if (doesMsvcHashMatchTargets(i, targets))
+                    hashes.add(i);
+        }
 
         return hashes;
     }
@@ -159,18 +173,14 @@ public class SCMsvcHashReverser {
     // It's 7 because the 7th bit is the highest bit written by any 7-bit ASCII character.
     // It seems highly improbable that any other kind of character would be seen, as these are symbol names written in source code.
     private static final int MINIMUM_SHIFT_AMOUNT = 7;
-    private static final int EXTRA_PREFIX_SHIFT_PADDING = 5;
 
     /**
-     * Calculates and returns the number of bits to shift in a full 32-bit MSVC hash to
+     * Calculates and returns the number of bits to shift in a full 32-bit MSVC hash to remove for prefix validation.
      * @param substringLength the length of the substring to generate
      * @return prefixShiftAmount
      */
     private static int getPrefixShiftAmount(int substringLength) {
-        if (substringLength == 0)
-            return 0;
-
-        return MINIMUM_SHIFT_AMOUNT + EXTRA_PREFIX_SHIFT_PADDING + (substringLength * 2);
+        return MINIMUM_SHIFT_AMOUNT + (substringLength * 2);
     }
 
     /**
@@ -810,7 +820,7 @@ public class SCMsvcHashReverser {
         // im_cav_ -> I'm not sure what the real solution is, but one viable solution is "sekpool". hash = -1442661551
         // im_cav_, size: 7, 31527 hashes
         // 1:11:896-898,2:12:895-897,3:13:900-903,4:14:899-902
-        runTest("im_cav_", 7, "1:11:896-898,2:12:895-897,3:13:900-903,4:14:899-902", suffixLookupTable4, "sekpool");
+        runTest("im_cav_", 7, "1:11:896-898,2:12:895-897,3:13:900-903,4:14:899-902", suffixLookupTable4, "sekpool", "pt_pool");
 
         System.out.println("Tests Complete.");
         System.out.println();
