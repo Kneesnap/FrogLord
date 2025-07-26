@@ -44,7 +44,11 @@ public class SCMsvcHashReverser {
         @NonNull private final MsvcSuffixLookupTableEntry[] entries;
         private final int suffixLength;
 
-        private static final int LOOKUP_TABLE_SIZE = FroggerHashUtil.PSYQ_LINKER_HASH_TABLE_SIZE * FroggerHashUtil.MSVC_SYMBOL_HASH_TABLE_SIZE;
+        // The properties of the lookup table only stay true because we split it by the MSVC hash.
+        // Splitting it by the PsyQ hash is just an added bonus for even more efficient lookup operations.
+        private static final int LOOKUP_TABLE_LARGE_FACTOR = FroggerHashUtil.PSYQ_LINKER_HASH_TABLE_SIZE;
+        private static final int LOOKUP_TABLE_SMALL_FACTOR = FroggerHashUtil.MSVC_SYMBOL_HASH_TABLE_SIZE;
+        private static final int LOOKUP_TABLE_SIZE = LOOKUP_TABLE_LARGE_FACTOR * LOOKUP_TABLE_SMALL_FACTOR;
     }
 
     @Getter
@@ -379,8 +383,8 @@ public class SCMsvcHashReverser {
 
                 // Scan each of the lookup table entries for any that solve our hash.
                 if (targetPsyqHash >= 0) {
-                    int baseIndex = targetPsyqHash * FroggerHashUtil.MSVC_SYMBOL_HASH_TABLE_SIZE;
-                    for (int localIndex = 0; localIndex < FroggerHashUtil.MSVC_SYMBOL_HASH_TABLE_SIZE; localIndex++) {
+                    int baseIndex = targetPsyqHash * MsvcSuffixLookupTable.LOOKUP_TABLE_SMALL_FACTOR;
+                    for (int localIndex = 0; localIndex < MsvcSuffixLookupTable.LOOKUP_TABLE_SMALL_FACTOR; localIndex++) {
                         MsvcSuffixLookupTableEntry lookupTableEntry = suffixLookupTable.getEntries()[baseIndex + localIndex];
                         List<String> usableSuffixes = findSuffixes(lookupTableEntry, lastFullHash, lastPaddedHash, targetFullMsvcHash);
                         for (int i = 0; i < usableSuffixes.size(); i++) {
@@ -550,7 +554,7 @@ public class SCMsvcHashReverser {
             if (!shouldSubstringBeSkipped(null, suffix)) {
                 int msvcHash = FroggerHashUtil.getMsvcC1HashTableKey(suffix);
                 int psyqHash = FroggerHashUtil.getPsyQLinkerHash(suffix);
-                int tableKey = (psyqHash * FroggerHashUtil.MSVC_SYMBOL_HASH_TABLE_SIZE) + msvcHash;
+                int tableKey = (psyqHash * MsvcSuffixLookupTable.LOOKUP_TABLE_SMALL_FACTOR) + msvcHash;
                 suffixTable[tableKey].add(suffix);
             }
 
@@ -705,7 +709,7 @@ public class SCMsvcHashReverser {
         int hashGroupIndex = getMsvcHashGroupFromFullMsvcHash(suffixHash) - lookupTableEntry.getStartingHashGroupId();
 
         int hashDistance = targetHash - startHash - suffixHash;
-        int groupDistance = hashDistance / FroggerHashUtil.MSVC_SYMBOL_HASH_TABLE_SIZE; // TODO: Change this if I change the lookup table size specification. (1024)
+        int groupDistance = hashDistance / MsvcSuffixLookupTable.LOOKUP_TABLE_SMALL_FACTOR;
 
         int newGroupIndex = hashGroupIndex + groupDistance;
         return newGroupIndex >= 0 && newGroupIndex <= lookupTableEntry.getHashGroupCount() ? newGroupIndex : Integer.MIN_VALUE;
