@@ -171,7 +171,7 @@ public class SCMsvcHashReverser {
                 hashes.add(Integer.MAX_VALUE);
         } else {
             // If the shift amount is low enough, we can eliminate a large amount of the search space for faster generation.
-            for (int i = shiftedHash << shiftBits; i < maxUpperHash; i++)
+            for (int i = shiftedHash << shiftBits; i < (int) maxUpperHash; i++)
                 if (doesMsvcHashMatchTargets(i, targets))
                     hashes.add(i);
         }
