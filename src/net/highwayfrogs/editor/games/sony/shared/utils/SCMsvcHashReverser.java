@@ -68,20 +68,40 @@ public class SCMsvcHashReverser {
         }
     }
 
+    @Getter
+    @RequiredArgsConstructor
+    private static class AutomatedTestEntry {
+        private final String prefix;
+        private final String substringLengthRange;
+        private final String hashTargetText;
+    }
+
     @SuppressWarnings("InfiniteLoopStatement")
     public static void main(String[] args) {
         Set<String> dictionarySet = new HashSet<>(getDefaultDictionaryStringGenerator().getAllLoadedWords());
         MsvcSuffixLookupTable[] lookupTables = new MsvcSuffixLookupTable[MAXIMUM_LOOKUP_TABLE_SUFFIX_LENGTH + 1];
 
         Scanner scanner = new Scanner(System.in);
+        List<AutomatedTestEntry> automatedTests = new ArrayList<>();
 
         while (true) {
-            System.out.print("Please enter the prefix. Example 'im_sub_': ");
-            String prefix = scanner.nextLine();
-            System.out.print("Please enter the length of the substrings to generate. ");
-            String substringLengthRangeStr = scanner.nextLine();
-            System.out.println("Please enter a comma-separated list of entries of the form 'suffix:psyqHashRange:msvcHashRange': ");
-            String hashTargetText = scanner.nextLine();
+            String prefix;
+            String substringLengthRangeStr;
+            String hashTargetText;
+
+            if (automatedTests.isEmpty()) {
+                System.out.print("Please enter the prefix. Example 'im_sub_': ");
+                prefix = scanner.nextLine();
+                System.out.print("Please enter the length of the substrings to generate. ");
+                substringLengthRangeStr = scanner.nextLine();
+                System.out.println("Please enter a comma-separated list of entries of the form 'suffix:psyqHashRange:msvcHashRange': ");
+                hashTargetText = scanner.nextLine();
+            } else {
+                AutomatedTestEntry testEntry = automatedTests.remove(0);
+                System.out.println("Prefix: " + (prefix = testEntry.getPrefix()));
+                System.out.println("Length Range: " + (substringLengthRangeStr = testEntry.getSubstringLengthRange()));
+                System.out.println("Hash Targets: " + (hashTargetText = testEntry.getHashTargetText()));
+            }
 
             HashRange substringLengthRange = HashRange.parseRange(substringLengthRangeStr, HashRangeType.PSYQ);
             MsvcHashTarget[] hashTargets = parseHashTargets(hashTargetText);
