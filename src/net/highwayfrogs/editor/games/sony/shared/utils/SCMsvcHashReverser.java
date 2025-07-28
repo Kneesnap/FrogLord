@@ -508,7 +508,7 @@ public class SCMsvcHashReverser {
                         List<String> usableSuffixes = findSuffixes(lookupTableEntry, lastFullHash, lastPaddedHash, targetFullMsvcHash);
                         for (int i = 0; i < usableSuffixes.size(); i++) {
                             String tempSubstring = lastSubstring.length() > 0 ? lastSubstring + usableSuffixes.get(i) : usableSuffixes.get(i);
-                            if (!shouldSubstringBeSkipped(prefix, tempSubstring))
+                            if (!shouldSubstringBeSkipped(prefix, tempSubstring, true))
                                 results.add(tempSubstring);
                         }
                     }
@@ -551,9 +551,9 @@ public class SCMsvcHashReverser {
                         continue; // Even if the nextZeroBit could be set to 1 via overflow, it would be impossible to overflow it a second time, as required to ultimately flip situation #2's bit 0 to bit 1.
                 }
 
-                if (targetFullMsvcHash == newHash && doesStringMatchBothMsvcAndPsyqTargets(fullString, hashTargets) && !shouldSubstringBeSkipped(prefix, nextSubstring)) {
+                if (targetFullMsvcHash == newHash && doesStringMatchBothMsvcAndPsyqTargets(fullString, hashTargets) && !shouldSubstringBeSkipped(prefix, nextSubstring, true)) {
                     results.add(nextSubstring);
-                } else if (targetLength > nextSubstring.length() && !shouldSubstringBeSkipped(prefix, nextSubstring)) {
+                } else if (targetLength > nextSubstring.length() && !shouldSubstringBeSkipped(prefix, nextSubstring, false)) {
                     int nextPrefixHash = FroggerHashUtil.getMsvcC1FullHash(nextSubstring, prefixHash);
                     if (findFirstSuffix(suffixLookupTable, substringTempChars[targetLength - nextSubstring.length()], nextPrefixHash, targetFullMsvcHash, false) == 0)
                         queue.add(nextSubstring); // This eliminates TONS of permutations. I observed a near 18x speed increase when I added this, and that was just when it generated 2 characters with the rest in a lookup table.
@@ -673,7 +673,7 @@ public class SCMsvcHashReverser {
         Arrays.fill(characters, availableCharacters[0]);
         while (true) {
             String suffix = new String(characters);
-            if (!shouldSubstringBeSkipped(null, suffix)) {
+            if (!shouldSubstringBeSkipped(null, suffix, false)) {
                 int msvcHash = FroggerHashUtil.getMsvcC1HashTableKey(suffix);
                 int psyqHash = FroggerHashUtil.getPsyQLinkerHash(suffix);
                 int tableKey = (psyqHash * MsvcSuffixLookupTable.LOOKUP_TABLE_SMALL_FACTOR) + msvcHash;
@@ -886,18 +886,19 @@ public class SCMsvcHashReverser {
      * @param substring  the substring to text
      * @return true if the substring should be hidden
      */
-    public static boolean shouldSubstringBeSkipped(String prefix, String substring) {
+    public static boolean shouldSubstringBeSkipped(String prefix, String substring, boolean fullSubstring) {
         if (substring == null)
             throw new NullPointerException("substring");
         if (substring.isEmpty())
             return false;
 
-        char lastChar = prefix != null && prefix.length() > 0 ? prefix.charAt(prefix.length() - 1) : '\0';
+        char endChar = prefix != null && prefix.length() > 0 ? prefix.charAt(prefix.length() - 1) : '\0';
+        char lastChar = endChar;
         char nextChar = substring.charAt(0);
         for (int i = 0; i < substring.length(); i++) {
             char currChar = nextChar;
             nextChar = substring.length() > i + 1 ? substring.charAt(i + 1) : '\0';
-            if (currChar == '_' && (lastChar == '_' || nextChar == '_')) {
+            if (currChar == '_' && (lastChar == '_' || nextChar == '_' || (endChar == '_' && i == 1))) {
                 return true;
             } else if (Character.isDigit(currChar) && !Character.isDigit(nextChar) && nextChar != '_' && (substring.length() - i >= 3)) {
                 return true;
