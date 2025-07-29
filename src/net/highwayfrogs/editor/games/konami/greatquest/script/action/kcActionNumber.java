@@ -92,7 +92,11 @@ public class kcActionNumber extends kcAction {
         }
 
         // Ensure there is a cause listening for this number.
-        if (this.operation == NumberOperation.LITERAL_NUMBER) {
+        if (this.operation == NumberOperation.ENTITY_VARIABLE) {
+            if (!data.anyActionsMatch(kcActionID.VARIABLE_SET, action -> ((kcActionLazyTemplate) action).getParamOrError(0).getAsInteger() == this.number)
+                    && !data.anyActionsMatch(kcActionID.VARIABLE_ADD, action -> ((kcActionLazyTemplate) action).getParamOrError(0).getAsInteger() == this.number))
+                printWarning(data.getLogger(), data.getEntityName() + " uses SendNumber on entity variable slot " + this.number + ", but that slot is never assigned to a number!");
+        } else if (this.operation == NumberOperation.LITERAL_NUMBER) {
             if (!data.anyCausesMatch(kcScriptCauseType.NUMBER, (kcScriptCauseNumber cause) -> cause.doesValueMatch(this.number)))
                 printWarning(data.getLogger(), data.getEntityName() + " does not have an " + kcScriptCauseType.NUMBER.getDisplayName() + " script cause handling number " + this.number + ".");
         } else if (this.operation == NumberOperation.RANDOM) {
