@@ -127,8 +127,7 @@ public class BeastWarsMapObject extends SCGameData<BeastWarsInstance> {
     public void setupEditor(GUIEditorGrid editor, BeastWarsObjectManager manager) {
         MRModel model = getModel();
         editor.addTextField("Model File", model != null ? model.getFileDisplayName() : "None").setEditable(false);
-        if (model == null)
-            editor.addTextField("formId", String.format("%04X", this.formId)).setEditable(false);
+        editor.addTextField("Form ID", String.valueOf(this.formId)).setDisable(true); // This may also act as some kind of entity ID.
 
         // TODO: Add a proper editor once things are figured out.
         // TODO: POSITION
