@@ -100,8 +100,8 @@ public class CVector implements IBinarySerializable {
 
     @Override
     public int hashCode() {
-        return ((0xFF & this.red) << 24) | ((0xFF & this.green) << 16) |
-                ((0xFF & this.blue) << 8) | (0xFF & this.code);
+        return ((this.red & 0xFF) << 24) | ((this.green & 0xFF) << 16) |
+                ((this.blue & 0xFF) << 8) | (this.code & 0xFF);
     }
 
     /**
@@ -354,7 +354,8 @@ public class CVector implements IBinarySerializable {
         imageUpdate[0] = () -> {
             BufferedImage newImage;
             if (scaledTexture != null) {
-                newImage = PSXTextureShader.makeTexturedFlatShadedImage(scaledTexture, this);
+                // Flat texture shading always use modulation unless we're mimicking gouraud shading where all the colors are the same.
+                newImage = PSXTextureShader.makeTexturedFlatShadedImage(scaledTexture, this, true);
             } else {
                 newImage = PSXTextureShader.makeFlatShadedImage(45, 45, this);
             }

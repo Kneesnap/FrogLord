@@ -706,21 +706,23 @@ public class PSXTextureShader {
     /**
      * Makes a textured flat shaded image (POLY_FT3 / POLY_FT4).
      * @param originalTexture The original texture to apply shading to.
-     * @param color           The shading color to apply.
+     * @param color The shading color to apply.
+     * @param enableModulation If true, color modulation will be enabled.
      * @return flatTextureShadedImage
      */
-    public static BufferedImage makeTexturedFlatShadedImage(BufferedImage originalTexture, CVector color) {
-        return makeTexturedFlatShadedImage(originalTexture, null, color);
+    public static BufferedImage makeTexturedFlatShadedImage(BufferedImage originalTexture, CVector color, boolean enableModulation) {
+        return makeTexturedFlatShadedImage(originalTexture, null, color, enableModulation);
     }
 
     /**
      * Makes a textured flat shaded image (POLY_FT3 / POLY_FT4).
      * @param originalTexture The original texture to apply shading to.
      * @param targetImage The image to write the shaded data to. If null, a new one will be created.
-     * @param color           The shading color to apply.
+     * @param color The shading color to apply.
+     * @param enableModulation If true, color modulation will be enabled.
      * @return flatTextureShadedImage
      */
-    public static BufferedImage makeTexturedFlatShadedImage(BufferedImage originalTexture, BufferedImage targetImage, CVector color) {
+    public static BufferedImage makeTexturedFlatShadedImage(BufferedImage originalTexture, BufferedImage targetImage, CVector color, boolean enableModulation) {
         int colorArgb = color.toARGB();
         if (colorArgb == UNSHADED_COLOR_ARGB)
             return originalTexture;
@@ -731,7 +733,7 @@ public class PSXTextureShader {
         int[] rawTargetImage = ImageWorkHorse.getPixelIntegerArray(targetImage);
         int pixelCount = targetImage.getWidth() * targetImage.getHeight();
         for (int i = 0; i < pixelCount; i++)
-            shadeRawPixel(rawSourceImage, rawTargetImage, i, colorArgb, true);
+            shadeRawPixel(rawSourceImage, rawTargetImage, i, colorArgb, enableModulation);
 
         return targetImage;
     }

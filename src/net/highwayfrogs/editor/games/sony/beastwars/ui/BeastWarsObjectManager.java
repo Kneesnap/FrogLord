@@ -179,7 +179,7 @@ public class BeastWarsObjectManager extends BeastWarsMapListManager<BeastWarsMap
     protected void onDelegateRemoved(BeastWarsMapObject object, MeshView meshView) {
         if (meshView != null) {
             getRenderManager().getRoot().getChildren().remove(meshView);
-            getController().getLightingGroup().getChildren().add(meshView);
+            getController().getLightingGroup().getChildren().remove(meshView);
         }
     }
 }

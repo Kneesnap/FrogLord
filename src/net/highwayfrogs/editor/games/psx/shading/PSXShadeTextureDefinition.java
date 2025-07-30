@@ -315,14 +315,14 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
                 return applyImagePostFx(PSXTextureShader.makeFlatShadedImage(targetImage, getWidth(), getHeight(), this.colors[0]));
             case POLY_FT3:
             case POLY_FT4:
-                return applyImagePostFx(PSXTextureShader.makeTexturedFlatShadedImage(sourceImage, targetImage, this.colors[0]));
+                return applyImagePostFx(PSXTextureShader.makeTexturedFlatShadedImage(sourceImage, targetImage, this.colors[0], true));
             case POLY_G3:
             case POLY_G4:
                 return applyImagePostFx(PSXTextureShader.makeGouraudShadedImage(targetImage, getWidth(), getHeight(), this.colors));
             case POLY_GT3:
             case POLY_GT4:
                 if (doAllColorsMatch()) {
-                    return applyImagePostFx(PSXTextureShader.makeTexturedFlatShadedImage(sourceImage, targetImage, this.colors[0]));
+                    return applyImagePostFx(PSXTextureShader.makeTexturedFlatShadedImage(sourceImage, targetImage, this.colors[0], this.enableModulation));
                 } else {
                     return applyImagePostFx(PSXTextureShader.makeTexturedGouraudShadedImage(sourceImage, targetImage, this.textureSource, this.colors, this.textureUVs, this.textureScaleX, this.textureScaleY, this.debugDrawCornerMarkers, this.enableModulation));
                 }
