@@ -41,4 +41,9 @@ public class IntegerCounter {
 
         return false;
     }
+
+    @Override
+    public String toString() {
+        return "IntegerCounter=" + this.counter + "@" + Integer.toHexString(hashCode());
+    }
 }

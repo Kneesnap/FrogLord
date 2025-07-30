@@ -241,7 +241,7 @@ public class SCImageTableGenerator {
 
         switch (instance.getPlatform()) {
             case WINDOWS:
-                return FroggerHashUtil.getMsvcCompilerC1HashTableKey(symbolName);
+                return FroggerHashUtil.getMsvcC1HashTableKey(symbolName);
             case PLAYSTATION:
                 return FroggerHashUtil.getPsyQLinkerHash(symbolName);
             default:

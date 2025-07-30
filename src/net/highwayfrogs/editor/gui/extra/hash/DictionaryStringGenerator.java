@@ -48,7 +48,7 @@ public class DictionaryStringGenerator implements IHashStringGenerator {
                 for (int i = 0; i < words.size(); i++) {
                     String word = words.get(i);
                     String testStr = prefix + word + suffix;
-                    if (msvcRange.isInRange(FroggerHashUtil.getMsvcCompilerC1HashTableKey(testStr)))
+                    if (msvcRange.isInRange(FroggerHashUtil.getMsvcC1HashTableKey(testStr)))
                         output.add(word);
                 }
             } else { // No MSVC range, so use them directly.
@@ -61,7 +61,7 @@ public class DictionaryStringGenerator implements IHashStringGenerator {
         for (int i = 0; i < this.allLoadedWords.size(); i++) {
             String word = this.allLoadedWords.get(i);
             String testStr = prefix + word + suffix;
-            if (msvcRange.isInRange(FroggerHashUtil.getMsvcCompilerC1HashTableKey(testStr)))
+            if (msvcRange.isInRange(FroggerHashUtil.getMsvcC1HashTableKey(testStr)))
                 output.add(word);
         }
     }

@@ -117,7 +117,7 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
 
         this.assemblerHashLabel.setText(String.valueOf(FroggerHashUtil.getPsyQAssemblerHash(fullStr)));
         this.linkerHashLabel.setText(String.valueOf(FroggerHashUtil.getPsyQLinkerHash(fullStr)));
-        this.compilerHashLabel.setText(String.valueOf(FroggerHashUtil.getMsvcCompilerC1HashTableKey(fullStr)));
+        this.compilerHashLabel.setText(String.valueOf(FroggerHashUtil.getMsvcC1HashTableKey(fullStr)));
         this.currentStringLabel.setText("Input: '" + fullStr + "'");
         this.generateStrings(null);
     }

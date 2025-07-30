@@ -52,7 +52,7 @@ public class HashTreeStringGenerator implements IHashStringGenerator {
                 continue;
 
             String newString = countMap.generateString();
-            if (msvcRange == null || msvcRange.isInRange(FroggerHashUtil.getMsvcCompilerC1HashTableKey(newString)))
+            if (msvcRange == null || msvcRange.isInRange(FroggerHashUtil.getMsvcC1HashTableKey(newString)))
                 results.add(newString);
         }
 

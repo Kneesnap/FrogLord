@@ -120,8 +120,8 @@ public class IntList {
     }
 
     public int indexOf(int value) {
-        for (int i = 0; i < array.length; i++)
-            if (array[i] == value)
+        for (int i = 0; i < this.size; i++)
+            if (this.array[i] == value)
                 return i;
         return -1;
     }
