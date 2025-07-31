@@ -353,7 +353,6 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
     }
 
     private void readFaceColors(DataReader reader) {
-        // TODO: There's a decent chance this is a PSXClutColor.
         this.faceColors = new short[this.heightMapZLength][this.heightMapXLength];
         for (int z = 0; z < this.heightMapZLength; z++)
             for (int x = 0; x < this.heightMapXLength; x++)
