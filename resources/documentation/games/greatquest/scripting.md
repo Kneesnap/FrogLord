@@ -118,6 +118,16 @@ This was possible because of how the example used "entity variables".
 ### Entity Variables
 Each entity has 8 variable slots available, and are zero-indexed. In other words, the first slot is called 'slot 0', the second slot is called 'slot 1', up until reaching 'slot 7'.
 Any whole number can be put in each slot, despite there being only 8 slots per entity.
+
+**What is this used for?**  
+If you want to have different behavior from the same cause, use `SendNumber ENTITY_VARIABLE #`.  
+That `#` character should actually be a number, which refers to a variable slot. Whatever number is found within that slot will be sent.  
+Then, the entity which receives the number (the entity who sent it) checks its functions.  
+If it finds a cause `cause=OnReceiveNumber EQUAL_TO <the number sent>`, that function will run.  
+This allows 
+
+
+**Alternative explanation.**  
 Variables are extremely powerful when used with the `SendNumber` command.  
 Think of `SendNumber` like a postal service, but a crappy one which only delivers a piece of paper containing a single number written on it.  
 Each entity can use the `SendNumber` postal service to send one number to themselves or to other entities.  
@@ -333,7 +343,9 @@ Not used in the vanilla game.
 **Summary:** Applies the provided entity flags to the script owner.  
 **Supported Entity Types:** All  
 **Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity::OnCommand`  
-**Usage:** `SetFlags [Entity Flags]`  
+**Usage:** `SetFlags [--Entity Flags...]`  
+**Example:** `SetFlags --DisableAI --HideShadow`  
+
 ```properties
 # Entity Flags:
 --Hide # Marks the entity to not be drawn. When set, it will also activate/deactivate the entity, along with collision. However, these can then be undone afterward.
@@ -364,14 +376,16 @@ Not used in the vanilla game.
 **Summary:** Removes the provided entity flags from the script owner.  
 **Supported Entity Types:** All  
 **Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity::OnCommand`  
-**Usage:** `ClearFlags [Entity Flags]`  
+**Usage:** `ClearFlags [--Entity Flags...]`  
+**Example:** `ClearFlags --DisableAI --HideShadow`
 See `SetFlags` above for a list of flags.  
 
 ### InitFlags (Both)
 **Summary:** Clears instance entity flags, then applies the provided entity instance flags.  
 **Supported Entity Types:** All  
 **Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity::OnCommand`  
-**Usage:** `InitFlags [Entity Flags]`  
+**Usage:** `InitFlags [--Entity Flags...]`  
+**Example:** `InitFlags --DisableAI --HideShadow`
 See `SetFlags` above for a list of flags.  
 This can be thought of as a combination of the previous two effects: `ClearFlags` and `SetFlags`.  
 Firstly, `InitFlags` will clear (almost) all entity instance flags. Unlike `ClearFlags` these are hardcoded and not the flags provided to `InitFlags` by the user.  
@@ -390,7 +404,13 @@ Not used in the vanilla game.
 **Usage:** `SetTarget <targetEntityName>`  
 A target entity is used for AI-related operations.  
 For example, most enemies have `"FrogInst001"` as their target, so they attack Frogger.  
-Others, such as Fairy Frogmother face the player by setting their target as `FrogInst001`.  
+Others, such as Fairy Frogmother face the player by setting their target as `FrogInst001`.
+
+> [!IMPORTANT]
+> If the `--DisableAI` flag is set, the entity will not pathfind UNLESS the target is a waypoint.
+
+> [!CAUTION]
+> If the entity has the `--FaceTargetEntity` flag set, it may not be able to move vertically (up/down).
 
 ### SetAnimationSpeed (Both)
 **Summary:** Sets the animation speed for the script owner.  
