@@ -401,6 +401,12 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
 
     @Override
     public void performDefaultUIAction() {
+        for (int i = 0; i < this.textureInfoEntries.length; i++) { // TODO: TOSS
+            MapTextureInfoEntry infoEntry = this.textureInfoEntries[i];
+            if (infoEntry.getFlags() != 0)
+                getLogger().info("TexEntry[%d]: (Flags: %08X/%d. Texture ID: %d)", i, infoEntry.getFlags(), infoEntry.getFlags(), infoEntry.getTextureId());
+        }
+
         MeshViewController.setupMeshViewer(getGameInstance(), new BeastWarsMapMeshController(getGameInstance()), new BeastWarsMapMesh(this));
     }
 
