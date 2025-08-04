@@ -11,6 +11,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.utils.SCImageTableGenerator;
@@ -21,6 +22,7 @@ import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -86,10 +88,17 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
 
     private void updatePsyQTargetHashRange() {
         try {
-            this.psyqTargetHashRange = HashRange.parseRange(this.targetLinkerHashField.getText(), HashRangeType.PSYQ);
+            String linkerRangeText = this.targetLinkerHashField.getText();
+            if (StringUtils.isNullOrEmpty(linkerRangeText)) {
+                this.psyqTargetHashRange = null;
+            } else {
+                this.psyqTargetHashRange = HashRange.parseRange(linkerRangeText, HashRangeType.PSYQ);
+            }
+
+            this.targetLinkerHashField.setStyle(null);
         } catch (Throwable th) {
             this.psyqTargetHashRange = null;
-            FXUtils.makePopUp(th.getMessage(), AlertType.ERROR);
+            this.targetLinkerHashField.setStyle(Constants.FX_STYLE_INVALID_TEXT);
             return;
         }
 
@@ -98,10 +107,17 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
 
     private void updateMsvcTargetHashRange() {
         try {
-            this.msvcTargetHashRange = HashRange.parseRange(this.targetCompilerHashField.getText(), HashRangeType.MSVC);
+            String msvcRangeText = this.targetCompilerHashField.getText();
+            if (StringUtils.isNullOrEmpty(msvcRangeText)) {
+                this.msvcTargetHashRange = null;
+            } else {
+                this.msvcTargetHashRange = HashRange.parseRange(msvcRangeText, HashRangeType.MSVC);
+            }
+
+            this.targetCompilerHashField.setStyle(null);
         } catch (Throwable th) {
             this.msvcTargetHashRange = null;
-            FXUtils.makePopUp(th.getMessage(), AlertType.ERROR);
+            this.targetCompilerHashField.setStyle(Constants.FX_STYLE_INVALID_TEXT);
             return;
         }
 
