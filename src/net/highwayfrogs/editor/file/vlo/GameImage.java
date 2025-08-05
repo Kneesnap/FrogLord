@@ -45,7 +45,7 @@ public class GameImage extends SCSharedGameData implements Cloneable, ITextureSo
     @Getter private short clutId;
     private byte ingameWidth; // In-game texture width, used to remove texture padding.
     private byte ingameHeight;
-    private byte[] imageBytes;
+    @Getter private byte[] imageBytes;
     @Getter private ImageClutMode clutMode; // TPF
     @Getter private int abr; // ABR.
 

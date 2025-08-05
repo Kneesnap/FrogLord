@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.sony;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
@@ -32,6 +33,7 @@ import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.io.File;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -360,5 +362,100 @@ public class SCUtils {
         }
 
         return instances;
+    }
+
+    /**
+     * Find images shared between the two versions which are a perfect match, and generate an image naming config based on it.
+     * @param nameSourceInst the game instance containing the image names
+     * @param copyDestInst the game instance to transfer the image names to
+     * @return sharedImageConfig
+     */
+    public static String generateImageNameConfigForMatchingTextures(SCGameInstance nameSourceInst, SCGameInstance copyDestInst) {
+        if (nameSourceInst == null)
+            throw new NullPointerException("nameSourceInst");
+        if (copyDestInst == null)
+            throw new NullPointerException("copyDestInst");
+
+        Map<Integer, List<GameImage>> imageMappings = new HashMap<>();
+        for (VLOArchive vloFile : nameSourceInst.getMainArchive().getAllFiles(VLOArchive.class)) {
+            for (GameImage image : vloFile.getImages()) {
+                int hash = Arrays.hashCode(image.getImageBytes());
+                List<GameImage> list = imageMappings.computeIfAbsent(hash, key -> new ArrayList<>());
+                if (list.stream().noneMatch(testImage -> testImage.getTextureId() == image.getTextureId()))
+                    list.add(image);
+            }
+        }
+
+        // Map images.
+        Map<Short, List<GameImage>> resultingMappings = new HashMap<>();
+        for (VLOArchive vloFile : copyDestInst.getMainArchive().getAllFiles(VLOArchive.class)) {
+            for (GameImage image : vloFile.getImages()) {
+                if (image.getOriginalName() != null) { // Keep previous name.
+                    resultingMappings.putIfAbsent(image.getTextureId(), new ArrayList<>(Arrays.asList(image, image)));
+                    continue;
+                }
+
+                List<GameImage> matchingImages = resultingMappings.get(image.getTextureId());
+                if (matchingImages == null) {
+                    resultingMappings.putIfAbsent(image.getTextureId(), matchingImages = new ArrayList<>());
+                    matchingImages.add(image);
+                }
+
+                int hash = Arrays.hashCode(image.getImageBytes());
+                List<GameImage> list = imageMappings.get(hash);
+                if (list == null)
+                    continue;
+
+                for (GameImage testImage : list)
+                    if (ImageWorkHorse.doImagesMatch(image.toBufferedImage(), testImage.toBufferedImage()) && !matchingImages.contains(testImage))
+                        matchingImages.add(testImage);
+            }
+        }
+
+        // Generate config.
+        int generatedNames = 0, knownNames = 0;
+        List<Entry<Short, List<GameImage>>> entryList = new ArrayList<>(resultingMappings.entrySet());
+        entryList.sort(Comparator.comparingInt(Entry::getKey));
+        StringBuilder builder = new StringBuilder();
+        for (Entry<Short, List<GameImage>> entry : entryList) {
+            List<GameImage> images = entry.getValue();
+            if (images == null || images.size() <= 1) {
+                builder.append("#").append(entry.getKey()).append("=?").append(Constants.NEWLINE);
+                continue;
+            }
+
+            // If possible, pick it from the known VLO.
+            GameImage destImage = images.remove(0);
+            if (images.stream().anyMatch(testImage -> testImage.getParent().getFileDisplayName().equals(destImage.getParent().getFileDisplayName())))
+                images.removeIf(testImage -> !testImage.getParent().getFileDisplayName().equals(destImage.getParent().getFileDisplayName()));
+
+            GameImage firstImage = images.stream().filter(testImage -> testImage.getOriginalName() != null).findFirst().orElse(images.get(0));
+            String name = firstImage.getOriginalName();
+            if (name == null) {
+                name = SCUtils.C_UNNAMED_IMAGE_PREFIX + firstImage.getTextureId();
+                generatedNames++;
+                builder.append("#");
+            } else {
+                knownNames++;
+            }
+
+            builder.append(entry.getKey()).append("=").append(name);
+            if (images.remove(firstImage) && images.size() > 0) {
+                builder.append(" # ");
+                for (int i = 0; i < images.size(); i++) {
+                    GameImage image = images.get(i);
+                    String tempName = image.getOriginalName();
+                    if (i > 0)
+                        builder.append(", ");
+                    builder.append(tempName != null ? tempName : SCUtils.C_UNNAMED_IMAGE_PREFIX + firstImage.getTextureId());
+                }
+            }
+
+            builder.append(Constants.NEWLINE);
+        }
+
+        builder.append("# ").append(knownNames).append(" texture names have been mapped. (").append(generatedNames).append(" textures were linked, but not named)")
+                .append(Constants.NEWLINE).append("# Names and IDs mapped from version: '").append(nameSourceInst.getVersionConfig().getInternalName()).append("'.");
+        return builder.toString();
     }
 }
