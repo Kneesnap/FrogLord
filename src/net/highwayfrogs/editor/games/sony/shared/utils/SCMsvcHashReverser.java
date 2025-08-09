@@ -17,6 +17,8 @@ import net.highwayfrogs.editor.utils.objects.IndexBitArray;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Allows solving/reversing MSVC hashes (combined with PsyQ hashes) back to a string form.
@@ -120,26 +122,34 @@ public class SCMsvcHashReverser {
                     System.out.println();
                 }
 
-                IntList fullHashes = calculateFullMsvcHashes(prefix, tempLength, hashTargets);
+                IntList fullHashes = calculateFullMsvcHashes(suffixLookupTable, prefix, tempLength, hashTargets);
                 if (fullHashes != null) {
                     System.out.println();
                     int oldFullHashCount = fullHashes.size();
-                    System.out.println("Found " + oldFullHashCount + " MSVC 32-bit hash" + (oldFullHashCount == 1 ? "" : "es") + ".");
+                    System.out.println("Found " + oldFullHashCount + " MSVC 32-bit hash" + (oldFullHashCount == 1 ? "" : "es") + " for substring length " + tempLength + ".");
                     fullHashes = cleanFullMsvcHashes(fullHashes, prefix, tempLength, hashTargets, suffixLookupTable);
                     int removedHashCount = oldFullHashCount - fullHashes.size();
                     if (removedHashCount > 0)
                         System.out.println("Removed " + removedHashCount + " MSVC 32-bit hash" + (removedHashCount == 1 ? "" : "es") + ". (New Amount: " + fullHashes.size() + ")");
                     long fullGenerationTimeStart = System.currentTimeMillis();
                     long resultCount = 0;
+                    long lastTimeUpdate = System.currentTimeMillis();
+                    final long messageInterval = TimeUnit.MINUTES.toMillis(2);
                     for (int i = 0; i < fullHashes.size(); i++) {
                         long generationTimeStart = System.currentTimeMillis();
+                        if (generationTimeStart >= lastTimeUpdate + messageInterval) {
+                            lastTimeUpdate = generationTimeStart;
+                            System.out.println(" - [Progress Update] Currently on hash " + (i + 1) + "/" + fullHashes.size());
+                        }
+
                         List<String> substrings = generateMiddleSubstrings(prefix, tempLength, hashTargets, fullHashes.get(i), suffixLookupTable);
                         long generationTimeEnd = System.currentTimeMillis();
                         if (substrings.size() > 0) {
+                            lastTimeUpdate = generationTimeEnd;
                             substrings = sortResultsForDisplay(prefix, substrings, dictionarySet);
                             System.out.println();
                             System.out.println("- Hash: " + fullHashes.get(i) + "/" + NumberUtils.to0PrefixedHexString(fullHashes.get(i)) + " (" + substrings.size() + " results in " + (generationTimeEnd - generationTimeStart) + " ms) [" + (i + 1) + "/" + fullHashes.size() + "]:");
-                            for (int j = 0; j < substrings.size(); j++)
+                            for (int j = 0; j < Math.min(250, substrings.size()); j++)
                                 System.out.println("  - " + prefix + substrings.get(j) + " (" + substrings.get(j) + ")");
                             resultCount += substrings.size();
                         } else {
@@ -166,7 +176,9 @@ public class SCMsvcHashReverser {
      * @param targets the hash targets which are to be reversed back into strings.
      * @return dirtyFullMsvcHashes (Note: Many of the returned hashes will not correspond to any valid substrings)
      */
-    public static IntList calculateFullMsvcHashes(String prefix, int middleSubstringLength, MsvcHashTarget[] targets) {
+    public static IntList calculateFullMsvcHashes(MsvcSuffixLookupTable suffixLookupTable, String prefix, int middleSubstringLength, MsvcHashTarget[] targets) {
+        if (suffixLookupTable == null)
+            throw new NullPointerException("suffixLookupTable");
         if (prefix == null || prefix.isEmpty() || targets == null || targets.length == 0)
             return null; // There's nothing to test the hashes against.
         if (middleSubstringLength < 0)
@@ -179,16 +191,18 @@ public class SCMsvcHashReverser {
         // If the hash appears to be valid at a glance, it is added to the list.
         // The minimum possible value is (shiftedHash << shiftBits), since the only possible variance from the current prefix is if the shiftedHash were to grow by 1.
         // That's also why we add two before shifting shiftedHash to create the maximum, because it's possible for an overflow to occur, adding one to shiftHash, in addition to the +1 required to create the base search range.
-        long maxUpperHash = (((long) (shiftedHash + 2)) << shiftBits);
+        long maxUpperHash = ((((shiftedHash & 0xFFFFFFFFL) + 2)) << shiftBits);
         IntList hashes = new IntList(16); // 16 is arbitrary, although we could probably calculate the upperbound via Math.max(1, pow(2, Math.min(32, shiftBits) - 13));
-        if (maxUpperHash >= (1L << Constants.BITS_PER_INTEGER)) {
-            // This is slow, but at least it doesn't get slower with larger suffixes, and it's tolerable enough.
-            // TODO: In the future, we might try solving individual bits to find the ones that bring us closest to the MSVC hash range using the reversal method.
+        if (maxUpperHash >= (1L << (Constants.BITS_PER_INTEGER - 2))) {
+            // Checking all 32-bit numbers is fast enough to just do like this.
             for (int i = Integer.MIN_VALUE; i < Integer.MAX_VALUE; i++)
                 if (doesMsvcHashMatchTargets(i, targets))
                     hashes.add(i);
-            if (doesMsvcHashMatchTargets(Integer.MAX_VALUE, targets))
-                hashes.add(Integer.MAX_VALUE);
+
+            // If that changes, my other idea is to take our hashTargets, and generate all possible 32-bit hashes that which when combined with the final character of the target substring, create a valid hash table key.
+            // Then, we work backwards to find all possible hashes for the target.
+            // Any which fail the findFirstSuffix() test will be skipped/ignored.
+            // From here, we test all resulting hashes against all the hash target suffixes, removing any via an IndexBitArray which don't meet the criteria of all the hash targets.
         } else {
             // If the shift amount is low enough, we can eliminate a large amount of the search space for faster generation.
             for (int i = shiftedHash << shiftBits; i < (int) maxUpperHash; i++)
@@ -293,8 +307,10 @@ public class SCMsvcHashReverser {
      */
     private static char[] findFirstSuffix(MsvcSuffixLookupTable suffixLookupTable, int substringLength, int prefixHash, int targetFullMsvcHash, boolean jiggleToValidSolution) {
         char[] substringChars = new char[substringLength];
-        int prefixDistance = findFirstSuffix(suffixLookupTable, substringChars, prefixHash, targetFullMsvcHash, jiggleToValidSolution);
-        return prefixDistance == 0 ? substringChars : null;
+        if (!findFirstSuffix(suffixLookupTable, substringChars, prefixHash, targetFullMsvcHash, jiggleToValidSolution, null))
+            return null;
+
+        return substringChars;
     }
 
     /**
@@ -304,9 +320,13 @@ public class SCMsvcHashReverser {
      * @param prefixHash the hash of the prefix to connect to the target hash
      * @param targetFullMsvcHash the full target msvc hash to connect to the prefix
      * @param jiggleToValidSolution set to true if a valid suffix must be calculated, instead of just proven to exist (expensive operation)
+     * @param outputPrefixDistance optional output storage for the prefix distance for the prefixDistance
      * @return zero if a valid suffix was found, otherwise, the distance from the prefix
      */
-    private static int findFirstSuffix(MsvcSuffixLookupTable suffixLookupTable, char[] substringChars, int prefixHash, int targetFullMsvcHash, boolean jiggleToValidSolution) {
+    private static boolean findFirstSuffix(MsvcSuffixLookupTable suffixLookupTable, char[] substringChars, int prefixHash, int targetFullMsvcHash, boolean jiggleToValidSolution, AtomicInteger outputPrefixDistance) {
+        if (outputPrefixDistance != null) // If a premature return occurs, ensure we don't keep the previous value of the prefix distance.
+            outputPrefixDistance.set(Integer.MAX_VALUE);
+
         // By padding that prefix to add a null character substring of the correct length, we create a hash which can be followed from the hash we'd like to test to a known hash near the target hash.
         // In order to test if the target hash can be reached from the prefix hash, we'll try to follow the path shown to us by the null character string.
         // We pick the characters which bring us close to the padded prefix hash. TODO: Why are we able to? I've not come up with a proof for this yet.
@@ -351,13 +371,16 @@ public class SCMsvcHashReverser {
             }
 
             if (bestNextHash == 0 && bestDistance == Integer.MAX_VALUE)
-                return Integer.MAX_VALUE; // Impossible to reach the prefix hash since somehow there were no parent chars.
+                return false; // Impossible to reach the prefix hash since somehow there were no parent chars.
 
             tempHash = bestNextHash;
         }
 
+        if (outputPrefixDistance != null)
+            outputPrefixDistance.set(prefixHash - tempHash);
+
         if (tempHash == prefixHash) {
-            return 0; // No jiggling required, this is a valid substring!
+            return true; // No jiggling required, this is a valid substring!
         } else if (tempHash > prefixHash) {
             // Quickly check if it appears possible to modify the string to remove the extraneous amount from the tempHash.
             int prefixDistance = tempHash - prefixHash;
@@ -371,7 +394,7 @@ public class SCMsvcHashReverser {
             }
 
             if (prefixDistance > addToNextChar)
-                return -prefixDistance;
+                return false;
         } else { // tempHash < prefixHash
             // Quickly check if it appears possible to modify the string to add the missing amount to the tempHash.
             int prefixDistance = prefixHash - tempHash;
@@ -385,15 +408,15 @@ public class SCMsvcHashReverser {
             }
 
             if (prefixDistance > addToNextChar)
-                return prefixDistance;
+                return false;
         }
 
         //noinspection IfStatementWithIdenticalBranches
         if (!jiggleToValidSolution)
-            return 0;
+            return true;
 
         // TODO: Jiggle it to a valid solution!
-        return 0;
+        return true;
     }
 
     // NOTE: I'm thinking that as long as there are less than 512 hashes returned, this may allow for some serious brute-forcing.
@@ -438,7 +461,7 @@ public class SCMsvcHashReverser {
         char[] testChars = new char[middleSubstringLength];
         for (int i = 0; i < msvcHashes.size(); i++) {
             int targetFullMsvcHash = msvcHashes.get(i);
-            if (findFirstSuffix(suffixLookupTable, testChars, prefixHash, targetFullMsvcHash, false) != 0)
+            if (!findFirstSuffix(suffixLookupTable, testChars, prefixHash, targetFullMsvcHash, false, null))
                 indicesToRemove.setBit(i, true);
         }
 
@@ -490,6 +513,21 @@ public class SCMsvcHashReverser {
         if (suffixLookupTable == null)
             throw new NullPointerException("suffixLookupTable");
 
+        // Find the suffix target to use for suffix table lookup.
+        // Find the first target hash which we can solve.
+        MsvcHashTarget lookupTableSuffixTarget = null;
+        for (int i = 0; i < hashTargets.length; i++) {
+            MsvcHashTarget suffixTarget = hashTargets[i];
+            if (!suffixTarget.getPsyqRange().isMinValueSameAsMaxValue())
+                continue;
+
+            lookupTableSuffixTarget = suffixTarget;
+            break;
+        }
+
+        if (lookupTableSuffixTarget == null)
+            System.err.println("WARNING: We are unable to use the suffix lookup table for speed increases, because none of the hash targets have a non-ranged PsyQ hash.");
+
         // Prepare temporary storage for substrings.
         char[][] substringTempChars = new char[targetLength][];
         for (int i = 0; i < targetLength; i++)
@@ -507,30 +545,19 @@ public class SCMsvcHashReverser {
 
             // Try to use the suffix table to quickly solve the ways to end the string.
             int suffixTableLength = suffixLookupTable.getSuffixLength();
-            if (suffixLookupTable.getEntries().length > 0 && suffixTableLength > 2 && lastSubstring.length() + suffixTableLength == targetLength) {
-                // Find the first target hash which we can solve.
-                int targetPsyqHash = -1;
-                for (int i = 0; i < hashTargets.length; i++) {
-                    MsvcHashTarget suffixTarget = hashTargets[i];
-                    if (!suffixTarget.getPsyqRange().isMinValueSameAsMaxValue())
-                        continue;
-
-                    int partialPsyqHash = suffixTarget.getPsyqRange().getSingleValue();
-                    targetPsyqHash = FroggerHashUtil.getPsyQLinkerHashWithoutPrefixSuffix(partialPsyqHash, prefix + lastSubstring, suffixTarget.suffix);
-                    break;
-                }
+            if (suffixLookupTable.getEntries().length > 0 && suffixTableLength > 2 && lastSubstring.length() + suffixTableLength == targetLength && lookupTableSuffixTarget != null) {
+                int partialPsyqHash = lookupTableSuffixTarget.getPsyqRange().getSingleValue();
+                int targetPsyqHash = FroggerHashUtil.getPsyQLinkerHashWithoutPrefixSuffix(partialPsyqHash, prefix + lastSubstring, lookupTableSuffixTarget.suffix);
 
                 // Scan each of the lookup table entries for any that solve our hash.
-                if (targetPsyqHash >= 0) {
-                    int baseIndex = targetPsyqHash * MsvcSuffixLookupTable.LOOKUP_TABLE_SMALL_FACTOR;
-                    for (int localIndex = 0; localIndex < MsvcSuffixLookupTable.LOOKUP_TABLE_SMALL_FACTOR; localIndex++) {
-                        MsvcSuffixLookupTableEntry lookupTableEntry = suffixLookupTable.getEntries()[baseIndex + localIndex];
-                        List<String> usableSuffixes = findSuffixes(lookupTableEntry, lastFullHash, lastPaddedHash, targetFullMsvcHash);
-                        for (int i = 0; i < usableSuffixes.size(); i++) {
-                            String tempSubstring = lastSubstring.length() > 0 ? lastSubstring + usableSuffixes.get(i) : usableSuffixes.get(i);
-                            if (!shouldSubstringBeSkipped(prefix, tempSubstring, true))
-                                results.add(tempSubstring);
-                        }
+                int baseIndex = targetPsyqHash * MsvcSuffixLookupTable.LOOKUP_TABLE_SMALL_FACTOR;
+                for (int localIndex = 0; localIndex < MsvcSuffixLookupTable.LOOKUP_TABLE_SMALL_FACTOR; localIndex++) {
+                    MsvcSuffixLookupTableEntry lookupTableEntry = suffixLookupTable.getEntries()[baseIndex + localIndex];
+                    List<String> usableSuffixes = findSuffixes(lookupTableEntry, lastFullHash, lastPaddedHash, targetFullMsvcHash);
+                    for (int i = 0; i < usableSuffixes.size(); i++) {
+                        String tempSubstring = lastSubstring.length() > 0 ? lastSubstring + usableSuffixes.get(i) : usableSuffixes.get(i);
+                        if (!shouldSubstringBeSkipped(prefix, tempSubstring, true))
+                            results.add(tempSubstring);
                     }
                 }
 
@@ -575,7 +602,7 @@ public class SCMsvcHashReverser {
                     results.add(nextSubstring);
                 } else if (targetLength > nextSubstring.length() && !shouldSubstringBeSkipped(prefix, nextSubstring, false)) {
                     int nextPrefixHash = FroggerHashUtil.getMsvcC1FullHash(nextSubstring, prefixHash);
-                    if (findFirstSuffix(suffixLookupTable, substringTempChars[targetLength - nextSubstring.length()], nextPrefixHash, targetFullMsvcHash, false) == 0)
+                    if (findFirstSuffix(suffixLookupTable, substringTempChars[targetLength - nextSubstring.length()], nextPrefixHash, targetFullMsvcHash, false, null))
                         queue.add(nextSubstring); // This eliminates TONS of permutations. I observed a near 18x speed increase when I added this, and that was just when it generated 2 characters with the rest in a lookup table.
                 }
             }
@@ -1010,7 +1037,7 @@ public class SCMsvcHashReverser {
 
     private static List<String> runTest(String prefix, int substringLength, String hashTargetsStr, MsvcSuffixLookupTable lookupTable) {
         MsvcHashTarget[] hashTargets = parseHashTargets(hashTargetsStr);
-        IntList msvcHashes = calculateFullMsvcHashes(prefix, substringLength, hashTargets);
+        IntList msvcHashes = calculateFullMsvcHashes(lookupTable, prefix, substringLength, hashTargets);
 
         List<String> results = new ArrayList<>();
         for (int i = 0; i < msvcHashes.size(); i++)

@@ -107,6 +107,10 @@ public class IntList {
         this.size = 0;
     }
 
+    public void sort() {
+        Arrays.sort(this.array, 0, this.size);
+    }
+
     public int get(int index) {
         if (index < 0 || index >= this.size) // Too high use to call Utils.verify.
             throw new ArrayIndexOutOfBoundsException(index);
