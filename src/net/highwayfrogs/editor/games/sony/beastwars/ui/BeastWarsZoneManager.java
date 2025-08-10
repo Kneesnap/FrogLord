@@ -181,6 +181,7 @@ public class BeastWarsZoneManager extends BeastWarsMapListManager<BeastWarsMapZo
                 return; // Can't display null...
 
             BeastWarsMapMesh mesh = getMesh();
+            mesh.pushBatchOperations();
             this.zone.updateRegionCache();
             this.overlayNode = new DynamicMeshOverlayNode(mesh);
             mesh.addNode(this.overlayNode);
@@ -189,9 +190,12 @@ public class BeastWarsZoneManager extends BeastWarsMapListManager<BeastWarsMapZo
                     BeastWarsMapZoneRegion region = this.zone.getRegion(x, z);
                     ITextureSource textureSource = getOverlayTextureSource(region);
                     BeastWarsMapVertex vertex = getZone().getMapFile().getVertex(this.zone.getMainRegion().getAbsoluteStartX() + x, this.zone.getMainRegion().getAbsoluteStartZ() + z);
-                    this.overlayNode.add(new OverlayTarget(mesh.getMainNode().getDataEntry(vertex), textureSource));
+                    if (vertex != null)
+                        this.overlayNode.add(new OverlayTarget(mesh.getMainNode().getDataEntry(vertex), textureSource));
                 }
             }
+
+            mesh.popBatchOperations();
         }
 
         private ITextureSource getOverlayTextureSource(BeastWarsMapZoneRegion region) {

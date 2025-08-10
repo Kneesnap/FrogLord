@@ -1,11 +1,13 @@
 package net.highwayfrogs.editor.games.sony.beastwars.map.data;
 
 import lombok.Getter;
+import lombok.NonNull;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.psx.PSXMath;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsInstance;
 import net.highwayfrogs.editor.games.sony.beastwars.map.BeastWarsMapFile;
+import net.highwayfrogs.editor.games.sony.beastwars.map.data.object.BeastWarsMapDeathDropType;
 import net.highwayfrogs.editor.games.sony.beastwars.ui.BeastWarsObjectManager;
 import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
@@ -31,8 +33,8 @@ public class BeastWarsMapObject extends SCGameData<BeastWarsInstance> {
     private int positionZ;
     private short formId;
     private short linkedZoneId = -1; // -1 indicates no zone. TODO: Can also link to line.
-    private byte field3_24; // Usually 0, but not always.
-    private byte field4_25; // Usually 0, but not always.
+    @NonNull private byte deathDropId;
+    private byte energonLevel; // Usually 0, but not always.
     private short field5_26; // TODO: ALWAYS ZERO OR ONE? (The code seems to support 2 as well..?)
     private short typeFlags;
     private byte field7_2A; // Player ID less than 4?
@@ -79,20 +81,18 @@ public class BeastWarsMapObject extends SCGameData<BeastWarsInstance> {
         this.positionZ = reader.readInt(); // 0x1C/4 - Z Position Integer
         this.formId = reader.readShort(); // 0x20/2 - Form ID
         this.linkedZoneId = reader.readShort(); // 0x22/2 - Linked Zone ID
-        this.field3_24 = reader.readByte(); // 0x24/1 - ???
-        this.field4_25 = reader.readByte(); // 0x25/1 - ???
-        this.field5_26 = reader.readShort(); // 0x26/2 - ??? Checked to be 1 or 2 in 80032350 PSX PAL.
-        this.typeFlags = reader.readShort(); // 0x28/2 - Type Flags? 0xC000
-        this.field7_2A = reader.readByte(); // 0x2A/1 - ??? Checked to be Less than 4 in 80032350 PSX PAL. Then used to index into global array. Could this be some kind of player ID?
+        this.deathDropId = reader.readByte(); // 0x24/1 - Death Drop TODO: Sometimes I think this means something else.
+        this.energonLevel = reader.readByte(); // 0x25/1 - ??? TODO: Sometimes ambient energon level.
+        this.field5_26 = reader.readShort(); // 0x26/2 - ??? Checked to be 1 or 2 in 80032350 PSX PAL. TODO: 1 Means ?. TODO: 2 Means set ambient energon level from previous field.
+        this.typeFlags = reader.readShort(); // 0x28/2 - Type Flags? 0xC000. 0x100 is set
+        this.field7_2A = reader.readByte(); // 0x2A/1 - ??? Checked to be Less than 4 in 80032350 PSX PAL. Then used to index into global array. Could this be some kind of player ID? TODO: Must be between 0 and 3 inclusive. I suspect this is a player ID.
         this.field8_2B = reader.readByte(); // 0x2B/1 - ???
-        this.unsureZeroToFiveFlags = reader.readShort();  // 0x2C/2 - Unknown Between [0, 4].
-        this.unsureFlags = reader.readShort(); // 0x2E/2 - Unsure Flags? [0x100, 0x80]
+        this.unsureZeroToFiveFlags = reader.readShort();  // 0x2C/2 - Unknown Between [0, 4]. Used by game.
+        this.unsureFlags = reader.readShort(); // 0x2E/2 - Unsure Flags? [0x100, 0x80] 0x80 seems to indicate it's a transformer. 0x100 is set by the game if it's a transformer too.
 
         // TODO: TOSS
-        if (this.field3_24 != 0)
-            getLogger().warning("field3_24 = %02X", this.field3_24);
-        if (this.field4_25 != 0)
-            getLogger().warning("field4_25 = %02X", this.field4_25);
+        if (this.energonLevel != 0)
+            getLogger().warning("field4_25 = %02X", this.energonLevel);
         if (this.field5_26 != 0 && this.field5_26 != 1)
             getLogger().warning("field5_26 = %02X", this.field5_26);
     }
@@ -109,8 +109,8 @@ public class BeastWarsMapObject extends SCGameData<BeastWarsInstance> {
         writer.writeInt(this.positionZ);
         writer.writeShort(this.formId);
         writer.writeShort(this.linkedZoneId);
-        writer.writeByte(this.field3_24);
-        writer.writeByte(this.field4_25);
+        writer.writeByte(this.deathDropId);
+        writer.writeByte(this.energonLevel);
         writer.writeShort(this.field5_26);
         writer.writeShort(this.typeFlags);
         writer.writeByte(this.field7_2A);
@@ -127,8 +127,7 @@ public class BeastWarsMapObject extends SCGameData<BeastWarsInstance> {
     public void setupEditor(GUIEditorGrid editor, BeastWarsObjectManager manager) {
         MRModel model = getModel();
         editor.addTextField("Model File", model != null ? model.getFileDisplayName() : "None").setEditable(false);
-        if (model == null)
-            editor.addTextField("formId", String.format("%04X", this.formId)).setEditable(false);
+        editor.addTextField("Form ID", String.valueOf(this.formId)).setDisable(true); // This may also act as some kind of entity ID.
 
         // TODO: Add a proper editor once things are figured out.
         // TODO: POSITION
@@ -140,8 +139,13 @@ public class BeastWarsMapObject extends SCGameData<BeastWarsInstance> {
         editor.addSignedShortField("Linked Zone ID", this.linkedZoneId,
                 newValue -> newValue >= -1 && newValue < this.mapFile.getZones().size(),
                 newValue -> this.linkedZoneId = newValue);
-        editor.addTextField("field15_24", String.format("%02X", this.field3_24)).setEditable(false);
-        editor.addTextField("field16_25", String.format("%02X", this.field4_25)).setEditable(false);
+        if (this.deathDropId >= 0 && this.deathDropId < BeastWarsMapDeathDropType.values().length) {
+            editor.addEnumSelector("Death Drop", BeastWarsMapDeathDropType.values()[this.deathDropId], BeastWarsMapDeathDropType.values(), false,
+                    newValue -> this.deathDropId = (byte) newValue.ordinal());
+        } else {
+            editor.addTextField("field15_24", String.format("%02X", this.deathDropId)).setEditable(false);
+        }
+        editor.addTextField("field16_25", String.format("%02X", this.energonLevel)).setEditable(false);
         editor.addTextField("field17_26", String.format("%04X", this.field5_26)).setEditable(false);
         editor.addTextField("typeFlags", String.format("%04X", this.typeFlags)).setEditable(false);
         editor.addTextField("field19_2A", String.format("%02X", this.field7_2A)).setEditable(false);

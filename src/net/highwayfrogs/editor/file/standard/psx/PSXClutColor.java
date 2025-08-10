@@ -1,13 +1,16 @@
 package net.highwayfrogs.editor.file.standard.psx;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents the CLUT format described on http://www.psxdev.net/forum/viewtopic.php?t=109.
@@ -15,11 +18,13 @@ import net.highwayfrogs.editor.utils.DataUtils;
  * Created by Kneesnap on 8/30/2018.
  */
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class PSXClutColor extends GameObject {
-    @Setter private boolean stp; // stp -> "Semi Transparent" Flag. TODO: For new FrogLord, we should take the time to understand these things, instead of just saying "it looks like it works".
     private byte red;
     private byte green;
     private byte blue;
+    @Setter private boolean stp; // stp -> "Semi Transparent" Flag. TODO: For new FrogLord, we should take the time to understand these things, instead of just saying "it looks like it works".
 
     private static final int BITS_PER_VALUE = 5;
     private static final int RED_OFFSET = 0;
@@ -51,21 +56,13 @@ public class PSXClutColor extends GameObject {
     Non full-black with STP bit = Semi-transparent color (alpha = 127)
      */
 
-    @Override
-    public void load(DataReader reader) {
-        short value = reader.readShort();
-        this.blue = getByte(value, BLUE_OFFSET);
-        this.green = getByte(value, GREEN_OFFSET);
-        this.red = getByte(value, RED_OFFSET);
-        this.stp = (value & STP_FLAG) == STP_FLAG;
+    public PSXClutColor(short value) {
+        fromShort(value);
     }
 
-    private static byte getByte(short value, int byteOffset) {
-        value >>= byteOffset;
-        for (int i = BITS_PER_VALUE; i < Constants.BITS_PER_BYTE; i++)
-            value &= ~(1 << i); // Disable bits 5-7, as bits 0-4 are the values we care about for this number.
-
-        return (byte) value;
+    @Override
+    public void load(DataReader reader) {
+        fromShort(reader.readShort());
     }
 
     @Override
@@ -74,15 +71,43 @@ public class PSXClutColor extends GameObject {
     }
 
     /**
+     * Loads the color data from the provided short value
+     * @param value the value to read from
+     * @return this
+     */
+    public PSXClutColor fromShort(short value) {
+        this.blue = getByte(value, BLUE_OFFSET);
+        this.green = getByte(value, GREEN_OFFSET);
+        this.red = getByte(value, RED_OFFSET);
+        this.stp = (value & STP_FLAG) == STP_FLAG;
+        return this;
+    }
+
+    private static byte getByte(short value, int byteOffset) {
+        value >>= byteOffset;
+        for (int i = BITS_PER_VALUE; i < Constants.BITS_PER_BYTE; i++)
+            value &= (short) ~(1 << i); // Disable bits 5-7, as bits 0-4 are the values we care about for this number.
+
+        return (byte) value;
+    }
+
+    /**
      * Get this value as a short.
      * @return shortValue
      */
     public short toShort() {
         short writeValue = (short) (this.stp ? STP_FLAG : 0);
-        writeValue |= (getBlue() << BLUE_OFFSET);
-        writeValue |= (getGreen() << GREEN_OFFSET);
-        writeValue |= (getRed() << RED_OFFSET);
+        writeValue |= (short) (getBlue() << BLUE_OFFSET);
+        writeValue |= (short) (getGreen() << GREEN_OFFSET);
+        writeValue |= (short) (getRed() << RED_OFFSET);
         return writeValue;
+    }
+
+    /**
+     * Gets this PSXClutColor as a CVector.
+     */
+    public CVector toCVector() {
+        return new CVector(getRed(), getGreen(), getBlue(), (byte) (this.stp ? CVector.FLAG_SEMI_TRANSPARENT : 0));
     }
 
     @Override

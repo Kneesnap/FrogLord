@@ -488,4 +488,39 @@ public class ImageWorkHorse {
         indexedImage.getGraphics().drawImage(sourceBufferedImage, 0, 0, null);
         return indexedImage;
     }
+
+    /**
+     * Test if two images are exact copies of each other
+     * @param image1 the first image to test
+     * @param image2 the second image to test
+     * @return true iff the images match
+     */
+    public static boolean doImagesMatch(BufferedImage image1, BufferedImage image2) {
+        if ((image1 == null) == (image2 != null))
+            return false;
+        if (image1 == image2)
+            return true;
+        if (image1.getWidth() != image2.getWidth() || image1.getHeight() != image2.getHeight())
+            return false;
+
+        // Fast check.
+        if (image1.getType() == image2.getType()) {
+            DataBuffer buffer1 = image1.getRaster().getDataBuffer();
+            DataBuffer buffer2 = image2.getRaster().getDataBuffer();
+            if (buffer1 instanceof DataBufferInt) {
+                return Arrays.equals(((DataBufferInt) buffer1).getData(), ((DataBufferInt) buffer2).getData());
+            } else if (buffer1 instanceof DataBufferByte) {
+                return Arrays.equals(((DataBufferByte) buffer1).getData(), ((DataBufferByte) buffer2).getData());
+            }
+        }
+
+        int width  = image1.getWidth();
+        int height = image1.getHeight();
+        for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
+                if (image1.getRGB(x, y) != image2.getRGB(x, y))
+                    return false;
+
+        return true;
+    }
 }

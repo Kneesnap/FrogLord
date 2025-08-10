@@ -28,7 +28,13 @@ public abstract class PSXShadedDynamicMesh<TPolygon, TPSXShadingManager extends 
             return;
 
         this.shadingEnabled = newState;
+        updateShading();
+    }
 
+    /**
+     * Updates the polygon shading.
+     */
+    public void updateShading() {
         getMesh().pushBatchOperations();
         getTextureAtlas().startBulkOperations();
         for (TPolygon polygon : getAllShadedPolygons())

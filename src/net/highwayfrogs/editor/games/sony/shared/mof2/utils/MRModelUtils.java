@@ -101,6 +101,7 @@ public class MRModelUtils {
 
         // Copy core model data.
         MRMofPartCel newPartCel = new MRMofPartCel(newStaticPart);
+        newStaticPart.getPartCels().add(newPartCel);
         Map<MRMofPolygon, MRMofTextureAnimationPolygonTarget> oldTargetsByOldPolygon = new HashMap<>();
         Map<MRMofTextureAnimation, MRMofTextureAnimation> newAnimations = new HashMap<>();
         Map<MRMofPolygon, MRMofPolygon> newPolygons = new HashMap<>();

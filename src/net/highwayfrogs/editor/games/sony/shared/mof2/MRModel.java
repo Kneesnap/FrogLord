@@ -16,6 +16,7 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.MRAnimatedMof;
+import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPart;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRStaticMof;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.MRModelFileUIController;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.MRModelMeshController;
@@ -144,7 +145,7 @@ public class MRModel extends SCSharedGameFile {
         propertyList.add("Type", getModelType() + (this.incomplete ? " (Incomplete)" : ""));
         propertyList.add("Main VLO", this.vloFile != null ? this.vloFile.getFileDisplayName() : "None");
         if (this.incomplete)
-            propertyList.add("Complete Counterpart", this.completeCounterpart.getFileDisplayName());
+            propertyList.add("Complete Counterpart", this.completeCounterpart != null ? this.completeCounterpart.getFileDisplayName() : "None");
 
         if (this.animatedMof != null)
             propertyList = this.animatedMof.addToPropertyList(propertyList);
@@ -422,5 +423,46 @@ public class MRModel extends SCSharedGameFile {
         String bankName = SCUtils.stripWin95(FileUtils.stripExtension(getFileDisplayName()));
         NameBank childBank = bank.getChildBank(bankName);
         return childBank != null ? childBank.getName(animationNameId) : null;
+    }
+
+    @Override
+    public void onImport(SCGameFile<?> oldFile, String oldFileName, String importedFileName) {
+        if (oldFile instanceof MRModel)
+            ((MRModel) oldFile).updateIncompleteReferences(this);
+    }
+
+    /**
+     * Update incomplete models which reference this one to reference a new model instead.
+     * @param newModel the new model to reference
+     */
+    private void updateIncompleteReferences(MRModel newModel) {
+        if (newModel == null)
+            throw new NullPointerException("newModel");
+        if (this.incomplete || isDummy() || this == newModel)
+            return;
+
+        for (MRModel otherModel : getGameInstance().getMainArchive().getAllFiles(MRModel.class)) {
+            if (!otherModel.isIncomplete() || otherModel.getCompleteCounterpart() != this)
+                continue;
+
+            otherModel.completeCounterpart = newModel;
+            List<MRStaticMof> staticMofs = newModel.getStaticMofs();
+            List<MRStaticMof> otherStaticMofs = otherModel.getStaticMofs();
+            if (staticMofs.size() != otherStaticMofs.size())
+                throw new RuntimeException("The new incomplete model had " + otherStaticMofs.size() + " static mofs, but " + staticMofs.size() + " were expected to match the new counterpart model.");
+
+            for (int i = 0; i < staticMofs.size(); i++) {
+                MRStaticMof staticMof = staticMofs.get(i);
+                MRStaticMof otherStaticMof = otherStaticMofs.get(i);
+                if (staticMof.getParts().size() != otherStaticMof.getParts().size())
+                    throw new RuntimeException("The new incomplete model had " + otherStaticMof.getParts().size() + " parts in staticMof " + i + ", but " + staticMof.getParts().size() + " were expected to match the new counterpart model.");
+
+                for (int j = 0; j < staticMof.getParts().size(); j++) {
+                    MRMofPart mofPart = staticMof.getParts().get(j);
+                    MRMofPart otherPart = staticMof.getParts().get(j);
+                    mofPart.copyToIncompletePart(otherPart);
+                }
+            }
+        }
     }
 }

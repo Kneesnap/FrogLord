@@ -13,8 +13,9 @@ import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsTexFile;
 import net.highwayfrogs.editor.games.sony.beastwars.map.BeastWarsMapFile;
 import net.highwayfrogs.editor.games.sony.beastwars.map.data.MapTextureInfoEntry;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
-import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapPolygon;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
+import net.highwayfrogs.editor.utils.ColorUtils;
+import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.awt.image.BufferedImage;
@@ -172,7 +173,7 @@ public class BeastWarsMapVertex extends SCGameObject<BeastWarsInstance> {
      * Gets shading color as a {@code CVector}.
      */
     public CVector getColorVector() {
-        return SCMapPolygon.fromPackedShort(getColor(), PSXPolygonType.POLY_GT4, false, false);
+        return fromPackedShort(getColor());
     }
 
     /**
@@ -257,7 +258,7 @@ public class BeastWarsMapVertex extends SCGameObject<BeastWarsInstance> {
         }
 
         PSXShadedTextureManager<BeastWarsMapVertex> shadedTextureManager = mesh != null ? mesh.getShadedTextureManager() : null;
-        return new PSXShadeTextureDefinition(shadedTextureManager, PSXPolygonType.POLY_GT4, textureSource, colors, CONSTANT_UVS, false, false);
+        return new PSXShadeTextureDefinition(shadedTextureManager, PSXPolygonType.POLY_GT4, textureSource, colors, CONSTANT_UVS, false, true);
     }
 
     @Override
@@ -272,5 +273,36 @@ public class BeastWarsMapVertex extends SCGameObject<BeastWarsInstance> {
 
         BeastWarsMapVertex vertex = (BeastWarsMapVertex) obj;
         return vertex.map == this.map && vertex.gridX == this.gridX && vertex.gridZ == this.gridZ;
+    }
+
+    /**
+     * Loads a CVector color from the given 16-bit short encoded in Beast Wars map vertex color format.
+     * @param packedColor the packed color in Beast Wars formatt
+     * @return color
+     */
+    public static CVector fromPackedShort(short packedColor) {
+        // Process padding into color value.
+        short blue = (short) ((packedColor & 0x1F) << 2);
+        short green = (short) (((packedColor >> 5) & 0x1F) << 2);
+        short red = (short) (((packedColor >> 10) & 0x1F) << 2);
+        int rgbColor = ColorUtils.toRGB(DataUtils.unsignedShortToByte(red), DataUtils.unsignedShortToByte(green), DataUtils.unsignedShortToByte(blue));
+
+        // Calculate GPU code.
+        byte gpuCode = CVector.GP0_COMMAND_POLYGON_PRIMITIVE | CVector.FLAG_GOURAUD_SHADING | CVector.FLAG_QUAD | CVector.FLAG_TEXTURED | CVector.FLAG_MODULATION;
+
+        // Create color.
+        CVector loadedColor = CVector.makeColorFromRGB(rgbColor);
+        loadedColor.setCode(gpuCode);
+        return loadedColor;
+    }
+
+    /**
+     * Saves the color to a packed 16-bit short in Beast Wars map vertex color format.
+     * @param color the color to pack
+     * @return packedShort
+     */
+    public static short toPackedShort(CVector color) {
+        return (short) (((color.getRedShort() & 0b01111100) << 8) | ((color.getGreenShort() & 0b01111100) << 3)
+                | (color.getBlueShort() & 0b01111100) >>> 2);
     }
 }

@@ -353,7 +353,6 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
     }
 
     private void readFaceColors(DataReader reader) {
-        // TODO: There's a decent chance this is a PSXClutColor.
         this.faceColors = new short[this.heightMapZLength][this.heightMapXLength];
         for (int z = 0; z < this.heightMapZLength; z++)
             for (int x = 0; x < this.heightMapXLength; x++)
@@ -402,6 +401,12 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
 
     @Override
     public void performDefaultUIAction() {
+        for (int i = 0; i < this.textureInfoEntries.length; i++) { // TODO: TOSS
+            MapTextureInfoEntry infoEntry = this.textureInfoEntries[i];
+            if (infoEntry.getFlags() != 0)
+                getLogger().info("TexEntry[%d]: (Flags: %08X/%d. Texture ID: %d)", i, infoEntry.getFlags(), infoEntry.getFlags(), infoEntry.getTextureId());
+        }
+
         MeshViewController.setupMeshViewer(getGameInstance(), new BeastWarsMapMeshController(getGameInstance()), new BeastWarsMapMesh(this));
     }
 
