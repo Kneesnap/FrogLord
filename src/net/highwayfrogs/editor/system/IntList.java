@@ -99,8 +99,7 @@ public class IntList {
         }
 
         // Remove invalid elements from the end.
-        while (totalIndexCount-- > 0)
-            remove(size() - 1);
+        this.size -= totalIndexCount;
     }
 
     public void clear() {
@@ -114,12 +113,12 @@ public class IntList {
     public int get(int index) {
         if (index < 0 || index >= this.size) // Too high use to call Utils.verify.
             throw new ArrayIndexOutOfBoundsException(index);
-        return array[index];
+        return this.array[index];
     }
 
     public int set(int index, int newValue) {
         int val = get(index);
-        array[index] = newValue;
+        this.array[index] = newValue;
         return val;
     }
 
