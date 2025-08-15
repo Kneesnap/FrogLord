@@ -15,6 +15,7 @@ import net.highwayfrogs.editor.file.config.data.MusicTrack;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.PickupData;
+import net.highwayfrogs.editor.file.config.exe.PickupData.PickupAnimationFrame;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.general.DemoTableEntry;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
@@ -38,6 +39,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePack
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketHeader;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerUtils;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerVersionComparison;
+import net.highwayfrogs.editor.games.sony.shared.ISCTextureUser;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
@@ -65,7 +67,7 @@ import java.util.Map.Entry;
  * Created by Kneesnap on 9/7/2023.
  */
 @Getter
-public class FroggerGameInstance extends SCGameInstance {
+public class FroggerGameInstance extends SCGameInstance implements ISCTextureUser {
     private final List<MapBook> mapLibrary = new ArrayList<>();
     private final List<MusicTrack> musicTracks = new ArrayList<>();
     private final List<LevelInfo> arcadeLevelInfo = new ArrayList<>();
@@ -238,6 +240,49 @@ public class FroggerGameInstance extends SCGameInstance {
         engine.addWrapperTemplates(FroggerGameInstance.class, FroggerConfig.class, FroggerTextureRemap.class, FroggerMapFile.class,
                 LevelInfo.class, FroggerMapLevelID.class, FroggerMapWorldID.class, PCMapBook.class, FroggerMapTheme.class,
                 PSXMapBook.class, MapBook.class, FroggerUtils.class, FroggerMapFilePacketEntity.class, MusicTrack.class);
+    }
+
+    @Override
+    public List<Short> getUsedTextureIds() {
+        List<Short> textures = new ArrayList<>();
+
+        for (int i = 0; i < this.allLevelInfo.size(); i++) {
+            LevelInfo levelInfo = this.allLevelInfo.get(i);
+            tryAddTexture(textures, levelInfo.getWorldLevelStackColoredImage());
+            tryAddTexture(textures, levelInfo.getUnusedWorldVisitedImage());
+            tryAddTexture(textures, levelInfo.getWorldNotTriedImage());
+            tryAddTexture(textures, levelInfo.getLevelPreviewScreenshotImage());
+            tryAddTexture(textures, levelInfo.getLevelNameImage());
+            tryAddTexture(textures, levelInfo.getIngameLevelNameImage());
+        }
+
+        // Add pickup data.
+        for (int i = 0; i < this.pickupData.length; i++) {
+            PickupData pickupData = this.pickupData[i];
+            if (pickupData == null)
+                continue;
+
+            for (int j = 0; j < pickupData.getFrames().size(); j++) {
+                PickupAnimationFrame pickupFrame = pickupData.getFrames().get(j);
+                GameImage image = pickupFrame.getImage();
+                if (image != null && !textures.contains(image.getTextureId()))
+                    textures.add(image.getTextureId());
+            }
+        }
+
+        // Add sky land remap.
+        if (this.skyLandTextureRemap != null)
+            textures.addAll(this.skyLandTextureRemap.getTextureIds());
+        return textures;
+    }
+
+    private static void tryAddTexture(List<Short> textures, GameImage image) {
+        if (image == null)
+            return;
+
+        short textureId = image.getTextureId();
+        if (textureId >= 0 && !textures.contains(textureId))
+            textures.add(textureId);
     }
 
     /**

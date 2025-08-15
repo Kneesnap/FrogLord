@@ -424,6 +424,28 @@ public class MWDFile extends SCSharedGameData {
     }
 
     /**
+     * Gets all files, including those found in wads.
+     */
+    public List<SCGameFile<?>> getAllFiles() {
+        List<SCGameFile<?>> results = new ArrayList<>();
+
+        for (SCGameFile<?> file : getFiles()) {
+            results.add(file);
+
+            if (file instanceof WADFile) {
+                WADFile wadFile = (WADFile) file;
+                for (WADEntry entry : wadFile.getFiles()) {
+                    SCGameFile<?> testFile = entry.getFile();
+                    if (testFile != null)
+                        results.add(testFile);
+                }
+            }
+        }
+
+        return results;
+    }
+
+    /**
      * Iterate over each file of a given type.
      * @param fileClass The type to iterate over.
      * @param handler   The behavior to apply.

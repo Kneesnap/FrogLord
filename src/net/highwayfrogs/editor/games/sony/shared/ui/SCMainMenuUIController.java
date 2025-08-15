@@ -15,6 +15,7 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.VLOController;
+import net.highwayfrogs.editor.games.sony.shared.utils.SCAnalysisUtils;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.MainMenuController;
@@ -75,6 +76,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
 
         addMenuItem(this.menuBarEdit, "Open Hash Playground", () -> HashPlaygroundController.openEditor(getGameInstance()));
         addMenuItem(this.menuBarEdit, "Find Texture By ID", this::promptSearchForTexture);
+        addMenuItem(this.menuBarEdit, "Find Unused Textures", () -> SCAnalysisUtils.findUnusedTextures(getGameInstance()));
     }
 
     @Override

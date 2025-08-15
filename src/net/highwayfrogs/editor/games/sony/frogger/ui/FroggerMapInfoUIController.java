@@ -106,10 +106,10 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
         if (level != null && !mapFile.getGameInstance().getLevelInfoMap().isEmpty()) {
             LevelInfo info = mapFile.getGameInstance().getLevelInfoMap().get(level);
             if (info != null) {
-                GameImage gamePreviewImage = mapFile.getGameInstance().getImageFromPointer(info.getLevelTexturePointer());
+                GameImage gamePreviewImage = info.getLevelPreviewScreenshotImage();
                 if (gamePreviewImage != null)
                     this.levelPreviewScreenshotView.setImage(gamePreviewImage.toFXImage());
-                GameImage gameNameImage = mapFile.getGameInstance().getImageFromPointer(info.getLevelNameTexturePointer());
+                GameImage gameNameImage = info.getLevelNameImage();
                 if (gameNameImage != null)
                     this.levelNameImageView.setImage(gameNameImage.toFXImage());
             }

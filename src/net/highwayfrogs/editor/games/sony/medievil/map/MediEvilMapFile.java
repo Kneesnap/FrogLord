@@ -11,11 +11,15 @@ import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapCollpri
 import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapEntitiesPacket;
 import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapGraphicsPacket;
 import net.highwayfrogs.editor.games.sony.medievil.map.packet.MediEvilMapHeaderPacket;
+import net.highwayfrogs.editor.games.sony.shared.ISCTextureUser;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
+import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+
+import java.util.List;
 
 /**
  * Represents a map file in MediEvil.
@@ -26,7 +30,7 @@ import net.highwayfrogs.editor.gui.editor.MeshViewController;
  * Cloned from a file created by Kneesnap on 03/9/2024.
  */
 @Getter
-public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> {
+public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> implements ISCTextureUser {
     private final MediEvilMapHeaderPacket headerPacket;
     private final MediEvilMapGraphicsPacket graphicsPacket;
     private final MediEvilMapEntitiesPacket entitiesPacket;
@@ -70,6 +74,16 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> {
      */
     public MediEvilLevelTableEntry getLevelTableEntry() {
         return getGameInstance().getLevelTableEntry(getFileResourceId());
+    }
+
+    @Override
+    public List<Short> getUsedTextureIds() {
+        MediEvilLevelTableEntry levelTableEntry = getLevelTableEntry();
+        if (levelTableEntry == null)
+            return null;
+
+        TextureRemapArray textureRemap = levelTableEntry.getRemap();
+        return textureRemap != null ? textureRemap.getTextureIds() : null;
     }
 
     @Override
