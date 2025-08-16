@@ -336,9 +336,6 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         @Cleanup PrintWriter vramCWriter = new PrintWriter(new File(folder, "frogvram.c"));
         saveFrogVRAM(vramHWriter, vramCWriter);
 
-        @Cleanup PrintWriter textureCfgWriter = new PrintWriter(new File(folder, "texture-config.txt"));
-        saveTextureCfg(textureCfgWriter);
-
         getLogger().info("Generated source files.");
     }
 
@@ -352,13 +349,13 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
 
         String[] imageNames = new String[maxTexId + 1];
         for (int i = 0; i < imageNames.length; i++)
-            imageNames[i] = "im_img" + i;
+            imageNames[i] = SCUtils.C_UNNAMED_IMAGE_PREFIX + i;
 
         // Apply image names.
         SCImageList imageList = getVersionConfig().getImageList();
         if (imageList.getImageNamesById().size() > 0)
             for (Entry<Short, String> imageEntry : imageList.getImageNamesById().entrySet())
-                imageNames[imageEntry.getKey()] = imageEntry.getValue();
+                imageNames[imageEntry.getKey()] = SCUtils.IMAGE_C_PREFIX + imageEntry.getValue();
 
         // Write start of .H file.
         vramHWriter.write("#ifndef __FROGVRAM_H" + Constants.NEWLINE);
@@ -452,11 +449,6 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
 
         // Must happen last.
         writer.write("#endif" + Constants.NEWLINE);
-    }
-
-    private void saveTextureCfg(PrintWriter writer) {
-        for (Entry<Short, String> entry : getVersionConfig().getImageList().getImageNamesById().entrySet())
-            writer.append(String.valueOf(entry.getKey())).append("=").append(entry.getValue()).append(Constants.NEWLINE);
     }
 
     /**

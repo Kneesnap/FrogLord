@@ -42,6 +42,7 @@ public class SCImageTableGenerator {
             if (StringUtils.isNullOrEmpty(imageName)) {
                 tempNameLength = SCUtils.C_UNNAMED_IMAGE_PREFIX.length() + NumberUtils.getDigitCount(image.getTextureId() & 0xFFFF);
             } else {
+                imageName = SCUtils.IMAGE_C_PREFIX + imageName;
                 tempNameLength = imageName.length();
             }
 
@@ -123,8 +124,11 @@ public class SCImageTableGenerator {
             // Write texture name.
             int hash = hashes[image.getTextureId() & 0xFFFF];
             String imageName = image.getOriginalName();
-            if (imageName == null)
+            if (imageName == null) {
                 imageName = SCUtils.C_UNNAMED_IMAGE_PREFIX + image.getTextureId();
+            } else {
+                imageName = SCUtils.IMAGE_C_PREFIX + imageName;
+            }
 
             lineBuilder.append(imageName).append(';');
             if (hash >= 0) {
@@ -269,6 +273,7 @@ public class SCImageTableGenerator {
             if (originalName == null)
                 continue;
 
+            originalName = SCUtils.IMAGE_C_PREFIX + originalName;
             int hash = calculateHash(instance, originalName);
             results[image.getTextureId() & 0xFFFF] = hash;
             if (lastHash > hash && lastHash != -1) {
