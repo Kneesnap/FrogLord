@@ -892,7 +892,7 @@ public class GUIEditorGrid {
         Button pasteButton = new Button("Paste");
         pasteButton.setOnMouseClicked(evt -> {
             if (LAST_COPIED_POSITION == null) {
-                FXUtils.makePopUp("No position has been copied, so no position will be pasted.", AlertType.WARNING);
+                FXUtils.showPopup(AlertType.WARNING, "Cannot paste position.", "No position has been copied, so no position can be pasted.");
                 return;
             }
 
@@ -1864,7 +1864,7 @@ public class GUIEditorGrid {
                 try {
                     newPitch = (float) Math.toRadians(Float.parseFloat(newText));
                 } catch (NumberFormatException ex) {
-                    FXUtils.makePopUp("Cannot interpret '" + newText + "' as a number.", AlertType.ERROR);
+                    FXUtils.showPopup(AlertType.ERROR, "Non-number was given.", "Cannot interpret '" + newText + "' as a number.");
                     return;
                 }
 
@@ -1881,7 +1881,7 @@ public class GUIEditorGrid {
                 try {
                     newYaw = (float) Math.toRadians(Float.parseFloat(newText));
                 } catch (NumberFormatException ex) {
-                    FXUtils.makePopUp("Cannot interpret '" + newText + "' as a number.", AlertType.ERROR);
+                    FXUtils.showPopup(AlertType.ERROR, "Non-number was given.", "Cannot interpret '" + newText + "' as a number.");
                     return;
                 }
 
@@ -1898,7 +1898,7 @@ public class GUIEditorGrid {
                 try {
                     newRoll = (float) Math.toRadians(Float.parseFloat(newText));
                 } catch (NumberFormatException ex) {
-                    FXUtils.makePopUp("Cannot interpret '" + newText + "' as a number.", AlertType.ERROR);
+                    FXUtils.showPopup(AlertType.ERROR, "Non-number was given.", "Cannot interpret '" + newText + "' as a number.");
                     return;
                 }
 

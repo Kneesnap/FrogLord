@@ -96,7 +96,7 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
                 List<SCTextureUsage>[] allTextureUsages = TEXTURE_USAGES_PER_INSTANCE.computeIfAbsent(getGameInstance(), SCAnalysisUtils::generateTextureUsageMapping);
                 List<SCTextureUsage> textureUsages = allTextureUsages != null && allTextureUsages.length > image.getTextureId() ? allTextureUsages[image.getTextureId()] : null;
                 if (textureUsages == null || textureUsages.isEmpty()) {
-                    FXUtils.makePopUp("No usages of this image were found.\nThis does *NOT* guarantee that the image is never unused.", AlertType.INFORMATION);
+                    FXUtils.showPopup(AlertType.INFORMATION, "No usages found.", "No usages of this image were found.\nThis does *NOT* guarantee that the image is never unused.");
                     return;
                 }
 
@@ -106,7 +106,7 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
                     builder.append(" - ").append(usage.getLocationDescription()).append('\n');
                 }
 
-                FXUtils.makePopUp(builder.toString(), AlertType.INFORMATION);
+                FXUtils.showPopup(AlertType.INFORMATION, "Texture Usage Finder:", builder.toString());
             });
         }));
 

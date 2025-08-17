@@ -105,12 +105,12 @@ public abstract class BasicListMeshUIManager<TMesh extends DynamicMesh, TValue, 
         this.addValueButton.setOnAction(evt -> {
             TValue newValue = createNewValue();
             if (newValue == null) {
-                FXUtils.makePopUp("Failed to create a new " + getValueName() + ".", AlertType.WARNING);
+                FXUtils.showPopup(AlertType.WARNING, "Failed to add new " + getValueName() + ".", "Null was returned by createNewValue().");
                 return;
             }
 
             if (!addValue(newValue))
-                FXUtils.makePopUp("Failed to add the new " + getValueName() + ".\n" + newValue, AlertType.WARNING);
+                FXUtils.showPopup(AlertType.WARNING, "Failed to add the new " + getValueName() + ".", "The " + getValueName() + " was not added successfully.\nObject: " + newValue);
         });
         this.addValueButton.setAlignment(Pos.CENTER);
         this.mainGrid.setupNode(this.addValueButton);

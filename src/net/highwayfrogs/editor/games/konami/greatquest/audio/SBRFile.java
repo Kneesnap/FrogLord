@@ -14,9 +14,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.reader.FileSource;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.generic.data.GameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
@@ -35,6 +32,9 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.Proper
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.*;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.FileSource;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.Clip;
@@ -642,7 +642,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
 
             if (!hasPcWarningBeenShown) {
                 hasPcWarningBeenShown = true;
-                FXUtils.makePopUp("FrogLord is unable to play these sound effects due to Java not supporting this audio format.\nHowever, FrogLord will still let you import/export it, as other programs will be able to play it.", AlertType.WARNING);
+                FXUtils.showPopup(AlertType.WARNING, "Audio Playback Failure", "FrogLord is unable to play these sound effects due to Java not supporting this audio format.\nHowever, FrogLord will still let you import/export it, as other programs will be able to play it.");
             }
 
             return null;
@@ -1391,7 +1391,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             this.addNewWaveEntryItem.setOnAction(event -> {
                 SBRFile sbrFile = getListComponent().getFile();
                 if (sbrFile.getWaves().isEmpty()) {
-                    FXUtils.makePopUp("There are no sound waves in this file currently, so it is not possible to add a reference.", AlertType.WARNING);
+                    FXUtils.showPopup(AlertType.WARNING, null, "There are no sound waves in this file currently, so it is not possible to add a reference.");
                     return;
                 }
 

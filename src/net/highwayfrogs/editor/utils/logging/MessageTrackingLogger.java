@@ -132,7 +132,7 @@ public class MessageTrackingLogger extends WrappedLogger {
         }
 
         String displayMessage = resolveTemplateText(messageTemplate, alertType, summaryText);
-        FXUtils.makePopUp(displayMessage, alertType);
+        FXUtils.showPopup(alertType, "Summary:", displayMessage);
     }
 
     private enum SectionReadState {

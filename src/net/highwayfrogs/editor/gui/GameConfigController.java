@@ -131,7 +131,7 @@ public class GameConfigController extends GameUIController<GameInstance> {
 
         // Failsafe.
         if (gameType == null || StringUtils.isNullOrWhiteSpace(gameVersion) || this.activeConfigController == null || this.activeConfigController.isLoadButtonDisabled()) {
-            FXUtils.makePopUp("Cannot load game without being fully configured!", AlertType.ERROR);
+            FXUtils.showPopup(AlertType.ERROR, "Load Failure", "Cannot load game without being fully configured!");
             return;
         }
 

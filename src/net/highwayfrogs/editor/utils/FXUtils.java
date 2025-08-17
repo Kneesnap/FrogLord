@@ -10,6 +10,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
@@ -23,10 +24,12 @@ import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Duration;
+import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.gui.GameUIController;
+import net.highwayfrogs.editor.gui.ImageResource;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -240,7 +243,7 @@ public class FXUtils {
         GameInstance instance = controller.getGameInstance();
         FXMLLoader fxmlTemplateLoader = getFXMLTemplateLoader(instance, template);
         if (fxmlTemplateLoader == null) {
-            makePopUp("The UI template '" + template + "' was not found.", AlertType.ERROR);
+            showPopup(AlertType.ERROR, "Could not find UI template.", "UI template path: '" + template + "'");
             return false;
         }
 
@@ -436,7 +439,7 @@ public class FXUtils {
             String errorMessage = stringWriter.toString();
 
             showPopUpAndWait(() -> {
-                Alert alert = new Alert(AlertType.ERROR, errorMessage, ButtonType.OK);
+                Alert alert = makeAlert(AlertType.ERROR, "An error occurred.", errorMessage, null, ButtonType.OK);
                 if (ex != null) {
                     alert.setResizable(true);
                     alert.setWidth(1000);
@@ -446,6 +449,21 @@ public class FXUtils {
                 return alert;
             });
         }
+    }
+
+    private static Alert makeAlert(AlertType alertType, String headerText, String contentText, Image graphicIcon, ButtonType... buttonTypes) {
+        Alert newAlert = new Alert(alertType, StringUtils.isNullOrEmpty(contentText) ? "" : contentText, buttonTypes);
+        if (graphicIcon != null)
+            newAlert.setGraphic(new ImageView(graphicIcon));
+        newAlert.setTitle(StringUtils.capitalize(alertType.name()) + " Popup");
+        if (!StringUtils.isNullOrEmpty(headerText))
+            newAlert.setHeaderText(headerText);
+
+        Window alertWindow = newAlert.getDialogPane().getScene().getWindow();
+        if (alertWindow instanceof Stage)
+            ((Stage) alertWindow).getIcons().add(ImageResource.FROGLORD_LOGO_SQUARE_ICON.getFxImage());
+
+        return newAlert;
     }
 
     // Shows a popup and waits for a response, even if async.
@@ -471,10 +489,23 @@ public class FXUtils {
 
     /**
      * Make a popup show up.
-     * @param message The message to display.
+     * @param alertType The type of popup to display.
+     * @param headerText The message to display in the header.
+     * @param contentText The content text to display.
      */
+    public static void showPopup(@NonNull AlertType alertType, String headerText, String contentText) {
+        showPopUpAndWait(() -> makeAlert(alertType, headerText, contentText, null, ButtonType.OK));
+    }
+
+    /**
+     * Make a popup show up.
+     * TODO: Review usages.
+     * @param message The message to display.
+     * @deprecated Use {@code showPopup} instead.
+     */
+    @Deprecated
     public static void makePopUp(String message, AlertType type) {
-        showPopUpAndWait(() -> new Alert(type, message, ButtonType.OK));
+        showPopUpAndWait(() -> makeAlert(type, null, message, null, ButtonType.OK));
     }
 
     /**
@@ -482,7 +513,16 @@ public class FXUtils {
      * @param message The message to display.
      */
     public static boolean makePopUpYesNo(String message) {
-        return showPopUpAndWait(() -> new Alert(AlertType.CONFIRMATION, message, ButtonType.YES, ButtonType.NO))
+        return makePopUpYesNo("Confirmation", message);
+    }
+
+    /**
+     * Make a yes or no popup prompt show up.
+     * @param headerText The text to display as part of the header
+     * @param message The message to display.
+     */
+    public static boolean makePopUpYesNo(String headerText, String message) {
+        return showPopUpAndWait(() -> makeAlert(AlertType.CONFIRMATION, headerText, message, null, ButtonType.YES, ButtonType.NO))
                 .orElse(ButtonType.NO) == ButtonType.YES;
     }
 

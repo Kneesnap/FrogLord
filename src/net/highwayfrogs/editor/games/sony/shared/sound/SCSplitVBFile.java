@@ -3,14 +3,14 @@ package net.highwayfrogs.editor.games.sony.shared.sound;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.SCVABUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents a .VB file.
@@ -51,7 +51,7 @@ public class SCSplitVBFile extends SCSharedGameFile {
         if (this.soundBank != null)
             return loadEditor(getGameInstance(), "edit-file-vb", new SCVABUIController(getGameInstance()), this);
 
-        FXUtils.makePopUp("Could not find the sound bank header file which pairs with this file.", AlertType.ERROR);
+        FXUtils.showPopup(AlertType.ERROR, "Could not find the sound bank header.", "Paired VB File: " + getFileDisplayName());
         return null;
     }
 
