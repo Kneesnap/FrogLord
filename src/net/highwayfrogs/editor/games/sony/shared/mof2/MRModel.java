@@ -27,6 +27,7 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.ui.MRModelMeshController;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.mesh.MRModelMesh;
 import net.highwayfrogs.editor.games.sony.shared.mof2.utils.MRModelUtils;
 import net.highwayfrogs.editor.games.sony.shared.mof2.utils.MRMofAndMisfitModelConverter;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.utils.DynamicMeshObjExporter;
 import net.highwayfrogs.editor.gui.GameUIController;
@@ -499,5 +500,12 @@ public class MRModel extends SCSharedGameFile implements ISCTextureUser {
         }
 
         return textures;
+    }
+
+    @Override
+    public String getTextureUserName() {
+        // Include the parent WAD to ensure files with the same name can be distinguished.
+        WADFile parentWadFile = getParentWadFile();
+        return getFileDisplayName() + (parentWadFile != null ? "[" + parentWadFile.getFileDisplayName() + "]" : "");
     }
 }

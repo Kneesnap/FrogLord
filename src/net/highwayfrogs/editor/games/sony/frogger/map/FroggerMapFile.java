@@ -190,6 +190,11 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> implement
         return textureRemap != null ? textureRemap.getTextureIds() : null;
     }
 
+    @Override
+    public String getTextureUserName() {
+        return getFileDisplayName();
+    }
+
     /**
      * Gets the remap table for this map.
      * @return remapTable

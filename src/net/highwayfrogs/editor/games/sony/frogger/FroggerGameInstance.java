@@ -48,6 +48,7 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.LazySCGameFileListGroup;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
+import net.highwayfrogs.editor.games.sony.shared.utils.SCAnalysisUtils.SCTextureUsage;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
 import net.highwayfrogs.editor.utils.DataUtils;
@@ -244,16 +245,27 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
 
     @Override
     public List<Short> getUsedTextureIds() {
-        List<Short> textures = new ArrayList<>();
+        return ISCTextureUser.getTextureIdsFromUsages(getTextureUsages());
+    }
 
+    @Override
+    public String getTextureUserName() {
+        return null;
+    }
+
+    @Override
+    public Set<SCTextureUsage> getTextureUsages() {
+        Set<SCTextureUsage> textures = new HashSet<>();
+
+        final String levelSelectName = "Level Select";
         for (int i = 0; i < this.allLevelInfo.size(); i++) {
             LevelInfo levelInfo = this.allLevelInfo.get(i);
-            tryAddTexture(textures, levelInfo.getWorldLevelStackColoredImage());
-            tryAddTexture(textures, levelInfo.getUnusedWorldVisitedImage());
-            tryAddTexture(textures, levelInfo.getWorldNotTriedImage());
-            tryAddTexture(textures, levelInfo.getLevelPreviewScreenshotImage());
-            tryAddTexture(textures, levelInfo.getLevelNameImage());
-            tryAddTexture(textures, levelInfo.getIngameLevelNameImage());
+            tryAddTexture(textures, levelInfo.getWorldLevelStackColoredImage(), levelSelectName);
+            tryAddTexture(textures, levelInfo.getUnusedWorldVisitedImage(), levelSelectName);
+            tryAddTexture(textures, levelInfo.getWorldNotTriedImage(), levelSelectName);
+            tryAddTexture(textures, levelInfo.getLevelPreviewScreenshotImage(), levelSelectName);
+            tryAddTexture(textures, levelInfo.getLevelNameImage(), levelSelectName);
+            tryAddTexture(textures, levelInfo.getIngameLevelNameImage(), levelSelectName);
         }
 
         // Add pickup data.
@@ -265,24 +277,24 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
             for (int j = 0; j < pickupData.getFrames().size(); j++) {
                 PickupAnimationFrame pickupFrame = pickupData.getFrames().get(j);
                 GameImage image = pickupFrame.getImage();
-                if (image != null && !textures.contains(image.getTextureId()))
-                    textures.add(image.getTextureId());
+                if (image != null)
+                    textures.add(new SCTextureUsage(this, image.getTextureId(), "PickupData"));
             }
         }
 
         // Add sky land remap.
         if (this.skyLandTextureRemap != null)
-            textures.addAll(this.skyLandTextureRemap.getTextureIds());
+            addTextureIdUsages(textures, this.skyLandTextureRemap.getTextureIds(), this.skyLandTextureRemap.getName());
         return textures;
     }
 
-    private static void tryAddTexture(List<Short> textures, GameImage image) {
+    private void tryAddTexture(Set<SCTextureUsage> textures, GameImage image, String name) {
         if (image == null)
             return;
 
         short textureId = image.getTextureId();
-        if (textureId >= 0 && !textures.contains(textureId))
-            textures.add(textureId);
+        if (textureId >= 0)
+            textures.add(new SCTextureUsage(this, textureId, name));
     }
 
     /**

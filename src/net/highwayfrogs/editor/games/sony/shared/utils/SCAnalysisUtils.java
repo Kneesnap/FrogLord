@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.games.sony.shared.utils;
 
+import lombok.Data;
+import lombok.NonNull;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
@@ -9,13 +11,34 @@ import net.highwayfrogs.editor.games.sony.shared.ISCTextureUser;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.IndexBitArray;
 
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Contains static file analysis tools.
  * Created by Kneesnap on 2/20/2019.
  */
 public class SCAnalysisUtils {
+    private static List<ISCTextureUser> getAllTextureUsers(SCGameInstance instance) {
+        if (instance == null)
+            throw new NullPointerException("instance");
+
+        List<ISCTextureUser> textureUsers = new ArrayList<>();
+
+        // Test the game instance itself.
+        if (instance instanceof ISCTextureUser)
+            textureUsers.add((ISCTextureUser) instance);
+
+        // Test all game files.
+        for (SCGameFile<?> gameFile : instance.getMainArchive().getAllFiles())
+            if (gameFile instanceof ISCTextureUser)
+                textureUsers.add((ISCTextureUser) gameFile);
+
+        return textureUsers;
+    }
+
     /**
      * Prints unused textures found in a MWD File.
      * There are some VLOs which frogger can't determine if a texture is used or not, so it will not scan them.
@@ -28,13 +51,8 @@ public class SCAnalysisUtils {
 
         // Mark textures referenced by files as used.
         IndexBitArray usedTextures = new IndexBitArray();
-        for (SCGameFile<?> gameFile : instance.getMainArchive().getAllFiles())
-            if (gameFile instanceof ISCTextureUser)
-                addTexturesToBitArray(usedTextures, (ISCTextureUser) gameFile);
-
-        // Mark all textures referenced by the game instance as used.
-        if (instance instanceof ISCTextureUser)
-            addTexturesToBitArray(usedTextures, (ISCTextureUser) instance);
+        for (ISCTextureUser textureUser : getAllTextureUsers(instance))
+            addTexturesToBitArray(usedTextures, textureUser);
 
         ILogger logger = instance.getLogger();
         for (VLOArchive vloArchive : instance.getMainArchive().getAllFiles(VLOArchive.class)) {
@@ -73,6 +91,51 @@ public class SCAnalysisUtils {
             Short textureId = textureIds.get(i);
             if (textureId != null && textureId >= 0)
                 usedTextures.setBit(textureId, true);
+        }
+    }
+
+    /**
+     * Prints unused textures found in a MWD File.
+     * There are some VLOs which frogger can't determine if a texture is used or not, so it will not scan them.
+     * Skipped: SKY_LAND textures, FIXE, OPT, LS, GEN, GENM, START, particle textures.
+     * @param instance The game instance file to scan.
+     */
+    @SuppressWarnings("unchecked")
+    public static List<SCTextureUsage>[] generateTextureUsageMapping(SCGameInstance instance) {
+        if (instance == null)
+            throw new NullPointerException("instance");
+
+        List<List<SCTextureUsage>> textureUsagesById = new ArrayList<>();
+
+        for (ISCTextureUser textureUser : getAllTextureUsers(instance)) {
+            Set<SCTextureUsage> textureUsages = textureUser.getTextureUsages();
+            if (textureUsages == null || textureUsages.isEmpty())
+                continue;
+
+            for (SCTextureUsage textureUsage : textureUsages) {
+                while (textureUsage.getTextureId() >= textureUsagesById.size())
+                    textureUsagesById.add(null);
+
+                List<SCTextureUsage> usagesOfId = textureUsagesById.get(textureUsage.getTextureId());
+                if (usagesOfId == null)
+                    textureUsagesById.set(textureUsage.getTextureId(), usagesOfId = new ArrayList<>());
+                usagesOfId.add(textureUsage);
+            }
+        }
+
+        return (List<SCTextureUsage>[]) textureUsagesById.toArray(new List[0]);
+    }
+
+    @Data
+    public static class SCTextureUsage {
+        private final WeakReference<ISCTextureUser> textureUser;
+        private final short textureId;
+        private final String locationDescription;
+
+        public SCTextureUsage(@NonNull ISCTextureUser textureUser, short textureId, String locationDescription) {
+            this.textureUser = new WeakReference<>(textureUser);
+            this.textureId = textureId;
+            this.locationDescription = locationDescription;
         }
     }
 }

@@ -124,4 +124,9 @@ public abstract class SCMapFile<TGameInstance extends SCGameInstance> extends SC
         TextureRemapArray textureRemap = levelTableEntry.getRemap();
         return textureRemap != null ? textureRemap.getTextureIds() : null;
     }
+
+    @Override
+    public String getTextureUserName() {
+        return getFileDisplayName();
+    }
 }

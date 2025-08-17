@@ -87,6 +87,11 @@ public class MediEvilMapFile extends SCChunkedFile<MediEvilGameInstance> impleme
     }
 
     @Override
+    public String getTextureUserName() {
+        return getFileDisplayName();
+    }
+
+    @Override
     public MediEvilConfig getConfig() {
         return (MediEvilConfig) super.getConfig();
     }
