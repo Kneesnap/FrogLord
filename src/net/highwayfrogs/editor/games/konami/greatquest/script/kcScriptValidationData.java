@@ -49,6 +49,8 @@ public class kcScriptValidationData {
         List<kcAction> actions = this.actionsByType.get(actionID);
         if (actions == null || actions.isEmpty())
             return false;
+        if (action == null)
+            return true;
 
         for (int i = 0; i < actions.size(); i++)
             if (action.test((TAction) actions.get(i)))
@@ -69,6 +71,8 @@ public class kcScriptValidationData {
         List<kcScriptCause> causes = this.causesByType.get(causeType);
         if (causes == null || causes.isEmpty())
             return false;
+        if (action == null)
+            return true;
 
         for (int i = 0; i < causes.size(); i++)
             if (action.test((TCause) causes.get(i)))

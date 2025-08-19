@@ -118,7 +118,8 @@ public enum kcEntityFlag {
 
     // This is checked by kcCActorBase::UpdateMotion, and if it is not set, the function will exit and motion updates will not occur.
     // This is checked by kcCActorBase::OnImpulse, and if it's missing, the impulse will not occur.
-    DISABLE_MOTION(kcEntityFlagType.ACTOR_BASE, Constants.BIT_FLAG_12), // 0x1000
+    // CCharacter::ResetInt is what assigns this to ALL characters.
+    ENABLE_MOTION(kcEntityFlagType.ACTOR_BASE, Constants.BIT_FLAG_12), // 0x1000
 
     // CProp::OnDamage() -> This flag must be set in order to take damage.
     // If this flag is NOT set, and flag 31 (is player) IS set, CCharacter::Update() will abort/skip. However, the super call to kcActor::Update will still run.

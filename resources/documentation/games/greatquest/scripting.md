@@ -572,7 +572,20 @@ This will only work if the `--EnablePhysics` flag is applied to the script owner
 The physics system in the game is not currently reverse engineered, but this is most likely for impulse-based dynamics (physics simulation).  
 That would mean that "impulse" means "the change in momentum of an object".  
 So in other words, `ApplyImpulse` changes the momentum of the entity.  
-TODO: Add a warning if the physics flag isn't present, and is never set.
+For example, `ApplyImpulse 0 100 0` would launch the entity flying into the air by around the size of Frogger's 3D model.
+
+> [!IMPORTANT]  
+> Make sure the `--EnablePhysics` flag is set, and the `--EnableTerrainTracking` flag is **NOT** set.
+
+> [!IMPORTANT]  
+> Only `CCharacter` entities can use this command. Other entities such as `CProp` entities will need to be converted into a `CCharacter` to work properly.
+<!---
+It's CCharacter::ResetInt which applies a special flag (0x1000) that enables motion at all.
+So, even though this action looks like it's supposed to work for most entity types, in practice it only works on CCharacter entities.
+-->
+
+> [!CAUTION]  
+> If the entity is stuck inside of terrain or another entity, physics such as gravity, impulses, etc. may not occur.  
 
 ### Prompt (Unsupported)
 **Summary:** This was never fully supported by the game, but it looks like it was supposed to allow the player to make choices within dialog text-boxes.  
@@ -585,13 +598,15 @@ Not used in the vanilla game.
 **Supported Entity Types:** Base Actors  
 **Ghidra Reference (Ignore):** `kcCActorBase::OnCommand/kcCActor::OnCommand`  
 **Usage:** `ShowDialog <dialogResourceName>`  
-IMPORTANT! This command is more complicated than it would initially seem.  
-It would seem intuitive to use it like `ShowDialog "Bruiser: You got my honey yet?"`.  
-However, this will not work. In-game this would show a dialog box with the text "not found".  
-This is because `ShowDialog` is expecting the name of a text resource containing the dialog text, and not the dialog text itself.  
-So, `ShowDialog "DIALOG_004"` would work if there is a text resource named `DIALOG_004` in the level.  
-This allowed the original team to translate the game into multiple languages without having to copy the scripts for every single language.  
-Instructions for adding text/string resources are in the documentation near the start of this file, but can also be found [here](./modding-gqs-file.md)  
+
+> [!IMPORTANT]
+> This command is more complicated than it would initially seem.
+> It would seem intuitive to use it like `ShowDialog "Bruiser: You got my honey yet?"`.  
+> However, this will not work. In-game this would show a dialog box with the text "not found".  
+> This is because `ShowDialog` is expecting the name of a text resource containing the dialog text, and not the dialog text itself.  
+> So, `ShowDialog "DIALOG_004"` would work if there is a text resource named `DIALOG_004` in the level.  
+> This allowed the original team to translate the game into multiple languages without having to copy the scripts for every single language.  
+> Instructions for adding text/string resources are in the documentation near the start of this file, but can also be found [here](./modding-gqs-file.md)  
 
 ### SetAlarm (Both)
 **Summary:** Sets an alarm to ring (Script Cause: `OnAlarm`) after a delay.  
@@ -612,22 +627,12 @@ The main purpose of this feature is to run script effects after a delay.
 
 **Valid Events:**  
 ```properties
-"LevelLoadComplete" # The game will load the sky box, water, setup lighting, and setup environment render states from kcEnvironment. Usually called by ExecuteLoad() completing.
-"LevelBegin" # Sets up default data like coin pickup particles, the AI system, adds the system entities. Called when the level start FMV ends.
 "LevelCompleted" # Destroys all active cameras, and sets a flag for completing the level. Triggered by in-game scripts.
-"LevelEnd" # Stops all sound effects and sends the OnLevel script cause for completing the level. -> Not sure what triggers this event.
-"LevelUnload" # Cleanup/remove water & sky dome, stop all sounds, hide the HID, unload main menu/interface resources. Called by exiting the pause menu requesting to quit the game (PauseEndCase) or the level stops. (PlayEndCase).
 "BeginScreenFade" # Causes the screen to fade to black. Called by a lot of things.
 "EndScreenFade" # Unfades/unhides the contents of the screen. Called by a lot of things.
-"StartMovie" # Seems to setup FMV/movie playback. Called by PlayMovieUpdate
-"CutMovie" # Stops movie playback. Called when the player skips an FMV or it completes. (MovieDoneOrRequestAdvance)
-"MovieContinueGame", # Seems to setup the game to continue playback. Registered in PlayMovieUpdate(). I don't think this is ever called.
-"LockPlayerControl" # Disables controller/keyboard input from influencing the player character. Exclusively called from scripts. NOTE: This will be automatically be enabled when a dialog box opens, and disabled when closed.
+"LockPlayerControl" # Disables controller/keyboard input from influencing the player character. NOTE: This will be automatically be enabled when a dialog box opens, and disabled when closed, so using dialog will unlock player control. Exclusively called from scripts. 
 "UnlockPlayerControl" # Re-enables controller/keyboard input for the player character. Exclusively called from scripts.
-"DialogBegin" # Displays the dialog text box, and sends the script cause `OnDialog BEGIN`. Called by the handler for the script command 'ShowDialog' (kcCActorBase::OnCommand).
-"DialogAdvance" # Hides the dialog text box, and sends the script cause `OnDialog ADVANCE`. Called by the dialog update logic (kcCDialog::Update).
-"DialogEnd" # Never called, but if it were it would hide the dialog text box and sends the script cause `OnDialog END`. Re-enables player input.
-"ShakeCameraRand" # Shakes the camera randomly. Exclusively used by scripts.
+"ShakeCameraRand" # Shakes the camera randomly. Exclusively used by scripts. NOTE: If this does nothing, ActivateCamera/DeactivateCamera should be used immediately before/after this event is triggered.
 "PlayMidMovie01" # Plays the FMV "OMOVIES/MDRAGONF.PSS"/"mid_catdragon_fire.fpc" (This file does not exist in the vanilla game.) Description: "Play Dragon Fire Movie"
 "PlayMidMovie02" # Plays the FMV "OMOVIES/MWITCH.PSS"/"mid_catdragon_fire.fpc" (Introduction of Big Bertha.), Description: "Play Witch Movie"
 "PlayMidMovie03" # Plays the FMV "OMOVIES/MSTARK.PSS"/"mid_starkenstein.fpc" (Introduction of the Metal Chicken Ray.), Description: "Play Ckicken Emerge Movie"
@@ -638,6 +643,24 @@ The main purpose of this feature is to run script effects after a delay.
 "PlayMidMovie08" # Plays the FMV "OMOVIES/PREVIEW.PSS"/"preview_frogger2.fpc" (Shows the preview of the cancelled sequel.)
 "PlayMidMovie09" # Plays the FMV "OMOVIES/MDRAGONS.PSS"/"mid_catdragon_smoke.fpc" (This file does not exist in the vanilla game.), Description: "Play Dragon Smoke Movie"
 "PlayMidMovie10" # Plays the FMV "OMOVIES/MCASTLE.PSS"/"mid_joycastle.fpc" (Unused video showing the general entering Joy Towers.), Description: "Play General Entering Movie"
+```
+
+**Events which could be used in very rare situations:**  
+```properties
+"LevelLoadComplete" # The game will load the sky box, water, setup lighting, and setup environment render states from kcEnvironment. Usually called by ExecuteLoad() completing.
+"LevelBegin" # Sets up default data like coin pickup particles, the AI system, adds the system entities. Called when the level start FMV ends.
+"LevelEnd" # Stops all sound effects and sends the OnLevel script cause for completing the level. -> Not sure what triggers this event.
+"LevelUnload" # Cleanup/remove water & sky dome, stop all sounds, hide the HID, unload main menu/interface resources. Called by exiting the pause menu requesting to quit the game (PauseEndCase) or the level stops. (PlayEndCase).
+"DialogBegin" # Displays the dialog text box, and sends the script cause `OnDialog BEGIN`. Called by the handler for the script command 'ShowDialog' (kcCActorBase::OnCommand).
+"DialogAdvance" # Hides the dialog text box, and sends the script cause `OnDialog ADVANCE`. Called by the dialog update logic (kcCDialog::Update).
+"DialogEnd" # Never called, but if it were it would hide the dialog text box and sends the script cause `OnDialog END`. Re-enables player input.
+```
+
+**Events that exist but probably shouldn't ever be used:**  
+```properties
+"StartMovie" # Seems to setup FMV/movie playback. Called by PlayMovieUpdate
+"CutMovie" # Stops movie playback. Called when the player skips an FMV or it completes. (MovieDoneOrRequestAdvance)
+"MovieContinueGame", # Seems to setup the game to continue playback. Registered in PlayMovieUpdate(). I don't think this is ever called.
 
 # The following exist, but appear to do nothing:
 "LevelLoad" # Does nothing, never used by the game.
@@ -725,8 +748,7 @@ Not used in the vanilla game.
 **Ghidra Reference (Ignore):** `CCharacter::OnCommand, CProp::OnCommand`  
 **Usage:** `SendPlayerHasItem <inventoryItem>`  
 Click [here](../../../../src/net/highwayfrogs/editor/games/konami/greatquest/generic/InventoryItem.java) to see a list of InventoryItem values.  
-When the `--AsEntity` flag is included, the number will be sent to the `--AsEntity` target instead of the script owner.  
-TODO: Warn if there is no cause.
+Using the `--AsEntity` flag will change both the sender and the receiver, unlike `SendNumber` which would change only the entity receiving the number, not the sender.  
 
 ### SetPlayerHasItem (Script Only)
 **Summary:** Add or remove an inventory item in the player's inventory.  

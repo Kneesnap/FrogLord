@@ -73,4 +73,13 @@ public class kcActionFlag extends kcAction {
         if (this.flagMask == 0 && getActionID() != kcActionID.INIT_FLAGS)
             printWarning(logger, "it does not specify any entity flags.");
     }
+
+    /**
+     * Test if a given flag was provided as an argument to this action.
+     * @param entityFlag the flag to test
+     * @return true iff the flag was provided to this action
+     */
+    public boolean hasFlagPresent(kcEntityInstanceFlag entityFlag) {
+        return (this.flagMask & entityFlag.getInstanceBitFlagMask()) == entityFlag.getInstanceBitFlagMask();
+    }
 }

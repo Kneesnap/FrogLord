@@ -68,9 +68,6 @@ public class kcScriptCauseWhenItem extends kcScriptCause {
         super.printAdvancedWarnings(data);
         if (!data.anyActionsMatch(kcActionID.WITH_ITEM))
             printWarning(data.getLogger(), data.getEntityName() + " never executes " + kcActionID.WITH_ITEM.getFrogLordName() + ".");
-
-        // Because an entity terminating is still capable of calling SendNumber, and triggering its own script listeners, even if kcScriptCause.isEntityTerminated is true,
-        // it is likely that OnReceivePlayerHasItem works as well.
     }
 
     @Override
