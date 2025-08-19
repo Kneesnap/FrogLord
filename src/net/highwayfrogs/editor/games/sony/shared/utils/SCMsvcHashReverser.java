@@ -122,11 +122,13 @@ public class SCMsvcHashReverser {
                     System.out.println();
                 }
 
+                long calculateHashStartTime = System.currentTimeMillis();
                 IntList fullHashes = calculateFullMsvcHashes(suffixLookupTable, prefix, tempLength, hashTargets);
+                long calculateHashEndTime = System.currentTimeMillis();
                 if (fullHashes != null) {
                     System.out.println();
                     int oldFullHashCount = fullHashes.size();
-                    System.out.println("Found " + oldFullHashCount + " MSVC 32-bit hash" + (oldFullHashCount == 1 ? "" : "es") + " for substring length " + tempLength + ".");
+                    System.out.println("Found " + oldFullHashCount + " MSVC 32-bit hash" + (oldFullHashCount == 1 ? "" : "es") + " for substring length " + tempLength + " in " + (calculateHashEndTime - calculateHashStartTime) + " ms.");
                     fullHashes = cleanFullMsvcHashes(fullHashes, prefix, tempLength, hashTargets, suffixLookupTable);
                     int removedHashCount = oldFullHashCount - fullHashes.size();
                     if (removedHashCount > 0)
@@ -138,8 +140,8 @@ public class SCMsvcHashReverser {
                     for (int i = 0; i < fullHashes.size(); i++) {
                         long generationTimeStart = System.currentTimeMillis();
                         if (generationTimeStart >= lastTimeUpdate + messageInterval) {
+                            System.out.println(" - [Progress Update] Currently on hash " + (i + 1) + "/" + fullHashes.size() + ". (" + (System.currentTimeMillis() - lastTimeUpdate) + " ms)");
                             lastTimeUpdate = generationTimeStart;
-                            System.out.println(" - [Progress Update] Currently on hash " + (i + 1) + "/" + fullHashes.size());
                         }
 
                         List<String> substrings = generateMiddleSubstrings(prefix, tempLength, hashTargets, fullHashes.get(i), suffixLookupTable);
@@ -459,12 +461,20 @@ public class SCMsvcHashReverser {
         int prefixHash = FroggerHashUtil.getMsvcC1FullHash(prefix);
         IndexBitArray indicesToRemove = new IndexBitArray();
         char[] testChars = new char[middleSubstringLength];
+        long lastMessageTime = System.currentTimeMillis();
+        final long messageInterval = TimeUnit.MINUTES.toMillis(3);
         for (int i = 0; i < msvcHashes.size(); i++) {
+            if (System.currentTimeMillis() > lastMessageTime + messageInterval) {
+                System.out.println(" - [Hash Cleaning Progress] " + (i + 1) + " / " + msvcHashes.size() + " hashes checked. (" + indicesToRemove.getBitCount() + " removed, " + (System.currentTimeMillis() - lastMessageTime) + " ms)");
+                lastMessageTime = System.currentTimeMillis();
+            }
+
             int targetFullMsvcHash = msvcHashes.get(i);
             if (!findFirstSuffix(suffixLookupTable, testChars, prefixHash, targetFullMsvcHash, false, null))
                 indicesToRemove.setBit(i, true);
         }
 
+        // Clear out hashes.
         msvcHashes.removeIndices(indicesToRemove);
         return msvcHashes;
     }
