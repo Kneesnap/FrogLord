@@ -37,6 +37,7 @@ import java.util.stream.Stream;
  * Created by Kneesnap on 10/25/2024.
  */
 public class FileUtils {
+    public static final BrowserFileType EXPORT_C_HEADER_FILE_TYPE = new BrowserFileType("C/C++ Header", "h");
     public static final BrowserFileType IMPORT_IMAGE_FILE_TYPE = new BrowserFileType("Image File", ImageIO.getReaderFileSuffixes());
     public static final BrowserFileType EXPORT_IMAGE_FILE_TYPE = new BrowserFileType("Image File", ImageIO.getWriterFileSuffixes());
     public static final SavedFilePath IMPORT_SINGLE_IMAGE_PATH = new SavedFilePath("singleImageFileImportPath", "Please select the image file to open.", IMPORT_IMAGE_FILE_TYPE);

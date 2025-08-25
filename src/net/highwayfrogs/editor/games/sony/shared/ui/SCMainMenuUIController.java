@@ -13,6 +13,7 @@ import net.highwayfrogs.editor.games.sony.SCGameConfig;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
+import net.highwayfrogs.editor.games.sony.shared.ISCMWDHeaderGenerator;
 import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.VLOController;
 import net.highwayfrogs.editor.games.sony.shared.utils.SCAnalysisUtils;
@@ -41,6 +42,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
     private static final SavedFilePath TEXTURE_FOLDER = new SavedFilePath("bulkTextureExportPath", "Choose the folder to save all textures to.");
     public static final BrowserFileType MWI_FILE_TYPE = new BrowserFileType("Millennium WAD Index", "MWI");
     private static final SavedFilePath MWI_FILE = new SavedFilePath("mwiFilePath", "Specify the file to save the MWI as...", MWI_FILE_TYPE);
+    private static final SavedFilePath MWD_HEADER_FILE = new SavedFilePath("mwdHeaderFilePath", "Specify the file to save the MWD header as...", FileUtils.EXPORT_C_HEADER_FILE_TYPE);
 
     private static final SavedFilePath SAVE_MWD_FILE_PATH = new SavedFilePath("mwd-save-path", "Please select the file to save the MWD file as...", SCGameType.MWD_FILE_TYPE);
     private static final SavedFilePath SAVE_EXE_FILE_PATH = new SavedFilePath("exe-save-path", "Please select the file to save the executable as...", SCGameType.EXECUTABLE_FILE_TYPE);
@@ -77,6 +79,13 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
         addMenuItem(this.menuBarEdit, "Open Hash Playground", () -> HashPlaygroundController.openEditor(getGameInstance()));
         addMenuItem(this.menuBarEdit, "Find Texture By ID", this::promptSearchForTexture);
         addMenuItem(this.menuBarEdit, "Find Unused Textures", () -> SCAnalysisUtils.findUnusedTextures(getGameInstance()));
+        if (getGameInstance() instanceof ISCMWDHeaderGenerator) {
+            addMenuItem(this.menuBarEdit, "Generate MWD Header File (.H)", () -> {
+                File targetFile = FileUtils.askUserToSaveFile(getGameInstance(), MWD_HEADER_FILE, "export.h", false);
+                if (targetFile != null)
+                    ((ISCMWDHeaderGenerator) getGameInstance()).generateMwdCHeader(targetFile);
+            });
+        }
     }
 
     @Override

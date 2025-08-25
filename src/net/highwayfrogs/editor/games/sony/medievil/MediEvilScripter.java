@@ -203,124 +203,124 @@ public class MediEvilScripter {
     }
 
     public enum EventSetPosFlag implements BitFlagEnum {
-        SETP_ENABLE_SKY_B,
-        SETP_DISABLE_SKY_B,
+        SETP_ENABLE_SKY_F,
+        SETP_DISABLE_SKY_F,
         SETP_MAX
     }
 
     public enum EntityState2Flags implements BitFlagEnum {
-        ENT_STATE2_NO_DISPLAY_B,
-        ENT_STATE2_HIT_FLASH_OVERRIDE_B,
-        ENT_STATE2_INVULNERABLE_FLASH_B,
-        ENT_STATE2_NO_GROUND_LIGHTING_B,
-        ENT_STATE2_SHADOW_DISC_B,
-        ENT_STATE2_SHADOW_SQUARE_B,
-        ENT_STATE2_SUBSPECIES_ANIM_RES_B,
-        ENT_STATE2_NO_STICK_IN_B,
-        ENT_STATE2_FOOTFALL_SOUND_B,
-        ENT_STATE2_CAN_FLOAT_B,
-        ENT_STATE2_AMPHIBIOUS_B,
-        ENT_STATE2_NO_SINKING_B,
-        ENT_STATE2_NO_FALLING_DEATH_B,
-        ENT_STATE2_SUBSPECIES_BFLAGS_B,
-        ENT_STATE2_VINE_BASED_B,
-        ENT_STATE2_NO_INVOLUNTARY_MOVE_B,
-        ENT_STATE2_NO_FOOTCOL_ALIGN_B,
-        ENT_STATE2_ANIM_USER0_B,
-        ENT_STATE2_ANIM_USER1_B,
-        ENT_STATE2_ANIM_USER2_B,
-        ENT_STATE2_ANIM_USER3_B,
-        ENT_STATE2_IN_EVENT_ZONE_B,
-        ENT_STATE2_IN_WARP_ZONE_B,
-        ENT_STATE2_IN_WATER_B,
-        ENT_STATE2_UNDER_WATER_B,
-        ENT_STATE2_IN_MUD_B,
-        ENT_STATE2_CREATE_TRANSLUCENT_B,
-        ENT_STATE2_NO_BURN_B,
-        ENT_STATE2_LIE_DOWN_WHEN_DEAD_B,
-        ENT_STATE2_SHADOW_PARTS_B,
-        ENT_STATE2_USE_BG_SOUND_B,
-        ENT_STATE2_LIMIT_B
+        ENT_STATE2_NO_DISPLAY_F,
+        ENT_STATE2_HIT_FLASH_OVERRIDE_F,
+        ENT_STATE2_INVULNERABLE_FLASH_F,
+        ENT_STATE2_NO_GROUND_LIGHTING_F,
+        ENT_STATE2_SHADOW_DISC_F,
+        ENT_STATE2_SHADOW_SQUARE_F,
+        ENT_STATE2_SUBSPECIES_ANIM_RES_F,
+        ENT_STATE2_NO_STICK_IN_F,
+        ENT_STATE2_FOOTFALL_SOUND_F,
+        ENT_STATE2_CAN_FLOAT_F,
+        ENT_STATE2_AMPHIBIOUS_F,
+        ENT_STATE2_NO_SINKING_F,
+        ENT_STATE2_NO_FALLING_DEATH_F,
+        ENT_STATE2_SUBSPECIES_BFLAGS_F,
+        ENT_STATE2_VINE_BASED_F,
+        ENT_STATE2_NO_INVOLUNTARY_MOVE_F,
+        ENT_STATE2_NO_FOOTCOL_ALIGN_F,
+        ENT_STATE2_ANIM_USER0_F,
+        ENT_STATE2_ANIM_USER1_F,
+        ENT_STATE2_ANIM_USER2_F,
+        ENT_STATE2_ANIM_USER3_F,
+        ENT_STATE2_IN_EVENT_ZONE_F,
+        ENT_STATE2_IN_WARP_ZONE_F,
+        ENT_STATE2_IN_WATER_F,
+        ENT_STATE2_UNDER_WATER_F,
+        ENT_STATE2_IN_MUD_F,
+        ENT_STATE2_CREATE_TRANSLUCENT_F,
+        ENT_STATE2_NO_BURN_F,
+        ENT_STATE2_LIE_DOWN_WHEN_DEAD_F,
+        ENT_STATE2_SHADOW_PARTS_F,
+        ENT_STATE2_USE_BG_SOUND_F,
+        ENT_STATE2_LIMIT_F
     }
 
     public enum EntityState1Flags implements BitFlagEnum {
-        ENT_STATE1_NOT_INITED_B,
-        ENT_STATE1_IMMORTAL_B,
-        ENT_STATE1_NO_DEBUG_PLACE_B,
-        ENT_STATE1_FORCE_DEBUG_PLACE_B,
-        ENT_STATE1_NO_DETECT_B,
-        ENT_STATE1_NO_GROUND_DETECT_B,
-        ENT_STATE1_NO_GROUND_ALIGN_B,
-        ENT_STATE1_NO_GRAVITY_B,
-        ENT_STATE1_NO_AVOID_SOLID_B,
-        ENT_STATE1_NO_COLLIDE_EJECT_B,
-        ENT_STATE1_WARP_DETECT_B,
-        ENT_STATE1_NO_BG_COLLIDE_B,
-        ENT_STATE1_NO_RANGE_DEACTIVATE_B,
-        ENT_STATE1_PREVENT_FALL_B,
-        ENT_STATE1_PHYSICS_OVERRIDE_B,
-        ENT_STATE1_LANDING_BOUNCE_B,
-        ENT_STATE1_STATIC_B,
-        ENT_STATE1_OFFSCREEN_FREEZE_B,
-        ENT_STATE1_CHILD_B,
-        ENT_STATE1_CHILD_INACTIVE_B,
-        ENT_STATE1_IN_AIR_B,
-        ENT_STATE1_DUCK_B,
-        ENT_STATE1_SKIDDING_B,
-        ENT_STATE1_RUNNING_B,
-        ENT_STATE1_TIPTOE_B,
-        ENT_STATE1_RECOILING_B,
-        ENT_STATE1_SHRUNK_B,
-        ENT_STATE1_HEAVY_LANDING_B,
-        ENT_STATE1_PROPELLANT_MOVE_OVERRIDE_B,
-        ENT_STATE1_ON_PLATFORM_B,
-        ENT_STATE1_OVER_ACTIVE_RANGE_B,
-        ENT_STATE1_OVER_KILL_RANGE_B,
-        ENT_STATE1_LIMIT_B
+        ENT_STATE1_NOT_INITED_F,
+        ENT_STATE1_IMMORTAL_F,
+        ENT_STATE1_NO_DEBUG_PLACE_F,
+        ENT_STATE1_FORCE_DEBUG_PLACE_F,
+        ENT_STATE1_NO_DETECT_F,
+        ENT_STATE1_NO_GROUND_DETECT_F,
+        ENT_STATE1_NO_GROUND_ALIGN_F,
+        ENT_STATE1_NO_GRAVITY_F,
+        ENT_STATE1_NO_AVOID_SOLID_F,
+        ENT_STATE1_NO_COLLIDE_EJECT_F,
+        ENT_STATE1_WARP_DETECT_F,
+        ENT_STATE1_NO_BG_COLLIDE_F,
+        ENT_STATE1_NO_RANGE_DEACTIVATE_F,
+        ENT_STATE1_PREVENT_FALL_F,
+        ENT_STATE1_PHYSICS_OVERRIDE_F,
+        ENT_STATE1_LANDING_BOUNCE_F,
+        ENT_STATE1_STATIC_F,
+        ENT_STATE1_OFFSCREEN_FREEZE_F,
+        ENT_STATE1_CHILD_F,
+        ENT_STATE1_CHILD_INACTIVE_F,
+        ENT_STATE1_IN_AIR_F,
+        ENT_STATE1_DUCK_F,
+        ENT_STATE1_SKIDDING_F,
+        ENT_STATE1_RUNNING_F,
+        ENT_STATE1_TIPTOE_F,
+        ENT_STATE1_RECOILING_F,
+        ENT_STATE1_SHRUNK_F,
+        ENT_STATE1_HEAVY_LANDING_F,
+        ENT_STATE1_PROPELLANT_MOVE_OVERRIDE_F,
+        ENT_STATE1_ON_PLATFORM_F,
+        ENT_STATE1_OVER_ACTIVE_RANGE_F,
+        ENT_STATE1_OVER_KILL_RANGE_F,
+        ENT_STATE1_LIMIT_F
     }
 
     public enum EntityDestroyInfoFlags implements BitFlagEnum {
-        ENT_DEST_CHAOS_RUNE_B,
-        ENT_DEST_EARTH_RUNE_B,
-        ENT_DEST_MOON_RUNE_B,
-        ENT_DEST_STAR_RUNE_B,
-        ENT_DEST_TIME_RUNE_B,
-        ENT_DEST_PLAYER_KILLED_B,
-        ENT_DEST_NO_RANGE_KILL_B,
-        ENT_DEST_RANGE_REMAP_TO_SOURCE_B,
-        ENT_DEST_REMAP_ON_KILL_B,
-        ENT_DEST_REMAP_ON_RESTART_B,
-        ENT_DEST_USER_1_B,
-        ENT_DEST_USER_2_B,
-        ENT_DEST_USER_3_B,
-        ENT_DEST_USER_4_B,
-        ENT_DEST_CREATE_BONUS_B,
-        ENT_DEST_STAY_DEAD_B,
-        ENT_DEST_ROT_SAVED_B,
-        ENT_DEST_STAY_ALIVE_B,
-        ENT_DEST_INFO_LIMIT_B
+        ENT_DEST_CHAOS_RUNE_F,
+        ENT_DEST_EARTH_RUNE_F,
+        ENT_DEST_MOON_RUNE_F,
+        ENT_DEST_STAR_RUNE_F,
+        ENT_DEST_TIME_RUNE_F,
+        ENT_DEST_PLAYER_KILLED_F,
+        ENT_DEST_NO_RANGE_KILL_F,
+        ENT_DEST_RANGE_REMAP_TO_SOURCE_F,
+        ENT_DEST_REMAP_ON_KILL_F,
+        ENT_DEST_REMAP_ON_RESTART_F,
+        ENT_DEST_USER_1_F,
+        ENT_DEST_USER_2_F,
+        ENT_DEST_USER_3_F,
+        ENT_DEST_USER_4_F,
+        ENT_DEST_CREATE_BONUS_F,
+        ENT_DEST_STAY_DEAD_F,
+        ENT_DEST_ROT_SAVED_F,
+        ENT_DEST_STAY_ALIVE_F,
+        ENT_DEST_INFO_LIMIT_F
     }
 
     public enum EntityInitInfoFlags implements BitFlagEnum {
-        ENT_INIT_PREVENT_CREATE_B,
-        ENT_INIT_CREATE_ON_PREPROCESS_B,
-        ENT_INIT_START_ACTIVE_B,
-        ENT_INIT_REMAIN_INACTIVE_B,
-        ENT_INIT_START_AS_HERO_B,
-        ENT_INIT_NO_STARTUP_ALIGN_B,
-        ENT_INIT_FDIR_HERO_B,
-        ENT_INIT_FDIR_RANDOM_B,
-        ENT_INIT_FDIR_MAPPED_B,
-        ENT_INIT_USER_1_B,
-        ENT_INIT_USER_2_B,
-        ENT_INIT_USER_3_B,
-        ENT_INIT_USER_4_B,
-        ENT_INIT_AWAIT_EVENT_TRIGGER_B,
-        ENT_INIT_AWAIT_PLAYER_SEEN_B,
-        ENT_INIT_GENERATED_B,
-        ENT_INIT_ODD_B,
-        ENT_INIT_FLAGS_RESOLVED_B,
-        ENT_INIT_INFO_LIMIT_B
+        ENT_INIT_PREVENT_CREATE_F,
+        ENT_INIT_CREATE_ON_PREPROCESS_F,
+        ENT_INIT_START_ACTIVE_F,
+        ENT_INIT_REMAIN_INACTIVE_F,
+        ENT_INIT_START_AS_HERO_F,
+        ENT_INIT_NO_STARTUP_ALIGN_F,
+        ENT_INIT_FDIR_HERO_F,
+        ENT_INIT_FDIR_RANDOM_F,
+        ENT_INIT_FDIR_MAPPED_F,
+        ENT_INIT_USER_1_F,
+        ENT_INIT_USER_2_F,
+        ENT_INIT_USER_3_F,
+        ENT_INIT_USER_4_F,
+        ENT_INIT_AWAIT_EVENT_TRIGGER_F,
+        ENT_INIT_AWAIT_PLAYER_SEEN_F,
+        ENT_INIT_GENERATED_F,
+        ENT_INIT_ODD_F,
+        ENT_INIT_FLAGS_RESOLVED_F,
+        ENT_INIT_INFO_LIMIT_F
     }
 
     public enum EntitySpecies {
@@ -619,25 +619,25 @@ public class MediEvilScripter {
     }
 
     public enum EventConditionFlag implements BitFlagEnum {
-        EF_IS_COMMAND_B,
-        EF_SIMPLE_CONDITIONAL_B,
-        EF_SWITCH_B,
-        EF_ALLOC_EVENT_B,
-        ECONF_PROC_CMD_WHEN_TRUE_B,
-        ECONF_PROC_CMD_WHEN_FALSE_B,
-        ECONF_PROC_CMD_ALWAYS_B,
-        ECONF_PROC_CMD_WHILE_B,
-        ECONF_ADVANCE_B,
-        ECONF_RETREAT_B,
-        ECONF_SKIP1_B,
-        ECONF_SKIP2_B,
-        ECONF_RESET_B,
-        ECONF_KILL_BRANCH_WHEN_MET_B,
-        ECONF_MUST_BE_MET_B,
-        ECONF_MET_B,
-        ECMDF_REPEATING_B,
-        ECMDF_AWAIT_COMPLETE_B,
-        ECMDF_COMPLETED_B
+        EF_IS_COMMAND_F,
+        EF_SIMPLE_CONDITIONAL_F,
+        EF_SWITCH_F,
+        EF_ALLOC_EVENT_F,
+        ECONF_PROC_CMD_WHEN_TRUE_F,
+        ECONF_PROC_CMD_WHEN_FALSE_F,
+        ECONF_PROC_CMD_ALWAYS_F,
+        ECONF_PROC_CMD_WHILE_F,
+        ECONF_ADVANCE_F,
+        ECONF_RETREAT_F,
+        ECONF_SKIP1_F,
+        ECONF_SKIP2_F,
+        ECONF_RESET_F,
+        ECONF_KILL_BRANCH_WHEN_MET_F,
+        ECONF_MUST_BE_MET_F,
+        ECONF_MET_F,
+        ECMDF_REPEATING_F,
+        ECMDF_AWAIT_COMPLETE_F,
+        ECMDF_COMPLETED_F
     }
 
     public interface BitFlagEnum {
@@ -2412,7 +2412,7 @@ public class MediEvilScripter {
             this.flags = reader.readInt();
             
             boolean isCommand = this instanceof CommandStandard || this instanceof EventConditionEndCommandList;
-            boolean hasCommandFlag = (this.flags & EventConditionFlag.EF_IS_COMMAND_B.getBitMask()) == EventConditionFlag.EF_IS_COMMAND_B.getBitMask();
+            boolean hasCommandFlag = (this.flags & EventConditionFlag.EF_IS_COMMAND_F.getBitMask()) == EventConditionFlag.EF_IS_COMMAND_F.getBitMask();
             if (hasCommandFlag != isCommand) {
                 if (isCommand) {
                     throw new RuntimeException("This " + this.getClass().getSimpleName() + " is a command, but did not have the command flag!");
@@ -2421,7 +2421,7 @@ public class MediEvilScripter {
                 }
             } else {
                 if (hasCommandFlag)
-                    this.flags ^= EventConditionFlag.EF_IS_COMMAND_B.getBitMask();
+                    this.flags ^= EventConditionFlag.EF_IS_COMMAND_F.getBitMask();
             }
         }
 
@@ -2432,7 +2432,7 @@ public class MediEvilScripter {
             writer.writeUnsignedByte(this.size);
             int flags = this.flags;
             if (this instanceof CommandStandard || this instanceof EventConditionEndCommandList)
-                flags |= EventConditionFlag.EF_IS_COMMAND_B.getBitMask();
+                flags |= EventConditionFlag.EF_IS_COMMAND_F.getBitMask();
 
             writer.writeInt(flags);
         }

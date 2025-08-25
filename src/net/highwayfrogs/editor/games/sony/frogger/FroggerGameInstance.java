@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.sony.frogger;
 import javafx.scene.image.Image;
 import lombok.Cleanup;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.FrogLordApplication;
@@ -39,6 +40,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePack
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketHeader;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerUtils;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerVersionComparison;
+import net.highwayfrogs.editor.games.sony.shared.ISCMWDHeaderGenerator;
 import net.highwayfrogs.editor.games.sony.shared.ISCTextureUser;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
@@ -68,7 +70,7 @@ import java.util.Map.Entry;
  * Created by Kneesnap on 9/7/2023.
  */
 @Getter
-public class FroggerGameInstance extends SCGameInstance implements ISCTextureUser {
+public class FroggerGameInstance extends SCGameInstance implements ISCTextureUser, ISCMWDHeaderGenerator {
     private final List<MapBook> mapLibrary = new ArrayList<>();
     private final List<MusicTrack> musicTracks = new ArrayList<>();
     private final List<LevelInfo> arcadeLevelInfo = new ArrayList<>();
@@ -341,8 +343,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         getArchiveIndex().save(writer);
         writer.closeReceiver();
 
-        @Cleanup PrintWriter frogpsxHWriter = new PrintWriter(new File(folder, "frogpsx.h"));
-        saveFrogPSX(frogpsxHWriter);
+        generateMwdCHeader(new File(folder, "frogpsx.h"));
 
         @Cleanup PrintWriter vramHWriter = new PrintWriter(new File(folder, "frogvram.h"));
         @Cleanup PrintWriter vramCWriter = new PrintWriter(new File(folder, "frogvram.c"));
@@ -431,36 +432,10 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         vramHWriter.write("#endif" + Constants.NEWLINE);
     }
 
-    private void saveFrogPSX(PrintWriter writer) {
-        writer.write("#ifndef __FROGPSX_H" + Constants.NEWLINE);
-        writer.write("#define __FROGPSX_H" + Constants.NEWLINE + Constants.NEWLINE);
-
-        writer.write("#define RES_FROGPSX_DIRECTORY \"L:\\\\FROGGER\\\\\"" + Constants.NEWLINE);
-        writer.write("#define RES_NUMBER_OF_RESOURCES " + getArchiveIndex().getEntries().size() + Constants.NEWLINE + Constants.NEWLINE);
-
-        writer.write("enum {\n" +
-                "\tFR_FTYPE_STD, // Standard?\n" +
-                "\tFR_FTYPE_VLO, // VLO Files\n" +
-                "\tFR_FTYPE_SPU, // Sound files \n" +
-                "\tFR_FTYPE_MOF,\n" +
-                "\tFR_FTYPE_MAPMOF,\n" +
-                "\tFR_FTYPE_MAPANIMMOF, // Unused\n" +
-                "\tFR_FTYPE_DEMODATA\n" +
-                "};\n\n");
-
-        HashSet<String> resourceNames = new HashSet<>();
-        writer.write("enum {" + Constants.NEWLINE);
-        for (MWIResourceEntry entry : getArchiveIndex().getEntries()) {
-            String resName = "RES_" + entry.getDisplayName().replace(".", "_");
-            while (!resourceNames.add(resName))
-                resName += "_DUPE";
-
-            writer.write("\t" + resName + "," + Constants.NEWLINE);
-        }
-        writer.write("};" + Constants.NEWLINE + Constants.NEWLINE);
-
-        // Must happen last.
-        writer.write("#endif" + Constants.NEWLINE);
+    @Override
+    public void generateMwdCHeader(@NonNull File file) {
+        // Based on the data seen in FROGPSX.H in the E3 Frogger prototype.
+        SCUtils.generateMwdCHeader(this, "L:\\\\FROGGER\\\\", file, "FR", "STD", "VLO", "SPU", "MOF", "MAPMOF", "MAPANIMMOF", "DEMODATA");
     }
 
     /**
