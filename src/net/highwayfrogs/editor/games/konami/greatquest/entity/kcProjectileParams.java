@@ -3,13 +3,15 @@ package net.highwayfrogs.editor.games.konami.greatquest.entity;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
+import net.highwayfrogs.editor.games.konami.IConfigData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.ProxyReact;
+import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents the 'kcProjectileParams' struct.
@@ -17,7 +19,7 @@ import net.highwayfrogs.editor.utils.NumberUtils;
  */
 @Getter
 @Setter
-public class kcProjectileParams extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
+public class kcProjectileParams extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter, IConfigData {
     private ProxyReact proxyReact = ProxyReact.NOTIFY;
     private float sensorRadius;
     private int group; // Bone ID? Not sure.
@@ -90,5 +92,47 @@ public class kcProjectileParams extends GameData<GreatQuestInstance> implements 
             throw new NullPointerException("reactionType");
 
         this.proxyReact = reactionType;
+    }
+
+    @Override
+    public void fromConfig(Config input) {
+        this.proxyReact = input.getKeyValueNodeOrError(CONFIG_KEY_PROXY_REACT).getAsEnumOrError(ProxyReact.class);
+        this.sensorRadius = input.getKeyValueNodeOrError(CONFIG_KEY_SENSOR_RADIUS).getAsFloat();
+        this.group = input.getKeyValueNodeOrError(CONFIG_KEY_GROUP).getAsInteger();
+        this.focus = input.getKeyValueNodeOrError(CONFIG_KEY_FOCUS).getAsInteger();
+        this.mass = input.getKeyValueNodeOrError(CONFIG_KEY_MASS).getAsFloat();
+        this.gravity = input.getKeyValueNodeOrError(CONFIG_KEY_GRAVITY).getAsFloat();
+        this.flags = input.getKeyValueNodeOrError(CONFIG_KEY_FLAGS).getAsInteger();
+        this.retainBounce = input.getKeyValueNodeOrError(CONFIG_KEY_RETAIN_BOUNCE).getAsFloat();
+        this.retainSlide = input.getKeyValueNodeOrError(CONFIG_KEY_RETAIN_SLIDE).getAsFloat();
+        this.damageFlags = input.getKeyValueNodeOrError(CONFIG_KEY_DAMAGE_FLAGS).getAsInteger();
+        this.hitStrength = input.getKeyValueNodeOrError(CONFIG_KEY_HIT_STRENGTH).getAsInteger();
+    }
+
+    private static final String CONFIG_KEY_PROXY_REACT = "proxyReact";
+    private static final String CONFIG_KEY_SENSOR_RADIUS = "sensorRadius";
+    private static final String CONFIG_KEY_GROUP = "group";
+    private static final String CONFIG_KEY_FOCUS = "focus";
+    private static final String CONFIG_KEY_MASS = "mass";
+    private static final String CONFIG_KEY_GRAVITY = "gravity";
+    private static final String CONFIG_KEY_FLAGS = "flags";
+    private static final String CONFIG_KEY_RETAIN_BOUNCE = "retainBounce";
+    private static final String CONFIG_KEY_RETAIN_SLIDE = "retainSlide";
+    private static final String CONFIG_KEY_DAMAGE_FLAGS = "damageFlags";
+    private static final String CONFIG_KEY_HIT_STRENGTH = "hitStrength";
+
+    @Override
+    public void toConfig(Config output) {
+        output.getOrCreateKeyValueNode(CONFIG_KEY_PROXY_REACT).setAsEnum(this.proxyReact);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_SENSOR_RADIUS).setAsFloat(this.sensorRadius);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_GROUP).setAsInteger(this.group);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_FOCUS).setAsInteger(this.focus);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_MASS).setAsFloat(this.mass);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_GRAVITY).setAsFloat(this.gravity);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_FLAGS).setAsInteger(this.flags);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_RETAIN_BOUNCE).setAsFloat(this.retainBounce);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_RETAIN_SLIDE).setAsFloat(this.retainSlide);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_DAMAGE_FLAGS).setAsInteger(this.damageFlags);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_HIT_STRENGTH).setAsInteger(this.hitStrength);
     }
 }

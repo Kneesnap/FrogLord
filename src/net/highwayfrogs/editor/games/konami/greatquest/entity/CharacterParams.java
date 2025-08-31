@@ -26,38 +26,40 @@ import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 public class CharacterParams extends kcActorDesc {
     private CharacterType characterType = CharacterType.NONE;
     private final kcVector4 homePos = new kcVector4(0, 0, 0, 1); // Represents the local offset of the collision proxy (CCharacter::Init).
-    private float homeRange = 30F; // 144 out of 148 are set to 30. (With the others being 10, 20, 25, 100), Appears unused
-    private float visionRange = 30F; // 141/148 use 30. Used by CCharacter::CanSeeTarget
-    private float visionFov = 1.2217305F; // 147/148 use this value. The Bone Cruncher uses 1.5707964. Used by CCharacter::IsPointInDialogRange, CCharacter::IsTargetInMissileRange, and CCharacter::CanSeeTarget.
-    private float hearRange = 30F; // 147/148 use 30F, The Bone Cruncher uses 50F. The range which the target entity will be detected within. (MonsterClass::Set_States)
-    private float huntRange = 20F; // 139/148 use 20F, Hiss uses 50F. Appears unused.
-    private float defendRange = 3F; // 139/148 use 3F, appears unused.
-    private float attackRange = 1F; // 122/148 use 1F, 15 use 2F, 8 use 3F. Appears unused.
-    private float meleeRange = 1F; // 122/148 use 1F, 15 use 2F, 8 use 3F. Used by CCharacter::IsTargetInMeleeRange
-    private float missileRange = 1F; // 1F appears to be the default, on entities which are not ranged. Used by CCharacter::IsTargetInMissileRange
+    private float homeRange = DEFAULT_HOME_RANGE; // 144 out of 148 are set to 30. (With the others being 10, 20, 25, 100), Appears unused
+    private float visionRange = DEFAULT_VISION_RANGE; // 141/148 use 30. Used by CCharacter::CanSeeTarget
+    private float visionFov = DEFAULT_VISION_FOV; // 147/148 use this value. The Bone Cruncher uses 1.5707964. Used by CCharacter::IsPointInDialogRange, CCharacter::IsTargetInMissileRange, and CCharacter::CanSeeTarget.
+    private float hearRange = DEFAULT_HEAR_RANGE; // 147/148 use 30F, The Bone Cruncher uses 50F. The range which the target entity will be detected within. (MonsterClass::Set_States)
+    private float huntRange = DEFAULT_HUNT_RANGE; // 139/148 use 20F, Hiss uses 50F. Appears unused.
+    private float defendRange = DEFAULT_DEFEND_RANGE; // 139/148 use 3F, appears unused.
+    private float attackRange = DEFAULT_ATTACK_RANGE; // 122/148 use 1F, 15 use 2F, 8 use 3F. Appears unused.
+    private float meleeRange = 1F; // 122/148 use 1F, 15 use 2F (20F??), 8 use 3F Used by CCharacter::IsTargetInMeleeRange to determine how far away the entity should be to enter their attack animation.
+    private float missileRange = DEFAULT_MISSILE_RANGE; // 1F appears to be the default, on entities which are not ranged. Used by CCharacter::IsTargetInMissileRange
     private int weaponMask; // Used by CCharacter::AttackCallback
-    private int attackStrength = 10; // 136/148 use 10, Used by CCharacter::AttackCallback, CFrogCtl::CheckForHealthBug. Set by MonsterClass:Do_Find() -> Seems to be set to the AI Melee Attack Damage (AITemp2)
+    // This represents the health amount to heal for edible bug entities.
+    // In other situations, this is either overwritten at runtime (AITemp2 for melee damage, or not used (for ranged damage).
+    private int attackStrength = DEFAULT_ATTACK_STRENGTH; // 136/148 use 10, Used by CCharacter::AttackCallback, CFrogCtl::CheckForHealthBug. Set by MonsterClass:Do_Find() -> Seems to be set to the AI Melee Attack Damage (AITemp2)
     private short aggression; // Copied in AISystemClass::Process, ticked in MonsterClass::Set_States. This appears to be a counter. 0xFF means ALWAYS aggressive, anything else will assign a timer to this value when damage occurs, then after the timer reaches 0, the entity will no longer be aggressive.
-    private short fleePercent; // 125/128, the fairies have 100, Itty Bitty/Goobler/Snicker have 10.
-    private short guardHome; // Usually 0, but sometimes 50. MonsterClass::Calculate_Goal() a goal value for how
+    private short fleePercent; // 125/128, the fairies have 100, Itty Bitty/Goobler/Snicker have 10. Seems to indicate likelihood of running away (usually into a wall)
+    private short guardHome; // Usually 0, but sometimes 50. MonsterClass::Calculate_Goal() contains a goal value for this. This doesn't seem to do anything, even if there may be some code for it.
     private short protectLike; // Usually 0, sometimes 50. Appears unused.
     private short climbHeight; // Usually 0. Seems unused?
     private short fallHeight; // Usually 0. Seems unused?
-    private short monsterGroup; // Usually 0. Used in AISystemClass::Process.
+    private short monsterGroup; // Usually 0. Used in AISystemClass::Process. When this value is not zero, and the character is attacked, I believe all other characters of the same group will act as if they were also attacked.
     private short AITemp2; // Used as MeleeAttackDamage in MonsterClass::Set_States
-    private short AITemp3; // Used as MissileAttackDamage in MonsterClass::Set_States
+    private short AITemp3; // Unused. It's assigned as MissileAttackDamage in MonsterClass::Set_States, but this value is never used, in favor of the projectile hit strength instead.
     private short AITemp4; // Used as swim/fly speed by MonsterClass::Anim_Checks seems to be speed for swimming/flying and CCharacter::GoingToWaypoint, after it is casted to float, then divided by the distance to the target.
     private int closeDistance; // 94/148. Appears unused.
     private short dodgePercent; // 121/148 Appears unused.
-    private short tauntPercent; // 116/148 MonsterClass::Do_Find -> The percentage chance (100% is always) of playing the taunt sequence (Tnt)
-    private short attackGoalPercent = 100; // 90/148
-    private short wanderGoalPercent; // 129/148
-    private short sleepGoalPercent; // 148/148.
-    private boolean preferRanged; // 144/148. Used by MonsterClass::Set_States Used in cases where an entity can do both, such as the Crossbow Goblin.
-    private boolean avoidWater; // Used by MonsterClass::Set_States Cannot enter water (Such as the mosquitos who will teleport above the water)
-    private short recoverySpeed = 10; // 70/148 Appears unused.
-    private short meleeAttackSpeed = 10; // 71/148 Time in between melee attacks. MonsterClass::Do_Find. Units are probably 1/1000th of a second.
-    private short rangedAttackSpeed = 10; // Time in between ranged attacks. MonsterClass::Do_Find Units are probably 1/100th of a second.
+    private short tauntPercent; // 116/148 MonsterClass::Do_Find -> The percentage chance (100% is always) of playing the taunt sequence (Tnt). This is used in the vanilla game for Snicker goblins, and has been confirmed to work.
+    private short attackGoalPercent = DEFAULT_ATTACK_GOAL_PERCENT; // 90/148 Used to cause an entity to start attacking.
+    private short wanderGoalPercent; // 129/148 Used to cause an entity to start wandering.
+    private short sleepGoalPercent; // 148/148. Not sure if this is used, but it sure doesn't seem to do anything, even on entities with sleep sequences.
+    private boolean preferRanged; // 144/148. Used by MonsterClass::Set_States Used in cases where an entity can do both melee and ranged damage, such as the Crossbow Goblin or the Magical General.
+    private boolean avoidWater; // Used by MonsterClass::Set_States Cannot enter water (Such as the mosquitos who will teleport above the water). This doesn't seem to do anything unless the type is FLYER.
+    private short recoverySpeed = DEFAULT_RECOVERY_SPEED; // 70/148 Appears unused.
+    private short meleeAttackSpeed = DEFAULT_MELEE_ATTACK_SPEED; // 71/148 Time in between melee attacks. MonsterClass::Do_Find. Units are probably 1/1000th of a second.
+    private short rangedAttackSpeed = DEFAULT_RANGED_ATTACK_SPEED; // Time in between ranged attacks. MonsterClass::Do_Find Units are probably 1/100th of a second.
     private boolean preferRun; // 123/148 I couldn't figure out where this was checked, but it seems to be used, as Gooblers use their run sequence over their walk sequence, and have this set.
     private float activationRange; // 136/148 Appears unused.
 
@@ -66,8 +68,23 @@ public class CharacterParams extends kcActorDesc {
     private static final int DEFAULT_ATTACK_RATE = -1;
     private static final float DEFAULT_CORE_RANGE = .75F; // Appears unused
 
+    private static final float DEFAULT_HOME_RANGE = 30F;
+    private static final float DEFAULT_VISION_RANGE = 30F;
+    private static final float DEFAULT_VISION_FOV = 1.2217305F;
+    private static final float DEFAULT_HEAR_RANGE = 30F;
+    private static final float DEFAULT_HUNT_RANGE = 20F;
+    private static final float DEFAULT_DEFEND_RANGE = 3F;
+    private static final float DEFAULT_ATTACK_RANGE = 1F;
+    private static final float DEFAULT_MISSILE_RANGE = 20F;
+    private static final short DEFAULT_ATTACK_STRENGTH = 10;
+    private static final short DEFAULT_ATTACK_GOAL_PERCENT = 100;
+    private static final short DEFAULT_RECOVERY_SPEED = 10;
+    private static final short DEFAULT_MELEE_ATTACK_SPEED = 10;
+    private static final short DEFAULT_RANGED_ATTACK_SPEED = 10;
+    private static final String UNUSED_COMMENT = "This is unused by the game, but has been included here since it doesn't match the default value.";
+
     public CharacterParams(@NonNull kcCResourceGeneric resource) {
-        super(resource, kcEntityDescType.CHARACTER_PARAMS);
+        super(resource, kcEntityDescType.CHARACTER);
     }
 
     @Override
@@ -195,41 +212,72 @@ public class CharacterParams extends kcActorDesc {
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         super.writeMultiLineInfo(builder, padding);
         builder.append(padding).append("Character Type: ").append(this.characterType).append(Constants.NEWLINE);
-        this.homePos.writePrefixedInfoLine(builder, "Home Location", padding);
-        builder.append(padding).append("Home Range: ").append(this.homeRange).append(Constants.NEWLINE);
-        builder.append(padding).append("Vision Range: ").append(this.visionRange).append(Constants.NEWLINE);
-        builder.append(padding).append("Vision FOV: ").append(this.visionFov).append(Constants.NEWLINE);
-        builder.append(padding).append("Hear Range: ").append(this.hearRange).append(Constants.NEWLINE);
-        builder.append(padding).append("Hunt Range: ").append(this.huntRange).append(Constants.NEWLINE);
-        builder.append(padding).append("Defend Range: ").append(this.defendRange).append(Constants.NEWLINE);
-        builder.append(padding).append("Attack Range: ").append(this.attackRange).append(Constants.NEWLINE);
+        if (!doesVectorLookLikeOrigin(this.homePos))
+            this.homePos.writePrefixedInfoLine(builder, "Home Location", padding);
+        if (this.homeRange != DEFAULT_HOME_RANGE)
+            builder.append(padding).append("Home Range: ").append(this.homeRange).append(Constants.NEWLINE);
+        if (isNotDefaultValue(this.visionRange, DEFAULT_VISION_RANGE))
+            builder.append(padding).append("Vision Range: ").append(this.visionRange).append(Constants.NEWLINE);
+        if (isNotDefaultValue(this.visionFov, DEFAULT_VISION_FOV))
+            builder.append(padding).append("Vision FOV: ").append(this.visionFov).append(Constants.NEWLINE);
+        if (isNotDefaultValue(this.hearRange, DEFAULT_HEAR_RANGE))
+            builder.append(padding).append("Hear Range: ").append(this.hearRange).append(Constants.NEWLINE);
+        if (this.huntRange != DEFAULT_HUNT_RANGE)
+            builder.append(padding).append("Hunt Range: ").append(this.huntRange).append(Constants.NEWLINE);
+        if (this.defendRange != DEFAULT_DEFEND_RANGE)
+            builder.append(padding).append("Defend Range: ").append(this.defendRange).append(Constants.NEWLINE);
+        if (this.attackRange != DEFAULT_ATTACK_RANGE)
+            builder.append(padding).append("Attack Range: ").append(this.attackRange).append(Constants.NEWLINE);
         builder.append(padding).append("Melee Range: ").append(this.meleeRange).append(Constants.NEWLINE);
-        builder.append(padding).append("Missile Range: ").append(this.missileRange).append(Constants.NEWLINE);
-        builder.append(padding).append("Weapon Flags (BitMask): ").append(NumberUtils.toHexString(this.weaponMask)).append(Constants.NEWLINE);
-        builder.append(padding).append("Attack Strength: ").append(this.attackStrength).append(Constants.NEWLINE);
+        if (this.missileRange != DEFAULT_MISSILE_RANGE)
+            builder.append(padding).append("Missile Range: ").append(this.missileRange).append(Constants.NEWLINE);
+        if (this.weaponMask != 0)
+            builder.append(padding).append("Weapon Flags (BitMask): ").append(NumberUtils.toHexString(this.weaponMask)).append(Constants.NEWLINE);
+        if (this.attackStrength != DEFAULT_ATTACK_STRENGTH || isHealthBug())
+            builder.append(padding).append("Attack Strength: ").append(this.attackStrength).append(Constants.NEWLINE);
         builder.append(padding).append("Aggression: ").append(this.aggression).append(Constants.NEWLINE);
-        builder.append(padding).append("Flee Percent: ").append(this.fleePercent).append(Constants.NEWLINE);
-        builder.append(padding).append("Guard Home: ").append(this.guardHome).append(Constants.NEWLINE);
-        builder.append(padding).append("Protect Like: ").append(this.protectLike).append(Constants.NEWLINE);
-        builder.append(padding).append("Climb Height: ").append(this.climbHeight).append(Constants.NEWLINE);
-        builder.append(padding).append("Fall Height: ").append(this.fallHeight).append(Constants.NEWLINE);
-        builder.append(padding).append("Monster Group: ").append(this.monsterGroup).append(Constants.NEWLINE);
+        if (this.fleePercent != 0)
+            builder.append(padding).append("Flee Percent: ").append(this.fleePercent).append(Constants.NEWLINE);
+        if (this.guardHome != 0)
+            builder.append(padding).append("Guard Home: ").append(this.guardHome).append(Constants.NEWLINE);
+        if (this.protectLike != 0)
+            builder.append(padding).append("Protect Like: ").append(this.protectLike).append(Constants.NEWLINE);
+        if (this.climbHeight != 0)
+            builder.append(padding).append("Climb Height: ").append(this.climbHeight).append(Constants.NEWLINE);
+        if (this.fallHeight != 0)
+            builder.append(padding).append("Fall Height: ").append(this.fallHeight).append(Constants.NEWLINE);
+        if (this.monsterGroup != 0)
+            builder.append(padding).append("Monster Group: ").append(this.monsterGroup).append(Constants.NEWLINE);
         builder.append(padding).append("AI Temp2: ").append(this.AITemp2).append(Constants.NEWLINE);
-        builder.append(padding).append("AI Temp3: ").append(this.AITemp3).append(Constants.NEWLINE);
-        builder.append(padding).append("AI Temp4: ").append(this.AITemp4).append(Constants.NEWLINE);
-        builder.append(padding).append("Close Distance: ").append(this.closeDistance).append(Constants.NEWLINE);
-        builder.append(padding).append("Dodge Percent: ").append(this.dodgePercent).append(Constants.NEWLINE);
-        builder.append(padding).append("Taunt Percent: ").append(this.tauntPercent).append(Constants.NEWLINE);
+        if (this.AITemp3 != 0)
+            builder.append(padding).append("AI Temp3: ").append(this.AITemp3).append(Constants.NEWLINE);
+        if (this.AITemp4 != 0 || this.characterType == CharacterType.FLYER || this.characterType == CharacterType.SWIMMER)
+            builder.append(padding).append("AI Temp4: ").append(this.AITemp4).append(Constants.NEWLINE);
+        if (this.closeDistance != 0)
+            builder.append(padding).append("Close Distance: ").append(this.closeDistance).append(Constants.NEWLINE);
+        if (this.dodgePercent != 0)
+            builder.append(padding).append("Dodge Percent: ").append(this.dodgePercent).append(Constants.NEWLINE);
+        if (this.tauntPercent != 0)
+            builder.append(padding).append("Taunt Percent: ").append(this.tauntPercent).append(Constants.NEWLINE);
         builder.append(padding).append("Attack Percent: ").append(this.attackGoalPercent).append(Constants.NEWLINE);
-        builder.append(padding).append("Wander Percent: ").append(this.wanderGoalPercent).append(Constants.NEWLINE);
-        builder.append(padding).append("Sleep Percent: ").append(this.sleepGoalPercent).append(Constants.NEWLINE);
-        builder.append(padding).append("Prefer Ranged: ").append(this.preferRanged).append(Constants.NEWLINE);
-        builder.append(padding).append("Avoid Water: ").append(this.avoidWater).append(Constants.NEWLINE);
-        builder.append(padding).append("Recovery Speed: ").append(this.recoverySpeed).append(Constants.NEWLINE);
-        builder.append(padding).append("Melee Attack Speed: ").append(this.meleeAttackSpeed).append(Constants.NEWLINE);
-        builder.append(padding).append("Ranged Attack Speed: ").append(this.rangedAttackSpeed).append(Constants.NEWLINE);
-        builder.append(padding).append("Prefer Run: ").append(this.preferRanged).append(Constants.NEWLINE);
-        builder.append(padding).append("Activation Range: ").append(this.activationRange).append(Constants.NEWLINE);
+        if (this.wanderGoalPercent != 0)
+            builder.append(padding).append("Wander Percent: ").append(this.wanderGoalPercent).append(Constants.NEWLINE);
+        if (this.sleepGoalPercent != 0)
+            builder.append(padding).append("Sleep Percent: ").append(this.sleepGoalPercent).append(Constants.NEWLINE);
+        if (this.preferRanged)
+            builder.append(padding).append("Prefer Ranged: true").append(Constants.NEWLINE);
+        if (this.avoidWater || (this.characterType == CharacterType.FLYER))
+            builder.append(padding).append("Avoid Water: ").append(this.avoidWater).append(Constants.NEWLINE);
+        if (this.recoverySpeed != DEFAULT_RECOVERY_SPEED)
+            builder.append(padding).append("Recovery Speed: ").append(this.recoverySpeed).append(Constants.NEWLINE);
+        if (this.meleeAttackSpeed != DEFAULT_MELEE_ATTACK_SPEED)
+            builder.append(padding).append("Melee Attack Speed: ").append(this.meleeAttackSpeed).append(Constants.NEWLINE);
+        if (this.rangedAttackSpeed != DEFAULT_RANGED_ATTACK_SPEED)
+            builder.append(padding).append("Ranged Attack Speed: ").append(this.rangedAttackSpeed).append(Constants.NEWLINE);
+        if (this.preferRun || this.characterType == CharacterType.WALKER)
+            builder.append(padding).append("Prefer Run: ").append(this.preferRanged).append(Constants.NEWLINE);
+        if (this.activationRange != 0F)
+            builder.append(padding).append("Activation Range: ").append(this.activationRange).append(Constants.NEWLINE);
     }
 
     private static final String CONFIG_KEY_CHARACTER_TYPE = "characterType";
@@ -279,88 +327,162 @@ public class CharacterParams extends kcActorDesc {
         return node != null ? node.getAsInteger() : defaultValue;
     }
 
+    private static boolean getOptionalBoolean(Config input, String key) {
+        ConfigValueNode node = input.getOptionalKeyValueNode(key);
+        return node != null && node.getAsBoolean();
+    }
+
     @Override
     public void fromConfig(Config input) {
         super.fromConfig(input);
         this.characterType = input.getKeyValueNodeOrError(CONFIG_KEY_CHARACTER_TYPE).getAsEnumOrError(CharacterType.class);
-        this.homePos.parse(input.getKeyValueNodeOrError(CONFIG_KEY_HOME_POSITION).getAsString(), 1);
-        this.homeRange = input.getKeyValueNodeOrError(CONFIG_KEY_HOME_RANGE).getAsFloat();
-        this.visionRange = input.getKeyValueNodeOrError(CONFIG_KEY_VISION_RANGE).getAsFloat();
-        this.visionFov = input.getKeyValueNodeOrError(CONFIG_KEY_VISION_FOV).getAsFloat();
-        this.hearRange = input.getKeyValueNodeOrError(CONFIG_KEY_HEAR_RANGE).getAsFloat();
-        this.huntRange = getOptionalFloat(input, CONFIG_KEY_HUNT_RANGE, this.huntRange);
-        this.defendRange = getOptionalFloat(input, CONFIG_KEY_DEFEND_RANGE, this.huntRange);
-        this.attackRange = getOptionalFloat(input, CONFIG_KEY_ATTACK_RANGE, this.huntRange);
+
+        // Parse homePos if feasible.
+        ConfigValueNode homePosNode = input.getOptionalKeyValueNode(CONFIG_KEY_HOME_POSITION);
+        if (homePosNode != null) {
+            this.homePos.parse(homePosNode.getAsString(), 1);
+        } else {
+            this.homePos.setXYZW(0F, 0F, 0F, 1F);
+        }
+
+        this.homeRange = getOptionalFloat(input, CONFIG_KEY_HOME_RANGE, DEFAULT_HOME_RANGE);
+        this.visionRange = getOptionalFloat(input, CONFIG_KEY_VISION_RANGE, DEFAULT_VISION_RANGE);
+        this.visionFov = getOptionalFloat(input, CONFIG_KEY_VISION_FOV, DEFAULT_VISION_FOV);
+        this.hearRange = getOptionalFloat(input, CONFIG_KEY_HEAR_RANGE, DEFAULT_HEAR_RANGE);
+        this.huntRange = getOptionalFloat(input, CONFIG_KEY_HUNT_RANGE, DEFAULT_HUNT_RANGE);
+        this.defendRange = getOptionalFloat(input, CONFIG_KEY_DEFEND_RANGE, DEFAULT_DEFEND_RANGE);
+        this.attackRange = getOptionalFloat(input, CONFIG_KEY_ATTACK_RANGE, DEFAULT_ATTACK_RANGE);
         this.meleeRange = input.getKeyValueNodeOrError(CONFIG_KEY_MELEE_RANGE).getAsFloat();
-        this.missileRange = input.getKeyValueNodeOrError(CONFIG_KEY_MISSILE_RANGE).getAsFloat();
+        this.missileRange = getOptionalFloat(input, CONFIG_KEY_MISSILE_RANGE, DEFAULT_MISSILE_RANGE);
         String damageFlags = input.getKeyValueNodeOrError(CONFIG_KEY_WEAPON_MASK).getAsString();
         this.weaponMask = kcDamageType.getValueFromArguments(OptionalArguments.parseCommaSeparatedNamedArguments(damageFlags));
-        this.attackStrength = input.getKeyValueNodeOrError(CONFIG_KEY_ATTACK_STRENGTH).getAsInteger();
+        if (isHealthBug()) {
+            this.attackStrength = input.getKeyValueNodeOrError(CONFIG_KEY_ATTACK_STRENGTH).getAsInteger();
+        } else {
+            this.attackStrength = getOptionalInt(input, CONFIG_KEY_ATTACK_STRENGTH, DEFAULT_ATTACK_STRENGTH);
+        }
         this.aggression = (short) input.getKeyValueNodeOrError(CONFIG_KEY_AGGRESSION).getAsInteger();
-        this.fleePercent = (short) input.getKeyValueNodeOrError(CONFIG_KEY_FLEE_PERCENT).getAsInteger();
-        this.guardHome = (short) input.getKeyValueNodeOrError(CONFIG_KEY_GUARD_HOME).getAsInteger();
-        this.protectLike = (short) getOptionalInt(input, CONFIG_KEY_PROTECT_LIKE, this.protectLike);
-        this.climbHeight = (short) getOptionalInt(input, CONFIG_KEY_CLIMB_HEIGHT, this.climbHeight);
-        this.fallHeight = (short) getOptionalInt(input, CONFIG_KEY_FALL_HEIGHT, this.fallHeight);
-        this.monsterGroup = (short) input.getKeyValueNodeOrError(CONFIG_KEY_MONSTER_GROUP).getAsInteger();
+        this.fleePercent = (short) getOptionalInt(input, CONFIG_KEY_FLEE_PERCENT, 0);
+        this.guardHome = (short) getOptionalInt(input, CONFIG_KEY_GUARD_HOME, 0);
+        this.protectLike = (short) getOptionalInt(input, CONFIG_KEY_PROTECT_LIKE, 0);
+        this.climbHeight = (short) getOptionalInt(input, CONFIG_KEY_CLIMB_HEIGHT, 0);
+        this.fallHeight = (short) getOptionalInt(input, CONFIG_KEY_FALL_HEIGHT, 0);
+        this.monsterGroup = (short) getOptionalInt(input, CONFIG_KEY_MONSTER_GROUP, 0);
         this.AITemp2 = (short) input.getKeyValueNodeOrError(CONFIG_KEY_AI_TEMP2).getAsInteger();
-        this.AITemp3 = (short) input.getKeyValueNodeOrError(CONFIG_KEY_AI_TEMP3).getAsInteger();
-        this.AITemp4 = (short) input.getKeyValueNodeOrError(CONFIG_KEY_AI_TEMP4).getAsInteger();
-        this.closeDistance = (short) getOptionalInt(input, CONFIG_KEY_CLOSE_DISTANCE, this.closeDistance);
-        this.dodgePercent = (short) getOptionalInt(input, CONFIG_KEY_DODGE_PERCENT, this.dodgePercent);
-        this.tauntPercent = (short) input.getKeyValueNodeOrError(CONFIG_KEY_TAUNT_PERCENT).getAsInteger();
+        this.AITemp3 = (short) getOptionalInt(input, CONFIG_KEY_AI_TEMP3, 0);
+        this.AITemp4 = (short) getOptionalInt(input, CONFIG_KEY_AI_TEMP4, 0);
+        this.closeDistance = (short) getOptionalInt(input, CONFIG_KEY_CLOSE_DISTANCE, 0);
+        this.dodgePercent = (short) getOptionalInt(input, CONFIG_KEY_DODGE_PERCENT, 0);
+        this.tauntPercent = (short) getOptionalInt(input, CONFIG_KEY_TAUNT_PERCENT, 0);
         this.attackGoalPercent = (short) input.getKeyValueNodeOrError(CONFIG_KEY_ATTACK_PERCENT).getAsInteger();
-        this.wanderGoalPercent = (short) input.getKeyValueNodeOrError(CONFIG_KEY_WANDER_PERCENT).getAsInteger();
-        this.sleepGoalPercent = (short) input.getKeyValueNodeOrError(CONFIG_KEY_SLEEP_PERCENT).getAsInteger();
-        this.preferRanged = input.getKeyValueNodeOrError(CONFIG_KEY_PREFER_RANGED).getAsBoolean();
-        this.avoidWater = input.getKeyValueNodeOrError(CONFIG_KEY_AVOID_WATER).getAsBoolean();
-        this.recoverySpeed = (short) getOptionalInt(input, CONFIG_KEY_RECOVERY_SPEED, this.recoverySpeed);
-        this.meleeAttackSpeed = (short) input.getKeyValueNodeOrError(CONFIG_KEY_MELEE_ATTACK_SPEED).getAsInteger();
-        this.rangedAttackSpeed = (short) input.getKeyValueNodeOrError(CONFIG_KEY_RANGED_ATTACK_SPEED).getAsInteger();
-        this.preferRun = input.getKeyValueNodeOrError(CONFIG_KEY_PREFER_RUN).getAsBoolean();
-        this.activationRange = getOptionalFloat(input, CONFIG_KEY_ACTIVATION_RANGE, this.activationRange);
+        this.wanderGoalPercent = (short) getOptionalInt(input, CONFIG_KEY_WANDER_PERCENT, 0);
+        this.sleepGoalPercent = (short) getOptionalInt(input, CONFIG_KEY_SLEEP_PERCENT, 0);
+        this.preferRanged = getOptionalBoolean(input, CONFIG_KEY_PREFER_RANGED);
+        this.avoidWater = getOptionalBoolean(input, CONFIG_KEY_AVOID_WATER);
+        this.recoverySpeed = (short) getOptionalInt(input, CONFIG_KEY_RECOVERY_SPEED, DEFAULT_RECOVERY_SPEED);
+        this.meleeAttackSpeed = (short) getOptionalInt(input, CONFIG_KEY_MELEE_ATTACK_SPEED, DEFAULT_MELEE_ATTACK_SPEED);
+        this.rangedAttackSpeed = (short) getOptionalInt(input, CONFIG_KEY_RANGED_ATTACK_SPEED, DEFAULT_RANGED_ATTACK_SPEED);
+        this.preferRun = getOptionalBoolean(input, CONFIG_KEY_PREFER_RUN);
+        this.activationRange = getOptionalFloat(input, CONFIG_KEY_ACTIVATION_RANGE, 0F);
     }
 
     @Override
-    @SuppressWarnings("CommentedOutCode") // Commented lines may potentially be enabled in the future depending on what is deemed as actually used/useful.
     public void toConfig(Config output, kcScriptDisplaySettings settings) {
         super.toConfig(output, settings);
+
+        // If the value is unused OR rarely used/has unhelpful functionality, we tend to hide it by default.
         output.getOrCreateKeyValueNode(CONFIG_KEY_CHARACTER_TYPE).setAsEnum(this.characterType);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_HOME_POSITION).setAsString(this.homePos.toParseableString(1));
-        output.getOrCreateKeyValueNode(CONFIG_KEY_HOME_RANGE).setAsFloat(this.homeRange);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_VISION_RANGE).setAsFloat(this.visionRange);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_VISION_FOV).setAsFloat(this.visionFov);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_HEAR_RANGE).setAsFloat(this.hearRange);
-        //output.getOrCreateKeyValueNode(CONFIG_KEY_HUNT_RANGE).setAsFloat(this.huntRange);
-        //output.getOrCreateKeyValueNode(CONFIG_KEY_DEFEND_RANGE).setAsFloat(this.defendRange);
-        //output.getOrCreateKeyValueNode(CONFIG_KEY_ATTACK_RANGE).setAsFloat(this.attackRange);
+        if (!doesVectorLookLikeOrigin(this.homePos))
+            output.getOrCreateKeyValueNode(CONFIG_KEY_HOME_POSITION).setAsString(this.homePos.toParseableString(1));
+        createUnusedFloatConfigEntry(output, CONFIG_KEY_HOME_RANGE, this.homeRange, DEFAULT_HOME_RANGE);
+        if (isNotDefaultValue(this.visionRange, DEFAULT_VISION_RANGE))
+            output.getOrCreateKeyValueNode(CONFIG_KEY_VISION_RANGE).setAsFloat(this.visionRange);
+        if (isNotDefaultValue(this.visionFov, DEFAULT_VISION_FOV))
+            output.getOrCreateKeyValueNode(CONFIG_KEY_VISION_FOV).setAsFloat(this.visionFov);
+        if (isNotDefaultValue(this.hearRange, DEFAULT_HEAR_RANGE))
+            output.getOrCreateKeyValueNode(CONFIG_KEY_HEAR_RANGE).setAsFloat(this.hearRange);
+        createUnusedFloatConfigEntry(output, CONFIG_KEY_HUNT_RANGE, this.huntRange, DEFAULT_HUNT_RANGE);
+        createUnusedFloatConfigEntry(output, CONFIG_KEY_DEFEND_RANGE, this.defendRange, DEFAULT_DEFEND_RANGE);
+        createUnusedFloatConfigEntry(output, CONFIG_KEY_ATTACK_RANGE, this.attackRange, DEFAULT_ATTACK_RANGE);
         output.getOrCreateKeyValueNode(CONFIG_KEY_MELEE_RANGE).setAsFloat(this.meleeRange);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_MISSILE_RANGE).setAsFloat(this.missileRange);
+        if (this.missileRange != DEFAULT_MISSILE_RANGE)
+            output.getOrCreateKeyValueNode(CONFIG_KEY_MISSILE_RANGE).setAsFloat(this.missileRange);
         output.getOrCreateKeyValueNode(CONFIG_KEY_WEAPON_MASK).setAsString(kcDamageType.getFlagsAsString(this.weaponMask));
-        output.getOrCreateKeyValueNode(CONFIG_KEY_ATTACK_STRENGTH).setAsInteger(this.attackStrength);
+        if (isHealthBug()) {
+            // Health bugs use this.
+            output.getOrCreateKeyValueNode(CONFIG_KEY_ATTACK_STRENGTH).setAsInteger(this.attackStrength);
+        } else  {
+            createUnusedIntConfigEntry(output, CONFIG_KEY_ATTACK_STRENGTH, this.attackStrength, DEFAULT_ATTACK_STRENGTH);
+        }
         output.getOrCreateKeyValueNode(CONFIG_KEY_AGGRESSION).setAsInteger(this.aggression);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_FLEE_PERCENT).setAsInteger(this.fleePercent);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_GUARD_HOME).setAsInteger(this.guardHome);
-        //output.getOrCreateKeyValueNode(CONFIG_KEY_PROTECT_LIKE).setAsInteger(this.protectLike);
-        //output.getOrCreateKeyValueNode(CONFIG_KEY_CLIMB_HEIGHT).setAsInteger(this.climbHeight);
-        //output.getOrCreateKeyValueNode(CONFIG_KEY_FALL_HEIGHT).setAsInteger(this.fallHeight);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_MONSTER_GROUP).setAsInteger(this.monsterGroup);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_AI_TEMP2).setAsInteger(this.AITemp2);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_AI_TEMP3).setAsInteger(this.AITemp3);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_AI_TEMP4).setAsInteger(this.AITemp4);
-        //output.getOrCreateKeyValueNode(CONFIG_KEY_CLOSE_DISTANCE).setAsInteger(this.closeDistance);
-        //output.getOrCreateKeyValueNode(CONFIG_KEY_DODGE_PERCENT).setAsInteger(this.dodgePercent);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_TAUNT_PERCENT).setAsInteger(this.tauntPercent);
+        if (this.fleePercent != 0)
+            output.getOrCreateKeyValueNode(CONFIG_KEY_FLEE_PERCENT).setAsInteger(this.fleePercent);
+        createUnusedIntConfigEntry(output, CONFIG_KEY_GUARD_HOME, this.guardHome, 0);
+        if (this.tauntPercent != 0)
+            output.getOrCreateKeyValueNode(CONFIG_KEY_TAUNT_PERCENT).setAsInteger(this.tauntPercent);
         output.getOrCreateKeyValueNode(CONFIG_KEY_ATTACK_PERCENT).setAsInteger(this.attackGoalPercent);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_WANDER_PERCENT).setAsInteger(this.wanderGoalPercent);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_SLEEP_PERCENT).setAsInteger(this.sleepGoalPercent);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_PREFER_RANGED).setAsBoolean(this.preferRanged);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_AVOID_WATER).setAsBoolean(this.avoidWater);
-        //output.getOrCreateKeyValueNode(CONFIG_KEY_RECOVERY_SPEED).setAsInteger(this.recoverySpeed);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_MELEE_ATTACK_SPEED).setAsInteger(this.meleeAttackSpeed);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_RANGED_ATTACK_SPEED).setAsInteger(this.rangedAttackSpeed);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_PREFER_RUN).setAsBoolean(this.preferRun);
-        //output.getOrCreateKeyValueNode(CONFIG_KEY_ACTIVATION_RANGE).setAsFloat(this.activationRange);
+        if (this.wanderGoalPercent != 0)
+            output.getOrCreateKeyValueNode(CONFIG_KEY_WANDER_PERCENT).setAsInteger(this.wanderGoalPercent);
+        createUnusedIntConfigEntry(output, CONFIG_KEY_SLEEP_PERCENT, this.sleepGoalPercent, 0);
+        if (this.preferRanged)
+            output.getOrCreateKeyValueNode(CONFIG_KEY_PREFER_RANGED).setAsBoolean(this.preferRanged);
+        if (this.avoidWater || (this.characterType == CharacterType.FLYER))
+            output.getOrCreateKeyValueNode(CONFIG_KEY_AVOID_WATER).setAsBoolean(this.avoidWater);
+        createUnusedIntConfigEntry(output, CONFIG_KEY_PROTECT_LIKE, this.protectLike, 0);
+        createUnusedIntConfigEntry(output, CONFIG_KEY_CLIMB_HEIGHT, this.climbHeight, 0);
+        createUnusedIntConfigEntry(output, CONFIG_KEY_FALL_HEIGHT, this.fallHeight, 0);
+        if (this.monsterGroup != 0)
+            output.getOrCreateKeyValueNode(CONFIG_KEY_MONSTER_GROUP).setAsInteger(this.monsterGroup);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_AI_TEMP2).setAsInteger(this.AITemp2);
+        createUnusedIntConfigEntry(output, CONFIG_KEY_AI_TEMP3, this.AITemp3, 0);
+        if (this.AITemp4 != 0 || this.characterType == CharacterType.FLYER || this.characterType == CharacterType.SWIMMER) // flyOrSwimSpeed
+            output.getOrCreateKeyValueNode(CONFIG_KEY_AI_TEMP4).setAsInteger(this.AITemp4);
+        createUnusedIntConfigEntry(output, CONFIG_KEY_CLOSE_DISTANCE, this.closeDistance, 0);
+        createUnusedIntConfigEntry(output, CONFIG_KEY_DODGE_PERCENT, this.dodgePercent, 0);
+        createUnusedIntConfigEntry(output, CONFIG_KEY_RECOVERY_SPEED, this.recoverySpeed, DEFAULT_RECOVERY_SPEED);
+        if (this.meleeAttackSpeed != DEFAULT_MELEE_ATTACK_SPEED)
+            output.getOrCreateKeyValueNode(CONFIG_KEY_MELEE_ATTACK_SPEED).setAsInteger(this.meleeAttackSpeed);
+        if (this.rangedAttackSpeed != DEFAULT_RANGED_ATTACK_SPEED)
+            output.getOrCreateKeyValueNode(CONFIG_KEY_RANGED_ATTACK_SPEED).setAsInteger(this.rangedAttackSpeed);
+        if (this.preferRun || this.characterType == CharacterType.WALKER)
+            output.getOrCreateKeyValueNode(CONFIG_KEY_PREFER_RUN).setAsBoolean(this.preferRun);
+        createUnusedFloatConfigEntry(output, CONFIG_KEY_ACTIVATION_RANGE, this.activationRange, 0F);
+    }
+
+    private static boolean isNotDefaultValue(float testValue, float defaultValue) {
+        return !Float.isFinite(testValue) || (Math.abs(testValue - defaultValue) >= .00001);
+    }
+
+    private static void createUnusedFloatConfigEntry(Config output, String key, float testValue, float defaultValue) {
+        if (isNotDefaultValue(testValue, defaultValue)) {
+            ConfigValueNode node = output.getOrCreateKeyValueNode(key);
+            node.setAsFloat(testValue);
+            node.setComment(UNUSED_COMMENT);
+        }
+    }
+
+    private static void createUnusedIntConfigEntry(Config output, String key, int testValue, int defaultValue) {
+        if (testValue != defaultValue) {
+            ConfigValueNode node = output.getOrCreateKeyValueNode(key);
+            node.setAsInteger(testValue);
+            node.setComment(UNUSED_COMMENT);
+        }
+    }
+
+    private static boolean doesVectorLookLikeOrigin(kcVector4 vector) {
+        return Math.abs(vector.getX()) < .00001 && Math.abs(vector.getY()) < .00001 && Math.abs(vector.getZ()) < .00001;
+    }
+
+    /**
+     * Test if this describes a health bug.
+     */
+    public boolean isHealthBug() {
+        String name = getParentHash().getOriginalString();
+        if (name == null)
+            return false;
+
+        // Nabbed from CFrogCtl::CheckForHealthBug().
+        return name.startsWith("GroundBug") || name.startsWith("FlyingBug") || name.startsWith("WaterBug") || name.startsWith("Tropical");
     }
 
     /**

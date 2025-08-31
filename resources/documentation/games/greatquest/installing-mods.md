@@ -1,4 +1,4 @@
-# Guide for installing Frogger: The Great Quest mods.
+# Mod Installation Guide (Frogger: The Great Quest)
 
 ## 1) Download FrogLord
 Instructions: [here](../../download-froglord.md)
