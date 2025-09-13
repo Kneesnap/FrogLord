@@ -68,6 +68,8 @@ public class MediEvilGameInstance extends SCGameInstance implements ISCMWDHeader
     public SCGameFile<?> createFile(MWIResourceEntry resourceEntry, byte[] fileData) {
         if (resourceEntry.getTypeId() == FILE_TYPE_MAP || resourceEntry.hasExtension("map"))
             return new MediEvilMapFile(this);
+        if (resourceEntry.getTypeId() == 0 && (resourceEntry.hasExtension("bin") || resourceEntry.getDisplayName().startsWith("HELP")) && MediEvilHelpFile.isHelpFile(fileData))
+            return new MediEvilHelpFile(this);
 
         // TODO FILE_TYPE_VLO
         return SCUtils.createSharedGameFile(resourceEntry, fileData);
