@@ -89,8 +89,17 @@ public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFi
                 this.fileClass = (Class<? extends TGameFile>) file.getClass();
 
             this.file = file;
-            this.propertyListViewer.showProperties(file != null ? file.createPropertyList() : null);
+            onSelectedFileChange(oldFile, file);
         }
+    }
+
+    /**
+     * Called when the selected file changes.
+     * @param oldFile the previous file
+     * @param newFile the new file
+     */
+    protected void onSelectedFileChange(TGameFile oldFile, TGameFile newFile) {
+        this.propertyListViewer.showProperties(file != null ? file.createPropertyList() : null);
     }
 
     @Override

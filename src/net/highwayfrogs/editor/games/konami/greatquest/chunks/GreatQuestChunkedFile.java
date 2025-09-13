@@ -60,13 +60,15 @@ import java.util.stream.Collectors;
  */
 public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFileExport {
     private final List<kcCResource> chunks = new ArrayList<>();
+    private final List<kcCResourceTableOfContents> tableOfContents = new ArrayList<>();
     private final List<kcCResource> immutableChunks = Collections.unmodifiableList(this.chunks);
+    private final List<kcCResourceTableOfContents> immutableTableOfContents = Collections.unmodifiableList(this.tableOfContents);
 
     private static final String RESOURCE_PATH_NAME = "chunkedResourceImportExportPath";
     public static final SavedFilePath RESOURCE_IMPORT_PATH = new SavedFilePath(RESOURCE_PATH_NAME, "Please select the folder with the assets to import");
     public static final SavedFilePath RESOURCE_EXPORT_PATH = new SavedFilePath(RESOURCE_PATH_NAME, "Please select the folder to export assets to");
 
-    private static final Comparator<kcCResource> RESOURCE_ORDERING = Comparator
+    public static final Comparator<kcCResource> RESOURCE_ORDERING = Comparator
             .comparingInt((kcCResource resource) -> resource.getChunkType().ordinal()) // Sort by resource type.
             .thenComparing(kcCResource::getName, String.CASE_INSENSITIVE_ORDER); // Sort by name (case-insensitive, alphabetically)
 
@@ -77,11 +79,11 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     @Override
     public void load(DataReader reader) {
         this.chunks.clear();
+        this.tableOfContents.clear();
 
         // Prepare chunks.
         Map<kcCResource, byte[]> cachedRawDataMap = new HashMap<>();
-        kcCResourceTOC tocChunk = null;
-        int tocPos = 0;
+        kcCResourceTableOfContents lastTableOfContents = null;
         while (reader.hasMore()) {
             String identifier = reader.readTerminatedString(4);
             int length = reader.readInt() + kcCResource.NAME_SIZE; // 0x20 and not 0x24 because we're reading from the start of the data, not the length.
@@ -91,30 +93,43 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             KCResourceID readType = KCResourceID.getByMagic(identifier);
             kcCResource newChunk = createResource(readType, readBytes, identifier);
 
-            if (newChunk instanceof kcCResourceTOC) {
+            if (newChunk instanceof kcCResourceTableOfContents) {
                 // If we encounter a table of contents, use it for reading the upcoming chunks!
-                if (this.chunks.size() > 0)
-                    throw new IllegalStateException("kcCResourceTOC was not the first chunk in the file!");
+                if (lastTableOfContents != null)
+                    lastTableOfContents.validateReadOkay();
 
-                tocChunk = (kcCResourceTOC) newChunk;
-                tocChunk.loadFromRawBytes(readBytes);
+                this.tableOfContents.add(lastTableOfContents = (kcCResourceTableOfContents) newChunk);
+                lastTableOfContents.loadFromRawBytes(readBytes);
             } else {
                 cachedRawDataMap.put(newChunk, readBytes);
                 this.chunks.add(newChunk);
 
                 // Apply the hash from the table of contents.
-                if (tocChunk != null && tocChunk.getHashes().size() > tocPos)
-                    newChunk.getSelfHash().setHash(tocChunk.getHashes().get(tocPos++));
+                if (lastTableOfContents == null)
+                    throw new IllegalStateException("A(n) " + Utils.getSimpleName(newChunk) + " was found before the first kcCResourceTableOfContents.");
+
+                newChunk.getSelfHash().setHash(lastTableOfContents.getNextHash());
+                lastTableOfContents.resourceChunks.add(newChunk);
             }
         }
 
+        // Finalize reading.
+        if (lastTableOfContents != null)
+            lastTableOfContents.validateReadOkay();
+
         // Read the chunks. (Chunk data reading occurs after all chunks have been read, in order to allow resolving of hashes into chunk object references, regardless of if the order they are read.)
-        kcCResource lastChunk = null;
-        for (int i = 0; i < this.chunks.size(); i++) {
-            kcCResource chunk = this.chunks.get(i);
-            if (!(chunk instanceof kcCResourceTOC)) {
+        for (int i = 0; i < this.tableOfContents.size(); i++) {
+            kcCResource lastChunk = null;
+            kcCResourceTableOfContents chunkGroup = this.tableOfContents.get(i);
+            boolean shouldChunksBeSorted = chunkGroup.shouldResourcesBeSorted();
+            List<kcCResource> chunks = chunkGroup.getResourceChunks();
+            for (int j = 0; j < chunks.size(); j++) {
+                kcCResource chunk = chunks.get(j);
+                if (chunk instanceof kcCResourceTableOfContents)
+                    continue; // Shouldn't happen.
+
                 chunk.loadFromRawBytes(cachedRawDataMap.remove(chunk));
-                if (lastChunk != null && RESOURCE_ORDERING.compare(chunk, lastChunk) < 0)
+                if (shouldChunksBeSorted && lastChunk != null && RESOURCE_ORDERING.compare(chunk, lastChunk) < 0)
                     getLogger().warning("The chunk '%s'/%s was expected to be sorted before '%s'/%s, but it was found after it!", chunk.getName(), chunk.getHashAsHexString(), lastChunk.getName(), lastChunk.getHashAsHexString());
 
                 lastChunk = chunk;
@@ -150,14 +165,32 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
     @Override
     public void save(DataWriter writer) {
-        // Write table of contents.
-        kcCResourceTOC tableOfContents = new kcCResourceTOC(this);
-        tableOfContents.update(this.chunks);
-        writeChunk(writer, tableOfContents);
+        // Validate all chunks are found inside the chunk groups, otherwise saving issues will happen.
+        Set<kcCResource> chunksFromGroups = new HashSet<>();
+        for (int i = 0; i < this.tableOfContents.size(); i++)
+            chunksFromGroups.addAll(this.tableOfContents.get(i).getResourceChunks());
 
-        // Write chunks.
-        for (kcCResource chunk : this.chunks)
-            writeChunk(writer, chunk);
+        for (int i = 0; i < this.chunks.size(); i++) {
+            kcCResource resource = this.chunks.get(i);
+            if (!chunksFromGroups.remove(resource))
+                getGameInstance().showWarning(getLogger(), "%s was supposed to be written/saved, but wasn't registered to any of the chunk groups!", resource);
+        }
+
+        if (chunksFromGroups.size() > 0)
+            getGameInstance().showWarning(getLogger(), "Found %d resource chunk(s) which are registered to the ");
+
+        // Write each group.
+        for (int i = 0; i < this.tableOfContents.size(); i++) {
+            kcCResourceTableOfContents tableOfContents = this.tableOfContents.get(i);
+
+            // Write table of contents.
+            writeChunk(writer, tableOfContents);
+
+            // Write chunks.
+            List<kcCResource> chunks = tableOfContents.getResourceChunks();
+            for (int j = 0; j < chunks.size(); j++)
+                writeChunk(writer, chunks.get(j));
+        }
     }
 
     private void writeChunk(DataWriter writer, kcCResource chunk) {
@@ -279,6 +312,13 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
      */
     public List<kcCResource> getChunks() {
         return this.immutableChunks;
+    }
+
+    /**
+     * Gets a list of chunk groups tracked by this chunked file.
+     */
+    public List<kcCResourceTableOfContents> getTableOfContents() {
+        return this.immutableTableOfContents;
     }
 
     /**
@@ -412,18 +452,38 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
     /**
      * Add a resource to the chunked file.
-     * An exception will be thrown if it is not possible to add.
+     * An exception will be thrown if it is not possible to add, such as if a resource group needs to be specified.
      * @param resource The resource to add.
      */
     public void addResource(kcCResource resource) {
         if (resource == null)
             throw new NullPointerException("resource");
+        if (this.tableOfContents.size() > 1)
+            throw new IllegalArgumentException("GreatQuestChunkedFile.addResource(kcCResource) only works if there is a single resource group, but there were " + this.tableOfContents.size() + "!");
+        if (this.tableOfContents.isEmpty())
+            this.tableOfContents.add(new kcCResourceTableOfContents(this));
+
+        addResource(this.tableOfContents.get(0), resource);
+    }
+
+    /**
+     * Add a resource to the chunked file.
+     * An exception will be thrown if it is not possible to add.
+     * @param resource The resource to add.
+     */
+    public void addResource(kcCResourceTableOfContents tableOfContents, kcCResource resource) {
+        if (tableOfContents == null)
+            throw new NullPointerException("tableOfContents");
+        if (resource == null)
+            throw new NullPointerException("resource");
         if (StringUtils.isNullOrEmpty(resource.getName()))
             throw new IllegalArgumentException("Cannot add resource " + resource + ", as it does not appear to have a valid name.");
-        if (resource instanceof kcCResourceTOC)
+        if (resource instanceof kcCResourceTableOfContents)
             throw new IllegalArgumentException("Table of Contents chunks cannot be manually added to chunked files.");
         if (resource.getParentFile() != this)
             throw new IllegalArgumentException("Cannot add resource " + resource + ", as it belongs to a different chunked file! (" + (resource.getParentFile() != null ? resource.getParentFile().getFilePath() : "null") + ")");
+        if (tableOfContents.getParentFile() != this || !this.tableOfContents.contains(tableOfContents))
+            throw new IllegalArgumentException("The provided table of contents was not registered to " + this + ".");
 
         int resourceHash = resource.getHash();
         if (resourceHash == 0 || resourceHash == -1)
@@ -435,27 +495,33 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         if (conflictingResource != null)
             throw new IllegalArgumentException("Cannot add resource " + resource + ", as another resource (" + conflictingResource + ") has a conflicting hash.");
 
-        addResourceToList(resource);
+        addResourceToList(tableOfContents, resource);
         resource.onAddedToChunkFile();
     }
 
     /**
      * Add a resource to the resource list without performing any safety checks.
      * This is not treated as registering the file.
+     * @param resourceGroup the resource group to add the resource to.
      * @param resource the resource to add.
      */
-    void addResourceToList(kcCResource resource) {
-        int insertionIndex;
-        int searchResult = Collections.binarySearch(this.chunks, resource, RESOURCE_ORDERING);
-        if (searchResult >= 0) { // This happens when there are name collisions (such as trimesh files which all call themselves "unnamed" and do not appear to have any sort order.)
-            insertionIndex = searchResult + 1;
-            while (this.chunks.size() > insertionIndex && RESOURCE_ORDERING.compare(resource, this.chunks.get(insertionIndex)) == 0)
-                insertionIndex++;
-        } else { // Found a spot to insert it at.
-            insertionIndex = -(searchResult + 1);
+    void addResourceToList(kcCResourceTableOfContents resourceGroup, kcCResource resource) {
+        int localInsertionIndex = resourceGroup.getResourceInsertionIndex(resource);
+
+        resourceGroup.resourceChunks.add(localInsertionIndex, resource);
+
+        int baseOffset = 0;
+        for (int i = 0; i < this.tableOfContents.size(); i++) {
+            kcCResourceTableOfContents tableOfContents = this.tableOfContents.get(i);
+            if (tableOfContents == resourceGroup) {
+                this.chunks.add(baseOffset + localInsertionIndex, resource);
+                return;
+            } else {
+                baseOffset += tableOfContents.getResourceChunks().size();
+            }
         }
 
-        this.chunks.add(insertionIndex, resource);
+        throw new IllegalStateException("Failed to find the right position to add the resource " + resource + " to in the chunk list.");
     }
 
     /**
@@ -465,7 +531,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     public void removeResource(kcCResource resource) {
         if (resource == null)
             throw new NullPointerException("resource");
-        if (resource instanceof kcCResourceTOC)
+        if (resource instanceof kcCResourceTableOfContents)
             throw new IllegalArgumentException("Table of Contents chunks cannot be manually removed from chunked files.");
         if (resource.getParentFile() != this)
             throw new IllegalArgumentException("Cannot remove resource " + resource + ", as it belongs to a different chunked file! (" + (resource.getParentFile() != null ? resource.getParentFile().getFilePath() : "null") + ")");
@@ -483,37 +549,47 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
      * @return true iff the resource was removed.
      */
     boolean removeResourceFromList(kcCResource resource) {
-        if (resource == null || StringUtils.isNullOrEmpty(resource.getName()))
-            return false; // Can't remove such a resource.
+        int localIndex = -1;
+        kcCResourceTableOfContents tableOfContents = null;
+        for (int i = 0; i < this.tableOfContents.size(); i++) {
+            tableOfContents = this.tableOfContents.get(i);
+            localIndex = tableOfContents.indexOf(resource);
+            if (localIndex >= 0)
+                break;
+        }
 
-        int searchIndex = Collections.binarySearch(this.chunks, resource, RESOURCE_ORDERING);
-        if (searchIndex < 0)
+        if (localIndex < 0)
             return false;
 
-        // Search for the research to the left.
-        int resourceIndex = searchIndex;
-        kcCResource temp;
-        while (resourceIndex >= 0 && (temp = this.chunks.get(resourceIndex)) != resource && RESOURCE_ORDERING.compare(resource, temp) == 0)
-            resourceIndex--;
-
-        // Search for the resource to the right.
-        if (resourceIndex < 0 || this.chunks.get(resourceIndex) != resource) {
-            resourceIndex = searchIndex + 1;
-            while (this.chunks.size() > resourceIndex && (temp = this.chunks.get(resourceIndex)) != resource && RESOURCE_ORDERING.compare(resource, temp) == 0)
-                resourceIndex++;
-
-            // Couldn't find the index to remove from.
-            if (resourceIndex >= this.chunks.size())
-                return false;
-        }
-
-        kcCResource removedResource = this.chunks.remove(resourceIndex);
+        // Remove from table of contents.
+        kcCResource removedResource = tableOfContents.resourceChunks.remove(localIndex);
         if (removedResource != resource) { // Sanity check.
-            this.chunks.add(resourceIndex, removedResource); // Add it back!!
-            throw new IllegalArgumentException("[Shouldn't happen] The resource we removed (" + removedResource + ") was not the one we expected to remove!! (" + resourceIndex + ")");
+            tableOfContents.resourceChunks.add(localIndex, removedResource); // Add it back!!
+            throw new IllegalArgumentException("[Shouldn't happen] The resource we removed from the table of contents (" + removedResource + ") was not the one we expected to remove!! (" + localIndex + ")");
         }
 
-        return true;
+        // Remove from chunks list.
+        int baseOffset = 0;
+        for (int i = 0; i < this.tableOfContents.size(); i++) {
+            kcCResourceTableOfContents testTableOfContents = this.tableOfContents.get(i);
+            if (tableOfContents == testTableOfContents) {
+                int removeIndex = baseOffset + localIndex;
+                removedResource = this.chunks.remove(removeIndex);
+                if (removedResource != resource) { // Sanity check.
+                    tableOfContents.resourceChunks.add(localIndex, removedResource); // Add it back!!
+                    this.chunks.add(removeIndex, removedResource); // Add it back!!
+                    throw new IllegalArgumentException("[Shouldn't happen] The resource we removed from the chunked file (" + removedResource + ") was not the one we expected to remove!! (" + removeIndex + ")");
+                }
+
+                return true;
+            } else {
+                baseOffset += testTableOfContents.getResourceChunks().size();
+            }
+        }
+
+        // Wasn't removed.
+        tableOfContents.resourceChunks.add(localIndex, removedResource); // Add it back!!
+        throw new IllegalArgumentException("[Shouldn't happen] The resource we removed from the table of contents (" + removedResource + ") wasn't found in the parent chunked file!");
     }
 
     /**

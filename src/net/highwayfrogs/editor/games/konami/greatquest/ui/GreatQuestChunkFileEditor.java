@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.konami.greatquest.ui;
 
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
@@ -19,14 +20,16 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.KCResourceID;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTableOfContents;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
 import net.highwayfrogs.editor.gui.components.ListViewComponent;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
-import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.fx.wrapper.LazyFXListCell;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -61,6 +64,7 @@ public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<
         // Register the editor.
         if (getLeftSidePanelFreeArea() != null) {
             this.chunkListComponent.applyDefaultEditor(this.collectionEditorComponent);
+            this.collectionEditorComponent.setMoveButtonLogic(null); // Prevent moving up/down.
             Node propertyListViewRootNode = this.collectionEditorComponent.getRootNode();
             VBox.setVgrow(propertyListViewRootNode, Priority.ALWAYS);
             getLeftSidePanelFreeArea().getChildren().add(propertyListViewRootNode);
@@ -69,13 +73,11 @@ public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<
     }
 
     @Override
-    public void setTargetFile(GreatQuestChunkedFile newChunkedFile) {
-        GreatQuestChunkedFile oldChunkedFile = getFile();
-        super.setTargetFile(newChunkedFile);
-        if (oldChunkedFile != newChunkedFile) {
-            this.chunkListComponent.refreshDisplay();
-            this.collectionEditorComponent.updateEditorControls();
-        }
+    protected void onSelectedFileChange(GreatQuestChunkedFile oldChunkedFile, GreatQuestChunkedFile newChunkedFile) {
+        super.onSelectedFileChange(oldChunkedFile, newChunkedFile);
+        this.chunkListComponent.refreshDisplay();
+        this.chunkListComponent.updateResourceGroupComboBox(newChunkedFile);
+        this.collectionEditorComponent.updateEditorControls();
     }
 
     @Override
@@ -91,12 +93,15 @@ public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<
     public static class GreatQuestChunkListViewComponent extends ListViewComponent<GreatQuestInstance, kcCResource> {
         private final GreatQuestChunkFileEditor listComponent;
         private final ComboBox<GreatQuestChunkResourceCategory> resourceTypeComboBox;
+        private final ComboBox<kcCResourceTableOfContents> resourceGroupComboBox;
+        private final Region emptyRegion = new Region();
         private final CustomMenuItem addNewChunkItem = new CustomMenuItem(new Label("Add New"));
 
         public GreatQuestChunkListViewComponent(GreatQuestChunkFileEditor listComponent) {
             super(listComponent.getGameInstance());
             this.listComponent = listComponent;
-            this.resourceTypeComboBox = createComboBox();
+            this.resourceTypeComboBox = createResourceTypeComboBox();
+            this.resourceGroupComboBox = createResourceGroupComboBox();
         }
 
         @Override
@@ -130,10 +135,15 @@ public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<
 
         @Override
         public List<kcCResource> getViewEntries() {
-            if (this.listComponent != null && this.listComponent.getFile() != null) {
-                return this.listComponent.getFile().getChunks();
-            } else {
+            if (this.listComponent == null || this.listComponent.getFile() == null)
                 return Collections.emptyList();
+
+            GreatQuestChunkedFile chunkedFile = this.listComponent.getFile();
+            kcCResourceTableOfContents resourceGroup = this.resourceGroupComboBox != null ? this.resourceGroupComboBox.getValue() : null;
+            if (resourceGroup != null && chunkedFile.getTableOfContents().contains(resourceGroup)) {
+                return resourceGroup.getResourceChunks();
+            } else {
+                return chunkedFile.getChunks();
             }
         }
 
@@ -155,9 +165,10 @@ public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<
          * This must be run after the parent UI has been loaded, since otherwise it can't work.
          */
         private void extendParentUI() {
-            Region emptyRegion = new Region();
-            HBox.setHgrow(emptyRegion, Priority.ALWAYS); // Ensures the combo box is aligned to the right.
-            getListComponent().getLeftSidePanelTopBox().getChildren().addAll(emptyRegion, this.resourceTypeComboBox);
+            HBox.setHgrow(this.resourceGroupComboBox, Priority.NEVER);
+            HBox.setHgrow(this.resourceTypeComboBox, Priority.NEVER);
+            HBox.setHgrow(this.emptyRegion, Priority.ALWAYS); // Ensures the combo box is aligned to the right.
+            getListComponent().getLeftSidePanelTopBox().getChildren().addAll(this.emptyRegion, this.resourceTypeComboBox);
             updateAddMenuEntries(this.resourceTypeComboBox.getValue());
 
             this.resourceTypeComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
@@ -168,22 +179,70 @@ public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<
                 }
             });
 
+            this.resourceGroupComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
+                if (oldValue == newValue)
+                    return;
+
+                getListComponent().getChunkListComponent().refreshDisplay();
+                getListComponent().getCollectionEditorComponent().updateEditorControls();
+            });
+
             this.addNewChunkItem.setOnAction(event -> {
-                // TODO: PS2 PAL FIX -> Multiple TOC Support.
                 FXUtils.makePopUp("Not supported yet. Chunks can be added by loading .gqs files instead.", AlertType.ERROR); // TODO: IMPLEMENT!
             });
 
             getListComponent().getCollectionEditorComponent().addMenuItemToAddButtonLogic(this.addNewChunkItem);
         }
 
-        private static ComboBox<GreatQuestChunkResourceCategory> createComboBox() {
+        private void updateResourceGroupComboBox(GreatQuestChunkedFile newChunkedFile) {
+            if (this.resourceGroupComboBox == null)
+                return;
+
+            // Update.
+            ObservableList<kcCResourceTableOfContents> resourceGroups = getResourceGroups(newChunkedFile);
+            ObservableList<Node> leftSidePanelChildren = getListComponent().getLeftSidePanelTopBox().getChildren();
+            int groupComboBoxIndex = leftSidePanelChildren.indexOf(this.resourceGroupComboBox);
+            if (resourceGroups != null && resourceGroups.size() > 0) {
+                this.resourceGroupComboBox.setItems(resourceGroups);
+                this.resourceGroupComboBox.getSelectionModel().selectFirst();
+                if (groupComboBoxIndex < 0) // Add combo box.
+                    leftSidePanelChildren.add(leftSidePanelChildren.indexOf(this.emptyRegion), this.resourceGroupComboBox);
+            } else {
+                this.resourceGroupComboBox.getSelectionModel().clearSelection();
+                if (groupComboBoxIndex >= 0) // Hide combo box.
+                    leftSidePanelChildren.remove(groupComboBoxIndex);
+            }
+        }
+
+        private static ComboBox<GreatQuestChunkResourceCategory> createResourceTypeComboBox() {
             ComboBox<GreatQuestChunkResourceCategory> comboBox = new ComboBox<>(FXCollections.observableArrayList(GreatQuestChunkResourceCategory.values()));
             comboBox.getSelectionModel().select(GreatQuestChunkResourceCategory.ALL);
-            comboBox.setConverter(new AbstractStringConverter<>(GreatQuestChunkResourceCategory::getDisplayName));
-            comboBox.setCellFactory(listView -> new AbstractAttachmentCell<>((resourceType, index) -> resourceType != null ? resourceType.getDisplayName() : null,
+            FXUtils.applyComboBoxDisplaySettings(comboBox, () -> new AbstractAttachmentCell<>(
+                    (resourceType, index) -> resourceType != null ? resourceType.getDisplayName() : null,
                     (resourceType, index) -> resourceType != null ? new ImageView(resourceType.getIcon().getFxImage()) : null));
             HBox.setMargin(comboBox, new Insets(0, 2, 0, 0));
             return comboBox;
+        }
+
+        private static ComboBox<kcCResourceTableOfContents> createResourceGroupComboBox() {
+            ComboBox<kcCResourceTableOfContents> comboBox = new ComboBox<>();
+            FXUtils.applyComboBoxDisplaySettings(comboBox, () -> new LazyFXListCell<>(
+                    (resource, index) -> " Group " + (index - 1) + " (" + resource.getResourceChunks().size() + ")",
+                    "All Groups"));
+            return comboBox;
+        }
+
+        private static ObservableList<kcCResourceTableOfContents> getResourceGroups(GreatQuestChunkedFile chunkedFile) {
+            if (chunkedFile == null)
+                return FXCollections.emptyObservableList();
+
+            List<kcCResourceTableOfContents> resourceGroups = chunkedFile.getTableOfContents();
+            if (resourceGroups.size() <= 1)
+                return FXCollections.emptyObservableList();
+
+            resourceGroups = new ArrayList<>(resourceGroups);
+            resourceGroups.add(0, null);
+            return FXCollections.observableArrayList(resourceGroups);
         }
     }
 

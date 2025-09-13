@@ -657,6 +657,17 @@ public class FXUtils {
         }), 0, TimeUnit.MINUTES.toMillis(1));
     }
 
+    /**
+     * Applies the list cell display supplier to both the listview cells, and the drop-down button displays.
+     * @param comboBox the combo box to apply to
+     * @param cellSupplier the cell supplier to apply
+     * @param <T> the type of element tracked by the combo box
+     */
+    public static <T> void applyComboBoxDisplaySettings(@NonNull ComboBox<T> comboBox, @NonNull Supplier<ListCell<T>> cellSupplier) {
+        comboBox.setCellFactory(listView -> cellSupplier.get());
+        comboBox.setButtonCell(cellSupplier.get());
+    }
+
     static {
         setupCacheTimerTask();
     }

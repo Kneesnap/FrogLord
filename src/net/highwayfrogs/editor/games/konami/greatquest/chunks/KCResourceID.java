@@ -28,7 +28,7 @@ public enum KCResourceID {
     ACTORDESC("RAD\0", "Actor Data", ImageResource.GHIDRA_ICON_GEAR_16, null), // Game Registered ID: 9 (Unused?)
     TRIMESH("RTM\0", "Collision Mesh", ImageResource.GOURAUD_TRIANGLE_LIST_16, kcCResourceTriMesh::new),
     GENERIC("GEN\0", "Generic Data", ImageResource.WIN98_HEXCHAT_16, kcCResourceGeneric::new),
-    TOC("TOC\0", "Table of Contents", ImageResource.WIN98_HELP_CONTENTS_16, kcCResourceTOC::new),
+    TOC("TOC\0", "Table of Contents", ImageResource.WIN98_HELP_CONTENTS_16, kcCResourceTableOfContents::new),
     ACTIONSEQUENCE("ASQ\0", "Action Sequence", ImageResource.GHIDRA_ICON_PAPER_WITH_TEXT_16, kcCActionSequence::new),
     NAMEDHASH("NHS\0", "Action Sequence Names", ImageResource.GHIDRA_ICON_CLIPBOARD_PASTE_16, kcCResourceNamedHash::new),
     ENTITYINST("NST\0", "Entity Instance", ImageResource.GHIDRA_ICON_MONKEY_16, kcCResourceEntityInst::new),

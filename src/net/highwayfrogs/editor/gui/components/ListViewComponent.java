@@ -184,8 +184,10 @@ public abstract class ListViewComponent<TGameInstance extends GameInstance, TVie
      */
     @SuppressWarnings("unchecked")
     public void applyDefaultEditor(CollectionEditorComponent<TGameInstance, ?> editorComponent) {
-        editorComponent.setRemoveButtonLogic(viewEntry -> removeViewEntry((TViewEntry) viewEntry));
-        editorComponent.setMoveButtonLogic((viewEntry, direction) -> moveViewEntry((TViewEntry) viewEntry, direction.getOffset()));
+        if (editorComponent.getRemoveButtonLogic() == null)
+            editorComponent.setRemoveButtonLogic(viewEntry -> removeViewEntry((TViewEntry) viewEntry));
+        if (editorComponent.getMoveButtonLogic() == null)
+            editorComponent.setMoveButtonLogic((viewEntry, direction) -> moveViewEntry((TViewEntry) viewEntry, direction.getOffset()));
     }
 
     /**
