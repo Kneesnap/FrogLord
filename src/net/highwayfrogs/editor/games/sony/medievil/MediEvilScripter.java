@@ -51,9 +51,9 @@ public class MediEvilScripter {
         System.out.println("{");
 
         for (EventBlock block : readScript(reader))
-            System.out.println("\t" + block + ",");
+            System.out.println("\t" + block);
 
-        System.out.println("}");
+        System.out.println("};");
         System.out.println();
     }
 
@@ -114,7 +114,7 @@ public class MediEvilScripter {
     }
 
     public static <E extends Enum<E>> String getEnumName(E[] enumValues, int ordinal) {
-        return ordinal >= 0 && ordinal < enumValues.length ? enumValues[ordinal].name() : "/*[BAD ENUM]*/ " + NumberUtils.toHexString(ordinal);
+        return ordinal >= 0 && ordinal < enumValues.length ? enumValues[ordinal].name() : "/*[TODO: BAD ENUM]*/ " + NumberUtils.toHexString(ordinal);
     }
 
     public static String getBitFlagsString(int bitValue, BitFlagEnum[] values) {
