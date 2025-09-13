@@ -269,6 +269,8 @@ public class FFSUtil {
         // This is necessary, as even changes done in FrogLord need to be reapplied after a restart.
         if (textureRemap.getTextureIds().size() > textureRemap.getTextureIdSlotsAvailable())
             context.handleProblem(Level.WARNING, "The texture remap for %s has room for %d textures, but %d were imported.\nThis will likely cause graphical corruption in-game!", map.getFileDisplayName(), textureRemap.getTextureIdSlotsAvailable(), textureRemap.getTextureIds().size());
+        while (textureRemap.getTextureIdSlotsAvailable() > textureRemap.getTextureIds().size())
+            textureRemap.getTextureIds().add((short) -1);
 
         // 3) Clear old vertex data, and add new polygon data.
         FroggerMapFilePacketVertex vertexPacket = map.getVertexPacket();
