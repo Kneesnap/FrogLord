@@ -1,9 +1,9 @@
 # Fixing the PC Port of Frogger: The Great Quest
-The PC port of Frogger: The Great Quest suffers from many framerate-related issues, including crashes.
+The PC port of Frogger: The Great Quest suffers from many frame-rate related issues, including crashes.
 
 > [!NOTE]
 > Some of these steps will need to be done every time you reboot your computer or shut down the relevant programs.  
-> Follow the check-list at the bottom of the file if you are not sure if you have followed the steps correctly.
+> Follow the checklist at the bottom of the file if you are not sure if you have followed the steps correctly.
 
 ## Step 1) DxWnd
 DxWnd is a program used to fix old games to run properly on modern versions of Windows.
