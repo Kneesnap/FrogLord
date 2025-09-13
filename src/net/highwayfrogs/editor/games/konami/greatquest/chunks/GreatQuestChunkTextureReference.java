@@ -1,5 +1,7 @@
 package net.highwayfrogs.editor.games.konami.greatquest.chunks;
 
+import javafx.scene.Node;
+import javafx.scene.image.ImageView;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
@@ -8,6 +10,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFi
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestImageFile;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -41,6 +44,12 @@ public class GreatQuestChunkTextureReference extends kcCResource {
     public void save(DataWriter writer) {
         super.save(writer);
         writer.writeNullTerminatedFixedSizeString(this.fullPath, PATH_SIZE, GreatQuestInstance.PADDING_BYTE_CD);
+    }
+
+    @Override
+    public Node createFxPreview() {
+        // TODO: Create a screenshot of 3D models as a preview for .VTX files.
+        return new ImageView(FXUtils.toFXImage(getReferencedImage().getImage(), false));
     }
 
     @Override

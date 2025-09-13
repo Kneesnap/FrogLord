@@ -41,6 +41,7 @@ import java.util.List;
 public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<GreatQuestChunkedFile> {
     private final CollectionEditorComponent<GreatQuestInstance, kcCResource> collectionEditorComponent;
     private final GreatQuestChunkListViewComponent chunkListComponent;
+    private Node tempExtraNode;
 
     public GreatQuestChunkFileEditor(GreatQuestInstance instance) {
         this(instance, "Chunks");
@@ -75,6 +76,11 @@ public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<
     @Override
     protected void onSelectedFileChange(GreatQuestChunkedFile oldChunkedFile, GreatQuestChunkedFile newChunkedFile) {
         super.onSelectedFileChange(oldChunkedFile, newChunkedFile);
+        if (this.tempExtraNode != null) {
+            getRightSidePanelFreeArea().getChildren().remove(this.tempExtraNode);
+            this.tempExtraNode = null;
+        }
+
         this.chunkListComponent.refreshDisplay();
         this.chunkListComponent.updateResourceGroupComboBox(newChunkedFile);
         this.collectionEditorComponent.updateEditorControls();
@@ -117,6 +123,15 @@ public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<
         protected void onSelect(kcCResource resource) {
             // Update controls based on selection.
             this.listComponent.getCollectionEditorComponent().updateEditorControls();
+
+            if (this.listComponent.tempExtraNode != null) {
+                this.listComponent.getRightSidePanelFreeArea().getChildren().remove(this.listComponent.tempExtraNode);
+                this.listComponent.tempExtraNode = null;
+            }
+
+            this.listComponent.tempExtraNode = resource != null ? resource.createFxPreview() : null;
+            if (this.listComponent.tempExtraNode != null)
+                this.listComponent.getRightSidePanelFreeArea().getChildren().add(this.listComponent.tempExtraNode);
 
             if (resource != null) {
                 this.listComponent.getPropertyListViewer().showProperties(resource.createPropertyList());

@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.chunks;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
@@ -396,6 +397,13 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
      */
     public void handleDoubleClick() {
         // Do nothing.
+    }
+
+    /**
+     * Creates an extra UI preview node.
+     */
+    public Node createFxPreview() {
+        return null;
     }
 
     /**

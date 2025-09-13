@@ -79,7 +79,6 @@ import java.util.Map.Entry;
  * TODO Future:
  *  -> Flesh out the PropertyList behavior. (Nesting!)
  *  -> Further support previewing & editing generic data.
- *  -> Preview texture references in chunk file viewer.
  *  -> Improve how the scripting UI feels to use. (Eg: the UI shouldn't be completely blocked)
  *  -> Config
  *   -> How do we handle comments in the key-value-pair section? (Multi-line)
