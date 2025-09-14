@@ -157,10 +157,10 @@ public class kcActionAttachSensor extends kcAction {
     }
 
     private void setParticleEmitterHash(int particleEmitterHash) {
-        GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, getChunkedFile(), this, this.particleEmitterRef, particleEmitterHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGeneric.class, getChunkedFile(), this, this.particleEmitterRef, particleEmitterHash, true);
     }
 
     private void setLauncherDataHash(int launcherDataHash) {
-        GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, getChunkedFile(), this, this.launchDataRef, launcherDataHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGeneric.class, getChunkedFile(), this, this.launchDataRef, launcherDataHash, true);
     }
 }

@@ -1,10 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.loading;
 
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkTextureReference;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceModel;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestImageFile;
@@ -65,11 +61,10 @@ public class kcMaterialLoadContext {
             return;
 
         String collisionFileName = kcCResourceModel.getAsCollisionTriMeshFileName(originalFileName);
-        int collisionFileHash = GreatQuestUtils.hash(collisionFileName);
         List<GreatQuestChunkedFile> chunkedFiles = getChunkedFiles();
         for (int i = 0; i < chunkedFiles.size(); i++) {
             GreatQuestChunkedFile chunkedFile = chunkedFiles.get(i);
-            kcCResource triMesh = chunkedFile.getResourceByHash(collisionFileHash);
+            kcCResource triMesh = chunkedFile.getResourceByName(collisionFileName, kcCResourceTriMesh.class);
             if (triMesh != null && StringUtils.isNullOrEmpty(triMesh.getSelfHash().getOriginalString()))
                 triMesh.getSelfHash().setOriginalString(collisionFileName);
         }

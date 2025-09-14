@@ -62,8 +62,8 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
         this.scriptIndex = reader.readInt();
         int targetEntityHash = reader.readInt();
 
-        GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, this.resource, this.descriptionRef, descriptionHash, this.resource == null || !this.resource.doesNameMatch("DummyParticleInst001", "clover-2ProxyDesc", "ConeTreeM-1Inst004", "Sbpile2Inst001")); // There are a handful of cases where this doesn't resolve, but in almost all situations it does resolve. Not sure how entities work when it doesn't resolve though.
-        GreatQuestUtils.resolveResourceHash(kcCResourceEntityInst.class, this.resource, this.targetEntityRef, targetEntityHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGeneric.class, this.resource, this.descriptionRef, descriptionHash, this.resource == null || !this.resource.doesNameMatch("DummyParticleInst001", "clover-2ProxyDesc", "ConeTreeM-1Inst004", "Sbpile2Inst001")); // There are a handful of cases where this doesn't resolve, but in almost all situations it does resolve. Not sure how entities work when it doesn't resolve though.
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceEntityInst.class, this.resource, this.targetEntityRef, targetEntityHash, true);
     }
 
     @Override
@@ -240,12 +240,12 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
             throw new NullPointerException("chunkedFile");
 
         int entityDescHash = GreatQuestUtils.getAsHash(input.getKeyValueNodeOrError(CONFIG_KEY_ENTITY_DESC), -1, this.descriptionRef);
-        GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, chunkedFile, this.resource, this.descriptionRef, entityDescHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGeneric.class, chunkedFile, this.resource, this.descriptionRef, entityDescHash, true);
 
         this.priority = input.getOrDefaultKeyValueNode(CONFIG_KEY_PRIORITY).getAsInteger(1);
 
         int targetEntityHash = GreatQuestUtils.getAsHash(input.getKeyValueNodeOrError(CONFIG_KEY_TARGET_ENTITY), -1, this.targetEntityRef);
-        GreatQuestUtils.resolveResourceHash(kcCResourceEntityInst.class, chunkedFile, this.resource, this.targetEntityRef, targetEntityHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceEntityInst.class, chunkedFile, this.resource, this.targetEntityRef, targetEntityHash, true);
     }
 
     /**

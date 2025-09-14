@@ -317,7 +317,7 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
                 throw new IllegalArgumentException("The kcCResourceNamedHash read an entry for key '" + this.keyName + "' with hash " + NumberUtils.to0PrefixedHexString(originalKeyHash) + ". However, the key actually hashes to " + NumberUtils.to0PrefixedHexString(ourHash) + ".");
 
             // Resolve value.
-            GreatQuestUtils.resolveResourceHash(kcCActionSequence.class, this.parentHashTable, this.valueRef, valueHash, false);
+            GreatQuestUtils.resolveLevelResourceHash(kcCActionSequence.class, this.parentHashTable, this.valueRef, valueHash, false);
         }
 
         @Override

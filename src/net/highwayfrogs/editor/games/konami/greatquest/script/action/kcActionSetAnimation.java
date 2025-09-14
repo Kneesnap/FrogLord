@@ -137,7 +137,7 @@ public class kcActionSetAnimation extends kcAction {
      * @param trackHash the hash of the track to apply
      */
     public void setTrackHash(int trackHash) {
-        GreatQuestUtils.resolveResourceHash(kcCResourceTrack.class, getChunkedFile(), this, this.trackRef, trackHash, false);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceTrack.class, getChunkedFile(), this, this.trackRef, trackHash, false);
     }
 
     @Getter

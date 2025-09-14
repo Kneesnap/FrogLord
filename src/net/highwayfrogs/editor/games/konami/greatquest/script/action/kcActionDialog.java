@@ -64,6 +64,6 @@ public class kcActionDialog extends kcAction {
      * @param newDialogHash the hash of the new dialog.
      */
     public void setDialogHash(int newDialogHash) {
-        GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, getChunkedFile(), this, this.dialogRef, newDialogHash, false);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGeneric.class, getChunkedFile(), this, this.dialogRef, newDialogHash, false);
     }
 }

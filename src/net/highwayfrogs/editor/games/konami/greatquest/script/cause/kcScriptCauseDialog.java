@@ -113,7 +113,7 @@ public class kcScriptCauseDialog extends kcScriptCause {
      * @param dialogHash the hash to apply
      */
     public void setDialogHash(int dialogHash) {
-        GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, getChunkFile(), this, this.dialogRef, dialogHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGeneric.class, getChunkFile(), this, this.dialogRef, dialogHash, true);
     }
 
     @Getter

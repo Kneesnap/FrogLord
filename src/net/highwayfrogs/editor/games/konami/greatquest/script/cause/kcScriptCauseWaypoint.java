@@ -94,7 +94,7 @@ public class kcScriptCauseWaypoint extends kcScriptCause {
      * @param otherEntityHash the hash to apply
      */
     public void setOtherEntityHash(int otherEntityHash) {
-        GreatQuestUtils.resolveResourceHash(kcCResourceEntityInst.class, getChunkFile(), this, this.otherEntityRef, otherEntityHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceEntityInst.class, getChunkFile(), this, this.otherEntityRef, otherEntityHash, true);
     }
 
     @Getter

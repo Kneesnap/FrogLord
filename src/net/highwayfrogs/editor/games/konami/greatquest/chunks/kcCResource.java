@@ -344,20 +344,23 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
         contextMenu.getItems().add(copyNameItem);
         copyNameItem.setOnAction(event -> FXUtils.setClipboardText(getName()));
 
+        MenuItem copyHashItem = new MenuItem("Copy Hash to Clipboard");
+        contextMenu.getItems().add(copyHashItem);
+        copyHashItem.setOnAction(event -> FXUtils.setClipboardText(getHashAsHexString()));
+
         MenuItem renameItem = new MenuItem("Rename");
         contextMenu.getItems().add(renameItem);
         renameItem.setOnAction(event -> {
             InputMenu.promptInput(getGameInstance(), "Please enter the new name for the chunk.", getName(), newName -> {
                 if (newName.length() >= NAME_SIZE) {
-                    FXUtils.makePopUp("The provided name is too long! (Max: " + (NAME_SIZE - 1) + " characters)", AlertType.ERROR);
+                    FXUtils.showPopup(AlertType.ERROR, "Rename failed.", "The provided name is too long! (Max: " + (NAME_SIZE - 1) + " characters)");
                     return;
                 }
 
                 if (isHashBasedOnName()) {
-                    int newHash = calculateHash(newName);
-                    kcCResource otherResource = getParentFile().getResourceByHash(newHash);
+                    kcCResource otherResource = getParentFile().getResourceByName(newName, null);
                     if (otherResource != null && otherResource != this) {
-                        FXUtils.makePopUp("The provided name conflicts with another resource: " + otherResource + ".", AlertType.ERROR);
+                        FXUtils.showPopup(AlertType.ERROR, "Rename failed.", "The provided name conflicts with another resource: " + otherResource + ".");
                         return;
                     }
                 }

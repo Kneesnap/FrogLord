@@ -54,6 +54,6 @@ public class kcActionSpawnParticleEffect extends kcAction {
      * @param newParticleHash the hash of the new dialog.
      */
     public void setParticleHash(int newParticleHash) {
-        GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, getChunkedFile(), this, this.particleRef, newParticleHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGeneric.class, getChunkedFile(), this, this.particleRef, newParticleHash, true);
     }
 }

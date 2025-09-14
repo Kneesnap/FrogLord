@@ -43,7 +43,7 @@ public class kcAnimSetDesc extends kcBaseDesc implements IPropertyListCreator {
         for (int i = 0; i < animationCount; i++) {
             int hash = reader.readInt();
             GreatQuestHash<kcCResourceTrack> animation = new GreatQuestHash<>(hash);
-            GreatQuestUtils.resolveResourceHash(kcCResourceTrack.class, this, animation, hash, false); // It is common for these to not resolve, so don't warn about it.
+            GreatQuestUtils.resolveLevelResourceHash(kcCResourceTrack.class, this, animation, hash, false); // It is common for these to not resolve, so don't warn about it.
             this.animationRefs.add(animation);
         }
     }

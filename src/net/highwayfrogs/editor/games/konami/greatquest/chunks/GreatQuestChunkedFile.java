@@ -4,6 +4,7 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
@@ -49,7 +50,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -399,17 +399,60 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     }
 
     /**
+     * Gets a resource by its name.
+     * @param name        The name of the resource to lookup.
+     * @param <TResource> The type of resource to return.
+     * @return The resource found with the hash, or null.
+     */
+    @SuppressWarnings("unchecked")
+    public <TResource extends kcCResource> TResource getResourceByName(String name, Class<TResource> resourceClass) {
+        int hash = NumberUtils.isHexInteger(name) ? NumberUtils.parseHexInteger(name) : GreatQuestUtils.hash(name);
+        if (hash == 0 || hash == -1)
+            return null; // TOC chunks conflict since they don't have a hash / aren't loaded.
+
+        for (int i = 0; i < this.chunks.size(); i++) {
+            kcCResource resource = this.chunks.get(i);
+            if (resource.getHash() != hash)
+                continue;
+
+            if (resourceClass != null && !resourceClass.isInstance(resource))
+                throw new RuntimeException("Expected a resource named '" + name + "' to be a(n) " + resourceClass.getSimpleName() + ", but it was actually found to be a(n) " + Utils.getSimpleName(resourceClass) + ".");
+
+            return (TResource) resource;
+        }
+
+        return null;
+    }
+
+    /**
+     * Gets a resource by its name.
+     * @param name        The name of the resource to lookup.
+     * @param genericType The type of generic resource to return.
+     * @return The resource found with the hash, or null.
+     */
+    public kcCResourceGeneric getGenericResourceByName(String name, @NonNull kcCResourceGenericType genericType) {
+        kcCResourceGeneric resourceGeneric = getResourceByName(name, kcCResourceGeneric.class);
+        if (resourceGeneric == null)
+            return null;
+
+        if (resourceGeneric.getResourceType() != genericType)
+            throw new RuntimeException("Expected a resource named '" + name + "' to be a(n) " + genericType + ", but it was actually found to be a(n) " + resourceGeneric.getResourceType() + ".");
+
+        return resourceGeneric;
+    }
+
+    /**
      * Gets the scene manager for this map, if it exists.
      */
     public kcEnvironment getEnvironment() {
-        return getResourceByHash(kcEnvironment.LEVEL_RESOURCE_HASH);
+        return getResourceByName(kcEnvironment.RESOURCE_NAME, kcEnvironment.class);
     }
 
     /**
      * Gets the scene manager for this map, if it exists.
      */
     public kcCResOctTreeSceneMgr getSceneManager() {
-        return getResourceByHash(kcCResOctTreeSceneMgr.LEVEL_RESOURCE_HASH);
+        return getResourceByName(kcCResOctTreeSceneMgr.RESOURCE_NAME, kcCResOctTreeSceneMgr.class);
     }
 
     /**
@@ -610,7 +653,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
             // Entities can reference each other, so it is important to create new instances for each entity before loading individual entity data.
             String entityName = entityCfg.getSectionName();
-            kcCResourceEntityInst entityInst = getResourceByHash(GreatQuestUtils.hash(entityName));
+            kcCResourceEntityInst entityInst = getResourceByName(entityName, kcCResourceEntityInst.class);
             if (entityInst == null) {
                 entityInst = new kcCResourceEntityInst(this);
                 entityInst.setName(entityName, true);
@@ -621,7 +664,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
         for (Config entityCfg : importConfigs) {
             String entityName = entityCfg.getSectionName();
-            kcCResourceEntityInst entityInst = getResourceByHash(GreatQuestUtils.hash(entityName));
+            kcCResourceEntityInst entityInst = getResourceByName(entityName, kcCResourceEntityInst.class);
             if (entityInst == null) // Should not happen.
                 throw new RuntimeException("Could not find entity '" + entityName + "'.");
 
@@ -700,7 +743,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
      * Gets the script list in this chunked file, if there is one.
      */
     public kcScriptList getScriptList() {
-        kcScriptList scriptList = getResourceByHash(kcScriptList.GLOBAL_SCRIPT_NAME_HASH);
+        kcScriptList scriptList = getResourceByName(kcScriptList.GLOBAL_SCRIPT_NAME, kcScriptList.class);
         if (scriptList != null)
             return scriptList;
 
@@ -769,16 +812,22 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             kcEntityDescType descType = entityDescCfg.getKeyValueNodeOrError(kcEntity3DDesc.CONFIG_KEY_DESC_TYPE).getAsEnumOrError(kcEntityDescType.class);
 
             String entityDescName = entityDescCfg.getSectionName();
-            kcCResourceGeneric generic = getResourceByHash(GreatQuestUtils.hash(entityDescName));
-            if (generic == null) {
+            kcCResourceGeneric generic = getResourceByName(entityDescName, kcCResourceGeneric.class);
+
+            boolean createNewResource = (generic == null);
+            if (createNewResource) {
                 generic = new kcCResourceGeneric(this);
                 generic.setName(entityDescName, true);
                 addResource(generic);
             }
 
             kcEntity3DDesc entityDesc = generic.getAsEntityDescription();
-            if (entityDesc == null)
+            if (entityDesc == null) {
+                if (!createNewResource)
+                    throw new RuntimeException("Found a resource named '" + entityDescName + "', which was expected to be an entity description, but was actually a(n) " + generic.getResourceType() + ".");
+
                 generic.setResourceData(entityDesc = descType.createNewInstance(generic));
+            }
 
             entityDesc.fromConfig(entityDescCfg);
             importCount++;
@@ -828,16 +877,22 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             kcProxyDescType descType = proxyDescCfg.getKeyValueNodeOrError(kcProxyDesc.CONFIG_KEY_DESC_TYPE).getAsEnumOrError(kcProxyDescType.class);
 
             String proxyDescName = proxyDescCfg.getSectionName();
-            kcCResourceGeneric generic = getResourceByHash(GreatQuestUtils.hash(proxyDescName));
-            if (generic == null) {
+            kcCResourceGeneric generic = getResourceByName(proxyDescName, kcCResourceGeneric.class);
+
+            boolean createNewResource = (generic == null);
+            if (createNewResource) {
                 generic = new kcCResourceGeneric(this);
                 generic.setName(proxyDescName, true);
                 addResource(generic);
             }
 
             kcProxyDesc proxyDesc = generic.getAsProxyDescription();
-            if (proxyDesc == null)
+            if (proxyDesc == null) {
+                if (!createNewResource)
+                    throw new RuntimeException("Found a resource named '" + proxyDescName + "', which was expected to be a collision proxy, but was actually a(n) " + generic.getResourceType() + ".");
+
                 generic.setResourceData(proxyDesc = descType.createNewInstance(generic));
+            }
 
             proxyDesc.fromConfig(proxyDescCfg);
             importCount++;
@@ -1164,34 +1219,20 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
      * @param prefix The prefix to write.
      * @param hashObj The hash to lookup.
      */
-    public static StringBuilder writeAssetLine(GreatQuestChunkedFile file, StringBuilder builder, String padding, String prefix, GreatQuestHash<?> hashObj) {
-        return writeAssetInfo(file, builder, padding, prefix, hashObj != null ? hashObj.getHashNumber() : 0, kcCResource::getName).append(Constants.NEWLINE);
-    }
-
-    /**
-     * Write asset information to the builder. The information written is specified via the function.
-     * If the asset isn't found, the hash is written instead.
-     * @param file         The chunked file to search for assets from.
-     * @param builder      The builder to write to.
-     * @param padding      The line padding data.
-     * @param prefix       The prefix to write.
-     * @param resourceHash The hash value to lookup.
-     * @param getter       The function to turn the resource into a string.
-     * @param <TResource>  The resource type to lookup.
-     */
-    public static <TResource extends kcCResource> StringBuilder writeAssetInfo(GreatQuestChunkedFile file, StringBuilder builder, String padding, String prefix, int resourceHash, Function<TResource, String> getter) {
+    public static StringBuilder writeAssetLine(GreatQuestChunkedFile file, StringBuilder builder, String padding, String prefix, GreatQuestHash<? extends kcCResource> hashObj) {
         builder.append(padding).append(prefix).append(": ");
 
-        TResource resource = GreatQuestUtils.findResourceByHashGlobal(file, file != null ? file.getGameInstance() : null, resourceHash);
+        kcCResource resource = hashObj != null ? hashObj.getResource() : null;
+        int resourceHash = hashObj != null ? hashObj.getHashNumber() : 0;
         if (resource != null) {
-            builder.append(getter.apply(resource));
+            builder.append(resource.getName());
         } else if (resourceHash != 0 && resourceHash != -1) {
             builder.append(NumberUtils.to0PrefixedHexString(resourceHash));
         } else {
             builder.append("None");
         }
 
-        return builder;
+        return builder.append(Constants.NEWLINE);
     }
 
     /**
@@ -1200,24 +1241,12 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
      * @param label The label to write.
      * @param hashObj The hash to lookup.
      */
-    public static Label writeAssetLine(GUIEditorGrid grid, GreatQuestChunkedFile file, String label, GreatQuestHash<?> hashObj) {
-        return writeAssetInfo(grid, file, label, hashObj != null ? hashObj.getHashNumber() : 0, kcCResource::getName);
-    }
-
-    /**
-     * Write asset information to the UI. The information written is specified via the function.
-     * If the asset isn't found, the hash is written instead.
-     * @param file         The chunked file to search for assets from.
-     * @param label        The label to write.
-     * @param resourceHash The hash value to lookup.
-     * @param getter       The function to turn the resource into a string.
-     * @param <TResource>  The resource type to lookup.
-     */
-    public static <TResource extends kcCResource> Label writeAssetInfo(GUIEditorGrid grid, GreatQuestChunkedFile file, String label, int resourceHash, Function<TResource, String> getter) {
+    public static Label writeAssetLine(GUIEditorGrid grid, GreatQuestChunkedFile file, String label, GreatQuestHash<? extends kcCResource> hashObj) {
         String resourceName = null;
-        TResource resource = GreatQuestUtils.findResourceByHashGlobal(file, file != null ? file.getGameInstance() : null, resourceHash);
+        kcCResource resource = hashObj != null ? hashObj.getResource() : null;
+        int resourceHash = hashObj != null ? hashObj.getHashNumber() : 0;
         if (resource != null)
-            resourceName = getter.apply(resource);
+            resourceName = resource.getName();
 
         return grid.addLabel(label + ":", (resourceName != null ? resourceName : "Not Found") + " (" + NumberUtils.to0PrefixedHexString(resourceHash) + ")");
     }
@@ -1288,7 +1317,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
      */
     public kcCResource createResource(KCResourceID readType, byte[] rawBytes, String identifier) {
         kcCResource newChunk;
-        if (readType == KCResourceID.RAW && DataUtils.testSignature(rawBytes, kcEnvironment.ENVIRONMENT_NAME)) {
+        if (readType == KCResourceID.RAW && DataUtils.testSignature(rawBytes, kcEnvironment.RESOURCE_NAME)) {
             newChunk = new kcEnvironment(this);
         } else if (readType == KCResourceID.RAW && DataUtils.testSignature(rawBytes, kcScriptList.GLOBAL_SCRIPT_NAME)) {
             newChunk = new kcScriptList(this);

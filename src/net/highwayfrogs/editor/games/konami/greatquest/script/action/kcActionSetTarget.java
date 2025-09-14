@@ -51,6 +51,6 @@ public class kcActionSetTarget extends kcAction {
      * @param newTargetEntityHash the hash to resolve
      */
     public void setNewEntityTargetHash(int newTargetEntityHash) {
-        GreatQuestUtils.resolveResourceHash(kcCResourceEntityInst.class, getChunkedFile(), this, this.newEntityTargetRef, newTargetEntityHash, false);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceEntityInst.class, getChunkedFile(), this, this.newEntityTargetRef, newTargetEntityHash, false);
     }
 }

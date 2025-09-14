@@ -45,7 +45,7 @@ public class kcProxyTriMeshDesc extends kcProxyDesc {
         int meshHash = reader.readInt();
 
         // If we resolve the tri mesh successfully, our goal is to generate the collision mesh name.
-        if (GreatQuestUtils.resolveResourceHash(kcCResourceTriMesh.class, this, this.meshRef, meshHash, true)) {
+        if (GreatQuestUtils.resolveLevelResourceHash(kcCResourceTriMesh.class, this, this.meshRef, meshHash, true)) {
             String modelName = getParentHash().getOriginalString();
             if (!modelName.endsWith(NAME_SUFFIX))
                 throw new IllegalStateException("The kcProxyTriMeshDesc name was '" + modelName + "', but it was expected to end with '" + NAME_SUFFIX + "'.");
@@ -85,7 +85,7 @@ public class kcProxyTriMeshDesc extends kcProxyDesc {
     public void fromConfig(Config input) {
         super.fromConfig(input);
         int meshHash = GreatQuestUtils.getAsHash(input.getKeyValueNodeOrError(CONFIG_KEY_COLLISION), -1, this.meshRef);
-        GreatQuestUtils.resolveResourceHash(kcCResourceTriMesh.class, getParentFile(), this, this.meshRef, meshHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceTriMesh.class, getParentFile(), this, this.meshRef, meshHash, true);
     }
 
     @Override

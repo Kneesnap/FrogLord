@@ -113,7 +113,7 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
      */
     public boolean setTargetEntityHash(int hash) {
         GreatQuestChunkedFile chunkedFile = getParentFunction().getScript().getScriptList().getParentFile();
-        return GreatQuestUtils.resolveResourceHash(kcCResourceEntityInst.class, chunkedFile, this, this.targetEntityRef, hash, false);
+        return GreatQuestUtils.resolveLevelResourceHash(kcCResourceEntityInst.class, chunkedFile, this, this.targetEntityRef, hash, false);
     }
 
     /**

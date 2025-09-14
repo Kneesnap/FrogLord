@@ -5,7 +5,6 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetUtils;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcActorBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
@@ -24,6 +23,7 @@ import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
@@ -42,7 +42,6 @@ public class kcScriptList extends kcCResource {
     private transient kcScriptListInterim interim;
 
     public static final String GLOBAL_SCRIPT_NAME = "scriptdata";
-    public static final int GLOBAL_SCRIPT_NAME_HASH = GreatQuestUtils.hash(GLOBAL_SCRIPT_NAME);
     private static final String SCRIPT_FILE_PATH_KEY = "scriptFilePath";
     private static final SavedFilePath SCRIPT_EXPORT_PATH = new SavedFilePath(SCRIPT_FILE_PATH_KEY, "Select the directory to export scripts to");
     private static final SavedFilePath SCRIPT_IMPORT_PATH = new SavedFilePath(SCRIPT_FILE_PATH_KEY, "Select the directory to import scripts from");
@@ -176,10 +175,10 @@ public class kcScriptList extends kcCResource {
                 }
 
                 Config scriptCfg = Config.loadConfigFromTextFile(file, false);
-                int entityNameHash = GreatQuestUtils.hash(scriptCfg.getSectionName());
-                kcCResourceEntityInst entity = getParentFile().getResourceByHash(entityNameHash);
+                String entityName = scriptCfg.getSectionName();
+                kcCResourceEntityInst entity = getParentFile().getResourceByName(entityName, kcCResourceEntityInst.class);
                 if (entity == null) {
-                    getLogger().warning("Skipping %s, as the entity could not be resolved.", scriptCfg.getSectionName());
+                    getLogger().warning("Skipping %s, as the entity could not be resolved.", entityName);
                     continue;
                 }
 
@@ -190,7 +189,7 @@ public class kcScriptList extends kcCResource {
                 }
 
                 filesImported++;
-                entityInst.addScriptFunctions(this, scriptCfg, scriptCfg.getSectionName(), false);
+                entityInst.addScriptFunctions(this, scriptCfg, entityName, false);
             }
 
             getLogger().info("Imported %d scripts.", filesImported);
@@ -222,10 +221,15 @@ public class kcScriptList extends kcCResource {
             if (gqsGroupFile == null)
                 return;
 
-            getLogger().info("Importing GQS script group '%s'.", gqsGroupFile.getName());
+            getLogger().info("Importing GQS file '%s'.", gqsGroupFile.getName());
             Config scriptGroupCfg = Config.loadConfigFromTextFile(gqsGroupFile, false);
-            GreatQuestAssetUtils.applyGqsScriptGroup(getParentFile(), scriptGroupCfg);
-            getLogger().info("Finished importing the gqs.");
+
+            try {
+                GreatQuestAssetUtils.applyGqsScriptGroup(getParentFile(), scriptGroupCfg);
+                getLogger().info("Finished importing the gqs.");
+            } catch (Throwable th) {
+                Utils.handleError(getLogger(), th, true, "An error occurred while importing the gqs file '%s'.", gqsGroupFile.getName());
+            }
         });
     }
 

@@ -158,7 +158,7 @@ public class kcActionSetSequence extends kcAction {
      */
     public void setAnimationSequenceHash(int newAnimationSequenceHash) {
         this.sequenceEntry = null;
-        if (GreatQuestUtils.resolveResourceHash(kcCActionSequence.class, getChunkedFile(), this, this.sequenceRef, newAnimationSequenceHash, false))
+        if (GreatQuestUtils.resolveLevelResourceHash(kcCActionSequence.class, getChunkedFile(), this, this.sequenceRef, newAnimationSequenceHash, false))
             return; // Successfully resolved hash.
 
         kcActorBaseDesc actorDesc = getExecutor() != null ? getExecutor().getExecutingActorBaseDescription() : null;

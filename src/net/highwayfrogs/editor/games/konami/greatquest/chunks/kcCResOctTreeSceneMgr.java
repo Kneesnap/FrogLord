@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.GamePlatform;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTriMesh.kcCTriMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
@@ -43,7 +42,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
     private static final int SUPPORTED_VERSION = 1;
     private static final int RESERVED_HEADER_FIELDS = 7;
     private static final int RESERVED_PRIM_HEADER_FIELDS = 3;
-    public static final int LEVEL_RESOURCE_HASH = GreatQuestUtils.hash("OctTreeSceneMgr", true);
+    public static final String RESOURCE_NAME = "OctTreeSceneMgr";
 
     public kcCResOctTreeSceneMgr(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.OCTTREESCENEMGR);

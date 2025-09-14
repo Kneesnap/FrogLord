@@ -5,8 +5,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
@@ -17,6 +15,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySet
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents the kcWaypointDesc struct.
@@ -61,8 +61,8 @@ public class kcWaypointDesc extends kcEntity3DDesc {
         reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
 
         // Resolve entities. Keep in mind that there are a good number of entities which were removed/no longer resolve.
-        GreatQuestUtils.resolveResourceHash(kcCResourceEntityInst.class, this, this.previousWaypointEntityRef, prevEntityHash, false);
-        GreatQuestUtils.resolveResourceHash(kcCResourceEntityInst.class, this, this.nextWaypointEntityRef, nextEntityHash, false);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceEntityInst.class, this, this.previousWaypointEntityRef, prevEntityHash, false);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceEntityInst.class, this, this.nextWaypointEntityRef, nextEntityHash, false);
         if (waypointFlags != 0)
             throw new RuntimeException("Found a kcWaypointDesc which had non-zero waypointFlags! (Had: " + NumberUtils.toHexString(waypointFlags) + ")");
         if (colorAlpha != 0)

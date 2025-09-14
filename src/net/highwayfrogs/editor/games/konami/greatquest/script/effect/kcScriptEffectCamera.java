@@ -104,7 +104,7 @@ public class kcScriptEffectCamera extends kcScriptEffect {
             return;
 
         int entityHash = this.arguments[0].getAsInteger();
-        GreatQuestUtils.resolveResourceHash(kcCResourceEntityInst.class, getChunkedFile(), this, this.entityParamRef, entityHash, false);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceEntityInst.class, getChunkedFile(), this, this.entityParamRef, entityHash, false);
     }
 
     @Override

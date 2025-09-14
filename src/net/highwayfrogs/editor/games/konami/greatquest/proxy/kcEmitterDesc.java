@@ -45,7 +45,7 @@ public class kcEmitterDesc extends kcProxyCapsuleDesc {
         this.spawnRange = reader.readFloat();
         int entityDescHash = reader.readInt();
 
-        GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, this, this.entityDescRef, entityDescHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGeneric.class, this, this.entityDescRef, entityDescHash, true);
     }
 
     @Override

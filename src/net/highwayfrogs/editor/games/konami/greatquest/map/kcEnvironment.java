@@ -31,8 +31,7 @@ public class kcEnvironment extends kcCResource implements IMultiLineInfoWriter {
     private final kcFogParams fog = new kcFogParams();
     private final kcPerspective perspective = new kcPerspective();
 
-    public static final String ENVIRONMENT_NAME = "_kcEnvironment";
-    public static final int LEVEL_RESOURCE_HASH = GreatQuestUtils.hash(ENVIRONMENT_NAME);
+    public static final String RESOURCE_NAME = "_kcEnvironment";
 
     public kcEnvironment(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.RAW);

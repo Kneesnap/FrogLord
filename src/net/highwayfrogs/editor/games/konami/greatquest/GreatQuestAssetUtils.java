@@ -20,7 +20,6 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.system.Tuple2;
-import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -107,10 +106,9 @@ public class GreatQuestAssetUtils {
 
         for (Entry<String, ConfigValueNode> entry : dialogCfg.getKeyValuePairs().entrySet()) {
             String dialogResName = entry.getKey();
-            int dialogResHash = GreatQuestUtils.hash(dialogResName);
 
             // Get or replace generic resource.
-            kcCResourceGeneric generic = chunkedFile.getResourceByHash(dialogResHash);
+            kcCResourceGeneric generic = chunkedFile.getGenericResourceByName(dialogResName, kcCResourceGenericType.STRING_RESOURCE);
             if (generic == null) {
                 generic = new kcCResourceGeneric(chunkedFile, kcCResourceGenericType.STRING_RESOURCE);
                 generic.setName(dialogResName, true);
@@ -189,14 +187,7 @@ public class GreatQuestAssetUtils {
 
             // Find resources.
             for (String resourceId : resourceList.getTextWithoutComments()) {
-                kcCResource sourceResource;
-                if (NumberUtils.isHexInteger(resourceId)) {
-                    int resourceHash = NumberUtils.parseHexInteger(resourceId);
-                    sourceResource = sourceChunkFile.getResourceByHash(resourceHash);
-                } else {
-                    sourceResource = sourceChunkFile.getResourceByHash(GreatQuestUtils.hash(resourceId));
-                }
-
+                kcCResource sourceResource = sourceChunkFile.getResourceByName(resourceId, null);
                 if (sourceResource == null) {
                     logger.warning("Skipping resource copy for %s from %s in %s, as the resource was not found.", resourceId, sourceChunkFile.getFilePath(), sourceName);
                     continue;
@@ -237,14 +228,7 @@ public class GreatQuestAssetUtils {
 
         String sourceName = deleteResourceCfg.getRootNode().getSectionName();
         for (String resourceName : deleteResourceCfg.getTextWithoutComments()) {
-            int resourceHash;
-            if (NumberUtils.isHexInteger(resourceName)) {
-                resourceHash = NumberUtils.parseHexInteger(resourceName);
-            } else {
-                resourceHash = GreatQuestUtils.hash(resourceName);
-            }
-
-            kcCResource resource = chunkedFile.getResourceByHash(resourceHash);
+            kcCResource resource = chunkedFile.getResourceByName(resourceName, null);
             if (resource == null) {
                 // Don't warn since gqs scripts are often applied multiple times.
                 // logger.warning("Skipping resource deletion for " + NumberUtils.toHexString(resourceHash) + "/'" + resourceName + "' in " + sourceName + ", as the chunked file could not be found.");
@@ -254,7 +238,7 @@ public class GreatQuestAssetUtils {
             try {
                 chunkedFile.removeResource(resource);
             } catch (Throwable th) {
-                Utils.handleError(logger, th, false, "Failed to remove resource %s/'%s' in %s.", NumberUtils.toHexString(resourceHash), resourceName, sourceName);
+                Utils.handleError(logger, th, false, "Failed to remove resource %s/'%s' in %s.", resource.getHashAsHexString(), resourceName, sourceName);
             }
         }
     }
@@ -279,7 +263,7 @@ public class GreatQuestAssetUtils {
             }
 
             String fileName = foundFile.getFileName();
-            kcCResourceModel modelRef = GreatQuestUtils.findLevelResourceByHash(chunkedFile, GreatQuestUtils.hash(fileName));
+            kcCResourceModel modelRef = GreatQuestUtils.findLevelResourceByName(chunkedFile, fileName, kcCResourceModel.class);
             if (modelRef == null) {
                 modelRef = new kcCResourceModel(chunkedFile);
                 modelRef.setName(fileName, true);
@@ -291,7 +275,7 @@ public class GreatQuestAssetUtils {
             StringNode modelDescNameNode = arguments.use(CONFIG_OPTION_CREATE_MODEL_DESC);
             if (modelDescNameNode != null) {
                 String modelDescName = modelDescNameNode.getAsString();
-                kcCResourceGeneric genericResource = GreatQuestUtils.findLevelResourceByHash(chunkedFile, GreatQuestUtils.hash(modelDescName));
+                kcCResourceGeneric genericResource = GreatQuestUtils.findLevelResourceByName(chunkedFile, modelDescName, kcCResourceGeneric.class);
                 if (genericResource == null) {
                     genericResource = new kcCResourceGeneric(chunkedFile);
                     genericResource.setName(modelDescName, true);
@@ -299,7 +283,11 @@ public class GreatQuestAssetUtils {
                     chunkedFile.addResource(genericResource);
                 }
 
-                genericResource.getAsModelDescription().getModelRef().setResource(modelRef, false);
+                kcModelDesc modelDesc = genericResource.getAsModelDescription();
+                if (modelDesc == null)
+                    throw new RuntimeException("Found a resource named '" + modelDescName + "', which was expected to be a entity description, but was actually a(n) " + genericResource.getResourceType() + ".");
+
+                modelDesc.getModelRef().setResource(modelRef, false);
             }
 
             arguments.warnAboutUnusedArguments(logger);
@@ -312,8 +300,7 @@ public class GreatQuestAssetUtils {
 
         for (Config collisionProxyDescCfg : collisionCfg.getChildConfigNodes()) {
             String collisionProxyDescName = collisionProxyDescCfg.getSectionName();
-            int collisionProxyNameHash = GreatQuestUtils.hash(collisionProxyDescName);
-            kcCResourceGeneric collisionDesc = GreatQuestUtils.findLevelResourceByHash(chunkedFile, collisionProxyNameHash);
+            kcCResourceGeneric collisionDesc = GreatQuestUtils.findLevelResourceByName(chunkedFile, collisionProxyDescName, kcCResourceGeneric.class);
             if (collisionDesc == null) {
                 kcProxyDescType descType = collisionProxyDescCfg.getKeyValueNodeOrError(kcProxyDesc.CONFIG_KEY_DESC_TYPE).getAsEnumOrError(kcProxyDescType.class);
 
@@ -323,7 +310,11 @@ public class GreatQuestAssetUtils {
                 chunkedFile.addResource(collisionDesc);
             }
 
-            collisionDesc.getAsProxyDescription().fromConfig(collisionProxyDescCfg);
+            kcProxyDesc proxyDesc = collisionDesc.getAsProxyDescription();
+            if (proxyDesc == null)
+                throw new RuntimeException("Found a resource named '" + collisionProxyDescName + "', which was expected to be a entity description, but was actually a(n) " + collisionDesc.getResourceType() + ".");
+
+            proxyDesc.fromConfig(collisionProxyDescCfg);
         }
     }
 
@@ -333,14 +324,12 @@ public class GreatQuestAssetUtils {
 
         for (Config animationSetCfg : resourceHashTableCfg.getChildConfigNodes()) {
             String animationSetName = animationSetCfg.getSectionName();
-            int animationSetNameHash = GreatQuestUtils.hash(animationSetName);
-            kcCResourceAnimSet animationSet = GreatQuestUtils.findLevelResourceByHash(chunkedFile, animationSetNameHash);
+            kcCResourceAnimSet animationSet = GreatQuestUtils.findLevelResourceByName(chunkedFile, animationSetName, kcCResourceAnimSet.class);
 
             // Try to find the animation set by auto-adding the prefix.
             if (animationSet == null && !animationSetName.endsWith(kcCResourceAnimSet.NAME_SUFFIX)) {
                 animationSetName += kcCResourceAnimSet.NAME_SUFFIX;
-                animationSetNameHash = GreatQuestUtils.hash(animationSetName);
-                animationSet = GreatQuestUtils.findLevelResourceByHash(chunkedFile, animationSetNameHash);
+                animationSet = GreatQuestUtils.findLevelResourceByName(chunkedFile, animationSetName, kcCResourceAnimSet.class);
             }
 
             // Create a new animation set.
@@ -352,8 +341,7 @@ public class GreatQuestAssetUtils {
 
             // Add the animations.
             for (String animationName : animationSetCfg.getTextWithoutComments()) {
-                int animationNameHash = GreatQuestUtils.hash(animationName);
-                kcCResourceTrack animation = GreatQuestUtils.findLevelResourceByHash(chunkedFile, animationNameHash);
+                kcCResourceTrack animation = GreatQuestUtils.findLevelResourceByName(chunkedFile, animationName, kcCResourceTrack.class);
                 if (animation == null) {
                     logger.warning("Could not find animation named '%s'.", animationName);
                     continue;
@@ -372,8 +360,7 @@ public class GreatQuestAssetUtils {
         for (Config hashTableCfg : resourceHashTableCfg.getChildConfigNodes()) {
             String hashTableName = hashTableCfg.getSectionName() + kcCResourceNamedHash.NAME_SUFFIX;
 
-            int hashTableNameHash = GreatQuestUtils.hash(hashTableName);
-            kcCResourceNamedHash namedHashTable = GreatQuestUtils.findLevelResourceByHash(chunkedFile, hashTableNameHash);
+            kcCResourceNamedHash namedHashTable = GreatQuestUtils.findLevelResourceByName(chunkedFile, hashTableName, kcCResourceNamedHash.class);
             if (namedHashTable == null) {
                 namedHashTable = new kcCResourceNamedHash(chunkedFile);
                 namedHashTable.setName(hashTableName, true);
@@ -390,18 +377,21 @@ public class GreatQuestAssetUtils {
 
         for (Config entityDescCfg : entityDescriptionsCfg.getChildConfigNodes()) {
             String entityDescName = entityDescCfg.getSectionName();
-            int entityDescNameHash = GreatQuestUtils.hash(entityDescName);
-            kcCResourceGeneric entityDesc = GreatQuestUtils.findLevelResourceByHash(chunkedFile, entityDescNameHash);
-            if (entityDesc == null) {
+            kcCResourceGeneric generic = GreatQuestUtils.findLevelResourceByName(chunkedFile, entityDescName, kcCResourceGeneric.class);
+            if (generic == null) {
                 kcEntityDescType descType = entityDescCfg.getKeyValueNodeOrError(kcEntity3DDesc.CONFIG_KEY_DESC_TYPE).getAsEnumOrError(kcEntityDescType.class);
 
-                entityDesc = new kcCResourceGeneric(chunkedFile);
-                entityDesc.setName(entityDescName, true);
-                entityDesc.setResourceData(descType.createNewInstance(entityDesc));
-                chunkedFile.addResource(entityDesc);
+                generic = new kcCResourceGeneric(chunkedFile);
+                generic.setName(entityDescName, true);
+                generic.setResourceData(descType.createNewInstance(generic));
+                chunkedFile.addResource(generic);
             }
 
-            entityDesc.getAsEntityDescription().fromConfig(entityDescCfg);
+            kcEntity3DDesc entityDesc = generic.getAsEntityDescription();
+            if (entityDesc == null)
+                throw new RuntimeException("Found a resource named '" + entityDescName + "', which was expected to be a entity description, but was actually a(n) " + generic.getResourceType() + ".");
+
+            entityDesc.fromConfig(entityDescCfg);
         }
     }
 
@@ -413,8 +403,7 @@ public class GreatQuestAssetUtils {
         String sourceName = entityCfg.getRootNode().getSectionName();
         for (Config entityInstanceCfg : entityCfg.getChildConfigNodes()) {
             String entityInstName = entityInstanceCfg.getSectionName();
-            int entityInstNameHash = GreatQuestUtils.hash(entityInstName);
-            kcCResourceEntityInst entity = chunkedFile.getResourceByHash(entityInstNameHash);
+            kcCResourceEntityInst entity = chunkedFile.getResourceByName(entityInstName, kcCResourceEntityInst.class);
             if (entity == null) {
                 entity = new kcCResourceEntityInst(chunkedFile);
                 entity.setName(entityInstName, true);
@@ -427,8 +416,7 @@ public class GreatQuestAssetUtils {
         Map<kcEntityInst, Config> scriptCfgsPerEntity = new HashMap<>();
         for (Config entityInstanceCfg : entityCfg.getChildConfigNodes()) {
             String entityInstName = entityInstanceCfg.getSectionName();
-            int entityInstNameHash = GreatQuestUtils.hash(entityInstName);
-            kcCResourceEntityInst entity = chunkedFile.getResourceByHash(entityInstNameHash);
+            kcCResourceEntityInst entity = chunkedFile.getResourceByName(entityInstName, kcCResourceEntityInst.class);
             if (entity == null)
                 throw new RuntimeException("Could not find an entity named '" + entityInstName + "' to load data for.");
 
@@ -456,8 +444,7 @@ public class GreatQuestAssetUtils {
         String sourceName = scriptCfg.getRootNode().getSectionName();
         for (Config entityScriptCfg : scriptCfg.getChildConfigNodes()) {
             for (String entityInstName : entityScriptCfg.getSectionName().split("\\|")) { // Allows multiple entities to be assigned by splitting with the pipe character. I originally wanted comma, but some entity names have commas in them.
-                int entityInstNameHash = GreatQuestUtils.hash(entityInstName);
-                kcCResourceEntityInst entity = chunkedFile.getResourceByHash(entityInstNameHash);
+                kcCResourceEntityInst entity = chunkedFile.getResourceByName(entityInstName, kcCResourceEntityInst.class);
                 if (entity == null)
                     throw new RuntimeException("Couldn't resolve entity named '" + entityInstName + "' to make script modifications to.");
 

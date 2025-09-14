@@ -41,7 +41,7 @@ public class kcModelDesc extends kcBaseDesc implements IInfoWriter, kcIGenericRe
         int materialHash = reader.readInt();
 
         // Resolve the model.
-        GreatQuestUtils.resolveResourceHash(kcCResourceModel.class, this, this.modelRef, modelHash, false); // There are quite a few models which have been removed but still have their model descriptions.
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceModel.class, this, this.modelRef, modelHash, false); // There are quite a few models which have been removed but still have their model descriptions.
 
         // Warn if things look wrong.
         if (materialHash != EXPECTED_MATERIAL_HASH)

@@ -58,7 +58,7 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
         GreatQuestUtils.skipPaddingRequireEmptyOrByte(reader, PADDING_VALUES * Constants.INTEGER_SIZE, GreatQuestInstance.PADDING_BYTE_DEFAULT);
 
         // Resolve hashes.
-        GreatQuestUtils.resolveResourceHash(GreatQuestChunkTextureReference.class, this, this.textureRef, textureReferenceHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(GreatQuestChunkTextureReference.class, this, this.textureRef, textureReferenceHash, true);
         if (hThis != this.parentHash.getHashNumber() && hThis != -1)
             throw new RuntimeException("The kcParticleEmitterParam reported the parent chunk as " + NumberUtils.to0PrefixedHexString(hThis) + ", but it was expected to be " + this.parentHash.getHashNumberAsString() + ".");
     }

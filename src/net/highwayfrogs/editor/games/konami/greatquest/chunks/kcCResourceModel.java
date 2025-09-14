@@ -124,7 +124,7 @@ public class kcCResourceModel extends kcCResource {
     private void applyCollisionMeshName() {
         // If we resolve the model successfully, our goal is to generate the name of any corresponding collision mesh.
         String collisionMeshName = getAsCollisionTriMeshFileName(getFileName());
-        kcCResource triMesh = getParentFile().getResourceByHash(GreatQuestUtils.hash(collisionMeshName));
+        kcCResourceTriMesh triMesh = getParentFile().getResourceByName(collisionMeshName, kcCResourceTriMesh.class);
         if (triMesh != null && StringUtils.isNullOrEmpty(triMesh.getSelfHash().getOriginalString()))
             triMesh.getSelfHash().setOriginalString(collisionMeshName);
     }

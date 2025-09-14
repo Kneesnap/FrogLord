@@ -139,7 +139,7 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
 
     @Override
     protected void setDefaultCameraPosition() {
-        kcCResourceEntityInst playerEntity = getMap().getResourceByHash(kcEntityInst.PLAYER_ENTITY_HASH);
+        kcCResourceEntityInst playerEntity = getMap().getResourceByName(kcEntityInst.PLAYER_ENTITY_NAME, kcCResourceEntityInst.class);
         if (playerEntity != null && playerEntity.getInstance() instanceof kcEntity3DInst) {
             kcEntity3DInst playerEntity3D = (kcEntity3DInst) playerEntity.getInstance();
             Vector3f position = new Vector3f(playerEntity3D.getPosition().getX(), playerEntity3D.getPosition().getY(), playerEntity3D.getPosition().getZ());

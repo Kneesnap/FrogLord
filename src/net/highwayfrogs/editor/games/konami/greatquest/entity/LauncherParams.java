@@ -60,9 +60,9 @@ public class LauncherParams extends kcProjectileParams implements kcIGenericReso
         reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
 
         GreatQuestChunkedFile parentFile = this.resource.getParentFile();
-        GreatQuestUtils.resolveResourceHash(kcCResourceModel.class, parentFile, this, this.vtxModelRef, vtxResourceHash, true);
-        GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, parentFile, this, this.cruiseParticleEffectRef, cruiseParticleEffectHash, true);
-        GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, parentFile, this, this.hitParticleEffectRef, hitParticleEffectHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceModel.class, parentFile, this, this.vtxModelRef, vtxResourceHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGeneric.class, parentFile, this, this.cruiseParticleEffectRef, cruiseParticleEffectHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGeneric.class, parentFile, this, this.hitParticleEffectRef, hitParticleEffectHash, true);
     }
 
     @Override
@@ -149,6 +149,6 @@ public class LauncherParams extends kcProjectileParams implements kcIGenericReso
      */
     private <TResource extends kcHashedResource> void resolve(ConfigValueNode node, Class<TResource> resourceClass, GreatQuestHash<TResource> hashObj) {
         int nodeHash = GreatQuestUtils.getAsHash(node, hashObj.isNullZero() ? 0 : -1, hashObj);
-        GreatQuestUtils.resolveResourceHash(resourceClass, getParentFile(), getResource(), hashObj, nodeHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(resourceClass, getParentFile(), getResource(), hashObj, nodeHash, true);
     }
 }
