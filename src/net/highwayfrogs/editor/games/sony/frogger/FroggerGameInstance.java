@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.sony.frogger;
 
 import javafx.scene.image.Image;
-import lombok.Cleanup;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -25,11 +24,7 @@ import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.file.config.script.FroggerScript;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.games.sony.SCGameConfig.SCImageList;
-import net.highwayfrogs.editor.games.sony.SCGameFile;
-import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.games.sony.SCGameType;
-import net.highwayfrogs.editor.games.sony.SCUtils;
+import net.highwayfrogs.editor.games.sony.*;
 import net.highwayfrogs.editor.games.sony.frogger.file.FroggerPaletteFile;
 import net.highwayfrogs.editor.games.sony.frogger.file.FroggerSkyLand;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
@@ -61,9 +56,7 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
 
 import java.io.File;
-import java.io.PrintWriter;
 import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Represents an instance of the game files for Frogger (1997).
@@ -344,10 +337,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         writer.closeReceiver();
 
         generateMwdCHeader(new File(folder, "frogpsx.h"));
-
-        @Cleanup PrintWriter vramHWriter = new PrintWriter(new File(folder, "frogvram.h"));
-        @Cleanup PrintWriter vramCWriter = new PrintWriter(new File(folder, "frogvram.c"));
-        saveFrogVRAM(vramHWriter, vramCWriter);
+        generateVloSourceFiles(this, new File(folder, "frogvram.h"));
 
         getLogger().info("Generated source files.");
     }
@@ -435,7 +425,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
     @Override
     public void generateMwdCHeader(@NonNull File file) {
         // Based on the data seen in FROGPSX.H in the E3 Frogger prototype.
-        SCUtils.generateMwdCHeader(this, "L:\\\\FROGGER\\\\", file, "FR", "STD", "VLO", "SPU", "MOF", "MAPMOF", "MAPANIMMOF", "DEMODATA");
+        SCSourceFileGenerator.generateMwdCHeader(this, "L:\\\\FROGGER\\\\", file, "FR", "STD", "VLO", "SPU", "MOF", "MAPMOF", "MAPANIMMOF", "DEMODATA");
     }
 
     /**

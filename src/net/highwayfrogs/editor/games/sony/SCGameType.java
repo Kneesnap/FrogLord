@@ -208,6 +208,43 @@ public enum SCGameType implements IGameType {
     }
 
     /**
+     * Returns the expected mwd header file name for the given game type, if one is known
+     * @return headerFileName
+     */
+    public String getMwdHeaderFileName() {
+        switch (this) {
+            case FROGGER:
+                return "frogpsx.h";
+            case MEDIEVIL:
+                return "medres.h";
+            case MEDIEVIL2:
+            case C12:
+                return "projfile.h";
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Returns the expected vlo header file name for the given game type, if one is known
+     * @return headerFileName
+     */
+    public String getVloHeaderFileName() {
+        switch (this) {
+            case FROGGER:
+                return "frogvram.h";
+            case MEDIEVIL:
+                return "medvlo.h";
+            case MEDIEVIL2:
+                return "med2vlo.h";
+            case C12:
+                return "roninvlo.h";
+            default:
+                return null;
+        }
+    }
+
+    /**
      * The UI definition for the game.
      */
     public static class SCGameConfigUI extends GameConfigUIController<SCGameConfig> {
@@ -284,7 +321,7 @@ public enum SCGameType implements IGameType {
 
                         if (otherGameTypeConfig != null) {
                             // Don't select the version, since it overwrite the path on the previous game, instead of the correct place.
-                            FXUtils.makePopUp("That file is for " + otherGameTypeConfig.getGameType().getDisplayName() + ", not " + getGameType().getDisplayName() + ".", AlertType.ERROR);
+                            FXUtils.showPopup(AlertType.ERROR, "Wrong game selected.", "That file is for " + otherGameTypeConfig.getGameType().getDisplayName() + ", not " + getGameType().getDisplayName() + ".");
                             return false;
                         } else {
                             Utils.getInstanceLogger().warning("The provided executable was not registered, and it had a checksum of: %d.", exeChecksum);
@@ -300,7 +337,7 @@ public enum SCGameType implements IGameType {
         private boolean validateSelectedMwdFile(String newFilePath, File newFile) {
             long fileSize = newFile.length();
             if (fileSize < Constants.CD_SECTOR_SIZE) {
-                FXUtils.makePopUp("The selected file does not appear to be a valid MWD file.", AlertType.ERROR);
+                FXUtils.showPopup(AlertType.ERROR, "Invalid file.", "The selected file does not appear to be a valid MWD file.");
                 return false;
             }
 
@@ -309,7 +346,7 @@ public enum SCGameType implements IGameType {
                 fileReader.read(signature);
 
                 if (!DataUtils.testSignature(signature, MWDFile.FILE_SIGNATURE)) {
-                    FXUtils.makePopUp("The selected file does not appear to be a valid MWD file.", AlertType.ERROR);
+                    FXUtils.showPopup(AlertType.ERROR, "Invalid file.", "The selected file does not appear to be a valid MWD file.");
                     return false;
                 }
 
@@ -348,13 +385,13 @@ public enum SCGameType implements IGameType {
 
                 // Ensure correct GameType.
                 if (!buildInfo.getGameType().equalsIgnoreCase(getGameType().getIdentifier())) {
-                    FXUtils.makePopUp("That file is for " + StringUtils.capitalize(buildInfo.getGameType()) + ", not " + getGameType().getDisplayName() + ".", AlertType.ERROR);
+                    FXUtils.showPopup(AlertType.ERROR, "Wrong game selected.", "That file is for " + StringUtils.capitalize(buildInfo.getGameType()) + ", not " + getGameType().getDisplayName() + ".");
                     return false;
                 }
 
                 GameConfig foundConfig = getGameType().getVersionConfigByName(buildInfo.getGameVersion());
                 if (foundConfig == null) {
-                    FXUtils.makePopUp("That file is an unknown version: '" + buildInfo.getGameVersion() + "'.\nWas it saved with a different version of FrogLord?", AlertType.ERROR);
+                    FXUtils.showPopup(AlertType.ERROR, "", "That file is an unknown version: '" + buildInfo.getGameVersion() + "'.\nWas it saved with a different version of FrogLord?");
                     return false;
                 }
 

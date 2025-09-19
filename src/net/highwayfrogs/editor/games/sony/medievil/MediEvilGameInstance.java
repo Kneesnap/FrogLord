@@ -5,10 +5,7 @@ import lombok.NonNull;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
-import net.highwayfrogs.editor.games.sony.SCGameFile;
-import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.games.sony.SCGameType;
-import net.highwayfrogs.editor.games.sony.SCUtils;
+import net.highwayfrogs.editor.games.sony.*;
 import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
 import net.highwayfrogs.editor.games.sony.medievil.entity.MediEvilEntityTable;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
@@ -168,8 +165,15 @@ public class MediEvilGameInstance extends SCGameInstance implements ISCMWDHeader
             if (entry.getTextureRemapPointer() < 0)
                 continue;
 
+            String mapCode = entry.getMapCode();
+            if (mapCode != null) {
+                mapCode = mapCode.toLowerCase();
+            } else {
+                mapCode = String.valueOf(i);
+            }
+
             // Create new remap.
-            TextureRemapArray remap = new TextureRemapArray(this, "txl_map" + i, entry.getTextureRemapPointer());
+            TextureRemapArray remap = new TextureRemapArray(this, "txl_" + mapCode + "_data", entry.getTextureRemapPointer());
             entry.setRemap(remap);
             addRemap(remap);
         }
@@ -214,6 +218,6 @@ public class MediEvilGameInstance extends SCGameInstance implements ISCMWDHeader
     @Override
     public void generateMwdCHeader(@NonNull File file) {
         // Based on the data seen in the executables, and educated guesses.
-        SCUtils.generateMwdCHeader(this, "S:\\\\", file, "MED", "STD", "VLO", "MOF", "FMOF", "MAP", "QTR", "PGD");
+        SCSourceFileGenerator.generateMwdCHeader(this, "S:\\\\", file, "MED", "STD", "VLO", "MOF", "FMOF", "MAP", "QTR", "PGD");
     }
 }

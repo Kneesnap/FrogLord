@@ -206,6 +206,20 @@ public class FileUtils {
     }
 
     /**
+     * Read bytes from a file.
+     * @param file The file to read from.
+     * @return fileText
+     */
+    public static byte[] readBytesFromFile(File file) {
+        try {
+            return Files.readAllBytes(file.toPath());
+        } catch (IOException e) {
+            Utils.handleError(null, e, false, "Failed to read binary data from file '%s'", file);
+            return new byte[0];
+        }
+    }
+
+    /**
      * Read text from a file.
      * @param file The file to read from.
      * @return fileText

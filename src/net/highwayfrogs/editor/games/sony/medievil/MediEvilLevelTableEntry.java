@@ -2,15 +2,15 @@ package net.highwayfrogs.editor.games.sony.medievil;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.SCGameRegion;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents an entry in the MediEvil level table.
@@ -89,5 +89,34 @@ public class MediEvilLevelTableEntry extends SCGameData<MediEvilGameInstance> {
      */
     public VLOArchive getVloFile() {
         return this.vloResourceId >= 0 ? getGameInstance().getGameFile(this.vloResourceId) : null;
+    }
+
+    /**
+     * Gets the map code associated with this table entry.
+     * @return mapCode
+     */
+    public String getMapCode() {
+        MediEvilMapFile mapFile = getMapFile();
+        if (mapFile != null) {
+            String displayName = mapFile.getFileDisplayName();
+            if (displayName != null)
+                return displayName.split("_")[0];
+        }
+
+        WADFile wadFile = getWadFile();
+        if (wadFile != null) {
+            String displayName = wadFile.getFileDisplayName();
+            if (displayName != null)
+                return displayName.split("_")[0];
+        }
+
+        VLOArchive vloFile = getVloFile();
+        if (vloFile != null) {
+            String displayName = vloFile.getFileDisplayName();
+            if (displayName != null)
+                return displayName.split("_")[0];
+        }
+
+        return null;
     }
 }
