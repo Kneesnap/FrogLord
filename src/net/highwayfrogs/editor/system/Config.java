@@ -842,7 +842,7 @@ public class Config implements IBinarySerializable {
                 commentText = StringUtils.trimStart(rawCommentText);
                 String rawText = text.substring(0, commentAt);
                 text = StringUtils.trimEnd(rawText);
-                commentSeparator = rawText.substring(text.length()) + COMMENT_CHARACTER + rawCommentText.substring(0, rawText.length() - text.length());
+                commentSeparator = rawText.substring(text.length()) + COMMENT_CHARACTER + rawCommentText.substring(0, rawCommentText.length() - commentText.length());
             }
 
             // Determine if this is a key-value pair.
