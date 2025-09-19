@@ -42,6 +42,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
     public static final BrowserFileType MWI_FILE_TYPE = new BrowserFileType("Millennium WAD Index", "MWI");
     private static final SavedFilePath MWI_FILE = new SavedFilePath("mwiFilePath", "Specify the file to save the MWI as...", MWI_FILE_TYPE);
     private static final SavedFilePath MWD_HEADER_FILE = new SavedFilePath("mwdHeaderFilePath", "Specify the file to save the MWD header as...", FileUtils.EXPORT_C_HEADER_FILE_TYPE);
+    private static final SavedFilePath VLO_HEADER_FILE = new SavedFilePath("vloHeaderFilePath", "Specify the file to save the VLO header as...", FileUtils.EXPORT_C_HEADER_FILE_TYPE);
 
     private static final SavedFilePath SAVE_MWD_FILE_PATH = new SavedFilePath("mwd-save-path", "Please select the file to save the MWD file as...", SCGameType.MWD_FILE_TYPE);
     private static final SavedFilePath SAVE_EXE_FILE_PATH = new SavedFilePath("exe-save-path", "Please select the file to save the executable as...", SCGameType.EXECUTABLE_FILE_TYPE);
@@ -94,7 +95,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
                 if (defaultFileName == null)
                     defaultFileName = "vlo.h";
 
-                File targetFile = FileUtils.askUserToSaveFile(getGameInstance(), MWD_HEADER_FILE, defaultFileName, false);
+                File targetFile = FileUtils.askUserToSaveFile(getGameInstance(), VLO_HEADER_FILE, defaultFileName, false);
                 if (targetFile != null)
                     ((ISCMWDHeaderGenerator) getGameInstance()).generateVloSourceFiles(getGameInstance(), targetFile);
             });

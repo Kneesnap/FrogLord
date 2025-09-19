@@ -124,15 +124,15 @@ public class SCSourceFileGenerator {
                 .append(Constants.NEWLINE);
 
         // Get image mappings.
-        List<GameImage> images = getStaticTextures(instance);
         List<GameImage> imagesById = new ArrayList<>();
-        for (int i = 0; i < images.size(); i++) {
-            GameImage image = images.get(i);
+        for (VLOArchive vloArchive : instance.getMainArchive().getAllFiles(VLOArchive.class)) {
+            for (GameImage image : vloArchive.getImages()) {
+                while (image.getTextureId() >= imagesById.size())
+                    imagesById.add(null);
 
-            while (image.getTextureId() >= imagesById.size())
-                imagesById.add(null);
-
-            imagesById.set(image.getTextureId(), image);
+                if (image.testFlag(GameImage.FLAG_REFERENCED_BY_NAME))
+                    imagesById.set(image.getTextureId(), image);
+            }
         }
 
         // Write bmp_pointers table.
@@ -174,6 +174,10 @@ public class SCSourceFileGenerator {
                     .append("[] = {");
 
             int textureSlots = textureRemap.getTextureIdSlotsAvailable();
+            Short textureIdObj;
+            while (textureSlots > 0 && ((textureIdObj = textureRemap.getRemappedTextureId(textureSlots - 1)) == null || textureIdObj <= 0))
+                textureSlots--; // Don't include IDs of 0 at the end.
+
             for (int j = 0; j < textureSlots; j++) {
                 if (j % 32 == 0) {
                     builder.append(Constants.NEWLINE).append("\t");
@@ -181,7 +185,7 @@ public class SCSourceFileGenerator {
                     builder.append(' ');
                 }
 
-                Short textureIdObj = textureRemap.getRemappedTextureId(j);
+                textureIdObj = textureRemap.getRemappedTextureId(j);
                 int textureId = textureIdObj != null ? textureIdObj : 0;
                 builder.append(textureId);
 
@@ -196,8 +200,9 @@ public class SCSourceFileGenerator {
         }
 
         // Write image definitions.
-        for (int i = 0; i < images.size(); i++) {
-            GameImage image = images.get(i);
+        List<GameImage> staticTextures = getStaticTextures(instance);
+        for (int i = 0; i < staticTextures.size(); i++) {
+            GameImage image = staticTextures.get(i);
             builder.append("MR_TEXTURE\t")
                     .append(SCUtils.IMAGE_C_PREFIX)
                     .append(getImageName(image))
@@ -208,6 +213,8 @@ public class SCSourceFileGenerator {
         // Write to file.
         FileUtils.writeStringToFile(instance.getLogger(), file, builder.toString(), true);
     }
+
+    private static final String TEXTURE_COUNT_NAME = "NUM_TEXTURES";
 
     /**
      * Generates the header file used to declare the textures available in source code.
@@ -237,39 +244,39 @@ public class SCSourceFileGenerator {
                 if (image.getTextureId() >= textureCount)
                     textureCount = image.getTextureId() + 1;
 
-        String textureCountName = "NUM_TEXTURES";
-        writeDefineSymbol(builder, textureCountName, textureCountName.length(), "(" + textureCount + ")");
-
-        builder.append(Constants.NEWLINE).append(Constants.NEWLINE);
-
-        // Write file name macros.
+        // Write any texture ID to name macros.
+        int maxTextureNameLength = TEXTURE_COUNT_NAME.length();
         SCImageList imageList = instance.getVersionConfig().getImageList();
         if (writeFileNameMacros && imageList != null) {
             List<Entry<Short, String>> sortedImageNames = new ArrayList<>(imageList.getImageNamesById().entrySet());
             sortedImageNames.sort(Comparator.comparingInt(entry -> (int) entry.getKey()));
 
-            // Determine longest image names.
+            // Determine max length of file name macros.
             final String resourcePrefix = "MRT_IM_";
-            int maxLength = 0;
             for (int i = 0; i < sortedImageNames.size(); i++) {
                 String suffix = sortedImageNames.get(i).getValue();
                 int testLength = resourcePrefix.length() + suffix.length();
-                if (testLength > maxLength)
-                    maxLength = testLength;
+                if (testLength > maxTextureNameLength)
+                    maxTextureNameLength = testLength;
             }
+
+            // Write texture count.
+            writeDefineSymbol(builder, TEXTURE_COUNT_NAME, maxTextureNameLength, "(" + textureCount + ")");
+            builder.append(Constants.NEWLINE);
 
             // Write longest image names.
             for (int i = 0; i < sortedImageNames.size(); i++) {
                 Entry<Short, String> entry = sortedImageNames.get(i);
                 String suffix = entry.getValue();
                 if (!StringUtils.isNullOrEmpty(suffix))
-                    writeDefineSymbol(builder, resourcePrefix + suffix.toUpperCase(), maxLength, "(" + entry.getKey() + ")");
+                    writeDefineSymbol(builder, resourcePrefix + suffix.toUpperCase(), maxTextureNameLength, "(" + entry.getKey() + ")");
             }
 
-            if (sortedImageNames.size() > 0) {
-                builder.append(Constants.NEWLINE)
-                        .append(Constants.NEWLINE);
-            }
+            if (sortedImageNames.size() > 0)
+                builder.append(Constants.NEWLINE);
+        } else {
+            writeDefineSymbol(builder, TEXTURE_COUNT_NAME, maxTextureNameLength, "(" + textureCount + ")");
+            builder.append(Constants.NEWLINE);
         }
 
         // Add bmp_pointers define.
