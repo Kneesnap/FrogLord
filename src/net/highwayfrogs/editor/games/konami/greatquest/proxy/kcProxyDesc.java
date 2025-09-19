@@ -5,8 +5,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.IConfigData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
@@ -15,6 +13,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneri
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcIGenericResourceData;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 /**
@@ -39,6 +39,7 @@ public abstract class kcProxyDesc extends kcBaseDesc implements kcIGenericResour
     // sLinkProxy (OctTree handler for ResolveCollision/ResolveCollisionIterate) ensures that the entity testing collision's collideWith has at least one masked bit with the collisionGroup of the oct tree entity.
 
     public static final int CLASS_ID = GreatQuestUtils.hash("kcCProxy");
+    public static final String NAME_SUFFIX = "ProxyDesc"; // This is applied to all kcProxyTriMeshDescs.
 
     public kcProxyDesc(kcCResourceGeneric resource, kcProxyDescType descriptionType) {
         super(resource);

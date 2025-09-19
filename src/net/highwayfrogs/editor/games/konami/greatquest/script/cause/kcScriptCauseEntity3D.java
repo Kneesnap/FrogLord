@@ -64,7 +64,7 @@ public class kcScriptCauseEntity3D extends kcScriptCause {
     protected void loadArguments(OptionalArguments arguments) {
         this.status = arguments.useNext().getAsEnumOrError(kcScriptCauseEntity3DStatus.class);
         if (this.status.hasOtherEntityAsParam())
-            setOtherEntityHash(GreatQuestUtils.getAsHash(arguments.useNext(), -1, this.otherEntityRef));
+            resolveResource(arguments.useNext(), kcCResourceEntityInst.class, this.otherEntityRef);
     }
 
     @Override

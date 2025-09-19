@@ -4,7 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionDialog;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionID;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
@@ -45,7 +47,9 @@ public class kcScriptCauseDialog extends kcScriptCause {
     @Override
     protected void loadArguments(OptionalArguments arguments) {
         this.stage = arguments.useNext().getAsEnum(kcScriptDialogStage.class);
-        setDialogHash(GreatQuestUtils.getAsHash(arguments.useNext(), 0, this.dialogRef));
+        GreatQuestChunkedFile chunkedFile = getParentFunction().getChunkedFile();
+        GreatQuestUtils.resolveLevelResource(arguments.useNext(), kcCResourceGenericType.STRING_RESOURCE, chunkedFile, this, this.dialogRef, true);
+
     }
 
     @Override
@@ -113,7 +117,7 @@ public class kcScriptCauseDialog extends kcScriptCause {
      * @param dialogHash the hash to apply
      */
     public void setDialogHash(int dialogHash) {
-        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGeneric.class, getChunkFile(), this, this.dialogRef, dialogHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGenericType.STRING_RESOURCE, getChunkFile(), this, this.dialogRef, dialogHash, true);
     }
 
     @Getter

@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
@@ -42,7 +43,7 @@ public class kcActionDialog extends kcAction {
 
     @Override
     protected void loadArguments(OptionalArguments arguments) {
-        setDialogHash(GreatQuestUtils.getAsHash(arguments.useNext(), 0, this.dialogRef));
+        resolveResource(arguments.useNext(), kcCResourceGenericType.STRING_RESOURCE, this.dialogRef);
     }
 
     @Override
@@ -64,6 +65,6 @@ public class kcActionDialog extends kcAction {
      * @param newDialogHash the hash of the new dialog.
      */
     public void setDialogHash(int newDialogHash) {
-        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGeneric.class, getChunkedFile(), this, this.dialogRef, newDialogHash, false);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGenericType.STRING_RESOURCE, getChunkedFile(), this, this.dialogRef, newDialogHash, false);
     }
 }

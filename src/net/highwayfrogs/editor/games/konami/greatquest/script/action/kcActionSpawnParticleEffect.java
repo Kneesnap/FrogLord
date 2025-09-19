@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
@@ -41,7 +42,8 @@ public class kcActionSpawnParticleEffect extends kcAction {
 
     @Override
     protected void loadArguments(OptionalArguments arguments) {
-        setParticleHash(GreatQuestUtils.getAsHash(arguments.useNext(), 0, this.particleRef));
+        // This might be kcCResourceGenericType.PARTICLE_EMITTER_PARAM instead.
+        resolveResource(arguments.useNext(), kcCResourceGenericType.EMITTER_DESCRIPTION, this.particleRef);
     }
 
     @Override
@@ -54,6 +56,7 @@ public class kcActionSpawnParticleEffect extends kcAction {
      * @param newParticleHash the hash of the new dialog.
      */
     public void setParticleHash(int newParticleHash) {
-        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGeneric.class, getChunkedFile(), this, this.particleRef, newParticleHash, true);
+        // This might be kcCResourceGenericType.PARTICLE_EMITTER_PARAM instead.
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGenericType.EMITTER_DESCRIPTION, getChunkedFile(), this, this.particleRef, newParticleHash, true);
     }
 }

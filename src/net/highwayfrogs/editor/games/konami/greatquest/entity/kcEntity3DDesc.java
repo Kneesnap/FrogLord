@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedRe
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityFlag.kcEntityInstanceFlag;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.IkcCResourceGenericTypeGroup;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcIGenericResourceData;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcSphere;
@@ -162,9 +163,18 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
      * @param hashObj the hash object to apply the result to
      * @param <TResource> the type of resource to resolve
      */
-    protected <TResource extends kcHashedResource> void resolve(ConfigValueNode node, Class<TResource> resourceClass, GreatQuestHash<TResource> hashObj) {
-        int nodeHash = GreatQuestUtils.getAsHash(node, hashObj.isNullZero() ? 0 : -1, hashObj);
-        GreatQuestUtils.resolveLevelResourceHash(resourceClass, getParentFile(), getResource(), hashObj, nodeHash, true);
+    protected <TResource extends kcHashedResource> void resolveResource(ConfigValueNode node, Class<TResource> resourceClass, GreatQuestHash<TResource> hashObj) {
+        GreatQuestUtils.resolveLevelResource(node, resourceClass, getParentFile(), getResource(), hashObj, true);
+    }
+
+    /**
+     * Resolves a resource from a config node.
+     * @param node the node to resolve the resource from
+     * @param resourceType the type of resource to resolve
+     * @param hashObj the hash object to apply the result to
+     */
+    protected void resolveResource(ConfigValueNode node, IkcCResourceGenericTypeGroup resourceType, GreatQuestHash<kcCResourceGeneric> hashObj) {
+        GreatQuestUtils.resolveLevelResource(node, resourceType, getParentFile(), getResource(), hashObj, true);
     }
 
     /**

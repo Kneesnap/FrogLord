@@ -5,7 +5,6 @@ import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedResource;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
@@ -15,7 +14,6 @@ import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneri
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcIGenericResourceData;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.system.Config;
-import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -61,8 +59,8 @@ public class LauncherParams extends kcProjectileParams implements kcIGenericReso
 
         GreatQuestChunkedFile parentFile = this.resource.getParentFile();
         GreatQuestUtils.resolveLevelResourceHash(kcCResourceModel.class, parentFile, this, this.vtxModelRef, vtxResourceHash, true);
-        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGeneric.class, parentFile, this, this.cruiseParticleEffectRef, cruiseParticleEffectHash, true);
-        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGeneric.class, parentFile, this, this.hitParticleEffectRef, hitParticleEffectHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGenericType.PARTICLE_EMITTER_PARAM, parentFile, this, this.cruiseParticleEffectRef, cruiseParticleEffectHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGenericType.PARTICLE_EMITTER_PARAM, parentFile, this, this.hitParticleEffectRef, hitParticleEffectHash, true);
     }
 
     @Override
@@ -113,9 +111,9 @@ public class LauncherParams extends kcProjectileParams implements kcIGenericReso
     @Override
     public void fromConfig(Config input) {
         super.fromConfig(input);
-        this.resolve(input.getOptionalKeyValueNode(CONFIG_KEY_MODEL), kcCResourceModel.class, this.vtxModelRef);
-        this.resolve(input.getOptionalKeyValueNode(CONFIG_KEY_CRUISE_PARTICLE_EFFECT), kcCResourceGeneric.class, this.cruiseParticleEffectRef);
-        this.resolve(input.getOptionalKeyValueNode(CONFIG_KEY_HIT_PARTICLE_EFFECT), kcCResourceGeneric.class, this.hitParticleEffectRef);
+        GreatQuestUtils.resolveLevelResource(input.getOptionalKeyValueNode(CONFIG_KEY_MODEL), kcCResourceModel.class, getParentFile(), getResource(), this.vtxModelRef, true);
+        GreatQuestUtils.resolveLevelResource(input.getOptionalKeyValueNode(CONFIG_KEY_CRUISE_PARTICLE_EFFECT), kcCResourceGenericType.PARTICLE_EMITTER_PARAM, getParentFile(), getResource(), this.cruiseParticleEffectRef, true);
+        GreatQuestUtils.resolveLevelResource(input.getOptionalKeyValueNode(CONFIG_KEY_HIT_PARTICLE_EFFECT), kcCResourceGenericType.PARTICLE_EMITTER_PARAM, getParentFile(), getResource(), this.hitParticleEffectRef, true);
         this.projectileLifeTime = Math.round(input.getKeyValueNodeOrError(CONFIG_KEY_PROJECTILE_LIFE_TIME).getAsFloat() * 1000F);
         this.speed = input.getOrDefaultKeyValueNode(CONFIG_KEY_SPEED).getAsFloat(DEFAULT_SPEED);
     }
@@ -138,17 +136,5 @@ public class LauncherParams extends kcProjectileParams implements kcIGenericReso
             output.getOrCreateKeyValueNode(CONFIG_KEY_HIT_PARTICLE_EFFECT).setAsString(this.hitParticleEffectRef.getAsGqsString(settings));
         output.getOrCreateKeyValueNode(CONFIG_KEY_PROJECTILE_LIFE_TIME).setAsFloat(this.projectileLifeTime  / 1000F);
         output.getOrCreateKeyValueNode(CONFIG_KEY_SPEED).setAsFloat(this.speed);
-    }
-
-    /**
-     * Resolves a resource from a config node.
-     * @param node the node to resolve the resource from
-     * @param resourceClass the type of resource to resolve
-     * @param hashObj the hash object to apply the result to
-     * @param <TResource> the type of resource to resolve
-     */
-    private <TResource extends kcHashedResource> void resolve(ConfigValueNode node, Class<TResource> resourceClass, GreatQuestHash<TResource> hashObj) {
-        int nodeHash = GreatQuestUtils.getAsHash(node, hashObj.isNullZero() ? 0 : -1, hashObj);
-        GreatQuestUtils.resolveLevelResourceHash(resourceClass, getParentFile(), getResource(), hashObj, nodeHash, true);
     }
 }

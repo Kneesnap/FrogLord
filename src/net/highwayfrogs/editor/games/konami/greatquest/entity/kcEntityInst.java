@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInf
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericTypeGroup;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
@@ -19,6 +20,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.Great
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.entity.GreatQuestMapEditorEntityDisplay;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -62,7 +64,8 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
         this.scriptIndex = reader.readInt();
         int targetEntityHash = reader.readInt();
 
-        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGeneric.class, this.resource, this.descriptionRef, descriptionHash, this.resource == null || !this.resource.doesNameMatch("DummyParticleInst001", "clover-2ProxyDesc", "ConeTreeM-1Inst004", "Sbpile2Inst001")); // There are a handful of cases where this doesn't resolve, but in almost all situations it does resolve. Not sure how entities work when it doesn't resolve though.
+        if (this.resource != null)
+            GreatQuestUtils.resolveLevelResourceHash(kcCResourceGenericTypeGroup.ENTITY_DESCRIPTION, this.resource.getParentFile(), this.resource, this.descriptionRef, descriptionHash, !this.resource.doesNameMatch("DummyParticleInst001", "clover-2ProxyDesc", "ConeTreeM-1Inst004", "Sbpile2Inst001")); // There are a handful of cases where this doesn't resolve, but in almost all situations it does resolve. Not sure how entities work when it doesn't resolve though.
         GreatQuestUtils.resolveLevelResourceHash(kcCResourceEntityInst.class, this.resource, this.targetEntityRef, targetEntityHash, true);
     }
 
@@ -239,13 +242,13 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
         if (chunkedFile == null)
             throw new NullPointerException("chunkedFile");
 
-        int entityDescHash = GreatQuestUtils.getAsHash(input.getKeyValueNodeOrError(CONFIG_KEY_ENTITY_DESC), -1, this.descriptionRef);
-        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGeneric.class, chunkedFile, this.resource, this.descriptionRef, entityDescHash, true);
+        ConfigValueNode entityDescNode = input.getKeyValueNodeOrError(CONFIG_KEY_ENTITY_DESC);
+        GreatQuestUtils.resolveLevelResource(entityDescNode, kcCResourceGenericTypeGroup.ENTITY_DESCRIPTION, chunkedFile, this.resource, this.descriptionRef, true);
 
         this.priority = input.getOrDefaultKeyValueNode(CONFIG_KEY_PRIORITY).getAsInteger(1);
 
-        int targetEntityHash = GreatQuestUtils.getAsHash(input.getKeyValueNodeOrError(CONFIG_KEY_TARGET_ENTITY), -1, this.targetEntityRef);
-        GreatQuestUtils.resolveLevelResourceHash(kcCResourceEntityInst.class, chunkedFile, this.resource, this.targetEntityRef, targetEntityHash, true);
+        ConfigValueNode targetEntityNode = input.getKeyValueNodeOrError(CONFIG_KEY_TARGET_ENTITY);
+        GreatQuestUtils.resolveLevelResource(targetEntityNode, kcCResourceEntityInst.class, chunkedFile, this.resource, this.targetEntityRef, true);
     }
 
     /**

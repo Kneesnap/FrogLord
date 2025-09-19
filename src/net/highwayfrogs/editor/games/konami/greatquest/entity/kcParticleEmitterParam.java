@@ -100,7 +100,7 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
         this.srcBlend = input.getOrDefaultKeyValueNode(CONFIG_KEY_SOURCE_BLEND).getAsEnum(kcBlend.ONE);
         this.dstBlend = input.getOrDefaultKeyValueNode(CONFIG_KEY_DESTINATION_BLEND).getAsEnum(kcBlend.ONE);
         this.lifeTimeEmitter = input.getOrDefaultKeyValueNode(CONFIG_KEY_LIFETIME_EMITTER).getAsFloat(-1);
-        this.resolve(input.getOptionalKeyValueNode(CONFIG_KEY_TEXTURE), GreatQuestChunkTextureReference.class, this.textureRef);
+        this.resolveResource(input.getOptionalKeyValueNode(CONFIG_KEY_TEXTURE), GreatQuestChunkTextureReference.class, this.textureRef);
         if (this.lifeTimeEmitter < -1 || this.lifeTimeEmitter >= 60) // Allow zero as the indicator to use from the kcParticleParam struct instead.
             throw new RuntimeException("The lifeTimeEmitter value (" + this.lifeTimeEmitter + ") was not in the expected range!");
 

@@ -2,9 +2,14 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedResource;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInheritanceGroup;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.IkcCResourceGenericTypeGroup;
 import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffectActor;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
@@ -13,6 +18,7 @@ import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
+import net.highwayfrogs.editor.utils.objects.StringNode;
 
 /**
  * Represents an action.
@@ -257,6 +263,30 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
     }
 
     /**
+     * Resolves a resource from a config node.
+     * @param node the node to resolve the resource from
+     * @param resourceClass the type of resource to resolve
+     * @param hashObj the hash object to apply the result to
+     * @param <TResource> the type of resource to resolve
+     */
+    protected <TResource extends kcHashedResource> void resolveResource(StringNode node, Class<TResource> resourceClass, GreatQuestHash<TResource> hashObj) {
+        GreatQuestChunkedFile chunkedFile = getExecutor().getChunkedFile();
+        GreatQuestUtils.resolveLevelResource(node, resourceClass, chunkedFile, this, hashObj, true);
+    }
+
+    /**
+     * Resolves a resource from a config node.
+     * @param node the node to resolve the resource from
+     * @param resourceType the type of resource to resolve
+     * @param hashObj the hash object to apply the result to
+     * @param <TResource> the type of resource to resolve
+     */
+    protected void resolveResource(StringNode node, IkcCResourceGenericTypeGroup resourceType, GreatQuestHash<kcCResourceGeneric> hashObj) {
+        GreatQuestChunkedFile chunkedFile = getExecutor().getChunkedFile();
+        GreatQuestUtils.resolveLevelResource(node, resourceType, chunkedFile, this, hashObj, true);
+    }
+
+    /**
      * Writes the kcAction with its parameters to a StringBuilder.
      * @param builder    The builder to write to.
      * @param parameters The parameters to the action.
@@ -315,7 +345,6 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
             builder.append(kcScriptDisplaySettings.getHashDisplay(settings, parameters[i].getAsInteger(), false));
         }
     }
-
 
     /**
      * Read a kcAction from the DataReader.

@@ -38,7 +38,7 @@ public class kcActionSetTarget extends kcAction {
 
     @Override
     protected void loadArguments(OptionalArguments arguments) {
-        setNewEntityTargetHash(GreatQuestUtils.getAsHash(arguments.useNext(), 0, this.newEntityTargetRef));
+        resolveResource(arguments.useNext(), kcCResourceEntityInst.class, this.newEntityTargetRef);
     }
 
     @Override

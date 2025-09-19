@@ -105,8 +105,8 @@ public class kcWaypointDesc extends kcEntity3DDesc {
     public void fromConfig(Config input) {
         super.fromConfig(input);
         this.type = input.getKeyValueNodeOrError(CONFIG_KEY_TYPE).getAsEnumOrError(kcWaypointType.class);
-        resolve(input.getKeyValueNodeOrError(CONFIG_KEY_PREV_WAYPOINT), kcCResourceEntityInst.class, this.previousWaypointEntityRef);
-        resolve(input.getKeyValueNodeOrError(CONFIG_KEY_NEXT_WAYPOINT), kcCResourceEntityInst.class, this.nextWaypointEntityRef);
+        resolveResource(input.getKeyValueNodeOrError(CONFIG_KEY_PREV_WAYPOINT), kcCResourceEntityInst.class, this.previousWaypointEntityRef);
+        resolveResource(input.getKeyValueNodeOrError(CONFIG_KEY_NEXT_WAYPOINT), kcCResourceEntityInst.class, this.nextWaypointEntityRef);
 
         // Read the bounding box data.
         ConfigValueNode boundingBoxNode = (this.type == kcWaypointType.BOUNDING_BOX)

@@ -389,8 +389,25 @@ public class kcCResourceGeneric extends kcCResource {
         }
     }
 
+    /**
+     * Represents one or more generic resource types.
+     */
+    public interface IkcCResourceGenericTypeGroup {
+        /**
+         * Obtains the name of the group.
+         */
+        String name();
+
+        /**
+         * Tests if the group contains the given type.
+         * @param otherType the type to test
+         * @return containsType
+         */
+        boolean contains(kcCResourceGenericType otherType);
+    }
+
     @Getter
-    public enum kcCResourceGenericType {
+    public enum kcCResourceGenericType implements IkcCResourceGenericTypeGroup {
         ACTOR_BASE_DESCRIPTION(ImageResource.GHIDRA_ICON_MONKEY_16, "Actor Entity Data", "ActorBaseDesc", 0x46E460D7), // Real Struct: kcActorBaseDesc
         EMITTER_DESCRIPTION(ImageResource.GHIDRA_ICON_MONKEY_16, "Emitter Entity Data", "EmitterDesc", 0x3224F1ED), // Real Struct: kcEmitterDesc
         ITEM_DESCRIPTION(ImageResource.GHIDRA_ICON_MONKEY_16, "Item Entity Data", "ItemDesc", 0xE23B225D), // Real Struct: CUniqueItemDesc
@@ -438,6 +455,33 @@ public class kcCResourceGeneric extends kcCResource {
             if (!allowNull)
                 throw new RuntimeException("Couldn't determine the generic type from tag " + NumberUtils.to0PrefixedHexString(tag) + ".");
             return null;
+        }
+
+        @Override
+        public boolean contains(kcCResourceGenericType otherType) {
+            return otherType == this;
+        }
+    }
+
+    /**
+     * Represents common groups of generic resource types.
+     */
+    public enum kcCResourceGenericTypeGroup implements IkcCResourceGenericTypeGroup {
+        ENTITY_DESCRIPTION(kcCResourceGenericType.ACTOR_BASE_DESCRIPTION, kcCResourceGenericType.ITEM_DESCRIPTION,
+                kcCResourceGenericType.PROP_DESCRIPTION, kcCResourceGenericType.PARTICLE_EMITTER_PARAM,
+                kcCResourceGenericType.WAYPOINT_DESCRIPTION),
+        PROXY_DESCRIPTION(kcCResourceGenericType.PROXY_CAPSULE_DESCRIPTION, kcCResourceGenericType.PROXY_TRI_MESH_DESCRIPTION,
+                kcCResourceGenericType.EMITTER_DESCRIPTION);
+
+        private final kcCResourceGenericType[] resourceTypes;
+
+        kcCResourceGenericTypeGroup(kcCResourceGenericType... resourceTypes) {
+            this.resourceTypes = resourceTypes;
+        }
+
+        @Override
+        public boolean contains(kcCResourceGenericType otherType) {
+            return Utils.contains(this.resourceTypes, otherType);
         }
     }
 }

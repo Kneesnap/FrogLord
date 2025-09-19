@@ -13,6 +13,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedF
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.IkcCResourceGenericTypeGroup;
 import net.highwayfrogs.editor.utils.*;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -517,16 +519,107 @@ public class GreatQuestUtils {
         kcCResource resource = GreatQuestUtils.findLevelResourceByHash(parentFile, hash);
         if (resource != null) {
             if (!resourceClass.isInstance(resource))
-                throw new ClassCastException("Resolved hash " + hashObj.getHashNumberAsString() + " to a " + Utils.getSimpleName(resource) + " named '" + resource.getName() + "', but a " + resourceClass.getName() + " was expected instead!");
+                throw new ClassCastException("Tried to use the resource '" + resource.getCollectionViewDisplayName() + "' as a " + resourceClass.getSimpleName() + ", but it was actually a " + Utils.getSimpleName(resource) + "!");
 
             TResource castedResource = resourceClass.cast(resource);
             hashObj.setResource(castedResource, true);
             return true;
         } else {
             if (warnIfNotFound && hash != 0 && hash != -1)
-                gameObj.getLogger().warning("Failed to resolve %s by its %s hash: %s.", resourceClass.getSimpleName(), Utils.getSimpleName(gameObj), hashObj.getHashNumberAsString());
+                gameObj.getLogger().warning("Could not find a resource by the hash: %s. (Used by: %s, Resource Type: %s).", hashObj.getHashNumberAsString(), Utils.getSimpleName(gameObj), resourceClass.getSimpleName());
             return false;
         }
+    }
+
+    /**
+     * Resolves a resource hash to a particular asset.
+     * @param resourceType the desired resource type
+     * @param parentFile the file to find assets within
+     * @param gameObj the game object resolving the hash.
+     * @param hashObj the hash object to save results within
+     * @param hash the numerical hash to resolve.
+     * @param warnIfNotFound if true and the resource is not found, a warning will be written.
+     * @return if the resource was successfully resolved
+     */
+    public static boolean resolveLevelResourceHash(IkcCResourceGenericTypeGroup resourceType, GreatQuestChunkedFile parentFile, IGameObject gameObj, GreatQuestHash<kcCResourceGeneric> hashObj, int hash, boolean warnIfNotFound) {
+        if (resourceType == null)
+            throw new NullPointerException("resourceType");
+
+        if (!resolveLevelResourceHash(kcCResourceGeneric.class, parentFile, gameObj, hashObj, hash, warnIfNotFound))
+            return false;
+
+        kcCResourceGeneric resource = hashObj.getResource();
+        if (resource.getResourceType() != null && !resourceType.contains(resource.getResourceType()))
+            throw new ClassCastException("Tried to use the resource '" + resource.getCollectionViewDisplayName() + "' as a(n) " + resourceType + ", but it was actually a(n) " + resource.getResourceType() + "!");
+
+        return true;
+    }
+
+    /**
+     * Resolves a resource hash to a particular asset.
+     * @param node the config node to resolve the resource from
+     * @param resourceClass the desired resource class
+     * @param parentFile the file to find assets within
+     * @param gameObj the game object resolving the hash.
+     * @param hashObj the hash object to save results within
+     * @param warnIfNotFound if true and the resource is not found, a warning will be written.
+     * @return if the resource was successfully resolved
+     * @param <TResource> the type of resource to resolve
+     */
+    public static <TResource extends kcHashedResource> boolean resolveLevelResource(StringNode node, Class<TResource> resourceClass, GreatQuestChunkedFile parentFile, IGameObject gameObj, GreatQuestHash<TResource> hashObj, boolean warnIfNotFound) {
+        if (resourceClass == null)
+            throw new NullPointerException("resourceClass");
+        if (gameObj == null)
+            throw new NullPointerException("gameObj");
+        if (hashObj == null)
+            throw new NullPointerException("hashObj");
+
+        // Handle null.
+        int nullHashValue = hashObj.isNullZero() ? 0 : -1;
+        String nodeString = node != null ? node.getAsString() : null;
+        if (nodeString == null) {
+            hashObj.setHash(nullHashValue);
+            return false;
+        }
+
+        // Resolve the resource.
+        int nodeHash = getAsHash(nodeString, nullHashValue, hashObj);
+        kcCResource resource = findLevelResourceByName(parentFile, nodeString, kcCResource.class); // We want to give our own message, so we'll accept any kind of resource.
+        if (resource == null) {
+            if (warnIfNotFound && nodeHash != nullHashValue)
+                gameObj.getLogger().warning("Could not find the resource '%s'. (Used by: %s, Resource Type: %s).", nodeString, Utils.getSimpleName(gameObj), resourceClass.getSimpleName());
+            return false;
+        }
+
+        if (!resourceClass.isInstance(resource))
+            throw new ClassCastException("Tried to use the resource '" + resource.getCollectionViewDisplayName() + "' as a " + resourceClass.getSimpleName() + ", but it was actually a " + Utils.getSimpleName(resource) + "!");
+
+        TResource castedResource = resourceClass.cast(resource);
+        hashObj.setResource(castedResource, true);
+        return true;
+    }
+
+    /**
+     * Resolves a resource hash to a particular asset.
+     * @param node the config node to resolve the resource from
+     * @param resourceType the desired resource type
+     * @param parentFile the file to find assets within
+     * @param gameObj the game object resolving the hash.
+     * @param hashObj the hash object to save results within
+     * @param warnIfNotFound if true and the resource is not found, a warning will be written.
+     * @return if the resource was successfully resolved
+     */
+    public static boolean resolveLevelResource(StringNode node, IkcCResourceGenericTypeGroup resourceType, GreatQuestChunkedFile parentFile, IGameObject gameObj, GreatQuestHash<kcCResourceGeneric> hashObj, boolean warnIfNotFound) {
+        if (resourceType == null)
+            throw new NullPointerException("resourceType");
+        if (!resolveLevelResource(node, kcCResourceGeneric.class, parentFile, gameObj, hashObj, warnIfNotFound))
+            return false;
+
+        kcCResourceGeneric resource = hashObj.getResource();
+        if (resource.getResourceType() != null && !resourceType.contains(resource.getResourceType()))
+            throw new ClassCastException("Tried to use the resource '" + resource.getCollectionViewDisplayName() + "' as a(n) " + resourceType + ", but it was actually a(n) " + resource.getResourceType() + "!");
+
+        return true;
     }
 
     /**
@@ -587,7 +680,7 @@ public class GreatQuestUtils {
     }
 
     /**
-     * Find a resource available to the given level by the resource name
+     * Find a resource available to the given level by the resource name.
      * @param parentFile the parent file, searched first. If not found, other chunked files loaded will be searched.
      * @param resourceName the name of the resource to lookup
      * @param resourceClass the type of resource to resolve
@@ -808,33 +901,6 @@ public class GreatQuestUtils {
             fileName = fileName.substring(lastSlashIndex + 1);
 
         return fileName;
-    }
-
-    /**
-     * Interprets the given node as a hash
-     * @param node the node to interpret
-     * @param nullValue the value to return if a null or empty string is provided
-     * @return hashValue
-     */
-    public static int getAsHash(StringNode node, int nullValue) {
-        return node != null && node.getAsString() != null ? getAsHash(node.getAsString(), nullValue, null) : nullValue;
-    }
-
-    /**
-     * Interprets the given node as a hash
-     * @param node the node to interpret
-     * @param nullValue the value to return if a null or empty string is provided
-     * @return hashValue
-     */
-    public static int getAsHash(StringNode node, int nullValue, GreatQuestHash<?> hashObj) {
-        String originalString;
-        if (node != null && (originalString = node.getAsString()) != null) {
-            return getAsHash(originalString, nullValue, hashObj);
-        } else {
-            if (hashObj != null)
-                hashObj.setHash(nullValue);
-            return nullValue;
-        }
     }
 
     /**

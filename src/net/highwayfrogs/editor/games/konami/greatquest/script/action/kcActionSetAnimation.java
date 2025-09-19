@@ -66,7 +66,7 @@ public class kcActionSetAnimation extends kcAction {
         StringNode trackNode = arguments.useNext();
         StringNode timestampTick = arguments.useNextIfPresent();
 
-        setTrackHash(GreatQuestUtils.getAsHash(trackNode, 0, this.trackRef)); // Load 'track' parameter.
+        resolveResource(trackNode, kcCResourceTrack.class, this.trackRef); // Load 'track' parameter.
         if (timestampTick != null) {
             this.translationTick.fromConfigNode(getExecutor(), getGameInstance(), timestampTick, kcParamType.TIMESTAMP_TICK); // Load 'transitionTime' parameter.
         } else {

@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericTypeGroup;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc;
@@ -50,7 +51,7 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         this.proxyDescRef = new GreatQuestHash<>(); // kcCActorBase::Init()
         this.animationSequencesRef = new GreatQuestHash<>(); // kcCActorBase::__ct
         GreatQuestUtils.applySelfNameSuffixAndToFutureNameChanges(resource, NAME_SUFFIX);
-        applyModelDescName();
+        applyNameToDescriptions();
     }
 
     @Override
@@ -70,14 +71,14 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
             throw new RuntimeException("The kcActorBaseDesc reported the parent chunk as " + NumberUtils.to0PrefixedHexString(hThis) + ", but it was expected to be " + this.parentHash.getHashNumberAsString() + ".");
 
         // Resolve assets.
-        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGeneric.class, this, this.modelDescRef, modelDescHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGenericType.MODEL_DESCRIPTION, getParentFile(), this, this.modelDescRef, modelDescHash, true);
         GreatQuestUtils.resolveLevelResourceHash(kcCResourceSkeleton.class, this, this.hierarchyRef, hierarchyHash, true);
         GreatQuestUtils.resolveLevelResourceHash(kcCResourceAnimSet.class, this, this.animSetRef, animSetHash, true);
-        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGeneric.class, this, this.proxyDescRef, proxyDescHash, !isParentResourceNamed("Dummy", "Tree 8", "Tree 9")); // There are only 3 places this doesn't resolve, all in Rolling Rapids Creek (PC version, PS2 untested).
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGenericTypeGroup.PROXY_DESCRIPTION, getParentFile(), this, this.proxyDescRef, proxyDescHash, !isParentResourceNamed("Dummy", "Tree 8", "Tree 9")); // There are only 3 places this doesn't resolve, all in Rolling Rapids Creek (PC version, PS2 untested).
         if (!GreatQuestUtils.resolveLevelResourceHash(kcCResourceNamedHash.class, this, this.animationSequencesRef, animationHash, false) && animationHash != -1) // There are TONS of hashes set which correspond to sequences which don't exist.
             this.animationSequencesRef.setOriginalString(getResource().getName() + kcCResourceNamedHash.NAME_SUFFIX); // If we don't resolve the asset, we can at least apply the original string.
 
-        applyModelDescName(); // TODO: On name change, update linked names.
+        applyNameToDescriptions(); // TODO: On name change, update linked names.
     }
 
     @Override
@@ -199,11 +200,11 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
     @Override
     public void fromConfig(Config input) {
         super.fromConfig(input);
-        resolve(input.getKeyValueNodeOrError(CONFIG_KEY_MODEL_DESC), kcCResourceGeneric.class, this.modelDescRef);
-        resolve(input.getOptionalKeyValueNode(CONFIG_KEY_PROXY_DESC), kcCResourceGeneric.class, this.proxyDescRef);
-        resolve(input.getOptionalKeyValueNode(CONFIG_KEY_HIERARCHY), kcCResourceSkeleton.class, this.hierarchyRef);
-        resolve(input.getOptionalKeyValueNode(CONFIG_KEY_ANIMATION_SET), kcCResourceAnimSet.class, this.animSetRef);
-        resolve(input.getOptionalKeyValueNode(CONFIG_KEY_ACTION_SEQUENCES), kcCResourceNamedHash.class, this.animationSequencesRef);
+        resolveResource(input.getKeyValueNodeOrError(CONFIG_KEY_MODEL_DESC), kcCResourceGenericType.MODEL_DESCRIPTION, this.modelDescRef);
+        resolveResource(input.getOptionalKeyValueNode(CONFIG_KEY_PROXY_DESC), kcCResourceGenericTypeGroup.PROXY_DESCRIPTION, this.proxyDescRef);
+        resolveResource(input.getOptionalKeyValueNode(CONFIG_KEY_HIERARCHY), kcCResourceSkeleton.class, this.hierarchyRef);
+        resolveResource(input.getOptionalKeyValueNode(CONFIG_KEY_ANIMATION_SET), kcCResourceAnimSet.class, this.animSetRef);
+        resolveResource(input.getOptionalKeyValueNode(CONFIG_KEY_ACTION_SEQUENCES), kcCResourceNamedHash.class, this.animationSequencesRef);
         ConfigValueNode channelCountNode = input.getOptionalKeyValueNode(CONFIG_KEY_CHANNEL_COUNT);
         if (channelCountNode != null)
             this.channelCount = channelCountNode.getAsInteger();
@@ -220,18 +221,23 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         output.getOrCreateKeyValueNode(CONFIG_KEY_ACTION_SEQUENCES).setAsString(this.animationSequencesRef.getAsGqsString(settings));
     }
 
-    private void applyModelDescName() {
+    private void applyNameToDescriptions() {
         if (getResource() == null)
             return;
 
         // If we resolve the model successfully, our goal is to generate the name of any corresponding collision mesh.
-        String modelName = getResource().getName();
-        if (modelName.endsWith(NAME_SUFFIX))
-            modelName = modelName.substring(0, modelName.length() - NAME_SUFFIX.length());
+        String baseName = getResource().getName();
+        if (baseName.endsWith(NAME_SUFFIX))
+            baseName = baseName.substring(0, baseName.length() - NAME_SUFFIX.length());
 
-        String modelDescName = modelName + kcModelDesc.NAME_SUFFIX;
+        String modelDescName = baseName + kcModelDesc.NAME_SUFFIX;
         int testHash = GreatQuestUtils.hash(modelDescName);
         if (this.modelDescRef.getHashNumber() == testHash && this.modelDescRef.getResource() != null)
             this.modelDescRef.getResource().getSelfHash().setOriginalString(modelDescName);
+
+        String proxyDescName = baseName + kcProxyDesc.NAME_SUFFIX;
+        testHash = GreatQuestUtils.hash(proxyDescName);
+        if (this.proxyDescRef.getHashNumber() == testHash && this.proxyDescRef.getResource() != null)
+            this.proxyDescRef.getResource().getSelfHash().setOriginalString(proxyDescName);
     }
 }

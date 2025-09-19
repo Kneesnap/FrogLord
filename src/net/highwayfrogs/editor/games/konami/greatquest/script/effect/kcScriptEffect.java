@@ -128,7 +128,7 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
         boolean resolvedOverrideEntity = false;
         kcCResourceEntityInst scriptOwner = getParentFunction().getScript().getEntity();
         this.targetEntityRef.setResource(scriptOwner, false);
-        if (overrideTargetEntity != null && setTargetEntityHash(GreatQuestUtils.getAsHash(overrideTargetEntity, 0, this.targetEntityRef)))
+        if (overrideTargetEntity != null && GreatQuestUtils.resolveLevelResource(overrideTargetEntity, kcCResourceEntityInst.class, getChunkedFile(), this, this.targetEntityRef, false))
             resolvedOverrideEntity = true;
 
         loadArguments(arguments, lineNumber, fileName);

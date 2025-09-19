@@ -1,11 +1,13 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.games.generic.data.GameObject;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedResource;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
@@ -19,6 +21,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptValidation
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
+import net.highwayfrogs.editor.utils.objects.StringNode;
 
 import java.util.List;
 
@@ -32,7 +35,7 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
     private final kcScriptCauseType type;
     private final int minimumArguments;
     private final int gqsArgumentCount;
-    @Setter(AccessLevel.PACKAGE) private kcScriptFunction parentFunction;
+    @Setter private kcScriptFunction parentFunction;
     @Setter private boolean loadedFromGame; // True if the cause was loaded from the game, and was not loaded by the user.
     private int userLineNumber = -1; // The line number as imported by the user.
     private String userImportSource;
@@ -224,6 +227,18 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
     }
 
     /**
+     * Resolves a resource from a config node.
+     * @param node the node to resolve the resource from
+     * @param resourceClass the type of resource to resolve
+     * @param hashObj the hash object to apply the result to
+     * @param <TResource> the type of resource to resolve
+     */
+    protected <TResource extends kcHashedResource> void resolveResource(StringNode node, Class<TResource> resourceClass, GreatQuestHash<TResource> hashObj) {
+        GreatQuestChunkedFile chunkedFile = this.parentFunction.getChunkedFile();
+        GreatQuestUtils.resolveLevelResource(node, resourceClass, chunkedFile, this, hashObj, true);
+    }
+
+    /**
      * Reads a script's boolean value from an integer.
      * @param number      The number to read from.
      * @param description The description of what is being read.
@@ -254,9 +269,9 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
      * @param line The line of text to parse
      * @return the parsed script effect
      */
-    public static kcScriptCause parseScriptCause(kcScript script, String line, int lineNumber, String fileName) {
-        if (script == null)
-            throw new NullPointerException("script");
+    public static kcScriptCause parseScriptCause(kcScriptFunction function, String line, int lineNumber, String fileName) {
+        if (function == null)
+            throw new NullPointerException("function");
         if (line == null)
             throw new NullPointerException("line");
         if (line.trim().isEmpty())
@@ -268,7 +283,8 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
         if (causeType == null)
             throw new RuntimeException("The cause name '" + causeName + "' seems invalid, no kcScriptCauseType could be found for it.");
 
-        kcScriptCause newCause = causeType.createNew(script);
+        kcScriptCause newCause = causeType.createNew(function.getScript());
+        newCause.setParentFunction(function);
 
         try {
             newCause.load(arguments, lineNumber, fileName);

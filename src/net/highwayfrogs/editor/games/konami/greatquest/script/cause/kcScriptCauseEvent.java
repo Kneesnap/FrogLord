@@ -1,16 +1,19 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
- * Allows a script event to trigger for an event.
+ * Allows an event trigger to cause a script function to run.
  * This may appear like it should only fire when the event hash in here matches the event which has been fired.
  * However, it seems they forgot to add verification check to that, so actually the event hash specified here is unused.
  * ProcessGlobalScript() tests the scriptType and the causeType, but none of the additional params.
@@ -20,7 +23,7 @@ import java.util.List;
  */
 @Getter
 public class kcScriptCauseEvent extends kcScriptCause {
-    private int eventNameHash;
+    private final GreatQuestHash<?> eventRef = new GreatQuestHash<>();
 
     public kcScriptCauseEvent(kcScript script) {
         super(script, kcScriptCauseType.EVENT, 1, 1);
@@ -31,23 +34,34 @@ public class kcScriptCauseEvent extends kcScriptCause {
         if (subCauseType != 0)
             throw new RuntimeException("The subCauseType for kcScriptCauseEvent is expected to always be zero, but was " + subCauseType + ".");
 
-        this.eventNameHash = extraValues.get(0);
+        int eventHash = extraValues.get(0);
+        String eventName = GreatQuestUtils.getEventName(eventHash);
+        if (eventName != null) {
+            this.eventRef.setHash(eventName);
+        } else {
+            this.eventRef.setHash(eventHash);
+        }
     }
 
     @Override
     public void save(List<Integer> output) {
         output.add(0);
-        output.add(this.eventNameHash);
+        output.add(this.eventRef.getHashNumber());
     }
 
     @Override
     protected void loadArguments(OptionalArguments arguments) {
-        this.eventNameHash = GreatQuestUtils.getAsHash(arguments.useNext(), 0);
+        String eventName = arguments.useNext().getAsString(); // We can't resolve the sequence by the hash of the string normally since these seem to use randomized hash values.
+        if (NumberUtils.isHexInteger(eventName)) {
+            this.eventRef.setHash(NumberUtils.parseHexInteger(eventName));
+        } else {
+            this.eventRef.setHash(eventName);
+        }
     }
 
     @Override
     protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
-        kcScriptDisplaySettings.applyGqsSyntaxHashDisplay(arguments.createNext(), settings, this.eventNameHash);
+        this.eventRef.applyGqsString(arguments.createNext(), settings);
     }
 
     @Override
@@ -58,18 +72,18 @@ public class kcScriptCauseEvent extends kcScriptCause {
 
     @Override
     public int hashCode() {
-        return super.hashCode() ^ this.eventNameHash;
+        return super.hashCode() ^ this.eventRef.hashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
-        return super.equals(obj) && ((kcScriptCauseEvent) obj).getEventNameHash() == this.eventNameHash;
+        return super.equals(obj) && Objects.equals(((kcScriptCauseEvent) obj).getEventRef(), this.eventRef);
     }
 
     @Override
     public void toString(StringBuilder builder, kcScriptDisplaySettings settings) {
         builder.append("When any event is triggered. (Should be for just '");
-        builder.append(kcScriptDisplaySettings.getHashDisplay(settings, this.eventNameHash, true));
+        builder.append(this.eventRef.getDisplayString(false));
         builder.append("', but the game is broken)");
     }
 }

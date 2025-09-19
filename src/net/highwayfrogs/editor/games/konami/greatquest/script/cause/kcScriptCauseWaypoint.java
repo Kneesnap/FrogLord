@@ -43,7 +43,7 @@ public class kcScriptCauseWaypoint extends kcScriptCause {
     @Override
     protected void loadArguments(OptionalArguments arguments) {
         this.status = arguments.useNext().getAsEnumOrError(kcScriptCauseWaypointStatus.class);
-        setOtherEntityHash(GreatQuestUtils.getAsHash(arguments.useNext(), -1, this.otherEntityRef));
+        resolveResource(arguments.useNext(), kcCResourceEntityInst.class, this.otherEntityRef);
     }
 
     @Override

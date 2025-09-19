@@ -309,6 +309,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
             // Read effects.
             List<kcScriptEffect> effects = new ArrayList<>();
             kcScriptFunction newFunction = new kcScriptFunction(newScript, cause, effects);
+            cause.setParentFunction(newFunction);
 
             // Find effect.
             int startingEffectIndex = interim.getEffectByOffset(effectOffset);
@@ -450,7 +451,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
 
             // Set cause.
             String rawScriptCause = config.getKeyValueNodeOrError(CONFIG_FIELD_SCRIPT_CAUSE).getAsString();
-            this.cause = kcScriptCause.parseScriptCause(this.script, rawScriptCause, config.getOriginalLineNumber(), config.getRootNode().getSectionName());
+            this.cause = kcScriptCause.parseScriptCause(this, rawScriptCause, config.getOriginalLineNumber(), config.getRootNode().getSectionName());
 
             // Add script effects.
             this.effects.clear();
