@@ -312,7 +312,7 @@ public class kcCResourceGeneric extends kcCResource {
 
         kcCResourceGenericType genericType = getResourceType();
         if (genericType != desiredType)
-            throw new RuntimeException("Expected the generic resource type to be " + desiredType + ", but was " + genericType + " instead.");
+            throw new RuntimeException("Expected the generic resource type of resource '" + getName() + "' to be " + desiredType + ", but was " + genericType + " instead.");
 
         return (T) this.resourceData;
     }

@@ -34,6 +34,11 @@ public class kcCResourceModel extends kcCResource {
         super.load(reader);
         this.fullPath = reader.readNullTerminatedFixedSizeString(FULL_PATH_SIZE); // Don't read with the padding byte, as the padding bytes are only valid when the buffer is initially created, if the is shrunk (Such as GOOBER.VTX in 00.dat), after the null byte, the old bytes will still be there.
 
+        String partialName = GreatQuestUtils.getFileNameFromPath(this.fullPath);
+        int testHash = GreatQuestUtils.hash(partialName);
+        if (testHash == getHash())
+            getSelfHash().setOriginalString(partialName);
+
         GreatQuestAssetBinFile mainArchive = getMainArchive();
         if (mainArchive != null)
             mainArchive.applyFileName(this.fullPath, false);

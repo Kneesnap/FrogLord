@@ -50,6 +50,7 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         this.proxyDescRef = new GreatQuestHash<>(); // kcCActorBase::Init()
         this.animationSequencesRef = new GreatQuestHash<>(); // kcCActorBase::__ct
         GreatQuestUtils.applySelfNameSuffixAndToFutureNameChanges(resource, NAME_SUFFIX);
+        applyModelDescName();
     }
 
     @Override
@@ -75,6 +76,8 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         GreatQuestUtils.resolveLevelResourceHash(kcCResourceGeneric.class, this, this.proxyDescRef, proxyDescHash, !isParentResourceNamed("Dummy", "Tree 8", "Tree 9")); // There are only 3 places this doesn't resolve, all in Rolling Rapids Creek (PC version, PS2 untested).
         if (!GreatQuestUtils.resolveLevelResourceHash(kcCResourceNamedHash.class, this, this.animationSequencesRef, animationHash, false) && animationHash != -1) // There are TONS of hashes set which correspond to sequences which don't exist.
             this.animationSequencesRef.setOriginalString(getResource().getName() + kcCResourceNamedHash.NAME_SUFFIX); // If we don't resolve the asset, we can at least apply the original string.
+
+        applyModelDescName(); // TODO: On name change, update linked names.
     }
 
     @Override
@@ -215,5 +218,20 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         output.getOrCreateKeyValueNode(CONFIG_KEY_CHANNEL_COUNT).setAsInteger(this.channelCount);
         output.getOrCreateKeyValueNode(CONFIG_KEY_ANIMATION_SET).setAsString(this.animSetRef.getAsGqsString(settings));
         output.getOrCreateKeyValueNode(CONFIG_KEY_ACTION_SEQUENCES).setAsString(this.animationSequencesRef.getAsGqsString(settings));
+    }
+
+    private void applyModelDescName() {
+        if (getResource() == null)
+            return;
+
+        // If we resolve the model successfully, our goal is to generate the name of any corresponding collision mesh.
+        String modelName = getResource().getName();
+        if (modelName.endsWith(NAME_SUFFIX))
+            modelName = modelName.substring(0, modelName.length() - NAME_SUFFIX.length());
+
+        String modelDescName = modelName + kcModelDesc.NAME_SUFFIX;
+        int testHash = GreatQuestUtils.hash(modelDescName);
+        if (this.modelDescRef.getHashNumber() == testHash && this.modelDescRef.getResource() != null)
+            this.modelDescRef.getResource().getSelfHash().setOriginalString(modelDescName);
     }
 }

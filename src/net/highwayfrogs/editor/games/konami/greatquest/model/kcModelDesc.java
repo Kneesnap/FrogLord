@@ -26,6 +26,7 @@ public class kcModelDesc extends kcBaseDesc implements IInfoWriter, kcIGenericRe
     private final GreatQuestHash<kcCResourceModel> modelRef; // Resolved by kcCModel::Init()
 
     private static final int EXPECTED_MATERIAL_HASH = -1; // Never used.
+    public static final String NAME_SUFFIX = "ModelDesc";
 
     public kcModelDesc(@NonNull kcCResourceGeneric resource) {
         super(resource);
