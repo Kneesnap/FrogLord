@@ -369,12 +369,20 @@ public abstract class SCGameInstance extends GameInstance {
 
         // Check there aren't any gaps in data.
         nextTextureRemap = this.textureRemaps.size() > index + 1 ? this.textureRemaps.get(index + 1) : null;
-        int extraBytes = nextTextureRemap != null ? nextTextureRemap.getReaderIndex() - reader.getIndex() : 0;
-        if (extraBytes != 0)
-            getLogger().warning( "%s has %d unread bytes between it and %s.", textureRemap, extraBytes, nextTextureRemap);
+        int extraBytesStart = reader.getIndex();
+        int extraBytes = nextTextureRemap != null ? nextTextureRemap.getReaderIndex() - extraBytesStart : 0;
 
         // Return, but only after calling hook.
         reader.jumpReturn();
+
+        // Handle extra bytes.
+        if (extraBytes != 0) {
+            getLogger().warning("%s has %d unread bytes between it and %s.", textureRemap, extraBytes, nextTextureRemap);
+            if (extraBytes > Constants.INTEGER_SIZE) {
+                TextureRemapArray newTextureRemap = new TextureRemapArray(this, "txl_unknown", extraBytesStart + getRamOffset());
+                this.textureRemaps.add(index + 1, newTextureRemap);
+            }
+        }
     }
 
     /**
