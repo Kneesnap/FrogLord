@@ -18,6 +18,7 @@ import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.MainGameInstanceLogger;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -187,7 +188,12 @@ public abstract class GameInstance implements IGameInstance {
             throw new IllegalStateException("Cannot load the game configuration '" + gameVersionConfigName + "' because it has already been loaded.");
 
         // Load config.
-        net.highwayfrogs.editor.file.config.Config gameConfig = new net.highwayfrogs.editor.file.config.Config(this.gameType.getEmbeddedResourceStream("versions/" + gameVersionConfigName + ".cfg"));
+        String configPath = "versions/" + gameVersionConfigName + ".cfg";
+        InputStream configStream = this.gameType.getEmbeddedResourceStream(configPath);
+        if (configStream == null)
+            throw new IllegalStateException("Could not load game config '" + this.gameType.getEmbeddedResourcePath(configPath) + "'.");
+
+        net.highwayfrogs.editor.file.config.Config gameConfig = new net.highwayfrogs.editor.file.config.Config(configStream);
         loadGameConfig(gameVersionConfigName, gameConfig, instanceConfig);
     }
 

@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.games.generic.IGameType;
 import net.highwayfrogs.editor.games.shared.basic.GameBuildInfo;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsConfig;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsInstance;
+import net.highwayfrogs.editor.games.sony.c12.C12GameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilGameInstance;
@@ -56,7 +57,7 @@ public enum SCGameType implements IGameType {
     //COMMON_TALES(null), // 1999
     MOONWARRIOR("Moon Warrior", MoonWarriorInstance::new, null, true), // 1999
     MEDIEVIL2("MediEvil II", MediEvil2GameInstance::new, MediEvil2Config::new, true), // October 1998 -> March 2000
-    C12("C-12: Final Resistance", null, null, true); // ?
+    C12("C-12: Final Resistance", C12GameInstance::new, MediEvil2Config::new, true); // ?
 
     @Getter private final String displayName;
     private final Supplier<SCGameInstance> instanceMaker;
