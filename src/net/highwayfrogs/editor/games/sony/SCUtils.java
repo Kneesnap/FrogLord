@@ -368,9 +368,10 @@ public class SCUtils {
      * Find images shared between the two versions which are a perfect match, and generate an image naming config based on it.
      * @param nameSourceInst the game instance containing the image names
      * @param copyDestInst the game instance to transfer the image names to
+     * @param includeMissingTexturesAsComments if true, missing textures will be included as comments
      * @return sharedImageConfig
      */
-    public static String generateImageNameConfigForMatchingTextures(SCGameInstance nameSourceInst, SCGameInstance copyDestInst) {
+    public static String generateImageNameConfigForMatchingTextures(SCGameInstance nameSourceInst, SCGameInstance copyDestInst, boolean includeMissingTexturesAsComments) {
         if (nameSourceInst == null)
             throw new NullPointerException("nameSourceInst");
         if (copyDestInst == null)
@@ -407,7 +408,7 @@ public class SCUtils {
                     continue;
 
                 for (GameImage testImage : list)
-                    if (ImageWorkHorse.doImagesMatch(image.toBufferedImage(), testImage.toBufferedImage()) && !matchingImages.contains(testImage))
+                    if (!matchingImages.contains(testImage) && ImageWorkHorse.doImagesMatch(image.toBufferedImage(), testImage.toBufferedImage()))
                         matchingImages.add(testImage);
             }
         }
@@ -420,7 +421,8 @@ public class SCUtils {
         for (Entry<Short, List<GameImage>> entry : entryList) {
             List<GameImage> images = entry.getValue();
             if (images == null || images.size() <= 1) {
-                builder.append("#").append(entry.getKey()).append("=?").append(Constants.NEWLINE);
+                if (includeMissingTexturesAsComments)
+                    builder.append("#").append(entry.getKey()).append("=?").append(Constants.NEWLINE);
                 continue;
             }
 
@@ -432,6 +434,9 @@ public class SCUtils {
             GameImage firstImage = images.stream().filter(testImage -> testImage.getOriginalName() != null).findFirst().orElse(images.get(0));
             String name = firstImage.getOriginalName();
             if (name == null) {
+                if (!includeMissingTexturesAsComments && images.stream().allMatch(image -> image.getOriginalName() == null))
+                    continue;
+
                 name = SCUtils.C_UNNAMED_IMAGE_PREFIX + firstImage.getTextureId();
                 generatedNames++;
                 builder.append("#");
