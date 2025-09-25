@@ -1,12 +1,18 @@
 package net.highwayfrogs.editor.utils.fx.wrapper;
 
+import javafx.event.EventHandler;
+import javafx.scene.Node;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.ContextMenuEvent;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.lambda.TriConsumer;
 
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -19,10 +25,13 @@ public class LazyFXListCell<T> extends ListCell<T> {
     private final BiFunction<T, Integer, String> withIndexTextHandler;
     private final Function<T, Image> withoutIndexGraphicHandler;
     private final BiFunction<T, Integer, Image> withIndexGraphicHandler;
+    private final EventHandler<? super ContextMenuEvent> contextMenuListener = this::setupContextMenu;
     private final String nullDisplay;
     private Function<T, Tooltip> withoutIndexTooltipHandler;
     private BiFunction<T, Integer, Tooltip> withIndexTooltipHandler;
     private Tooltip nullTooltip;
+    private TriConsumer<ContextMenu, T, Integer> withIndexContextMenuHandler;
+    private BiConsumer<ContextMenu, T> withoutIndexContextMenuHandler;
     private int forcedGraphicSize = DEFAULT_GRAPHIC_SIZE;
 
     private static final int DEFAULT_GRAPHIC_SIZE = 25;
@@ -88,6 +97,26 @@ public class LazyFXListCell<T> extends ListCell<T> {
      */
     public LazyFXListCell<T> setWithIndexTooltipHandler(BiFunction<T, Integer, Tooltip> withIndexTooltipHandler) {
         this.withIndexTooltipHandler = withIndexTooltipHandler;
+        return this;
+    }
+
+    /**
+     * Sets the handler for creating a ContextMenu without using the list item index.
+     * @param withoutIndexContextMenuHandler the handler to apply
+     * @return this
+     */
+    public LazyFXListCell<T> setWithoutIndexContextMenuHandler(BiConsumer<ContextMenu, T> withoutIndexContextMenuHandler) {
+        this.withoutIndexContextMenuHandler = withoutIndexContextMenuHandler;
+        return this;
+    }
+
+    /**
+     * Sets the handler for creating a ContextMenu using the list item index.
+     * @param withIndexContextMenuHandler the handler to apply
+     * @return this
+     */
+    public LazyFXListCell<T> setWithIndexContextMenuHandler(TriConsumer<ContextMenu, T, Integer> withIndexContextMenuHandler) {
+        this.withIndexContextMenuHandler = withIndexContextMenuHandler;
         return this;
     }
 
@@ -174,5 +203,33 @@ public class LazyFXListCell<T> extends ListCell<T> {
         }
 
         setTooltip(tooltip);
+
+        // Setup the context menu right-click handler.
+        if (this.withIndexContextMenuHandler != null || this.withoutIndexContextMenuHandler != null) {
+            setOnContextMenuRequested(this.contextMenuListener);
+        } else {
+            setOnContextMenuRequested(null);
+        }
+    }
+
+    private void setupContextMenu(ContextMenuEvent event) {
+        ContextMenu contextMenu = new ContextMenu();
+
+        try {
+            if (this.withIndexContextMenuHandler != null) {
+                this.withIndexContextMenuHandler.accept(contextMenu, getItem(), getIndex());
+            } else if (this.withoutIndexContextMenuHandler != null) {
+                this.withoutIndexContextMenuHandler.accept(contextMenu, getItem());
+            } else {
+                return;
+            }
+        } catch (Throwable th) {
+            Utils.handleError(null, th, true, "Failed to setup right-click ContextMenu.");
+            return;
+        }
+
+        FXUtils.disableMnemonicParsing(contextMenu);
+        if (!contextMenu.getItems().isEmpty())
+            contextMenu.show((Node) event.getSource(), event.getScreenX(), event.getScreenY());
     }
 }

@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.file.config.exe;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.config.data.FroggerMapWorldID;
+import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapLevelID;
@@ -14,21 +15,19 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
  * Holds information about each level.
  * Created by Kneesnap on 2/1/2019.
  */
-@Getter
-@Setter
 public class LevelInfo extends ExeStruct {
-    private int level;
-    private FroggerMapWorldID world;
-    private int stackPosition; // 0 = Top of level stack.
+    @Setter private int level;
+    @Getter @Setter private FroggerMapWorldID world;
+    @Getter @Setter private int stackPosition; // 0 = Top of level stack.
     private int theme;
-    private int localLevelId; // 0 -> 4 (Level 1 -> 5)
-    private int levelsInWorld; // Number of levels in the world. (Used to calculate size.)
-    private long worldImageSelectablePointer;
-    private long worldImageVisitedPointer;
-    private long worldImageNotTriedPointer;
+    @Getter @Setter private int localLevelId; // 0 -> 4 (Level 1 -> 5)
+    @Getter @Setter private int levelsInWorld; // Number of levels in the world. (Used to calculate size.)
+    private long worldImageSelectablePointer; // Displayed on the level stack for the given world once unlocked.
+    private long worldImageVisitedPointer; // Unused.
+    private long worldImageNotTriedPointer; // Displayed on the level stack for the given world prior to unlock
     private long levelTexturePointer; // The screenshot of the level.
-    private long levelNameTexturePointer;
-    private long levelNameTextureInGamePointer;
+    private long levelNameTexturePointer; // The level name shown on the level stack.
+    private long levelNameTextureInGamePointer; // The level name shown in-game.
 
     private static final int RUNTIME_DATA_SIZE = 44;
     private static final int TERMINATOR_LEVEL_ID = -1;
@@ -116,5 +115,48 @@ public class LevelInfo extends ExeStruct {
      */
     public boolean isTerminator() {
         return this.level == TERMINATOR_LEVEL_ID;
+    }
+
+
+    /**
+     * Resolves the image displayed on the level stack for the given world once unlocked.
+     */
+    public GameImage getWorldLevelStackColoredImage() {
+        return getGameInstance().getImageFromPointer(this.worldImageSelectablePointer);
+    }
+
+    /**
+     * Resolves an image never displayed on the level stack, which theoretically would have displayed once "visited".
+     */
+    public GameImage getUnusedWorldVisitedImage() {
+        return getGameInstance().getImageFromPointer(this.worldImageVisitedPointer);
+    }
+
+    /**
+     * Resolves the image displayed on the level stack for the given world prior to unlock.
+     */
+    public GameImage getWorldNotTriedImage() {
+        return getGameInstance().getImageFromPointer(this.worldImageNotTriedPointer);
+    }
+
+    /**
+     * Resolves the preview image screenshot displayed on the level stack.
+     */
+    public GameImage getLevelPreviewScreenshotImage() {
+        return getGameInstance().getImageFromPointer(this.levelTexturePointer);
+    }
+
+    /**
+     * Resolves the level name image displayed on the level stack.
+     */
+    public GameImage getLevelNameImage() {
+        return getGameInstance().getImageFromPointer(this.levelNameTexturePointer);
+    }
+
+    /**
+     * Resolves the level name image displayed upon completing a level in-game.
+     */
+    public GameImage getIngameLevelNameImage() {
+        return getGameInstance().getImageFromPointer(this.levelNameTextureInGamePointer);
     }
 }

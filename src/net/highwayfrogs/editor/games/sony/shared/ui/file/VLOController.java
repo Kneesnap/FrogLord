@@ -5,6 +5,7 @@ import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
@@ -18,20 +19,24 @@ import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
-import net.highwayfrogs.editor.system.AbstractAttachmentCell;
+import net.highwayfrogs.editor.games.sony.shared.utils.SCAnalysisUtils;
+import net.highwayfrogs.editor.games.sony.shared.utils.SCAnalysisUtils.SCTextureUsage;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
+import net.highwayfrogs.editor.utils.fx.wrapper.LazyFXListCell;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.WeakHashMap;
 
 /**
  * Controls the VLO edit screen.
@@ -59,6 +64,7 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
 
     private static final SavedFilePath IMAGE_EXPORT_DIRECTORY = new SavedFilePath("vlo-bulk-export", "Select the folder to export images to...");
     private static final SavedFilePath IMAGE_IMPORT_DIRECTORY = new SavedFilePath("vlo-bulk-import", "Select the folder to import images from...");
+    private static final WeakHashMap<SCGameInstance, List<SCTextureUsage>[]> TEXTURE_USAGES_PER_INSTANCE = new WeakHashMap<>();
 
     private static final int SCALE_DIMENSION = 256;
 
@@ -76,18 +82,36 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VLOA
     public void setTargetFile(VLOArchive vlo) {
         super.setTargetFile(vlo);
 
-        imageList.setItems(FXCollections.observableArrayList(vlo.getImages()));
-        imageList.setCellFactory(param -> new AbstractAttachmentCell<>((image, index) -> {
+        this.imageList.setItems(FXCollections.observableArrayList(vlo.getImages()));
+        this.imageList.setCellFactory(param -> new LazyFXListCell<GameImage>((image, index) -> {
             if (image == null)
                 return null;
 
             String imageName = image.getOriginalName();
             return index + ": " + (imageName != null ? imageName : "") + " [" + image.getFullWidth() + ", " + image.getFullHeight() + "] (ID: " + image.getTextureId() + ")";
+        }).setWithoutIndexContextMenuHandler((contextMenu, image) -> {
+            MenuItem findTextureUsages = new MenuItem("Find Usages");
+            contextMenu.getItems().add(findTextureUsages);
+            contextMenu.setOnAction(event -> {
+                List<SCTextureUsage>[] allTextureUsages = TEXTURE_USAGES_PER_INSTANCE.computeIfAbsent(getGameInstance(), SCAnalysisUtils::generateTextureUsageMapping);
+                List<SCTextureUsage> textureUsages = allTextureUsages != null && allTextureUsages.length > image.getTextureId() ? allTextureUsages[image.getTextureId()] : null;
+                if (textureUsages == null || textureUsages.isEmpty()) {
+                    FXUtils.showPopup(AlertType.INFORMATION, "No usages found.", "No usages of this image were found.\nThis does *NOT* guarantee that the image is never unused.");
+                    return;
+                }
+
+                StringBuilder builder = new StringBuilder("Texture Usages (").append(textureUsages.size()).append("):\n");
+                for (int i = 0; i < textureUsages.size(); i++) {
+                    SCTextureUsage usage = textureUsages.get(i);
+                    builder.append(" - ").append(usage.getLocationDescription()).append('\n');
+                }
+
+                FXUtils.showPopup(AlertType.INFORMATION, "Texture Usage Finder:", builder.toString());
+            });
         }));
 
-        imageList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> selectImage(newValue, false));
-
-        imageList.getSelectionModel().select(0);
+        this.imageList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> selectImage(newValue, false));
+        this.imageList.getSelectionModel().selectFirst();
     }
 
     @Override

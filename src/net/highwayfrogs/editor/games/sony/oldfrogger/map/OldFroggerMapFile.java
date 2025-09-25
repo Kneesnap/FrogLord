@@ -14,11 +14,15 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.OldFroggerMapMeshC
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.*;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerMapController;
 import net.highwayfrogs.editor.games.sony.oldfrogger.utils.OldFroggerMapConverter;
+import net.highwayfrogs.editor.games.sony.shared.ISCTextureUser;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
+import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
+
+import java.util.List;
 
 /**
  * Represents a map file in pre-recode frogger.
@@ -33,7 +37,7 @@ import net.highwayfrogs.editor.gui.editor.MeshViewController;
  * Created by Kneesnap on 12/8/2023.
  */
 @Getter
-public class OldFroggerMapFile extends SCChunkedFile<OldFroggerGameInstance> {
+public class OldFroggerMapFile extends SCChunkedFile<OldFroggerGameInstance> implements ISCTextureUser {
     private final OldFroggerMapHeaderPacket headerPacket;
     private final OldFroggerMapLevelSpecificPacket levelSpecificDataPacket;
     private final OldFroggerMapPathPacket pathPacket;
@@ -163,5 +167,20 @@ public class OldFroggerMapFile extends SCChunkedFile<OldFroggerGameInstance> {
      */
     public OldFroggerMapVersion getFormatVersion() {
         return getMapConfig().getVersion();
+    }
+
+    @Override
+    public List<Short> getUsedTextureIds() {
+        OldFroggerLevelTableEntry levelTableEntry = getLevelTableEntry();
+        if (levelTableEntry == null)
+            return null;
+
+        TextureRemapArray textureRemap = levelTableEntry.getTextureRemap();
+        return textureRemap != null ? textureRemap.getTextureIds() : null;
+    }
+
+    @Override
+    public String getTextureUserName() {
+        return getFileDisplayName();
     }
 }

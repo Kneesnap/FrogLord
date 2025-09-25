@@ -37,6 +37,7 @@ import java.util.stream.Stream;
  * Created by Kneesnap on 10/25/2024.
  */
 public class FileUtils {
+    public static final BrowserFileType EXPORT_C_HEADER_FILE_TYPE = new BrowserFileType("C/C++ Header", "h");
     public static final BrowserFileType IMPORT_IMAGE_FILE_TYPE = new BrowserFileType("Image File", ImageIO.getReaderFileSuffixes());
     public static final BrowserFileType EXPORT_IMAGE_FILE_TYPE = new BrowserFileType("Image File", ImageIO.getWriterFileSuffixes());
     public static final SavedFilePath IMPORT_SINGLE_IMAGE_PATH = new SavedFilePath("singleImageFileImportPath", "Please select the image file to open.", IMPORT_IMAGE_FILE_TYPE);
@@ -62,7 +63,7 @@ public class FileUtils {
             String fullResourcePath = resourcePath.getFile();
             int exclamationPos = fullResourcePath.indexOf('!');
             if (exclamationPos < 0) {
-                FXUtils.makePopUp("Couldn't find the JAR-embedded file resource path in the URL '" + resourcePath + "'.", AlertType.ERROR);
+                FXUtils.showPopup(AlertType.ERROR, "Couldn't find resource file.", "JAR-embedded file resource path: '" + resourcePath + "'.");
                 return Collections.emptyList();
             }
 
@@ -790,12 +791,12 @@ public class FileUtils {
             return null;
 
         if (selectedFile.isFile() && selectedFile.exists() && !selectedFile.canWrite() && !selectedFile.setWritable(true)) {
-            FXUtils.makePopUp("Can't write to the file '" + selectedFile.getName() + "'." + Constants.NEWLINE + "Check that you have permission to write to this file.", AlertType.ERROR);
+            FXUtils.showPopup(AlertType.ERROR, "Can't write to the file '" + selectedFile.getName() + "'.", "Check that you have permission to write to this file.");
             return askUserToSaveFile(instance, savedPath, suggestedFileName, overrideLastFileName);
         }
 
         if (selectedFile.exists() && !selectedFile.setLastModified(System.currentTimeMillis())) {
-            FXUtils.makePopUp("Can't write to the file '" + selectedFile.getName() + "'." + Constants.NEWLINE + "Check that you have permission to write to this file.", AlertType.ERROR);
+            FXUtils.showPopup(AlertType.ERROR, "Can't write to the file '" + selectedFile.getName() + "'.","Check that you have permission to write to this file.");
             return askUserToSaveFile(instance, savedPath, suggestedFileName, overrideLastFileName);
         }
 
@@ -829,13 +830,13 @@ public class FileUtils {
 
         String extension = FileUtils.getFileNameExtensionLower(selectedFile.getName());
         if (extension == null || !Utils.contains(extensionSuffixes, extension)) {
-            FXUtils.makePopUp("Couldn't determine which image format to use for the file extension '." + extension + "'.", AlertType.ERROR);
+            FXUtils.showPopup(AlertType.ERROR, "Can't determine image format.", "Couldn't determine which image format to use for the file extension '." + extension + "'.");
             return null;
         }
 
         try {
             if (!ImageIO.write(image, extension, selectedFile)) {
-                FXUtils.makePopUp("No image writer was available for the ." + extension + " image type.", AlertType.ERROR);
+                FXUtils.showPopup(AlertType.ERROR, "No image writer found.", "No image writer was found for the ." + extension + " image type.");
                 return null;
             }
         } catch (IOException ex) {
@@ -844,7 +845,7 @@ public class FileUtils {
         }
 
         if (!selectedFile.exists() || !selectedFile.isFile()) {
-            FXUtils.makePopUp("The image was expected to have been written to the file, but wasn't!!", AlertType.ERROR);
+            FXUtils.showPopup(AlertType.ERROR, "Failed to write image to file.", "The image was expected to have been written to the file, but the file '" + selectedFile.getName() + "' does not exist!");
             return null;
         }
 

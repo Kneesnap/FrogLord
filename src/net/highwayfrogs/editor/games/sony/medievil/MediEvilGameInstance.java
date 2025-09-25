@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.sony.medievil;
 
 import lombok.Getter;
+import lombok.NonNull;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
@@ -12,6 +13,7 @@ import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
 import net.highwayfrogs.editor.games.sony.medievil.entity.MediEvilEntityTable;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.medievil.map.entity.MediEvilMapEntity;
+import net.highwayfrogs.editor.games.sony.shared.ISCMWDHeaderGenerator;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
@@ -25,6 +27,7 @@ import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewCom
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,7 +43,7 @@ import java.util.List;
  * Created by Kneesnap on 9/7/2023.
  */
 @Getter
-public class MediEvilGameInstance extends SCGameInstance {
+public class MediEvilGameInstance extends SCGameInstance implements ISCMWDHeaderGenerator {
     private final List<MediEvilLevelTableEntry> levelTable = new ArrayList<>();
     private final MediEvilEntityTable entityTable;
 
@@ -65,6 +68,8 @@ public class MediEvilGameInstance extends SCGameInstance {
     public SCGameFile<?> createFile(MWIResourceEntry resourceEntry, byte[] fileData) {
         if (resourceEntry.getTypeId() == FILE_TYPE_MAP || resourceEntry.hasExtension("map"))
             return new MediEvilMapFile(this);
+        if (resourceEntry.getTypeId() == 0 && (resourceEntry.hasExtension("bin") || resourceEntry.getDisplayName().startsWith("HELP")) && MediEvilHelpFile.isHelpFile(fileData))
+            return new MediEvilHelpFile(this);
 
         // TODO FILE_TYPE_VLO
         return SCUtils.createSharedGameFile(resourceEntry, fileData);
@@ -204,5 +209,11 @@ public class MediEvilGameInstance extends SCGameInstance {
         }
 
         return null;
+    }
+
+    @Override
+    public void generateMwdCHeader(@NonNull File file) {
+        // Based on the data seen in the executables, and educated guesses.
+        SCUtils.generateMwdCHeader(this, "S:\\\\", file, "MED", "STD", "VLO", "MOF", "FMOF", "MAP", "QTR", "PGD");
     }
 }

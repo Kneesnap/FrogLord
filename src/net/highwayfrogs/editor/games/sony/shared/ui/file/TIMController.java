@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.games.sony.shared.ui.file;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.ImageView;
@@ -16,11 +15,9 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.Proper
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.system.NameValuePair;
 import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 
 /**
  * Controls the screen for viewing TIM files.
@@ -108,26 +105,15 @@ public class TIMController extends SCFileEditorUIController<SCGameInstance, PSXT
     @FXML
     @SneakyThrows
     private void exportFile(ActionEvent event) {
-        File selectedFile = FXUtils.promptFileSave(getGameInstance(), "Specify the file to export this image as...", null, "Image Files", "png");
-        if (selectedFile != null)
-            ImageIO.write(getImage(), "png", selectedFile);
+       FileUtils.askUserToSaveImageFile(getGameInstance().getLogger(), getGameInstance(), getImage(), null);
     }
 
     @FXML
     @SneakyThrows
     private void importFile(ActionEvent event) {
-        FXUtils.makePopUp("Importing TIM images is not supported at this time.", AlertType.ERROR);
-        File selectedFile = FXUtils.promptFileOpenExtensions(getGameInstance(), "Select the image to import...", "Image Files", "png", "bmp");
-        if (selectedFile == null)
-            return; // Cancelled.
-
-        BufferedImage image;
-        try {
-            image = ImageIO.read(selectedFile);
-        } catch (IOException ex) {
-            handleError(ex, true, "Failed to read image file %s", selectedFile);
+        BufferedImage image = FileUtils.askUserToOpenImageFile(getGameInstance().getLogger(), getGameInstance());
+        if (image == null)
             return;
-        }
 
         try {
             getFile().fromBufferedImage(image, this.transparencyCheckBox.isSelected());

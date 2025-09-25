@@ -6,12 +6,10 @@ import javafx.scene.shape.MeshView;
 import javafx.scene.shape.TriangleMesh;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.SCGameObject;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
@@ -20,6 +18,8 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerFlyScor
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -65,7 +65,7 @@ public class PickupData extends SCGameData<FroggerGameInstance> {
         long imagePointer;
         while (reader.hasMore() && (imagePointer = reader.readUnsignedIntAsLong()) != 0)
             if (!isOldPickupFormat() || getGameInstance().getBmpTexturePointers().contains(imagePointer))
-                this.frames.add(new PickupAnimationFrame(this, this.frames.size(), imagePointer));
+                this.frames.add(new PickupAnimationFrame(this, imagePointer));
     }
 
     @Override
@@ -78,7 +78,7 @@ public class PickupData extends SCGameData<FroggerGameInstance> {
 
         // Write texture pointers (animation frames).
         for (int i = 0; i < this.frames.size(); i++)
-            writer.writeUnsignedInt(this.frames.get(i).getTexturePointer());
+            writer.writeUnsignedInt(this.frames.get(i).texturePointer);
         writer.writeNullPointer(); // Ends with an empty.
     }
 
@@ -99,10 +99,8 @@ public class PickupData extends SCGameData<FroggerGameInstance> {
     /**
      * Represents an animated frame of a pickup.
      */
-    @Getter
     public static class PickupAnimationFrame extends SCGameObject<FroggerGameInstance> {
         private final PickupData pickupData;
-        private final int animationFrame;
         private final long texturePointer;
         private boolean resolvedTextures;
         private GameImage resolvedImage;
@@ -116,10 +114,9 @@ public class PickupData extends SCGameData<FroggerGameInstance> {
         public static final float ENTITY_FLY_SPRITE_SCALE_SIZE = 4F * ENTITY_FLY_SPRITE_SIZE; // Chosen by experimenting until I found one I was happy with.
         public static final TriangleMesh ENTITY_FLY_SPRITE_MESH = Scene3DUtils.createSpriteMesh(ENTITY_FLY_SPRITE_SIZE);
 
-        public PickupAnimationFrame(PickupData pickupData, int animationFrame, long texturePointer) {
+        public PickupAnimationFrame(PickupData pickupData, long texturePointer) {
             super(pickupData.getGameInstance());
             this.pickupData = pickupData;
-            this.animationFrame = animationFrame;
             this.texturePointer = texturePointer;
         }
 
@@ -187,6 +184,14 @@ public class PickupData extends SCGameData<FroggerGameInstance> {
             double flySpriteSizeSq = (ENTITY_FLY_SPRITE_SIZE * ENTITY_FLY_SPRITE_SIZE);
             Scene3DUtils.setNodeScale(meshView, (double) (scaleSize * this.resolvedImage.getIngameWidth()) / flySpriteSizeSq, (double) (scaleSize * this.resolvedImage.getIngameHeight()) / flySpriteSizeSq, 1D);
             return true;
+        }
+
+        /**
+         * Gets the image used for this frame, if there is one.
+         */
+        public GameImage getImage() {
+            tryResolveTextures();
+            return this.resolvedImage;
         }
     }
 }

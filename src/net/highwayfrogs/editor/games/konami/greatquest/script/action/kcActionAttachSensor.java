@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc.kcColli
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 /**
@@ -140,6 +141,18 @@ public class kcActionAttachSensor extends kcAction {
                 break;
             default:
                 throw new RuntimeException("Unsupported kcAttachID: " + this.attachID);
+        }
+    }
+
+    @Override
+    public void printWarnings(ILogger logger) {
+        super.printWarnings(logger);
+
+        if (this.attachID == kcAttachID.ATTACK_SENSOR || this.attachID == kcAttachID.BUMP_SENSOR) {
+            if (this.radius <= 0 || !Float.isFinite(this.radius))
+                printWarning(logger, "the provided radius (" + this.radius + "), and not a positive number");
+            if (this.collideWith == 0)
+                printWarning(logger, "no collision groups were specified");
         }
     }
 

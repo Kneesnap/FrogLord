@@ -34,10 +34,21 @@ import java.io.File;
 @Setter
 public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericResourceData, IConfigData {
     @NonNull private final kcEntityDescType entityDescriptionType;
-    private int instanceFlags; // This doesn't appear to be used, it seems to be the default flags value for which kcEntity3DInst will pull its default value from.
-    // This is NOT the collision proxy, but instead a bounding sphere to easily eliminate most collision candidates. kcCProxyCapsule::Intersect does the sphere check before doing the more expensive proxy tests.
+    private int defaultFlags; // This doesn't appear to be used, it seems to be the default flags value for which kcEntity3DInst will pull its default value from.
+    // This is NOT the collision proxy, but is still used for collision purposes, especially checking for entities near each other.
     // NOTE: Waypoints with bounding boxes appear to ignore the bounding sphere, as massive bounding boxes such as the ones in Joy Towers have a radius of one.
-    private final kcSphere boundingSphere = new kcSphere(0, 0, 0, 1F); // Positioned relative to entity position.
+    // Copied from kcEntity3DDesc::mSphere to kcCEntity3D::mSphere by kcCEntity3D::Init.
+    // Places used:
+    //  - kcCOTAEntity3D::Update (Generates a bounding box to refresh where in the oct tree the entity is placed)
+    //  - kcCEntity3D::AngleToX/kcCEntity3D::AngleToY/kcCEntity3D::AngleToZ (Everything from checking to health bugs to AI wandering to seeking rotation to entities)
+    //  - kcCEntity3D::Intersects (Tests if two entities bounding spheres overlap. Overridden in kcCWaypoint to handle OBB testing.)
+    //  - kcCActorBase::SeekRotationToTarget
+    //  - kcCOctTreeSceneMgr::RenderProjectedTextureShadow (Seems to be the position the shadow is placed at, although I'm not 100%)
+    //  - kcCWaypoint::IntersectsExpanded
+    //  - MonsterClass::Do_Guard (Seems to be unused code that wasn't optimized out. Not sure)
+    //  - There are more, but I didn't think it was worth investigating.
+    //  - But perhaps most interestingly, CCharacter::LookAtTarget. When the target entity's skeleton has 0 has no head target (eg: no bone named 'Bip01 Head' or 'Bip02 Head'), the target position will be the bounding sphere position.
+    private final kcSphere boundingSphere = new kcSphere(0, 0, 0, 1F); // Positioned relative to entity position. (Not on any bone)
     private static final int PADDING_VALUES = 3;
     private static final int PADDING_VALUES_3D = 4;
     private static final int CLASS_ID = GreatQuestUtils.hash("kcCEntity3D");
@@ -61,7 +72,7 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
         super.load(reader);
 
         // Main Data
-        this.instanceFlags = reader.readInt();
+        this.defaultFlags = reader.readInt();
         reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
         this.boundingSphere.load(reader);
         reader.skipBytesRequireEmpty(PADDING_VALUES_3D * Constants.INTEGER_SIZE);
@@ -70,7 +81,7 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
     @Override
     public void saveData(DataWriter writer) {
         // Main Data
-        writer.writeInt(this.instanceFlags);
+        writer.writeInt(this.defaultFlags);
         writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
         this.boundingSphere.save(writer);
         writer.writeNull(PADDING_VALUES_3D * Constants.INTEGER_SIZE);
@@ -78,7 +89,7 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
 
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        builder.append(padding).append("Flags: ").append(kcEntityInstanceFlag.getAsOptionalArguments(this.instanceFlags).getNamedArgumentsAsCommaSeparatedString()).append(Constants.NEWLINE);
+        builder.append(padding).append("Flags: ").append(kcEntityInstanceFlag.getAsOptionalArguments(this.defaultFlags).getNamedArgumentsAsCommaSeparatedString()).append(Constants.NEWLINE);
         this.boundingSphere.writePrefixedMultiLineInfo(builder, "Bounding Sphere", padding);
     }
 
@@ -126,7 +137,7 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
     }
 
     public static final String CONFIG_KEY_DESC_TYPE = "type";
-    private static final String CONFIG_KEY_FLAGS = "flags";
+    private static final String CONFIG_KEY_FLAGS = "defaultFlags";
     private static final String CONFIG_KEY_BOUNDING_SPHERE_POS = "boundingSpherePos";
     private static final String CONFIG_KEY_BOUNDING_SPHERE_RADIUS = "boundingSphereRadius";
 
@@ -137,7 +148,7 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
             throw new RuntimeException("The entity description reported itself as " + descType + ", which is incompatible with " + getEntityDescriptionType() + ".");
 
         OptionalArguments arguments = OptionalArguments.parseCommaSeparatedNamedArguments(input.getKeyValueNodeOrError(CONFIG_KEY_FLAGS).getAsString());
-        this.instanceFlags = kcEntityInstanceFlag.getValueFromArguments(arguments);
+        this.defaultFlags = kcEntityInstanceFlag.getValueFromArguments(arguments);
         arguments.warnAboutUnusedArguments(getResource().getLogger());
 
         this.boundingSphere.getPosition().parse(input.getKeyValueNodeOrError(CONFIG_KEY_BOUNDING_SPHERE_POS).getAsString());
@@ -163,7 +174,7 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
      */
     public void toConfig(Config output, kcScriptDisplaySettings settings) {
         output.getOrCreateKeyValueNode(CONFIG_KEY_DESC_TYPE).setAsEnum(getEntityDescriptionType());
-        output.getOrCreateKeyValueNode(CONFIG_KEY_FLAGS).setAsString(kcEntityInstanceFlag.getAsOptionalArguments(this.instanceFlags).getNamedArgumentsAsCommaSeparatedString());
+        output.getOrCreateKeyValueNode(CONFIG_KEY_FLAGS).setAsString(kcEntityInstanceFlag.getAsOptionalArguments(this.defaultFlags).getNamedArgumentsAsCommaSeparatedString());
 
         output.getOrCreateKeyValueNode(CONFIG_KEY_BOUNDING_SPHERE_POS).setAsString(this.boundingSphere.getPosition().toParseableString());
         output.getOrCreateKeyValueNode(CONFIG_KEY_BOUNDING_SPHERE_RADIUS).setAsFloat(this.boundingSphere.getRadius());

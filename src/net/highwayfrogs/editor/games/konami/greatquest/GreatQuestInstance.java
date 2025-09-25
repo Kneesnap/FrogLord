@@ -62,11 +62,7 @@ import java.util.Map.Entry;
  * Represents an instance of 'Frogger: The Great Quest'.
  * TODO Immediate:
  *  -> Fix transparency for the bone icon.
- *  -> Add PS2 PAL TOC support.
  *  -> Scripting Engine
- *   -> Strings should be an object with a template.
- *   -> Enums should be an object with a template too.
- *   -> Support Arrays
  *   -> Consider rigid primitives, upsides & downsides.
  *   -> Register public static fields as well.
  *   -> Fix interfaces.
@@ -77,14 +73,12 @@ import java.util.Map.Entry;
  *   -> I think it'd be a good idea to consider if we want to allow partial-configs, for just applying changes to existing things. Eg: CharacterParams has a lot of stuff.
  *   -> Improve script warning system.
  *    -> Popup instead of console.
- *  -> Documentation of the non-script GQS portion.
  *  -> Transparent stuff has been broken again.
  *  -> Go over TODOs in the tutorial gqs script example.
  *
  * TODO Future:
  *  -> Flesh out the PropertyList behavior. (Nesting!)
  *  -> Further support previewing & editing generic data.
- *  -> Preview texture references in chunk file viewer.
  *  -> Improve how the scripting UI feels to use. (Eg: the UI shouldn't be completely blocked)
  *  -> Config
  *   -> How do we handle comments in the key-value-pair section? (Multi-line)
@@ -296,7 +290,7 @@ public class GreatQuestInstance extends GameInstance {
         engine.addWrapperTemplates(kcCResource.class, GreatQuestChunkTextureReference.class, GreatQuestDummyFileChunk.class,
                 kcCResOctTreeSceneMgr.class, kcCResourceAnimSet.class, kcCResourceEntityInst.class,
                 kcCResourceModel.class, kcCResourceNamedHash.class, kcCResourceSkeleton.class,
-                kcCResourceTOC.class, kcCResourceTrack.class, kcCResourceTriMesh.class,
+                kcCResourceTableOfContents.class, kcCResourceTrack.class, kcCResourceTriMesh.class,
                 HashTableEntry.class, kcNode.class);
         engine.addWrapperTemplates(CCoinDesc.class, CGemDesc.class, CharacterParams.class, CHoneyPotDesc.class,
                 CItemDesc.class, CMagicStoneDesc.class, CObjKeyDesc.class, CPropDesc.class, CUniqueItemDesc.class,

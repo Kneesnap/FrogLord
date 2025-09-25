@@ -16,7 +16,7 @@ import java.util.function.Function;
 public enum kcEntityDescType {
     COIN(kcClassID.COIN, "CCoinDesc", CCoinDesc::new),
     GEM(kcClassID.GEM, "CGemDesc", CGemDesc::new),
-    CHARACTER_PARAMS(kcClassID.CHARACTER, "CharacterParams", CharacterParams::new),
+    CHARACTER(kcClassID.CHARACTER, "CharacterParams", CharacterParams::new),
     HONEY_POT(kcClassID.HONEY_POT, "CCoinDesc", CHoneyPotDesc::new),
     ITEM(kcClassID.ITEM, "CItemDesc", CItemDesc::new),
     MAGIC_STONE(kcClassID.MAGIC_STONE, "CMagicStoneDesc", CMagicStoneDesc::new),

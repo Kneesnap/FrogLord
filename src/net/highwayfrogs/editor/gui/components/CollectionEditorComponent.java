@@ -40,8 +40,8 @@ public class CollectionEditorComponent<TGameInstance extends GameInstance, TView
     private final Button removeButton = new Button();
     private final Button moveUpButton = new Button();
     private final Button moveDownButton = new Button();
-    private Consumer<TViewEntry> removeButtonLogic;
-    private BiConsumer<TViewEntry, EditorMoveButtonDirection> moveButtonLogic;
+    @Getter private Consumer<TViewEntry> removeButtonLogic;
+    @Getter private BiConsumer<TViewEntry, EditorMoveButtonDirection> moveButtonLogic;
 
     public CollectionEditorComponent(TGameInstance instance, CollectionViewComponent<TGameInstance, TViewEntry> collectionViewComponent, boolean padCollectionView) {
         super(instance);

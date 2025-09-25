@@ -112,7 +112,6 @@ public class MessageTrackingLogger extends WrappedLogger {
         String summaryText;
         if (errorCount > 0 || warningCount > 0) {
             StringBuilder builder = new StringBuilder();
-            builder.append(" ");
             if (errorCount > 0)
                 builder.append(errorCount).append(errorCount != 1 ? " errors" : " error");
             if (warningCount > 0) {
@@ -132,7 +131,7 @@ public class MessageTrackingLogger extends WrappedLogger {
         }
 
         String displayMessage = resolveTemplateText(messageTemplate, alertType, summaryText);
-        FXUtils.makePopUp(displayMessage, alertType);
+        FXUtils.showPopup(alertType, "Summary:", displayMessage);
     }
 
     private enum SectionReadState {

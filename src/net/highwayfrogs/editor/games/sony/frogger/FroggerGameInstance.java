@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.sony.frogger;
 import javafx.scene.image.Image;
 import lombok.Cleanup;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.FrogLordApplication;
@@ -15,6 +16,7 @@ import net.highwayfrogs.editor.file.config.data.MusicTrack;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.PickupData;
+import net.highwayfrogs.editor.file.config.exe.PickupData.PickupAnimationFrame;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.general.DemoTableEntry;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
@@ -38,6 +40,8 @@ import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePack
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketHeader;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerUtils;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerVersionComparison;
+import net.highwayfrogs.editor.games.sony.shared.ISCMWDHeaderGenerator;
+import net.highwayfrogs.editor.games.sony.shared.ISCTextureUser;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
@@ -46,6 +50,7 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.LazySCGameFileListGroup;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
+import net.highwayfrogs.editor.games.sony.shared.utils.SCAnalysisUtils.SCTextureUsage;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
 import net.highwayfrogs.editor.utils.DataUtils;
@@ -65,7 +70,7 @@ import java.util.Map.Entry;
  * Created by Kneesnap on 9/7/2023.
  */
 @Getter
-public class FroggerGameInstance extends SCGameInstance {
+public class FroggerGameInstance extends SCGameInstance implements ISCTextureUser, ISCMWDHeaderGenerator {
     private final List<MapBook> mapLibrary = new ArrayList<>();
     private final List<MusicTrack> musicTracks = new ArrayList<>();
     private final List<LevelInfo> arcadeLevelInfo = new ArrayList<>();
@@ -240,6 +245,60 @@ public class FroggerGameInstance extends SCGameInstance {
                 PSXMapBook.class, MapBook.class, FroggerUtils.class, FroggerMapFilePacketEntity.class, MusicTrack.class);
     }
 
+    @Override
+    public List<Short> getUsedTextureIds() {
+        return ISCTextureUser.getTextureIdsFromUsages(getTextureUsages());
+    }
+
+    @Override
+    public String getTextureUserName() {
+        return null;
+    }
+
+    @Override
+    public Set<SCTextureUsage> getTextureUsages() {
+        Set<SCTextureUsage> textures = new HashSet<>();
+
+        final String levelSelectName = "Level Select";
+        for (int i = 0; i < this.allLevelInfo.size(); i++) {
+            LevelInfo levelInfo = this.allLevelInfo.get(i);
+            tryAddTexture(textures, levelInfo.getWorldLevelStackColoredImage(), levelSelectName);
+            tryAddTexture(textures, levelInfo.getUnusedWorldVisitedImage(), levelSelectName);
+            tryAddTexture(textures, levelInfo.getWorldNotTriedImage(), levelSelectName);
+            tryAddTexture(textures, levelInfo.getLevelPreviewScreenshotImage(), levelSelectName);
+            tryAddTexture(textures, levelInfo.getLevelNameImage(), levelSelectName);
+            tryAddTexture(textures, levelInfo.getIngameLevelNameImage(), levelSelectName);
+        }
+
+        // Add pickup data.
+        for (int i = 0; i < this.pickupData.length; i++) {
+            PickupData pickupData = this.pickupData[i];
+            if (pickupData == null)
+                continue;
+
+            for (int j = 0; j < pickupData.getFrames().size(); j++) {
+                PickupAnimationFrame pickupFrame = pickupData.getFrames().get(j);
+                GameImage image = pickupFrame.getImage();
+                if (image != null)
+                    textures.add(new SCTextureUsage(this, image.getTextureId(), "PickupData"));
+            }
+        }
+
+        // Add sky land remap.
+        if (this.skyLandTextureRemap != null)
+            addTextureIdUsages(textures, this.skyLandTextureRemap.getTextureIds(), this.skyLandTextureRemap.getName());
+        return textures;
+    }
+
+    private void tryAddTexture(Set<SCTextureUsage> textures, GameImage image, String name) {
+        if (image == null)
+            return;
+
+        short textureId = image.getTextureId();
+        if (textureId >= 0)
+            textures.add(new SCTextureUsage(this, textureId, name));
+    }
+
     /**
      * Gets this MWD's FroggerSkyLand file.
      * @return skyLand
@@ -284,15 +343,11 @@ public class FroggerGameInstance extends SCGameInstance {
         getArchiveIndex().save(writer);
         writer.closeReceiver();
 
-        @Cleanup PrintWriter frogpsxHWriter = new PrintWriter(new File(folder, "frogpsx.h"));
-        saveFrogPSX(frogpsxHWriter);
+        generateMwdCHeader(new File(folder, "frogpsx.h"));
 
         @Cleanup PrintWriter vramHWriter = new PrintWriter(new File(folder, "frogvram.h"));
         @Cleanup PrintWriter vramCWriter = new PrintWriter(new File(folder, "frogvram.c"));
         saveFrogVRAM(vramHWriter, vramCWriter);
-
-        @Cleanup PrintWriter textureCfgWriter = new PrintWriter(new File(folder, "texture-config.txt"));
-        saveTextureCfg(textureCfgWriter);
 
         getLogger().info("Generated source files.");
     }
@@ -307,13 +362,13 @@ public class FroggerGameInstance extends SCGameInstance {
 
         String[] imageNames = new String[maxTexId + 1];
         for (int i = 0; i < imageNames.length; i++)
-            imageNames[i] = "im_img" + i;
+            imageNames[i] = SCUtils.C_UNNAMED_IMAGE_PREFIX + i;
 
         // Apply image names.
         SCImageList imageList = getVersionConfig().getImageList();
         if (imageList.getImageNamesById().size() > 0)
             for (Entry<Short, String> imageEntry : imageList.getImageNamesById().entrySet())
-                imageNames[imageEntry.getKey()] = imageEntry.getValue();
+                imageNames[imageEntry.getKey()] = SCUtils.IMAGE_C_PREFIX + imageEntry.getValue();
 
         // Write start of .H file.
         vramHWriter.write("#ifndef __FROGVRAM_H" + Constants.NEWLINE);
@@ -377,41 +432,10 @@ public class FroggerGameInstance extends SCGameInstance {
         vramHWriter.write("#endif" + Constants.NEWLINE);
     }
 
-    private void saveFrogPSX(PrintWriter writer) {
-        writer.write("#ifndef __FROGPSX_H" + Constants.NEWLINE);
-        writer.write("#define __FROGPSX_H" + Constants.NEWLINE + Constants.NEWLINE);
-
-        writer.write("#define RES_FROGPSX_DIRECTORY \"L:\\\\FROGGER\\\\\"" + Constants.NEWLINE);
-        writer.write("#define RES_NUMBER_OF_RESOURCES " + getArchiveIndex().getEntries().size() + Constants.NEWLINE + Constants.NEWLINE);
-
-        writer.write("enum {\n" +
-                "\tFR_FTYPE_STD, // Standard?\n" +
-                "\tFR_FTYPE_VLO, // VLO Files\n" +
-                "\tFR_FTYPE_SPU, // Sound files \n" +
-                "\tFR_FTYPE_MOF,\n" +
-                "\tFR_FTYPE_MAPMOF,\n" +
-                "\tFR_FTYPE_MAPANIMMOF, // Unused\n" +
-                "\tFR_FTYPE_DEMODATA\n" +
-                "};\n\n");
-
-        HashSet<String> resourceNames = new HashSet<>();
-        writer.write("enum {" + Constants.NEWLINE);
-        for (MWIResourceEntry entry : getArchiveIndex().getEntries()) {
-            String resName = "RES_" + entry.getDisplayName().replace(".", "_");
-            while (!resourceNames.add(resName))
-                resName += "_DUPE";
-
-            writer.write("\t" + resName + "," + Constants.NEWLINE);
-        }
-        writer.write("};" + Constants.NEWLINE + Constants.NEWLINE);
-
-        // Must happen last.
-        writer.write("#endif" + Constants.NEWLINE);
-    }
-
-    private void saveTextureCfg(PrintWriter writer) {
-        for (Entry<Short, String> entry : getVersionConfig().getImageList().getImageNamesById().entrySet())
-            writer.append(String.valueOf(entry.getKey())).append("=").append(entry.getValue()).append(Constants.NEWLINE);
+    @Override
+    public void generateMwdCHeader(@NonNull File file) {
+        // Based on the data seen in FROGPSX.H in the E3 Frogger prototype.
+        SCUtils.generateMwdCHeader(this, "L:\\\\FROGGER\\\\", file, "FR", "STD", "VLO", "SPU", "MOF", "MAPMOF", "MAPANIMMOF", "DEMODATA");
     }
 
     /**

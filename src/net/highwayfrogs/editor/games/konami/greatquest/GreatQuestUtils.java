@@ -359,6 +359,22 @@ public class GreatQuestUtils {
     }
 
     /**
+     * Gets the name of an event by its hash
+     * @param eventNameHash the event name hash
+     * @return eventName, if found
+     */
+    public static String getEventName(int eventNameHash) {
+        for (int i = 0; i < EVENT_NAMES.size(); i++) {
+            String eventName = EVENT_NAMES.get(i);
+            int testEventHash = hash(eventName);
+            if (testEventHash == eventNameHash)
+                return eventName;
+        }
+
+        return null;
+    }
+
+    /**
      * Find the index a string is found at, doing a case-insensitive search.
      * @param input    The string to search.
      * @param patterns The strings to find.

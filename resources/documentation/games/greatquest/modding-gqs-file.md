@@ -40,6 +40,7 @@ The following sections document each of the available GQS config sections which 
 - `[Sequences]`          – Creates/replaces Action Sequences
 - `[Dialog]`             – Creates/replaces dialog strings
 - `[Collision]`          – Creates/updates collision proxies
+- `[Launchers]`          – Creates/updates launcher templates
 - `[EntityDescriptions]` – Creates/updates entity templates (Actor, Prop, Item, etc.)
 - `[Entities]`           – Creates/updates Entity Instances
 - `[Scripts]`            – Adds scripts to existing entities
@@ -118,7 +119,13 @@ C002FlyDodg01.bae
 ```
 
 ### [Sequences]
-Creates/replaces Action Sequences.
+Action Sequences are special kinds of [kcScript](./scripting.md) which have a special set of script effects/actions available.  
+Their primary use is managing entity animations, especially in the context of AI actions, like attacking, reacting to an attack, etc.  
+Each entity can have only one Action Sequence active at a time, and they often control entity 3D model animations.  
+The "Action Sequence Names" resource is automatically updated to include Action Sequences when they are added/removed.  
+The AI system responsible for pathfinding/walking/enemy attacks/etc will replace the current action sequence with one of its choosing (based on the sequence name) when an entity changes its current action.  
+Because of this, it is important to use the original naming conventions for any new action sequences that the AI system should use.  
+Refer [here](./modding-gqs-file.md#sequences) for more information.
 See the [scripting documentation](./scripting.md) for in-depth information on writing scripts.  
 
 Example:
@@ -134,6 +141,19 @@ SetAnimation "C001NRMCONV10.BAE" 0.1
 WaitForAnimation
 SetAnimation "C001NrmIdle01.bae" 0.2 --Repeat
 ```
+
+#### How does the AI work with action sequences?
+Character entities with their AI enabled will often automatically select their sequence based on what they are doing, and the available sequence names.  
+Eg: When creating action sequences, the name of the sequence matters.  
+<!-- MonsterClass::TransitionTo is responsible for building these names. -->
+To create the name of a sequence, pick the text from each step, then smooth them all together to get your name:
+1) Select `Nrm` (Normal), `Fly` (Flyer), or `Swm` (Swimmer), based on the character's type.
+2) Select one of the following options: `None`, `Idle`, `Walk`, `Run`, `Atk` (Attack), `Tnt` (Taunt), `Reac` (React), `Rng` (Range), `Spel` (Spell), `Die`, `Slp` (Sleep), `Talk`, `Spc` (Special?)
+3) Then, add `01`, `02`, `03`, etc, depending on how many other animations you've added with the name so far.
+4) Optionally, add `Agg` to the end, if you want it to be the aggressive variant.
+
+So, if I were to get Frogger's 1st walking animation, I would get `NrmWalk01`.  
+All that would be necessary to make Frogger animate while walking would be to create an action sequence named `NrmWalk01` for Frogger.
 
 ### [Dialog]
 Add/replace `String Resources` (dialog strings) so they can be used in scripts.
@@ -167,9 +187,35 @@ height=0.7
 offset=0.2
 ```
 
+TODO: Flesh out the instructions for creating collision proxies.
+
+### [Launchers]
+This section can be used to create/update projectile launchers.
+```PowerShell
+[Launchers]
+[[{entity name}LauncherDesc]] # Replace {entity name} with the name of the entity.
+
+TODO: We haven't put the things from kcParticleParam here yet!!!
+
+# The name of the 3D model reference to use for the projectile. (Optional)
+projectileModel=...
+
+# The particle effect reference to display while the projectile is in the air. (Optional)
+cruiseParticleEffect=...
+
+# The particle effect reference to display when the projectile hits something. (Optional)
+hitParticleEffect=...
+
+# How long the projectile will last for (in seconds)
+projectileLifeTime=2.5
+
+# How fast the projectile will move. (Units unknown)
+projectileSpeed=10.0
+```
+
 ### [EntityDescriptions]
 This section can be used to create/update any kind of entity description (Actor descriptions, Prop descriptions, Item descriptions, etc.)  
-Check out the [game file documentation](./modding-game-files.md) for details on each available description type.  
+Check out the [game file documentation](./modding-game-files.md#-actor-description-generic-data-type) for details on each available description type.  
 
 Example:
 ```PowerShell

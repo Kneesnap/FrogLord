@@ -96,7 +96,7 @@ public abstract class GameInstance implements IGameInstance {
                         Platform.exit(); // For some reason, this isn't enough to shut down even though it should be.
 
                         try {
-                            Thread.sleep(TimeUnit.SECONDS.toMillis(10));
+                            Thread.sleep(TimeUnit.SECONDS.toMillis(2));
                         } catch (InterruptedException ex) {
                             // Don't care.
                         }

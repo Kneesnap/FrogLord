@@ -101,10 +101,12 @@ Double-click the OctTreeSceneMgr, or the chunked file itself to open the 3D view
 
 ### ![Icon](../../../icons/model.png "Icon") Model Reference (ID: 4)
 A model reference tells the game to load a particular 3D model while on the loading screen.
-The full file path of the model is included.
+The full file path of the model is included.  
+Refer [here](./modding-gqs-file.md#models) to create a model reference.
 
 ### ![Icon](../../../icons/applications-multimedia32.png "Icon") Animation Track (ID: 6)
-Animation Tracks (.bae files) contain a single (but full) 3D animation for a 3D model.  
+Animation Tracks (.bae files) contain a 3D animation for a 3D model.  
+Each animation is split into its own file.  
 There is no current way to import/export 3D model animations, but they can be viewed through the ActorDesc data.
 
 ### ![Icon](../../../icons/skeleton-joints.png "Icon") Animation Skeleton/Hierarchy (ID: 7)
@@ -113,7 +115,8 @@ There is no current way to import/export 3D model animations, but they can be vi
 
 ### ![Icon](../../../icons/ghidra/program_obj.png "Icon") Animation Set (ID: 8)
 These are unused by the base game, but contain a list of all animations usable by a particular 3D model.  
-FrogLord relies on these despite the game leaving them unused, because FrogLord uses them to know which animations can be used with a particular 3D model.  
+FrogLord relies on these despite the game leaving them unused, because FrogLord uses them to know which animations belong to a particular .VTX file (3D model).  
+FrogLord will automatically update the animation set when an animation is added [using this method](./modding-gqs-file.md#animations).  
 
 ### ![Icon](../../../icons/gouraud-triangle-list.png "Icon") Collision Triangle Mesh (ID: 10)
 Collision Triangle Meshes (.ctm files) contain 3D meshes used for testing collision on different 3D models.  
@@ -123,39 +126,40 @@ FrogLord is currently only able to preview these files when previewing a level.
 Much like the `Raw Data` resource type, `Generic Data` can contain many different types of data, as follows:  
 
 #### ![Icon](../../../icons/ghidra/face-monkey16.png "Icon") Actor Description (Generic Data Type)
-An actor description is a template containing the settings used to create an actor entity.  
-TODO: Detail the FrogLord config syntax for creating these.  
+An actor/entity description is a template containing the settings used to create an actor entity.  
+Refer [here](./entity-descriptions.md#actor) for more information.  
 
 #### ![Icon](../../../icons/ghidra/face-monkey16.png "Icon") Emitter Description (Generic Data Type)
-An actor description is a template containing the settings used to create a particle emitter entity.  
-TODO: Detail the FrogLord config syntax for creating these.
+The only place it has been observed is Mushroom Valley, as a resource named 'TEST'.  
+Because no real usage of this data has been found, it is treated as unused.  
 
 #### ![Icon](../../../icons/ghidra/face-monkey16.png "Icon") Item Description (Generic Data Type)
-An actor description is a template containing the settings used to create an item entity. (Coins/gems/keys/etc)  
-TODO: Detail the FrogLord config syntax for creating these.
+An item description is a template containing the settings used to create an item entity. (Coins/gems/keys/etc)  
+Please refer [here](./entity-descriptions.md#item) for information on item descriptions.
 
 #### ![Icon](../../../icons/ghidra/locationOut.gif "Icon") Launcher Description (Generic Data Type)
 An actor description is a template containing the settings used to create a projectile launcher (Goobers, Fireballs, spells, etc.)  
-TODO: Detail the FrogLord config syntax for creating these.  
+Refer [here](./modding-gqs-file.md#launchers) for more information.
 
 #### ![Icon](../../../icons/model.png "Icon") Model Description (Generic Data Type)
 This is mostly pointless, it's just an extra 3D model used in addition to the `Model Reference` chunk type.  
+Refer [here](./modding-gqs-file.md#models) to create a model description.  
 
 #### ![Icon](../../../icons/ghidra/face-monkey16.png "Icon") Particle Emitter Param (Generic Data Type)
 Contains information about the particles created by a Particle Emitter entity.
-TODO: Detail the FrogLord config syntax for creating these.
+Please refer [here](./entity-descriptions.md#particle-emitter) for information on particle emitter descriptions.
 
 #### ![Icon](../../../icons/ghidra/face-monkey16.png "Icon") Prop Description (Generic Data Type)
-An actor description is a template containing the settings used to create a prop entity (Chairs, mushrooms, doors, treasure chests, etc.)  
-TODO: Detail the FrogLord config syntax for creating these.
+A prop description is a template containing the settings used to create a prop entity (Chairs, mushrooms, doors, treasure chests, etc.)  
+Please refer [here](./entity-descriptions.md#prop) for information on waypoint descriptions.
 
 #### ![Icon](../../../icons/model.png "Icon") Proxy Capsule Description (Generic Data Type)
 Defines an invisible 3D pill-shaped capsule which can be used for entity collision.  
-TODO: Include the FrogLord syntax for creating these.  
+Refer [here](./modding-gqs-file.md#collision) for more information.  
 
 #### ![Icon](../../../icons/gouraud-triangle-list.png "Icon") Proxy Tri Mesh Description (Generic Data Type)
 Defines an invisible 3D mesh which can be used for entity collision.  
-TODO: Include the FrogLord syntax for creating these.
+Refer [here](./modding-gqs-file.md#collision) for more information.  
 
 #### ![Icon](../../../icons/ghidra/openSmallFolder.png "Icon") Resource Path (Generic Data Type)
 These appear to be unused (may have been used by the debug version of the game), and declare the full file paths where the `Animation Tracks` were originally imported from.  
@@ -165,16 +169,17 @@ Modders can ignore these resources as they are unused.
 String resources contain the text shown in various dialog boxes throughout the game.  
 
 #### ![Icon](../../../icons/ghidra/flag.png "Icon") Waypoint Description (Generic Data Type)
-An actor description is a template containing the settings used to create a waypoint entity.  
-Waypoint entities are invisible, and are primarily used in scripts for purposes ranging from pathfinding to checking when an entity enters/exits a certain part of the world.  
-TODO: Detail the FrogLord config syntax for creating these.
+A waypoint description is a template containing the settings used to create a waypoint entity.  
+Please refer [here](./entity-descriptions.md#waypoint) for information on waypoint descriptions.  
 
 ### ![Icon](../../../icons/ghidra/program_obj.png "Icon") Action Sequence (ID: 13)
 Action Sequences are special kinds of [kcScript](./scripting.md) which have a special set of script effects/actions available.  
+Their primary use is managing entity animations, especially in the context of AI actions, like attacking, reacting to an attack, etc.  
 Each entity can have only one Action Sequence active at a time, and they often control entity 3D model animations.  
 The "Action Sequence Names" resource is automatically updated to include Action Sequences when they are added/removed.  
 The AI system responsible for pathfinding/walking/enemy attacks/etc will replace the current action sequence with one of its choosing (based on the sequence name) when an entity changes its current action.  
 Because of this, it is important to use the original naming conventions for any new action sequences that the AI system should use.  
+Refer [here](./modding-gqs-file.md#sequences) for more information.  
 
 ### ![Icon](../../../icons/ghidra/page_paste.png "Icon") Action Sequence Names (ID: 14)
 Action Sequences are a bit special, in that their hashes (See the [GQS documentation](./modding-gqs-file.md) for more info)) appear randomly generated instead of based on their name.  
@@ -184,7 +189,7 @@ This resource serves that purpose, and FrogLord will automatically update it whe
 ### ![Icon](../../../icons/ghidra/face-monkey16.png "Icon") Entity Instance (ID: 15)
 Every single enemy/ally/character, coin/item, and 3D model is an entity.
 These entity instances are the definitions of where the entity should be placed in the world, if it has a script active, and other configuration data.  
-TODO: Detail the FrogLord config syntax for creating these.
+Please refer [here](./modding-gqs-file.md#entities) for instructions on creating new entities.  
 
 ## FAQ
 ### Q: How can I add/delete files from the game?

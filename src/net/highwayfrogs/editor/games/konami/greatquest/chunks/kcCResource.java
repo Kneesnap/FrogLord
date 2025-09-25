@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.chunks;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
@@ -164,8 +165,16 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
         }
 
         // This should happen before updating the name.
-        boolean shouldAddToChunkedFile = updateChunkedFile && didNameChange
-                && getParentFile() != null && getParentFile().removeResourceFromList(this);
+        boolean shouldAddToChunkedFile = updateChunkedFile && didNameChange && getParentFile() != null;
+        kcCResourceTableOfContents tableOfContents = null;
+        if (shouldAddToChunkedFile) {
+            tableOfContents = getTableOfContents();
+            if (tableOfContents == null || !tableOfContents.shouldResourcesBeSorted()) {
+                shouldAddToChunkedFile = false;
+            } else if (!getParentFile().removeResourceFromList(this)) {
+                shouldAddToChunkedFile = false;
+            }
+        }
 
         // Apply new name. (Triggers any listeners, so it should run after the hash is updated, allowing further changes to occur.)
         if (!Objects.equals(oldName, newName)) {
@@ -175,7 +184,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
 
         // Must be run after the name property is updated.
         if (shouldAddToChunkedFile)
-            getParentFile().addResourceToList(this);
+            getParentFile().addResourceToList(tableOfContents, this);
     }
 
     /**
@@ -391,6 +400,13 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
     }
 
     /**
+     * Creates an extra UI preview node.
+     */
+    public Node createFxPreview() {
+        return null;
+    }
+
+    /**
      * Returns an empty list if removal is allowed without any prompts/warnings.
      */
     public List<String> isRemovalAllowed() {
@@ -399,6 +415,23 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
             warnings.add("There are " + this.selfHash.getLinkedHashes().size() + " usages of " + getName() + "/" + getHashAsHexString() + " which would be broken.");
 
         return warnings;
+    }
+
+    /**
+     * Finds which table of contents object this resource is located in, if any exist.
+     */
+    public kcCResourceTableOfContents getTableOfContents() {
+        if (this.parentFile == null)
+            return null;
+
+        List<kcCResourceTableOfContents> tableOfContentsList = this.parentFile.getTableOfContents();
+        for (int i = 0; i < tableOfContentsList.size(); i++) {
+            kcCResourceTableOfContents tableOfContents = tableOfContentsList.get(i);
+            if (tableOfContents.contains(this))
+                return tableOfContents;
+        }
+
+        return null;
     }
 
     /**

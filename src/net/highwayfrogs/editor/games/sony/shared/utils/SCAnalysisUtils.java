@@ -1,25 +1,18 @@
 package net.highwayfrogs.editor.games.sony.shared.utils;
 
-import net.highwayfrogs.editor.file.config.exe.LevelInfo;
-import net.highwayfrogs.editor.file.config.exe.ThemeBook;
+import lombok.Data;
+import lombok.NonNull;
 import net.highwayfrogs.editor.file.vlo.GameImage;
+import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
-import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
-import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapAnimation;
-import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
-import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
-import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
-import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTextureAnimation;
-import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTextureAnimationEntry;
-import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPart;
-import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPolygon;
-import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRStaticMof;
-import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.games.sony.SCUtils;
+import net.highwayfrogs.editor.games.sony.shared.ISCTextureUser;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.objects.IndexBitArray;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -28,6 +21,24 @@ import java.util.Set;
  * Created by Kneesnap on 2/20/2019.
  */
 public class SCAnalysisUtils {
+    private static List<ISCTextureUser> getAllTextureUsers(SCGameInstance instance) {
+        if (instance == null)
+            throw new NullPointerException("instance");
+
+        List<ISCTextureUser> textureUsers = new ArrayList<>();
+
+        // Test the game instance itself.
+        if (instance instanceof ISCTextureUser)
+            textureUsers.add((ISCTextureUser) instance);
+
+        // Test all game files.
+        for (SCGameFile<?> gameFile : instance.getMainArchive().getAllFiles())
+            if (gameFile instanceof ISCTextureUser)
+                textureUsers.add((ISCTextureUser) gameFile);
+
+        return textureUsers;
+    }
+
     /**
      * Prints unused textures found in a MWD File.
      * There are some VLOs which frogger can't determine if a texture is used or not, so it will not scan them.
@@ -35,73 +46,96 @@ public class SCAnalysisUtils {
      * @param instance The game instance file to scan.
      */
     public static void findUnusedTextures(SCGameInstance instance) {
-        List<FroggerMapFile> mapFiles = instance.getMainArchive().getAllFiles(FroggerMapFile.class);
-        List<MRModel> mofFiles = new ArrayList<>();
+        if (instance == null)
+            throw new NullPointerException("instance");
 
-        instance.getMainArchive().forEachFile(WADFile.class, wad -> wad.getFiles().forEach(entry -> {
-            if (entry.getFile() instanceof MRModel)
-                mofFiles.add((MRModel) entry.getFile());
-        }));
+        // Mark textures referenced by files as used.
+        IndexBitArray usedTextures = new IndexBitArray();
+        for (ISCTextureUser textureUser : getAllTextureUsers(instance))
+            addTexturesToBitArray(usedTextures, textureUser);
 
-        Set<Short> textureIds = new HashSet<>();
+        ILogger logger = instance.getLogger();
+        for (VLOArchive vloArchive : instance.getMainArchive().getAllFiles(VLOArchive.class)) {
+            int unusedTextures = 0;
+            for (int i = 0; i < vloArchive.getImages().size(); i++) {
+                GameImage image = vloArchive.getImages().get(i);
+                if (usedTextures.getBit(image.getTextureId()))
+                    continue;
 
-        // Populate Level Name ids.
-        if (instance.isFrogger()) {
-            for (LevelInfo info : ((FroggerGameInstance) instance).getArcadeLevelInfo()) {
-                int texId = instance.getTextureIdFromPointer(info.getLevelNameTextureInGamePointer());
-                if (texId >= 0)
-                    textureIds.add((short) texId);
+                if (unusedTextures++ == 0) {
+                    logger.info("");
+                    logger.info("Unused Images in %s:", vloArchive.getFileDisplayName());
+                }
+
+                String imageName = image.getOriginalName();
+                if (imageName == null)
+                    imageName = SCUtils.C_UNNAMED_IMAGE_PREFIX + image.getTextureId();
+
+                logger.info(" - %s (Local ID %d)", imageName, i);
+            }
+
+            if (unusedTextures > 0)
+                logger.info(" - Total: %d texture(s)", unusedTextures);
+        }
+    }
+
+    private static void addTexturesToBitArray(IndexBitArray usedTextures, ISCTextureUser textureUser) {
+        if (textureUser == null)
+            return;
+
+        List<Short> textureIds = textureUser.getUsedTextureIds();
+        if (textureIds == null || textureIds.isEmpty())
+            return;
+
+        for (int i = 0; i < textureIds.size(); i++) {
+            Short textureId = textureIds.get(i);
+            if (textureId != null && textureId >= 0)
+                usedTextures.setBit(textureId, true);
+        }
+    }
+
+    /**
+     * Prints unused textures found in a MWD File.
+     * There are some VLOs which frogger can't determine if a texture is used or not, so it will not scan them.
+     * Skipped: SKY_LAND textures, FIXE, OPT, LS, GEN, GENM, START, particle textures.
+     * @param instance The game instance file to scan.
+     */
+    @SuppressWarnings("unchecked")
+    public static List<SCTextureUsage>[] generateTextureUsageMapping(SCGameInstance instance) {
+        if (instance == null)
+            throw new NullPointerException("instance");
+
+        List<List<SCTextureUsage>> textureUsagesById = new ArrayList<>();
+
+        for (ISCTextureUser textureUser : getAllTextureUsers(instance)) {
+            Set<SCTextureUsage> textureUsages = textureUser.getTextureUsages();
+            if (textureUsages == null || textureUsages.isEmpty())
+                continue;
+
+            for (SCTextureUsage textureUsage : textureUsages) {
+                while (textureUsage.getTextureId() >= textureUsagesById.size())
+                    textureUsagesById.add(null);
+
+                List<SCTextureUsage> usagesOfId = textureUsagesById.get(textureUsage.getTextureId());
+                if (usagesOfId == null)
+                    textureUsagesById.set(textureUsage.getTextureId(), usagesOfId = new ArrayList<>());
+                usagesOfId.add(textureUsage);
             }
         }
 
-        // Populate MOF Ids.
-        mofFiles.forEach(model -> {
-            // Populate MOF animation.
-            for (MRStaticMof staticMof : model.getStaticMofs()) {
-                for (MRMofPart part : staticMof.getParts())
-                    for (MRMofTextureAnimation textureAnimation : part.getTextureAnimations())
-                        for (MRMofTextureAnimationEntry entry : textureAnimation.getEntries())
-                            textureIds.add(entry.getGlobalImageId());
+        return (List<SCTextureUsage>[]) textureUsagesById.toArray(new List[0]);
+    }
 
-                for (MRMofPart part : staticMof.getParts())
-                    for (MRMofPolygon polygon : part.getOrderedPolygons())
-                        if (polygon.getPolygonType().isTextured())
-                            textureIds.add(polygon.getTextureId());
-            }
-        });
+    @Data
+    public static class SCTextureUsage {
+        private final WeakReference<ISCTextureUser> textureUser;
+        private final short textureId;
+        private final String locationDescription;
 
-        // Populate MAP ids.
-        mapFiles.forEach(map -> {
-            TextureRemapArray remapTable = map.getTextureRemap();
-            if (remapTable == null)
-                return; // Failed to get a remap table. It's likely an unused map.
-
-            // Populate animation data.
-            for (FroggerMapAnimation animation : map.getAnimationPacket().getAnimations())
-                for (short texValue : animation.getTextureIds())
-                    textureIds.add(remapTable.getRemappedTextureId(texValue));
-
-            // Populate face data.
-            for (FroggerMapPolygon poly : map.getPolygonPacket().getPolygons())
-                if (poly.getPolygonType().isTextured())
-                    textureIds.add(remapTable.getRemappedTextureId(poly.getTextureId()));
-        });
-
-        // Find unused textures.
-        if (instance.isFrogger()) {
-            for (ThemeBook themeBook : ((FroggerGameInstance) instance).getThemeLibrary()) {
-                if (themeBook.getTheme() == FroggerMapTheme.GENERAL)
-                    continue; // Contains mostly things we can't check the validity of.
-
-                Set<Short> loggedIds = new HashSet<>(); // Prevents logging both high and low poly versions.
-                themeBook.forEachVLO(vloArchive -> {
-                    for (GameImage image : vloArchive.getImages()) {
-                        Short textureId = image.getTextureId();
-                        if (!textureIds.contains(textureId) && loggedIds.add(textureId))
-                            System.out.println(vloArchive.getFileDisplayName() + ": " + image.getLocalImageID() + " / " + textureId);
-                    }
-                });
-            }
+        public SCTextureUsage(@NonNull ISCTextureUser textureUser, short textureId, String locationDescription) {
+            this.textureUser = new WeakReference<>(textureUser);
+            this.textureId = textureId;
+            this.locationDescription = locationDescription;
         }
     }
 }

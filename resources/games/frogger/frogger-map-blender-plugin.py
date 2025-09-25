@@ -139,11 +139,11 @@ def create_shaded_material(material, folder, file_name):
     preview_output = create_material_node(nodes, 'ShaderNodeOutputMaterial')
 
     # Build the shader graph.
-    nodes.get('Material Output').location_absolute = Vector((330.0, 201.0))
+    nodes.get('Material Output').location = Vector((330.0, 201.0))
     nodes.get('Material Output').target = 'EEVEE' # See above.
     
     nodes[preview_output].name = 'Material Preview Output'
-    nodes[preview_output].location_absolute = Vector((330.0, -45.0))
+    nodes[preview_output].location = Vector((330.0, -45.0))
     nodes[preview_output].target = 'CYCLES' # See above
 
     # The purpose of this node is to allow passing a surface to the output instead of just an RGB color.
@@ -156,19 +156,19 @@ def create_shaded_material(material, folder, file_name):
     principled_bsdf.inputs["Metallic"].default_value = 0.0
     principled_bsdf.inputs["Roughness"].default_value = 1.0
     principled_bsdf.inputs["IOR"].default_value = 1.0
-    principled_bsdf.location_absolute = Vector((30.0, 179.0))
+    principled_bsdf.location = Vector((30.0, 179.0))
     links.new(principled_bsdf.outputs['BSDF'], nodes.get('Material Output').inputs['Surface'])
 
     nodes[gouraud_mixer].blend_type = 'MULTIPLY' # https://docs.blender.org/api/current/bpy_types_enum_items/ramp_blend_items.html#rna-enum-ramp-blend-items
     nodes[gouraud_mixer].data_type = 'RGBA'
     nodes[gouraud_mixer].inputs["Factor"].default_value = 1.0
-    nodes[gouraud_mixer].location_absolute = Vector((-156, 295.5))
+    nodes[gouraud_mixer].location = Vector((-156, 295.5))
     links.new(nodes[gouraud_mixer].outputs['Result'], principled_bsdf.inputs['Base Color'])
 
     nodes[texture].image = bpy.data.images.load(texture_file_path)
     nodes[texture].extension = 'EXTEND' # Extend repeating edge pixels of the image.
     nodes[texture].interpolation = 'Closest' # Disable interpolation.
-    nodes[texture].location_absolute = Vector((-457.75, -79))
+    nodes[texture].location = Vector((-457.75, -79))
     links.new(nodes[texture].outputs['Color'], nodes[gouraud_mixer].inputs['B'])
     links.new(nodes[texture].outputs['Alpha'], principled_bsdf.inputs['Alpha'])
     links.new(nodes[texture].outputs['Color'], nodes[preview_output].inputs['Surface'])
@@ -176,16 +176,16 @@ def create_shaded_material(material, folder, file_name):
     nodes[color_doubler].blend_type = 'MULTIPLY' # https://docs.blender.org/api/current/bpy_types_enum_items/ramp_blend_items.html#rna-enum-ramp-blend-items
     nodes[color_doubler].data_type = 'RGBA'
     nodes[color_doubler].inputs["Factor"].default_value = 1.0
-    nodes[color_doubler].location_absolute = Vector((-360.5, 211.5))
+    nodes[color_doubler].location = Vector((-360.5, 211.5))
     links.new(nodes[color_doubler].outputs['Result'], nodes[gouraud_mixer].inputs['A'])
 
     nodes[value_two].outputs["Value"].default_value = 4.0 # I'm not entirely sure why 2.0x doesn't work, but 4.0x does seem to work.
-    nodes[value_two].location_absolute = Vector((-600.25, 30.25))
+    nodes[value_two].location = Vector((-600.25, 30.25))
     links.new(nodes[value_two].outputs["Value"], nodes[color_doubler].inputs['B'])
 
     nodes[vertex_color_input].layer_name = VERTEX_COLOR_LAYER_NAME
     #nodes[vertex_color_input].outputs['Color'].default_value = (1.0, 1.0, 1.0, 1.0) # This doesn't fix material previews like I'd hoped, but I'll keep it here as a reminder how to set default values.
-    nodes[vertex_color_input].location_absolute = Vector((-583.5, 159.5))
+    nodes[vertex_color_input].location = Vector((-583.5, 159.5))
     links.new(nodes[vertex_color_input].outputs['Color'], nodes[color_doubler].inputs['A'])
 
 # Gets the frogger texture ID for the given material.
@@ -319,12 +319,12 @@ def load_ffs_file(operator, context, filepath):
     # Create the nodes. (All together to avoid object reference invalidation.)
     vertex_color_input = create_material_node(untextured_material_nodes, 'ShaderNodeVertexColor')
     untextured_material_nodes[vertex_color_input].layer_name = VERTEX_COLOR_LAYER_NAME
-    untextured_material_nodes[vertex_color_input].location_absolute = Vector((0.0, 0.0))
+    untextured_material_nodes[vertex_color_input].location = Vector((0.0, 0.0))
 
     if untextured_material_nodes.get('Material Output') is None: # By default, this node exists.
         material_output = create_material_node(untextured_material_nodes, 'ShaderNodeOutputMaterial')
         untextured_material_nodes[material_output].name = 'Material Output'
-    untextured_material_nodes.get('Material Output').location_absolute = Vector((175.0, 20.0))
+    untextured_material_nodes.get('Material Output').location = Vector((175.0, 20.0))
 
     # Setup.
     untextured_material_links.new(untextured_material_nodes[vertex_color_input].outputs['Color'], untextured_material_nodes.get('Material Output').inputs['Surface'])

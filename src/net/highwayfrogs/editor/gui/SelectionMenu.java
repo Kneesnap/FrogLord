@@ -73,7 +73,7 @@ public class SelectionMenu {
                 if (levelInfo.getTheme() != theme)
                     continue;
 
-                GameImage image = instance.getImageFromPointer(levelInfo.getWorldImageSelectablePointer());
+                GameImage image = levelInfo.getWorldLevelStackColoredImage();
                 return image != null ? image.toFXImage() : null; // There are many reasons why we might not find the image, including there might not be one, or this is the PS1 version which has these images in wads.
             }
 

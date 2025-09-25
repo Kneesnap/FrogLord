@@ -1,14 +1,14 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.cave;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.OldFroggerDifficultyWrapper.OldFroggerDifficultyData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.cave.SnailEntityData.SnailDifficultyData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.shared.PathEntityData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents entity data for the cave snail entity.
@@ -50,8 +50,8 @@ public class SnailEntityData extends PathEntityData<SnailDifficultyData> {
         @Override
         public void setupEditor(OldFroggerEntityManager manager, GUIEditorGrid editor) {
             editor.addUnsignedFixedShort("Speed", this.speed, newValue -> this.speed = newValue, 2184);
-            editor.addUnsignedFixedShort("Spline Delay", this.slimeDelay, newValue -> this.slimeDelay = newValue, 30);
-            editor.addUnsignedFixedShort("Spline Decay", this.slimeDecay, newValue -> this.slimeDecay = newValue, 30);
+            editor.addUnsignedFixedShort("Slime Delay", this.slimeDelay, newValue -> this.slimeDelay = newValue, 30);
+            editor.addUnsignedFixedShort("Slime Decay", this.slimeDecay, newValue -> this.slimeDecay = newValue, 30);
         }
     }
 }

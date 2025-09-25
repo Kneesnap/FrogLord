@@ -27,6 +27,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.packets.*;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGeneral.FroggerMapStartRotation;
 import net.highwayfrogs.editor.games.sony.frogger.ui.FroggerMapInfoUIController;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerUtils;
+import net.highwayfrogs.editor.games.sony.shared.ISCTextureUser;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
@@ -84,7 +85,7 @@ import java.util.Random;
  *   - then you could click a button "add all selected polygons to grid" and it'll automatically place them in the right places
  * Created by Kneesnap on 8/22/2018.
  */
-public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
+public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> implements ISCTextureUser {
     @Getter private final FroggerMapFilePacketHeader headerPacket;
     @Getter private final FroggerMapFilePacketGeneral generalPacket;
     @Getter private final FroggerMapFilePacketPath pathPacket;
@@ -139,7 +140,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
         if (levelImage == null && getGameInstance().getLevelInfoMap().size() > 0) {
             LevelInfo info = getGameInstance().getLevelInfoMap().get(level);
             if (info != null) {
-                GameImage levelTextureImage = getGameInstance().getImageFromPointer(info.getLevelTexturePointer());
+                GameImage levelTextureImage = info.getLevelPreviewScreenshotImage();
                 if (levelTextureImage != null)
                     getGameInstance().getLevelImageMap().put(level, levelImage = FXUtils.toFXImage(Utils.resizeImage(levelTextureImage.toBufferedImage(), 32, 32), false));
             }
@@ -181,6 +182,17 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> {
 
             targetMap.getArchive().replaceFile(getFileDisplayName(), targetMap.getIndexEntry(), targetMap, newMapFile, true);
         }, otherInstance.getMainArchive().getAllFiles(FroggerMapFile.class), SCGameFile::getFileDisplayName, FroggerMapFile::getCollectionViewIcon);
+    }
+
+    @Override
+    public List<Short> getUsedTextureIds() {
+        TextureRemapArray textureRemap = getTextureRemap();
+        return textureRemap != null ? textureRemap.getTextureIds() : null;
+    }
+
+    @Override
+    public String getTextureUserName() {
+        return getFileDisplayName();
     }
 
     /**

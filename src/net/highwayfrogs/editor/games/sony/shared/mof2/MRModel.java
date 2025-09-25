@@ -15,14 +15,19 @@ import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.shared.ISCTextureUser;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.MRAnimatedMof;
+import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTextureAnimation;
+import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTextureAnimationEntry;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPart;
+import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPolygon;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRStaticMof;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.MRModelFileUIController;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.MRModelMeshController;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.mesh.MRModelMesh;
 import net.highwayfrogs.editor.games.sony.shared.mof2.utils.MRModelUtils;
 import net.highwayfrogs.editor.games.sony.shared.mof2.utils.MRMofAndMisfitModelConverter;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.utils.DynamicMeshObjExporter;
 import net.highwayfrogs.editor.gui.GameUIController;
@@ -41,6 +46,7 @@ import net.highwayfrogs.editor.utils.logging.MessageTrackingLogger;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -51,7 +57,7 @@ import java.util.List;
  * Created by Kneesnap on 2/18/2025.
  */
 @Getter
-public class MRModel extends SCSharedGameFile {
+public class MRModel extends SCSharedGameFile implements ISCTextureUser {
     private MRStaticMof staticMof;
     private MRAnimatedMof animatedMof;
 
@@ -464,5 +470,42 @@ public class MRModel extends SCSharedGameFile {
                 }
             }
         }
+    }
+
+    @Override
+    public List<Short> getUsedTextureIds() {
+        List<Short> textures = new ArrayList<>();
+        List<MRStaticMof> staticMofs = getStaticMofs();
+        for (int i = 0; i < staticMofs.size(); i++) {
+            MRStaticMof staticMof = staticMofs.get(i);
+            for (int j = 0; j < staticMof.getParts().size(); j++) {
+                MRMofPart mofPart = staticMof.getParts().get(j);
+                List<MRMofPolygon> polygons = mofPart.getOrderedPolygons();
+                for (int k = 0; k < polygons.size(); k++) {
+                    MRMofPolygon polygon = polygons.get(k);
+                    if (polygon.getPolygonType().isTextured() && polygon.getTextureId() >= 0 && !textures.contains(polygon.getTextureId()))
+                        textures.add(polygon.getTextureId());
+                }
+
+                // Add animated textures.
+                for (int k = 0; k < mofPart.getTextureAnimations().size(); k++) {
+                    MRMofTextureAnimation textureAnimation = mofPart.getTextureAnimations().get(k);
+                    for (int l = 0; l < textureAnimation.getEntries().size(); l++) {
+                        MRMofTextureAnimationEntry animationEntry = textureAnimation.getEntries().get(l);
+                        if (animationEntry.getGlobalImageId() >= 0 && !textures.contains(animationEntry.getGlobalImageId()))
+                            textures.add(animationEntry.getGlobalImageId());
+                    }
+                }
+            }
+        }
+
+        return textures;
+    }
+
+    @Override
+    public String getTextureUserName() {
+        // Include the parent WAD to ensure files with the same name can be distinguished.
+        WADFile parentWadFile = getParentWadFile();
+        return getFileDisplayName() + (parentWadFile != null ? "[" + parentWadFile.getFileDisplayName() + "]" : "");
     }
 }

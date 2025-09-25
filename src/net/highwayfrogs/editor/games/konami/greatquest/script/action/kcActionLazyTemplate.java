@@ -33,10 +33,8 @@ public class kcActionLazyTemplate extends kcActionTemplate {
     public static final kcArgument[] WAIT_ARGUMENTS = kcArgument.make(kcParamType.MILLISECONDS, "timeInSeconds");
     public static final kcArgument[] WAIT_ROTATE_ARGUMENTS = kcArgument.make(kcParamType.AXIS, "axis");
     public static final kcArgument[] LOOP_ARGUMENTS = kcArgument.make(kcParamType.INT, "loopCount");
-    public static final kcArgument[] IMPULSE_ARGUMENTS = kcArgument.make(kcParamType.FLOAT, "x", kcParamType.FLOAT, "y", kcParamType.FLOAT, "z");
     public static final kcArgument[] PROMPT_ARGUMENTS = kcArgument.make(kcParamType.HASH, "promptRes");
     public static final kcArgument[] VARIABLE_SET_ARGUMENTS = kcArgument.make(kcParamType.VARIABLE_ID, "variableId", kcParamType.INT, "value");
     public static final kcArgument[] VARIABLE_ADD_ARGUMENTS = kcArgument.make(kcParamType.VARIABLE_ID, "variableId", kcParamType.INT, "value");
-    public static final kcArgument[] WITH_ITEM_ARGUMENTS = kcArgument.make(kcParamType.INVENTORY_ITEM, "item");
     public static final kcArgument[] SAVEPOINT_ARGUMENTS = kcArgument.make(kcParamType.UNSIGNED_INT, "savePointNumber", kcParamType.FLOAT, "x", kcParamType.FLOAT, "y", kcParamType.FLOAT, "z");
 }

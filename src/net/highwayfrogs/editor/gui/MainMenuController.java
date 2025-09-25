@@ -9,7 +9,6 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import lombok.Getter;
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
@@ -93,13 +92,13 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
 
             NoodleScript script = getGameInstance().getScriptEngine().loadScriptFile(noodleScript, true, true);
             if (script == null) {
-                FXUtils.makePopUp("The script was not compiled successfully, so it will not be run.", AlertType.ERROR);
+                FXUtils.showPopup(AlertType.ERROR, "The script was not compiled successfully.", "The script was not compiled successfully, so it will not be run.\nCheck the logging console for more information about the error.");
                 return;
             }
 
             // Create a thread to run the script.
             NoodleThread<NoodleScript> thread = new NoodleThread<>(getGameInstance(), script);
-            thread.setOnCancelHook(() -> FXUtils.makePopUp("An error occurred while running the script.\n" + thread.buildScriptInformation(), AlertType.ERROR));
+            thread.setOnCancelHook(() -> FXUtils.showPopup(AlertType.ERROR, "An error occurred while running the script.", thread.buildScriptInformation()));
             thread.setOnFinishHook(() -> getLogger().info("Reached the end of the script '%s'.", script.getName()));
             thread.addObjectInstanceArgument(getGameInstance());
 
@@ -162,7 +161,7 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
                 this.fileEditorPane.getChildren().add(uiController.getRootNode());
                 uiController.onSceneAdd(getScene());
             } else {
-                FXUtils.makePopUp("Cannot display UI, since there was no content available.", AlertType.WARNING);
+                FXUtils.showPopup(AlertType.WARNING, "No UI Content", "Cannot display UI, since there was no content available.");
             }
         }
     }
@@ -176,7 +175,7 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
     private void actionSaveMain(ActionEvent evt) {
         File baseFolder = getGameInstance().getMainGameFolder();
         if (baseFolder == null || !baseFolder.canWrite()) {
-            FXUtils.makePopUp("Can't write to the game folder." + Constants.NEWLINE + "Does FrogLord need admin permissions to save to this folder?", AlertType.ERROR);
+            FXUtils.showPopup(AlertType.ERROR, "Can't write to the game folder.", "Does FrogLord need admin permissions to save to this folder?\nFolder: " + baseFolder);
             return;
         }
 

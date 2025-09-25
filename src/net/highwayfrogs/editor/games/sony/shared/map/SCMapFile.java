@@ -3,8 +3,10 @@ package net.highwayfrogs.editor.games.sony.shared.map;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.shared.ISCTextureUser;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
+import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.map.mesh.SCMapMesh;
 import net.highwayfrogs.editor.games.sony.shared.map.mesh.SCMapMeshController;
 import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapEntityPacket;
@@ -15,6 +17,8 @@ import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 
+import java.util.List;
+
 /**
  * Represents the basic v2 standardized map file format.
  * This file format seems to be used by all games after MediEvil, although it seems heavily based on MediEvil's format.
@@ -22,7 +26,7 @@ import net.highwayfrogs.editor.gui.editor.MeshViewController;
  * Created by Kneesnap on 5/7/2024.
  */
 @Getter
-public abstract class SCMapFile<TGameInstance extends SCGameInstance> extends SCChunkedFile<TGameInstance> {
+public abstract class SCMapFile<TGameInstance extends SCGameInstance> extends SCChunkedFile<TGameInstance> implements ISCTextureUser {
     private final SCMapHeaderPacket<TGameInstance> headerPacket;
     private final SCMapPolygonPacket<TGameInstance> polygonPacket;
     private final SCMapEntityPacket<TGameInstance> entityPacket;
@@ -110,4 +114,19 @@ public abstract class SCMapFile<TGameInstance extends SCGameInstance> extends SC
      * Gets the level table entry available for the level.
      */
     public abstract ISCLevelTableEntry getLevelTableEntry();
+
+    @Override
+    public List<Short> getUsedTextureIds() {
+        ISCLevelTableEntry levelTableEntry = getLevelTableEntry();
+        if (levelTableEntry == null)
+            return null;
+
+        TextureRemapArray textureRemap = levelTableEntry.getRemap();
+        return textureRemap != null ? textureRemap.getTextureIds() : null;
+    }
+
+    @Override
+    public String getTextureUserName() {
+        return getFileDisplayName();
+    }
 }
