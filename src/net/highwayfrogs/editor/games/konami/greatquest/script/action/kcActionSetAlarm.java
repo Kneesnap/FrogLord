@@ -63,7 +63,7 @@ public class kcActionSetAlarm extends kcAction {
     protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
         arguments.createNext().setAsInteger(this.alarmId);
         arguments.createNext().setAsFloat(this.durationMillis / 1000F);
-        if (this.intervalCount != 0)
+        if (this.intervalCount != 1)
             arguments.getOrCreate(REPEAT_ARGUMENT_NAME).setAsInteger(this.intervalCount - 1);
     }
 
