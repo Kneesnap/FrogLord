@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.games.psx.PSXBitstreamImage;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.model.actionset.PTActionSetFile;
@@ -15,6 +16,7 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.MRAnimatedMof;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRStaticMof;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankBody;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankHeader;
@@ -30,6 +32,7 @@ import net.highwayfrogs.editor.games.sony.shared.sound.header.SCWindowsSoundBank
 import net.highwayfrogs.editor.gui.texture.atlas.TextureAtlas;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 
 import java.io.File;
 import java.util.*;
@@ -87,13 +90,14 @@ public class SCUtils {
                 if (DataUtils.testSignature(fileData, MRModel.DUMMY_DATA) || DataUtils.testSignature(fileData, MRStaticMof.SIGNATURE) || MRAnimatedMof.testSignature(fileData))
                     return makeModel(resourceEntry);
             }
-        } else {
-            if (resourceEntry.hasExtension("vlo"))
-                return new VLOArchive(resourceEntry.getGameInstance());
-            if (resourceEntry.hasExtension("xmr") || resourceEntry.hasExtension("xar") || resourceEntry.hasExtension("xmu"))
-                return makeModel(resourceEntry);
         }
 
+        if (resourceEntry.hasExtension("bs"))
+            return new PSXBitstreamImage(resourceEntry.getGameInstance());
+        if (resourceEntry.hasExtension("vlo"))
+            return new VLOArchive(resourceEntry.getGameInstance());
+        if (resourceEntry.hasExtension("xmr") || resourceEntry.hasExtension("xar") || resourceEntry.hasExtension("xmu"))
+            return makeModel(resourceEntry);
         if (resourceEntry.hasExtension("vh") || resourceEntry.hasExtension("vb"))
             return makeSound(resourceEntry, fileData, null);
 
@@ -462,5 +466,50 @@ public class SCUtils {
         builder.append("# ").append(knownNames).append(" texture names have been mapped. (").append(generatedNames).append(" textures were linked, but not named)")
                 .append(Constants.NEWLINE).append("# Names and IDs mapped from version: '").append(nameSourceInst.getVersionConfig().getInternalName()).append("'.");
         return builder.toString();
+    }
+
+    /**
+     * Loads all .BS images in a given WAD file with the provided width/height.
+     * @param instance the game instance to load the files from
+     * @param wadFileName the name of the wad file to search
+     * @param width the width of the images
+     * @param height the height of the images
+     * @param warnIfNotFound if true and the wad file is not found, display a warning
+     */
+    public static void loadBsImagesByName(SCGameInstance instance, String wadFileName, int width, int height, boolean warnIfNotFound) {
+        if (instance == null)
+            throw new NullPointerException("instance");
+        if (StringUtils.isNullOrWhiteSpace(wadFileName))
+            throw new NullPointerException("wadFileName");
+
+        WADFile wadFile = instance.getMainArchive().getFileByName(wadFileName);
+        if (wadFile == null) {
+            if (warnIfNotFound)
+                instance.getLogger().warning("Could not find file named '%s', skipping .BS image resolution.", wadFileName);
+            return;
+        }
+
+        loadBsImages(wadFile, width, height);
+    }
+
+    /**
+     * Loads all .BS images found within the given wad file.
+     * @param wadFile the wad file to load files from
+     * @param width the width of the images
+     * @param height the height of the images.
+     */
+    public static void loadBsImages(WADFile wadFile, int width, int height) {
+        if (wadFile == null)
+            throw new NullPointerException("wadFile");
+        if (width <= 0)
+            throw new IllegalArgumentException("Invalid width: " + width);
+        if (height <= 0)
+            throw new IllegalArgumentException("Invalid height: " + height);
+
+        for (WADEntry wadEntry : wadFile.getFiles()) {
+            SCGameFile<?> gameFile = wadEntry.getFile();
+            if (gameFile instanceof PSXBitstreamImage)
+                ((PSXBitstreamImage) gameFile).getImage(width, height);
+        }
     }
 }

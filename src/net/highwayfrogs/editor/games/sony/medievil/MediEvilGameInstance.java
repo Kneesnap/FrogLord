@@ -21,6 +21,7 @@ import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitVHFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.LazySCGameFileListGroup;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
+import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 
@@ -219,5 +220,15 @@ public class MediEvilGameInstance extends SCGameInstance implements ISCMWDHeader
     public void generateMwdCHeader(@NonNull File file) {
         // Based on the data seen in the executables, and educated guesses.
         SCSourceFileGenerator.generateMwdCHeader(this, "S:\\\\", file, "MED", "STD", "VLO", "MOF", "FMOF", "MAP", "QTR", "PGD");
+    }
+
+    public void loadGame(String versionConfigName, net.highwayfrogs.editor.system.Config instanceConfig, File mwdFile, File exeFile, ProgressBarComponent progressBar) {
+        super.loadGame(versionConfigName, instanceConfig, mwdFile, exeFile, progressBar);
+        loadCreditsImages();
+    }
+
+    private void loadCreditsImages() {
+        SCUtils.loadBsImagesByName(this, "CREDITS_MEM.WAD", 224, 192, true);
+        SCUtils.loadBsImagesByName(this, "INTRO_MEM.WAD", 224, 192, false);
     }
 }
