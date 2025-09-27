@@ -12,6 +12,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.VBox;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
@@ -19,6 +20,8 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
+import net.highwayfrogs.editor.gui.DefaultFileUIController.IExtraUISupplier;
+import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.system.NameValuePair;
 import net.highwayfrogs.editor.utils.FXUtils;
@@ -37,7 +40,9 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
     @FXML private TableColumn<Object, Object> tableColumnFileDataName;
     @FXML private TableColumn<Object, Object> tableColumnFileDataValue;
     @FXML private ListView<WADEntry> entryList;
+    @FXML private VBox rightSidePanelFreeArea;
     private WADEntry selectedEntry;
+    private GameUIController<?> extraUIController;
 
     public WADController(SCGameInstance instance) {
         super(instance);
@@ -89,6 +94,28 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
         }
     }
 
+    /**
+     * Sets the extra UI to display under the property list.
+     * @param uiController the UI controller to apply as the extra UI.
+     */
+    public void setExtraUI(GameUIController<?> uiController) {
+        if (this.extraUIController == uiController)
+            return;
+
+        // Remove existing extra UI controller.
+        if (this.extraUIController != null) {
+            this.rightSidePanelFreeArea.getChildren().remove(this.extraUIController.getRootNode());
+            removeController(this.extraUIController);
+        }
+
+        // Setup new extra UI controller.
+        this.extraUIController = uiController;
+        if (this.extraUIController != null && isActive()) {
+            this.rightSidePanelFreeArea.getChildren().add(this.extraUIController.getRootNode());
+            addController(this.extraUIController);
+        }
+    }
+
     @FXML
     @SneakyThrows
     private void importEntry(ActionEvent event) {
@@ -133,6 +160,10 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
 
     private void updateEntry() {
         updateProperties();
+
+        // Update extra UI.
+        SCGameFile<?> selectedFile = this.selectedEntry != null ? this.selectedEntry.getFile() : null;
+        setExtraUI(selectedFile instanceof IExtraUISupplier ? ((IExtraUISupplier) selectedFile).createExtraUIController() : null);
     }
 
     private void updateProperties() {

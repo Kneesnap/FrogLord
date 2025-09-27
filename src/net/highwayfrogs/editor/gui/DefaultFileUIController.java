@@ -40,6 +40,7 @@ public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFi
     private TGameFile file;
     private Class<? extends TGameFile> fileClass;
     private final PropertyListViewerComponent<TGameInstance> propertyListViewer;
+    private GameUIController<?> extraUIController;
 
     public static final String TEMPLATE_URL = "edit-file-default-template";
 
@@ -99,7 +100,8 @@ public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFi
      * @param newFile the new file
      */
     protected void onSelectedFileChange(TGameFile oldFile, TGameFile newFile) {
-        this.propertyListViewer.showProperties(file != null ? file.createPropertyList() : null);
+        this.propertyListViewer.showProperties(newFile != null ? newFile.createPropertyList() : null);
+        setExtraUI(newFile instanceof IExtraUISupplier ? ((IExtraUISupplier) newFile).createExtraUIController() : null);
     }
 
     @Override
@@ -111,6 +113,28 @@ public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFi
         }
 
         return super.trySetTargetFile(file);
+    }
+
+    /**
+     * Sets the extra UI to display under the property list.
+     * @param uiController the UI controller to apply as the extra UI.
+     */
+    public void setExtraUI(GameUIController<?> uiController) {
+        if (this.extraUIController == uiController)
+            return;
+
+        // Remove existing extra UI controller.
+        if (this.extraUIController != null) {
+            getRightSidePanelFreeArea().getChildren().remove(this.extraUIController.getRootNode());
+            removeController(this.extraUIController);
+        }
+
+        // Setup new extra UI controller.
+        this.extraUIController = uiController;
+        if (this.extraUIController != null && isActive()) {
+            getRightSidePanelFreeArea().getChildren().add(this.extraUIController.getRootNode());
+            addController(this.extraUIController);
+        }
     }
 
     /**
@@ -142,5 +166,15 @@ public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFi
         }
 
         return controller;
+    }
+
+    /**
+     * Supplies an extra UI, usually under a property list.
+     */
+    public interface IExtraUISupplier {
+        /**
+         * Creates a UI controller for the extra UI display.
+         */
+        GameUIController<?> createExtraUIController();
     }
 }

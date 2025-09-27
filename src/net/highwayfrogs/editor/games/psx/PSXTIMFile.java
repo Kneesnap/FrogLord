@@ -8,7 +8,10 @@ import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.TIMController;
+import net.highwayfrogs.editor.gui.DefaultFileUIController.IExtraUISupplier;
+import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
+import net.highwayfrogs.editor.gui.components.FXNodeWrapperComponent;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.DataUtils;
@@ -31,7 +34,7 @@ import java.util.Map;
  * Created by Kneesnap on 9/10/2023.
  */
 @Getter
-public class PSXTIMFile extends SCSharedGameFile {
+public class PSXTIMFile extends SCSharedGameFile implements IExtraUISupplier {
     private int flags;
     private int clutX;
     private int clutY;
@@ -388,6 +391,11 @@ public class PSXTIMFile extends SCSharedGameFile {
     @Override
     public TIMController makeEditorUI() {
         return loadEditor(getGameInstance(), "edit-file-tim", new TIMController(getGameInstance()), this);
+    }
+
+    @Override
+    public GameUIController<?> createExtraUIController() {
+        return FXNodeWrapperComponent.createImageView(getGameInstance(), toBufferedImage(false));
     }
 
     @Override

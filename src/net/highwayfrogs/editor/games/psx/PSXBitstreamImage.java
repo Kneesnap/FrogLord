@@ -11,8 +11,10 @@ import net.highwayfrogs.editor.games.psx.utils.PsxMdecUtils;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.BitstreamImageController;
+import net.highwayfrogs.editor.gui.DefaultFileUIController.IExtraUISupplier;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
+import net.highwayfrogs.editor.gui.components.FXNodeWrapperComponent;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
@@ -27,7 +29,7 @@ import java.awt.image.BufferedImage;
  * This is a format specific to the PSX, enabled by its custom MDEC chip which handles the image encoding/decoding process.
  * Created by Kneesnap on 9/23/2025.
  */
-public class PSXBitstreamImage extends SCSharedGameFile {
+public class PSXBitstreamImage extends SCSharedGameFile implements IExtraUISupplier {
     private byte[] encodedImageBytes;
     @Getter private BufferedImage cachedImage;
 
@@ -169,5 +171,10 @@ public class PSXBitstreamImage extends SCSharedGameFile {
             Utils.handleError(getLogger(), th, true, "The image could not be imported.");
             return false;
         }
+    }
+
+    @Override
+    public GameUIController<?> createExtraUIController() {
+        return this.cachedImage != null ? FXNodeWrapperComponent.createImageView(getGameInstance(), this.cachedImage) : null;
     }
 }
