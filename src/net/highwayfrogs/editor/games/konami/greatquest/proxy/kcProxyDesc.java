@@ -30,7 +30,7 @@ public abstract class kcProxyDesc extends kcBaseDesc implements kcIGenericResour
     private final GreatQuestHash<kcCResourceGeneric> parentHash; // The hash of this object's parent.
     private final kcProxyDescType descriptionType; // The hash of this object's parent.
     @NonNull private ProxyReact reaction = ProxyReact.SLIDE; // There is only one occurrence of any ProxyReact assigned to a kcProxyDesc which is not SLIDE. The other options are implemented (or at least I know NOTIFY/PENETRATE is), and probably would work. Default is set in CItem::Init
-    private int collisionGroup; // This value is applied to the entity's kcCProxy. If either ((this->collideWith & other.collisionGroup) || (this.collisionGroup & other.collideWith)) have bits (unless it's an octree search), it will perform collision checks.
+    private int collisionGroup; // This value is applied to the entity's kcCProxy. If either ((this->collideWith & other.collisionGroup) || (other.collideWith & this.collisionGroup)) have bits (unless it's an octree search), it will perform collision checks.
     private int collideWith; // This value is applied to the entity's kcCProxy.
 
     // NOTE: collisionGroup and collideWith are the same fundamental data type I believe.
