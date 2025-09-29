@@ -261,7 +261,7 @@ public class kcScriptList extends kcCResource {
                 for (int j = 0; j < script.getFunctions().size(); j++)
                     script.getFunctions().get(j).getCause().printWarning(logger, "the function/script was not attached to a valid entity");
 
-                throw new RuntimeException("Cannot print warnings, there's a script which doesn't have an entity linked! (Line Number: " + script.getFunctions().get(0).getCause().getUserLineNumber());
+                throw new RuntimeException("Cannot print warnings, there's a script which doesn't have an entity linked! (Line Number: " + script.getFunctions().get(0).getCause().getUserLineNumber() + ")");
             }
 
             kcScriptValidationData functionData = getOrCreateValidationData(logger, dataMap, entity);
@@ -362,5 +362,35 @@ public class kcScriptList extends kcCResource {
         }
 
         return validationData;
+    }
+
+    /**
+     * Removes a script.
+     * @param scriptIndex the index of the script to remove
+     * @return removedScript
+     */
+    public kcScript removeScript(int scriptIndex) {
+        if (scriptIndex < 0 || scriptIndex >= this.scripts.size())
+            throw new IllegalArgumentException("Invalid scriptIndex: " + scriptIndex);
+
+        kcScript script = this.scripts.remove(scriptIndex);
+
+        // Update script indices.
+        for (kcCResource resource : getParentFile().getChunks()) {
+            if (!(resource instanceof kcCResourceEntityInst))
+                continue;
+
+            kcEntityInst entityInst = ((kcCResourceEntityInst) resource).getInstance();
+            if (entityInst == null)
+                continue;
+
+            if (entityInst.getScriptIndex() == scriptIndex) {
+                entityInst.removeScriptIndex();
+            } else if (entityInst.getScriptIndex() > scriptIndex) {
+                entityInst.decrementScriptIndex();
+            }
+        }
+
+        return script;
     }
 }

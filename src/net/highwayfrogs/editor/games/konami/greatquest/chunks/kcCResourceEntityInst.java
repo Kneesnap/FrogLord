@@ -8,6 +8,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityFlag.kcEntityInstanceFlag;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.FileUtils;
@@ -99,6 +100,21 @@ public class kcCResourceEntityInst extends kcCResource {
         } else if (this.dummyBytes != null) {
             writer.writeBytes(this.dummyBytes);
         }
+    }
+
+    @Override
+    protected void onRemovedFromChunkFile() {
+        // Delete the script associated with the entity.
+        if (this.instance != null) {
+            int scriptIndex = this.instance.getScriptIndex();
+            if (scriptIndex >= 0) {
+                kcScriptList scriptList = getParentFile().getScriptList();
+                if (scriptList != null)
+                    scriptList.removeScript(scriptIndex);
+            }
+        }
+
+        super.onRemovedFromChunkFile();
     }
 
     /**

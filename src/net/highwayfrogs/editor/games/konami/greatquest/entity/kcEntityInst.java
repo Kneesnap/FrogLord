@@ -210,6 +210,14 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
     }
 
     /**
+     * Decrease the index of the script by one.
+     * Used when a script previously in the list is removed, and indices need to be updated to reflect that change.
+     */
+    public void decrementScriptIndex() {
+        this.scriptIndex--;
+    }
+
+    /**
      * Sets up the main information to be edited.
      * @param grid the grid to create the UI inside
      */
