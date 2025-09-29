@@ -693,6 +693,9 @@ Valid variable IDs are between 0 and 7.
 The provided value must be a whole number.  
 The only way to use a variable is with the `SendNumber` effect.  
 
+> ![NOTE]
+> Variables can only represent whole numbers, between `-32768` and `32767`.  
+
 ### AddToVariable (Script Only)
 **Summary:** Adds a value to one of the script owner's entity variables by its ID.  
 **Supported Entity Types:** All  
@@ -702,6 +705,9 @@ Adds the value into the variable ID/slot.
 Valid variable IDs are between 0 and 7.  
 The provided value must be a whole number.  
 The only way to use a variable is with the `SendNumber` effect.
+
+> ![NOTE]
+> Variables can only represent whole numbers, between `-32768` and `32767`.
 
 ### SendNumber (Script Only)
 **Summary:** Sends a number, which will cause the `OnReceiveNumber` script cause.  

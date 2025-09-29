@@ -265,6 +265,13 @@ public class kcParam {
             case UNSIGNED_INT:
                 setValue(node.getAsUnsignedInteger());
                 break;
+            case INT16:
+                int value32 = node.getAsInteger();
+                if (value32 < Short.MIN_VALUE || value32 > Short.MAX_VALUE)
+                    throw new RuntimeException("The value " + value32 + " is invalid, it must be between " + Short.MIN_VALUE + " and " + Short.MAX_VALUE + ".");
+
+                setValue(value32);
+                break;
             case INT:
             case ALARM_ID:
             case VARIABLE_ID:
@@ -368,6 +375,7 @@ public class kcParam {
                 node.setAsUnsignedInteger(getAsInteger());
                 break;
             case INT:
+            case INT16:
             case ALARM_ID:
             case VARIABLE_ID:
                 node.setAsInteger(getAsInteger());

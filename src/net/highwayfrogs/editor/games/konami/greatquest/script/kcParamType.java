@@ -6,6 +6,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.script;
  */
 public enum kcParamType {
     HEX_INTEGER,
+    INT16,
     INT,
     UNSIGNED_INT, // int -> long?
     BOOLEAN,
