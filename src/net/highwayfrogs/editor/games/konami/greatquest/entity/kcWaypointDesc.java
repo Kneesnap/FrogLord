@@ -17,6 +17,7 @@ import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.objects.StringNode;
 
 /**
  * Represents the kcWaypointDesc struct.
@@ -105,8 +106,8 @@ public class kcWaypointDesc extends kcEntity3DDesc {
     public void fromConfig(Config input) {
         super.fromConfig(input);
         this.type = input.getKeyValueNodeOrError(CONFIG_KEY_TYPE).getAsEnumOrError(kcWaypointType.class);
-        resolveResource(input.getKeyValueNodeOrError(CONFIG_KEY_PREV_WAYPOINT), kcCResourceEntityInst.class, this.previousWaypointEntityRef);
-        resolveResource(input.getKeyValueNodeOrError(CONFIG_KEY_NEXT_WAYPOINT), kcCResourceEntityInst.class, this.nextWaypointEntityRef);
+        setEntityRefWithoutResolve(this.previousWaypointEntityRef, input.getKeyValueNodeOrError(CONFIG_KEY_PREV_WAYPOINT));
+        setEntityRefWithoutResolve(this.nextWaypointEntityRef, input.getKeyValueNodeOrError(CONFIG_KEY_NEXT_WAYPOINT));
 
         // Read the bounding box data.
         ConfigValueNode boundingBoxNode = (this.type == kcWaypointType.BOUNDING_BOX)
@@ -133,6 +134,26 @@ public class kcWaypointDesc extends kcEntity3DDesc {
             output.getOrCreateKeyValueNode(CONFIG_KEY_BOUNDING_BOX_DIMENSIONS).setAsString(this.boundingBoxDimensions.toParseableString());
         if (this.type == kcWaypointType.APPLY_WATER_CURRENT || this.strength != 0)
             output.getOrCreateKeyValueNode(CONFIG_KEY_STRENGTH).setAsFloat(this.strength);
+    }
+
+    private static void setEntityRefWithoutResolve(GreatQuestHash<kcCResourceEntityInst> hashObj, ConfigValueNode node) {
+        String value = node != null ? node.getAsString(null) : null;
+        if (value != null) {
+            hashObj.setHash(value);
+        } else if (hashObj.getResource() != null) {
+            hashObj.setResource(null, false);
+        }
+    }
+
+    /**
+     * Resolves pending waypoint entities.
+     * This would be part of {@code fromConfig(Config)} if entities weren't created after that function runs.
+     */
+    public void resolvePendingWaypointEntities() {
+        if (this.previousWaypointEntityRef.getOriginalString() != null && this.previousWaypointEntityRef.getResource() == null)
+            resolveResource(new StringNode(this.previousWaypointEntityRef.getOriginalString()), kcCResourceEntityInst.class, this.previousWaypointEntityRef);
+        if (this.nextWaypointEntityRef.getOriginalString() != null && this.nextWaypointEntityRef.getResource() == null)
+            resolveResource(new StringNode(this.nextWaypointEntityRef.getOriginalString()), kcCResourceEntityInst.class, this.nextWaypointEntityRef);
     }
 
     @Override

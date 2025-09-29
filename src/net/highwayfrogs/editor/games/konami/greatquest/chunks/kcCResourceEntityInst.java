@@ -119,7 +119,7 @@ public class kcCResourceEntityInst extends kcCResource {
         if (!entityInst.hasFlag(kcEntityInstanceFlag.FACE_TARGET_ENTITY))
             return null; // Without a --FaceTargetEntity, this isn't known to cause any problems.
 
-        if (entityInst.getTargetEntityRef().getHashNumber() == -1)
+        if (entityInst.getTargetEntityRef().isHashNull())
             return null; // There is no target entity.
 
         kcCResourceEntityInst targetEntity = entityInst.getTargetEntityRef().getResource();

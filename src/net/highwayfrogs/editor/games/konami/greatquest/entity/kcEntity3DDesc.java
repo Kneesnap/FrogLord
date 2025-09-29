@@ -18,12 +18,12 @@ import net.highwayfrogs.editor.games.konami.greatquest.generic.kcIGenericResourc
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcSphere;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.system.Config;
-import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
+import net.highwayfrogs.editor.utils.objects.StringNode;
 
 import java.io.File;
 
@@ -163,7 +163,7 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
      * @param hashObj the hash object to apply the result to
      * @param <TResource> the type of resource to resolve
      */
-    protected <TResource extends kcHashedResource> void resolveResource(ConfigValueNode node, Class<TResource> resourceClass, GreatQuestHash<TResource> hashObj) {
+    protected <TResource extends kcHashedResource> void resolveResource(StringNode node, Class<TResource> resourceClass, GreatQuestHash<TResource> hashObj) {
         GreatQuestUtils.resolveLevelResource(node, resourceClass, getParentFile(), getResource(), hashObj, true);
     }
 
@@ -173,7 +173,7 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
      * @param resourceType the type of resource to resolve
      * @param hashObj the hash object to apply the result to
      */
-    protected void resolveResource(ConfigValueNode node, IkcCResourceGenericTypeGroup resourceType, GreatQuestHash<kcCResourceGeneric> hashObj) {
+    protected void resolveResource(StringNode node, IkcCResourceGenericTypeGroup resourceType, GreatQuestHash<kcCResourceGeneric> hashObj) {
         GreatQuestUtils.resolveLevelResource(node, resourceType, getParentFile(), getResource(), hashObj, true);
     }
 

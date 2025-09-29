@@ -5,10 +5,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxAttribut
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxEntryStreamAttributes;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
-import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
-import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
-import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityDescType;
-import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.*;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
@@ -28,10 +25,7 @@ import net.highwayfrogs.editor.utils.logging.MessageTrackingLogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 import net.highwayfrogs.editor.utils.objects.StringNode;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 /**
@@ -87,11 +81,15 @@ public class GreatQuestAssetUtils {
 
         // This should occur after resource copying to ensure it can resolve resources. Copied resources shouldn't reference entity descriptions since entity instances (a resource which is not expected to be copied) are the only resource to resolve entity descriptions.
         // This should also happen before entity instances are applied.
-        applyEntityDescriptions(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ENTITY_DESCRIPTIONS));
+        List<kcWaypointDesc> waypoints = applyEntityDescriptions(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ENTITY_DESCRIPTIONS));
 
         // Run before scripts, but after entity descriptions.
         applyEntityInstances(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ENTITIES), scriptList, logger);
         applyScripts(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_SCRIPTS), scriptList, logger);
+
+        // Finish resolving waypoint descriptions. (Happens after entities are created, so the next/prev entities can be resolved successfully.
+        if (waypoints != null)
+            waypoints.forEach(kcWaypointDesc::resolvePendingWaypointEntities);
 
         // Print advanced warnings after everything is complete.
         scriptList.printAdvancedWarnings(logger);
@@ -371,10 +369,11 @@ public class GreatQuestAssetUtils {
         }
     }
 
-    private static void applyEntityDescriptions(GreatQuestChunkedFile chunkedFile, Config entityDescriptionsCfg) {
+    private static List<kcWaypointDesc> applyEntityDescriptions(GreatQuestChunkedFile chunkedFile, Config entityDescriptionsCfg) {
         if (entityDescriptionsCfg == null)
-            return;
+            return Collections.emptyList();
 
+        List<kcWaypointDesc> waypoints = new ArrayList<>();
         for (Config entityDescCfg : entityDescriptionsCfg.getChildConfigNodes()) {
             String entityDescName = entityDescCfg.getSectionName();
             kcCResourceGeneric generic = GreatQuestUtils.findLevelResourceByName(chunkedFile, entityDescName, kcCResourceGeneric.class);
@@ -392,7 +391,13 @@ public class GreatQuestAssetUtils {
                 throw new RuntimeException("Found a resource named '" + entityDescName + "', which was expected to be a entity description, but was actually a(n) " + generic.getResourceType() + ".");
 
             entityDesc.fromConfig(entityDescCfg);
+
+            // Return waypoints.
+            if (entityDesc instanceof kcWaypointDesc)
+                waypoints.add((kcWaypointDesc) entityDesc);
         }
+
+        return waypoints;
     }
 
     private static void applyEntityInstances(GreatQuestChunkedFile chunkedFile, Config entityCfg, kcScriptList scriptList, ILogger logger) {

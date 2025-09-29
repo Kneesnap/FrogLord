@@ -435,6 +435,13 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
     }
 
     /**
+     * Test if the hash represents a null value.
+     */
+    public boolean isHashNull() {
+        return this.hashNumber == getValueRepresentingNull();
+    }
+
+    /**
      * Marks -1 as the value for null.
      */
     public GreatQuestHash<TResource> setNullRepresentedAsZero() {
