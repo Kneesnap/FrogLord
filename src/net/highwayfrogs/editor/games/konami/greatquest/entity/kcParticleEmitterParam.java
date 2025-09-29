@@ -20,6 +20,7 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 /**
  * Represents the 'kcParticleEmitterParam' struct.
  * Loaded from kcParticleEmitterParam::Init.
+ * NOTE: This cannot be used in kcCResourceEntityInst, see kcCResourceEntityInst::Prepare() to see that it will not work.
  * Created by Kneesnap on 8/22/2023.
  */
 @Setter

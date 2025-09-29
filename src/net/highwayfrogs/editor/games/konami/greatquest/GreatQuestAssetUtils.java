@@ -420,11 +420,7 @@ public class GreatQuestAssetUtils {
             if (entity == null)
                 throw new RuntimeException("Could not find an entity named '" + entityInstName + "' to load data for.");
 
-            kcEntityInst entityInst = entity.getInstance();
-            if (entityInst == null)
-                throw new RuntimeException("The entity instance for '" + entityInstName + "' was null, so we couldn't modify its script.");
-
-            entityInst.fromConfig(entityInstanceCfg);
+            kcEntityInst entityInst = entity.fromConfig(entityInstanceCfg);
 
             // Scripts should load AFTER core entity data.
             Config scriptCfg = entityInstanceCfg.getChildConfigByName(kcEntityInst.CONFIG_SECTION_SCRIPT);

@@ -56,10 +56,15 @@ public enum kcEntityFlag {
     // kcCActorBase::Update() -> If this flag is set, TerrainTrack will occur.
     ENABLE_TERRAIN_TRACK(kcEntityFlagType.ACTOR_BASE, Constants.BIT_FLAG_2), // 0x4 - ?
 
+    // If this flag is set when kcCEntity3D::Reset runs, the entity gets the reset flag, and then the entity's update function is called. Other updates happen too.
+    // kcCGameSystem::SceneUpdate(entity) will occur, or in other words,kcCOctTreeSceneMgr::Update().
+    // This will make sure the entity is found within the oct tree, and update the bounding box for the entity/move it around/ensure it's in the right part of each octree (both visual + collision).
     // Running kcCActorBase::EvaluateTransform will wipe this bit, but running SetPosition or SetRotation will re-apply it.
-    // Applied by kcCEntity3D::Reset, kcCEntity3D has this set by default
+    // Applied by kcCEntity3D::__ct, kcCEntity3D has this set by default.
+    // It also is applied from from kcCEntity3D::SetPosition and kcCEntity3D::SetRotation
     // Though... kcCActor::OnDamage() also sets this when the entity dies or takes damage.
     // Seems weird in CCharacter::OnPickup and kcCEntity3D::Entity3DUpdate
+    // So it seems to be some kind of "POSITION_NEEDS_UPDATE" flag.
     UNKNOWN(kcEntityFlagType.ENTITY3D, Constants.BIT_FLAG_3), // 0x8
 
     // This must be true for kcCEntity::Update to run the "Execute" function.
@@ -188,7 +193,7 @@ public enum kcEntityFlag {
     // kcCEntity::OnEnableUpdate() sets/removes this flag too, so this flag most likely indicates whether its process is registered/whether the
     PROCESS_REGISTERED(kcEntityFlagType.ENTITY, Constants.BIT_FLAG_30), // 0x40000000 This flag represents whether the entity is considered to be active (updates are enabled).
 
-    // Whenever kcCEntity3D::Reset() is called, if this has flag 0x8, this flag will be set, then Update() will be called, then the flag is removed?.
+    // Whenever kcCEntity3D::Reset() is called, if this has flag 0x8, this flag will be set, then kcCOctTreeSceneMgr::Update(kcCEntity3D) will be called, then the flag is removed.
     // If this bit is set, kcCEntity::Update and kcCActorBase::UpdateMotion will skip their logic.
     // [SET - CCharacter doesn't take damage when IMMORTAL FROGGER IS SET] CCharacter::OnDamage will be skipped if this flag is set AND "IMMORTAL FROGGER" is disabled in the debug menu (MenuData.value == 0).
     // [Item pickup login will only run if set.] - CCharacter::OnPickup will ONLY pickup the item if this flag is set on the entity picking up the item.
@@ -241,7 +246,7 @@ public enum kcEntityFlag {
         FORCE_STAY_ACTIVE(kcEntityFlagType.ENTITY, "ForceStayActive", Constants.BIT_FLAG_14, kcEntityFlag.FORCE_STAY_ACTIVE_WHEN_FAR_AWAY), // 0x4000 -> 0x80 Unused in scripts, but some entities have it set, such as an invisible FFM in the tutorial.
 
         // ENTITY3D:
-        FACE_TARGET_ENTITY(kcEntityFlagType.ENTITY3D, "FaceTargetEntity", Constants.BIT_FLAG_2, kcEntityFlag.FACE_TARGET_ENTITY), // 0x4 -> 0x2
+        FACE_TARGET_ENTITY(kcEntityFlagType.ENTITY3D, "FaceTargetEntity", Constants.BIT_FLAG_2, kcEntityFlag.FACE_TARGET_ENTITY), // 0x4 -> 0x2 NOTE: This is the flag for billboarding.
         HIDE_SHADOW(kcEntityFlagType.ENTITY3D, "HideShadow", Constants.BIT_FLAG_3, kcEntityFlag.HIDE_SHADOW), // 0x8 -> 0x4 <-> There are multiple targeting kcEntityFlag.HIDE because the INIT_FLAGS action will reset this flag at each inheritance level, so each flag is here to allow keeping such a thing.
         ALLOW_WAYPOINT_INTERACTION(kcEntityFlagType.ENTITY3D, "AllowWaypointInteraction", Constants.BIT_FLAG_5, kcEntityFlag.ALLOW_WAYPOINT_INTERACTION), // 0x20 -> 0x20
 

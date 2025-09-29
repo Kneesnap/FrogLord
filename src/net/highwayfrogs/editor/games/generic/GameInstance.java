@@ -236,6 +236,7 @@ public abstract class GameInstance implements IGameInstance {
      * @param messageTemplate the message format string template to log
      * @param arguments the arguments to log with
      */
+    @Deprecated
     public void showWarning(ILogger logger, String messageTemplate, Object... arguments) {
         boolean showLoggerInfo = true;
         if (logger == null) {
@@ -249,6 +250,28 @@ public abstract class GameInstance implements IGameInstance {
         String formattedMessage = StringUtils.formatStringSafely(messageTemplate, arguments);
 
         logger.warning(formattedMessage);
-        FXUtils.makePopUp((showLoggerInfo ? "[" + logger.getName() + "]:\n" : "") + formattedMessage, AlertType.WARNING);
+        FXUtils.showPopup(AlertType.WARNING, "Attention!", (showLoggerInfo ? "[" + logger.getName() + "]:\n" : "") + formattedMessage);
+    }
+
+    /**
+     * Shows a warning to the user in the form of a popup, while also logging it to the provided logger.
+     * @param logger the logger to log the message to
+     * @param messageTemplate the message format string template to log
+     * @param arguments the arguments to log with
+     */
+    public void showWarning(ILogger logger, String headerText, String messageTemplate, Object... arguments) {
+        boolean showLoggerInfo = true;
+        if (logger == null) {
+            showLoggerInfo = false;
+            logger = getLogger();
+        }
+
+        if (messageTemplate == null)
+            throw new NullPointerException("messageTemplate");
+
+        String formattedMessage = StringUtils.formatStringSafely(messageTemplate, arguments);
+
+        logger.warning(formattedMessage);
+        FXUtils.showPopup(AlertType.WARNING, headerText, (showLoggerInfo ? "[" + logger.getName() + "]:\n" : "") + formattedMessage);
     }
 }
