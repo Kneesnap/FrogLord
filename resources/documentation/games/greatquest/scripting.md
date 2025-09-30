@@ -763,6 +763,10 @@ Using the `--AsEntity` flag will change both the sender and the receiver, unlike
 **Usage:** `SetPlayerHasItem <inventoryItem> <true|false>`  
 Click [here](../../../../src/net/highwayfrogs/editor/games/konami/greatquest/generic/InventoryItem.java) to see a list of InventoryItem values.
 
+> ![NOTE]  
+> `STONE_FIRE`, `STONE_ICE`, `STONE_SPEED`, `STATUE`, and `CROWN` are tracked between levels/in the save file.  
+> This can be expanded by changing the hardcoded list of inventory items named `CarryOverItems` in the executable, or by patching `CInventory::Reset` to not reset these items.  
+
 ### TakeDamage (Script Only)
 **Summary:** The script owner takes damage (loses health).  
 **Supported Entity Types:** Base Actors  
