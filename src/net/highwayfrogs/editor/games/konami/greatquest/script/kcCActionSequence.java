@@ -151,6 +151,7 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
         this.actions.clear();
         getSelfHash().setHash(config.getKeyValueNodeOrError(HASH_CONFIG_FIELD).getAsInteger());
         int lineNumber = 0;
+        config.markTextAsAccessed();
         String fileName = config.getRootNode().getSectionName();
         for (ConfigValueNode line : config.getInternalText()) {
             lineNumber++;

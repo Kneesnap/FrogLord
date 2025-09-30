@@ -93,6 +93,7 @@ public class GreatQuestAssetUtils {
 
         // Print advanced warnings after everything is complete.
         scriptList.printAdvancedWarnings(logger);
+        gqsScriptGroup.recursivelyWarnAboutUnusedData(logger);
 
         // Show popup.
         logger.showPopup("successfully", "Imported '%s' [problem=with ][summary].", sourceName);

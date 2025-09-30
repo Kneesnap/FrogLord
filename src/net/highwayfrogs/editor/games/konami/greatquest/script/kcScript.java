@@ -456,6 +456,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
             // Add script effects.
             this.effects.clear();
 
+            config.markTextAsAccessed();
             String fileName = config.getRootNode().getSectionName();
             for (int i = 0; i < config.getInternalText().size(); i++) {
                 ConfigValueNode node = config.getInternalText().get(i);
