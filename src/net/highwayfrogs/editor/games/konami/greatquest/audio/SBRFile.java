@@ -1192,12 +1192,13 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             return InputMenu.promptInputInt(instance, "Please enter the ID of a sound effect which exists, but is not currently used here.", oldSfxId, newId -> {
                 if (newId < 0)
                     throw new IllegalArgumentException(newId + " is not a valid SFX ID! IDs must be greater than or equal to zero!");
-                if (newId == oldSfxId)
-                    throw new IllegalArgumentException("The provided SFX ID (" + newId + ") was the same as before.");
 
                 SoundChunkEntry foundEntry = instance.getSoundChunkFile().getSoundById(newId);
                 if (foundEntry == null)
                     throw new IllegalArgumentException("The provided SFX ID (" + newId + ") had no sound data in the stream chunk file.");
+
+                if (newId == oldSfxId)
+                    return; // No change, allow it.
 
                 for (int i = 0; i < sbrFile.getSoundEffects().size(); i++) {
                     SfxEntry tempEntry = sbrFile.getSoundEffects().get(i);
@@ -1218,12 +1219,13 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
                     throw new IllegalArgumentException(newId + " is not a valid SFX ID! IDs must be greater than or equal to zero!");
                 if (newId > instance.getNextFreeSoundId() || (newId == instance.getNextFreeSoundId() && oldSfxId != instance.getNextFreeSoundId()))
                     throw new IllegalArgumentException(newId + " is not a valid SFX ID as it is reserved for newly added sounds!");
-                if (newId == oldSfxId)
-                    throw new IllegalArgumentException("The provided SFX ID (" + newId + ") was the same as before.");
 
                 SoundChunkEntry foundEntry = instance.getSoundChunkFile().getSoundById(newId);
                 if (foundEntry != null)
                     throw new IllegalArgumentException("The provided SFX ID (" + newId + ") corresponds to '" + instance.getFullSoundPath(newId) + "', which has its sound data in the streamed sound chunk file, and thus cannot be used for an embedded sound effect.");
+
+                if (newId == oldSfxId)
+                    return; // Allow it.
 
                 for (int i = 0; i < sbrFile.getSoundEffects().size(); i++) {
                     SfxEntry tempEntry = sbrFile.getSoundEffects().get(i);
