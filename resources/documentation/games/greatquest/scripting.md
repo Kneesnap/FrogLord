@@ -296,11 +296,17 @@ OnEntity ENTERS_TARGET_WAYPOINT_AREA # Executes when the script owner enters the
 OnEntity LEAVES_TARGET_WAYPOINT_AREA # Executes when the script owner leaves the area of its target waypoint.
 ```
 
+> ![WARNING]  
+> If the entity (player or non-player) dies, they will NOT trigger this cause.  
+
 ### OnWaypoint
 **Summary:** Executes when an entity enters/leaves the script owner (who must be a waypoint)'s area.  
 **Supported Entity Types:** Waypoints  
 <!---**Ghidra Reference (Ignore):** `sSendWaypointStatus`-->
 **Usage:** `OnWaypoint <ENTITY_ENTERS|ENTITY_LEAVES> <entityName>`
+
+> ![WARNING]  
+> If the entity (player or non-player) dies, they will NOT trigger this cause.  
 
 ## Available Effects
 The following documentation explains all script effects/actions found within the game, and how they work.
@@ -805,6 +811,7 @@ If such an entity is found, particles will be played at the position of that ent
 **Usage:** `Entity.EnableUpdates` and `Entity.DisableUpdates`  
 **Alias:** `SetUpdatesEnabled <true|false>` (DOES NOT WORK)  
 See the documentation for "entity updates" below for an explanation.  
+Note that this will not prevent the game from activating/deactivating entity updates based on if it is on-screen or not.  
 
 ### SetAIGoal (Script Only)
 **Summary:** Sets the script owner's AI goal.  

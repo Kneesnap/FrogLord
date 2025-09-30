@@ -54,19 +54,34 @@ public class GreatQuestUtils {
             "KeyPikupParticleParam", "UniqueItemParticleParam", "ModeAfterMovie", "MovieContinueGame",
             "FrogSpawnParticleParam", "CoinPickupParticleParam", "_kcEnvironment", "null"));
 
-    // These are entities which are registered by the game itself, but are not registered to the static entity lookup map kcCEntity::mpInstanceMap.
-    private static final List<String> UNMAPPED_SYSTEM_ENTITIES = Collections.singletonList(
-            "ParticleMgr" // 0x2F5AFD67, kcCParticleMgr, Added by CGreatQuest::Init()
+    // These are entities which are possible to search by hash, because they are registered in kcCEntity::mpInstanceMap.
+    // A search of the game files shows that these entities are never referenced by any scripts.
+    // But that doesn't mean we couldn't theoretically use them if we'd like.
+    private static final List<String> SYSTEM_ENTITIES = Arrays.asList(
+            "ParticleMgr", // 0x2F5AFD67, kcCParticleMgr, Added by CGreatQuest::Init()
+            // Idea: Hide/show all particles at will?
+            "ScriptCamera", // 0x725CE60F, kcCCameraPivot, Added by EvLevelBegin(), kcCCameraPivot::chDefaultHandle (This is the camera which gets switched to when ActivateCamera is called)
+            "FollowCamera", // 0x815DBBEB, kcCCameraFollow, Added by EvLevelBegin(), kcCCameraFollow::chDefaultHandle (Set the camera target?. Already doable with SetCameraTarget) This camera is pushed onto the stack when the level begins, and is the main camera.
+            // Idea: We could theoretically lock the camera in place relative to the player. Might be good for some fixed camera angles, like that one time in Joy Castle.
+            "WaypointMgr", // 0x69F9EA6C, kcCWaypointMgr, Added by kcCGameSystem::Init()
+            // Idea: Temporarily prevent waypoint pathfinding and waypoint status ticking.
+            "kcGlobalDialog", // 0x72FA6003, kcCDialog, Added by EvLevelBegin()
+            // Idea: Prevent the user from progressing a dialog box.
+            // Idea: This could (in theory) be used to slow down dialog speed, by using an alarm to delay showing the next text character a bit.
+            "CameraStack", // 0x2464F220, kcCCameraStack, Added by EvLevelBegin()
+            "kcCScriptMgr" // 0x44EDFE47, kcCScriptMgr, Added by kcCScriptMgr::Init()
+            // Other ways of spawning entities:
+            //  - kcCEmitter (kcEmitterDesc) can spawn entities of name format("%s%d", emitterName, entitiesSpawnedByEmitter++). This is unused in the vanilla game. kcCEmitter::Spawn
+            //  - CLauncher::Launch/CLauncher::LaunchMissile can spawn entities of name format("%s_dynamic%5d", entityName, rand() % 100000). kcCGameSystem::FindUnmappedEntityName generates the names.
+            //  - SpawnObject is called as part of an entity's death sequence (CCharacter::Update), and seems to be used to spawn in the coins on death. format("%s_%03d", typeName, staticNumberOfObjectsSpawnedThisWay++) Available type names are defined in __sinit_CCharacter.cpp (eg: "Copper Coin")
     );
 
-    // These are entities which are possible to search by hash, because they are registered in kcCEntity::mpInstanceMap.
-    private static final List<String> MAPPED_SYSTEM_ENTITIES = Arrays.asList(
-            "ScriptCamera", // 0x725CE60F, kcCCameraPivot, Added by EvLevelBegin(), kcCCameraPivot::chDefaultHandle
-            "FollowCamera", // 0x815DBBEB, kcCCameraFollow, Added by EvLevelBegin(), kcCCameraFollow::chDefaultHandle
-            "WaypointMgr", // 0x69F9EA6C, kcCParticleMgr, Added by kcCGameSystem::Init()
-            "kcGlobalDialog", // 0x72FA6003, kcCDialog, Added by EvLevelBegin()
-            "CameraStack" // 0x2464F220, kcCCameraStack, Added by EvLevelBegin()
-    );
+    public static final Map<Integer, String> SYSTEM_ENTITIES_BY_HASH = new HashMap<>();
+
+    static {
+        for (String entityName : SYSTEM_ENTITIES)
+            SYSTEM_ENTITIES_BY_HASH.put(GreatQuestUtils.hash(entityName), entityName);
+    }
 
     // These are all event names seen in PS2 PAL in RegisterEvents(), kcRegisterEvents(), InitMode(), modeMovieInit(), and InitMovie().
     // All usages of kcCEventMgr::Trigger(),  were checked to ensure none are missing too.
@@ -930,8 +945,7 @@ public class GreatQuestUtils {
 
     static {
         ALL_HARDCODED_STRINGS_TO_HASH.addAll(GENERAL_HASHED_STRINGS);
-        ALL_HARDCODED_STRINGS_TO_HASH.addAll(UNMAPPED_SYSTEM_ENTITIES);
-        ALL_HARDCODED_STRINGS_TO_HASH.addAll(MAPPED_SYSTEM_ENTITIES);
+        ALL_HARDCODED_STRINGS_TO_HASH.addAll(SYSTEM_ENTITIES);
         ALL_HARDCODED_STRINGS_TO_HASH.addAll(EVENT_NAMES);
         ALL_HARDCODED_STRINGS_TO_HASH.addAll(EVENT_PUBLIC_INFO_NAMES);
         ALL_HARDCODED_STRINGS_TO_HASH.addAll(CLASS_NAMES);

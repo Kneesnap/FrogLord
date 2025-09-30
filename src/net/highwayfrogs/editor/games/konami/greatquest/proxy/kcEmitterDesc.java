@@ -14,6 +14,8 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Implements the 'kcEmitterDesc' struct.
+ * Note that this is not related to particles as I previously thought, it is an entity spawner.
+ * This can be used to spawn entities with the named formatted as String.format("%s%d", emitterName, entitiesSpawnedByEmitter++).
  * This may seem unused, but it's actually used once in Mushroom Valley, the 'TEST' value. Which... may not actually be used, I'm not sure.
  * Loaded by kcCEmitter::Init
  * Created by Kneesnap on 8/22/2023.
