@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.utils;
 
+import javafx.scene.control.Alert.AlertType;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.utils.logging.ILogger;
@@ -11,8 +12,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.ToIntBiFunction;
 import java.util.function.ToIntFunction;
 import java.util.function.ToLongBiFunction;
@@ -371,8 +372,13 @@ public class Utils {
         }
 
         // Create popup window.
-        if (showWindow)
-            FXUtils.makeErrorPopUp(formattedMessage, formattedMessage != null ? null : th, false);
+        if (showWindow) {
+            if (formattedMessage != null) {
+                FXUtils.showPopup(AlertType.ERROR, "An error occurred.", formattedMessage + "\n\nTrace:\n - " + String.join("\n - ", getErrorMessages(th)));
+            } else {
+                FXUtils.makeErrorPopUp(null, th, false);
+            }
+        }
     }
 
     /**
