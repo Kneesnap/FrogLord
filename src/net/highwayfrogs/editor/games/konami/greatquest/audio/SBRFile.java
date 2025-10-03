@@ -1091,14 +1091,24 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             }
         }
 
-        private SfxWave getWave() {
+        private SfxWave getWave(boolean createIfMissing) {
             List<SfxWave> waves = getParentFile().getWaves();
-            return waves.size() > this.waveIndex && this.waveIndex >= 0 ? waves.get(this.waveIndex) : null;
+            if (waves.size() > this.waveIndex && this.waveIndex >= 0) {
+                return waves.get(this.waveIndex);
+            } else if (createIfMissing) {
+                SfxWave newWave = getParentFile().createNewWave();
+                this.waveIndex = waves.size();
+                newWave.setWaveID(waves.size());
+                waves.add(newWave);
+                return newWave;
+            } else {
+                return null;
+            }
         }
 
         @Override
         public Clip getClip(SfxEntry entry) {
-            SfxWave wave = getWave();
+            SfxWave wave = getWave(false);
             return wave != null ? wave.getClip() : null;
         }
 
@@ -1109,7 +1119,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
 
         @Override
         public void loadFromWavFile(SfxEntry entry, byte[] fileData, String fileName) {
-            SfxWave wave = getWave();
+            SfxWave wave = getWave(true);
             if (wave == null)
                 throw new IllegalStateException("Could not resolve SfxWave for '" + entry.getExportFileName() + "'.");
 
@@ -1118,7 +1128,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
 
         @Override
         public void saveToWavFile(SfxEntry entry, File outputFile) throws IOException {
-            SfxWave wave = getWave();
+            SfxWave wave = getWave(false);
             if (wave == null)
                 throw new IllegalStateException("Could not resolve SfxWave for '" + entry.getExportFileName() + "'.");
 
@@ -1127,7 +1137,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
 
         @Override
         public byte[] saveToWavFile(SfxEntry entry) {
-            SfxWave wave = getWave();
+            SfxWave wave = getWave(false);
             if (wave == null)
                 throw new IllegalStateException("Could not resolve SfxWave for '" + entry.getExportFileName() + "'.");
 
@@ -1199,7 +1209,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             if (arguments.has(FLAG_NAME_PAN))
                 setPan(arguments.use(FLAG_NAME_PAN).getAsInteger());
 
-            SfxWave wave = getWave();
+            SfxWave wave = getWave(true);
             if (wave != null)
                 wave.applySettingsFromArguments(arguments);
         }
@@ -1250,6 +1260,16 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             return null;
         }
 
+        private SoundChunkEntry getOrCreateSoundChunkEntry(SfxEntry entry) {
+            SoundChunkEntry chunkEntry = getSoundChunkEntry(entry);
+            if (chunkEntry == null) {
+                chunkEntry = new SoundChunkEntry(getGameInstance().getSoundChunkFile(), entry.getSfxId());
+                chunkEntry.getSoundChunkFile().getEntries().add(chunkEntry);
+            }
+
+            return chunkEntry;
+        }
+
         @Override
         public Clip getClip(SfxEntry entry) {
             SoundChunkEntry soundChunkEntry = getSoundChunkEntry(entry);
@@ -1263,10 +1283,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
 
         @Override
         public void loadFromWavFile(SfxEntry entry, byte[] wavFileData, String fileName) {
-            SoundChunkEntry soundChunkEntry = getSoundChunkEntry(entry);
-            if (soundChunkEntry == null)
-                throw new IllegalStateException("Could not resolve SoundChunkEntry for '" + entry.getExportFileName() + "'.");
-
+            SoundChunkEntry soundChunkEntry = getOrCreateSoundChunkEntry(entry);
             soundChunkEntry.loadSupportedAudioFile(wavFileData);
         }
 
@@ -1315,7 +1332,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
 
         private static final String FLAG_NAME_EMBEDDED = "Embedded";
         private static final String FLAG_NAME_STREAM = "Stream";
-        private static final String FLAG_NAME_IMPORT = "Import";
+        public static final String FLAG_NAME_IMPORT = "Import";
         private static final String FLAG_NAME_BIT_DEPTH = "BitDepth";
         private static final String FLAG_NAME_SAMPLE_RATE = "SampleRate";
         private static final String FLAG_NAME_CHANNEL_COUNT = "ChannelCount";
@@ -1516,7 +1533,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
                 throw new IllegalArgumentException("The SfxEntry had attributes of type: " + Utils.getSimpleName(this.attributes) + ", which cannot be converted to a streamed sound effect.");
 
             SfxEntrySimpleAttributes oldAttributes = (SfxEntrySimpleAttributes) this.attributes;
-            SfxWave oldWave = oldAttributes.getWave();
+            SfxWave oldWave = oldAttributes.getWave(false);
             if (oldWave == null)
                 throw new UnsupportedOperationException("Cannot convert SfxEntry '" + getExportFileName() + "' attributes to " + SfxEntryStreamAttributes.class.getSimpleName() + ", because the sound data (wave) could not be resolved.");
 
@@ -1525,11 +1542,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             copyAttributes(oldAttributes, newAttributes);
             newAttributes.setVolume(oldAttributes.getVolume());
 
-            SoundChunkEntry chunkEntry = newAttributes.getSoundChunkEntry(this);
-            if (chunkEntry == null) {
-                chunkEntry = new SoundChunkEntry(getGameInstance().getSoundChunkFile(), this.sfxId);
-                chunkEntry.getSoundChunkFile().getEntries().add(chunkEntry);
-            }
+            SoundChunkEntry chunkEntry = newAttributes.getOrCreateSoundChunkEntry(this);
 
             // Import wav over stream entry.
             chunkEntry.loadSupportedAudioFile(oldWave.exportToWav());

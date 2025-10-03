@@ -134,17 +134,25 @@ public class GreatQuestAssetUtils {
                 OptionalArguments arguments = OptionalArguments.parse(line);
                 String filePath = arguments.useNext().getAsString();
                 int sfxId = chunkedFile.getGameInstance().getSfxIdFromFullSoundPath(filePath);
-                if (sfxId < 0) { // TODO: If --Import is included, create a new sound instead.
-                    logger.warning("Skipping sound file reference '%s' in %s, it could not be resolved.", filePath, sourceName);
-                    continue;
-                }
 
                 SfxEntry sfxEntry = null;
-                for (int i = 0; i < sbrFile.getSoundEffects().size(); i++) {
-                    SfxEntry tempEntry = sbrFile.getSoundEffects().get(i);
-                    if (tempEntry.getSfxId() == sfxId) {
-                        sfxEntry = tempEntry;
-                        break;
+                if (sfxId < 0) {
+                    if (!arguments.has(SfxEntry.FLAG_NAME_IMPORT)) { // If we're importing, then we create a new sound instead!
+                        logger.warning("Skipping sound file reference '%s' in %s, it could not be resolved.", filePath, sourceName);
+                        continue;
+                    }
+
+                    // Continue by building a new entry.
+                    sfxId = chunkedFile.getGameInstance().useNextFreeSoundIdSlot();
+                    chunkedFile.getGameInstance().getModData().setUserSfxFullPath(sfxId, filePath);
+                } else {
+                    // Find the entry using this ID.
+                    for (int i = 0; i < sbrFile.getSoundEffects().size(); i++) {
+                        SfxEntry tempEntry = sbrFile.getSoundEffects().get(i);
+                        if (tempEntry.getSfxId() == sfxId) {
+                            sfxEntry = tempEntry;
+                            break;
+                        }
                     }
                 }
 

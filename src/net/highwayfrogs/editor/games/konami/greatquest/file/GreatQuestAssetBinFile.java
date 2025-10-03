@@ -116,6 +116,10 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         for (int i = 0; i < globalPathCount; i++)
             this.globalPaths.add(reader.readNullTerminatedFixedSizeString(NAME_SIZE, Constants.NULL_BYTE));
 
+        // Read FrogLord mod data.
+        if (reader.hasMore())
+            getGameInstance().getModData().load(reader);
+
         // Process (load) files. (File loading occurs only after we have an object for every single game file, so that file hash references can be resolved regardless of file order.)
         if (progressBar != null)
             progressBar.setTotalProgress(this.files.size());
@@ -254,6 +258,9 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         writer.writeInt(this.globalPaths.size());
         for (String globalPath : this.globalPaths)
             writer.writeNullTerminatedFixedSizeString(globalPath, NAME_SIZE);
+
+        // Write mod data.
+        getGameInstance().getModData().save(writer);
 
         // Now that files have been written, let's go back to write the updated headers.
         // This is done separately in order to reduce the overall number of jumps between positions in the file to maximize write speed.

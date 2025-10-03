@@ -59,9 +59,9 @@ public class kcActionPlaySound extends kcAction {
         // Validate SFX ID is valid.
         if (!getGameInstance().hasFullSoundPathFor(this.soundId)) {
             if (this.soundPath != null) {
-                printWarning(logger, "no sound could be found named '" + this.soundPath + "'.");
+                printWarning(logger, "no sound could be found named '" + this.soundPath + "'. (Sound ID: " + this.soundId + ")");
             } else {
-                printWarning(logger, "no sound was provided.");
+                printWarning(logger, "no sound was provided. (Sound ID: " + this.soundId + ")");
             }
             return;
         }

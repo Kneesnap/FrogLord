@@ -87,6 +87,7 @@ import java.util.Map.Entry;
  */
 @Getter
 public class GreatQuestInstance extends GameInstance {
+    private final GreatQuestModData modData;
     private final List<GreatQuestGameFile> allFiles = new ArrayList<>();
     private final List<GreatQuestGameFile> looseFiles = new ArrayList<>();
     private GreatQuestAssetBinFile mainArchive;
@@ -108,6 +109,7 @@ public class GreatQuestInstance extends GameInstance {
 
     public GreatQuestInstance() {
         super(GreatQuestGameType.INSTANCE);
+        this.modData = new GreatQuestModData(this);
     }
 
     /**
@@ -333,17 +335,23 @@ public class GreatQuestInstance extends GameInstance {
         return false;
     }
 
+    private String getFullSoundPathOrNull(int soundId) {
+        String soundPath = this.modData.getUserFullSoundPath(soundId);
+        if (soundPath != null)
+            return soundPath;
+
+        soundPath = this.soundPathsById.get(soundId);
+        return soundPath;
+    }
+
     /**
      * Gets the full sound file path for the given sound ID.
      * @param soundId the sound ID to resolve.
      * @return fullSoundPath, or the ID as a string if there is none.
      */
     public String getFullSoundPath(int soundId) {
-        String soundPath = this.soundPathsById.get(soundId);
-        if (soundPath != null)
-            return soundPath;
-
-        return String.valueOf(soundId);
+        String soundPath = getFullSoundPathOrNull(soundId);
+        return soundPath != null ? soundPath : String.valueOf(soundId);
     }
 
     /**
@@ -353,7 +361,7 @@ public class GreatQuestInstance extends GameInstance {
      * @return shortenedSoundPath
      */
     public String getShortenedSoundPath(int soundId, boolean includeId) {
-        String soundPath = this.soundPathsById.get(soundId);
+        String soundPath = getFullSoundPathOrNull(soundId);
         if (soundPath == null)
             return NumberUtils.padNumberString(soundId, 4);
 
@@ -374,7 +382,7 @@ public class GreatQuestInstance extends GameInstance {
      * @return soundFileName
      */
     public String getSoundFileName(int soundId, boolean includeId) {
-        String soundPath = this.soundPathsById.get(soundId);
+        String soundPath = getFullSoundPathOrNull(soundId);
         if (soundPath == null)
             return NumberUtils.padNumberString(soundId, 4);
 
@@ -391,7 +399,7 @@ public class GreatQuestInstance extends GameInstance {
      * @return true iff there is a corresponding sound path.
      */
     public boolean hasFullSoundPathFor(int sfxId) {
-        return sfxId >= 0 && sfxId < this.nextFreeSoundId && !StringUtils.isNullOrWhiteSpace(this.soundPathsById.get(sfxId));
+        return sfxId >= 0 && sfxId < this.nextFreeSoundId && !StringUtils.isNullOrWhiteSpace(getFullSoundPathOrNull(sfxId));
     }
 
     /**
@@ -402,6 +410,10 @@ public class GreatQuestInstance extends GameInstance {
     public int getSfxIdFromFullSoundPath(String fullPath) {
         if (NumberUtils.isInteger(fullPath))
             return Integer.parseInt(fullPath);
+
+        int userSfxId = this.modData.getSfxIdFromFullSoundPath(fullPath);
+        if (userSfxId >= 0)
+            return userSfxId;
 
         Integer sfxId = this.soundIdsByPath.get(fullPath);
         return sfxId != null ? sfxId : -1;
