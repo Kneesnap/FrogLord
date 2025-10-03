@@ -30,8 +30,6 @@ public class GreatQuestRunners {
         instance.getMainArchive().load(reader);
         System.out.println("Loaded.");
 
-        // TODO: Slight problem at the moment, which is that it doesn't save a 1:1 copy. We need to either get it so it saves each file correctly, so it produces a valid .bin. If we make every file a dummy file, this works.
-
         // Switch the level hashes, so it loads it.
         GreatQuestArchiveFile theGoblinFort = instance.getMainArchive().getFiles().get(31);
         GreatQuestArchiveFile ruinsOfJoyTown = instance.getMainArchive().getFiles().get(32);
