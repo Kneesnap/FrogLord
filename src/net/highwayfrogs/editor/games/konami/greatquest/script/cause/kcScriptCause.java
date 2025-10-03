@@ -65,16 +65,18 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
      * Loads the cause data from the arguments.
      * @param arguments the arguments to read from
      */
-    public final void load(OptionalArguments arguments, int lineNumber, String fileName) {
+    public final void load(ILogger logger, OptionalArguments arguments, int lineNumber, String fileName) {
         if (!validateGqsArgumentCount(arguments.getRemainingArgumentCount()))
             throw new RuntimeException("Cannot load " + Utils.getSimpleName(this) + "[" + getType() + "] from '" + arguments + "' since " + getGqsArgumentCount() + " arguments were expected, but " + arguments.getRemainingArgumentCount() + " were found.");
+        if (logger == null)
+            logger = getLogger();
 
         this.loadedFromGame = false;
         this.userLineNumber = lineNumber;
         this.userImportSource = fileName;
         loadArguments(arguments);
-        arguments.warnAboutUnusedArguments(getLogger());
-        printWarnings(getLogger());
+        arguments.warnAboutUnusedArguments(logger);
+        printWarnings(logger);
         if (!validateGqsArgumentCount(arguments.getOrderedArgumentCount()))
             throw new RuntimeException("Cannot load " + Utils.getSimpleName(this) + "[" + getType() + "] from '" + arguments + "' since " + getGqsArgumentCount() + " arguments were expected, but " + arguments.getOrderedArgumentCount() + " were found.");
     }
@@ -269,7 +271,7 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
      * @param line The line of text to parse
      * @return the parsed script effect
      */
-    public static kcScriptCause parseScriptCause(kcScriptFunction function, String line, int lineNumber, String fileName) {
+    public static kcScriptCause parseScriptCause(ILogger logger, kcScriptFunction function, String line, int lineNumber, String fileName) {
         if (function == null)
             throw new NullPointerException("function");
         if (line == null)
@@ -287,7 +289,7 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
         newCause.setParentFunction(function);
 
         try {
-            newCause.load(arguments, lineNumber, fileName);
+            newCause.load(logger, arguments, lineNumber, fileName);
         } catch (Throwable th) {
             throw new RuntimeException("Failed to parse '" + line + "' in '" + fileName + "' on line " + lineNumber + " as a script effect.", th);
         }

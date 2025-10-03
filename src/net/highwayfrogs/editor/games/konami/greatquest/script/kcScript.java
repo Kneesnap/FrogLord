@@ -451,7 +451,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
 
             // Set cause.
             String rawScriptCause = config.getKeyValueNodeOrError(CONFIG_FIELD_SCRIPT_CAUSE).getAsString();
-            this.cause = kcScriptCause.parseScriptCause(this, rawScriptCause, config.getOriginalLineNumber(), config.getRootNode().getSectionName());
+            this.cause = kcScriptCause.parseScriptCause(logger, this, rawScriptCause, config.getOriginalLineNumber(), config.getRootNode().getSectionName());
 
             // Add script effects.
             this.effects.clear();
