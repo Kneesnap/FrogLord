@@ -32,9 +32,11 @@ import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.Proper
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.*;
+import net.highwayfrogs.editor.utils.data.reader.ArraySource;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.reader.FileSource;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.objects.OptionalArguments;
+import net.highwayfrogs.editor.utils.objects.StringNode;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.Clip;
@@ -170,7 +172,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         int waveDataStartsAt = writer.getIndex();
         writer.writeAddressTo(waveDataOffset);
         for (int i = 0; i < this.waves.size(); i++)
-            this.waves.get(i).saveADPCM(writer);
+            this.waves.get(i).saveAudioData(writer);
 
         writer.writeIntAtPos(waveDataSize, writer.getIndex() - waveDataStartsAt);
     }
@@ -211,6 +213,29 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         }
 
         return null;
+    }
+
+    /**
+     * Removes a wave.
+     * @param wave the wave to remove
+     * @return true iff the wave was removed successfully
+     */
+    public boolean removeWave(SfxWave wave) {
+        if (wave == null || wave.getWaveID() < 0 || wave.getWaveID() >= this.waves.size())
+            return false;
+
+        SfxWave removedWave = this.waves.get(wave.getWaveID());
+        if (removedWave == wave) {
+            this.waves.remove(wave.getWaveID());
+            synchronizeWaveIds();
+            return true;
+        }
+
+        if (!this.waves.remove(wave))
+            return false;
+
+        synchronizeWaveIds();
+        return true;
     }
 
     /**
@@ -309,21 +334,36 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
          * Writes the ADPCM data to the writer.
          * @param writer The writer to write the data to.
          */
-        void saveADPCM(DataWriter writer);
+        void saveAudioData(DataWriter writer);
 
         /**
          * Save as a .wav file.
          * @param file The file to save to.
          * @throws IOException If it was impossible to write the file.
          */
-        void exportToWav(File file) throws IOException;
+        default void exportToWav(File file) throws IOException {
+            Files.write(file.toPath(), exportToWav());
+        }
+
+        /**
+         * Save as a .wav file byte array.
+         */
+        byte[] exportToWav();
 
         /**
          * Loads from a .wav file.
          * @param file The file to save to.
          * @throws IOException If it was impossible to write the file.
          */
-        void importFromWav(File file) throws IOException;
+        default void importFromWav(File file) throws IOException {
+            importFromWav(Files.readAllBytes(file.toPath()), file.getName());
+        }
+
+        /**
+         * Loads the sound from a byte array representing the contents of a valid .wav file.
+         * @param rawFileBytes the file bytes to load from
+         */
+        void importFromWav(byte[] rawFileBytes, String fileName);
 
         /**
          * Returns the local wave ID.
@@ -347,6 +387,27 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
          * @return Returns true iff a sound is successfully imported.
          */
         boolean promptUserImportWavFile();
+
+        /**
+         * Gets the sample rate for the sound wave.
+         */
+        int getSampleRate();
+
+        /**
+         * Gets the channel count for the sound wave.
+         */
+        int getChannelCount();
+
+        /**
+         * Gets the bitDepth for the sound wave.
+         */
+        int getBitDepth();
+
+        /**
+         * Load settings about the sound from the arguments.
+         * @param arguments the arguments to load from
+         */
+        void applySettingsFromArguments(OptionalArguments arguments);
     }
 
     @Getter
@@ -383,6 +444,9 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         public PropertyList addToPropertyList(PropertyList propertyList) {
             propertyList.add("Local Wave ID", getWaveID());
             propertyList.add("Wave Size", getWaveSize() + " (" + DataSizeUnit.formatSize(getWaveSize()) + ")");
+            propertyList.add("Channel Count", getChannelCount());
+            propertyList.add("Bit Depth", getBitDepth());
+            propertyList.add("Sample Rate", getSampleRate());
             return propertyList;
         }
 
@@ -440,6 +504,8 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         private byte[] ADPCMData;
         private Clip cachedClip;
 
+        public static final int BIT_DEPTH = 16; // Hardcoded value for these sounds.
+        public static final int CHANNEL_COUNT = 1; // Hardcoded value for these sounds.
         public static final int FLAG_VALIDATION_MASK = 0b1;
         public static final int FLAG_REPEAT_UNTIL_STOPPED = Constants.BIT_FLAG_0;
 
@@ -475,7 +541,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         }
 
         @Override
-        public void saveADPCM(DataWriter writer) {
+        public void saveAudioData(DataWriter writer) {
             if (this.ADPCMData != null)
                 writer.writeBytes(this.ADPCMData);
         }
@@ -486,11 +552,27 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         }
 
         @Override
+        public int getChannelCount() {
+            return CHANNEL_COUNT;
+        }
+
+        @Override
+        public int getBitDepth() {
+            return BIT_DEPTH;
+        }
+
+        @Override
+        public void applySettingsFromArguments(OptionalArguments arguments) {
+            // Do not call useFlag() here, since the argument has already been used by SfxAttributes.
+            setFlagState(FLAG_REPEAT_UNTIL_STOPPED, arguments.has(SfxAttributes.FLAG_NAME_REPEAT));
+        }
+
+        @Override
         public Clip getClip() {
             if (this.cachedClip != null)
                 return this.cachedClip;
 
-            AudioFormat format = new AudioFormat(getSampleRate(), 16, 1, true, false);
+            AudioFormat format = createPs2SbrAudioFormat(getSampleRate());
             byte[] convertedAudioData = VAGUtil.rawVagToWav(this.ADPCMData);
             return this.cachedClip = AudioUtils.getClipFromRawAudioData(format, convertedAudioData);
         }
@@ -508,18 +590,17 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         }
 
         @Override
-        public void exportToWav(File file) throws IOException {
-            Files.write(file.toPath(), VAGUtil.rawVagToWav(this.ADPCMData, getSampleRate()));
+        public byte[] exportToWav() {
+            return VAGUtil.rawVagToWav(this.ADPCMData, getSampleRate());
         }
 
         @Override
-        public void importFromWav(File file) throws IOException {
-            byte[] rawFileBytes = Files.readAllBytes(file.toPath());
-            this.ADPCMData = VAGUtil.wavToVag(AudioUtils.getRawAudioDataFromWavFile(rawFileBytes));
-
-            AudioFormat newFormat = AudioUtils.getAudioFormatFromWavFile(rawFileBytes);
-            if (newFormat != null)
-                setSampleRate((int) newFormat.getSampleRate());
+        public void importFromWav(byte[] rawFileBytes, String fileName) {
+            AudioFormat importFormat = AudioUtils.getAudioFormatFromWavFile(rawFileBytes);
+            int convertSampleRate = importFormat != null ? (int) importFormat.getSampleRate() : getSampleRate();
+            AudioFormat convertFormat = createPs2SbrAudioFormat(convertSampleRate); // Ensure it is in the expected format.
+            this.ADPCMData = VAGUtil.wavToVag(AudioUtils.getRawAudioDataConvertedFromWavFile(convertFormat, rawFileBytes));
+            setSampleRate(convertSampleRate);
 
             clearCachedClip();
         }
@@ -533,8 +614,6 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
                 this.flags ^= FLAG_REPEAT_UNTIL_STOPPED;
                 return isRepeatEnabled();
             });
-            propertyList.add("Sample Rate", this.sampleRate, () ->
-                    InputMenu.promptInputInt(getGameInstance(), "Please specify the new sample rate.", this.sampleRate, this::setSampleRate));
             return propertyList;
         }
 
@@ -568,17 +647,25 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
                 this.flags &= ~flagMask;
             }
         }
+
+        private static AudioFormat createPs2SbrAudioFormat(int sampleRate) {
+            return new AudioFormat(sampleRate, BIT_DEPTH, CHANNEL_COUNT, true, false);
+        }
     }
 
+    /**
+     * Represents a .SBR wave on PC. (A single sound)
+     * This should probably be rewritten to use WavFile, but I've just not gotten around to it.
+     */
     public static class SfxWavePC extends BaseSfxWave implements SfxWave {
-        @Getter private int unknownValue; // What is this? We should figure this out. I suspect this was probably the size of the original uncompressed wav file before it was converted to compressed wave data, but I am not sure.
+        // What is this? We should figure this out.
+        // I suspect this was probably the size of the original uncompressed wav file before it was converted to compressed wave data, but I am not sure.
+        // This is because this value always seems proportional to the size of the wav file.
+        @Getter private int unknownValue;
         private byte[] waveFormatEx; // Modelled by the 'WAVEFORMATEX' struct. https://learn.microsoft.com/en-us/windows/win32/api/mmreg/ns-mmreg-waveformatex
         private byte[] ADPCMData;
         private Clip cachedClip;
 
-        private static final String RIFF_SIGNATURE = "RIFF";
-        private static final String WAV_SIGNATURE = "WAVE";
-        private static final String DATA_CHUNK_SIGNATURE = "data";
         private static boolean hasPcWarningBeenShown;
 
         public SfxWavePC(@NonNull SBRFile parentFile) {
@@ -596,7 +683,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             reader.jumpTemp(wavDataOffset + waveDataStartOffset);
 
             // Read WAVEFORMATEX.
-            int waveFormatExSize = 18; // Default Size of 'WAVEFORMATEX'.
+            int waveFormatExSize = WavFile.DEFAULT_HEADER_SIZE; // Default Size of 'WAVEFORMATEX'.
             reader.jumpTemp(reader.getIndex() + waveFormatExSize - Constants.SHORT_SIZE);
             waveFormatExSize += reader.readShort();
             reader.jumpReturn();
@@ -618,7 +705,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         }
 
         @Override
-        public void saveADPCM(DataWriter writer) {
+        public void saveAudioData(DataWriter writer) {
             if (this.waveFormatEx != null)
                 writer.writeBytes(this.waveFormatEx);
             if (this.ADPCMData != null)
@@ -636,7 +723,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             // So in theory if the files were converted to one that Java did support, it would play just fine, but the problem is they compressed the sounds to take up less space in memory.
 
             // The file data here has info about the AudioFormat, and the easiest way to deal with the lack of the AudioFormat is to just complete the wav file and read it directly.
-            this.cachedClip = AudioUtils.getClipFromWavFile(toWavFileBytes(), false);
+            this.cachedClip = AudioUtils.getClipFromWavFile(exportToWav(), false);
             if (this.cachedClip != null)
                 return this.cachedClip;
 
@@ -655,35 +742,28 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             }
         }
 
-        /**
-         * Gets the sound as a .wav file.
-         */
-        public byte[] toWavFileBytes() {
+        @Override
+        public byte[] exportToWav() {
             return AudioUtils.createWavFile(this.waveFormatEx, this.ADPCMData);
         }
 
         @Override
-        public void exportToWav(File file) throws IOException {
-            Files.write(file.toPath(), toWavFileBytes());
-        }
-
-        @Override
-        public void importFromWav(File file) throws IOException {
-            DataReader reader = new DataReader(new FileSource(file));
+        public void importFromWav(byte[] rawFileBytes, String fileName) {
+            DataReader reader = new DataReader(new ArraySource(rawFileBytes));
 
             try {
-                reader.verifyString(RIFF_SIGNATURE);
+                reader.verifyString(WavFile.RIFF_SIGNATURE);
                 reader.skipInt();
-                reader.verifyString(WAV_SIGNATURE);
-                reader.verifyString("fmt ");
+                reader.verifyString(WavFile.WAVE_SIGNATURE);
+                reader.verifyString(WavFile.FORMAT_SIGNATURE);
                 int waveFormatExLength = reader.readInt();
                 this.waveFormatEx = reader.readBytes(waveFormatExLength);
-                reader.verifyString(DATA_CHUNK_SIGNATURE);
+                reader.verifyString(WavFile.DATA_SIGNATURE);
                 int adpcmDataLength = reader.readInt();
                 this.ADPCMData = reader.readBytes(adpcmDataLength);
                 clearCachedClip();
             } catch (Throwable th) {
-                throw new RuntimeException("Invalid wav file '" + file.getName() + "'.", th);
+                throw new RuntimeException("Invalid wav file '" + fileName + "'.", th);
             }
         }
 
@@ -696,6 +776,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         @Override
         public PropertyList addToPropertyList(PropertyList propertyList) {
             propertyList = super.addToPropertyList(propertyList);
+            propertyList.add("WAV Format ID", getWavFormatID());
             propertyList.add("Unknown Value", this.unknownValue,
                     () -> InputMenu.promptInputInt(getGameInstance(), "Please enter the new unknown value.", this.unknownValue, null));
             return propertyList;
@@ -704,6 +785,33 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         @Override
         public boolean isRepeatEnabled() {
             return false;
+        }
+
+        @Override
+        public int getChannelCount() {
+            return DataUtils.readNumberFromBytes(this.waveFormatEx, 2, 2);
+        }
+
+        @Override
+        public int getSampleRate() {
+            return DataUtils.readIntFromBytes(this.waveFormatEx, 4);
+        }
+
+        @Override
+        public int getBitDepth() {
+            return DataUtils.readNumberFromBytes(this.waveFormatEx, 2, 14);
+        }
+
+        @Override
+        public void applySettingsFromArguments(OptionalArguments arguments) {
+            // There aren't any arguments to use here.
+        }
+
+        /**
+         * Gets the wav file format ID. 1 is for PCM.
+         */
+        public int getWavFormatID() {
+            return DataUtils.readNumberFromBytes(this.waveFormatEx, 2, 0);
         }
     }
 
@@ -722,6 +830,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         public static final String FLAG_NAME_VOICE_CLIP = "VoiceClip";
         public static final String FLAG_NAME_MUSIC = "Music";
         public static final String FLAG_NAME_PRIORITY = "Priority";
+        public static final String FLAG_NAME_VOLUME = "Volume";
 
         protected SfxAttributes(@NonNull SBRFile parentFile, byte typeOpcode) {
             super(parentFile.getGameInstance());
@@ -755,6 +864,17 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
                     () -> InputMenu.promptInputInt(getGameInstance(), "What should the new priority value be set to? (Default = 100)", this.priority, this::setPriority));
 
             return propertyList;
+        }
+
+        /**
+         * Get the state of the given bit flags
+         * @param flagMask the bit flags to get
+         */
+        public boolean getFlagState(int flagMask) {
+            if ((flagMask & FLAG_VALIDATION_MASK) != flagMask)
+                throw new IllegalArgumentException("flagMask (" + NumberUtils.toHexString(flagMask) + ") had unsupported bits set!");
+
+            return (this.flags & flagMask) == flagMask;
         }
 
         /**
@@ -836,13 +956,29 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
          * Loads the sound data from the wav file.
          * @param inputFile the file to load data from
          */
-        public abstract void loadFromWavFile(SfxEntry entry, File inputFile) throws IOException;
+        public void loadFromWavFile(SfxEntry entry, File inputFile) throws IOException {
+            loadFromWavFile(entry, Files.readAllBytes(inputFile.toPath()), inputFile.getName());
+        }
+
+        /**
+         * Loads the sound data from the wav file.
+         * @param entry the sfx entry to load from
+         * @param wavFileData the file to load data from
+         * @param fileName the name of the file which data was loaded from
+         */
+        public abstract void loadFromWavFile(SfxEntry entry, byte[] wavFileData, String fileName);
 
         /**
          * Save the sound to a wav file.
          * @param outputFile the file to save the sound as.
          */
         public abstract void saveToWavFile(SfxEntry entry, File outputFile) throws IOException;
+
+        /**
+         * Save the sound to a wav file.
+         * @param entry the entry which this attributes object is associated with
+         */
+        public abstract byte[] saveToWavFile(SfxEntry entry);
 
         /**
          * Read sound effect attributes from the reader.
@@ -857,7 +993,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
                 attributes = new SfxEntrySimpleAttributes(parentFile);
             } else if (type == SfxEntryStreamAttributes.TYPE_OPCODE) {
                 attributes = new SfxEntryStreamAttributes(parentFile);
-            } else {
+            } else { // Other sound types are defined in the code, but are not implemented/wouldn't do anything if we supported them.
                 throw new RuntimeException("Don't know what SfxAttributes type " + type + " is.");
             }
 
@@ -875,6 +1011,19 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
 
             this.priority = (short) newPriority;
         }
+
+        /**
+         * Load settings about the sound from the arguments.
+         * @param arguments the arguments to load from
+         */
+        public void applySettingsFromArguments(OptionalArguments arguments) {
+            setFlagState(SfxAttributes.FLAG_REPEAT, arguments.useFlag(SfxAttributes.FLAG_NAME_REPEAT));
+            setFlagState(SfxAttributes.FLAG_VOICE_CLIP, arguments.useFlag(SfxAttributes.FLAG_NAME_VOICE_CLIP));
+            setFlagState(SfxAttributes.FLAG_MUSIC, arguments.useFlag(SfxAttributes.FLAG_NAME_MUSIC));
+            StringNode priorityNode = arguments.use(SfxAttributes.FLAG_NAME_PRIORITY);
+            if (priorityNode != null)
+                setPriority(priorityNode.getAsInteger());
+        }
     }
 
     /**
@@ -889,6 +1038,9 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         private int waveIndex = -1;
 
         private static final byte TYPE_OPCODE = 0;
+
+        private static final String FLAG_NAME_PAN = "Pan";
+        private static final String FLAG_NAME_PITCH = "Pitch";
 
         protected SfxEntrySimpleAttributes(@NonNull SBRFile parentFile) {
             super(parentFile, TYPE_OPCODE);
@@ -956,21 +1108,30 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         }
 
         @Override
-        public void loadFromWavFile(SfxEntry entry, File inputFile) throws IOException {
+        public void loadFromWavFile(SfxEntry entry, byte[] fileData, String fileName) {
             SfxWave wave = getWave();
             if (wave == null)
-                throw new IllegalStateException("Could not resolve SfxWave.");
+                throw new IllegalStateException("Could not resolve SfxWave for '" + entry.getExportFileName() + "'.");
 
-            wave.importFromWav(inputFile);
+            wave.importFromWav(fileData, fileName);
         }
 
         @Override
         public void saveToWavFile(SfxEntry entry, File outputFile) throws IOException {
             SfxWave wave = getWave();
             if (wave == null)
-                throw new IllegalStateException("Could not resolve SfxWave.");
+                throw new IllegalStateException("Could not resolve SfxWave for '" + entry.getExportFileName() + "'.");
 
             wave.exportToWav(outputFile);
+        }
+
+        @Override
+        public byte[] saveToWavFile(SfxEntry entry) {
+            SfxWave wave = getWave();
+            if (wave == null)
+                throw new IllegalStateException("Could not resolve SfxWave for '" + entry.getExportFileName() + "'.");
+
+            return wave.exportToWav();
         }
 
         /**
@@ -1026,6 +1187,21 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
                 throw new IllegalArgumentException("That is not a valid Wave ID! (" + newWaveIndex + "). Perhaps this is an SFX ID instead?");
 
             this.waveIndex = (short) newWaveIndex;
+        }
+
+        @Override
+        public void applySettingsFromArguments(OptionalArguments arguments) {
+            super.applySettingsFromArguments(arguments);
+            if (arguments.has(FLAG_NAME_VOLUME))
+                setVolume(arguments.use(FLAG_NAME_VOLUME).getAsInteger());
+            if (arguments.has(FLAG_NAME_PITCH))
+                setPitch(arguments.use(FLAG_NAME_PITCH).getAsInteger());
+            if (arguments.has(FLAG_NAME_PAN))
+                setPan(arguments.use(FLAG_NAME_PAN).getAsInteger());
+
+            SfxWave wave = getWave();
+            if (wave != null)
+                wave.applySettingsFromArguments(arguments);
         }
     }
 
@@ -1086,21 +1262,30 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         }
 
         @Override
-        public void loadFromWavFile(SfxEntry entry, File inputFile) {
+        public void loadFromWavFile(SfxEntry entry, byte[] wavFileData, String fileName) {
             SoundChunkEntry soundChunkEntry = getSoundChunkEntry(entry);
             if (soundChunkEntry == null)
-                throw new IllegalStateException("Could not resolve SoundChunkEntry.");
+                throw new IllegalStateException("Could not resolve SoundChunkEntry for '" + entry.getExportFileName() + "'.");
 
-            soundChunkEntry.loadSupportedAudioFile(inputFile);
+            soundChunkEntry.loadSupportedAudioFile(wavFileData);
         }
 
         @Override
         public void saveToWavFile(SfxEntry entry, File outputFile) {
             SoundChunkEntry soundChunkEntry = getSoundChunkEntry(entry);
             if (soundChunkEntry == null)
-                throw new IllegalStateException("Could not resolve SoundChunkEntry.");
+                throw new IllegalStateException("Could not resolve SoundChunkEntry for '" + entry.getExportFileName() + "'.");
 
             soundChunkEntry.saveAsWavFile(outputFile);
+        }
+
+        @Override
+        public byte[] saveToWavFile(SfxEntry entry) {
+            SoundChunkEntry soundChunkEntry = getSoundChunkEntry(entry);
+            if (soundChunkEntry == null)
+                throw new IllegalStateException("Could not resolve SoundChunkEntry for '" + entry.getExportFileName() + "'.");
+
+            return soundChunkEntry.toWavFileBytes();
         }
 
         /**
@@ -1113,13 +1298,27 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
 
             this.volume = (short) newVolume;
         }
+
+        @Override
+        public void applySettingsFromArguments(OptionalArguments arguments) {
+            super.applySettingsFromArguments(arguments);
+            if (arguments.has(FLAG_NAME_VOLUME))
+                setVolume(arguments.use(FLAG_NAME_VOLUME).getAsInteger());
+        }
     }
 
     @Getter
     public static class SfxEntry extends GameObject<GreatQuestInstance> implements IBasicSound {
         @NonNull private final SBRFile parentFile;
         private int sfxId;
-        private final SfxAttributes attributes;
+        private SfxAttributes attributes;
+
+        private static final String FLAG_NAME_EMBEDDED = "Embedded";
+        private static final String FLAG_NAME_STREAM = "Stream";
+        private static final String FLAG_NAME_IMPORT = "Import";
+        private static final String FLAG_NAME_BIT_DEPTH = "BitDepth";
+        private static final String FLAG_NAME_SAMPLE_RATE = "SampleRate";
+        private static final String FLAG_NAME_CHANNEL_COUNT = "ChannelCount";
 
         public SfxEntry(@NonNull SBRFile parentFile, int sfxId, SfxAttributes attributes) {
             super(parentFile.getGameInstance());
@@ -1276,6 +1475,174 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
                     Utils.handleError(getLogger(), th, true, "Failed to export sound as '%s'.", outputFile.getName());
                 }
             }
+        }
+
+        /**
+         * Converts the attached sound effect to a sound effect embedded in the .SBR file, instead of streamed from the .SCK.
+         */
+        public SfxEntrySimpleAttributes convertToEmbeddedSfx() {
+            if (this.attributes instanceof SfxEntrySimpleAttributes)
+                return (SfxEntrySimpleAttributes) this.attributes;
+            if (!(this.attributes instanceof SfxEntryStreamAttributes))
+                throw new IllegalArgumentException("The SfxEntry had attributes of type: " + Utils.getSimpleName(this.attributes) + ", which cannot be converted to an embedded sound effect.");
+
+            SfxEntryStreamAttributes streamAttributes = (SfxEntryStreamAttributes) this.attributes;
+
+            // Create the new attributes.
+            SfxEntrySimpleAttributes newAttributes = new SfxEntrySimpleAttributes(getParentFile());
+            copyAttributes(streamAttributes, newAttributes);
+            newAttributes.setVolume(streamAttributes.getVolume());
+
+            SoundChunkEntry chunkEntry = streamAttributes.getSoundChunkEntry(this);
+            if (chunkEntry != null) {
+                SfxWave newWave = getParentFile().createNewWave();
+                newWave.importFromWav(chunkEntry.toWavFileBytes(), chunkEntry.getExportFileName());
+                newWave.setWaveID(getParentFile().getWaves().size());
+                getParentFile().getWaves().add(newWave);
+                newAttributes.setWaveIndex(newWave.getWaveID()); // Can only occur after the wave is added.
+            }
+
+            this.attributes = newAttributes;
+            return newAttributes;
+        }
+
+        /**
+         * Converts the attached sound effect to a sound effect embedded in the .SBR file, instead of streamed from the .SCK.
+         */
+        public SfxEntryStreamAttributes convertToStreamSfx() {
+            if (this.attributes instanceof SfxEntryStreamAttributes)
+                return (SfxEntryStreamAttributes) this.attributes;
+            if (!(this.attributes instanceof SfxEntrySimpleAttributes))
+                throw new IllegalArgumentException("The SfxEntry had attributes of type: " + Utils.getSimpleName(this.attributes) + ", which cannot be converted to a streamed sound effect.");
+
+            SfxEntrySimpleAttributes oldAttributes = (SfxEntrySimpleAttributes) this.attributes;
+            SfxWave oldWave = oldAttributes.getWave();
+            if (oldWave == null)
+                throw new UnsupportedOperationException("Cannot convert SfxEntry '" + getExportFileName() + "' attributes to " + SfxEntryStreamAttributes.class.getSimpleName() + ", because the sound data (wave) could not be resolved.");
+
+            // Create the new attributes.
+            SfxEntryStreamAttributes newAttributes = new SfxEntryStreamAttributes(getParentFile());
+            copyAttributes(oldAttributes, newAttributes);
+            newAttributes.setVolume(oldAttributes.getVolume());
+
+            SoundChunkEntry chunkEntry = newAttributes.getSoundChunkEntry(this);
+            if (chunkEntry == null) {
+                chunkEntry = new SoundChunkEntry(getGameInstance().getSoundChunkFile(), this.sfxId);
+                chunkEntry.getSoundChunkFile().getEntries().add(chunkEntry);
+            }
+
+            // Import wav over stream entry.
+            chunkEntry.loadSupportedAudioFile(oldWave.exportToWav());
+
+            // Delete wav locally, and update all IDs.
+            getParentFile().removeWave(oldWave);
+            getParentFile().synchronizeWaveIds();
+
+            this.attributes = newAttributes;
+            return newAttributes;
+        }
+
+        private void copyAttributes(SfxAttributes oldAttributes, SfxAttributes newAttributes) {
+            newAttributes.setFlagState(SfxAttributes.FLAG_REPEAT, oldAttributes.getFlagState(SfxAttributes.FLAG_REPEAT));
+            newAttributes.setFlagState(SfxAttributes.FLAG_VOICE_CLIP, oldAttributes.getFlagState(SfxAttributes.FLAG_VOICE_CLIP));
+            newAttributes.setFlagState(SfxAttributes.FLAG_MUSIC, oldAttributes.getFlagState(SfxAttributes.FLAG_MUSIC));
+            newAttributes.setPriority(oldAttributes.getPriority());
+        }
+
+        /**
+         * Applies settings from optional arguments
+         * @param arguments the optional arguments to apply the settings from
+         */
+        @SuppressWarnings("ExtractMethodRecommender")
+        public void applySettings(File workingDirectory, OptionalArguments arguments) {
+            if (workingDirectory != null && !workingDirectory.isDirectory())
+                throw new IllegalArgumentException("workingDirectory was expected to be a directory, but was actually '" + workingDirectory.getName() + "'!");
+            if (this.attributes == null)
+                throw new IllegalStateException("This attributes for this SfxEntry (" + getExportFileName() + ") were null!");
+
+            boolean embedded = arguments.useFlag(FLAG_NAME_EMBEDDED);
+            boolean stream = arguments.useFlag(FLAG_NAME_STREAM);
+            if (embedded && stream)
+                throw new IllegalArgumentException("Arguments --" + FLAG_NAME_EMBEDDED + " and --" + FLAG_NAME_STREAM + " cannot be used together.");
+
+            // Import sound.
+            StringNode importNode = arguments.use(FLAG_NAME_IMPORT);
+            if (importNode != null && !StringUtils.isNullOrWhiteSpace(importNode.getAsString())) {
+                if (workingDirectory == null)
+                    throw new UnsupportedOperationException("Cannot use --" + FLAG_NAME_IMPORT + ", because no working directory has been specified.");
+
+                String importPath = importNode.getAsString();
+                File importFile = new File(workingDirectory, importPath.replace('\\', '/'));
+                if (!importFile.exists() || !importFile.isFile())
+                    throw new IllegalArgumentException("No sound file could be found with the path '" + importPath + "', please make sure such a file exists.");
+
+                try {
+                    this.attributes.loadFromWavFile(this, importFile);
+                } catch (IOException ex) {
+                    throw new RuntimeException("Failed to import sound file '" + importFile.getName() + "'.", ex);
+                }
+            }
+
+            // Convert a streamed sound to an embedded sound.
+            if (embedded) {
+                convertToEmbeddedSfx();
+            } else if (stream) {
+                convertToStreamSfx();
+            }
+
+            // Apply audio settings. (Should happen after converting to the attribute type)
+            this.attributes.applySettingsFromArguments(arguments);
+
+            // Re-encode audio.
+            int sampleRate = arguments.has(FLAG_NAME_SAMPLE_RATE) ? arguments.use(FLAG_NAME_SAMPLE_RATE).getAsInteger() : -1;
+            int bitDepth = arguments.has(FLAG_NAME_BIT_DEPTH) ? arguments.use(FLAG_NAME_BIT_DEPTH).getAsInteger() : -1;
+            int channelCount = arguments.has(FLAG_NAME_CHANNEL_COUNT) ? arguments.use(FLAG_NAME_CHANNEL_COUNT).getAsInteger() : -1;
+            changeAudioQuality(sampleRate, bitDepth, channelCount);
+        }
+
+        /**
+         * Re-encodes the audio using the settings specified.
+         * If the provided settings match the existing audio format, re-encoding will be skipped
+         * @param sampleRate the new sample rate to apply. If -1 is provided, the sound's current sample rate will be unchanged.
+         * @param bitDepth the new bit depth of the audio. If -1 is provided, the sound's current bit depth will be unchanged.
+         * @param channelCount the new channel count of the audio. If -1 is provided, the sound's current channel count will be unchanged.
+         * @return true if re-encoding occurred
+         */
+        public boolean changeAudioQuality(int sampleRate, int bitDepth, int channelCount) {
+            if (sampleRate != -1 && sampleRate <= 0)
+                throw new IllegalArgumentException("Invalid sample rate: " + sampleRate);
+            if (bitDepth != -1 && (bitDepth % 4 != 0 || bitDepth <= 0 || bitDepth > 32))
+                throw new IllegalArgumentException("Invalid bitDepth: " + bitDepth);
+            if (channelCount != -1 && (channelCount <= 0 || channelCount > 2))
+                throw new IllegalArgumentException("Invalid channelCount: " + channelCount);
+            if (sampleRate == -1 && bitDepth == -1 && channelCount == -1)
+                return false; // No change.
+
+            // Get sound as wav file.
+            byte[] oldWavFileData = this.attributes.saveToWavFile(this);
+            WavFile wavFile = new WavFile();
+            DataUtils.loadData(wavFile, oldWavFileData, true);
+
+            // Get the new audio.
+            AudioFormat oldAudioFormat = wavFile.createAudioFormat();
+            if (sampleRate == -1)
+                sampleRate = (int) oldAudioFormat.getSampleRate();
+            if (bitDepth == -1)
+                bitDepth = oldAudioFormat.getSampleSizeInBits();
+            if (channelCount == -1)
+                channelCount = oldAudioFormat.getChannels();
+
+            if (sampleRate == (int) oldAudioFormat.getSampleRate()
+                    && bitDepth == oldAudioFormat.getSampleSizeInBits()
+                    && channelCount == oldAudioFormat.getChannels())
+                return false; // No changes to the audio format, so don't re-encode anything.
+
+            // Re-encode audio and apply it to the attributes.
+            AudioFormat newAudioFormat = new AudioFormat(oldAudioFormat.getEncoding(), sampleRate, bitDepth, channelCount,
+                    WavFile.calculatePCMFrameSize(bitDepth, channelCount), sampleRate, false);
+            wavFile.convertToAudioFormat(newAudioFormat);
+            this.attributes.loadFromWavFile(this, wavFile.writeDataToByteArray(), getExportFileName());
+            return true;
         }
     }
 

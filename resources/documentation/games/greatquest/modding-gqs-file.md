@@ -61,9 +61,9 @@ Example:
 ```
 
 ### [SoundEffects]
-Makes streamed sound effects (the ones found in the global .SCK file) accessible to the level the .gqs file is applied to.  
-In more technical terms, it creates a new `Entry` (as opposed to a new `Wave`) in the .SBR file for the active level.  
-Currently this does not import any new sound effects, only creates sound effects for sounds already in the `.SCK` file.  
+Allows importing/configuring sound files.  
+Each line starts with the sound identifier (path).  
+This will allow such a sound effect to be used in the current level.
 
 Example:
 ```PowerShell
@@ -73,6 +73,95 @@ characters/Phroi/lvl04_sick_response
 characters/Phroi/lvl08_dialog_07
 characters/Phroi/lvl10_dialog_04
 ```
+
+Then, the following flags can be included to configure the sound.  
+All the following flags are considered optional, but not including `--Music`, `--VoiceClip`, or `--Repeat` will clear those properties if they were previously present.  
+
+**--Music:**  
+Marks the sound as being music.  
+Not sure what this is actually used for.  
+
+> ![NOTE]
+> Always include `--Priority 200` with `--Music` to ensure the game properly identifies the sound as music.  
+
+**--VoiceClip:**  
+Marks the sound as a voice clip.  
+Not sure what this is actually used for.  
+
+**--Repeat:**  
+Marks the sound as repeating when it ends.  
+This must be used with a `--Priority` of 200 or higher (in the case of a streamed sound), or it will not repeat.  
+<!-- kcCSoundEffectStream::Play is why it won't repeat. -->  
+
+**--Priority \<newPriority\>:**  
+Higher priority sounds will stop/replace lower priority sounds.  
+Having a priority of 200 means the (streamed) sound will not be stopped when dialog is advanced.  
+Valid Range: `0-255`  (100 is the default priority.)  
+
+<details>
+  <summary>Detailed information for programmers.</summary>
+
+When either `kcCAudioManager::PlaySfx` or `kcCAudioManager::OpenSfx` play a streamed sound effect, they will either update the globally tracked "music handle" or "voice handle".  
+The music handle is unused, but the voice handle is stopped whenever a dialog box is advanced. (By `kcCDialog::Update`)  
+So, if a sound should not be stopped when dialog is advanced, use `--Priority 200`.  
+A priority of 200 will cause the "music handle" to be set instead of the "voice handle".  
+</details>
+
+**--Volume \<newVolume\>:**  
+Choose the volume at which the sound is played back at.  
+Valid Range: `0-127` (127 is the default volume)  
+
+**--Pan \<newPan\>:**  
+Sets the audio pan of the sound. (How strongly to play the sound in each ear.)  
+Valid Range: `0-127` (64 is the default pan)  
+Only usable on streamed sounds (not embedded).  
+
+**--Pitch \<newPitch\>:**  
+Sets the pitch which the sound is played back with.  
+Valid Range: `0-127` (0 is the default pitch)  
+Only usable on streamed sounds (not embedded).  
+
+**--SampleRate \<newSampleRate\>:**  
+Re-encode the sound with the new sample-rate.  
+Common Values: `11025, 22050, 24000, 48000`  
+
+**--BitDepth \<newBitDepth\>:**  
+Re-encode the sound with the new bit-depth.  
+Valid Values: `8, 16, 24, 32`
+
+> ![WARNING]  
+> PlayStation 2 builds of the game only support 16-bit embedded sounds, while `--BitDepth` can still be used, the audio file will then be converted to 16-bit.  
+
+**--ChannelCount \<newChannelCount\>:**  
+Re-encode the sound with the new number of channels.  
+Valid Values: `1, 2`  
+
+> ![WARNING]  
+> PlayStation 2 builds of the game only support mono embedded sounds, while `--Channel` can still be used, the audio file will then be converted to mono.  
+
+**--Embedded:**  
+Embeds the sound into the per-level .SBR file.  
+
+> ![NOTE]  
+> It is possible to play many (up to 64) embedded sounds at the same time, without interrupting the streamed audio.  
+> This is the main benefit compared to streamed audio, which can only play two at a time (and one of those slots is taken up by music!).  
+
+> ![WARNING]  
+> If the .SBR file reaches/exceeds 1MB, the game will crash when loaded!  
+> Use streamed audio when possible, and lower the quality of embedded audio.
+
+**--Stream:**  
+Moves the sound from the per-level .SBR file to the `SNDCHUNK.SCK` file.  
+
+> ![NOTE]
+> All sounds except short sound effects should be streamed audio because of the 1MB limit on .SBR files.  
+> Unfortunately, there is a downside, which is that only two streamed sounds can be played at the same time.  
+> Because music is always playing, that means only one streamed sound file can be played at a time.  
+> Usually, new sound effects will stop the previous sound effect and play over them.
+
+**--Import \<relativeFilePath\>:**  
+Imports a .wav file from a file path relative to the .gqs file.  
+If neither `--Stream` or `--Embedded` are included, the sound will either use the pre-existing sound type, or create a new streamed sound.  
 
 ### [CopyResources]
 Copies resource chunks from one chunked file to the chunked file which the .gqs file is applied to.  

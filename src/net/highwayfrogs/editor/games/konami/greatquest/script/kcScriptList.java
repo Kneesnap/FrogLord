@@ -223,9 +223,10 @@ public class kcScriptList extends kcCResource {
 
             getLogger().info("Importing GQS file '%s'.", gqsGroupFile.getName());
             Config scriptGroupCfg = Config.loadConfigFromTextFile(gqsGroupFile, false);
+            File workingDirectory = gqsGroupFile.getParentFile();
 
             try {
-                GreatQuestAssetUtils.applyGqsScriptGroup(getParentFile(), scriptGroupCfg);
+                GreatQuestAssetUtils.applyGqsScriptGroup(workingDirectory, getParentFile(), scriptGroupCfg);
                 getLogger().info("Finished importing the gqs.");
             } catch (Throwable th) {
                 Utils.handleError(getLogger(), th, true, "An error occurred while importing the gqs file '%s'.", gqsGroupFile.getName());

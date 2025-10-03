@@ -196,15 +196,6 @@ public class AudioUtils {
 
     /**
      * Gets raw audio data from file bytes representing a supported audio file type (Usually .wav)
-     * @param wavFileContents the file contents to load.
-     * @return rawAudioDataInBytes
-     */
-    public static byte[] getRawAudioDataFromWavFile(byte[] wavFileContents) {
-        return getRawAudioDataConvertedFromWavFile(null, wavFileContents);
-    }
-
-    /**
-     * Gets raw audio data from file bytes representing a supported audio file type (Usually .wav)
      * @param targetFormat the target format to convert the audio to. Null indicates no conversion should occur.
      * @param wavFileContents the file contents to load.
      * @return rawAudioDataInBytes

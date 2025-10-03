@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile;
-import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxAttributes;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxEntryStreamAttributes;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
@@ -25,6 +24,7 @@ import net.highwayfrogs.editor.utils.logging.MessageTrackingLogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 import net.highwayfrogs.editor.utils.objects.StringNode;
 
+import java.io.File;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -51,14 +51,17 @@ public class GreatQuestAssetUtils {
      * A section named 'Dialog' can contain key-value pairs of dialog strings to add/replace.
      * A section named 'Entities' can contain entity definitions which should be added/set.
      * A section named 'Scripts' can contain entity script definitions.
+     * @param workingDirectory the working directory to load other files from. Can be null, but it would disable any features loading external files.
      * @param chunkedFile the file to apply the script group to
      * @param gqsScriptGroup the script group config to apply
      */
-    public static void applyGqsScriptGroup(GreatQuestChunkedFile chunkedFile, Config gqsScriptGroup) {
+    public static void applyGqsScriptGroup(File workingDirectory, GreatQuestChunkedFile chunkedFile, Config gqsScriptGroup) {
         if (chunkedFile == null)
             throw new NullPointerException("chunkedFile");
         if (gqsScriptGroup == null)
             throw new NullPointerException("gqsScriptGroup");
+        if (workingDirectory != null && !workingDirectory.isDirectory())
+            throw new IllegalArgumentException("The provided workingDirectory was not a directory! " + workingDirectory);
 
         MessageTrackingLogger logger = new MessageTrackingLogger(chunkedFile.getLogger());
         String sourceName = gqsScriptGroup.getSectionName();
@@ -69,7 +72,7 @@ public class GreatQuestAssetUtils {
         applyStringResources(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_DIALOG));
 
         // Should apply before scripts/entities.
-        applySoundEffects(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_SOUND_EFFECTS), logger);
+        applySoundEffects(workingDirectory, chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_SOUND_EFFECTS), logger);
 
         // Should occur before resource copying, so that any resources can resolve the model/collision references.
         applyModelReferences(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_MODELS), logger);
@@ -118,7 +121,7 @@ public class GreatQuestAssetUtils {
         }
     }
 
-    private static void applySoundEffects(GreatQuestChunkedFile chunkedFile, Config soundEffectsCfg, ILogger logger) {
+    private static void applySoundEffects(File workingDirectory, GreatQuestChunkedFile chunkedFile, Config soundEffectsCfg, ILogger logger) {
         if (soundEffectsCfg == null)
             return;
 
@@ -131,7 +134,7 @@ public class GreatQuestAssetUtils {
                 OptionalArguments arguments = OptionalArguments.parse(line);
                 String filePath = arguments.useNext().getAsString();
                 int sfxId = chunkedFile.getGameInstance().getSfxIdFromFullSoundPath(filePath);
-                if (sfxId < 0) {
+                if (sfxId < 0) { // TODO: If --Import is included, create a new sound instead.
                     logger.warning("Skipping sound file reference '%s' in %s, it could not be resolved.", filePath, sourceName);
                     continue;
                 }
@@ -152,15 +155,12 @@ public class GreatQuestAssetUtils {
                     sbrFile.getSoundEffects().add(sfxEntry);
                 }
 
-                SfxAttributes attributes = sfxEntry.getAttributes();
-                attributes.setFlagState(SfxAttributes.FLAG_REPEAT, arguments.useFlag(SfxAttributes.FLAG_NAME_REPEAT));
-                attributes.setFlagState(SfxAttributes.FLAG_VOICE_CLIP, arguments.useFlag(SfxAttributes.FLAG_NAME_VOICE_CLIP));
-                attributes.setFlagState(SfxAttributes.FLAG_MUSIC, arguments.useFlag(SfxAttributes.FLAG_NAME_MUSIC));
-                StringNode priorityNode = arguments.use(SfxAttributes.FLAG_NAME_PRIORITY);
-                if (priorityNode != null)
-                    attributes.setPriority(priorityNode.getAsInteger());
-
-                arguments.warnAboutUnusedArguments(logger);
+                try {
+                    sfxEntry.applySettings(workingDirectory, arguments);
+                    arguments.warnAboutUnusedArguments(logger);
+                } catch (Throwable th) {
+                    Utils.handleError(logger, th, false, "Failed to configure the sound '%s'.", filePath);
+                }
             }
         }
     }

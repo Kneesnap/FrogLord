@@ -327,13 +327,18 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
 
     public static class SoundChunkEntry extends GameObject<GreatQuestInstance> implements IBasicSound {
         @Getter @NonNull private final SoundChunkFile soundChunkFile;
-        @Getter private int id = -1;
-        private byte[] rawFileBytes; // This includes a WAV file header on PS2, but NOT on PC, it is just raw sound data, I think?
+        @Getter private int id;
+        private final WavFile wavFile = new WavFile();
         private Clip cachedClip;
 
         public SoundChunkEntry(SoundChunkFile soundChunkFile) {
+            this(soundChunkFile, -1);
+        }
+
+        public SoundChunkEntry(SoundChunkFile soundChunkFile, int sfxId) {
             super(soundChunkFile.getGameInstance());
             this.soundChunkFile = soundChunkFile;
+            this.id = sfxId;
         }
 
         /**
@@ -349,7 +354,17 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
             this.id = indexEntry.getSfxId();
             int soundDataEndIndex = nextEntry != null ? nextEntry.getOffset() : reader.getSize();
             reader.requireIndex(this.soundChunkFile.getLogger(), indexEntry.getOffset(), "Expected SFX Body Data");
-            this.rawFileBytes = reader.readBytes(soundDataEndIndex - reader.getIndex());
+            int audioDataSizeInBytes = soundDataEndIndex - reader.getIndex();
+
+            // Split the PC version into body and header.
+            if (getGameInstance().isPC()) {
+                int dataStartIndex = reader.getIndex();
+                this.wavFile.loadHeader(reader);
+                int headerSize = reader.getIndex() - dataStartIndex;
+                this.wavFile.loadData(reader.readBytes(audioDataSizeInBytes - headerSize));
+            } else {
+                this.wavFile.load(reader);
+            }
         }
 
         /**
@@ -366,8 +381,14 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
             indexEntry.offset = writer.getIndex();
 
             // Write the data.
-            if (this.rawFileBytes != null)
-                writer.writeBytes(this.rawFileBytes);
+            if (getGameInstance().isPC()) {
+                this.wavFile.setIgnoreCbSizeField(false); // PC uses WAVEFORMATEX.
+                this.wavFile.saveHeader(writer);
+                this.wavFile.saveData(writer);
+            } else {
+                this.wavFile.setIgnoreCbSizeField(true); // PS2 uses PCMWAVEFORMAT.
+                this.wavFile.save(writer);
+            }
         }
 
         /**
@@ -378,7 +399,7 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
                 return this.cachedClip;
 
             if (getGameInstance().isPC() || getGameInstance().isPS2()) {
-                return this.cachedClip = AudioUtils.getClipFromWavFile(toWavFileBytes(), true);
+                return this.cachedClip = this.wavFile.createClip(true);
             } else {
                 throw new UnsupportedOperationException("Unsupported game platform: " + getGameInstance().getPlatform());
             }
@@ -388,13 +409,8 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
          * Convert the sound's raw file bytes into a wave file.
          */
         public byte[] toWavFileBytes() {
-            if (getGameInstance().isPS2())  {
-                return this.rawFileBytes;
-            } else if (getGameInstance().isPC()) {
-                // The PC version contains raw audio data prefixed with an audio format header.
-                // We try to create a wav file by reading such data.
-                int expectedSize = DataUtils.readNumberFromBytes(this.rawFileBytes, 2, 14); // Read cbSize from WAVEFORMATEX.
-                return AudioUtils.createWavFile(this.rawFileBytes, 0, expectedSize, this.rawFileBytes, expectedSize, this.rawFileBytes.length - expectedSize);
+            if (getGameInstance().isPS2() || getGameInstance().isPC()) {
+                return this.wavFile.writeDataToByteArray();
             } else {
                 throw new IllegalStateException("Cannot use toWavFileBytes() when the platform is not supported!! (" + getGameInstance().getPlatform() + ")");
             }
@@ -437,30 +453,22 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
                 throw new RuntimeException("Failed to read contents of file '" + file.getName() + "'.");
             }
 
-            if (getGameInstance().isPC()) {
-                // The PC version contains a WAVEFORMATEX struct, followed by raw audio data.
+            loadSupportedAudioFile(rawFileData);
+        }
 
-                DataReader reader = new DataReader(new ArraySource(rawFileData));
-                reader.verifyString("RIFF");
-                reader.skipInt(); // File size address.
-                reader.verifyString("WAVE");
-                reader.verifyString("fmt "); // Well, I'm actually not 100% sure this is always present, I don't know how loose the .wav format is. For now it doesn't matter, but if it causes issues we'll change it.
-                int formatHeaderLength = reader.readInt();
-                byte[] formatHeader = reader.readBytes(formatHeaderLength);
-                reader.verifyString("data");
-                int rawDataLength = reader.readInt();
-                byte[] rawData = reader.readBytes(rawDataLength);
+        /**
+         * Loads the audio from the supplied file into this sound entry.
+         * @param wavFileData the wav file data to load
+         */
+        public void loadSupportedAudioFile(byte[] wavFileData) {
+            if (wavFileData == null)
+                throw new NullPointerException("wavFileData");
 
-                // Create the file data ready to be used.
-                this.rawFileBytes = new byte[formatHeaderLength + rawDataLength];
-                System.arraycopy(formatHeader, 0, this.rawFileBytes, 0, formatHeaderLength);
-                System.arraycopy(rawData, 0, this.rawFileBytes, formatHeaderLength, rawDataLength);
-            } else if (getGameInstance().isPS2()) {
-                // The PS2 version contains wav files with full headers.
-                if (!DataUtils.testSignature(rawFileData, "RIFF"))
-                    throw new RuntimeException("The provided file does not look like a .wav file!");
-
-                this.rawFileBytes = rawFileData;
+            DataReader reader = new DataReader(new ArraySource(wavFileData));
+            if (getGameInstance().isPC() || getGameInstance().isPS2()) {
+                this.wavFile.load(reader);
+                // TODO: Figure out what kinds of sounds are not allowed on each version (if any), and then warn if one is imported.
+                //  PS2 needs audio type of PCM. I think other settings are okay. PC can probably accept anything.
             } else {
                 throw new UnsupportedOperationException("Unsupported game platform: " + getGameInstance().getPlatform());
             }
@@ -496,7 +504,9 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
         @Override
         public PropertyList addToPropertyList(PropertyList propertyList) {
             propertyList.add("SFX ID", this.id);
-            propertyList.add("Sound File Size", this.rawFileBytes.length + " (" + DataSizeUnit.formatSize(this.rawFileBytes.length) + ")");
+            if (getGameInstance().isPS2() || getGameInstance().isPC())
+                propertyList = this.wavFile.addToPropertyList(propertyList);
+
             return propertyList;
         }
 

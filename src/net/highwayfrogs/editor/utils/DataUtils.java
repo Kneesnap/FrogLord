@@ -471,4 +471,21 @@ public class DataUtils {
         byte[] rawData = oldObject.writeDataToByteArray();
         return new DataReader(new ArraySource(rawData));
     }
+
+    /**
+     * Deserialize the passed object using the data found in the provided byte array.
+     * @param object the object to deserialize.
+     * @param data the data to deserialize the object with
+     */
+    public static void loadData(IBinarySerializable object, byte[] data, boolean throwIfExtraData) {
+        if (object == null)
+            throw new NullPointerException("object");
+        if (data == null)
+            throw new NullPointerException("data");
+
+        DataReader reader = new DataReader(new ArraySource(data));
+        object.load(reader);
+        if (throwIfExtraData && reader.hasMore())
+            throw new RuntimeException("The " + Utils.getSimpleName(object) + " was deserialized, but left " + reader.getRemaining() + " byte(s) unread.");
+    }
 }
