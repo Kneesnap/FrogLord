@@ -2,11 +2,10 @@ package net.highwayfrogs.editor.games.konami.greatquest;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
-import net.highwayfrogs.editor.utils.logging.ILogger;
-import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -17,27 +16,26 @@ import java.util.Map.Entry;
  * Created by Kneesnap on 10/2/2025.
  */
 public class GreatQuestModData extends GameData<GreatQuestInstance> {
-    private final ILogger logger;
     private final Map<Integer, String> userSoundFilePathsById = new HashMap<>();
     private final Map<String, Integer> userSoundFileIdsByPaths = new HashMap<>();
     @Getter private final Map<Integer, String> userGlobalFilePaths = new HashMap<>();
 
-    private static final String SIGNATURE = "FROGLORD";
+    public static final String SIGNATURE = "FROGLORD";
     private static final short CURRENT_VERSION = 0;
 
     public GreatQuestModData(GreatQuestInstance instance) {
         super(instance);
-        this.logger = new LazyInstanceLogger(instance, getClass().getSimpleName());
     }
 
     @Override
     public void load(DataReader reader) {
+        int headerAddress = reader.getIndex();
         reader.verifyString(SIGNATURE);
         short version = reader.readUnsignedByteAsShort();
-        if (version > CURRENT_VERSION) {
-            this.logger.warning("The version of FrogLord data included in this bin file (v%d) is newer than what this version of FrogLord supports! (v%d)", version, CURRENT_VERSION);
-            this.logger.warning("This may or may not cause problems.");
-        }
+        if (version > CURRENT_VERSION)
+            throw new RuntimeException("The version of FrogLord data included in this bin file (v" + version
+                    + ") is not supported in this version of FrogLord! (v" + CURRENT_VERSION
+                    + ") Try updating FrogLord to a newer version.");
 
         readStringByIdMap(reader, this.userSoundFilePathsById);
         readStringByIdMap(reader, this.userGlobalFilePaths);
@@ -45,14 +43,23 @@ public class GreatQuestModData extends GameData<GreatQuestInstance> {
         // Automatic recreation of the opposite mapping.
         for (Entry<Integer, String> entry : this.userSoundFilePathsById.entrySet())
             this.userSoundFileIdsByPaths.put(entry.getValue(), entry.getKey());
+
+        // Final load.
+        reader.verifyString(SIGNATURE);
+        int readHeaderAddress = reader.readInt();
+        if (readHeaderAddress != headerAddress)
+            throw new RuntimeException("The FrogLord data header was expected to start at 0x" + NumberUtils.to0PrefixedHexString(readHeaderAddress) + ", but actually started at 0x" + NumberUtils.to0PrefixedHexString(headerAddress) + ".");
     }
 
     @Override
     public void save(DataWriter writer) {
+        int headerAddress = writer.getIndex();
         writer.writeStringBytes(SIGNATURE);
         writer.writeUnsignedByte(CURRENT_VERSION);
         writeStringByIdMap(writer, this.userSoundFilePathsById);
         writeStringByIdMap(writer, this.userGlobalFilePaths);
+        writer.writeStringBytes(SIGNATURE);
+        writer.writeInt(headerAddress);
     }
 
     /**

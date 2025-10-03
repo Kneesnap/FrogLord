@@ -571,11 +571,6 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
 
                 getSoundListComponent().addViewEntry(newSound, 1); // Also adds to the underlying sound list.
                 getLogger().info("Imported '%s' into the SoundChunkFile as sound ID %d.", inputFile.getName(), newSound.getId());
-
-                // TODO: Implement file-name management. (And ensure a sound with that path isn't already registered)
-                //  -> Setup the removal of file names by path on removal? not sure.
-                //  -> Allow renaming?
-                //  -> This task should be done later, once we've got a system for other non-sound files too, since we've gotta track file names for everything, not just sounds.
             });
         }
     }
