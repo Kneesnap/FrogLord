@@ -81,7 +81,7 @@ All the following flags are considered optional, but not including `--Music`, `-
 Marks the sound as being music.  
 Not sure what this is actually used for.  
 
-> ![NOTE]
+> [!NOTE]  
 > Always include `--Priority 200` with `--Music` to ensure the game properly identifies the sound as music.  
 
 **--VoiceClip:**  
@@ -129,31 +129,31 @@ Common Values: `11025, 22050, 24000, 48000`
 Re-encode the sound with the new bit-depth.  
 Valid Values: `8, 16, 24, 32`
 
-> ![WARNING]  
+> [!WARNING]  
 > PlayStation 2 builds of the game only support 16-bit embedded sounds, while `--BitDepth` can still be used, the audio file will then be converted to 16-bit.  
 
 **--ChannelCount \<newChannelCount\>:**  
 Re-encode the sound with the new number of channels.  
 Valid Values: `1, 2`  
 
-> ![WARNING]  
+> [!WARNING]  
 > PlayStation 2 builds of the game only support mono embedded sounds, while `--Channel` can still be used, the audio file will then be converted to mono.  
 
 **--Embedded:**  
 Embeds the sound into the per-level .SBR file.  
 
-> ![NOTE]  
+> [!NOTE]  
 > It is possible to play many (up to 64) embedded sounds at the same time, without interrupting the streamed audio.  
 > This is the main benefit compared to streamed audio, which can only play two at a time (and one of those slots is taken up by music!).  
 
-> ![WARNING]  
+> [!WARNING]  
 > If the .SBR file reaches/exceeds 1MB, the game will crash when loaded!  
 > Use streamed audio when possible, and lower the quality of embedded audio.
 
 **--Stream:**  
 Moves the sound from the per-level .SBR file to the `SNDCHUNK.SCK` file.  
 
-> ![NOTE]
+> [!NOTE]  
 > All sounds except short sound effects should be streamed audio because of the 1MB limit on .SBR files.  
 > Unfortunately, there is a downside, which is that only two streamed sounds can be played at the same time.  
 > Because music is always playing, that means only one streamed sound file can be played at a time.  

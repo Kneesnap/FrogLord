@@ -296,7 +296,7 @@ OnEntity ENTERS_TARGET_WAYPOINT_AREA # Executes when the script owner enters the
 OnEntity LEAVES_TARGET_WAYPOINT_AREA # Executes when the script owner leaves the area of its target waypoint.
 ```
 
-> ![WARNING]  
+> [!WARNING]  
 > If the entity (player or non-player) dies, they will NOT trigger this cause.  
 
 ### OnWaypoint
@@ -305,7 +305,7 @@ OnEntity LEAVES_TARGET_WAYPOINT_AREA # Executes when the script owner leaves the
 <!---**Ghidra Reference (Ignore):** `sSendWaypointStatus`-->
 **Usage:** `OnWaypoint <ENTITY_ENTERS|ENTITY_LEAVES> <entityName>`
 
-> ![WARNING]  
+> [!WARNING]  
 > If the entity (player or non-player) dies, they will NOT trigger this cause.  
 
 ## Available Effects
@@ -699,7 +699,7 @@ Valid variable IDs are between 0 and 7.
 The provided value must be a whole number.  
 The only way to use a variable is with the `SendNumber` effect.  
 
-> ![NOTE]
+> [!NOTE]  
 > Variables can only represent whole numbers, between `-32768` and `32767`.  
 
 ### AddToVariable (Script Only)
@@ -769,7 +769,7 @@ Using the `--AsEntity` flag will change both the sender and the receiver, unlike
 **Usage:** `SetPlayerHasItem <inventoryItem> <true|false>`  
 Click [here](../../../../src/net/highwayfrogs/editor/games/konami/greatquest/generic/InventoryItem.java) to see a list of InventoryItem values.
 
-> ![NOTE]  
+> [!NOTE]  
 > `STONE_FIRE`, `STONE_ICE`, `STONE_SPEED`, `STATUE`, and `CROWN` are tracked between levels/in the save file.  
 > This can be expanded by changing the hardcoded list of inventory items named `CarryOverItems` in the executable, or by patching `CInventory::Reset` to not reset these items.  
 
