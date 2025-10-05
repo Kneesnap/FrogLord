@@ -37,7 +37,7 @@ import java.util.function.Consumer;
  */
 @Getter
 public final class GreatQuestHash<TResource extends kcHashedResource> {
-    private int hashNumber;
+    private int hashNumber = -1;
     private String originalString; // The "original" string is the one which created the hash, if known.
 
     // Some hashes need to use zero for their null value instead of -1, due to how they are processed by the game.

@@ -422,6 +422,20 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             return (TResource) resource;
         }
 
+        // Search for action sequences by name.
+        if (!StringUtils.isNullOrWhiteSpace(name) && (kcCActionSequence.class.equals(resourceClass) || ((resourceClass == null || resourceClass.isAssignableFrom(kcCActionSequence.class) && name.endsWith("]") && name.indexOf("[") > 0)))) { // Likely an action sequence, so search by name.
+            for (int i = 0; i < this.chunks.size(); i++) {
+                kcCResource resource = this.chunks.get(i);
+                if (!name.equals(resource.getName()))
+                    continue;
+
+                if (resourceClass != null && !resourceClass.isInstance(resource))
+                    throw new RuntimeException("Expected a resource named '" + name + "' to be a(n) " + resourceClass.getSimpleName() + ", but it was actually found to be a(n) " + Utils.getSimpleName(resourceClass) + ".");
+
+                return (TResource) resource;
+            }
+        }
+
         return null;
     }
 

@@ -13,6 +13,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * A recreation of the 'kcCResourceNamedHash' class in Frogger PS2 PAL.
@@ -148,7 +150,7 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
                 return;
 
             Config scriptCfg = Config.loadConfigFromTextFile(inputFile, false);
-            addSequencesFromConfigNode(scriptCfg, getLogger());
+            addSequencesFromConfigNode(getBaseName(), scriptCfg, getLogger());
             getLogger().info("Imported %d kcCActionSequence definitions from '%s'.", scriptCfg.getChildConfigNodes().size(), inputFile.getName());
         });
     }
@@ -229,7 +231,7 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
      * New sequences will be created as configured.
      * @param config The config to load the script from
      */
-    public void addSequencesFromConfigNode(Config config, ILogger logger) {
+    public void addSequencesFromConfigNode(String entityName, Config config, ILogger logger) {
         if (config == null)
             throw new NullPointerException("config");
 
@@ -241,13 +243,30 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
         }
 
         for (Config sequenceCfg : config.getChildConfigNodes()) {
-            int sequenceHash = sequenceCfg.getKeyValueNodeOrError(kcCActionSequence.HASH_CONFIG_FIELD).getAsInteger();
             String sequenceName = sequenceCfg.getSectionName();
+            String fullSequenceResourceName = entityName + "[" + sequenceName + "]";
+            kcCActionSequence oldActionSequence = getParentFile().getResourceByName(fullSequenceResourceName, kcCActionSequence.class);
+
+            // Apply hash, if present.
+            int sequenceHash;
+            ConfigValueNode hashNode = sequenceCfg.getOptionalKeyValueNode(kcCActionSequence.HASH_CONFIG_FIELD);
+            if (oldActionSequence != null) {
+                if (hashNode != null)
+                    oldActionSequence.getSelfHash().setHash(hashNode.getAsInteger(), fullSequenceResourceName, false);
+
+                sequenceHash = oldActionSequence.getHash();
+            } else if (hashNode != null) { // Apply hash from config.
+                sequenceHash = hashNode.getAsInteger();
+            } else { // Randomly generate a new hash.
+                sequenceHash = 0;
+                while (sequenceHash == 0 || sequenceHash == -1 || getParentFile().getResourceByHash(sequenceHash) != null)
+                    sequenceHash = ThreadLocalRandom.current().nextInt();
+            }
 
             // Lookup by hash lookup and NOT by name lookup.
             // This is to ensure typos (such as seen in Frog[ThroatFloatLan] vs ThroatFloatLand) do not cause any issues.
             // Hashes are how the game looks up chunked resources too, so this enforces consistent behavior.
-            HashTableEntry entry = entryLookupByValueHash.get(sequenceHash);
+            HashTableEntry entry = entryLookupByValueHash.get(sequenceHash); // Try to get the old hash, so we don't make a new entry.
             if (entry == null) {
                 entry = new HashTableEntry(this, sequenceName);
                 entry.getValueRef().setHash(sequenceHash);
