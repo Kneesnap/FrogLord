@@ -38,7 +38,7 @@ public class kcScriptCauseDummy extends kcScriptCause {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         this.subCauseType = arguments.useNext().getAsInteger();
         if (arguments.hasNext()) {
             if (this.unhandledValues == null)
@@ -51,7 +51,7 @@ public class kcScriptCauseDummy extends kcScriptCause {
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         arguments.createNext().setAsString(NumberUtils.to0PrefixedHexString(this.subCauseType), false);
         if (this.unhandledValues != null)
             for (int i = 0; i < this.unhandledValues.size(); i++)

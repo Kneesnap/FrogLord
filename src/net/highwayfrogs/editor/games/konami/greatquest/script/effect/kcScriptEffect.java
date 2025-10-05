@@ -90,16 +90,18 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
 
     /**
      * Loads the action arguments from the arguments provided.
+     * @param logger the logger to write information and warnings to
      * @param arguments the arguments to load from
      */
-    protected abstract void loadArguments(OptionalArguments arguments, int lineNumber, String fileName);
+    protected abstract void loadArguments(ILogger logger, OptionalArguments arguments, int lineNumber, String fileName);
 
     /**
      * Save the arguments of the action to the object.
+     * @param logger the logger to write information to
      * @param arguments The object to store the action arguments within
-     * @param settings settings to use to save the arguments as strings
+     * @param settings  settings to use to save the arguments as strings
      */
-    protected abstract void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings);
+    protected abstract void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings);
 
     /**
      * Gets the comment (if any) which should be included at the end of the effect line.
@@ -111,9 +113,9 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
      * Resolves the target entity hash.
      * @param hash the hash of the target entity
      */
-    public boolean setTargetEntityHash(int hash) {
+    public boolean setTargetEntityHash(ILogger logger, int hash) {
         GreatQuestChunkedFile chunkedFile = getParentFunction().getScript().getScriptList().getParentFile();
-        return GreatQuestUtils.resolveLevelResourceHash(kcCResourceEntityInst.class, chunkedFile, this, this.targetEntityRef, hash, false);
+        return GreatQuestUtils.resolveLevelResourceHash(logger, kcCResourceEntityInst.class, chunkedFile, this, this.targetEntityRef, hash, false);
     }
 
     /**
@@ -128,10 +130,10 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
         boolean resolvedOverrideEntity = false;
         kcCResourceEntityInst scriptOwner = getParentFunction().getScript().getEntity();
         this.targetEntityRef.setResource(scriptOwner, false);
-        if (overrideTargetEntity != null && GreatQuestUtils.resolveLevelResource(overrideTargetEntity, kcCResourceEntityInst.class, getChunkedFile(), this, this.targetEntityRef, false))
+        if (overrideTargetEntity != null && GreatQuestUtils.resolveLevelResource(logger, overrideTargetEntity, kcCResourceEntityInst.class, getChunkedFile(), this, this.targetEntityRef, false))
             resolvedOverrideEntity = true;
 
-        loadArguments(arguments, lineNumber, fileName);
+        loadArguments(logger, arguments, lineNumber, fileName);
 
         // Warn about target entity.
         if (resolvedOverrideEntity && scriptOwner == this.targetEntityRef.getResource()) {
@@ -169,7 +171,7 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
      */
     public final OptionalArguments saveEffect(kcScriptDisplaySettings settings) {
         OptionalArguments optionalArguments = new OptionalArguments();
-        this.saveEffect(optionalArguments, settings);
+        this.saveEffect(settings.getLogger(), optionalArguments, settings);
         return optionalArguments;
     }
 
@@ -178,13 +180,15 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
      * @param arguments The object to store the effect statement within
      * @param settings settings to use to save the arguments as strings
      */
-    public final void saveEffect(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    public final void saveEffect(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
+        if (logger == null)
+            throw new NullPointerException("logger");
         if (arguments == null)
             throw new NullPointerException("arguments");
 
         arguments.clear();
         arguments.createNext().setAsString(getEffectCommandName(), false);
-        saveArguments(arguments, settings);
+        saveArguments(logger, arguments, settings);
 
         // Include the target entity hash if it's not implied.
         if (this.targetEntityRef.getResource() == null || getParentFunction().getScript().getEntity() != this.targetEntityRef.getResource())

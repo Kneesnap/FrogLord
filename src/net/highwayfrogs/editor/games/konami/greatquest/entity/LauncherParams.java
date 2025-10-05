@@ -17,6 +17,7 @@ import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.function.Function;
 
@@ -58,7 +59,7 @@ public class LauncherParams extends kcProjectileParams implements kcIGenericReso
         reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
 
         GreatQuestChunkedFile parentFile = this.resource.getParentFile();
-        GreatQuestUtils.resolveLevelResourceHash(kcCResourceModel.class, parentFile, this, this.vtxModelRef, vtxResourceHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(getLogger(), kcCResourceModel.class, parentFile, this, this.vtxModelRef, vtxResourceHash, true);
         GreatQuestUtils.resolveLevelResourceHash(kcCResourceGenericType.PARTICLE_EMITTER_PARAM, parentFile, this, this.cruiseParticleEffectRef, cruiseParticleEffectHash, true);
         GreatQuestUtils.resolveLevelResourceHash(kcCResourceGenericType.PARTICLE_EMITTER_PARAM, parentFile, this, this.hitParticleEffectRef, hitParticleEffectHash, true);
     }
@@ -109,11 +110,11 @@ public class LauncherParams extends kcProjectileParams implements kcIGenericReso
     }
 
     @Override
-    public void fromConfig(Config input) {
-        super.fromConfig(input);
-        GreatQuestUtils.resolveLevelResource(input.getOptionalKeyValueNode(CONFIG_KEY_MODEL), kcCResourceModel.class, getParentFile(), getResource(), this.vtxModelRef, true);
-        GreatQuestUtils.resolveLevelResource(input.getOptionalKeyValueNode(CONFIG_KEY_CRUISE_PARTICLE_EFFECT), kcCResourceGenericType.PARTICLE_EMITTER_PARAM, getParentFile(), getResource(), this.cruiseParticleEffectRef, true);
-        GreatQuestUtils.resolveLevelResource(input.getOptionalKeyValueNode(CONFIG_KEY_HIT_PARTICLE_EFFECT), kcCResourceGenericType.PARTICLE_EMITTER_PARAM, getParentFile(), getResource(), this.hitParticleEffectRef, true);
+    public void fromConfig(ILogger logger, Config input) {
+        super.fromConfig(logger, input);
+        GreatQuestUtils.resolveLevelResource(logger, input.getOptionalKeyValueNode(CONFIG_KEY_MODEL), kcCResourceModel.class, getParentFile(), getResource(), this.vtxModelRef, true);
+        GreatQuestUtils.resolveLevelResource(logger, input.getOptionalKeyValueNode(CONFIG_KEY_CRUISE_PARTICLE_EFFECT), kcCResourceGenericType.PARTICLE_EMITTER_PARAM, getParentFile(), getResource(), this.cruiseParticleEffectRef, true);
+        GreatQuestUtils.resolveLevelResource(logger, input.getOptionalKeyValueNode(CONFIG_KEY_HIT_PARTICLE_EFFECT), kcCResourceGenericType.PARTICLE_EMITTER_PARAM, getParentFile(), getResource(), this.hitParticleEffectRef, true);
         this.projectileLifeTime = Math.round(input.getKeyValueNodeOrError(CONFIG_KEY_PROJECTILE_LIFE_TIME).getAsFloat() * 1000F);
         this.speed = input.getOrDefaultKeyValueNode(CONFIG_KEY_SPEED).getAsFloat(DEFAULT_SPEED);
     }

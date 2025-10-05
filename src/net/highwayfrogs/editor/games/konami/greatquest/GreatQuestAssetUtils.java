@@ -76,7 +76,7 @@ public class GreatQuestAssetUtils {
 
         // Should occur before resource copying, so that any resources can resolve the model/collision references.
         applyModelReferences(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_MODELS), logger);
-        applyCollisionProxies(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_COLLISION_PROXIES));
+        applyCollisionProxies(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_COLLISION_PROXIES), logger);
         copyResources(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_COPY_RESOURCES), logger);
         deleteResources(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_DELETE_RESOURCES), logger);
         updateAnimationSets(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ANIMATIONS), logger);
@@ -84,7 +84,7 @@ public class GreatQuestAssetUtils {
 
         // This should occur after resource copying to ensure it can resolve resources. Copied resources shouldn't reference entity descriptions since entity instances (a resource which is not expected to be copied) are the only resource to resolve entity descriptions.
         // This should also happen before entity instances are applied.
-        List<kcWaypointDesc> waypoints = applyEntityDescriptions(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ENTITY_DESCRIPTIONS));
+        List<kcWaypointDesc> waypoints = applyEntityDescriptions(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ENTITY_DESCRIPTIONS), logger);
 
         // Run before scripts, but after entity descriptions.
         applyEntityInstances(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ENTITIES), scriptList, logger);
@@ -92,7 +92,8 @@ public class GreatQuestAssetUtils {
 
         // Finish resolving waypoint descriptions. (Happens after entities are created, so the next/prev entities can be resolved successfully.
         if (waypoints != null)
-            waypoints.forEach(kcWaypointDesc::resolvePendingWaypointEntities);
+            for (int i = 0; i < waypoints.size(); i++)
+                waypoints.get(i).resolvePendingWaypointEntities(logger);
 
         // Print advanced warnings after everything is complete.
         scriptList.printAdvancedWarnings(logger);
@@ -301,7 +302,7 @@ public class GreatQuestAssetUtils {
         }
     }
 
-    private static void applyCollisionProxies(GreatQuestChunkedFile chunkedFile, Config collisionCfg) {
+    private static void applyCollisionProxies(GreatQuestChunkedFile chunkedFile, Config collisionCfg, ILogger logger) {
         if (collisionCfg == null)
             return;
 
@@ -321,7 +322,7 @@ public class GreatQuestAssetUtils {
             if (proxyDesc == null)
                 throw new RuntimeException("Found a resource named '" + collisionProxyDescName + "', which was expected to be a entity description, but was actually a(n) " + collisionDesc.getResourceType() + ".");
 
-            proxyDesc.fromConfig(collisionProxyDescCfg);
+            proxyDesc.fromConfig(logger, collisionProxyDescCfg);
         }
     }
 
@@ -378,7 +379,7 @@ public class GreatQuestAssetUtils {
         }
     }
 
-    private static List<kcWaypointDesc> applyEntityDescriptions(GreatQuestChunkedFile chunkedFile, Config entityDescriptionsCfg) {
+    private static List<kcWaypointDesc> applyEntityDescriptions(GreatQuestChunkedFile chunkedFile, Config entityDescriptionsCfg, ILogger logger) {
         if (entityDescriptionsCfg == null)
             return Collections.emptyList();
 
@@ -399,7 +400,7 @@ public class GreatQuestAssetUtils {
             if (entityDesc == null)
                 throw new RuntimeException("Found a resource named '" + entityDescName + "', which was expected to be a entity description, but was actually a(n) " + generic.getResourceType() + ".");
 
-            entityDesc.fromConfig(entityDescCfg);
+            entityDesc.fromConfig(logger, entityDescCfg);
 
             // Return waypoints.
             if (entityDesc instanceof kcWaypointDesc)
@@ -434,7 +435,7 @@ public class GreatQuestAssetUtils {
             if (entity == null)
                 throw new RuntimeException("Could not find an entity named '" + entityInstName + "' to load data for.");
 
-            kcEntityInst entityInst = entity.fromConfig(entityInstanceCfg);
+            kcEntityInst entityInst = entity.fromConfig(logger, entityInstanceCfg);
 
             // Scripts should load AFTER core entity data.
             Config scriptCfg = entityInstanceCfg.getChildConfigByName(kcEntityInst.CONFIG_SECTION_SCRIPT);

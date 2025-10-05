@@ -38,7 +38,7 @@ public class kcScriptCauseEntity3D extends kcScriptCause {
     public void load(int subCauseType, List<Integer> extraValues) {
         this.status = kcScriptCauseEntity3DStatus.getStatus(subCauseType, false);
         if (this.status.hasOtherEntityAsParam()) {
-            setOtherEntityHash(extraValues.get(0));
+            setOtherEntityHash(getLogger(), extraValues.get(0));
         } else if (extraValues.get(0) != 0) {
             throw new RuntimeException("Expected extra value 0 (waypoint entity) to be zero for kcScriptCauseEntity3D/" + this.status + ". (Was: " + extraValues.get(0) + ")");
         }
@@ -61,14 +61,14 @@ public class kcScriptCauseEntity3D extends kcScriptCause {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         this.status = arguments.useNext().getAsEnumOrError(kcScriptCauseEntity3DStatus.class);
         if (this.status.hasOtherEntityAsParam())
-            resolveResource(arguments.useNext(), kcCResourceEntityInst.class, this.otherEntityRef);
+            resolveResource(logger, arguments.useNext(), kcCResourceEntityInst.class, this.otherEntityRef);
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         arguments.createNext().setAsEnum(this.status);
         if (this.status.hasOtherEntityAsParam())
             this.otherEntityRef.applyGqsString(arguments.createNext(), settings);
@@ -121,8 +121,8 @@ public class kcScriptCauseEntity3D extends kcScriptCause {
      * Changes the hash of the referenced entity resource.
      * @param otherEntityHash the hash to apply
      */
-    public void setOtherEntityHash(int otherEntityHash) {
-        GreatQuestUtils.resolveLevelResourceHash(kcCResourceEntityInst.class, getChunkFile(), this, this.otherEntityRef, otherEntityHash, true);
+    public void setOtherEntityHash(ILogger logger, int otherEntityHash) {
+        GreatQuestUtils.resolveLevelResourceHash(logger, kcCResourceEntityInst.class, getChunkFile(), this, this.otherEntityRef, otherEntityHash, true);
     }
 
     @Getter

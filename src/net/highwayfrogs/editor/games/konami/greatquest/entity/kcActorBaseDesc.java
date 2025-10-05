@@ -22,6 +22,7 @@ import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.List;
 
@@ -198,13 +199,13 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
     private static final String CONFIG_KEY_ACTION_SEQUENCES = "actionSequenceTable";
 
     @Override
-    public void fromConfig(Config input) {
-        super.fromConfig(input);
-        resolveResource(input.getKeyValueNodeOrError(CONFIG_KEY_MODEL_DESC), kcCResourceGenericType.MODEL_DESCRIPTION, this.modelDescRef);
-        resolveResource(input.getOptionalKeyValueNode(CONFIG_KEY_PROXY_DESC), kcCResourceGenericTypeGroup.PROXY_DESCRIPTION, this.proxyDescRef);
-        resolveResource(input.getOptionalKeyValueNode(CONFIG_KEY_HIERARCHY), kcCResourceSkeleton.class, this.hierarchyRef);
-        resolveResource(input.getOptionalKeyValueNode(CONFIG_KEY_ANIMATION_SET), kcCResourceAnimSet.class, this.animSetRef);
-        resolveResource(input.getOptionalKeyValueNode(CONFIG_KEY_ACTION_SEQUENCES), kcCResourceNamedHash.class, this.animationSequencesRef);
+    public void fromConfig(ILogger logger, Config input) {
+        super.fromConfig(logger, input);
+        resolveResource(logger, input.getKeyValueNodeOrError(CONFIG_KEY_MODEL_DESC), kcCResourceGenericType.MODEL_DESCRIPTION, this.modelDescRef);
+        resolveResource(logger, input.getOptionalKeyValueNode(CONFIG_KEY_PROXY_DESC), kcCResourceGenericTypeGroup.PROXY_DESCRIPTION, this.proxyDescRef);
+        resolveResource(logger, input.getOptionalKeyValueNode(CONFIG_KEY_HIERARCHY), kcCResourceSkeleton.class, this.hierarchyRef);
+        resolveResource(logger, input.getOptionalKeyValueNode(CONFIG_KEY_ANIMATION_SET), kcCResourceAnimSet.class, this.animSetRef);
+        resolveResource(logger, input.getOptionalKeyValueNode(CONFIG_KEY_ACTION_SEQUENCES), kcCResourceNamedHash.class, this.animationSequencesRef);
         ConfigValueNode channelCountNode = input.getOptionalKeyValueNode(CONFIG_KEY_CHANNEL_COUNT);
         if (channelCountNode != null)
             this.channelCount = channelCountNode.getAsInteger();

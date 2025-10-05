@@ -44,6 +44,7 @@ import net.highwayfrogs.editor.utils.*;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.io.File;
 import java.io.IOException;
@@ -173,11 +174,11 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         for (int i = 0; i < this.chunks.size(); i++) {
             kcCResource resource = this.chunks.get(i);
             if (!chunksFromGroups.remove(resource))
-                getGameInstance().showWarning(getLogger(), "%s was supposed to be written/saved, but wasn't registered to any of the chunk groups!", resource);
+                getGameInstance().showWarning(getLogger(), "Invalid resources.", "%s was supposed to be written/saved, but wasn't registered to any of the chunk groups!", resource);
         }
 
         if (chunksFromGroups.size() > 0)
-            getGameInstance().showWarning(getLogger(), "Found %d resource chunk(s) which are registered to the ");
+            getGameInstance().showWarning(getLogger(), "Invalid resources.", "Found %d resource chunk(s) which are registered in the file, but weren't saved!");
 
         // Write each group.
         for (int i = 0; i < this.tableOfContents.size(); i++) {
@@ -276,7 +277,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         kcScriptList scriptList = getScriptList();
         kcScriptDisplaySettings settings = createScriptDisplaySettings();
         saveActionSequences(new File(folder, "sequences.txt"), settings);
-        saveScripts(new File(folder, "scripts.txt"), settings);
+        saveScripts(getLogger(), new File(folder, "scripts.txt"), settings);
 
         saveGenericText(new File(folder, "strings.txt"));
         saveAnimationSets(new File(folder, "animation-sets.txt"));
@@ -639,9 +640,11 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
      * Import entities from a folder.
      * @param folder The folder to import entity data from
      */
-    public void importEntities(File folder) {
+    public void importEntities(ILogger logger, File folder) {
         if (folder == null)
             throw new NullPointerException("folder");
+        if (logger == null)
+            logger = getLogger();
 
         List<Config> importConfigs = new ArrayList<>();
         for (File file : FileUtils.listFiles(folder)) {
@@ -671,10 +674,10 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             if (entityInst.getInstance() == null)
                 entityInst.setInstance(new kcEntity3DInst(entityInst));
 
-            entityInst.getInstance().fromConfigIncludeScripts(entityCfg);
+            entityInst.getInstance().fromConfigIncludeScripts(logger, entityCfg);
         }
 
-        getLogger().info("Imported %d entity instance(s).", importConfigs.size());
+        logger.info("Imported %d entity instance(s).", importConfigs.size());
     }
 
     /**
@@ -712,7 +715,10 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
      * @param file     The file to save to.
      * @param settings The settings to print the scripts with.
      */
-    public void saveScripts(File file, kcScriptDisplaySettings settings) {
+    public void saveScripts(ILogger logger, File file, kcScriptDisplaySettings settings) {
+        if (logger == null)
+            logger = getLogger();
+
         File scriptFolder = new File(file.getParentFile(), "scripts/");
 
         StringBuilder scriptBuilder = new StringBuilder();
@@ -729,7 +735,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 FileUtils.makeDirectory(scriptFolder);
                 for (int i = 0; i < scriptList.getScripts().size(); i++) {
                     kcScript script = scriptList.getScripts().get(i);
-                    Config rootNode = script.toConfigNode(settings);
+                    Config rootNode = script.toConfigNode(logger, settings);
                     rootNode.saveTextFile(new File(scriptFolder, rootNode.getSectionName() + "." + kcScript.EXTENSION));
                 }
             }
@@ -799,9 +805,11 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
      * Import entities from a folder.
      * @param folder The folder to import entity data from
      */
-    public void importEntityDescriptions(File folder) {
+    public void importEntityDescriptions(ILogger logger, File folder) {
         if (folder == null)
             throw new NullPointerException("folder");
+        if (logger == null)
+            logger = getLogger();
 
         int importCount = 0;
         for (File file : FileUtils.listFiles(folder)) {
@@ -829,11 +837,11 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 generic.setResourceData(entityDesc = descType.createNewInstance(generic));
             }
 
-            entityDesc.fromConfig(entityDescCfg);
+            entityDesc.fromConfig(logger, entityDescCfg);
             importCount++;
         }
 
-        getLogger().info("Imported %d entity description(s).", importCount);
+        logger.info("Imported %d entity description(s).", importCount);
     }
 
     /**
@@ -864,9 +872,11 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
      * Import collision proxies from a folder.
      * @param folder The folder to import proxy data from
      */
-    public void importCollisionProxies(File folder) {
+    public void importCollisionProxies(ILogger logger, File folder) {
         if (folder == null)
             throw new NullPointerException("folder");
+        if (logger == null)
+            logger = getLogger();
 
         int importCount = 0;
         for (File file : FileUtils.listFiles(folder)) {
@@ -894,11 +904,11 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 generic.setResourceData(proxyDesc = descType.createNewInstance(generic));
             }
 
-            proxyDesc.fromConfig(proxyDescCfg);
+            proxyDesc.fromConfig(logger, proxyDescCfg);
             importCount++;
         }
 
-        getLogger().info("Imported %d collision proxies.", importCount);
+        logger.info("Imported %d collision proxies.", importCount);
     }
 
 
@@ -1271,7 +1281,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             importEntitiesItem.setOnAction(event -> {
                 File inputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), RESOURCE_IMPORT_PATH);
                 if (inputFolder != null)
-                    importEntities(inputFolder);
+                    importEntities(getLogger(), inputFolder);
             });
         }
 
@@ -1288,7 +1298,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         importEntityDescriptionsItem.setOnAction(event -> {
             File inputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), RESOURCE_IMPORT_PATH);
             if (inputFolder != null)
-                importEntityDescriptions(inputFolder);
+                importEntityDescriptions(getLogger(), inputFolder);
         });
 
         MenuItem exportProxyDescriptionsItem = new MenuItem("Export Collision Proxies");
@@ -1304,7 +1314,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         importProxyDescriptionsItem.setOnAction(event -> {
             File inputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), RESOURCE_IMPORT_PATH);
             if (inputFolder != null)
-                importCollisionProxies(inputFolder);
+                importCollisionProxies(getLogger(), inputFolder);
         });
     }
 

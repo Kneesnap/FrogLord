@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.lambda.Consumer5;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.Arrays;
 import java.util.List;
@@ -81,9 +82,9 @@ public class kcProxyTriMeshDesc extends kcProxyDesc {
     private static final String CONFIG_KEY_COLLISION = "collisionMesh";
 
     @Override
-    public void fromConfig(Config input) {
-        super.fromConfig(input);
-        GreatQuestUtils.resolveLevelResource(input.getKeyValueNodeOrError(CONFIG_KEY_COLLISION), kcCResourceTriMesh.class, getParentFile(), this, this.meshRef, true);
+    public void fromConfig(ILogger logger, Config input) {
+        super.fromConfig(logger, input);
+        GreatQuestUtils.resolveLevelResource(logger, input.getKeyValueNodeOrError(CONFIG_KEY_COLLISION), kcCResourceTriMesh.class, getParentFile(), this, this.meshRef, true);
     }
 
     @Override

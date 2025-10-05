@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 /**
  * Represents the 'kcProjectileParams' struct.
@@ -95,7 +96,7 @@ public class kcProjectileParams extends GameData<GreatQuestInstance> implements 
     }
 
     @Override
-    public void fromConfig(Config input) {
+    public void fromConfig(ILogger logger, Config input) {
         this.proxyReact = input.getKeyValueNodeOrError(CONFIG_KEY_PROXY_REACT).getAsEnumOrError(ProxyReact.class);
         this.sensorRadius = input.getKeyValueNodeOrError(CONFIG_KEY_SENSOR_RADIUS).getAsFloat();
         this.group = input.getKeyValueNodeOrError(CONFIG_KEY_GROUP).getAsInteger();

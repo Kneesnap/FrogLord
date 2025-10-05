@@ -62,13 +62,13 @@ public class kcActionNumber extends kcAction {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         this.operation = arguments.useNext().getAsEnumOrError(NumberOperation.class);
         this.number = arguments.useNext().getAsInteger();
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         arguments.createNext().setAsEnum(this.operation);
         arguments.createNext().setAsInteger(this.number);
     }

@@ -22,6 +22,7 @@ import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 import net.highwayfrogs.editor.utils.objects.StringNode;
 
@@ -127,7 +128,7 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
                 return;
 
             Config entityCfg = Config.loadConfigFromTextFile(inputFile, false);
-            this.fromConfig(entityCfg);
+            this.fromConfig(getLogger(), entityCfg);
             getLogger().info("Loaded '%s' from '%s'.", getResource().getName(), inputFile.getName());
         });
     }
@@ -143,7 +144,7 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
     private static final String CONFIG_KEY_BOUNDING_SPHERE_RADIUS = "boundingSphereRadius";
 
     @Override
-    public void fromConfig(Config input) {
+    public void fromConfig(ILogger logger, Config input) {
         kcEntityDescType descType = input.getKeyValueNodeOrError(CONFIG_KEY_DESC_TYPE).getAsEnumOrError(kcEntityDescType.class);
         if (descType != getEntityDescriptionType())
             throw new RuntimeException("The entity description reported itself as " + descType + ", which is incompatible with " + getEntityDescriptionType() + ".");
@@ -163,8 +164,8 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
      * @param hashObj the hash object to apply the result to
      * @param <TResource> the type of resource to resolve
      */
-    protected <TResource extends kcHashedResource> void resolveResource(StringNode node, Class<TResource> resourceClass, GreatQuestHash<TResource> hashObj) {
-        GreatQuestUtils.resolveLevelResource(node, resourceClass, getParentFile(), getResource(), hashObj, true);
+    protected <TResource extends kcHashedResource> void resolveResource(ILogger logger, StringNode node, Class<TResource> resourceClass, GreatQuestHash<TResource> hashObj) {
+        GreatQuestUtils.resolveLevelResource(logger, node, resourceClass, getParentFile(), getResource(), hashObj, true);
     }
 
     /**
@@ -173,8 +174,8 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
      * @param resourceType the type of resource to resolve
      * @param hashObj the hash object to apply the result to
      */
-    protected void resolveResource(StringNode node, IkcCResourceGenericTypeGroup resourceType, GreatQuestHash<kcCResourceGeneric> hashObj) {
-        GreatQuestUtils.resolveLevelResource(node, resourceType, getParentFile(), getResource(), hashObj, true);
+    protected void resolveResource(ILogger logger, StringNode node, IkcCResourceGenericTypeGroup resourceType, GreatQuestHash<kcCResourceGeneric> hashObj) {
+        GreatQuestUtils.resolveLevelResource(logger, node, resourceType, getParentFile(), getResource(), hashObj, true);
     }
 
     /**

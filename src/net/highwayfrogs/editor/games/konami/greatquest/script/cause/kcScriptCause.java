@@ -74,7 +74,7 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
         this.loadedFromGame = false;
         this.userLineNumber = lineNumber;
         this.userImportSource = fileName;
-        loadArguments(arguments);
+        loadArguments(logger, arguments);
         arguments.warnAboutUnusedArguments(logger);
         printWarnings(logger);
         if (!validateGqsArgumentCount(arguments.getOrderedArgumentCount()))
@@ -86,10 +86,21 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
      * @param arguments the arguments to save to
      */
     public final void save(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+        save(null, arguments, settings);
+    }
+
+    /**
+     * Saves the cause data to the arguments object.
+     * @param arguments the arguments to save to
+     */
+    public final void save(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
+        if (logger == null)
+            logger = getLogger();
+
         arguments.createNext().setAsString(getType().getDisplayName(), false);
         int oldCount = arguments.getOrderedArgumentCount();
 
-        saveArguments(arguments, settings);
+        saveArguments(logger, arguments, settings);
 
         int argumentCount = (arguments.getOrderedArgumentCount() - oldCount);
         if (!validateGqsArgumentCount(argumentCount))
@@ -107,16 +118,18 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
 
     /**
      * Load data from the provided arguments.
+     * @param logger the logger to write warnings and other messages to
      * @param arguments The arguments to read from
      */
-    protected abstract void loadArguments(OptionalArguments arguments);
+    protected abstract void loadArguments(ILogger logger, OptionalArguments arguments);
 
     /**
      * Save arguments to the provided object.
+     * @param logger the logger to write warnings and other messages to
      * @param arguments the object to save arguments to
-     * @param settings the settings to display the cause with
+     * @param settings  the settings to display the cause with
      */
-    protected abstract void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings);
+    protected abstract void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings);
 
     /**
      * Test that we support the number of provided arguments.
@@ -235,9 +248,9 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
      * @param hashObj the hash object to apply the result to
      * @param <TResource> the type of resource to resolve
      */
-    protected <TResource extends kcHashedResource> void resolveResource(StringNode node, Class<TResource> resourceClass, GreatQuestHash<TResource> hashObj) {
+    protected <TResource extends kcHashedResource> void resolveResource(ILogger logger, StringNode node, Class<TResource> resourceClass, GreatQuestHash<TResource> hashObj) {
         GreatQuestChunkedFile chunkedFile = this.parentFunction.getChunkedFile();
-        GreatQuestUtils.resolveLevelResource(node, resourceClass, chunkedFile, this, hashObj, true);
+        GreatQuestUtils.resolveLevelResource(logger, node, resourceClass, chunkedFile, this, hashObj, true);
     }
 
     /**

@@ -52,7 +52,7 @@ public class kcActionSetAlarm extends kcAction {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         this.alarmId = arguments.useNext().getAsInteger();
         this.durationMillis = (int) (arguments.useNext().getAsFloat() * 1000F);
         StringNode repeatNode = arguments.use(REPEAT_ARGUMENT_NAME);
@@ -60,7 +60,7 @@ public class kcActionSetAlarm extends kcAction {
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         arguments.createNext().setAsInteger(this.alarmId);
         arguments.createNext().setAsFloat(this.durationMillis / 1000F);
         if (this.intervalCount != 1)

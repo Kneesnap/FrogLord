@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamRea
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 import net.highwayfrogs.editor.utils.objects.StringNode;
 
@@ -53,7 +54,7 @@ public class kcScriptEffectCamera extends kcScriptEffect {
     public void load(kcParamReader reader) {
         this.arguments = reader.getArguments();
         reader.setCurrentIndex(this.arguments.length);
-        resolveEntityFromArguments();
+        resolveEntityFromArguments(getLogger());
     }
 
     @Override
@@ -66,7 +67,7 @@ public class kcScriptEffectCamera extends kcScriptEffect {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments, int lineNumber, String fileName) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments, int lineNumber, String fileName) {
         this.arguments = new kcParam[this.cameraEffect.getArguments().length];
         for (int i = 0; i < this.arguments.length; i++) {
             StringNode node = arguments.useNext();
@@ -74,14 +75,14 @@ public class kcScriptEffectCamera extends kcScriptEffect {
 
             kcParam newArgument = new kcParam();
             this.arguments[i] = newArgument;
-            newArgument.fromConfigNode(this, getGameInstance(), node, argumentTemplate.getType());
+            newArgument.fromConfigNode(logger, this, getGameInstance(), node, argumentTemplate.getType());
         }
 
-        resolveEntityFromArguments();
+        resolveEntityFromArguments(logger);
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         for (int i = 0; i < Math.min(this.arguments.length, this.cameraEffect.getArguments().length); i++) {
             StringNode node = arguments.createNext();
             kcArgument argumentTemplate = this.cameraEffect.getArguments()[i];
@@ -99,12 +100,12 @@ public class kcScriptEffectCamera extends kcScriptEffect {
         return null; // None of these effects have end of line comments.
     }
 
-    private void resolveEntityFromArguments() {
+    private void resolveEntityFromArguments(ILogger logger) {
         if (this.entityParamRef == null)
             return;
 
         int entityHash = this.arguments[0].getAsInteger();
-        GreatQuestUtils.resolveLevelResourceHash(kcCResourceEntityInst.class, getChunkedFile(), this, this.entityParamRef, entityHash, false);
+        GreatQuestUtils.resolveLevelResourceHash(logger, kcCResourceEntityInst.class, getChunkedFile(), this, this.entityParamRef, entityHash, false);
     }
 
     @Override

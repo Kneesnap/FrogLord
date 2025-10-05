@@ -40,7 +40,7 @@ public class kcScriptCausePrompt extends kcScriptCause {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         String promptName = arguments.useNext().getAsString();
         if (NumberUtils.isHexInteger(promptName)) {
             this.promptRef.setHash(NumberUtils.parseHexInteger(promptName));
@@ -50,7 +50,7 @@ public class kcScriptCausePrompt extends kcScriptCause {
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         this.promptRef.applyGqsString(arguments.createNext(), settings);
     }
 

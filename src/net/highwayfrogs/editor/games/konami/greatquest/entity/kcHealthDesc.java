@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 /**
@@ -58,7 +59,7 @@ public class kcHealthDesc extends GameData<GreatQuestInstance> implements IMulti
     private static final String CONFIG_KEY_IMMUNE_MASK = "immuneMask";
 
     @Override
-    public void fromConfig(Config input) {
+    public void fromConfig(ILogger logger, Config input) {
         this.maxHealth = input.getKeyValueNodeOrError(CONFIG_KEY_MAX_HEALTH).getAsInteger();
         this.startHealth = input.getKeyValueNodeOrError(CONFIG_KEY_START_HEALTH).getAsInteger();
 

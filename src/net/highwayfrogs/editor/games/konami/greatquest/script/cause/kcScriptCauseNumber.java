@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionNum
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptValidationData;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
@@ -43,13 +44,13 @@ public class kcScriptCauseNumber extends kcScriptCause {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         this.operation = arguments.useNext().getAsEnumOrError(kcScriptCauseNumberOperation.class);
         this.value = arguments.useNext().getAsInteger();
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         arguments.createNext().setAsEnum(this.operation);
         arguments.createNext().setAsInteger(this.value);
     }

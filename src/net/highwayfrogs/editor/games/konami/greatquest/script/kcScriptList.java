@@ -150,7 +150,7 @@ public class kcScriptList extends kcCResource {
             kcScriptDisplaySettings settings = getParentFile().createScriptDisplaySettings();
             for (int i = 0; i < this.scripts.size(); i++) {
                 kcScript script = this.scripts.get(i);
-                Config rootNode = script.toConfigNode(settings);
+                Config rootNode = script.toConfigNode(getLogger(), settings);
                 rootNode.saveTextFile(new File(scriptFolder, rootNode.getSectionName() + "." + kcScript.EXTENSION));
                 functions += rootNode.getChildConfigNodes().size();
             }

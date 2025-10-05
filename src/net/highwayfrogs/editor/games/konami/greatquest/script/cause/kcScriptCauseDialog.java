@@ -35,7 +35,7 @@ public class kcScriptCauseDialog extends kcScriptCause {
     @Override
     public void load(int subCauseType, List<Integer> extraValues) {
         this.stage = kcScriptDialogStage.getStage(subCauseType, false);
-        setDialogHash(extraValues.get(0));
+        setDialogHash(getLogger(), extraValues.get(0));
     }
 
     @Override
@@ -45,15 +45,15 @@ public class kcScriptCauseDialog extends kcScriptCause {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         this.stage = arguments.useNext().getAsEnum(kcScriptDialogStage.class);
         GreatQuestChunkedFile chunkedFile = getParentFunction().getChunkedFile();
-        GreatQuestUtils.resolveLevelResource(arguments.useNext(), kcCResourceGenericType.STRING_RESOURCE, chunkedFile, this, this.dialogRef, true);
+        GreatQuestUtils.resolveLevelResource(logger, arguments.useNext(), kcCResourceGenericType.STRING_RESOURCE, chunkedFile, this, this.dialogRef, true);
 
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         arguments.createNext().setAsEnum(this.stage);
         this.dialogRef.applyGqsString(arguments.createNext(), settings);
     }
@@ -116,8 +116,8 @@ public class kcScriptCauseDialog extends kcScriptCause {
      * Changes the hash of the referenced dialog resource.
      * @param dialogHash the hash to apply
      */
-    public void setDialogHash(int dialogHash) {
-        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGenericType.STRING_RESOURCE, getChunkFile(), this, this.dialogRef, dialogHash, true);
+    public void setDialogHash(ILogger logger, int dialogHash) {
+        GreatQuestUtils.resolveLevelResourceHash(logger, kcCResourceGenericType.STRING_RESOURCE, getChunkFile(), this, this.dialogRef, dialogHash, true);
     }
 
     @Getter

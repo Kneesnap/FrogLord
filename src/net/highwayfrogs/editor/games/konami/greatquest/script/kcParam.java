@@ -21,6 +21,7 @@ import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.StringNode;
 
 import java.util.Arrays;
@@ -248,7 +249,7 @@ public class kcParam {
      * @param node The node to load the value from.
      * @param paramType The parameter type to resolve the value as.
      */
-    public void fromConfigNode(kcActionExecutor executor, GreatQuestInstance instance, StringNode node, kcParamType paramType) {
+    public void fromConfigNode(ILogger logger, kcActionExecutor executor, GreatQuestInstance instance, StringNode node, kcParamType paramType) {
         switch (paramType) {
             case HEX_INTEGER:
             case HASH:
@@ -344,7 +345,10 @@ public class kcParam {
                         setValue(node.getAsInteger());
                     } else {
                         int newHash = GreatQuestUtils.hash(boneName);
-                        skeleton.getLogger().warning("Could not resolve a bone named '%s', storing its hash so it can still be identified as %08X.", boneName, newHash);
+                        if (logger == null)
+                            logger = skeleton.getLogger();
+
+                        logger.warning("Could not resolve a bone named '%s', storing its hash so it can still be identified as %08X.", boneName, newHash);
                         setValue(newHash);
                     }
                 } else {

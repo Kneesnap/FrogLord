@@ -15,6 +15,7 @@ import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 /**
@@ -98,24 +99,24 @@ public abstract class kcProxyDesc extends kcBaseDesc implements kcIGenericResour
     private static final String CONFIG_KEY_COLLIDE_WITH = "collideWith";
 
     @Override
-    public void fromConfig(Config input) {
+    public void fromConfig(ILogger logger, Config input) {
         kcProxyDescType descType = input.getKeyValueNodeOrError(CONFIG_KEY_DESC_TYPE).getAsEnumOrError(kcProxyDescType.class);
         if (descType != getDescriptionType())
             throw new RuntimeException("The proxy description reported itself as " + descType + ", which is incompatible with " + getDescriptionType() + ".");
 
         this.reaction = input.getKeyValueNodeOrError(CONFIG_KEY_REACTION).getAsEnumOrError(ProxyReact.class);
         if (this.reaction == ProxyReact.HALT)
-            getLogger().warning("ProxyReact.HALT is not enabled for proxy descriptions, and will be changed to SLIDE.");
+            logger.warning("ProxyReact.HALT is not enabled for proxy descriptions, and will be changed to SLIDE.");
 
         String collisionGroupStr = input.getOrDefaultKeyValueNode(CONFIG_KEY_COLLISION_GROUP).getAsString(kcCollisionGroup.NO_COLLISION_GROUP);
         OptionalArguments collisionGroupArgs = OptionalArguments.parseCommaSeparatedNamedArguments(collisionGroupStr);
         this.collisionGroup = kcCollisionGroup.getValueFromArguments(collisionGroupArgs);
-        collisionGroupArgs.warnAboutUnusedArguments(getLogger());
+        collisionGroupArgs.warnAboutUnusedArguments(logger);
 
         String collideWithStr = input.getOrDefaultKeyValueNode(CONFIG_KEY_COLLIDE_WITH).getAsString(kcCollisionGroup.NO_COLLISION_GROUP);
         OptionalArguments collideWithArgs = OptionalArguments.parseCommaSeparatedNamedArguments(collideWithStr);
         this.collideWith = kcCollisionGroup.getValueFromArguments(collideWithArgs);
-        collideWithArgs.warnAboutUnusedArguments(getLogger());
+        collideWithArgs.warnAboutUnusedArguments(logger);
     }
 
     @Override

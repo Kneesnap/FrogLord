@@ -42,7 +42,7 @@ public class kcActionSetAnimation extends kcAction {
 
     @Override
     public void load(kcParamReader reader) {
-        setTrackHash(reader.next().getAsInteger());
+        setTrackHash(getLogger(), reader.next().getAsInteger());
         this.startTime.setValue(reader.next());
         this.translationTick.setValue(reader.next());
         this.mode = kcAnimationMode.getType(reader.next().getAsInteger(), false);
@@ -62,13 +62,13 @@ public class kcActionSetAnimation extends kcAction {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         StringNode trackNode = arguments.useNext();
         StringNode timestampTick = arguments.useNextIfPresent();
 
-        resolveResource(trackNode, kcCResourceTrack.class, this.trackRef); // Load 'track' parameter.
+        resolveResource(logger, trackNode, kcCResourceTrack.class, this.trackRef); // Load 'track' parameter.
         if (timestampTick != null) {
-            this.translationTick.fromConfigNode(getExecutor(), getGameInstance(), timestampTick, kcParamType.TIMESTAMP_TICK); // Load 'transitionTime' parameter.
+            this.translationTick.fromConfigNode(logger, getExecutor(), getGameInstance(), timestampTick, kcParamType.TIMESTAMP_TICK); // Load 'transitionTime' parameter.
         } else {
             this.translationTick.setValue(0);
         }
@@ -95,7 +95,7 @@ public class kcActionSetAnimation extends kcAction {
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         this.trackRef.applyGqsString(arguments.createNext(), settings); // Save 'track' parameter.
         this.translationTick.toConfigNode(getExecutor(), settings, arguments.createNext(), kcParamType.TIMESTAMP_TICK); // Save 'transitionTime' parameter.
 
@@ -136,8 +136,8 @@ public class kcActionSetAnimation extends kcAction {
      * Sets the hash corresponding to the animation track to play
      * @param trackHash the hash of the track to apply
      */
-    public void setTrackHash(int trackHash) {
-        GreatQuestUtils.resolveLevelResourceHash(kcCResourceTrack.class, getChunkedFile(), this, this.trackRef, trackHash, false);
+    public void setTrackHash(ILogger logger, int trackHash) {
+        GreatQuestUtils.resolveLevelResourceHash(logger, kcCResourceTrack.class, getChunkedFile(), this, this.trackRef, trackHash, false);
     }
 
     @Getter

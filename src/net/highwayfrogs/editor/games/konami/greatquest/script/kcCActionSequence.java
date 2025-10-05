@@ -170,7 +170,7 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
 
             kcAction newAction = actionID.newInstance(this);
             try {
-                newAction.load(arguments, lineNumber, fileName);
+                newAction.load(logger, arguments, lineNumber, fileName);
             } catch (Throwable th) {
                 throw new IllegalConfigSyntaxException("Could not parse the action '" + line + "' when importing sequence " + getName() + ".", th);
             }
@@ -201,9 +201,10 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
         if (sequence == null)
             return result;
 
+        ILogger logger = entry.getParentHashTable().getLogger();
         String sequenceName = sequence.getSequenceName();
         if (!sequenceName.equalsIgnoreCase(entry.getKeyName()))
-            entry.getParentHashTable().getLogger().warning("The sequence %s did not match the expected %s!", sequenceName, entry.getKeyName());
+            logger.warning("The sequence %s did not match the expected %s!", sequenceName, entry.getKeyName());
 
         // Write actions.
         StringBuilder builder = new StringBuilder();
@@ -211,7 +212,7 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
         for (int i = 0; i < sequence.getActions().size(); i++) {
             kcAction action = sequence.getActions().get(i);
             optionalArguments.createNext().setAsString(action.getActionID().getFrogLordName(), false);
-            action.save(optionalArguments, settings);
+            action.save(logger, optionalArguments, settings);
             optionalArguments.toString(builder);
             String actionText = builder.toString();
             builder.setLength(0);

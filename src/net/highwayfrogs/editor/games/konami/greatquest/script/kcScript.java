@@ -173,10 +173,13 @@ public class kcScript extends GameObject<GreatQuestInstance> {
      * @param settings The settings to save the script with
      * @return configNode
      */
-    public Config toConfigNode(kcScriptDisplaySettings settings) {
+    public Config toConfigNode(ILogger logger, kcScriptDisplaySettings settings) {
+        if (logger == null)
+            throw new NullPointerException("logger");
+
         Config result = new Config(this.entity != null ? this.entity.getName() : "Unused_" + this.scriptList.getScripts().indexOf(this));
         for (int i = 0; i < this.functions.size(); i++)
-            result.addChildConfig(this.functions.get(i).toConfigNode(settings));
+            result.addChildConfig(this.functions.get(i).toConfigNode(logger, settings));
 
         return result;
     }
@@ -416,7 +419,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
          * @param settings The settings to save the script with
          * @return configNode
          */
-        public Config toConfigNode(kcScriptDisplaySettings settings) {
+        public Config toConfigNode(ILogger logger, kcScriptDisplaySettings settings) {
             OptionalArguments tempArguments = new OptionalArguments();
             StringBuilder builder = new StringBuilder();
 
@@ -432,7 +435,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
             tempArguments.clear();
             for (int i = 0; i < this.effects.size(); i++) {
                 kcScriptEffect effect = this.effects.get(i);
-                effect.saveEffect(tempArguments, settings);
+                effect.saveEffect(logger, tempArguments, settings);
                 tempArguments.toString(builder);
                 result.getInternalText().add(new ConfigValueNode(builder.toString(), effect.getEndOfLineComment()));
                 builder.setLength(0);

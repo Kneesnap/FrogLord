@@ -3,12 +3,13 @@ package net.highwayfrogs.editor.games.konami.greatquest.proxy;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 /**
  * Implements the 'kcProxyCapsuleDesc' struct.
@@ -104,8 +105,8 @@ public class kcProxyCapsuleDesc extends kcProxyDesc {
     private static final String CONFIG_KEY_OFFSET = "offset";
 
     @Override
-    public void fromConfig(Config input) {
-        super.fromConfig(input);
+    public void fromConfig(ILogger logger, Config input) {
+        super.fromConfig(logger, input);
         this.radius = input.getOrDefaultKeyValueNode(CONFIG_KEY_RADIUS).getAsFloat(.35F);
         this.length = input.getOrDefaultKeyValueNode(CONFIG_KEY_LENGTH).getAsFloat(.5F);
         this.offset = input.getOrDefaultKeyValueNode(CONFIG_KEY_OFFSET).getAsFloat(.5F);

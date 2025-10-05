@@ -242,7 +242,7 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
 
 
     @Override
-    public void fromConfig(Config input) {
+    public void fromConfig(ILogger logger, Config input) {
         if (this.resource == null)
             throw new NullPointerException("this.resource");
 
@@ -251,24 +251,27 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
             throw new NullPointerException("chunkedFile");
 
         ConfigValueNode entityDescNode = input.getKeyValueNodeOrError(CONFIG_KEY_ENTITY_DESC);
-        GreatQuestUtils.resolveLevelResource(entityDescNode, kcCResourceGenericTypeGroup.ENTITY_DESCRIPTION, chunkedFile, this.resource, this.descriptionRef, true);
+        GreatQuestUtils.resolveLevelResource(logger, entityDescNode, kcCResourceGenericTypeGroup.ENTITY_DESCRIPTION, chunkedFile, this.resource, this.descriptionRef, true);
 
         this.priority = input.getOrDefaultKeyValueNode(CONFIG_KEY_PRIORITY).getAsInteger(1);
 
         ConfigValueNode targetEntityNode = input.getKeyValueNodeOrError(CONFIG_KEY_TARGET_ENTITY);
-        GreatQuestUtils.resolveLevelResource(targetEntityNode, kcCResourceEntityInst.class, chunkedFile, this.resource, this.targetEntityRef, true);
+        GreatQuestUtils.resolveLevelResource(logger, targetEntityNode, kcCResourceEntityInst.class, chunkedFile, this.resource, this.targetEntityRef, true);
     }
 
     /**
      * Loads from the config, and loads the script now.
      * @param input the input config to read from
      */
-    public final void fromConfigIncludeScripts(Config input) {
+    public final void fromConfigIncludeScripts(ILogger logger, Config input) {
+        if (logger == null)
+            throw new NullPointerException("logger");
+
         GreatQuestChunkedFile chunkedFile = this.resource.getParentFile();
         if (chunkedFile == null)
             throw new NullPointerException("chunkedFile");
 
-        fromConfig(input);
+        fromConfig(logger, input);
 
         // Read scripts.
         Config scriptCfg = input.getChildConfigByName(CONFIG_SECTION_SCRIPT);
@@ -321,7 +324,7 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
 
         kcScript script = getScript(scriptList);
         if (script != null) {
-            Config scriptData = script.toConfigNode(settings);
+            Config scriptData = script.toConfigNode(getLogger(), settings);
             scriptData.setSectionName(CONFIG_SECTION_SCRIPT);
             output.addChildConfig(scriptData);
         }

@@ -60,10 +60,10 @@ public class kcActionAttachSensor extends kcAction {
         this.boneId.setValue(reader.next());
         switch (this.attachID) {
             case PARTICLE_EMITTER:
-                setParticleEmitterHash(reader.next().getAsInteger());
+                setParticleEmitterHash(getLogger(), reader.next().getAsInteger());
                 break;
             case LAUNCHER:
-                setLauncherDataHash(reader.next().getAsInteger());
+                setLauncherDataHash(getLogger(), reader.next().getAsInteger());
                 break;
             case ATTACK_SENSOR:
             case BUMP_SENSOR:
@@ -103,15 +103,15 @@ public class kcActionAttachSensor extends kcAction {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         this.attachID = getActionID() == kcActionID.ATTACH_SENSOR ? kcAttachID.ATTACK_SENSOR : arguments.useNext().getAsEnum(kcAttachID.class);
-        this.boneId.fromConfigNode(getExecutor(), getGameInstance(), arguments.useNext(), kcParamType.BONE_TAG);
+        this.boneId.fromConfigNode(logger, getExecutor(), getGameInstance(), arguments.useNext(), kcParamType.BONE_TAG);
         switch (this.attachID) {
             case PARTICLE_EMITTER:
-                resolveResource(arguments.useNext(), kcCResourceGenericType.PARTICLE_EMITTER_PARAM, this.particleEmitterRef);
+                resolveResource(logger, arguments.useNext(), kcCResourceGenericType.PARTICLE_EMITTER_PARAM, this.particleEmitterRef);
                 break;
             case LAUNCHER:
-                resolveResource(arguments.useNext(), kcCResourceGenericType.LAUNCHER_DESCRIPTION, this.launchDataRef);
+                resolveResource(logger, arguments.useNext(), kcCResourceGenericType.LAUNCHER_DESCRIPTION, this.launchDataRef);
                 break;
             case ATTACK_SENSOR:
             case BUMP_SENSOR:
@@ -124,7 +124,7 @@ public class kcActionAttachSensor extends kcAction {
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         if (getActionID() != kcActionID.ATTACH_SENSOR)
             arguments.createNext().setAsEnum(this.attachID);
         this.boneId.toConfigNode(getExecutor(), settings, arguments.createNext(), kcParamType.BONE_TAG);
@@ -157,11 +157,11 @@ public class kcActionAttachSensor extends kcAction {
         }
     }
 
-    private void setParticleEmitterHash(int particleEmitterHash) {
-        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGenericType.PARTICLE_EMITTER_PARAM, getChunkedFile(), this, this.particleEmitterRef, particleEmitterHash, true);
+    private void setParticleEmitterHash(ILogger logger, int particleEmitterHash) {
+        GreatQuestUtils.resolveLevelResourceHash(logger, kcCResourceGenericType.PARTICLE_EMITTER_PARAM, getChunkedFile(), this, this.particleEmitterRef, particleEmitterHash, true);
     }
 
-    private void setLauncherDataHash(int launcherDataHash) {
-        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGenericType.LAUNCHER_DESCRIPTION, getChunkedFile(), this, this.launchDataRef, launcherDataHash, true);
+    private void setLauncherDataHash(ILogger logger, int launcherDataHash) {
+        GreatQuestUtils.resolveLevelResourceHash(logger, kcCResourceGenericType.LAUNCHER_DESCRIPTION, getChunkedFile(), this, this.launchDataRef, launcherDataHash, true);
     }
 }

@@ -40,13 +40,13 @@ public class kcActionGiveDamage extends kcActionTemplate {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         getAttackStrength().setValue(arguments.useNext().getAsInteger());
         getWeaponMask().setValue(kcDamageType.getValueFromArguments(arguments));
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         arguments.createNext().setAsInteger(getAttackStrength().getAsInteger());
         kcDamageType.addFlags(getWeaponMask().getAsInteger(), arguments);
     }

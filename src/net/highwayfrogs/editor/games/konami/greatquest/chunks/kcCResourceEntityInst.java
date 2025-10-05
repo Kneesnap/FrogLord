@@ -15,6 +15,7 @@ import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.io.File;
 
@@ -185,8 +186,9 @@ public class kcCResourceEntityInst extends kcCResource {
             if (this.instance == null)
                 this.instance = new kcEntity3DInst(this);
 
-            this.instance.fromConfig(entityCfg);
-            getLogger().info("Loaded '%s from '%s'.", getName(), inputFile.getName());
+            ILogger logger = getLogger();
+            this.instance.fromConfig(logger, entityCfg);
+            logger.info("Loaded '%s from '%s'.", getName(), inputFile.getName());
         });
     }
 
@@ -195,20 +197,22 @@ public class kcCResourceEntityInst extends kcCResource {
      * @param entityInstanceCfg the entity instance config to load from
      * @return entityInst
      */
-    public @NonNull kcEntityInst fromConfig(Config entityInstanceCfg) {
+    public @NonNull kcEntityInst fromConfig(ILogger logger, Config entityInstanceCfg) {
         if (entityInstanceCfg == null)
             throw new NullPointerException("entityInstanceCfg");
 
         kcEntityInst entityInst = this.instance;
         if (entityInst == null)
             throw new RuntimeException("The entity instance for '" + entityInstanceCfg.getSectionName() + "' was null, so we couldn't modify its script.");
+        if (logger == null)
+            logger = getLogger();
 
-        entityInst.fromConfig(entityInstanceCfg);
+        entityInst.fromConfig(logger, entityInstanceCfg);
 
         // Show target entity warning, if there is one.
         String targetEntityWarning = getCurrentFaceTargetEntityWarning();
         if (targetEntityWarning != null)
-            getLogger().warning(targetEntityWarning);
+            logger.warning(targetEntityWarning);
 
         return entityInst;
     }

@@ -42,13 +42,13 @@ public class kcActionPlaySound extends kcAction {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         this.soundPath = arguments.useNext().getAsString();
         this.soundId = getGameInstance().getSfxIdFromFullSoundPath(this.soundPath);
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         arguments.createNext().setAsString(this.soundPath, this.soundPath != null && !NumberUtils.isInteger(this.soundPath));
     }
 

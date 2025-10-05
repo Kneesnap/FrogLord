@@ -40,7 +40,7 @@ public class kcActionSetSequence extends kcAction {
 
     @Override
     public void load(kcParamReader reader) {
-        setAnimationSequenceHash(reader.next().getAsInteger());
+        setAnimationSequenceHash(getLogger(), reader.next().getAsInteger());
         this.ignoreIfAlreadyActive = reader.next().getAsBoolean();
         this.openBoneChannel = reader.next().getAsBoolean();
     }
@@ -58,10 +58,10 @@ public class kcActionSetSequence extends kcAction {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         String sequenceName = arguments.useNext().getAsString(); // We can't resolve the sequence by the hash of the string normally since these seem to use randomized hash values.
         if (NumberUtils.isHexInteger(sequenceName)) {
-            setAnimationSequenceHash(NumberUtils.parseHexInteger(sequenceName));
+            setAnimationSequenceHash(logger, NumberUtils.parseHexInteger(sequenceName));
         } else {
             kcCActionSequence foundSequence = null;
 
@@ -103,7 +103,7 @@ public class kcActionSetSequence extends kcAction {
             // Resolve the sequence hash, while also tracking the sequence name in-case of error.
             int newHash = foundSequence != null ? foundSequence.getHash() : (sequenceEntry != null ? sequenceEntry.getValueRef().getHashNumber() : 0);
             this.sequenceRef.setHash(newHash, sequenceName, false);
-            setAnimationSequenceHash(newHash);
+            setAnimationSequenceHash(logger, newHash);
         }
 
         this.ignoreIfAlreadyActive = arguments.useFlag(ARGUMENT_IGNORE_IF_ALREADY_ACTIVE);
@@ -111,7 +111,7 @@ public class kcActionSetSequence extends kcAction {
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         if (this.sequenceRef.getResource() != null) {
             arguments.createNext().setAsString(this.sequenceRef.getResource().getSequenceName(), true);
         } else if (this.sequenceEntry != null) {
@@ -156,9 +156,9 @@ public class kcActionSetSequence extends kcAction {
      * Resolves a new animation sequence hash for this action.
      * @param newAnimationSequenceHash The hash of sequence we'd like to apply when running this action.
      */
-    public void setAnimationSequenceHash(int newAnimationSequenceHash) {
+    public void setAnimationSequenceHash(ILogger logger, int newAnimationSequenceHash) {
         this.sequenceEntry = null;
-        if (GreatQuestUtils.resolveLevelResourceHash(kcCActionSequence.class, getChunkedFile(), this, this.sequenceRef, newAnimationSequenceHash, false))
+        if (GreatQuestUtils.resolveLevelResourceHash(logger, kcCActionSequence.class, getChunkedFile(), this, this.sequenceRef, newAnimationSequenceHash, false))
             return; // Successfully resolved hash.
 
         kcActorBaseDesc actorDesc = getExecutor() != null ? getExecutor().getExecutingActorBaseDescription() : null;

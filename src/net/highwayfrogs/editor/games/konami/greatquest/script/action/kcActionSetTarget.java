@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityI
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 /**
@@ -28,7 +29,7 @@ public class kcActionSetTarget extends kcAction {
 
     @Override
     public void load(kcParamReader reader) {
-        setNewEntityTargetHash(reader.next().getAsInteger());
+        setNewEntityTargetHash(getLogger(), reader.next().getAsInteger());
     }
 
     @Override
@@ -37,12 +38,12 @@ public class kcActionSetTarget extends kcAction {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
-        resolveResource(arguments.useNext(), kcCResourceEntityInst.class, this.newEntityTargetRef);
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
+        resolveResource(logger, arguments.useNext(), kcCResourceEntityInst.class, this.newEntityTargetRef);
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         this.newEntityTargetRef.applyGqsString(arguments.createNext(), settings);
     }
 
@@ -50,7 +51,7 @@ public class kcActionSetTarget extends kcAction {
      * Resolves a hash for the target used as an argument in this action.
      * @param newTargetEntityHash the hash to resolve
      */
-    public void setNewEntityTargetHash(int newTargetEntityHash) {
-        GreatQuestUtils.resolveLevelResourceHash(kcCResourceEntityInst.class, getChunkedFile(), this, this.newEntityTargetRef, newTargetEntityHash, false);
+    public void setNewEntityTargetHash(ILogger logger, int newTargetEntityHash) {
+        GreatQuestUtils.resolveLevelResourceHash(logger, kcCResourceEntityInst.class, getChunkedFile(), this, this.newEntityTargetRef, newTargetEntityHash, false);
     }
 }

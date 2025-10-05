@@ -24,6 +24,7 @@ import net.highwayfrogs.editor.utils.MathUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.text.DecimalFormat;
@@ -218,8 +219,8 @@ public class kcEntity3DInst extends kcEntityInst {
     private static final String CONFIG_KEY_SCALE = "scale";
 
     @Override
-    public void fromConfig(Config input) {
-        super.fromConfig(input);
+    public void fromConfig(ILogger logger, Config input) {
+        super.fromConfig(logger, input);
 
         ConfigValueNode flagNode = input.getOptionalKeyValueNode(CONFIG_KEY_FLAGS);
         OptionalArguments flagArguments = flagNode != null ? OptionalArguments.parseCommaSeparatedNamedArguments(flagNode.getAsString()) : new OptionalArguments();

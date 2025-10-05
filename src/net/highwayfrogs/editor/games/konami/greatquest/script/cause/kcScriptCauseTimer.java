@@ -39,13 +39,13 @@ public class kcScriptCauseTimer extends kcScriptCause {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         this.timerState = arguments.useNext().getAsEnumOrError(kcScriptCauseTimerState.class);
         this.alarmId = arguments.useNext().getAsInteger();
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         arguments.createNext().setAsEnum(this.timerState);
         arguments.createNext().setAsInteger(this.alarmId);
     }

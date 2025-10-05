@@ -111,7 +111,7 @@ public class kcInterimScriptEffect extends GameData<GreatQuestInstance> {
      */
     public kcScriptEffect toScriptEffect(kcScriptFunction scriptFunction) {
         kcScriptEffect newEffect = this.effectType.newInstance(scriptFunction, this.effectID);
-        newEffect.setTargetEntityHash(this.destObjectHash);
+        newEffect.setTargetEntityHash(scriptFunction.getLogger(), this.destObjectHash);
         kcParamReader reader = new kcParamReader(this.parameters);
         newEffect.load(reader);
 

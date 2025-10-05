@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySet
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 /**
  * Represents the 'CMagicStoneDesc'
@@ -44,8 +45,8 @@ public class CMagicStoneDesc extends CItemDesc {
     }
 
     @Override
-    public void fromConfig(Config input) {
-        super.fromConfig(input);
+    public void fromConfig(ILogger logger, Config input) {
+        super.fromConfig(logger, input);
         this.type = input.getKeyValueNodeOrError("stoneType").getAsEnumOrError(MagicStoneType.class);
 
     }

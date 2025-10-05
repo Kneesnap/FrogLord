@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneri
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 /**
@@ -33,7 +34,7 @@ public class kcActionDialog extends kcAction {
 
     @Override
     public void load(kcParamReader reader) {
-        setDialogHash(reader.next().getAsInteger());
+        setDialogHash(getLogger(), reader.next().getAsInteger());
     }
 
     @Override
@@ -42,12 +43,12 @@ public class kcActionDialog extends kcAction {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
-        resolveResource(arguments.useNext(), kcCResourceGenericType.STRING_RESOURCE, this.dialogRef);
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
+        resolveResource(logger, arguments.useNext(), kcCResourceGenericType.STRING_RESOURCE, this.dialogRef);
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         this.dialogRef.applyGqsString(arguments.createNext(), settings);
     }
 
@@ -64,7 +65,7 @@ public class kcActionDialog extends kcAction {
      * Resolves the hash of a dialog string and applies it to become the string shown when this action is executed.
      * @param newDialogHash the hash of the new dialog.
      */
-    public void setDialogHash(int newDialogHash) {
-        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGenericType.STRING_RESOURCE, getChunkedFile(), this, this.dialogRef, newDialogHash, false);
+    public void setDialogHash(ILogger logger, int newDialogHash) {
+        GreatQuestUtils.resolveLevelResourceHash(logger, kcCResourceGenericType.STRING_RESOURCE, getChunkedFile(), this, this.dialogRef, newDialogHash, false);
     }
 }

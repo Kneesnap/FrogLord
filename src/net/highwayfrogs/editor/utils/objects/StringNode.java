@@ -341,7 +341,7 @@ public class StringNode {
     public <TEnum extends Enum<TEnum>> TEnum getAsEnumOrError(Class<TEnum> enumClass) {
         TEnum value = getAsEnum(enumClass);
         if (value == null)
-            throw new IllegalConfigSyntaxException("The value '" + this.value + "' could not be interpretted as an enum value from " + enumClass.getSimpleName() + "." + getExtraDebugErrorInfo());
+            throw new IllegalConfigSyntaxException("The value '" + this.value + "' could not be interpreted as an enum value from " + enumClass.getSimpleName() + "." + getExtraDebugErrorInfo());
 
         return value;
     }

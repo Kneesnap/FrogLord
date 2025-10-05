@@ -13,6 +13,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 /**
  * Represents the 'kcParticleParam' struct.
@@ -137,7 +138,7 @@ public class kcParticleParam implements IMultiLineInfoWriter, IBinarySerializabl
     private static final String CONFIG_KEY_ORIENTATION = "orientation";
 
     @Override
-    public void fromConfig(Config input) {
+    public void fromConfig(ILogger logger, Config input) {
         this.burstMode = input.getKeyValueNodeOrError(CONFIG_KEY_BURST_MODE).getAsInteger();
         this.emitAngle = input.getKeyValueNodeOrError(CONFIG_KEY_EMIT_ANGLE).getAsFloat();
         this.emitAngleVariance = input.getKeyValueNodeOrError(CONFIG_KEY_EMIT_ANGLE_VARIANCE).getAsFloat();

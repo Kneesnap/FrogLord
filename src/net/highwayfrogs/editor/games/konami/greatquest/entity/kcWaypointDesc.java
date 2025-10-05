@@ -17,6 +17,7 @@ import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.StringNode;
 
 /**
@@ -103,8 +104,8 @@ public class kcWaypointDesc extends kcEntity3DDesc {
     private static final String CONFIG_KEY_STRENGTH = "strength";
 
     @Override
-    public void fromConfig(Config input) {
-        super.fromConfig(input);
+    public void fromConfig(ILogger logger, Config input) {
+        super.fromConfig(logger, input);
         this.type = input.getKeyValueNodeOrError(CONFIG_KEY_TYPE).getAsEnumOrError(kcWaypointType.class);
         setEntityRefWithoutResolve(this.previousWaypointEntityRef, input.getKeyValueNodeOrError(CONFIG_KEY_PREV_WAYPOINT));
         setEntityRefWithoutResolve(this.nextWaypointEntityRef, input.getKeyValueNodeOrError(CONFIG_KEY_NEXT_WAYPOINT));
@@ -149,11 +150,11 @@ public class kcWaypointDesc extends kcEntity3DDesc {
      * Resolves pending waypoint entities.
      * This would be part of {@code fromConfig(Config)} if entities weren't created after that function runs.
      */
-    public void resolvePendingWaypointEntities() {
+    public void resolvePendingWaypointEntities(ILogger logger) {
         if (this.previousWaypointEntityRef.getOriginalString() != null && this.previousWaypointEntityRef.getResource() == null)
-            resolveResource(new StringNode(this.previousWaypointEntityRef.getOriginalString()), kcCResourceEntityInst.class, this.previousWaypointEntityRef);
+            resolveResource(logger, new StringNode(this.previousWaypointEntityRef.getOriginalString()), kcCResourceEntityInst.class, this.previousWaypointEntityRef);
         if (this.nextWaypointEntityRef.getOriginalString() != null && this.nextWaypointEntityRef.getResource() == null)
-            resolveResource(new StringNode(this.nextWaypointEntityRef.getOriginalString()), kcCResourceEntityInst.class, this.nextWaypointEntityRef);
+            resolveResource(logger, new StringNode(this.nextWaypointEntityRef.getOriginalString()), kcCResourceEntityInst.class, this.nextWaypointEntityRef);
     }
 
     @Override

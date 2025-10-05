@@ -45,12 +45,12 @@ public class kcActionFlag extends kcAction {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         this.flagMask = kcEntityInstanceFlag.getValueFromArguments(arguments);
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         kcEntityInstanceFlag.addFlags(this.flagMask, arguments);
     }
 

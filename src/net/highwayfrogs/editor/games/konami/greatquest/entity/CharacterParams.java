@@ -14,6 +14,7 @@ import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 /**
@@ -333,8 +334,8 @@ public class CharacterParams extends kcActorDesc {
     }
 
     @Override
-    public void fromConfig(Config input) {
-        super.fromConfig(input);
+    public void fromConfig(ILogger logger, Config input) {
+        super.fromConfig(logger, input);
         this.characterType = input.getKeyValueNodeOrError(CONFIG_KEY_CHARACTER_TYPE).getAsEnumOrError(CharacterType.class);
 
         // Parse homePos if feasible.
