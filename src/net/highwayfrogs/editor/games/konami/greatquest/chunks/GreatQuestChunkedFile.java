@@ -284,7 +284,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         saveAnimationTracks(new File(folder, "animation-tracks.txt"));
         exportEntities(new File(folder, "entities"), scriptList, settings);
         exportEntityDescriptions(new File(folder, "entity-descriptions"));
-        exportCollisionProxies(new File(folder, "proxy-descriptions.txt"));
+        exportCollisionProxies(new File(folder, "proxy-descriptions"));
         saveGenericEmitterInfo(new File(folder, "emitters.txt"));
         saveGenericLauncherInfo(new File(folder, "launchers.txt"));
         saveGenericResourcePaths(new File(folder, "resource-paths.txt"));

@@ -1,10 +1,10 @@
 package net.highwayfrogs.editor.games.konami.greatquest.model;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.Arrays;
 
@@ -21,7 +21,7 @@ public class kcVertex implements IInfoWriter {
     private float normalX;
     private float normalY;
     private float normalZ;
-    private int diffuse;
+    private int diffuse; // TODO: The PC version has this, enable vertex colors in rendering at some point.
     private float u0;
     private float v0;
     private float u1;

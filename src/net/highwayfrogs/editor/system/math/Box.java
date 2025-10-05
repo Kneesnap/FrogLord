@@ -447,13 +447,6 @@ public class Box {
         }
     }
 
-    /// <summary>
-    /// Tests whether this box contains another box.
-    /// </summary>
-    /// <param name="otherBox">The box which is checked.</param>
-    /// <param name="mode">The mode used to deal with edge behavior.</param>
-    /// <returns>Whether this box contains the other box.</returns>
-
     /**
      * Test whether another box is contained within this box.
      * @param otherBox the box to test

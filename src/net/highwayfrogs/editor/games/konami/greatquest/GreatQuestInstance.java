@@ -62,21 +62,17 @@ import java.util.Map.Entry;
  * Represents an instance of 'Frogger: The Great Quest'.
  * TODO Immediate:
  *  -> Fix transparency for the bone icon.
+ *  -> Transparent stuff has been broken again.
  *  -> Scripting Engine
  *   -> Consider rigid primitives, upsides & downsides.
  *   -> Register public static fields as well.
  *   -> Fix interfaces.
  *   -> throw "" keyword.
  *   -> I believe config is not properly handling escapes, either that or NoodleCompiler isn't properly handling escapes in strings.
- *  -> Import/Export Models/Animations/Animation Sets/Skeletons/Collision Meshes/OctTree building
- *  -> GQS:
- *   -> I think it'd be a good idea to consider if we want to allow partial-configs, for just applying changes to existing things. Eg: CharacterParams has a lot of stuff.
- *   -> Improve script warning system.
- *    -> Popup instead of console.
- *  -> Transparent stuff has been broken again.
- *  -> Go over TODOs in the tutorial gqs script example.
  *
  * TODO Future:
+ *  -> Octree building (map importing)
+ *  -> Model importing (and collision)
  *  -> Flesh out the PropertyList behavior. (Nesting!)
  *  -> Further support previewing & editing generic data.
  *  -> Improve how the scripting UI feels to use. (Eg: the UI shouldn't be completely blocked)

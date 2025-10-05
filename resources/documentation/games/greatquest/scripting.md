@@ -518,11 +518,15 @@ Not used in the vanilla game.
 **Supported Entity Types:** Base Actors  
 <!---**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand`-->
 **Usage:** `SetAnimation <animationFileName> <transitionTime> [--Repeat] [--FirstAnimationInSequence] [--StartTime <startTimeInSeconds>]`  
-The `transitionTime` argument is how long it takes to switch (blend?) from the current animation to the new one. 0 would be instant.  
+The `transitionTime` argument is how long (in seconds) it takes to switch (blend?) from the current animation to the new one. 0 would be instant.  
 While this effect appears to work outside an action sequence, the game scripts always use `SetSequence` instead of directly calling `SetAnimation`.  
 In other words, this command should mainly be called from action sequences, and not scripts.  
 Scripts should instead use `SetSequence` to apply the sequence which then in-turn calls `SetAnimation`.  
 It has been done this way so that the AI system can also activate sequences without causing major visual issues depending on what the script is doing.  
+
+> [!NOTE]  
+> The `--FirstAnimationInSequence` flag is always included in the first `SetAnimation` call in an animation sequence by the original game.  
+> The purpose of this flag has not yet been reverse engineered. <!-- TODO: Reverse engineer it. -->  
 
 ### SetSequence (Script Only)
 **Summary:** Sets the script owner's active action sequence.  

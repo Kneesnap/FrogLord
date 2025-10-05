@@ -2,9 +2,9 @@ package net.highwayfrogs.editor.system.math;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 
 /**
  * Represents a vector with four 32 bit floating point values.
@@ -208,6 +208,19 @@ public class Vector4f implements IBinarySerializable {
         this.z = (float) (this.z * inverseMagnitude);
         this.w = (float) (this.w * inverseMagnitude);
         return this;
+    }
+
+    /**
+     * Gets this as a Vector3f (dropping the w value)
+     * @param output the output storage.
+     * @return outputVector
+     */
+    public Vector3f getXYZ(Vector3f output) {
+        if (output == null)
+            output = new Vector3f();
+
+        output.setXYZ(this.x, this.y, this.z);
+        return output;
     }
 
     /**

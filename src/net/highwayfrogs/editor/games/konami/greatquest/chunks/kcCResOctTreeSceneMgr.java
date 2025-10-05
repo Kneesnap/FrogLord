@@ -47,8 +47,8 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
     public kcCResOctTreeSceneMgr(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.OCTTREESCENEMGR);
         // All the levels seem to use these for their oct trees.
-        this.visualTree = new kcOctTree(getGameInstance(), kcOctTreeType.VISUAL, 14, 10);
-        this.entityTree = new kcOctTree(getGameInstance(), kcOctTreeType.COLLISION, 14, 14);
+        this.visualTree = new kcOctTree(getLogger(), getGameInstance(), kcOctTreeType.VISUAL, 14, 10);
+        this.entityTree = new kcOctTree(getLogger(), getGameInstance(), kcOctTreeType.COLLISION, 14, 14);
     }
 
     /**
@@ -295,7 +295,10 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
         @Setter private int materialId; // kcCOTAPrim::__ct()
         @Setter private float normalTolerance = 2F; // kcCOTAPrim::__ct()
         private final kcVector4 normalAverage = new kcVector4(0, 0, 1, 0); // kcCOTAPrim::__ct()
-        private final kcBox4 boundingBox = new kcBox4(); // This is the smallest box which contains all vertices. Generates the box bounding sphere from this, as well as oct tree collision.
+        // This is the smallest box which contains all vertices. Generates the box bounding sphere from this, as well as oct tree collision.
+        // Note that because the PS2 data has lower-precision for its floating point values, the values loaded from the PS2 version are slightly more accurate than the actual vertices.)
+        // In other words, there's some precision loss if we recalculate this box on the PS2 version. BUT, it does not matter, since the actual vertices change too.
+        private final kcBox4 boundingBox = new kcBox4();
 
         // kcVtxBufFileStruct
         private long fvf;
@@ -384,7 +387,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
             writer.writeFloat(this.normalTolerance);
             writer.writeInt(0); // Verified to be zero. (Reserved)
             this.normalAverage.save(writer);
-            this.boundingBox.save(writer);
+            calculateBoundingBox(this.boundingBox).save(writer);
 
             // _kcVtxBufFileStruct
             writer.writeUnsignedInt(this.fvf);
@@ -423,6 +426,44 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
             builder.append(padding).append("Vertices (").append(this.vertices.size()).append("):").append(Constants.NEWLINE);
             for (int i = 0; i < this.vertices.size(); i++)
                 this.vertices.get(i).writePrefixedInfoLine(builder, "", newPadding);
+        }
+
+        /**
+         * Calculates the bounding box for this list, applied to the
+         * @param boundingBox the output storage for the bounding box, or null to create one
+         * @return boundingBox
+         */
+        public kcBox4 calculateBoundingBox(kcBox4 boundingBox) {
+            if (boundingBox == null)
+                boundingBox = new kcBox4();
+
+            // No vertices? Return an empty box.
+            if (this.vertices.isEmpty()) {
+                boundingBox.getMin().setXYZW(0, 0, 0, 1F);
+                boundingBox.getMax().setXYZW(0, 0, 0, 1F);
+                return boundingBox;
+            }
+
+            boundingBox.getMin().setXYZW(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE, 1F);
+            boundingBox.getMax().setXYZW(Float.MIN_VALUE, Float.MIN_VALUE, Float.MIN_VALUE, 1F);
+
+            for (int i = 0; i < this.vertices.size(); i++) {
+                kcVertex vertex = this.vertices.get(i);
+                if (vertex.getX() < boundingBox.getMin().getX())
+                    boundingBox.getMin().setX(vertex.getX());
+                if (vertex.getX() > boundingBox.getMax().getX())
+                    boundingBox.getMax().setX(vertex.getX());
+                if (vertex.getY() < boundingBox.getMin().getY())
+                    boundingBox.getMin().setY(vertex.getY());
+                if (vertex.getY() > boundingBox.getMax().getY())
+                    boundingBox.getMax().setY(vertex.getY());
+                if (vertex.getZ() < boundingBox.getMin().getZ())
+                    boundingBox.getMin().setZ(vertex.getZ());
+                if (vertex.getZ() > boundingBox.getMax().getZ())
+                    boundingBox.getMax().setZ(vertex.getZ());
+            }
+
+            return boundingBox;
         }
     }
 }
