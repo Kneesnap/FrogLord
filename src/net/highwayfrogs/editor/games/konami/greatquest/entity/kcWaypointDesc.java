@@ -15,6 +15,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySet
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
@@ -107,8 +108,8 @@ public class kcWaypointDesc extends kcEntity3DDesc {
     public void fromConfig(ILogger logger, Config input) {
         super.fromConfig(logger, input);
         this.type = input.getKeyValueNodeOrError(CONFIG_KEY_TYPE).getAsEnumOrError(kcWaypointType.class);
-        setEntityRefWithoutResolve(this.previousWaypointEntityRef, input.getKeyValueNodeOrError(CONFIG_KEY_PREV_WAYPOINT));
-        setEntityRefWithoutResolve(this.nextWaypointEntityRef, input.getKeyValueNodeOrError(CONFIG_KEY_NEXT_WAYPOINT));
+        setEntityRefWithoutResolve(this.previousWaypointEntityRef, input.getOptionalKeyValueNode(CONFIG_KEY_PREV_WAYPOINT));
+        setEntityRefWithoutResolve(this.nextWaypointEntityRef, input.getOptionalKeyValueNode(CONFIG_KEY_NEXT_WAYPOINT));
 
         // Read the bounding box data.
         ConfigValueNode boundingBoxNode = (this.type == kcWaypointType.BOUNDING_BOX)
@@ -139,7 +140,7 @@ public class kcWaypointDesc extends kcEntity3DDesc {
 
     private static void setEntityRefWithoutResolve(GreatQuestHash<kcCResourceEntityInst> hashObj, ConfigValueNode node) {
         String value = node != null ? node.getAsString(null) : null;
-        if (value != null) {
+        if (!StringUtils.isNullOrWhiteSpace(value)) {
             hashObj.setHash(value);
         } else if (hashObj.getResource() != null) {
             hashObj.setResource(null, false);
