@@ -375,7 +375,7 @@ public class GreatQuestAssetUtils {
                 chunkedFile.addResource(namedHashTable);
             }
 
-            namedHashTable.addSequencesFromConfigNode(hashTableCfg, logger);
+            namedHashTable.addSequencesFromConfigNode(hashTableCfg.getSectionName(), hashTableCfg, logger);
         }
     }
 
