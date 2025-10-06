@@ -908,7 +908,7 @@ public class Config implements IBinarySerializable {
 
                 // Verify layer.
                 if (leftLayer != rightLayer)
-                    throw new IllegalConfigSyntaxException("This section had a different number of square brackets on the left-side vs the right-side! (Line " + lineNumber + ": '" + sectionLine + "', Left: " + leftLayer + ", Right: " + rightLayer + ")");
+                    throw new IllegalConfigSyntaxException("The section had a different number of square brackets on the left-side vs the right-side! (Line " + lineNumber + ": '" + sectionLine + "', Left: " + leftLayer + ", Right: " + rightLayer + ")");
 
                 int sectionLayer = leftLayer;
                 if (sectionLayer > layer + 1)
@@ -986,7 +986,7 @@ public class Config implements IBinarySerializable {
                 if ((oldNode = config.keyValuePairs.putIfAbsent(key, newNode = new ConfigValueNode(value, commentText, commentSeparator))) == null) {
                     config.orderedKeyValuePairs.add(key);
                 } else {
-                    throw new IllegalConfigSyntaxException("The KeyValuePair on line #" + lineNumber + " conflicts the one defined on line #" + oldNode.getOriginalLineNumber() + "."
+                    throw new IllegalConfigSyntaxException("The property name '" + key + "'on line #" + lineNumber + " was previously set on line #" + oldNode.getOriginalLineNumber() + "."
                             + "\nLine #" + oldNode.getOriginalLineNumber() + ": " + escapeKey(key) + "=" + oldNode.getAsStringLiteral()
                             + "\nLine #" + lineNumber + ": " + escapeKey(key) + "=" + escapeValue(value));
                 }
