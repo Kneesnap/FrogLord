@@ -36,12 +36,14 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
     private final GreatQuestHash<kcCResourceGeneric> parentHash;
     private final GreatQuestHash<kcCResourceGeneric> modelDescRef;
     private final GreatQuestHash<kcCResourceSkeleton> hierarchyRef; // If this value is -1, it means create a new kcCAnimCtl with CID_PRS for the animation controller. Otherwise, create a new kcCSkeleton from this. kcCSkeleton::InitHierarchy() will be called whenever the hash is not -1.
-    private int channelCount = 2; // Used for initializing the skeleton hierarchy in kcCActorBase::Init, this is always seen to be two.
+    private int channelCount = DEFAULT_ANIMATION_CHANNEL_COUNT; // Used for initializing the skeleton hierarchy in kcCActorBase::Init, this is always seen to be two.
     private final GreatQuestHash<kcCResourceAnimSet> animSetRef; // I've done an extensive search and am confident that this is completely unused.
     private final GreatQuestHash<kcCResourceGeneric> proxyDescRef; // kcCActorBase::Init() will fail if this is not either -1 or a valid hash.
     private final GreatQuestHash<kcCResourceNamedHash> animationSequencesRef; // hAnimHash, kcCActorBase::Init, kcCActorBase::ResetInt
     private static final int PADDING_VALUES = 4;
     private static final String NAME_SUFFIX = "ActorDesc";
+
+    private static final int DEFAULT_ANIMATION_CHANNEL_COUNT = 2;
 
     public kcActorBaseDesc(@NonNull kcCResourceGeneric resource, kcEntityDescType descType) {
         super(resource, descType);
@@ -107,7 +109,8 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         builder.append(padding).append("Hash: ").append(this.parentHash.getHashNumberAsString()).append(Constants.NEWLINE);
         writeAssetLine(builder, padding, "Model", this.modelDescRef);
         writeAssetLine(builder, padding, "Animation Hierarchy", this.hierarchyRef);
-        builder.append(padding).append("Channel Count: ").append(this.channelCount).append(Constants.NEWLINE);
+        if (this.channelCount != DEFAULT_ANIMATION_CHANNEL_COUNT)
+            builder.append(padding).append("Channel Count: ").append(this.channelCount).append(Constants.NEWLINE);
         writeAssetLine(builder, padding, "Anim Set", this.animSetRef);
         if (this instanceof CItemDesc) {
             builder.append(padding).append("Collision Proxy: {HARDCODED ITEM PROXY}").append(Constants.NEWLINE);
@@ -217,7 +220,8 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         output.getOrCreateKeyValueNode(CONFIG_KEY_MODEL_DESC).setAsString(this.modelDescRef.getAsGqsString(settings));
         output.getOrCreateKeyValueNode(CONFIG_KEY_PROXY_DESC).setAsString(this.proxyDescRef.getAsGqsString(settings));
         output.getOrCreateKeyValueNode(CONFIG_KEY_HIERARCHY).setAsString(this.hierarchyRef.getAsGqsString(settings));
-        output.getOrCreateKeyValueNode(CONFIG_KEY_CHANNEL_COUNT).setAsInteger(this.channelCount);
+        if (this.channelCount != DEFAULT_ANIMATION_CHANNEL_COUNT)
+            output.getOrCreateKeyValueNode(CONFIG_KEY_CHANNEL_COUNT).setAsInteger(this.channelCount);
         output.getOrCreateKeyValueNode(CONFIG_KEY_ANIMATION_SET).setAsString(this.animSetRef.getAsGqsString(settings));
         output.getOrCreateKeyValueNode(CONFIG_KEY_ACTION_SEQUENCES).setAsString(this.animationSequencesRef.getAsGqsString(settings));
     }

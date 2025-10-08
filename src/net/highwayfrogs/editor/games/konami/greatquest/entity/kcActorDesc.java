@@ -20,8 +20,10 @@ import net.highwayfrogs.editor.utils.logging.ILogger;
 @Setter
 public class kcActorDesc extends kcActorBaseDesc {
     private final kcHealthDesc health;
-    private int invincibleDurationLimitMs = 2000; // May not be used?
+    private int invincibleDurationLimitMs = DEFAULT_INVINCIBLE_DURATION_LIMIT_MILLIS; // May not be used?
     private static final int PADDING_VALUES = 3;
+
+    private static final int DEFAULT_INVINCIBLE_DURATION_LIMIT_MILLIS = 2000;
 
     public kcActorDesc(@NonNull kcCResourceGeneric resource, kcEntityDescType entityDescType) {
         super(resource, entityDescType);
@@ -44,25 +46,28 @@ public class kcActorDesc extends kcActorBaseDesc {
         writer.writeNull(PADDING_VALUES * Constants.INTEGER_SIZE);
     }
 
+    private static final String CONFIG_KEY_INVICIBILITY_DURATION = "invincibleDurationLimitMs";
+
     @Override
     public void fromConfig(ILogger logger, Config input) {
         super.fromConfig(logger, input);
         this.health.fromConfig(logger, input);
-        this.invincibleDurationLimitMs = input.getKeyValueNodeOrError("invincibleDurationLimitMs").getAsInteger();
-
+        this.invincibleDurationLimitMs = input.getOrDefaultKeyValueNode(CONFIG_KEY_INVICIBILITY_DURATION).getAsInteger(DEFAULT_INVINCIBLE_DURATION_LIMIT_MILLIS);
     }
 
     @Override
     public void toConfig(Config output, kcScriptDisplaySettings settings) {
         super.toConfig(output, settings);
         this.health.toConfig(output);
-        output.getOrCreateKeyValueNode("invincibleDurationLimitMs").setAsInteger(this.invincibleDurationLimitMs);
+        if (this.invincibleDurationLimitMs != DEFAULT_INVINCIBLE_DURATION_LIMIT_MILLIS)
+            output.getOrCreateKeyValueNode(CONFIG_KEY_INVICIBILITY_DURATION).setAsInteger(this.invincibleDurationLimitMs);
     }
 
     @Override
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         super.writeMultiLineInfo(builder, padding);
         this.health.writePrefixedMultiLineInfo(builder, "Health", padding);
-        builder.append(padding).append("Invincible Duration Limit (Ms): ").append(this.invincibleDurationLimitMs).append(Constants.NEWLINE);
+        if (this.invincibleDurationLimitMs != DEFAULT_INVINCIBLE_DURATION_LIMIT_MILLIS)
+            builder.append(padding).append("Invincible Duration Limit (Ms): ").append(this.invincibleDurationLimitMs).append(Constants.NEWLINE);
     }
 }
