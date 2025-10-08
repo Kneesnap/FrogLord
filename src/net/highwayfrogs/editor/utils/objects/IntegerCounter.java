@@ -11,6 +11,14 @@ import lombok.Getter;
 public class IntegerCounter {
     private int counter;
 
+    public IntegerCounter() {
+        this(0);
+    }
+
+    public IntegerCounter(int value) {
+        this.counter = value;
+    }
+
     /**
      * The counter is considered active if the value is above zero.
      */
@@ -40,6 +48,17 @@ public class IntegerCounter {
         }
 
         return false;
+    }
+
+    /**
+     * Sets the counter value.
+     * @param newValue the new value to apply
+     */
+    public void set(int newValue) {
+        if (newValue < 0)
+            throw new IllegalArgumentException("Invalid newValue: " + newValue);
+
+        this.counter = newValue;
     }
 
     @Override

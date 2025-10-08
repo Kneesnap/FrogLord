@@ -428,7 +428,8 @@ public class MultiViewScaleGizmo extends DynamicMesh {
 
         // Update state.
         GizmoMeshViewState state = this.meshViewStates.get(meshView);
-        state.setDragStartPosition(null);
+        if (state != null)
+            state.setDragStartPosition(null);
 
         // Re-enable dragging on the gizmo.
         meshView.setMouseTransparent(false);
