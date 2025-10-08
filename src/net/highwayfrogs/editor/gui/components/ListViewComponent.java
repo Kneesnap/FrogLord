@@ -84,6 +84,10 @@ public abstract class ListViewComponent<TGameInstance extends GameInstance, TVie
         boolean didChangeOccur = !activeViewEntries.equals(this.entries);
         if (didChangeOccur)
             getRootNode().requestFocus();
+
+        // Re-select the old value.
+        if (oldSelectedEntry != null)
+            setSelectedViewEntryInUI(oldSelectedEntry);
     }
 
     @Override

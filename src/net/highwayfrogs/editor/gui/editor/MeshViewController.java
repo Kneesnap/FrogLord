@@ -274,7 +274,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         splitPane.setDividerPositions(.2);
         splitPane.getItems().addAll(loadRoot, borderPane3D);
 
-        // Setup the root node. (This exists so we can also add 2D elements above the 3D space.
+        // Setup the root node. (So we can also add 2D elements above the 3D space.)
         this.root2D = new AnchorPane();
         GameUIController.setAnchorPaneStretch(splitPane);
         this.root2D.getChildren().add(splitPane);
@@ -696,7 +696,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
      */
     public static <TController extends MeshViewController<TDynMesh>, TDynMesh extends DynamicMesh> TController setupMeshViewer(Stage stageToOverride, TController controller, TDynMesh mesh) {
         if (!Platform.isSupported(ConditionalFeature.SCENE3D)) {
-            FXUtils.makePopUp("Your version of JavaFX does not support 3D, so meshes cannot be previewed.", AlertType.WARNING);
+            FXUtils.showPopup(AlertType.WARNING, "3D not supported.", "Your version of JavaFX does not support 3D, so meshes cannot be previewed.");
             return null;
         }
 

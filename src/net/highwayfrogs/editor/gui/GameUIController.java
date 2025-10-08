@@ -344,7 +344,8 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
             // When the window is hidden (with the possibility of opening later), run the removal hook.
             newStage.setOnHiding(event -> {
                 try {
-                    controller.onSceneRemove(newScene);
+                    if (controller.getScene() == newStage.getScene())  // If the scene differs (such as for a mesh viewer), the main controller isn't actually getting added.
+                        controller.onSceneRemove(newStage.getScene());
                 } catch (Throwable th) {
                     Utils.handleError(controller.getLogger(), th, true, "Failed to cleanup the UI controller %s for the scene.", Utils.getSimpleName(controller));
                 }
@@ -353,7 +354,8 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
             // If the window is re-opened after it is show, run the scene add hook again.
             newStage.setOnShowing(event -> {
                 try {
-                    controller.onSceneAdd(newScene);
+                    if (controller.getScene() == newStage.getScene()) // If the scene differs (such as for a mesh viewer), the main controller isn't actually getting added.
+                        controller.onSceneAdd(newStage.getScene());
                 } catch (Throwable th) {
                     Utils.handleError(controller.getLogger(), th, true, "Failed to setup the UI controller %s for the scene.", Utils.getSimpleName(controller));
                 }
