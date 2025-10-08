@@ -151,7 +151,7 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
 
         OptionalArguments arguments = OptionalArguments.parseCommaSeparatedNamedArguments(input.getKeyValueNodeOrError(CONFIG_KEY_FLAGS).getAsString());
         this.defaultFlags = kcEntityInstanceFlag.getValueFromArguments(arguments);
-        arguments.warnAboutUnusedArguments(getResource().getLogger());
+        arguments.warnAboutUnusedArguments(logger);
 
         this.boundingSphere.getPosition().parse(input.getKeyValueNodeOrError(CONFIG_KEY_BOUNDING_SPHERE_POS).getAsString());
         this.boundingSphere.setRadius(input.getKeyValueNodeOrError(CONFIG_KEY_BOUNDING_SPHERE_RADIUS).getAsFloat());
