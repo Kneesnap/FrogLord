@@ -32,9 +32,12 @@ public class kcEmitterDesc extends kcProxyCapsuleDesc {
     private float spawnRange = 2F;
     private final GreatQuestHash<kcCResourceGeneric> entityDescRef;
 
+    public static final String NAME_SUFFIX = "EmitterDesc";
+
     public kcEmitterDesc(kcCResourceGeneric resource) {
         super(resource, kcProxyDescType.EMITTER);
         this.entityDescRef = new GreatQuestHash<>();
+        applyNameToDescriptions();
     }
 
     @Override
@@ -49,6 +52,7 @@ public class kcEmitterDesc extends kcProxyCapsuleDesc {
         int entityDescHash = reader.readInt();
 
         GreatQuestUtils.resolveLevelResourceHash(kcCResourceGenericTypeGroup.ENTITY_DESCRIPTION, getParentFile(), this, this.entityDescRef, entityDescHash, true);
+        applyNameToDescriptions();
     }
 
     @Override
@@ -83,5 +87,24 @@ public class kcEmitterDesc extends kcProxyCapsuleDesc {
         builder.append("Max Spawn: ").append(this.maxSpawn).append(Constants.NEWLINE);
         builder.append("Spawn Range: ").append(this.spawnRange).append(Constants.NEWLINE);
         writeAssetLine(builder, padding, "Entity Description", this.entityDescRef);
+    }
+
+    private void applyNameToDescriptions() {
+        if (getResource() == null)
+            return;
+
+        // If we resolve the model successfully, our goal is to generate the name of any corresponding collision mesh.
+        String baseName = getResource().getName();
+        if (baseName.endsWith(NAME_SUFFIX))
+            baseName = baseName.substring(0, baseName.length() - NAME_SUFFIX.length());
+
+        int testHash = GreatQuestUtils.hash(baseName);
+        if (this.entityDescRef.getHashNumber() == testHash && this.entityDescRef.getResource() != null)
+            this.entityDescRef.getResource().getSelfHash().setOriginalString(baseName);
+
+        String emitterDescName = baseName + NAME_SUFFIX;
+        testHash = GreatQuestUtils.hash(emitterDescName);
+        if (getResource() != null && getResource().getHash() == testHash)
+            getResource().getSelfHash().setOriginalString(emitterDescName);
     }
 }
