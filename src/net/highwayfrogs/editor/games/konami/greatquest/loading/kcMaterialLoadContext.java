@@ -260,9 +260,9 @@ public class kcMaterialLoadContext {
 
             // Print output.
             getLogger().warning("%d image file(s) were identified for file '%s' from the material named '%s' in %s", foundImageCount, material.getTextureFileName(), material.getMaterialName(), file.getDebugName() + (foundImageCount > 0 ? ":" : "."));
-            if (foundImages != null && foundImageCount > 0)
-                for (GreatQuestImageFile foundImage : foundImages)
-                    getLogger().warning(" - %s", foundImage.getDebugName());
+            //if (foundImages != null && foundImageCount > 0) // We don't really need to see the paths.
+            //    for (GreatQuestImageFile foundImage : foundImages)
+            //        getLogger().warning(" - %s", foundImage.getDebugName());
         }
     }
 
