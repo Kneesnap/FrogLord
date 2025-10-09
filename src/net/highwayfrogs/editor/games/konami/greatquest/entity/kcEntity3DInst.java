@@ -28,6 +28,7 @@ import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.text.DecimalFormat;
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -43,10 +44,14 @@ public class kcEntity3DInst extends kcEntityInst {
     private final kcVector4 position = new kcVector4(0, 0, 0, 1);
     private final kcVector4 rotation = new kcVector4(0, 0, 0, 1);
     private final kcVector4 scale = new kcVector4(1, 1, 1, 1);
-    private final int[] reservedValues = new int[7];
-    private final int[] padding = new int[32];
+    private final int[] reservedValues = new int[RESERVE_VALUE_COUNT];
+    private final int[] padding = new int[PADDING_VALUE_COUNT];
 
     public static final int SIZE_IN_BYTES = 240;
+    public static final int SIZE_IN_BYTES_WITHOUT_PADDING = 180;
+    private static final int RESERVE_VALUE_COUNT = 7;
+    private static final int PADDING_VALUE_COUNT = 32;
+    public static final int ACTUAL_PADDING_BYTE_SIZE = (RESERVE_VALUE_COUNT + PADDING_VALUE_COUNT) * Constants.INTEGER_SIZE;
     private static final UUID GIZMO_ID = UUID.randomUUID();
 
     public kcEntity3DInst(kcCResourceEntityInst entity) {
@@ -61,10 +66,18 @@ public class kcEntity3DInst extends kcEntityInst {
         this.position.load(reader);
         this.rotation.load(reader);
         this.scale.load(reader);
-        for (int i = 0; i < this.reservedValues.length; i++)
-            this.reservedValues[i] = reader.readInt();
-        for (int i = 0; i < this.padding.length; i++)
-            this.padding[i] = reader.readInt();
+        if (reader.getRemaining() == ACTUAL_PADDING_BYTE_SIZE) {
+            for (int i = 0; i < this.reservedValues.length; i++)
+                this.reservedValues[i] = reader.readInt();
+            for (int i = 0; i < this.padding.length; i++)
+                this.padding[i] = reader.readInt();
+        } else {
+            // A handful of coins & gems found in the PC version's extra Dark Trail level seem to be semi-broken.
+            // The data reports the wrong byte-size, and is missing the padding fields but not the reserved fields.
+            reader.skipBytes(reader.getRemaining()); // Seems to be garbage. (Part of another entity instance?)
+            Arrays.fill(this.reservedValues, 0);
+            Arrays.fill(this.padding, 0);
+        }
     }
 
     @Override
@@ -130,13 +143,13 @@ public class kcEntity3DInst extends kcEntityInst {
                 double startRotation = slider.getValue();
                 InputMenu.promptInputBlocking(instance, "Please enter the new " + labelText + ".", ROTATION_ANGLE_FORMATTER.format(startRotation), newAngleText -> {
                     if (!NumberUtils.isNumber(newAngleText)) {
-                        FXUtils.makePopUp("The value '" + newAngleText + "' cannot be interpreted as a number!", AlertType.WARNING);
+                        FXUtils.showPopup(AlertType.WARNING, "Invalid number.", "The value '" + newAngleText + "' cannot be interpreted as a number!");
                         return;
                     }
 
                     float newAngle = Float.parseFloat(newAngleText);
                     if (!Float.isFinite(newAngle)) {
-                        FXUtils.makePopUp("The value '" + newAngleText + "' cannot be used as an angle!", AlertType.WARNING);
+                        FXUtils.showPopup(AlertType.WARNING, "Invalid angle.", "The value '" + newAngleText + "' cannot be used as an angle!");
                         return;
                     }
 

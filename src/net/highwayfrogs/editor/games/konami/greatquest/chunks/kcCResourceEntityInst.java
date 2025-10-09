@@ -73,16 +73,21 @@ public class kcCResourceEntityInst extends kcCResource {
 
         this.instance = null;
         this.dummyBytes = null;
-        if (sizeInBytes == kcEntity3DInst.SIZE_IN_BYTES) {
+
+        // The game uses the entity description hash (read prematurely from the upcoming data) to determine which kind of entity to create. (See kcCGameSystem::CreateInstance)
+        // All descriptions have been loaded by this point since entities are guaranteed to be last in the file.
+        // Every entity except kcCParticleEmitter can be created, see kcCResourceEntityInst::Prepare() to see that it will not work. Non-entity objects could theoretically be created too, but would cause memory corruption.
+        // It appears all entities we'd want to create are accessible except kcCParticleEmitter, which could theoretically be patched in.
+        // The following code is not accurate to the original game, but works reliably.
+        if (sizeInBytes == kcEntity3DInst.SIZE_IN_BYTES || sizeInBytes == kcEntity3DInst.SIZE_IN_BYTES_WITHOUT_PADDING) {
             this.instance = new kcEntity3DInst(this);
             this.instance.load(reader);
         } else if (sizeInBytes == kcEntityInst.SIZE_IN_BYTES) {
-            // This appears supported, although I am unsure in what circumstance this would ever be useful, and the game doesn't seem to have any entities like this.
-            getLogger().warning("A non-3D entity was found! This is unusual, and may not work correctly.");
+            // This should never occur for reasons explained above.
+            getLogger().warning("A non-3D entity was found, which is expected to never occur.");
             this.instance = new kcEntityInst(this);
             this.instance.load(reader);
         } else {
-            // TODO: Let's reverse engineer this.
             getLogger().severe("Couldn't identify the entity type for '%s' from the byte size of %d.", getName(), sizeInBytes);
             this.dummyBytes = reader.readBytes(sizeInBytes);
         }
