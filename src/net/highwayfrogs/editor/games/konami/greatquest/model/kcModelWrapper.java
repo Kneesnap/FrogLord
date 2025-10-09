@@ -45,7 +45,7 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
         reader.verifyString(SIGNATURE_STR);
         int size = reader.readInt();
 
-        if (size != reader.getRemaining()) // TODO: This being 4 too low indicates it's using the old (broken) format.
+        if (size != reader.getRemaining()) // This being 4 too low indicates it's using the old (broken) format.
             getLogger().warning("The model '%s' was supposed to have %d bytes, but actually has %d byte(s).", getDebugName(), size, reader.getRemaining());
 
         this.model.load(reader);

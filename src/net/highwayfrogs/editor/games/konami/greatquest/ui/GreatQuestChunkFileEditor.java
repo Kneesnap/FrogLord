@@ -203,7 +203,7 @@ public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<
             });
 
             this.addNewChunkItem.setOnAction(event -> {
-                FXUtils.makePopUp("Not supported yet. Chunks can be added by loading .gqs files instead.", AlertType.ERROR); // TODO: IMPLEMENT!
+                FXUtils.showPopup(AlertType.ERROR, "Not supported.", "Chunks can be created by loading .gqs files.");
             });
 
             getListComponent().getCollectionEditorComponent().addMenuItemToAddButtonLogic(this.addNewChunkItem);

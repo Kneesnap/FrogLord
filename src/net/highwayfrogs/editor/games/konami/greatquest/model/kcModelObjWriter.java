@@ -162,7 +162,6 @@ public class kcModelObjWriter {
             // Write new material.
             if (lastMaterialId != prim.getMaterialId() && mtlWriter != null) {
                 if (context.getModel().getMaterials().size() <= prim.getMaterialId()) {
-                    // TODO: !
                     context.getLogger().warning("Got material ID %d, but... there are only %d material(s) available in the model.", prim.getMaterialId(), context.getModel().getMaterials().size());
                 } else {
                     kcMaterial material = context.getModel().getMaterials().get(prim.getMaterialId());

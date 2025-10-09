@@ -38,7 +38,6 @@ import java.util.regex.Pattern;
 
 /**
  * Manages entities for a Great Quest map.
- * TODO: Need some way of viewing an entities activation radius.
  * TODO: Allow teleporting the camera to an entity selected.
  * TODO: Use Fxyz3D's Capsule mesh instead of sphere for capsules.
  * Created by Kneesnap on 4/14/2024.

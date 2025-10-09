@@ -68,7 +68,6 @@ public class kcColor3 implements IInfoWriter, IBinarySerializable {
      * @return this
      */
     public kcColor3 fromRGB(int rgbColor) {
-        // TODO: We should allow a color object, with direct float access, maybe. Just thinking about what the new UI system could look like.
         this.red = ColorUtils.getRedInt(rgbColor) / 255F;
         this.green = ColorUtils.getGreenInt(rgbColor) / 255F;
         this.blue = ColorUtils.getBlueInt(rgbColor) / 255F;
