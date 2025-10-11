@@ -315,6 +315,13 @@ public class FXUtils {
         Scene oldScene = stage.getScene();
 
         Window oldWindow = oldScene.getWindow();
+
+        // Preserve non-maximized window size.
+        boolean wasMaximized = stage.isMaximized();
+        if (wasMaximized)
+            stage.setMaximized(false);
+
+        // Preserve window size.
         double width = oldWindow.getWidth();
         double height = oldWindow.getHeight();
         double x = oldWindow.getX();
@@ -328,10 +335,15 @@ public class FXUtils {
 
         // Maintain the position the viewer Scene was at when it was closed.
         Window newWindow = newScene.getWindow();
+        Stage newStage = newWindow instanceof Stage ? (Stage) newWindow : null;
         newWindow.setX(x);
         newWindow.setY(y);
         newWindow.setWidth(width);
         newWindow.setHeight(height);
+
+        // Restore maximization state.
+        if (newStage != null && wasMaximized && !newStage.isMaximized())
+            Platform.runLater(() -> newStage.setMaximized(true)); // Doesn't work without a delay.
 
         return oldScene;
     }
