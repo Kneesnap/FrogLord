@@ -5,7 +5,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.NonNull;
-import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
@@ -56,7 +55,6 @@ import java.util.stream.Collectors;
 /**
  * Handles the Frogger TGQ TOC files. (They are maps, but may also have other data(?))
  * These files may appear sorted, but in PS2 PAL there's a little more to it. "\GameData\Level00Global\Text\globaltext.dat", "\GameData\Level07TreeKnowledge\Level\PS2_Level07.dat", etc, show that there may be more to it.
- * TODO: Over time we should start removing a lot of the export functionality in this class, as it will have been replaced.
  * Created by Kneesnap on 8/25/2019.
  */
 public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFileExport {
@@ -271,21 +269,21 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
     @Override
     public void exportToFolder(File folder) throws IOException {
-        saveMapObj(folder); // TODO: Here's the slowdown.
-        exportChunksToDirectory(folder);
+        saveMapObj(folder);
 
         kcScriptList scriptList = getScriptList();
         kcScriptDisplaySettings settings = createScriptDisplaySettings();
         saveActionSequences(new File(folder, "sequences.txt"), settings);
         saveScripts(getLogger(), new File(folder, "scripts.txt"), settings);
 
+        exportEntities(new File(folder, "entities"), scriptList, settings);
+        exportEntityDescriptions(new File(folder, "entity-descriptions"));
+        exportCollisionProxies(new File(folder, "proxy-descriptions"));
+
         saveGenericText(new File(folder, "strings.txt"));
         saveAnimationSets(new File(folder, "animation-sets.txt"));
         saveAnimationSkeletons(new File(folder, "animation-skeletons.txt"));
         saveAnimationTracks(new File(folder, "animation-tracks.txt"));
-        exportEntities(new File(folder, "entities"), scriptList, settings);
-        exportEntityDescriptions(new File(folder, "entity-descriptions"));
-        exportCollisionProxies(new File(folder, "proxy-descriptions"));
         saveGenericEmitterInfo(new File(folder, "emitters.txt"));
         saveGenericLauncherInfo(new File(folder, "launchers.txt"));
         saveGenericResourcePaths(new File(folder, "resource-paths.txt"));
@@ -1201,37 +1199,6 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             Files.write(target.toPath(), Arrays.asList(builder.toString().split(Constants.NEWLINE)));
         } catch (IOException ex) {
             throw new RuntimeException("Failed to save data to '" + target + "'.", ex);
-        }
-    }
-
-    /**
-     * Exports this file and all of its chunks to the directory.
-     * This makes debugging easier.
-     * @param directory The folder to export chunks to.
-     */
-    @SneakyThrows
-    public void exportChunksToDirectory(File directory) {
-        Map<String, Integer> countMap = new HashMap<>();
-        for (kcCResource chunk : this.chunks) {
-            String signature = StringUtils.stripAlphanumeric(chunk.getChunkIdentifier());
-            int count = countMap.getOrDefault(signature, 0) + 1;
-            countMap.put(signature, count);
-
-            // Check there is data.
-            String fileName = NumberUtils.padNumberString(count, 3);
-            if (chunk.getRawData() == null) {
-                getLogger().warning("Skipping chunk with null data: '%s-%s'.", signature, fileName);
-                continue;
-            }
-
-            // Create sub-directory.
-            File subDirectory = new File(directory, signature);
-            FileUtils.makeDirectory(subDirectory);
-
-            // Save file contents.
-            File outputFile = new File(subDirectory, fileName);
-            if (!outputFile.exists())
-                Files.write(outputFile.toPath(), chunk.getRawData());
         }
     }
 
