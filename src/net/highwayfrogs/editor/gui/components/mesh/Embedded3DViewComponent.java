@@ -71,13 +71,12 @@ public class Embedded3DViewComponent<TGameInstance extends GameInstance> extends
             throw new NullPointerException("mesh");
 
         MeshView meshView = new MeshView();
-        addMeshView(new MeshView());
-        meshView.setCullFace(CullFace.NONE);
         if (mesh.addView(meshView, this.meshTracker))
             addMeshView(meshView);
     }
 
     private void addMeshView(MeshView meshView) {
+        meshView.setCullFace(CullFace.NONE);
         this.root3D.getChildren().add(meshView);
         this.rotationCamera.addRotationsToNode(meshView);
     }
