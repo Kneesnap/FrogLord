@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.games.konami.greatquest;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.utils.NumberUtils;
-import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -15,10 +14,9 @@ import java.util.Map.Entry;
  * Represents custom data saved to a custom instance of Frogger: The Great Quest.
  * Created by Kneesnap on 10/2/2025.
  */
+@Getter
 public class GreatQuestModData extends GameData<GreatQuestInstance> {
-    private final Map<Integer, String> userSoundFilePathsById = new HashMap<>();
-    private final Map<String, Integer> userSoundFileIdsByPaths = new HashMap<>();
-    @Getter private final Map<Integer, String> userGlobalFilePaths = new HashMap<>();
+    private final Map<Integer, String> userGlobalFilePaths = new HashMap<>();
 
     public static final String SIGNATURE = "FROGLORD";
     private static final short CURRENT_VERSION = 0;
@@ -37,12 +35,7 @@ public class GreatQuestModData extends GameData<GreatQuestInstance> {
                     + ") is not supported in this version of FrogLord! (v" + CURRENT_VERSION
                     + ") Try updating FrogLord to a newer version.");
 
-        readStringByIdMap(reader, this.userSoundFilePathsById);
         readStringByIdMap(reader, this.userGlobalFilePaths);
-
-        // Automatic recreation of the opposite mapping.
-        for (Entry<Integer, String> entry : this.userSoundFilePathsById.entrySet())
-            this.userSoundFileIdsByPaths.put(entry.getValue(), entry.getKey());
 
         // Final load.
         reader.verifyString(SIGNATURE);
@@ -56,62 +49,18 @@ public class GreatQuestModData extends GameData<GreatQuestInstance> {
         int headerAddress = writer.getIndex();
         writer.writeStringBytes(SIGNATURE);
         writer.writeUnsignedByte(CURRENT_VERSION);
-        writeStringByIdMap(writer, this.userSoundFilePathsById);
         writeStringByIdMap(writer, this.userGlobalFilePaths);
         writer.writeStringBytes(SIGNATURE);
         writer.writeInt(headerAddress);
     }
 
     /**
-     * Gets the full sound file path for the given sound ID, if there is one.
-     * @param soundId the sound ID to resolve.
-     * @return fullSoundPath, or null if there is none.
+     * Read a string by ID mapping.
+     * @param reader the reader to read from
+     * @param results the map to store the results in
+     * @return results
      */
-    public String getUserFullSoundPath(int soundId) {
-        return this.userSoundFilePathsById.get(soundId);
-    }
-
-    /**
-     * Gets the full sound file path for the given sound ID.
-     * @param fullPath the path to resolve.
-     * @return sfxId, or -1 if the sound effect ID could not be found.
-     */
-    public int getSfxIdFromFullSoundPath(String fullPath) {
-        Integer sfxId = this.userSoundFileIdsByPaths.get(fullPath);
-        return sfxId != null ? sfxId : -1;
-    }
-
-    /**
-     * Sets the SFX path to use for the user created sound.
-     * @param sfxId the SFX ID to apply to the user created sound
-     * @param fullPath the full path to use for the user created sound ID.
-     */
-    public void setUserSfxFullPath(int sfxId, String fullPath) {
-        if (sfxId < 0 || sfxId > getGameInstance().getNextFreeSoundId())
-            throw new IllegalArgumentException("Invalid sfxId: " + sfxId);
-        if (getGameInstance().getSoundPathsById().containsKey(sfxId))
-            throw new IllegalArgumentException("There is already an original game sound using the ID " + sfxId + ", so the path '" + fullPath + "' cannot be assigned to that ID.");
-        if (getGameInstance().getSoundIdsByPath().containsKey(fullPath))
-            throw new IllegalArgumentException("There is already another SFX using the path '" + fullPath + "', so SFX ID " + sfxId + " cannot use that path.");
-
-        Integer oldSfxId = this.userSoundFileIdsByPaths.get(fullPath);
-        if (oldSfxId != null) {
-            if (oldSfxId == sfxId)
-                return; // No change.
-
-            throw new IllegalArgumentException("There is already another SFX (ID: " + oldSfxId + ") using the path '" + fullPath + "', so SFX ID " + sfxId + " cannot use that path.");
-        }
-
-        boolean hasNewPath = !StringUtils.isNullOrWhiteSpace(fullPath);
-        String oldPath = hasNewPath ? this.userSoundFilePathsById.put(sfxId, fullPath) : this.userSoundFilePathsById.remove(sfxId);
-        if (oldPath != null && !this.userSoundFilePathsById.remove(sfxId, oldPath))
-            throw new IllegalStateException("Failed to remove path '" + oldPath + "' as SFX ID: " + sfxId + " from the userSoundFilePathsById tracking.");
-
-        if (hasNewPath)
-            this.userSoundFileIdsByPaths.put(fullPath, sfxId);
-    }
-
-    private static Map<Integer, String> readStringByIdMap(DataReader reader, Map<Integer, String> results) {
+    static Map<Integer, String> readStringByIdMap(DataReader reader, Map<Integer, String> results) {
         if (results != null) {
             results.clear();
         } else {
@@ -130,7 +79,12 @@ public class GreatQuestModData extends GameData<GreatQuestInstance> {
     }
 
 
-    private static void writeStringByIdMap(DataWriter writer, Map<Integer, String> stringIdMap) {
+    /**
+     * Write a string by ID mapping.
+     * @param writer the writer to write to
+     * @param stringIdMap the map to write
+     */
+    static void writeStringByIdMap(DataWriter writer, Map<Integer, String> stringIdMap) {
         List<Entry<Integer, String>> entries = new ArrayList<>(stringIdMap.entrySet());
         entries.sort(Comparator.comparingInt(Entry::getKey));
 

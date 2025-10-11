@@ -52,10 +52,7 @@ import net.highwayfrogs.editor.utils.data.writer.LargeFileReceiver;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 /**
@@ -96,6 +93,7 @@ import java.util.Map.Entry;
 @Getter
 public class GreatQuestInstance extends GameInstance {
     private final GreatQuestModData modData;
+    private final GreatQuestSoundModData soundModData;
     private final List<GreatQuestGameFile> allFiles = new ArrayList<>();
     private final List<GreatQuestGameFile> looseFiles = new ArrayList<>();
     private GreatQuestAssetBinFile mainArchive;
@@ -118,6 +116,7 @@ public class GreatQuestInstance extends GameInstance {
     public GreatQuestInstance() {
         super(GreatQuestGameType.INSTANCE);
         this.modData = new GreatQuestModData(this);
+        this.soundModData = new GreatQuestSoundModData(this);
     }
 
     /**
@@ -187,7 +186,9 @@ public class GreatQuestInstance extends GameInstance {
             return;
 
         File idxFile = null, sckFile = null;
-        for (File sndFile : soundFolder.listFiles()) {
+        File[] dirFiles = soundFolder.listFiles();
+        Arrays.sort(dirFiles, Comparator.comparing(File::getName, String.CASE_INSENSITIVE_ORDER));
+        for (File sndFile : dirFiles) {
             String soundFileName = sndFile.getName().toLowerCase();
 
             GreatQuestGameFile gameFile;
@@ -344,7 +345,7 @@ public class GreatQuestInstance extends GameInstance {
     }
 
     private String getFullSoundPathOrNull(int soundId) {
-        String soundPath = this.modData.getUserFullSoundPath(soundId);
+        String soundPath = this.soundModData.getUserFullSoundPath(soundId);
         if (soundPath != null)
             return soundPath;
 
@@ -419,7 +420,7 @@ public class GreatQuestInstance extends GameInstance {
         if (NumberUtils.isInteger(fullPath))
             return Integer.parseInt(fullPath);
 
-        int userSfxId = this.modData.getSfxIdFromFullSoundPath(fullPath);
+        int userSfxId = this.soundModData.getSfxIdFromFullSoundPath(fullPath);
         if (userSfxId >= 0)
             return userSfxId;
 

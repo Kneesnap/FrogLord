@@ -125,6 +125,8 @@ public class GreatQuestAssetUtils {
     private static void applySoundEffects(File workingDirectory, GreatQuestChunkedFile chunkedFile, Config soundEffectsCfg, ILogger logger) {
         if (soundEffectsCfg == null)
             return;
+        if (chunkedFile.getGameInstance().getSoundChunkFile() == null)
+            throw new IllegalStateException("Cannot apply sound changes, because the sound files were not found/loaded in a folder named SOUND\\ found in the directory holding 'data.bin'!");
 
         String sourceName = soundEffectsCfg.getRootNode().getSectionName();
         SBRFile sbrFile = chunkedFile.getSoundBankFile();
@@ -145,7 +147,7 @@ public class GreatQuestAssetUtils {
 
                     // Continue by building a new entry.
                     sfxId = chunkedFile.getGameInstance().useNextFreeSoundIdSlot();
-                    chunkedFile.getGameInstance().getModData().setUserSfxFullPath(sfxId, filePath);
+                    chunkedFile.getGameInstance().getSoundModData().setUserSfxFullPath(sfxId, filePath);
                 } else {
                     // Find the entry using this ID.
                     for (int i = 0; i < sbrFile.getSoundEffects().size(); i++) {

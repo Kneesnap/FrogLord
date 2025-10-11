@@ -112,15 +112,22 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         // Read wav attributes.
         this.waves.clear();
         reader.setIndex(waveAttrOffset);
+        int waveDataEndIndex = 0;
         for (int i = 0; i < numWaves; i++) {
             SfxWave wave = createNewWave();
             wave.load(reader, waveDataOffset);
             this.waves.add(wave);
+
+            waveDataEndIndex += wave.getWaveSize();
         }
 
         int actualWaveAttrSize = reader.getIndex() - waveAttrOffset;
         if (actualWaveAttrSize != waveAttrSize)
             throw new RuntimeException("Read " + actualWaveAttrSize + " bytes of wave attribute data, but the file said there were supposed to be " + waveAttrSize + " bytes.");
+
+        reader.setIndex(reader.getIndex() + waveDataEndIndex);
+        if (reader.hasMore())
+            getGameInstance().getSoundModData().load(reader);
     }
 
     @Override
@@ -175,6 +182,10 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             this.waves.get(i).saveAudioData(writer);
 
         writer.writeIntAtPos(waveDataSize, writer.getIndex() - waveDataStartsAt);
+
+        // Write FrogLord header.
+        if ("00.SBR".equalsIgnoreCase(getFileName()))
+            getGameInstance().getSoundModData().save(writer);
     }
 
     @Override
