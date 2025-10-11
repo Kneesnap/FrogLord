@@ -148,6 +148,7 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
         component.getRotationCamera().getRotationY().setAngle(GreatQuestModelViewController.DEFAULT_CAMERA_YAW);
         component.getRotationCamera().setMovementFactor(GreatQuestModelViewController.DEFAULT_ZOOM_FACTOR);
         component.getRoot3D().getChildren().add(new AmbientLight(Color.WHITE)); // Fullbright.
+        component.getRootNode().setHeight(400);
 
         return component;
     }

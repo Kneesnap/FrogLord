@@ -72,7 +72,7 @@ public class Embedded3DViewComponent<TGameInstance extends GameInstance> extends
 
         MeshView meshView = new MeshView();
         addMeshView(new MeshView());
-        meshView.setCullFace(CullFace.BACK);
+        meshView.setCullFace(CullFace.NONE);
         if (mesh.addView(meshView, this.meshTracker))
             addMeshView(meshView);
     }

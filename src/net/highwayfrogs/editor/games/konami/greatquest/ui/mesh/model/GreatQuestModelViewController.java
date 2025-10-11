@@ -40,7 +40,7 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
     private CheckBox forceRepeatCheckBox;
     private final MeshView skeletonMeshView = new MeshView();
 
-    public static final double DEFAULT_FAR_CLIP = 50;
+    public static final double DEFAULT_FAR_CLIP = 1000;
     public static final double DEFAULT_NEAR_CLIP = 0.1;
     public static final Vector3f DEFAULT_CAMERA_OFFSET = new Vector3f(0, 1, 3);
     public static final float DEFAULT_CAMERA_PITCH = 180;;
