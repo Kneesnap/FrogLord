@@ -21,6 +21,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestActionSequencePlayback.SequenceStatus;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshCollection.MeshViewCollection;
+import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.fx.wrapper.LazyFXListCell;
 
@@ -39,8 +40,13 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
     private CheckBox forceRepeatCheckBox;
     private final MeshView skeletonMeshView = new MeshView();
 
-    private static final double DEFAULT_FAR_CLIP = 50;
-    private static final double DEFAULT_NEAR_CLIP = 0.1;
+    public static final double DEFAULT_FAR_CLIP = 50;
+    public static final double DEFAULT_NEAR_CLIP = 0.1;
+    public static final Vector3f DEFAULT_CAMERA_OFFSET = new Vector3f(0, 1, 3);
+    public static final float DEFAULT_CAMERA_PITCH = 180;;
+    public static final float DEFAULT_CAMERA_YAW = 0;
+    public static final double DEFAULT_ZOOM_FACTOR = 0.05;
+
     private static final double DEFAULT_MOVEMENT_SPEED = 3;
 
     private static final PhongMaterial VERTEX_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
@@ -180,8 +186,8 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
     @Override
     protected void setDefaultCameraPosition() {
         getFirstPersonCamera().setInvertY(true);
-        getFirstPersonCamera().setPos(0, 1, 3);
-        getFirstPersonCamera().setPitchAndYaw(180, 0);
+        getFirstPersonCamera().setPos(DEFAULT_CAMERA_OFFSET.getX(), DEFAULT_CAMERA_OFFSET.getY(), DEFAULT_CAMERA_OFFSET.getZ());
+        getFirstPersonCamera().setPitchAndYaw(DEFAULT_CAMERA_PITCH, DEFAULT_CAMERA_YAW);
     }
 
     @Override

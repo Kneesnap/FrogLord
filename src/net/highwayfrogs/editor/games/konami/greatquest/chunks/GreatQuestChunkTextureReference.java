@@ -48,7 +48,6 @@ public class GreatQuestChunkTextureReference extends kcCResource {
 
     @Override
     public Node createFxPreview() {
-        // TODO: Create a screenshot of 3D models as a preview for .VTX files.
         GreatQuestImageFile imageFile = getReferencedImage();
         if (imageFile == null)
             return null;

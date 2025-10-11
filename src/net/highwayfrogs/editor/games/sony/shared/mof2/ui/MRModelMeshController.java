@@ -33,6 +33,10 @@ public class MRModelMeshController extends MeshViewController<MRModelMesh> {
     private final MRModelTextureAnimationUIManager textureAnimationManager;
 
     public static final double MAP_VIEW_FAR_CLIP = 2000.0;
+    public static final double CAMERA_DEFAULT_TRANSLATE_Y = 0;
+    public static final double CAMERA_DEFAULT_TRANSLATE_Z = -45;
+    public static final double CAMERA_DEFAULT_ROTATION_X = 40;
+    public static final double CAMERA_DEFAULT_ROTATION_Y = 180;
 
     public MRModelMeshController(SCGameInstance instance) {
         super(instance);
@@ -90,10 +94,10 @@ public class MRModelMeshController extends MeshViewController<MRModelMesh> {
     protected void setDefaultCameraPosition() {
         Camera camera = getCamera();
         camera.setFarClip(MAP_VIEW_FAR_CLIP);
-        camera.setTranslateZ(-45.0);
-        camera.setTranslateY(0.0);
-        this.rotationManager.getRotationX().setAngle(40);
-        this.rotationManager.getRotationY().setAngle(180);
+        camera.setTranslateZ(CAMERA_DEFAULT_TRANSLATE_Z);
+        camera.setTranslateY(CAMERA_DEFAULT_TRANSLATE_Y);
+        this.rotationManager.getRotationX().setAngle(CAMERA_DEFAULT_ROTATION_X);
+        this.rotationManager.getRotationY().setAngle(CAMERA_DEFAULT_ROTATION_Y);
     }
 
     /**

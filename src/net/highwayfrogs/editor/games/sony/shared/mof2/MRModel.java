@@ -30,9 +30,11 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.utils.MRMofAndMisfitModelC
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.utils.DynamicMeshObjExporter;
+import net.highwayfrogs.editor.gui.DefaultFileUIController.IExtraUISupplier;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.mesh.Embedded3DViewComponent;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.utils.FXUtils;
@@ -57,7 +59,7 @@ import java.util.List;
  * Created by Kneesnap on 2/18/2025.
  */
 @Getter
-public class MRModel extends SCSharedGameFile implements ISCTextureUser {
+public class MRModel extends SCSharedGameFile implements ISCTextureUser, IExtraUISupplier {
     private MRStaticMof staticMof;
     private MRAnimatedMof animatedMof;
 
@@ -507,5 +509,21 @@ public class MRModel extends SCSharedGameFile implements ISCTextureUser {
         // Include the parent WAD to ensure files with the same name can be distinguished.
         WADFile parentWadFile = getParentWadFile();
         return getFileDisplayName() + (parentWadFile != null ? "[" + parentWadFile.getFileDisplayName() + "]" : "");
+    }
+
+    @Override
+    public GameUIController<?> createExtraUIController() {
+        if (isDummy())
+            return null;
+
+        Embedded3DViewComponent<?> component = new Embedded3DViewComponent<>(getGameInstance(), createMeshWithDefaultAnimation());
+        component.getCamera().setFarClip(MRModelMeshController.MAP_VIEW_FAR_CLIP);
+        component.getCamera().setTranslateZ(MRModelMeshController.CAMERA_DEFAULT_TRANSLATE_Z * 2); // smaller view -> larger distance to fit within smaller view.
+        component.getCamera().setTranslateY(MRModelMeshController.CAMERA_DEFAULT_TRANSLATE_Y);
+        component.getRotationCamera().getRotationX().setAngle(MRModelMeshController.CAMERA_DEFAULT_ROTATION_X);
+        component.getRotationCamera().getRotationY().setAngle(MRModelMeshController.CAMERA_DEFAULT_ROTATION_Y);
+        component.getRootNode().setHeight(200);
+
+        return component;
     }
 }

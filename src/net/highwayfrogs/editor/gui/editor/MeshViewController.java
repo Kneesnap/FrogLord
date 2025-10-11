@@ -288,7 +288,8 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         subScene3D.heightProperty().bind(borderPane3D.heightProperty());
 
         // Associate camera controls with the scene.
-        this.firstPersonCamera.assignSceneControls(stageToOverride, this.meshScene);
+        this.inputManager.assignSceneControls(this.meshScene);
+        this.inputManager.setStage(stageToOverride);
         if (isDefaultCamera())
             this.firstPersonCamera.startThreadProcessing();
 
@@ -297,37 +298,13 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                 return; // Handled by the other controller.
 
             if (event.getCode() == KeyCode.ESCAPE) { // Exit the viewer.
-                // Stop camera processing and clear up the render manager
-                this.textureSheetDebugView.imageProperty().unbind();
-                if (isDefaultCamera())
-                    this.firstPersonCamera.stopThreadProcessing();
-                this.firstPersonCamera.removeSceneControls(stageToOverride, this.meshScene);
-                this.renderManager.removeAllDisplayLists();
-                this.transparentRenderManager.removeAllDisplayLists();
-                this.inputManager.shutdown();
-                this.frameTimer.stop();
-
-                // Clear selectors
-                while (!this.selectors.isEmpty())
-                    this.selectors.get(this.selectors.size() - 1).cancel();
-
-                // Call shutdown hook.
-                try {
-                    onShutdown();
-                } catch (Throwable th) {
-                    String errorMessage = "Encountered error in MeshViewController shutdown hook.";
-                    getLogger().throwing("MeshViewController", null, new RuntimeException(errorMessage, th));
-                }
-
-                this.meshTracker.disposeMeshes(); // Prevent memory leaks by ensuring texture sheets remove any listeners from static textures sources (which would then keep the texture sheet in memory).
-                this.root3D.getChildren().clear(); // Clear data just in-case there's a memory leak.
-                FXUtils.setSceneKeepPosition(this.overwrittenStage, this.originalScene);
+                shutdownMeshViewer();
             } else if (event.getCode() == KeyCode.F8) { // Print mesh information.
                 getMesh().printDebugMeshInfo();
             } else if (event.getCode() == KeyCode.F9) { // 3D screenshot.
                 Scene3DUtils.take3DScreenshot(getGameInstance(), getLogger(), this.mesh, this.mesh.getMeshName());
             } else if (event.getCode() == KeyCode.F10) { // Take screenshot.
-                Scene3DUtils.takeScreenshot(getGameInstance(), this.subScene, getMeshScene(), FileUtils.stripExtension(getMeshDisplayName()), false);
+                Scene3DUtils.takeScreenshot(getGameInstance(), this.subScene, FileUtils.stripExtension(getMeshDisplayName()), false);
             } else if (event.getCode() == KeyCode.F12 && getMesh().getTextureAtlas() != null) {
 
                 if (getMesh().getTextureAtlas().getTextureSource().isEnableAwtImage()) {
@@ -414,6 +391,38 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
      */
     protected boolean mapRendersFirst() {
         return false;
+    }
+
+    /**
+     * Shuts down the mesh viewer.
+     */
+    public void shutdownMeshViewer() {
+        // Stop camera processing and clear up the render manager
+        this.textureSheetDebugView.imageProperty().unbind();
+        if (isDefaultCamera())
+            this.firstPersonCamera.stopThreadProcessing();
+        this.inputManager.removeSceneControls(this.meshScene);
+        this.inputManager.setStage(null);
+        this.renderManager.removeAllDisplayLists();
+        this.transparentRenderManager.removeAllDisplayLists();
+        this.inputManager.shutdown();
+        this.frameTimer.stop();
+
+        // Clear selectors
+        while (!this.selectors.isEmpty())
+            this.selectors.get(this.selectors.size() - 1).cancel();
+
+        // Call shutdown hook.
+        try {
+            onShutdown();
+        } catch (Throwable th) {
+            String errorMessage = "Encountered error in MeshViewController shutdown hook.";
+            getLogger().throwing("MeshViewController", null, new RuntimeException(errorMessage, th));
+        }
+
+        this.meshTracker.disposeMeshes(); // Prevent memory leaks by ensuring texture sheets remove any listeners from static textures sources (which would then keep the texture sheet in memory).
+        this.root3D.getChildren().clear(); // Clear data just in-case there's a memory leak.
+        FXUtils.setSceneKeepPosition(this.overwrittenStage, this.originalScene);
     }
 
     /**

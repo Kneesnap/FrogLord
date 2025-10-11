@@ -18,9 +18,12 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
+import net.highwayfrogs.editor.gui.DefaultFileUIController.IExtraUISupplier;
+import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
+import net.highwayfrogs.editor.gui.components.FXNodeWrapperComponent;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.*;
@@ -41,7 +44,7 @@ import java.util.Objects;
  * Represents a resource in a TGQ file.
  * Created by Kneesnap on 8/25/2019.
  */
-public abstract class kcCResource extends GameData<GreatQuestInstance> implements kcHashedResource, ICollectionViewEntry, IPropertyListCreator {
+public abstract class kcCResource extends GameData<GreatQuestInstance> implements kcHashedResource, ICollectionViewEntry, IPropertyListCreator, IExtraUISupplier {
     @Getter private byte[] rawData;
     @Getter private final KCResourceID chunkType;
     @Getter private final GreatQuestHash<? extends kcCResource> selfHash; // The real hash comes from the TOC chunk.
@@ -407,6 +410,12 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
      */
     public Node createFxPreview() {
         return null;
+    }
+
+    @Override
+    public GameUIController<?> createExtraUIController() {
+        Node fxPreview = createFxPreview();
+        return fxPreview != null ? new FXNodeWrapperComponent<>(getGameInstance(), fxPreview) : null;
     }
 
     /**

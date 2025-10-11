@@ -413,7 +413,8 @@ For example, most enemies have `"FrogInst001"` as their target, so they attack F
 Others, such as Fairy Frogmother face the player by setting their target as `FrogInst001`.
 
 > [!IMPORTANT]
-> If the `--DisableAI` flag is set, the entity will not pathfind UNLESS the target is a waypoint.
+> If the `--DisableAI` flag is set, the entity will not pathfind UNLESS the target is a waypoint.  
+> The entity description must have `attackGoalPercent` set to a non-zero number for this to happen, and have a valid walk/run sequence configured.  
 
 > [!CAUTION]
 > If the entity has the `--FaceTargetEntity` flag set, it may not be able to move vertically (up/down).

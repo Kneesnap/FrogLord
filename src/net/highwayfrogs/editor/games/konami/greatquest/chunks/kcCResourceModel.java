@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFi
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
+import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.FileUtils;
@@ -78,6 +79,12 @@ public class kcCResourceModel extends kcCResource {
         propertyList.add("File Path", this.fullPath,
                 () -> InputMenu.promptInputBlocking(getGameInstance(), "Please enter the new path.", this.fullPath, newPath -> setFullPath(newPath, true)));
         return propertyList;
+    }
+
+    @Override
+    public GameUIController<?> createExtraUIController() {
+        kcModelWrapper modelWrapper = getModelWrapper();
+        return modelWrapper != null ? modelWrapper.createEmbeddedModelViewer() : super.createExtraUIController();
     }
 
     /**
