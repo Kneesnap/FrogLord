@@ -15,6 +15,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.entity.kcBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.IkcCResourceGenericTypeGroup;
+import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
+import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.utils.*;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -784,8 +786,59 @@ public class GreatQuestUtils {
         }
 
         return result != null ? result : source;
-
     }
+
+    /**
+     * Some A8R8G8B8 images (such as Pike.tga for C075.vtx on PC) are A8R8G8B8, and have empty alpha values.
+     * The actual game seems to ignore the alpha channel if alpha-blend is not enabled, causing those models to render as if they had full alpha.
+     * Unfortunately, FrogLord doesn't have the ability to replicate this behavior, so we must create a modified image
+     * @param material the material to
+     * @return newImage
+     */
+    public static boolean needsHardcodedAlphaFix(kcMaterial material, kcModelWrapper model) {
+        if (material == null || model == null)
+            return false;
+
+        return (model.getGameInstance().isPC() && "Pike.tga".equals(material.getTextureFileName()) && "C075.vtx".equalsIgnoreCase(model.getFileName()));
+    }
+
+    /**
+     * Some A8R8G8B8 images (such as Pike.tga for C075.vtx on PC) are A8R8G8B8, and have empty alpha values.
+     * The actual game seems to ignore the alpha channel if alpha-blend is not enabled, causing those models to render as if they had full alpha.
+     * Unfortunately, FrogLord doesn't have the ability to replicate this behavior, so we must create a modified image.
+     * @param source the image to apply
+     * @return newImage
+     */
+    public static BufferedImage forceFullAlpha(BufferedImage source) {
+        if (source == null)
+            return null;
+
+        // If the image is BYTE_INDEXED, create the array directly.
+        if (source.getType() != BufferedImage.TYPE_INT_ARGB)
+            return source;
+
+        BufferedImage result = null;
+        int[] readBuffer = ImageWorkHorse.getPixelIntegerArray(source);
+        int[] writeBuffer = null;
+
+        for (int i = 0; i < readBuffer.length; i++) {
+            int argbColor = readBuffer[i];
+            int alpha = argbColor >>> 24;
+            if (alpha == 255)
+                continue;
+
+            // Create result.
+            if (result == null) {
+                result = ImageWorkHorse.copyImage(source);
+                writeBuffer = ImageWorkHorse.getPixelIntegerArray(result);
+            }
+
+            writeBuffer[i] = argbColor | 0xFF000000;
+        }
+
+        return result != null ? result : source;
+    }
+
 
     /**
      * Skip bytes, requiring the bytes skipped be 0 or the alternate value.

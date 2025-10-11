@@ -54,8 +54,13 @@ public class GreatQuestModelMaterialMesh extends DynamicMesh {
 
     @Override
     protected PhongMaterial updateMaterial(BufferedImage newImage) {
-        if (this.gameMaterial != null && this.gameMaterial.hasAlphaBlend())
-            newImage = GreatQuestUtils.fillEmptyAlpha(newImage);
+        if (this.gameMaterial != null) {
+            if (this.gameMaterial.hasAlphaBlend())
+                newImage = GreatQuestUtils.fillEmptyAlpha(newImage);
+            if (GreatQuestUtils.needsHardcodedAlphaFix(this.gameMaterial, this.fullMesh.getModelWrapper()))
+                newImage = GreatQuestUtils.forceFullAlpha(newImage);
+        }
+
         PhongMaterial parentMaterial = super.updateMaterial(newImage);
         if (this.highlightedMaterial != null)
             this.highlightedMaterial = Scene3DUtils.updateHighlightMaterial(this.highlightedMaterial, newImage);

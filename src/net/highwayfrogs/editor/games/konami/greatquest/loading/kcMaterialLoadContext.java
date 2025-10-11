@@ -199,7 +199,11 @@ public class kcMaterialLoadContext {
             if (material.getTexture() != null)
                 continue; // Already has a resolved texture reference.
 
-            List<GreatQuestImageFile> images = this.globalCachedImages.get(FileUtils.stripExtension(material.getTextureFileName()));
+            String strippedFileName = FileUtils.stripExtension(material.getTextureFileName());
+            if (strippedFileName.isEmpty())
+                continue;
+
+            List<GreatQuestImageFile> images = this.globalCachedImages.get(strippedFileName);
             if (images == null || images.isEmpty())
                 continue;
 
@@ -274,6 +278,8 @@ public class kcMaterialLoadContext {
      */
     private GreatQuestImageFile findLocalImageFile(GreatQuestChunkedFile chunkedFile, String imageFileName) {
         String strippedTextureFileName = FileUtils.stripExtension(imageFileName);
+        if (strippedTextureFileName.isEmpty())
+            return null;
 
         // Setup image cache.
         Map<String, GreatQuestImageFile> cachedImages = this.chunkedFileImageCache.get(chunkedFile);
