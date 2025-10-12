@@ -415,7 +415,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 continue;
 
             if (resourceClass != null && !resourceClass.isInstance(resource))
-                throw new RuntimeException("Expected a resource named '" + name + "' to be a(n) " + resourceClass.getSimpleName() + ", but it was actually found to be a(n) " + Utils.getSimpleName(resourceClass) + ".");
+                throw new RuntimeException("Expected a resource named '" + name + "' to be a(n) " + resourceClass.getSimpleName() + ", but it was actually found to be a(n) " + Utils.getSimpleName(resource) + ".");
 
             return (TResource) resource;
         }
@@ -428,7 +428,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                     continue;
 
                 if (resourceClass != null && !resourceClass.isInstance(resource))
-                    throw new RuntimeException("Expected a resource named '" + name + "' to be a(n) " + resourceClass.getSimpleName() + ", but it was actually found to be a(n) " + Utils.getSimpleName(resourceClass) + ".");
+                    throw new RuntimeException("Expected a resource named '" + name + "' to be a(n) " + resourceClass.getSimpleName() + ", but it was actually found to be a(n) " + Utils.getSimpleName(resource) + ".");
 
                 return (TResource) resource;
             }

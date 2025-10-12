@@ -86,8 +86,10 @@ public class kcActionSetAnimation extends kcAction {
         for (int i = 0; i < kcAnimationMode.values().length; i++) {
             kcAnimationMode animationMode = kcAnimationMode.values()[i];
             if (animationMode.getFlagName() != null && arguments.useFlag(animationMode.getFlagName())) {
+                if (mode != kcAnimationMode.NO_REPEAT)
+                    logger.warning("Found more than one animation mode (--%s and --%s), but only one can be used!", mode.getFlagName(), animationMode.getFlagName());
+
                mode = animationMode;
-               break;
             }
         }
 
