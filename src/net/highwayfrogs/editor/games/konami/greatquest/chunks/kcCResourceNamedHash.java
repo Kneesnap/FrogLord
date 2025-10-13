@@ -251,8 +251,10 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
             int sequenceHash;
             ConfigValueNode hashNode = sequenceCfg.getOptionalKeyValueNode(kcCActionSequence.HASH_CONFIG_FIELD);
             if (oldActionSequence != null) {
-                if (hashNode != null)
-                    oldActionSequence.getSelfHash().setHash(hashNode.getAsInteger(), fullSequenceResourceName, false);
+                if (hashNode != null && hashNode.getAsInteger() != oldActionSequence.getHash()) {
+                    // We cannot change the hash because when we use [CopyResources], we'll get a copy of the resource.
+                    logger.warning("The hash '%s' does not match the hash of the pre-existing action sequence, and has been ignored. (Pre-existing hash: %s)", hashNode.getAsString(), oldActionSequence.getSelfHash().getHashNumberAsString());
+                }
 
                 sequenceHash = oldActionSequence.getHash();
             } else if (hashNode != null) { // Apply hash from config.
