@@ -441,16 +441,22 @@ See `SetPosition` for any limitations.
 **Supported Entity Types:** All 3D Entities  
 <!---**Ghidra Reference (Ignore):** `kcCEntity3D::OnCommand`-->
 **Usage:** `SetPosition <x> <y> <z>`  
-**Warning:**  
-```
-This command does not work properly when used on the player if collision sits between the player and the new position.
-If collision is disabled for the player, the teleport will work up until the moment collision is re-enabled, when the player will be snapped back.
 
-It is recommended to fade the screen out, and perform a series of teleports (With at least one frame of delay between each) to get the player to the destination without going through any collision.
-The other alternative is to set the player's respawn point and kill the player which is faster for testing, but not great for player experience.
-
-Further research/debugging is necessary to determine what causes this issue.
-```
+> [!WARNING]  
+> This command is much more difficult to use than it sounds.
+> This was most likely an oversight/bug on the original developer's part.  
+> The game's collision system prevents character entities (including the player) from moving through solid collision, including from `SetPosition`.  
+> If the `--EnableCollision` is removed before the teleport, everything works!  
+> But the instant collision is re-enabled, the entity will snap back to their previous position as if they had never left.  
+> 
+> **Workarounds:**  
+> - If you do not need collision, remove the `--EnableCollision` flag.  
+> - If the entity is the player, setting the player's checkpoint position, fading the screen out then killing them before fading back in will bypass any collision checks. Replace the regular death sounds with empty SFX, and add random death noises only when the player isn't getting teleported via scripts.  
+> - Fade the screen out, and teleport the entity through a series of pre-selected positions (ideally up in the sky) which ensure the player never hits any collision.  
+> - Patch the executable to fix this bug. (Hasn't been done yet.)  
+>
+> Further research/debugging is necessary to determine what causes this issue. <!-- TODO: Do this research -->  
+> This issue does not seem to impact non-character entities (props, items, etc).  
 
 ### AddToAxisPosition (Script Only)
 **Summary:** Offsets the script owner's current position by the given value on the specified axis.  
