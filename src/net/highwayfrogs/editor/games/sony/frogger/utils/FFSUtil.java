@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.games.sony.frogger.utils;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.vlo.GameImage;
@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.generic.GameConfig;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
+import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapAnimation;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapAnimationTargetPolygon;
@@ -26,6 +27,12 @@ import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
+import net.highwayfrogs.editor.utils.commandparser.*;
+import net.highwayfrogs.editor.utils.commandparser.CommandListException.CommandListExecutionError;
+import net.highwayfrogs.editor.utils.commandparser.CommandListException.CommandListSyntaxError;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.MessageTrackingLogger;
+import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -33,7 +40,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.function.BiPredicate;
 import java.util.logging.Level;
 
 /**
@@ -92,8 +98,8 @@ public class FFSUtil {
         builder.append("# Export Time: ").append(new Date()).append('\n');
 
         // Write format version.
-        builder.append(FfsCommand.FFS_VERSION.getLabel()).append(' ').append(CURRENT_FORMAT_VERSION).append("\n");
-        builder.append(FfsCommand.GAME_VERSION.getLabel()).append(' ').append(map.getGameInstance().getVersionConfig().getInternalName()).append("\n\n");
+        builder.append(FfsCommandType.FFS_VERSION.getLabel()).append(' ').append(CURRENT_FORMAT_VERSION).append("\n");
+        builder.append(FfsCommandType.GAME_VERSION.getLabel()).append(' ').append(map.getGameInstance().getVersionConfig().getInternalName()).append("\n\n");
 
         // Export textures.
         VLOArchive mapVlo = map.getVloFile();
@@ -104,7 +110,7 @@ public class FFSUtil {
                 return;
             }
 
-            builder.append(FfsCommand.TEXTURE.getLabel())
+            builder.append(FfsCommandType.TEXTURE.getLabel())
                     .append(' ').append(image.getTextureId())
                     .append(Constants.NEWLINE);
 
@@ -123,7 +129,7 @@ public class FFSUtil {
         List<SVector> vertices = map.getVertexPacket().getVertices();
         for (int i = 0; i < vertices.size(); i++) {
             SVector vertex = vertices.get(i);
-            builder.append(FfsCommand.VERTEX.getLabel()).append(' ')
+            builder.append(FfsCommandType.VERTEX.getLabel()).append(' ')
                     .append(vertex.getFloatX()).append(' ')
                     .append(vertex.getFloatY()).append(' ')
                     .append(vertex.getFloatZ()).append(Constants.NEWLINE);
@@ -148,7 +154,7 @@ public class FFSUtil {
         }
 
         for (FroggerMapPolygon polygon : polygons) {
-            builder.append(FfsCommand.POLYGON.getLabel()).append(' ')
+            builder.append(FfsCommandType.POLYGON.getLabel()).append(' ')
                     .append(polygon.getPolygonType().name().toLowerCase()).append(' ')
                     .append(polygon.isVisible() ? "show" : "hide");
 
@@ -198,54 +204,38 @@ public class FFSUtil {
      * @param map       The map to export.
      * @param inputFile The file to read from.
      */
-    public static void importFFSToMap(FroggerMapFile map, File inputFile, ProblemResponse response) {
+    public static void importFFSToMap(ILogger logger, FroggerMapFile map, File inputFile) {
         if (map == null)
             throw new NullPointerException("map");
         if (inputFile == null)
             throw new NullPointerException("inputFile");
-        if (response == null)
-            throw new NullPointerException("response");
         if (!inputFile.isFile() || !inputFile.exists())
             throw new IllegalArgumentException("The provided inputFile was not a real file! (" + inputFile + ")");
+        if (logger == null)
+            logger = map.getLogger();
 
+        FroggerGameInstance instance = map.getGameInstance();
         TextureRemapArray textureRemap = map.getTextureRemap();
         if (textureRemap == null) {
-            Utils.handleProblem(response, map.getLogger(), Level.SEVERE, "There was no texture remap available for %s.", map.getFileDisplayName());
+            instance.showWarning(logger, "No texture remap found!",  "There was no texture remap available for %s.", map.getFileDisplayName());
             return;
-        }
-
-        List<String> lines;
-        try {
-            lines = Files.readAllLines(inputFile.toPath());
-        } catch (IOException ex) {
-            throw new RuntimeException("Failed to read " + inputFile.getName(), ex);
         }
 
         // Clear remap before running commands. (Commands must update remap.)
         List<Short> oldTextureIds = new ArrayList<>(textureRemap.getTextureIds());
         textureRemap.getTextureIds().clear();
+        logger.info("Importing map data from %s.", inputFile.getName());
 
-        FfsLoadContext context = new FfsLoadContext(map, response);
-        int lineNumber = 0;
-        for (String line : lines) {
-            line = line.trim();
-            lineNumber++;
-            if (line.isEmpty() || line.startsWith("#"))
-                continue;
+        // 1) Run commands from file.
+        MessageTrackingLogger trackedLogger = new MessageTrackingLogger(logger);
+        FfsLoadContext context = new FfsLoadContext(map, trackedLogger);
 
-            String[] split = line.split("\\s+");
-            FfsCommand command = FfsCommand.getCommandByLabel(split[0]);
-            if (command == null) {
-                context.handleProblem(Level.WARNING, "Skipping unrecognized command '%s' on line %d.", split[0], lineNumber);
-                continue;
-            }
-
-            String[] args = split.length > 1 ? Arrays.copyOfRange(split, 1, split.length) : new String[0];
-            if (!command.runCommand(context, args, lineNumber)) {
-                textureRemap.getTextureIds().clear();
-                textureRemap.getTextureIds().addAll(oldTextureIds);
-                return; // Command failed.
-            }
+        try {
+            FfsCommandType.getCommandParser().executeCommands(context, inputFile);
+        } catch (Throwable th) {
+            textureRemap.getTextureIds().clear();
+            textureRemap.getTextureIds().addAll(oldTextureIds);
+            throw new RuntimeException("An error occurred while loading '" + inputFile.getName() + "'.", th);
         }
 
         // Apply the loaded FFS data to the level.
@@ -268,7 +258,7 @@ public class FFSUtil {
         // 2) Validate texture remap.
         // This is necessary, as even changes done in FrogLord need to be reapplied after a restart.
         if (textureRemap.getTextureIds().size() > textureRemap.getTextureIdSlotsAvailable())
-            context.handleProblem(Level.WARNING, "The texture remap for %s has room for %d textures, but %d were imported.\nThis will likely cause graphical corruption in-game!", map.getFileDisplayName(), textureRemap.getTextureIdSlotsAvailable(), textureRemap.getTextureIds().size());
+            map.getGameInstance().showWarning(trackedLogger, "Overflowed the texture remap!", "The texture remap for %s has room for %d textures, but %d were imported.\nThis will likely cause graphical corruption in-game!", map.getFileDisplayName(), textureRemap.getTextureIdSlotsAvailable(), textureRemap.getTextureIds().size());
         while (textureRemap.getTextureIdSlotsAvailable() > textureRemap.getTextureIds().size())
             textureRemap.getTextureIds().add((short) -1);
 
@@ -296,91 +286,79 @@ public class FFSUtil {
         map.getGridPacket().generateGrid(context.getNewPolygonGridSquareFlags());
 
         // 6) Generate map groups for the new level data.
-        map.getGroupPacket().generateMapGroups(response, true);
-        map.getLogger().info("Imported map data from %s.", inputFile.getName());
+        map.getGroupPacket().generateMapGroups(trackedLogger, ProblemResponse.CREATE_POPUP, true);
+        trackedLogger.info("Finished importing map data.");
+
+        if (trackedLogger.hasErrorsOrWarnings())
+            trackedLogger.showImportPopup(inputFile.getName());
     }
 
     @Getter
-    @RequiredArgsConstructor
-    private static class FfsLoadContext {
-        private final FroggerMapFile mapFile;
-        private final ProblemResponse response;
+    private static class FfsLoadContext extends CommandListExecutionContext {
+        @NonNull private final FroggerMapFile mapFile;
         private final List<SVector> newVertices = new ArrayList<>();
         private final List<FroggerMapPolygon> newPolygons = new ArrayList<>();
         private final Map<FroggerMapPolygon, Integer> newPolygonGridSquareFlags = new HashMap<>();
         private int ffsVersion;
         private FroggerConfig froggerConfig;
 
-        public void handleProblem(Level severity, String template, Object... arguments) {
-            Utils.handleProblem(this.response, this.mapFile.getLogger(), severity, template, arguments);
+        public FfsLoadContext(FroggerMapFile mapFile, ILogger logger) {
+            super(logger);
+            this.mapFile = mapFile;
         }
     }
 
-    private static boolean commandFfsVersion(FfsLoadContext context, String[] args) {
-        int newVersion = Integer.parseInt(args[0]);
+    private static boolean commandFfsVersion(FfsLoadContext context, OptionalArguments args) {
+        int newVersion = args.useNext().getAsInteger();
         if (newVersion <= 0 || newVersion > CURRENT_FORMAT_VERSION)
-            context.handleProblem(Level.WARNING, "The FFS reports a file version (%d) not supported by this version of FrogLord! This may lead to errors!", newVersion);
+            context.getLogger().warning("The FFS reports a file version (%d) not supported by this version of FrogLord! This may lead to errors!", newVersion);
 
         context.ffsVersion = newVersion;
         return true;
     }
 
-    private static boolean commandGameVersion(FfsLoadContext context, String[] args) {
-        String versionName = args[0];
+    private static void commandGameVersion(FfsLoadContext context, OptionalArguments args) throws CommandListExecutionError {
+        String versionName = args.useNext().getAsString();
 
-        if (context.getFroggerConfig() != null) {
-            context.handleProblem(Level.SEVERE, "Tried to set the game version more than once? (%s)", versionName);
-            return false;
-        }
+        if (context.getFroggerConfig() != null)
+            throw new CommandListExecutionError("Tried to set the game version again, after it was already set? (%s)", versionName);
 
         GameConfig gameConfig = SCGameType.FROGGER.getVersionConfigByName(versionName);
-        if (!(gameConfig instanceof FroggerConfig)) {
-            context.handleProblem(Level.SEVERE, "Could not resolve a Frogger game version named '%s'.", versionName);
-            return false;
-        }
+        if (!(gameConfig instanceof FroggerConfig))
+            throw new CommandListExecutionError("Could not resolve a Frogger game version named '%s'.", versionName);
 
         context.froggerConfig = (FroggerConfig) gameConfig;
-        return true;
     }
 
-    private static boolean commandVertex(FfsLoadContext context, String[] args) {
-        context.getNewVertices().add(new SVector(Float.parseFloat(args[0]), Float.parseFloat(args[1]), Float.parseFloat(args[2])));
-        return true;
+    private static void commandVertex(FfsLoadContext context, OptionalArguments args) {
+        float x = args.useNext().getAsFloat();
+        float y = args.useNext().getAsFloat();
+        float z = args.useNext().getAsFloat();
+        context.getNewVertices().add(new SVector(x, y, z));
     }
 
-    private static boolean commandTexture(FfsLoadContext context, String[] args) {
+    private static void commandTexture(FfsLoadContext context, OptionalArguments args) {
         // The remap is updated when the command is run because polygon commands rely on the remap having been updated first.
-        context.getMapFile().getTextureRemap().getTextureIds().add(Short.parseShort(args[0]));
-        return true;
+        context.getMapFile().getTextureRemap().getTextureIds().add(args.useNext().getAsShort());
     }
 
-    private static boolean commandPolygon(FfsLoadContext context, String[] args) {
-        int index = 0;
-
-        FroggerMapPolygonType polygonType;
-        try {
-            polygonType = FroggerMapPolygonType.valueOf(args[index++].toUpperCase());
-        } catch (IllegalArgumentException iae) {
-            context.handleProblem(Level.SEVERE, "Invalid FroggerMapPolygonType: %s.", args[index - 1]);
-            return false;
-        }
-
+    private static void commandPolygon(FfsLoadContext context, OptionalArguments args) throws CommandListException {
+        FroggerMapPolygonType polygonType = args.useNext().getAsEnumOrError(FroggerMapPolygonType.class);
         FroggerMapPolygon newPolygon = new FroggerMapPolygon(context.getMapFile(), polygonType);
 
-        String showStr = args[index++];
+        String showStr = args.useNext().getAsString();
         if ("show".equalsIgnoreCase(showStr)) {
             newPolygon.setVisible(true);
         } else if ("hide".equalsIgnoreCase(showStr)) {
             newPolygon.setVisible(false);
         } else {
-            context.handleProblem(Level.SEVERE, "Don't know how to interpret '%s' as either 'show' or 'hide'.", showStr);
-            return false;
+            throw new CommandListSyntaxError("The argument '%s' was expected to either be 'show' or 'hide'.", showStr);
         }
 
         // Read Texture ID & Flags
         if (polygonType.isTextured()) {
-            short textureId = Short.parseShort(args[index++]);
-            int textureFlags = Integer.parseInt(args[index++]);
+            short textureId = args.useNext().getAsShort();
+            int textureFlags = args.useNext().getAsInteger();
 
             TextureRemapArray remap = context.getMapFile().getTextureRemap();
             newPolygon.setTextureId((short) remap.getRemapIndex(textureId)); // -1 if not found.
@@ -389,12 +367,12 @@ public class FFSUtil {
 
         // Read vertices.
         for (int i = 0; i < newPolygon.getVertexCount(); i++)
-            newPolygon.getVertices()[i] = Integer.parseInt(args[index++]);
+            newPolygon.getVertices()[i] = args.useNext().getAsInteger();
 
         // Read Texture UVs.
         if (polygonType.isTextured()) {
             for (int i = 0; i < newPolygon.getVertexCount(); i++) {
-                String[] texCoordSplit = args[index++].split(":");
+                String[] texCoordSplit = args.useNext().getAsString().split(":");
                 float u = Float.parseFloat(texCoordSplit[0]);
                 float v = Float.parseFloat(texCoordSplit[1]);
                 newPolygon.getTextureUvs()[i].setFloatUV(u, v);
@@ -403,77 +381,62 @@ public class FFSUtil {
 
         // Read colors.
         for (int i = 0; i < newPolygon.getColors().length; i++)
-            newPolygon.getColors()[i].fromRGB(Integer.parseInt(args[index++], 16));
+            newPolygon.getColors()[i].fromRGB(Integer.parseInt(args.useNext().getAsString(), 16));
 
         // Read grid square data.
-        if (args.length > index) {
-            int gridFlags = Integer.parseInt(args[index]);
+        if (args.hasNext()) {
+            int gridFlags = args.useNext().getAsInteger();
             context.getNewPolygonGridSquareFlags().put(newPolygon, gridFlags);
         }
 
         context.getNewPolygons().add(newPolygon);
-        return true;
     }
 
-    @RequiredArgsConstructor
-    private enum FfsCommand {
+    @Getter
+    private enum FfsCommandType {
         FFS_VERSION("version_ffs", 1, FFSUtil::commandFfsVersion),
         GAME_VERSION("version_game", 1, FFSUtil::commandGameVersion),
         VERTEX("vertex", 3, FFSUtil::commandVertex),
         TEXTURE("texture", 1, FFSUtil::commandTexture),
         POLYGON("polygon", 6, FFSUtil::commandPolygon);
 
-        @Getter private final String label;
-        @Getter private final int minimumArguments;
-        private final BiPredicate<FfsLoadContext, String[]> loadFunction;
+        private final String label;
+        private final FFSCommand command;
 
-        /**
-         * Runs the command with the given arguments.
-         * @param context the context to run with
-         * @param args the arguments to run the command with
-         * @return true iff the command completed successfully
-         */
-        public boolean runCommand(FfsLoadContext context, String[] args, int lineNumber) {
-            if (context == null)
-                throw new NullPointerException("context");
-            if (args == null)
-                throw new NullPointerException("args");
+        @Getter private static final CommandListParser<FfsLoadContext> commandParser = new CommandListParser<>();
 
-            if ((context.getFfsVersion() == 0 || context.getFroggerConfig() == null) && (this != FFS_VERSION && this != GAME_VERSION)) {
-                context.handleProblem(Level.SEVERE, "The command '%s' on line %d may only be used after the game/format versions are specified.", this.label, lineNumber);
-                return false;
-            }
-
-            if (this.minimumArguments > args.length) {
-                context.handleProblem(Level.SEVERE, "The command '%s' on line %d requires at least %d arguments. (%d were specified)", this.label, lineNumber, this.minimumArguments, args.length);
-                return false;
-            }
-
-            try {
-                return this.loadFunction == null || this.loadFunction.test(context, args);
-            } catch (Throwable th) {
-                Utils.handleError(context.getMapFile().getLogger(), th, false, "An error occurred processing the '%s' command on line %d.", getLabel(), lineNumber);
-                context.handleProblem(Level.SEVERE, "An error occurred processing the '%s' command on line %d.", getLabel(), lineNumber);
-                return false;
-            }
+        static {
+            for (FfsCommandType commandType : values())
+                commandParser.registerCommand(commandType.getCommand());
         }
 
-        /**
-         * Gets the command by the label.
-         * @param label the label to resolve the command by.
-         * @return commandOrNull
-         */
-        public static FfsCommand getCommandByLabel(String label) {
-            if (label == null)
-                return null;
+        FfsCommandType(String label, int minimumArguments, ILazyTextCommandHandler<FfsLoadContext> lazyHandler) {
+            this.label = label;
+            this.command = new FFSCommand(this, label, minimumArguments, lazyHandler);
+        }
+    }
 
-            for (int i = 0; i < values().length; i++) {
-                FfsCommand command = values()[i];
-                if (label.equalsIgnoreCase(command.getLabel()))
-                    return command;
-            }
+    private static class FFSCommand extends TextCommand<FfsLoadContext> {
+        private final FfsCommandType commandType;
+        private final ILazyTextCommandHandler<FfsLoadContext> lazyHandler;
 
-            return null;
+        public FFSCommand(FfsCommandType commandType, String name, int minimumArguments, ILazyTextCommandHandler<FfsLoadContext>lazyHandler) {
+            super(name, minimumArguments);
+            this.commandType = commandType;
+            this.lazyHandler = lazyHandler;
+        }
+
+        @Override
+        public void validateBeforeExecution(FfsLoadContext context, OptionalArguments arguments, CommandLocation location) throws CommandListException {
+            super.validateBeforeExecution(context, arguments, location);
+
+            if ((context.getFfsVersion() == 0 || context.getFroggerConfig() == null) && (this.commandType != FfsCommandType.FFS_VERSION && this.commandType != FfsCommandType.GAME_VERSION))
+                throw new CommandListExecutionError(location, "The command '%s' may only be used after the game/format versions are specified.", getName());
+        }
+
+        @Override
+        public void execute(FfsLoadContext context, OptionalArguments arguments) throws CommandListException {
+            this.lazyHandler.handle(context, arguments);
         }
     }
 }

@@ -459,10 +459,10 @@ public class kcScript extends GameObject<GreatQuestInstance> {
             // Add script effects.
             this.effects.clear();
 
-            config.markTextAsAccessed();
             String fileName = config.getRootNode().getSectionName();
-            for (int i = 0; i < config.getInternalText().size(); i++) {
-                ConfigValueNode node = config.getInternalText().get(i);
+            List<ConfigValueNode> textNodes = config.getTextNodes();
+            for (int i = 0; i < textNodes.size(); i++) {
+                ConfigValueNode node = textNodes.get(i);
                 String textLine = node != null ? node.getAsStringLiteral() : null;
                 if (!StringUtils.isNullOrWhiteSpace(textLine))
                     this.effects.add(kcScriptEffect.parseScriptEffect(logger, this, textLine, config.getOriginalLineNumber() + i, fileName));

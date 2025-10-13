@@ -362,7 +362,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> implement
         this.lightPacket.addLight(light2);
 
         // Setup Group:
-        this.groupPacket.generateMapGroups(ProblemResponse.CREATE_POPUP, true);
+        this.groupPacket.generateMapGroups(getLogger(), ProblemResponse.CREATE_POPUP, true);
         getLogger().info("Cleared the map, its new size is %dx%d.", xTileCount, zTileCount);
     }
 

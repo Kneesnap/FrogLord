@@ -177,7 +177,7 @@ public class MRModel extends SCSharedGameFile implements ISCTextureUser, IExtraU
             contextMenu.getItems().add(bakeToStaticMof);
             bakeToStaticMof.setOnAction(event -> {
                 MRModel newModel = MRModelUtils.bakeAndReplaceAnimatedMof(this);
-                FXUtils.makePopUp("Successfully baked '" + newModel.getFileDisplayName() + "' into a staticMof!", AlertType.INFORMATION);
+                FXUtils.showPopup(AlertType.INFORMATION, "Successfully imported the model.", "Successfully baked '" + newModel.getFileDisplayName() + "' into a staticMof!");
             });
         }
     }
@@ -255,11 +255,11 @@ public class MRModel extends SCSharedGameFile implements ISCTextureUser, IExtraU
                 return;
             }
 
-            importLogger.showPopup("successfully", "Imported '%s' [problem=with ][summary].", inputFile.getName());
+            importLogger.showImportPopup(inputFile.getName());
         } else if (fileName.endsWith(".vlo") || fileName.endsWith(".xar") || fileName.endsWith(".xmr")) {
             importFile(inputFile);
         } else {
-            FXUtils.makePopUp("Don't know how to import this file type. Aborted.", AlertType.WARNING);
+            FXUtils.showPopup(AlertType.WARNING, "Unrecognized/unsupported file type.", "Don't know how to import this file type. Aborted.");
         }
     }
 

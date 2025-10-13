@@ -100,7 +100,7 @@ public class GreatQuestAssetUtils {
         gqsScriptGroup.recursivelyWarnAboutUnusedData(logger);
 
         // Show popup.
-        logger.showPopup("successfully", "Imported '%s' [problem=with ][summary].", sourceName);
+        logger.showImportPopup(sourceName);
     }
 
     private static void applyStringResources(GreatQuestChunkedFile chunkedFile, Config dialogCfg) {

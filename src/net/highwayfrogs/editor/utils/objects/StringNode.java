@@ -137,6 +137,42 @@ public class StringNode {
     }
 
     /**
+     * Gets the node value as a short.
+     * @return shortValue
+     * @throws IllegalConfigSyntaxException Thrown if the value is not formatted as either a short or a hex short.
+     */
+    public short getAsShort() {
+        int value = getAsInteger();
+        if (value < Short.MIN_VALUE || value > 0xFFFF)
+            throw new IllegalConfigSyntaxException("Value '" + this.value + "' cannot be represented as a 16-bit short number." + getExtraDebugErrorInfo());
+
+        return (short) value;
+    }
+
+    /**
+     * Gets the node value as a short.
+     * @param fallback the number to return if there is no value.
+     * @return shortValue
+     * @throws IllegalConfigSyntaxException Thrown if the value is not formatted as either a short or a hex short.
+     */
+    public short getAsShort(short fallback) {
+        int value = getAsInteger(fallback);
+        if (value < Short.MIN_VALUE || value > 0xFFFF)
+            throw new IllegalConfigSyntaxException("Value '" + this.value + "' cannot be represented as a 16-bit short number." + getExtraDebugErrorInfo());
+
+        return (short) value;
+    }
+
+    /**
+     * Sets the node value to a short.
+     * @param newValue The new value.
+     */
+    public void setAsShort(short newValue) {
+        this.value = Short.toString(newValue);
+        this.surroundByQuotes = false;
+    }
+
+    /**
      * Gets the node value as an integer.
      * @return intValue
      * @throws IllegalConfigSyntaxException Thrown if the value is not formatted as either an integer or a hex integer.
@@ -327,9 +363,13 @@ public class StringNode {
         }
 
         try {
-            return Enum.valueOf(enumClass, this.value);
+            return Enum.valueOf(enumClass, this.value.toUpperCase());
         } catch (Exception e) {
-            throw new IllegalConfigSyntaxException("The value '" + this.value + "' could not be interpreted as an enum value from " + enumClass.getSimpleName() + "." + getExtraDebugErrorInfo(), e);
+            try {
+                return Enum.valueOf(enumClass, this.value);
+            } catch (Exception e2) {
+                throw new IllegalConfigSyntaxException("The value '" + this.value + "' could not be interpreted as an enum value from " + enumClass.getSimpleName() + "." + getExtraDebugErrorInfo(), e2);
+            }
         }
     }
 
@@ -392,7 +432,7 @@ public class StringNode {
      * @param input the string to parse
      */
     public void parseStringLiteral(String input) {
-        parseStringLiteral(new SequentialStringReader(input), new StringBuilder(), true);
+        parseStringLiteral(new SequentialStringReader(input), new StringBuilder(), true, false);
     }
 
     /**
@@ -407,8 +447,9 @@ public class StringNode {
      * @param reader the reader to read from
      * @param result the result buffer to store temporary stuff within
      * @param includeWhitespace if whitespace should be included
+     * @param treatCommaAsEndOfValue if a comma outside a quoted string should be treated as the end of the value
      */
-    public void parseStringLiteral(SequentialStringReader reader, StringBuilder result, boolean includeWhitespace) {
+    public void parseStringLiteral(SequentialStringReader reader, StringBuilder result, boolean includeWhitespace, boolean treatCommaAsEndOfValue) {
         result.setLength(0);
 
         boolean isEscape = false;
@@ -449,7 +490,7 @@ public class StringNode {
             } else if (includeWhitespace && Character.isWhitespace(lastChar) && tempChar == '-' && reader.hasNext() && reader.peek() == '-') {
                 reader.setIndex(reader.getIndex() - 1);
                 break;
-            } else if (Character.isWhitespace(tempChar)) {
+            } else if (Character.isWhitespace(tempChar) || (treatCommaAsEndOfValue && tempChar == ',' && result.length() > 0)) {
                 if (result.length() > 0) // If there's whitespace and this is at the start, just skip it.
                     break;
             } else {

@@ -91,8 +91,9 @@ public class Config implements IBinarySerializable {
      * Gets the internal text tracking, which can be safely modified.
      * This gives the text specific to THIS config, and ONLY this config.
      */
-    @Getter
+    @Getter // Right now this should only be used for changing the text. Reading the text should be done elsewhere.
     private final List<ConfigValueNode> internalText = new ArrayList<>();
+    private final List<ConfigValueNode> immutableTextNodes = Collections.unmodifiableList(this.internalText);
 
     private static final ConfigValueNode EMPTY_DEFAULT_NODE = new ConfigValueNode(null);
 
@@ -184,6 +185,14 @@ public class Config implements IBinarySerializable {
     }
 
     /**
+     * Gets the text nodes as an ordered list.
+     */
+    public List<ConfigValueNode> getTextNodes() {
+        this.accessTracker |= TRACKED_ACCESS_TEXT;
+        return this.immutableTextNodes;
+    }
+
+    /**
      * Returns the key value pairs.
      * To modify the contents of this, use the functions for doing so. Iterating through this will only give properties for this config, not any parent configs.
      * @return immutableKeyValuePairs
@@ -225,18 +234,11 @@ public class Config implements IBinarySerializable {
     }
 
     /**
-     * Marks the text in this config node as used/accessed, so it will not warn for being unused.
-     */
-    public void markTextAsAccessed() {
-        this.accessTracker |= TRACKED_ACCESS_TEXT;
-    }
-
-    /**
      * Gets the individual lines of text from a list of config value nodes.
      * @return textStringList
      */
     public List<String> getTextWithoutComments() {
-        markTextAsAccessed();
+        this.accessTracker |= TRACKED_ACCESS_TEXT;
 
         List<String> textList = new ArrayList<>(this.internalText.size());
         for (int i = 0; i < this.internalText.size(); i++) {
@@ -254,7 +256,7 @@ public class Config implements IBinarySerializable {
      * @return textStringList
      */
     public List<String> getTextWithComments() {
-        markTextAsAccessed();
+        this.accessTracker |= TRACKED_ACCESS_TEXT;
 
         List<String> textList = new ArrayList<>(this.internalText.size());
         for (int i = 0; i < this.internalText.size(); i++) {
@@ -993,7 +995,7 @@ public class Config implements IBinarySerializable {
             } else { // It's raw text.
                 newNode = new ConfigValueNode(text, commentText, commentSeparator);
                 newNode.setAsString(text); // Ensure it is not escaped, as escaped text isn't supported here.
-                config.getInternalText().add(newNode);
+                config.internalText.add(newNode);
             }
 
             // Setup the new node.

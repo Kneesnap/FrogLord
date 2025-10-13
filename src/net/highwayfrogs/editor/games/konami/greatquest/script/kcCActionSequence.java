@@ -151,9 +151,8 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
         // Read actions.
         this.actions.clear();
         int lineNumber = 0;
-        config.markTextAsAccessed();
         String fileName = config.getRootNode().getSectionName();
-        for (ConfigValueNode line : config.getInternalText()) {
+        for (ConfigValueNode line : config.getTextNodes()) {
             lineNumber++;
             String textLine = line.getAsStringLiteral();
             if (StringUtils.isNullOrWhiteSpace(textLine))

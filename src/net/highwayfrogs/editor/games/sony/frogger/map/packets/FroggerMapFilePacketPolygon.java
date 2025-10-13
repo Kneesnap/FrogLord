@@ -169,7 +169,7 @@ public class FroggerMapFilePacketPolygon extends FroggerMapFilePacket {
         // Load data from other packets relying on polygon conversions.
         getParentFile().getAnimationPacket().copyAnimationsTo(newMapFile.getAnimationPacket(), polygonMapping);
         getParentFile().getGridPacket().copyGridTo(newMapFile.getGridPacket(), polygonMapping);
-        getParentFile().getGroupPacket().generateMapGroups(ProblemResponse.THROW_EXCEPTION, false);
+        getParentFile().getGroupPacket().generateMapGroups(null, ProblemResponse.THROW_EXCEPTION, false);
     }
 
     private void savePolygonList(DataWriter writer, FroggerMapGroup mapGroup, FroggerMapPolygonType polygonType) {

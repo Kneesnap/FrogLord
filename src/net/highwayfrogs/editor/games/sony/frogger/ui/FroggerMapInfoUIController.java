@@ -148,17 +148,17 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
         InputMenu.promptInput(getGameInstance(), "Please enter the grid dimensions for the new map.", "5,5", newText -> {
             String[] split = newText.split(",");
             if (split.length != 2) {
-                FXUtils.makePopUp("'" + newText + "' was invalid.\nPlease enter two numbers separated by a comma.", AlertType.ERROR);
+                FXUtils.showPopup(AlertType.ERROR, "Invalid grid dimensions.", "'" + newText + "' was invalid.\nPlease enter two numbers separated by a comma.");
                 return;
             }
 
             if (!NumberUtils.isInteger(split[0])) {
-                FXUtils.makePopUp("'" + split[0] + "' is not a valid number.", AlertType.ERROR);
+                FXUtils.showPopup(AlertType.ERROR, "Invalid X grid size.", "'" + split[0] + "' is not a valid number.");
                 return;
             }
 
             if (!NumberUtils.isInteger(split[1])) {
-                FXUtils.makePopUp("'" + split[1] + "' is not a valid number.", AlertType.ERROR);
+                FXUtils.showPopup(AlertType.ERROR, "Invalid Z grid size.", "'" + split[1] + "' is not a valid number.");
                 return;
             }
 
@@ -182,7 +182,7 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
     private void loadFromFFS(ActionEvent event) {
         File importFile = FileUtils.askUserToOpenFile(getGameInstance(), FFS_IMPORT_PATH);
         if (importFile != null)
-            FFSUtil.importFFSToMap(getFile(), importFile, ProblemResponse.CREATE_POPUP);
+            FFSUtil.importFFSToMap(getFile().getLogger(), getFile(), importFile);
     }
 
     @FXML
