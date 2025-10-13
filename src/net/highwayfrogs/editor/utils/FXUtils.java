@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.utils;
 
 import com.sun.javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXMLLoader;
@@ -21,6 +22,7 @@ import javafx.scene.shape.Sphere;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.stage.PopupWindow.AnchorLocation;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Duration;
@@ -682,5 +684,53 @@ public class FXUtils {
 
     static {
         setupCacheTimerTask();
+    }
+
+    /**
+     * Snaps the tooltip to the top right of the window.
+     * @param stage the stage to snap to
+     * @param tooltip the tooltip to snap
+     */
+    public static void snapTooltipToTopRight(Stage stage, Tooltip tooltip) {
+        if (stage == null)
+            throw new NullPointerException("stage");
+        if (tooltip == null)
+            throw new NullPointerException("tooltip");
+
+        ChangeListener<Number> xChangeListener = (observable, oldValue, newValue) -> tooltip.setAnchorX(newValue.doubleValue() + stage.getWidth() - (stage.isMaximized() ? tooltip.getWidth() * .1 : 0));
+        ChangeListener<Number> yChangeListener = (observable, oldValue, newValue) -> tooltip.setAnchorY(newValue.doubleValue() + stage.getHeight() - stage.getScene().getHeight());
+        ChangeListener<Number> widthChangeListener = (observable, oldValue, newValue) -> tooltip.setAnchorX(stage.getX() + newValue.doubleValue() - (stage.isMaximized() ? tooltip.getWidth() * .1 : 0));
+        ChangeListener<Number> heightChangeListener = (observable, oldValue, newValue) -> tooltip.setAnchorY(stage.getY() + newValue.doubleValue() - stage.getScene().getHeight());
+        ChangeListener<? super Scene> sceneListener = (observable, oldScene, newScene) -> {
+            if (oldScene != newScene)
+                tooltip.hide();
+        };
+
+        tooltip.textProperty().addListener((observable, oldText, newText) -> {
+            tooltip.setAnchorX(stage.getX() + stage.getWidth() - (stage.isMaximized() ? tooltip.getWidth() * .1 : 0));
+            tooltip.setAnchorY(stage.getY() + stage.getHeight() - stage.getScene().getHeight());
+        });
+
+        tooltip.setHideOnEscape(false);
+        tooltip.setAnchorLocation(AnchorLocation.WINDOW_TOP_RIGHT);
+        tooltip.setOnShown(event -> {
+            stage.xProperty().addListener(xChangeListener);
+            stage.yProperty().addListener(yChangeListener);
+            stage.widthProperty().addListener(widthChangeListener);
+            stage.heightProperty().addListener(heightChangeListener);
+            stage.sceneProperty().addListener(sceneListener);
+            tooltip.setAnchorX(stage.getX() + stage.getWidth() - (stage.isMaximized() ? tooltip.getWidth() * .1 : 0));
+            tooltip.setAnchorY(stage.getY() + stage.getHeight() - stage.getScene().getHeight());
+        });
+
+        tooltip.setOnHidden(event -> {
+            stage.xProperty().removeListener(xChangeListener);
+            stage.yProperty().removeListener(yChangeListener);
+            stage.widthProperty().removeListener(widthChangeListener);
+            stage.heightProperty().removeListener(heightChangeListener);
+            stage.sceneProperty().removeListener(sceneListener);
+        });
+
+        tooltip.show(stage);
     }
 }

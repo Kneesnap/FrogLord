@@ -355,6 +355,25 @@ public class InputManager {
             }
         }
 
+        // Send out mouse event handlers for any mouse event.
+        mouseHandlers = this.mouseHandlersByType.get(MouseEvent.ANY);
+        if (mouseHandlers != null && mouseHandlers.size() > 0) {
+            for (int i = 0; i < mouseHandlers.size(); i++) {
+                MouseHandler handler = mouseHandlers.get(i);
+
+                try {
+                    handler.accept(this, evt, mouseDeltaX, mouseDeltaY);
+                } catch (Throwable th) {
+                    String errorMessage = "Failed to run MouseHandler " + handler + ".";
+                    getLogger().throwing("InputManager", "processMouseEvents", new RuntimeException(errorMessage, th));
+                }
+
+                // If the event was consumed, abort.
+                if (evt.isConsumed())
+                    return;
+            }
+        }
+
         // Send out generic key handlers.
         for (int i = 0; i < this.mouseHandlers.size(); i++) {
             MouseHandler handler = this.mouseHandlers.get(i);

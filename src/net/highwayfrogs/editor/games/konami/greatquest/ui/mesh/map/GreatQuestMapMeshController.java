@@ -1,6 +1,8 @@
 package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map;
 
+import javafx.geometry.Point3D;
 import javafx.scene.SubScene;
+import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
 import javafx.scene.paint.Color;
@@ -25,8 +27,10 @@ import net.highwayfrogs.editor.gui.mesh.DynamicMeshCollection.MeshViewCollection
 import net.highwayfrogs.editor.system.math.Matrix4x4f;
 import net.highwayfrogs.editor.system.math.Quaternion;
 import net.highwayfrogs.editor.system.math.Vector3f;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 
+import java.text.DecimalFormat;
 import java.util.List;
 
 /**
@@ -39,9 +43,11 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
     private kcVtxBufFileStruct selectedVertexBuffer;
     private GreatQuestMapMaterialMesh highlightedVertexBufferMesh;
     private final Box selectedVertexBufferBoundingBox = new Box();
+    private final Tooltip extraInfoTooltip = new Tooltip();
     private static final double DEFAULT_FAR_CLIP = 1000; // Far enough away to see the skybox.
     private static final double DEFAULT_NEAR_CLIP = .1; // Great Quest needs a fairly small near clip as the map geometry is shown at a small scale.
     private static final double DEFAULT_MOVEMENT_SPEED = 25;
+    private static final DecimalFormat POSITION_DECIMAL_FORMAT = new DecimalFormat("0.####");
 
     private static final PhongMaterial BOUNDING_BOX_OUTLINE = Scene3DUtils.makeUnlitSharpMaterial(Color.RED);
 
@@ -60,6 +66,17 @@ public class GreatQuestMapMeshController extends MeshViewController<GreatQuestMa
         getCamera().setFarClip(DEFAULT_FAR_CLIP);
         getFirstPersonCamera().setDefaultMoveSpeed(DEFAULT_MOVEMENT_SPEED);
         getComboBoxMeshCullFace().setValue(CullFace.NONE); // Great Quest has no back-face culling.
+
+        FXUtils.snapTooltipToTopRight(getOverwrittenStage(), this.extraInfoTooltip);
+        getInputManager().addMouseListener(MouseEvent.ANY, (manager, event, deltaX, deltaY) -> {
+            PickResult result = event.getPickResult();
+            if (result != null && result.getIntersectedPoint() != null && Double.isFinite(result.getIntersectedPoint().getX()) && Math.abs(result.getIntersectedPoint().getZ()) > .00001) {
+                Point3D mousePoint = result.getIntersectedPoint();
+                this.extraInfoTooltip.setText("Position: " + POSITION_DECIMAL_FORMAT.format(mousePoint.getX())
+                        + ", " + POSITION_DECIMAL_FORMAT.format(mousePoint.getY())
+                        + ", " + POSITION_DECIMAL_FORMAT.format(mousePoint.getZ()));
+            }
+        });
 
         // Add mesh click listener.
         getInputManager().addMouseListener(MouseEvent.MOUSE_CLICKED, (manager, event, deltaX, deltaY) -> {
