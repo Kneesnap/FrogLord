@@ -94,6 +94,8 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
                 playback.getModelMesh().tickAnimation(deltaTime);
             }
         });
+
+        setupSkyBox(); // Setup sky box early so transparent things work right with it.
     }
 
     @Override
@@ -117,12 +119,12 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
         this.sequenceSelectionBox.setButtonCell(new LazyFXListCell<>(kcCActionSequence::getSequenceName, "No Sequence"));
         this.sequenceSelectionBox.setCellFactory(listView -> new LazyFXListCell<>(kcCActionSequence::getSequenceName, "No Sequence"));
 
-        // Water and sky box should be setup last, because water is the biggest transparent model of all.
+        // Water should be setup last, because water is the biggest transparent model of all.
         // So, it should come after everything else.
-        Platform.runLater(this::setupWaterAndSkyBox);
+        Platform.runLater(this::setupWater);
     }
 
-    private void setupWaterAndSkyBox() {
+    private void setupSkyBox() {
         // Add skybox.
         for (kcCResource resource : getMap().getChunks()) {
             if (!(resource instanceof kcCResourceModel))
@@ -131,11 +133,22 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
             kcCResourceModel resourceModel = (kcCResourceModel) resource;
             if (isFileNameSkyDome(resource.getName())) {
                 GreatQuestModelMesh skyBoxMesh = new GreatQuestModelMesh(resourceModel);
-                this.skyBoxCollection = new GreatQuestMapEnvironmentCollection(this, false);
+                this.skyBoxCollection = new GreatQuestMapEnvironmentCollection(this, false, false);
                 this.skyBoxCollection.setMesh(skyBoxMesh.getActualMesh());
-            } else if (isFileNameWaterMesh(resource.getName())) {
+            }
+        }
+    }
+
+    private void setupWater() {
+        // Add skybox.
+        for (kcCResource resource : getMap().getChunks()) {
+            if (!(resource instanceof kcCResourceModel))
+                continue;
+
+            kcCResourceModel resourceModel = (kcCResourceModel) resource;
+            if (isFileNameWaterMesh(resource.getName())) {
                 GreatQuestModelMesh waterBoxMesh = new GreatQuestModelMesh(resourceModel);
-                GreatQuestMapEnvironmentCollection waterCollection = new GreatQuestMapEnvironmentCollection(this, true);
+                GreatQuestMapEnvironmentCollection waterCollection = new GreatQuestMapEnvironmentCollection(this, true, true);
                 waterCollection.setMesh(waterBoxMesh.getActualMesh());
                 this.waterMeshCollections.add(waterCollection);
             }
@@ -404,8 +417,8 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
         private final GreatQuestEntityManager manager;
         private final boolean noCulling;
 
-        public GreatQuestMapEnvironmentCollection(GreatQuestEntityManager manager, boolean noCulling) {
-            super(manager.getController(), manager.getTransparentRenderManager().createDisplayListWithNewGroup());
+        public GreatQuestMapEnvironmentCollection(GreatQuestEntityManager manager, boolean noCulling, boolean transparent) {
+            super(manager.getController(), (transparent ? manager.getTransparentRenderManager() : manager.getRenderManager()).createDisplayListWithNewGroup());
             this.manager = manager;
             this.noCulling = noCulling;
         }
