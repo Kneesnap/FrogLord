@@ -107,6 +107,10 @@ public abstract class GameInstance implements IGameInstance {
                         System.exit(0);
                     });
                 }
+
+                // If the stage is kept in memory by JavaFX, then this lambda function will keep the old game instance in memory, thus creating a sizable memory leak.
+                // Clearing the close request will fix such a memory leak.
+                ((Stage) event.getSource()).setOnCloseRequest(null);
             });
         }
 
