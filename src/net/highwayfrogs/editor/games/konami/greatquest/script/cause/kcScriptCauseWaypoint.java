@@ -100,8 +100,8 @@ public class kcScriptCauseWaypoint extends kcScriptCause {
     @Getter
     @AllArgsConstructor
     public enum kcScriptCauseWaypointStatus {
-        ENTITY_LEAVES("leaves the attached waypoint entity's area"),
-        ENTITY_ENTERS("enters the attached waypoint entity's area");
+        ENTITY_ENTERS("enters the attached waypoint entity's area"),
+        ENTITY_LEAVES("leaves the attached waypoint entity's area");
 
         private final String displayAction;
 
