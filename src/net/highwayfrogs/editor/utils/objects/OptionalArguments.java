@@ -398,7 +398,9 @@ public class OptionalArguments {
     private static StringNode parseValue(SequentialStringReader reader, StringBuilder result, boolean includeWhitespace, boolean treatCommaAsEndOfValue) {
         StringNode newNode = new StringNode();
         newNode.parseStringLiteral(reader, result, includeWhitespace, treatCommaAsEndOfValue);
-        if (newNode.getAsStringLiteral().endsWith(",")) // This can happen if treatCommaAsEndOfValue is false, but it still isn't valid.
+
+        String literal = newNode.getAsStringLiteral();
+        if (literal != null && literal.endsWith(",")) // This can happen if treatCommaAsEndOfValue is false, but it still isn't valid.
             throw new RuntimeException("Unexpected comma ends '" + newNode.getAsString() + "' in '" + reader.getPreviouslyReadPartOfString() + "'.");
 
         result.setLength(0);
