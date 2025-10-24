@@ -323,6 +323,9 @@ public class kcScript extends GameObject<GreatQuestInstance> {
             for (int j = 0; j < effectCount; j++)
                 effects.add(interim.getEffects().get(startingEffectIndex + j).toScriptEffect(newFunction));
 
+            // Modify the effect order to show in an order more closely resembling the order which the game will run the effects.
+            kcScriptListInterim.reverseExecutionOrder(effects);
+
             totalEffects += effects.size();
             functions.add(newFunction);
         }

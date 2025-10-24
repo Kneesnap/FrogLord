@@ -16,6 +16,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.Great
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.entity.GreatQuestMapEditorEntityDisplay;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.InputMenu;
+import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.system.math.Vector3f;
@@ -39,11 +40,11 @@ import java.util.function.Consumer;
  */
 @Getter
 public class kcEntity3DInst extends kcEntityInst {
-    @Setter private int flags;
-    private kcAxisType billboardAxis = kcAxisType.Y;
-    private final kcVector4 position = new kcVector4(0, 0, 0, 1);
-    private final kcVector4 rotation = new kcVector4(0, 0, 0, 1);
-    private final kcVector4 scale = new kcVector4(1, 1, 1, 1);
+    @Setter private int flags = DEFAULT_FLAGS;
+    private kcAxisType billboardAxis = DEFAULT_BILLBOARD_AXIS;
+    private final kcVector4 position = DEFAULT_POSITION.clone();
+    private final kcVector4 rotation = DEFAULT_ROTATION.clone();
+    private final kcVector4 scale = DEFAULT_SCALE.clone();
     private final int[] reservedValues = new int[RESERVE_VALUE_COUNT];
     private final int[] padding = new int[PADDING_VALUE_COUNT];
 
@@ -53,6 +54,11 @@ public class kcEntity3DInst extends kcEntityInst {
     private static final int PADDING_VALUE_COUNT = 32;
     public static final int ACTUAL_PADDING_BYTE_SIZE = (RESERVE_VALUE_COUNT + PADDING_VALUE_COUNT) * Constants.INTEGER_SIZE;
     private static final UUID GIZMO_ID = UUID.randomUUID();
+    private static final kcAxisType DEFAULT_BILLBOARD_AXIS = kcAxisType.Y;
+    private static final kcVector4 DEFAULT_POSITION = new kcVector4(0, 0, 0, 1);
+    private static final kcVector4 DEFAULT_ROTATION = new kcVector4(0, 0, 0, 1);
+    private static final kcVector4 DEFAULT_SCALE = new kcVector4(1, 1, 1, 1);
+    private static final int DEFAULT_FLAGS = 0;
 
     public kcEntity3DInst(kcCResourceEntityInst entity) {
         super(entity);
@@ -219,10 +225,24 @@ public class kcEntity3DInst extends kcEntityInst {
     public void writeMultiLineInfo(StringBuilder builder, String padding) {
         super.writeMultiLineInfo(builder, padding);
         builder.append(padding).append("Flags: ").append(kcEntityInstanceFlag.getAsOptionalArguments(this.flags).getNamedArgumentsAsCommaSeparatedString()).append(Constants.NEWLINE);
-        builder.append(padding).append("Billboard Axis: ").append(this.billboardAxis).append(Constants.NEWLINE);
+        if (this.billboardAxis != DEFAULT_BILLBOARD_AXIS)
+            builder.append(padding).append("Billboard Axis: ").append(this.billboardAxis).append(Constants.NEWLINE);
         this.position.writePrefixedInfoLine(builder, "Position", padding);
-        this.rotation.writePrefixedInfoLine(builder, "Rotation", padding);
-        this.scale.writePrefixedInfoLine(builder, "Scale", padding);
+        if (!DEFAULT_ROTATION.equals(this.rotation))
+            this.rotation.writePrefixedInfoLine(builder, "Rotation", padding);
+        if (!DEFAULT_SCALE.equals(this.scale))
+            this.scale.writePrefixedInfoLine(builder, "Scale", padding);
+    }
+
+    @Override
+    public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList = super.addToPropertyList(propertyList);
+        propertyList.add("Position", this.position.toParseableString(1F));
+        propertyList.add("Rotation", getRotationAnglesInDegrees(null).toParseableString());
+        propertyList.add("Scale", this.scale.toParseableString(1F));
+        propertyList.add("Flags", kcEntityInstanceFlag.getAsOptionalArguments(this.flags).getNamedArgumentsAsCommaSeparatedString());
+        propertyList.add("Billboard Axis", this.billboardAxis);
+        return propertyList;
     }
 
     private static final String CONFIG_KEY_FLAGS = "flags";
@@ -240,12 +260,24 @@ public class kcEntity3DInst extends kcEntityInst {
         this.flags = kcEntityInstanceFlag.getValueFromArguments(flagArguments);
         flagArguments.warnAboutUnusedArguments(getResource().getLogger());
 
-        Vector3f degrees = new Vector3f();
-        this.billboardAxis = input.getOrDefaultKeyValueNode(CONFIG_KEY_BILLBOARD_AXIS).getAsEnum(kcAxisType.Y);
+        this.billboardAxis = input.getOrDefaultKeyValueNode(CONFIG_KEY_BILLBOARD_AXIS).getAsEnum(DEFAULT_BILLBOARD_AXIS);
         this.position.parse(input.getKeyValueNodeOrError(CONFIG_KEY_POSITION).getAsString(), 1F);
-        degrees.parse(input.getKeyValueNodeOrError(CONFIG_KEY_ROTATION).getAsString());
-        this.scale.parse(input.getKeyValueNodeOrError(CONFIG_KEY_SCALE).getAsString(), 1F);
-        setRotationAnglesInDegrees(degrees);
+
+        ConfigValueNode rotationNode = input.getOptionalKeyValueNode(CONFIG_KEY_ROTATION);
+        if (rotationNode != null) {
+            Vector3f degrees = new Vector3f();
+            degrees.parse(rotationNode.getAsString());
+            setRotationAnglesInDegrees(degrees);
+        } else {
+            this.rotation.setXYZW(DEFAULT_ROTATION);
+        }
+
+        ConfigValueNode scaleNode = input.getOptionalKeyValueNode(CONFIG_KEY_SCALE);
+        if (scaleNode != null) {
+            this.scale.parse(scaleNode.getAsString(), 1F);
+        } else {
+            this.scale.setXYZW(DEFAULT_SCALE);
+        }
     }
 
     @Override
@@ -256,9 +288,12 @@ public class kcEntity3DInst extends kcEntityInst {
                 .setComment("For a full list of flags, refer to the GQS scripting documentation.")
                 .setAsString(kcEntityInstanceFlag.getAsOptionalArguments(this.flags).getNamedArgumentsAsCommaSeparatedString());
 
-        output.getOrCreateKeyValueNode(CONFIG_KEY_BILLBOARD_AXIS).setAsEnum(this.billboardAxis);
+        if (this.billboardAxis != DEFAULT_BILLBOARD_AXIS)
+            output.getOrCreateKeyValueNode(CONFIG_KEY_BILLBOARD_AXIS).setAsEnum(this.billboardAxis);
         output.getOrCreateKeyValueNode(CONFIG_KEY_POSITION).setAsString(this.position.toParseableString(1F));
-        output.getOrCreateKeyValueNode(CONFIG_KEY_ROTATION).setAsString(getRotationAnglesInDegrees(null).toParseableString());
-        output.getOrCreateKeyValueNode(CONFIG_KEY_SCALE).setAsString(this.scale.toParseableString(1F));
+        if (!DEFAULT_ROTATION.equals(this.rotation))
+            output.getOrCreateKeyValueNode(CONFIG_KEY_ROTATION).setAsString(getRotationAnglesInDegrees(null).toParseableString());
+        if (!DEFAULT_SCALE.equals(this.scale))
+            output.getOrCreateKeyValueNode(CONFIG_KEY_SCALE).setAsString(this.scale.toParseableString(1F));
     }
 }

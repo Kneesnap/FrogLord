@@ -121,23 +121,11 @@ public class kcScriptDisplaySettings extends GameObject<GreatQuestInstance> {
     }
 
     /**
-     * Get the hash number provided in the FrogLord GreatQuest script syntax.
-     * @param hash The hash to get a display string from.
-     * @return displayString
-     */
-    public static String getGqsSyntaxHashDisplay(kcScriptDisplaySettings settings, int hash) {
-        if (settings != null)
-            return settings.getGqsHashDisplay(hash);
-
-        return (hash == 0 || hash == -1) ? "null" : "0x" + NumberUtils.to0PrefixedHexString(hash);
-    }
-
-    /**
      * Apply the hash number provided in the FrogLord GreatQuest script syntax.
      * @param hash The hash to get a display string from.
      */
-    public static void applyGqsSyntaxHashDisplay(StringNode node, kcScriptDisplaySettings settings, int hash) {
-        if (hash == 0 || hash == -1) {
+    public static void applyGqsSyntaxHashDisplay(StringNode node, kcScriptDisplaySettings settings, int hash, int nullValue) {
+        if (hash == nullValue) {
             node.setNull();
         } else if (settings != null) {
             settings.applyGqsHashDisplay(node, hash);

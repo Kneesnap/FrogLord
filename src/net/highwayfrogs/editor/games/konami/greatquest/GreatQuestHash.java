@@ -137,7 +137,10 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
         if (this.originalString != null && this.originalString.length() > 0) {
             return this.originalString;
         } else {
-            return kcScriptDisplaySettings.getGqsSyntaxHashDisplay(settings, this.hashNumber);
+            if (settings != null)
+                return settings.getGqsHashDisplay(this.hashNumber);
+
+            return isHashNull() ? "null" : "0x" + getHashNumberAsString();
         }
     }
 
@@ -148,7 +151,7 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
         if (this.originalString != null && this.originalString.length() > 0) {
             node.setAsString(this.originalString, true);
         } else {
-            kcScriptDisplaySettings.applyGqsSyntaxHashDisplay(node, settings, this.hashNumber);
+            kcScriptDisplaySettings.applyGqsSyntaxHashDisplay(node, settings, this.hashNumber, getValueRepresentingNull());
         }
     }
 
@@ -430,7 +433,11 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
         return this.hashNumber == getValueRepresentingNull() || this.hashNumber == 0;
     }
 
-    private int getValueRepresentingNull() {
+    /**
+     * Gets the hash value which represents null for this hash.
+     * @return valueRepresentingNull
+     */
+    public int getValueRepresentingNull() {
         return isNullZero() ? 0 : -1;
     }
 

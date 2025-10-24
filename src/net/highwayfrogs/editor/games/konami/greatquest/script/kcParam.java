@@ -373,7 +373,7 @@ public class kcParam {
                 break;
             case HASH:
             case HASH_NULL_IS_ZERO:
-                kcScriptDisplaySettings.applyGqsSyntaxHashDisplay(node, settings, getAsInteger());
+                kcScriptDisplaySettings.applyGqsSyntaxHashDisplay(node, settings, getAsInteger(), (paramType == kcParamType.HASH_NULL_IS_ZERO) ? 0 : -1);
                 break;
             case UNSIGNED_INT:
                 node.setAsUnsignedInteger(getAsInteger());

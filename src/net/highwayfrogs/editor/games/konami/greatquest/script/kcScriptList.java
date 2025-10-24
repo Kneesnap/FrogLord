@@ -69,6 +69,7 @@ public class kcScriptList extends kcCResource {
         List<kcScriptTOC> entries = new ArrayList<>();
         List<Integer> statusData = new ArrayList<>();
         List<kcInterimScriptEffect> effects = new ArrayList<>();
+        List<kcScriptEffect> currentFunctionEffects = new ArrayList<>();
         for (int i = 0; i < this.scripts.size(); i++) {
             kcScript script = this.scripts.get(i);
 
@@ -80,8 +81,13 @@ public class kcScriptList extends kcCResource {
             for (int j = 0; j < script.getFunctions().size(); j++) {
                 kcScriptFunction function = script.getFunctions().get(j);
                 function.saveCauseData(statusData, effects.size() * kcInterimScriptEffect.SIZE_IN_BYTES);
-                for (int k = 0; k < function.getEffects().size(); k++)
-                    effects.add(function.getEffects().get(k).toInterimScriptEffect());
+
+                // Save the effects in an order to make the effects run in roughly the effect list order.
+                currentFunctionEffects.clear();
+                currentFunctionEffects.addAll(function.getEffects());
+                kcScriptListInterim.reverseExecutionOrder(currentFunctionEffects);
+                for (int k = 0; k < currentFunctionEffects.size(); k++)
+                    effects.add(currentFunctionEffects.get(k).toInterimScriptEffect());
             }
         }
 

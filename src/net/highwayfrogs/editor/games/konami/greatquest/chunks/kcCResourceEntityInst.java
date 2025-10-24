@@ -161,7 +161,9 @@ public class kcCResourceEntityInst extends kcCResource {
     @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {
         propertyList = super.addToPropertyList(propertyList);
-        // TODO: ADD ENTITY DATA INTO PROPERTY LIST!
+        if (this.instance != null)
+            propertyList = this.instance.addToPropertyList(propertyList);
+
         return propertyList;
     }
 

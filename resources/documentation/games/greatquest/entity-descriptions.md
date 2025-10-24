@@ -46,8 +46,9 @@ type=...
 defaultFlags=...
 
 # Each entity has a sphere surrounding it, centered at the entity's world position.
-# This sphere is used for fast vicinity checks, usually if two entities are close to each other.
-# NOTE: Waypoint entity descriptions have the option of ignoring this sphere in favor of a bounding box instead.
+# This sphere is used mainly for collision, so the sphere should always contain all parts of the collision proxy.
+# If the sphere is too small, the player might get stuck when touching the entity collision.
+# NOTE: Waypoint descriptions may use a bounding box instead, leaving this data unused.
 boundingSpherePos=0, 0, 0
 boundingSphereRadius=1
 ```
@@ -89,10 +90,10 @@ They can have scripts like any other entity, and can even be used to cull out hi
 # APPLY_WATER_CURRENT: A waypoint whose area is defined by the entity bounding sphere, AND pushes the player in the direction which the UVs are scrolling if the player is swimming and inside the waypoint area.
 waypointType=<BOUNDING_SPHERE|BOUNDING_BOX|APPLY_WATER_CURRENT>
 
-# Names of actual waypoint entity instances.
-# When an entity pathfinds to this entity, their pathfind target will update to the next entity.
-# It seems like for patrolling purposes, there's also a prevWaypoint entity, but this seems to be unused.
-# If you have no entity, set these to either null or 0xFFFFFFFF.
+# Names of actual entity instances. (Optional)
+# When an entity pathfinds to this entity, their pathfind target will update to the nextWaypoint.
+# It seems like for entity pathing purposes there's also a prevWaypoint entity, but this seems to be unused.
+# Note that these do not actually need to be waypoints, the next target will be set to any entity provided regardless of if it is a waypoint.
 prevWaypoint=...
 nextWaypoint=...
 
@@ -144,9 +145,8 @@ In the vanilla game, there are no entities which are directly base actor, only i
 ```
 <All properties inherited from base actor.>
 
-# The health configuration for the entity.
+# The health configuration for the entity. (Optional)
 # These values are arbitrary, but 100 is the standard amount in the base game.
-# 
 maxHealth=100
 startHealth=100
 

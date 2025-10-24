@@ -427,6 +427,9 @@ Others, such as Fairy Frogmother face the player by setting their target as `Fro
 Speed is a decimal number, likely multiplicative, so 1.0 would be 1x speed, 2.5 is 2.5x speed, etc.  
 Not used in the vanilla game.
 
+> [!CAUTION]  
+> Using this appears to crash the PC version, although the PS2 version has not been tested.  
+
 ### SetAxisPosition (Script Only)
 **Summary:** Sets the script owner's positional coordinate on the given axis.  
 **Supported Entity Types:** All 3D Entities  
@@ -449,11 +452,12 @@ See `SetPosition` for any limitations.
 > If the `--EnableCollision` is removed before the teleport, everything works!  
 > But the instant collision is re-enabled, the entity will snap back to their previous position as if they had never left.  
 > 
-> **Workarounds:**  
+> **Workarounds (Select the best one for the situation):**  
 > - If you do not need collision, remove the `--EnableCollision` flag.  
 > - If the entity is the player, setting the player's checkpoint position, fading the screen out then killing them before fading back in will bypass any collision checks. Replace the regular death sounds with empty SFX, and add random death noises only when the player isn't getting teleported via scripts.  
+> - Have two separate instances of the same entity type, and switch between them. Eg: Fade the screen out, terminate the first entity instance, and unhide the second.  
 > - Fade the screen out, and teleport the entity through a series of pre-selected positions (ideally up in the sky) which ensure the player never hits any collision.  
-> - Patch the executable to fix this bug. (Hasn't been done yet.)  
+> - Patch the game executable to fix this bug. (Hasn't been done yet.)  
 >
 > Further research/debugging is necessary to determine what causes this issue. <!-- TODO: Do this research -->  
 > This issue does not seem to impact non-character entities (props, items, etc).  
@@ -519,6 +523,9 @@ Not used in the vanilla game.
 <!---**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand, kcCEntity3D::OnCommand`-->
 **Usage:** `LookAtTargetEntity`  
 Not used in the vanilla game.
+
+> [!NOTE]  
+> When used in an entity script, this is only capable of rotating on the Y axis.
 
 ### SetAnimation (Both)
 **Summary:** Changes the animation currently performed.  
@@ -1075,3 +1082,85 @@ Climbable # 31, Seems to be set on climbable models such as ladders and vines.
 # To specify one of the unused collision groups, use the following:
 UnnamedGroupXX # Where XX is a number between 0 and 31 and is not one of the numbers listed above. For example: UnnamedGroup17
 ```
+
+### Technical Details
+The following detail specifics about how the scripting system works at a more technical level.  
+In most cases, understanding these will not be necessary.  
+
+#### When specifically do script functions and their effects run, and in what order?  
+**Ordering Notes:**  
+- If a script command causes another function (Eg: SendNumber causing OnReceiveNumber), the first function will still run all of its commands before the second one runs.
+- The function for a cause will run on the next game tick AFTER the cause is sent, UNLESS it is caused by the script itself (eg: OnReceiveNumber triggered by using SendNumber).
+- Script effects/commands in a function do not run in the order written. Instead, effects/commands execute on a per-entity basis. The last effect/command's execution entity will be the first entity to run ALL of its effects.
+- FrogLord manages the functions so that within each entity, effects/commands will run in the order which they are written in a .gqs file (when possible).
+
+> [!NOTE]  
+> Some day, it might be worthwhile sometime to patch the `kcCScriptMgr::Fire*Effect` methods to call kcCEntity::OnCommand directly instead of submitting to a queue.  
+> This queue system is poor, because it has growth of O(n^2) (where n is the size of the queue, aka the number of commands/effects to run this tick).  
+> This is because the `kcCPriQueue::Pop` method iterates through the entire queue before popping a value.  
+> This would not only be more efficient, but also result in significantly more deterministic behavior for when effects run.  
+
+<details>
+  <summary>Implementation details</summary>
+
+All entity scripts run when the function's script cause happens (eg: `OnDamage MELEE` happens when the actor takes melee damage).  
+To broadcast a script cause, a message must be sent to the `kcCScriptMgr` entity using `kcCMsgPool::SendMsg` in the `kcCEntity::mpMsgStore`, containing information such as what type of cause happened (`OnDamage`), and supplementary information such as the type of damage (`MELEE`.)  
+In practice, this is just a LIFO priority queue which tracks which entities should be processed in what order.
+
+At the very start of the next render update (frame), one of the very first things to happens is that the game will process the message queue (`kcCEntity::ProcessQueuedMessages`).  
+The message queue prioritizes lower priority messages first.  
+For instance, all priority 1 messages will be processed in FIFO order before the first priority 2 message is processed.  
+
+When an entity is processed, ALL of its messages will be processed in order, until the entity's mailbox is empty.  
+This means the scripts will run together at the time of the first message received by that entity.  
+Processing the message means running the `kcCEntity::OnCommand` function for the entity receiving the message/command.  
+
+Since we're processing script causes right now for the `kcCScriptMgr` entity, this will run `kcCScriptMgr::OnCommand`.  
+This function checks the target entity's script for a function with a matching cause to run.  
+If one is found, the function's effects/commands will be added to the queue.  
+
+Because the `kcScriptMgr` has a priority of zero, in the vanilla game it will queue up all script functions before the first script command actually runs.  
+All remaining script effects will run now as part of the same process of reading messages from the queue.  
+
+Do note that both the message queue and the entity mailbox queue are LIFO order, so FrogLord must reverse the order of script instructions to ensure they run in a semi-intuitive order.  
+
+**Exceptions:**
+- Player entities (FrogInst001) always have priority 2, and everything else has priority 1. Therefore, player entity functions will always run last.
+- Camera commands are not submitted to the queue for execution, and will run before any other effect, because they will run while the `kcScriptMgr` entity is generating messages for each command/effect, instead of as part of the message queue.
+
+That's a lot, but the big takeaway is that a function in gqs written as
+```PowerShell
+[[[[Function]]]]
+cause=OnReceiveNumber EQUAL_TO 0
+Entity.Activate
+Entity.Activate --AsEntity "Geeky BillInst003"
+SetSequence "NrmWalk01"
+SetSavePoint 002 -42.0 2.1 6.0 --AsEntity "FrogInst001"
+TakeDamage 100 --Melee --AsEntity "FrogInst001"
+SetAlarm 0 6
+```
+
+Would run in the order:  
+```PowerShell
+SetAlarm 0 6
+SetSequence "NrmWalk01"
+Entity.Activate
+
+Entity.Activate --AsEntity "Geeky BillInst003"
+
+TakeDamage 100 --Melee --AsEntity "FrogInst001"
+SetSavePoint 002 -42.0 2.1 6.0 --AsEntity "FrogInst001"
+```
+
+FrogLord does some of its own behind-the-scenes reordering to make it a little bit more intuitive however, so it would actually run as:
+```PowerShell
+Entity.Activate
+SetSequence "NrmWalk01"
+SetAlarm 0 6 # Frogger takes 6 seconds to respawn.
+
+Entity.Activate --AsEntity "Geeky BillInst003"
+
+SetSavePoint 002 -42.0 2.1 6.0 --AsEntity "FrogInst001"
+TakeDamage 100 --Melee --AsEntity "FrogInst001"
+```
+</details>

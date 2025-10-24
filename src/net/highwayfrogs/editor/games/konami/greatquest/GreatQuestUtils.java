@@ -613,7 +613,7 @@ public class GreatQuestUtils {
             logger = gameObj.getLogger();
 
         // Handle null.
-        int nullHashValue = hashObj.isNullZero() ? 0 : -1;
+        int nullHashValue = hashObj.getValueRepresentingNull();
         String nodeString = node != null ? node.getAsString() : null;
         if (nodeString == null) {
             hashObj.setHash(nullHashValue);
