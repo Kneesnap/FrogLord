@@ -404,12 +404,12 @@ public class MRMofPart extends SCSharedGameData {
         if (getPartCels().isEmpty())
             return box;
 
-        float minX = Float.MAX_VALUE;
-        float minY = Float.MAX_VALUE;
-        float minZ = Float.MAX_VALUE;
-        float maxX = Float.MIN_VALUE;
-        float maxY = Float.MIN_VALUE;
-        float maxZ = Float.MIN_VALUE;
+        float minX = Float.POSITIVE_INFINITY;
+        float minY = Float.POSITIVE_INFINITY;
+        float minZ = Float.POSITIVE_INFINITY;
+        float maxX = Float.NEGATIVE_INFINITY;
+        float maxY = Float.NEGATIVE_INFINITY;
+        float maxZ = Float.NEGATIVE_INFINITY;
         boolean anyVertices = false;
 
         for (MRMofPartCel partCel : getPartCels()) {

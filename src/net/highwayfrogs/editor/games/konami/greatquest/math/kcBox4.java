@@ -73,4 +73,9 @@ public class kcBox4 implements IMultiLineInfoWriter, IBinarySerializable {
 
         return output.set(this.min.getX(), this.min.getY(), this.min.getZ(), this.max.getX(), this.max.getY(), this.max.getZ());
     }
+
+    @Override
+    public String toString() {
+        return "kcBox4{" + this.min + "," + this.max + "}";
+    }
 }

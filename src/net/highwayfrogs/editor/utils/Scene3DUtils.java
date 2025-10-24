@@ -873,7 +873,7 @@ public class Scene3DUtils {
             throw new NullPointerException("mesh");
 
         net.highwayfrogs.editor.system.math.Box boundingBox = new net.highwayfrogs.editor.system.math.Box();
-        boundingBox.set(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE, Float.MIN_VALUE, Float.MIN_VALUE, Float.MIN_VALUE);
+        boundingBox.set(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY);
         if (!calculateBoundingBox(boundingBox, mesh, true))
             boundingBox.set(0F, 0F, 0F, 0F, 0F, 0F);
 
@@ -890,7 +890,7 @@ public class Scene3DUtils {
             throw new NullPointerException("meshes");
 
         net.highwayfrogs.editor.system.math.Box boundingBox = new net.highwayfrogs.editor.system.math.Box();
-        boundingBox.set(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE, Float.MIN_VALUE, Float.MIN_VALUE, Float.MIN_VALUE);
+        boundingBox.set(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY);
 
         boolean anyVerticesFound = false;
         for (int i = 0; i < meshes.size(); i++)

@@ -127,7 +127,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
         this.vertexBuffers.clear();
         GamePlatform platform = getLoadPlatform();
         for (int i = 0; i < primCount; i++) {
-            kcVtxBufFileStruct vtxBuf = new kcVtxBufFileStruct();
+            kcVtxBufFileStruct vtxBuf = new kcVtxBufFileStruct(this);
             vtxBuf.load(reader, platform);
             this.vertexBuffers.add(vtxBuf);
         }
@@ -291,6 +291,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
 
     @Getter
     public static class kcVtxBufFileStruct implements IMultiLineInfoWriter {
+        private final kcCResOctTreeSceneMgr sceneManager;
         // _OTAPrimHeader (Applied to kcCOTAPrim in kcCOTAPrim::Init)
         @Setter private int materialId; // kcCOTAPrim::__ct()
         @Setter private float normalTolerance = 2F; // kcCOTAPrim::__ct()
@@ -306,6 +307,12 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
         private int fvfStride;
         @Setter private kcPrimitiveType primitiveType;
         private final List<kcVertex> vertices = new ArrayList<>();
+
+        private static final ThreadLocal<kcBox4> TEMPORARY_BOUNDING_BOX = ThreadLocal.withInitial(kcBox4::new);
+
+        public kcVtxBufFileStruct(kcCResOctTreeSceneMgr sceneManager) {
+            this.sceneManager = sceneManager;
+        }
 
         /**
          * Set the FVF value for this vtxBuf.
@@ -374,6 +381,19 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
                 vertex.load(reader, this.components, this.fvf, false);
                 this.vertices.add(vertex);
             }
+
+            // Validate bounding box seems right.
+            float testThreshold = 0.01F;
+            kcBox4 calculatedBoundingBox = calculateBoundingBox(TEMPORARY_BOUNDING_BOX.get());
+            if (Math.abs(calculatedBoundingBox.getMin().getX() - this.boundingBox.getMin().getX()) > testThreshold
+                    || Math.abs(calculatedBoundingBox.getMax().getX() - this.boundingBox.getMax().getX()) > testThreshold
+                    || Math.abs(calculatedBoundingBox.getMin().getY() - this.boundingBox.getMin().getY()) > testThreshold
+                    || Math.abs(calculatedBoundingBox.getMax().getY() - this.boundingBox.getMax().getY()) > testThreshold
+                    || Math.abs(calculatedBoundingBox.getMin().getZ() - this.boundingBox.getMin().getZ()) > testThreshold
+                    || Math.abs(calculatedBoundingBox.getMax().getZ() - this.boundingBox.getMax().getZ()) > testThreshold
+                    || Math.abs(calculatedBoundingBox.getMin().getW() - this.boundingBox.getMin().getW()) > testThreshold
+                    || Math.abs(calculatedBoundingBox.getMax().getW() - this.boundingBox.getMax().getW()) > testThreshold)
+                this.sceneManager.getLogger().warning("Vertex Buffer[%d]%nReal Bounding Box: %s%nCalc Bounding Box: %s", this.sceneManager.getVertexBuffers().size(), this.boundingBox, calculatedBoundingBox);
         }
 
         /**
@@ -444,8 +464,8 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
                 return boundingBox;
             }
 
-            boundingBox.getMin().setXYZW(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE, 1F);
-            boundingBox.getMax().setXYZW(Float.MIN_VALUE, Float.MIN_VALUE, Float.MIN_VALUE, 1F);
+            boundingBox.getMin().setXYZW(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, 1F);
+            boundingBox.getMax().setXYZW(Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY, 1F);
 
             for (int i = 0; i < this.vertices.size(); i++) {
                 kcVertex vertex = this.vertices.get(i);

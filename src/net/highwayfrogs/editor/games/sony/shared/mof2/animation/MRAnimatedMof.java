@@ -221,16 +221,16 @@ public class MRAnimatedMof extends MRBaseModelData {
      * @return boundingBox
      */
     public MRMofBoundingBox makeBoundingBox() {
-        float minX = Float.MAX_VALUE;
-        float minY = Float.MAX_VALUE;
-        float minZ = Float.MAX_VALUE;
-        float maxX = Float.MIN_VALUE;
-        float maxY = Float.MIN_VALUE;
-        float maxZ = Float.MIN_VALUE;
+        float minX = Float.POSITIVE_INFINITY;
+        float minY = Float.POSITIVE_INFINITY;
+        float minZ = Float.POSITIVE_INFINITY;
+        float maxX = Float.NEGATIVE_INFINITY;
+        float maxY = Float.NEGATIVE_INFINITY;
+        float maxZ = Float.NEGATIVE_INFINITY;
 
-        float testX = Float.MAX_VALUE;
-        float testY = Float.MAX_VALUE;
-        float testZ = Float.MAX_VALUE;
+        float testX = Float.POSITIVE_INFINITY;
+        float testY = Float.POSITIVE_INFINITY;
+        float testZ = Float.POSITIVE_INFINITY;
 
         // TODO: Revisit this method.
         //  - TODO: Go over bounding boxes across games to see how accurate our generation of them is. Actually, compare with MR_VOID	MRCalculateMOFVertexExtremes() in MR_MOF.C
@@ -253,11 +253,11 @@ public class MRAnimatedMof extends MRBaseModelData {
                                 maxX = Math.max(maxX, vertex.getFloatX());
                                 maxY = Math.max(maxY, vertex.getFloatY());
                                 maxZ = Math.max(maxZ, vertex.getFloatZ());
-                                if (Math.abs(vertex.getFloatX()) < Math.abs(testX))
+                                if (Math.abs(vertex.getFloatX()) < Math.abs(testX) || !Float.isFinite(testX))
                                     testX = vertex.getFloatX();
-                                if (Math.abs(vertex.getFloatY()) < Math.abs(testY))
+                                if (Math.abs(vertex.getFloatY()) < Math.abs(testY) || !Float.isFinite(testY))
                                     testY = vertex.getFloatY();
-                                if (Math.abs(vertex.getFloatZ()) < Math.abs(testZ))
+                                if (Math.abs(vertex.getFloatZ()) < Math.abs(testZ) || !Float.isFinite(testZ))
                                     testZ = vertex.getFloatZ();
                             }
                         }
