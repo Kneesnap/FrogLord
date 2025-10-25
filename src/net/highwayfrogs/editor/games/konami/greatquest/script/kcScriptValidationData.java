@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCaus
 import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,13 +20,34 @@ import java.util.function.Predicate;
  * Contains information used to validate script data.
  * Created by Kneesnap on 11/25/2024.
  */
-@Getter
 @RequiredArgsConstructor
 public class kcScriptValidationData {
-    private final kcCResourceEntityInst entity;
-    private final ILogger logger;
+    @Getter private final kcCResourceEntityInst entity;
+    @Getter private final ILogger logger;
     private final Map<kcActionID, List<kcAction>> actionsByType = new HashMap<>();
     private final Map<kcScriptCauseType, List<kcScriptCause>> causesByType = new HashMap<>();
+
+    /**
+     * Adds an action to the tracker.
+     * @param action the action to add
+     */
+    public void addAction(kcAction action) {
+        if (action == null)
+            throw new NullPointerException("action");
+
+        this.actionsByType.computeIfAbsent(action.getActionID(), key -> new ArrayList<>()).add(action);
+    }
+
+    /**
+     * Adds an action to the tracker.
+     * @param cause the action to add
+     */
+    public void addCause(kcScriptCause cause) {
+        if (cause == null)
+            throw new NullPointerException("cause");
+
+        this.causesByType.computeIfAbsent(cause.getType(), key -> new ArrayList<>()).add(cause);
+    }
 
     /**
      * Returns true if there are any actions matching the given type.

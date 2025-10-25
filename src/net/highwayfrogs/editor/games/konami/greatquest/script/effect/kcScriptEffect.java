@@ -34,6 +34,7 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
     private final GreatQuestHash<kcCResourceEntityInst> targetEntityRef;
 
     public static final String ARGUMENT_ENTITY_RUNNER = "AsEntity";
+    public static final String ARGUMENT_EXTERNAL_ENTITY = "ExternalEntity";
 
     public kcScriptEffect(@NonNull kcScriptFunction parentFunction, kcScriptEffectType effectType) {
         super(parentFunction.getGameInstance());
@@ -46,6 +47,24 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
     }
 
     /**
+     * Gets the target entity, resolving it if the current instance is out of date.
+     * @return targetEntity
+     */
+    public kcCResourceEntityInst getTargetEntity(boolean resolveIfMissing) {
+        kcCResourceEntityInst entity = this.targetEntityRef.getResource();
+        if (entity != null)
+            return entity;
+
+        if (resolveIfMissing) {
+            GreatQuestChunkedFile chunkedFile = this.parentFunction.getChunkedFile();
+            if (GreatQuestUtils.resolveLevelResourceHash(chunkedFile.getLogger(), kcCResourceEntityInst.class, chunkedFile, this, this.targetEntityRef, this.targetEntityRef.getHashNumber(), false))
+                return this.targetEntityRef.getResource();
+        }
+
+        return null;
+    }
+
+    /**
      * Gets the chunked file which contains the script tree containing this script effect.
      */
     public GreatQuestChunkedFile getChunkedFile() {
@@ -54,9 +73,9 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
 
     @Override
     public String getName() {
-        kcCResourceEntityInst entityInst = getTargetEntityRef().getResource();
+        kcCResourceEntityInst entityInst = getTargetEntity(false);
         if (entityInst == null)
-            entityInst = getParentFunction().getScript().getEntity();
+            entityInst = this.parentFunction.getScript().getEntity();
 
         return entityInst != null ? entityInst.getName() : null;
     }
@@ -107,7 +126,13 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
      * Gets the comment (if any) which should be included at the end of the effect line.
      * @return eolComment
      */
-    public abstract String getEndOfLineComment();
+    public String getEndOfLineComment() {
+        GreatQuestChunkedFile chunkedFile = getChunkedFile();
+        if (getTargetEntity(false) == null && !(chunkedFile.getResourceByHash(this.targetEntityRef.getHashNumber()) instanceof kcCResourceEntityInst))
+            return "The target entity was not found.";
+
+        return null;
+    }
 
     /**
      * Resolves the target entity hash.
@@ -152,13 +177,16 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
      * @param arguments the arguments after the load occurred.
      */
     protected void printLoadWarnings(OptionalArguments arguments, ILogger logger) {
+        kcCResourceEntityInst targetEntity = getTargetEntity(false);
+        boolean externalEntityTarget = arguments.useFlag(ARGUMENT_EXTERNAL_ENTITY);
         arguments.warnAboutUnusedArguments(logger);
-        if (getTargetEntityRef().getResource() == null) {
+        if (targetEntity == null) {
             kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
-            logger.warning("The effect '%s' targets an entity which was not found.", saveEffect(settings));
-        } else if (getTargetEntityRef().getResource().getInstance() == null || getTargetEntityRef().getResource().getInstance().getDescription() == null) {
+            if (!externalEntityTarget)
+                logger.warning("The effect '%s' targets an entity which was not found.", saveEffect(settings));
+        } else if (targetEntity.getInstance() == null || targetEntity.getInstance().getDescription() == null) {
             kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
-            logger.warning("The effect '%s' targets an entity (%s) who did not have an entity description!", saveEffect(settings), getTargetEntityRef().getAsString());
+            logger.warning("The effect '%s' targets an entity (%s) who did not have an entity description!", saveEffect(settings), this.targetEntityRef.getAsString());
         } else if (!isActionApplicableToTarget()) {
             kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
             logger.warning("The effect '%s' targets an entity (%s) which is unable to execute the effect.", saveEffect(settings), this.targetEntityRef.getAsGqsString(settings));

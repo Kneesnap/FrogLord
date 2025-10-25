@@ -1083,6 +1083,11 @@ Climbable # 31, Seems to be set on climbable models such as ladders and vines.
 UnnamedGroupXX # Where XX is a number between 0 and 31 and is not one of the numbers listed above. For example: UnnamedGroup17
 ```
 
+### Common Problems (Troubleshooting)
+
+#### When using multiple .gqs files, there are warnings about using an entity defined in another .gqs file.  
+Use `--ExternalEntity` on a script command/effect to indicate that the entity is defined somewhere else, and no warning should be shown if the entity is not found.  
+
 ### Technical Details
 The following detail specifics about how the scripting system works at a more technical level.  
 In most cases, understanding these will not be necessary.  

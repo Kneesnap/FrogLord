@@ -95,11 +95,6 @@ public class kcScriptEffectCamera extends kcScriptEffect {
         }
     }
 
-    @Override
-    public String getEndOfLineComment() {
-        return null; // None of these effects have end of line comments.
-    }
-
     private void resolveEntityFromArguments(ILogger logger) {
         if (this.entityParamRef == null)
             return;
@@ -110,7 +105,7 @@ public class kcScriptEffectCamera extends kcScriptEffect {
 
     @Override
     public boolean isActionApplicableToTarget() {
-        return getTargetEntityRef().getResource() != null;
+        return true; // I believe this will work even if the target entity is not found.
     }
 
     @Override

@@ -277,7 +277,7 @@ public class kcScriptList extends kcCResource {
 
                 // Add cause.
                 if (functionData != null)
-                    functionData.getCausesByType().computeIfAbsent(function.getCause().getType(), key -> new ArrayList<>()).add(function.getCause());
+                    functionData.addCause(function.getCause());
 
                 // Add effects.
                 for (int k = 0; k < function.getEffects().size(); k++) {
@@ -287,9 +287,9 @@ public class kcScriptList extends kcCResource {
                         continue;
 
                     // Apply it to the target entity, not to the attached script entity.
-                    kcScriptValidationData validationData = getOrCreateValidationData(logger, dataMap, effect.getTargetEntityRef().getResource());
+                    kcScriptValidationData validationData = getOrCreateValidationData(logger, dataMap, effect.getTargetEntity(true));
                     if (validationData != null)
-                        validationData.getActionsByType().computeIfAbsent(action.getActionID(), key -> new ArrayList<>()).add(action);
+                        validationData.addAction(action);
                 }
             }
 
@@ -309,12 +309,11 @@ public class kcScriptList extends kcCResource {
                             // Apply it to the target entity, not to the attached script entity.
                             kcScriptValidationData validationData = getOrCreateValidationData(logger, dataMap, entity);
                             if (validationData != null)
-                                validationData.getActionsByType().computeIfAbsent(action.getActionID(), key -> new ArrayList<>()).add(action);
+                                validationData.addAction(action);
                         }
                     }
                 }
             }
-
         }
 
         // Print the warnings in order.
@@ -350,7 +349,7 @@ public class kcScriptList extends kcCResource {
                     if (action == null || action.isLoadedFromGame())
                         continue;
 
-                    kcScriptValidationData actionData = getOrCreateValidationData(logger, dataMap, effect.getTargetEntityRef().getResource());
+                    kcScriptValidationData actionData = getOrCreateValidationData(logger, dataMap, effect.getTargetEntity(true));
                     if (actionData != null)
                         action.printAdvancedWarnings(actionData);
                 }

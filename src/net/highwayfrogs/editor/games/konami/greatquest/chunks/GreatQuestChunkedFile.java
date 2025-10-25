@@ -28,7 +28,6 @@ import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDescType;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
-import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestChunkFileEditor;
@@ -274,7 +273,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         kcScriptList scriptList = getScriptList();
         kcScriptDisplaySettings settings = createScriptDisplaySettings();
         saveActionSequences(new File(folder, "sequences.txt"), settings);
-        saveScripts(getLogger(), new File(folder, "scripts.txt"), settings);
+        saveScripts(new File(folder, "scripts-debug.txt"), settings); // The scripts are saved in gqs form as part of the entities, this file right here is just for debugging.
 
         exportEntities(new File(folder, "entities"), scriptList, settings);
         exportEntityDescriptions(new File(folder, "entity-descriptions"));
@@ -727,12 +726,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
      * @param file     The file to save to.
      * @param settings The settings to print the scripts with.
      */
-    public void saveScripts(ILogger logger, File file, kcScriptDisplaySettings settings) {
-        if (logger == null)
-            logger = getLogger();
-
-        File scriptFolder = new File(file.getParentFile(), "scripts/");
-
+    public void saveScripts(File file, kcScriptDisplaySettings settings) {
         StringBuilder scriptBuilder = new StringBuilder();
         for (kcCResource testChunk : this.chunks) {
             if (testChunk instanceof kcScriptList) {
@@ -740,16 +734,6 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 scriptBuilder.append("// Script List: '").append(scriptList.getName()).append("'\n");
                 scriptList.toString(this, scriptBuilder, settings);
                 scriptBuilder.append('\n');
-
-                if (scriptList.getScripts().isEmpty())
-                    continue;
-
-                FileUtils.makeDirectory(scriptFolder);
-                for (int i = 0; i < scriptList.getScripts().size(); i++) {
-                    kcScript script = scriptList.getScripts().get(i);
-                    Config rootNode = script.toConfigNode(logger, settings);
-                    rootNode.saveTextFile(new File(scriptFolder, rootNode.getSectionName() + "." + kcScript.EXTENSION));
-                }
             }
         }
 

@@ -38,7 +38,7 @@ public abstract class kcScriptEffectAction extends kcScriptEffect implements kcA
     }
     @Override
     public boolean isActionApplicableToTarget() {
-        kcCResourceEntityInst entity = getTargetEntityRef().getResource();
+        kcCResourceEntityInst entity = getTargetEntity(false);
         kcAction action = getAction();
         return action != null && entity != null && action.getActionID().getActionTargetType() != null
                 && action.getActionID().getActionTargetType().isApplicable(entity.getInstance());
@@ -55,7 +55,16 @@ public abstract class kcScriptEffectAction extends kcScriptEffect implements kcA
 
     @Override
     public String getEndOfLineComment() {
+        String parentComment = super.getEndOfLineComment();
+
         kcAction action = getAction();
-        return action != null ? action.getEndOfLineComment() : null;
+        String actionComment = action != null ? action.getEndOfLineComment() : null;
+        if (actionComment == null) {
+            return parentComment;
+        } else if (parentComment != null) {
+            return actionComment + " " + parentComment;
+        } else {
+            return actionComment;
+        }
     }
 }
