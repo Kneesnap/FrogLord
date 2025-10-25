@@ -18,6 +18,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.generic.kcIGenericResourc
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcSphere;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -50,18 +51,18 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
     //  - MonsterClass::Do_Guard (Seems to be unused code that wasn't optimized out. Not sure)
     //  - There are more, but I didn't think it was worth investigating.
     //  - But perhaps most interestingly, CCharacter::LookAtTarget. When the target entity's skeleton has 0 has no head target (eg: no bone named 'Bip01 Head' or 'Bip02 Head'), the target position will be the bounding sphere position.
-    private final kcSphere boundingSphere = new kcSphere(0, 0, 0, 1F); // Positioned relative to entity position. (Not on any bone)
+    private final kcSphere boundingSphere = DEFAULT_BOUNDING_SPHERE.clone(); // Positioned relative to entity position. (Not on any bone)
     private static final int PADDING_VALUES = 3;
     private static final int PADDING_VALUES_3D = 4;
     private static final int CLASS_ID = GreatQuestUtils.hash("kcCEntity3D");
     private static final String ENTITY_DESC_FILE_PATH_KEY = "entityDescCfgFilePath";
     private static final SavedFilePath ENTITY_DESC_EXPORT_PATH = new SavedFilePath(ENTITY_DESC_FILE_PATH_KEY, "Select the directory to export the entity description to", Config.DEFAULT_FILE_TYPE);
     private static final SavedFilePath ENTITY_DESC_IMPORT_PATH = new SavedFilePath(ENTITY_DESC_FILE_PATH_KEY, "Select the directory to import entity description from", Config.DEFAULT_FILE_TYPE);
+    private static final kcSphere DEFAULT_BOUNDING_SPHERE = new kcSphere(0, 0, 0, 1F);
 
     protected kcEntity3DDesc(@NonNull kcCResourceGeneric resource, @NonNull kcEntityDescType descriptionType) {
         super(resource);
         this.entityDescriptionType = descriptionType;
-        this.boundingSphere.setRadius(1F); // Default radius is 1.
     }
 
     @Override
@@ -153,8 +154,19 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
         this.defaultFlags = kcEntityInstanceFlag.getValueFromArguments(arguments);
         arguments.warnAboutUnusedArguments(logger);
 
-        this.boundingSphere.getPosition().parse(input.getKeyValueNodeOrError(CONFIG_KEY_BOUNDING_SPHERE_POS).getAsString());
-        this.boundingSphere.setRadius(input.getKeyValueNodeOrError(CONFIG_KEY_BOUNDING_SPHERE_RADIUS).getAsFloat());
+        ConfigValueNode boundingSpherePosNode = input.getOptionalKeyValueNode(CONFIG_KEY_BOUNDING_SPHERE_POS);
+        if (boundingSpherePosNode != null) {
+            this.boundingSphere.getPosition().parse(boundingSpherePosNode.getAsString());
+        } else {
+            this.boundingSphere.getPosition().setXYZ(DEFAULT_BOUNDING_SPHERE.getPosition());
+        }
+
+        ConfigValueNode boundingSphereRadiusNode = input.getOptionalKeyValueNode(CONFIG_KEY_BOUNDING_SPHERE_RADIUS);
+        if (boundingSphereRadiusNode != null) {
+            this.boundingSphere.setRadius(boundingSphereRadiusNode.getAsFloat());
+        } else {
+            this.boundingSphere.setRadius(DEFAULT_BOUNDING_SPHERE.getRadius());
+        }
     }
 
     /**
@@ -187,7 +199,9 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
         output.getOrCreateKeyValueNode(CONFIG_KEY_DESC_TYPE).setAsEnum(getEntityDescriptionType());
         output.getOrCreateKeyValueNode(CONFIG_KEY_FLAGS).setAsString(kcEntityInstanceFlag.getAsOptionalArguments(this.defaultFlags).getNamedArgumentsAsCommaSeparatedString());
 
-        output.getOrCreateKeyValueNode(CONFIG_KEY_BOUNDING_SPHERE_POS).setAsString(this.boundingSphere.getPosition().toParseableString());
-        output.getOrCreateKeyValueNode(CONFIG_KEY_BOUNDING_SPHERE_RADIUS).setAsFloat(this.boundingSphere.getRadius());
+        if (!DEFAULT_BOUNDING_SPHERE.getPosition().equals(this.boundingSphere.getPosition()))
+            output.getOrCreateKeyValueNode(CONFIG_KEY_BOUNDING_SPHERE_POS).setAsString(this.boundingSphere.getPosition().toParseableString());
+        if (DEFAULT_BOUNDING_SPHERE.getRadius() != this.boundingSphere.getRadius())
+            output.getOrCreateKeyValueNode(CONFIG_KEY_BOUNDING_SPHERE_RADIUS).setAsFloat(this.boundingSphere.getRadius());
     }
 }

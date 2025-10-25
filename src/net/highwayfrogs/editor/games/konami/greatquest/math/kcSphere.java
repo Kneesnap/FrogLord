@@ -3,11 +3,11 @@ package net.highwayfrogs.editor.games.konami.greatquest.math;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents the 'kcSphere' struct and 'kcCSphere' class.
@@ -54,5 +54,12 @@ public class kcSphere implements IInfoWriter, IMultiLineInfoWriter, IBinarySeria
         builder.append(Constants.NEWLINE);
 
         builder.append(padding).append("Radius: ").append(this.radius).append(Constants.NEWLINE);
+    }
+
+    /**
+     * Creates a clone of this sphere.
+     */
+    public kcSphere clone() {
+        return new kcSphere(this.position.getX(), this.position.getY(), this.position.getZ(), this.radius);
     }
 }

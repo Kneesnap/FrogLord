@@ -130,8 +130,10 @@ public class kcWaypointDesc extends kcEntity3DDesc {
     public void toConfig(Config output, kcScriptDisplaySettings settings) {
         super.toConfig(output, settings);
         output.getOrCreateKeyValueNode(CONFIG_KEY_TYPE).setAsEnum(this.type);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_PREV_WAYPOINT).setAsString(this.previousWaypointEntityRef.getAsGqsString(settings));
-        output.getOrCreateKeyValueNode(CONFIG_KEY_NEXT_WAYPOINT).setAsString(this.nextWaypointEntityRef.getAsGqsString(settings));
+        if (!this.previousWaypointEntityRef.isHashNull())
+            output.getOrCreateKeyValueNode(CONFIG_KEY_PREV_WAYPOINT).setAsString(this.previousWaypointEntityRef.getAsGqsString(settings));
+        if (!this.nextWaypointEntityRef.isHashNull())
+            output.getOrCreateKeyValueNode(CONFIG_KEY_NEXT_WAYPOINT).setAsString(this.nextWaypointEntityRef.getAsGqsString(settings));
         if (this.type == kcWaypointType.BOUNDING_BOX || this.boundingBoxDimensions.getX() != 0 || this.boundingBoxDimensions.getY() != 0 || this.boundingBoxDimensions.getZ() != 0)
             output.getOrCreateKeyValueNode(CONFIG_KEY_BOUNDING_BOX_DIMENSIONS).setAsString(this.boundingBoxDimensions.toParseableString());
         if (this.type == kcWaypointType.APPLY_WATER_CURRENT || this.strength != 0)

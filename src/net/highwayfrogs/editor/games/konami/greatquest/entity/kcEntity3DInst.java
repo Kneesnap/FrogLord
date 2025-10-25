@@ -256,9 +256,14 @@ public class kcEntity3DInst extends kcEntityInst {
         super.fromConfig(logger, input);
 
         ConfigValueNode flagNode = input.getOptionalKeyValueNode(CONFIG_KEY_FLAGS);
-        OptionalArguments flagArguments = flagNode != null ? OptionalArguments.parseCommaSeparatedNamedArguments(flagNode.getAsString()) : new OptionalArguments();
-        this.flags = kcEntityInstanceFlag.getValueFromArguments(flagArguments);
-        flagArguments.warnAboutUnusedArguments(getResource().getLogger());
+        if (flagNode != null) {
+            OptionalArguments flagArguments = OptionalArguments.parseCommaSeparatedNamedArguments(flagNode.getAsString());
+            this.flags = kcEntityInstanceFlag.getValueFromArguments(flagArguments);
+            flagArguments.warnAboutUnusedArguments(getResource().getLogger());
+        } else {
+            kcEntity3DDesc description = getDescription();
+            this.flags = description != null ? description.getDefaultFlags() : DEFAULT_FLAGS;
+        }
 
         this.billboardAxis = input.getOrDefaultKeyValueNode(CONFIG_KEY_BILLBOARD_AXIS).getAsEnum(DEFAULT_BILLBOARD_AXIS);
         this.position.parse(input.getKeyValueNodeOrError(CONFIG_KEY_POSITION).getAsString(), 1F);

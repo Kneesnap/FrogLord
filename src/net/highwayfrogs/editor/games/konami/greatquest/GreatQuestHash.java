@@ -136,11 +136,12 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
     public String getAsGqsString(kcScriptDisplaySettings settings) {
         if (this.originalString != null && this.originalString.length() > 0) {
             return this.originalString;
+        } else if (isHashNull()) {
+            return "null";
+        } else if (settings != null) {
+            return settings.getGqsHashDisplay(this.hashNumber);
         } else {
-            if (settings != null)
-                return settings.getGqsHashDisplay(this.hashNumber);
-
-            return isHashNull() ? "null" : "0x" + getHashNumberAsString();
+            return "0x" + getHashNumberAsString();
         }
     }
 
