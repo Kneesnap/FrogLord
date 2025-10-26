@@ -166,18 +166,17 @@ public class kcScriptEffectCamera extends kcScriptEffect {
         }
     }
 
-    @Getter
-    @AllArgsConstructor
     public enum kcCameraPivotParam {
-        PIVOT_DISTANCE,
+        // Pivot param types:
+        PIVOT_DISTANCE, // On the follow camera, this is the "follow distance"
         TARGET_OFFSET_X,
         TARGET_OFFSET_Y,
         TARGET_OFFSET_Z,
         PIVOT_OFFSET_X,
-        PIVOT_OFFSET_Y,
+        PIVOT_OFFSET_Y, // On the follow camera, this is the "follow vertex offset"
         PIVOT_OFFSET_Z,
         TRANSITION_DURATION,
-        CAMERA_BASE_FLAGS;
+        LOCK_PIVOT_Y; // kcCameraPivot::Update checks for flag 0x80 (set by setting this param to any value), the camera will have its pivot Y locked to the target Y. Seems to only ever be used by accident, in The Tree of Knowledge, since the camera cuts off the top of Mr. D because of this.
 
         /**
          * Gets the kcCameraPivotParam corresponding to the provided value.

@@ -940,15 +940,15 @@ The value is a decimal number.
 
 ```properties
 # kcCameraPivotParam Values:
-PIVOT_DISTANCE # How much distance to put between the camera and the pivot entity.
+PIVOT_DISTANCE # How much distance to put between the camera and the pivot entity. On the follow camera, this is the "follow distance"
 TARGET_OFFSET_X # An offset to the position the camera looks at (the target entity).
 TARGET_OFFSET_Y # An offset to the position the camera looks at (the target entity).
 TARGET_OFFSET_Z # An offset to the position the camera looks at (the target entity).
 PIVOT_OFFSET_X # An offset to the pivot position (the pivot entity).
-PIVOT_OFFSET_Y # An offset to the pivot position (the pivot entity).
+PIVOT_OFFSET_Y # An offset to the pivot position (the pivot entity). On the follow camera, this is the "follow vertex offset"
 PIVOT_OFFSET_Z # An offset to the pivot position (the pivot entity).
 TRANSITION_DURATION # How long the camera transition should take.
-CAMERA_BASE_FLAGS # The flags to apply to the camera entity. (Currently undocumented/unknown)
+LOCK_PIVOT_Y # The camera will have its pivot Y locked to the target Y. Seems to only ever be used by accident, as its only usage is in The Tree of Knowledge, and the camera cuts off the top of Mr. D because of this param getting set.
 ```
 
 ## Extra Documentation

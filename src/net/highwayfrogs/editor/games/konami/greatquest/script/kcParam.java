@@ -15,7 +15,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionNum
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionNumber.NumberOperation;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionPlaySound;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionSetAnimation;
-import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffectCamera.kcCameraParam;
+import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffectCamera.kcCameraPivotParam;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelMesh;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
@@ -199,7 +199,7 @@ public class kcParam {
             case NUMBER_OPERATION:
                 return getEnumWarning(NumberOperation.values());
             case CAMERA_PIVOT_PARAM:
-                return getEnumWarning(kcCameraParam.values());
+                return getEnumWarning(kcCameraPivotParam.values());
             case ATTACH_ID:
                 return getEnumWarning(kcAttachID.values());
             case SPECIAL_ACTIVATION_BIT_MASK:
@@ -301,7 +301,7 @@ public class kcParam {
                 setEnumFromNode(NumberOperation.class, node);
                 break;
             case CAMERA_PIVOT_PARAM:
-                setEnumFromNode(kcCameraParam.class, node);
+                setEnumFromNode(kcCameraPivotParam.class, node);
                 break;
             case ATTACH_ID:
                 setEnumFromNode(kcAttachID.class, node);
@@ -407,7 +407,7 @@ public class kcParam {
                 setNodeToEnumName(node, NumberOperation.values());
                 break;
             case CAMERA_PIVOT_PARAM:
-                setNodeToEnumName(node, kcCameraParam.values());
+                setNodeToEnumName(node, kcCameraPivotParam.values());
                 break;
             case ATTACH_ID:
                 setNodeToEnumName(node, kcAttachID.values());
