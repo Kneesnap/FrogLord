@@ -29,6 +29,8 @@ public class kcActionNumber extends kcAction {
     private int number;
     private NumberOperation operation;
 
+    public static final int ENTITY_VARIABLE_SLOTS = 8;
+
     public kcActionNumber(kcActionExecutor executor) {
         super(executor, kcActionID.NUMBER);
     }
@@ -78,7 +80,7 @@ public class kcActionNumber extends kcAction {
         super.printWarnings(logger);
         if (this.operation == NumberOperation.RANDOM && this.number < 1)
             printWarning(logger, "the RANDOM operation requires a number greater than zero!");
-        if (this.operation == NumberOperation.ENTITY_VARIABLE && (this.number < 0 || this.number > 7))
+        if (this.operation == NumberOperation.ENTITY_VARIABLE && (this.number < 0 || this.number >= ENTITY_VARIABLE_SLOTS))
             printWarning(logger, this.number + " is not a valid entity variable id!");
     }
 
@@ -93,8 +95,8 @@ public class kcActionNumber extends kcAction {
 
         // Ensure there is a cause listening for this number.
         if (this.operation == NumberOperation.ENTITY_VARIABLE) {
-            if (!data.anyActionsMatch(kcActionID.VARIABLE_SET, action -> ((kcActionLazyTemplate) action).getParamOrError(0).getAsInteger() == this.number)
-                    && !data.anyActionsMatch(kcActionID.VARIABLE_ADD, action -> ((kcActionLazyTemplate) action).getParamOrError(0).getAsInteger() == this.number))
+            if (!data.anyActionsMatch(kcActionID.VARIABLE_SET, action -> ((kcActionChangeVariable) action).getVariableID() == this.number)
+                    && !data.anyActionsMatch(kcActionID.VARIABLE_ADD, action -> ((kcActionChangeVariable) action).getVariableID() == this.number))
                 printWarning(data.getLogger(), data.getEntityName() + " uses SendNumber on entity variable slot " + this.number + ", but that slot is never assigned to a number!");
         } else if (this.operation == NumberOperation.LITERAL_NUMBER) {
             if (!data.anyCausesMatch(kcScriptCauseType.NUMBER, (kcScriptCauseNumber cause) -> cause.doesValueMatch(this.number)))

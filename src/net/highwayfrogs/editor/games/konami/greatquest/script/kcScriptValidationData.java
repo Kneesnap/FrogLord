@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionID;
+import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionNumber;
+import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionNumber.NumberOperation;
 import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCause;
 import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCauseType;
 import net.highwayfrogs.editor.utils.StringUtils;
@@ -26,6 +28,7 @@ public class kcScriptValidationData {
     @Getter private final ILogger logger;
     private final Map<kcActionID, List<kcAction>> actionsByType = new HashMap<>();
     private final Map<kcScriptCauseType, List<kcScriptCause>> causesByType = new HashMap<>();
+    private int sentVariables;
 
     /**
      * Adds an action to the tracker.
@@ -47,6 +50,37 @@ public class kcScriptValidationData {
             throw new NullPointerException("cause");
 
         this.causesByType.computeIfAbsent(cause.getType(), key -> new ArrayList<>()).add(cause);
+    }
+
+    /**
+     * If the provided action is for sending a number, track it separately, to track which variables have been used.
+     * This needs a special case because SendNumber has a special-case for handling --AsEntity, where it will grab variable data from the sending entity.
+     * @param action the action to try adding
+     */
+    public void addSendNumberToOwner(kcAction action) {
+        // Track variables which have been sent.
+        if (action.getActionID() == kcActionID.NUMBER && ((kcActionNumber) action).getOperation() == NumberOperation.ENTITY_VARIABLE)
+            markVariableSent(((kcActionNumber) action).getNumber());
+    }
+
+    /**
+     * Marks a particular variable ID as having been used/sent.
+     * @param variableId the variable ID to mark as used/sent.
+     */
+    private void markVariableSent(int variableId) {
+        if (variableId < 0 || variableId >= kcActionNumber.ENTITY_VARIABLE_SLOTS)
+            return;
+
+        this.sentVariables |= (1 << variableId);
+    }
+
+    /**
+     * Test if a variable was sent
+     * @param variableId the variable ID to test.
+     * @return true iff a variable was sent by the given entity.
+     */
+    public boolean wasVariableSent(int variableId) {
+        return (variableId >= 0) && (variableId < kcActionNumber.ENTITY_VARIABLE_SLOTS) && (this.sentVariables & (1 << variableId)) != 0;
     }
 
     /**

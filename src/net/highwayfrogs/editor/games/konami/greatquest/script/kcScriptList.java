@@ -290,6 +290,8 @@ public class kcScriptList extends kcCResource {
                     kcScriptValidationData validationData = getOrCreateValidationData(logger, dataMap, effect.getTargetEntity(true));
                     if (validationData != null)
                         validationData.addAction(action);
+                    if (functionData != null)
+                        functionData.addSendNumberToOwner(action);
                 }
             }
 
@@ -308,8 +310,10 @@ public class kcScriptList extends kcCResource {
 
                             // Apply it to the target entity, not to the attached script entity.
                             kcScriptValidationData validationData = getOrCreateValidationData(logger, dataMap, entity);
-                            if (validationData != null)
+                            if (validationData != null) {
                                 validationData.addAction(action);
+                                validationData.addSendNumberToOwner(action);
+                            }
                         }
                     }
                 }
