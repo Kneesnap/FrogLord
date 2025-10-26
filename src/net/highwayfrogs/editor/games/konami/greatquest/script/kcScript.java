@@ -467,8 +467,17 @@ public class kcScript extends GameObject<GreatQuestInstance> {
             for (int i = 0; i < textNodes.size(); i++) {
                 ConfigValueNode node = textNodes.get(i);
                 String textLine = node != null ? node.getAsStringLiteral() : null;
-                if (!StringUtils.isNullOrWhiteSpace(textLine))
-                    this.effects.add(kcScriptEffect.parseScriptEffect(logger, this, textLine, config.getOriginalLineNumber() + i, fileName));
+                if (StringUtils.isNullOrWhiteSpace(textLine))
+                    continue;
+
+                int lineNumber = config.getOriginalLineNumber() + i;
+                try {
+                    this.effects.add(kcScriptEffect.parseScriptEffect(logger, this, textLine, lineNumber, fileName));
+                } catch (Throwable th) {
+                    // We must print exception causes, because if we don't, they won't be visible to the user.
+                    String entityName = this.script.getEntity() != null ? "'" + this.script.getEntity().getName() + "'" : "null";
+                    Utils.handleError(logger, th, false, "Failed to load script effect for entity '%s' from %s on line %d.\n%s", entityName, config.getRootNode().getSectionName(), lineNumber, Utils.getOrderedErrorMessagesString(th));
+                }
             }
         }
 
