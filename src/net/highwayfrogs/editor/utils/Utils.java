@@ -363,8 +363,16 @@ public class Utils {
         if (logger != null) {
             if (formattedMessage != null)
                 logger.severe(formattedMessage);
-            if (th != null)
+
+            if (th != null) {
+                // Trace display for UI console.
+                logger.severe("Trace:");
+                for (String errorMessage : getErrorMessages(th))
+                    logger.severe(" - %s", errorMessage);
+
+                // Show exception stack trace. (Only put in log file and debug console, not displayed in UI console)
                 logger.throwing(callingClass != null ? callingClass.getSimpleName() : null, callingMethodName, th);
+            }
         } else {
             System.err.println(formattedMessage);
             if (th != null)
