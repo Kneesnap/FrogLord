@@ -945,6 +945,11 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         }
 
         /**
+         * Returns true iff the audio has been setup properly, and is playable.
+         */
+        public abstract boolean isAudioPresent(SfxEntry entry);
+
+        /**
          * Gets the icon to use for this SFX.
          */
         public abstract Image getIcon();
@@ -1091,6 +1096,11 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
 
             // NOTE: I don't actually know that the limits are 127. It's possible values higher might be supported, but I don't see much of a reason to care.
             return propertyList;
+        }
+
+        @Override
+        public boolean isAudioPresent(SfxEntry entry) {
+            return getWave(false) != null;
         }
 
         @Override
@@ -1256,6 +1266,11 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             propertyList = super.addToPropertyList(propertyList);
             propertyList.add("Volume", this.volume, () -> InputMenu.promptInputInt(getGameInstance(), "What is the new volume? (Default: 127)", this.volume, this::setVolume));
             return propertyList;
+        }
+
+        @Override
+        public boolean isAudioPresent(SfxEntry entry) {
+            return getSoundChunkEntry(entry) != null;
         }
 
         @Override
@@ -1427,11 +1442,9 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
                 if (newId == oldSfxId)
                     return; // No change, allow it.
 
-                for (int i = 0; i < sbrFile.getSoundEffects().size(); i++) {
-                    SfxEntry tempEntry = sbrFile.getSoundEffects().get(i);
-                    if (tempEntry.getSfxId() == newId)
-                        throw new IllegalArgumentException("The provided SFX ID (" + newId + ") is already claimed in " + sbrFile.getFileName() + " by entry " + i + ".");
-                }
+                SfxEntry oldEntry = sbrFile.getEntryByID(newId);
+                if (oldEntry != null)
+                    throw new IllegalArgumentException("The provided SFX ID (" + newId + ") is already claimed in " + sbrFile.getFileName() + " by entry '" + oldEntry.getExportFileName() + "'.");
             });
         }
 
@@ -1454,11 +1467,9 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
                 if (newId == oldSfxId)
                     return; // Allow it.
 
-                for (int i = 0; i < sbrFile.getSoundEffects().size(); i++) {
-                    SfxEntry tempEntry = sbrFile.getSoundEffects().get(i);
-                    if (tempEntry.getSfxId() == newId)
-                        throw new IllegalArgumentException("The provided SFX ID (" + newId + ") is already claimed in " + sbrFile.getFileName() + " by entry " + i + ".");
-                }
+                SfxEntry oldEntry = sbrFile.getEntryByID(newId);
+                if (oldEntry != null)
+                    throw new IllegalArgumentException("The provided SFX ID (" + newId + ") is already claimed in " + sbrFile.getFileName() + " by entry '" + oldEntry.getExportFileName() + "'.");
             });
         }
 
@@ -1566,6 +1577,20 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             return newAttributes;
         }
 
+        /**
+         * Removes the sfx entry.
+         * @return true if the entry was successfully removed.
+         */
+        public boolean remove() {
+            if (this.attributes instanceof SfxEntrySimpleAttributes) {
+                SfxEntrySimpleAttributes oldAttributes = (SfxEntrySimpleAttributes) this.attributes;
+                SfxWave oldWave = oldAttributes.getWave(false);
+                getParentFile().removeWave(oldWave);
+            }
+
+            return getParentFile().getSoundEffects().remove(this);
+        }
+
         private void copyAttributes(SfxAttributes oldAttributes, SfxAttributes newAttributes) {
             newAttributes.setFlagState(SfxAttributes.FLAG_REPEAT, oldAttributes.getFlagState(SfxAttributes.FLAG_REPEAT));
             newAttributes.setFlagState(SfxAttributes.FLAG_VOICE_CLIP, oldAttributes.getFlagState(SfxAttributes.FLAG_VOICE_CLIP));
@@ -1597,13 +1622,30 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
 
                 String importPath = importNode.getAsString();
                 File importFile = new File(workingDirectory, importPath.replace('\\', '/'));
-                if (!importFile.exists() || !importFile.isFile())
-                    throw new IllegalArgumentException("No sound file could be found with the path '" + importPath + "', please make sure such a file exists.");
 
-                try {
-                    this.attributes.loadFromWavFile(this, importFile);
-                } catch (IOException ex) {
-                    throw new RuntimeException("Failed to import sound file '" + importFile.getName() + "'.", ex);
+
+                int copySfxId;
+                if ((!importFile.exists() || !importFile.isFile()) && (copySfxId = getGameInstance().getSfxIdFromFullSoundPath(importPath)) >= 0) {
+                    // This feature is primarily here for allowing deletions of original sound effects (eg: ones referenced in the code, so they are not played), but still allowing us to copy them and play them ourselves.
+                    // So, if we can't find the sound, it's okay to silently fail, UNLESS we have no sound data.
+                    SfxEntry localCopyEntry;
+                    SoundChunkEntry globalCopyEntry;
+                    if ((localCopyEntry = this.parentFile.getEntryByID(copySfxId)) != null) {
+                        this.attributes.loadFromWavFile(this, localCopyEntry.getAttributes().saveToWavFile(localCopyEntry), importPath);
+                    } else if ((globalCopyEntry = getGameInstance().getSoundChunkFile().getSoundById(copySfxId)) != null) {
+                        this.attributes.loadFromWavFile(this, globalCopyEntry.toWavFileBytes(), importPath);
+                    } else if (!this.attributes.isAudioPresent(this)) {
+                        throw new RuntimeException("Could not find soundEntry '" + importPath + "' for sound effect '" + getExportFileName() + "'.");
+                    }
+                } else {
+                    if (!importFile.exists() || !importFile.isFile())
+                        throw new IllegalArgumentException("No sound file could be found with the path '" + importPath + "', please make sure such a file exists.");
+
+                    try {
+                        this.attributes.loadFromWavFile(this, importFile);
+                    } catch (IOException ex) {
+                        throw new RuntimeException("Failed to import sound file '" + importFile.getName() + "'.", ex);
+                    }
                 }
             }
 

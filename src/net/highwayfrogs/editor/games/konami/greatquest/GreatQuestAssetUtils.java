@@ -122,6 +122,7 @@ public class GreatQuestAssetUtils {
         }
     }
 
+    private static final String FLAG_NAME_DELETE = "Delete";
     private static void applySoundEffects(File workingDirectory, GreatQuestChunkedFile chunkedFile, Config soundEffectsCfg, ILogger logger) {
         if (soundEffectsCfg == null)
             return;
@@ -137,6 +138,7 @@ public class GreatQuestAssetUtils {
                 OptionalArguments arguments = OptionalArguments.parse(line);
                 String filePath = arguments.useNext().getAsString();
                 int sfxId = chunkedFile.getGameInstance().getSfxIdFromFullSoundPath(filePath);
+                boolean deleteEntry = arguments.useFlag(FLAG_NAME_DELETE);
 
                 SfxEntry sfxEntry = null;
                 if (sfxId < 0) {
@@ -161,9 +163,17 @@ public class GreatQuestAssetUtils {
 
                 // Didn't find an entry.
                 if (sfxEntry == null) {
+                    if (deleteEntry)
+                        continue;
+
                     SfxEntryStreamAttributes newAttributes = new SfxEntryStreamAttributes(sbrFile);
                     sfxEntry = new SfxEntry(sbrFile, sfxId, newAttributes);
                     sbrFile.getSoundEffects().add(sfxEntry);
+                } else if (deleteEntry) {
+                    if (!sfxEntry.remove())
+                        logger.warning("Failed to remove SfxEntry named '%s'.", sfxEntry.getExportFileName());
+
+                    continue;
                 }
 
                 try {

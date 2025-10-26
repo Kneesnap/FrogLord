@@ -453,7 +453,11 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
                 throw new RuntimeException("Failed to read contents of file '" + file.getName() + "'.");
             }
 
-            loadSupportedAudioFile(rawFileData);
+            try {
+                loadSupportedAudioFile(rawFileData);
+            } catch (Throwable th) {
+                throw new RuntimeException("Failed to process the audio file '" + file.getName() + "'.", th);
+            }
         }
 
         /**
