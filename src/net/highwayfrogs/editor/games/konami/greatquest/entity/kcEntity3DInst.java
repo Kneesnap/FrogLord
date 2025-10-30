@@ -44,7 +44,7 @@ public class kcEntity3DInst extends kcEntityInst {
     private kcAxisType billboardAxis = DEFAULT_BILLBOARD_AXIS;
     private final kcVector4 position = DEFAULT_POSITION.clone();
     private final kcVector4 rotation = DEFAULT_ROTATION.clone();
-    private final kcVector4 scale = DEFAULT_SCALE.clone();
+    private final kcVector4 scale = DEFAULT_SCALE.clone(); // This is fully unused by the game in all tested versions.
     private final int[] reservedValues = new int[RESERVE_VALUE_COUNT];
     private final int[] padding = new int[PADDING_VALUE_COUNT];
 
@@ -84,6 +84,9 @@ public class kcEntity3DInst extends kcEntityInst {
             Arrays.fill(this.reservedValues, 0);
             Arrays.fill(this.padding, 0);
         }
+
+        if (!DEFAULT_SCALE.equals(this.scale))
+            getLogger().warning("The entity's scale was not the default scale! %s (This is thought to be unsupported by the game!)", this.scale);
     }
 
     @Override
@@ -115,12 +118,14 @@ public class kcEntity3DInst extends kcEntityInst {
         });
 
         // Scale Editor
-        grid.addScaleEditor(manager.getController(), GIZMO_ID, "Scale", this.position.getX(), this.position.getY(), this.position.getZ(), this.scale.getX(), this.scale.getY(), this.scale.getZ(), .02, (meshView, oldX, oldY, oldZ, newX, newY, newZ) -> {
-            this.scale.setX((float) newX);
-            this.scale.setY((float) newY);
-            this.scale.setZ((float) newZ);
-            entityDisplay.setScale(newX, newY, newZ);
-        });
+        if (!DEFAULT_SCALE.equals(this.scale)) {
+            grid.addScaleEditor(manager.getController(), GIZMO_ID, "Scale", this.position.getX(), this.position.getY(), this.position.getZ(), this.scale.getX(), this.scale.getY(), this.scale.getZ(), .02, (meshView, oldX, oldY, oldZ, newX, newY, newZ) -> {
+                this.scale.setX((float) newX);
+                this.scale.setY((float) newY);
+                this.scale.setZ((float) newZ);
+                entityDisplay.setScale(newX, newY, newZ);
+            });
+        }
 
         // Rotation
         addRotationSlider(getGameInstance(), grid, entityDisplay, "Rotation X", this.rotation.getX(), this.rotation::setX);
@@ -239,7 +244,8 @@ public class kcEntity3DInst extends kcEntityInst {
         propertyList = super.addToPropertyList(propertyList);
         propertyList.add("Position", this.position.toParseableString(1F));
         propertyList.add("Rotation", getRotationAnglesInDegrees(null).toParseableString());
-        propertyList.add("Scale", this.scale.toParseableString(1F));
+        if (!DEFAULT_SCALE.equals(this.scale))
+            propertyList.add("Scale", this.scale.toParseableString(1F));
         propertyList.add("Flags", kcEntityInstanceFlag.getAsOptionalArguments(this.flags).getNamedArgumentsAsCommaSeparatedString());
         propertyList.add("Billboard Axis", this.billboardAxis);
         return propertyList;
@@ -259,7 +265,7 @@ public class kcEntity3DInst extends kcEntityInst {
         if (flagNode != null) {
             OptionalArguments flagArguments = OptionalArguments.parseCommaSeparatedNamedArguments(flagNode.getAsString());
             this.flags = kcEntityInstanceFlag.getValueFromArguments(flagArguments);
-            flagArguments.warnAboutUnusedArguments(getResource().getLogger());
+            flagArguments.warnAboutUnusedArguments(getLogger());
         } else {
             kcEntity3DDesc description = getDescription();
             this.flags = description != null ? description.getDefaultFlags() : DEFAULT_FLAGS;
