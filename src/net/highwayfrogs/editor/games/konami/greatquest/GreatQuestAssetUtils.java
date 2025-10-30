@@ -39,7 +39,7 @@ public class GreatQuestAssetUtils {
     private static final String CONFIG_SECTION_DELETE_RESOURCES = "DeleteResources";
     private static final String CONFIG_SECTION_ANIMATIONS = "Animations";
     public static final String CONFIG_SECTION_ACTION_SEQUENCES = "Sequences";
-    public static final String CONFIG_SECTION_LAUNCHERS = "Launchers"; // TODO: Implement.
+    public static final String CONFIG_SECTION_LAUNCHERS = "Launchers";
     public static final String CONFIG_SECTION_DIALOG = "Dialog";
     public static final String CONFIG_SECTION_COLLISION_PROXIES = "Collision";
     public static final String CONFIG_SECTION_ENTITY_DESCRIPTIONS = "EntityDescriptions";
@@ -75,10 +75,12 @@ public class GreatQuestAssetUtils {
         // Should apply before scripts/entities.
         applySoundEffects(workingDirectory, chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_SOUND_EFFECTS), logger);
 
-        // Should occur before resource copying, so that any resources can resolve the model/collision references.
+        // Should occur before resource copying, so that any copied resources can resolve the model/collision references.
         applyModelReferences(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_MODELS), logger);
         applyCollisionProxies(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_COLLISION_PROXIES), logger);
         copyResources(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_COPY_RESOURCES), logger);
+
+        // Should occur after resource copying, so any resources done here can resolve the copied resources.
         deleteResources(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_DELETE_RESOURCES), logger);
         updateAnimationSets(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ANIMATIONS), logger);
         applyActionSequences(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ACTION_SEQUENCES), logger);
@@ -86,6 +88,7 @@ public class GreatQuestAssetUtils {
         // This should occur after resource copying to ensure it can resolve resources. Copied resources shouldn't reference entity descriptions since entity instances (a resource which is not expected to be copied) are the only resource to resolve entity descriptions.
         // This should also happen before entity instances are applied.
         List<kcWaypointDesc> waypoints = applyEntityDescriptions(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ENTITY_DESCRIPTIONS), logger);
+        applyLauncherParams(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_LAUNCHERS), logger); // Must run after particle emitter params (entity descriptions) and .vtx references are imported, but before scripts.
 
         // Run before scripts, but after entity descriptions.
         applyEntityInstances(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ENTITIES), scriptList, logger);
@@ -120,6 +123,26 @@ public class GreatQuestAssetUtils {
             }
 
             generic.getAsStringResource().setValue(entry.getValue().getAsString());
+        }
+    }
+
+    // Must run after particle params are loaded, and after vtx models are imported, but before scripts.
+    private static void applyLauncherParams(GreatQuestChunkedFile chunkedFile, Config launcherParamsCfg, ILogger logger) {
+        for (Config launcherParamCfg : launcherParamsCfg.getChildConfigNodes()) {
+            String launcherParamName = launcherParamCfg.getSectionName();
+            kcCResourceGeneric generic = GreatQuestUtils.findLevelResourceByName(chunkedFile, launcherParamName, kcCResourceGeneric.class);
+            if (generic == null) {
+                generic = new kcCResourceGeneric(chunkedFile);
+                generic.setName(launcherParamName, true);
+                generic.setResourceData(new LauncherParams(generic));
+                chunkedFile.addResource(generic);
+            }
+
+            LauncherParams launcherParams = generic.getAsLauncherParams();
+            if (launcherParams == null)
+                throw new RuntimeException("Found a resource named '" + launcherParamName + "', which was expected to be launcher params, but was actually a(n) " + generic.getResourceType() + ".");
+
+            launcherParams.fromConfig(logger, launcherParamCfg);
         }
     }
 
