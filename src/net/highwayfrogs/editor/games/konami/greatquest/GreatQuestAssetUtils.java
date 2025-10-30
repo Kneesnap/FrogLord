@@ -38,11 +38,12 @@ public class GreatQuestAssetUtils {
     private static final String CONFIG_SECTION_COPY_RESOURCES = "CopyResources";
     private static final String CONFIG_SECTION_DELETE_RESOURCES = "DeleteResources";
     private static final String CONFIG_SECTION_ANIMATIONS = "Animations";
-    private static final String CONFIG_SECTION_ACTION_SEQUENCES = "Sequences";
-    private static final String CONFIG_SECTION_DIALOG = "Dialog";
-    private static final String CONFIG_SECTION_COLLISION_PROXIES = "Collision";
-    private static final String CONFIG_SECTION_ENTITY_DESCRIPTIONS = "EntityDescriptions";
-    private static final String CONFIG_SECTION_ENTITIES = "Entities";
+    public static final String CONFIG_SECTION_ACTION_SEQUENCES = "Sequences";
+    public static final String CONFIG_SECTION_LAUNCHERS = "Launchers"; // TODO: Implement.
+    public static final String CONFIG_SECTION_DIALOG = "Dialog";
+    public static final String CONFIG_SECTION_COLLISION_PROXIES = "Collision";
+    public static final String CONFIG_SECTION_ENTITY_DESCRIPTIONS = "EntityDescriptions";
+    public static final String CONFIG_SECTION_ENTITIES = "Entities";
     private static final String CONFIG_SECTION_SCRIPTS = "Scripts";
     private static final String CONFIG_OPTION_CREATE_MODEL_DESC = "CreateModelDesc";
 

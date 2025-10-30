@@ -125,6 +125,21 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
     /**
      * Gets the name of the sequence without the name of the entity.
      */
+    public String getEntityDescriptionName() {
+        String baseName = getName();
+        if (!baseName.endsWith("]"))
+            throw new IllegalArgumentException("Cannot determine entityDesc name from '" + baseName + "'.");
+
+        int openIndex = baseName.lastIndexOf('[');
+        if (openIndex < 0)
+            throw new IllegalArgumentException("Cannot determine entityDesc name from '" + baseName + "'.");
+
+        return baseName.substring(0, openIndex);
+    }
+
+    /**
+     * Gets the name of the sequence without the name of the entity.
+     */
     public String getSequenceName() {
         String baseName = getName();
         if (!baseName.endsWith("]"))
@@ -182,6 +197,44 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
     }
 
     /**
+     * Saves the sequence to a gqs-compliant config node.
+     * @param logger the logger to write messages to
+     * @param settings the settings to save the sequence with
+     * @return configNode
+     */
+    public Config saveToConfigNode(ILogger logger, kcScriptDisplaySettings settings) {
+        Config result = new Config(getSequenceName()); // Use the key name instead of the sequence name, since this is what it is resolved by.
+        ConfigValueNode hashNode = result.getOrCreateKeyValueNode(HASH_CONFIG_FIELD);
+        hashNode.setAsString("0x" + getSelfHash().getHashNumberAsString());
+        hashNode.setComment("This value is (probably) random. It uniquely identifies this sequence, so the same number should not be used for more than one sequence.");
+        writeSequenceToConfig(logger, result, settings);
+        return result;
+    }
+
+    private void writeSequenceToConfig(ILogger logger, Config config, kcScriptDisplaySettings settings) {
+        if (config == null)
+            throw new NullPointerException("config");
+        if (logger == null)
+            logger = getLogger();
+
+        // Write actions.
+        StringBuilder builder = new StringBuilder();
+        OptionalArguments optionalArguments = new OptionalArguments();
+        config.getInternalText().clear();
+        for (int i = 0; i < this.actions.size(); i++) {
+            kcAction action = this.actions.get(i);
+            optionalArguments.createNext().setAsString(action.getActionID().getFrogLordName(), false);
+            action.save(logger, optionalArguments, settings);
+            optionalArguments.toString(builder);
+            String actionText = builder.toString();
+            builder.setLength(0);
+            optionalArguments.clear();
+
+            config.getInternalText().add(new ConfigValueNode(actionText, action.getEndOfLineComment()));
+        }
+    }
+
+    /**
      * Converts a HashTableEntry pointing to a kcCActionSequence into a config node.
      * @param entry the entry to convert
      * @param settings the settings to use
@@ -194,32 +247,21 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
         Config result = new Config(entry.getKeyName()); // Use the key name instead of the sequence name, since this is what it is resolved by.
         ConfigValueNode hashNode = result.getOrCreateKeyValueNode(HASH_CONFIG_FIELD);
         hashNode.setAsString("0x" + entry.getValueRef().getHashNumberAsString());
-        hashNode.setComment("This value is (probably) random. It uniquely identifies this sequence, so the same number should not be used more than once.");
-
-        kcCActionSequence sequence = entry.getSequence();
-        if (sequence == null)
-            return result;
+        hashNode.setComment("This value is (probably) random. It uniquely identifies this sequence, so the same number should not be used for more than one sequence.");
 
         ILogger logger = entry.getParentHashTable().getLogger();
-        String sequenceName = sequence.getSequenceName();
-        if (!sequenceName.equalsIgnoreCase(entry.getKeyName()))
-            logger.warning("The sequence %s did not match the expected %s!", sequenceName, entry.getKeyName());
-
-        // Write actions.
-        StringBuilder builder = new StringBuilder();
-        OptionalArguments optionalArguments = new OptionalArguments();
-        for (int i = 0; i < sequence.getActions().size(); i++) {
-            kcAction action = sequence.getActions().get(i);
-            optionalArguments.createNext().setAsString(action.getActionID().getFrogLordName(), false);
-            action.save(logger, optionalArguments, settings);
-            optionalArguments.toString(builder);
-            String actionText = builder.toString();
-            builder.setLength(0);
-            optionalArguments.clear();
-
-            result.getInternalText().add(new ConfigValueNode(actionText, action.getEndOfLineComment()));
+        kcCActionSequence sequence = entry.getSequence();
+        if (sequence == null) {
+            // Mark the sequence as not being found.
+            result.getInternalText().add(new ConfigValueNode("", "Could not resolve this action sequence from the hash table."));
+            return result;
         }
 
+        String sequenceName = sequence.getSequenceName();
+        if (!sequenceName.equalsIgnoreCase(entry.getKeyName()))
+            logger.warning("The sequence '%s' was expected to be named '%s'! (Sequence hash table broken?)", sequenceName, entry.getKeyName());
+
+        sequence.writeSequenceToConfig(logger, result, settings);
         return result;
     }
 

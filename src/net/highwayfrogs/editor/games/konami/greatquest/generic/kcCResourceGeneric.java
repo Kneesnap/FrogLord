@@ -258,6 +258,8 @@ public class kcCResourceGeneric extends kcCResource {
                 return getAsProxyCapsuleDescription();
             case PROXY_TRI_MESH_DESCRIPTION:
                 return getAsProxyTriMeshDescription();
+            case EMITTER_DESCRIPTION:
+                return getAsEmitterDescription();
             default:
                 return null;
         }

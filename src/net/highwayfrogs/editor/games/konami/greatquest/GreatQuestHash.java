@@ -137,7 +137,7 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
         if (this.originalString != null && this.originalString.length() > 0) {
             return this.originalString;
         } else if (isHashNull()) {
-            return "null";
+            return null;
         } else if (settings != null) {
             return settings.getGqsHashDisplay(this.hashNumber);
         } else {
@@ -500,7 +500,8 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
 
         // Master hashes can't be edited, at least not directly here. (Their names are usually set somewhere else and then applied to here)
         if (isMaster()) {
-            TextField field = grid.addTextField(label, this.getAsGqsString(null));
+            String startText = getAsGqsString(null);
+            TextField field = grid.addTextField(label, startText != null ? startText : "null");
             field.setDisable(true);
             return field;
         }
