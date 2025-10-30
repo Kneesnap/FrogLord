@@ -68,15 +68,16 @@ public class kcModelPrim extends GameData<GreatQuestInstance> {
     /**
      * Loads the vertices individually from the raw vertex data.
      * @param reader The reader to read data from.
+     * @param oldUvFormat If true, the old UV format seen in some PS2 models will be read.
      * @return loadedVertexCount
      */
-    public int loadVertices(DataReader reader) {
+    public int loadVertices(DataReader reader, boolean oldUvFormat) {
         if (this.loadedVertexCount == -1)
             throw new RuntimeException("Cannot load vertices, the loading execution flow wasn't correct.");
 
         for (int i = 0; i < this.loadedVertexCount; i++) {
             kcVertex vertex = new kcVertex();
-            vertex.load(reader, this.model.getComponents(), this.model.getFvf(), true);
+            vertex.load(reader, this.model.getComponents(), this.model.getFvf(), true, oldUvFormat);
             this.vertices.add(vertex);
         }
 

@@ -128,11 +128,12 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
         GamePlatform platform = getLoadPlatform();
         for (int i = 0; i < primCount; i++) {
             kcVtxBufFileStruct vtxBuf = new kcVtxBufFileStruct(this);
-            vtxBuf.load(reader, platform);
             this.vertexBuffers.add(vtxBuf);
+            vtxBuf.load(reader, platform);
         }
 
         // Read materials.
+        this.materials.clear();
         for (int i = 0; i < materialCount; i++) {
             kcMaterial newMaterial = new kcMaterial(getGameInstance());
             newMaterial.load(reader);
@@ -293,8 +294,16 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
     public static class kcVtxBufFileStruct implements IMultiLineInfoWriter {
         private final kcCResOctTreeSceneMgr sceneManager;
         // _OTAPrimHeader (Applied to kcCOTAPrim in kcCOTAPrim::Init)
-        @Setter private int materialId; // kcCOTAPrim::__ct()
-        @Setter private float normalTolerance = 2F; // kcCOTAPrim::__ct()
+        // -1 is not a valid material ID, and will display warnings if this value is not changed before a save occurs.
+        @Setter private int materialId = -1; // kcCOTAPrim::__ct()
+        // The normal tolerance and normal heading are SUPPOSED to be used for culling purposes.
+        // kcCOTAPrim::Render will ensure that dotProduct(this.normalAverage, globalRenderHeading) <= normalTolerance.
+        // It's not very clear how exactly this would be a valid way to cull display lists, since it does not seem to have any way of accounting for camera position, just rotation.
+        // Since the game does not have backface culling, it seems unclear how this could possibly cull anything (in the context of the model already passing the frustum culling check).
+        // That's probably why rendering will still happen if normalTolerance >= 1.0, and that has been observed to be the case in almost all original game data.
+        // The only exception was a single buffer in The Goblin Trail, which appears to be old terrain (located physically under terrain actually displayed), from before the level was textured. It's at the start of the level to the left, beyond some spikes and under 3 crates. View it from below.
+        // So while the algorithm to generate these values is not known, leaving them as the default values is acceptable.
+        private float normalTolerance = 2F; // kcCOTAPrim::__ct()
         private final kcVector4 normalAverage = new kcVector4(0, 0, 1, 0); // kcCOTAPrim::__ct()
         // This is the smallest box which contains all vertices. Generates the box bounding sphere from this, as well as oct tree collision.
         // Note that because the PS2 data has lower-precision for its floating point values, the values loaded from the PS2 version are slightly more accurate than the actual vertices.)
@@ -302,16 +311,39 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
         private final kcBox4 boundingBox = new kcBox4();
 
         // kcVtxBufFileStruct
-        private long fvf;
+        private int fvf;
         private kcVertexFormatComponent[] components;
         private int fvfStride;
-        @Setter private kcPrimitiveType primitiveType;
+        // kcOTARenderCallbackBuffer::AddVtxBuffer on PS2 PAL will skip all non TRIANGLE_LIST types.
+        // Therefore, it is only possible to use TRIANGLE_LIST here.
+        private kcPrimitiveType primitiveType = kcPrimitiveType.TRIANGLE_LIST;
         private final List<kcVertex> vertices = new ArrayList<>();
 
         private static final ThreadLocal<kcBox4> TEMPORARY_BOUNDING_BOX = ThreadLocal.withInitial(kcBox4::new);
+        private static final int PS2_FVF_VALUE = 0x4152;
+        private static final int PC_FVF_VALUE = 0x152;
 
         public kcVtxBufFileStruct(kcCResOctTreeSceneMgr sceneManager) {
             this.sceneManager = sceneManager;
+
+            GamePlatform platform = sceneManager.getGameInstance().getPlatform();
+            switch (platform) {
+                case WINDOWS:
+                    setFVF(PC_FVF_VALUE, platform);
+                    break;
+                case PLAYSTATION_2:
+                    setFVF(PS2_FVF_VALUE, platform);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("The platform " + platform + " is not supported by kcVtxBufFileStruct.");
+            }
+        }
+
+        /**
+         * Gets the local index of this vertex buffer within the list of vertex buffers.
+         */
+        public int getLocalIndex() {
+            return this.sceneManager.getVertexBuffers().lastIndexOf(this);
         }
 
         /**
@@ -319,10 +351,17 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
          * @param newFvf   The new fvf value to include.
          * @param platform The platform to save the FVF on.
          */
-        public void setFVF(long newFvf, GamePlatform platform) {
+        public void setFVF(int newFvf, GamePlatform platform) {
+            if (platform == null)
+                throw new NullPointerException("platform");
+
             this.fvf = newFvf;
-            this.components = kcModel.calculateOrder(newFvf, platform);
-            this.fvfStride = kcModel.calculateStride(this.components, newFvf);
+            this.components = kcFvFUtil.getTerrainComponents(newFvf, platform);
+            this.fvfStride = kcVertex.calculateStride(this.components, newFvf);
+
+            int validationFvf = kcFvFUtil.calculateTerrainFvF(this.components, platform);
+            if (this.fvf != validationFvf)
+                throw new RuntimeException("The newFvf was " + NumberUtils.toHexString(newFvf) + ", which resulted in " + Arrays.toString(this.components) + ", with a non-matching FvF of " + NumberUtils.toHexString(validationFvf) + ".");
         }
 
         /**
@@ -344,6 +383,9 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
             int otaPrimHeaderSize = reader.readInt();
             this.materialId = reader.readInt();
             this.normalTolerance = reader.readFloat();
+            if (this.normalTolerance < .95F) // See the explanation above for normalTolerance.
+                this.sceneManager.getLogger().warning("kcVtxBufFileStruct[%d] has a normalTolerance of %f, which is thought to cause it to be intermittently invisible!", getLocalIndex(), this.normalTolerance);
+
             int otaZero = reader.readInt();
             this.normalAverage.load(reader);
             this.boundingBox.load(reader);
@@ -351,7 +393,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
                 throw new RuntimeException("The reserved field in the _OTAPrimHeader was supposed to be zero, but actually was " + otaZero + ".");
 
             // _kcVtxBufFileStruct
-            setFVF(reader.readUnsignedIntAsLong(), platform);
+            setFVF(reader.readInt(), platform);
             int fvfStride = reader.readInt();
             if (this.fvfStride != fvfStride)
                 throw new RuntimeException("The calculated fvfStride did not match the fvfStride provided in the vtxBuf! (FVF: " + this.fvf + ", Components: " + Arrays.toString(this.components) + ", Read Stride: " + fvfStride + ", Calculated Stride: " + this.fvfStride + ")");
@@ -365,7 +407,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
                     throw new RuntimeException("Expected zero in reserved prim header field at " + reader.getIndex() + ", but got " + zero + " instead.");
             }
 
-            int numOfVertices = kcModel.calculateVertexCount(primCount, this.primitiveType);
+            int numOfVertices = this.primitiveType.calculateVertexCount(primCount);
             if (byteLength != (fvfStride * numOfVertices))
                 throw new RuntimeException("The byte length (" + byteLength + ") for the prim didn't match the calculated fvfStride * numOfVertices (" + (fvfStride * numOfVertices) + ", " + this.primitiveType + ").");
             if (byteLength != (otaPrimHeaderSize - (reader.getIndex() - startReadIndex)))
@@ -378,12 +420,12 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
 
             for (int i = 0; i < numOfVertices; i++) {
                 kcVertex vertex = new kcVertex();
-                vertex.load(reader, this.components, this.fvf, false);
+                vertex.load(reader, this.components, this.fvf, false, false);
                 this.vertices.add(vertex);
             }
 
             // Validate bounding box seems right.
-            float testThreshold = 0.01F;
+            float testThreshold = this.sceneManager.getGameInstance().isPS2() ? 0.1F : 0.01F; // PS2 has less accuracy.
             kcBox4 calculatedBoundingBox = calculateBoundingBox(TEMPORARY_BOUNDING_BOX.get());
             if (Math.abs(calculatedBoundingBox.getMin().getX() - this.boundingBox.getMin().getX()) > testThreshold
                     || Math.abs(calculatedBoundingBox.getMax().getX() - this.boundingBox.getMax().getX()) > testThreshold
@@ -393,7 +435,7 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
                     || Math.abs(calculatedBoundingBox.getMax().getZ() - this.boundingBox.getMax().getZ()) > testThreshold
                     || Math.abs(calculatedBoundingBox.getMin().getW() - this.boundingBox.getMin().getW()) > testThreshold
                     || Math.abs(calculatedBoundingBox.getMax().getW() - this.boundingBox.getMax().getW()) > testThreshold)
-                this.sceneManager.getLogger().warning("Vertex Buffer[%d]%nReal Bounding Box: %s%nCalc Bounding Box: %s", this.sceneManager.getVertexBuffers().size(), this.boundingBox, calculatedBoundingBox);
+                this.sceneManager.getLogger().warning("Vertex Buffer[%d]%nReal Bounding Box: %s%nCalc Bounding Box: %s", getLocalIndex(), this.boundingBox, calculatedBoundingBox);
         }
 
         /**
@@ -401,19 +443,25 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
          * @param writer The writer to write data to.
          */
         public void save(DataWriter writer) {
+            boolean validMaterialID = true;
+            if (this.materialId < 0 || this.materialId >= this.sceneManager.getMaterials().size()) {
+                validMaterialID = false;
+                this.sceneManager.getGameInstance().showWarning(this.sceneManager.getLogger(), "Invalid Material ID", "kcVtxBufFileStruct[%d] in %s cannot be saved with an invalid material ID of %d!", getLocalIndex(), this.sceneManager.getParentFile().getDebugName(), this.materialId);
+            }
+
             // _OTAPrimHeader from kcCVtxBufList.h
             int otaPrimHeaderSizeAddress = writer.writeNullPointer(); // otaPrimHeaderSize
-            writer.writeInt(this.materialId);
+            writer.writeInt(validMaterialID ? this.materialId : 0);
             writer.writeFloat(this.normalTolerance);
             writer.writeInt(0); // Verified to be zero. (Reserved)
             this.normalAverage.save(writer);
             calculateBoundingBox(this.boundingBox).save(writer);
 
             // _kcVtxBufFileStruct
-            writer.writeUnsignedInt(this.fvf);
+            writer.writeInt(this.fvf);
             writer.writeInt(this.fvfStride);
             writer.writeInt(this.primitiveType.ordinal());
-            writer.writeInt(kcModel.calculatePrimCount(this.vertices.size(), this.primitiveType)); // primitiveCount
+            writer.writeInt(this.primitiveType.calculatePrimCount(this.vertices.size())); // primitiveCount
             int vtxByteLengthAddress = writer.writeNullPointer();
             for (int j = 0; j < RESERVED_PRIM_HEADER_FIELDS; j++)
                 writer.writeInt(0); // These are known to be empty.

@@ -48,10 +48,14 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
         reader.verifyString(SIGNATURE_STR);
         int size = reader.readInt();
 
-        if (size != reader.getRemaining()) // This being 4 too low indicates it's using the old (broken) format.
-            getLogger().warning("The model '%s' was supposed to have %d bytes, but actually has %d byte(s).", getDebugName(), size, reader.getRemaining());
+        boolean oldPs2Format = false;
+        int bytesRemaining = reader.getRemaining();
+        if (size != bytesRemaining) { // It seems the older exports incorrectly calculate export size.
+            oldPs2Format = true;
+            //getLogger().warning("The model '%s' was supposed to have %d bytes, but actually has %d byte(s).", getDebugName(), size, bytesRemaining);
+        }
 
-        this.model.load(reader);
+        this.model.load(reader, oldPs2Format);
         if (reader.hasMore())
             getLogger().warning("The model '%s' has %d unread byte(s).", getDebugName(), reader.getRemaining());
     }

@@ -34,13 +34,14 @@ public class kcVertex implements IInfoWriter {
      * @param reader     The reader to load vertex data from.
      * @param components The components describing the vertex data to load.
      * @param scaleVertex if vertex scaling should be applied to compressed positions.
+     * @param oldUvFormat if true, the old UV format seen in some PS2 models will be used
      */
-    public void load(DataReader reader, kcVertexFormatComponent[] components, long fvf, boolean scaleVertex) {
+    public void load(DataReader reader, kcVertexFormatComponent[] components, int fvf, boolean scaleVertex, boolean oldUvFormat) {
         if (components == null)
             return;
 
         for (int i = 0; i < components.length; i++)
-            this.load(reader, components[i], fvf, scaleVertex);
+            this.load(reader, components[i], fvf, scaleVertex, oldUvFormat);
     }
 
     /**
@@ -48,10 +49,11 @@ public class kcVertex implements IInfoWriter {
      * @param reader    The reader to load vertex data from.
      * @param component The component describing the vertex data to load.
      * @param scaleVertex  if vertex scaling should be applied to compressed positions.
+     * @param oldUvFormat if true, the old UV format seen in some PS2 models will be used
      */
-    public void load(DataReader reader, kcVertexFormatComponent component, long fvf, boolean scaleVertex) {
-        if ((fvf & kcModel.FVF_FLAG_COMPRESSED) == kcModel.FVF_FLAG_COMPRESSED) {
-            loadCompressed(reader, component, scaleVertex);
+    public void load(DataReader reader, kcVertexFormatComponent component, int fvf, boolean scaleVertex, boolean oldUvFormat) {
+        if ((fvf & kcFvFUtil.FVF_FLAG_COMPRESSED) == kcFvFUtil.FVF_FLAG_COMPRESSED) {
+            loadCompressed(reader, component, scaleVertex, oldUvFormat);
         } else {
             loadNormal(reader, component);
         }
@@ -59,16 +61,14 @@ public class kcVertex implements IInfoWriter {
 
     /**
      * Loads vertex data from the reader for the given components.
+     * This is a rough recreation of 'kcVtxBufGetVertex'.
      * @param reader    The reader to load vertex data from.
      * @param component The component describing the vertex data to load.
      */
     public void loadNormal(DataReader reader, kcVertexFormatComponent component) {
         // NOTE: If we have to implement compression, use this same function, but change readFloat() to a function which takes arguments and "decompresses" it, if that's enabled or just reads the float directly.
 
-        float red;
-        float green;
-        float blue;
-
+        float red, green, blue, alpha;
         switch (component) {
             case POSITION_XYZF: // 12
                 this.x = reader.readFloat();
@@ -108,7 +108,7 @@ public class kcVertex implements IInfoWriter {
                 red = reader.readFloat();
                 green = reader.readFloat();
                 blue = reader.readFloat();
-                float alpha = reader.readFloat();
+                alpha = reader.readFloat();
                 this.diffuse = (((int) (alpha * 255F)) << 24) | (((int) (red * 255F)) << 16) | (((int) (green * 255F)) << 8) | (int) (blue * 255F);
                 break;
             case DIFFUSE_RGBAI: // 4
@@ -197,6 +197,9 @@ public class kcVertex implements IInfoWriter {
     private static final float COMPRESSION_OTHER_MULTIPLIER = 1F / COMPRESSION_FIXED_PT_OTHER_UNIT;
     private static final double COMPRESSION_POSITION_MULTIPLIER = COMPRESSED_POSITION_DOWN_SCALE / COMPRESSION_FIXED_PT_OTHER_UNIT;
 
+    private static final int COMPRESSION_FIXED_PT_OLD_UVS = 32768;
+    private static final double COMPRESSION_OLD_UVS_MULTIPLIER = 1D / COMPRESSION_FIXED_PT_OLD_UVS;
+
     private static float readCompressedFloat(DataReader reader) {
         return readCompressedFloat(reader, COMPRESSION_MAIN_MULTIPLIER);
     }
@@ -207,17 +210,18 @@ public class kcVertex implements IInfoWriter {
 
     /**
      * Loads vertex data from the reader for the given components.
-     * This method has been verified against both the PS2 PAL and PC versions.
+     * This method has been verified against both the PS2 PAL and PC versions, and is a rough recreation of 'kcVtxBufGetVertexPS2Compressed'.
      * @param reader    The reader to load vertex data from.
      * @param component The component describing the vertex data to load.
      * @param scaleVertex if vertex scaling should be applied to compressed positions.
      */
-    public void loadCompressed(DataReader reader, kcVertexFormatComponent component, boolean scaleVertex) {
+    public void loadCompressed(DataReader reader, kcVertexFormatComponent component, boolean scaleVertex, boolean oldUvFormat) {
         short red;
         short green;
         short blue;
         short alpha;
         final double positionMultiplier = scaleVertex ? COMPRESSION_POSITION_MULTIPLIER : COMPRESSION_OTHER_MULTIPLIER;
+        final double uvMultiplier = oldUvFormat ? COMPRESSION_OLD_UVS_MULTIPLIER : COMPRESSION_MAIN_MULTIPLIER;
 
         switch (component) {
             case POSITION_XYZF: // 6
@@ -287,8 +291,8 @@ public class kcVertex implements IInfoWriter {
                 this.v1 = readCompressedFloat(reader);
                 break;
             case TEX1_STQP: // 8
-                this.u0 = readCompressedFloat(reader);
-                this.v0 = readCompressedFloat(reader);
+                this.u0 = readCompressedFloat(reader, uvMultiplier);
+                this.v0 = readCompressedFloat(reader, uvMultiplier);
                 reader.skipBytes(4); // Not sure why we skip it, but that's what the PS2 PAL & PC versions do.
                 break;
             case WEIGHT3F: // 6
@@ -338,7 +342,7 @@ public class kcVertex implements IInfoWriter {
      * @param components The components describing the vertex data to write.
      * @param scaleVertex if vertex scaling should be applied to compressed positions.
      */
-    public void save(DataWriter writer, kcVertexFormatComponent[] components, long fvf, boolean scaleVertex) {
+    public void save(DataWriter writer, kcVertexFormatComponent[] components, int fvf, boolean scaleVertex) {
         if (components == null)
             return;
 
@@ -352,8 +356,8 @@ public class kcVertex implements IInfoWriter {
      * @param component The component describing the vertex data to write.
      * @param scaleVertex if vertex scaling should be applied to compressed positions.
      */
-    public void save(DataWriter writer, kcVertexFormatComponent component, long fvf, boolean scaleVertex) {
-        if ((fvf & kcModel.FVF_FLAG_COMPRESSED) == kcModel.FVF_FLAG_COMPRESSED) {
+    public void save(DataWriter writer, kcVertexFormatComponent component, int fvf, boolean scaleVertex) {
+        if ((fvf & kcFvFUtil.FVF_FLAG_COMPRESSED) == kcFvFUtil.FVF_FLAG_COMPRESSED) {
             saveCompressed(writer, component, scaleVertex);
         } else {
             saveNormal(writer, component);
@@ -657,5 +661,31 @@ public class kcVertex implements IInfoWriter {
         builder.append(",uv0=[").append(this.u0).append(",").append(this.v0);
         builder.append("],uv1=[").append(this.u1).append(",").append(this.v1);
         builder.append("],weight=").append(Arrays.toString(this.weight)).append(",w=").append(this.w).append(",pointSize=").append(this.pointSize);
+    }
+
+    /**
+     * Calculates the stride of a vertex with the given FVF value.
+     * Functionality matches 'kcFVFVertexGetSizePS2' from the PS2 PAL version.
+     * @param components The components to calculate the stride from.
+     * @param fvf        The fvf value to calculate the stride from.
+     * @return calculatedStride
+     */
+    public static int calculateStride(kcVertexFormatComponent[] components, int fvf) {
+        return calculateStride(components, (fvf & kcFvFUtil.FVF_FLAG_COMPRESSED) == kcFvFUtil.FVF_FLAG_COMPRESSED);
+    }
+
+    /**
+     * Calculates the stride of a vertex with the given FVF value.
+     * Functionality matches 'kcFVFVertexGetSizePS2' from the PS2 PAL version.
+     * @param components      The components to calculate the stride from.
+     * @param isCompressedPS2 If the values are "compressed PS2" values.
+     * @return calculatedStride
+     */
+    public static int calculateStride(kcVertexFormatComponent[] components, boolean isCompressedPS2) {
+        int stride = 0;
+        for (int i = 0; i < components.length; i++)
+            stride += isCompressedPS2 ? components[i].getCompressedStride() : components[i].getStride();
+
+        return stride;
     }
 }
