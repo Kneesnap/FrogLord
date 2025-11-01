@@ -261,22 +261,71 @@ WEDDING_FROGGER_002="Frogger: Well, ok, I'll try!"
 ```
 
 ### [Collision]
-Allows creating/updating `Collision Proxy Descriptions`.
+Collision happens through what are called "collision proxies", which are stand-ins for objects (terrain, entities, etc.)  
+These proxies are 3D shapes which aren't shown in-game, but can be previewed using FrogLord.  
+There are two kinds of proxies, "capsules" and "triangle meshes".
 
-Example:
+
+**Capsules (kcCProxyCapsule):**  
+A "proxy capsule" is a pill-shaped area (a cylinder with a round top/bottom). These are very easy to create, and fast for the game engine to use, but not very precise.  
+
+**Example:**  
 ```PowerShell
 [Collision]
-[[HollyProxyDesc]]
-type=CAPSULE
-reaction=SLIDE
-collisionGroups=NonHostileEntities
-collideWith=TriangleMeshes, Player, NonHostileEntities, HostileEntities, Terrain
-radius=0.35
-height=0.7
-offset=0.2
+[[HollyProxyDesc]] # The name of the collision proxy is 'HollyProxyDesc'.
+type=CAPSULE # This is a capsule.
+reaction=SLIDE # Colliding entities should slide off. Other reactions are: PENETRATE (let the user through), and HALT (stop all movement).
+collisionGroups=NonHostileEntities # This collision proxy belongs to the NonHostileEntities collision group.
+collideWith=TriangleMeshes, Player, NonHostileEntities, HostileEntities, Terrain # These groups can collide with this collision proxy.
+radius=0.35 # The radius of the cylinder/hemisphere/pill shapes.
+height=0.7 # The height between the top and bottom hemispheres.
+offset=0.2 # How far up from the entity's Y position should the pill be offset to.
 ```
 
+<details>
+  <summary>Click here to see an example collision proxy.</summary>
+
+![Example of capsule proxy](./images/example-collision-proxy-capsule.png)
+</details>
+
+**Triangle Meshes (kcCProxyTriMesh):**  
+A "triangle mesh" is a just a normal 3D model, but without any textures.
+These are more flexible than capsules but do not perform very well.  
+Note that these cannot have animations like the models which get displayed in-game can.
+
+TODO: Creating through configurations.
 TODO: Flesh out the instructions for creating collision proxies.
+
+#### There's more to collision though!  
+Before the proxy will be tested, there is a sphere on every actor description.    
+This sphere is a very fast collision test which gets checked BEFORE the proxies are tested.  
+This is because spheres are extremely fast/quick/easy to check, so the sphere can eliminate some of the more heavy collision checks.  
+So, make sure the entity description's collision sphere is large enough to hold the full collision shape!  
+To check this, open the map 3D preview in FrogLord, and check that the blue collision sphere fully contains the green collision proxy.
+
+#### Collision Groups  
+The game groups together certain similar entities so that collision which should be skipped can be skipped quickly.  
+For example, enemies don't need to collide with coins/gems/etc, but they do need to collide with the player.  
+So each entity description has a "collisionGroup" field to indicate what group(s) it is part of, as well as a "collideWith" field to indicate which collision groups the entity should collide with.  
+The following are the collision groups which can be used:
+```properties
+TriangleMeshes # 00
+Player # 01
+NonHostileEntities # 02
+HostileEntities # 03
+PlayerKicks # 04 (The player's feet while they are kicking)
+PlayerPunches # 05 (The player's hands while they are punching)
+Flyers # 11
+Swimmers # 12
+Sensors # 14 (Attack / Bump Sensors)
+Items # 15
+Terrain # 16
+Climbable # 31, Seems to be set on climbable models such as ladders and vines.
+# There are a ton more possible collision groups than the ones listed above, but most are unused.
+# Thus, they are free to be used for whatever kind of purpose the mod-creator likes.
+# To specify one of the unused collision groups, use the following:
+UnnamedGroupXX # Where XX is a number between 0 and 31 and is not one of the numbers listed above. For example: UnnamedGroup17
+```
 
 ### [Launchers]
 This section can be used to create/update projectile launchers.

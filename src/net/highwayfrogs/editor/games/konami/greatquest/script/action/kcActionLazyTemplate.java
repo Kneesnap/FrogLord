@@ -30,9 +30,8 @@ public class kcActionLazyTemplate extends kcActionTemplate {
     public static final kcArgument[] ADD_ROTATION_XYZ_ARGUMENTS = kcArgument.make(kcParamType.ANGLE, "xAngle", kcParamType.ANGLE, "yAngle", kcParamType.ANGLE, "zAngle");
     public static final kcArgument[] ROTATE_RIGHT_ARGUMENTS = kcArgument.make(kcParamType.ANGLE, "angle");
     public static final kcArgument[] ROTATE_LEFT_ARGUMENTS = kcArgument.make(kcParamType.ANGLE, "angle");
-    public static final kcArgument[] WAIT_ARGUMENTS = kcArgument.make(kcParamType.MILLISECONDS, "timeInSeconds");
+    public static final kcArgument[] WAIT_ARGUMENTS = kcArgument.make(kcParamType.DOUBLE_TIMESTAMP_TICK, "timeInSeconds");
     public static final kcArgument[] WAIT_ROTATE_ARGUMENTS = kcArgument.make(kcParamType.AXIS, "axis");
-    public static final kcArgument[] LOOP_ARGUMENTS = kcArgument.make(kcParamType.INT, "loopCount");
     public static final kcArgument[] PROMPT_ARGUMENTS = kcArgument.make(kcParamType.HASH, "promptRes");
     public static final kcArgument[] SAVEPOINT_ARGUMENTS = kcArgument.make(kcParamType.UNSIGNED_INT, "savePointNumber", kcParamType.FLOAT, "x", kcParamType.FLOAT, "y", kcParamType.FLOAT, "z");
 }

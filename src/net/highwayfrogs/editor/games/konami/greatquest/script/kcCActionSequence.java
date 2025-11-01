@@ -189,10 +189,9 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
                 throw new IllegalConfigSyntaxException("Could not parse the action '" + line + "' when importing sequence " + getName() + ".", th);
             }
 
+            this.actions.add(newAction);
             newAction.printWarnings(logger);
             arguments.warnAboutUnusedArguments(logger);
-
-            this.actions.add(newAction);
         }
     }
 

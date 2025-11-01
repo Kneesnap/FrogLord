@@ -24,6 +24,7 @@ public enum kcParamType {
     MILLISECONDS,
     ANIMATION_TICK,
     TIMESTAMP_TICK,
+    DOUBLE_TIMESTAMP_TICK,
     ANGLE,
     VARIABLE_ID,
     ALARM_ID,

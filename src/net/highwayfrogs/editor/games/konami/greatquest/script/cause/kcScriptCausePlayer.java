@@ -2,16 +2,11 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
-import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityFlag.kcEntityInstanceFlag;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
-import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
-import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionFlag;
-import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionID;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptValidationData;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
@@ -67,21 +62,9 @@ public class kcScriptCausePlayer extends kcScriptCause {
 
         // OnPlayer INTERACT -> Warn if PlayerCanInteract is never set.
         if (this.action == kcScriptCauseEntityAction.INTERACT) {
-            kcCResourceEntityInst entityResource = getScriptEntity();
-            kcEntityInst entityInst = entityResource != null ? entityResource.getInstance() : null;
-            kcEntity3DInst entity3DInst = entityInst instanceof kcEntity3DInst ? (kcEntity3DInst) entityInst : null;
-            if ((entity3DInst == null || !entity3DInst.hasFlag(kcEntityInstanceFlag.INTERACT_ENABLED))
-                    && !data.anyActionsMatch(kcActionID.SET_FLAGS, kcScriptCausePlayer::doesActionHaveInteractFlag)
-                    && !data.anyActionsMatch(kcActionID.INIT_FLAGS, kcScriptCausePlayer::doesActionHaveInteractFlag))
+            if (!data.doesEntityEverHaveFlagSet(kcEntityInstanceFlag.INTERACT_ENABLED))
                 printWarning(data.getLogger(), data.getEntityName() + " never has the --" + kcEntityInstanceFlag.INTERACT_ENABLED.getDisplayName() + " flag set.");
         }
-    }
-
-    private static boolean doesActionHaveInteractFlag(kcAction action) {
-        if (!(action instanceof kcActionFlag))
-            throw new IllegalArgumentException("Invalid kcActionFlag: " + Utils.getSimpleName(action));
-
-        return ((kcActionFlag) action).hasFlagPresent(kcEntityInstanceFlag.INTERACT_ENABLED);
     }
 
     @Override

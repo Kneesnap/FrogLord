@@ -187,6 +187,7 @@ public class kcParam {
             case FLOAT:
             case ANGLE:
             case TIMESTAMP_TICK:
+            case DOUBLE_TIMESTAMP_TICK:
                 if (!Float.isFinite(floatValue))
                     return floatValue + " cannot be represented as a floating point value.";
                 break;
@@ -326,6 +327,9 @@ public class kcParam {
             case TIMESTAMP_TICK:
                 setValue(Math.round(node.getAsFloat() * GreatQuestModelMesh.TICKS_PER_SECOND));
                 break;
+            case DOUBLE_TIMESTAMP_TICK:
+                setValue(Math.round(2 * node.getAsFloat() * GreatQuestModelMesh.TICKS_PER_SECOND));
+                break;
             case ANGLE:
                 setValue((float) Math.toRadians(node.getAsFloat()));
                 break;
@@ -431,6 +435,9 @@ public class kcParam {
                 break;
             case TIMESTAMP_TICK:
                 node.setAsFloat((float) getAsInteger() / GreatQuestModelMesh.TICKS_PER_SECOND);
+                break;
+            case DOUBLE_TIMESTAMP_TICK:
+                node.setAsFloat((getAsInteger() * .5F) / GreatQuestModelMesh.TICKS_PER_SECOND);
                 break;
             case ANGLE:
                 node.setAsFloat(getAsAngleInDegrees());

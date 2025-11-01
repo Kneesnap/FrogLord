@@ -21,7 +21,7 @@ import net.highwayfrogs.editor.utils.logging.ILogger;
 @Getter
 @Setter
 public class kcProjectileParams extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter, IConfigData {
-    private ProxyReact proxyReact = ProxyReact.NOTIFY;
+    private ProxyReact proxyReact = ProxyReact.PENETRATE;
     private float sensorRadius;
     private int group; // Bone ID? Not sure.
     private int focus;

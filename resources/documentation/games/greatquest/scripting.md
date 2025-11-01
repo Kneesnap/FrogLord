@@ -324,13 +324,13 @@ Not used in the vanilla game.
 **Usage:** `Do not use.`  
 Not used in the vanilla game.
 
-### SetActive (Script Only)
+### Entity.Activate/Entity.Deactivate (Script Only)
 **Summary:** Set whether the script owner is active. (An inactive entity will be invisible and lack collision)  
 **Supported Entity Types:** All  
 <!---**Ghidra Reference (Ignore):** `kcCEntity::OnCommand -> kcCEntity::ActivateAndUnhide`-->
 **Usage:** `Entity.Activate` and `Entity.Deactivate`  
 **Alias:** `SetActive <true|false>` (DOES NOT WORK)  
-Waypoints are capable of activating invisible parts of the map when this is used. 
+Waypoints may re-activate activate invisible entities and invisible parts of the map (covered by the waypoint's area) when `Entity.Activate` is used.  
 
 ### SetEnable (Unsupported)
 **Summary:** Does nothing.  
@@ -427,8 +427,9 @@ Others, such as Fairy Frogmother face the player by setting their target as `Fro
 Speed is a decimal number, likely multiplicative, so 1.0 would be 1x speed, 2.5 is 2.5x speed, etc.  
 Not used in the vanilla game.
 
-> [!CAUTION]  
-> Using this appears to crash the PC version, although the PS2 version has not been tested.  
+> [!WARNING]  
+> The game may crash if `SetAnimationSpeed` is used before `SetAnimation.  
+> Instead, use `SetAnimationSpeed` immediately after `SetAnimation` to avoid crashing the game.  
 
 ### SetAxisPosition (Script Only)
 **Summary:** Sets the script owner's positional coordinate on the given axis.  
@@ -525,7 +526,7 @@ Not used in the vanilla game.
 Not used in the vanilla game.
 
 > [!NOTE]  
-> When used in an entity script, this is only capable of rotating on the Y axis.
+> When used in an entity script (as opposed to an action sequence), this is only capable of rotating on the Y axis.
 
 ### SetAnimation (Both)
 **Summary:** Changes the animation currently performed.  
@@ -582,10 +583,22 @@ Not used in the vanilla game.
 <!---**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction`-->
 **Usage:** `WaitForAnimation`  
 
+> [!WARNING]  
+> When `SetAnimation` is called with a NON-ZERO transition time, WaitForAnimation may instantly continue without waiting.  
+> The reason for this is currently unknown.  
+
 ### Loop (Action Sequence Only)
 **Summary:** The action sequence will restart the number of times specified.  
 <!---**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction`-->
 **Usage:** `Loop <numberOfTimesToLoop>`  
+
+> [!NOTE]  
+> In order to loop as many times as possible, use `Loop MAX`.  
+
+> [!WARNING]  
+> The first action in an action sequence will be skipped when looping.  
+> This MIGHT not be a bug, because the `"Gavin[Sit]"` sequence in Bog Town uses this feature to let Gavin sit down once, then loop through the rest once sitting.  
+> <!-- This is because kcCActorBase::UpdateBehavior sets mCurAction to be zero, and it gets incremented right before ProcessAction() gets called, so the first action to be called is action 1. -->
 
 ### ApplyImpulse (Both)
 **Summary:** Applies a physics-based motion "impulse" (instantaneous force) to the script owner.  
@@ -643,6 +656,13 @@ The timer will start counting down from the number of seconds given.
 Once the timer reaches 0, it will send `OnAlarm` with the alarm ID provided.  
 The main purpose of this feature is to run script effects after a delay.  
 
+> [!NOTE]
+> In order to repeat for as long as possible, use `--Repeat MAX`.  
+> After approximately 5.2 days of uptime, the game's i32 tick counter will overflow, (usually) causing all active alarms to expire. <!-- `kcCGameSystem::mTicksSinceStartup` -->  
+> Using `--Repeat MAX` will ensure the alarms last until this 5.2 day limit.  
+> New alarms can still be registered and appear to work correctly.  
+> To repeat beyond the 5.2 day limit, use `cause=OnAlarm FINISHED` to re-register the alarm once it stops.  
+
 ### TriggerEvent (Both)
 **Summary:** Triggers a named event.  
 **Supported Entity Types:** All  
@@ -654,7 +674,7 @@ The main purpose of this feature is to run script effects after a delay.
 "LevelCompleted" # Destroys all active cameras, and sets a flag for completing the level. Triggered by in-game scripts.
 "BeginScreenFade" # Causes the screen to fade to black. Called by a lot of things.
 "EndScreenFade" # Unfades/unhides the contents of the screen. Called by a lot of things.
-"LockPlayerControl" # Disables controller/keyboard input from influencing the player character. NOTE: This will be automatically be enabled when a dialog box opens, and disabled when closed, so using dialog will unlock player control. Exclusively called from scripts. 
+"LockPlayerControl" # Disables controller/keyboard input from influencing the player character. NOTE: This will be automatically be enabled when a dialog box opens, and disabled when closed, so using dialog will unlock player control. Exclusively called from scripts.
 "UnlockPlayerControl" # Re-enables controller/keyboard input for the player character. Exclusively called from scripts.
 "ShakeCameraRand" # Shakes the camera randomly. Exclusively used by scripts. NOTE: If this does nothing, ActivateCamera/DeactivateCamera should be used immediately before/after this event is triggered.
 "PlayMidMovie01" # Plays the FMV "OMOVIES/MDRAGONF.PSS"/"mid_catdragon_fire.fpc" (This file does not exist in the vanilla game.) Description: "Play Dragon Fire Movie"
@@ -730,8 +750,8 @@ Valid variable IDs are between 0 and 7.
 The provided value must be a whole number.  
 The only way to use a variable is with the `SendNumber` effect.
 
-> ![NOTE]
-> Variables can only represent whole numbers, between `-32768` and `32767`.
+> [!NOTE]  
+> Variables can only represent whole numbers, between `-32768` and `32767`.  
 
 ### SendNumber (Script Only)
 **Summary:** Sends a number, which will cause the `OnReceiveNumber` script cause.  
@@ -819,8 +839,8 @@ A negative number will heal the entity.
 <!---**Ghidra Reference (Ignore):** `CCharacter::OnCommand`-->
 **Usage:** `SetSavePoint <savePointId> <x> <y> <z>`  
 The player's respawn position will be set to the new coordinates.  
-Also, the game will find an entity named `"Save pointInstXXX"` where `XXX` is the `savePointId`.  
-If such an entity is found, particles will be played at the position of that entity.  
+Also, the game will search for an entity named `"Save pointInstXXX"` where `XXX` is the `savePointId`.  
+This entity is optional to create, but if it is created, checkpoint particles will be displayed at that entity's position.  
 
 ### SetUpdatesEnabled (Script Only)
 **Summary:** Sets whether updates are enabled for the script owner.  
@@ -883,7 +903,7 @@ Attach PARTICLE_EMITTER <boneNameOrId> <particleEmitterParamName>
 <!---**Ghidra Reference (Ignore):** `CCharacter::OnCommand`-->
 **Usage:** `Detach PARTICLE_EMITTER <boneNameOrId>`
 
-### SetWorldActive
+### Entity.ActivateSpecial
 **Summary:** Set whether entities/terrain are enabled in the world area covered by the waypoint.  
 **Supported Entity Types:** Waypoint  
 <!---**Ghidra Reference (Ignore):** `kcCEntity::OnCommand`-->
@@ -924,7 +944,7 @@ BOTH # Controls both entity visibility and terrain visibility.
 **Usage:** `SetCameraTarget <entityName>`
 
 ### SetCameraPivot (Script Only)
-**Summary:** Set the rotational pivot entity for the current camera.
+**Summary:** Set the rotational pivot entity for the current camera.  
 **Supported Entity Types:** All  
 <!---**Ghidra Reference (Ignore):** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnSetPivot`-->
 **Usage:** `SetCameraPivot <entityName>`  
@@ -1021,39 +1041,11 @@ When a waypoint entity is activated/deactivated, all entities & terrain buffers 
 Waypoints do not appear to automatically activate/deactivate based on player position like the rest, presumably because they are not rendered.  
 NOTE: Bounding boxes must ALSO have bounding spheres set which cover the same area too, otherwise the game will skip certain parts of the world. (`sTestWaypointIntersection`)
 
-## Entity Descriptions
-TODO: Document Entity descriptions.
-
-## Collision
-Collision happens through what are called "collision proxies", which are stand-ins for objects (terrain, entities, etc.)
-These proxies are 3D shapes which aren't shown in-game, but can be previewed using FrogLord.  
-There are two kinds of proxies, "capsules" and "triangle meshes".
-
-**Capsules (kcCProxyCapsule):**  
-A "proxy capsule" is a pill-shaped area (a cylinder with a round top/bottom). These are very fast but not very flexible.
-
-TODO: Creating through configurations.
-TODO: Example image?
-
-**Triangle Meshes (kcCProxyTriMesh):**  
-A "triangle mesh" is a just a normal 3D model, but without any textures.
-These are more flexible than capsules but do not perform very well.  
-Note that these cannot have animations like the models which get displayed in-game can.  
-
-TODO: Creating through configurations.
-TODO: Example image?
-
-### There's more to collision though!
-Before the proxy will be tested, there is a sphere on every actor description.  
-This sphere is a very fast collision test which gets checked BEFORE the proxies are tested.  
-This is because spheres are extremely fast/quick/easy to check, so the sphere can eliminate some of the more heavy collision checks.  
-
-
 ### Waypoint Collision
 Waypoints are special, as they do not have collision proxy data.  
 They can either have a `BOUNDING_BOX` or a `SPHERE` shape.
 If a sphere is chosen, the entity sphere described before is used.  
-If a bounding box is selected, the sphere appears to be completely ignored, and the box dimensions are found in the waypoint description data instead of a collision proxy.  
+If a bounding box is selected, the sphere is completely ignored, and the box dimensions are configured in the waypoint description data (instead of a collision proxy).  
 
 ### Items
 Items are also special, because their collision proxy data is hardcoded. (Applied by `CItem::Init`.)  

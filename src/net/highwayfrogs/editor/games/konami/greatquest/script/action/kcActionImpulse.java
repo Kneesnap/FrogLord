@@ -1,8 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
-import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityFlag.kcEntityInstanceFlag;
-import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
 
 /**
@@ -24,10 +22,9 @@ public class kcActionImpulse extends kcActionTemplate {
     @Override
     public void printAdvancedWarnings(kcScriptValidationData data) {
         super.printAdvancedWarnings(data);
-
-        kcEntityInst entityInst = data.getEntity() != null ? data.getEntity().getInstance() : null;
-        if (entityInst instanceof kcEntity3DInst && !((kcEntity3DInst) entityInst).hasFlag(kcEntityInstanceFlag.ENABLE_PHYSICS)
-                && !data.anyActionsMatch(kcActionID.SET_FLAGS, action -> ((kcActionFlag) action).hasFlagPresent(kcEntityInstanceFlag.ENABLE_PHYSICS)))
+        if (!data.doesEntityEverHaveFlagSet(kcEntityInstanceFlag.ENABLE_PHYSICS))
             printWarning(data.getLogger(), data.getEntityName() + " never has the " + kcEntityInstanceFlag.ENABLE_PHYSICS.getDisplayName() + " flag set.");
+        if (data.doesEntityAlwaysHaveFlagSet(kcEntityInstanceFlag.ENABLE_TERRAIN_TRACKING))
+            printWarning(data.getLogger(), data.getEntityName() + " always has the " + kcEntityInstanceFlag.ENABLE_TERRAIN_TRACKING.getDisplayName() + " flag set.");
     }
 }

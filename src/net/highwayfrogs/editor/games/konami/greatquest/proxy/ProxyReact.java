@@ -5,7 +5,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.proxy;
  * Created by Kneesnap on 8/24/2023.
  */
 public enum ProxyReact {
-    NOTIFY, // This is sometimes called 'PENETRATE', as it lets the user through.
+    PENETRATE, // This is sometimes called 'NOTIFY', as its primary use is for responding to a collision. Both of these are official/original names, but 'PENETRATE' is more self-explanatory.
     HALT, // 'HALT' presumably presents the user from moving.
     SLIDE; // Causes the player to slide off the surface.
 

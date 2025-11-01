@@ -45,7 +45,7 @@ public enum kcActionID {
     WAIT_ROTATE((byte) 0x19, "WaitForAxisRotation", null, true, kcActionLazyTemplate.WAIT_ROTATE_ARGUMENTS), // kcCActorBase::ProcessAction, Seems unused.
     WAIT_ROTATE_XYZ((byte) 0x1A, "WaitForFullRotation", null, true, kcActionEmptyTemplate::new), // kcCActorBase::ProcessAction, Seems unused.
     WAIT_ANIMATION((byte) 0x1B, "WaitForAnimation", null, true, kcActionEmptyTemplate::new), // kcCActorBase::ProcessAction
-    LOOP((byte) 0x1D, "Loop", null, true, kcActionLazyTemplate.LOOP_ARGUMENTS), // kcCActorBase::ProcessAction. Marks the sequence to be restarted a given number of times. This will not cause it to restart during subsequent executions.
+    LOOP((byte) 0x1D, "Loop", null, true, kcActionLoop::new), // kcCActorBase::ProcessAction. Marks the sequence to be restarted a given number of times. This will not cause it to restart during subsequent executions.
     IMPULSE((byte) 0x1E, "ApplyImpulse", kcEntityInheritanceGroup.CHARACTER, true, kcActionImpulse::new), // kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand
     DAMAGE((byte) 0x1F, "Damage", kcEntityInheritanceGroup.ACTOR_BASE, false, kcActionGiveDamage::new), // kcCActorBase::OnCommand/kcCActor::OnCommand. This isn't called directly, but GIVE_DAMAGE is automatically remapped to this command.
     PROMPT((byte) 0x2F, "Prompt", kcEntityInheritanceGroup.ACTOR_BASE, false, kcActionLazyTemplate.PROMPT_ARGUMENTS), // kcCActorBase::OnCommand/kcCActor::OnCommand NOTE: This seems unused, and we don't know for certain the argument is labelled correctly. It is implemented though. This feature can be useful to reduce code duplication however, so it makes sense to use it.

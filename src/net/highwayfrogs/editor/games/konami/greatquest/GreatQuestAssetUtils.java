@@ -128,6 +128,9 @@ public class GreatQuestAssetUtils {
 
     // Must run after particle params are loaded, and after vtx models are imported, but before scripts.
     private static void applyLauncherParams(GreatQuestChunkedFile chunkedFile, Config launcherParamsCfg, ILogger logger) {
+        if (launcherParamsCfg == null)
+            return;
+
         for (Config launcherParamCfg : launcherParamsCfg.getChildConfigNodes()) {
             String launcherParamName = launcherParamCfg.getSectionName();
             kcCResourceGeneric generic = GreatQuestUtils.findLevelResourceByName(chunkedFile, launcherParamName, kcCResourceGeneric.class);
