@@ -142,7 +142,7 @@ Actors are a step-up from actor-base, being able to take damage/have health.
 In the vanilla game, there are no entities which are directly base actor, only inherited types such as `Character`.  
 
 **Properties:**  
-```
+```PowerShell
 <All properties inherited from base actor.>
 
 # The health configuration for the entity. (Optional)
@@ -164,7 +164,7 @@ Characters are capable of using the AI/pathfinding system.
 Pretty much all living/breathing entities are characters.  
 
 **Properties:**
-```
+```PowerShell
 <All properties inherited from actor.>
 
 characterType=<PLAYER|STATIC|WALKER|FLYER|SWIMMER> # Different kinds of characters are available, with different AI settings.
