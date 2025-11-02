@@ -416,8 +416,24 @@ Others, such as Fairy Frogmother face the player by setting their target as `Fro
 > If the `--DisableAI` flag is set, the entity will not pathfind UNLESS the target is a waypoint.  
 > The entity description must have `attackGoalPercent` set to a non-zero number for this to happen, and have a valid walk/run sequence configured.  
 
-> [!CAUTION]
-> If the entity has the `--FaceTargetEntity` flag set, it may not be able to move vertically (up/down).
+> [!CAUTION]  
+> If the entity has the `--FaceTargetEntity` flag set, it may not be able to move vertically (up/down).  
+> The entity's head may also look in a strange/unexpected direction when this occurs.  
+
+> [!NOTE]  
+> **Pathfind Troubleshooting:**  
+> 1. If the entity is not moving...
+> - 1a) Check the entity is a character. Other kinds of entities such as props or items will not pathfind.
+> - 1b) If the entity is frozen in-place, was the entity deactivated? (Try `Entity.Activate`, adding `--ForceStayActive`, etc.)
+> - 1c) Does the entity description have the `attackGoalPercent` property set to 100? The "attack goal" is what causes pathfinding.
+> - 1d) Is the `--DisableAI` flag set? This will prevent pathfinding, UNLESS the target is a waypoint entity.
+> - 1e) Does the entity have an action sequence setup correctly to animate walking/flying/etc? (Eg: `NrmWalk01`). It's actually the movement as part of the animation which causes an entity to move in the world. 
+> - 1f) Check the entity's bounding sphere, and the waypoint's size. They might be too large, and the entity arrives too early.
+> 2. If the entity walks to the target, but does not stop walking...  
+> - 2a) Set the entity's sequence to a new non-walking animation. The walking animation will continue to move them if it is still active.  
+> - 2b) Use `SetTarget null` or add `--DisableAI` to ensure the entity's AI doesn't try to re-activate.  
+> 3. If the entity is moving seemingly randomly, and not towards a goal...  
+> - This is the "wandering" behavior, and is what an entity will do by default. Make sure `attackGoalPercent` is set in the entity description so they will "attack" instead of wandering.  
 
 ### SetAnimationSpeed (Both)
 **Summary:** Sets the animation speed for the script owner.  
