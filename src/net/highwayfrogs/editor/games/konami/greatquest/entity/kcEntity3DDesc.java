@@ -148,7 +148,7 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
     public void fromConfig(ILogger logger, Config input) {
         kcEntityDescType descType = input.getKeyValueNodeOrError(CONFIG_KEY_DESC_TYPE).getAsEnumOrError(kcEntityDescType.class);
         if (descType != getEntityDescriptionType())
-            throw new RuntimeException("The entity description reported itself as " + descType + ", which is incompatible with " + getEntityDescriptionType() + ".");
+            throw new RuntimeException("The entity description type was configured to be a(n) " + descType + ", but '" + getResourceName() + "' already exists as a(n) " + getEntityDescriptionType() + " description instead.");
 
         OptionalArguments arguments = OptionalArguments.parseCommaSeparatedNamedArguments(input.getKeyValueNodeOrError(CONFIG_KEY_FLAGS).getAsString());
         this.defaultFlags = kcEntityInstanceFlag.getValueFromArguments(arguments);

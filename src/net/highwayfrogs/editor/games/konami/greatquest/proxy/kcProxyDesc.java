@@ -102,7 +102,7 @@ public abstract class kcProxyDesc extends kcBaseDesc implements kcIGenericResour
     public void fromConfig(ILogger logger, Config input) {
         kcProxyDescType descType = input.getKeyValueNodeOrError(CONFIG_KEY_DESC_TYPE).getAsEnumOrError(kcProxyDescType.class);
         if (descType != getDescriptionType())
-            throw new RuntimeException("The proxy description reported itself as " + descType + ", which is incompatible with " + getDescriptionType() + ".");
+            throw new RuntimeException("The proxy description type was configured to be a(n) " + descType + ", but '" + getResourceName() + "' already exists as a(n) " + getDescriptionType() + " description instead.");
 
         this.reaction = input.getKeyValueNodeOrError(CONFIG_KEY_REACTION).getAsEnumOrError(ProxyReact.class);
         if (this.reaction == ProxyReact.HALT)
