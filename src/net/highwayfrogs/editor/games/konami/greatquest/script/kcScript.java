@@ -188,8 +188,9 @@ public class kcScript extends GameObject<GreatQuestInstance> {
      * Adds all function definitions found in a Config node.
      * @param baseConfigNode The config node to add functions from
      * @param sourceName The source name (usually a file name) representing where the scripts came from.
+     * @param sharedScript Iff the script data currently being loaded will be shared to other entities.
      */
-    public void addFunctionsFromConfigNode(ILogger logger, Config baseConfigNode, String sourceName) {
+    public void addFunctionsFromConfigNode(ILogger logger, Config baseConfigNode, String sourceName, boolean sharedScript) {
         if (logger == null)
             throw new NullPointerException("logger");
         if (baseConfigNode == null)
@@ -207,7 +208,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
 
             // Load the script function.
             try {
-                newFunction.loadFromConfigNode(nestedFunction, logger);
+                newFunction.loadFromConfigNode(nestedFunction, logger, sharedScript);
             } catch (Throwable th) {
                 // We must print exception causes, because if we don't, they won't be visible to the user.
                 String entityName = getEntity() != null ? "'" + getEntity().getName() + "'" : "null";
@@ -237,7 +238,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
 
                 if (functionToReplace != null) {
                     newFunction = functionToReplace;
-                    functionToReplace.loadFromConfigNode(nestedFunction, logger);
+                    functionToReplace.loadFromConfigNode(nestedFunction, logger, sharedScript);
                 } else {
                     // Add the new function.
                     this.functions.add(newFunction);
@@ -450,8 +451,9 @@ public class kcScript extends GameObject<GreatQuestInstance> {
         /**
          * Loads this function loaded from a Config node.
          * @param config The config containing the function definition
+         * @param sharedScript Iff the script data currently being loaded will be shared to other entities.
          */
-        public void loadFromConfigNode(Config config, ILogger logger) {
+        public void loadFromConfigNode(Config config, ILogger logger, boolean sharedScript) {
             if (config == null)
                 throw new NullPointerException("config");
 
@@ -472,7 +474,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
 
                 int lineNumber = config.getOriginalLineNumber() + i;
                 try {
-                    this.effects.add(kcScriptEffect.parseScriptEffect(logger, this, textLine, lineNumber, fileName));
+                    this.effects.add(kcScriptEffect.parseScriptEffect(logger, this, textLine, lineNumber, fileName, sharedScript));
                 } catch (Throwable th) {
                     // We must print exception causes, because if we don't, they won't be visible to the user.
                     String entityName = this.script.getEntity() != null ? "'" + this.script.getEntity().getName() + "'" : "null";

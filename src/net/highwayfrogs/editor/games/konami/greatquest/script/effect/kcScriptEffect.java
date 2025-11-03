@@ -146,8 +146,11 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
     /**
      * Loads the action arguments from the arguments provided.
      * @param arguments the arguments to load from
+     * @param lineNumber the line number which the line of text came from
+     * @param fileName the name of the file which the script effect is parsed from
+     * @param sharedEffect true iff the effect is applied to more than one entity
      */
-    public final void loadEffect(ILogger logger, OptionalArguments arguments, int lineNumber, String fileName) {
+    public final void loadEffect(ILogger logger, OptionalArguments arguments, int lineNumber, String fileName, boolean sharedEffect) {
         // Apply the target entity override before loading the arguments to ensure that the action can access the entity while loading. (Happens for kcActionSetSequence, and anything else which wants to get the actor desc)
         StringNode overrideTargetEntity = arguments.use(ARGUMENT_ENTITY_RUNNER);
 
@@ -161,7 +164,7 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
         loadArguments(logger, arguments, lineNumber, fileName);
 
         // Warn about target entity.
-        if (resolvedOverrideEntity && scriptOwner == this.targetEntityRef.getResource()) {
+        if (!sharedEffect && resolvedOverrideEntity && scriptOwner == this.targetEntityRef.getResource()) {
             kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
             OptionalArguments savedEffect = saveEffect(settings);
             kcScriptDisplaySettings.applyGqsSyntaxHashDisplay(savedEffect.getOrCreate(ARGUMENT_ENTITY_RUNNER), settings, this.targetEntityRef);
@@ -252,10 +255,15 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
     /**
      * Attempts to parse a script effect from a line of text in the FrogLord TGQ script syntax.
      * Throws an exception if it cannot be parsed.
+     * @param logger the logger to write any information to
+     * @param function the function to parse the script effect for
      * @param line The line of text to parse
+     * @param lineNumber the line number which the line of text came from
+     * @param fileName the name of the file which the script effect is parsed from
+     * @param sharedScript true iff the script is applied to more than one entity.
      * @return the parsed script effect
      */
-    public static kcScriptEffect parseScriptEffect(ILogger logger, kcScriptFunction function, String line, int lineNumber, String fileName) {
+    public static kcScriptEffect parseScriptEffect(ILogger logger, kcScriptFunction function, String line, int lineNumber, String fileName, boolean sharedScript) {
         if (function == null)
             throw new NullPointerException("function");
         if (line == null)
@@ -270,7 +278,7 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
             if (newEffect == null)
                 throw new RuntimeException("The command name '" + commandName + "' is incorrect, make sure it has been spelled correctly.");
 
-            newEffect.loadEffect(logger, arguments, lineNumber, fileName);
+            newEffect.loadEffect(logger, arguments, lineNumber, fileName, sharedScript);
             return newEffect;
         } catch (Throwable th) {
             throw new RuntimeException("Failed to parse '" + line + "' in '" + fileName + "' on line " + lineNumber + " as a script effect.", th);

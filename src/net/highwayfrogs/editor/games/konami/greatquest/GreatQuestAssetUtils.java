@@ -484,7 +484,7 @@ public class GreatQuestAssetUtils {
 
         // Scripts are loaded last in order to ensure entity data is correct. (Prevents incorrect resolutions and warnings.)
         for (Entry<kcEntityInst, Config> entry : scriptCfgsPerEntity.entrySet())
-            entry.getKey().addScriptFunctions(logger, scriptList, entry.getValue(), sourceName, true);
+            entry.getKey().addScriptFunctions(logger, scriptList, entry.getValue(), sourceName, true, false);
     }
 
     private static void applyScripts(GreatQuestChunkedFile chunkedFile, Config scriptCfg, kcScriptList scriptList, ILogger logger) {
@@ -493,7 +493,8 @@ public class GreatQuestAssetUtils {
 
         String sourceName = scriptCfg.getRootNode().getSectionName();
         for (Config entityScriptCfg : scriptCfg.getChildConfigNodes()) {
-            for (String entityInstName : entityScriptCfg.getSectionName().split("\\|")) { // Allows multiple entities to be assigned by splitting with the pipe character. I originally wanted comma, but some entity names have commas in them.
+            String[] entityNames = entityScriptCfg.getSectionName().split("\\|");
+            for (String entityInstName : entityNames) { // Allows multiple entities to be assigned by splitting with the pipe character. I originally wanted comma, but some entity names have commas in them.
                 kcCResourceEntityInst entity = chunkedFile.getResourceByName(entityInstName, kcCResourceEntityInst.class);
                 if (entity == null)
                     throw new RuntimeException("Couldn't resolve entity named '" + entityInstName + "' to make script modifications to.");
@@ -502,7 +503,7 @@ public class GreatQuestAssetUtils {
                 if (entityInst == null)
                     throw new RuntimeException("The entity instance for '" + entityInstName + "' was null, so we couldn't modify its script.");
 
-                entityInst.addScriptFunctions(logger, scriptList, entityScriptCfg, sourceName, false);
+                entityInst.addScriptFunctions(logger, scriptList, entityScriptCfg, sourceName, false, entityNames.length > 1);
             }
         }
     }

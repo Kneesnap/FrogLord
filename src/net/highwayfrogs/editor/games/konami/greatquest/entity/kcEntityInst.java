@@ -173,24 +173,14 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
 
     /**
      * Loads script functions from the config to this entity, creating a new script if necessary.
-     * @param scriptList The script list to resolve/create scripts with.
-     * @param config The config to load script functions from
-     * @param sourceName The source name (usually a file name) representing where the scripts came from.
-     * @param clearExistingFunctions if true, any existing functions will be wiped.
-     */
-    public void addScriptFunctions(kcScriptList scriptList, Config config, String sourceName, boolean clearExistingFunctions) {
-        addScriptFunctions(null, scriptList, config, sourceName, clearExistingFunctions);
-    }
-
-    /**
-     * Loads script functions from the config to this entity, creating a new script if necessary.
      * @param logger the logger to write script information/warnings to
      * @param scriptList The script list to resolve/create scripts with.
      * @param config The config to load script functions from
      * @param sourceName The source name (usually a file name) representing where the scripts came from.
      * @param clearExistingFunctions if true, any existing functions will be wiped.
+     * @param sharedScript Iff true, the script will be applied to more than one entity.
      */
-    public void addScriptFunctions(ILogger logger, kcScriptList scriptList, Config config, String sourceName, boolean clearExistingFunctions) {
+    public void addScriptFunctions(ILogger logger, kcScriptList scriptList, Config config, String sourceName, boolean clearExistingFunctions, boolean sharedScript) {
         if (scriptList == null)
             throw new NullPointerException("scriptList");
         if (config == null)
@@ -217,7 +207,7 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
         if (clearExistingFunctions)
             script.getFunctions().clear();
 
-        script.addFunctionsFromConfigNode(logger, config, sourceName);
+        script.addFunctionsFromConfigNode(logger, config, sourceName, sharedScript);
     }
 
     /**
@@ -296,26 +286,6 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
             targetEntityNode = DEFAULT_TARGET_ENTITY_NODE;
 
         GreatQuestUtils.resolveLevelResource(logger, targetEntityNode, kcCResourceEntityInst.class, chunkedFile, this.resource, this.targetEntityRef, true);
-    }
-
-    /**
-     * Loads from the config, and loads the script now.
-     * @param input the input config to read from
-     */
-    public final void fromConfigIncludeScripts(ILogger logger, Config input) {
-        if (logger == null)
-            throw new NullPointerException("logger");
-
-        GreatQuestChunkedFile chunkedFile = this.resource.getParentFile();
-        if (chunkedFile == null)
-            throw new NullPointerException("chunkedFile");
-
-        fromConfig(logger, input);
-
-        // Read scripts.
-        Config scriptCfg = input.getChildConfigByName(CONFIG_SECTION_SCRIPT);
-        if (scriptCfg != null)
-            addScriptFunctions(chunkedFile.getScriptList(), scriptCfg, scriptCfg.getRootNode().getSectionName(), true);
     }
 
     @Override

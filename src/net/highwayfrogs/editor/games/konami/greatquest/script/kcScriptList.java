@@ -4,7 +4,6 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import lombok.Getter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcActorBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
@@ -19,17 +18,11 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcScriptTO
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.system.Config;
-import net.highwayfrogs.editor.utils.FXUtils;
-import net.highwayfrogs.editor.utils.FileUtils;
-import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.AppendInfoLoggerWrapper;
 
-import java.io.File;
 import java.util.*;
 
 /**
@@ -42,10 +35,6 @@ public class kcScriptList extends kcCResource {
     private transient kcScriptListInterim interim;
 
     public static final String GLOBAL_SCRIPT_NAME = "scriptdata";
-    private static final String SCRIPT_FILE_PATH_KEY = "scriptFilePath";
-    private static final SavedFilePath SCRIPT_EXPORT_PATH = new SavedFilePath(SCRIPT_FILE_PATH_KEY, "Select the directory to export scripts to");
-    private static final SavedFilePath SCRIPT_IMPORT_PATH = new SavedFilePath(SCRIPT_FILE_PATH_KEY, "Select the directory to import scripts from");
-    private static final SavedFilePath SCRIPT_GROUP_IMPORT_PATH = new SavedFilePath("gqsScriptFilePath", "Select the script group to import", kcScript.GQS_GROUP_FILE_TYPE);
 
     public kcScriptList(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.RAW);
@@ -145,99 +134,10 @@ public class kcScriptList extends kcCResource {
     public void setupRightClickMenuItems(ContextMenu contextMenu) {
         super.setupRightClickMenuItems(contextMenu);
 
-        MenuItem exportScriptsItem = new MenuItem("Export Scripts");
-        contextMenu.getItems().add(exportScriptsItem);
-        exportScriptsItem.setOnAction(event -> {
-            File scriptFolder = FileUtils.askUserToSelectFolder(getGameInstance(), SCRIPT_EXPORT_PATH);
-            if (scriptFolder == null)
-                return;
-
-            int functions = 0;
-            kcScriptDisplaySettings settings = getParentFile().createScriptDisplaySettings();
-            for (int i = 0; i < this.scripts.size(); i++) {
-                kcScript script = this.scripts.get(i);
-                Config rootNode = script.toConfigNode(getLogger(), settings);
-                rootNode.saveTextFile(new File(scriptFolder, rootNode.getSectionName() + "." + kcScript.EXTENSION));
-                functions += rootNode.getChildConfigNodes().size();
-            }
-
-            getLogger().info("Saved %d script%s containing %d function%s to a folder named '%s'.",
-                    this.scripts.size(), (this.scripts.size() != 1 ? "s" : ""), functions, (functions != 1 ? "s" : ""),
-                    scriptFolder.getName());
-        });
-
-        MenuItem importScriptsItem = new MenuItem("Import Scripts");
-        contextMenu.getItems().add(importScriptsItem);
-        importScriptsItem.setOnAction(event -> {
-            File scriptFolder = FileUtils.askUserToSelectFolder(getGameInstance(), SCRIPT_IMPORT_PATH);
-            if (scriptFolder == null)
-                return;
-
-            int filesImported = 0;
-            for (File file : FileUtils.listFiles(scriptFolder)) {
-                if (!file.getName().endsWith(kcScript.EXTENSION)) {
-                    getLogger().warning("Skipping %s", file.getName());
-                    continue;
-                }
-
-                Config scriptCfg = Config.loadConfigFromTextFile(file, false);
-                String entityName = scriptCfg.getSectionName();
-                kcCResourceEntityInst entity = getParentFile().getResourceByName(entityName, kcCResourceEntityInst.class);
-                if (entity == null) {
-                    getLogger().warning("Skipping %s, as the entity could not be resolved.", entityName);
-                    continue;
-                }
-
-                kcEntityInst entityInst = entity.getInstance();
-                if (entityInst == null) {
-                    getLogger().warning("Skipping %s because the entity is not valid.", entity.getName());
-                    continue;
-                }
-
-                filesImported++;
-                entityInst.addScriptFunctions(this, scriptCfg, entityName, false);
-            }
-
-            getLogger().info("Imported %d scripts.", filesImported);
-        });
-
-        MenuItem clearScriptsItem = new MenuItem("Clear Scripts");
-        contextMenu.getItems().add(clearScriptsItem);
-        clearScriptsItem.setOnAction(event -> {
-            if (!FXUtils.makePopUpYesNo("Are you sure you'd like to clear all the scripts in the level?"))
-                return;
-
-            // Ensure entities no longer have script indices. (Otherwise they will point to the wrong scripts when we add new ones.)
-            for (int i = 0; i < this.scripts.size(); i++) {
-                kcScript script = this.scripts.get(i);
-                kcCResourceEntityInst entity = script.getEntity();
-                if (entity != null && entity.getInstance() != null)
-                    entity.getInstance().removeScriptIndex();
-            }
-
-            this.scripts.clear();
-            getLogger().info("Cleared the script list.");
-        });
-
         // Apply GQS Script Group.
-        MenuItem importScriptGroupItem = new MenuItem("Import GQS Script Group");
+        MenuItem importScriptGroupItem = new MenuItem("Import GQS File");
         contextMenu.getItems().add(importScriptGroupItem);
-        importScriptGroupItem.setOnAction(event -> {
-            File gqsGroupFile = FileUtils.askUserToOpenFile(getGameInstance(), SCRIPT_GROUP_IMPORT_PATH);
-            if (gqsGroupFile == null)
-                return;
-
-            getLogger().info("Importing GQS file '%s'.", gqsGroupFile.getName());
-            Config scriptGroupCfg = Config.loadConfigFromTextFile(gqsGroupFile, false);
-            File workingDirectory = gqsGroupFile.getParentFile();
-
-            try {
-                GreatQuestAssetUtils.applyGqsScriptGroup(workingDirectory, getParentFile(), scriptGroupCfg);
-                getLogger().info("Finished importing the gqs.");
-            } catch (Throwable th) {
-                Utils.handleError(getLogger(), th, true, "An error occurred while importing the gqs file '%s'.", gqsGroupFile.getName());
-            }
-        });
+        importScriptGroupItem.setOnAction(event -> getParentFile().askUserToImportGqsFile());
     }
 
     /**
