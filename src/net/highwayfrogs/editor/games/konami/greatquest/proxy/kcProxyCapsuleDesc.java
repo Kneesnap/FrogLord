@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneri
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
@@ -100,6 +101,43 @@ public class kcProxyCapsuleDesc extends kcProxyDesc {
         return true; // Does nothing for kcProxyCapsuleDesc, but is always true in the retail game.
     }
 
+    @Override
+    public float getMinimumSphereRadius(Vector3f spherePos) {
+        if (spherePos == null)
+            spherePos = Vector3f.ZERO;
+
+        float capsuleBtmY = getBottomSphereOffsetY();
+        float capsuleTopY = getTopSphereOffsetY();
+        float radius = getProcessedRadius();
+
+        double largestDistanceSq = Double.NEGATIVE_INFINITY;
+        // We're going to test 10 points to find what radius must hold them. Best radius wins.
+        // The top tip of the capsule.
+        largestDistanceSq = getDistanceSq(largestDistanceSq, spherePos, 0, capsuleTopY + radius, 0);
+        // 4 increments of pi/2 on the circle formed by slicing the top of the pill into a cylinder and a hemisphere.
+        largestDistanceSq = getDistanceSq(largestDistanceSq, spherePos, -radius, capsuleTopY, 0);
+        largestDistanceSq = getDistanceSq(largestDistanceSq, spherePos, radius, capsuleTopY, 0);
+        largestDistanceSq = getDistanceSq(largestDistanceSq, spherePos, 0, capsuleTopY, -radius);
+        largestDistanceSq = getDistanceSq(largestDistanceSq, spherePos, 0, capsuleTopY, radius);
+        // The bottom tip of the capsule.
+        largestDistanceSq = getDistanceSq(largestDistanceSq, spherePos, 0, capsuleBtmY - radius, 0);
+        // 4 increments of pi/2 on the circle formed by slicing the bottom of the pill into a cylinder and a hemisphere.
+        largestDistanceSq = getDistanceSq(largestDistanceSq, spherePos, -radius, capsuleBtmY, 0);
+        largestDistanceSq = getDistanceSq(largestDistanceSq, spherePos, radius, capsuleBtmY, 0);
+        largestDistanceSq = getDistanceSq(largestDistanceSq, spherePos, 0, capsuleBtmY, -radius);
+        largestDistanceSq = getDistanceSq(largestDistanceSq, spherePos, 0, capsuleBtmY, radius);
+
+        return (float) Math.sqrt(largestDistanceSq);
+    }
+
+    private static double getDistanceSq(double largestDistanceSq, Vector3f spherePos, float localX, float localY, float localZ) {
+        float xDiff = (spherePos.getX() - localX);
+        float yDiff = (spherePos.getY() - localY);
+        float zDiff = (spherePos.getZ() - localZ);
+        double tempDistanceSq = ((double) xDiff * xDiff) + ((double) yDiff * yDiff) + ((double) zDiff * zDiff);
+        return Math.max(largestDistanceSq, tempDistanceSq);
+    }
+
     private static final String CONFIG_KEY_RADIUS = "radius";
     private static final String CONFIG_KEY_LENGTH = "height";
     private static final String CONFIG_KEY_OFFSET = "offset";
@@ -110,6 +148,10 @@ public class kcProxyCapsuleDesc extends kcProxyDesc {
         this.radius = input.getOrDefaultKeyValueNode(CONFIG_KEY_RADIUS).getAsFloat(.35F);
         this.length = input.getOrDefaultKeyValueNode(CONFIG_KEY_LENGTH).getAsFloat(.5F);
         this.offset = input.getOrDefaultKeyValueNode(CONFIG_KEY_OFFSET).getAsFloat(.5F);
+        if (this.radius < 0)
+            throw new IllegalArgumentException("kcProxyCapsuleDesc cannot use a negative radius: " + this.radius + "! (" + getResourceName() + ")");
+        if (this.length < 0)
+            throw new IllegalArgumentException("kcProxyCapsuleDesc  cannot use a negative length: " + this.length + "! (" + getResourceName() + ")");
     }
 
     @Override

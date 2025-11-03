@@ -142,7 +142,7 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
     public static final String CONFIG_KEY_DESC_TYPE = "type";
     private static final String CONFIG_KEY_FLAGS = "defaultFlags";
     private static final String CONFIG_KEY_BOUNDING_SPHERE_POS = "boundingSpherePos";
-    private static final String CONFIG_KEY_BOUNDING_SPHERE_RADIUS = "boundingSphereRadius";
+    protected static final String CONFIG_KEY_BOUNDING_SPHERE_RADIUS = "boundingSphereRadius";
 
     @Override
     public void fromConfig(ILogger logger, Config input) {

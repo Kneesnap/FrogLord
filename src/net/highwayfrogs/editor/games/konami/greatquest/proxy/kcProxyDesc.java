@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.entity.kcBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcIGenericResourceData;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -134,6 +135,12 @@ public abstract class kcProxyDesc extends kcBaseDesc implements kcIGenericResour
      * I'm not sure in what scenario this would ever be desirable, so it will not be implemented as user-editable.
      */
     public abstract boolean isStatic();
+
+    /**
+     * Gets the minimum radius of a sphere required to hold this proxy.
+     * @param spherePos the position of the center of the sphere in entity local space
+     */
+    public abstract float getMinimumSphereRadius(Vector3f spherePos);
 
     @Getter
     @RequiredArgsConstructor

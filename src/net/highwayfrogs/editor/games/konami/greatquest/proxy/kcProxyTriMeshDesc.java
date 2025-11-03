@@ -5,10 +5,13 @@ import lombok.NonNull;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTriMesh;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTriMesh.kcCTriMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
+import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.lambda.Consumer5;
@@ -99,6 +102,29 @@ public class kcProxyTriMeshDesc extends kcProxyDesc {
         // but it is unclear when this would ever be desired.
         // The game never uses it either, so this keeps it disabled.
         return false;
+    }
+
+    @Override
+    public float getMinimumSphereRadius(Vector3f spherePos) {
+        kcCResourceTriMesh triMeshResource = this.meshRef.getResource();
+        kcCTriMesh triMesh = triMeshResource != null ? triMeshResource.getTriMesh() : null;
+        if (triMesh == null || triMesh.getVertices().isEmpty())
+            return 0;
+        if (spherePos == null)
+            spherePos = Vector3f.ZERO;
+
+        double largestDistanceSq = Double.NEGATIVE_INFINITY;
+        for (int i = 0; i < triMesh.getVertices().size(); i++) {
+            kcVector4 vertex = triMesh.getVertices().get(i);
+            float xDiff = (vertex.getX() - spherePos.getX());
+            float yDiff = (vertex.getY() - spherePos.getY());
+            float zDiff = (vertex.getZ() - spherePos.getZ());
+            double tempDistanceSq = ((double) xDiff * xDiff) + ((double) yDiff * yDiff) + ((double) zDiff * zDiff);
+            if (tempDistanceSq > largestDistanceSq)
+                largestDistanceSq = tempDistanceSq;
+        }
+
+        return (float) Math.sqrt(largestDistanceSq);
     }
 
     // When the reference to kcCResourceTriMesh changes, update the name listeners.

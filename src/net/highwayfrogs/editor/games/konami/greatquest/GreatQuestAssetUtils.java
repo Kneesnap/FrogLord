@@ -77,7 +77,7 @@ public class GreatQuestAssetUtils {
 
         // Should occur before resource copying, so that any copied resources can resolve the model/collision references.
         applyModelReferences(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_MODELS), logger);
-        applyCollisionProxies(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_COLLISION_PROXIES), logger);
+        applyCollisionProxies(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_COLLISION_PROXIES), logger); // Before entity descriptions, and before resource copies, so these can be resolved in both.
         copyResources(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_COPY_RESOURCES), logger);
 
         // Should occur after resource copying, so any resources done here can resolve the copied resources.

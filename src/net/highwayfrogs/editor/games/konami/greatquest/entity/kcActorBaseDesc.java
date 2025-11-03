@@ -24,6 +24,8 @@ import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.List;
 
 /**
@@ -201,6 +203,11 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
     private static final String CONFIG_KEY_ANIMATION_SET = "animationSet";
     private static final String CONFIG_KEY_ACTION_SEQUENCES = "actionSequenceTable";
 
+    private static final DecimalFormat SPHERE_RADIUS_FORMAT = new DecimalFormat("0.####");
+    static {
+        SPHERE_RADIUS_FORMAT.setRoundingMode(RoundingMode.CEILING);
+    }
+
     @Override
     public void fromConfig(ILogger logger, Config input) {
         super.fromConfig(logger, input);
@@ -212,6 +219,31 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         ConfigValueNode channelCountNode = input.getOptionalKeyValueNode(CONFIG_KEY_CHANNEL_COUNT);
         if (channelCountNode != null)
             this.channelCount = channelCountNode.getAsInteger();
+
+        validateBoundingSphere(logger, input);
+    }
+
+    private void validateBoundingSphere(ILogger logger, Config input) {
+        kcCResourceGeneric proxyDescResource = this.proxyDescRef.getResource();
+        if (proxyDescResource == null)
+            return;
+
+        kcProxyDesc proxyDesc = proxyDescResource.getAsProxyDescription();
+        if (proxyDesc == null)
+            return;
+
+        float minimumRadius = proxyDesc.getMinimumSphereRadius(getBoundingSphere().getPosition());
+        float actualRadius = getBoundingSphere().getRadius();
+        if (actualRadius >= minimumRadius)
+            return;
+
+        if (!input.hasKeyValueNode(CONFIG_KEY_BOUNDING_SPHERE_RADIUS)) { // If the radius isn't set, we automatically take care of it.
+            getBoundingSphere().setRadius(minimumRadius);
+        } else { // If the radius was explicitly set, and is too small, then we should let the user know.
+            logger.warning("The %s must be at least %s to contain the collision proxy: '%s'. (Was: %f)",
+                    CONFIG_KEY_BOUNDING_SPHERE_RADIUS, SPHERE_RADIUS_FORMAT.format(minimumRadius),
+                    proxyDesc.getResourceName(), actualRadius);
+        }
     }
 
     @Override
