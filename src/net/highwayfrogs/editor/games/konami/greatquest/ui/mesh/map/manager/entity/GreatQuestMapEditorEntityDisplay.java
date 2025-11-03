@@ -357,8 +357,8 @@ public class GreatQuestMapEditorEntityDisplay {
         double xRotation = entity3D.getRotation().getX();
         double yRotation = entity3D.getRotation().getY();
         double zRotation = entity3D.getRotation().getZ();
-        boolean isCollisionNode = (node == this.collisionPreview);
-        boolean isBoundingSphereNode = (node == this.boundingSpherePreview);
+        boolean isCollisionNode = node != null && (node == this.collisionPreview);
+        boolean isBoundingSphereNode = node != null && (node == this.boundingSpherePreview);
 
         if (this.collisionPreview != null && (node == null || isCollisionNode)) { // NOTE: The behavior of rotations has not been fully understood. Eg: We've not found the exact code cause for this in the original code yet.
             GreatQuestUtils.setEntityRotation(this.collisionPreview, xRotation, yRotation, zRotation, false);
