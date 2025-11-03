@@ -168,10 +168,12 @@ public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<
         }
 
         @Override
-        public void removeViewEntry(@NonNull kcCResource resource) {
+        public void removeViewEntry(@NonNull kcCResource resource, boolean updateUI) {
             getListComponent().getFile().removeResource(resource);
             if (getRootNode().getSelectionModel().getSelectedItem() == resource)
                 getRootNode().getSelectionModel().clearSelection();
+            if (updateUI)
+                refreshDisplay();
         }
 
         private void updateAddMenuEntries(GreatQuestChunkResourceCategory category) {

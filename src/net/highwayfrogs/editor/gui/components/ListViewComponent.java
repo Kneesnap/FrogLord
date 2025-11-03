@@ -138,8 +138,9 @@ public abstract class ListViewComponent<TGameInstance extends GameInstance, TVie
      * Removes the view entry from the underlying collection, if possible and supported.
      * Throws exceptions if unsupported, so call isRemoveOperationSupported() first.
      * @param viewEntry the entry to remove
+     * @param updateUI if true, the UI will be updated
      */
-    public void removeViewEntry(@NonNull TViewEntry viewEntry) {
+    public void removeViewEntry(@NonNull TViewEntry viewEntry, boolean updateUI) {
         Collection<? extends TViewEntry> collection = getViewEntries();
         if (!collection.remove(viewEntry))
             throw new IllegalArgumentException("The viewEntry '" + viewEntry + "' could not be removed from the collection!");
@@ -147,7 +148,8 @@ public abstract class ListViewComponent<TGameInstance extends GameInstance, TVie
         if (getRootNode().getSelectionModel().getSelectedItem() == viewEntry)
             getRootNode().getSelectionModel().clearSelection();
 
-        this.entries.remove(viewEntry);
+        if (this.entries.remove(viewEntry) && updateUI)
+            refreshDisplay();
     }
 
     /**
@@ -189,7 +191,7 @@ public abstract class ListViewComponent<TGameInstance extends GameInstance, TVie
     @SuppressWarnings("unchecked")
     public void applyDefaultEditor(CollectionEditorComponent<TGameInstance, ?> editorComponent) {
         if (editorComponent.getRemoveButtonLogic() == null)
-            editorComponent.setRemoveButtonLogic(viewEntry -> removeViewEntry((TViewEntry) viewEntry));
+            editorComponent.setRemoveButtonLogic(viewEntry -> removeViewEntry((TViewEntry) viewEntry, true));
         if (editorComponent.getMoveButtonLogic() == null)
             editorComponent.setMoveButtonLogic((viewEntry, direction) -> moveViewEntry((TViewEntry) viewEntry, direction.getOffset()));
     }

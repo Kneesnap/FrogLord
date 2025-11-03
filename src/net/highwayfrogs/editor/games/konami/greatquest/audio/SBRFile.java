@@ -1726,11 +1726,13 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
             getSoundListComponent().extendParentUI();
 
             getCollectionEditorComponent().setRemoveButtonLogic(sound -> {
-                getSoundListComponent().removeViewEntry(sound);
+                getSoundListComponent().removeViewEntry(sound, false);
 
                 // If we're removing a wave, sync the indices to keep them up to date.
-                if (sound instanceof SfxWave && getFile().synchronizeWaveIds())
-                    getSoundListComponent().refreshDisplay();
+                if (sound instanceof SfxWave)
+                    getFile().synchronizeWaveIds();
+
+                getSoundListComponent().refreshDisplay();
             });
 
             getCollectionEditorComponent().setMoveButtonLogic((sound, direction) -> {
