@@ -53,13 +53,20 @@ public class GreatQuestChunkTextureReference extends kcCResource {
             return null;
 
         return new ImageView(FXUtils.toFXImage(imageFile.getImage(), false));
+
     }
 
     @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList.add("IMPORTANT", "This is not an actual image!\nInstead, this is a file path to an image.");
+        propertyList.add("", "");
+
+        // Add other stuff.
         propertyList = super.addToPropertyList(propertyList);
         propertyList.add("File Path", this.fullPath,
                 () -> InputMenu.promptInputBlocking(getGameInstance(), "Please enter the new path.", this.fullPath, newPath -> setFullPath(newPath, true)));
+
+        propertyList.add("Info", "");
 
         return propertyList;
     }

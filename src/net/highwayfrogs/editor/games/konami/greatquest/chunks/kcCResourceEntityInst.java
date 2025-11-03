@@ -1,7 +1,5 @@
 package net.highwayfrogs.editor.games.konami.greatquest.chunks;
 
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.MenuItem;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -11,13 +9,9 @@ import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.system.Config;
-import net.highwayfrogs.editor.utils.FileUtils;
-import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
-
-import java.io.File;
 
 /**
  * Recreation of the 'kcCResourceEntityInst' class from the PS2 version.
@@ -50,10 +44,6 @@ import java.io.File;
 public class kcCResourceEntityInst extends kcCResource {
     private kcEntityInst instance;
     private byte[] dummyBytes;
-
-    private static final String ENTITY_FILE_PATH_KEY = "entityCfgFilePath";
-    private static final SavedFilePath ENTITY_EXPORT_PATH = new SavedFilePath(ENTITY_FILE_PATH_KEY, "Select the directory to export the entity to", Config.DEFAULT_FILE_TYPE);
-    private static final SavedFilePath ENTITY_IMPORT_PATH = new SavedFilePath(ENTITY_FILE_PATH_KEY, "Select the directory to import entity data from", Config.DEFAULT_FILE_TYPE);
 
     public kcCResourceEntityInst(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.ENTITYINST);
@@ -165,38 +155,6 @@ public class kcCResourceEntityInst extends kcCResource {
             propertyList = this.instance.addToPropertyList(propertyList);
 
         return propertyList;
-    }
-
-    @Override
-    public void setupRightClickMenuItems(ContextMenu contextMenu) {
-        super.setupRightClickMenuItems(contextMenu);
-
-        MenuItem exportEntityItem = new MenuItem("Export Entity");
-        contextMenu.getItems().add(exportEntityItem);
-        exportEntityItem.setOnAction(event -> {
-            File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), ENTITY_EXPORT_PATH, getName() + "." + Config.DEFAULT_EXTENSION, true);
-            if (outputFile != null) {
-                this.instance.toConfig().saveTextFile(outputFile);
-                getLogger().info("Saved '%s' as '%s'.", getName(), outputFile.getName());
-            }
-        });
-        exportEntityItem.setDisable(this.instance == null);
-
-        MenuItem importEntityItem = new MenuItem("Import Entity");
-        contextMenu.getItems().add(importEntityItem);
-        importEntityItem.setOnAction(event -> {
-            File inputFile = FileUtils.askUserToOpenFile(getGameInstance(), ENTITY_IMPORT_PATH);
-            if (inputFile == null)
-                return;
-
-            Config entityCfg = Config.loadConfigFromTextFile(inputFile, false);
-            if (this.instance == null)
-                this.instance = new kcEntity3DInst(this);
-
-            ILogger logger = getLogger();
-            this.instance.fromConfig(logger, entityCfg);
-            logger.info("Loaded '%s from '%s'.", getName(), inputFile.getName());
-        });
     }
 
     /**

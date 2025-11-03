@@ -381,7 +381,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
                 FileUtils.writeBytesToFile(getLogger(), outputFile, getRawData(), true);
         });
 
-        MenuItem exportChunkItem = new MenuItem("Export Chunk");
+        MenuItem exportChunkItem = new MenuItem("Export Raw Data");
         contextMenu.getItems().add(exportChunkItem);
         exportChunkItem.setOnAction(event -> {
             File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), CHUNK_FILE_PATH, getName(), true);
@@ -389,7 +389,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
                 writeDataToFile(outputFile, true);
         });
 
-        MenuItem importChunkItem = new MenuItem("Import Chunk");
+        MenuItem importChunkItem = new MenuItem("Import Raw Data");
         contextMenu.getItems().add(importChunkItem);
         importChunkItem.setOnAction(event -> {
             File inputFile = FileUtils.askUserToOpenFile(getGameInstance(), CHUNK_FILE_PATH);

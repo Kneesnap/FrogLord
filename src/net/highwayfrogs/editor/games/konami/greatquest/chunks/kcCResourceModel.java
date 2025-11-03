@@ -75,6 +75,9 @@ public class kcCResourceModel extends kcCResource {
 
     @Override
     public PropertyList addToPropertyList(PropertyList propertyList) {
+        propertyList.add("IMPORTANT", "This is not an actual 3D model!\nInstead, this is the file path to a 3D model.");
+        propertyList.add("", "");
+
         propertyList = super.addToPropertyList(propertyList);
         propertyList.add("File Path", this.fullPath,
                 () -> InputMenu.promptInputBlocking(getGameInstance(), "Please enter the new path.", this.fullPath, newPath -> setFullPath(newPath, true)));

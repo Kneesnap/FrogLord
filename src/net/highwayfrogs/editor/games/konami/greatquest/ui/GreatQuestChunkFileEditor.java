@@ -104,6 +104,7 @@ public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<
         private final ComboBox<kcCResourceTableOfContents> resourceGroupComboBox;
         private final Region emptyRegion = new Region();
         private final CustomMenuItem addNewChunkItem = new CustomMenuItem(new Label("Add New"));
+        private final CustomMenuItem importGqsFileItem = new CustomMenuItem(new Label("Import GQS File"));
 
         public GreatQuestChunkListViewComponent(GreatQuestChunkFileEditor listComponent) {
             super(listComponent.getGameInstance());
@@ -213,7 +214,10 @@ public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<
                 FXUtils.showPopup(AlertType.ERROR, "Not supported.", "Chunks can be created by loading .gqs files.");
             });
 
+            this.importGqsFileItem.setOnAction(event -> this.listComponent.getFile().askUserToImportGqsFile());
+
             getListComponent().getCollectionEditorComponent().addMenuItemToAddButtonLogic(this.addNewChunkItem);
+            getListComponent().getCollectionEditorComponent().addMenuItemToAddButtonLogic(this.importGqsFileItem);
         }
 
         private void updateResourceGroupComboBox(GreatQuestChunkedFile newChunkedFile) {

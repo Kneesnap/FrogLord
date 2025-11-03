@@ -20,6 +20,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.map.kcEnvironment;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestChunkFileEditor;
@@ -54,8 +55,8 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     private final List<kcCResourceTableOfContents> immutableTableOfContents = Collections.unmodifiableList(this.tableOfContents);
 
     private static final String RESOURCE_PATH_NAME = "chunkedResourceImportExportPath";
-    public static final SavedFilePath RESOURCE_IMPORT_PATH = new SavedFilePath(RESOURCE_PATH_NAME, "Please select the folder with the assets to import");
     public static final SavedFilePath RESOURCE_EXPORT_PATH = new SavedFilePath(RESOURCE_PATH_NAME, "Please select the folder to export assets to");
+    private static final SavedFilePath GQS_IMPORT_PATH = new SavedFilePath("gqsScriptFilePath", "Select the script group to import", kcScript.GQS_GROUP_FILE_TYPE);
 
     public static final Comparator<kcCResource> RESOURCE_ORDERING = Comparator
             .comparingInt((kcCResource resource) -> resource.getChunkType().ordinal()) // Sort by resource type.
@@ -1086,6 +1087,31 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                 Utils.handleError(getLogger(), ex, true, "Failed to export level data for '%s'.", getDebugName());
             }
         });
+
+        // Import GQS file.
+        MenuItem importGqsItem = new MenuItem("Import GQS File");
+        contextMenu.getItems().add(importGqsItem);
+        importGqsItem.setOnAction(event -> askUserToImportGqsFile());
+    }
+
+    /**
+     * Ask the user to import a .gqs file.
+     */
+    public void askUserToImportGqsFile() {
+        File gqsGroupFile = FileUtils.askUserToOpenFile(getGameInstance(), GQS_IMPORT_PATH);
+        if (gqsGroupFile == null)
+            return;
+
+        getLogger().info("Importing GQS file '%s'.", gqsGroupFile.getName());
+        Config scriptGroupCfg = Config.loadConfigFromTextFile(gqsGroupFile, false);
+        File workingDirectory = gqsGroupFile.getParentFile();
+
+        try {
+            GreatQuestAssetUtils.applyGqsScriptGroup(workingDirectory, this, scriptGroupCfg);
+            getLogger().info("Finished importing the gqs.");
+        } catch (Throwable th) {
+            Utils.handleError(getLogger(), th, true, "An error occurred while importing the gqs file '%s'.", gqsGroupFile.getName());
+        }
     }
 
     /**
