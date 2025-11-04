@@ -58,7 +58,6 @@ import java.util.Map.Entry;
 /**
  * Represents an instance of 'Frogger: The Great Quest'.
  * TODO:
- *  -> Shorten 'LITERAL_NUMBER' to just 'LITERAL'. Perhaps 'ENTITY_VARIABLE' to just 'VARIABLE' Update documentation too.
  *  -> Add extensive popup warnings for character descriptions. (Everything down to the .VTX file, or the selected resources being for another entity. Even the .bae files and the sequences. Also [Sequences] -> Mispelling the entity name should warning too.)
  *   -> Consider right-clicking a character to allow exporting a "CopyResources" section with all of the sequences for that character, descriptions, etc.
  *   -> Textures used by a 3D model which are not present in the level data seem to load without problem. Make sure this is documented.

@@ -102,7 +102,7 @@ In The Great Quest, it would look like:
 cause=OnPlayer INTERACT
 # The following effect will make FFM send the number currently in entity variable slot zero to herself.
 # Therefore, if the number in slot 0 is zero, then FFM will 
-SendNumber ENTITY_VARIABLE 0
+SendNumber VARIABLE 0
 
 # This function will run ONLY when FFM receives the number zero.
 [[[[Function]]]]
@@ -120,7 +120,7 @@ Each entity has 8 variable slots available, and are zero-indexed. In other words
 Any whole number can be put in each slot, despite there being only 8 slots per entity.
 
 **What is this used for?**  
-If you want to have different behavior from the same cause, use `SendNumber ENTITY_VARIABLE #`.  
+If you want to have different behavior from the same cause, use `SendNumber VARIABLE #`.  
 That `#` character should actually be a number, which refers to a variable slot. Whatever number is found within that slot will be sent.  
 Then, the entity which receives the number (the entity who sent it) checks its functions.  
 If it finds a cause `cause=OnReceiveNumber EQUAL_TO <the number sent>`, that function will run.  
@@ -152,7 +152,7 @@ cause=... # This function's cause doesn't matter for the purpose of this example
 # This will send a number cause with the number that is currently in Variable #0.
 # By having two separate functions which listen for different numbers, we can control which function runs based on the variable.
 # This can be used to recreate the conceptual behavior of "If X, do Y, otherwise, do Z.".
-SendNumber ENTITY_VARIABLE 0 
+SendNumber VARIABLE 0 
 ```
 
 ### Action Sequences
@@ -773,20 +773,20 @@ The only way to use a variable is with the `SendNumber` effect.
 **Summary:** Sends a number, which will cause the `OnReceiveNumber` script cause.  
 **Supported Entity Types:** All  
 <!---**Ghidra Reference (Ignore):** `kcCEntity::OnCommand`-->
-**Usage:** `SendNumber <LITERAL_NUMBER|ENTITY_VARIABLE|RANDOM> <number>`  
+**Usage:** `SendNumber <LITERAL|VARIABLE|RANDOM> <number>`  
 Think of `SendNumber` like a postal service, but a crappy one which only delivers a piece of paper containing a single number written on it.  
 Each entity can use the `SendNumber` postal service to send one number to themselves or to other entities.  
 Then, the entity who receives the number from the postal service will execute its functions caused by `OnReceiveNumber`, if the number they got from the postal service matches the cause.
 
 ```properties
-LITERAL_NUMBER # The number sent with the postal service is the argument named <number> in the above example.
-ENTITY_VARIABLE # The number sent with the postal service is the value in the provided entity variable slot.
+LITERAL # The number sent with the postal service is the argument named <number> in the above example.
+VARIABLE # The number sent with the postal service is the value in the provided entity variable slot.
 RANDOM # The number sent with the postal service is a random number between 0 and provided number.
 # When using RANDOM, the number provided is exclusive, so for 'SendNumber RANDOM 5' the random numbers generated are between 0 and 4.
 ```
 
 If the `--AsEntity` flag is included, the number will be sent to the `--AsEntity` target instead of the script owner.  
-When sending an `ENTITY_VARIABLE` the number sent will be the value of the variable obtained from the script owner, instead of from the `--AsEntity` target.  
+When sending a `VARIABLE`, the number sent will be the value of the variable obtained from the script owner, instead of from the `--AsEntity` target.  
 
 ### SpawnParticleEffect (Script Only)
 **Summary:** Sets up a particle emitter for the script owner.  

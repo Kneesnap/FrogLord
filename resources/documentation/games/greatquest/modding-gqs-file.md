@@ -390,7 +390,7 @@ scale=1.0, 1.0, 1.0
 [[[Script]]] # An optional tag to add scripts.
 [[[[Function]]]]
 cause=OnWaypoint ENTITY_ENTERS "FrogInst001"
-SendNumber ENTITY_VARIABLE 0 # Only handle the first time that the Frog enters the waypoint.
+SendNumber VARIABLE 0 # Only handle the first time that the Frog enters the waypoint.
 
 [[[[Function]]]] # Handle wedding waypoint trigger.
 cause=OnReceiveNumber EQUAL_TO 0

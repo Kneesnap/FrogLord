@@ -63,7 +63,7 @@ public class kcScriptValidationData {
      */
     public void addSendNumberToOwner(kcAction action) {
         // Track variables which have been sent.
-        if (action.getActionID() == kcActionID.NUMBER && ((kcActionNumber) action).getOperation() == NumberOperation.ENTITY_VARIABLE)
+        if (action.getActionID() == kcActionID.NUMBER && ((kcActionNumber) action).getOperation() == NumberOperation.VARIABLE)
             markVariableSent(((kcActionNumber) action).getNumber());
     }
 

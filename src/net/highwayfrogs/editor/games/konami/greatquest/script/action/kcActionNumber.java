@@ -37,7 +37,7 @@ public class kcActionNumber extends kcAction {
 
     @Override
     public kcArgument[] getArgumentTemplate(kcParam[] arguments) {
-        if (arguments != null && arguments.length > 2 && arguments[1].getAsInteger() == NumberOperation.ENTITY_VARIABLE.ordinal() && arguments[2].getAsInteger() != 0) {
+        if (arguments != null && arguments.length > 2 && arguments[1].getAsInteger() == NumberOperation.VARIABLE.ordinal() && arguments[2].getAsInteger() != 0) {
             return WITH_ENTITY_ARGUMENTS; // This does nothing, so we will always hide it unless we have a reason to show it.
         } else {
             return DEFAULT_ARGUMENTS;
@@ -48,7 +48,7 @@ public class kcActionNumber extends kcAction {
     public void load(kcParamReader reader) {
         this.number = reader.next().getAsInteger();
         this.operation = NumberOperation.getType(reader.next().getAsInteger(), false);
-        if (this.operation == NumberOperation.ENTITY_VARIABLE) {
+        if (this.operation == NumberOperation.VARIABLE) {
             int entityHash = reader.next().getAsInteger();
             if (entityHash != 0)
                 getLogger().warning("kcActionNumber had an non-zero entity hash set! (Value: %08X) This value is has been determined to be ignored by the retail game!", entityHash);
@@ -59,7 +59,7 @@ public class kcActionNumber extends kcAction {
     public void save(kcParamWriter writer) {
         writer.write(this.number);
         writer.write(this.operation.ordinal());
-        if (this.operation == NumberOperation.ENTITY_VARIABLE)
+        if (this.operation == NumberOperation.VARIABLE)
             writer.write(0);
     }
 
@@ -80,7 +80,7 @@ public class kcActionNumber extends kcAction {
         super.printWarnings(logger);
         if (this.operation == NumberOperation.RANDOM && this.number < 1)
             printWarning(logger, "the RANDOM operation requires a number greater than zero!");
-        if (this.operation == NumberOperation.ENTITY_VARIABLE && (this.number < 0 || this.number >= ENTITY_VARIABLE_SLOTS))
+        if (this.operation == NumberOperation.VARIABLE && (this.number < 0 || this.number >= ENTITY_VARIABLE_SLOTS))
             printWarning(logger, this.number + " is not a valid entity variable id!");
     }
 
@@ -94,11 +94,11 @@ public class kcActionNumber extends kcAction {
         }
 
         // Ensure there is a cause listening for this number.
-        if (this.operation == NumberOperation.ENTITY_VARIABLE) {
+        if (this.operation == NumberOperation.VARIABLE) {
             if (!data.anyActionsMatch(kcActionID.VARIABLE_SET, action -> ((kcActionChangeVariable) action).getVariableID() == this.number)
                     && !data.anyActionsMatch(kcActionID.VARIABLE_ADD, action -> ((kcActionChangeVariable) action).getVariableID() == this.number))
                 printWarning(data.getLogger(), data.getEntityName() + " uses SendNumber on entity variable slot " + this.number + ", but that slot is never assigned to a number!");
-        } else if (this.operation == NumberOperation.LITERAL_NUMBER) {
+        } else if (this.operation == NumberOperation.LITERAL) {
             if (!data.anyCausesMatch(kcScriptCauseType.NUMBER, (kcScriptCauseNumber cause) -> cause.doesValueMatch(this.number)))
                 printWarning(data.getLogger(), data.getEntityName() + " does not have an " + kcScriptCauseType.NUMBER.getDisplayName() + " script cause handling number " + this.number + ".");
         } else if (this.operation == NumberOperation.RANDOM) {
@@ -108,7 +108,7 @@ public class kcActionNumber extends kcAction {
     }
 
     public enum NumberOperation {
-        LITERAL_NUMBER, ENTITY_VARIABLE, RANDOM;
+        LITERAL, VARIABLE, RANDOM;
 
         /**
          * Gets the NumberOperation corresponding to the provided value.

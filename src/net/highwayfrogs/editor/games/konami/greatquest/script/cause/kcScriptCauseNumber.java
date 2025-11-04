@@ -82,9 +82,9 @@ public class kcScriptCauseNumber extends kcScriptCause {
     }
 
     private boolean doesActionMatch(kcActionNumber action) {
-        if (action.getOperation() == NumberOperation.ENTITY_VARIABLE) {
+        if (action.getOperation() == NumberOperation.VARIABLE) {
             return true; // We don't know what this could be, so we'll assume it matches.
-        } else if (action.getOperation() == NumberOperation.LITERAL_NUMBER) {
+        } else if (action.getOperation() == NumberOperation.LITERAL) {
             return doesValueMatch(action.getNumber());
         } else if (action.getOperation() == NumberOperation.RANDOM) {
             return couldRandomValueMatch(action.getNumber());
