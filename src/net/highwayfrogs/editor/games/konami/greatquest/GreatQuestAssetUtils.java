@@ -45,6 +45,7 @@ public class GreatQuestAssetUtils {
     public static final String CONFIG_SECTION_ENTITY_DESCRIPTIONS = "EntityDescriptions";
     public static final String CONFIG_SECTION_ENTITIES = "Entities";
     private static final String CONFIG_SECTION_SCRIPTS = "Scripts";
+    private static final String CONFIG_SECTION_INCLUDE = "Include";
     private static final String CONFIG_OPTION_CREATE_MODEL_DESC = "CreateModelDesc";
 
     /**
@@ -70,6 +71,20 @@ public class GreatQuestAssetUtils {
         if (scriptList == null)
             throw new RuntimeException(chunkedFile.getDebugName() + " does not have any script data, so we cannot apply " + sourceName + "!");
 
+        // Apply the GQS script group.
+        applyGqsScriptGroup(logger, scriptList, gqsScriptGroup, workingDirectory);
+
+        // Print advanced warnings after everything is complete.
+        scriptList.printAdvancedWarnings(logger);
+
+        // Show popup.
+        logger.showImportPopup(sourceName);
+    }
+
+    private static void applyGqsScriptGroup(ILogger logger, kcScriptList scriptList, Config gqsScriptGroup, File workingDirectory) {
+        GreatQuestChunkedFile chunkedFile = scriptList.getParentFile();
+
+        // Dialog is independent of all else, so it happens first.
         applyStringResources(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_DIALOG));
 
         // Should apply before scripts/entities.
@@ -99,12 +114,27 @@ public class GreatQuestAssetUtils {
             for (int i = 0; i < waypoints.size(); i++)
                 waypoints.get(i).resolvePendingWaypointEntities(logger);
 
-        // Print advanced warnings after everything is complete.
-        scriptList.printAdvancedWarnings(logger);
+        // Must be done before the unused test is performed to ensure this section isn't seen as unused.
+        Config includeCfg = gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_INCLUDE);
+        List<String> includeFilePaths = includeCfg != null ? includeCfg.getTextWithoutComments() : null;
+
+        // Warn if any bits were unused.
         gqsScriptGroup.recursivelyWarnAboutUnusedData(logger);
 
-        // Show popup.
-        logger.showImportPopup(sourceName);
+        // Include other gqs files.
+        if (includeFilePaths != null) {
+            for (int i = 0; i < includeFilePaths.size(); i++) {
+                String filePath = includeFilePaths.get(i);
+                File file = new File(workingDirectory, filePath);
+                if (!file.exists() || !file.isFile()) {
+                    logger.severe("Cannot include the file '%s', as it does not exist.", file);
+                    continue;
+                }
+
+                Config includedGqsConfig = Config.loadConfigFromTextFile(file, false);
+                applyGqsScriptGroup(logger, scriptList, includedGqsConfig, file.getParentFile());
+            }
+        }
     }
 
     private static void applyStringResources(GreatQuestChunkedFile chunkedFile, Config dialogCfg) {
