@@ -11,8 +11,11 @@ import java.util.List;
 
 /**
  * Represents a model node in the kcGameSystem.
- * This seems to be a group of primitives which render together. When iterating the model for rendering, the game will iterate this instead of going through the other list.
- * TODO: Should we start rendering models by this? Probably.
+ * This seems to be a group of primitives which render together.
+ * When iterating the model for rendering, the game will iterate this instead of going through the other list.
+ * Model rendering process.
+ * kcCModel::Render (See rendering flow in kcModel.java to get from the oct tree to the model rendering)
+ * -> Goes through these nodes, and renders using them. So, we want to reduce the number of nodes as much as possible.
  * Created by Kneesnap on 6/22/2023.
  */
 @Getter

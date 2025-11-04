@@ -26,7 +26,7 @@ import java.util.List;
 public class kcModel extends GameData<GreatQuestInstance> implements IPropertyListCreator {
     private final List<kcMaterial> materials = new ArrayList<>();
     private final List<kcModelNode> nodes = new ArrayList<>();
-    private final List<kcModelPrim> primitives = new ArrayList<>();
+    private final List<kcModelPrim> primitives = new ArrayList<>(); // TODO: Get rid of this, and dynamically build it from the polygon lists in this.nodes.
     private int fvf;
     private kcVertexFormatComponent[] components;
     private int bonesPerPrimitive = 1; // TODO: Seems to either be 0 or 1 on PS2. Determines if WEIGHT4F is present or not.

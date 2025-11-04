@@ -10,10 +10,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceNamedHa
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton.kcNode;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTrack;
-import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
-import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
-import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelNode;
-import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
+import net.highwayfrogs.editor.games.konami.greatquest.model.*;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
@@ -83,13 +80,45 @@ public class GreatQuestModelMesh extends DynamicMesh {
         this.skeletonAxisRotationApplied = (skeleton != null) || hasSkeletonAxisRotation(model);
 
         if (model != null) {
-            this.actualMesh.addMesh(new GreatQuestModelMaterialMesh(this, model, null, meshName));
-            for (kcMaterial material : model.getMaterials())
-                this.actualMesh.addMesh(new GreatQuestModelMaterialMesh(this, model, material, meshName));
+            List<kcModelPrim>[] modelPrimsByMaterial = getModelPrimsByMaterialIDs(model); // Use as few models as possible.
+
+            // Only adds materials which are actually used.
+            for (int i = 0; i < model.getMaterials().size(); i++) {
+                List<kcModelPrim> modelPrims = modelPrimsByMaterial[i];
+                if (modelPrims != null && !modelPrims.isEmpty())
+                    this.actualMesh.addMesh(new GreatQuestModelMaterialMesh(this, model, meshName, model.getMaterials().get(i), modelPrims));
+            }
+
+            // Add unresolved materials.
+            List<kcModelPrim> nullMaterialPrims = modelPrimsByMaterial[modelPrimsByMaterial.length - 1];
+            if (nullMaterialPrims != null && !nullMaterialPrims.isEmpty())
+                this.actualMesh.addMesh(new GreatQuestModelMaterialMesh(this, model, meshName, null, nullMaterialPrims));
         } else {
             // Setup placeholder.
             this.actualMesh.addMesh(new GreatQuestModelMaterialMesh(this, null, null));
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<kcModelPrim>[] getModelPrimsByMaterialIDs(kcModel model) {
+        int nullMaterialID = model.getMaterials().size();
+        List<kcModelPrim>[] results = new List[nullMaterialID + 1]; // Slot 0 is null material, and might be copied to other slots.
+
+        List<kcMaterial> materials = model.getMaterials();
+        for (kcModelPrim modelPrim : model.getPrimitives()) {
+            int materialId = modelPrim.getMaterialId();
+            kcMaterial material = materialId >= 0 && materials.size() > materialId ? materials.get(materialId) : null;
+            if (material == null || !material.hasTexture() || material.getTexture() == null)
+                materialId = nullMaterialID;
+
+            List<kcModelPrim> list = results[materialId];
+            if (list == null)
+                results[materialId] = list = new ArrayList<>();
+
+            list.add(modelPrim);
+        }
+
+        return results;
     }
 
     /**
