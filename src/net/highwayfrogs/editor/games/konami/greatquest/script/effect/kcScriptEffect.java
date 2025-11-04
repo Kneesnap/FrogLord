@@ -10,15 +10,18 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedF
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionID;
+import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCause;
 import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffectCamera.kcCameraEffect;
 import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffectEntity.kcEntityEffect;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcInterimScriptEffect;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcActionExecutor;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptEffectType;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 import net.highwayfrogs.editor.utils.objects.StringNode;
@@ -168,11 +171,22 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
             kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
             OptionalArguments savedEffect = saveEffect(settings);
             kcScriptDisplaySettings.applyGqsSyntaxHashDisplay(savedEffect.getOrCreate(ARGUMENT_ENTITY_RUNNER), settings, this.targetEntityRef);
-            logger.warning("The effect '%s' should not include --%s because it already runs as that entity.", savedEffect, ARGUMENT_ENTITY_RUNNER);
+            logger.warning("The effect '%s'%s should not include --%s because it already runs as that entity.", savedEffect, getCodeLocation(), ARGUMENT_ENTITY_RUNNER);
         }
 
         // Print warnings.
         printLoadWarnings(arguments, logger);
+    }
+
+    /**
+     * Gets the location where the effect can be found.
+     */
+    protected String getCodeLocation() {
+        kcScriptCause cause = this.parentFunction != null ? this.parentFunction.getCause() : null;
+        if (cause != null && (cause.getUserLineNumber() > 0 || !StringUtils.isNullOrWhiteSpace(cause.getUserImportSource())))
+            return kcScript.getCodeLocation(cause.getUserLineNumber(), cause.getUserImportSource(), false);
+
+        return "";
     }
 
     /**
@@ -186,13 +200,13 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
         if (targetEntity == null) {
             kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
             if (!externalEntityTarget)
-                logger.warning("The effect '%s' targets an entity which was not found.", saveEffect(settings));
+                logger.warning("The effect '%s'%s targets an entity which was not found.", saveEffect(settings), getCodeLocation());
         } else if (targetEntity.getInstance() == null || targetEntity.getInstance().getDescription() == null) {
             kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
-            logger.warning("The effect '%s' targets an entity (%s) who did not have an entity description!", saveEffect(settings), this.targetEntityRef.getAsString());
+            logger.warning("The effect '%s'%s targets an entity (%s) who did not have an entity description!", saveEffect(settings), getCodeLocation(), this.targetEntityRef.getAsString());
         } else if (!isActionApplicableToTarget()) {
             kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
-            logger.warning("The effect '%s' targets an entity (%s) which is unable to execute the effect.", saveEffect(settings), this.targetEntityRef.getAsGqsString(settings));
+            logger.warning("The effect '%s'%s targets an entity (%s) which is unable to execute the effect.", saveEffect(settings), getCodeLocation(), this.targetEntityRef.getAsGqsString(settings));
         }
     }
 

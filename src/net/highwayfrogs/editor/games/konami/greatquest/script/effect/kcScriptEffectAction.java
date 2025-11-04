@@ -4,9 +4,11 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcActionExecutor;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptEffectType;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
@@ -36,6 +38,16 @@ public abstract class kcScriptEffectAction extends kcScriptEffect implements kcA
 
         super.printLoadWarnings(arguments, logger);
     }
+
+    @Override
+    protected String getCodeLocation() {
+        kcAction action = getAction();
+        if (action != null && (action.getUserLineNumber() > 0 || !StringUtils.isNullOrWhiteSpace(action.getUserImportSource())))
+            return kcScript.getCodeLocation(action.getUserLineNumber(), action.getUserImportSource(), true);
+
+        return super.getCodeLocation();
+    }
+
     @Override
     public boolean isActionApplicableToTarget() {
         kcCResourceEntityInst entity = getTargetEntity(false);

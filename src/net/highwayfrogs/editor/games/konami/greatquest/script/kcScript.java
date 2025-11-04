@@ -275,6 +275,29 @@ public class kcScript extends GameObject<GreatQuestInstance> {
     }
 
     /**
+     * Gets the code location as a string.
+     * @param lineNumber the line number
+     * @param source the source string
+     * @param exact true if the line number is exact
+     * @return codeLocationStr
+     */
+    public static String getCodeLocation(int lineNumber, String source, boolean exact) {
+        StringBuilder builder = new StringBuilder();
+        if (lineNumber > 0)
+            builder.append(exact ? " on" : " near").append(" line ").append(lineNumber);
+        if (!StringUtils.isNullOrWhiteSpace(source)) {
+            builder.append(" in ");
+            if (source.contains(" "))
+                builder.append("'");
+            builder.append(source);
+            if (source.contains(" "))
+                builder.append("'");
+        }
+
+        return builder.toString();
+    }
+
+    /**
      * Loads a kcScript from the interim data model.
      * @param interim The interim data to load from.
      * @param scriptList The script list to add scripts to.
