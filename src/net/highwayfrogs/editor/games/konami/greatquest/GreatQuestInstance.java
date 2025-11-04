@@ -57,16 +57,6 @@ import java.util.Map.Entry;
 
 /**
  * Represents an instance of 'Frogger: The Great Quest'.
- * TODO Immediate:
- *  -> Fix transparency for the bone icon.
- *  -> Transparent stuff has been broken again.
- *  -> Scripting Engine
- *   -> Consider rigid primitives, upsides & downsides.
- *   -> Register public static fields as well.
- *   -> Fix interfaces.
- *   -> throw "" keyword.
- *   -> I believe config is not properly handling escapes, either that or NoodleCompiler isn't properly handling escapes in strings.
- *
  * TODO:
  *  -> Shorten 'LITERAL_NUMBER' to just 'LITERAL'. Perhaps 'ENTITY_VARIABLE' to just 'VARIABLE' Update documentation too.
  *  -> Add extensive popup warnings for character descriptions. (Everything down to the .VTX file, or the selected resources being for another entity. Even the .bae files and the sequences. Also [Sequences] -> Mispelling the entity name should warning too.)
@@ -88,6 +78,12 @@ import java.util.Map.Entry;
  *  -> Config
  *   -> How do we handle comments in the key-value-pair section? (Multi-line)
  *   -> Phase out the old Config class.
+ *  -> Noodle
+ *   -> Consider rigid primitives, upsides & downsides.
+ *   -> Register public static fields as well.
+ *   -> Fix interfaces.
+ *   -> throw "" keyword.
+ *   -> I believe config is not properly handling escapes, either that or NoodleCompiler isn't properly handling escapes in strings.
  * Created by Kneesnap on 4/13/2024.
  */
 @Getter
