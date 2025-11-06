@@ -672,12 +672,16 @@ The timer will start counting down from the number of seconds given.
 Once the timer reaches 0, it will send `OnAlarm` with the alarm ID provided.  
 The main purpose of this feature is to run script effects after a delay.  
 
-> [!NOTE]
+> [!NOTE]  
 > In order to repeat for as long as possible, use `--Repeat MAX`.  
-> After approximately 5.2 days of uptime, the game's i32 tick counter will overflow, (usually) causing all active alarms to expire. <!-- `kcCGameSystem::mTicksSinceStartup` -->  
+> After approximately 5.2 days of uptime, the game's i32 tick counter will overflow, (usually) causing all active alarms to break. <!-- `kcCGameSystem::mTicksSinceStartup` -->  
 > Using `--Repeat MAX` will ensure the alarms last until this 5.2 day limit.  
 > New alarms can still be registered and appear to work correctly.  
-> To repeat beyond the 5.2 day limit, use `cause=OnAlarm FINISHED` to re-register the alarm once it stops.  
+
+> [!NOTE]  
+> An alarm duration of zero (Eg: `SetAlarm <alarmId> 0`) will cause the alarm to finish immediately after all scripts are processed.  
+> In practice, this means the cause will run on the very next game frame.  
+> To make an alarm run every single game frame, use `SetAlarm <alarmId> 0 --Repeat MAX`.  
 
 ### TriggerEvent (Both)
 **Summary:** Triggers a named event.  
