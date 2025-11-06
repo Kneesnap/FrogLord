@@ -83,7 +83,7 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
                         this.actionSequenceComboBox.setValue(null);
                     }
 
-                    getMesh().setActiveAnimation(newValue, this.forceRepeatCheckBox.isSelected());
+                    getMesh().setActiveAnimation(newValue, this.forceRepeatCheckBox.isSelected(), false, false);
                 }
             });
         } else {

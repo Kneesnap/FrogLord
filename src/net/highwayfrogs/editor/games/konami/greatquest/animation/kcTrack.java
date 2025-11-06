@@ -199,6 +199,13 @@ public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineI
             }
         }
 
+        // Return the earliest key if it fails.
+        if (!this.keyList.isEmpty()) {
+            int startTick = this.keyList.get(0).getTick();
+            if (startTick > tick)
+                return 0;
+        }
+
         return -1;
     }
 

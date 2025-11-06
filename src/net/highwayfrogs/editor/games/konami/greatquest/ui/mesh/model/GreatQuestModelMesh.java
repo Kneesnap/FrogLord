@@ -36,6 +36,8 @@ public class GreatQuestModelMesh extends DynamicMesh {
     @Getter private final boolean environmentalMesh;
     @Getter private kcCResourceTrack activeAnimation;
     @Getter private boolean repeatAnimationOnFinish; // Whether the animation should repeat upon finish.
+    @Getter private boolean reverseAnimationOnFinish; // Whether the animation should reverse upon completion.
+    @Getter private boolean reverseAnimation; // Whether the animation is currently reversed.
     @Getter private boolean playingAnimation; // Returns true while playing an animation.
     @Getter private double animationTick;
     @Getter private final GreatQuestModelSkeletonMesh skeletonMesh;
@@ -133,7 +135,7 @@ public class GreatQuestModelMesh extends DynamicMesh {
      * @param newAnimation the animation to display
      */
     public void setActiveAnimation(kcCResourceTrack newAnimation) {
-        setActiveAnimation(newAnimation, false);
+        setActiveAnimation(newAnimation, false, false, false);
     }
 
     /**
@@ -141,13 +143,15 @@ public class GreatQuestModelMesh extends DynamicMesh {
      * @param newAnimation the animation to display
      * @param repeat if true, the animation will repeat upon completion.
      */
-    public void setActiveAnimation(kcCResourceTrack newAnimation, boolean repeat) {
+    public void setActiveAnimation(kcCResourceTrack newAnimation, boolean repeat, boolean reverse, boolean reverseOnCompletion) {
+        this.repeatAnimationOnFinish = repeat;
+        this.reverseAnimation = reverse;
+        this.reverseAnimationOnFinish = reverseOnCompletion;
+        this.playingAnimation = true;
         if (newAnimation == this.activeAnimation)
             return; // No change.
 
         this.activeAnimation = newAnimation;
-        this.repeatAnimationOnFinish = repeat;
-        this.playingAnimation = true;
         this.animationTick = 0;
         updateMeshes();
     }
@@ -157,8 +161,10 @@ public class GreatQuestModelMesh extends DynamicMesh {
      * @param deltaTimeSeconds the amount of time (in seconds) to increase the animation state by
      */
     public void tickAnimation(float deltaTimeSeconds) {
-        if (this.playingAnimation)
-            setAnimationTick(this.animationTick + ((double) deltaTimeSeconds * TICKS_PER_SECOND));
+        if (this.playingAnimation) {
+            double tickDelta = ((double) deltaTimeSeconds * TICKS_PER_SECOND);
+            setAnimationTick(this.reverseAnimation ? this.animationTick - tickDelta : this.animationTick + tickDelta);
+        }
     }
 
     /**
@@ -225,7 +231,7 @@ public class GreatQuestModelMesh extends DynamicMesh {
             if (this.activeAnimation != null) { // Apply animation.
                 List<kcTrack> tracks = this.activeAnimation.getTracksByTag(tempNode.getTag());
                 this.tempAnimationState.reset(tempNode);
-                boolean moreAnimationLeft = this.tempAnimationState.evaluate(tempNode, this.animationTick, tracks);
+                boolean moreAnimationLeft = this.tempAnimationState.evaluate(tempNode, this.animationTick, tracks, this.reverseAnimation);
                 localTransform = this.tempAnimationState.getLocalOffsetMatrix(localTransform);
                 if (moreAnimationLeft)
                     this.playingAnimation = true;
@@ -245,9 +251,17 @@ public class GreatQuestModelMesh extends DynamicMesh {
         }
 
         // Restart the animation if configured.
-        if (!this.playingAnimation && this.repeatAnimationOnFinish) {
-            this.playingAnimation = true;
-            this.animationTick = 0;
+        if (!this.playingAnimation) {
+            if (this.reverseAnimationOnFinish) {
+                this.reverseAnimation = !this.reverseAnimation;
+                if (this.reverseAnimation)
+                    this.playingAnimation = true;
+            }
+
+            if (this.repeatAnimationOnFinish) {
+                this.playingAnimation = true;
+                this.animationTick = 0;
+            }
         }
     }
 

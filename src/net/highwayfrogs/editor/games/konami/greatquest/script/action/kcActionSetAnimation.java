@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceAnimSet;
@@ -11,6 +12,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamRea
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelMesh;
+import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 import net.highwayfrogs.editor.utils.objects.StringNode;
@@ -24,8 +27,9 @@ public class kcActionSetAnimation extends kcAction {
     private final GreatQuestHash<kcCResourceTrack> trackRef = new GreatQuestHash<>();
     private final kcParam startTime = new kcParam();
     private final kcParam translationTick = new kcParam();
-    private kcAnimationMode mode = kcAnimationMode.NO_REPEAT;
-    private static final kcArgument[] ARGUMENTS = kcArgument.make(kcParamType.HASH, "track", kcParamType.ANIMATION_TICK, "startTime", kcParamType.TIMESTAMP_TICK, "transitionTime", kcParamType.INT, "mode");
+    private int modeFlags;
+    private static final kcArgument[] SEQUENCE_ARGUMENTS = kcArgument.make(kcParamType.HASH, "track", kcParamType.ANIMATION_TICK, "startTime", kcParamType.TIMESTAMP_TICK, "transitionTime", kcParamType.INT, "mode");
+    private static final kcArgument[] SCRIPT_ARGUMENTS = kcArgument.make(kcParamType.HASH, "track", kcParamType.INT, "mode", kcParamType.ANIMATION_TICK, "startTime", kcParamType.TIMESTAMP_TICK, "transitionTime");
 
     private static final String ARGUMENT_START_TIME = "StartTime";
     public static final int DEFAULT_START_TIME = 0x80000000;
@@ -37,23 +41,41 @@ public class kcActionSetAnimation extends kcAction {
 
     @Override
     public kcArgument[] getArgumentTemplate(kcParam[] arguments) {
-        return ARGUMENTS;
+        if (isPartOfActionSequence()) {
+            return SEQUENCE_ARGUMENTS;
+        } else {
+            return SCRIPT_ARGUMENTS;
+        }
     }
 
     @Override
     public void load(kcParamReader reader) {
         setTrackHash(getLogger(), reader.next().getAsInteger());
-        this.startTime.setValue(reader.next());
-        this.translationTick.setValue(reader.next());
-        this.mode = kcAnimationMode.getType(reader.next().getAsInteger(), false);
+        if (isPartOfActionSequence()) {
+            this.startTime.setValue(reader.next());
+            this.translationTick.setValue(reader.next());
+            this.modeFlags = reader.next().getAsInteger();
+        } else {
+            this.modeFlags = reader.next().getAsInteger();
+            this.startTime.setValue(reader.next());
+            this.translationTick.setValue(reader.next());
+        }
+
+        warnAboutInvalidBitFlags(this.modeFlags, kcAnimationModeFlag.FLAG_VALIDATION_MASK, getAsGqsStatement());
     }
 
     @Override
     public void save(kcParamWriter writer) {
         writer.write(this.trackRef.getHashNumber());
-        writer.write(this.startTime);
-        writer.write(this.translationTick);
-        writer.write(this.mode.getValue());
+        if (isPartOfActionSequence()) {
+            writer.write(this.startTime);
+            writer.write(this.translationTick);
+            writer.write(this.modeFlags);
+        } else {
+            writer.write(this.modeFlags);
+            writer.write(this.startTime);
+            writer.write(this.translationTick);
+        }
     }
 
     @Override
@@ -82,18 +104,7 @@ public class kcActionSetAnimation extends kcAction {
         }
 
         // Determine the mode based on the flags.
-        kcAnimationMode mode = kcAnimationMode.NO_REPEAT;
-        for (int i = 0; i < kcAnimationMode.values().length; i++) {
-            kcAnimationMode animationMode = kcAnimationMode.values()[i];
-            if (animationMode.getFlagName() != null && arguments.useFlag(animationMode.getFlagName())) {
-                if (mode != kcAnimationMode.NO_REPEAT)
-                    logger.warning("Found more than one animation mode (--%s and --%s), but only one can be used!", mode.getFlagName(), animationMode.getFlagName());
-
-               mode = animationMode;
-            }
-        }
-
-        this.mode = kcAnimationMode.getType(mode.getValue(), false);
+        this.modeFlags = kcAnimationModeFlag.getValueFromArguments(arguments);
     }
 
     @Override
@@ -101,12 +112,12 @@ public class kcActionSetAnimation extends kcAction {
         this.trackRef.applyGqsString(arguments.createNext(), settings); // Save 'track' parameter.
         this.translationTick.toConfigNode(getExecutor(), settings, arguments.createNext(), kcParamType.TIMESTAMP_TICK); // Save 'transitionTime' parameter.
 
-        if (this.mode != null && this.mode.getFlagName() != null)
-            arguments.getOrCreate(this.mode.getFlagName());
-
         // Apply 'startTime' parameter.
         if (this.startTime.getAsInteger() != DEFAULT_START_TIME)
             arguments.getOrCreate(ARGUMENT_START_TIME).setAsFloat(getStartTime());
+
+        // Apply mode flags.
+        kcAnimationModeFlag.addFlags(this.modeFlags, arguments);
     }
 
     @Override
@@ -120,6 +131,13 @@ public class kcActionSetAnimation extends kcAction {
         kcCResourceAnimSet animSet = actorDesc != null ? actorDesc.getAnimationSet() : null;
         if (animation != null && animSet != null && !animSet.contains(animation))
             printWarning(logger, "the animation '" + animation.getName() + "' was not found in '" + animSet.getName() + "', the animation set configured for '" + actorDesc.getResource().getName() + "'.");
+    }
+
+    /**
+     * Tests if this action is part of an action sequence.
+     */
+    public boolean isPartOfActionSequence() {
+        return getExecutor() instanceof kcCActionSequence;
     }
 
     /**
@@ -142,34 +160,68 @@ public class kcActionSetAnimation extends kcAction {
         GreatQuestUtils.resolveLevelResourceHash(logger, kcCResourceTrack.class, getChunkedFile(), this, this.trackRef, trackHash, false);
     }
 
+    /**
+     * Test if the given flag is set.
+     * @param flag the flag to test
+     * @return true iff the flag is set
+     */
+    public boolean hasFlag(kcAnimationModeFlag flag) {
+        return (this.modeFlags & flag.getValue()) == flag.getValue();
+    }
+
     @Getter
     @RequiredArgsConstructor
-    public enum kcAnimationMode {
-        NO_REPEAT(null, 0),
-        REPEAT("Repeat", 2), // This is often applied to the last animation command in a sequence.
-        FIRST_IN_SEQUENCE("FirstAnimationInSequence", 65536), // If this is the first animation in a sequence, AND there are more sequences later, set this flag.
-        UNKNOWN_MODE("UnknownMode", 36); // Seen in an unused sequence in Dr. Starkenstein's castle. I assume this is probably some kind of unused feature. It's unclear if it was ever implemented.
+    public enum kcAnimationModeFlag {
+        BROKEN("Broken", Constants.BIT_FLAG_0), // This breaks rendering of animated entities.
+        REPEAT("Repeat", Constants.BIT_FLAG_1), // 2, This is often applied to the last animation command in a sequence.
+        REVERSE("Reverse", Constants.BIT_FLAG_16), // 65536, See kcCAnimCtl::SetMode. Seems to cut off all bits higher than this one too.
+        REVERSE_ON_COMPLETE("ReverseOnComplete", 36); // Seen in an unused sequence in Dr. Starkenstein's castle. It seems like the '4' part is what causes this, I can't confirm that 32 does anything. But for consistency with the original, I'll keep it as 36.
 
         private final String flagName;
         private final int value;
 
+        private static final int FLAG_VALIDATION_MASK;
+        static {
+            int mask = 0;
+            for (kcAnimationModeFlag flag : values())
+                mask |= flag.getValue();
+
+            FLAG_VALIDATION_MASK = mask;
+        }
+
         /**
-         * Gets the kcAnimationMode corresponding to the provided value.
-         * @param value     The value to lookup.
-         * @param allowNull If null is allowed.
-         * @return kcAnimationMode
+         * Add flags to the arguments for the corresponding entity flags.
+         * @param value The value to determine which flags to apply from
+         * @param arguments The arguments to add the flags to
          */
-        public static kcAnimationMode getType(int value, boolean allowNull) {
+        public static void addFlags(int value, OptionalArguments arguments) {
+            // Write flags.
             for (int i = 0; i < values().length; i++) {
-                kcAnimationMode temp = values()[i];
-                if (temp.getValue() == value)
-                    return temp;
+                kcAnimationModeFlag flag = values()[i];
+                if ((value & flag.getValue()) == flag.getValue()) {
+                    arguments.getOrCreate(flag.getFlagName());
+                    value &= ~flag.getValue();
+                }
             }
 
-            if (!allowNull)
-                throw new RuntimeException("Couldn't determine the kcAnimationMode from value " + value + ".");
+            if (value != 0)
+                Utils.getLogger().warning("kcAnimationModeFlag.addFlags() skipped some bits! " + NumberUtils.toHexString(value));
+        }
 
-            return null;
+        /**
+         * Consume optional flag arguments to build a value containing the same flags as specified by the arguments.
+         * @param arguments The arguments to create the value from.
+         * @return flagArguments
+         */
+        public static int getValueFromArguments(OptionalArguments arguments) {
+            int value = 0;
+            for (int i = 0; i < values().length; i++) {
+                kcAnimationModeFlag flag = values()[i];
+                if (arguments.useFlag(flag.getFlagName()))
+                    value |= flag.getValue();
+            }
+
+            return value;
         }
     }
 }

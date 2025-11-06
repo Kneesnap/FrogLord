@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.chunks;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.kcTrack;
+import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcTrackKey;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -115,6 +116,24 @@ public class kcCResourceTrack extends kcCResource implements IMultiLineInfoWrite
      */
     public List<kcTrack> getTracksByTag(int tag) {
         return tag >= 0 && tag < this.tracksByTag.size() ? this.tracksByTag.get(tag) : Collections.emptyList();
+    }
+
+    /**
+     * Determines the maxTick used in this animation.
+     */
+    public int getMaxTick() {
+        int maxTick = 0;
+        for (int i = 0; i < this.tracks.size(); i++) {
+            kcTrack track = this.tracks.get(i);
+            if (track.getKeyList().isEmpty())
+                continue;
+
+            kcTrackKey<?> trackKey = track.getKeyList().get(track.getKeyList().size() - 1);
+            if (trackKey.getTick() > maxTick)
+                maxTick = trackKey.getTick();
+        }
+
+        return maxTick;
     }
 
     @Override
