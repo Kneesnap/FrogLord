@@ -225,6 +225,24 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
     }
 
     /**
+     * Test if a particular action sequence is currently tracked within the table.
+     * @param sequence the sequence to find
+     * @return sequenceFound
+     */
+    public boolean contains(kcCActionSequence sequence) {
+        if (sequence == null)
+            return false;
+
+        for (int i = 0; i < this.entries.size(); i++) {
+            HashTableEntry entry = this.entries.get(i);
+            if (sequence == entry.getSequence() || sequence.getHash() == entry.getValueRef().getHashNumber() || sequence.getSequenceName().equalsIgnoreCase(entry.getKeyName()))
+                return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Loads sequences from a Config node.
      * The provided config node will have its child config nodes read, with their names used as the sequence names.
      * Existing sequences will have their actions replaced/read if present in the provided config node.

@@ -5,19 +5,18 @@ import javafx.collections.ObservableList;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.kcTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcAnimState;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceModel;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceNamedHash;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton.kcNode;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.model.*;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshCollection;
 import net.highwayfrogs.editor.system.math.Matrix4x4f;
+import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,6 +28,7 @@ public class GreatQuestModelMesh extends DynamicMesh {
     @Getter private final kcModelWrapper modelWrapper;
     @Getter private final kcCResourceSkeleton skeleton;
     @Getter private final kcCResourceNamedHash actionSequenceTable;
+    @Getter private final List<kcCResourceTrack> sourceAnimations;
     @Getter private final ObservableList<kcCResourceTrack> availableAnimations;
     @Getter private final ObservableList<kcCActionSequence> availableSequences;
     @Getter private final DynamicMeshCollection<GreatQuestModelMaterialMesh> actualMesh;
@@ -67,8 +67,9 @@ public class GreatQuestModelMesh extends DynamicMesh {
         this.modelWrapper = modelWrapper;
         this.skeleton = skeleton;
         this.actionSequenceTable = actionSequenceTable;
-        this.availableAnimations = animations != null ? FXCollections.observableArrayList(animations) : FXCollections.observableArrayList();
-        this.availableSequences = actionSequenceTable != null ? FXCollections.observableArrayList(actionSequenceTable.getSequences()) : FXCollections.observableArrayList();
+        this.sourceAnimations = animations != null ? Collections.unmodifiableList(animations) : Collections.emptyList();
+        this.availableAnimations = animations != null ? FXCollections.observableArrayList(getAnimations(skeleton, modelWrapper, animations)) : FXCollections.observableArrayList();
+        this.availableSequences = actionSequenceTable != null ? FXCollections.observableArrayList(getActionSequences(actionSequenceTable)) : FXCollections.observableArrayList();
         this.actualMesh = new DynamicMeshCollection<>(getMeshName());
         this.environmentalMesh = modelWrapper != null && GreatQuestEntityManager.isFileNameEnvironmentalMesh(modelWrapper.getFileName());
         this.skeletonMesh = skeleton != null ? new GreatQuestModelSkeletonMesh(this, meshName + "Skeleton") : null;
@@ -308,5 +309,37 @@ public class GreatQuestModelMesh extends DynamicMesh {
         }
 
         return false;
+    }
+
+    private static List<kcCActionSequence> getActionSequences(kcCResourceNamedHash hashTable) {
+        List<kcCActionSequence> sequences = hashTable.getSequences();
+        String name = hashTable.getBaseName().toLowerCase();
+        for (kcCResource resource : hashTable.getParentFile().getChunks()) {
+            if (!(resource instanceof kcCActionSequence))
+                continue;
+
+            kcCActionSequence tempSequence = (kcCActionSequence) resource;
+            if (tempSequence.getName().toLowerCase().startsWith(name) && sequences.stream().noneMatch(tempResource -> tempSequence.getSequenceName().equalsIgnoreCase(tempResource.getSequenceName())))
+                sequences.add(tempSequence);
+        }
+
+        return sequences;
+    }
+
+    private static List<kcCResourceTrack> getAnimations(kcCResourceSkeleton skeleton, kcModelWrapper modelWrapper, List<kcCResourceTrack> oldAnimations) {
+        List<kcCResourceTrack> animations = new ArrayList<>(oldAnimations);
+
+        if (modelWrapper != null && skeleton != null) {
+            String fileName = FileUtils.stripExtension(modelWrapper.getFileName()).toLowerCase();
+            for (kcCResource resource : skeleton.getParentFile().getChunks()) {
+                if (!(resource instanceof kcCResourceTrack))
+                    continue;
+                kcCResourceTrack track = (kcCResourceTrack) resource;
+                if (track.getName().toLowerCase().startsWith(fileName) && !animations.contains(track))
+                    animations.add(track);
+            }
+        }
+
+        return animations;
     }
 }

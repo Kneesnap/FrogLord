@@ -55,6 +55,7 @@ public class FXUtils {
     private static final Map<BufferedImage, TextureCache> imageCacheMap = new HashMap<>();
     private static final long IMAGE_CACHE_EXPIRE = TimeUnit.MINUTES.toMillis(5);
     private static final Map<String, FXMLLoader> CACHED_RESOURCE_PATH_FXML_LOADERS = new HashMap<>();
+    public static final String STYLE_LIST_CELL_RED_BACKGROUND = "-fx-control-inner-background: red ;";
 
     /**
      * Make a combo box scroll to the value it has selected.

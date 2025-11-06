@@ -31,6 +31,7 @@ import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshCollection.MeshViewCollection;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.fx.wrapper.LazyFXListCell;
 
 import java.util.*;
@@ -117,7 +118,14 @@ public class GreatQuestEntityManager extends GreatQuestMapListManager<kcCResourc
                 display.getSequencePlayback().setSequenceAndTick(newSequence);
         });
         this.sequenceSelectionBox.setButtonCell(new LazyFXListCell<>(kcCActionSequence::getSequenceName, "No Sequence"));
-        this.sequenceSelectionBox.setCellFactory(listView -> new LazyFXListCell<>(kcCActionSequence::getSequenceName, "No Sequence"));
+        this.sequenceSelectionBox.setCellFactory(listView -> new LazyFXListCell<>(kcCActionSequence::getSequenceName, "No Sequence")
+                .setWithoutIndexStyleHandler(sequence -> {
+                    GreatQuestMapEditorEntityDisplay display = getDelegatesByValue().get(getSelectedValue());
+                    if (sequence == null || display == null || (display.getModelMesh() != null && display.getModelMesh().getActionSequenceTable() != null && display.getModelMesh().getActionSequenceTable().contains(sequence)))
+                        return null;
+
+                    return FXUtils.STYLE_LIST_CELL_RED_BACKGROUND;
+                }));
 
         // Water should be setup last, because water is the biggest transparent model of all.
         // So, it should come after everything else.

@@ -22,6 +22,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestA
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshCollection.MeshViewCollection;
 import net.highwayfrogs.editor.system.math.Vector3f;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.fx.wrapper.LazyFXListCell;
 
@@ -72,7 +73,8 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
         // Setup animation UI.
         this.animationComboBox = new ComboBox<>(getMesh().getAvailableAnimations());
         this.animationComboBox.setButtonCell(new LazyFXListCell<>(kcCResourceTrack::getName, "No Animation"));
-        this.animationComboBox.setCellFactory(listView -> new LazyFXListCell<>(kcCResourceTrack::getName, "No Animation"));
+        this.animationComboBox.setCellFactory(listView -> new LazyFXListCell<>(kcCResourceTrack::getName, "No Animation")
+                .setWithoutIndexStyleHandler(animation -> (animation == null || getMesh().getSourceAnimations().contains(animation)) ? null : FXUtils.STYLE_LIST_CELL_RED_BACKGROUND));
         GridPane.setHgrow(this.animationComboBox, Priority.ALWAYS);
         if (getMesh().getAvailableAnimations().size() > 0) {
             this.animationComboBox.getSelectionModel().selectFirst();
@@ -95,7 +97,8 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
         // Setup sequence UI.
         this.actionSequenceComboBox = new ComboBox<>(getMesh().getAvailableSequences());
         this.actionSequenceComboBox.setButtonCell(new LazyFXListCell<>(kcCActionSequence::getName, "No Sequence"));
-        this.actionSequenceComboBox.setCellFactory(listView -> new LazyFXListCell<>(kcCActionSequence::getName, "No Sequence"));
+        this.actionSequenceComboBox.setCellFactory(listView -> new LazyFXListCell<>(kcCActionSequence::getName, "No Sequence")
+                .setWithoutIndexStyleHandler(sequence -> sequence == null || (getMesh().getActionSequenceTable() != null && getMesh().getActionSequenceTable().contains(sequence)) ? null : FXUtils.STYLE_LIST_CELL_RED_BACKGROUND));
         GridPane.setHgrow(this.actionSequenceComboBox, Priority.ALWAYS);
         if (getMesh().getAvailableSequences().size() > 0) {
             this.actionSequenceComboBox.getSelectionModel().selectFirst();
