@@ -39,6 +39,9 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
     @Setter private boolean loadedFromGame; // True if the cause was loaded from the game, and was not loaded by the user.
     private int userLineNumber = -1; // The line number as imported by the user.
     private String userImportSource;
+    private boolean unusedCauseAllowed; // If true, any warnings will be hidden about the triggering of the cause, as we expect it to be allowed from another file.
+
+    public static final String ARGUMENT_NAME_ALLOW_UNUSED_CAUSE = "AllowUnused";
 
     public kcScriptCause(@NonNull kcScript script, kcScriptCauseType type, int minimumArguments, int gqsArgumentCount) {
         super(script.getGameInstance());
@@ -74,6 +77,7 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
         this.loadedFromGame = false;
         this.userLineNumber = lineNumber;
         this.userImportSource = fileName;
+        this.unusedCauseAllowed = arguments.useFlag(ARGUMENT_NAME_ALLOW_UNUSED_CAUSE);
         loadArguments(logger, arguments);
         arguments.warnAboutUnusedArguments(logger);
         printWarnings(logger);
