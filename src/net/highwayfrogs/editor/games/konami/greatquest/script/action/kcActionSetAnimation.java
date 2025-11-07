@@ -130,7 +130,7 @@ public class kcActionSetAnimation extends kcAction {
         kcActorBaseDesc actorDesc = getExecutor() != null ? getExecutor().getExecutingActorBaseDescription() : null;
         kcCResourceAnimSet animSet = actorDesc != null ? actorDesc.getAnimationSet() : null;
         if (animation != null && animSet != null && !animSet.contains(animation))
-            printWarning(logger, "the animation '" + animation.getName() + "' was not found in '" + animSet.getName() + "', the animation set configured for '" + actorDesc.getResource().getName() + "'.");
+            printWarning(logger, "the animation '" + animation.getName() + "' was not found in '" + animSet.getName() + "', the animation set configured for '" + actorDesc.getResourceName() + "'.");
     }
 
     /**

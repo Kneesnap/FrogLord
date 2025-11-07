@@ -68,7 +68,7 @@ public class kcActionGiveDamage extends kcActionTemplate {
                 int immuneMask = ((kcActorDesc) actorDesc).getHealth().getImmuneMask();
                 int overlappingMask = (weaponMask & immuneMask);
                 if (overlappingMask != 0)
-                    printWarning(logger, "the target (" + actorDesc.getResource().getName() + ") is immune to the damage flags: " + kcDamageType.getFlagsAsString(overlappingMask));
+                    printWarning(logger, "the target (" + actorDesc.getResourceName() + ") is immune to the damage flags: " + kcDamageType.getFlagsAsString(overlappingMask));
             }
         }
     }

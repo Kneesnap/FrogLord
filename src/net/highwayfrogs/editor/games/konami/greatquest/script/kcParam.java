@@ -235,7 +235,7 @@ public class kcParam {
                     if (bone == null)
                         return intValue + " is not a valid bone tag for the skeleton '" + skeleton.getName() + "'.";
                 } else if (intValue != 0) {
-                    return intValue + " is not a valid bone tag when the entity (" + (actorDesc != null ? actorDesc.getResource().getName() : "null") + ") has no skeleton!";
+                    return intValue + " is not a valid bone tag when the entity (" + (actorDesc != null ? actorDesc.getResourceName() : "null") + ") has no skeleton!";
                 }
 
                 break;

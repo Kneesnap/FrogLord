@@ -64,7 +64,7 @@ public class kcActionFlag extends kcAction {
             for (kcEntityInstanceFlag flag : kcEntityInstanceFlag.values()) {
                 kcEntityInheritanceGroup group = flag.getFlagType().getInheritanceGroup();
                 if ((this.flagMask & flag.getInstanceBitFlagMask()) == flag.getInstanceBitFlagMask() && !group.isApplicable(entityDesc))
-                    printWarning(logger, "the entity flag '" + flag.getDisplayName() + "' requires the entity description '" + entityDesc.getResource().getName() + "' to extend " + group.getDisplayName() + ", but the entity was actually a " + Utils.getSimpleName(entityDesc) + ".");
+                    printWarning(logger, "the entity flag '" + flag.getDisplayName() + "' requires the entity description '" + entityDesc.getResourceName() + "' to extend " + group.getDisplayName() + ", but the entity was actually a " + Utils.getSimpleName(entityDesc) + ".");
             }
         }
 

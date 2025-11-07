@@ -115,10 +115,10 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
         MenuItem exportEntityItem = new MenuItem("Export Entity Description");
         contextMenu.getItems().add(exportEntityItem);
         exportEntityItem.setOnAction(event -> {
-            File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), ENTITY_DESC_EXPORT_PATH, getResource().getName() + "." + Config.DEFAULT_EXTENSION, true);
+            File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), ENTITY_DESC_EXPORT_PATH, getResourceName() + "." + Config.DEFAULT_EXTENSION, true);
             if (outputFile != null) {
                 toConfig().saveTextFile(outputFile);
-                getLogger().info("Saved '%s' as '%s'.", getResource().getName(), outputFile.getName());
+                getLogger().info("Saved '%s' as '%s'.", getResourceName(), outputFile.getName());
             }
         });
 
@@ -131,7 +131,7 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
 
             Config entityCfg = Config.loadConfigFromTextFile(inputFile, false);
             this.fromConfig(getLogger(), entityCfg);
-            getLogger().info("Loaded '%s' from '%s'.", getResource().getName(), inputFile.getName());
+            getLogger().info("Loaded '%s' from '%s'.", getResourceName(), inputFile.getName());
         });
     }
 

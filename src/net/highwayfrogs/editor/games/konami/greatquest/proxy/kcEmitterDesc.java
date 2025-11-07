@@ -94,7 +94,7 @@ public class kcEmitterDesc extends kcProxyCapsuleDesc {
             return;
 
         // If we resolve the model successfully, our goal is to generate the name of any corresponding collision mesh.
-        String baseName = getResource().getName();
+        String baseName = getResourceName();
         if (baseName.endsWith(NAME_SUFFIX))
             baseName = baseName.substring(0, baseName.length() - NAME_SUFFIX.length());
 
