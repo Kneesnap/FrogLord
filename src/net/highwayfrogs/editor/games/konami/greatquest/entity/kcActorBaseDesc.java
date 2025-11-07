@@ -90,7 +90,7 @@ public class kcActorBaseDesc extends kcEntity3DDesc implements ILateResourceReso
         if (!GreatQuestUtils.resolveLevelResourceHash(kcCResourceNamedHash.class, this, this.animationSequencesRef, animationHash, false) && animationHash != -1) // There are TONS of hashes set which correspond to sequences which don't exist.
             this.animationSequencesRef.setOriginalString(getResourceName() + kcCResourceNamedHash.NAME_SUFFIX); // If we don't resolve the asset, we can at least apply the original string.
 
-        applyNameToDescriptions(); // TODO: On name change, update linked names.
+        applyNameToDescriptions();
     }
 
     @Override
