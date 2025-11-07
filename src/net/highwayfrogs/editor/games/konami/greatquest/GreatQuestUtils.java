@@ -201,7 +201,7 @@ public class GreatQuestUtils {
      * Adds hardcoded file paths by their hashes to the map provided.
      * @param nameMap The map to update.
      */
-    public static void addHardcodedFileNameHashesToMap(Map<Integer, String> nameMap) {
+    public static void addHardcodedFilePathHashesToMap(Map<Integer, String> nameMap) {
         loadFileList();
         nameMap.putAll(FILENAMES_BY_HASH);
     }

@@ -18,8 +18,8 @@ public class GreatQuestDummyArchiveFile extends GreatQuestArchiveFile {
     private byte[] data;
     private final int length;
 
-    public GreatQuestDummyArchiveFile(GreatQuestInstance instance, int length) {
-        super(instance);
+    public GreatQuestDummyArchiveFile(GreatQuestInstance instance, GreatQuestArchiveFileType fileType, int length) {
+        super(instance, fileType);
         this.length = length;
     }
 

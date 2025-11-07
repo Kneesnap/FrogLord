@@ -4,14 +4,13 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestModData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
-import net.highwayfrogs.editor.utils.DataUtils;
-import net.highwayfrogs.editor.utils.NumberUtils;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.*;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -22,7 +21,7 @@ import java.nio.file.Files;
 import java.util.*;
 
 /**
- * Parses FTGQ's main game data file. It's called "data.bin" in all of the builds we've seen.
+ * Parses FTGQ's main game data file. It's called "data.bin" in all builds we've seen so far.
  * .SBR files contain sound effects. the SCK file contains only PCM data, with headers in the .IDX file.
  * .PSS (PS2) are video files. Can be opened with VLC.
  * BUFFER.DAT files (PS2) are video files, and can be opened with VLC.
@@ -32,14 +31,17 @@ import java.util.*;
 public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
     private final List<String> globalPaths = new ArrayList<>();
     private final List<GreatQuestArchiveFile> files = new ArrayList<>();
-    private final Map<Integer, GreatQuestArchiveFile> nameMap = new HashMap<>();
-    private final Map<Integer, List<GreatQuestArchiveFile>> fileCollisions = new HashMap<>();
+    private final Map<Integer, List<GreatQuestArchiveFile>> filesByHash = new HashMap<>();
 
-    private static final Comparator<GreatQuestAssetBinFileHeader> FILE_ORDERING =
+    private static final Comparator<GreatQuestAssetBinFileHeader> HEADER_FILE_ORDERING =
             Comparator.comparingInt(GreatQuestAssetBinFileHeader::getOffset)
-                    .thenComparing(Comparator.nullsFirst(Comparator.comparing(GreatQuestAssetBinFileHeader::getName)))
-                    .thenComparing(GreatQuestAssetBinFileHeader::getName)
-                    .thenComparingInt(GreatQuestAssetBinFileHeader::hashCode);
+                    .thenComparing(value -> {
+                        throw new UnsupportedOperationException("GreatQuestAssetBinFileHeader.getOffset() should never be duplicated.");
+                    });
+
+    private static final Comparator<GreatQuestArchiveFile> FILE_ORDERING =
+            Comparator.comparingInt((GreatQuestArchiveFile file) -> file.getFileType().ordinal()) // #1) File Type
+                    .thenComparing(GreatQuestAssetBinFile::getFilePathOrNeighborFilePath); // #2) File path
 
     public static final int NAME_SIZE = 0x108;
 
@@ -58,12 +60,30 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
      * @param progressBar the progress bar to update, if exists
      */
     public void load(DataReader reader, ProgressBarComponent progressBar) {
+        // Read the mod data header, if it exists.
+        reader.jumpTemp(reader.getSize() - Constants.INTEGER_SIZE - GreatQuestModData.SIGNATURE.length());
+        byte[] signature = reader.readBytes(GreatQuestModData.SIGNATURE.length());
+        int frogLordHeaderStartAddress = reader.readInt();
+        reader.jumpReturn();
+        int frogLordDataSize;
+        if (DataUtils.testSignature(signature, GreatQuestModData.SIGNATURE)) {
+            reader.jumpTemp(frogLordHeaderStartAddress);
+            getGameInstance().getModData().load(reader);
+            frogLordDataSize = reader.getIndex() - frogLordHeaderStartAddress;
+            reader.jumpReturn();
+        } else {
+            frogLordHeaderStartAddress = -1;
+            frogLordDataSize = 0;
+        }
+
+        // Start reading from beginning of data.bin.
         int unnamedFiles = reader.readInt();
         int namedFiles = reader.readInt();
         int globalPathStartAddress = reader.readInt(); // Located after the files.
 
-        Map<Integer, String> nameMap = new HashMap<>();
-        GreatQuestUtils.addHardcodedFileNameHashesToMap(nameMap);
+        Map<Integer, String> filePathMap = new HashMap<>();
+        GreatQuestUtils.addHardcodedFilePathHashesToMap(filePathMap);
+        filePathMap.putAll(getGameInstance().getModData().getUserGlobalFilePaths()); // Copy mod-supplied file paths, and overwrite any of the hardcoded paths.
 
         List<GreatQuestAssetBinFileHeader> fileHeaders = new ArrayList<>();
 
@@ -75,7 +95,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
 
         for (int i = 0; i < unnamedFiles; i++) {
             int hash = reader.readInt();
-            fileHeaders.add(readFileHeader(reader, nameMap.get(hash), hash, false, progressBar));
+            fileHeaders.add(readFileHeader(reader, filePathMap.get(hash), hash, false, progressBar));
         }
 
         // Prepare named files. Files are named if they have a collision with other files.
@@ -93,7 +113,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
 
             // The named headers should be sorted into the existing fileHeader list, even though they are written separately.
             // This is the order the files are written originally, and it makes it nicer when browsing files
-            int insertionIndex = Collections.binarySearch(fileHeaders, newHeader, FILE_ORDERING);
+            int insertionIndex = Collections.binarySearch(fileHeaders, newHeader, HEADER_FILE_ORDERING);
             if (insertionIndex >= 0)
                 throw new RuntimeException("Did not expect to find the header already in the fileHeaders list.");
 
@@ -104,8 +124,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         if (progressBar != null)
             progressBar.setTotalProgress(fileHeaders.size());
         this.files.clear();
-        this.fileCollisions.clear();
-        this.nameMap.clear();
+        this.filesByHash.clear();
         for (int i = 0; i < fileHeaders.size(); i++)
             fileHeaders.get(i).prepareFile(reader, progressBar);
 
@@ -116,15 +135,25 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         for (int i = 0; i < globalPathCount; i++)
             this.globalPaths.add(reader.readNullTerminatedFixedSizeString(NAME_SIZE, Constants.NULL_BYTE));
 
-        // Read FrogLord mod data.
-        if (reader.hasMore())
-            getGameInstance().getModData().load(reader);
+        // Skip FrogLord mod data.
+        if (frogLordHeaderStartAddress >= 0 && frogLordDataSize > 0) {
+            requireReaderIndex(reader, frogLordHeaderStartAddress, "Expected FrogLord mod data");
+            reader.skipBytes(frogLordDataSize);
+        }
 
         // Process (load) files. (File loading occurs only after we have an object for every single game file, so that file hash references can be resolved regardless of file order.)
         if (progressBar != null)
             progressBar.setTotalProgress(this.files.size());
-        for (int i = 0; i < this.files.size(); i++)
-            loadFile(this.files.get(i), progressBar);
+
+        GreatQuestArchiveFile lastFile = null;
+        for (int i = 0; i < this.files.size(); i++) {
+            GreatQuestArchiveFile currentFile = this.files.get(i);
+            if (lastFile != null && FILE_ORDERING.compare(currentFile, lastFile) < 0)
+                getLogger().warning("File '%s' is out of order with the previously loaded file: '%s'!", currentFile.getDebugName(), lastFile.getDebugName());
+
+            loadFile(currentFile, progressBar);
+            lastFile = currentFile;
+        }
 
         // Handle post-load setup.
         kcLoadContext context = new kcLoadContext(this);
@@ -188,8 +217,17 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
     public void save(DataWriter writer, ProgressBarComponent progressBar) {
         List<GreatQuestArchiveFile> unnamedFiles = new ArrayList<>();
         List<GreatQuestArchiveFile> namedFiles = new ArrayList<>();
-        for (GreatQuestArchiveFile file : getFiles())
-            (file.hasFilePath() && file.isCollision() ? namedFiles : unnamedFiles).add(file);
+
+        // Split files into named/unnamed files.
+        GreatQuestArchiveFile lastFile  = null;
+        for (GreatQuestArchiveFile currentFile : getFiles()) {
+            if (lastFile != null && FILE_ORDERING.compare(currentFile, lastFile) < 0)
+                getLogger().warning("File '%s' is out of order with the previous file: '%s'!", currentFile.getDebugName(), lastFile.getDebugName());
+
+            List<GreatQuestArchiveFile> targetList = currentFile.hasCollision() ? namedFiles : unnamedFiles;
+            targetList.add(currentFile);
+            lastFile = currentFile;
+        }
 
         // Start writing file.
         writer.writeInt(unnamedFiles.size());
@@ -205,7 +243,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
             writer.writeInt(file.getHash());
 
             // Add header which will be updated & written again later.
-            GreatQuestAssetBinFileHeader newHeader = new GreatQuestAssetBinFileHeader(this, file.getFilePath(), file.getHash(), file.isCollision());
+            GreatQuestAssetBinFileHeader newHeader = new GreatQuestAssetBinFileHeader(this, file.getFilePath(), file.getHash(), false);
             fileHeaders.add(newHeader);
             headersByFile.put(file, newHeader);
             newHeader.save(writer);
@@ -217,7 +255,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
             writer.writeNullTerminatedFixedSizeString(fullFilePath, NAME_SIZE, GreatQuestInstance.PADDING_BYTE_CD);
 
             // Add header which will be updated & written again later.
-            GreatQuestAssetBinFileHeader newHeader = new GreatQuestAssetBinFileHeader(this, file.getFilePath(), file.getHash(), file.isCollision());
+            GreatQuestAssetBinFileHeader newHeader = new GreatQuestAssetBinFileHeader(this, file.getFilePath(), file.getHash(), true);
             fileHeaders.add(newHeader);
             headersByFile.put(file, newHeader);
             newHeader.save(writer);
@@ -277,6 +315,158 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
     }
 
     /**
+     * Returns true iff the file is currently registered in the .bin file.
+     */
+    public boolean isRegistered(GreatQuestArchiveFile file) {
+        if (file == null)
+            throw new NullPointerException("file");
+        if (file.getGameInstance() != getGameInstance())
+            return false;
+
+        if (this.filesByHash.get(file.getHash()) == file)
+            return true;
+
+        List<GreatQuestArchiveFile> files = this.filesByHash.get(file.getHash());
+        return files != null && files.contains(file);
+    }
+
+    /**
+     * Returns true iff the file is currently registered in the .bin file and its hash collides with another file.
+     */
+    public boolean hasCollision(GreatQuestArchiveFile file) {
+        if (file == null)
+            throw new NullPointerException("file");
+        if (file.getGameInstance() != getGameInstance())
+            return false;
+        if (!file.hasFilePath())
+            return false;
+
+        List<GreatQuestArchiveFile> files = this.filesByHash.get(file.getHash());
+        return files != null && (files.size() > 1 || (!files.isEmpty() && !files.contains(file)));
+    }
+
+    /**
+     * Adds a file to the .bin file.
+     * Note that {@code file.init} must be called on the file before calling this function.
+     * @param file the file to add
+     * @return true iff the file was not previously registered, and has now been successfully registered.
+     */
+    public boolean addFile(GreatQuestArchiveFile file) {
+        if (file == null)
+            throw new NullPointerException("file");
+        if (file.getGameInstance() != getGameInstance())
+            throw new IllegalArgumentException("The provided file is registered to a different game instance!");
+        if (file.isRegistered())
+            return false;
+
+        // Original files with unknown file paths break our ability to binary search.
+        // Given at the time of writing, we have valid looking file paths for all known versions of the game, I see no reason why we wouldn't be able to find any new ones too.
+        if (StringUtils.isNullOrWhiteSpace(file.getFilePath()) || !file.getFilePath().contains(".") || !file.getFilePath().contains("\\"))
+            throw new IllegalArgumentException("Cannot register file, its file path is invalid. (" + file.getFilePath() + ")");
+
+        int searchIndex = Collections.binarySearch(this.files, file, FILE_ORDERING);
+        int insertionIndex = -(searchIndex + 1);
+        if (searchIndex >= 0) {
+            GreatQuestArchiveFile oldFile = this.files.get(searchIndex);
+            if (file == oldFile) {
+                throw new IllegalStateException("Internal state error! this.files contained the file, but the file did not report as registered!");
+            } else if (file.getFilePath().equalsIgnoreCase(oldFile.getFilePath())) {
+                throw new IllegalArgumentException("Another file with the path '" + file.getFilePath() + "' is already registered!");
+            } else {
+                throw new IllegalArgumentException("Unknown problem adding '" + file.getFilePath() + "', which conflicts with '" + oldFile.getFilePath() + "'!");
+            }
+        }
+
+        List<GreatQuestArchiveFile> files = this.filesByHash.computeIfAbsent(file.getHash(), key -> new ArrayList<>());
+        if (files.contains(file))
+            throw new IllegalStateException("Internal state error! this.filesByHash contained the file, but the file did not report as registered!");
+
+        // Validate great quest files.
+        int looseFiles = getGameInstance().getLooseFiles().size();
+        if (looseFiles + this.files.size() != getGameInstance().getAllFiles().size()) {
+            throw new IllegalStateException("Expected getGameInstance().getAllFiles() to be getGameInstance().getLooseFiles() + this.files, but that does not appear to be the case! ("
+                    + getGameInstance().getAllFiles().size() + ", " + looseFiles + ", " + this.files.size() + ")");
+        }
+
+        // Register.
+        this.files.add(insertionIndex, file);
+        getGameInstance().getAllFiles().add(looseFiles + insertionIndex, file);
+        files.add(file);
+
+        // Just added the file path, so track it in the mod data.
+        if (files.size() > 1) {
+            // Files with collisions have their file paths stored in the .bin file, there's no reason to track it.
+            getGameInstance().getModData().getUserGlobalFilePaths().remove(file.getHash());
+        } else {
+            // Track the file path in mod data if there's only one file with this hash.
+            getGameInstance().getModData().getUserGlobalFilePaths().put(file.getHash(), file.getFilePath());
+        }
+
+        return true;
+    }
+
+    /**
+     * Removes a file from the asset .bin file, if it is registered
+     * @param file the file to remove
+     * @return true iff the file was successfully removed
+     */
+    @SuppressWarnings("ExtractMethodRecommender")
+    public boolean removeFile(GreatQuestArchiveFile file) {
+        if (file == null)
+            throw new NullPointerException("file");
+        if (!file.isRegistered())
+            return false;
+
+        // Search for removal index.
+        int removeIndex = file.hasFilePath() ? Collections.binarySearch(this.files, file, FILE_ORDERING) : -1;
+        if (removeIndex < 0 || this.files.get(removeIndex) != file) // This is possible to happen if there are files without file paths.
+            removeIndex = this.files.indexOf(file);
+
+        if (removeIndex < 0)
+            throw new IllegalStateException("File reports that it isRegistered(), but we couldn't find it in this.files. (" + file.getDebugName() + ")");
+
+        // Validate game instance file tracking.
+        int looseFiles = getGameInstance().getLooseFiles().size();
+        if (looseFiles + this.files.size() != getGameInstance().getAllFiles().size()) {
+            throw new IllegalStateException("Expected getGameInstance().getAllFiles() to be getGameInstance().getLooseFiles() + this.files, but that does not appear to be the case! ("
+                    + getGameInstance().getAllFiles().size() + ", " + looseFiles + ", " + this.files.size() + ")");
+        }
+
+        // Start removing.
+        List<GreatQuestArchiveFile> files = this.filesByHash.get(file.getHash());
+        if (files == null || !files.remove(file))
+            throw new IllegalStateException("Internal state error! this.filesByHash did not contain the file (" + file.getDebugName() + "), even though the file reported as registered!");
+
+        int allFilesIndex = looseFiles + removeIndex;
+        GreatQuestGameFile removedFile = getGameInstance().getAllFiles().remove(allFilesIndex);
+        if (removedFile != file) {
+            files.add(file);
+            getGameInstance().getAllFiles().add(allFilesIndex, removedFile);
+            throw new IllegalStateException("Internal state error! gameInstance.allFiles did not contain the file (" + file.getDebugName() + ") at the expected position (" + allFilesIndex + "), even though the file reported as registered! (Removed: " + removedFile.getFileName() + ")");
+        }
+
+        removedFile = this.files.remove(removeIndex);
+        if (removedFile != file) { // Shouldn't be possible.
+            files.add(file);
+            getGameInstance().getAllFiles().add(looseFiles + removeIndex, file);
+            this.files.add(removeIndex, (GreatQuestArchiveFile) removedFile);
+            throw new IllegalStateException("Internal state error! this.files did not contain the file (" + file.getDebugName() + ") at the expected position, even though the file reported as registered!");
+        }
+
+        // Handle file path tracking.
+        if (files.size() == 1) {
+            // Files without collisions have their file paths stored in the mod data.
+            getGameInstance().getModData().getUserGlobalFilePaths().put(file.getHash(), files.get(0).getFilePath());
+        } else if (files.isEmpty()) {
+            // The last file was removed, so stop tracking the file paths.
+            getGameInstance().getModData().getUserGlobalFilePaths().remove(file.getHash());
+            this.filesByHash.remove(file.getHash(), files);
+        }
+
+        return true;
+    }
+
+    /**
      * Print a list of all files to stdout.
      */
     @SuppressWarnings("unused")
@@ -289,7 +479,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
             fileLine.append(NumberUtils.padNumberString(i, 4));
             fileLine.append(", Hash: ");
             fileLine.append(file.getHashAsHexString());
-            if (file.isCollision())
+            if (file.hasCollision())
                 fileLine.append(" (Collision)");
             if (file.isCompressed())
                 fileLine.append(", Compressed");
@@ -335,17 +525,15 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
      * @return the found file, if there was one.
      */
     public GreatQuestArchiveFile getOptionalFileByName(String filePath) {
+        if (StringUtils.isNullOrWhiteSpace(filePath))
+            throw new NullPointerException("filePath");
+
         // Create hash.
         String abbreviatedFilePath = GreatQuestUtils.getFileIdFromPath(filePath);
         int hash = GreatQuestUtils.hash(abbreviatedFilePath);
 
-        // Search for unique file without collisions.
-        GreatQuestArchiveFile file = this.nameMap.get(hash);
-        if (file != null)
-            return file;
-
-        // Search colliding files.
-        List<GreatQuestArchiveFile> collidingFiles = this.fileCollisions.get(hash);
+        // Search files.
+        List<GreatQuestArchiveFile> collidingFiles = this.filesByHash.get(hash);
         if (collidingFiles != null) {
             for (int i = 0; i < collidingFiles.size(); i++) {
                 GreatQuestArchiveFile collidedFile = collidingFiles.get(i);
@@ -382,17 +570,17 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
     @Getter
     private static class GreatQuestAssetBinFileHeader extends GameData<GreatQuestInstance> {
         private final GreatQuestAssetBinFile parentFile;
-        private final String name;
+        private final String filePath;
         private final int nameHash;
         private final boolean hasCollision;
         private int size;
         private int compressedSize;
         private int offset;
 
-        public GreatQuestAssetBinFileHeader(GreatQuestAssetBinFile parentFile, String name, int nameHash, boolean hasCollision) {
+        public GreatQuestAssetBinFileHeader(GreatQuestAssetBinFile parentFile, String filePath, int nameHash, boolean hasCollision) {
             super(parentFile.getGameInstance());
             this.parentFile = parentFile;
-            this.name = name;
+            this.filePath = filePath;
             this.nameHash = nameHash;
             this.hasCollision = hasCollision;
         }
@@ -422,7 +610,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         public GreatQuestArchiveFile prepareFile(DataReader reader, ProgressBarComponent progressBar) {
             boolean isCompressed = (this.compressedSize != 0); // ZLib compression.
 
-            requireReaderIndex(reader, this.offset, "Expected file data for '" + this.name + "'");
+            requireReaderIndex(reader, this.offset, "Expected file data for '" + this.filePath + "'");
             byte[] fileBytes;
             if (isCompressed) {
                 byte[] compressedFileBytes = reader.readBytes(this.compressedSize);
@@ -441,25 +629,53 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
             } else if (this.parentFile.files.size() > 100 && fileBytes.length > 30) {
                 readFile = new GreatQuestImageFile(getGameInstance());
             } else {
-                readFile = new GreatQuestDummyArchiveFile(getGameInstance(), fileBytes.length);
+                // Files are sorted by file-type, so use the previous
+                GreatQuestArchiveFile lastFile = this.parentFile.files.size() > 0 ? this.parentFile.files.get(this.parentFile.files.size() - 1) : null;
+                GreatQuestArchiveFileType lastType = lastFile != null ? lastFile.getFileType() : GreatQuestArchiveFileType.values()[0];
+                GreatQuestArchiveFileType fileType = GreatQuestArchiveFileType.getFileTypeFromFilePath(this.filePath, lastType);
+                readFile = new GreatQuestDummyArchiveFile(getGameInstance(), fileType, fileBytes.length);
             }
 
             // Setup file.
-            readFile.init(this.name, isCompressed, this.nameHash, fileBytes, this.hasCollision);
+            readFile.init(this.filePath, isCompressed, this.nameHash, fileBytes);
             if (progressBar != null)
                 progressBar.setStatusMessage("Preparing '" + readFile.getExportName() + "'");
 
             this.parentFile.files.add(readFile); // Add before loading, so it can find its ID.
-            if (hasCollision) {
-                this.parentFile.fileCollisions.computeIfAbsent(readFile.getHash(), key -> new ArrayList<>()).add(readFile);
-            } else {
-                this.parentFile.nameMap.put(readFile.getHash(), readFile);
-            }
+            this.parentFile.filesByHash.computeIfAbsent(readFile.getHash(), key -> new ArrayList<>()).add(readFile);
 
             if (progressBar != null)
                 progressBar.addCompletedProgress(1);
             return readFile;
         }
+    }
+    private static String getSortableString(String input) {
+        return (FileUtils.stripExtension(input.toLowerCase()));
+    }
 
+    private static String getFilePathOrNeighborFilePath(GreatQuestArchiveFile file) {
+        String filePath = file.getFilePath();
+        if (!StringUtils.isNullOrWhiteSpace(filePath))
+            return getSortableString(filePath);
+
+        // In the case of a file without a name, we want to preserve the existing order, so we'll get a neighbor.
+        GreatQuestAssetBinFile binFile = file.getMainArchive();
+        int fileIndex = binFile.getFiles().indexOf(file);
+        if (fileIndex < 0)
+            throw new UnsupportedOperationException("Cannot sort a GreatQuestArchiveFile without a filePath which isn't already registered.");
+
+        GreatQuestArchiveFile testFile;
+        int maxSearch = Math.max(fileIndex, binFile.getFiles().size() - fileIndex);
+        for (int i = 0; i < maxSearch; i++) {
+            int minIndex = fileIndex - i - 1;
+            if (minIndex > 0 && !StringUtils.isNullOrWhiteSpace((testFile = binFile.getFiles().get(minIndex)).getFilePath()))
+                return getSortableString(testFile.getFilePath());
+
+            int maxIndex = fileIndex + i + 1;
+            if (maxIndex < binFile.getFiles().size() && !StringUtils.isNullOrWhiteSpace((testFile = binFile.getFiles().get(maxIndex)).getFilePath()))
+                return getSortableString(testFile.getFilePath());
+        }
+
+        return ""; // No files exist which we can try.
     }
 }

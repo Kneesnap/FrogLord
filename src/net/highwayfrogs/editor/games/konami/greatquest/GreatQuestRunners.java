@@ -2,8 +2,7 @@ package net.highwayfrogs.editor.games.konami.greatquest;
 
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.system.Config;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.reader.FileSource;
+import net.highwayfrogs.editor.utils.DataSizeUnit;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
 
@@ -17,29 +16,33 @@ import java.util.Scanner;
 public class GreatQuestRunners {
 
     // This runner will replace the "Goblin Fort" level with the unused level on the PC version.
-    public static void applyUnusedLevel(String[] args) throws Exception {
+    public static void applyUnusedLevel(String[] args) {
         File binFile = getBinFile(args);
         if (binFile == null)
             return;
 
         // Load main bin.
         System.out.println("Loading file...");
-        DataReader reader = new DataReader(new FileSource(binFile));
         GreatQuestInstance instance = new GreatQuestInstance();
         instance.loadGame("pc-retail", new Config("FakeConfig"), binFile, null);
-        instance.getMainArchive().load(reader);
         System.out.println("Loaded.");
 
         // Switch the level hashes, so it loads it.
         GreatQuestArchiveFile theGoblinFort = instance.getMainArchive().getFiles().get(31);
         GreatQuestArchiveFile ruinsOfJoyTown = instance.getMainArchive().getFiles().get(32);
+        String goblinFortFilePath = theGoblinFort.getFilePath();
+        boolean goblinFortCompressed = theGoblinFort.isCompressed();
         int goblinFortHash = theGoblinFort.getHash();
-        boolean goblinFortCollision = theGoblinFort.isCollision();
-        theGoblinFort.init(ruinsOfJoyTown.getFilePath(), theGoblinFort.isCompressed(), ruinsOfJoyTown.getHash(), theGoblinFort.getRawData(), ruinsOfJoyTown.isCollision());
-        ruinsOfJoyTown.init(theGoblinFort.getFilePath(), ruinsOfJoyTown.isCompressed(), goblinFortHash, ruinsOfJoyTown.getRawData(), goblinFortCollision);
+        byte[] goblinFortRawData = theGoblinFort.getRawData();
+        instance.getMainArchive().removeFile(theGoblinFort);
+        instance.getMainArchive().removeFile(ruinsOfJoyTown);
+        theGoblinFort.init(ruinsOfJoyTown.getFilePath(), ruinsOfJoyTown.isCompressed(), ruinsOfJoyTown.getHash(), ruinsOfJoyTown.getRawData());
+        ruinsOfJoyTown.init(goblinFortFilePath, goblinFortCompressed, goblinFortHash, goblinFortRawData);
+        instance.getMainArchive().addFile(theGoblinFort);
+        instance.getMainArchive().addFile(ruinsOfJoyTown);
 
-        System.out.println("Saving.");
-        DataWriter writer = new DataWriter(new FileReceiver(new File(binFile.getParentFile(), "export.bin"), 300 * (1024 * 1024)));
+        System.out.println("Saving...");
+        DataWriter writer = new DataWriter(new FileReceiver(new File(binFile.getParentFile(), "export.bin"), 256 * (int) DataSizeUnit.MEGABYTE.getIncrement()));
         instance.getMainArchive().save(writer);
         writer.closeReceiver();
         System.out.println("Done.");

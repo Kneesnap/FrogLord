@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IFileExport;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFileType;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelInfoController;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelMesh;
@@ -39,7 +40,7 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
     }
 
     public kcModelWrapper(GreatQuestInstance instance, kcModel model) {
-        super(instance);
+        super(instance, GreatQuestArchiveFileType.MODEL);
         this.model = model;
     }
 

@@ -31,16 +31,17 @@ import java.util.concurrent.ThreadLocalRandom;
  * Created by Kneesnap on 8/17/2019.
  */
 public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implements ICollectionViewEntry, IPropertyListCreator, kcHashedResource {
+    @Getter private final GreatQuestArchiveFileType fileType;
     @Getter private final GreatQuestHash<GreatQuestArchiveFile> selfHash;
     @Getter private byte[] rawData;
     @Getter private String fileName;
     @Getter private String filePath;
-    @Getter private boolean collision; // This is true iff there are multiple files that share the hash.
     @Getter @Setter private boolean compressed;
     private ILogger cachedLogger;
 
-    public GreatQuestArchiveFile(GreatQuestInstance instance) {
+    public GreatQuestArchiveFile(GreatQuestInstance instance, GreatQuestArchiveFileType fileType) {
         super(instance);
+        this.fileType = fileType;
         this.selfHash = new GreatQuestHash<>(this);
     }
 
@@ -90,7 +91,7 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
     /**
      * Gets the main archive.
      */
-    private GreatQuestAssetBinFile getMainArchive() {
+    public GreatQuestAssetBinFile getMainArchive() {
         return getGameInstance().getMainArchive();
     }
 
@@ -104,7 +105,7 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
         propertyList = super.addToPropertyList(propertyList);
 
         propertyList.add("Name Hash", NumberUtils.to0PrefixedHexString(getHash()));
-        propertyList.add("Name Collision", this.collision);
+        propertyList.add("Name Collision", hasCollision());
         propertyList.add("Compression Enabled", this.compressed);
         if (this.rawData != null)
             propertyList.add("Loaded File Size", DataSizeUnit.formatSize(this.rawData.length));
@@ -114,15 +115,29 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
 
     /**
      * Initialize the information about this file.
-     * @param realName   This file's raw name. Can be null.
+     * @param filePath   This file's raw name. Can be null.
      * @param compressed Whether this file is compressed.
+     * @param rawBytes   The raw unprocessed bytes containing the file data.
      */
-    public void init(String realName, boolean compressed, int hash, byte[] rawBytes, boolean collision) {
-        setFilePath(realName);
+    public void init(String filePath, boolean compressed, byte[] rawBytes) {
+        init(filePath, compressed, GreatQuestUtils.hashFilePath(filePath), rawBytes);
+    }
+
+    /**
+     * Initialize the information about this file.
+     * @param filePath   This file's raw name. Can be null.
+     * @param compressed Whether this file is compressed.
+     * @param hash       The hash of the file path.
+     * @param rawBytes   The raw unprocessed bytes containing the file data.
+     */
+    public void init(String filePath, boolean compressed, int hash, byte[] rawBytes) {
+        if (isRegistered())
+            throw new IllegalStateException("Cannot re-init file '" + this.filePath + "'/" + getSelfHash().getHashNumberAsString() + " to '" + filePath + "'/" + NumberUtils.to0PrefixedHexString(hash) + " while the file is registered.");
+
+        setFilePath(filePath);
         this.compressed = compressed;
         this.selfHash.setHash(hash);
         this.rawData = rawBytes;
-        this.collision = collision;
     }
 
     /**
@@ -154,10 +169,8 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
         }
 
         // If we already have a path, we shouldn't be replacing it, and we should warn if the path differs.
-        if (this.filePath != null && !this.filePath.isEmpty() && !this.filePath.equalsIgnoreCase(filePath)) {
-            getLogger().warning("Attempted to replace file name '%s' with '%s'. Not sure how to handle.", this.filePath, filePath);
-            return;
-        }
+        if (this.filePath != null && !this.filePath.isEmpty() && !this.filePath.equalsIgnoreCase(filePath) && isRegistered())
+            throw new IllegalStateException("Cannot change file-path of '" + this.filePath + "' to '" + filePath + "' while the file is registered.");
 
         // Apply data.
         this.filePath = filePath;
@@ -225,6 +238,20 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
      */
     public String getExportFolderName() {
         return "Usable";
+    }
+
+    /**
+     * Returns true iff this file's hash collides with another file's hash.
+     */
+    public boolean hasCollision() {
+        return getMainArchive().hasCollision(this);
+    }
+
+    /**
+     * Returns true iff the file is currently registered in the .bin file.
+     */
+    public boolean isRegistered() {
+        return getMainArchive().isRegistered(this);
     }
 
     /**

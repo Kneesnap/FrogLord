@@ -70,7 +70,7 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
     private static final List<String> PC_IGNORED_IMAGES_WITH_EXTRA_DATA = Arrays.asList("skycloud.img", "stmcloud.img", "ground04.img", "momring.img", "firems01.img");
 
     public GreatQuestImageFile(GreatQuestInstance instance) {
-        super(instance);
+        super(instance, GreatQuestArchiveFileType.IMAGE);
     }
 
     /**
