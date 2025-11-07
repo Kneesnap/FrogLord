@@ -58,13 +58,9 @@ import java.util.Map.Entry;
 /**
  * Represents an instance of 'Frogger: The Great Quest'.
  * TODO:
- *  -> Add extensive popup warnings for character descriptions. (Everything down to the .VTX file, or the selected resources being for another entity. Even the .bae files and the sequences. Also [Sequences] -> Mispelling the entity name should warning too.)
- *   -> Consider right-clicking a character to allow exporting a "CopyResources" section with all of the sequences for that character, descriptions, etc.
- *   -> Textures used by a 3D model which are not present in the level data seem to load without problem. Make sure this is documented.
- *   -> Need to include warnings in the UI about how animations cannot be shown by viewing .VTX files directly.
- *  -> Go over the "Export Files" feature, and ensure it exports GQS stuff well. Also, make animations export to their proper paths (Refer to resource paths for clarity on where those .baes came from)
  *  -> Determine how PS2 vs PC support will work.
  *   -> Only after this is done can we settle on how importing GQS files for different versions will work.
+ *   -> We'll probably want a C-like preprocessor.
  *  -> Allow importing textures (replacing existing ones and creating new ones) in the core data.bin file.
  *  -> Octree building (map importing)
  *  -> Model importing (and collision)
@@ -72,7 +68,6 @@ import java.util.Map.Entry;
  *   -> Editing them in FrogLord allows more easily lining them up with terrain.
  *   -> Automatically generate UVs based on a world-grid calculation. But do allow manually changing them if desired.
  *  -> Flesh out the PropertyList behavior. (Nesting!)
- *  -> Further support previewing & editing generic data.
  *  -> Improve how the scripting UI feels to use. (Eg: the UI shouldn't be completely blocked)
  *  -> Config
  *   -> How do we handle comments in the key-value-pair section? (Multi-line)

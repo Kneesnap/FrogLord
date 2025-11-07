@@ -255,20 +255,30 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
 
         // Create a map to quickly lookup entries by their names.
         Map<Integer, HashTableEntry> entryLookupByValueHash = new HashMap<>();
+        Map<String, HashTableEntry> entryLookupByName = new HashMap<>();
         for (int i = 0; i < this.entries.size(); i++) {
             HashTableEntry entry = this.entries.get(i);
             entryLookupByValueHash.put(entry.getValueRef().getHashNumber(), entry);
+            entryLookupByName.put(entry.getKeyName().toLowerCase(), entry);
         }
 
         for (Config sequenceCfg : config.getChildConfigNodes()) {
             String sequenceName = sequenceCfg.getSectionName();
             String fullSequenceResourceName = entityName + "[" + sequenceName + "]";
             kcCActionSequence oldActionSequence = getParentFile().getResourceByName(fullSequenceResourceName, kcCActionSequence.class);
+            HashTableEntry nameEntry = entryLookupByName.get(sequenceName.toLowerCase()); // Try to find the old sequence by its name.
 
             // Apply hash, if present.
             int sequenceHash;
             ConfigValueNode hashNode = sequenceCfg.getOptionalKeyValueNode(kcCActionSequence.HASH_CONFIG_FIELD);
-            if (oldActionSequence != null) {
+            if (nameEntry != null) { // Takes precedence over the oldActionSequence, because it has been observed that sometimes there are multiple sequences with the same name, but only one is in the table.
+                if (hashNode != null && hashNode.getAsInteger() != nameEntry.getValueRef().getHashNumber()) {
+                    // We cannot change the hash because when we use [CopyResources], we'll get a copy of the resource.
+                    logger.warning("The hash '%s' does not match the hash of the pre-existing action sequence, and has been ignored. (Pre-existing hash: %s)", hashNode.getAsString(), nameEntry.getValueRef().getHashNumberAsString());
+                }
+
+                sequenceHash = nameEntry.getValueRef().getHashNumber();
+            } else if (oldActionSequence != null) {
                 if (hashNode != null && hashNode.getAsInteger() != oldActionSequence.getHash()) {
                     // We cannot change the hash because when we use [CopyResources], we'll get a copy of the resource.
                     logger.warning("The hash '%s' does not match the hash of the pre-existing action sequence, and has been ignored. (Pre-existing hash: %s)", hashNode.getAsString(), oldActionSequence.getSelfHash().getHashNumberAsString());
@@ -292,6 +302,7 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
                 entry.getValueRef().setHash(sequenceHash);
                 entry.getValueRef().setResource(getParentFile().getResourceByHash(sequenceHash), true); // Avoid an issue where copying this file from another list will cause the same action sequence to be added twice (which throws an exception)
                 entryLookupByValueHash.put(sequenceHash, entry);
+                entryLookupByName.put(sequenceName.toLowerCase(), entry);
                 this.entries.add(entry);
             }
 

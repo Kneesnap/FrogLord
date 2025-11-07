@@ -2,16 +2,16 @@ package net.highwayfrogs.editor.games.konami.greatquest.script;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.KCResourceID;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceNamedHash;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceNamedHash.HashTableEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcActorBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.ILateResourceResolver;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionID;
+import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionSetAnimation;
 import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
@@ -97,7 +97,7 @@ import java.util.List;
  * Created by Kneesnap on 3/23/2020.
  */
 
-public class kcCActionSequence extends kcCResource implements kcActionExecutor {
+public class kcCActionSequence extends kcCResource implements kcActionExecutor, ILateResourceResolver {
     @Getter private final List<kcAction> actions = new ArrayList<>();
     private final GreatQuestHash<kcCResourceGeneric> cachedActorBaseDescRef = new GreatQuestHash<>();
 
@@ -316,6 +316,23 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
             return entityDesc instanceof kcActorBaseDesc ? (kcActorBaseDesc) entityDesc : null;
         } else {
             return null;
+        }
+    }
+
+    @Override
+    public void resolvePendingResources(ILogger logger) {
+        for (int i = 0; i < this.actions.size(); i++) {
+            kcAction action = this.actions.get(i);
+            if (!(action instanceof kcActionSetAnimation))
+                continue;
+
+            kcActionSetAnimation setAnimation = (kcActionSetAnimation) action;
+            GreatQuestHash<kcCResourceTrack> animationRef = setAnimation.getTrackRef();
+            if (animationRef.getResource() != null)
+                continue;
+
+            if (!GreatQuestUtils.resolveLevelResourceHash(logger, kcCResourceTrack.class, getParentFile(), this, animationRef, animationRef.getHashNumber(), false))
+                logger.warning("Sequence '%s' contains an action '%s' uses an animation which was not made accessible to this level.", getName(), action.getAsGqsStatement());
         }
     }
 }

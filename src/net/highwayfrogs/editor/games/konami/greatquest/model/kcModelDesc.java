@@ -94,4 +94,13 @@ public class kcModelDesc extends kcBaseDesc implements IInfoWriter, kcIGenericRe
     public kcCResourceModel getModel() {
         return this.modelRef.getResource();
     }
+
+    /**
+     * Get the model wrapper, if there is one.
+     * @return modelWrapper
+     */
+    public kcModelWrapper getModelWrapper() {
+        kcCResourceModel model = getModel();
+        return model != null ? model.getModelWrapper() : null;
+    }
 }

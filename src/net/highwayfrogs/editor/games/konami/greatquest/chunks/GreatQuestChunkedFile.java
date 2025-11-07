@@ -373,9 +373,6 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             if (resource.getHash() != hash)
                 continue;
 
-            if (!name.equalsIgnoreCase(resource.getName()) && !name.equalsIgnoreCase(resource.getSelfHash().getOriginalString()))
-                throw new RuntimeException("Tried to get a resource named '" + name + "'" + (resourceClass != null ? " of type " + resourceClass.getSimpleName() : "") + ", but a different resource named '" + resource.getName() + "' was found to have the same hash! (A different name/hash must be used!)");
-
             if (resourceClass != null && !resourceClass.isInstance(resource))
                 throw new RuntimeException("Expected a resource named '" + name + "' to be a(n) " + resourceClass.getSimpleName() + ", but it was actually found to be a(n) " + Utils.getSimpleName(resource) + ".");
 

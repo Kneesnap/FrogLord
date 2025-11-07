@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.ILateResourceResolver;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector3;
@@ -19,7 +20,6 @@ import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
-import net.highwayfrogs.editor.utils.objects.StringNode;
 
 /**
  * Represents the kcWaypointDesc struct.
@@ -28,7 +28,7 @@ import net.highwayfrogs.editor.utils.objects.StringNode;
  */
 @Getter
 @Setter
-public class kcWaypointDesc extends kcEntity3DDesc {
+public class kcWaypointDesc extends kcEntity3DDesc implements ILateResourceResolver {
     private final GreatQuestHash<kcCResourceGeneric> parentHash;
     @NonNull private kcWaypointType type = kcWaypointType.BOUNDING_SPHERE;
     private final GreatQuestHash<kcCResourceEntityInst> previousWaypointEntityRef; // NOTE: -1 when not found, kcCWaypoint::RenderDebug, kcCWaypoint::__ct, MonsterClass::Do_Guard
@@ -149,15 +149,12 @@ public class kcWaypointDesc extends kcEntity3DDesc {
         }
     }
 
-    /**
-     * Resolves pending waypoint entities.
-     * This would be part of {@code fromConfig(Config)} if entities weren't created after that function runs.
-     */
-    public void resolvePendingWaypointEntities(ILogger logger) {
+    @Override
+    public void resolvePendingResources(ILogger logger) {
         if (this.previousWaypointEntityRef.getOriginalString() != null && this.previousWaypointEntityRef.getResource() == null)
-            resolveResource(logger, new StringNode(this.previousWaypointEntityRef.getOriginalString()), kcCResourceEntityInst.class, this.previousWaypointEntityRef);
+            resolveResource(logger, kcCResourceEntityInst.class, this.previousWaypointEntityRef, true);
         if (this.nextWaypointEntityRef.getOriginalString() != null && this.nextWaypointEntityRef.getResource() == null)
-            resolveResource(logger, new StringNode(this.nextWaypointEntityRef.getOriginalString()), kcCResourceEntityInst.class, this.nextWaypointEntityRef);
+            resolveResource(logger, kcCResourceEntityInst.class, this.nextWaypointEntityRef, true);
     }
 
     @Override

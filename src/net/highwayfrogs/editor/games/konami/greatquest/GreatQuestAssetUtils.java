@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxEntryStr
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.*;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.ILateResourceResolver;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelDesc;
@@ -17,8 +18,6 @@ import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.system.Tuple2;
 import net.highwayfrogs.editor.utils.Utils;
-import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.MessageTrackingLogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
@@ -35,7 +34,7 @@ import java.util.Map.Entry;
 public class GreatQuestAssetUtils {
     private static final String CONFIG_SECTION_MODELS = "Models";
     private static final String CONFIG_SECTION_SOUND_EFFECTS = "SoundEffects";
-    private static final String CONFIG_SECTION_COPY_RESOURCES = "CopyResources";
+    public static final String CONFIG_SECTION_COPY_RESOURCES = "CopyResources";
     private static final String CONFIG_SECTION_DELETE_RESOURCES = "DeleteResources";
     private static final String CONFIG_SECTION_ANIMATIONS = "Animations";
     public static final String CONFIG_SECTION_ACTION_SEQUENCES = "Sequences";
@@ -84,35 +83,43 @@ public class GreatQuestAssetUtils {
     private static void applyGqsScriptGroup(ILogger logger, kcScriptList scriptList, Config gqsScriptGroup, File workingDirectory) {
         GreatQuestChunkedFile chunkedFile = scriptList.getParentFile();
 
-        // Dialog is independent of all else, so it happens first.
+        List<ILateResourceResolver> lateResolvers = new ArrayList<>();
+
+        // Resource deletion should never impact anything created as part of the gqs file, so it should run first.
+        deleteResources(chunkedFile, logger, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_DELETE_RESOURCES));
+
+        // Dialog is independent of all else, so it happens early.
         applyStringResources(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_DIALOG));
 
         // Should apply before scripts/entities.
-        applySoundEffects(workingDirectory, chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_SOUND_EFFECTS), logger);
+        applySoundEffects(chunkedFile, logger, workingDirectory, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_SOUND_EFFECTS));
 
         // Should occur before resource copying, so that any copied resources can resolve the model/collision references.
-        applyModelReferences(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_MODELS), logger);
-        applyCollisionProxies(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_COLLISION_PROXIES), logger); // Before entity descriptions, and before resource copies, so these can be resolved in both.
-        copyResources(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_COPY_RESOURCES), logger);
+        applyModelReferences(chunkedFile, logger, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_MODELS));
+        applyCollisionProxies(chunkedFile, logger, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_COLLISION_PROXIES)); // Before entity descriptions, and before resource copies, so these can be resolved in both.
+        copyResources(chunkedFile, logger, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_COPY_RESOURCES), lateResolvers);
 
         // Should occur after resource copying, so any resources done here can resolve the copied resources.
-        deleteResources(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_DELETE_RESOURCES), logger);
-        updateAnimationSets(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ANIMATIONS), logger);
-        applyActionSequences(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ACTION_SEQUENCES), logger);
+        updateAnimationSets(chunkedFile, logger, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ANIMATIONS));
+        List<kcCResourceNamedHash> sequenceTables = applyActionSequences(chunkedFile, logger, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ACTION_SEQUENCES));
 
         // This should occur after resource copying to ensure it can resolve resources. Copied resources shouldn't reference entity descriptions since entity instances (a resource which is not expected to be copied) are the only resource to resolve entity descriptions.
         // This should also happen before entity instances are applied.
-        List<kcWaypointDesc> waypoints = applyEntityDescriptions(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ENTITY_DESCRIPTIONS), logger);
-        applyLauncherParams(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_LAUNCHERS), logger); // Must run after particle emitter params (entity descriptions) and .vtx references are imported, but before scripts.
+        applyEntityDescriptions(chunkedFile, logger, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ENTITY_DESCRIPTIONS), lateResolvers);
+        applyLauncherParams(chunkedFile, logger, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_LAUNCHERS)); // Must run after particle emitter params (entity descriptions) and .vtx references are imported, but before scripts.
 
         // Run before scripts, but after entity descriptions.
-        applyEntityInstances(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ENTITIES), scriptList, logger);
-        applyScripts(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_SCRIPTS), scriptList, logger);
+        applyEntityInstances(chunkedFile, logger, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_ENTITIES), scriptList);
+        applyScripts(chunkedFile, logger, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_SCRIPTS), scriptList);
 
-        // Finish resolving waypoint descriptions. (Happens after entities are created, so the next/prev entities can be resolved successfully.
-        if (waypoints != null)
-            for (int i = 0; i < waypoints.size(); i++)
-                waypoints.get(i).resolvePendingWaypointEntities(logger);
+        // Warn about unused sequences. (Likely indicates a typo.)
+        warnAboutUnusedSequences(chunkedFile, logger, sequenceTables);
+
+        // Some resources can't fully resolve when they are loaded. (Happens after entities are created, so the next/prev entities can be resolved successfully.
+        // Some examples include waypoint descriptions referencing entity instances, or [CopyResources] requiring descriptions not yet created.
+        // Resolve all remaining resolves. This may show warnings if certain things are not resolved.
+        for (int i = 0; i < lateResolvers.size(); i++)
+            lateResolvers.get(i).resolvePendingResources(logger);
 
         // Must be done before the unused test is performed to ensure this section isn't seen as unused.
         Config includeCfg = gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_INCLUDE);
@@ -157,7 +164,7 @@ public class GreatQuestAssetUtils {
     }
 
     // Must run after particle params are loaded, and after vtx models are imported, but before scripts.
-    private static void applyLauncherParams(GreatQuestChunkedFile chunkedFile, Config launcherParamsCfg, ILogger logger) {
+    private static void applyLauncherParams(GreatQuestChunkedFile chunkedFile, ILogger logger, Config launcherParamsCfg) {
         if (launcherParamsCfg == null)
             return;
 
@@ -180,7 +187,7 @@ public class GreatQuestAssetUtils {
     }
 
     private static final String FLAG_NAME_DELETE = "Delete";
-    private static void applySoundEffects(File workingDirectory, GreatQuestChunkedFile chunkedFile, Config soundEffectsCfg, ILogger logger) {
+    private static void applySoundEffects(GreatQuestChunkedFile chunkedFile, ILogger logger, File workingDirectory, Config soundEffectsCfg) {
         if (soundEffectsCfg == null)
             return;
         if (chunkedFile.getGameInstance().getSoundChunkFile() == null)
@@ -243,7 +250,7 @@ public class GreatQuestAssetUtils {
         }
     }
 
-    private static void copyResources(GreatQuestChunkedFile chunkedFile, Config copyResourceCfg, ILogger logger) {
+    private static void copyResources(GreatQuestChunkedFile chunkedFile, ILogger logger, Config copyResourceCfg, List<ILateResourceResolver> lateResolvers) {
         if (copyResourceCfg == null)
             return;
 
@@ -271,11 +278,7 @@ public class GreatQuestAssetUtils {
                 }
 
                 // Save the resource data.
-                ArrayReceiver receiver = new ArrayReceiver();
-                DataWriter writer = new DataWriter(receiver);
-                sourceResource.save(writer);
-                writer.closeReceiver();
-                byte[] rawData = receiver.toArray();
+                byte[] rawData = sourceResource.writeDataToByteArray();
 
                 // Firstly, create the new resources in the destination.
                 kcCResource newResource = chunkedFile.getResourceByHash(sourceResource.getHash());
@@ -289,6 +292,13 @@ public class GreatQuestAssetUtils {
                 if (sourceResource.getSelfHash().getOriginalString() != null)
                     newResource.getSelfHash().setOriginalString(sourceResource.getSelfHash().getOriginalString());
 
+                // Check if this resource may need to have things resolved later.
+                if (newResource instanceof ILateResourceResolver) {
+                    lateResolvers.add((ILateResourceResolver) newResource);
+                } else if (newResource instanceof kcCResourceGeneric && ((kcCResourceGeneric) newResource).getResourceData() instanceof ILateResourceResolver) {
+                    lateResolvers.add((ILateResourceResolver) ((kcCResourceGeneric) newResource).getResourceData());
+                }
+
                 // Queue the resource to have its data loaded.
                 queuedResources.add(new Tuple2<>(newResource, rawData));
             }
@@ -299,7 +309,7 @@ public class GreatQuestAssetUtils {
             pair.getA().loadFromRawBytes(pair.getB());
     }
 
-    private static void deleteResources(GreatQuestChunkedFile chunkedFile, Config deleteResourceCfg, ILogger logger) {
+    private static void deleteResources(GreatQuestChunkedFile chunkedFile, ILogger logger, Config deleteResourceCfg) {
         if (deleteResourceCfg == null)
             return;
 
@@ -321,7 +331,7 @@ public class GreatQuestAssetUtils {
     }
 
 
-    private static void applyModelReferences(GreatQuestChunkedFile chunkedFile, Config modelCfg, ILogger logger) {
+    private static void applyModelReferences(GreatQuestChunkedFile chunkedFile, ILogger logger, Config modelCfg) {
         if (modelCfg == null)
             return;
 
@@ -371,7 +381,7 @@ public class GreatQuestAssetUtils {
         }
     }
 
-    private static void applyCollisionProxies(GreatQuestChunkedFile chunkedFile, Config collisionCfg, ILogger logger) {
+    private static void applyCollisionProxies(GreatQuestChunkedFile chunkedFile, ILogger logger, Config collisionCfg) {
         if (collisionCfg == null)
             return;
 
@@ -395,7 +405,7 @@ public class GreatQuestAssetUtils {
         }
     }
 
-    private static void updateAnimationSets(GreatQuestChunkedFile chunkedFile, Config resourceHashTableCfg, ILogger logger) {
+    private static void updateAnimationSets(GreatQuestChunkedFile chunkedFile, ILogger logger, Config resourceHashTableCfg) {
         if (resourceHashTableCfg == null)
             return;
 
@@ -430,10 +440,11 @@ public class GreatQuestAssetUtils {
         }
     }
 
-    private static void applyActionSequences(GreatQuestChunkedFile chunkedFile, Config resourceHashTableCfg, ILogger logger) {
+    private static List<kcCResourceNamedHash> applyActionSequences(GreatQuestChunkedFile chunkedFile, ILogger logger, Config resourceHashTableCfg) {
         if (resourceHashTableCfg == null)
-            return;
+            return Collections.emptyList();
 
+        List<kcCResourceNamedHash> entitySequences = new ArrayList<>();
         for (Config hashTableCfg : resourceHashTableCfg.getChildConfigNodes()) {
             String hashTableName = hashTableCfg.getSectionName() + kcCResourceNamedHash.NAME_SUFFIX;
 
@@ -445,14 +456,17 @@ public class GreatQuestAssetUtils {
             }
 
             namedHashTable.addSequencesFromConfigNode(hashTableCfg.getSectionName(), hashTableCfg, logger);
+            if (!entitySequences.contains(namedHashTable))
+                entitySequences.add(namedHashTable);
         }
+
+        return entitySequences;
     }
 
-    private static List<kcWaypointDesc> applyEntityDescriptions(GreatQuestChunkedFile chunkedFile, Config entityDescriptionsCfg, ILogger logger) {
+    private static void applyEntityDescriptions(GreatQuestChunkedFile chunkedFile, ILogger logger, Config entityDescriptionsCfg, List<ILateResourceResolver> lateResolvers) {
         if (entityDescriptionsCfg == null)
-            return Collections.emptyList();
+            return;
 
-        List<kcWaypointDesc> waypoints = new ArrayList<>();
         for (Config entityDescCfg : entityDescriptionsCfg.getChildConfigNodes()) {
             String entityDescName = entityDescCfg.getSectionName();
             kcCResourceGeneric generic = GreatQuestUtils.findLevelResourceByName(chunkedFile, entityDescName, kcCResourceGeneric.class);
@@ -471,15 +485,13 @@ public class GreatQuestAssetUtils {
 
             entityDesc.fromConfig(logger, entityDescCfg);
 
-            // Return waypoints.
-            if (entityDesc instanceof kcWaypointDesc)
-                waypoints.add((kcWaypointDesc) entityDesc);
+            // If the entity description has things to resolve later, add it. (Waypoints, actor base descriptions)
+            if (entityDesc instanceof ILateResourceResolver)
+                lateResolvers.add((ILateResourceResolver) entityDesc);
         }
-
-        return waypoints;
     }
 
-    private static void applyEntityInstances(GreatQuestChunkedFile chunkedFile, Config entityCfg, kcScriptList scriptList, ILogger logger) {
+    private static void applyEntityInstances(GreatQuestChunkedFile chunkedFile, ILogger logger, Config entityCfg, kcScriptList scriptList) {
         if (entityCfg == null)
             return;
 
@@ -517,7 +529,7 @@ public class GreatQuestAssetUtils {
             entry.getKey().addScriptFunctions(logger, scriptList, entry.getValue(), sourceName, true, false);
     }
 
-    private static void applyScripts(GreatQuestChunkedFile chunkedFile, Config scriptCfg, kcScriptList scriptList, ILogger logger) {
+    private static void applyScripts(GreatQuestChunkedFile chunkedFile, ILogger logger, Config scriptCfg, kcScriptList scriptList) {
         if (scriptCfg == null)
             return;
 
@@ -535,6 +547,34 @@ public class GreatQuestAssetUtils {
 
                 entityInst.addScriptFunctions(logger, scriptList, entityScriptCfg, sourceName, false, entityNames.length > 1);
             }
+        }
+    }
+
+    @SuppressWarnings("ExtractMethodRecommender")
+    private static void warnAboutUnusedSequences(GreatQuestChunkedFile chunkedFile, ILogger logger, List<kcCResourceNamedHash> sequenceTables) {
+        if (sequenceTables == null || sequenceTables.isEmpty())
+            return;
+
+        // Find all sequence tables actually used.
+        Set<kcCResourceNamedHash> usedSequenceTables = new HashSet<>();
+        for (kcCResource resource : chunkedFile.getChunks()) {
+            if (!(resource instanceof kcCResourceGeneric))
+                continue;
+
+            kcEntity3DDesc entityDesc = ((kcCResourceGeneric) resource).getAsEntityDescription();
+            if (!(entityDesc instanceof kcActorBaseDesc))
+                continue;
+
+            kcCResourceNamedHash sequenceTable = ((kcActorBaseDesc) entityDesc).getAnimationSequences();
+            if (sequenceTable != null)
+                usedSequenceTables.add(sequenceTable);
+        }
+
+        // Test each sequence table.
+        for (int i = 0; i < sequenceTables.size(); i++) {
+            kcCResourceNamedHash namedHash = sequenceTables.get(i);
+            if (!usedSequenceTables.contains(namedHash))
+                logger.warning("The action sequence table '%s' is never used. This may indicate a typo in the sequence definition.", namedHash.getName());
         }
     }
 }

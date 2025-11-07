@@ -63,6 +63,15 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
 
         this.sequencePlayback = new GreatQuestActionSequencePlayback(getMesh());
 
+        if (getMesh().getSkeleton() == null) {
+            Label animLabel1 = new Label("To view animations, open an entity");
+            Label animLabel2 = new Label(" description instead of a .VTX file.");
+            animLabel1.setUnderline(true);
+            animLabel2.setUnderline(true);
+            addToViewSettingsGrid(animLabel1, HPos.LEFT);
+            addToViewSettingsGrid(animLabel2, HPos.LEFT);
+        }
+
         // Setup skeleton view toggle.
         this.showSkeletonCheckBox = new CheckBox("Show Skeleton");
         this.showSkeletonCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> this.skeletonMeshView.setVisible(newValue));

@@ -21,6 +21,7 @@ import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
@@ -188,6 +189,33 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
      */
     protected void resolveResource(ILogger logger, StringNode node, IkcCResourceGenericTypeGroup resourceType, GreatQuestHash<kcCResourceGeneric> hashObj) {
         GreatQuestUtils.resolveLevelResource(logger, node, resourceType, getParentFile(), getResource(), hashObj, true);
+    }
+
+    /**
+     * Resolves a resource from a config node.
+     * @param resourceClass the type of resource to resolve
+     * @param hashObj the hash object to apply the result to
+     * @param <TResource> the type of resource to resolve
+     */
+    protected <TResource extends kcHashedResource> boolean resolveResource(ILogger logger, Class<TResource> resourceClass, GreatQuestHash<TResource> hashObj, boolean warnIfNotFound) {
+        if (!StringUtils.isNullOrWhiteSpace(hashObj.getOriginalString())) {
+            return GreatQuestUtils.resolveLevelResource(logger, new StringNode(hashObj.getOriginalString()), resourceClass, getParentFile(), getResource(), hashObj, warnIfNotFound);
+        } else {
+            return GreatQuestUtils.resolveLevelResourceHash(logger, resourceClass, getParentFile(), getResource(), hashObj, hashObj.getHashNumber(), warnIfNotFound);
+        }
+    }
+
+    /**
+     * Resolves a resource from a config node.
+     * @param resourceType the type of resource to resolve
+     * @param hashObj the hash object to apply the result to
+     */
+    protected boolean resolveResource(ILogger logger, IkcCResourceGenericTypeGroup resourceType, GreatQuestHash<kcCResourceGeneric> hashObj, boolean warnIfNotFound) {
+        if (!StringUtils.isNullOrWhiteSpace(hashObj.getOriginalString())) {
+            return GreatQuestUtils.resolveLevelResource(logger, new StringNode(hashObj.getOriginalString()), resourceType, getParentFile(), getResource(), hashObj, warnIfNotFound);
+        } else {
+            return GreatQuestUtils.resolveLevelResourceHash(logger, resourceType, getParentFile(), getResource(), hashObj, hashObj.getHashNumber(), warnIfNotFound);
+        }
     }
 
     /**

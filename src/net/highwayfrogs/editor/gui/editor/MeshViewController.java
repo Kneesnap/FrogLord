@@ -7,6 +7,7 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.HPos;
 import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
@@ -384,6 +385,20 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         GridPane.setRowIndex(rightNode, oldSize);
         getViewSettingsPane().getChildren().add(leftNode);
         getViewSettingsPane().getChildren().add(rightNode);
+    }
+
+    /**
+     * Adds a node to the view settings grid.
+     * @param node the node to place
+     */
+    protected void addToViewSettingsGrid(Node node, HPos alignment) {
+        RowConstraints example = getViewSettingsPane().getRowConstraints().get(0);
+        getViewSettingsPane().getRowConstraints().add(new RowConstraints(example.getMinHeight(), example.getPrefHeight(), example.getMaxHeight(), example.getVgrow(), example.getValignment(), example.isFillHeight()));
+        GridPane.setHalignment(node, alignment);
+        GridPane.setColumnSpan(node, 2);
+        GridPane.setColumnIndex(node, 0);
+        GridPane.setRowIndex(node, getViewSettingsPane().getRowConstraints().size() - 1);
+        getViewSettingsPane().getChildren().add(node);
     }
 
     /**

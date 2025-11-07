@@ -94,17 +94,17 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
     private static final String CONFIG_KEY_SOURCE_BLEND = "srcBlend";
     private static final String CONFIG_KEY_DESTINATION_BLEND = "dstBlend";
     private static final String CONFIG_KEY_TEXTURE = "texture";
-    private static final String CONFIG_KEY_LIFETIME_EMITTER = "lifeTimeEmitter";
+    private static final String CONFIG_KEY_LIFETIME = "lifeTime";
 
     @Override
     public void fromConfig(ILogger logger, Config input) {
         super.fromConfig(logger, input);
         this.srcBlend = input.getOrDefaultKeyValueNode(CONFIG_KEY_SOURCE_BLEND).getAsEnum(kcBlend.ONE);
         this.dstBlend = input.getOrDefaultKeyValueNode(CONFIG_KEY_DESTINATION_BLEND).getAsEnum(kcBlend.ONE);
-        this.lifeTimeEmitter = input.getOrDefaultKeyValueNode(CONFIG_KEY_LIFETIME_EMITTER).getAsFloat(-1);
+        this.lifeTimeEmitter = input.getOrDefaultKeyValueNode(CONFIG_KEY_LIFETIME).getAsFloat(-1);
         this.resolveResource(logger, input.getOptionalKeyValueNode(CONFIG_KEY_TEXTURE), GreatQuestChunkTextureReference.class, this.textureRef);
         if (this.lifeTimeEmitter < -1 || this.lifeTimeEmitter >= 60) // Allow zero as the indicator to use from the kcParticleParam struct instead.
-            throw new RuntimeException("The lifeTimeEmitter value (" + this.lifeTimeEmitter + ") was not in the expected range!");
+            throw new RuntimeException("The " + CONFIG_KEY_LIFETIME + " value (" + this.lifeTimeEmitter + ") was not in the expected range of [-1, 60)!");
 
         this.particleParam.fromConfig(logger, input);
     }
@@ -115,7 +115,7 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
         output.getOrCreateKeyValueNode(CONFIG_KEY_SOURCE_BLEND).setAsEnum(this.srcBlend);
         output.getOrCreateKeyValueNode(CONFIG_KEY_DESTINATION_BLEND).setAsEnum(this.dstBlend);
         output.getOrCreateKeyValueNode(CONFIG_KEY_TEXTURE).setAsString(this.textureRef.getAsGqsString(settings));
-        output.getOrCreateKeyValueNode(CONFIG_KEY_LIFETIME_EMITTER).setAsFloat(this.lifeTimeEmitter);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_LIFETIME).setAsFloat(this.lifeTimeEmitter);
         this.particleParam.toConfig(output);
     }
 

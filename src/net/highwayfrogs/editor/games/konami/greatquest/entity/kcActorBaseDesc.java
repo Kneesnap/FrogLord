@@ -1,24 +1,31 @@
 package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestAssetUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.ILateResourceResolver;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericTypeGroup;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelViewController;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -34,7 +41,7 @@ import java.util.List;
  */
 @Getter
 @Setter
-public class kcActorBaseDesc extends kcEntity3DDesc {
+public class kcActorBaseDesc extends kcEntity3DDesc implements ILateResourceResolver {
     private final GreatQuestHash<kcCResourceGeneric> parentHash;
     private final GreatQuestHash<kcCResourceGeneric> modelDescRef;
     private final GreatQuestHash<kcCResourceSkeleton> hierarchyRef; // If this value is -1, it means create a new kcCAnimCtl with CID_PRS for the animation controller. Otherwise, create a new kcCSkeleton from this. kcCSkeleton::InitHierarchy() will be called whenever the hash is not -1.
@@ -223,6 +230,34 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         validateBoundingSphere(logger, input);
     }
 
+    @Override
+    public void resolvePendingResources(ILogger logger) {
+        // Warn about invisible model descriptions.
+        kcModelDesc modelDesc = getModelDescription();
+        kcCResourceModel resourceModel;
+        if (modelDesc == null) {
+            // If this model hash is null, this was probably intentionally left blank.
+            if (!this.modelDescRef.isHashNull() && !resolveResource(logger, kcCResourceGenericType.MODEL_DESCRIPTION, this.modelDescRef, false))
+                logger.warning("The %s was not found for entity description '%s', so any entities using it will be invisible! (%s)", CONFIG_KEY_MODEL_DESC, getResourceName(), this.modelDescRef.getAsGqsString(null));
+        } else if ((resourceModel = modelDesc.getModel()) == null) {
+            logger.warning("The %s named '%s' could not find the kcCResourceModel %s, so any entities using %s will be invisible!", CONFIG_KEY_MODEL_DESC, modelDesc.getResourceName(), modelDesc.getModelRef().getAsString(), getResourceName());
+        } else if (resourceModel.getModel() == null) {
+            logger.warning("The kcCResourceModel named '%s' could not resolve the file path '%s', so any entities using %s will be invisible!", resourceModel.getName(), resourceModel.getFullPath(), getResourceName());
+        }
+
+        if (getSkeleton() == null && !this.hierarchyRef.isHashNull() && !resolveResource(logger, kcCResourceSkeleton.class, this.hierarchyRef, false))
+            logger.warning("The entity description '%s' could not resolve its skeleton! (Skeleton: %s)", getResourceName(), this.hierarchyRef.getAsGqsString(null));
+
+        if (getAnimationSet() == null && !this.animSetRef.isHashNull() && !resolveResource(logger, kcCResourceAnimSet.class, this.animSetRef, false))
+            logger.warning("The entity description '%s' could not resolve its animation set! (Animation Set: %s)", getResource(), this.animSetRef.getAsGqsString(null));
+
+        if (getCollisionProxyDescription() == null && !this.proxyDescRef.isHashNull() && !resolveResource(logger, kcCResourceGenericTypeGroup.PROXY_DESCRIPTION, this.proxyDescRef, false))
+            logger.warning("The entity description '%s' could not resolve its collision proxy description! (Collision Proxy: %s)", getResource(), this.proxyDescRef.getAsGqsString(null));
+
+        if (getAnimationSequences() == null && !this.animationSequencesRef.isHashNull() && !resolveResource(logger, kcCResourceNamedHash.class, this.animationSequencesRef, false))
+            logger.warning("The entity description '%s' could not resolve its sequence table! (Sequence Tables: %s)", getResource(), this.animationSequencesRef.getAsGqsString(null));
+    }
+
     private void validateBoundingSphere(ILogger logger, Config input) {
         kcCResourceGeneric proxyDescResource = this.proxyDescRef.getResource();
         if (proxyDescResource == null)
@@ -258,12 +293,67 @@ public class kcActorBaseDesc extends kcEntity3DDesc {
         output.getOrCreateKeyValueNode(CONFIG_KEY_ACTION_SEQUENCES).setAsString(this.animationSequencesRef.getAsGqsString(settings));
     }
 
+    @Override
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        super.setupRightClickMenuItems(contextMenu);
+
+        MenuItem copyGqsItem = new MenuItem("Apply [" + GreatQuestAssetUtils.CONFIG_SECTION_COPY_RESOURCES + "] to Clipboard");
+        contextMenu.getItems().add(copyGqsItem);
+        copyGqsItem.setOnAction(event -> {
+            Config config = toCopyResourcesConfig();
+            String configText = config.toString();
+            FXUtils.setClipboardText(configText);
+            FXUtils.showPopup(AlertType.INFORMATION, "Applied GQS to clipboard.", configText);
+        });
+    }
+
+    /**
+     * Creates a gqs copy resources config containing everything the entity needs.
+     */
+    public Config toCopyResourcesConfig() {
+        Config root = new Config("clipboard");
+        Config copyResources = new Config(GreatQuestAssetUtils.CONFIG_SECTION_COPY_RESOURCES);
+        root.addChildConfig(copyResources);
+        Config levelNode = new Config(getParentFile().getFilePath());
+        copyResources.addChildConfig(levelNode);
+
+        levelNode.getInternalText().add(new ConfigValueNode(getResourceName()));
+        if (getModelDescription() != null)
+            levelNode.getInternalText().add(new ConfigValueNode(getModelDescription().getResourceName()));
+        if (getSkeleton() != null)
+            levelNode.getInternalText().add(new ConfigValueNode(getSkeleton().getName()));
+        if (getAnimationSet() != null)
+            levelNode.getInternalText().add(new ConfigValueNode(getAnimationSet().getName()));
+        if (getCollisionProxyDescription() != null)
+            levelNode.getInternalText().add(new ConfigValueNode(getCollisionProxyDescription().getResourceName()));
+        if (getAnimationSequences() != null)
+            levelNode.getInternalText().add(new ConfigValueNode(getAnimationSequences().getName()));
+
+        // Add animations
+        List<kcCResourceTrack> animations = GreatQuestModelMesh.getAnimations(this);
+        if (animations.size() > 0) {
+            levelNode.getInternalText().add(new ConfigValueNode(""));
+            for (int i = 0; i < animations.size(); i++)
+                levelNode.getInternalText().add(new ConfigValueNode(animations.get(i).getName()));
+        }
+
+        // Add sequences.
+        List<kcCActionSequence> sequences = GreatQuestModelMesh.getActionSequences(this);
+        if (sequences.size() > 0) {
+            levelNode.getInternalText().add(new ConfigValueNode(""));
+            for (int i = 0; i < sequences.size(); i++)
+                levelNode.getInternalText().add(new ConfigValueNode(sequences.get(i).getName()));
+        }
+
+        return root;
+    }
+
     private void applyNameToDescriptions() {
         if (getResource() == null)
             return;
 
         // If we resolve the model successfully, our goal is to generate the name of any corresponding collision mesh.
-        String baseName = getResource().getName();
+        String baseName = getResourceName();
         if (baseName.endsWith(NAME_SUFFIX))
             baseName = baseName.substring(0, baseName.length() - NAME_SUFFIX.length());
 

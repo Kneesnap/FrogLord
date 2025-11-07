@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.animation.kcTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcAnimState;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton.kcNode;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcActorBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.model.*;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
@@ -311,10 +312,27 @@ public class GreatQuestModelMesh extends DynamicMesh {
         return false;
     }
 
+    /**
+     * Gets all the action sequences available for a particular actor description
+     * @param actorDesc the actor description
+     * @return sequences
+     */
+    public static List<kcCActionSequence> getActionSequences(kcActorBaseDesc actorDesc) {
+        kcCResourceNamedHash sequenceTable = actorDesc.getAnimationSequences();
+        List<kcCActionSequence> oldSequences = sequenceTable != null ? sequenceTable.getSequences() : Collections.emptyList();
+        List<kcCActionSequence> newSequences = getActionSequences(actorDesc.getParentFile(), actorDesc.getResourceName(), oldSequences);
+        newSequences.sort(GreatQuestChunkedFile.RESOURCE_ORDERING);
+        return newSequences;
+    }
+
     private static List<kcCActionSequence> getActionSequences(kcCResourceNamedHash hashTable) {
-        List<kcCActionSequence> sequences = hashTable.getSequences();
-        String name = hashTable.getBaseName().toLowerCase();
-        for (kcCResource resource : hashTable.getParentFile().getChunks()) {
+        return getActionSequences(hashTable.getParentFile(), hashTable.getBaseName(), hashTable.getSequences());
+    }
+
+    private static List<kcCActionSequence> getActionSequences(GreatQuestChunkedFile chunkedFile, String actorDescName, List<kcCActionSequence> oldSequences) {
+        List<kcCActionSequence> sequences = new ArrayList<>(oldSequences);
+        String name = actorDescName.toLowerCase();
+        for (kcCResource resource : chunkedFile.getChunks()) {
             if (!(resource instanceof kcCActionSequence))
                 continue;
 
@@ -324,6 +342,25 @@ public class GreatQuestModelMesh extends DynamicMesh {
         }
 
         return sequences;
+    }
+
+    /**
+     * Gets all the animations available for a particular actor description
+     * @param actorDesc the actor description
+     * @return animations
+     */
+    public static List<kcCResourceTrack> getAnimations(kcActorBaseDesc actorDesc) {
+        kcCResourceSkeleton skeleton = actorDesc != null ? actorDesc.getSkeleton() : null;
+        kcModelDesc modelDesc = actorDesc != null ? actorDesc.getModelDescription() : null;
+        kcModelWrapper modelWrapper = modelDesc != null ? modelDesc.getModelWrapper() : null;
+        if (skeleton == null || modelWrapper == null)
+            return Collections.emptyList();
+
+        kcCResourceAnimSet animationSet = actorDesc.getAnimationSet();
+        List<kcCResourceTrack> oldAnimations = animationSet != null ? animationSet.getAnimations() : Collections.emptyList();
+        List<kcCResourceTrack> newAnimations = getAnimations(skeleton, modelWrapper, oldAnimations);
+        newAnimations.sort(GreatQuestChunkedFile.RESOURCE_ORDERING);
+        return newAnimations;
     }
 
     private static List<kcCResourceTrack> getAnimations(kcCResourceSkeleton skeleton, kcModelWrapper modelWrapper, List<kcCResourceTrack> oldAnimations) {

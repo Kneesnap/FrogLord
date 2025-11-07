@@ -477,7 +477,7 @@ See `SetPosition` for any limitations.
 > - Patch the game executable to fix this bug. (Hasn't been done yet.)  
 >
 > Further research/debugging is necessary to determine what causes this issue. <!-- TODO: Do this research -->  
-> This issue does not seem to impact non-character entities (props, items, etc).  
+> This issue does not seem to impact non-character entities, although this might just be due to them not having `collideWith=Terrain`.  
 
 ### AddToAxisPosition (Script Only)
 **Summary:** Offsets the script owner's current position by the given value on the specified axis.  
@@ -571,6 +571,11 @@ As such, it is usually recommended to use `SetAnimation` in action sequences ins
 # This seems to combine the current animation with any new ones
 # Eg: Only the bones which aren't animated on the existing sequence will be animated from the new one.
 ```
+
+> [!NOTE]  
+> By default, all entities use the `NrmIdle01` sequence.  
+> But on the PC version, entities T-Pose until the player gets near them.  
+> This can be fixed by adding `Entity.Activate` or `Entity.EnableUpdates` in `cause=OnLevel BEGIN`.  
 
 ### Wait (Action Sequence Only)
 **Summary:** Wait a given amount of time before continuing the action sequence.  
