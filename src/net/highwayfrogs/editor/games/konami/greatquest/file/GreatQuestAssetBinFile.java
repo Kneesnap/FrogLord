@@ -8,6 +8,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestModData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
+import net.highwayfrogs.editor.games.konami.greatquest.model.kcFvFUtil;
+import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.*;
@@ -19,6 +21,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * Parses FTGQ's main game data file. It's called "data.bin" in all builds we've seen so far.
@@ -41,7 +45,9 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
 
     private static final Comparator<GreatQuestArchiveFile> FILE_ORDERING =
             Comparator.comparingInt((GreatQuestArchiveFile file) -> file.getFileType().ordinal()) // #1) File Type
-                    .thenComparing(GreatQuestAssetBinFile::getFilePathOrNeighborFilePath); // #2) File path
+                    .thenComparingInt(GreatQuestAssetBinFile::getImageSortingValue) // #2a) Image Type
+                    .thenComparingInt(GreatQuestAssetBinFile::getModelSortingValue) // #2b) Model has compressed vertices?
+                    .thenComparing(GreatQuestAssetBinFile::getFilePathOrNeighborFilePath); // #3) File path
 
     public static final int NAME_SIZE = 0x108;
 
@@ -671,14 +677,46 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
             return readFile;
         }
     }
-    private static String getSortableString(String input) {
-        return (FileUtils.stripExtension(input.toLowerCase()));
+
+    private static int getImageSortingValue(GreatQuestArchiveFile file) {
+        if (file.getFileType() != GreatQuestArchiveFileType.IMAGE)
+            return -1; // Dummy .img files will continue here.
+
+        // PS2 compressed models are sorted before non-compressed models.
+        GreatQuestImageFile imageFile = getSelfOrValidNeighborFile(file,
+                testFile -> testFile instanceof GreatQuestImageFile,
+                testFile -> (GreatQuestImageFile) testFile, null);
+
+        return imageFile != null ? ((GreatQuestImageFile) file).getFileFormat().ordinal() : -1;
+    }
+
+    private static int getModelSortingValue(GreatQuestArchiveFile file) {
+        if (file.getFileType() != GreatQuestArchiveFileType.MODEL)
+            return -1; // Dummy .VTX files will continue here.
+
+        // PS2 compressed models are sorted before non-compressed models.
+        kcModel model = getSelfOrValidNeighborFile(file,
+                testFile -> testFile instanceof kcModelWrapper,
+                testFile -> ((kcModelWrapper) testFile).getModel(), null);
+
+        return model != null ? (((model.getFvf() & kcFvFUtil.FVF_FLAG_COMPRESSED) != kcFvFUtil.FVF_FLAG_COMPRESSED) ? 1 : 0) : -1;
     }
 
     private static String getFilePathOrNeighborFilePath(GreatQuestArchiveFile file) {
-        String filePath = file.getFilePath();
-        if (!StringUtils.isNullOrWhiteSpace(filePath))
-            return getSortableString(filePath);
+        return getSelfOrValidNeighborFile(file,
+                testFile -> !StringUtils.isNullOrWhiteSpace(testFile.getFilePath()),
+                GreatQuestAssetBinFile::getSortableFilePath, "");
+    }
+
+    private static String getSortableFilePath(GreatQuestArchiveFile file) {
+        // The extension is stripped because the files are already sorted by file type and thus there's no reason to include the extension.
+        // Or at least that's my guess for why the original developers sorted this way.
+        return FileUtils.stripExtension(file.getFilePath().toLowerCase());
+    }
+
+    private static <T> T getSelfOrValidNeighborFile(GreatQuestArchiveFile file, Predicate<GreatQuestArchiveFile> fileTester, Function<GreatQuestArchiveFile, T> valueGetter, T defaultValue) {
+        if (fileTester.test(file))
+            return valueGetter.apply(file);
 
         // In the case of a file without a name, we want to preserve the existing order, so we'll get a neighbor.
         GreatQuestAssetBinFile binFile = file.getMainArchive();
@@ -690,14 +728,15 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         int maxSearch = Math.max(fileIndex, binFile.getFiles().size() - fileIndex);
         for (int i = 0; i < maxSearch; i++) {
             int minIndex = fileIndex - i - 1;
-            if (minIndex > 0 && !StringUtils.isNullOrWhiteSpace((testFile = binFile.getFiles().get(minIndex)).getFilePath()))
-                return getSortableString(testFile.getFilePath());
+            if (minIndex > 0 && fileTester.test(testFile = binFile.getFiles().get(minIndex)))
+                return valueGetter.apply(testFile);
 
             int maxIndex = fileIndex + i + 1;
-            if (maxIndex < binFile.getFiles().size() && !StringUtils.isNullOrWhiteSpace((testFile = binFile.getFiles().get(maxIndex)).getFilePath()))
-                return getSortableString(testFile.getFilePath());
+            if (maxIndex < binFile.getFiles().size() && fileTester.test(testFile = binFile.getFiles().get(maxIndex)))
+                return valueGetter.apply(testFile);
         }
 
-        return ""; // No files exist which we can try.
+        return defaultValue; // No files exist which we can try.
     }
+
 }

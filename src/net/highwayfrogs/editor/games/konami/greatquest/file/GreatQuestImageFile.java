@@ -287,7 +287,7 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
 
     @Override
     public void save(DataWriter writer) {
-        if ((this.fileFormat == GreatQuestImageFileFormat.ENGINE) || getGameInstance().isPC()) { // Based on kcImageSave(_kcImage p, int handle)
+        if (this.fileFormat == GreatQuestImageFileFormat.ENGINE) { // Based on kcImageSave(_kcImage p, int handle)
             writer.writeInt(SIGNATURE);
             int headerSizeAddress = writer.writeNullPointer();
             writer.writeInt(this.image.getWidth()); // width
@@ -445,10 +445,23 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
         this.image = image;
 
         // Automatically update the file format to match the necessary option for the newly applied image format.
-        if (format == kcImageFormat.INDEXED8) {
-            this.fileFormat = GreatQuestImageFileFormat.TGA;
+        GreatQuestImageFileFormat oldFormat = this.fileFormat;
+        GreatQuestImageFileFormat newFormat;
+        if (format == kcImageFormat.A8R8G8B8) {
+            newFormat = GreatQuestImageFileFormat.ENGINE;
         } else {
-            this.fileFormat = GreatQuestImageFileFormat.ENGINE;
+            // Both R8G8B8 and INDEXED8 are stored as .tga.
+            newFormat = GreatQuestImageFileFormat.TGA;
+        }
+
+        // If the format changes, this impacts the file ordering, so re-register the file.
+        if (oldFormat != newFormat) {
+            if (getMainArchive().removeFile(this)) {
+                this.fileFormat = newFormat; // Must change only after removal, but BEFORE adding.
+                getMainArchive().addFile(this);
+            } else {
+                this.fileFormat = newFormat; // Must change only after removal, so this if statement is necessary.
+            }
         }
     }
 
