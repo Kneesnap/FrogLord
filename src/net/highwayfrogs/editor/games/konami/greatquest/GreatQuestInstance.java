@@ -61,7 +61,6 @@ import java.util.Map.Entry;
  *  -> Determine how PS2 vs PC support will work.
  *   -> Only after this is done can we settle on how importing GQS files for different versions will work.
  *   -> We'll probably want a C-like preprocessor.
- *  -> Allow importing textures (replacing existing ones and creating new ones) in the core data.bin file.
  *  -> Octree building (map importing)
  *  -> Model importing (and collision)
  *  -> Allow editing water meshes inside of FrogLord. (Even if exporting them is still okay).
@@ -288,7 +287,7 @@ public class GreatQuestInstance extends GameInstance {
                 kcTrackKeyLinearScale.class);
         engine.addWrapperTemplates(SBRFile.class, SfxWavePC.class, SfxWavePS2.class, SfxEntry.class,
                 SfxEntryStreamAttributes.class,SfxEntrySimpleAttributes.class, SoundChunkFile.class, SoundChunkEntry.class);
-        engine.addWrapperTemplates(kcCResource.class, GreatQuestChunkTextureReference.class, GreatQuestDummyFileChunk.class,
+        engine.addWrapperTemplates(kcCResource.class, kcCResourceTexture.class, kcCResourceDummy.class,
                 kcCResOctTreeSceneMgr.class, kcCResourceAnimSet.class, kcCResourceEntityInst.class,
                 kcCResourceModel.class, kcCResourceNamedHash.class, kcCResourceSkeleton.class,
                 kcCResourceTableOfContents.class, kcCResourceTrack.class, kcCResourceTriMesh.class,

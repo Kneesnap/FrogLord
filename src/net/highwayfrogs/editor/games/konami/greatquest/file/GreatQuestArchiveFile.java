@@ -174,9 +174,7 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
 
         // Apply data.
         this.filePath = filePath;
-        this.fileName = filePath;
-        if (filePath != null && filePath.contains("\\")) // Remove path.
-            this.fileName = filePath.substring(filePath.lastIndexOf("\\") + 1);
+        this.fileName = getFileNameFromPath(filePath);
     }
 
     /**
@@ -274,5 +272,18 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
                 throw new RuntimeException("Failed to export file '" + getDebugName() + "' to usable format.", ex);
             }
         }
+    }
+
+    /**
+     * Gets the file name from the file path.
+     * @param filePath the file path to condense into a file name
+     * @return fileName
+     */
+    public static String getFileNameFromPath(String filePath) {
+        if (filePath == null)
+            return null;
+
+        int backSlashIndex = filePath.lastIndexOf('\\');
+        return backSlashIndex >= 0 ? filePath.substring(backSlashIndex + 1) : filePath;
     }
 }

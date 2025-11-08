@@ -35,11 +35,17 @@ public class kcCResourceModel extends kcCResource {
         super.load(reader);
         this.fullPath = reader.readNullTerminatedFixedSizeString(FULL_PATH_SIZE); // Don't read with the padding byte, as the padding bytes are only valid when the buffer is initially created, if the is shrunk (Such as GOOBER.VTX in 00.dat), after the null byte, the old bytes will still be there.
 
-        String partialName = GreatQuestUtils.getFileNameFromPath(this.fullPath);
-        int testHash = GreatQuestUtils.hash(partialName);
-        if (testHash == getHash())
-            getSelfHash().setOriginalString(partialName);
+        // Validate file name.
+        String fileName = GreatQuestUtils.getFileNameFromPath(this.fullPath);
+        if (!fileName.equalsIgnoreCase(getName()) && !kcCResource.DEFAULT_RESOURCE_NAME.equalsIgnoreCase(getName()))
+            getLogger().warning("The file name was expected to match the resource name ('%s'), but it determined to actually be '%s' instead.", getName(), fileName);
 
+        // Apply original string just in-case any of these are 'unnamed'. (Happens occasionally)
+        int testHash = GreatQuestUtils.hash(fileName);
+        if (testHash == getHash())
+            getSelfHash().setOriginalString(fileName);
+
+        // Apply the file name found here to the corresponding global file.
         GreatQuestAssetBinFile mainArchive = getMainArchive();
         if (mainArchive != null)
             mainArchive.applyFileName(this.fullPath, false);

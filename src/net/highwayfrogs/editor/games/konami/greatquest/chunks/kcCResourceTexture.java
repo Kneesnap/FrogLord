@@ -20,12 +20,12 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
  * Created by Kneesnap on 8/25/2019.
  */
 @Getter
-public class GreatQuestChunkTextureReference extends kcCResource {
+public class kcCResourceTexture extends kcCResource {
     private String fullPath = "";
 
     private static final int PATH_SIZE = 260;
 
-    public GreatQuestChunkTextureReference(GreatQuestChunkedFile parentFile) {
+    public kcCResourceTexture(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.TEXTURE);
     }
 
@@ -33,6 +33,11 @@ public class GreatQuestChunkTextureReference extends kcCResource {
     public void load(DataReader reader) {
         super.load(reader);
         this.fullPath = reader.readNullTerminatedFixedSizeString(PATH_SIZE); // Don't read with the padding byte, as the padding bytes are only valid when the buffer is initially created, if the is shrunk (Such as shadow.img in 00.dat), after the null byte, the old bytes will still be there.
+
+        // Validate file name.
+        String fileName = GreatQuestUtils.getFileNameFromPath(this.fullPath);
+        if (!fileName.equalsIgnoreCase(getName()))
+            getLogger().warning("The file name was expected to match the resource name ('%s'), but it determined to actually be '%s' instead.", getName(), fileName);
 
         // Apply the file name.
         GreatQuestAssetBinFile mainArchive = getMainArchive();
@@ -53,7 +58,6 @@ public class GreatQuestChunkTextureReference extends kcCResource {
             return null;
 
         return new ImageView(FXUtils.toFXImage(imageFile.getImage(), false));
-
     }
 
     @Override
@@ -65,8 +69,6 @@ public class GreatQuestChunkTextureReference extends kcCResource {
         propertyList = super.addToPropertyList(propertyList);
         propertyList.add("File Path", this.fullPath,
                 () -> InputMenu.promptInputBlocking(getGameInstance(), "Please enter the new path.", this.fullPath, newPath -> setFullPath(newPath, true)));
-
-        propertyList.add("Info", "");
 
         return propertyList;
     }

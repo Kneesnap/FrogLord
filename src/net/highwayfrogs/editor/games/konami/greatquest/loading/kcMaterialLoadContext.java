@@ -286,10 +286,10 @@ public class kcMaterialLoadContext {
         if (cachedImages == null) {
             this.chunkedFileImageCache.put(chunkedFile, cachedImages = new HashMap<>());
             for (kcCResource resource : chunkedFile.getChunks()) {
-                if (!(resource instanceof GreatQuestChunkTextureReference))
+                if (!(resource instanceof kcCResourceTexture))
                     continue;
 
-                GreatQuestChunkTextureReference texRef = (GreatQuestChunkTextureReference) resource;
+                kcCResourceTexture texRef = (kcCResourceTexture) resource;
                 GreatQuestImageFile referencedImage = texRef.getReferencedImage();
                 if (referencedImage != null)
                     cachedImages.put(strippedTextureFileName, referencedImage);

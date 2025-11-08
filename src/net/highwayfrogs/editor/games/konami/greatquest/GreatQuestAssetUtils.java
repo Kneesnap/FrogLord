@@ -1,11 +1,14 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
+import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxEntryStreamAttributes;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.*;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestImageFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.ILateResourceResolver;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
@@ -13,16 +16,21 @@ import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDescType;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.system.Tuple2;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.MessageTrackingLogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 import net.highwayfrogs.editor.utils.objects.StringNode;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.*;
 import java.util.Map.Entry;
@@ -32,6 +40,7 @@ import java.util.Map.Entry;
  * Created by Kneesnap on 11/2/2024.
  */
 public class GreatQuestAssetUtils {
+    private static final String CONFIG_SECTION_TEXTURES = "Textures";
     private static final String CONFIG_SECTION_MODELS = "Models";
     private static final String CONFIG_SECTION_SOUND_EFFECTS = "SoundEffects";
     public static final String CONFIG_SECTION_COPY_RESOURCES = "CopyResources";
@@ -92,6 +101,7 @@ public class GreatQuestAssetUtils {
         applyStringResources(chunkedFile, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_DIALOG));
 
         // Should apply before scripts/entities.
+        applyTextures(chunkedFile, logger, workingDirectory, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_TEXTURES));
         applySoundEffects(chunkedFile, logger, workingDirectory, gqsScriptGroup.getChildConfigByName(CONFIG_SECTION_SOUND_EFFECTS));
 
         // Should occur before resource copying, so that any copied resources can resolve the model/collision references.
@@ -197,55 +207,56 @@ public class GreatQuestAssetUtils {
         SBRFile sbrFile = chunkedFile.getSoundBankFile();
         if (sbrFile == null) {
             logger.warning("Skipping sound file references in %s, as the sound bank file could not be resolved.", sourceName);
-        } else {
-            for (String line : soundEffectsCfg.getTextWithoutComments()) {
-                OptionalArguments arguments = OptionalArguments.parse(line);
-                String filePath = arguments.useNext().getAsString();
-                int sfxId = chunkedFile.getGameInstance().getSfxIdFromFullSoundPath(filePath);
-                boolean deleteEntry = arguments.useFlag(FLAG_NAME_DELETE);
+            return;
+        }
 
-                SfxEntry sfxEntry = null;
-                if (sfxId < 0) {
-                    if (!arguments.has(SfxEntry.FLAG_NAME_IMPORT)) { // If we're importing, then we create a new sound instead!
-                        logger.warning("Skipping sound file reference '%s' in %s, it could not be resolved.", filePath, sourceName);
-                        continue;
-                    }
+        for (String line : soundEffectsCfg.getTextWithoutComments()) {
+            OptionalArguments arguments = OptionalArguments.parse(line);
+            String filePath = arguments.useNext().getAsString();
+            int sfxId = chunkedFile.getGameInstance().getSfxIdFromFullSoundPath(filePath);
+            boolean deleteEntry = arguments.useFlag(FLAG_NAME_DELETE);
 
-                    // Continue by building a new entry.
-                    sfxId = chunkedFile.getGameInstance().useNextFreeSoundIdSlot();
-                    chunkedFile.getGameInstance().getSoundModData().setUserSfxFullPath(sfxId, filePath);
-                } else {
-                    // Find the entry using this ID.
-                    for (int i = 0; i < sbrFile.getSoundEffects().size(); i++) {
-                        SfxEntry tempEntry = sbrFile.getSoundEffects().get(i);
-                        if (tempEntry.getSfxId() == sfxId) {
-                            sfxEntry = tempEntry;
-                            break;
-                        }
-                    }
-                }
-
-                // Didn't find an entry.
-                if (sfxEntry == null) {
-                    if (deleteEntry)
-                        continue;
-
-                    SfxEntryStreamAttributes newAttributes = new SfxEntryStreamAttributes(sbrFile);
-                    sfxEntry = new SfxEntry(sbrFile, sfxId, newAttributes);
-                    sbrFile.getSoundEffects().add(sfxEntry);
-                } else if (deleteEntry) {
-                    if (!sfxEntry.remove())
-                        logger.warning("Failed to remove SfxEntry named '%s'.", sfxEntry.getExportFileName());
-
+            SfxEntry sfxEntry = null;
+            if (sfxId < 0) {
+                if (!arguments.has(SfxEntry.FLAG_NAME_IMPORT)) { // If we're importing, then we create a new sound instead!
+                    logger.warning("Skipping sound file reference '%s' in %s, it could not be resolved.", filePath, sourceName);
                     continue;
                 }
 
-                try {
-                    sfxEntry.applySettings(workingDirectory, arguments);
-                    arguments.warnAboutUnusedArguments(logger);
-                } catch (Throwable th) {
-                    Utils.handleError(logger, th, false, "Failed to configure the sound '%s'.", filePath);
+                // Continue by building a new entry.
+                sfxId = chunkedFile.getGameInstance().useNextFreeSoundIdSlot();
+                chunkedFile.getGameInstance().getSoundModData().setUserSfxFullPath(sfxId, filePath);
+            } else {
+                // Find the entry using this ID.
+                for (int i = 0; i < sbrFile.getSoundEffects().size(); i++) {
+                    SfxEntry tempEntry = sbrFile.getSoundEffects().get(i);
+                    if (tempEntry.getSfxId() == sfxId) {
+                        sfxEntry = tempEntry;
+                        break;
+                    }
                 }
+            }
+
+            // Didn't find an entry.
+            if (sfxEntry == null) {
+                if (deleteEntry)
+                    continue;
+
+                SfxEntryStreamAttributes newAttributes = new SfxEntryStreamAttributes(sbrFile);
+                sfxEntry = new SfxEntry(sbrFile, sfxId, newAttributes);
+                sbrFile.getSoundEffects().add(sfxEntry);
+            } else if (deleteEntry) {
+                if (!sfxEntry.remove())
+                    logger.warning("Failed to remove SfxEntry named '%s'.", sfxEntry.getExportFileName());
+
+                continue;
+            }
+
+            try {
+                sfxEntry.applySettings(workingDirectory, arguments);
+                arguments.warnAboutUnusedArguments(logger);
+            } catch (Throwable th) {
+                Utils.handleError(logger, th, false, "Failed to configure the sound '%s'.", filePath);
             }
         }
     }
@@ -330,6 +341,118 @@ public class GreatQuestAssetUtils {
         }
     }
 
+    private static String getCodeLocation(Config config, ConfigValueNode node) {
+        return kcScript.getCodeLocation(node.getOriginalLineNumber(), config != null ? config.getRootNode().getSectionName() : null, true);
+    }
+
+    private static final String CONFIG_OPTION_TEXTURE_IMPORT = "Import";
+    private static final String CONFIG_OPTION_TEXTURE_DELETE = "Delete";
+    private static final String CONFIG_OPTION_TEXTURE_RESIZE = "Resize";
+    private static void applyTextures(GreatQuestChunkedFile chunkedFile, ILogger logger, File workingDirectory, Config textureCfg) {
+        if (textureCfg == null)
+            return;
+
+        GreatQuestAssetBinFile binFile = chunkedFile.getGameInstance().getMainArchive();
+        for (ConfigValueNode node : textureCfg.getTextNodes()) {
+            String textLine = node.getAsString();
+            if (StringUtils.isNullOrWhiteSpace(textLine))
+                continue;
+
+            OptionalArguments arguments = OptionalArguments.parse(textLine);
+            StringNode binFilePathNode = arguments.useNextIfPresent();
+            if (binFilePathNode == null) {
+                logger.warning("Skipping '%s'%s because it does not include a file path.", textLine, getCodeLocation(textureCfg, node));
+                continue;
+            }
+
+            // Parse arguments.
+            boolean shouldDelete = arguments.useFlag(CONFIG_OPTION_TEXTURE_DELETE);
+            StringNode importPath = arguments.use(CONFIG_OPTION_TEXTURE_IMPORT);
+            StringNode resizeDimensions = arguments.use(CONFIG_OPTION_TEXTURE_RESIZE);
+            arguments.warnAboutUnusedArguments(logger);
+
+            // Find file.
+            String binFilePath = binFilePathNode.getAsString();
+            String localChunkName = GreatQuestUtils.getFileNameFromPath(binFilePath);
+            GreatQuestArchiveFile originalFileFoundByPath = binFile.getOptionalFileByName(binFilePath);
+            GreatQuestImageFile gqImageFile;
+            if (originalFileFoundByPath != null) {
+                if (!(originalFileFoundByPath instanceof GreatQuestImageFile)) {
+                    logger.severe("Skipping texture '%s'%s because it wasn't actually a texture!", localChunkName, getCodeLocation(textureCfg, node));
+                    continue;
+                }
+
+                gqImageFile = (GreatQuestImageFile) originalFileFoundByPath;
+            } else if (importPath == null) {
+                logger.severe("Skipping texture '%s'%s because it does not exist, and --%s was not included!", localChunkName, getCodeLocation(textureCfg, node), CONFIG_OPTION_TEXTURE_IMPORT);
+                continue;
+            } else {
+                gqImageFile = new GreatQuestImageFile(chunkedFile.getGameInstance());
+                gqImageFile.init(binFilePath, true, null); // Both PC and PS2 seem to enable compression on images.
+            }
+
+            // Attempt to delete the image file.
+            if (shouldDelete) {
+                if (originalFileFoundByPath != null) {
+                    // Remove all references to this path.
+                    kcCResourceTexture textureReference = chunkedFile.getResourceByName(localChunkName, kcCResourceTexture.class);
+                    if (textureReference != null && binFilePath.equalsIgnoreCase(textureReference.getFullPath()))
+                        chunkedFile.removeResource(textureReference);
+
+                    // Remove from main archive.
+                    chunkedFile.getMainArchive().removeFile(originalFileFoundByPath);
+                }
+
+                continue;
+            }
+
+            // Attempt to import the image.
+            if (importPath != null) {
+                String relativeFilePath = importPath.getAsString();
+                File imageFile = new File(workingDirectory, relativeFilePath);
+                if (!imageFile.exists() || !imageFile.isFile()) {
+                    logger.severe("Skipping texture '%s'%s because '%s' did not exist/could not be imported!", localChunkName, getCodeLocation(textureCfg, node), relativeFilePath);
+                    continue;
+                }
+
+                BufferedImage image = FileUtils.openImageFile(logger, imageFile);
+                if (image == null)
+                    continue;
+
+                gqImageFile.setImage(image);
+            }
+
+            if (resizeDimensions != null) {
+                String rawDimensions = resizeDimensions.getAsString();
+                int newWidth = 0, newHeight = 0;
+                int xPosition = rawDimensions.indexOf('x');
+                if (xPosition > 0 && NumberUtils.isInteger(rawDimensions.substring(0, xPosition)))
+                    newWidth = Integer.parseInt(rawDimensions.substring(0, xPosition));
+                if (xPosition < rawDimensions.length() - 1 && NumberUtils.isInteger(rawDimensions.substring(xPosition + 1)))
+                    newHeight = Integer.parseInt(rawDimensions.substring(xPosition + 1));
+
+                if (newWidth <= 0 || newHeight <= 0) {
+                    logger.severe("Skipping texture resize of '%s'%s because '%s' was not formatted properly!", localChunkName, getCodeLocation(textureCfg, node), rawDimensions);
+                } else if (newWidth != gqImageFile.getWidth() || newHeight != gqImageFile.getHeight()) {
+                    gqImageFile.setImage(ImageWorkHorse.resizeImage(gqImageFile.getImage(), newWidth, newHeight, true));
+                }
+            }
+
+            // Register image file, if it wasn't previously found.
+            if (gqImageFile != originalFileFoundByPath)
+                chunkedFile.getMainArchive().addFile(gqImageFile);
+
+            // Create/update texture description.
+            kcCResourceTexture textureRef = chunkedFile.getResourceByName(localChunkName, kcCResourceTexture.class);
+            if (textureRef == null) {
+                textureRef = new kcCResourceTexture(chunkedFile);
+                textureRef.setName(localChunkName, true);
+                chunkedFile.addResource(textureRef);
+            }
+
+            textureRef.setFullPath(binFilePath, false);
+        }
+    }
 
     private static void applyModelReferences(GreatQuestChunkedFile chunkedFile, ILogger logger, Config modelCfg) {
         if (modelCfg == null)

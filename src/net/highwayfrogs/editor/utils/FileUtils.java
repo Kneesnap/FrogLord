@@ -1098,4 +1098,30 @@ public class FileUtils {
             throw new UnsupportedOperationException("saveConfigDataToExecutable() doesn't support the " + gameInstance.getPlatform() + " platform yet.");
         }
     }
+
+    /**
+     * Opens the image file, logging warnings to the console if it fails.
+     * @param logger The logger to use in-case of failure.
+     * @param imageFile The image file to load.
+     * @return image, if successfully loaded
+     */
+    public static BufferedImage openImageFile(ILogger logger, File imageFile) {
+        if (logger == null)
+            throw new NullPointerException("logger");
+        if (imageFile == null)
+            throw new NullPointerException("imageFile");
+
+        BufferedImage image;
+        try {
+            image = ImageIO.read(imageFile);
+        } catch (IOException ex) {
+            Utils.handleError(logger, ex, true, "Failed to load image from file '%s'.", imageFile.getName());
+            return null;
+        }
+
+        if (image == null)
+            logger.severe("Could not open '%s' as an image file.", imageFile.getName());
+
+        return image;
+    }
 }

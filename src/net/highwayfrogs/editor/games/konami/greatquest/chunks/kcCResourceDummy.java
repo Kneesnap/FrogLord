@@ -6,14 +6,15 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents a dummy chunk of data.
+ * This is not supported by the original game, but is a FrogLord only concept for handling unrecognized data.
  * Created by Kneesnap on 8/25/2019.
  */
 @Getter
-public class GreatQuestDummyFileChunk extends kcCResource {
+public class kcCResourceDummy extends kcCResource {
     private final String identifier;
     private byte[] unhandledBytes;
 
-    public GreatQuestDummyFileChunk(GreatQuestChunkedFile parentFile, String identifier) {
+    public kcCResourceDummy(GreatQuestChunkedFile parentFile, String identifier) {
         super(parentFile, KCResourceID.getByMagic(identifier));
         this.identifier = identifier;
     }

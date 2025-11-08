@@ -18,7 +18,7 @@ import java.util.function.Function;
 public enum KCResourceID {
     NONE("NON\0", "None", ImageResource.GHIDRA_ICON_RED_X_16, null), // Game Registered ID: 0
     RAW("RAW\0", "Raw Data", ImageResource.WIN98_HEXCHAT_16, null), // Game Registered ID: 1
-    TEXTURE("TEX\0", "Texture Ref", ImageResource.PHOTO_ALBUM_16, GreatQuestChunkTextureReference::new), // Game Registered ID: 2
+    TEXTURE("TEX\0", "Texture Ref", ImageResource.PHOTO_ALBUM_16, kcCResourceTexture::new), // Game Registered ID: 2
     OCTTREESCENEMGR("OTT\0", "World", ImageResource.TREASURE_MAP_16, kcCResOctTreeSceneMgr::new), // Game Registered ID: 3
     MODEL("6YTV", "Model Ref", ImageResource.GEOMETRIC_SHAPES_16, kcCResourceModel::new), // Game Registered ID: 4
     // IMGd (5)

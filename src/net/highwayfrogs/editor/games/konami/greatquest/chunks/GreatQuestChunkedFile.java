@@ -1131,7 +1131,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         } else if (readType != null && readType.getMaker() != null) {
             newChunk = readType.getMaker().apply(this);
         } else {
-            newChunk = new GreatQuestDummyFileChunk(this, identifier);
+            newChunk = new kcCResourceDummy(this, identifier);
             getLogger().warning("Reading unsupported chunk with identifier '%s'.", identifier);
         }
 

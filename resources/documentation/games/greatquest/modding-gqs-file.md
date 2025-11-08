@@ -32,7 +32,8 @@ TODO: Include some information on how to manage scripts with Noodle later.
 The following sections document each of the available GQS config sections which are available, how they work, and how to configure them.  
 
 ### Quick Sections Reference
-- `[Models]`             – Adds 3D models and descriptions to chunked file
+- `[Models]`             – Configures 3D models and descriptions
+- `[Textures]`           – Configures textures and descriptions
 - `[SoundEffects]`       – Adds references to streamed sound effects in `.SCK`
 - `[CopyResources]`      – Copies resources from one `.dat` to another
 - `[DeleteResources]`    – Deletes chunks from current level
@@ -46,19 +47,55 @@ The following sections document each of the available GQS config sections which 
 - `[Scripts]`            – Adds scripts to existing entities
 
 ### [Models]
-Adds all included 3D model files as `Model References` to the chunked file.
-If `--CreateModelDesc <modelDescName>` is included (which in most circumstances it should be), a corresponding `Model Description` will also be created.  
+Including 3D model requires three separate pieces.  
+1) Importing the .VTX file into the `data.bin` file. (Skip if the .VTX is already part of the game.)  
+2) Creating a "model reference". (This is done by adding the file name under `[Models]`)
+3) Creating a "model description" (Use `--CreateModelDesc <modelDescName>`, skip for WATER and DOME meshes.)
 
 Example:  
 ```PowerShell
 [Models]
+# These models already exist within the game, so they only need to follow steps 2 and 3.
 \GameSource\Level00Global\Characters\C036\C036.VTX --CreateModelDesc "GeneralModelDesc" # The Magical General
 \GameSource\Level00Global\Characters\C058\C058.vtx --CreateModelDesc "Princess JoyModelDesc" # Princess Joy
-\GameSource\Level18JoyTowers\Props\MomRing\MOM_RING.VTX --CreateModelDesc "MomRingModelDesc" # MomRing
-\GameSource\Level00Global\Characters\C054\C054.VTX --CreateModelDesc "HollyModelDesc" # Holly
-\GameSource\Level00Global\Characters\C062\C062.VTX --CreateModelDesc "PhroiModelDesc" # Phroi
-\GameSource\Level17JoyCastle\Level\17DOME.VTX # Sky Box (No need for --CreateModelDesc because Sky boxes aren't entities)
+
+# Sky Box
+# There's no need to include --CreateModelDesc, because Sky domes are not entities.
+# Therefore, only step 2 needs to be followed.
+\GameSource\Level17JoyCastle\Level\17DOME.VTX
 ```
+
+### [Textures]
+Configuring textures can be broken down into two steps.  
+1) Creating a "texture reference" by putting the desired image file path into the `[Textures]` section.  
+2) Importing the image into `data.bin` by using `--Import <filePath>`. (Optional.)  
+
+Example:
+```PowerShell
+[Textures]
+# Creates a texture reference (resource chunk named 'bee.img') in the level chunked file.
+# This will ensure the image is loaded while on the loading screen, but will keep the original image unmodified.
+\GameSource\Level02BogTown\Level\bee.img
+
+# Replaces an existing image (catwlk01.img) with a new one.
+\GameSource\Level02BogTown\Level\catwlk01.img --Import "../images/phroi_cult_poster.png"
+
+# Creates a new image (phroi_cult.img), based on the same image path as above.
+\GameSource\Level02BogTown\Level\phroi_cult.img --Import "../images/phroi_cult_poster.png"
+```
+
+#### Texture Options
+**--Import <filePath>:**  
+Example: `--Import "../images/phroi_cult_poster.png"`  
+Creates or replaces the image in `data.bin` with the image found at the given path (relative to the .gqs file.)  
+Most common image formats (`.bmp`, `.png`, `.gif`, `.jpg`, etc.) should be supported, but different computers may have different formats available.  
+
+**--Resize \<width>x\<height>:**  
+Example: `--Resize 128x128`  
+Resizes the image to the newly given width/height using nearest neighbor scaling (to keep existing palette).  
+
+**--Delete:**  
+Deletes the image from `data.bin`, and the texture reference in the level.  
 
 ### [SoundEffects]
 Allows importing/configuring sound files.  
