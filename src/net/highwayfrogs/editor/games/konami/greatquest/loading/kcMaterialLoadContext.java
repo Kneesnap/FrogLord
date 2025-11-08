@@ -128,7 +128,7 @@ public class kcMaterialLoadContext {
             String texturePath = fullPath.substring(0, lastDirectorySeparator + 1)
                     + textureFileName + ".img";
 
-            GreatQuestArchiveFile file = this.mainArchive.applyFileName(texturePath, false);
+            GreatQuestArchiveFile file = this.mainArchive.applyFilePath(texturePath, false);
 
             if (file instanceof GreatQuestImageFile) {
                 material.setTexture((GreatQuestImageFile) file);
@@ -250,7 +250,7 @@ public class kcMaterialLoadContext {
                     String texturePath = file.getFilePath().substring(0, lastDirectorySeparator + 1)
                             + FileUtils.stripExtension(material.getTextureFileName()) + ".img";
 
-                    GreatQuestArchiveFile targetImageFile = this.mainArchive.applyFileName(texturePath, false);
+                    GreatQuestArchiveFile targetImageFile = this.mainArchive.applyFilePath(texturePath, false);
                     if (targetImageFile != null) {
                         if (!(targetImageFile instanceof GreatQuestImageFile))
                             throw new RuntimeException("We found a file for material ref '" + texturePath + "', but it wasn't an image file! It was a(n) " + targetImageFile.getClass().getSimpleName() + ".");

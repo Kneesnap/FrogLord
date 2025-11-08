@@ -42,7 +42,7 @@ public class kcCResourceTexture extends kcCResource {
         // Apply the file name.
         GreatQuestAssetBinFile mainArchive = getMainArchive();
         if (mainArchive != null)
-            mainArchive.applyFileName(this.fullPath, false);
+            mainArchive.applyFilePath(this.fullPath, false);
     }
 
     @Override
@@ -77,7 +77,7 @@ public class kcCResourceTexture extends kcCResource {
      * Gets the images referenced by this chunk.
      */
     public GreatQuestImageFile getReferencedImage() {
-        GreatQuestArchiveFile texRefFile = getGameInstance().getMainArchive().getFileByName(getParentFile(), this.fullPath);
+        GreatQuestArchiveFile texRefFile = getGameInstance().getMainArchive().getFileByPath(getParentFile(), this.fullPath);
         if (texRefFile != null && !(texRefFile instanceof GreatQuestImageFile)) {
             getLogger().warning("%s pointed to path '%s', which yielded a(n) %s instead of an image???", Utils.getSimpleName(this), this.fullPath, Utils.getSimpleName(texRefFile));
             return null;
@@ -98,7 +98,7 @@ public class kcCResourceTexture extends kcCResource {
             throw new IllegalArgumentException("The provided path is too large! (Provided: " + newPath.length() + ", Maximum: " + (PATH_SIZE - 1) + ")");
 
         if (throwIfPathCannotBeResolved) {
-            GreatQuestArchiveFile texRefFile = getGameInstance().getMainArchive().getFileByName(getParentFile(), newPath);
+            GreatQuestArchiveFile texRefFile = getGameInstance().getMainArchive().getFileByPath(getParentFile(), newPath);
             if (!(texRefFile instanceof GreatQuestImageFile))
                 throw new IllegalArgumentException("The file path could not be resolved to an image! (" + newPath + ")");
         }

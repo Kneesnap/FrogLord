@@ -48,7 +48,7 @@ public class kcCResourceModel extends kcCResource {
         // Apply the file name found here to the corresponding global file.
         GreatQuestAssetBinFile mainArchive = getMainArchive();
         if (mainArchive != null)
-            mainArchive.applyFileName(this.fullPath, false);
+            mainArchive.applyFilePath(this.fullPath, false);
 
         applyCollisionMeshName();
     }

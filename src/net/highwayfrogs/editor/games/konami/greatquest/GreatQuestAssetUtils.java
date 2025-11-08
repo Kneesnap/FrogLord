@@ -269,7 +269,7 @@ public class GreatQuestAssetUtils {
         List<Tuple2<kcCResource, byte[]>> queuedResources = new ArrayList<>();
         for (Config resourceList : copyResourceCfg.getChildConfigNodes()) {
             String sourceFilePath = resourceList.getSectionName();
-            GreatQuestArchiveFile sourceFile = chunkedFile.getGameInstance().getMainArchive().getOptionalFileByName(sourceFilePath);
+            GreatQuestArchiveFile sourceFile = chunkedFile.getGameInstance().getMainArchive().getOptionalFileByPath(sourceFilePath);
             if (sourceFile == null) {
                 logger.warning("Skipping resource copy for '%s' in %s, as the chunked file could not be found.", sourceFilePath, sourceName);
                 continue;
@@ -374,7 +374,7 @@ public class GreatQuestAssetUtils {
             // Find file.
             String binFilePath = binFilePathNode.getAsString();
             String localChunkName = GreatQuestUtils.getFileNameFromPath(binFilePath);
-            GreatQuestArchiveFile originalFileFoundByPath = binFile.getOptionalFileByName(binFilePath);
+            GreatQuestArchiveFile originalFileFoundByPath = binFile.getOptionalFileByPath(binFilePath);
             GreatQuestImageFile gqImageFile;
             if (originalFileFoundByPath != null) {
                 if (!(originalFileFoundByPath instanceof GreatQuestImageFile)) {
@@ -463,7 +463,7 @@ public class GreatQuestAssetUtils {
             OptionalArguments arguments = OptionalArguments.parse(line);
             String filePath = arguments.useNext().getAsString();
 
-            GreatQuestArchiveFile foundFile = chunkedFile.getGameInstance().getMainArchive().getOptionalFileByName(filePath);
+            GreatQuestArchiveFile foundFile = chunkedFile.getGameInstance().getMainArchive().getOptionalFileByPath(filePath);
             if (foundFile == null) {
                 logger.warning("Skipping model reference '%s' in %s, it could not be resolved.", filePath, sourceName);
                 continue;

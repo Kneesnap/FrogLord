@@ -207,7 +207,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
      */
     public GreatQuestArchiveFile getFileByName(String filePath) {
         GreatQuestAssetBinFile mainArchive = getMainArchive();
-        return mainArchive != null ? mainArchive.getFileByName(getParentFile(), filePath) : null;
+        return mainArchive != null ? mainArchive.getFileByPath(getParentFile(), filePath) : null;
     }
 
     /**
@@ -217,7 +217,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
      */
     public GreatQuestArchiveFile getOptionalFileByName(String filePath) {
         GreatQuestAssetBinFile mainArchive = getMainArchive();
-        return mainArchive != null ? mainArchive.getOptionalFileByName(filePath) : null;
+        return mainArchive != null ? mainArchive.getOptionalFileByPath(filePath) : null;
     }
 
     /**

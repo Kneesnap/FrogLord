@@ -190,8 +190,8 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         context.onComplete();
     }
 
-    private GreatQuestAssetBinFileHeader readFileHeader(DataReader reader, String name, int nameHash, boolean hasCollision, ProgressBarComponent progressBar) {
-        GreatQuestAssetBinFileHeader header = new GreatQuestAssetBinFileHeader(this, name, nameHash, hasCollision);
+    private GreatQuestAssetBinFileHeader readFileHeader(DataReader reader, String filePath, int nameHash, boolean hasCollision, ProgressBarComponent progressBar) {
+        GreatQuestAssetBinFileHeader header = new GreatQuestAssetBinFileHeader(this, filePath, nameHash, hasCollision);
         header.load(reader);
         if (progressBar != null)
             progressBar.addCompletedProgress(1);
@@ -498,11 +498,11 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
     }
 
     /**
-     * Activates the filename
-     * @param filePath              The path of a game file.
+     * Applies a file path to the file which the file path belongs to.
+     * @param filePath The path of a game file.
      * @param showMessageIfNotFound Specify if a warning should be displayed if the file is not found.
      */
-    public GreatQuestArchiveFile applyFileName(String filePath, boolean showMessageIfNotFound) {
+    public GreatQuestArchiveFile applyFilePath(String filePath, boolean showMessageIfNotFound) {
         String abbreviatedFilePath = GreatQuestUtils.getFileIdFromPath(filePath);
         int hash = GreatQuestUtils.hash(abbreviatedFilePath);
 
@@ -540,8 +540,8 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
      * @param filePath   Full file path.
      * @return the found file, if there was one.
      */
-    public GreatQuestArchiveFile getFileByName(GreatQuestArchiveFile searchFrom, String filePath) {
-        GreatQuestArchiveFile file = getOptionalFileByName(filePath);
+    public GreatQuestArchiveFile getFileByPath(GreatQuestArchiveFile searchFrom, String filePath) {
+        GreatQuestArchiveFile file = getOptionalFileByPath(filePath);
         if (file == null)
             getLogger().warning("Failed to find file %s. (%s)", filePath + (searchFrom != null ? " referenced in " + searchFrom.getExportName() : ""), GreatQuestUtils.getFileIdFromPath(filePath));
         return file;
@@ -552,7 +552,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
      * @param filePath Full file path.
      * @return the found file, if there was one.
      */
-    public GreatQuestArchiveFile getOptionalFileByName(String filePath) {
+    public GreatQuestArchiveFile getOptionalFileByPath(String filePath) {
         if (StringUtils.isNullOrWhiteSpace(filePath))
             throw new NullPointerException("filePath");
 
