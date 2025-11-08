@@ -140,7 +140,7 @@ public class kcCResourceEntityInst extends kcCResource {
                     + entityInst.getTargetEntityRef().getDisplayString(false) + " may cause '"
                     + getName() + "' to not display correctly in-game!";
 
-        if (GreatQuestChunkedFile.RESOURCE_ORDERING.compare(targetEntity, this) > 0)
+        if (GreatQuestChunkedFile.RESOURCE_ORDERING.compare(targetEntity, this) > 0 && !kcCResource.DEFAULT_RESOURCE_NAME.equalsIgnoreCase(targetEntity.getName()))
             return "Using --" + kcEntityInstanceFlag.FACE_TARGET_ENTITY.getDisplayName() + " with the target entity '"
                     + targetEntity.getName() + "' may cause '" + getName() + "' to not display correctly in-game because '"
                     + getName() + "' is loaded before '" + targetEntity.getName() + "'.";

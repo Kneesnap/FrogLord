@@ -94,7 +94,12 @@ public class kcScriptCauseWaypoint extends kcScriptCause {
      * @param otherEntityHash the hash to apply
      */
     public void setOtherEntityHash(ILogger logger, int otherEntityHash) {
-        GreatQuestUtils.resolveLevelResourceHash(logger, kcCResourceEntityInst.class, getChunkFile(), this, this.otherEntityRef, otherEntityHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(logger, kcCResourceEntityInst.class, getChunkFile(), this, this.otherEntityRef, otherEntityHash, false);
+    }
+
+    @Override
+    public String getEndOfLineComment() {
+        return this.otherEntityRef.getResource() != null ? super.getEndOfLineComment() : "WARNING: Entity was not found.";
     }
 
     @Getter

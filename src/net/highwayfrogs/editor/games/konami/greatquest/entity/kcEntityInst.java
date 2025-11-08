@@ -76,7 +76,7 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
 
         if (this.resource != null)
             GreatQuestUtils.resolveLevelResourceHash(kcCResourceGenericTypeGroup.ENTITY_DESCRIPTION, this.resource.getParentFile(), this.resource, this.descriptionRef, descriptionHash, !this.resource.doesNameMatch("DummyParticleInst001", "clover-2ProxyDesc", "ConeTreeM-1Inst004", "Sbpile2Inst001")); // There are a handful of cases where this doesn't resolve, but in almost all situations it does resolve. Not sure how entities work when it doesn't resolve though.
-        GreatQuestUtils.resolveLevelResourceHash(kcCResourceEntityInst.class, this.resource, this.targetEntityRef, targetEntityHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceEntityInst.class, this.resource, this.targetEntityRef, targetEntityHash, showTargetEntityWarning(targetEntityHash));
 
         // Test after resolving entity reference.
         int expectedPriority = calculatePriority();
@@ -335,5 +335,9 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
             scriptData.setSectionName(CONFIG_SECTION_SCRIPT);
             output.addChildConfig(scriptData);
         }
+    }
+
+    private boolean showTargetEntityWarning(int hash) {
+        return (!"FrogInst001".equals(this.resource.getName()) || hash != 0xAF201672); // BarrelInst001.
     }
 }

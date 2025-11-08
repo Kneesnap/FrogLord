@@ -35,6 +35,7 @@ public class kcScriptCauseEntity3D extends kcScriptCause {
     }
 
     @Override
+    @SuppressWarnings("DataFlowIssue")
     public void load(int subCauseType, List<Integer> extraValues) {
         this.status = kcScriptCauseEntity3DStatus.getStatus(subCauseType, false);
         if (this.status.hasOtherEntityAsParam()) {
@@ -88,6 +89,11 @@ public class kcScriptCauseEntity3D extends kcScriptCause {
     }
 
     @Override
+    public String getEndOfLineComment() {
+        return this.otherEntityRef.getResource() != null || !this.status.hasOtherEntityAsParam() ? super.getEndOfLineComment() : "WARNING: Entity was not found.";
+    }
+
+    @Override
     public int hashCode() {
         return super.hashCode() ^ (this.status.ordinal() << 24) ^ this.otherEntityRef.getHashNumber();
     }
@@ -122,7 +128,7 @@ public class kcScriptCauseEntity3D extends kcScriptCause {
      * @param otherEntityHash the hash to apply
      */
     public void setOtherEntityHash(ILogger logger, int otherEntityHash) {
-        GreatQuestUtils.resolveLevelResourceHash(logger, kcCResourceEntityInst.class, getChunkFile(), this, this.otherEntityRef, otherEntityHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(logger, kcCResourceEntityInst.class, getChunkFile(), this, this.otherEntityRef, otherEntityHash, false);
     }
 
     @Getter

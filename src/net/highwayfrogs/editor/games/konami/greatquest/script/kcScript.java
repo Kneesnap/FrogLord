@@ -456,7 +456,13 @@ public class kcScript extends GameObject<GreatQuestInstance> {
 
             // Set cause.
             this.cause.save(tempArguments, settings);
-            result.getOrCreateKeyValueNode(CONFIG_FIELD_SCRIPT_CAUSE).setAsString(tempArguments.toString());
+            ConfigValueNode causeNode = result.getOrCreateKeyValueNode(CONFIG_FIELD_SCRIPT_CAUSE);
+            causeNode.setAsString(tempArguments.toString());
+
+            // Set cause comment.
+            String causeComment = this.cause.getEndOfLineComment();
+            if (causeComment != null)
+                causeNode.setComment(causeComment);
 
             // Add script effects.
             tempArguments.clear();

@@ -49,7 +49,6 @@ public class kcScriptCauseDialog extends kcScriptCause {
         this.stage = arguments.useNext().getAsEnum(kcScriptDialogStage.class);
         GreatQuestChunkedFile chunkedFile = getParentFunction().getChunkedFile();
         GreatQuestUtils.resolveLevelResource(logger, arguments.useNext(), kcCResourceGenericType.STRING_RESOURCE, chunkedFile, this, this.dialogRef, true);
-
     }
 
     @Override

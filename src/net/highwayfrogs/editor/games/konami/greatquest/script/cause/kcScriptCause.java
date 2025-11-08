@@ -196,6 +196,13 @@ public abstract class kcScriptCause extends GameObject<GreatQuestInstance> {
     }
 
     /**
+     * Returns an end of line comment to include.
+     */
+    public String getEndOfLineComment() {
+        return null;
+    }
+
+    /**
      * Prints warnings about this script cause to the logger.
      * @param logger the logger to print warnings to
      */
