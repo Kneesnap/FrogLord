@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.file;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 
 /**
  * Represents the different available archive file types.
@@ -16,6 +17,33 @@ public enum GreatQuestArchiveFileType {
     MODEL(".vtx");
 
     private final String extension;
+
+    /**
+     * Determine the default compression state for a resource of this type.
+     * @param instance the game instance to determine compression state with
+     * @return if the default state of a file of this type is being compressed.
+     */
+    public boolean isCompressedByDefault(GreatQuestInstance instance) {
+        if (instance == null)
+            throw new NullPointerException("instance");
+
+        if (instance.isPS2()) {
+            return true; // All assets appear compressed on PS2.
+        } else if (instance.isPC()) {
+            switch (this) {
+                case CHUNKED_FILE:
+                    return false;
+                case ICON:
+                case IMAGE:
+                case MODEL:
+                    return true;
+                default:
+                    throw new UnsupportedOperationException("Unsupported enum value: " + this);
+            }
+        } else {
+            throw new UnsupportedOperationException("Unsupported game platform: " + instance.getPlatform());
+        }
+    }
 
     /**
      * Gets the file type from the given file path.

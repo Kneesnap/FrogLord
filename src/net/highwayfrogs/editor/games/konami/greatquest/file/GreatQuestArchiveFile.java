@@ -115,12 +115,11 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
 
     /**
      * Initialize the information about this file.
-     * @param filePath   This file's raw name. Can be null.
-     * @param compressed Whether this file is compressed.
-     * @param rawBytes   The raw unprocessed bytes containing the file data.
+     * @param filePath This file's raw name. Can be null.
+     * @param rawBytes The raw unprocessed bytes containing the file data.
      */
-    public void init(String filePath, boolean compressed, byte[] rawBytes) {
-        init(filePath, compressed, GreatQuestUtils.hashFilePath(filePath), rawBytes);
+    public void init(String filePath, byte[] rawBytes) {
+        init(filePath, this.fileType.isCompressedByDefault(getGameInstance()), GreatQuestUtils.hashFilePath(filePath), rawBytes);
     }
 
     /**

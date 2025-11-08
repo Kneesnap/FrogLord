@@ -388,7 +388,7 @@ public class GreatQuestAssetUtils {
                 continue;
             } else {
                 gqImageFile = new GreatQuestImageFile(chunkedFile.getGameInstance());
-                gqImageFile.init(binFilePath, true, null); // Both PC and PS2 seem to enable compression on images.
+                gqImageFile.init(binFilePath, null);
             }
 
             // Attempt to delete the image file.
