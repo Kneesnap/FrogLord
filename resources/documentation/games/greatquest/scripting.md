@@ -877,6 +877,8 @@ Note that this will not prevent the game from activating/deactivating entity upd
 **Supported Entity Types:** CCharacter  
 <!---**Ghidra Reference (Ignore):** `CCharacter::OnCommand`-->
 **Usage:** `SetAIGoal <FIND|FLEE|WANDER|GUARD|DEAD|SLEEP>`  
+This command is not very useful, especially considering the entity may choose a different AI goal at any time.  
+
 ```properties
 # Notable Goal Types:
 FIND # Attempts to run towards the target, and attack if possible. Will attempt to wander sometimes if it gets stuck.
@@ -886,6 +888,10 @@ GUARD # Seems to try to walk along a waypoint path back and forth until it has a
 DEAD # Applies the entity death animation.
 SLEEP # Applies the entity sleep animation.
 ```
+
+> [!NOTE]
+> `SetAIGoal SCRIPT` can be seen in certain levels such as The Dark Trail Ruins.  
+> This has not been proven to actually do anything, and so far there is no explanation for why this is present.  
 
 ### AttachSensor / Attach (Script Only)
 **Summary:** Attaches a sensor to the script owner.  
