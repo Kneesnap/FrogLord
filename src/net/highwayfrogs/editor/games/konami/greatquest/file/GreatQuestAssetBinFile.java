@@ -145,13 +145,16 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         if (progressBar != null)
             progressBar.setTotalProgress(this.files.size());
 
+        for (int i = 0; i < this.files.size(); i++)
+            loadFile(this.files.get(i), progressBar);
+
+        // Test ordering. (Must occur AFTER file data is loaded for some of the tiebreakers to work)
         GreatQuestArchiveFile lastFile = null;
         for (int i = 0; i < this.files.size(); i++) {
             GreatQuestArchiveFile currentFile = this.files.get(i);
             if (lastFile != null && FILE_ORDERING.compare(currentFile, lastFile) < 0)
                 getLogger().warning("File '%s' is out of order with the previously loaded file: '%s'!", currentFile.getDebugName(), lastFile.getDebugName());
 
-            loadFile(currentFile, progressBar);
             lastFile = currentFile;
         }
 
@@ -494,13 +497,32 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
      * @param showMessageIfNotFound Specify if a warning should be displayed if the file is not found.
      */
     public GreatQuestArchiveFile applyFileName(String filePath, boolean showMessageIfNotFound) {
-        GreatQuestArchiveFile file = getOptionalFileByName(filePath);
+        String abbreviatedFilePath = GreatQuestUtils.getFileIdFromPath(filePath);
+        int hash = GreatQuestUtils.hash(abbreviatedFilePath);
+
+        // Search files.
+        GreatQuestArchiveFile file = null;
+        List<GreatQuestArchiveFile> collidingFiles = this.filesByHash.get(hash);
+        if (collidingFiles != null) {
+            if (collidingFiles.size() > 1) {
+                // If there's more than one file, it means the file collides with another hash, MEANING its full file name was included in the data.bin.
+                // Therefore, we want to check if the file is found, and if so, we do not need to show the warning message.
+                for (int i = 0; i < collidingFiles.size(); i++) {
+                    if (filePath.equalsIgnoreCase(collidingFiles.get(i).getFilePath())) {
+                        showMessageIfNotFound = false;
+                        break;
+                    }
+                }
+            } else if (collidingFiles.size() == 1) {
+                file = collidingFiles.get(0);
+            }
+        }
+
         if (file != null) {
             file.setFilePath(filePath);
             return file;
         }
 
-        int hash = GreatQuestUtils.hashFilePath(filePath);
         if (showMessageIfNotFound)
             getLogger().warning("Attempted to apply the file path '%s', but no file matched the hash %08X.", filePath, hash);
         return null;
@@ -537,7 +559,7 @@ public class GreatQuestAssetBinFile extends GameData<GreatQuestInstance> {
         if (collidingFiles != null) {
             for (int i = 0; i < collidingFiles.size(); i++) {
                 GreatQuestArchiveFile collidedFile = collidingFiles.get(i);
-                if (GreatQuestUtils.getFileIdFromPath(collidedFile.getFilePath()).equalsIgnoreCase(abbreviatedFilePath))
+                if (abbreviatedFilePath.equalsIgnoreCase(GreatQuestUtils.getFileIdFromPath(collidedFile.getFilePath())))
                     return collidedFile;
             }
         }
