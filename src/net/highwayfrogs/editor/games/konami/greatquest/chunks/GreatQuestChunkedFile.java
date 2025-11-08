@@ -415,38 +415,42 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     }
 
     /**
-     * Gets the sound bank file corresponding to this chunked file, if there is one.
-     * @return soundBankFile
+     * Gets the level ID representing this level as a string, if possible to determine.
+     * Examples: "01", "11A", etc.
      */
-    public SBRFile getSoundBankFile() {
+    public String getLevelID() {
         String filePath = getFilePath();
         if (filePath == null)
             return null;
 
-        // Extract numeric level ID from the file path.
-        StringBuilder builder = new StringBuilder();
+        int highSplitIndex = filePath.length();
         boolean currentlyBuildingNumber = false;
-        for (int i = 0; i < filePath.length(); i++) {
+        for (int i = filePath.length() - 1; i >= 0; i--) {
             char tempChar = filePath.charAt(i);
             if (Character.isDigit(tempChar)) {
-                if (currentlyBuildingNumber) {
-                    builder.append(tempChar);
-                } else {
-                    currentlyBuildingNumber = true;
-                    builder.setLength(0);
-                    builder.append(tempChar);
-                }
-            } else {
-                currentlyBuildingNumber = false;
+                currentlyBuildingNumber = true;
+            } else if (currentlyBuildingNumber) {
+                return filePath.substring(i + 1, highSplitIndex);
+            } else if (tempChar == '.' || tempChar == '_' || tempChar == '\\' || tempChar == '/') {
+                highSplitIndex = i;
             }
         }
 
-        if (builder.length() == 0)
+        return null;
+    }
+
+    /**
+     * Gets the sound bank file corresponding to this chunked file, if there is one.
+     * @return soundBankFile
+     */
+    public SBRFile getSoundBankFile() {
+        String levelId = getLevelID();
+        if (levelId == null)
             return null;
 
-        String filePrefix = builder.append('.').toString();
+        String fileName = levelId + ".sbr";
         for (GreatQuestGameFile file : getGameInstance().getLooseFiles())
-            if (file instanceof SBRFile && file.getFileName().startsWith(filePrefix))
+            if (file instanceof SBRFile && fileName.equalsIgnoreCase(file.getFileName()))
                 return (SBRFile) file;
 
         return null;
