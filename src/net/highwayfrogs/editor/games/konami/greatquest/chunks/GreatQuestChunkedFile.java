@@ -1114,6 +1114,11 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         try {
             GreatQuestAssetUtils.applyGqsScriptGroup(workingDirectory, this, scriptGroupCfg);
             getLogger().info("Finished importing the gqs.");
+
+            // Refresh UI
+            GameUIController<?> currentEditor = getGameInstance().getMainMenuController().getCurrentEditor();
+            if (currentEditor instanceof GreatQuestChunkFileEditor)
+                ((GreatQuestChunkFileEditor) currentEditor).getChunkListComponent().refreshDisplay();
         } catch (Throwable th) {
             Utils.handleError(getLogger(), th, true, "An error occurred while importing the gqs file '%s'.", gqsGroupFile.getName());
         }
