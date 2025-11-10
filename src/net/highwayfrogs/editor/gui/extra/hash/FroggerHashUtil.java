@@ -100,6 +100,23 @@ public class FroggerHashUtil {
     }
 
     /**
+     * Early versions of slink beta (such as the ones used by MediEvil) used yet another hash.
+     * Reverse engineered from 0x0043b410 in SLINK Beta 2.1. I am not certain this is correct.
+     * @param input the string to calculate the hash from
+     * @return earlySLinkHash
+     */
+    public static short getEarlySLinkHash(String input) {
+        if (input.length() == 0)
+            return 0;
+
+        int hash = input.length();
+        for (int i = 0; i < input.length(); i++)
+            hash = (hash * 4) ^ input.charAt(i);
+
+        return (short) (hash & 0x1FF);
+    }
+
+    /**
      * Gets the full hash of a string in accordance with the hashing algorithm seen in Microsoft Visual Studio '97.
      * The executables reverse-engineered were found in the Frogger 2 development backup, specifically C1.DLL which had a last modified date of 4/24/1997.
      * The MSVC 1997 Compilation Overview is as follows:
