@@ -12,7 +12,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.map.octree.kcOctTreeType;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcBox4;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.games.konami.greatquest.model.*;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -278,16 +278,13 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Vertex Buffers", this.vertexBuffers.size());
         propertyList.add("Materials", this.materials.size());
         propertyList.add("Collision Meshes", this.collisionMeshes.size());
-        propertyList.add("Entity Tree", "");
-        propertyList = this.entityTree.addToPropertyList(propertyList);
-        propertyList.add("Visual Tree", "");
-        propertyList = this.visualTree.addToPropertyList(propertyList);
-        return propertyList;
+        propertyList.add("Entity Tree", this.entityTree);
+        propertyList.add("Visual Tree", this.visualTree);
     }
 
     @Getter

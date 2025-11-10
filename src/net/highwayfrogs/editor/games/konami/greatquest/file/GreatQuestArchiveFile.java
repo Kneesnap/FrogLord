@@ -10,8 +10,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IFileExport;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.DataSizeUnit;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
@@ -101,16 +101,14 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
 
         propertyList.add("Name Hash", NumberUtils.to0PrefixedHexString(getHash()));
         propertyList.add("Name Collision", hasCollision());
         propertyList.add("Compression Enabled", this.compressed);
         if (this.rawData != null)
             propertyList.add("Loaded File Size", DataSizeUnit.formatSize(this.rawData.length));
-
-        return propertyList;
     }
 
     /**

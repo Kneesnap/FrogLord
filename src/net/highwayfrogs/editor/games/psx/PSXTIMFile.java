@@ -12,7 +12,7 @@ import net.highwayfrogs.editor.gui.DefaultFileUIController.IExtraUISupplier;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.FXNodeWrapperComponent;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
@@ -399,8 +399,8 @@ public class PSXTIMFile extends SCSharedGameFile implements IExtraUISupplier {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Flags", NumberUtils.toHexString(this.flags));
         propertyList.add("Palette Count", this.palettes != null ? this.palettes.length : 0);
         propertyList.add("Image Dimensions", getImageWidth() + "x" + getImageHeight());
@@ -409,8 +409,6 @@ public class PSXTIMFile extends SCSharedGameFile implements IExtraUISupplier {
             propertyList.add("CLUT Dimensions", getClutWidth() + "x" + getClutHeight());
             propertyList.add("CLUT Position", "X: " + this.clutX + ", Y: " + this.clutY);
         }
-
-        return propertyList;
     }
 
     @Override

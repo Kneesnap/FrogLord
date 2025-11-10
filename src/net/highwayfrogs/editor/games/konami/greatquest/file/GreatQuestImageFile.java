@@ -12,7 +12,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IFileExport;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestImageController;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.DataUtils;
@@ -488,12 +488,11 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Image Dimensions", getWidth() + " x " + getHeight());
         propertyList.add("Image File Format", this.fileFormat.getDisplayName()); // No need to allow for manual changes of this, as importing an image will do everything necessary.
         propertyList.add("Pixel Format", getFormat());
-        return propertyList;
     }
 
     @Override

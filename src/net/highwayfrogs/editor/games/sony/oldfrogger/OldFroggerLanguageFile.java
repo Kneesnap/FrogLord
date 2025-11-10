@@ -2,15 +2,15 @@ package net.highwayfrogs.editor.games.sony.oldfrogger;
 
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorPropertyListUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.InputMenu;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -53,8 +53,8 @@ public class OldFroggerLanguageFile extends SCGameFile<OldFroggerGameInstance> {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Language String Entries", this.entries.size());
         for (int i = 0; i < this.entries.size(); i++) {
             final int index = i;
@@ -71,8 +71,6 @@ public class OldFroggerLanguageFile extends SCGameFile<OldFroggerGameInstance> {
                 return newValue;
             });
         }
-
-        return propertyList;
     }
 
     /**

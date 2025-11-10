@@ -7,8 +7,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.gui.InputMenu;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -55,10 +55,9 @@ public class kcCResourcePath extends GameData<GreatQuestInstance> implements IPr
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Path", this.filePath,
                 () -> InputMenu.promptInputBlocking(getGameInstance(), "Please enter the new path.", this.filePath, this::setFilePath));
-        return propertyList;
     }
 
     @Override

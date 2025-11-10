@@ -2,8 +2,6 @@ package net.highwayfrogs.editor.games.renderware.chunks;
 
 import javafx.scene.control.ContextMenu;
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.renderware.IRwStreamChunkWithEmbeddedStruct;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
@@ -12,7 +10,9 @@ import net.highwayfrogs.editor.games.renderware.struct.RwStruct;
 import net.highwayfrogs.editor.games.renderware.struct.RwStructType;
 import net.highwayfrogs.editor.games.renderware.struct.types.RwV3d;
 import net.highwayfrogs.editor.games.renderware.ui.IRwStreamChunkUIEntry;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -76,10 +76,9 @@ public class RwFrameListChunk extends RwStreamChunk implements IRwStreamChunkWit
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Frames", this.frames.size());
-        return propertyList;
     }
 
     @Override
@@ -132,15 +131,14 @@ public class RwFrameListChunk extends RwStreamChunk implements IRwStreamChunkWit
         }
 
         @Override
-        public PropertyList addToPropertyList(PropertyList propertyList) {
-            propertyList = super.addToPropertyList(propertyList);
+        public void addToPropertyList(PropertyListNode propertyList) {
+            super.addToPropertyList(propertyList);
             propertyList.add("Matrix Position", this.matrixPos);
             propertyList.add("Matrix At", this.matrixAt);
             propertyList.add("Matrix Right", this.matrixRight);
             propertyList.add("Matrix Up", this.matrixUp);
             propertyList.add("Parent Index", this.parentIndex);
             propertyList.add("Data", this.data);
-            return propertyList;
         }
 
         @Override

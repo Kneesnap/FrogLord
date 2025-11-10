@@ -1,15 +1,15 @@
 package net.highwayfrogs.editor.games.renderware.chunks;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk.IRwPlatformIndependentTexturePrefix;
 import net.highwayfrogs.editor.games.renderware.struct.types.RwStreamTexture;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Implements the texture stream chunk as seen in rtpitexd.c/rtpitexdTextureStreamReadPre
@@ -52,14 +52,13 @@ public class RwTextureChunk extends RwStreamChunk {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         if (this.name != null && this.name.trim().length() > 0)
             propertyList.add("Name", this.name);
         if (this.mask != null && this.mask.trim().length() > 0)
             propertyList.add("Mask", this.mask);
         propertyList.add("Flags", NumberUtils.toHexString(this.texFiltAddr));
-        return propertyList;
     }
 
     @Override

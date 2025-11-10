@@ -26,7 +26,7 @@ import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerUtils;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCRemapEditor;
 import net.highwayfrogs.editor.gui.InputMenu;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListViewerComponent;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
@@ -88,7 +88,7 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
         // Clear display.
         this.levelPreviewScreenshotView.setImage(null);
         this.levelNameImageView.setImage(null);
-        this.propertyListViewer.showProperties(null);
+        this.propertyListViewer.clear();
         this.remapListLabel.setText("No Texture Remap");
         this.remapList.setDisable(true);
         if (this.remapList.getItems() != null)

@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.chunks;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcAnimSetDesc;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -36,9 +36,9 @@ public class kcCResourceAnimSet extends kcCResource {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
-        return this.animSetDesc.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
+        this.animSetDesc.addToPropertyList(propertyList);
     }
 
     /**

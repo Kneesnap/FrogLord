@@ -8,8 +8,8 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -65,11 +65,10 @@ public class kcPerspective implements IMultiLineInfoWriter, IBinarySerializable,
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("FOV (Degrees)", Math.toDegrees(this.fovVert));
         propertyList.add("Aspect Ratio", this.aspect);
         propertyList.add("Near Clip", this.zNear);
         propertyList.add("Far Clip", this.zFar);
-        return propertyList;
     }
 }

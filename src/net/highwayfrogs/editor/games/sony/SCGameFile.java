@@ -18,8 +18,8 @@ import net.highwayfrogs.editor.gui.DefaultFileUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
@@ -201,7 +201,7 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         MWIResourceEntry mwiEntry = getIndexEntry();
         if (mwiEntry != null) {
             propertyList.add("File Type ID", mwiEntry.getTypeId());
@@ -210,8 +210,6 @@ public abstract class SCGameFile<TGameInstance extends SCGameInstance> extends S
 
         if (getFileDefinition().hasFullFilePath())
             propertyList.add("File Path", getFileDefinition().getFullFilePath());
-
-        return propertyList;
     }
 
     /**

@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.sony.beastwars.map.data;
 
 import lombok.Getter;
-import lombok.NonNull;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.psx.PSXMath;
 import net.highwayfrogs.editor.games.sony.SCGameData;
@@ -33,7 +32,7 @@ public class BeastWarsMapObject extends SCGameData<BeastWarsInstance> {
     private int positionZ;
     private short formId;
     private short linkedZoneId = -1; // -1 indicates no zone. TODO: Can also link to line.
-    @NonNull private byte deathDropId;
+    private byte deathDropId;
     private byte energonLevel; // Usually 0, but not always.
     private short field5_26; // TODO: ALWAYS ZERO OR ONE? (The code seems to support 2 as well..?)
     private short typeFlags;

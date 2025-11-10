@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.games.konami.hudson.ui.HudsonFileEditorUIControll
 import net.highwayfrogs.editor.games.shared.basic.file.BasicGameFile;
 import net.highwayfrogs.editor.games.shared.basic.file.definition.IGameFileDefinition;
 import net.highwayfrogs.editor.gui.GameUIController;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 
@@ -33,9 +33,9 @@ public abstract class HudsonGameFile extends BasicGameFile<HudsonGameInstance> {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Compression Enabled", this.compressionEnabled);
-        return super.addToPropertyList(propertyList);
+        super.addToPropertyList(propertyList);
     }
 
     /**

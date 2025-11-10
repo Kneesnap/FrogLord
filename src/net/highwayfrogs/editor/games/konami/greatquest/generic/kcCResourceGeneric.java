@@ -17,8 +17,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyCapsuleDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyTriMeshDesc;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -123,13 +123,11 @@ public class kcCResourceGeneric extends kcCResource {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Generic Resource Type", getResourceType() + " (" + Utils.getSimpleName(this.resourceData) + ")");
         if (this.resourceData instanceof IPropertyListCreator)
-            propertyList = ((IPropertyListCreator) this.resourceData).addToPropertyList(propertyList);
-
-        return propertyList;
+            ((IPropertyListCreator) this.resourceData).addToPropertyList(propertyList);
     }
 
     @Override

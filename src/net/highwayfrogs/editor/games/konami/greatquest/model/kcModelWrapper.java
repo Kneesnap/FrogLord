@@ -16,9 +16,9 @@ import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestM
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelViewController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.components.mesh.Embedded3DViewComponent;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -118,12 +118,10 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         if (this.model != null)
             this.model.addToPropertyList(propertyList);
-
-        return propertyList;
     }
 
     /**

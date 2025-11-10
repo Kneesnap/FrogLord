@@ -33,8 +33,8 @@ import net.highwayfrogs.editor.games.sony.shared.utils.DynamicMeshObjExporter;
 import net.highwayfrogs.editor.gui.DefaultFileUIController.IExtraUISupplier;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
 import net.highwayfrogs.editor.gui.components.mesh.Embedded3DViewComponent;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.utils.FXUtils;
@@ -147,8 +147,8 @@ public class MRModel extends SCSharedGameFile implements ISCTextureUser, IExtraU
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
 
         propertyList.add("Type", getModelType() + (this.incomplete ? " (Incomplete)" : ""));
         propertyList.add("Main VLO", this.vloFile != null ? this.vloFile.getFileDisplayName() : "None");
@@ -156,11 +156,9 @@ public class MRModel extends SCSharedGameFile implements ISCTextureUser, IExtraU
             propertyList.add("Complete Counterpart", this.completeCounterpart != null ? this.completeCounterpart.getFileDisplayName() : "None");
 
         if (this.animatedMof != null)
-            propertyList = this.animatedMof.addToPropertyList(propertyList);
+            this.animatedMof.addToPropertyList(propertyList);
         if (this.staticMof != null)
-            propertyList = this.staticMof.addToPropertyList(propertyList);
-
-        return propertyList;
+            this.staticMof.addToPropertyList(propertyList);
     }
 
     @Override

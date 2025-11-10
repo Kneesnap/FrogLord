@@ -1,14 +1,14 @@
 package net.highwayfrogs.editor.games.renderware.chunks;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.renderware.IRwStreamChunkWithEmbeddedStruct;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.games.renderware.struct.types.RwV2d;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Implements the RwCamera chunk as defined in babincam.h
@@ -63,14 +63,13 @@ public class RwCameraChunk extends RwStreamChunk implements IRwStreamChunkWithEm
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("View Window", this.viewWindow);
         propertyList.add("View Offset", this.viewOffset);
         propertyList.add("Near Plane", this.nearPlane);
         propertyList.add("Far Plane", this.farPlane);
         propertyList.add("Fog Plane", this.fogPlane);
         propertyList.add("Projection", this.projection);
-        return propertyList;
     }
 }

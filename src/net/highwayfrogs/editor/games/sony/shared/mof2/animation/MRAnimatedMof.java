@@ -17,7 +17,7 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.collision.MRMofBoundingBox
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPart;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPartCel;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRStaticMof;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
@@ -314,7 +314,7 @@ public class MRAnimatedMof extends MRBaseModelData {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         int modelCount = 0;
         int xarAnimationCount = 0;
         int xarAnimationsWithInterpolationCount = 0;
@@ -334,11 +334,9 @@ public class MRAnimatedMof extends MRBaseModelData {
         propertyList.add("Xar Animations", xarAnimationCount + " (" + xarAnimationsWithInterpolationCount + " Interpolated)");
 
         if (this.staticMofs.size() == 1) {
-            propertyList.add("Static MOF", "");
-            propertyList = this.staticMofs.get(0).addToPropertyList(propertyList);
+            propertyList.add("Static MOF", this.staticMofs.get(0));
         }
 
         // TODO: Recursively go through and add properties.
-        return propertyList;
     }
 }

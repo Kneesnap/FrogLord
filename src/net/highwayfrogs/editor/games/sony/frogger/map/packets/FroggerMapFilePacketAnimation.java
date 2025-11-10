@@ -9,7 +9,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapA
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -125,9 +125,8 @@ public class FroggerMapFilePacketAnimation extends FroggerMapFilePacket {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Animation Count", this.animations.size());
-        return propertyList;
     }
 
     /**

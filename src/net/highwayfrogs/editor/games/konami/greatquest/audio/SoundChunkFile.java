@@ -17,7 +17,7 @@ import net.highwayfrogs.editor.gui.components.DefaultFileEditorUISoundListCompon
 import net.highwayfrogs.editor.gui.components.DefaultFileEditorUISoundListComponent.IBasicSound;
 import net.highwayfrogs.editor.gui.components.DefaultFileEditorUISoundListComponent.IBasicSoundList;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.*;
 import net.highwayfrogs.editor.utils.data.reader.ArraySource;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -506,12 +506,9 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
         }
 
         @Override
-        public PropertyList addToPropertyList(PropertyList propertyList) {
+        public void addToPropertyList(PropertyListNode propertyList) {
             propertyList.add("SFX ID", this.id);
-            if (getGameInstance().isPS2() || getGameInstance().isPC())
-                propertyList = this.wavFile.addToPropertyList(propertyList);
-
-            return propertyList;
+            this.wavFile.addToPropertyList(propertyList);
         }
 
         @Override

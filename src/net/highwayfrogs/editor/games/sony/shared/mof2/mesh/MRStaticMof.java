@@ -12,7 +12,7 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.MRAnimatedMof;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.MRAnimatedMofModel;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPart.MRMofPartHeader;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -186,7 +186,7 @@ public class MRStaticMof extends MRBaseModelData {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Parts", this.parts.size());
         propertyList.add("Partcels", this.parts.stream().mapToInt(part -> part.getPartCels().size()).sum());
         propertyList.add("Flipbook Animations", getFlipbookAnimationCount());
@@ -199,7 +199,6 @@ public class MRStaticMof extends MRBaseModelData {
 
         // TODO: Recursively go through and add properties.
         // TODO: I'd like to finally add the sub-category properly-list building API. I'd like to have some stats here about the static MOF as a whole, then break down into individual parts.
-        return propertyList;
     }
 
 

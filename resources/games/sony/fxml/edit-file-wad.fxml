@@ -7,73 +7,76 @@
 <?import javafx.scene.text.Font?>
 <AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="305.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1">
     <children>
-      <HBox prefHeight="100.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-         <children>
-          <AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="240.0" HBox.hgrow="NEVER">
-               <children>
-                  <VBox prefHeight="303.0" prefWidth="206.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                     <children>
-                        <AnchorPane maxHeight="-Infinity" minHeight="-Infinity" prefHeight="40.0" prefWidth="130.0" VBox.vgrow="NEVER">
-                           <children>
-                              <Label layoutX="52.0" layoutY="12.0" prefHeight="40.0" prefWidth="240.0" text="WAD File" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="8.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                                 <font>
-                                    <Font name="System Bold" size="14.0" />
-                                 </font>
-                                 <graphic>
-                                    <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
-                                       <image>
-                                          <Image url="@/icons/packed.png" />
-                                       </image>
-                                    </ImageView>
-                                 </graphic>
-                              </Label>
-                               <Button layoutX="124.0" layoutY="8.0" mnemonicParsing="false" onAction="#editSelectedFile" text="Edit Selected File" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="8.0" />
-                           </children>
-                        </AnchorPane>
-                        <AnchorPane prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
-                           <children>
-                                <ListView fx:id="entryList" prefHeight="305.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="8.0" AnchorPane.rightAnchor="8.0" AnchorPane.topAnchor="0.0" />
-                           </children>
-                        </AnchorPane>
-                        <AnchorPane maxHeight="-Infinity" minHeight="-Infinity" prefHeight="48.0" prefWidth="130.0" VBox.vgrow="NEVER">
-                           <children>
-                              <HBox alignment="CENTER" prefHeight="100.0" prefWidth="236.0" spacing="2.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                                 <children>
-                                     <Button mnemonicParsing="false" onAction="#importEntry" prefHeight="25.0" prefWidth="54.0" text="Import" />
-                                     <Button mnemonicParsing="false" onAction="#exportEntry" prefHeight="25.0" prefWidth="54.0" text="Export" />
-                                     <Button mnemonicParsing="false" onAction="#exportAll" prefHeight="25.0" prefWidth="70.0" text="Export All" />
-                                 </children>
-                              </HBox>
-                           </children>
-                        </AnchorPane>
-                     </children>
-                  </VBox>
-               </children>
-            </AnchorPane>
-            <Separator maxWidth="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefWidth="0.0" HBox.hgrow="NEVER" />
-             <AnchorPane style="-fx-border-color: #ffffff; -fx-border-width: 0px 0px 0px 1px;" HBox.hgrow="ALWAYS">
-                 <children>
-                     <VBox fx:id="rightSidePanelFreeArea" prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                         <children>
-                             <AnchorPane maxHeight="-Infinity" minHeight="-Infinity" prefHeight="16.0" prefWidth="359.0" VBox.vgrow="NEVER">
-                                 <children>
-                                     <Label prefHeight="40.0" prefWidth="459.0" text="File Properties:" underline="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-                                 </children>
-                             </AnchorPane>
-                             <TableView fx:id="tableFileData" prefHeight="180.0" prefWidth="180.0" AnchorPane.bottomAnchor="4.0" AnchorPane.leftAnchor="4.0" AnchorPane.rightAnchor="4.0" AnchorPane.topAnchor="0.0" VBox.vgrow="SOMETIMES">
-                                 <columns>
-                                     <TableColumn fx:id="tableColumnFileDataName" editable="false" prefWidth="75.0" text="Name" />
-                                     <TableColumn fx:id="tableColumnFileDataValue" editable="false" prefWidth="75.0" text="Value" />
-                                 </columns>
-                                 <columnResizePolicy>
-                                     <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-                                 </columnResizePolicy>
-                             </TableView>
-                         </children>
-                     </VBox>
-                 </children>
-             </AnchorPane>
-         </children>
-      </HBox>
+        <HBox prefHeight="100.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <children>
+                <AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="240.0" HBox.hgrow="NEVER">
+                    <children>
+                        <VBox prefHeight="303.0" prefWidth="206.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                            <children>
+                                <AnchorPane maxHeight="-Infinity" minHeight="-Infinity" prefHeight="40.0" prefWidth="130.0" VBox.vgrow="NEVER">
+                                    <children>
+                                        <Label layoutX="52.0" layoutY="12.0" prefHeight="40.0" prefWidth="240.0" text="WAD File" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="8.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                            <font>
+                                                <Font name="System Bold" size="14.0" />
+                                            </font>
+                                            <graphic>
+                                                <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                                                    <image>
+                                                        <Image url="@/icons/packed.png" />
+                                                    </image>
+                                                </ImageView>
+                                            </graphic>
+                                        </Label>
+                                        <Button layoutX="124.0" layoutY="8.0" mnemonicParsing="false" onAction="#editSelectedFile" text="Edit Selected File" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="8.0" />
+                                    </children>
+                                </AnchorPane>
+                                <AnchorPane prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+                                    <children>
+                                        <ListView fx:id="entryList" prefHeight="305.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="8.0" AnchorPane.rightAnchor="8.0" AnchorPane.topAnchor="0.0" />
+                                    </children>
+                                </AnchorPane>
+                                <AnchorPane maxHeight="-Infinity" minHeight="-Infinity" prefHeight="48.0" prefWidth="130.0" VBox.vgrow="NEVER">
+                                    <children>
+                                        <HBox alignment="CENTER" prefHeight="100.0" prefWidth="236.0" spacing="2.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                            <children>
+                                                <Button mnemonicParsing="false" onAction="#importEntry" prefHeight="25.0" prefWidth="54.0" text="Import" />
+                                                <Button mnemonicParsing="false" onAction="#exportEntry" prefHeight="25.0" prefWidth="54.0" text="Export" />
+                                                <Button mnemonicParsing="false" onAction="#exportAll" prefHeight="25.0" prefWidth="70.0" text="Export All" />
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </AnchorPane>
+                            </children>
+                        </VBox>
+                    </children>
+                </AnchorPane>
+                <Separator maxWidth="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefWidth="0.0" HBox.hgrow="NEVER" />
+                <AnchorPane style="-fx-border-color: #ffffff; -fx-border-width: 0px 0px 0px 1px;" HBox.hgrow="ALWAYS">
+                    <children>
+                        <VBox fx:id="rightSidePanelFreeArea" prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                            <children>
+                                <AnchorPane maxHeight="-Infinity" minHeight="-Infinity" prefHeight="16.0" prefWidth="359.0" VBox.vgrow="NEVER">
+                                    <children>
+                                        <Label prefHeight="40.0" prefWidth="459.0" text="File Properties:" underline="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                                    </children>
+                                </AnchorPane>
+                                <TreeTableView fx:id="tableFileData" prefHeight="180.0" AnchorPane.bottomAnchor="4.0" AnchorPane.leftAnchor="4.0" AnchorPane.rightAnchor="4.0" AnchorPane.topAnchor="0.0" VBox.vgrow="SOMETIMES">
+                                    <columns>
+                                        <TreeTableColumn fx:id="tableColumnFileDataName" editable="false" minWidth="50.0" prefWidth="100.0" text="Name" />
+                                        <TreeTableColumn fx:id="tableColumnFileDataValue" editable="false" maxWidth="Infinity" prefWidth="260.0" resizable="false" text="Value" />
+                                    </columns>
+                                    <!--<columnResizePolicy>
+                                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                    </columnResizePolicy>
+                                    <padding>
+                                        <Insets bottom="8.0" />
+                                    </padding>-->
+                                </TreeTableView>
+                            </children>
+                        </VBox>
+                    </children>
+                </AnchorPane>
+            </children>
+        </HBox>
     </children>
 </AnchorPane>

@@ -16,8 +16,8 @@ import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.CollectionViewEntryTreeCell;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListViewerComponent;
 import net.highwayfrogs.editor.utils.FileUtils;
 
 import java.net.URL;
@@ -65,7 +65,7 @@ public class RenderWareStreamEditorUIController<TGameInstance extends GameInstan
         createFxTreeItems(this.streamFile);
 
         if (this.rightSidePanelFreeArea != null) {
-            TableView<NameValuePair> propertyListViewRootNode = this.propertyListViewer.getRootNode();
+            TreeTableView<PropertyListNode> propertyListViewRootNode = this.propertyListViewer.getRootNode();
             HBox.setHgrow(propertyListViewRootNode, Priority.ALWAYS);
             this.propertyListViewer.bindSize();
 

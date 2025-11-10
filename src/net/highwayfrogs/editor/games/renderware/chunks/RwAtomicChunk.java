@@ -1,16 +1,16 @@
 package net.highwayfrogs.editor.games.renderware.chunks;
 
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.beyond.FroggerBeyondGameType;
 import net.highwayfrogs.editor.games.renderware.IRwStreamChunkWithEmbeddedStruct;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.games.renderware.chunks.RwFrameListChunk.RwStreamFrame;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.List;
 
@@ -62,12 +62,11 @@ public class RwAtomicChunk extends RwStreamChunk implements IRwStreamChunkWithEm
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Frame Index", this.frameIndex);
         propertyList.add("Geometry Index", this.geometryIndex);
         propertyList.add("Flags", NumberUtils.toHexString(this.flags));
-        return propertyList;
     }
 
     /**

@@ -14,7 +14,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerU
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -204,10 +204,9 @@ public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Map Group Dimensions", this.groupXCount + " x " + this.groupZCount + " (" + getGroupCount() + " groups)");
         propertyList.add("Map Group Square Size", getGroupXSizeAsFloat() + " x " + getGroupZSizeAsFloat());
-        return propertyList;
     }
 
     /**

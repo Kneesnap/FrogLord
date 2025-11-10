@@ -27,8 +27,8 @@ import net.highwayfrogs.editor.gui.components.DefaultFileEditorUISoundListCompon
 import net.highwayfrogs.editor.gui.components.DefaultFileEditorUISoundListComponent.BasicSoundListViewComponent;
 import net.highwayfrogs.editor.gui.components.DefaultFileEditorUISoundListComponent.IBasicSound;
 import net.highwayfrogs.editor.gui.components.DefaultFileEditorUISoundListComponent.IBasicSoundList;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.*;
@@ -319,12 +319,11 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("SFX Bank ID", this.sfxBankId);
         propertyList.add("SFX Entry Count", this.soundEffects.size());
         propertyList.add("SFX Wave Count", this.waves.size());
-        return propertyList;
     }
 
     public interface SfxWave extends IBasicSound {
@@ -452,13 +451,12 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         }
 
         @Override
-        public PropertyList addToPropertyList(PropertyList propertyList) {
+        public void addToPropertyList(PropertyListNode propertyList) {
             propertyList.add("Local Wave ID", getWaveID());
             propertyList.add("Wave Size", getWaveSize() + " (" + DataSizeUnit.formatSize(getWaveSize()) + ")");
             propertyList.add("Channel Count", getChannelCount());
             propertyList.add("Bit Depth", getBitDepth());
             propertyList.add("Sample Rate", getSampleRate());
-            return propertyList;
         }
 
         @Override
@@ -617,15 +615,17 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         }
 
         @Override
-        public PropertyList addToPropertyList(PropertyList propertyList) {
-            propertyList = super.addToPropertyList(propertyList);
+        public void addToPropertyList(PropertyListNode propertyList) {
+            super.addToPropertyList(propertyList);
             // This is the only sound flag here. I do wonder if the other flags (VOICE_CLIP / MUSIC) are valid here.
             // But I see no reason to support them, as they don't have any obvious benefit here and that never occurs in the shipped game.
-            propertyList.add("Repeat", isRepeatEnabled(), () -> {
-                this.flags ^= FLAG_REPEAT_UNTIL_STOPPED;
-                return isRepeatEnabled();
+            propertyList.addBoolean("Repeat", isRepeatEnabled(), newState -> {
+                if (newState) {
+                    this.flags |= FLAG_REPEAT_UNTIL_STOPPED;
+                } else {
+                    this.flags &= ~FLAG_REPEAT_UNTIL_STOPPED;
+                }
             });
-            return propertyList;
         }
 
         /**
@@ -785,12 +785,10 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         }
 
         @Override
-        public PropertyList addToPropertyList(PropertyList propertyList) {
-            propertyList = super.addToPropertyList(propertyList);
+        public void addToPropertyList(PropertyListNode propertyList) {
+            super.addToPropertyList(propertyList);
             propertyList.add("WAV Format ID", getWavFormatID());
-            propertyList.add("Unknown Value", this.unknownValue,
-                    () -> InputMenu.promptInputInt(getGameInstance(), "Please enter the new unknown value.", this.unknownValue, null));
-            return propertyList;
+            propertyList.addInteger("Unknown Value", this.unknownValue, newValue -> this.unknownValue = newValue);
         }
 
         @Override
@@ -831,8 +829,9 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         @NonNull private final SBRFile parentFile;
         private final byte type;
         private short flags;
-        private short priority = 100; // 100 seems to be default, 50 for vase break/barrel breaks, 50 for unimportant, 200 for music. >= 200 is necessary for looping to occur. (kcCSoundEffectStream::Play) Also seems to control m_musicHandle in PlaySfx.
+        private short priority = DEFAULT_PRIORITY; // 100 seems to be default, 50 for vase break/barrel breaks, 50 for unimportant, 200 for music. >= 200 is necessary for looping to occur. (kcCSoundEffectStream::Play) Also seems to control m_musicHandle in PlaySfx.
 
+        private static final int DEFAULT_PRIORITY = 100;
         private static final int FLAG_VALIDATION_MASK = 0b11000001;
         public static final int FLAG_REPEAT = Constants.BIT_FLAG_0;
         public static final int FLAG_VOICE_CLIP = Constants.BIT_FLAG_6;
@@ -864,17 +863,14 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         }
 
         @Override
-        public PropertyList addToPropertyList(PropertyList propertyList) {
+        public void addToPropertyList(PropertyListNode propertyList) {
             propertyList.add("Type", this.type + " (" + Utils.getSimpleName(this) + ")");
             String flagString = getFlagsAsString();
             propertyList.add("Flags", NumberUtils.toHexString(this.flags) + (flagString != null ? " (" + flagString + ")" : ""));
             addFlagToggle(propertyList, "Repeat", FLAG_REPEAT);
             addFlagToggle(propertyList, "Voice Clip", FLAG_VOICE_CLIP);
             addFlagToggle(propertyList, "Music", FLAG_MUSIC);
-            propertyList.add("Priority", this.priority,
-                    () -> InputMenu.promptInputInt(getGameInstance(), "What should the new priority value be set to? (Default = 100)", this.priority, this::setPriority));
-
-            return propertyList;
+            propertyList.addInteger("Priority", this.priority, this::setPriority);
         }
 
         /**
@@ -905,7 +901,7 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         }
 
         @SuppressWarnings("lossy-conversions")
-        private void addFlagToggle(PropertyList propertyList, String name, int flagMask) {
+        private void addFlagToggle(PropertyListNode propertyList, String name, int flagMask) {
             propertyList.add(name + " Flag", (this.flags & flagMask) == flagMask, () -> {
                 this.flags ^= flagMask;
                 return (this.flags & flagMask) == flagMask;
@@ -1086,16 +1082,15 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         }
 
         @Override
-        public PropertyList addToPropertyList(PropertyList propertyList) {
-            propertyList = super.addToPropertyList(propertyList);
-            propertyList.add("Instance Limit", this.instanceLimit, () -> InputMenu.promptInputInt(getGameInstance(), "What is the new instance limit? (Default: 127)", this.instanceLimit, this::setInstanceLimit));
-            propertyList.add("Volume", this.volume, () -> InputMenu.promptInputInt(getGameInstance(), "What is the new volume? (Default: 127)", this.volume, this::setVolume));
-            propertyList.add("Pan", this.pan, () -> InputMenu.promptInputInt(getGameInstance(), "What is the new pan? (Default: 64)", this.pan, this::setPan));
-            propertyList.add("Pitch", this.pitch, () -> InputMenu.promptInputInt(getGameInstance(), "What is the new pitch? (Default: 0)", this.pitch, this::setPitch));
-            propertyList.add("Wave ID", this.waveIndex, () -> InputMenu.promptInputInt(getGameInstance(), "What is the local ID of the wave to apply?", this.waveIndex, this::setWaveIndex));
+        public void addToPropertyList(PropertyListNode propertyList) {
+            super.addToPropertyList(propertyList);
+            propertyList.addInteger("Instance Limit", this.instanceLimit, this::setInstanceLimit);
+            propertyList.addInteger("Volume", this.volume, this::setVolume);
+            propertyList.addInteger("Pan", this.pan, this::setPan);
+            propertyList.addInteger("Pitch", this.pitch, this::setPitch);
+            propertyList.addInteger("Wave ID", this.waveIndex, this::setWaveIndex);
 
             // NOTE: I don't actually know that the limits are 127. It's possible values higher might be supported, but I don't see much of a reason to care.
-            return propertyList;
         }
 
         @Override
@@ -1262,10 +1257,9 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         }
 
         @Override
-        public PropertyList addToPropertyList(PropertyList propertyList) {
-            propertyList = super.addToPropertyList(propertyList);
-            propertyList.add("Volume", this.volume, () -> InputMenu.promptInputInt(getGameInstance(), "What is the new volume? (Default: 127)", this.volume, this::setVolume));
-            return propertyList;
+        public void addToPropertyList(PropertyListNode propertyList) {
+            super.addToPropertyList(propertyList);
+            propertyList.addInteger("Volume", this.volume, this::setVolume);
         }
 
         @Override
@@ -1401,14 +1395,16 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
         }
 
         @Override
-        public PropertyList addToPropertyList(PropertyList propertyList) {
+        public void addToPropertyList(PropertyListNode propertyList) {
             propertyList.add("SFX ID", this.sfxId, () -> {
                 Integer newSfxId = this.attributes != null ? this.attributes.askUserForNewSfxId(this) : null;
                 if (newSfxId != null)
                     this.sfxId = newSfxId;
                 return newSfxId;
             });
-            return this.attributes != null ? this.attributes.addToPropertyList(propertyList) : propertyList;
+
+            if (this.attributes != null)
+                this.attributes.addToPropertyList(propertyList);
         }
 
         /**
@@ -1602,7 +1598,6 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
          * Applies settings from optional arguments
          * @param arguments the optional arguments to apply the settings from
          */
-        @SuppressWarnings("ExtractMethodRecommender")
         public void applySettings(File workingDirectory, OptionalArguments arguments) {
             if (workingDirectory != null && !workingDirectory.isDirectory())
                 throw new IllegalArgumentException("workingDirectory was expected to be a directory, but was actually '" + workingDirectory.getName() + "'!");

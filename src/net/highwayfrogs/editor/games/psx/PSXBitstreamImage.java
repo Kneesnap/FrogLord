@@ -15,7 +15,7 @@ import net.highwayfrogs.editor.gui.DefaultFileUIController.IExtraUISupplier;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.FXNodeWrapperComponent;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -59,15 +59,13 @@ public class PSXBitstreamImage extends SCSharedGameFile implements IExtraUISuppl
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Image Loaded?", this.cachedImage != null);
         if (this.cachedImage != null) {
             propertyList.add("Image Width", getCachedWidth());
             propertyList.add("Image Height", getCachedHeight());
         }
-
-        return propertyList;
     }
 
     @Override

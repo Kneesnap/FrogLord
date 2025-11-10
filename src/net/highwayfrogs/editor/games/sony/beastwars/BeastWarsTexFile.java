@@ -11,7 +11,7 @@ import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.beastwars.ui.TexController;
 import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapPolygon;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.gui.texture.BufferedImageWrapper;
 import net.highwayfrogs.editor.gui.texture.atlas.SequentialTextureAtlas;
 import net.highwayfrogs.editor.gui.texture.atlas.TextureAtlas;
@@ -284,9 +284,8 @@ public class BeastWarsTexFile extends SCGameFile<BeastWarsInstance> {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Image Count", this.images.size());
-        return propertyList;
     }
 }

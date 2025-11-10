@@ -1,8 +1,6 @@
 package net.highwayfrogs.editor.games.renderware.chunks.sector;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.*;
 import net.highwayfrogs.editor.games.renderware.chunks.RwGeometryChunk;
@@ -11,8 +9,10 @@ import net.highwayfrogs.editor.games.renderware.struct.RwStruct;
 import net.highwayfrogs.editor.games.renderware.struct.RwStructType;
 import net.highwayfrogs.editor.games.renderware.struct.types.*;
 import net.highwayfrogs.editor.games.renderware.struct.types.RpTriangle.IRwGeometryMesh;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -173,8 +173,8 @@ public class RwAtomicSectorChunk extends RwSectorBase implements IRwGeometryMesh
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Triangle Count", this.triangles.size());
         propertyList.add("Vertex Count", this.vertices.size());
         propertyList.add("Material List Window Base", this.materialListBaseIndex);
@@ -182,7 +182,6 @@ public class RwAtomicSectorChunk extends RwSectorBase implements IRwGeometryMesh
         propertyList.add("Minimum Position", calculateMinPosition(new RwV3d(getGameInstance())));
         propertyList.add("Maximum Position", calculateMaxPosition(new RwV3d(getGameInstance())));
         // TODO: Include flags in world.
-        return propertyList;
     }
 
     /**
@@ -336,8 +335,8 @@ public class RwAtomicSectorChunk extends RwSectorBase implements IRwGeometryMesh
         }
 
         @Override
-        public PropertyList addToPropertyList(PropertyList propertyList) {
-            propertyList = super.addToPropertyList(propertyList);
+        public void addToPropertyList(PropertyListNode propertyList) {
+            super.addToPropertyList(propertyList);
             propertyList.add("Material List Window Base", this.materialListWindowBase);
             propertyList.add("Triangle Count", this.numTriangles);
             propertyList.add("Vertex Count", this.numVertices);
@@ -345,7 +344,6 @@ public class RwAtomicSectorChunk extends RwSectorBase implements IRwGeometryMesh
             propertyList.add("Max Position", this.maxPosition);
             if (this.collisionSectorPresent)
                 propertyList.add("Collision Sector Present?", true);
-            return propertyList;
         }
 
         @Override
@@ -384,12 +382,11 @@ public class RwAtomicSectorChunk extends RwSectorBase implements IRwGeometryMesh
         }
 
         @Override
-        public PropertyList addToPropertyList(PropertyList propertyList) {
-            propertyList = super.addToPropertyList(propertyList);
+        public void addToPropertyList(PropertyListNode propertyList) {
+            super.addToPropertyList(propertyList);
             propertyList.add("cType", NumberUtils.toHexString(this.cType & 0xFF));
             propertyList.add("Vertex Index", this.vertexIndex);
             propertyList.add("Start Polygon", this.startPolygon);
-            return propertyList;
         }
 
         @Override

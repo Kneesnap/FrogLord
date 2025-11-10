@@ -4,8 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -191,7 +191,7 @@ public class WavFile implements IBinarySerializable, IPropertyListCreator {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         int fileSizeInBytes = getFileSizeInBytes();
         propertyList.add("Sound File Size", fileSizeInBytes + " (" + DataSizeUnit.formatSize(fileSizeInBytes) + ")");
         propertyList.add("Audio Format", this.formatTag);
@@ -202,8 +202,6 @@ public class WavFile implements IBinarySerializable, IPropertyListCreator {
             propertyList.add("Extra Header Bytes", this.extraHeaderBytes.length);
         if (this.extraBytesAtEnd != null && this.extraBytesAtEnd.length > 0)
             propertyList.add("EOF Bytes", this.extraBytesAtEnd.length);
-
-        return propertyList;
     }
 
     /**

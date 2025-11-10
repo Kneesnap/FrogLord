@@ -18,7 +18,7 @@ import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
 import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -201,9 +201,8 @@ public class FroggerMapFilePacketEntity extends FroggerMapFilePacket {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Entity Count", this.entities.size());
-        return propertyList;
     }
 
     /**

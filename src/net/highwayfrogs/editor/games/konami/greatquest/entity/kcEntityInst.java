@@ -20,8 +20,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.entity.GreatQuestMapEditorEntityDisplay;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.Utils;
@@ -258,11 +258,10 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Entity Description", this.descriptionRef.getDisplayString(false));
         propertyList.add("Script ID", this.scriptIndex != -1 ? this.scriptIndex : "None");
         propertyList.add("Target Entity", this.targetEntityRef.getDisplayString(false));
-        return propertyList;
     }
 
     private static final String CONFIG_KEY_ENTITY_DESC = "description";

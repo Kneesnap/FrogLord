@@ -5,7 +5,7 @@ import net.highwayfrogs.editor.games.generic.data.IGameObject;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
 
 import java.util.List;
 

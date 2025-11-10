@@ -13,7 +13,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListViewerComponent;
 
 /**
  * Represents a file editor with a property list showing the properties of the file.
@@ -52,7 +52,7 @@ public class SCFileEditorPropertyListUIController<TGameInstance extends SCGameIn
         super.setTargetFile(languageFile);
 
         // Clear display.
-        this.propertyListViewer.showProperties(null);
+        this.propertyListViewer.clear();
 
         // If there's no file, abort!
         if (languageFile == null)

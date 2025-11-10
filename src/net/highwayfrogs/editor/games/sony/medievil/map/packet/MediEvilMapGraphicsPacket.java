@@ -5,8 +5,8 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapPolygon;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -89,7 +89,7 @@ public class MediEvilMapGraphicsPacket extends MediEvilMapPacket implements IPro
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         int g3Count = 0;
         int g4Count = 0;
         int gt3Count = 0;
@@ -118,6 +118,5 @@ public class MediEvilMapGraphicsPacket extends MediEvilMapPacket implements IPro
         propertyList.add("Untextured Polygons", "[G3s: " + g3Count + ", G4s: " + g4Count + "]");
         propertyList.add("Textured Polygons", "[GT3s: " + gt3Count + ", GT4s: " + gt4Count + "]");
         propertyList.add("Vertices", this.vertices.size());
-        return propertyList;
     }
 }

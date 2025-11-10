@@ -6,8 +6,8 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
 import net.highwayfrogs.editor.games.sony.shared.map.SCMapFilePacket;
 import net.highwayfrogs.editor.games.sony.shared.map.data.SCMapEntity;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -64,8 +64,7 @@ public class SCMapEntityPacket<TGameInstance extends SCGameInstance> extends SCM
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Entity Count", this.entities.size());
-        return propertyList;
     }
 }

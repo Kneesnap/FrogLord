@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRStaticMof;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;

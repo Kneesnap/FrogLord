@@ -16,7 +16,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerU
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.ColorUtils;
@@ -185,7 +185,7 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         if (!isAprilFormat()) {
             propertyList.add("Map Theme", this.mapTheme);
             propertyList.add("Starting Time Limit", this.startingTimeLimit);
@@ -195,7 +195,6 @@ public class FroggerMapFilePacketGeneral extends FroggerMapFilePacket {
         propertyList.add("Start Grid Rotation", this.startRotation.name() + " (" + this.startRotation.getArrow() + ")");
         if (hasFrogColorData())
             propertyList.add("Frog Ambient Lighting", "<red=" + (this.frogRedLighting & 0xFF) + ",green=" + (this.frogGreenLighting & 0xFF) + ",blue=" + (this.frogBlueLighting & 0xFF) + ">");
-        return propertyList;
     }
 
     /**

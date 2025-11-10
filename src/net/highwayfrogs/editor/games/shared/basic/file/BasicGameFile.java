@@ -9,7 +9,7 @@ import net.highwayfrogs.editor.games.shared.basic.file.definition.IGameFileDefin
 import net.highwayfrogs.editor.games.shared.basic.ui.BasicFileEditorUIController;
 import net.highwayfrogs.editor.gui.DefaultFileUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.DataSizeUnit;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -87,11 +87,9 @@ public abstract class BasicGameFile<TGameInstance extends BasicGameInstance> ext
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         if (this.rawData != null)
             propertyList.add("Loaded File Size", DataSizeUnit.formatSize(this.rawData.length) + " (" + this.rawData.length + " bytes)");
-
-        return propertyList;
     }
 
     /**

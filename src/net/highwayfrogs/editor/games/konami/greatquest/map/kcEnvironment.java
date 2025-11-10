@@ -11,7 +11,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.KCResourceID;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -95,8 +95,8 @@ public class kcEnvironment extends kcCResource implements IMultiLineInfoWriter {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         // TODO: Nested properties of "Perspective": this.perspective.addToPropertyList(propertyList);
 
         propertyList.add("Fog Enabled", this.fogEnabled);
@@ -111,8 +111,6 @@ public class kcEnvironment extends kcCResource implements IMultiLineInfoWriter {
 
             // TODO: Nested properties of "Directional Light #" + (i + 1): this.this.directionalLights[i].addToPropertyList(propertyList);
         }
-
-        return propertyList;
     }
 
     @Override

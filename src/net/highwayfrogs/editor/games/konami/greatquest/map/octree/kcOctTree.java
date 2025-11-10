@@ -6,8 +6,8 @@ import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector3;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -191,14 +191,13 @@ public class kcOctTree extends GameData<GreatQuestInstance> implements IMultiLin
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Offset", this.offset);
         propertyList.add("Octree Depth", this.treeDepth);
         propertyList.add("Smallest Node Depth", this.smallestNodeDepth);
         propertyList.add("Branches", this.branches.size());
         propertyList.add("Leaves", this.leaves.size());
         propertyList.add("Quad Branches", this.quadBranches.size());
-        return propertyList;
     }
 
     /**

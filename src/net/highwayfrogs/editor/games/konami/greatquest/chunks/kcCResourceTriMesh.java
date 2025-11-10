@@ -10,8 +10,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcBox4;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -57,9 +57,9 @@ public class kcCResourceTriMesh extends kcCResource {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
-        return this.triMesh.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
+        this.triMesh.addToPropertyList(propertyList);
     }
 
     @Getter
@@ -134,11 +134,10 @@ public class kcCResourceTriMesh extends kcCResource {
         }
 
         @Override
-        public PropertyList addToPropertyList(PropertyList propertyList) {
+        public void addToPropertyList(PropertyListNode propertyList) {
             // TODO: Nested Property: this.boundingBox.writePrefixedMultiLineInfo(builder, "Bounding Box", padding, newPadding);
             propertyList.add("Vertices", this.vertices.size());
             propertyList.add("Faces", this.faces.size());
-            return propertyList;
         }
     }
 

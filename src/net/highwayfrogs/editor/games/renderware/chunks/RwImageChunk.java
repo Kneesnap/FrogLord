@@ -17,7 +17,7 @@ import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.games.renderware.chunks.RwPlatformIndependentTextureDictionaryChunk.IRwPlatformIndependentTexturePrefix;
 import net.highwayfrogs.editor.games.renderware.struct.types.RwImage;
 import net.highwayfrogs.editor.gui.GameUIController;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.FXUtils;
@@ -227,15 +227,14 @@ public class RwImageChunk extends RwStreamChunk implements ITextureSource {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         if (this.texturePrefix != null)
             this.texturePrefix.addToPropertyList(propertyList);
 
         propertyList.add("Image Dimensions", this.image.getWidth() + " x " + this.image.getHeight());
         propertyList.add("Bit Depth", getBitDepth());
         propertyList.add("Stride", getStride());
-        return propertyList;
     }
 
     @Override

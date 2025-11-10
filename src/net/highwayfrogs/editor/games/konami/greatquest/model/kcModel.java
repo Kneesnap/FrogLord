@@ -3,8 +3,8 @@ package net.highwayfrogs.editor.games.konami.greatquest.model;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -262,7 +262,7 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Materials", this.materials.size());
         propertyList.add("Nodes", this.nodes.size());
         propertyList.add("Primitives", this.primitives.size());
@@ -283,7 +283,5 @@ public class kcModel extends GameData<GreatQuestInstance> implements IPropertyLi
             for (int i = 0; i < this.primitives.size(); i++)
                 propertyList.add("Primitive " + i, this.primitives.get(i));
         }
-
-        return propertyList;
     }
 }

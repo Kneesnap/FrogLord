@@ -16,7 +16,7 @@ import net.highwayfrogs.editor.gui.DefaultFileUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
 import net.highwayfrogs.editor.gui.components.DefaultFileEditorUISoundListComponent.IBasicSoundList;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
 import net.highwayfrogs.editor.utils.FXUtils;
 
 import javax.sound.sampled.Clip;

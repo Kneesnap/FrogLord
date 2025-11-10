@@ -17,7 +17,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcScriptLi
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcScriptTOC;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
@@ -124,10 +124,9 @@ public class kcScriptList extends kcCResource {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Scripts", this.scripts.size());
-        return propertyList;
     }
 
     @Override

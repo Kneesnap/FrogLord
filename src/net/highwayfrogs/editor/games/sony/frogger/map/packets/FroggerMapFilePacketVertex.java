@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -67,8 +67,7 @@ public class FroggerMapFilePacketVertex extends FroggerMapFilePacket {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Vertex Count", this.vertices.size());
-        return propertyList;
     }
 }

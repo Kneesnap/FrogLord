@@ -12,7 +12,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -277,7 +277,7 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Collision Grid Dimensions", this.gridXCount + " x " + this.gridZCount + " (" + (this.gridXCount * this.gridZCount) + " groups)");
         propertyList.add("Collision Grid Square Size", getGridXSizeAsFloat() + " x " + getGridZSizeAsFloat());
 
@@ -295,8 +295,6 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
 
             propertyList.add("Grid Square Count", squareCount);
         }
-
-        return propertyList;
     }
 
     /**

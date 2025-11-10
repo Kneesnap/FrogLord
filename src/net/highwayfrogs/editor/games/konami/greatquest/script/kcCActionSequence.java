@@ -12,7 +12,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneri
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionID;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionSetAnimation;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.system.Config.IllegalConfigSyntaxException;
@@ -265,13 +265,11 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor, 
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Actions", this.actions.size());
         for (int i = 0; i < this.actions.size(); i++)
             propertyList.add("Action " + i, this.actions.get(i));
-
-        return propertyList;
     }
 
     @Override

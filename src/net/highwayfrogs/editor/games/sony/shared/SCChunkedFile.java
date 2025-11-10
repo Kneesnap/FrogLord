@@ -6,8 +6,8 @@ import net.highwayfrogs.editor.games.sony.SCGameConfig;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -200,8 +200,8 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Active Packet Count", getActivePacketCount());
 
         // Get a list of active packets.
@@ -222,8 +222,6 @@ public abstract class SCChunkedFile<TGameInstance extends SCGameInstance> extend
             if (filePacket.isActive() && filePacket instanceof IPropertyListCreator)
                 ((IPropertyListCreator) filePacket).addToPropertyList(propertyList);
         }
-
-        return propertyList;
     }
 
     /**

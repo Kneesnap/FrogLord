@@ -9,8 +9,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestCharsetProvider
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.gui.InputMenu;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -50,11 +50,9 @@ public class kcCResourceString extends GameData<GreatQuestInstance> implements k
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Value", this.value,
                 () -> InputMenu.promptInputBlocking(getGameInstance(), "Please enter the new string.", this.value, this::setValue));
-
-        return propertyList;
     }
 
     /**

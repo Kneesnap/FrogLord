@@ -8,7 +8,7 @@ import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorPropertyListUICo
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.InputMenu;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.DataSizeUnit;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -120,8 +120,8 @@ public class MediEvilHelpFile extends SCGameFile<MediEvilGameInstance> {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("String Entries", this.strings.size());
         for (int i = 0; i < this.strings.size(); i++) {
             final int index = i;
@@ -134,8 +134,6 @@ public class MediEvilHelpFile extends SCGameFile<MediEvilGameInstance> {
                 return newValue;
             });
         }
-
-        return propertyList;
     }
 
     /**

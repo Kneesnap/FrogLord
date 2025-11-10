@@ -2,12 +2,12 @@ package net.highwayfrogs.editor.games.renderware.struct.types;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.struct.RwStruct;
 import net.highwayfrogs.editor.games.renderware.struct.RwStructType;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents the RpVertexNormal struct in basector.h
@@ -44,12 +44,11 @@ public class RpVertexNormal extends RwStruct {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("X", this.x);
         propertyList.add("Y", this.y);
         propertyList.add("Z", this.z);
-        return propertyList;
     }
 
     @Override

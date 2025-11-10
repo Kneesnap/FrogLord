@@ -16,7 +16,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.Great
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.entity.GreatQuestMapEditorEntityDisplay;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.InputMenu;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.system.math.Vector3f;
@@ -240,15 +240,14 @@ public class kcEntity3DInst extends kcEntityInst {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Position", this.position.toParseableString(1F));
         propertyList.add("Rotation", getRotationAnglesInDegrees(null).toParseableString());
         if (!DEFAULT_SCALE.equals(this.scale))
             propertyList.add("Scale", this.scale.toParseableString(1F));
         propertyList.add("Flags", kcEntityInstanceFlag.getAsOptionalArguments(this.flags).getNamedArgumentsAsCommaSeparatedString());
         propertyList.add("Billboard Axis", this.billboardAxis);
-        return propertyList;
     }
 
     private static final String CONFIG_KEY_FLAGS = "flags";

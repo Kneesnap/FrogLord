@@ -24,8 +24,8 @@ import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
 import net.highwayfrogs.editor.gui.components.FXNodeWrapperComponent;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.*;
 import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
@@ -329,7 +329,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Resource Type", this.chunkType);
         propertyList.add("Hash", this.selfHash.getHashNumberAsString());
         propertyList.add("Name", getName());
@@ -337,8 +337,6 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
             propertyList.add("Original Name", this.selfHash.getOriginalString());
         if (this.rawData != null)
             propertyList.add("Loaded Data Length", DataSizeUnit.formatSize(this.rawData.length) + " (" + this.rawData.length + " bytes)");
-
-        return propertyList;
     }
 
     @Override

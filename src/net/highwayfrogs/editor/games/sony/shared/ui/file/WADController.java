@@ -6,7 +6,6 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.ContextMenuEvent;
@@ -22,8 +21,8 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.gui.DefaultFileUIController.IExtraUISupplier;
 import net.highwayfrogs.editor.gui.GameUIController;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
-import net.highwayfrogs.editor.system.NameValuePair;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListViewerComponent;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -36,16 +35,24 @@ import java.io.File;
  * Created by Kneesnap on 9/30/2018.
  */
 public class WADController extends SCFileEditorUIController<SCGameInstance, WADFile> {
-    @FXML private TableView<NameValuePair> tableFileData;
-    @FXML private TableColumn<Object, Object> tableColumnFileDataName;
-    @FXML private TableColumn<Object, Object> tableColumnFileDataValue;
+    @FXML private TreeTableView<PropertyListNode> tableFileData;
+    @FXML private TreeTableColumn<PropertyListNode, String> tableColumnFileDataName;
+    @FXML private TreeTableColumn<PropertyListNode, String> tableColumnFileDataValue;
     @FXML private ListView<WADEntry> entryList;
     @FXML private VBox rightSidePanelFreeArea;
+    private PropertyListViewerComponent<SCGameInstance> propertyListViewer;
     private WADEntry selectedEntry;
     private GameUIController<?> extraUIController;
 
     public WADController(SCGameInstance instance) {
         super(instance);
+    }
+
+    @Override
+    protected void onControllerLoad(Node root) {
+        super.onControllerLoad(root);
+        this.propertyListViewer = new PropertyListViewerComponent<>(getGameInstance(), this.tableFileData);
+        addController(this.propertyListViewer);
     }
 
     @Override
@@ -173,13 +180,7 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
         if (!hasEntry)
             return;
 
-        this.tableFileData.getItems().clear();
-        this.tableColumnFileDataName.setCellValueFactory(new PropertyValueFactory<>("name"));
-        this.tableColumnFileDataValue.setCellValueFactory(new PropertyValueFactory<>("value"));
-
-        PropertyList properties = this.selectedEntry.getFile().createPropertyList();
-        if (properties != null)
-            properties.apply(this.tableFileData);
+        this.propertyListViewer.showProperties(this.selectedEntry.getFile().createPropertyList());
     }
 
     private static class WADEntryListCell extends ListCell<WADEntry> {

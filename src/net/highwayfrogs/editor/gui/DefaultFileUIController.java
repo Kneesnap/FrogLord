@@ -15,8 +15,8 @@ import javafx.scene.layout.VBox;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.generic.data.GameObject;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListViewerComponent;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 

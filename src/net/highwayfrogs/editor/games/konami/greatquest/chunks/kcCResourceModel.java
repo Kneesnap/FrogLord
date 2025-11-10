@@ -10,7 +10,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.InputMenu;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -80,14 +80,13 @@ public class kcCResourceModel extends kcCResource {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("IMPORTANT", "This is not an actual 3D model!\nInstead, this is the file path to a 3D model.");
         propertyList.add("", "");
 
-        propertyList = super.addToPropertyList(propertyList);
+        super.addToPropertyList(propertyList);
         propertyList.add("File Path", this.fullPath,
                 () -> InputMenu.promptInputBlocking(getGameInstance(), "Please enter the new path.", this.fullPath, newPath -> setFullPath(newPath, true)));
-        return propertyList;
     }
 
     @Override

@@ -8,8 +8,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceAnimSet;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -148,10 +148,9 @@ public class kcAnimSetDesc extends kcBaseDesc implements IPropertyListCreator {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Animation References", this.animationRefs.size());
         for (int i = 0; i < this.animationRefs.size(); i++)
             propertyList.add("Animation Ref " + i, this.animationRefs.get(i).getDisplayString(false));
-        return propertyList;
     }
 }
