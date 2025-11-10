@@ -58,7 +58,6 @@ import java.util.Map.Entry;
 /**
  * Represents an instance of 'Frogger: The Great Quest'.
  * TODO:
- *  -> Case insensitive search bar
  *  -> More resources (generic, skeleton, animation, trimesh, octree, scriptlist, kcEnvironment) should use the property list.
  *  -> Determine how PS2 vs PC support will work.
  *   -> Only after this is done can we settle on how importing GQS files for different versions will work.

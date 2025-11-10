@@ -11,6 +11,29 @@ import java.util.List;
  */
 public class StringUtils {
     /**
+     * Test if the input string contains the substring in a case-insensitive manner without allocating new string objects.
+     * @param input the string to search
+     * @param substring the substring to test for
+     * @return true iff input contains the substring (case-insensitive)
+     */
+    public static boolean containsIgnoreCase(String input, String substring) {
+        if (input == null)
+            throw new NullPointerException("input");
+        if (substring == null)
+            return false;
+
+        final int length = substring.length();
+        if (length == 0)
+            return true;
+
+        for (int i = input.length() - length; i >= 0; i--)
+            if (input.regionMatches(true, i, substring, 0, length))
+                return true;
+
+        return false;
+    }
+
+    /**
      * Capitalize every letter after a space.
      * @param sentence The sentence to capitalize.
      * @return capitalized

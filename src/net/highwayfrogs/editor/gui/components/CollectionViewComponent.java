@@ -8,6 +8,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
+import net.highwayfrogs.editor.utils.StringUtils;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -97,7 +98,7 @@ public abstract class CollectionViewComponent<TGameInstance extends GameInstance
             return true;
 
         String viewEntryDisplayName = viewEntry != null ? viewEntry.getCollectionViewDisplayName() : null;
-        return viewEntryDisplayName != null && viewEntryDisplayName.contains(searchQuery);
+        return viewEntryDisplayName != null && StringUtils.containsIgnoreCase(viewEntryDisplayName, searchQuery);
     }
 
     /**
