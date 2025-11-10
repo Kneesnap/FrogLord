@@ -58,6 +58,8 @@ import java.util.Map.Entry;
 /**
  * Represents an instance of 'Frogger: The Great Quest'.
  * TODO:
+ *  -> Case insensitive search bar
+ *  -> More resources (generic, skeleton, animation, trimesh, octree, scriptlist, kcEnvironment) should use the property list.
  *  -> Determine how PS2 vs PC support will work.
  *   -> Only after this is done can we settle on how importing GQS files for different versions will work.
  *   -> We'll probably want a C-like preprocessor.
@@ -66,7 +68,6 @@ import java.util.Map.Entry;
  *  -> Allow editing water meshes inside of FrogLord. (Even if exporting them is still okay).
  *   -> Editing them in FrogLord allows more easily lining them up with terrain.
  *   -> Automatically generate UVs based on a world-grid calculation. But do allow manually changing them if desired.
- *  -> Flesh out the PropertyList behavior. (Nesting!)
  *  -> Improve how the scripting UI feels to use. (Eg: the UI shouldn't be completely blocked)
  *  -> Config
  *   -> How do we handle comments in the key-value-pair section? (Multi-line)
