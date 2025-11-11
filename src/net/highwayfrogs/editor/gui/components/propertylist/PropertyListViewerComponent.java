@@ -3,13 +3,11 @@ package net.highwayfrogs.editor.gui.components.propertylist;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
-import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableRow;
 import javafx.scene.control.TreeTableView;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
@@ -17,24 +15,17 @@ import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.lang.ref.WeakReference;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Consumer;
+import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
 /**
  * Displays PropertyList data in a JavaFX TreeTableView.
  * Reference: <a href="https://examples.javacodegeeks.com/java-development/desktop-java/javafx/javafx-treetableview-example/"/>
- * TODO:
- *  -> Fix the issue where often times PropertyListViewerComponents don't properly use the space available (Eg: Improper resizing, etc)
- *  -> Allow setting the graphic node to go along with the text of a TreeItem.
  * Created by Kneesnap on 11/8/2025.
  */
 public class PropertyListViewerComponent<TGameInstance extends GameInstance> extends GameUIController<TGameInstance> {
     private final Map<PropertyListNode, PropertyListUINode> nodeMappings = new HashMap<>();
-    private final EventHandler<? super MouseEvent> rowMouseClickHandler = this::onRowMouseClicked;
     private TreeTableColumn<PropertyListNode, String> tableColumnKey;
     private TreeTableColumn<PropertyListNode, String> tableColumnValue;
 
@@ -60,7 +51,7 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
     protected void onControllerLoad(Node rootNode) {
         TreeTableView<PropertyListNode> tableView = (TreeTableView<PropertyListNode>) rootNode;
         tableView.setShowRoot(false); // Hide the root node, so instead of all properties being collapsable, only sub-properties are collapsable.
-        tableView.setEditable(true); // Required to allow the use of the edit() method. TODO: Consider if we don't need this.
+        tableView.setEditable(true); // Required to allow editing.
 
         // TODO: I don't think this belongs here.
         AnchorPane.setTopAnchor(rootNode, 8D);
@@ -84,7 +75,8 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
             PropertyListNode node = data.getValue().getValue();
             return node instanceof PropertyListEntry ? ((PropertyListEntry) node).nameProperty() : null;
         });
-        this.tableColumnValue.setEditable(true); // Must be editable for individual rows to be editable.
+        this.tableColumnValue.setEditable(true); // Required for editing to work.
+        this.tableColumnValue.setCellFactory(list -> new FXPropertyListNodeTreeTableCell(this)); // Responsible for editing behavior.
         this.tableColumnValue.setCellValueFactory(data -> {
             PropertyListNode node = data.getValue().getValue();
             return node instanceof PropertyListEntry ? ((PropertyListEntry) node).valueProperty() : null;
@@ -96,7 +88,6 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
         double oneThirdWidth = getRootNode().getWidth() / 3D;
         this.tableColumnKey.setPrefWidth(oneThirdWidth);
         this.tableColumnValue.setPrefWidth(oneThirdWidth * 2);
-        // TODO: TOSS this.tableColumnKey.maxWidthProperty().bind(getRootNode().widthProperty()); // Could restrict this to be widthProperty() - PIXEL_WIDTH_OFFSET
 
         // Only allow resizing the key.
         this.tableColumnKey.setResizable(true);
@@ -151,14 +142,14 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
         if (!hasEntry)
             return;
 
-        // Remove previous entries.
-        if (getRootNode().getRoot() != null && getRootNode().getRoot().getValue() != null && getRootNode().getRoot() != null)
-            getRootNode().getRoot().getValue().clearChildEntries();
-
         if (getRootNode().getRoot() != null && getRootNode().getRoot().getValue() == propertyList) {
             // If it's the same property list as before, so just update the entries.
-            propertyList.updateChildEntries();
+            updateNode(propertyList);
         } else {
+            // Remove previous entries.
+            if (getRootNode().getRoot() != null && getRootNode().getRoot().getValue() != null && getRootNode().getRoot() != null)
+                getRootNode().getRoot().getValue().clearChildEntries();
+
             // This is a new property list, so generate entries and create nodes.
             propertyList.populateChildEntriesIfNecessary();
             getRootNode().setRoot(getOrCreateNodeUI(propertyList).getTreeItem());
@@ -172,6 +163,10 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
     public void bindSize() {
         getRootNode().maxWidth(Double.POSITIVE_INFINITY);
         getRootNode().prefWidth(Double.POSITIVE_INFINITY);
+    }
+
+    PropertyListUINode getNodeUI(PropertyListNode node) {
+        return this.nodeMappings.get(node);
     }
 
     private PropertyListUINode getOrCreateNodeUI(PropertyListNode node) {
@@ -208,43 +203,68 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
             onTreeItemRemove(children.get(i));
     }
 
-    private void onRowMouseClicked(MouseEvent event) {
-        if (event.getClickCount() != 2)
-            return;
+    private void updateNode(PropertyListNode node) {
+        if (!node.canHaveProperties())
+            return; // Not much to do.
 
-        if (!(event.getSource() instanceof TreeTableRow))
-            throw new ClassCastException("Expected the EventSource to be TreeTableRow, but was actually " + Utils.getSimpleName(event.getSource()) + ".");
+        PropertyListUINode nodeUI = getNodeUI(node);
+        if (nodeUI == null)
+            return; // Can't refresh nodes without a UI node.
 
-        @SuppressWarnings("unchecked")
-        TreeTableRow<PropertyListNode> tableRow = (TreeTableRow<PropertyListNode>) event.getSource();
-        PropertyListNode propertyListNode = tableRow.getItem(); // The root node shouldn't be clickable.
-        if (!(propertyListNode instanceof PropertyListEntry))
-            return; // If null, OR the root node, there's nothing to handle.
+        List<TreeItem<PropertyListNode>> oldTreeItems = new ArrayList<>(nodeUI.getTreeItem().getChildren());
 
-        // TODO: If the node does not support editing, abort!
+        // Doing this will clear the tree, we'll need to update the UI to re-expand and re-select everything which should be expanded.
+        node.updateChildEntries();
 
-        PropertyListUINode uiNode = this.nodeMappings.get(propertyListNode);
+        tryExpandNewTreeItems(oldTreeItems, nodeUI.getTreeItem());
+        selectTreeItem(nodeUI.getTreeItem(), false);
+    }
 
-        try {
-            uiNode.currentRowUnsafe = tableRow; // TODO: TOSS?
-            // TODO: Call method.
-            // TODO: Catch error?
-        } finally {
-            uiNode.currentRowUnsafe = null;
+    private void tryExpandNewTreeItems(List<TreeItem<PropertyListNode>> oldTreeItems, TreeItem<PropertyListNode> treeItem) {
+        int lastMatchIndex = 0;
+        List<TreeItem<PropertyListNode>> newTreeItems = treeItem.getChildren();
+        for (int i = 0; i< oldTreeItems.size(); i++) {
+            TreeItem<PropertyListNode> oldItem = oldTreeItems.get(i);
+            if (!oldItem.isExpanded() || oldItem.isLeaf())
+                continue;
+
+            for (int j = lastMatchIndex; j < newTreeItems.size(); j++) {
+                TreeItem<PropertyListNode> newItem = newTreeItems.get(j);
+                if (Objects.equals(((PropertyListEntry) oldItem.getValue()).getName(), ((PropertyListEntry) newItem.getValue()).getName())) {
+                    lastMatchIndex = j + 1;
+                    newItem.setExpanded(true);
+                    tryExpandNewTreeItems(oldItem.getChildren(), newItem);
+                    break;
+                }
+            }
         }
+    }
+
+    private void selectTreeItem(TreeItem<PropertyListNode> treeItem, boolean focus) {
+        int newRowIndex = getRootNode().getRow(treeItem);
+        getRootNode().scrollTo(newRowIndex);
+
+        // Put the first column in editing mode
+        getRootNode().getSelectionModel().select(treeItem);
+        if (focus)
+            getRootNode().getFocusModel().focus(newRowIndex, this.tableColumnKey);
     }
 
     private TreeTableRow<PropertyListNode> createPropertyListEntryTableRow(TreeTableView<PropertyListNode> tableView) {
         TreeTableRow<PropertyListNode> newRow = new TreeTableRow<>();
-        newRow.setOnMouseClicked(this.rowMouseClickHandler);
+        newRow.getStyleClass().clear();
+        newRow.getStyleClass().addAll("cell", "indexed-cell", "table-row-cell"); // Change this to use the alternating background class. Refer to modena.css
+        // At some point if I can figure out how to add on to modena.css, I'd like to do this the proper way instead of using table-row-cell.
         return newRow;
     }
 
-    private static class PropertyListUINode implements IPropertyListEntryUI {
+    protected static class PropertyListUINode implements IPropertyListEntryUI {
         @Getter private final PropertyListViewerComponent<?> component;
         @Getter private final TreeItem<PropertyListNode> treeItem;
         private final ListChangeListener<PropertyListNode> listListener;
-        private TreeTableRow<PropertyListNode> currentRowUnsafe;
+        @Getter private Predicate<String> validator;
+        @Getter private BiConsumer<IPropertyListEntryUI, String> newValueHandler;
+        @Getter private boolean editorDataSetup;
 
         @SuppressWarnings({"unchecked"})
         private static final ChangeListener<? super Boolean> EXPANSION_LISTENER = (observable, oldValue, newValue) -> {
@@ -275,36 +295,51 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
 
         @Override
         public void updateEntry(PropertyListNode node) {
-            node.updateChildEntries();
-            // TODO: Ensure removed stuff is properly updated. (I think this works, but actually test)
-            // TODO: Actually, we should ensure the same TreeItem depths are expanded as before, and the same node is selected.
-            // TODO: This method should be in the main class, so that when changing the root we can call this method too.
+            this.component.updateNode(node);
         }
 
         @Override
-        public void edit(String startValue, Predicate<String> validator, Consumer<String> newValueHandler) {
-            if (this.currentRowUnsafe == null) // TODO: Perhaps fallback to the default InputMenu method instead? ORR
-                throw new IllegalStateException("Cannot use edit() while the PropertyListUINode doesn't know what row it should make editable.");
+        public void edit(String startValue, Predicate<String> validator, BiConsumer<IPropertyListEntryUI, String> newValueHandler) {
+            if (newValueHandler == null)
+                throw new NullPointerException("newValueHandler");
 
-            // TODO: Perhaps this will work.
-            /*int rowIndex = this.component.getRootNode().getRow(this.treeItem);
-            if (rowIndex >= 0)
-                this.component.getRootNode().edit(rowIndex, this.component.tableColumnValue);*/ // TODO: RESUME?
+            this.validator = validator;
+            this.newValueHandler = newValueHandler;
+            this.editorDataSetup = true;
 
-            this.currentRowUnsafe.editingProperty().addListener((observable, oldValue, newValue) -> {
-                getNode().getLogger().info("EDIT STATE CHANGE! OLD: %s%nNEW: %s%nSOURCE: %s", oldValue, newValue, observable);
-            }); // TODO: Handle change?
+            // Start editing.
+            int rowIndex = this.component.getRootNode().getRow(this.treeItem);
+            if (rowIndex >= 0) {
+                this.component.selectTreeItem(this.treeItem, true);
+                this.component.getRootNode().edit(rowIndex, this.component.tableColumnValue);
+            }
+        }
 
-            this.currentRowUnsafe.addEventHandler(TreeTableView.editCancelEvent(), event -> {
-                getNode().getLogger().info("CANCEL EVENT!%nTree Item: %s%nOld/New Values: %s/%s%nSource: %s", event.getTreeItem(), event.getOldValue(), event.getNewValue(), event.getSource());
-            }); // TODO: Handle!
-            this.currentRowUnsafe.addEventHandler(TreeTableView.editCommitEvent(), event -> {
-                getNode().getLogger().info("COMMIT EVENT!%nTree Item: %s%nOld/New Values: %s/%s%nSource: %s", event.getTreeItem(), event.getOldValue(), event.getNewValue(), event.getSource());
-            }); // TODO: Handle!
-            this.currentRowUnsafe.textProperty().addListener((observable, oldValue, newValue) -> {
-                getNode().getLogger().info("TEXT CHANGE! OLD: %s%nNEW: %s%nSOURCE: %s", oldValue, newValue, observable);
-            }); // TODO: Handle change?
-            this.currentRowUnsafe.startEdit();
+        void setupEditor() {
+            PropertyListEntry entry = getEntry();
+            if (entry == null)
+                return;
+
+            try {
+                entry.setupEditor(this);
+            } catch (Throwable th) {
+                Utils.handleError(entry.getLogger(), th, true, "Failed to setup editor for property named '%s'. (Value: %s)", entry.getName(), entry.getValue());
+                onEditorShutdown();
+            }
+        }
+
+        boolean validate(String data) {
+            try {
+                return this.validator == null || this.validator.test(data);
+            } catch (Throwable th) {
+                return false;
+            }
+        }
+
+        void onEditorShutdown() {
+            this.validator = null;
+            this.newValueHandler = null;
+            this.editorDataSetup = false;
         }
 
         private void setup() {

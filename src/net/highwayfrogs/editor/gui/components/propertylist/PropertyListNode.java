@@ -84,13 +84,15 @@ public abstract class PropertyListNode {
 
     /**
      * Adds a new property to the property list.
+     * TODO: Review all usages.
      * @param name the name of the property to add
      * @param value the value to add
+     * @param newValueProvider the provider for new values.
      * @return newEntry
      */
-    public <TData> PropertyListDataEntry<TData> add(String name, TData value, Supplier<TData> newValue) {
-        // TODO: Implement properly.
-        return add(new PropertyListDataEntry<>(null, name, value));
+    public <TData> PropertyListDataEntry<TData> add(String name, TData value, Supplier<TData> newValueProvider) {
+        return add(new PropertyListDataEntry<>(null, name, value))
+                .setDataProvider(newValueProvider);
     }
 
     /**
@@ -99,9 +101,33 @@ public abstract class PropertyListNode {
      * @param propertyListCreator the property list creator to create the property list
      * @return newEntry
      */
-    public PropertyListEntry add(String name, IPropertyListCreator propertyListCreator) {
-        return add(new PropertyListEntry(propertyListCreator, name));
+    public PropertyListDataEntry<String> add(String name, IPropertyListCreator propertyListCreator) {
+        return addString(name, "", propertyListCreator);
     }
+
+    /**
+     * Adds a property list creator to the property list.
+     * @param name the name of the property list
+     * @param propertyListCreator the property list creator to create the property list
+     * @param toStringConverter the converter to use to display the propertyListConverter as a display String.
+     * @return newEntry
+     */
+    public <TValue extends IPropertyListCreator> PropertyListDataEntry<TValue> add(String name, TValue propertyListCreator, Function<TValue, String> toStringConverter) {
+        return add(new PropertyListDataEntry<>(propertyListCreator, name, propertyListCreator))
+                .setDataToStringConverter(toStringConverter);
+    }
+
+    /**
+     * Adds a String value to the property list, without allowing the user to change it.
+     * @param name the name of the value to add
+     * @param value the value to add
+     * @return newEntry
+     */
+    public PropertyListDataEntry<String> addString(String name, String value) {
+        return addString(name, value, null);
+    }
+
+    private static final Function<String, String> STRING_TO_STRING_PLACE_HOLDER = str -> str;
 
     /**
      * Adds a property list creator to the property list.
@@ -110,46 +136,10 @@ public abstract class PropertyListNode {
      * @param propertyListCreator the property list creator to create the property list
      * @return newEntry
      */
-    public PropertyListEntry add(String name, String value, IPropertyListCreator propertyListCreator) {
-        return add(new PropertyListEntry(propertyListCreator, name).setValue(value));
-    }
-
-
-    private static final Function<String, String> STRING_CONVERTER = str -> str;
-
-    /**
-     * Adds a String value to the property list, without allowing the user to change it.
-     * @param name the name of the value to add
-     * @param value the value to add
-     * @return newEntry
-     */
-    public PropertyListEntry addString(String name, String value) {
-        return add(new PropertyListDataEntry<>(null, name, value));
-    }
-
-    /**
-     * Adds a String value to the property list, allowing the user to edit the value.
-     * @param name the name of the value to add
-     * @param value the value to add
-     * @param handler the handling behavior for a new value
-     * @return newEntry
-     */
-    public PropertyListDataEntry<String> addString(String name, String value, Consumer<String> handler) {
-        // TODO: IMPLEMENT
-        return null;
-    }
-
-    /**
-     * Adds a String value to the property list, allowing the user to edit the value.
-     * @param name the name of the value to add
-     * @param value the value to add
-     * @param validator the behavior for confirming whether a value can be applied
-     * @param handler the handling behavior for a new value
-     * @return newEntry
-     */
-    public PropertyListDataEntry<String> addString(String name, String value, Predicate<String> validator, Consumer<String> handler) {
-        // TODO: IMPLEMENT
-        return null;
+    public PropertyListDataEntry<String> addString(String name, String value, IPropertyListCreator propertyListCreator) {
+        return add(new PropertyListDataEntry<>(propertyListCreator, name, value))
+                .setDataFromStringConverter(STRING_TO_STRING_PLACE_HOLDER)
+                .setDataToStringConverter(STRING_TO_STRING_PLACE_HOLDER);
     }
 
     /**
@@ -158,8 +148,9 @@ public abstract class PropertyListNode {
      * @param value the value to add
      * @return newEntry
      */
-    public PropertyListEntry addBoolean(String name, boolean value) {
-        return add(new PropertyListDataEntry<>(null, name, value));
+    public PropertyListDataEntry<Boolean> addBoolean(String name, boolean value) {
+        return add(new PropertyListDataEntry<>(null, name, value))
+                .setDataFromStringConverter(Boolean::parseBoolean);
     }
 
     /**
@@ -170,8 +161,8 @@ public abstract class PropertyListNode {
      * @return newEntry
      */
     public PropertyListDataEntry<Boolean> addBoolean(String name, boolean value, Consumer<Boolean> handler) {
-        // TODO: IMPLEMENT
-        return null;
+        return addBoolean(name, value)
+                .setDataHandler(handler);
     }
 
     /**
@@ -216,7 +207,7 @@ public abstract class PropertyListNode {
      * @param value the value to add
      * @return newEntry
      */
-    public PropertyListDataEntry<Integer> addShort(String name, int value) {
+    public PropertyListDataEntry<Integer> addInteger(String name, int value) {
         return add(new PropertyListDataEntry<>(null, name, value));
     }
 
@@ -342,6 +333,14 @@ public abstract class PropertyListNode {
      * Gets the property list.
      */
     public abstract PropertyList getPropertyList();
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append(getClass().getSimpleName()).append('{');
+        toString(builder);
+        return builder.append('}').toString();
+    }
 
     /**
      * Write the property list entry (in isolation) to a StringBuilder.

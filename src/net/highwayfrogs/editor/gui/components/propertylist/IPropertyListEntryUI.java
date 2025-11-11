@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.gui.components.propertylist;
 
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
 /**
@@ -49,5 +49,5 @@ public interface IPropertyListEntryUI {
      * @param validator the validator which ensures the value is okay
      * @param newValueHandler the handler which accepts a value. This will only run if a new (valid) value is accepted by the user.
      */
-    void edit(String startValue, Predicate<String> validator, Consumer<String> newValueHandler);
+    void edit(String startValue, Predicate<String> validator, BiConsumer<IPropertyListEntryUI, String> newValueHandler);
 }

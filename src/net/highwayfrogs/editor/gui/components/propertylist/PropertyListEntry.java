@@ -7,20 +7,16 @@ import lombok.NonNull;
 import net.highwayfrogs.editor.utils.StringUtils;
 
 import java.util.Objects;
-import java.util.function.BiConsumer;
-import java.util.function.Predicate;
 
 /**
  * Represents an entry in a property list.
  * Created by Kneesnap on 11/8/2025.
  */
-public class PropertyListEntry extends PropertyListNode {
+public abstract class PropertyListEntry extends PropertyListNode {
     private final StringProperty nameProperty = new SimpleStringProperty();
     private final StringProperty valueProperty = new SimpleStringProperty();
     @Getter private PropertyList propertyList;
     @Getter private PropertyListNode parentNode;
-    private BiConsumer<IPropertyListEntryUI, String> newValueHandler; // TODO: Move this to another implementation?
-    private Predicate<String> newValueValidator; // TODO: Move this to another implementation?
 
     public PropertyListEntry(IPropertyListCreator propertyListCreator, String name) {
         super(propertyListCreator);
@@ -80,7 +76,7 @@ public class PropertyListEntry extends PropertyListNode {
      * @return propertyValue
      */
     public String getValue() {
-        return this.nameProperty.get();
+        return this.valueProperty.get();
     }
 
     /**
@@ -109,10 +105,14 @@ public class PropertyListEntry extends PropertyListNode {
         return this.valueProperty;
     }
 
+    /**
+     * Returns true iff editing the property value is allowed.
+     */
+    public abstract boolean isEditingAllowed();
 
-    // TODO: Here we can have methods for handling the double-click.
-    //  -> Ensure access to refreshing the UI in edit/callback mode? Ensure we've got access to the TreeItem or more, like static methods to refresh it. But it should be done via indirection. Eg: If we display a PropertyList in more UI targets, we should have abstraction to prevent us directly touching a TreeItem in the code trying to refresh the UI.
-    //  -> Many properties probably shouldn't make a full pop-up, but instead accept editing a textbox in-place. There should be a system which allows both pop-up prompts as well as text field edits, which can use the same validation.
-    //  -> Refer to SfxEntrySimpleAttributes.addToPropertyList() to see places where we might want to have convenience method definitions to avoid tons of duplicated code.
-    //   -> Ensure we handle things such as exiting the window cleanly.
+    /**
+     * Sets up an editor UI for the property list node.
+     * @param entryUI the UI implementation for this entry, used to configure an editor.
+     */
+    public abstract void setupEditor(IPropertyListEntryUI entryUI);
 }

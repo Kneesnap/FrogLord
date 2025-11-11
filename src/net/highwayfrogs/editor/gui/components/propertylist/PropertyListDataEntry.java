@@ -3,9 +3,7 @@ package net.highwayfrogs.editor.gui.components.propertylist;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.util.Objects;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 
 /**
  * Represents a PropertyListEntry which stores an object.
@@ -14,14 +12,87 @@ import java.util.function.Predicate;
 public class PropertyListDataEntry<TData> extends PropertyListEntry {
     private TData dataObject;
     private Function<TData, String> objectDataToStringConverter;
-    private Function<String, TData> objectDataFromStringConverter; // TODO: Convert this and the following one into a single pass when passing off to the UI?
+    private Function<String, TData> objectDataFromStringConverter;
+    private Supplier<TData> simpleDataProvider;
+    private Function<IPropertyListEntryUI, TData> advancedDataProvider;
     private Predicate<TData> dataValidator;
-    private Consumer<TData> dataHandler; // TODO: !
-    // TODO: Missing data handler.
+    private Consumer<TData> simpleDataHandler;
+    private BiConsumer<IPropertyListEntryUI, TData> advancedDataHandler;
 
     public PropertyListDataEntry(IPropertyListCreator propertyListCreator, String name, TData dataObject) {
         super(propertyListCreator, name);
         setDataObject(dataObject);
+    }
+
+    @Override
+    public boolean isEditingAllowed() {
+        return (this.advancedDataProvider != null || this.simpleDataProvider != null || this.objectDataFromStringConverter != null)
+                && (this.simpleDataHandler != null || this.advancedDataHandler != null);
+    }
+
+    @Override
+    public void setupEditor(IPropertyListEntryUI entryUI) {
+        if (this.advancedDataProvider != null) {
+            TData newData;
+            try {
+                newData = this.advancedDataProvider.apply(entryUI);
+            } catch (Throwable th) {
+                throw new RuntimeException(th);
+            }
+
+            if (newData != null)
+                handleNewData(entryUI, newData);
+        } else if (this.simpleDataProvider != null) {
+            TData newData;
+            try {
+                newData = this.simpleDataProvider.get();
+            } catch (Throwable th) {
+                throw new RuntimeException(th);
+            }
+
+            if (newData != null)
+                handleNewData(entryUI, newData);
+        } else {
+            entryUI.edit(getValue(), this::validateData, this::handleEdit);
+        }
+    }
+
+    private boolean validateData(String newValue) {
+        TData data;
+        try {
+            data = this.objectDataFromStringConverter.apply(newValue);
+        } catch (Throwable th) {
+            return false;
+        }
+
+        if (this.dataValidator == null)
+            return true;
+
+        try {
+            return this.dataValidator.test(data);
+        } catch (Throwable th) {
+            return false;
+        }
+    }
+
+    private void handleEdit(IPropertyListEntryUI entryUI, String newValue) {
+        TData newData = this.objectDataFromStringConverter.apply(newValue);
+        handleNewData(entryUI, newData);
+    }
+
+    private void handleNewData(IPropertyListEntryUI entryUI, TData newData) {
+        if (newData == this.dataObject) {
+            setValue(getDataObjectAsString()); // Update the value, as it's possible something in the object changed.
+            return;
+        }
+
+        if (this.advancedDataHandler != null) {
+            this.advancedDataHandler.accept(entryUI, newData);
+        } else {
+            this.simpleDataHandler.accept(newData);
+        }
+
+        setDataObject(newData);
     }
 
     /**
@@ -66,11 +137,42 @@ public class PropertyListDataEntry<TData> extends PropertyListEntry {
     }
 
     /**
-     * Sets the object data handler which will accept the value after other values.
+     * Sets the object data provider which will provide a new value through arbitrary means, usually other than editing the text field.
+     * @param newDataProvider the new data handler
+     */
+    public PropertyListDataEntry<TData> setDataProvider(Supplier<TData> newDataProvider) {
+        this.simpleDataProvider = newDataProvider;
+        this.advancedDataProvider = null;
+        return this;
+    }
+
+    /**
+     * Sets the object data provider which will provide a new value through arbitrary means, usually other than editing the text field.
+     * @param newDataProvider the new data handler
+     */
+    public PropertyListDataEntry<TData> setDataProvider(Function<IPropertyListEntryUI, TData> newDataProvider) {
+        this.simpleDataProvider = null;
+        this.advancedDataProvider = newDataProvider;
+        return this;
+    }
+
+    /**
+     * Sets the object data handler which will handle/apply a new value.
      * @param newDataHandler the new data handler
      */
     public PropertyListDataEntry<TData> setDataHandler(Consumer<TData> newDataHandler) {
-        this.dataHandler = newDataHandler;
+        this.simpleDataHandler = newDataHandler;
+        this.advancedDataHandler = null;
+        return this;
+    }
+
+    /**
+     * Sets the object data handler which will handle/apply a new value.
+     * @param newDataHandler the new data handler
+     */
+    public PropertyListDataEntry<TData> setDataHandler(BiConsumer<IPropertyListEntryUI, TData> newDataHandler) {
+        this.simpleDataHandler = null;
+        this.advancedDataHandler = newDataHandler;
         return this;
     }
 
