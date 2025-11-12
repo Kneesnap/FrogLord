@@ -2,10 +2,10 @@ package net.highwayfrogs.editor.games.konami.greatquest.proxy;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -89,11 +89,11 @@ public class kcProxyCapsuleDesc extends kcProxyDesc {
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        super.writeMultiLineInfo(builder, padding);
-        builder.append(padding).append("Radius: ").append(this.radius).append(Constants.NEWLINE);
-        builder.append(padding).append("Length: ").append(this.length).append(Constants.NEWLINE);
-        builder.append(padding).append("Offset: ").append(this.offset).append(Constants.NEWLINE);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
+        propertyList.addFloat("Radius", this.radius, newRadius -> this.radius = newRadius);
+        propertyList.addFloat("Length", this.length, newLength -> this.length = newLength);
+        propertyList.addFloat("Offset", this.offset, newOffset -> this.offset = newOffset);
     }
 
     @Override

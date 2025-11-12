@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneri
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -77,9 +78,9 @@ public class kcProxyTriMeshDesc extends kcProxyDesc {
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        super.writeMultiLineInfo(builder, padding);
-        writeAssetLine(builder, padding, "Collision Mesh", this.meshRef);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
+        this.meshRef.addToPropertyList(propertyList, "Collision Mesh", getParentFile(), kcCResourceTriMesh.class);
     }
 
     private static final String CONFIG_KEY_COLLISION = "collisionMesh";

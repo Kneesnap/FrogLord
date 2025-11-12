@@ -365,7 +365,7 @@ public class RwGeometryChunk extends RwStreamChunk implements IRwGeometryMesh {
         @Override
         public void addToPropertyList(PropertyListNode propertyList) {
             super.addToPropertyList(propertyList);
-            propertyList.add("Bounding Sphere", this.boundingSphere);
+            propertyList.addProperties("Bounding Sphere", this.boundingSphere);
             propertyList.add("Points Present", this.pointsPresent);
             propertyList.add("Normals Present", this.normalsPresent);
         }

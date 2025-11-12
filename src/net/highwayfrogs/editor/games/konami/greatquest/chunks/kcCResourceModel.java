@@ -9,7 +9,6 @@ import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.gui.GameUIController;
-import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.StringUtils;
@@ -85,8 +84,8 @@ public class kcCResourceModel extends kcCResource {
         propertyList.add("", "");
 
         super.addToPropertyList(propertyList);
-        propertyList.add("File Path", this.fullPath,
-                () -> InputMenu.promptInputBlocking(getGameInstance(), "Please enter the new path.", this.fullPath, newPath -> setFullPath(newPath, true)));
+        propertyList.addString("File Path", this.fullPath)
+                .setDataHandler(newPath -> setFullPath(newPath, true));
     }
 
     @Override
@@ -139,6 +138,7 @@ public class kcCResourceModel extends kcCResource {
 
         setName(GreatQuestUtils.getFileNameFromPath(newPath));
         this.fullPath = newPath;
+        refreshUI();
     }
 
     private void applyCollisionMeshName() {

@@ -22,6 +22,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelViewController;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
@@ -113,20 +114,19 @@ public class kcActorBaseDesc extends kcEntity3DDesc implements ILateResourceReso
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        super.writeMultiLineInfo(builder, padding);
-        builder.append(padding).append("Hash: ").append(this.parentHash.getHashNumberAsString()).append(Constants.NEWLINE);
-        writeAssetLine(builder, padding, "Model", this.modelDescRef);
-        writeAssetLine(builder, padding, "Animation Hierarchy", this.hierarchyRef);
-        if (this.channelCount != DEFAULT_ANIMATION_CHANNEL_COUNT)
-            builder.append(padding).append("Channel Count: ").append(this.channelCount).append(Constants.NEWLINE);
-        writeAssetLine(builder, padding, "Anim Set", this.animSetRef);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
+        this.modelDescRef.addToPropertyList(propertyList, "Model Description", getParentFile(), kcCResourceGenericType.MODEL_DESCRIPTION);
+        this.hierarchyRef.addToPropertyList(propertyList, "Skeleton", getParentFile(), kcCResourceSkeleton.class);
+        propertyList.addInteger("Channel Count", this.channelCount, newValue -> newValue > 0, newChannelCount -> this.channelCount = newChannelCount);
+        this.animSetRef.addToPropertyList(propertyList, "Animation Set", getParentFile(), kcCResourceAnimSet.class);
         if (this instanceof CItemDesc) {
-            builder.append(padding).append("Collision Proxy: {HARDCODED ITEM PROXY}").append(Constants.NEWLINE);
+            propertyList.add("Collision Proxy", "{HARDCODED ITEM PROXY}");
         } else {
-            writeAssetLine(builder, padding, "Collision Proxy", this.proxyDescRef);
+            this.proxyDescRef.addToPropertyList(propertyList, "Collision Proxy", getParentFile(), kcCResourceGenericTypeGroup.PROXY_DESCRIPTION);
         }
-        writeAssetLine(builder, padding, "Animation List", this.animationSequencesRef);
+
+        this.animationSequencesRef.addToPropertyList(propertyList, "Action Sequences", getParentFile(), kcCResourceNamedHash.class);
     }
 
     @Override

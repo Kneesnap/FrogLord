@@ -8,7 +8,6 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestImageFile;
-import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -67,8 +66,8 @@ public class kcCResourceTexture extends kcCResource {
 
         // Add other stuff.
         super.addToPropertyList(propertyList);
-        propertyList.add("File Path", this.fullPath,
-                () -> InputMenu.promptInputBlocking(getGameInstance(), "Please enter the new path.", this.fullPath, newPath -> setFullPath(newPath, true)));
+        propertyList.addString("File Path", this.fullPath)
+                .setDataHandler(newPath -> setFullPath(newPath, true));
     }
 
     /**
@@ -103,5 +102,6 @@ public class kcCResourceTexture extends kcCResource {
 
         setName(GreatQuestUtils.getFileNameFromPath(newPath));
         this.fullPath = newPath;
+        refreshUI();
     }
 }

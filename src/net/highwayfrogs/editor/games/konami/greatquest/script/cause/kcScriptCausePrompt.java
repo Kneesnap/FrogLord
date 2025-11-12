@@ -42,8 +42,8 @@ public class kcScriptCausePrompt extends kcScriptCause {
     @Override
     protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         String promptName = arguments.useNext().getAsString();
-        if (NumberUtils.isHexInteger(promptName)) {
-            this.promptRef.setHash(NumberUtils.parseHexInteger(promptName));
+        if (NumberUtils.isPrefixedHexInteger(promptName)) {
+            this.promptRef.setHash(NumberUtils.parseIntegerAllowHex(promptName));
         } else {
             this.promptRef.setHash(promptName);
         }

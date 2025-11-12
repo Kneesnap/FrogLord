@@ -7,19 +7,16 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceModel;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcIGenericResourceData;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
-import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
-
-import java.util.function.Function;
 
 /**
  * Represents the 'LauncherParams' struct.
@@ -76,32 +73,13 @@ public class LauncherParams extends kcProjectileParams implements kcIGenericReso
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        super.writeMultiLineInfo(builder, padding);
-
-        writeAssetInfo(builder, padding, "Model", this.vtxModelRef, kcCResourceModel::getFullPath);
-        writeAssetInfo(builder, padding, "Cruise Particle Effect", this.cruiseParticleEffectRef, kcCResource::getName);
-        writeAssetInfo(builder, padding, "Hit Particle Effect", this.hitParticleEffectRef, kcCResource::getName);
-
-        builder.append(" - Projectile Life Time: ").append(this.projectileLifeTime).append(Constants.NEWLINE);
-        if (this.speed != DEFAULT_SPEED && this.speed != 0)
-            builder.append(" - Speed: ").append(this.speed).append(Constants.NEWLINE);
-    }
-
-    private <TResource extends kcCResource> void writeAssetInfo(StringBuilder builder, String padding, String prefix, GreatQuestHash<? extends TResource> hash, Function<TResource, String> getter) {
-        builder.append(padding).append(prefix).append(": ");
-
-        TResource resource = hash != null ? hash.getResource() : null;
-        int resourceHash = hash != null ? hash.getHashNumber() : 0;
-        if (resource != null) {
-            builder.append(getter.apply(resource));
-        } else if (resourceHash != 0 && resourceHash != -1) {
-            builder.append(NumberUtils.to0PrefixedHexString(resourceHash));
-        } else {
-            builder.append("None");
-        }
-
-        builder.append(Constants.NEWLINE);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
+        this.vtxModelRef.addToPropertyList(propertyList, "Model", getParentFile(), kcCResourceModel.class);
+        this.cruiseParticleEffectRef.addToPropertyList(propertyList, "Cruise Particle Effect", getParentFile(), kcCResourceGenericType.PARTICLE_EMITTER_PARAM);
+        this.hitParticleEffectRef.addToPropertyList(propertyList, "Hit Particle Effect", getParentFile(), kcCResourceGenericType.PARTICLE_EMITTER_PARAM);
+        propertyList.addInteger("Projectile Life Time", this.projectileLifeTime, newValue -> this.projectileLifeTime = newValue);
+        propertyList.addFloat("Speed", this.speed, newValue -> this.speed = newValue);
     }
 
     @Override

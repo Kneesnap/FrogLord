@@ -17,6 +17,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneri
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcIGenericResourceData;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcSphere;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.FileUtils;
@@ -92,9 +93,9 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        builder.append(padding).append("Flags: ").append(kcEntityInstanceFlag.getAsOptionalArguments(this.defaultFlags).getNamedArgumentsAsCommaSeparatedString()).append(Constants.NEWLINE);
-        this.boundingSphere.writePrefixedMultiLineInfo(builder, "Bounding Sphere", padding);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        propertyList.add("Flags", kcEntityInstanceFlag.getAsOptionalArguments(this.defaultFlags).getNamedArgumentsAsCommaSeparatedString());
+        this.boundingSphere.addToPropertyList(propertyList, "Bounding Sphere");
     }
 
     @Override

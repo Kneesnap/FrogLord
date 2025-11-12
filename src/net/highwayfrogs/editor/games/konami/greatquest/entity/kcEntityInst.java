@@ -8,7 +8,6 @@ import net.highwayfrogs.editor.games.konami.IConfigData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
-import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.CharacterParams.CharacterType;
@@ -39,7 +38,7 @@ import java.util.Map;
  * Created by Kneesnap on 8/24/2023.
  */
 @Getter
-public class kcEntityInst extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter, IConfigData, IPropertyListCreator {
+public class kcEntityInst extends GameData<GreatQuestInstance> implements IConfigData, IPropertyListCreator {
     private final kcCResourceEntityInst resource;
     private final GreatQuestHash<kcCResourceGeneric> descriptionRef; // Resolved by kcCGameSystem::CreateInstance(), kcCGameSystem::CreateInstance(), kcCEntity::Reset, kcCEntity::Init
     @Setter private int scriptIndex = -1;
@@ -165,7 +164,7 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
             grid.addBoldLabel("Description" + (name != null ? " '" + name + "'" : "") + " (" + Utils.getSimpleName(entityDescription) + "):");
 
             StringBuilder builder = new StringBuilder();
-            entityDescription.writeMultiLineInfo(builder);
+            entityDescription.createPropertyList().toStringChildEntries(builder, " ", 0);
             for (String str : builder.toString().split(Constants.NEWLINE))
                 grid.addNormalLabel(str);
         }
@@ -247,21 +246,11 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        GreatQuestChunkedFile chunkedFile = this.resource != null ? this.resource.getParentFile() : null;
-
-        GreatQuestChunkedFile.writeAssetLine(chunkedFile, builder, padding, "Description", this.descriptionRef);
-        if (this.scriptIndex != -1)
-            builder.append(padding).append("Script Index: ").append(this.scriptIndex).append(Constants.NEWLINE);
-        if (this.targetEntityRef.getHashNumber() != PLAYER_ENTITY_HASH)
-            GreatQuestChunkedFile.writeAssetLine(chunkedFile, builder, padding, "Target Entity", this.targetEntityRef);
-    }
-
-    @Override
     public void addToPropertyList(PropertyListNode propertyList) {
-        propertyList.add("Entity Description", this.descriptionRef.getDisplayString(false));
+        GreatQuestChunkedFile parentFile = getResource() != null ? getResource().getParentFile() : null;
+        this.descriptionRef.addToPropertyList(propertyList, "Entity Description", parentFile, kcCResourceGenericTypeGroup.ENTITY_DESCRIPTION);
         propertyList.add("Script ID", this.scriptIndex != -1 ? this.scriptIndex : "None");
-        propertyList.add("Target Entity", this.targetEntityRef.getDisplayString(false));
+        this.targetEntityRef.addToPropertyList(propertyList, "Target Entity", parentFile, kcCResourceEntityInst.class);
     }
 
     private static final String CONFIG_KEY_ENTITY_DESC = "description";

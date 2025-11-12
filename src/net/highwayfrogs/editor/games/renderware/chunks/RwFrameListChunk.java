@@ -133,10 +133,10 @@ public class RwFrameListChunk extends RwStreamChunk implements IRwStreamChunkWit
         @Override
         public void addToPropertyList(PropertyListNode propertyList) {
             super.addToPropertyList(propertyList);
-            propertyList.add("Matrix Position", this.matrixPos);
-            propertyList.add("Matrix At", this.matrixAt);
-            propertyList.add("Matrix Right", this.matrixRight);
-            propertyList.add("Matrix Up", this.matrixUp);
+            propertyList.addProperties("Matrix Position", this.matrixPos);
+            propertyList.addProperties("Matrix At", this.matrixAt);
+            propertyList.addProperties("Matrix Right", this.matrixRight);
+            propertyList.addProperties("Matrix Up", this.matrixUp);
             propertyList.add("Parent Index", this.parentIndex);
             propertyList.add("Data", this.data);
         }

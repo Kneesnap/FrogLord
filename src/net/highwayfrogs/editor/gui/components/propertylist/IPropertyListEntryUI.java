@@ -22,7 +22,7 @@ public interface IPropertyListEntryUI {
     /**
      * Updates the property list entry by updating the parent entry.
      */
-    default void updateSelfAndParent() {
+    default void updateParent() {
         PropertyListEntry entry = getEntry();
         if (entry == null)
             return;
@@ -30,7 +30,7 @@ public interface IPropertyListEntryUI {
         if (entry.getParentNode() != null) {
             updateEntry(entry.getParentNode());
         } else {
-            updateEntry(entry);
+            updateFullPropertyList();
         }
     }
 

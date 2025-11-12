@@ -179,8 +179,8 @@ public class RwAtomicSectorChunk extends RwSectorBase implements IRwGeometryMesh
         propertyList.add("Vertex Count", this.vertices.size());
         propertyList.add("Material List Window Base", this.materialListBaseIndex);
         propertyList.add("# of TexCoord sets", this.texCoordSets.size());
-        propertyList.add("Minimum Position", calculateMinPosition(new RwV3d(getGameInstance())));
-        propertyList.add("Maximum Position", calculateMaxPosition(new RwV3d(getGameInstance())));
+        propertyList.addProperties("Minimum Position", calculateMinPosition(new RwV3d(getGameInstance())));
+        propertyList.addProperties("Maximum Position", calculateMaxPosition(new RwV3d(getGameInstance())));
         // TODO: Include flags in world.
     }
 
@@ -340,8 +340,8 @@ public class RwAtomicSectorChunk extends RwSectorBase implements IRwGeometryMesh
             propertyList.add("Material List Window Base", this.materialListWindowBase);
             propertyList.add("Triangle Count", this.numTriangles);
             propertyList.add("Vertex Count", this.numVertices);
-            propertyList.add("Min Position", this.minPosition);
-            propertyList.add("Max Position", this.maxPosition);
+            propertyList.addProperties("Min Position", this.minPosition);
+            propertyList.addProperties("Max Position", this.maxPosition);
             if (this.collisionSectorPresent)
                 propertyList.add("Collision Sector Present?", true);
         }

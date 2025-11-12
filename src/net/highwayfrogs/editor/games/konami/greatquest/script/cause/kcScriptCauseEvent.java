@@ -52,8 +52,8 @@ public class kcScriptCauseEvent extends kcScriptCause {
     @Override
     protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         String eventName = arguments.useNext().getAsString(); // We can't resolve the sequence by the hash of the string normally since these seem to use randomized hash values.
-        if (NumberUtils.isHexInteger(eventName)) {
-            this.eventRef.setHash(NumberUtils.parseHexInteger(eventName));
+        if (NumberUtils.isPrefixedHexInteger(eventName)) {
+            this.eventRef.setHash(NumberUtils.parseIntegerAllowHex(eventName));
         } else {
             this.eventRef.setHash(eventName);
         }

@@ -227,27 +227,14 @@ public class kcEntity3DInst extends kcEntityInst {
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        super.writeMultiLineInfo(builder, padding);
-        builder.append(padding).append("Flags: ").append(kcEntityInstanceFlag.getAsOptionalArguments(this.flags).getNamedArgumentsAsCommaSeparatedString()).append(Constants.NEWLINE);
-        if (this.billboardAxis != DEFAULT_BILLBOARD_AXIS)
-            builder.append(padding).append("Billboard Axis: ").append(this.billboardAxis).append(Constants.NEWLINE);
-        this.position.writePrefixedInfoLine(builder, "Position", padding);
-        if (!DEFAULT_ROTATION.equals(this.rotation))
-            this.rotation.writePrefixedInfoLine(builder, "Rotation", padding);
-        if (!DEFAULT_SCALE.equals(this.scale))
-            this.scale.writePrefixedInfoLine(builder, "Scale", padding);
-    }
-
-    @Override
     public void addToPropertyList(PropertyListNode propertyList) {
         super.addToPropertyList(propertyList);
-        propertyList.add("Position", this.position.toParseableString(1F));
+        this.position.addToPropertyList(propertyList, "Position", 1F);
         propertyList.add("Rotation", getRotationAnglesInDegrees(null).toParseableString());
         if (!DEFAULT_SCALE.equals(this.scale))
-            propertyList.add("Scale", this.scale.toParseableString(1F));
+            this.scale.addToPropertyList(propertyList, "Scale", 1F);
         propertyList.add("Flags", kcEntityInstanceFlag.getAsOptionalArguments(this.flags).getNamedArgumentsAsCommaSeparatedString());
-        propertyList.add("Billboard Axis", this.billboardAxis);
+        propertyList.addEnum("Billboard Axis", this.billboardAxis, kcAxisType.class, this::setBillboardAxis, false);
     }
 
     private static final String CONFIG_KEY_FLAGS = "flags";

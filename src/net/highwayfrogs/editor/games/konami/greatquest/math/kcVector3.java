@@ -28,4 +28,11 @@ public class kcVector3 extends Vector3f implements IInfoWriter {
                 .append(", ")
                 .append(getZ());
     }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder("kcVector3{");
+        writeInfo(builder);
+        return builder.append('}').toString();
+    }
 }

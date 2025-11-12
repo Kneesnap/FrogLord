@@ -192,7 +192,7 @@ public class kcOctTree extends GameData<GreatQuestInstance> implements IMultiLin
 
     @Override
     public void addToPropertyList(PropertyListNode propertyList) {
-        propertyList.add("Offset", this.offset);
+        this.offset.addToPropertyList(propertyList, "Offset");
         propertyList.add("Octree Depth", this.treeDepth);
         propertyList.add("Smallest Node Depth", this.smallestNodeDepth);
         propertyList.add("Branches", this.branches.size());

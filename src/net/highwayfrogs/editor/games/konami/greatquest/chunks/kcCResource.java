@@ -18,6 +18,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestChunkFileEditor;
 import net.highwayfrogs.editor.gui.DefaultFileUIController.IExtraUISupplier;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
@@ -186,8 +187,10 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
         }
 
         // Must be run after the name property is updated.
-        if (shouldAddToChunkedFile)
+        if (shouldAddToChunkedFile) {
             getParentFile().addResourceToList(tableOfContents, this);
+            getParentFile().updateListUI();
+        }
     }
 
     /**
@@ -461,5 +464,17 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
             getLogger().warning("Resource removed from chunk file despite %d remaining usage%s.", linkedUsages, (linkedUsages != 1 ? "s" : ""));*/
 
         getSelfHash().invalidate(); // Anything references to this hash should be unlinked.
+    }
+
+    /**
+     * Refresh the resource UI for the resource, if such UI is active.
+     */
+    public void refreshUI() {
+        GameUIController<?> currentEditor = getGameInstance().getMainMenuController().getCurrentEditor();
+        if (currentEditor instanceof GreatQuestChunkFileEditor) {
+            GreatQuestChunkFileEditor editor = (GreatQuestChunkFileEditor) currentEditor;
+            if (editor.getFile() == getParentFile() && editor.getChunkListComponent().getSelectedViewEntry() == this)
+                editor.getChunkListComponent().updateResourceUI(this);
+        }
     }
 }

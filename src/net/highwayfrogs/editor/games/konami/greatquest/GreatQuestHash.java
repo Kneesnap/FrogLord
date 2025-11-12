@@ -6,8 +6,11 @@ import net.highwayfrogs.editor.games.generic.data.IGameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedResource;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.IkcCResourceGenericTypeGroup;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListDataEntry;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.lambda.Consumer5;
@@ -166,8 +169,8 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
             setHash(null);
         } else if (input.startsWith("\"") && input.endsWith("\"")) {
             setHash(unescape(input.substring(1, input.length() - 1)));
-        } else if (input.length() == 8 && NumberUtils.isHexInteger("0x" + input)) {
-            setHash(Integer.parseInt(input, 16));
+        } else if (input.length() == 8 && NumberUtils.isHexInteger(input)) {
+            setHash(NumberUtils.parseHexInteger(input));
         } else {
             setHash(input);
         }
@@ -509,8 +512,8 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
         return grid.addTextField(label, this.getAsGqsString(null), newTargetEntityText -> {
             int hash;
             boolean allowBadHash;
-            if (NumberUtils.isHexInteger(newTargetEntityText)) {
-                hash = NumberUtils.parseHexInteger(newTargetEntityText);
+            if (NumberUtils.isPrefixedHexInteger(newTargetEntityText)) {
+                hash = NumberUtils.parseIntegerAllowHex(newTargetEntityText);
                 allowBadHash = true;
             } else {
                 hash = GreatQuestUtils.hash(newTargetEntityText);
@@ -528,6 +531,104 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
                 return false;
             }
         });
+    }
+
+    /**
+     * Adds the hash object to a property list.
+     * @param propertyList the property list to add to
+     * @param name the name of the property to show as
+     * @param chunkedFile the chunked file to resolve assets from
+     * @param resourceClass the type of resource to resolve
+     * @return newEntry
+     */
+    public PropertyListDataEntry<GreatQuestHash<TResource>> addToPropertyList(PropertyListNode propertyList, String name, GreatQuestChunkedFile chunkedFile, Class<TResource> resourceClass) {
+        if (propertyList == null)
+            throw new NullPointerException("propertyList");
+        if (resourceClass != null && !kcCResource.class.isAssignableFrom(resourceClass))
+            throw new IllegalArgumentException("resourceClass " + resourceClass.getSimpleName() + " is not a " + kcCResource.class.getSimpleName() + "!");
+
+        PropertyListDataEntry<GreatQuestHash<TResource>> newEntry = propertyList.add(name, this)
+                .setDataToStringConverter(hash -> hash.getAsGqsString(null));
+
+        // Master hashes can't be edited, at least not directly here. (Their names are usually set somewhere else and then applied to here)
+        if (!isMaster() || chunkedFile == null)
+            return newEntry;
+
+        // TODO: Implement resolver.
+        return newEntry;
+        //newEntry.setDataFromStringConverter(newText -> this);
+
+        /*return grid.addTextField(label, this.getAsGqsString(null), newTargetEntityText -> {
+            int hash;
+            boolean allowBadHash;
+            if (NumberUtils.isPrefixedHexInteger(newTargetEntityText)) {
+                hash = NumberUtils.parseIntegerAllowHex(newTargetEntityText);
+                allowBadHash = true;
+            } else {
+                hash = GreatQuestUtils.hash(newTargetEntityText);
+                allowBadHash = false;
+            }
+
+            kcCResource resource = chunkedFile != null ? chunkedFile.getResourceByHash(hash) : null;
+            if (resourceClass != null && resourceClass.isInstance(resource)) {
+                this.setResource(resourceClass.cast(resource), false);
+                return true;
+            } else if (allowBadHash) {
+                this.setHash(hash);
+                return true;
+            } else {
+                return false;
+            }
+        });*/
+    }
+
+    /**
+     * Adds the hash object to a property list.
+     * @param propertyList the property list to add to
+     * @param name the name of the property to show as
+     * @param chunkedFile the chunked file to resolve assets from
+     * @param resourceType the type of resource to resolve
+     * @return newEntry
+     */
+    public PropertyListDataEntry<GreatQuestHash<TResource>> addToPropertyList(PropertyListNode propertyList, String name, GreatQuestChunkedFile chunkedFile, IkcCResourceGenericTypeGroup resourceType) {
+        if (propertyList == null)
+            throw new NullPointerException("propertyList");
+        if (resourceType == null)
+            throw new NullPointerException("resourceType");
+
+        PropertyListDataEntry<GreatQuestHash<TResource>> newEntry = propertyList.add(name, this)
+                .setDataToStringConverter(hash -> hash.getAsGqsString(null));
+
+        // Master hashes can't be edited, at least not directly here. (Their names are usually set somewhere else and then applied to here)
+        if (!isMaster() || chunkedFile == null)
+            return newEntry;
+
+        // TODO: Implement resolver.
+        return newEntry;
+        //newEntry.setDataFromStringConverter(newText -> this);
+
+        /*return grid.addTextField(label, this.getAsGqsString(null), newTargetEntityText -> {
+            int hash;
+            boolean allowBadHash;
+            if (NumberUtils.isPrefixedHexInteger(newTargetEntityText)) {
+                hash = NumberUtils.parseIntegerAllowHex(newTargetEntityText);
+                allowBadHash = true;
+            } else {
+                hash = GreatQuestUtils.hash(newTargetEntityText);
+                allowBadHash = false;
+            }
+
+            kcCResource resource = chunkedFile != null ? chunkedFile.getResourceByHash(hash) : null;
+            if (resourceClass != null && resourceClass.isInstance(resource)) {
+                this.setResource(resourceClass.cast(resource), false);
+                return true;
+            } else if (allowBadHash) {
+                this.setHash(hash);
+                return true;
+            } else {
+                return false;
+            }
+        });*/
     }
 
     @Override

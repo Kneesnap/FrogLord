@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.generic.kcBlend;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -80,15 +81,15 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        super.writeMultiLineInfo(builder, padding);
-        builder.append(padding).append("Src Blend: ").append(this.srcBlend).append(Constants.NEWLINE);
-        builder.append(padding).append("Dest Blend: ").append(this.dstBlend).append(Constants.NEWLINE);
-        writeAssetLine(builder, padding, "Texture", this.textureRef);
-        writeAssetLine(builder, padding, "Self Hash", this.parentHash);
-        this.particleParam.writePrefixedMultiLineInfo(builder, "Particle Params", padding);
-        builder.append(padding).append("Emitter Life Time (Garbage?): ").append(this.lifeTimeEmitter).append(Constants.NEWLINE);
-        builder.append(padding).append("Max Particle: ").append(getMaxParticle()).append(Constants.NEWLINE);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
+        propertyList.addEnum("Src Blend", this.srcBlend, kcBlend.class, newValue -> this.srcBlend = newValue, false);
+        propertyList.addEnum("Dest Blend", this.dstBlend, kcBlend.class, newValue -> this.dstBlend = newValue, false);
+        this.textureRef.addToPropertyList(propertyList, "Texture", getParentFile(), kcCResourceTexture.class);
+        propertyList.addProperties("Particle Params", this.particleParam);
+        propertyList.addFloat("Emitter Life Time", this.lifeTimeEmitter, kcParticleEmitterParam::isValidUserSuppliedEmitterValue,
+                newValue -> this.lifeTimeEmitter = newValue);
+        propertyList.add("Max Particle", getMaxParticle());
     }
 
     private static final String CONFIG_KEY_SOURCE_BLEND = "srcBlend";
@@ -103,7 +104,7 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
         this.dstBlend = input.getOrDefaultKeyValueNode(CONFIG_KEY_DESTINATION_BLEND).getAsEnum(kcBlend.ONE);
         this.lifeTimeEmitter = input.getOrDefaultKeyValueNode(CONFIG_KEY_LIFETIME).getAsFloat(-1);
         this.resolveResource(logger, input.getOptionalKeyValueNode(CONFIG_KEY_TEXTURE), kcCResourceTexture.class, this.textureRef);
-        if (this.lifeTimeEmitter < -1 || this.lifeTimeEmitter >= 60) // Allow zero as the indicator to use from the kcParticleParam struct instead.
+        if (!isValidUserSuppliedEmitterValue(this.lifeTimeEmitter)) // Allow zero as the indicator to use from the kcParticleParam struct instead.
             throw new RuntimeException("The " + CONFIG_KEY_LIFETIME + " value (" + this.lifeTimeEmitter + ") was not in the expected range of [-1, 60)!");
 
         this.particleParam.fromConfig(logger, input);
@@ -136,5 +137,9 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
         } else {
             return DEFAULT_MAX_PARTICLE;
         }
+    }
+
+    private static boolean isValidUserSuppliedEmitterValue(float testValue) {
+        return Float.isFinite(testValue) && (testValue >= -1F && testValue < 60);
     }
 }

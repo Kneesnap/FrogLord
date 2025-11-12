@@ -25,6 +25,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestChunkFileEditor;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestMainMenuUIController;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.GreatQuestMapMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.GreatQuestMapMeshController;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
@@ -351,7 +352,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
      */
     @SuppressWarnings("unchecked")
     public <TResource extends kcCResource> TResource getResourceByName(String name, Class<TResource> resourceClass) {
-        int hash = NumberUtils.isHexInteger(name) ? NumberUtils.parseHexInteger(name) : GreatQuestUtils.hash(name);
+        int hash = NumberUtils.isPrefixedHexInteger(name) ? NumberUtils.parseIntegerAllowHex(name) : GreatQuestUtils.hash(name);
         if (hash == 0 || hash == -1)
             return null; // TOC chunks conflict since they don't have a hash / aren't loaded.
 
@@ -836,7 +837,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             kcCResourceAnimSet animSet = (kcCResourceAnimSet) chunk;
             builder.append(chunk.getName()).append('[').append(chunk.getHashAsHexString())
                     .append("]: ").append(Constants.NEWLINE);
-            animSet.getAnimSetDesc().writeMultiLineInfo(builder, " ");
+            animSet.getAnimSetDesc().createPropertyList().toStringChildEntries(builder, " ", 1);
         }
 
         saveExport(file, builder);
@@ -917,7 +918,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
             kcModelDesc modelDesc = generic.getAsModelDescription();
             builder.append(chunk.getName()).append('[').append(chunk.getHashAsHexString()).append("], ");
-            modelDesc.writeInfo(builder);
+            modelDesc.createPropertyList().toStringChildEntries(builder, " ", 0);
             builder.append(Constants.NEWLINE);
         }
 
@@ -976,7 +977,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                     continue;
 
                 builder.append(Constants.NEWLINE);
-                ((kcEnvironment) chunk).writePrefixedMultiLineInfo(builder, "kcEnvironment", "", " ");
+                chunk.createPropertyList().toString(builder, " ", 0);
             }
 
             builder.append(Constants.NEWLINE);
@@ -1036,30 +1037,6 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     }
 
     /**
-     * Write the asset name to the builder to a single line.
-     * @param file The chunked file to search for assets from.
-     * @param builder The builder to write to.
-     * @param padding The line padding data.
-     * @param prefix The prefix to write.
-     * @param hashObj The hash to lookup.
-     */
-    public static StringBuilder writeAssetLine(GreatQuestChunkedFile file, StringBuilder builder, String padding, String prefix, GreatQuestHash<? extends kcCResource> hashObj) {
-        builder.append(padding).append(prefix).append(": ");
-
-        kcCResource resource = hashObj != null ? hashObj.getResource() : null;
-        int resourceHash = hashObj != null ? hashObj.getHashNumber() : 0;
-        if (resource != null) {
-            builder.append(resource.getName());
-        } else if (resourceHash != 0 && resourceHash != -1) {
-            builder.append(NumberUtils.to0PrefixedHexString(resourceHash));
-        } else {
-            builder.append("None");
-        }
-
-        return builder.append(Constants.NEWLINE);
-    }
-
-    /**
      * Write the asset name to the UI.
      * @param file The chunked file to search for assets from.
      * @param label The label to write.
@@ -1114,11 +1091,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         try {
             GreatQuestAssetUtils.applyGqsScriptGroup(workingDirectory, this, scriptGroupCfg);
             getLogger().info("Finished importing the gqs.");
-
-            // Refresh UI
-            GameUIController<?> currentEditor = getGameInstance().getMainMenuController().getCurrentEditor();
-            if (currentEditor instanceof GreatQuestChunkFileEditor)
-                ((GreatQuestChunkFileEditor) currentEditor).getChunkListComponent().refreshDisplay();
+            updateListUI();
         } catch (Throwable th) {
             Utils.handleError(getLogger(), th, true, "An error occurred while importing the gqs file '%s'.", gqsGroupFile.getName());
         }
@@ -1145,5 +1118,16 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         }
 
         return newChunk;
+    }
+
+    /**
+     * Updates the resource list UI, if currently displayed.
+     */
+    public void updateListUI() {
+        // Update UI to reflect new name.
+        GreatQuestMainMenuUIController mainMenu = getGameInstance().getMainMenuController();
+        GameUIController<?> currentEditor = mainMenu != null ? mainMenu.getCurrentEditor() : null;
+        if (currentEditor instanceof GreatQuestChunkFileEditor && ((GreatQuestChunkFileEditor) currentEditor).getFile() == this)
+            ((GreatQuestChunkFileEditor) currentEditor).getChunkListComponent().refreshDisplay();
     }
 }

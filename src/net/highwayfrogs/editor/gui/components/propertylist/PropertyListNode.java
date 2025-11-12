@@ -3,9 +3,12 @@ package net.highwayfrogs.editor.gui.components.propertylist;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import lombok.Getter;
+import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -84,7 +87,6 @@ public abstract class PropertyListNode {
 
     /**
      * Adds a new property to the property list.
-     * TODO: Review all usages.
      * @param name the name of the property to add
      * @param value the value to add
      * @param newValueProvider the provider for new values.
@@ -101,20 +103,8 @@ public abstract class PropertyListNode {
      * @param propertyListCreator the property list creator to create the property list
      * @return newEntry
      */
-    public PropertyListDataEntry<String> add(String name, IPropertyListCreator propertyListCreator) {
-        return addString(name, "", propertyListCreator);
-    }
-
-    /**
-     * Adds a property list creator to the property list.
-     * @param name the name of the property list
-     * @param propertyListCreator the property list creator to create the property list
-     * @param toStringConverter the converter to use to display the propertyListConverter as a display String.
-     * @return newEntry
-     */
-    public <TValue extends IPropertyListCreator> PropertyListDataEntry<TValue> add(String name, TValue propertyListCreator, Function<TValue, String> toStringConverter) {
-        return add(new PropertyListDataEntry<>(propertyListCreator, name, propertyListCreator))
-                .setDataToStringConverter(toStringConverter);
+    public PropertyListDataEntry<String> addProperties(String name, IPropertyListCreator propertyListCreator) {
+        return addString(propertyListCreator, name, "");
     }
 
     /**
@@ -124,7 +114,7 @@ public abstract class PropertyListNode {
      * @return newEntry
      */
     public PropertyListDataEntry<String> addString(String name, String value) {
-        return addString(name, value, null);
+        return addString(null, name, value);
     }
 
     private static final Function<String, String> STRING_TO_STRING_PLACE_HOLDER = str -> str;
@@ -136,10 +126,22 @@ public abstract class PropertyListNode {
      * @param propertyListCreator the property list creator to create the property list
      * @return newEntry
      */
-    public PropertyListDataEntry<String> addString(String name, String value, IPropertyListCreator propertyListCreator) {
+    public PropertyListDataEntry<String> addString(IPropertyListCreator propertyListCreator, String name, String value) {
         return add(new PropertyListDataEntry<>(propertyListCreator, name, value))
                 .setDataFromStringConverter(STRING_TO_STRING_PLACE_HOLDER)
                 .setDataToStringConverter(STRING_TO_STRING_PLACE_HOLDER);
+    }
+
+    /**
+     * Adds a property list creator to the property list.
+     * @param name the name of the property list
+     * @param value the value display text for the property list
+     * @param handler the behavior for handling a new value
+     * @return newEntry
+     */
+    public PropertyListDataEntry<String> addString(String name, String value, Consumer<String> handler) {
+        return addString(name, value)
+                .setDataHandler(handler);
     }
 
     /**
@@ -311,6 +313,30 @@ public abstract class PropertyListNode {
     }
 
     /**
+     * Adds an enum value to the property list, without allowing the user to change it.
+     * @param name the name of the value to add
+     * @param value the value to add
+     * @return newEntry
+     */
+    public <TEnum extends Enum<TEnum>> PropertyListDataEntry<TEnum> addEnum(String name, TEnum value) {
+        return add(new PropertyListDataEntry<>(null, name, value));
+    }
+
+    /**
+     * Adds an enum value to the property list, allowing the user to edit the value.
+     * @param name the name of the value to add
+     * @param value the value to add
+     * @param handler the handling behavior for a new value
+     * @return newEntry
+     */
+    public <TEnum extends Enum<TEnum>> PropertyListDataEntry<TEnum>  addEnum(String name, TEnum value, Class<TEnum> enumClass, Consumer<TEnum> handler, boolean allowNull) {
+        return addEnum(name, value)
+                .setDataFromStringConverter(newText -> StringUtils.isNullOrEmpty(newText) || "null".equals(newText) ? null : Enum.valueOf(enumClass, newText))
+                .setDataValidator(allowNull ? null : Objects::nonNull)
+                .setDataHandler(handler);
+    }
+
+    /**
      * Clear all child entries.
      */
     public void clearChildEntries() {
@@ -355,13 +381,30 @@ public abstract class PropertyListNode {
      * @param padding the string representing padding
      * @param paddingAmount how many times the padding string should be written when writing padding
      */
-    public void toString(StringBuilder builder, String padding, int paddingAmount) {
-        populateChildEntriesIfNecessary();
+    public void toStringChildEntries(StringBuilder builder, String padding, int paddingAmount) {
+        if (!canHaveProperties())
+            return;
 
-        if (canHaveProperties()) {
-            int newPaddingAmount = paddingAmount + 1;
-            for (int i = 0; i < this.childEntries.size(); i++)
-                this.childEntries.get(i).toString(builder, padding, newPaddingAmount);
+        populateChildEntriesIfNecessary();
+        for (int i = 0; i < this.childEntries.size(); i++) {
+            if (i > 0)
+                builder.append(Constants.NEWLINE);
+            this.childEntries.get(i).toString(builder, padding, paddingAmount);
         }
+    }
+
+    /**
+     * Writes the property list base, and all of its child property list entries to a StringBuilder
+     * @param builder the StringBuilder to append to
+     * @param padding the string representing padding
+     * @param paddingAmount how many times the padding string should be written when writing padding
+     */
+    public void toString(StringBuilder builder, String padding, int paddingAmount) {
+        int oldLength = builder.length();
+        toString(builder);
+        if (builder.length() > oldLength && this.childEntries != null && this.childEntries.size() > 0)
+            builder.append(Constants.NEWLINE);
+
+        toStringChildEntries(builder, padding, paddingAmount + 1);
     }
 }

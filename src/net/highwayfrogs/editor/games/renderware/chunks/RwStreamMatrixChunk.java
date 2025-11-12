@@ -62,9 +62,9 @@ public class RwStreamMatrixChunk extends RwStreamChunk implements IRwStreamChunk
     public void addToPropertyList(PropertyListNode propertyList) {
         super.addToPropertyList(propertyList);
         propertyList.add("Type", this.type);
-        propertyList.add("Position", this.pos);
-        propertyList.add("At", this.at);
-        propertyList.add("Right", this.right);
-        propertyList.add("Up", this.up);
+        propertyList.addProperties("Position", this.pos);
+        propertyList.addProperties("At", this.at);
+        propertyList.addProperties("Right", this.right);
+        propertyList.addProperties("Up", this.up);
     }
 }

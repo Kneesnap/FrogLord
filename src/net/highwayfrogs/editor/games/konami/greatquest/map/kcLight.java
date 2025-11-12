@@ -3,11 +3,11 @@ package net.highwayfrogs.editor.games.konami.greatquest.map;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
-import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -22,7 +22,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
-public class kcLight implements IMultiLineInfoWriter, IBinarySerializable {
+public class kcLight implements IPropertyListCreator, IBinarySerializable {
     private kcLightType lightType;
     private final kcColor4 diffuseColor = new kcColor4();
     private final kcColor4 ambientColor = new kcColor4();
@@ -105,20 +105,20 @@ public class kcLight implements IMultiLineInfoWriter, IBinarySerializable {
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        builder.append(padding).append("Light Type: ").append(this.lightType).append(Constants.NEWLINE);
-        this.diffuseColor.writePrefixedInfoLine(builder, "Diffuse Color", padding);
-        this.ambientColor.writePrefixedInfoLine(builder, "Ambient Color", padding);
-        this.specularColor.writePrefixedInfoLine(builder, "Specular Color", padding);
-        this.position.writePrefixedInfoLine(builder, "Position", padding);
-        this.direction.writePrefixedInfoLine(builder, "Direction", padding);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        propertyList.addEnum("Light Type", this.lightType, kcLightType.class, newType -> this.lightType = newType, false);
+        this.diffuseColor.addToPropertyList(propertyList, "Diffuse Color");
+        this.ambientColor.addToPropertyList(propertyList, "Ambient Color");
+        this.specularColor.addToPropertyList(propertyList, "Specular Color");
+        this.position.addToPropertyList(propertyList, "Position");
+        this.direction.addToPropertyList(propertyList, "Direction");
 
-        builder.append(padding).append("Range: ").append(this.range).append(Constants.NEWLINE);
-        builder.append(padding).append("Falloff: ").append(this.falloff).append(Constants.NEWLINE);
-        builder.append(padding).append("Attenuation 0: ").append(this.attenuation0).append(Constants.NEWLINE);
-        builder.append(padding).append("Attenuation 1: ").append(this.attenuation1).append(Constants.NEWLINE);
-        builder.append(padding).append("Attenuation 2: ").append(this.attenuation2).append(Constants.NEWLINE);
-        builder.append(padding).append("Theta: ").append(this.theta).append(Constants.NEWLINE);
-        builder.append(padding).append("Phi: ").append(this.phi).append(Constants.NEWLINE);
+        propertyList.addFloat("Range", this.range, newValue -> this.range = newValue);
+        propertyList.addFloat("Falloff", this.falloff, newValue -> this.falloff = newValue);
+        propertyList.addFloat("Attenuation 0", this.attenuation0, newValue -> this.attenuation0 = newValue);
+        propertyList.addFloat("Attenuation 1", this.attenuation1, newValue -> this.attenuation1 = newValue);
+        propertyList.addFloat("Attenuation 2", this.attenuation2, newValue -> this.attenuation2 = newValue);
+        propertyList.addFloat("Theta", this.theta, newValue -> this.theta = newValue);
+        propertyList.addFloat("Phi", this.phi, newValue -> this.phi = newValue);
     }
 }

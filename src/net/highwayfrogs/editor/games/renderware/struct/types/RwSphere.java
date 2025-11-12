@@ -38,7 +38,7 @@ public class RwSphere extends RwStruct {
     @Override
     public void addToPropertyList(PropertyListNode propertyList) {
         super.addToPropertyList(propertyList);
-        propertyList.add("Center", this.center);
+        propertyList.addProperties("Center", this.center);
         propertyList.add("Radius", this.radius);
     }
 

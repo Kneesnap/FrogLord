@@ -334,7 +334,7 @@ public class MRAnimatedMof extends MRBaseModelData {
         propertyList.add("Xar Animations", xarAnimationCount + " (" + xarAnimationsWithInterpolationCount + " Interpolated)");
 
         if (this.staticMofs.size() == 1) {
-            propertyList.add("Static MOF", this.staticMofs.get(0));
+            propertyList.addProperties("Static MOF", this.staticMofs.get(0));
         }
 
         // TODO: Recursively go through and add properties.

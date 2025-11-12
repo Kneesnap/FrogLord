@@ -84,14 +84,14 @@ public class RpWorldChunkInfo extends RwStruct {
     public void addToPropertyList(PropertyListNode propertyList) {
         super.addToPropertyList(propertyList);
         propertyList.add("Root Is World Sector", this.rootIsWorldSector);
-        propertyList.add("Inv World Origin", this.invWorldOrigin);
+        propertyList.addProperties("Inv World Origin", this.invWorldOrigin);
         propertyList.add("Triangles", this.numTriangles);
         propertyList.add("Vertices", this.numVertices);
         propertyList.add("Plane Sectors", this.numPlaneSectors);
         propertyList.add("Collision Sector Size", this.colSectorSize);
         propertyList.add("World Format Flags", NumberUtils.toHexString(this.formatFlags));
         if (this.boundingBox != null)
-            propertyList.add("Bounding Box", this.boundingBox);
+            propertyList.addProperties("Bounding Box", this.boundingBox);
     }
 
     public void applyDataFromWorld(RwWorldChunk worldChunk) {

@@ -37,7 +37,6 @@ public abstract class PropertyListEntry extends PropertyListNode {
             for (int i = 0; i < paddingAmount; i++)
                 builder.append(padding);
 
-        toString(builder);
         super.toString(builder, padding, paddingAmount);
     }
 

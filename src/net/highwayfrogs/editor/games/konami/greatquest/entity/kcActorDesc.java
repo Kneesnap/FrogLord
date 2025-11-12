@@ -6,6 +6,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -64,10 +65,9 @@ public class kcActorDesc extends kcActorBaseDesc {
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        super.writeMultiLineInfo(builder, padding);
-        this.health.writePrefixedMultiLineInfo(builder, "Health", padding);
-        if (this.invincibleDurationLimitMs != DEFAULT_INVINCIBLE_DURATION_LIMIT_MILLIS)
-            builder.append(padding).append("Invincible Duration Limit (Ms): ").append(this.invincibleDurationLimitMs).append(Constants.NEWLINE);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
+        this.health.addToPropertyList(propertyList);
+        propertyList.addInteger("Invincible Duration (Ms)", this.invincibleDurationLimitMs, newValue -> this.invincibleDurationLimitMs = newValue);
     }
 }

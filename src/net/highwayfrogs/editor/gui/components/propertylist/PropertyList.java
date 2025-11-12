@@ -24,6 +24,6 @@ public class PropertyList extends PropertyListNode {
 
     @Override
     public void toString(StringBuilder builder) {
-        toString(builder, " ", -1);
+        // Nothing!
     }
 }

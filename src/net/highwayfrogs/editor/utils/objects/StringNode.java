@@ -180,7 +180,7 @@ public class StringNode {
     public int getAsInteger() {
         if (!StringUtils.isNullOrWhiteSpace(this.value)) {
             try {
-                return NumberUtils.isHexInteger(this.value) ? NumberUtils.parseHexInteger(this.value) : Integer.parseInt(this.value);
+                return NumberUtils.parseIntegerAllowHex(this.value);
             } catch (NumberFormatException nfe) {
                 throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid integer." + getExtraDebugErrorInfo(), nfe);
             }
@@ -198,7 +198,7 @@ public class StringNode {
     public int getAsInteger(int fallback) {
         if (!StringUtils.isNullOrWhiteSpace(this.value)) {
             try {
-                return NumberUtils.isHexInteger(this.value) ? NumberUtils.parseHexInteger(this.value) : Integer.parseInt(this.value);
+                return NumberUtils.parseIntegerAllowHex(this.value);
             } catch (NumberFormatException nfe) {
                 throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid integer." + getExtraDebugErrorInfo(), nfe);
             }
@@ -224,7 +224,7 @@ public class StringNode {
     public int getAsUnsignedInteger() {
         if (!StringUtils.isNullOrWhiteSpace(this.value)) {
             try {
-                return NumberUtils.isHexInteger(this.value) ? NumberUtils.parseHexInteger(this.value) : (int) Long.parseLong(this.value);
+                return NumberUtils.isPrefixedHexInteger(this.value) ? NumberUtils.parseIntegerAllowHex(this.value) : (int) Long.parseLong(this.value);
             } catch (NumberFormatException nfe) {
                 throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid integer.", nfe);
             }
@@ -242,7 +242,7 @@ public class StringNode {
     public int getAsUnsignedInteger(int fallback) {
         if (!StringUtils.isNullOrWhiteSpace(this.value)) {
             try {
-                return NumberUtils.isHexInteger(this.value) ? NumberUtils.parseHexInteger(this.value) : (int) Long.parseLong(this.value);
+                return NumberUtils.isPrefixedHexInteger(this.value) ? NumberUtils.parseIntegerAllowHex(this.value) : (int) Long.parseLong(this.value);
             } catch (NumberFormatException nfe) {
                 throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid integer." + getExtraDebugErrorInfo(), nfe);
             }

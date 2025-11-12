@@ -2,6 +2,8 @@ package net.highwayfrogs.editor.system.math;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListDataEntry;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 
 /**
  * Represents a vector with two 32 bit floating point values.
@@ -89,7 +91,6 @@ public class Vector2f {
         this.y += y;
         return this;
     }
-
 
     /**
      * Adds two vectors together.
@@ -222,6 +223,22 @@ public class Vector2f {
     @Override
     public int hashCode() {
         return Float.hashCode(this.x) * 397 ^ Float.hashCode(this.y);
+    }
+
+    /**
+     * Adds the vector to the property list.
+     * @param propertyList the property list to add to
+     * @param name the name to put the vector into the property list with
+     */
+    public PropertyListDataEntry<Vector2f> addToPropertyList(PropertyListNode propertyList, String name) {
+        return propertyList.add(name, this)
+                .setDataToStringConverter(Vector2f::toParseableString)
+                .setDataFromStringConverter(newText -> {
+                    Vector2f newVector = new Vector2f();
+                    newVector.parse(newText);
+                    return newVector;
+                })
+                .setDataHandler(newVector -> this.setXY(newVector));
     }
 
     /**

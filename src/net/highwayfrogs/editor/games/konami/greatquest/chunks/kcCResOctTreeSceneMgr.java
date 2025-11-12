@@ -283,8 +283,8 @@ public class kcCResOctTreeSceneMgr extends kcCResource implements IMultiLineInfo
         propertyList.add("Vertex Buffers", this.vertexBuffers.size());
         propertyList.add("Materials", this.materials.size());
         propertyList.add("Collision Meshes", this.collisionMeshes.size());
-        propertyList.add("Entity Tree", this.entityTree);
-        propertyList.add("Visual Tree", this.visualTree);
+        propertyList.addProperties("Entity Tree", this.entityTree);
+        propertyList.addProperties("Visual Tree", this.visualTree);
     }
 
     @Getter

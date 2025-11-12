@@ -7,9 +7,10 @@ import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.konami.IConfigData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
-import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.map.kcColor4;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -22,7 +23,7 @@ import net.highwayfrogs.editor.utils.logging.ILogger;
  */
 @Getter
 @Setter
-public class kcParticleParam implements IMultiLineInfoWriter, IBinarySerializable, IConfigData {
+public class kcParticleParam implements IPropertyListCreator, IBinarySerializable, IConfigData {
     private int burstMode = 1;
     private float emitAngle = .55F;
     private float emitAngleVariance = 0F;
@@ -96,24 +97,27 @@ public class kcParticleParam implements IMultiLineInfoWriter, IBinarySerializabl
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        builder.append(padding).append("Burst Mode: ").append(this.burstMode).append(Constants.NEWLINE);
-        builder.append(padding).append("Emit Angle: ").append(this.emitAngle).append(Constants.NEWLINE);
-        builder.append(padding).append("Emit Angle Variance: ").append(this.emitAngleVariance).append(Constants.NEWLINE);
-        builder.append(padding).append("Part Per Second: ").append(this.partPerSecond).append(Constants.NEWLINE);
-        builder.append(padding).append("Speed: ").append(this.speed).append(Constants.NEWLINE);
-        builder.append(padding).append("Speed Variance: ").append(this.speedVariance).append(Constants.NEWLINE);
-        builder.append(padding).append("Life Time: ").append(this.lifeTime).append(Constants.NEWLINE);
-        builder.append(padding).append("Life Variance: ").append(this.lifeVariance).append(Constants.NEWLINE);
-        this.colorBegin.writePrefixedInfoLine(builder, "Begin Color", padding);
-        this.colorEnd.writePrefixedInfoLine(builder, "End Color", padding);
-        this.colorVariance.writePrefixedInfoLine(builder, "Color Variance", padding);
-        this.gravityBegin.writePrefixedInfoLine(builder, "Begin Gravity", padding);
-        this.gravityEnd.writePrefixedInfoLine(builder, "End Gravity", padding);
-        builder.append(padding).append("Gravity Variance: ").append(this.gravityVariance).append(Constants.NEWLINE);
-        builder.append(padding).append("Line Left: ").append(this.lineLeft).append(Constants.NEWLINE);
-        builder.append(padding).append("Line Right: ").append(this.lineRight).append(Constants.NEWLINE);
-        builder.append(padding).append("Orientation: ").append(this.orientation).append(Constants.NEWLINE);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        propertyList.addInteger("Burst Mode", this.burstMode, newValue -> this.burstMode = newValue);
+        propertyList.addFloat("Emit Angle", this.emitAngle, newValue -> this.emitAngle = newValue);
+        propertyList.addFloat("Emit Angle Variance", this.emitAngleVariance, newValue -> this.emitAngleVariance = newValue);
+        propertyList.addInteger("Part Per Second", this.partPerSecond, newValue -> this.partPerSecond = newValue);
+        propertyList.addFloat("Speed", this.speed, newValue -> this.speed = newValue);
+        propertyList.addFloat("Speed Variance", this.speedVariance, newValue -> this.speedVariance = newValue);
+        propertyList.addFloat("Life Time", this.lifeTime, newValue -> this.lifeTime = newValue);
+        propertyList.addFloat("Life Variance", this.lifeVariance, newValue -> this.lifeVariance = newValue);
+        propertyList.addFloat("Size Begin", this.sizeBegin, newValue -> this.sizeBegin = newValue);
+        propertyList.addFloat("Size End", this.sizeEnd, newValue -> this.sizeEnd = newValue);
+        propertyList.addFloat("Size Variance", this.sizeVariance, newValue -> this.sizeVariance = newValue);
+        this.colorBegin.addToPropertyList(propertyList, "Color Begin");
+        this.colorEnd.addToPropertyList(propertyList, "Color End");
+        this.colorVariance.addToPropertyList(propertyList, "Color Variance");
+        this.gravityBegin.addToPropertyList(propertyList, "Gravity Begin");
+        this.gravityEnd.addToPropertyList(propertyList, "Gravity End");
+        propertyList.addFloat("Gravity Variance", this.gravityVariance, newValue -> this.gravityVariance = newValue);
+        propertyList.addFloat("Line Left", this.lineLeft, newValue -> this.lineLeft = newValue);
+        propertyList.addFloat("Line Right", this.lineRight, newValue -> this.lineRight = newValue);
+        propertyList.addFloat("Orientation", this.orientation, newValue -> this.orientation = newValue);
     }
 
     private static final String CONFIG_KEY_BURST_MODE = "burstMode";

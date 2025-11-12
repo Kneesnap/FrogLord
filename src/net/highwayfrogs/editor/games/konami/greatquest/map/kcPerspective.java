@@ -4,9 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
-import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
 import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
@@ -21,7 +19,7 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class kcPerspective implements IMultiLineInfoWriter, IBinarySerializable, IPropertyListCreator {
+public class kcPerspective implements IBinarySerializable, IPropertyListCreator {
     private float fovVert;
     private float aspect;
     private float zNear;
@@ -57,18 +55,10 @@ public class kcPerspective implements IMultiLineInfoWriter, IBinarySerializable,
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        builder.append(padding).append("FOV (Degrees): ").append(Math.toDegrees(this.fovVert)).append(Constants.NEWLINE);
-        builder.append(padding).append("Aspect Ratio: ").append(this.aspect).append(Constants.NEWLINE);
-        builder.append(padding).append("zNear: ").append(this.zNear).append(Constants.NEWLINE);
-        builder.append(padding).append("zFar: ").append(this.zFar).append(Constants.NEWLINE);
-    }
-
-    @Override
     public void addToPropertyList(PropertyListNode propertyList) {
-        propertyList.add("FOV (Degrees)", Math.toDegrees(this.fovVert));
-        propertyList.add("Aspect Ratio", this.aspect);
-        propertyList.add("Near Clip", this.zNear);
-        propertyList.add("Far Clip", this.zFar);
+        propertyList.addDouble("FOV (Degrees)", Math.toDegrees(this.fovVert), newValue -> this.fovVert = (float) Math.toDegrees(newValue));
+        propertyList.addFloat("Aspect Ratio", this.aspect, newValue -> this.aspect = newValue);
+        propertyList.addFloat("Near Clip", this.zNear, newValue -> this.zNear = newValue);
+        propertyList.addFloat("Far Clip", this.zFar, newValue -> this.zFar = newValue);
     }
 }

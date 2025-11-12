@@ -1004,8 +1004,8 @@ public class GreatQuestUtils {
             if (hashObj != null)
                 hashObj.setHash(nullValue);
             return nullValue;
-        } else if (NumberUtils.isHexInteger(input)) {
-            int hash = NumberUtils.parseHexInteger(input);
+        } else if (NumberUtils.isPrefixedHexInteger(input)) {
+            int hash = NumberUtils.parseIntegerAllowHex(input);
             if (hashObj != null)
                 hashObj.setHash(hash);
             return hash;

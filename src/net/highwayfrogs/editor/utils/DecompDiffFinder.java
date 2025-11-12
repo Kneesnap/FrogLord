@@ -88,8 +88,6 @@ public class DecompDiffFinder {
             int address;
             if (NumberUtils.isHexInteger(userInputStr)) {
                 address = NumberUtils.parseHexInteger(userInputStr);
-            } else if (NumberUtils.isHexInteger("0x" + userInputStr)) {
-                address = NumberUtils.parseHexInteger("0x" + userInputStr);
             } else {
                 System.out.println("Invalid address.");
                 continue;

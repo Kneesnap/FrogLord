@@ -13,6 +13,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneri
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector3;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
@@ -87,15 +88,15 @@ public class kcWaypointDesc extends kcEntity3DDesc implements ILateResourceResol
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        super.writeMultiLineInfo(builder, padding);
-        builder.append(padding).append("Type: ").append(this.type).append(Constants.NEWLINE);
-        writeAssetLine(builder, padding, "Previous", this.previousWaypointEntityRef);
-        writeAssetLine(builder, padding, "Next", this.nextWaypointEntityRef);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
+        propertyList.addEnum("Type", this.type, kcWaypointType.class, newType -> this.type = newType, false);
+        this.previousWaypointEntityRef.addToPropertyList(propertyList, "Previous Target", getParentFile(), kcCResourceEntityInst.class);
+        this.nextWaypointEntityRef.addToPropertyList(propertyList, "Next Target", getParentFile(), kcCResourceEntityInst.class);
         if (this.type == kcWaypointType.BOUNDING_BOX || this.boundingBoxDimensions.getX() != 0 || this.boundingBoxDimensions.getY() != 0 || this.boundingBoxDimensions.getZ() != 0)
-            this.boundingBoxDimensions.writePrefixedInfoLine(builder, "Bounding Box Dimensions", padding);
+            this.boundingBoxDimensions.addToPropertyList(propertyList, "Bounding Box Dimensions");
         if (this.type == kcWaypointType.APPLY_WATER_CURRENT || this.strength != 0)
-            builder.append(padding).append("Strength: ").append(this.strength).append(Constants.NEWLINE);
+            propertyList.addFloat("Water Strength", this.strength, newValue -> this.strength = newValue);
     }
 
     private static final String CONFIG_KEY_TYPE = "waypointType";

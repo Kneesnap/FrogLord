@@ -2,10 +2,10 @@ package net.highwayfrogs.editor.games.konami.greatquest.math;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
-import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter;
-import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListDataEntry;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
+import net.highwayfrogs.editor.system.math.Vector4f;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -15,7 +15,7 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
  */
 @Getter
 @Setter
-public class kcSphere implements IInfoWriter, IMultiLineInfoWriter, IBinarySerializable {
+public class kcSphere implements IBinarySerializable {
     private final kcVector3 position;
     private float radius;
 
@@ -41,19 +41,33 @@ public class kcSphere implements IInfoWriter, IMultiLineInfoWriter, IBinarySeria
     }
 
     @Override
-    public void writeInfo(StringBuilder builder) {
-        builder.append("Position: ");
-        this.position.writeInfo(builder);
-        builder.append(", Radius: ").append(this.radius);
+    public String toString() {
+        return "kcSphere{pos=" + this.position.getX() + "," + this.position.getY() + "," + this.position.getZ() + ",radius=" + this.radius + "}";
     }
 
-    @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        builder.append(padding).append("Position: ");
-        this.position.writeInfo(builder);
-        builder.append(Constants.NEWLINE);
-
-        builder.append(padding).append("Radius: ").append(this.radius).append(Constants.NEWLINE);
+    /**
+     * Adds this sphere to the property list
+     * @param propertyList the property list to add to
+     * @param name the name to give this sphere
+     * @return propertyListEntry
+     */
+    public PropertyListDataEntry<kcSphere> addToPropertyList(PropertyListNode propertyList, String name) {
+        return propertyList.add(name, this)
+                .setDataToStringConverter(sphere -> sphere.position.toParseableString() + ", " + sphere.radius)
+                .setDataFromStringConverter(newText -> {
+                    Vector4f newVector = new Vector4f();
+                    newVector.parse(newText);
+                    kcSphere sphere = new kcSphere();
+                    sphere.getPosition().setXYZ(newVector.getXYZ(null));
+                    sphere.setRadius(newVector.getW());
+                    return sphere;
+                })
+                .setDataHandler((entry, newSphere) -> {
+                    this.position.setXYZ(newSphere.getPosition());
+                    this.radius = newSphere.getRadius();
+                    //noinspection unchecked
+                    ((PropertyListDataEntry<kcSphere>) entry.getEntry()).setDataObject(this);
+                });
     }
 
     /**

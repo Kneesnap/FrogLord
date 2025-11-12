@@ -65,8 +65,8 @@ public class RwCameraChunk extends RwStreamChunk implements IRwStreamChunkWithEm
     @Override
     public void addToPropertyList(PropertyListNode propertyList) {
         super.addToPropertyList(propertyList);
-        propertyList.add("View Window", this.viewWindow);
-        propertyList.add("View Offset", this.viewOffset);
+        propertyList.addProperties("View Window", this.viewWindow);
+        propertyList.addProperties("View Offset", this.viewOffset);
         propertyList.add("Near Plane", this.nearPlane);
         propertyList.add("Far Plane", this.farPlane);
         propertyList.add("Fog Plane", this.fogPlane);

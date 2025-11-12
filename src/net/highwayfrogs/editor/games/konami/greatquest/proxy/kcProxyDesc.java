@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcIGenericResourceData;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.NumberUtils;
@@ -82,11 +83,11 @@ public abstract class kcProxyDesc extends kcBaseDesc implements kcIGenericResour
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         // No need to display the hash, if we need to know that we can look at the resource containing this data.
-        builder.append(padding).append("Reaction: ").append(this.reaction).append(Constants.NEWLINE);
-        builder.append(padding).append("Collision Group: ").append(kcCollisionGroup.getAsString(this.collisionGroup)).append(Constants.NEWLINE);
-        builder.append(padding).append("Collide With: ").append(kcCollisionGroup.getAsString(this.collideWith)).append(Constants.NEWLINE);
+        propertyList.addEnum("Reaction", this.reaction, ProxyReact.class, newValue -> this.reaction = newValue, false);
+        propertyList.add("Collision Group", kcCollisionGroup.getAsString(this.collisionGroup));
+        propertyList.add("Collide With", kcCollisionGroup.getAsString(this.collideWith));
     }
 
     @Override

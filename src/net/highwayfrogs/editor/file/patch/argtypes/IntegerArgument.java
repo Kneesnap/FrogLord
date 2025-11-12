@@ -15,7 +15,7 @@ public class IntegerArgument extends PatchArgumentBehavior<Integer> {
 
     @Override
     public boolean isValidString(String text) {
-        return NumberUtils.isInteger(text) || NumberUtils.isHexInteger(text);
+        return NumberUtils.isInteger(text) || NumberUtils.isPrefixedHexInteger(text);
     }
 
     @Override

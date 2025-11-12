@@ -4,11 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
-import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -20,7 +20,7 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class kcFogParams implements IMultiLineInfoWriter, IBinarySerializable {
+public class kcFogParams implements IPropertyListCreator, IBinarySerializable {
     private kcFogMode mode;
     private final kcColor3 color = new kcColor3();
     private float start;
@@ -62,18 +62,13 @@ public class kcFogParams implements IMultiLineInfoWriter, IBinarySerializable {
         editorGrid.addCheckBox("Range Based", this.rangeBased, newValue -> this.rangeBased = newValue);
     }
 
-    /**
-     * Writes information about this object.
-     * @param builder The builder to write the information to.
-     * @param padding The padding to apply to new lines.
-     */
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        builder.append(padding).append("Fog Mode: ").append(this.mode).append(Constants.NEWLINE);
-        this.color.writePrefixedInfoLine(builder, "Color", padding);
-
-        builder.append(padding).append("Start: ").append(this.start).append(Constants.NEWLINE);
-        builder.append(padding).append("End: ").append(this.end).append(Constants.NEWLINE);
-        builder.append(padding).append("Density: ").append(this.density).append(Constants.NEWLINE);
-        builder.append(padding).append("Range Based: ").append(this.rangeBased).append(Constants.NEWLINE);
+    @Override
+    public void addToPropertyList(PropertyListNode propertyList) {
+        propertyList.addEnum("Fog Mode", this.mode, kcFogMode.class, newFogMode -> this.mode = newFogMode, false);
+        this.color.addToPropertyList(propertyList, "Color");
+        propertyList.addFloat("Start", this.start, newValue -> this.start = newValue);
+        propertyList.addFloat("End", this.end, newValue -> this.end = newValue);
+        propertyList.addFloat("Density", this.density, newValue -> this.density = newValue);
+        propertyList.addBoolean("Range Based", this.rangeBased, newValue -> this.rangeBased = newValue);
     }
 }

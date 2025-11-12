@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
 import lombok.Getter;
 import lombok.NonNull;
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceAnimSet;
@@ -57,13 +56,10 @@ public class kcAnimSetDesc extends kcBaseDesc implements IPropertyListCreator {
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        for (int i = 0; i < this.animationRefs.size(); i++) {
-            builder.append(padding).append("-");
-            writeAssetLine(builder, padding, "kcAnimSetDesc Entry", this.animationRefs.get(i));
-        }
-
-        builder.append(Constants.NEWLINE);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        propertyList.add("Animation References", this.animationRefs.size());
+        for (int i = 0; i < this.animationRefs.size(); i++)
+            propertyList.add("Animation Ref " + i, this.animationRefs.get(i).getDisplayString(false));
     }
 
     @Override
@@ -145,12 +141,5 @@ public class kcAnimSetDesc extends kcBaseDesc implements IPropertyListCreator {
         }
 
         return false;
-    }
-
-    @Override
-    public void addToPropertyList(PropertyListNode propertyList) {
-        propertyList.add("Animation References", this.animationRefs.size());
-        for (int i = 0; i < this.animationRefs.size(); i++)
-            propertyList.add("Animation Ref " + i, this.animationRefs.get(i).getDisplayString(false));
     }
 }

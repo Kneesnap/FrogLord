@@ -124,6 +124,14 @@ public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<
 
         @Override
         protected void onSelect(kcCResource resource) {
+            updateResourceUI(resource);
+        }
+
+        /**
+         * Updates the resource UI to display the given resource.
+         * @param resource the resource to display
+         */
+        public void updateResourceUI(kcCResource resource) {
             // Update controls based on selection.
             this.listComponent.getCollectionEditorComponent().updateEditorControls();
 

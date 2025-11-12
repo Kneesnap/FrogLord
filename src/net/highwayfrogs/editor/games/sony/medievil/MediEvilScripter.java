@@ -38,7 +38,7 @@ public class MediEvilScripter {
 
         System.out.print("What is the address of the script (In the file): ");
         String addressStr = scanner.nextLine();
-        if (!NumberUtils.isHexInteger(addressStr)) {
+        if (!NumberUtils.isPrefixedHexInteger(addressStr)) {
             System.out.print("Invalid hex integer '" + addressStr + "'.");
             return;
         }

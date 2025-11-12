@@ -18,7 +18,12 @@ import net.highwayfrogs.editor.utils.Utils;
  * For example, TextFieldTreeTableCell.forTreeTableColumn() creates a TreeTableCell which sets the graphic to a TextField when clicked, so it can be edited.
  *  - tableColumnValue.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
  * However, none of the options built into JavaFX work quite right for us, since we want:
- *  A) The ability to have different types of UI in cells for different properties. TODO: Implement this later. (booleans as checkboxes, enums and bit flags as combo-boxes, etc)
+ *  A) The ability to have different types of UI in cells for different properties.
+ *  TODO: Implement this later.
+ *   - Booleans as checkboxes
+ *   - Enums and bit flags as combo boxes.
+ *   - Colors as color pickers.
+ *   - Great quest resources should have a search bar
  *  B) The ability to validate user input in real-time as it is typed.
  *  C) To only enable editing for property list nodes that have editing behavior setup.
  * Created by Kneesnap on 11/10/2025.

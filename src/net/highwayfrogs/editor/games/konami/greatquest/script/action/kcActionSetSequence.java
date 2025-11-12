@@ -59,8 +59,8 @@ public class kcActionSetSequence extends kcAction {
     @Override
     protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         String sequenceName = arguments.useNext().getAsString(); // We can't resolve the sequence by the hash of the string normally since these seem to use randomized hash values.
-        if (NumberUtils.isHexInteger(sequenceName)) {
-            setAnimationSequenceHash(logger, NumberUtils.parseHexInteger(sequenceName));
+        if (NumberUtils.isPrefixedHexInteger(sequenceName)) {
+            setAnimationSequenceHash(logger, NumberUtils.parseIntegerAllowHex(sequenceName));
         } else {
             kcCActionSequence foundSequence = null;
 

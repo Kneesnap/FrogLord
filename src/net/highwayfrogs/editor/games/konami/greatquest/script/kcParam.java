@@ -256,8 +256,8 @@ public class kcParam {
             case HEX_INTEGER:
             case HASH:
             case HASH_NULL_IS_ZERO:
-                if (!node.isNull() && NumberUtils.isHexInteger(node.getAsString())) {
-                    setValue(NumberUtils.parseHexInteger(node.getAsString()));
+                if (!node.isNull() && NumberUtils.isPrefixedHexInteger(node.getAsString())) {
+                    setValue(NumberUtils.parseIntegerAllowHex(node.getAsString()));
                 } else if (paramType == kcParamType.HASH_NULL_IS_ZERO) {
                     setValue(node.isNull() ? 0 : GreatQuestUtils.hash(node.getAsString()));
                 } else {
@@ -346,7 +346,7 @@ public class kcParam {
 
                     if (bone != null) {
                         setValue(bone.getTag());
-                    } else if (NumberUtils.isHexInteger(boneName)) {
+                    } else if (NumberUtils.isPrefixedHexInteger(boneName)) {
                         setValue(node.getAsInteger());
                     } else {
                         int newHash = GreatQuestUtils.hash(boneName);
