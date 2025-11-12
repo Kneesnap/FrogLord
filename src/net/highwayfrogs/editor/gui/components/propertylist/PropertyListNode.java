@@ -174,7 +174,8 @@ public abstract class PropertyListNode {
      * @return newEntry
      */
     public PropertyListDataEntry<Short> addShort(String name, short value) {
-        return add(new PropertyListDataEntry<>(null, name, value));
+        return add(new PropertyListDataEntry<>(null, name, value))
+                .setDataFromStringConverter(Short::parseShort);
     }
 
     /**
@@ -185,9 +186,8 @@ public abstract class PropertyListNode {
      * @return newEntry
      */
     public PropertyListDataEntry<Short> addShort(String name, short value, Consumer<Short> handler) {
-        return add(new PropertyListDataEntry<>(null, name, value))
-                .setDataHandler(handler)
-                .setDataFromStringConverter(Short::parseShort);
+        return addShort(name, value)
+                .setDataHandler(handler);
     }
 
     /**
@@ -210,7 +210,8 @@ public abstract class PropertyListNode {
      * @return newEntry
      */
     public PropertyListDataEntry<Integer> addInteger(String name, int value) {
-        return add(new PropertyListDataEntry<>(null, name, value));
+        return add(new PropertyListDataEntry<>(null, name, value))
+                .setDataFromStringConverter(Integer::parseInt);
     }
 
     /**
@@ -221,9 +222,8 @@ public abstract class PropertyListNode {
      * @return newEntry
      */
     public PropertyListDataEntry<Integer> addInteger(String name, int value, Consumer<Integer> handler) {
-        return add(new PropertyListDataEntry<>(null, name, value))
-                .setDataHandler(handler)
-                .setDataFromStringConverter(Integer::parseInt);
+        return addInteger(name, value)
+                .setDataHandler(handler);
     }
 
     /**
@@ -236,7 +236,6 @@ public abstract class PropertyListNode {
      */
     public PropertyListDataEntry<Integer> addInteger(String name, int value, Predicate<Integer> validator, Consumer<Integer> handler) {
         return addInteger(name, value, handler)
-                .setDataHandler(handler)
                 .setDataValidator(validator);
     }
 
@@ -247,7 +246,8 @@ public abstract class PropertyListNode {
      * @return newEntry
      */
     public PropertyListDataEntry<Float> addFloat(String name, float value) {
-        return add(new PropertyListDataEntry<>(null, name, value));
+        return add(new PropertyListDataEntry<>(null, name, value))
+                .setDataFromStringConverter(Float::parseFloat);
     }
 
     /**
@@ -258,9 +258,8 @@ public abstract class PropertyListNode {
      * @return newEntry
      */
     public PropertyListDataEntry<Float> addFloat(String name, float value, Consumer<Float> handler) {
-        return add(new PropertyListDataEntry<>(null, name, value))
-                .setDataHandler(handler)
-                .setDataFromStringConverter(Float::parseFloat);
+        return addFloat(name, value)
+                .setDataHandler(handler);
     }
 
     /**
@@ -283,7 +282,8 @@ public abstract class PropertyListNode {
      * @return newEntry
      */
     public PropertyListDataEntry<Double> addDouble(String name, double value) {
-        return add(new PropertyListDataEntry<>(null, name, value));
+        return add(new PropertyListDataEntry<>(null, name, value))
+                .setDataFromStringConverter(Double::parseDouble);
     }
 
     /**
@@ -294,9 +294,8 @@ public abstract class PropertyListNode {
      * @return newEntry
      */
     public PropertyListDataEntry<Double> addDouble(String name, double value, Consumer<Double> handler) {
-        return add(new PropertyListDataEntry<>(null, name, value))
-                .setDataHandler(handler)
-                .setDataFromStringConverter(Double::parseDouble);
+        return addDouble(name, value)
+                .setDataHandler(handler);
     }
 
     /**
