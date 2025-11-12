@@ -19,14 +19,18 @@ import net.highwayfrogs.editor.utils.logging.ILogger;
  * Note that this is not related to particles as I previously thought, it is an entity spawner.
  * This can be used to spawn entities with the named formatted as String.format("%s%d", emitterName, entitiesSpawnedByEmitter++).
  * This may seem unused, but it's actually used once in Mushroom Valley, the 'TEST' value. Which... may not actually be used, I'm not sure.
- * Loaded by kcCEmitter::Init
+ * Loaded by kcCEmitter::Init.
+ * I tried to get this to work in-game.
+ *  #1) Using this as a collision proxy crashed the game.
+ *  #2) Using this as an entity description did seem to work, but the emitter didn't actually do anything in-game.
+ * Therefore, this feature is treated as unsupported by FrogLord, as it does not appear to work.
  * Created by Kneesnap on 8/22/2023.
  */
 @Getter
 @Setter
 public class kcEmitterDesc extends kcProxyCapsuleDesc {
     // The following default data has been pulled from 'TEST' in mushroom valley, which as mentioned before, is likely unused.
-    private int triggerType = DEFAULT_TRIGGER_TYPE; // TODO: Either 1 or 2.
+    private int triggerType = DEFAULT_TRIGGER_TYPE; // Either 1 or 2.
     private int frequency = DEFAULT_FREQUENCY; // How frequently the timer
     private int lifeTime = DEFAULT_LIFE_TIME;
     private int spawnLimit = DEFAULT_SPAWN_LIMIT;
@@ -117,7 +121,6 @@ public class kcEmitterDesc extends kcProxyCapsuleDesc {
         this.entityDescRef.addToPropertyList(propertyList, "Entity Description", getParentFile(), kcCResourceGenericTypeGroup.ENTITY_DESCRIPTION);
     }
 
-    // TODO: Need to add this to entity description config?
     private static final String CONFIG_KEY_TRIGGER_TYPE = "triggerType";
     private static final String CONFIG_KEY_FREQUENCY = "frequency";
     private static final String CONFIG_KEY_LIFE_TIME = "lifeTime";
@@ -135,7 +138,7 @@ public class kcEmitterDesc extends kcProxyCapsuleDesc {
         this.spawnLimit = input.getOrDefaultKeyValueNode(CONFIG_KEY_SPAWN_LIMIT).getAsInteger(DEFAULT_SPAWN_LIMIT);
         this.maxSpawn = input.getOrDefaultKeyValueNode(CONFIG_KEY_MAX_SPAWN).getAsInteger(DEFAULT_MAX_SPAWN);
         this.spawnRange = input.getOrDefaultKeyValueNode(CONFIG_KEY_SPAWN_RANGE).getAsFloat(DEFAULT_SPAWN_RANGE);
-        // TODO: EntityDesc.
+        GreatQuestUtils.resolveLevelResource(logger, input.getKeyValueNodeOrError(CONFIG_KEY_ENTITY_DESCRIPTION), kcCResourceGenericTypeGroup.ENTITY_DESCRIPTION, getParentFile(), this, this.entityDescRef, true);
     }
 
     @Override
@@ -147,6 +150,6 @@ public class kcEmitterDesc extends kcProxyCapsuleDesc {
         output.getOrCreateKeyValueNode(CONFIG_KEY_SPAWN_LIMIT).setAsInteger(this.spawnLimit);
         output.getOrCreateKeyValueNode(CONFIG_KEY_MAX_SPAWN).setAsInteger(this.maxSpawn);
         output.getOrCreateKeyValueNode(CONFIG_KEY_SPAWN_RANGE).setAsFloat(this.spawnRange);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_SPAWN_RANGE).setAsFloat(this.spawnRange); // TODO: ENTITY DESC
+        output.getOrCreateKeyValueNode(CONFIG_KEY_ENTITY_DESCRIPTION).setAsString(this.entityDescRef.getAsGqsString(null));
     }
 }

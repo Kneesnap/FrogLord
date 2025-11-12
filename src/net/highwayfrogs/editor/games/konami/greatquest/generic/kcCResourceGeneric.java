@@ -470,6 +470,14 @@ public class kcCResourceGeneric extends kcCResource {
         ENTITY_DESCRIPTION(kcCResourceGenericType.ACTOR_BASE_DESCRIPTION, kcCResourceGenericType.ITEM_DESCRIPTION,
                 kcCResourceGenericType.PROP_DESCRIPTION, kcCResourceGenericType.PARTICLE_EMITTER_PARAM,
                 kcCResourceGenericType.WAYPOINT_DESCRIPTION),
+
+        // kcCActorBase::CreateCollisionProxy() may look like it doesn't support kcCResourceGenericType.EMITTER_DESCRIPTION,
+        // But actually, it HALF does. This is because its classID is never changed from kcCProxyCapsule, even though it's kcCEmitter.
+        // It will use the kcCEmitter as if it is a capsule.
+        // Because the kcCEntity::Update method is not called on a kcCProxy entity, the correct way to use a kcCEmitter is actually as an ENTITY DESCRIPTION.
+        // Technically, it seems possible to spawn any collision proxy in as an entity directly, but I'm not sure why anyone would ever want that...
+        // I tried to get the emitter description working in-game, both as an entity description and as a collision proxy. The collision proxy crashed, the entity description did nothing.
+        // It is assumed that this feature was incomplete/does not work, even though the code for it looks like it should work.
         PROXY_DESCRIPTION(kcCResourceGenericType.PROXY_CAPSULE_DESCRIPTION, kcCResourceGenericType.PROXY_TRI_MESH_DESCRIPTION,
                 kcCResourceGenericType.EMITTER_DESCRIPTION);
 
