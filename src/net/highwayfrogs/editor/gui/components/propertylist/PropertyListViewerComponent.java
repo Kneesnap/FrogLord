@@ -244,7 +244,7 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
 
     private void selectTreeItem(TreeItem<PropertyListNode> treeItem, boolean focus) {
         int newRowIndex = getRootNode().getRow(treeItem);
-        getRootNode().scrollTo(newRowIndex);
+        // getRootNode().scrollTo(newRowIndex); // This is pretty jarring.
 
         // Put the first column in editing mode
         getRootNode().getSelectionModel().select(treeItem);
