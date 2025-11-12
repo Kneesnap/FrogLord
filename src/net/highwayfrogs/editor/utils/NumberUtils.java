@@ -74,7 +74,7 @@ public class NumberUtils {
             input = input.substring(2);
 
         // We need to use Long.parseLong() since Integer.parseInt() will not accept values larger than 0x80000000.
-        long value = Long.parseLong(input.substring(2), 16);
+        long value = Long.parseLong(input, 16);
         if (value > 0xFFFFFFFFL || value < -0xFFFFFFFFL)
             throw new ArithmeticException("The value: " + value + " (" + Long.toHexString(value) + ") cannot be represented as a 32-bit integer. (Too large/small!)");
 

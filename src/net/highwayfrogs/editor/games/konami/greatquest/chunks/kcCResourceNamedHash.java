@@ -272,7 +272,7 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
             if (nameEntry != null) { // Takes precedence over the oldActionSequence, because it has been observed that sometimes there are multiple sequences with the same name, but only one is in the table.
                 if (hashNode != null && hashNode.getAsInteger() != nameEntry.getValueRef().getHashNumber()) {
                     // We cannot change the hash because when we use [CopyResources], we'll get a copy of the resource.
-                    logger.warning("The hash '%s' does not match the hash of the pre-existing action sequence, and has been ignored. (Pre-existing hash: %s)", hashNode.getAsString(), nameEntry.getValueRef().getHashNumberAsString());
+                    logger.warning("The hash '%s' does not match the hash of the pre-existing action sequence (in the hash table), and has been ignored. (Pre-existing hash: %s)", hashNode.getAsString(), nameEntry.getValueRef().getHashNumberAsString());
                 }
 
                 sequenceHash = nameEntry.getValueRef().getHashNumber();
