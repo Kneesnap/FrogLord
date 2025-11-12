@@ -1,6 +1,8 @@
 package net.highwayfrogs.editor.gui.components.propertylist;
 
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
 import javafx.scene.Node;
@@ -250,11 +252,20 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
             getRootNode().getFocusModel().focus(newRowIndex, this.tableColumnKey);
     }
 
+    @SuppressWarnings("unchecked")
     private TreeTableRow<PropertyListNode> createPropertyListEntryTableRow(TreeTableView<PropertyListNode> tableView) {
         TreeTableRow<PropertyListNode> newRow = new TreeTableRow<>();
-        newRow.getStyleClass().clear();
-        newRow.getStyleClass().addAll("cell", "indexed-cell", "table-row-cell"); // Change this to use the alternating background class. Refer to modena.css
-        // At some point if I can figure out how to add on to modena.css, I'd like to do this the proper way instead of using table-row-cell.
+
+        // My goal is to make the rows alternate in colors, similarly to ListView or TableView.
+        // The most sensible thing is to apply the same property as applied to table-row-cell:odd, but to tree-table-row-cell in modena.css.
+        // But I've not figured out how to actually do that. So this is the next best thing.
+        newRow.indexProperty().addListener((observable, oldIndex, newIndex) ->
+                ((TreeTableRow<PropertyListNode>) ((ReadOnlyIntegerProperty) observable).getBean()).setStyle((newIndex.intValue() % 2) > 0 ? "-fx-background: -fx-control-inner-background-alt;" : null));
+        newRow.selectedProperty().addListener((observable, wasSelected, isSelected) -> {
+            TreeTableRow<PropertyListNode> tableRow = ((TreeTableRow<PropertyListNode>) ((ReadOnlyBooleanProperty) observable).getBean());
+            tableRow.setStyle(!isSelected && (tableRow.getIndex() % 2) > 0 ? "-fx-background: -fx-control-inner-background-alt;" : null);
+        });
+
         return newRow;
     }
 
