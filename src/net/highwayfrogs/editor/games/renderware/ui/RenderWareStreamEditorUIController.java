@@ -67,7 +67,6 @@ public class RenderWareStreamEditorUIController<TGameInstance extends GameInstan
         if (this.rightSidePanelFreeArea != null) {
             TreeTableView<PropertyListNode> propertyListViewRootNode = this.propertyListViewer.getRootNode();
             HBox.setHgrow(propertyListViewRootNode, Priority.ALWAYS);
-            this.propertyListViewer.bindSize();
 
             this.rightSidePanelFreeArea.getChildren().add(propertyListViewRootNode);
             addController(this.propertyListViewer);

@@ -72,7 +72,6 @@ public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFi
 
             Node propertyListViewRootNode = this.propertyListViewer.getRootNode();
             VBox.setVgrow(propertyListViewRootNode, Priority.ALWAYS);
-            this.propertyListViewer.bindSize();
             getRightSidePanelFreeArea().getChildren().add(propertyListViewRootNode);
             addController(this.propertyListViewer);
         }

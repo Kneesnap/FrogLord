@@ -10,7 +10,6 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableRow;
 import javafx.scene.control.TreeTableView;
-import javafx.scene.layout.AnchorPane;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.gui.GameUIController;
@@ -54,12 +53,6 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
         TreeTableView<PropertyListNode> tableView = (TreeTableView<PropertyListNode>) rootNode;
         tableView.setShowRoot(false); // Hide the root node, so instead of all properties being collapsable, only sub-properties are collapsable.
         tableView.setEditable(true); // Required to allow editing.
-
-        // TODO: I don't think this belongs here.
-        AnchorPane.setTopAnchor(rootNode, 8D);
-        AnchorPane.setBottomAnchor(rootNode, 8D);
-        AnchorPane.setLeftAnchor(rootNode, 8D);
-        AnchorPane.setRightAnchor(rootNode, 8D);
 
         // Setup columns.
         if (tableView.getColumns().size() == 2) {
@@ -156,15 +149,6 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
             propertyList.populateChildEntriesIfNecessary();
             getRootNode().setRoot(getOrCreateNodeUI(propertyList).getTreeItem());
         }
-    }
-
-    /**
-     * Binds the column widths to the table size.
-     * TODO: Review.
-     */
-    public void bindSize() {
-        getRootNode().maxWidth(Double.POSITIVE_INFINITY);
-        getRootNode().prefWidth(Double.POSITIVE_INFINITY);
     }
 
     PropertyListUINode getNodeUI(PropertyListNode node) {
