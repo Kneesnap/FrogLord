@@ -8,6 +8,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInf
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcMatrix;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcQuat;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector3;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.math.Matrix4x4f;
 import net.highwayfrogs.editor.system.math.Quaternion;
 import net.highwayfrogs.editor.system.math.Vector3f;
@@ -61,6 +63,12 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
 
         // Ensure we get the size right.
         writer.writeIntAtPos(dataSizeAddress, writer.getIndex() - dataStartAddress);
+    }
+
+    @Override
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
+        propertyList.addProperties(this.rootNode.getName() + " (Tag: " + this.rootNode.getTag() + ")", this.rootNode);
     }
 
     @Override
@@ -185,7 +193,7 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
         return null;
     }
 
-    public static class kcNode extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
+    public static class kcNode extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter, IPropertyListCreator {
         @Getter private final kcCResourceSkeleton skeleton;
         @Getter private final kcNode parent;
         @Getter private final List<kcNode> children = new ArrayList<>();
@@ -305,6 +313,23 @@ public class kcCResourceSkeleton extends kcCResource implements IMultiLineInfoWr
                 writer.writeIntAtPos(childNodeOffsetList + (i * Constants.INTEGER_SIZE), writer.getIndex() - nodeBaseAddress);
                 this.children.get(i).save(writer);
             }
+        }
+
+        private void addChildrenToPropertyList(PropertyListNode propertyList) {
+            for (int i = 0; i < this.children.size(); i++) {
+                kcNode node = this.children.get(i);
+                propertyList.addProperties(node.getName() + " (Tag: " + node.getTag() + ")", node);
+            }
+        }
+
+        @Override
+        public void addToPropertyList(PropertyListNode propertyList) {
+            propertyList.add("Flags", Integer.toHexString(this.flags).toUpperCase());
+            this.localPosition.addToPropertyList(propertyList, "Position");
+            Quaternion.toEulerAngles(getLocalRotation()).addToPropertyList(propertyList, "Rotation");
+            this.localScale.addToPropertyList(propertyList, "Position");
+            if (this.children.size() > 0)
+                propertyList.addProperties("Child Bones", this::addChildrenToPropertyList);
         }
 
         @Override

@@ -99,8 +99,10 @@ public class kcCResourceTrack extends kcCResource implements IMultiLineInfoWrite
     @Override
     public void addToPropertyList(PropertyListNode propertyList) {
         super.addToPropertyList(propertyList);
-        propertyList.add("Tracks", this.tracks.size());
-        // TODO: Nest the track information for each track.
+        for (int i = 0; i < this.tracks.size(); i++) {
+            kcTrack track = this.tracks.get(i);
+            propertyList.addProperties("Track " + i + " (Tag: " + track.getTag() + ")", track);
+        }
     }
 
     /**

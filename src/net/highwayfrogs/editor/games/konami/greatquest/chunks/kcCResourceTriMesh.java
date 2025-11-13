@@ -135,7 +135,6 @@ public class kcCResourceTriMesh extends kcCResource {
 
         @Override
         public void addToPropertyList(PropertyListNode propertyList) {
-            // TODO: Nested Property: this.boundingBox.writePrefixedMultiLineInfo(builder, "Bounding Box", padding, newPadding);
             propertyList.add("Vertices", this.vertices.size());
             propertyList.add("Faces", this.faces.size());
         }

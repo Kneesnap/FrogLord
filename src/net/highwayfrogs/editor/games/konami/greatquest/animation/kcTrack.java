@@ -7,6 +7,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.animation.key.kcTrackKey;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTrack;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -20,7 +22,7 @@ import java.util.List;
  * Created by Kneesnap on 4/16/2024.
  */
 @Getter
-public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
+public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter, IPropertyListCreator {
     private final kcCResourceTrack parentResource;
     private int packedValue; // This value contains the track mode, bit flags, and the kcControlType.
     private int tag; // This directly corresponds with the 'tag' value in a kcCSkeleton.
@@ -123,7 +125,7 @@ public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineI
         // FLAG_HAS_NEXT and FLAG_IS_FIRST are validated in the parent object, as this object is unaware of its ordering.
         warnAboutInvalidBitFlags(getFlags(), FLAG_VALIDATION_MASK);
         if ((getFlags() & FLAG_IS_PACKED) != FLAG_IS_PACKED)
-            getLogger().warning("Encountered a kcTrack which had the IS_PACKED flag set! (This has never been observed before)");
+            getLogger().warning("Encountered a kcTrack which did not have the IS_PACKED flag set! (This has never been observed before)");
 
         int mode = getTrackMode();
         if (mode != 0 && mode != 1 && mode != 2) // 17 is seen in the PS2 NTSC prototype.
@@ -258,6 +260,24 @@ public class kcTrack extends GameData<GreatQuestInstance> implements IMultiLineI
         }
 
         setFlags(newFlags);
+    }
+
+    private void addKeysToPropertyList(PropertyListNode propertyList) {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < this.keyList.size(); i++) {
+            kcTrackKey<?> trackKey = this.keyList.get(i);
+            builder.setLength(0);
+            trackKey.writeInfo(builder);
+            propertyList.add("Key " + trackKey.getTick(), builder.toString());
+        }
+    }
+
+    @Override
+    public void addToPropertyList(PropertyListNode propertyList) {
+        propertyList.add("Type", getTrackControlType());
+        propertyList.add("Mode", getTrackMode());
+        propertyList.add("Tag", getTag());
+        propertyList.addProperties("Keys", this::addKeysToPropertyList);
     }
 
     @Override
