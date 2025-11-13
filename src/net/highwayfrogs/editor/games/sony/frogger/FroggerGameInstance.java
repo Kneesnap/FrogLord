@@ -235,7 +235,8 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         super.setupScriptEngine(engine);
         engine.addWrapperTemplates(FroggerGameInstance.class, FroggerConfig.class, FroggerTextureRemap.class, FroggerMapFile.class,
                 LevelInfo.class, FroggerMapLevelID.class, FroggerMapWorldID.class, PCMapBook.class, FroggerMapTheme.class,
-                PSXMapBook.class, MapBook.class, FroggerUtils.class, FroggerMapFilePacketEntity.class, MusicTrack.class);
+                PSXMapBook.class, MapBook.class, FroggerUtils.class, FroggerMapFilePacketEntity.class, MusicTrack.class,
+                DemoTableEntry.class);
     }
 
     @Override

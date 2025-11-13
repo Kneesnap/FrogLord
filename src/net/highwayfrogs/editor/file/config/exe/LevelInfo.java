@@ -21,13 +21,14 @@ public class LevelInfo extends ExeStruct {
     @Getter @Setter private int stackPosition; // 0 = Top of level stack.
     private int theme;
     @Getter @Setter private int localLevelId; // 0 -> 4 (Level 1 -> 5)
+    // These are editable in Noodle scripts.
     @Getter @Setter private int levelsInWorld; // Number of levels in the world. (Used to calculate size.)
-    private long worldImageSelectablePointer; // Displayed on the level stack for the given world once unlocked.
-    private long worldImageVisitedPointer; // Unused.
-    private long worldImageNotTriedPointer; // Displayed on the level stack for the given world prior to unlock
-    private long levelTexturePointer; // The screenshot of the level.
-    private long levelNameTexturePointer; // The level name shown on the level stack.
-    private long levelNameTextureInGamePointer; // The level name shown in-game.
+    @Getter @Setter private long worldImageSelectablePointer; // Displayed on the level stack for the given world once unlocked.
+    @Getter @Setter private long worldImageVisitedPointer; // Unused.
+    @Getter @Setter private long worldImageNotTriedPointer; // Displayed on the level stack for the given world prior to unlock
+    @Getter @Setter private long levelTexturePointer; // The screenshot of the level.
+    @Getter @Setter private long levelNameTexturePointer; // The level name shown on the level stack.
+    @Getter @Setter  private long levelNameTextureInGamePointer; // The level name shown in-game.
 
     private static final int RUNTIME_DATA_SIZE = 44;
     private static final int TERMINATOR_LEVEL_ID = -1;

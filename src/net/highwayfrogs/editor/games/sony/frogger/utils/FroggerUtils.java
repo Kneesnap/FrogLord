@@ -194,7 +194,50 @@ public class FroggerUtils {
         }
     }
 
-    private static Font froggerFont;
+    /**
+     * Copies a WAD file entry from one wad file to another.
+     * @param source The source .WAD file to copy wad entries from
+     * @param target the target .WAD file to set up (the per-level wad file)
+     * @param wadEntryIndex the index of the wad file entry to copy.
+     */
+    @SuppressWarnings("unused") // Used by Noodle scripts.
+    public static void copyWadEntry(WADFile source, WADFile target, int wadEntryIndex) {
+        if (source == null)
+            throw new NullPointerException("source");
+        if (target == null)
+            throw new NullPointerException("target");
+        if (source.getFiles().size() != target.getFiles().size())
+            throw new IllegalArgumentException("File '" + source.getFileDisplayName() + "' has " + source.getFiles().size() + " entries, while" + target.getFileDisplayName() + " has " + target.getFiles().size() + " entries. (They are not compatible with each other.)");
+        if (wadEntryIndex < 0 || wadEntryIndex >= source.getFiles().size())
+            throw new IllegalArgumentException("The wadEntryIndex: " + wadEntryIndex + " is not valid for " + source.getFileDisplayName() + "! (" + source.getFiles().size() + " entries)");
+
+        WADEntry oldEntry = source.getFiles().get(wadEntryIndex);
+
+        WADEntry newEntry = target.getFiles().get(wadEntryIndex);
+        newEntry.setFile(null);
+
+        byte[] rawData = oldEntry.getFile().writeDataToByteArray();
+        SCGameFile<?> newFile = oldEntry.getArchive().replaceFile(oldEntry.getDisplayName(), rawData, oldEntry.getFileEntry(), oldEntry.getFile(), false);
+        newFile.setRawFileData(rawData);
+
+        // Setup new file.
+        newFile.setFileDefinition(oldEntry.getFileEntry());
+        newFile.setWadFileEntry(newEntry);
+        newEntry.setFile(newFile);
+    }
+
+    /**
+     * Returns true if the wadEntry is hardcoded/referenced in the game code.
+     * @param wadEntry the wadEntry to test
+     * @return if the entry is hardcoded to be used by the game
+     */
+    public static boolean isHardcodedInGameCode(WADEntry wadEntry) {
+        if (wadEntry == null)
+            return false;
+
+        SCGameFile<?> file = wadEntry.getFile();
+        return file != null && (file.getFileDisplayName().startsWith("DES_FALLING_ROCK") || file.getFileDisplayName().startsWith("JUN_PLINTH"));
+    }
 
     /**
      * Writes Frogger text to the image with the given settings.
@@ -285,6 +328,8 @@ public class FroggerUtils {
 
         return image;
     }
+
+    private static Font froggerFont;
 
     /**
      * Gets the font used to create text.
