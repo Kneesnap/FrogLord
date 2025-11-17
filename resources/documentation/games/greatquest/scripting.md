@@ -957,6 +957,10 @@ BOTH # Controls both entity visibility and terrain visibility.
 **Usage:** `ActivateCamera <transitionInSeconds>`  
 `transitionInSeconds` is a decimal number indicating how long it will take (in seconds) to switch to the new camera.
 
+> [!WARNING]
+> When activating a second camera, remember to use `DeactivateCamera 0` immediately before activating a new camera.  
+> Otherwise, the camera may behave in unexpected ways.  
+
 ### DeactivateCamera (Script Only)
 **Summary:** Deactivates the current camera, reverting to the previous camera.  
 **Supported Entity Types:** All  
