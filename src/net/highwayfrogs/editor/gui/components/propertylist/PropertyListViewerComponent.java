@@ -141,13 +141,7 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
             // If it's the same property list as before, so just update the entries.
             updateNode(propertyList);
         } else {
-            // Remove previous entries.
-            if (getRootNode().getRoot() != null && getRootNode().getRoot().getValue() != null && getRootNode().getRoot() != null)
-                getRootNode().getRoot().getValue().clearChildEntries();
-
-            // This is a new property list, so generate entries and create nodes.
-            propertyList.populateChildEntriesIfNecessary();
-            getRootNode().setRoot(getOrCreateNodeUI(propertyList).getTreeItem());
+            changeRoot(propertyList);
         }
     }
 
@@ -180,8 +174,10 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
     private void onTreeItemRemove(TreeItem<PropertyListNode> treeItem) {
         PropertyListNode node = treeItem.getValue();
         PropertyListUINode uiNode = this.nodeMappings.remove(node);
-        if (uiNode != null)
-            uiNode.remove();
+        if (uiNode == null)
+            return;
+
+        uiNode.remove();
 
         // Recursively remove child nodes.
         List<TreeItem<PropertyListNode>> children = treeItem.getChildren();
@@ -197,33 +193,73 @@ public class PropertyListViewerComponent<TGameInstance extends GameInstance> ext
         if (nodeUI == null)
             return; // Can't refresh nodes without a UI node.
 
-        List<TreeItem<PropertyListNode>> oldTreeItems = new ArrayList<>(nodeUI.getTreeItem().getChildren());
+        TreeItem<PropertyListNode> oldSelectedTreeItem = getRootNode().getSelectionModel().getSelectedItem();
+        List<TreeItem<PropertyListNode>> oldTreeItems = new ArrayList<>(nodeUI.getTreeItem().getChildren()); // This list will be wiped out when we do updateChildEntries(), so it's important to duplicate its contents.
 
         // Doing this will clear the tree, we'll need to update the UI to re-expand and re-select everything which should be expanded.
         node.updateChildEntries();
 
-        tryExpandNewTreeItems(oldTreeItems, nodeUI.getTreeItem());
-        selectTreeItem(nodeUI.getTreeItem(), false);
+        TreeItem<PropertyListNode> newSelectedTreeItem = tryExpandNewTreeItems(oldTreeItems, nodeUI.getTreeItem(), oldSelectedTreeItem);
+        if (newSelectedTreeItem != null)
+            selectTreeItem(newSelectedTreeItem, false);
     }
 
-    private void tryExpandNewTreeItems(List<TreeItem<PropertyListNode>> oldTreeItems, TreeItem<PropertyListNode> treeItem) {
+    private void changeRoot(PropertyList newPropertyList) {
+        TreeItem<PropertyListNode> oldRoot = getRootNode().getRoot();
+        PropertyListUINode oldRootUI = oldRoot != null ? this.nodeMappings.get(oldRoot.getValue()) : null;
+
+        // Get the old selection/expansion information.
+        TreeItem<PropertyListNode> oldSelectedTreeItem = getRootNode().getSelectionModel().getSelectedItem();
+        List<TreeItem<PropertyListNode>> oldTreeItems = oldRootUI != null ? new ArrayList<>(oldRootUI.getTreeItem().getChildren()) : null;
+
+        // Clear the node mappings.
+        this.nodeMappings.values().forEach(PropertyListUINode::remove); // Remove all the change listeners without clearing the old tree.
+        this.nodeMappings.clear();
+
+        // This is a new property list, so generate entries and create nodes, and setup the new root item.
+        newPropertyList.populateChildEntriesIfNecessary();
+        PropertyListUINode newRootUI = getOrCreateNodeUI(newPropertyList);
+        getRootNode().setRoot(newRootUI.getTreeItem()); // Must be set before trying to expand the items.
+
+        // Expand the tree items in the same pattern as previously expanded.
+        if (oldTreeItems != null) {
+            TreeItem<PropertyListNode> newSelectedTreeItem = tryExpandNewTreeItems(oldTreeItems, newRootUI.getTreeItem(), oldSelectedTreeItem);
+            if (newSelectedTreeItem != null)
+                selectTreeItem(newSelectedTreeItem, false);
+        }
+    }
+
+    private TreeItem<PropertyListNode> tryExpandNewTreeItems(List<TreeItem<PropertyListNode>> oldTreeItems, TreeItem<PropertyListNode> treeItem, TreeItem<PropertyListNode> oldSelectedTreeItem) {
         int lastMatchIndex = 0;
+        TreeItem<PropertyListNode> newSelectedTreeItem = null;
         List<TreeItem<PropertyListNode>> newTreeItems = treeItem.getChildren();
         for (int i = 0; i< oldTreeItems.size(); i++) {
             TreeItem<PropertyListNode> oldItem = oldTreeItems.get(i);
-            if (!oldItem.isExpanded() || oldItem.isLeaf())
+            boolean isPreviouslySelectedEntry = (oldSelectedTreeItem == oldItem);
+            if ((!oldItem.isExpanded() || oldItem.isLeaf()) && !isPreviouslySelectedEntry)
                 continue;
 
             for (int j = lastMatchIndex; j < newTreeItems.size(); j++) {
                 TreeItem<PropertyListNode> newItem = newTreeItems.get(j);
+
                 if (Objects.equals(((PropertyListEntry) oldItem.getValue()).getName(), ((PropertyListEntry) newItem.getValue()).getName())) {
-                    lastMatchIndex = j + 1;
-                    newItem.setExpanded(true);
-                    tryExpandNewTreeItems(oldItem.getChildren(), newItem);
+                    if (oldItem.isExpanded()) {
+                        lastMatchIndex = j + 1;
+                        newItem.setExpanded(true);
+                        TreeItem<PropertyListNode> testSelectedTreeItem = tryExpandNewTreeItems(oldItem.getChildren(), newItem, oldSelectedTreeItem);
+                        if (testSelectedTreeItem != null)
+                            newSelectedTreeItem = testSelectedTreeItem;
+                    }
+
+                    if (isPreviouslySelectedEntry)
+                        newSelectedTreeItem = newItem;
+
                     break;
                 }
             }
         }
+
+        return newSelectedTreeItem;
     }
 
     private void selectTreeItem(TreeItem<PropertyListNode> treeItem, boolean focus) {

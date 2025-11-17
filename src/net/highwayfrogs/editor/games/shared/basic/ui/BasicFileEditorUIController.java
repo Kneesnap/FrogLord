@@ -43,7 +43,7 @@ public class BasicFileEditorUIController<TGameFile extends IBasicGameFile, TGame
         TGameFile oldFile = this.file;
         if (oldFile != file) {
             this.file = file;
-            this.propertyListViewer.showProperties(file != null ? file.createPropertyList() : null);
+            this.propertyListViewer.showProperties(file);
         }
     }
 }

@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.games.shared.basic.ui;
 import net.highwayfrogs.editor.games.shared.basic.BasicGameInstance;
 import net.highwayfrogs.editor.games.shared.basic.file.BasicGameFile;
 import net.highwayfrogs.editor.games.shared.basic.file.definition.IGameFileDefinition;
-import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.CollectionTreeViewComponent;
 
 import java.util.Collection;
@@ -24,11 +23,8 @@ public class BasicFileListViewComponent<TGameInstance extends BasicGameInstance>
 
     @Override
     protected void onSelect(BasicGameFile<?> file) {
-        if (file == null)
-            return;
-
-        GameUIController<?> controller = file.makeEditorUI();
-        getGameInstance().getMainMenuController().showEditor(controller);
+        if (file != null)
+            ((BasicMainMenuUIController<?>) getGameInstance().getMainMenuController()).showEditor(file);
     }
 
     @Override

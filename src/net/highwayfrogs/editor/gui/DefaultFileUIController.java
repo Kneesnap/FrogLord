@@ -99,7 +99,7 @@ public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFi
      * @param newFile the new file
      */
     protected void onSelectedFileChange(TGameFile oldFile, TGameFile newFile) {
-        this.propertyListViewer.showProperties(newFile != null ? newFile.createPropertyList() : null);
+        this.propertyListViewer.showProperties(newFile);
         setExtraUI(newFile instanceof IExtraUISupplier ? ((IExtraUISupplier) newFile).createExtraUIController() : null);
     }
 

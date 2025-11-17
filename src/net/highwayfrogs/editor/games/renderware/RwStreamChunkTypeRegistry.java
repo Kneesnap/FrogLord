@@ -3,13 +3,13 @@ package net.highwayfrogs.editor.games.renderware;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.games.renderware.chunks.RwStructChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwUnsupportedChunk;
 import net.highwayfrogs.editor.games.renderware.struct.RwUnsupportedStruct;
 import net.highwayfrogs.editor.system.TriFunction;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -149,9 +149,16 @@ public class RwStreamChunkTypeRegistry implements Cloneable {
         // Register chunks.
 
         // Register chunk types registered to the built-in RenderWare engine types.
-        for (RwStreamChunkType chunkType : RwStreamChunkType.values())
-            if (chunkType.getChunkCreator() != null)
+        for (RwStreamChunkType chunkType : RwStreamChunkType.values()) {
+            if (chunkType == RwStreamChunkType.STRUCT)
+                continue; // skip struct specifically.
+
+            if (chunkType.getChunkCreator() != null) {
                 defaultRegistry.registerChunkType(chunkType, chunkType.getChunkCreator());
+            } else {
+                defaultRegistry.registerChunkType(chunkType, chunkType::makeDefaultUnsupportedChunk);
+            }
+        }
 
         // By default, treat structs as unsupported, since we can't identify them without extra info.
         defaultRegistry.registerChunkType((gameInstance, version, parentChunk) -> new RwStructChunk<>(gameInstance, version, parentChunk, RwUnsupportedStruct.class));

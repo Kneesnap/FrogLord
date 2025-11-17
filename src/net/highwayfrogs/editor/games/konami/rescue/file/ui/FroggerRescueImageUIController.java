@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.games.konami.greatquest.ui;
+package net.highwayfrogs.editor.games.konami.rescue.file.ui;
 
 import javafx.event.ActionEvent;
 import javafx.scene.Node;
@@ -9,8 +9,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
-import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestImageFile;
+import net.highwayfrogs.editor.games.konami.hudson.HudsonGameInstance;
+import net.highwayfrogs.editor.games.konami.rescue.file.FroggerRescueImage;
+import net.highwayfrogs.editor.gui.DefaultFileUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
@@ -18,16 +19,19 @@ import net.highwayfrogs.editor.utils.FileUtils;
 import java.awt.image.BufferedImage;
 
 /**
- * Manages image displays for Frogger The Great Quest.
- * Created by Kneesnap on 4/14/2024.
+ * Represents the UI for displaying/editing a FroggerRescueImage.
+ * TODO: Add listener to property list viewer for selecting images, and highlighting selected image areas red.
+ * TODO: Maybe a
+ * Created by Kneesnap on 11/14/2025.
  */
-public class GreatQuestImageController extends GreatQuestFileEditorUIController<GreatQuestImageFile> {
+public class FroggerRescueImageUIController extends DefaultFileUIController<HudsonGameInstance, FroggerRescueImage> {
     private final ImageView imageView;
     private final Button exportImageButton;
     private final Button importImageButton;
 
-    public GreatQuestImageController(GreatQuestInstance instance) {
-        super(instance, "Image File", ImageResource.PHOTO_ALBUM_16);
+
+    public FroggerRescueImageUIController(HudsonGameInstance instance) {
+        super(instance, "Image", ImageResource.PHOTO_ALBUM_16.getFxImage());
         this.imageView = new ImageView();
         this.imageView.setFitWidth(256);
         this.imageView.setFitHeight(256);
@@ -51,21 +55,21 @@ public class GreatQuestImageController extends GreatQuestFileEditorUIController<
     }
 
     @Override
-    public void setTargetFile(GreatQuestImageFile imageFile) {
+    public void setTargetFile(FroggerRescueImage imageFile) {
         super.setTargetFile(imageFile);
         updateImage();
     }
 
     @SneakyThrows
     private void exportImage(ActionEvent event) {
-        GreatQuestImageFile image = getFile();
+        FroggerRescueImage image = getFile();
         if (image != null)
-            FileUtils.askUserToSaveImageFile(image.getLogger(), getGameInstance(), image.getImage(), image.getExportName());
+            FileUtils.askUserToSaveImageFile(image.getLogger(), getGameInstance(), getImage(), image.getFullDisplayName());
     }
 
     @SneakyThrows
     private void importImage(ActionEvent event) {
-        GreatQuestImageFile image = getFile();
+        FroggerRescueImage image = getFile();
         if (image == null)
             return;
 
@@ -73,7 +77,7 @@ public class GreatQuestImageController extends GreatQuestFileEditorUIController<
         if (loadedImage == null)
             return; // Cancelled.
 
-        getFile().setImage(loadedImage);
+        // TODO: getFile().setImage(loadedImage);
         updateImage();
         getPropertyListViewer().showProperties(image); // Update the property list, which may have changed.
     }
@@ -82,14 +86,23 @@ public class GreatQuestImageController extends GreatQuestFileEditorUIController<
      * Update the displayed image.
      */
     public void updateImage() {
-        boolean hasImage = (getFile() != null);
+        BufferedImage image = getImage();
+        boolean hasImage = (image != null);
         this.imageView.setVisible(hasImage);
 
         if (hasImage) {
-            BufferedImage image = getFile().getImage();
             this.imageView.setFitWidth(image.getWidth());
             this.imageView.setFitHeight(image.getHeight());
             this.imageView.setImage(FXUtils.toFXImage(image, false));
         }
+    }
+
+    private BufferedImage getImage() {
+        FroggerRescueImage imageFile = getFile();
+        if (imageFile == null || imageFile.getDataChunk3List().isEmpty())
+            return null;
+
+        // TODO: Allow viewing more than just the first entry.
+        return imageFile.getDataChunk3List().get(0).toBufferedImage();
     }
 }

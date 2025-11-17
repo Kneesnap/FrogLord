@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.konami.rescue;
 
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameInstance;
+import net.highwayfrogs.editor.games.konami.rescue.file.FroggerRescueImage;
 import net.highwayfrogs.editor.games.konami.rescue.file.FroggerRescueSoundBank;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkTypeRegistry;
 import net.highwayfrogs.editor.games.shared.basic.file.definition.IGameFileDefinition;
@@ -36,6 +37,8 @@ public class FroggerRescueInstance extends HudsonGameInstance {
             return new HFSFile(fileDefinition);
         } else if (DataUtils.testSignature(rawData, FroggerRescueSoundBank.SIGNATURE)) {
             return new FroggerRescueSoundBank(fileDefinition);
+        } else if (FroggerRescueImage.couldBeRescueImage(rawData)) {
+            return new FroggerRescueImage(fileDefinition);
         } else {
             return super.createGameFile(fileDefinition, rawData);
         }
