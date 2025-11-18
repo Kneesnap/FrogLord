@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.DemoFile;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.config.NameBank;
@@ -22,6 +21,7 @@ import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
 import net.highwayfrogs.editor.file.config.exe.pc.PCThemeBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
+import net.highwayfrogs.editor.file.config.exe.psx.PSXThemeBook;
 import net.highwayfrogs.editor.file.config.script.FroggerScript;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
@@ -100,7 +100,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         super.loadGame(versionConfigName, instanceConfig, mwdFile, exeFile, progressBar);
 
         // Setup version comparison.
-        FroggerVersionComparison.setup(FrogLordApplication.getWorkingDirectory());
+        FroggerVersionComparison.setup(getMainGameFolder());
         FroggerVersionComparison.addNewVersionToConfig(this);
     }
 
@@ -236,7 +236,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         super.setupScriptEngine(engine);
         engine.addWrapperTemplates(FroggerGameInstance.class, FroggerConfig.class, FroggerTextureRemap.class, FroggerMapFile.class,
                 LevelInfo.class, FroggerMapLevelID.class, FroggerMapWorldID.class, PCMapBook.class, FroggerMapTheme.class,
-                PSXMapBook.class, MapBook.class, ThemeBook.class, PCThemeBook.class, PSXMapBook.class,
+                PSXMapBook.class, MapBook.class, ThemeBook.class, PCThemeBook.class, PSXThemeBook.class,
                 FroggerUtils.class, FroggerMapFilePacketEntity.class, MusicTrack.class, DemoTableEntry.class);
     }
 

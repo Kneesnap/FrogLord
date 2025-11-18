@@ -147,7 +147,7 @@ public class FXUtils {
         }
         fileChooser.getExtensionFilters().add(new ExtensionFilter(typeInfo, allExtensions));
 
-        fileChooser.setInitialDirectory(FileUtils.getValidFolder(FrogLordApplication.getWorkingDirectory()));
+        fileChooser.setInitialDirectory(FileUtils.getValidFolder(getGameDirectory(instance)));
 
         File selectedFile = fileChooser.showOpenDialog(instance != null ? instance.getMainStage() : null);
         if (selectedFile != null)
@@ -196,7 +196,7 @@ public class FXUtils {
             }
         }
 
-        fileChooser.setInitialDirectory(FileUtils.getValidFolder(FrogLordApplication.getWorkingDirectory()));
+        fileChooser.setInitialDirectory(FileUtils.getValidFolder(getGameDirectory(instance)));
         if (suggestName != null) {
             String initialName = suggestName;
             if (extension != null && !extension.equals("*") && !initialName.endsWith("." + extension))
@@ -212,6 +212,10 @@ public class FXUtils {
         return selectedFile;
     }
 
+    private static File getGameDirectory(GameInstance instance) {
+        return instance != null ? instance.getMainGameFolder() : FrogLordApplication.getWorkingDirectory();
+    }
+
     /**
      * Prompt the user to select a directory.
      * TODO: Replace with FileUtils.askUserToSelectFolder()
@@ -223,7 +227,7 @@ public class FXUtils {
     public static File promptChooseDirectory(GameInstance instance, String title, boolean saveDirectory) {
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle(title);
-        chooser.setInitialDirectory(FileUtils.getValidFolder(FrogLordApplication.getWorkingDirectory()));
+        chooser.setInitialDirectory(FileUtils.getValidFolder(getGameDirectory(instance)));
 
         File selectedFolder = chooser.showDialog(instance != null ? instance.getMainStage() : null);
         if (selectedFolder != null && saveDirectory)

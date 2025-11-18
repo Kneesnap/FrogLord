@@ -22,7 +22,6 @@ import javafx.scene.shape.MeshView;
 import javafx.stage.Stage;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
-import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.psx.shading.IPSXShadedMesh;
 import net.highwayfrogs.editor.gui.GameUIController;
@@ -311,7 +310,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                 if (getMesh().getTextureAtlas().getTextureSource().isEnableAwtImage()) {
                     getLogger().info("Saving main mesh texture sheet to 'texture-sheet-awt.png'...");
                     try {
-                        ImageIO.write(getMesh().getTextureAtlas().getImage(), "png", new File(FrogLordApplication.getWorkingDirectory(), "texture-sheet-awt.png"));
+                        ImageIO.write(getMesh().getTextureAtlas().getImage(), "png", new File(getGameInstance().getMainGameFolder(), "texture-sheet-awt.png"));
                     } catch (IOException ex) {
                         FXUtils.makeErrorPopUp("Failed to save 'texture-sheet-awt.png'.", ex, true);
                     }
@@ -320,7 +319,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
                 if (getMesh().getTextureAtlas().getTextureSource().isEnableFxImage()) {
                     getLogger().info("Saving main mesh texture sheet to 'texture-sheet-fx.png'...");
                     try {
-                        ImageIO.write(SwingFXUtils.fromFXImage(getMesh().getTextureAtlas().getFxImage(), null), "png", new File(FrogLordApplication.getWorkingDirectory(), "texture-sheet-fx.png"));
+                        ImageIO.write(SwingFXUtils.fromFXImage(getMesh().getTextureAtlas().getFxImage(), null), "png", new File(getGameInstance().getMainGameFolder(), "texture-sheet-fx.png"));
                     } catch (IOException ex) {
                         FXUtils.makeErrorPopUp("Failed to save 'texture-sheet-fx.png'.", ex, true);
                     }
