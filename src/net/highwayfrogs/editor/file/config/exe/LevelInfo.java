@@ -28,7 +28,7 @@ public class LevelInfo extends ExeStruct {
     @Getter @Setter private long worldImageNotTriedPointer; // Displayed on the level stack for the given world prior to unlock
     @Getter @Setter private long levelTexturePointer; // The screenshot of the level.
     @Getter @Setter private long levelNameTexturePointer; // The level name shown on the level stack.
-    @Getter @Setter  private long levelNameTextureInGamePointer; // The level name shown in-game.
+    @Getter @Setter private long levelNameTextureInGamePointer; // The level name shown in-game.
 
     private static final int RUNTIME_DATA_SIZE = 44;
     private static final int TERMINATOR_LEVEL_ID = -1;

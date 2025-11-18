@@ -19,6 +19,8 @@ import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.math.*;
 import net.highwayfrogs.editor.utils.*;
 import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.*;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
@@ -328,6 +330,7 @@ public class NoodleScriptEngine extends SharedGameObject {
                 NumberUtils.class, StringUtils.class, TimeUtils.class, Utils.class, ProblemResponse.class);
         addWrapperTemplates(BufferedImage.class, java.awt.Color.class);
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(Config.class));
+        addWrapperTemplates(DataReader.class, DataWriter.class, BitReader.class, BitWriter.class, ArrayReceiver.class, FileReceiver.class, FixedArrayReceiver.class);
 
         // DataReader/DataWriter is considered not very helpful to Noodle, as its data types are somewhat bizarre.
         // Perhaps we should have a way to create them, and pass them to functions, but not necessarily use them.

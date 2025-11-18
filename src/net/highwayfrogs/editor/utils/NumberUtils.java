@@ -44,14 +44,20 @@ public class NumberUtils {
             return false;
 
         int startIndex = str.startsWith("0x") ? "0x".length() : 0;
-        for (int i = startIndex; i < str.length(); i++) {
-            char temp = str.charAt(i);
-            boolean isHex = (temp >= '0' && temp <= '9') || (temp >= 'a' && temp <= 'f') || (temp >= 'A' && temp <= 'F');
-            if (!isHex)
+        for (int i = startIndex; i < str.length(); i++)
+            if (!isHexDigit(str.charAt(i)))
                 return false;
-        }
 
         return true;
+    }
+
+    /**
+     * Tests if the given character is a valid hexadecimal digit.
+     * @param input the character to test
+     * @return true iff the character is a hexadecimal digit
+     */
+    public static boolean isHexDigit(char input) {
+        return (input >= '0' && input <= '9') || (input >= 'a' && input <= 'f') || (input >= 'A' && input <= 'F');
     }
 
     /**
