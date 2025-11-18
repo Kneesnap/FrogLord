@@ -20,6 +20,7 @@ import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.general.DemoTableEntry;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
+import net.highwayfrogs.editor.file.config.exe.pc.PCThemeBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.file.config.script.FroggerScript;
 import net.highwayfrogs.editor.file.vlo.GameImage;
@@ -235,8 +236,8 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         super.setupScriptEngine(engine);
         engine.addWrapperTemplates(FroggerGameInstance.class, FroggerConfig.class, FroggerTextureRemap.class, FroggerMapFile.class,
                 LevelInfo.class, FroggerMapLevelID.class, FroggerMapWorldID.class, PCMapBook.class, FroggerMapTheme.class,
-                PSXMapBook.class, MapBook.class, FroggerUtils.class, FroggerMapFilePacketEntity.class, MusicTrack.class,
-                DemoTableEntry.class);
+                PSXMapBook.class, MapBook.class, ThemeBook.class, PCThemeBook.class, PSXMapBook.class,
+                FroggerUtils.class, FroggerMapFilePacketEntity.class, MusicTrack.class, DemoTableEntry.class);
     }
 
     @Override
