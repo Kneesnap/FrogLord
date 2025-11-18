@@ -295,6 +295,7 @@ public class NoodleScriptEngine extends SharedGameObject {
         addGlobalFunction(NDLFunctionLogInfo.INSTANCE);
         addGlobalFunction(NDLFunctionLogWarning.INSTANCE);
         addGlobalFunction(NDLFunctionPresetPrompt.INSTANCE);
+        addGlobalFunction(NDLFunctionPromptYesNo.INSTANCE);
         addGlobalFunction(NDLFunctionMakePopup.INSTANCE);
         addGlobalFunction(NDLFunctionReadImage.INSTANCE);
 
