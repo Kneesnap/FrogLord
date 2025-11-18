@@ -594,8 +594,8 @@ public class Config implements IBinarySerializable {
             builder.append(line.getTextWithComments()).append(Constants.NEWLINE);
         }
 
-        // Empty line between sections.
-        if (builder.length() > builderStartLength)
+        // Empty line between sections. (Unless there's already some there.)
+        if (builder.length() > builderStartLength && (this.internalText.isEmpty() || !StringUtils.isNullOrWhiteSpace(this.internalText.get(this.internalText.size() - 1).getTextWithComments())))
             builder.append(Constants.NEWLINE);
 
         // Write child sections in order.
