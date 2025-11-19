@@ -87,7 +87,8 @@ public abstract class NoodleObjectTemplate<TType> {
         this.onSetup();
         this.instanceFunctions.registerCallable(new NoodleTemplateEqualsFunction<>(this));
         this.instanceFunctions.registerCallable(new NoodleTemplateToStringFunction<>(this));
-        addGetter("template", (thread, value) -> thread.getStack().pushObject(getName()));
+        addGetter("class", (thread, value) -> thread.getStack().pushObject(this));
+        addStaticGetter("class", thread -> thread.getStack().pushObject(this));
     }
 
     /**
