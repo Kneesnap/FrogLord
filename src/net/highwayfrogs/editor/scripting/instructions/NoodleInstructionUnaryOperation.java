@@ -46,6 +46,8 @@ public class NoodleInstructionUnaryOperation extends NoodleInstruction {
             case INVERT:
                 if (primitive.isNull()) {
                     thread.getStack().pushBoolean(true);
+                } else if (primitive.isObjectReference()) {
+                    thread.getStack().pushBoolean(false); // Object is not null.
                 } else if (primitive.isBoolean()) {
                     thread.getStack().pushBoolean(!primitive.getBoolean());
                 } else if (primitive.isIntegerNumber()) {
