@@ -512,4 +512,27 @@ public class SCUtils {
                 ((PSXBitstreamImage) gameFile).getImage(width, height);
         }
     }
+
+    /**
+     * Copies a WAD file entry from one wad file to another.
+     * @param source The source .WAD file to copy wad entries from
+     * @param target the target .WAD file to set up (the per-level wad file)
+     * @param wadEntryIndex the index of the wad file entry to copy.
+     */
+    @SuppressWarnings("unused") // Used by Noodle scripts.
+    public static void copyWadEntry(WADFile source, WADFile target, int wadEntryIndex) {
+        if (source == null)
+            throw new NullPointerException("source");
+        if (target == null)
+            throw new NullPointerException("target");
+        if (source.getFiles().size() != target.getFiles().size())
+            throw new IllegalArgumentException("File '" + source.getFileDisplayName() + "' has " + source.getFiles().size() + " entries, while" + target.getFileDisplayName() + " has " + target.getFiles().size() + " entries. (They are not compatible with each other.)");
+        if (wadEntryIndex < 0 || wadEntryIndex >= source.getFiles().size())
+            throw new IllegalArgumentException("The wadEntryIndex: " + wadEntryIndex + " is not valid for " + source.getFileDisplayName() + "! (" + source.getFiles().size() + " entries)");
+
+        WADEntry srcEntry = source.getFiles().get(wadEntryIndex);
+        WADEntry dstEntry = target.getFiles().get(wadEntryIndex);
+        byte[] rawData = srcEntry.getFile().writeDataToByteArray();
+        SCGameFile<?> newFile = source.getArchive().replaceFile(srcEntry.getDisplayName(), rawData, dstEntry.getFileEntry(), dstEntry.getFile(), false);
+    }
 }

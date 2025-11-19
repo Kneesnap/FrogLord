@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.games.sony.frogger.utils;
 
-import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
@@ -131,7 +131,7 @@ public class FroggerUtils {
                 continue;
 
             if (foundInstance != null) {
-                FXUtils.makePopUp("There is more than one copy of Frogger open at once,\n so FrogLord is unable to choose which version to convert the map to.", Alert.AlertType.ERROR);
+                FXUtils.showPopup(AlertType.ERROR, "Multiple copies of Frogger are open.", "There is more than one copy of Frogger open at once,\n so FrogLord is unable to choose which version to convert the map to.");
                 return null;
             }
 
@@ -139,7 +139,7 @@ public class FroggerUtils {
         }
 
         if (foundInstance == null) {
-            FXUtils.makePopUp("Please open a copy of Frogger to target.", Alert.AlertType.ERROR);
+            FXUtils.showPopup(AlertType.ERROR, "Frogger is not open.", "Please open a copy of Frogger to target.");
             return null;
         }
 
@@ -192,38 +192,6 @@ public class FroggerUtils {
             newEntry.setFile(newFile);
             target.getFiles().add(newEntry);
         }
-    }
-
-    /**
-     * Copies a WAD file entry from one wad file to another.
-     * @param source The source .WAD file to copy wad entries from
-     * @param target the target .WAD file to set up (the per-level wad file)
-     * @param wadEntryIndex the index of the wad file entry to copy.
-     */
-    @SuppressWarnings("unused") // Used by Noodle scripts.
-    public static void copyWadEntry(WADFile source, WADFile target, int wadEntryIndex) {
-        if (source == null)
-            throw new NullPointerException("source");
-        if (target == null)
-            throw new NullPointerException("target");
-        if (source.getFiles().size() != target.getFiles().size())
-            throw new IllegalArgumentException("File '" + source.getFileDisplayName() + "' has " + source.getFiles().size() + " entries, while" + target.getFileDisplayName() + " has " + target.getFiles().size() + " entries. (They are not compatible with each other.)");
-        if (wadEntryIndex < 0 || wadEntryIndex >= source.getFiles().size())
-            throw new IllegalArgumentException("The wadEntryIndex: " + wadEntryIndex + " is not valid for " + source.getFileDisplayName() + "! (" + source.getFiles().size() + " entries)");
-
-        WADEntry oldEntry = source.getFiles().get(wadEntryIndex);
-
-        WADEntry newEntry = target.getFiles().get(wadEntryIndex);
-        newEntry.setFile(null);
-
-        byte[] rawData = oldEntry.getFile().writeDataToByteArray();
-        SCGameFile<?> newFile = oldEntry.getArchive().replaceFile(oldEntry.getDisplayName(), rawData, oldEntry.getFileEntry(), oldEntry.getFile(), false);
-        newFile.setRawFileData(rawData);
-
-        // Setup new file.
-        newFile.setFileDefinition(oldEntry.getFileEntry());
-        newFile.setWadFileEntry(newEntry);
-        newEntry.setFile(newFile);
     }
 
     /**
