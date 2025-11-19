@@ -7,6 +7,7 @@ import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.shared.basic.GameBuildInfo;
+import net.highwayfrogs.editor.games.sony.SCGameConfig.SCImageList;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
@@ -167,7 +168,7 @@ public abstract class SCGameInstance extends GameInstance {
         engine.addWrapperTemplates(SCGameData.class, SCGameFile.class, SCGameInstance.class, SCGameObject.class, SCGameConfig.class);
         engine.addWrapperTemplates(SCMath.class, SCUtils.class, MWDFile.class, MWIResourceEntry.class, TextureRemapArray.class, SCChunkedFile.class, SCByteTextureUV.class, LinkedTextureRemap.class);
         engine.addWrapperTemplates(VLOArchive.class, GameImage.class, MRModel.class, MRStaticMof.class, MRAnimatedMof.class, WADFile.class, WADEntry.class,
-                MRModelUtils.class);
+                MRModelUtils.class, SCImageList.class);
     }
 
     @Override
@@ -210,6 +211,16 @@ public abstract class SCGameInstance extends GameInstance {
      * @param wadIndex   The index to use for file access.
      */
     protected abstract void setupTextureRemaps(DataReader exeReader, MillenniumWadIndex wadIndex);
+
+    /**
+     * Gets the texture ID by its name, if known.
+     * @param name the name of the texture to resolve
+     * @return textureId, if known
+     */
+    @SuppressWarnings("unused") // Used by Noodle.
+    public Short getTextureIdByName(String name) {
+        return getVersionConfig().getImageList().getTextureIDFromName(name);
+    }
 
     /**
      * Resolves the .VLO files used by each model in the game.
