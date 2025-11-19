@@ -291,6 +291,7 @@ public class NoodleScriptEngine extends SharedGameObject {
     private void registerFunctions() {
         addGlobalFunction(NDLFunctionGetArgument.INSTANCE);
         addGlobalFunction(NDLFunctionCastToInt.INSTANCE);
+        addGlobalFunction(NDLFunctionError.INSTANCE);
         addGlobalFunction(NDLFunctionLogError.INSTANCE);
         addGlobalFunction(NDLFunctionLogInfo.INSTANCE);
         addGlobalFunction(NDLFunctionLogWarning.INSTANCE);

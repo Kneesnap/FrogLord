@@ -10,7 +10,7 @@ import net.highwayfrogs.editor.utils.FXUtils;
  * Created by Kneesnap on 11/17/2025.
  */
 public class NDLFunctionPromptYesNo extends NoodleFunction {
-    public static NDLFunctionPromptYesNo INSTANCE = new NDLFunctionPromptYesNo();
+    public static final NDLFunctionPromptYesNo INSTANCE = new NDLFunctionPromptYesNo();
 
     private NDLFunctionPromptYesNo() {
         super("promptYesNo", "<headerText> <message>");
