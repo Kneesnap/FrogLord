@@ -5,7 +5,7 @@ import net.highwayfrogs.editor.scripting.compiler.NoodleCallHolder.INoodleCallab
 import net.highwayfrogs.editor.scripting.runtime.NoodlePrimitive;
 import net.highwayfrogs.editor.scripting.runtime.NoodleRuntimeException;
 import net.highwayfrogs.editor.scripting.runtime.NoodleThread;
-import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleStaticTemplateFunction;
+import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleStaticFunction;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.lambda.Function3;
 
@@ -53,7 +53,7 @@ public abstract class NoodleTemplateFunction<TObject> implements INoodleCallable
         if (thread == null)
             throw new NullPointerException("thread");
 
-        if (this instanceof NoodleStaticTemplateFunction<?>) {
+        if (this instanceof NoodleStaticFunction<?>) {
             if (thisRef != null)
                 throw new NoodleRuntimeException("Static noodle function %s.%s was passed a non-null object instance.", this.objectClass.getSimpleName(), getSignature());
         } else {

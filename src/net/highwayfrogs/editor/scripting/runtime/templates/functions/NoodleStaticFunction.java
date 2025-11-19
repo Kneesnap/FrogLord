@@ -7,11 +7,11 @@ import net.highwayfrogs.editor.scripting.runtime.templates.NoodleTemplateFunctio
 import java.util.function.BiFunction;
 
 /**
- * Represents a static function within a template.
+ * Represents a static function within a class template.
  * Created by Kneesnap on 10/23/2024.
  */
-public abstract class NoodleStaticTemplateFunction<TObject> extends NoodleTemplateFunction<TObject> {
-    public NoodleStaticTemplateFunction(String name, Class<TObject> objectClass, String... argumentNames) {
+public abstract class NoodleStaticFunction<TObject> extends NoodleTemplateFunction<TObject> {
+    public NoodleStaticFunction(String name, Class<TObject> objectClass, String... argumentNames) {
         super(name, objectClass, argumentNames);
     }
 
@@ -32,10 +32,10 @@ public abstract class NoodleStaticTemplateFunction<TObject> extends NoodleTempla
      * Represents a static function which accepts a callback for its behavior, making it very easy to add them.
      * @param <TObject> the type of object created
      */
-    public static class LazyNoodleStaticTemplateFunction<TObject> extends NoodleStaticTemplateFunction<TObject> {
+    public static class LazyNoodleStaticFunction<TObject> extends NoodleStaticFunction<TObject> {
         private final BiFunction<NoodleThread<?>, NoodlePrimitive[], NoodlePrimitive> handler;
 
-        public LazyNoodleStaticTemplateFunction(String name, Class<TObject> objectClass, BiFunction<NoodleThread<?>, NoodlePrimitive[], NoodlePrimitive> handler, String... argumentNames) {
+        public LazyNoodleStaticFunction(String name, Class<TObject> objectClass, BiFunction<NoodleThread<?>, NoodlePrimitive[], NoodlePrimitive> handler, String... argumentNames) {
             super(name, objectClass, argumentNames);
             this.handler = handler;
         }

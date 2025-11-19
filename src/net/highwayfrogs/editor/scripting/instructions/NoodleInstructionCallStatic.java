@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.scripting.runtime.NoodleRuntimeException;
 import net.highwayfrogs.editor.scripting.runtime.NoodleThread;
 import net.highwayfrogs.editor.scripting.runtime.NoodleThreadStatus;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleObjectTemplate;
-import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleStaticTemplateFunction;
+import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleStaticFunction;
 import net.highwayfrogs.editor.scripting.tracking.NoodleCodeLocation;
 
 /**
@@ -46,7 +46,7 @@ public class NoodleInstructionCallStatic extends NoodleInstruction {
             arguments[i] = thread.getStack().popWithoutGC();
 
         // Find template.
-        NoodleStaticTemplateFunction<?> function = this.template.getStaticFunction(this.functionLabel, this.argumentCount);
+        NoodleStaticFunction<?> function = this.template.getStaticFunction(this.functionLabel, this.argumentCount);
         if (function == null)
             throw new NoodleRuntimeException("The template for object '%s' does not have a static function named '%s' taking %d arguments.", template.getName(), this.functionLabel, this.argumentCount);
 
