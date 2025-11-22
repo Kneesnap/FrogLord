@@ -240,7 +240,7 @@ public class GameImage extends SCSharedGameData implements Cloneable, ITextureSo
         }
 
         if (clut.getColors().size() > maxColors)
-            throw new RuntimeException("Tried to save a PSX image with too many colors. [Max: " + maxColors + ", Colors: " + clut.getColors().size() + "]");
+            throw new RuntimeException("Tried to save a PSX image (ID: " + this.textureId + ", Name: '" + getOriginalName() + "') with too many colors. [Max: " + maxColors + ", Colors: " + clut.getColors().size() + "]");
 
         clut.getColors().sort(Comparator.comparingInt(PSXClutColor::toRGBA));
 

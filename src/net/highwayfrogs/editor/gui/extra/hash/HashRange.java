@@ -81,6 +81,9 @@ public class HashRange {
         if (StringUtils.isNullOrWhiteSpace(input))
             throw new NullPointerException("input");
 
+        if (input.equals("?"))
+            return new HashRange(rangeType, 0, rangeType.getMaximumValue());
+
         String[] split = input.trim().split("-");
         if (split.length != 1 && split.length != 2)
             throw new IllegalArgumentException("The text '" + input + "' cannot be interpreted as a range.");

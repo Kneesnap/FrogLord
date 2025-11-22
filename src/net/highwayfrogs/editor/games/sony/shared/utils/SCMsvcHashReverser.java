@@ -37,6 +37,36 @@ public class SCMsvcHashReverser {
         @NonNull private final String suffix;
         @NonNull private final HashRange psyqRange;
         @NonNull private final HashRange msvcRange;
+
+        /**
+         * Parses an MSVC hash target.
+         * @param input the input string to parse
+         * @return msvcHashTarget
+         */
+        public static MsvcHashTarget parseHashTarget(String input) {
+            String[] split = input.split(":");
+            if (split.length != 3)
+                throw new IllegalArgumentException("Cannot parse '" + input + "' as a hash target!");
+
+            String suffix = split[0];
+            HashRange psyqRange = HashRange.parseRange(split[1], HashRangeType.PSYQ);
+            HashRange msvcRange = HashRange.parseRange(split[2], HashRangeType.MSVC);
+            return new MsvcHashTarget(suffix, psyqRange, msvcRange);
+        }
+
+        /**
+         * Parses an array of MSVC hash targets.
+         * @param input the input string to parse
+         * @return msvcHashTarget
+         */
+        public static MsvcHashTarget[] parseHashTargets(String input) {
+            String[] split = input.split(",");
+            MsvcHashTarget[] hashTargets = new MsvcHashTarget[split.length];
+            for (int i = 0; i < split.length; i++)
+                hashTargets[i] = parseHashTarget(split[i]);
+
+            return hashTargets;
+        }
     }
 
     @Getter
