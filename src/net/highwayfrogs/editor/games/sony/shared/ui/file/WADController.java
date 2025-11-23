@@ -81,7 +81,7 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
 
     private void updateEntryText() {
         entryList.setCellFactory(null);
-        entryList.setCellFactory(param -> new WADEntryListCell(this));
+        entryList.setCellFactory(param -> new WADEntryListCell());
     }
 
     /**
@@ -184,13 +184,11 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
     }
 
     private static class WADEntryListCell extends ListCell<WADEntry> {
-        private final WADController controller;
         private final EventHandler<? super MouseEvent> doubleClickHandler;
         private final EventHandler<? super ContextMenuEvent> rightClickHandler;
 
         @SuppressWarnings("unchecked")
-        private WADEntryListCell(WADController controller) {
-            this.controller = controller;
+        private WADEntryListCell() {
             this.doubleClickHandler = event -> {
                 if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
                     event.consume();
