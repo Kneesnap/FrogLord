@@ -16,7 +16,6 @@ import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.PickupData;
 import net.highwayfrogs.editor.file.config.exe.PickupData.PickupAnimationFrame;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
-import net.highwayfrogs.editor.file.config.exe.general.DemoTableEntry;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
 import net.highwayfrogs.editor.file.config.exe.pc.PCThemeBook;
@@ -26,6 +25,7 @@ import net.highwayfrogs.editor.file.config.script.FroggerScript;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.*;
+import net.highwayfrogs.editor.games.sony.frogger.data.FroggerDemoTableEntry;
 import net.highwayfrogs.editor.games.sony.frogger.file.FroggerPaletteFile;
 import net.highwayfrogs.editor.games.sony.frogger.file.FroggerSkyLand;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
@@ -71,7 +71,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
     private final List<LevelInfo> raceLevelInfo = new ArrayList<>();
     private final List<LevelInfo> allLevelInfo = new ArrayList<>();
     private final Map<FroggerMapLevelID, LevelInfo> levelInfoMap = new HashMap<>();
-    private final List<DemoTableEntry> demoTableEntries = new ArrayList<>();
+    private final List<FroggerDemoTableEntry> demoTableEntries = new ArrayList<>();
     private final List<FormEntry> fullFormBook = new ArrayList<>();
     private final List<FroggerScript> scripts = new ArrayList<>();
     private final Map<FroggerMapLevelID, Image> levelImageMap = new HashMap<>();
@@ -237,7 +237,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         engine.addWrapperTemplates(FroggerGameInstance.class, FroggerConfig.class, FroggerTextureRemap.class, FroggerMapFile.class,
                 LevelInfo.class, FroggerMapLevelID.class, FroggerMapWorldID.class, PCMapBook.class, FroggerMapTheme.class,
                 PSXMapBook.class, MapBook.class, ThemeBook.class, PCThemeBook.class, PSXThemeBook.class,
-                FroggerUtils.class, FroggerMapFilePacketEntity.class, MusicTrack.class, DemoTableEntry.class);
+                FroggerUtils.class, FroggerMapFilePacketEntity.class, MusicTrack.class, FroggerDemoTableEntry.class);
     }
 
     @Override
@@ -594,18 +594,18 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
             getLogger().info("Found the demo table address at 0x%X", findIndex);
         }
 
+        this.demoTableEntries.clear();
         reader.setIndex(this.getVersionConfig().getDemoTableAddress());
         while (reader.hasMore()) {
+            reader.jumpTemp(reader.getIndex());
             int levelId = reader.readInt();
-            int resourceId = reader.readInt();
-            int minLevel = reader.readInt();
-
-            if (levelId == -1 || minLevel == -1)
+            reader.jumpReturn();
+            if (levelId == -1)
                 break; // Reached terminator.
 
-            // Add demo entry.
-            boolean isValid = (levelId != DemoTableEntry.SKIP_INT && minLevel != DemoTableEntry.SKIP_INT);
-            this.demoTableEntries.add(new DemoTableEntry(isValid ? FroggerMapLevelID.values()[levelId] : null, isValid ? resourceId : -1, isValid ? FroggerMapLevelID.values()[minLevel] : null, isValid));
+            FroggerDemoTableEntry newDemoTableEntry = new FroggerDemoTableEntry(this);
+            newDemoTableEntry.load(reader);
+            this.demoTableEntries.add(newDemoTableEntry);
         }
     }
 
@@ -614,8 +614,13 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
             return;
 
         exeWriter.setIndex(this.getVersionConfig().getDemoTableAddress());
-        for (DemoTableEntry entry : this.demoTableEntries)
+        for (FroggerDemoTableEntry entry : this.demoTableEntries)
             entry.save(exeWriter);
+
+        // Write terminator entry.
+        exeWriter.writeInt(-1);
+        exeWriter.writeInt(-1);
+        exeWriter.writeInt(-1);
     }
 
     private void readScripts(DataReader reader) {
