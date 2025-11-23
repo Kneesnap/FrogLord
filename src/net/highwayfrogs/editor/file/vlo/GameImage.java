@@ -386,6 +386,9 @@ public class GameImage extends SCSharedGameData implements Cloneable, ITextureSo
         // Ensure transparent pixels are now black.
         image = ImageWorkHorse.applyFilter(image, BlackFilter.INSTANCE);
 
+        if (getGameInstance().isPSX() && getClutMode() == ImageClutMode.MODE_4BIT && (image.getWidth() % 2) > 0)
+            getLogger().warning("The image '%s'/%d uses a 4-bit CLUT, which means this image will be slanted due to its non-even length!", getOriginalName(), getTextureId());
+
         // Automatically generate padding if necessary.
         /*if (getIngameWidth() == image.getWidth() && getIngameHeight() == image.getHeight()) {
             // TODO: Automatically generate padding, and update dimensions.
@@ -406,7 +409,6 @@ public class GameImage extends SCSharedGameData implements Cloneable, ITextureSo
         /*if ((imageWidth / getWidthMultiplier()) + getVramX() > MAX_DIMENSION)
             Utils.makePopUp("This image does not fit horizontally in VRAM. Use the VRAM editor to make it fit.", AlertType.WARNING);
          */
-
 
         if (getFullWidth() != imageWidth || getFullHeight() != imageHeight) {
             // If it's not the expected dimensions, use a default padding scheme.

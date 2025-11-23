@@ -221,6 +221,11 @@ public class FroggerUtils {
             throw new NullPointerException("text");
         if (textColor == null)
             textColor = DEFAULT_TEXT_AWT_COLOR;
+
+        // These must be even on PSX for 4-bit cluts to work correctly.
+        if ((width % 2) > 0)
+            width++;
+
         if (image == null || image.getWidth() != width || image.getHeight() != height)
             image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 
