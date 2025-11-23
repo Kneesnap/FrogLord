@@ -88,6 +88,7 @@ public abstract class GameInstance implements IGameInstance {
             Stage stage = GameUIController.openWindow(this.mainMenuController, "FrogLord " + Constants.VERSION + " -- " + this.gameType.getDisplayName() + " " + versionName, false);
             stage.setResizable(true);
 
+            // The window hide hook handles the close hook for the main menu.
             // For some reason, JavaFX fails to properly shut down when all windows are closed, despite Platform.isImplicitExit() being true.
             // So, this is our hack for now (or indefinitely), until it's the right time to dig into JavaFX to figure out why.
             stage.setOnCloseRequest(event -> {
@@ -128,7 +129,7 @@ public abstract class GameInstance implements IGameInstance {
     public Stage getMainStage() {
         Stage stage = this.mainMenuController != null ? this.mainMenuController.getStage() : null;
         if (stage == null) {
-            FXUtils.makePopUp("There was no stage available to override.", AlertType.ERROR);
+            FXUtils.showPopup(AlertType.ERROR, "There was no stage available.", "");
             return null;
         }
 

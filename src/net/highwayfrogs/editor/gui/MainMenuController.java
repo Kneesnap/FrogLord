@@ -152,17 +152,18 @@ public abstract class MainMenuController<TGameInstance extends GameInstance, TFi
         // Remove any existing editor.
         this.fileEditorPane.getChildren().clear();
         if (this.currentEditor != null)
-            this.currentEditor.onSceneRemove(getScene());
+            removeController(this.currentEditor);
 
         // Create any new editor.
         this.currentEditor = uiController;
         if (uiController != null) {
             if (uiController.getRootNode() != null) {
                 this.fileEditorPane.getChildren().add(uiController.getRootNode());
-                uiController.onSceneAdd(getScene());
             } else {
                 FXUtils.showPopup(AlertType.WARNING, "No UI Content", "Cannot display UI, since there was no content available.");
             }
+
+            addController(uiController);
         }
     }
 

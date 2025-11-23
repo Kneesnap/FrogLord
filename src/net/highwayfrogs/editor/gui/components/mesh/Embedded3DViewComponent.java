@@ -55,11 +55,32 @@ public class Embedded3DViewComponent<TGameInstance extends GameInstance> extends
 
         this.rotationCamera.getCamera().setFarClip(1000F);
         this.rotationCamera.getCamera().setNearClip(.1F);
-        this.inputManager.assignSceneControls(subScene);
 
-        // Apply 3D stuff to scene.
+        // Apply 3D stuff to SubScene.
         subScene.setCamera(this.rotationCamera.getCamera());
         subScene.setRoot(this.root3D);
+    }
+
+    @Override
+    public void onSceneAdd(Scene newScene) {
+        super.onSceneAdd(newScene);
+        this.inputManager.assignSceneControls(getRootNode());
+    }
+
+    @Override
+    public void onSceneRemove(Scene oldScene) {
+        super.onSceneRemove(oldScene);
+
+        // Stop camera processing and clear up the render manager
+        this.inputManager.removeSceneControls(getRootNode());
+        this.inputManager.shutdown();
+        this.meshTracker.disposeMeshes(); // Prevent memory leaks by ensuring texture sheets remove any listeners from static textures sources (which would then keep the texture sheet in memory).
+    }
+
+    @Override
+    protected void onRemoveFromParent() {
+        super.onRemoveFromParent();
+        this.meshTracker.disposeMeshes(); // Prevent memory leaks by ensuring texture sheets remove any listeners from static textures sources (which would then keep the texture sheet in memory).
     }
 
     /**
@@ -130,5 +151,4 @@ public class Embedded3DViewComponent<TGameInstance extends GameInstance> extends
                 this.setupMeshHandler.accept(meshIndex, mesh, meshView);
         }
     }
-
 }

@@ -6,6 +6,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.games.psx.shading.IPSXShadedMesh;
+import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.lambda.TriConsumer;
 import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
@@ -72,12 +73,13 @@ public class MeshViewFrameTimer extends AnimationTimer {
                 if (this.baseTitle == null || (!currentStageTitle.endsWith(")") && !currentStageTitle.contains("(FPS: ")))
                     this.baseTitle = currentStageTitle;
                 if (this.baseTitle != null)
-                    this.controller.getOverwrittenStage().setTitle(String.format("%s (FPS: %.3f)", this.baseTitle, frameRate));
+                    stage.setTitle(String.format("%s (FPS: %.3f)", this.baseTitle, frameRate));
             }
         }
 
-        if (this.controller.getMesh() instanceof IPSXShadedMesh)
-            ((IPSXShadedMesh) this.controller.getMesh()).getShadedTextureManager().getImageCache().cleanupExpiredEntries();
+        DynamicMesh mesh = this.controller.getMesh();
+        if (mesh instanceof IPSXShadedMesh)
+            ((IPSXShadedMesh) mesh).getShadedTextureManager().getImageCache().cleanupExpiredEntries();
     }
 
     /**
@@ -89,7 +91,7 @@ public class MeshViewFrameTimer extends AnimationTimer {
         // Restore the original title.
         Stage stage = this.controller.getOverwrittenStage();
         if (stage != null && this.baseTitle != null)
-            this.controller.getOverwrittenStage().setTitle(this.baseTitle);
+            stage.setTitle(this.baseTitle);
     }
 
     /**

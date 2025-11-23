@@ -117,7 +117,7 @@ public class WADController extends SCFileEditorUIController<SCGameInstance, WADF
 
         // Setup new extra UI controller.
         this.extraUIController = uiController;
-        if (this.extraUIController != null && isActive()) {
+        if (this.extraUIController != null) {
             this.rightSidePanelFreeArea.getChildren().add(this.extraUIController.getRootNode());
             addController(this.extraUIController);
         }

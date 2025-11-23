@@ -53,7 +53,7 @@ public abstract class SCFileEditorUIController<TGameInstance extends SCGameInsta
     public void tryReturnToParentWadFile() {
         WADFile wadFile = getParentWadFile();
         if (wadFile == null) {
-            FXUtils.makePopUp("There's no file to return to.", AlertType.WARNING);
+            FXUtils.showPopup(AlertType.WARNING, "There is no file to return to.", "");
             return;
         }
 

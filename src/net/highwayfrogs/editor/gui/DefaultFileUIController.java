@@ -130,7 +130,7 @@ public class DefaultFileUIController<TGameInstance extends GameInstance, TGameFi
 
         // Setup new extra UI controller.
         this.extraUIController = uiController;
-        if (this.extraUIController != null && isActive()) {
+        if (this.extraUIController != null) {
             getRightSidePanelFreeArea().getChildren().add(this.extraUIController.getRootNode());
             addController(this.extraUIController);
         }
