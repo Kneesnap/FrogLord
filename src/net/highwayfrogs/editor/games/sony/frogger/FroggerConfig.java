@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.sony.frogger;
 
 import lombok.Getter;
-import lombok.Setter;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.config.FroggerMapConfig;
 import net.highwayfrogs.editor.file.config.NameBank;
@@ -21,7 +20,6 @@ public class FroggerConfig extends SCGameConfig {
     private int themeBookAddress;
     private int arcadeLevelAddress;
     private int musicAddress;
-    @Setter private int demoTableAddress;
     private int pickupDataAddress;
     private int scriptArrayAddress;
     private int skyLandTextureAddress;
@@ -51,7 +49,6 @@ public class FroggerConfig extends SCGameConfig {
         this.pickupDataAddress = config.getInt("pickupData", 0); // Pointer to Pickup_data[] in ent_gen. If this is not set, bugs will not have textures in the viewer. On PSX, search for 63 63 63 00 then after this entries image pointers, there's Pickup_data.
         this.themeBookAddress = config.getInt("themeBook", -1);
         this.mapBookAddress = config.getInt("mapBook", -1);
-        this.demoTableAddress = config.getInt("demoTable", -1);
         // Get this by searching for "07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 1e 00 00 00 03 00 00 00 01 00 00 00 07 00 00 00".
         // Search for the pointer that points to this (Don't forget to include ramOffset)
         this.scriptArrayAddress = config.getInt("scripts", 0);

@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.games.sony.frogger.data;
+package net.highwayfrogs.editor.games.sony.frogger.data.demo;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -11,16 +11,17 @@ import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
- * Represents a Frogger demo table entry.
- * Created by Kneesnap on 11/22/2025.
+ * Represents a raw Frogger demo table entry as tracked by the game.
+ * Created by Kneesnap on 11/24/2025.
  */
 @Getter
 @Setter
 public class FroggerDemoTableEntry extends SCGameData<FroggerGameInstance> {
     private FroggerMapLevelID level;
-    private int demoResourceFile;
+    private int demoResourceId;
     private FroggerMapLevelID unlockLevel;
 
+    public static final int TERMINATOR_VALUE = -1;
     public static final int SKIP_VALUE = -2;
 
     public FroggerDemoTableEntry(FroggerGameInstance instance) {
@@ -31,7 +32,7 @@ public class FroggerDemoTableEntry extends SCGameData<FroggerGameInstance> {
     @Override
     public void load(DataReader reader) {
         int value1 = reader.readInt();
-        this.demoResourceFile = reader.readInt();
+        this.demoResourceId = reader.readInt();
         int value3 = reader.readInt();
         this.level = (value1 != SKIP_VALUE) ? FroggerMapLevelID.values()[value1] : null;
         this.unlockLevel = (value3 != SKIP_VALUE) ? FroggerMapLevelID.values()[value3] : null;
@@ -45,7 +46,7 @@ public class FroggerDemoTableEntry extends SCGameData<FroggerGameInstance> {
             writer.writeInt(SKIP_VALUE);
         } else {
             writer.writeInt(this.level.ordinal());
-            writer.writeInt(this.demoResourceFile);
+            writer.writeInt(this.demoResourceId);
             writer.writeInt(this.unlockLevel.ordinal());
         }
     }
@@ -55,7 +56,7 @@ public class FroggerDemoTableEntry extends SCGameData<FroggerGameInstance> {
      */
     public void setSkipped() {
         this.level = null;
-        this.demoResourceFile = SKIP_VALUE;
+        this.demoResourceId = SKIP_VALUE;
         this.unlockLevel = null;
     }
 
@@ -64,7 +65,7 @@ public class FroggerDemoTableEntry extends SCGameData<FroggerGameInstance> {
      * @return skipped
      */
     public boolean isSkipped() {
-        return this.level == null || this.demoResourceFile < 0 || this.unlockLevel == null;
+        return this.level == null || this.demoResourceId < 0 || this.unlockLevel == null;
     }
 
     /**
@@ -75,7 +76,19 @@ public class FroggerDemoTableEntry extends SCGameData<FroggerGameInstance> {
      */
     public void setup(@NonNull FroggerMapLevelID level, @NonNull DemoFile demoFile, FroggerMapLevelID unlockLevel) {
         this.level = level;
-        this.demoResourceFile = demoFile.getFileResourceId();
+        this.demoResourceId = demoFile.getFileResourceId();
+        this.unlockLevel = unlockLevel != null ? unlockLevel : level;
+    }
+
+    /**
+     * Setup the demo entry.
+     * @param level the level to load
+     * @param demoResourceId the demo file ID to use for this level
+     * @param unlockLevel which level must be unlocked for the demo to be usable.
+     */
+    public void setup(@NonNull FroggerMapLevelID level, int demoResourceId, FroggerMapLevelID unlockLevel) {
+        this.level = level;
+        this.demoResourceId = demoResourceId;
         this.unlockLevel = unlockLevel != null ? unlockLevel : level;
     }
 }

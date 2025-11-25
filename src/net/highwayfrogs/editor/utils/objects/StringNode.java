@@ -128,6 +128,28 @@ public class StringNode {
     }
 
     /**
+     * Gets the node value as a boolean, or return a default value if no value is present.
+     * @return boolValue
+     * @throws IllegalConfigSyntaxException Thrown if the node data is not a valid boolean.
+     */
+    public boolean getAsBoolean(boolean defaultValue) {
+        if (StringUtils.isNullOrWhiteSpace(this.value))
+            return defaultValue;
+
+        if ("true".equalsIgnoreCase(this.value)
+                || "yes".equalsIgnoreCase(this.value)
+                || "1".equalsIgnoreCase(this.value))
+            return true;
+
+        if ("false".equalsIgnoreCase(this.value)
+                || "no".equalsIgnoreCase(this.value)
+                || "0".equalsIgnoreCase(this.value))
+            return false;
+
+        throw new IllegalConfigSyntaxException("Don't know how to interpret '" + this.value + "' as a boolean." + getExtraDebugErrorInfo());
+    }
+
+    /**
      * Sets the node value to a boolean.
      * @param newValue The new value.
      */

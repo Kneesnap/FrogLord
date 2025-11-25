@@ -25,7 +25,9 @@ import net.highwayfrogs.editor.file.config.script.FroggerScript;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.*;
-import net.highwayfrogs.editor.games.sony.frogger.data.FroggerDemoTableEntry;
+import net.highwayfrogs.editor.games.sony.frogger.data.demo.FroggerDemoTable;
+import net.highwayfrogs.editor.games.sony.frogger.data.demo.FroggerDemoTableEntry;
+import net.highwayfrogs.editor.games.sony.frogger.data.demo.FroggerPCDemoTableEntry;
 import net.highwayfrogs.editor.games.sony.frogger.file.FroggerPaletteFile;
 import net.highwayfrogs.editor.games.sony.frogger.file.FroggerSkyLand;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
@@ -55,6 +57,7 @@ import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.io.File;
 import java.util.*;
@@ -71,7 +74,6 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
     private final List<LevelInfo> raceLevelInfo = new ArrayList<>();
     private final List<LevelInfo> allLevelInfo = new ArrayList<>();
     private final Map<FroggerMapLevelID, LevelInfo> levelInfoMap = new HashMap<>();
-    private final List<FroggerDemoTableEntry> demoTableEntries = new ArrayList<>();
     private final List<FormEntry> fullFormBook = new ArrayList<>();
     private final List<FroggerScript> scripts = new ArrayList<>();
     private final Map<FroggerMapLevelID, Image> levelImageMap = new HashMap<>();
@@ -79,6 +81,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
     private final ThemeBook[] themeLibrary = new ThemeBook[FroggerMapTheme.values().length];
     private final PickupData[] pickupData = new PickupData[FroggerFlyScoreType.values().length];
     private final TextureRemapArray skyLandTextureRemap;
+    private final FroggerDemoTable demoTable;
 
     private static final String CHILD_RESTORE_MAP_BOOK = "MapBookRestore";
     private static final String CHILD_RESTORE_THEME_BOOK = "ThemeBookRestore";
@@ -93,6 +96,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
     public FroggerGameInstance() {
         super(SCGameType.FROGGER);
         this.skyLandTextureRemap = new TextureRemapArray(this, "txl_sky_land");
+        this.demoTable = new FroggerDemoTable(this);
     }
 
     @Override
@@ -237,7 +241,8 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         engine.addWrapperTemplates(FroggerGameInstance.class, FroggerConfig.class, FroggerTextureRemap.class, FroggerMapFile.class,
                 LevelInfo.class, FroggerMapLevelID.class, FroggerMapWorldID.class, PCMapBook.class, FroggerMapTheme.class,
                 PSXMapBook.class, MapBook.class, ThemeBook.class, PCThemeBook.class, PSXThemeBook.class,
-                FroggerUtils.class, FroggerMapFilePacketEntity.class, MusicTrack.class, FroggerDemoTableEntry.class);
+                FroggerUtils.class, FroggerMapFilePacketEntity.class, MusicTrack.class,
+                FroggerDemoTable.class, FroggerPCDemoTableEntry.class, FroggerDemoTableEntry.class);
     }
 
     @Override
@@ -437,9 +442,16 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
     }
 
     @Override
-    protected void onMWILoad(MillenniumWadIndex mwi) {
-        super.onMWILoad(mwi);
-        readDemoTable(mwi, getExecutableReader());
+    protected void readExecutableData(DataReader reader, net.highwayfrogs.editor.system.Config executableConfig) {
+        super.readExecutableData(reader, executableConfig);
+        readDemoTable(getLogger(), reader, executableConfig);
+    }
+
+    @Override
+    public net.highwayfrogs.editor.system.Config createExecutableConfig() {
+        net.highwayfrogs.editor.system.Config config = super.createExecutableConfig();
+        this.demoTable.toConfig(config);
+        return config;
     }
 
     @Override
@@ -448,7 +460,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         writeThemeLibrary(writer);
         writeMapLibrary(writer);
         writeScripts(writer);
-        writeDemoTable(writer);
+        this.demoTable.save(writer);
         writeMusicData(writer);
         writeLevelData(writer);
     }
@@ -571,56 +583,15 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         this.mapLibrary.forEach(book -> book.save(exeWriter));
     }
 
-    private void readDemoTable(MillenniumWadIndex wadIndex, DataReader reader) {
-        if (this.getVersionConfig().getDemoTableAddress() <= 0) { // The demo table wasn't specified, so we'll search for it ourselves.
-            MWIResourceEntry demoEntry = wadIndex.getEntries().stream().filter(file -> file.getDisplayName().startsWith("SUB1DEMO.DAT")).findAny().orElse(null);
-            if (demoEntry == null)
-                return; // Couldn't find a demo by this name, so... skip.
+    private void readDemoTable(ILogger logger, DataReader reader, net.highwayfrogs.editor.system.Config config) {
+        try {
+            if (!this.demoTable.resolveFromConfig(config))
+                this.demoTable.resolveDemoTableAddress(logger);
 
-            byte[] levelId = DataUtils.toByteArray(FroggerMapLevelID.SUBURBIA1.ordinal());
-            byte[] demoId = DataUtils.toByteArray(demoEntry.getResourceId());
-
-            byte[] searchFor = new byte[levelId.length + demoId.length];
-            System.arraycopy(levelId, 0, searchFor, 0, levelId.length);
-            System.arraycopy(demoId, 0, searchFor, levelId.length, demoId.length);
-
-            int findIndex = Utils.indexOf(getExecutableBytes(), searchFor);
-            if (findIndex == -1) {
-                getLogger().warning("Failed to automatically find the demo table.");
-                return; // Didn't find the bytes, ABORT!
-            }
-
-            this.getVersionConfig().setDemoTableAddress(findIndex);
-            getLogger().info("Found the demo table address at 0x%X", findIndex);
+            this.demoTable.load(reader);
+        } catch (Throwable th) {
+            Utils.handleError(logger, th, false, "Failed to read demo table data.");
         }
-
-        this.demoTableEntries.clear();
-        reader.setIndex(this.getVersionConfig().getDemoTableAddress());
-        while (reader.hasMore()) {
-            reader.jumpTemp(reader.getIndex());
-            int levelId = reader.readInt();
-            reader.jumpReturn();
-            if (levelId == -1)
-                break; // Reached terminator.
-
-            FroggerDemoTableEntry newDemoTableEntry = new FroggerDemoTableEntry(this);
-            newDemoTableEntry.load(reader);
-            this.demoTableEntries.add(newDemoTableEntry);
-        }
-    }
-
-    private void writeDemoTable(DataWriter exeWriter) {
-        if (this.getVersionConfig().getDemoTableAddress() <= 0)
-            return;
-
-        exeWriter.setIndex(this.getVersionConfig().getDemoTableAddress());
-        for (FroggerDemoTableEntry entry : this.demoTableEntries)
-            entry.save(exeWriter);
-
-        // Write terminator entry.
-        exeWriter.writeInt(-1);
-        exeWriter.writeInt(-1);
-        exeWriter.writeInt(-1);
     }
 
     private void readScripts(DataReader reader) {

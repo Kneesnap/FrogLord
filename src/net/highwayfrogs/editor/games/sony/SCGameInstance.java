@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.sony;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.generic.GameInstance;
@@ -26,6 +25,7 @@ import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewCom
 import net.highwayfrogs.editor.games.sony.shared.ui.SCMainMenuUIController;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
+import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.ArraySource;
@@ -121,13 +121,17 @@ public abstract class SCGameInstance extends GameInstance {
         if (!this.getVersionConfig().isMwdLooseFiles() && (mwdFile == null || !mwdFile.exists() || !mwdFile.isFile()))
             throw new RuntimeException("The MWD file '" + mwdFile + "' does not exist.");
 
-        this.archiveIndex = this.readMWI();
+        // Read executable config.
+        DataReader exeReader = getExecutableReader();
+        Config executableConfig = FileUtils.loadConfigDataFromExecutable(exeReader, getExeFile().getName());
+        readExecutableData(exeReader, executableConfig);
+
         this.mainArchive = this.readMWD(progressBar);
         resolveModelVloFiles();
     }
 
     @Override
-    protected void onConfigLoad(Config configObj) {
+    protected void onConfigLoad(net.highwayfrogs.editor.file.config.Config configObj) {
         super.onConfigLoad(configObj);
 
         DataReader exeReader = getExecutableReader();
@@ -136,6 +140,15 @@ public abstract class SCGameInstance extends GameInstance {
         // Read data. (Should occur after we know the executable header info)
         this.readOverlayTable(exeReader);
         this.readBmpPointerData(exeReader);
+    }
+
+    /**
+     * Read potentially modifiable data from the executable to the instance object.
+     * @param reader The reader to read the data from.
+     * @param executableConfig The config containing data about the modded game configuration. (Null if the game has not been modded)
+     */
+    protected void readExecutableData(DataReader reader, Config executableConfig) {
+        this.archiveIndex = this.readMWI();
     }
 
     @Override
@@ -793,10 +806,17 @@ public abstract class SCGameInstance extends GameInstance {
         return mwdFile;
     }
 
-    private byte[] writeConfigToExecutable(byte[] executableBytes) {
-        net.highwayfrogs.editor.system.Config rootConfig = new net.highwayfrogs.editor.system.Config(null);
+    /**
+     * Creates the executable config stored in the executable after writing it.
+     */
+    public Config createExecutableConfig() {
+        Config rootConfig = new Config(null);
         rootConfig.addChildConfig(new GameBuildInfo<>(this).toConfig());
-        return FileUtils.saveConfigDataToExecutable(this, executableBytes, rootConfig);
+        return rootConfig;
+    }
+
+    private byte[] writeConfigToExecutable(byte[] executableBytes) {
+        return FileUtils.saveConfigDataToExecutable(this, executableBytes, createExecutableConfig());
     }
 
     /**
