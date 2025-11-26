@@ -125,16 +125,20 @@ public class GameImage extends SCSharedGameData implements Cloneable, ITextureSo
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeShort((short) (this.vramX / getWidthMultiplier()));
+        int widthMultiplier = getWidthMultiplier();
+        if ((this.fullWidth % widthMultiplier) != 0)
+            getGameInstance().showWarning(getLogger(), "Image skew detected.", "%s has a width of %d. Because it is mode %s, and the width is not a multiple of %d, the image will be skewed!", getIdentifier(), this.fullWidth, getClutMode(), widthMultiplier);
+
+        writer.writeShort((short) (this.vramX / widthMultiplier));
         writer.writeShort(this.vramY);
 
-        writer.writeShort((short) (this.fullWidth / getWidthMultiplier()));
+        writer.writeShort((short) (this.fullWidth / widthMultiplier));
         writer.writeShort(this.fullHeight);
         this.tempImageDataPointer = writer.writeNullPointer();
         writer.writeShort(this.textureId);
 
         short oldVramX = this.vramX;
-        this.vramX /= getWidthMultiplier();
+        this.vramX /= widthMultiplier;
         writer.writeShort(getTexturePageShort());
         this.vramX = oldVramX;
 
@@ -160,6 +164,18 @@ public class GameImage extends SCSharedGameData implements Cloneable, ITextureSo
     @Override
     public String toString() {
         return "GameImage{id=" + this.textureId + (this.parent != null ? "@" + this.parent.getFileDisplayName() : "") + "}";
+    }
+
+    /**
+     * Gets a string which identifies this image.
+     */
+    public String getIdentifier() {
+        StringBuilder builder = new StringBuilder("GameImage{");
+        String originalName = getOriginalName();
+        if (originalName != null)
+            builder.append("'").append(originalName).append("'/");
+        builder.append(getTextureId());
+        return builder.append("}").toString();
     }
 
     /**
@@ -367,7 +383,7 @@ public class GameImage extends SCSharedGameData implements Cloneable, ITextureSo
             return false;
 
         if (oldState) {
-            this.flags ^= flag;
+            this.flags &= ~flag;
         } else {
             this.flags |= flag;
         }
