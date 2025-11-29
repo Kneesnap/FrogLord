@@ -27,7 +27,7 @@ public enum RwStreamChunkType implements IRwStreamChunkType {
     ATOMIC_SECTOR(0x09, "World Sector", ImageResource.TREASURE_MAP_16, RwAtomicSectorChunk::new),
     PLANE_SECTOR(0x0A, "Plane Sector", ImageResource.TREASURE_MAP_16, RwPlaneSectorChunk::new),
     WORLD(0x0B, "World", ImageResource.GHIDRA_ICON_INTERNET_16, RwWorldChunk::new, RwStreamChunkTypeDisplayImportance.HIGHEST),
-    // TODO: C Spline
+    SPLINE(0x0C, "Spline", ImageResource.GHIDRA_ICON_REFRESH_16, null), // TODO: Support spline, better icon
     MATRIX(0x0D, "Matrix", ImageResource.MATRIX_16, RwStreamMatrixChunk::new),
     FRAME_LIST(0x0E, "Frame List", ImageResource.GHIDRA_ICON_SORT_ASCENDING_16, RwFrameListChunk::new),
     GEOMETRY(0x0F, "Geometry", ImageResource.GOURAUD_TRIANGLE_16, RwGeometryChunk::new),
@@ -38,7 +38,8 @@ public enum RwStreamChunkType implements IRwStreamChunkType {
     ATOMIC(0x14, "Atomic", ImageResource.GOURAUD_TRIANGLE_16, RwAtomicChunk::new), // TODO: ATOM ICON
     IMAGE(0x18, "Image", ImageResource.PHOTO_ALBUM_16, RwImageChunk::new, RwStreamChunkTypeDisplayImportance.LOW),
     GEOMETRY_LIST(0x1A, "Geometry List", ImageResource.GOURAUD_TRIANGLE_LIST_16, RwGeometryListChunk::new),
-    // *TODO: 1B Anim Animation
+    ANIMATION(0x1B, "Animation", ImageResource.GHIDRA_ICON_MULTIMEDIA_16, null),// TODO: Support animation.
+    // TODO: 0x1F?
     PITEX_DICTIONARY(0x23, "Platform Independent Texture Dictionary", ImageResource.PHOTO_ALBUM_16, RwPlatformIndependentTextureDictionaryChunk::new, RwStreamChunkTypeDisplayImportance.LOW),
     TOC(0x24, "Table of Contents", ImageResource.GHIDRA_ICON_PAPER_WITH_TEXT_16, RwTableOfContentsChunk::new);
     // *TODO: 29, 2A, 2B
@@ -51,5 +52,16 @@ public enum RwStreamChunkType implements IRwStreamChunkType {
 
     RwStreamChunkType(int typeId, String displayName, ImageResource icon, TriFunction<RwStreamFile, Integer, RwStreamChunk, RwStreamChunk> chunkCreator) {
         this(typeId, displayName, icon, chunkCreator, null);
+    }
+
+    /**
+     * Makes the default unsupported chunk, but with the type information setup.
+     * @param streamFile the stream file to create the chunk for
+     * @param rwVersion the RenderWare version of the chunk
+     * @param parentChunk the parent chunk which will own the new chunk
+     * @return newChunk
+     */
+    public RwStreamChunk makeDefaultUnsupportedChunk(RwStreamFile streamFile, int rwVersion, RwStreamChunk parentChunk) {
+        return new RwUnsupportedChunk(streamFile, this, rwVersion, parentChunk);
     }
 }

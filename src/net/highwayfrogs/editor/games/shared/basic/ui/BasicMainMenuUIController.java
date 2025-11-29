@@ -5,6 +5,7 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import net.highwayfrogs.editor.games.shared.basic.BasicGameInstance;
 import net.highwayfrogs.editor.games.shared.basic.file.BasicGameFile;
+import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.MainMenuController;
 import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
@@ -90,5 +91,17 @@ public class BasicMainMenuUIController<TGameInstance extends BasicGameInstance> 
         menuItem.setOnAction(event -> FXUtils.reportErrorIfFails(action));
         menuBar.getItems().add(menuItem);
         return menuItem;
+    }
+
+    /**
+     * Shows the editor for the given file on the main menu.
+     * @param file the file to show
+     */
+    public void showEditor(BasicGameFile<?> file) {
+        GameUIController<?> controller = getCurrentEditor();
+        if (controller != null && controller.trySetTargetFile(file))
+            return;
+
+        showEditor(file != null ? file.makeEditorUI() : null);
     }
 }

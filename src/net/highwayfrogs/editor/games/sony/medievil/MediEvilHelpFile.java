@@ -7,8 +7,7 @@ import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorPropertyListUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.gui.InputMenu;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.DataSizeUnit;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -120,22 +119,13 @@ public class MediEvilHelpFile extends SCGameFile<MediEvilGameInstance> {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("String Entries", this.strings.size());
         for (int i = 0; i < this.strings.size(); i++) {
             final int index = i;
-            propertyList.add("Entry " + i, this.strings.get(i), () -> {
-                String newValue = InputMenu.promptInput(getGameInstance(), "Please enter a new value.", this.strings.get(index));
-                if (newValue == null)
-                    return null;
-
-                this.strings.set(index, newValue);
-                return newValue;
-            });
+            propertyList.addString("Entry " + i, this.strings.get(i), newText -> this.strings.set(index, newText));
         }
-
-        return propertyList;
     }
 
     /**

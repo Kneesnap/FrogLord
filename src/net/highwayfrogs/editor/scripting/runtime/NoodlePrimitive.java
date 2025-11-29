@@ -606,6 +606,35 @@ public class NoodlePrimitive {
         }
     }
 
+    /**
+     * Gets the value of this primitive as a java Object.
+     * @return addString
+     */
+    public Object getAsJavaObject() {
+        switch (this.primitiveType) {
+            case CHAR:
+                return getChar();
+            case BOOLEAN:
+                return getBoolean();
+            case BYTE:
+                return getByte();
+            case SHORT:
+                return getShort();
+            case INTEGER:
+                return getInteger();
+            case LONG:
+                return getLong();
+            case FLOAT:
+                return getFloat();
+            case DOUBLE:
+                return getDouble();
+            case OBJECT_REFERENCE:
+                return this.objectInstance != null ? this.objectInstance.getObject() : null;
+            default:
+                throw new NoodleRuntimeException("Don't know how to getAsJavaObject() %s.", this.primitiveType);
+        }
+    }
+
     @Override
     public String toString() {
         switch (this.primitiveType) {

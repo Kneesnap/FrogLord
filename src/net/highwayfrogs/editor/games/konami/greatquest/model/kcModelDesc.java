@@ -4,13 +4,13 @@ import lombok.Getter;
 import lombok.NonNull;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
-import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceModel;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcIGenericResourceData;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -21,11 +21,12 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
  * Created by Kneesnap on 8/21/2023.
  */
 @Getter
-public class kcModelDesc extends kcBaseDesc implements IInfoWriter, kcIGenericResourceData {
+public class kcModelDesc extends kcBaseDesc implements kcIGenericResourceData {
     private final GreatQuestHash<kcCResourceGeneric> parentHash; // The hash of this object's parent. Unused.
     private final GreatQuestHash<kcCResourceModel> modelRef; // Resolved by kcCModel::Init()
 
     private static final int EXPECTED_MATERIAL_HASH = -1; // Never used.
+    public static final String NAME_SUFFIX = "ModelDesc";
 
     public kcModelDesc(@NonNull kcCResourceGeneric resource) {
         super(resource);
@@ -41,7 +42,7 @@ public class kcModelDesc extends kcBaseDesc implements IInfoWriter, kcIGenericRe
         int materialHash = reader.readInt();
 
         // Resolve the model.
-        GreatQuestUtils.resolveResourceHash(kcCResourceModel.class, this, this.modelRef, modelHash, false); // There are quite a few models which have been removed but still have their model descriptions.
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceModel.class, this, this.modelRef, modelHash, false); // There are quite a few models which have been removed but still have their model descriptions.
 
         // Warn if things look wrong.
         if (materialHash != EXPECTED_MATERIAL_HASH)
@@ -78,13 +79,8 @@ public class kcModelDesc extends kcBaseDesc implements IInfoWriter, kcIGenericRe
     }
 
     @Override
-    public void writeInfo(StringBuilder builder) {
-        writeAssetLine(builder, ", ", "Model", this.modelRef, kcCResourceModel::getFileName);
-    }
-
-    @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        writeAssetLine(builder, padding, "Model", this.modelRef);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        this.modelRef.addToPropertyList(propertyList, "Model", getParentFile(), kcCResourceModel.class);
     }
 
     /**
@@ -92,5 +88,14 @@ public class kcModelDesc extends kcBaseDesc implements IInfoWriter, kcIGenericRe
      */
     public kcCResourceModel getModel() {
         return this.modelRef.getResource();
+    }
+
+    /**
+     * Get the model wrapper, if there is one.
+     * @return modelWrapper
+     */
+    public kcModelWrapper getModelWrapper() {
+        kcCResourceModel model = getModel();
+        return model != null ? model.getModelWrapper() : null;
     }
 }

@@ -142,7 +142,8 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
         super.onSceneAdd(scene);
         setGridPolygonHighlightingVisible(true);
         this.collisionGridPreview.onSceneAdd();
-        this.inputManager.assignSceneControls(getStage(), scene);
+        this.inputManager.assignSceneControls(scene);
+        this.inputManager.setStage(getStage());
     }
 
     @Override
@@ -150,7 +151,8 @@ public class FroggerUIGridManager extends GameUIController<FroggerGameInstance> 
         super.onSceneRemove(scene);
         setGridPolygonHighlightingVisible(false);
         this.collisionGridPreview.onSceneRemove();
-        this.inputManager.removeSceneControls(getStage(), scene);
+        this.inputManager.removeSceneControls(scene);
+        this.inputManager.setStage(null);
     }
 
     @Override

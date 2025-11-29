@@ -18,11 +18,15 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestChunkFileEditor;
+import net.highwayfrogs.editor.gui.DefaultFileUIController.IExtraUISupplier;
+import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.FXNodeWrapperComponent;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.*;
 import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
@@ -41,7 +45,7 @@ import java.util.Objects;
  * Represents a resource in a TGQ file.
  * Created by Kneesnap on 8/25/2019.
  */
-public abstract class kcCResource extends GameData<GreatQuestInstance> implements kcHashedResource, ICollectionViewEntry, IPropertyListCreator {
+public abstract class kcCResource extends GameData<GreatQuestInstance> implements kcHashedResource, ICollectionViewEntry, IPropertyListCreator, IExtraUISupplier {
     @Getter private byte[] rawData;
     @Getter private final KCResourceID chunkType;
     @Getter private final GreatQuestHash<? extends kcCResource> selfHash; // The real hash comes from the TOC chunk.
@@ -183,8 +187,10 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
         }
 
         // Must be run after the name property is updated.
-        if (shouldAddToChunkedFile)
+        if (shouldAddToChunkedFile) {
             getParentFile().addResourceToList(tableOfContents, this);
+            getParentFile().updateListUI();
+        }
     }
 
     /**
@@ -204,7 +210,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
      */
     public GreatQuestArchiveFile getFileByName(String filePath) {
         GreatQuestAssetBinFile mainArchive = getMainArchive();
-        return mainArchive != null ? mainArchive.getFileByName(getParentFile(), filePath) : null;
+        return mainArchive != null ? mainArchive.getFileByPath(getParentFile(), filePath) : null;
     }
 
     /**
@@ -214,7 +220,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
      */
     public GreatQuestArchiveFile getOptionalFileByName(String filePath) {
         GreatQuestAssetBinFile mainArchive = getMainArchive();
-        return mainArchive != null ? mainArchive.getOptionalFileByName(filePath) : null;
+        return mainArchive != null ? mainArchive.getOptionalFileByPath(filePath) : null;
     }
 
     /**
@@ -326,7 +332,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Resource Type", this.chunkType);
         propertyList.add("Hash", this.selfHash.getHashNumberAsString());
         propertyList.add("Name", getName());
@@ -334,8 +340,6 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
             propertyList.add("Original Name", this.selfHash.getOriginalString());
         if (this.rawData != null)
             propertyList.add("Loaded Data Length", DataSizeUnit.formatSize(this.rawData.length) + " (" + this.rawData.length + " bytes)");
-
-        return propertyList;
     }
 
     @Override
@@ -344,20 +348,23 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
         contextMenu.getItems().add(copyNameItem);
         copyNameItem.setOnAction(event -> FXUtils.setClipboardText(getName()));
 
+        MenuItem copyHashItem = new MenuItem("Copy Hash to Clipboard");
+        contextMenu.getItems().add(copyHashItem);
+        copyHashItem.setOnAction(event -> FXUtils.setClipboardText(getHashAsHexString()));
+
         MenuItem renameItem = new MenuItem("Rename");
         contextMenu.getItems().add(renameItem);
         renameItem.setOnAction(event -> {
             InputMenu.promptInput(getGameInstance(), "Please enter the new name for the chunk.", getName(), newName -> {
                 if (newName.length() >= NAME_SIZE) {
-                    FXUtils.makePopUp("The provided name is too long! (Max: " + (NAME_SIZE - 1) + " characters)", AlertType.ERROR);
+                    FXUtils.showPopup(AlertType.ERROR, "Rename failed.", "The provided name is too long! (Max: " + (NAME_SIZE - 1) + " characters)");
                     return;
                 }
 
                 if (isHashBasedOnName()) {
-                    int newHash = calculateHash(newName);
-                    kcCResource otherResource = getParentFile().getResourceByHash(newHash);
+                    kcCResource otherResource = getParentFile().getResourceByName(newName, null);
                     if (otherResource != null && otherResource != this) {
-                        FXUtils.makePopUp("The provided name conflicts with another resource: " + otherResource + ".", AlertType.ERROR);
+                        FXUtils.showPopup(AlertType.ERROR, "Rename failed.", "The provided name conflicts with another resource: " + otherResource + ".");
                         return;
                     }
                 }
@@ -375,7 +382,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
                 FileUtils.writeBytesToFile(getLogger(), outputFile, getRawData(), true);
         });
 
-        MenuItem exportChunkItem = new MenuItem("Export Chunk");
+        MenuItem exportChunkItem = new MenuItem("Export Raw Data");
         contextMenu.getItems().add(exportChunkItem);
         exportChunkItem.setOnAction(event -> {
             File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), CHUNK_FILE_PATH, getName(), true);
@@ -383,7 +390,7 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
                 writeDataToFile(outputFile, true);
         });
 
-        MenuItem importChunkItem = new MenuItem("Import Chunk");
+        MenuItem importChunkItem = new MenuItem("Import Raw Data");
         contextMenu.getItems().add(importChunkItem);
         importChunkItem.setOnAction(event -> {
             File inputFile = FileUtils.askUserToOpenFile(getGameInstance(), CHUNK_FILE_PATH);
@@ -404,6 +411,12 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
      */
     public Node createFxPreview() {
         return null;
+    }
+
+    @Override
+    public GameUIController<?> createExtraUIController() {
+        Node fxPreview = createFxPreview();
+        return fxPreview != null ? new FXNodeWrapperComponent<>(getGameInstance(), fxPreview) : null;
     }
 
     /**
@@ -445,10 +458,23 @@ public abstract class kcCResource extends GameData<GreatQuestInstance> implement
      * Called when this resource is removed from the chunked file.
      */
     protected void onRemovedFromChunkFile() {
-        int linkedUsages = getSelfHash().getLinkedHashes().size();
+        // This warning isn't actually that helpful, just annoying.
+        /*int linkedUsages = getSelfHash().getLinkedHashes().size();
         if (linkedUsages > 0)
-            getLogger().warning("Resource removed from chunk file despite %d remaining usage%s.", linkedUsages, (linkedUsages != 1 ? "s" : ""));
+            getLogger().warning("Resource removed from chunk file despite %d remaining usage%s.", linkedUsages, (linkedUsages != 1 ? "s" : ""));*/
 
         getSelfHash().invalidate(); // Anything references to this hash should be unlinked.
+    }
+
+    /**
+     * Refresh the resource UI for the resource, if such UI is active.
+     */
+    public void refreshUI() {
+        GameUIController<?> currentEditor = getGameInstance().getMainMenuController().getCurrentEditor();
+        if (currentEditor instanceof GreatQuestChunkFileEditor) {
+            GreatQuestChunkFileEditor editor = (GreatQuestChunkFileEditor) currentEditor;
+            if (editor.getFile() == getParentFile() && editor.getChunkListComponent().getSelectedViewEntry() == this)
+                editor.getChunkListComponent().updateResourceUI(this);
+        }
     }
 }

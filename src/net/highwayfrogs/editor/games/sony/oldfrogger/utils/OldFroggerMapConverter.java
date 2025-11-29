@@ -190,7 +190,7 @@ public class OldFroggerMapConverter {
         }
 
         newGridPacket.recalculateAllCliffHeights();
-        newMapFile.getGroupPacket().generateMapGroups(ProblemResponse.CREATE_POPUP, true);
+        newMapFile.getGroupPacket().generateMapGroups(oldMapFile.getLogger(), ProblemResponse.CREATE_POPUP, true);
         return newMapFile;
     }
 

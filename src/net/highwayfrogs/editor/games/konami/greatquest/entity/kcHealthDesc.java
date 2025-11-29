@@ -7,11 +7,13 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.IConfigData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
-import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 /**
@@ -20,13 +22,16 @@ import net.highwayfrogs.editor.utils.objects.OptionalArguments;
  */
 @Getter
 @Setter
-public class kcHealthDesc extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter, IConfigData {
-    private int maxHealth = 100; // When loaded, if this is less than 1, 100 is used. The game called this durability.
-    private int startHealth = 100; // When loaded, if this is less than 1, 100 is used.
+public class kcHealthDesc extends GameData<GreatQuestInstance> implements IPropertyListCreator, IConfigData {
+    private int maxHealth = DEFAULT_MAX_HEALTH; // When loaded, if this is less than 1, 100 is used. The game called this durability.
+    private int startHealth = DEFAULT_MAX_HEALTH; // When loaded, if this is less than 1, 100 is used.
     // This is a bit mask which represent the types of damage which this object is immune to.
     // The flags are represented by the kcDamageType class.
     // If even a single one of these flags is seen when damage should occur, damage will be skipped.
-    private int immuneMask;
+    private int immuneMask = DEFAULT_IMMUNE_MASK;
+
+    private static final int DEFAULT_MAX_HEALTH = 100;
+    private static final int DEFAULT_IMMUNE_MASK = 0;
 
     public kcHealthDesc(GreatQuestInstance instance) {
         super(instance);
@@ -47,10 +52,20 @@ public class kcHealthDesc extends GameData<GreatQuestInstance> implements IMulti
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        builder.append(padding).append("Max Health (Durability): ").append(this.maxHealth).append(Constants.NEWLINE);
-        builder.append(padding).append("Start Health: ").append(this.startHealth).append(Constants.NEWLINE);
-        builder.append(padding).append("Immune Mask: ").append(NumberUtils.toHexString(this.immuneMask)).append(Constants.NEWLINE);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        propertyList.addInteger("Max Health (Durability)", this.maxHealth)
+                        .setDataHandler((entry, newMaxHealth) -> {
+                            if (this.maxHealth == this.startHealth) {
+                                this.startHealth = this.maxHealth = newMaxHealth;
+                                entry.updateParent();
+                            } else {
+                                this.maxHealth = newMaxHealth;
+                            }
+                        });
+
+        propertyList.addInteger("Start Health", this.startHealth, newStartHealth -> this.startHealth = newStartHealth);
+        if (this.immuneMask != DEFAULT_IMMUNE_MASK)
+            propertyList.add("Immune Mask", NumberUtils.toHexString(this.immuneMask));
     }
 
     private static final String CONFIG_KEY_MAX_HEALTH = "maxHealth";
@@ -58,20 +73,27 @@ public class kcHealthDesc extends GameData<GreatQuestInstance> implements IMulti
     private static final String CONFIG_KEY_IMMUNE_MASK = "immuneMask";
 
     @Override
-    public void fromConfig(Config input) {
-        this.maxHealth = input.getKeyValueNodeOrError(CONFIG_KEY_MAX_HEALTH).getAsInteger();
-        this.startHealth = input.getKeyValueNodeOrError(CONFIG_KEY_START_HEALTH).getAsInteger();
+    public void fromConfig(ILogger logger, Config input) {
+        this.maxHealth = input.getOrDefaultKeyValueNode(CONFIG_KEY_MAX_HEALTH).getAsInteger(DEFAULT_MAX_HEALTH);
+        this.startHealth = input.getOrDefaultKeyValueNode(CONFIG_KEY_START_HEALTH).getAsInteger(this.startHealth);
 
-        OptionalArguments arguments = OptionalArguments.parseCommaSeparatedNamedArguments(input.getKeyValueNodeOrError(CONFIG_KEY_IMMUNE_MASK).getAsString());
-        this.immuneMask = kcDamageType.getValueFromArguments(arguments);
-        arguments.warnAboutUnusedArguments(getGameInstance().getLogger());
+        if (input.hasKeyValueNode(CONFIG_KEY_IMMUNE_MASK)) {
+            OptionalArguments arguments = OptionalArguments.parseCommaSeparatedNamedArguments(input.getKeyValueNodeOrError(CONFIG_KEY_IMMUNE_MASK).getAsString());
+            this.immuneMask = kcDamageType.getValueFromArguments(arguments);
+            arguments.warnAboutUnusedArguments(getGameInstance().getLogger());
+        } else {
+            this.immuneMask = DEFAULT_IMMUNE_MASK;
+        }
     }
 
     @Override
     public void toConfig(Config output) {
-        output.getOrCreateKeyValueNode(CONFIG_KEY_MAX_HEALTH).setAsInteger(this.maxHealth);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_START_HEALTH).setAsInteger(this.startHealth);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_IMMUNE_MASK).setAsString(kcDamageType.getFlagsAsString(this.immuneMask));
+        if (this.maxHealth != DEFAULT_MAX_HEALTH)
+            output.getOrCreateKeyValueNode(CONFIG_KEY_MAX_HEALTH).setAsInteger(this.maxHealth);
+        if (this.startHealth != this.maxHealth)
+            output.getOrCreateKeyValueNode(CONFIG_KEY_START_HEALTH).setAsInteger(this.startHealth);
+        if (this.immuneMask != DEFAULT_IMMUNE_MASK)
+            output.getOrCreateKeyValueNode(CONFIG_KEY_IMMUNE_MASK).setAsString(kcDamageType.getFlagsAsString(this.immuneMask));
     }
 
     /**

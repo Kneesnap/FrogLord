@@ -1,12 +1,10 @@
 package net.highwayfrogs.editor.games.sony.frogger;
 
 import javafx.scene.image.Image;
-import lombok.Cleanup;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.DemoFile;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.config.NameBank;
@@ -18,18 +16,18 @@ import net.highwayfrogs.editor.file.config.exe.MapBook;
 import net.highwayfrogs.editor.file.config.exe.PickupData;
 import net.highwayfrogs.editor.file.config.exe.PickupData.PickupAnimationFrame;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
-import net.highwayfrogs.editor.file.config.exe.general.DemoTableEntry;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
+import net.highwayfrogs.editor.file.config.exe.pc.PCThemeBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
+import net.highwayfrogs.editor.file.config.exe.psx.PSXThemeBook;
 import net.highwayfrogs.editor.file.config.script.FroggerScript;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.games.sony.SCGameConfig.SCImageList;
-import net.highwayfrogs.editor.games.sony.SCGameFile;
-import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.games.sony.SCGameType;
-import net.highwayfrogs.editor.games.sony.SCUtils;
+import net.highwayfrogs.editor.games.sony.*;
+import net.highwayfrogs.editor.games.sony.frogger.data.demo.FroggerDemoTable;
+import net.highwayfrogs.editor.games.sony.frogger.data.demo.FroggerDemoTableEntry;
+import net.highwayfrogs.editor.games.sony.frogger.data.demo.FroggerPCDemoTableEntry;
 import net.highwayfrogs.editor.games.sony.frogger.file.FroggerPaletteFile;
 import net.highwayfrogs.editor.games.sony.frogger.file.FroggerSkyLand;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
@@ -59,11 +57,10 @@ import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.io.File;
-import java.io.PrintWriter;
 import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Represents an instance of the game files for Frogger (1997).
@@ -77,7 +74,6 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
     private final List<LevelInfo> raceLevelInfo = new ArrayList<>();
     private final List<LevelInfo> allLevelInfo = new ArrayList<>();
     private final Map<FroggerMapLevelID, LevelInfo> levelInfoMap = new HashMap<>();
-    private final List<DemoTableEntry> demoTableEntries = new ArrayList<>();
     private final List<FormEntry> fullFormBook = new ArrayList<>();
     private final List<FroggerScript> scripts = new ArrayList<>();
     private final Map<FroggerMapLevelID, Image> levelImageMap = new HashMap<>();
@@ -85,6 +81,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
     private final ThemeBook[] themeLibrary = new ThemeBook[FroggerMapTheme.values().length];
     private final PickupData[] pickupData = new PickupData[FroggerFlyScoreType.values().length];
     private final TextureRemapArray skyLandTextureRemap;
+    private final FroggerDemoTable demoTable;
 
     private static final String CHILD_RESTORE_MAP_BOOK = "MapBookRestore";
     private static final String CHILD_RESTORE_THEME_BOOK = "ThemeBookRestore";
@@ -99,6 +96,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
     public FroggerGameInstance() {
         super(SCGameType.FROGGER);
         this.skyLandTextureRemap = new TextureRemapArray(this, "txl_sky_land");
+        this.demoTable = new FroggerDemoTable(this);
     }
 
     @Override
@@ -106,7 +104,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         super.loadGame(versionConfigName, instanceConfig, mwdFile, exeFile, progressBar);
 
         // Setup version comparison.
-        FroggerVersionComparison.setup(FrogLordApplication.getWorkingDirectory());
+        FroggerVersionComparison.setup(getMainGameFolder());
         FroggerVersionComparison.addNewVersionToConfig(this);
     }
 
@@ -242,7 +240,9 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         super.setupScriptEngine(engine);
         engine.addWrapperTemplates(FroggerGameInstance.class, FroggerConfig.class, FroggerTextureRemap.class, FroggerMapFile.class,
                 LevelInfo.class, FroggerMapLevelID.class, FroggerMapWorldID.class, PCMapBook.class, FroggerMapTheme.class,
-                PSXMapBook.class, MapBook.class, FroggerUtils.class, FroggerMapFilePacketEntity.class, MusicTrack.class);
+                PSXMapBook.class, MapBook.class, ThemeBook.class, PCThemeBook.class, PSXThemeBook.class,
+                FroggerUtils.class, FroggerMapFilePacketEntity.class, MusicTrack.class,
+                FroggerDemoTable.class, FroggerPCDemoTableEntry.class, FroggerDemoTableEntry.class);
     }
 
     @Override
@@ -344,98 +344,15 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         writer.closeReceiver();
 
         generateMwdCHeader(new File(folder, "frogpsx.h"));
-
-        @Cleanup PrintWriter vramHWriter = new PrintWriter(new File(folder, "frogvram.h"));
-        @Cleanup PrintWriter vramCWriter = new PrintWriter(new File(folder, "frogvram.c"));
-        saveFrogVRAM(vramHWriter, vramCWriter);
+        generateVloSourceFiles(this, new File(folder, "frogvram.h"));
 
         getLogger().info("Generated source files.");
-    }
-
-    private void saveFrogVRAM(PrintWriter vramHWriter, PrintWriter vramCWriter) {
-        int maxTexId = 0;
-        for (VLOArchive vlo : getMainArchive().getAllFiles(VLOArchive.class))
-            for (GameImage image : vlo.getImages())
-                maxTexId = Math.max(maxTexId, image.getTextureId());
-
-        getLogger().info("Maximum Texture ID: %d", maxTexId);
-
-        String[] imageNames = new String[maxTexId + 1];
-        for (int i = 0; i < imageNames.length; i++)
-            imageNames[i] = SCUtils.C_UNNAMED_IMAGE_PREFIX + i;
-
-        // Apply image names.
-        SCImageList imageList = getVersionConfig().getImageList();
-        if (imageList.getImageNamesById().size() > 0)
-            for (Entry<Short, String> imageEntry : imageList.getImageNamesById().entrySet())
-                imageNames[imageEntry.getKey()] = SCUtils.IMAGE_C_PREFIX + imageEntry.getValue();
-
-        // Write start of .H file.
-        vramHWriter.write("#ifndef __FROGVRAM_H" + Constants.NEWLINE);
-        vramHWriter.write("#define __FROGVRAM_H" + Constants.NEWLINE);
-        vramHWriter.write("#include \"texmacro.h\"" + Constants.NEWLINE + Constants.NEWLINE);
-        vramHWriter.write("extern MR_TEXTURE* bmp_pointers[];" + Constants.NEWLINE + Constants.NEWLINE);
-
-        // Write start of .c file.
-        vramCWriter.write(Constants.NEWLINE);
-        vramCWriter.write("// frogvram.c - FrogLord Export " + this.getVersionConfig().getDisplayName() + " (" + this.getVersionConfig().getInternalName() + ")" + Constants.NEWLINE);
-        vramCWriter.write("// This file contains texture definitions generated from the game. Must be accompanied by texmacro.h generated from the ghidra script." + Constants.NEWLINE);
-        vramCWriter.write(Constants.NEWLINE);
-
-        // Write bmp_pointers.
-        vramCWriter.write("#include \"frogvram.h\"" + Constants.NEWLINE + Constants.NEWLINE);
-        vramCWriter.write("MR_TEXTURE* bmp_pointers[] = {");
-        for (int i = 0; i < imageNames.length; i++) {
-            if ((i % 16) == 0) {
-                vramCWriter.write(Constants.NEWLINE + "\t");
-            } else {
-                vramCWriter.write(' ');
-            }
-
-            vramCWriter.write("&" + imageNames[i] + ",");
-        }
-        vramCWriter.write(Constants.NEWLINE + "};" + Constants.NEWLINE + Constants.NEWLINE);
-
-        // Write texture remaps.
-        for (int i = 0; i < getTextureRemaps().size(); i++) {
-            TextureRemapArray remap = getTextureRemaps().get(i);
-            if (remap.getName() == null)
-                continue;
-
-            // Write start.
-            //String txlName = "txl_" + Utils.stripExtension(mapEntry.getDisplayName()).toLowerCase();
-            vramHWriter.write("extern MR_USHORT " + remap.getName() + "[];" + Constants.NEWLINE);
-            vramCWriter.write("MR_USHORT " + remap.getName() + "[] = {" + Constants.NEWLINE + "\t");
-
-            // Write remap texture ids.
-            for (int j = 0; j < remap.getTextureIds().size(); j++) {
-                vramCWriter.write(remap.getTextureIds().get(j) + ", ");
-                if (((j + 1) % 32) == 0 && remap.getTextureIds().size() > j + 3)
-                    vramCWriter.write(Constants.NEWLINE + "\t");
-            }
-
-            vramCWriter.write(Constants.NEWLINE + "};" + Constants.NEWLINE + Constants.NEWLINE);
-        }
-
-        // Write image definitions.
-        vramCWriter.write(Constants.NEWLINE);
-        vramHWriter.write(Constants.NEWLINE);
-        for (String imageName : imageNames) {
-            if (imageName == null)
-                continue;
-
-            vramCWriter.write("MR_TEXTURE " + imageName + ";" + Constants.NEWLINE);
-            vramHWriter.write("extern MR_TEXTURE " + imageName + ";" + Constants.NEWLINE);
-        }
-
-        // End
-        vramHWriter.write("#endif" + Constants.NEWLINE);
     }
 
     @Override
     public void generateMwdCHeader(@NonNull File file) {
         // Based on the data seen in FROGPSX.H in the E3 Frogger prototype.
-        SCUtils.generateMwdCHeader(this, "L:\\\\FROGGER\\\\", file, "FR", "STD", "VLO", "SPU", "MOF", "MAPMOF", "MAPANIMMOF", "DEMODATA");
+        SCSourceFileGenerator.generateMwdCHeader(this, "L:\\\\FROGGER\\\\", file, "FR", "STD", "VLO", "SPU", "MOF", "MAPMOF", "MAPANIMMOF", "DEMODATA");
     }
 
     /**
@@ -525,9 +442,16 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
     }
 
     @Override
-    protected void onMWILoad(MillenniumWadIndex mwi) {
-        super.onMWILoad(mwi);
-        readDemoTable(mwi, getExecutableReader());
+    protected void readExecutableData(DataReader reader, net.highwayfrogs.editor.system.Config executableConfig) {
+        super.readExecutableData(reader, executableConfig);
+        readDemoTable(getLogger(), reader, executableConfig);
+    }
+
+    @Override
+    public net.highwayfrogs.editor.system.Config createExecutableConfig() {
+        net.highwayfrogs.editor.system.Config config = super.createExecutableConfig();
+        this.demoTable.toConfig(config);
+        return config;
     }
 
     @Override
@@ -536,7 +460,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         writeThemeLibrary(writer);
         writeMapLibrary(writer);
         writeScripts(writer);
-        writeDemoTable(writer);
+        this.demoTable.save(writer);
         writeMusicData(writer);
         writeLevelData(writer);
     }
@@ -659,51 +583,15 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         this.mapLibrary.forEach(book -> book.save(exeWriter));
     }
 
-    private void readDemoTable(MillenniumWadIndex wadIndex, DataReader reader) {
-        if (this.getVersionConfig().getDemoTableAddress() <= 0) { // The demo table wasn't specified, so we'll search for it ourselves.
-            MWIResourceEntry demoEntry = wadIndex.getEntries().stream().filter(file -> file.getDisplayName().startsWith("SUB1DEMO.DAT")).findAny().orElse(null);
-            if (demoEntry == null)
-                return; // Couldn't find a demo by this name, so... skip.
+    private void readDemoTable(ILogger logger, DataReader reader, net.highwayfrogs.editor.system.Config config) {
+        try {
+            if (!this.demoTable.resolveFromConfig(config))
+                this.demoTable.resolveDemoTableAddress(logger);
 
-            byte[] levelId = DataUtils.toByteArray(FroggerMapLevelID.SUBURBIA1.ordinal());
-            byte[] demoId = DataUtils.toByteArray(demoEntry.getResourceId());
-
-            byte[] searchFor = new byte[levelId.length + demoId.length];
-            System.arraycopy(levelId, 0, searchFor, 0, levelId.length);
-            System.arraycopy(demoId, 0, searchFor, levelId.length, demoId.length);
-
-            int findIndex = Utils.indexOf(getExecutableBytes(), searchFor);
-            if (findIndex == -1) {
-                getLogger().warning("Failed to automatically find the demo table.");
-                return; // Didn't find the bytes, ABORT!
-            }
-
-            this.getVersionConfig().setDemoTableAddress(findIndex);
-            getLogger().info("Found the demo table address at 0x%X", findIndex);
+            this.demoTable.load(reader);
+        } catch (Throwable th) {
+            Utils.handleError(logger, th, false, "Failed to read demo table data.");
         }
-
-        reader.setIndex(this.getVersionConfig().getDemoTableAddress());
-        while (reader.hasMore()) {
-            int levelId = reader.readInt();
-            int resourceId = reader.readInt();
-            int minLevel = reader.readInt();
-
-            if (levelId == -1 || minLevel == -1)
-                break; // Reached terminator.
-
-            // Add demo entry.
-            boolean isValid = (levelId != DemoTableEntry.SKIP_INT && minLevel != DemoTableEntry.SKIP_INT);
-            this.demoTableEntries.add(new DemoTableEntry(isValid ? FroggerMapLevelID.values()[levelId] : null, isValid ? resourceId : -1, isValid ? FroggerMapLevelID.values()[minLevel] : null, isValid));
-        }
-    }
-
-    private void writeDemoTable(DataWriter exeWriter) {
-        if (this.getVersionConfig().getDemoTableAddress() <= 0)
-            return;
-
-        exeWriter.setIndex(this.getVersionConfig().getDemoTableAddress());
-        for (DemoTableEntry entry : this.demoTableEntries)
-            entry.save(exeWriter);
     }
 
     private void readScripts(DataReader reader) {

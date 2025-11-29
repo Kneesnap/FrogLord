@@ -9,7 +9,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygonType;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
@@ -169,7 +169,7 @@ public class FroggerMapFilePacketPolygon extends FroggerMapFilePacket {
         // Load data from other packets relying on polygon conversions.
         getParentFile().getAnimationPacket().copyAnimationsTo(newMapFile.getAnimationPacket(), polygonMapping);
         getParentFile().getGridPacket().copyGridTo(newMapFile.getGridPacket(), polygonMapping);
-        getParentFile().getGroupPacket().generateMapGroups(ProblemResponse.THROW_EXCEPTION, false);
+        getParentFile().getGroupPacket().generateMapGroups(null, ProblemResponse.THROW_EXCEPTION, false);
     }
 
     private void savePolygonList(DataWriter writer, FroggerMapGroup mapGroup, FroggerMapPolygonType polygonType) {
@@ -186,7 +186,7 @@ public class FroggerMapFilePacketPolygon extends FroggerMapFilePacket {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Total Polygon Count", this.polygons.size());
         propertyList.add("F Polygon Counts", "F3: " + getPolygonsByType(FroggerMapPolygonType.F3).size() + ", F4: " + getPolygonsByType(FroggerMapPolygonType.F4).size());
         propertyList.add("FT Polygon Counts", "FT3: " + getPolygonsByType(FroggerMapPolygonType.FT3).size() + ", FT4: " + getPolygonsByType(FroggerMapPolygonType.FT4).size());
@@ -195,8 +195,6 @@ public class FroggerMapFilePacketPolygon extends FroggerMapFilePacket {
         int g2Count = getPolygonsByType(FroggerMapPolygonType.G2).size();
         if (g2Count > 0)
             propertyList.add("G2 Polygon Count", g2Count);
-
-        return propertyList;
     }
 
     /**

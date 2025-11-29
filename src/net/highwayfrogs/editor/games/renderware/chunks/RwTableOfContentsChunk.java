@@ -1,14 +1,14 @@
 package net.highwayfrogs.editor.games.renderware.chunks;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,13 +46,11 @@ public class RwTableOfContentsChunk extends RwStreamChunk {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Entry Count", this.entries.size());
         for (int i = 0; i < this.entries.size(); i++)
             propertyList.add("Entry #" + (i + 1), this.entries.get(i));
-
-        return propertyList;
     }
 
     public static class RwTableOfContentsChunkEntry extends SharedGameData {

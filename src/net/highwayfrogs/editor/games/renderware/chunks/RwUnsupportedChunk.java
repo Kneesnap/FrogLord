@@ -2,12 +2,13 @@ package net.highwayfrogs.editor.games.renderware.chunks;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.renderware.IRwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
+import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.gui.ImageResource;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents an unsupported renderware chunk.
@@ -16,6 +17,10 @@ import net.highwayfrogs.editor.gui.ImageResource;
 public class RwUnsupportedChunk extends RwStreamChunk {
     public RwUnsupportedChunk(RwStreamFile streamFile, int chunkId, int rwVersion, RwStreamChunk parentChunk) {
         super(streamFile, new RwUnsupportedChunkType(chunkId), rwVersion, parentChunk);
+    }
+
+    public RwUnsupportedChunk(RwStreamFile streamFile, RwStreamChunkType chunkType, int rwVersion, RwStreamChunk parentChunk) {
+        super(streamFile, chunkType, rwVersion, parentChunk);
     }
 
     @Override

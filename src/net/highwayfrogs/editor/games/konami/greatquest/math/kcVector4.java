@@ -30,4 +30,16 @@ public class kcVector4 extends Vector4f implements IInfoWriter {
                 .append(", ")
                 .append(this.w);
     }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder("kcVector4{");
+        writeInfo(builder);
+        return builder.append("}").toString();
+    }
+
+    @Override
+    public kcVector4 clone() {
+        return new kcVector4(this.x, this.y, this.z, this.w);
+    }
 }

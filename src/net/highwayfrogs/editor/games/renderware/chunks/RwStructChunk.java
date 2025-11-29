@@ -2,16 +2,16 @@ package net.highwayfrogs.editor.games.renderware.chunks;
 
 import lombok.Getter;
 import lombok.NonNull;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.games.renderware.struct.RwStruct;
 import net.highwayfrogs.editor.gui.GameUIController;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
@@ -80,9 +80,10 @@ public class RwStructChunk<TStruct extends RwStruct> extends RwStreamChunk {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
-        return this.value != null ? this.value.addToPropertyList(propertyList) : propertyList;
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
+        if (this.value != null)
+            this.value.addToPropertyList(propertyList);
     }
 
     @Override

@@ -85,10 +85,12 @@ public class DynamicMeshCollection<TMesh extends DynamicMesh> {
         private final MeshViewController<?> controller;
         private DynamicMeshCollection<TMesh> meshCollection;
         private final List<MeshView> meshViews = new ArrayList<>();
+        private final MeshTracker meshTracker;
         private final DisplayList displayList;
 
         public MeshViewCollection(MeshViewController<?> controller, DisplayList displayList) {
             this.controller = controller;
+            this.meshTracker = controller != null ? controller.getMeshTracker() : new MeshTracker();
             this.displayList = displayList;
         }
 
@@ -134,7 +136,7 @@ public class DynamicMeshCollection<TMesh extends DynamicMesh> {
             int newMeshViewCount = newMeshCollection != null ? newMeshCollection.getMeshes().size() : 0;
             while (this.meshViews.size() > newMeshViewCount) {
                 MeshView removedView = this.meshViews.remove(this.meshViews.size() - 1);
-                if (removedView != null)
+                if (removedView != null && this.displayList != null)
                     this.displayList.remove(removedView);
             }
         }
@@ -167,7 +169,7 @@ public class DynamicMeshCollection<TMesh extends DynamicMesh> {
                 return; // MeshView is already setup.
 
             // Remove MeshView from the group.
-            if (!keepMeshViewTracked)
+            if (!keepMeshViewTracked&& this.displayList != null)
                 this.displayList.remove(meshView);
 
             // Call cleanup hook.
@@ -196,18 +198,20 @@ public class DynamicMeshCollection<TMesh extends DynamicMesh> {
             MeshView meshView;
             if (this.meshViews.size() == meshIndex) {
                 this.meshViews.add(meshView = new MeshView());
-                this.displayList.add(meshView);
+                if (this.displayList != null)
+                    this.displayList.add(meshView);
             } else {
                 meshView = this.meshViews.get(meshIndex);
                 if (meshView == null) {
                     this.meshViews.set(meshIndex, meshView = new MeshView());
-                    this.displayList.add(meshView);
+                    if (this.displayList != null)
+                        this.displayList.add(meshView);
                 }
             }
 
             // Setup the mesh view.
             TMesh mesh = this.meshCollection.getMeshes().get(meshIndex);
-            if (!mesh.addView(meshView, this.controller.getMeshTracker()))
+            if (!mesh.addView(meshView, this.meshTracker))
                 return; // MeshView is already setup.
 
             try {

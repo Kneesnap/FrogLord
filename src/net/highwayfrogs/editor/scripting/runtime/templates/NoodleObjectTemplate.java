@@ -4,10 +4,10 @@ import lombok.Getter;
 import net.highwayfrogs.editor.scripting.compiler.NoodleCallHolder;
 import net.highwayfrogs.editor.scripting.runtime.*;
 import net.highwayfrogs.editor.scripting.runtime.templates.NoodleTemplateFunction.LazyNoodleTemplateFunction;
-import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleStaticTemplateFunction;
-import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleStaticTemplateFunction.LazyNoodleStaticTemplateFunction;
-import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleTemplateConstructor;
-import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleTemplateConstructor.LazyNoodleTemplateConstructor;
+import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleConstructor;
+import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleConstructor.LazyNoodleConstructor;
+import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleStaticFunction;
+import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleStaticFunction.LazyNoodleStaticFunction;
 import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.lambda.Consumer3;
@@ -35,7 +35,7 @@ public abstract class NoodleObjectTemplate<TType> {
     private final Map<String, Consumer3<NoodleThread<?>, TType, NoodlePrimitive>> setters = new HashMap<>();
     private final Map<String, BiConsumer<NoodleThread<?>, NoodlePrimitive>> staticSetters = new HashMap<>();
     private final NoodleCallHolder<NoodleTemplateFunction<TType>> instanceFunctions = new NoodleCallHolder<>();
-    private final NoodleCallHolder<NoodleStaticTemplateFunction<TType>> staticFunctions = new NoodleCallHolder<>();
+    private final NoodleCallHolder<NoodleStaticFunction<TType>> staticFunctions = new NoodleCallHolder<>();
     private boolean setupHasOccurred;
     private boolean jvmSetupHasOccurred;
 
@@ -87,7 +87,8 @@ public abstract class NoodleObjectTemplate<TType> {
         this.onSetup();
         this.instanceFunctions.registerCallable(new NoodleTemplateEqualsFunction<>(this));
         this.instanceFunctions.registerCallable(new NoodleTemplateToStringFunction<>(this));
-        addGetter("template", (thread, value) -> thread.getStack().pushObject(getName()));
+        addGetter("class", (thread, value) -> thread.getStack().pushObject(this));
+        addStaticGetter("class", thread -> thread.getStack().pushObject(this));
     }
 
     /**
@@ -251,7 +252,7 @@ public abstract class NoodleObjectTemplate<TType> {
      * @param function The function to register.
      */
     public void addFunction(NoodleTemplateFunction<TType> function) {
-        if (CONSTRUCTOR_FUNCTION_NAME.equalsIgnoreCase(function.getName()) && !(function instanceof NoodleTemplateConstructor<?>)) {
+        if (CONSTRUCTOR_FUNCTION_NAME.equalsIgnoreCase(function.getName()) && !(function instanceof NoodleConstructor<?>)) {
             Utils.printStackTrace();
             warn("Tried to register a function with a constructor name for Noodle %s!", this.name);
             return;
@@ -269,7 +270,7 @@ public abstract class NoodleObjectTemplate<TType> {
      * @return true iff the function was successfully registered
      */
     public boolean addFunctionIfMissing(NoodleTemplateFunction<TType> function) {
-        if (CONSTRUCTOR_FUNCTION_NAME.equalsIgnoreCase(function.getName()) && !(function instanceof NoodleTemplateConstructor<?>)) {
+        if (CONSTRUCTOR_FUNCTION_NAME.equalsIgnoreCase(function.getName()) && !(function instanceof NoodleConstructor<?>)) {
             Utils.printStackTrace();
             warn("Tried to register a function with a constructor name for Noodle %s!", this.name);
             return false;
@@ -297,7 +298,7 @@ public abstract class NoodleObjectTemplate<TType> {
      * @param argumentNames Names of required arguments
      */
     public void addStaticFunction(String name, BiFunction<NoodleThread<?>, NoodlePrimitive[], NoodlePrimitive> delegateHandler, String... argumentNames) {
-        addStaticFunction(new LazyNoodleStaticTemplateFunction<>(name, this.wrappedClass, delegateHandler, argumentNames));
+        addStaticFunction(new LazyNoodleStaticFunction<>(name, this.wrappedClass, delegateHandler, argumentNames));
     }
 
     /**
@@ -305,7 +306,7 @@ public abstract class NoodleObjectTemplate<TType> {
      * Fails and logs warnings if the function could not be registered.
      * @param function The function to register.
      */
-    public void addStaticFunction(NoodleStaticTemplateFunction<TType> function) {
+    public void addStaticFunction(NoodleStaticFunction<TType> function) {
         if (!this.staticFunctions.registerCallable(function)) {
             Utils.printStackTrace();
             warn("NoodleObjectTemplate-STATIC/%s.%s(%d args) is already registered.", this.name, function.getName(), function.getArgumentCount());
@@ -317,7 +318,7 @@ public abstract class NoodleObjectTemplate<TType> {
      * @param function The function to register.
      * @return true iff the function was successfully registered
      */
-    public boolean addStaticFunctionIfMissing(NoodleStaticTemplateFunction<TType> function) {
+    public boolean addStaticFunctionIfMissing(NoodleStaticFunction<TType> function) {
         return this.staticFunctions.registerCallable(function);
     }
 
@@ -327,7 +328,7 @@ public abstract class NoodleObjectTemplate<TType> {
      * @param argumentNames The names of the constructor arguments.
      */
     public void addConstructor(BiFunction<NoodleThread<?>, NoodlePrimitive[], TType> constructor, String... argumentNames) {
-        addStaticFunction(new LazyNoodleTemplateConstructor<>(this.wrappedClass, constructor, argumentNames));
+        addStaticFunction(new LazyNoodleConstructor<>(this.wrappedClass, constructor, argumentNames));
     }
     
     /**
@@ -430,7 +431,7 @@ public abstract class NoodleObjectTemplate<TType> {
      * @param argumentCount The number of arguments the function uses.
      * @return foundFunction
      */
-    public NoodleStaticTemplateFunction<?> getStaticFunction(String functionName, int argumentCount) {
+    public NoodleStaticFunction<?> getStaticFunction(String functionName, int argumentCount) {
         return this.staticFunctions.getByNameAndArgumentCount(functionName, argumentCount);
     }
 

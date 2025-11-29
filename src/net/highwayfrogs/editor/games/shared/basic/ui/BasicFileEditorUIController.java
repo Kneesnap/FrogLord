@@ -8,7 +8,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.shared.basic.BasicGameInstance;
 import net.highwayfrogs.editor.games.shared.basic.file.IBasicGameFile;
 import net.highwayfrogs.editor.gui.GameUIController;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListViewerComponent;
 
 /**
  * Represents editor UI for a basic game file.
@@ -43,7 +43,7 @@ public class BasicFileEditorUIController<TGameFile extends IBasicGameFile, TGame
         TGameFile oldFile = this.file;
         if (oldFile != file) {
             this.file = file;
-            this.propertyListViewer.showProperties(file != null ? file.createPropertyList() : null);
+            this.propertyListViewer.showProperties(file);
         }
     }
 }

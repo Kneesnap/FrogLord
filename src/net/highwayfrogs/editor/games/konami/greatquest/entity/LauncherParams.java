@@ -5,22 +5,18 @@ import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedResource;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceModel;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcIGenericResourceData;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
-import net.highwayfrogs.editor.system.Config.ConfigValueNode;
-import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
-
-import java.util.function.Function;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 /**
  * Represents the 'LauncherParams' struct.
@@ -60,9 +56,9 @@ public class LauncherParams extends kcProjectileParams implements kcIGenericReso
         reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
 
         GreatQuestChunkedFile parentFile = this.resource.getParentFile();
-        GreatQuestUtils.resolveResourceHash(kcCResourceModel.class, parentFile, this, this.vtxModelRef, vtxResourceHash, true);
-        GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, parentFile, this, this.cruiseParticleEffectRef, cruiseParticleEffectHash, true);
-        GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, parentFile, this, this.hitParticleEffectRef, hitParticleEffectHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(getLogger(), kcCResourceModel.class, parentFile, this, this.vtxModelRef, vtxResourceHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGenericType.PARTICLE_EMITTER_PARAM, parentFile, this, this.cruiseParticleEffectRef, cruiseParticleEffectHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceGenericType.PARTICLE_EMITTER_PARAM, parentFile, this, this.hitParticleEffectRef, hitParticleEffectHash, true);
     }
 
     @Override
@@ -77,32 +73,13 @@ public class LauncherParams extends kcProjectileParams implements kcIGenericReso
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        super.writeMultiLineInfo(builder, padding);
-
-        writeAssetInfo(builder, padding, "Model", this.vtxModelRef, kcCResourceModel::getFullPath);
-        writeAssetInfo(builder, padding, "Cruise Particle Effect", this.cruiseParticleEffectRef, kcCResource::getName);
-        writeAssetInfo(builder, padding, "Hit Particle Effect", this.hitParticleEffectRef, kcCResource::getName);
-
-        builder.append(" - Projectile Life Time: ").append(this.projectileLifeTime).append(Constants.NEWLINE);
-        if (this.speed != DEFAULT_SPEED && this.speed != 0)
-            builder.append(" - Speed: ").append(this.speed).append(Constants.NEWLINE);
-    }
-
-    private <TResource extends kcCResource> void writeAssetInfo(StringBuilder builder, String padding, String prefix, GreatQuestHash<? extends TResource> hash, Function<TResource, String> getter) {
-        builder.append(padding).append(prefix).append(": ");
-
-        TResource resource = hash != null ? hash.getResource() : null;
-        int resourceHash = hash != null ? hash.getHashNumber() : 0;
-        if (resource != null) {
-            builder.append(getter.apply(resource));
-        } else if (resourceHash != 0 && resourceHash != -1) {
-            builder.append(NumberUtils.to0PrefixedHexString(resourceHash));
-        } else {
-            builder.append("None");
-        }
-
-        builder.append(Constants.NEWLINE);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
+        this.vtxModelRef.addToPropertyList(propertyList, "Model", getParentFile(), kcCResourceModel.class);
+        this.cruiseParticleEffectRef.addToPropertyList(propertyList, "Cruise Particle Effect", getParentFile(), kcCResourceGenericType.PARTICLE_EMITTER_PARAM);
+        this.hitParticleEffectRef.addToPropertyList(propertyList, "Hit Particle Effect", getParentFile(), kcCResourceGenericType.PARTICLE_EMITTER_PARAM);
+        propertyList.addInteger("Projectile Life Time", this.projectileLifeTime, newValue -> this.projectileLifeTime = newValue);
+        propertyList.addFloat("Speed", this.speed, newValue -> this.speed = newValue);
     }
 
     @Override
@@ -111,11 +88,11 @@ public class LauncherParams extends kcProjectileParams implements kcIGenericReso
     }
 
     @Override
-    public void fromConfig(Config input) {
-        super.fromConfig(input);
-        this.resolve(input.getOptionalKeyValueNode(CONFIG_KEY_MODEL), kcCResourceModel.class, this.vtxModelRef);
-        this.resolve(input.getOptionalKeyValueNode(CONFIG_KEY_CRUISE_PARTICLE_EFFECT), kcCResourceGeneric.class, this.cruiseParticleEffectRef);
-        this.resolve(input.getOptionalKeyValueNode(CONFIG_KEY_HIT_PARTICLE_EFFECT), kcCResourceGeneric.class, this.hitParticleEffectRef);
+    public void fromConfig(ILogger logger, Config input) {
+        super.fromConfig(logger, input);
+        GreatQuestUtils.resolveLevelResource(logger, input.getOptionalKeyValueNode(CONFIG_KEY_MODEL), kcCResourceModel.class, getParentFile(), getResource(), this.vtxModelRef, true);
+        GreatQuestUtils.resolveLevelResource(logger, input.getOptionalKeyValueNode(CONFIG_KEY_CRUISE_PARTICLE_EFFECT), kcCResourceGenericType.PARTICLE_EMITTER_PARAM, getParentFile(), getResource(), this.cruiseParticleEffectRef, true);
+        GreatQuestUtils.resolveLevelResource(logger, input.getOptionalKeyValueNode(CONFIG_KEY_HIT_PARTICLE_EFFECT), kcCResourceGenericType.PARTICLE_EMITTER_PARAM, getParentFile(), getResource(), this.hitParticleEffectRef, true);
         this.projectileLifeTime = Math.round(input.getKeyValueNodeOrError(CONFIG_KEY_PROJECTILE_LIFE_TIME).getAsFloat() * 1000F);
         this.speed = input.getOrDefaultKeyValueNode(CONFIG_KEY_SPEED).getAsFloat(DEFAULT_SPEED);
     }
@@ -138,17 +115,5 @@ public class LauncherParams extends kcProjectileParams implements kcIGenericReso
             output.getOrCreateKeyValueNode(CONFIG_KEY_HIT_PARTICLE_EFFECT).setAsString(this.hitParticleEffectRef.getAsGqsString(settings));
         output.getOrCreateKeyValueNode(CONFIG_KEY_PROJECTILE_LIFE_TIME).setAsFloat(this.projectileLifeTime  / 1000F);
         output.getOrCreateKeyValueNode(CONFIG_KEY_SPEED).setAsFloat(this.speed);
-    }
-
-    /**
-     * Resolves a resource from a config node.
-     * @param node the node to resolve the resource from
-     * @param resourceClass the type of resource to resolve
-     * @param hashObj the hash object to apply the result to
-     * @param <TResource> the type of resource to resolve
-     */
-    private <TResource extends kcHashedResource> void resolve(ConfigValueNode node, Class<TResource> resourceClass, GreatQuestHash<TResource> hashObj) {
-        int nodeHash = GreatQuestUtils.getAsHash(node, hashObj.isNullZero() ? 0 : -1, hashObj);
-        GreatQuestUtils.resolveResourceHash(resourceClass, getParentFile(), getResource(), hashObj, nodeHash, true);
     }
 }

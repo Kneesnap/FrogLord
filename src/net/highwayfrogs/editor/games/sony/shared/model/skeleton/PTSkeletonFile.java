@@ -9,8 +9,8 @@ import net.highwayfrogs.editor.games.sony.shared.model.PTModelFileUIController;
 import net.highwayfrogs.editor.games.sony.shared.model.staticmesh.PTStaticFile;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
@@ -69,11 +69,10 @@ public class PTSkeletonFile extends SCSharedGameFile implements IPropertyListCre
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Flags", NumberUtils.toHexString(this.flags));
         propertyList.add("Bones", this.bones.size());
-        return propertyList;
     }
 
     @Override

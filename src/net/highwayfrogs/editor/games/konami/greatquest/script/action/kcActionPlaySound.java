@@ -42,13 +42,13 @@ public class kcActionPlaySound extends kcAction {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         this.soundPath = arguments.useNext().getAsString();
         this.soundId = getGameInstance().getSfxIdFromFullSoundPath(this.soundPath);
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         arguments.createNext().setAsString(this.soundPath, this.soundPath != null && !NumberUtils.isInteger(this.soundPath));
     }
 
@@ -59,9 +59,9 @@ public class kcActionPlaySound extends kcAction {
         // Validate SFX ID is valid.
         if (!getGameInstance().hasFullSoundPathFor(this.soundId)) {
             if (this.soundPath != null) {
-                printWarning(logger, "no sound could be found named '" + this.soundPath + "'.");
+                printWarning(logger, "no sound could be found named '" + this.soundPath + "'. (Sound ID: " + this.soundId + ")");
             } else {
-                printWarning(logger, "no sound was provided.");
+                printWarning(logger, "no sound was provided. (Sound ID: " + this.soundId + ")");
             }
             return;
         }

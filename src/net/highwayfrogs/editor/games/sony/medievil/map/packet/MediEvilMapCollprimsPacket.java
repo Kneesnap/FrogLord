@@ -4,8 +4,8 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapCollprim;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -62,8 +62,7 @@ public class MediEvilMapCollprimsPacket extends MediEvilMapPacket implements IPr
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Collision Primitives", this.collprims.size());
-        return propertyList;
     }
 }

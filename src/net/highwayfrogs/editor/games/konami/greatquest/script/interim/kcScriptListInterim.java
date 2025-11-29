@@ -2,17 +2,22 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.interim;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
+import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffect;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptEffectType;
+import net.highwayfrogs.editor.system.IntList;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This is an interim object which holds the core script data when loading/saving, but isn't very nice to work with.
@@ -169,6 +174,46 @@ public class kcScriptListInterim extends GameData<GreatQuestInstance> {
         for (int i = 0; i < this.effects.size(); i++) {
             this.effects.get(i).toString(builder, settings);
             builder.append('\n');
+        }
+    }
+
+    /**
+     * This game engine executes scripts in reverse order of how they are ordered in the file.
+     * Technically, it's more complicated than that, but this simplification is good enough for understanding this function.
+     * This function reverses the order of certain script effects, so that users can read and write scripts in a more intuitive order.
+     * This function is reversible like the XOR operation, meaning list.equals(reverseExecutionOrder(reverseExecutionOrder(list))) is true.
+     * @param effects the effect list to reorder
+     */
+    public static void reverseExecutionOrder(List<kcScriptEffect> effects) {
+        if (effects == null)
+            throw new NullPointerException("effects");
+
+        // How the great quest engine works:
+        // The global message queue and entity mailboxes are LIFO priority queues.
+        // Each entity is fully processed one at a time (and has all of their mailbox processed at once). This makes the entity order very difficult to predict.
+        // Luckily, situations where it mattered which order the entities were processed in are so rare that they may as well not happen. (It's pretty much just if you set a variable for an unrelated action at the same time you send the variable. Which is a situation that the user would already intend to prevent just as a matter of that most likely being a bug in the user's code if that ever happens.)
+        // Camera effects must be skipped since they are not part of the queue system.
+
+        // 1) Create a mapping of all the indices to reverse on a per-entity basis.
+        Map<Integer, IntList> entityEffectIndices = new HashMap<>();
+        for (int i = 0; i < effects.size(); i++) {
+            kcScriptEffect effect = effects.get(i);
+            if (effect.getEffectType() == kcScriptEffectType.CAMERA)
+                continue; // Camera effects are executed directly are not put into the message queue, and thus should not be moved around. See kcCScriptMgr::FireCameraEffect vs the other methods.
+
+            entityEffectIndices.computeIfAbsent(effect.getTargetEntityRef().getHashNumber(), key -> new IntList()).add(i);
+        }
+
+        // 2) Reverse the indices.
+        for (IntList indexList : entityEffectIndices.values()) {
+            for (int i = 0; i < indexList.size() / 2; i++) {
+                int lowIndex = indexList.get(i);
+                int highIndex = indexList.get(indexList.size() - i - 1);
+
+                kcScriptEffect temp = effects.get(lowIndex);
+                effects.set(lowIndex, effects.get(highIndex));
+                effects.set(highIndex, temp);
+            }
         }
     }
 }

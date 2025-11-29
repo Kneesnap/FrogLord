@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamRea
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.*;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 import net.highwayfrogs.editor.utils.objects.StringNode;
 
@@ -53,7 +54,7 @@ public class kcScriptEffectCamera extends kcScriptEffect {
     public void load(kcParamReader reader) {
         this.arguments = reader.getArguments();
         reader.setCurrentIndex(this.arguments.length);
-        resolveEntityFromArguments();
+        resolveEntityFromArguments(getLogger());
     }
 
     @Override
@@ -66,7 +67,7 @@ public class kcScriptEffectCamera extends kcScriptEffect {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments, int lineNumber, String fileName) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments, int lineNumber, String fileName) {
         this.arguments = new kcParam[this.cameraEffect.getArguments().length];
         for (int i = 0; i < this.arguments.length; i++) {
             StringNode node = arguments.useNext();
@@ -74,14 +75,14 @@ public class kcScriptEffectCamera extends kcScriptEffect {
 
             kcParam newArgument = new kcParam();
             this.arguments[i] = newArgument;
-            newArgument.fromConfigNode(this, getGameInstance(), node, argumentTemplate.getType());
+            newArgument.fromConfigNode(logger, this, getGameInstance(), node, argumentTemplate.getType());
         }
 
-        resolveEntityFromArguments();
+        resolveEntityFromArguments(logger);
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         for (int i = 0; i < Math.min(this.arguments.length, this.cameraEffect.getArguments().length); i++) {
             StringNode node = arguments.createNext();
             kcArgument argumentTemplate = this.cameraEffect.getArguments()[i];
@@ -94,22 +95,17 @@ public class kcScriptEffectCamera extends kcScriptEffect {
         }
     }
 
-    @Override
-    public String getEndOfLineComment() {
-        return null; // None of these effects have end of line comments.
-    }
-
-    private void resolveEntityFromArguments() {
+    private void resolveEntityFromArguments(ILogger logger) {
         if (this.entityParamRef == null)
             return;
 
         int entityHash = this.arguments[0].getAsInteger();
-        GreatQuestUtils.resolveResourceHash(kcCResourceEntityInst.class, getChunkedFile(), this, this.entityParamRef, entityHash, false);
+        GreatQuestUtils.resolveLevelResourceHash(logger, kcCResourceEntityInst.class, getChunkedFile(), this, this.entityParamRef, entityHash, false);
     }
 
     @Override
     public boolean isActionApplicableToTarget() {
-        return getTargetEntityRef().getResource() != null;
+        return true; // I believe this will work even if the target entity is not found.
     }
 
     @Override
@@ -170,18 +166,17 @@ public class kcScriptEffectCamera extends kcScriptEffect {
         }
     }
 
-    @Getter
-    @AllArgsConstructor
     public enum kcCameraPivotParam {
-        PIVOT_DISTANCE,
+        // Pivot param types:
+        PIVOT_DISTANCE, // On the follow camera, this is the "follow distance"
         TARGET_OFFSET_X,
         TARGET_OFFSET_Y,
         TARGET_OFFSET_Z,
         PIVOT_OFFSET_X,
-        PIVOT_OFFSET_Y,
+        PIVOT_OFFSET_Y, // On the follow camera, this is the "follow vertex offset"
         PIVOT_OFFSET_Z,
         TRANSITION_DURATION,
-        CAMERA_BASE_FLAGS;
+        LOCK_PIVOT_Y; // kcCameraPivot::Update checks for flag 0x80 (set by setting this param to any value), the camera will have its pivot Y locked to the target Y. Seems to only ever be used by accident, in The Tree of Knowledge, since the camera cuts off the top of Mr. D because of this.
 
         /**
          * Gets the kcCameraPivotParam corresponding to the provided value.

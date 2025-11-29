@@ -23,15 +23,18 @@ import java.util.function.Function;
 public class LazyFXListCell<T> extends ListCell<T> {
     private final Function<T, String> withoutIndexTextHandler;
     private final BiFunction<T, Integer, String> withIndexTextHandler;
+    private final String nullDisplay;
     private final Function<T, Image> withoutIndexGraphicHandler;
     private final BiFunction<T, Integer, Image> withIndexGraphicHandler;
     private final EventHandler<? super ContextMenuEvent> contextMenuListener = this::setupContextMenu;
-    private final String nullDisplay;
     private Function<T, Tooltip> withoutIndexTooltipHandler;
     private BiFunction<T, Integer, Tooltip> withIndexTooltipHandler;
     private Tooltip nullTooltip;
     private TriConsumer<ContextMenu, T, Integer> withIndexContextMenuHandler;
     private BiConsumer<ContextMenu, T> withoutIndexContextMenuHandler;
+    private Function<T, String> withoutIndexStyleHandler;
+    private BiFunction<T, Integer, String> withIndexStyleHandler;
+    private String nullStyle;
     private int forcedGraphicSize = DEFAULT_GRAPHIC_SIZE;
 
     private static final int DEFAULT_GRAPHIC_SIZE = 25;
@@ -141,6 +144,36 @@ public class LazyFXListCell<T> extends ListCell<T> {
         return this;
     }
 
+    /**
+     * Sets the handler for creating a style using the list item index.
+     * @param withIndexStyleHandler the handler to apply
+     * @return this
+     */
+    public LazyFXListCell<T> setWithIndexStyleHandler(BiFunction<T, Integer, String> withIndexStyleHandler) {
+        this.withIndexStyleHandler = withIndexStyleHandler;
+        return this;
+    }
+
+    /**
+     * Sets the handler for creating a style using the list item index.
+     * @param withoutIndexStyleHandler the handler to apply
+     * @return this
+     */
+    public LazyFXListCell<T> setWithoutIndexStyleHandler(Function<T, String> withoutIndexStyleHandler) {
+        this.withoutIndexStyleHandler = withoutIndexStyleHandler;
+        return this;
+    }
+
+    /**
+     * Sets the style displayed for a cell with a null value.
+     * @param nullStyle the style to apply
+     * @return this
+     */
+    public LazyFXListCell<T> setNullStyle(String nullStyle) {
+        this.nullStyle = nullStyle;
+        return this;
+    }
+
     @Override
     public void updateItem(T selection, boolean empty) {
         super.updateItem(selection, empty);
@@ -184,6 +217,25 @@ public class LazyFXListCell<T> extends ListCell<T> {
         }
 
         setText(applyText);
+
+        // Update style.
+        String applyStyle;
+        try {
+            if (selection == null && this.nullStyle != null) {
+                applyStyle = this.nullStyle;
+            } else if (this.withIndexStyleHandler != null) {
+                applyStyle = this.withIndexStyleHandler.apply(selection, getIndex());
+            } else if (this.withoutIndexStyleHandler != null) {
+                applyStyle = this.withoutIndexStyleHandler.apply(selection);
+            } else {
+                applyStyle = null;
+            }
+        } catch (Throwable th) {
+            Utils.handleError(null, th, false);
+            applyStyle = null;
+        }
+
+        setStyle(applyStyle);
 
         // Update tooltip.
         Tooltip tooltip;

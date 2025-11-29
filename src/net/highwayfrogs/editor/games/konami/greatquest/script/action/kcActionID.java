@@ -45,7 +45,7 @@ public enum kcActionID {
     WAIT_ROTATE((byte) 0x19, "WaitForAxisRotation", null, true, kcActionLazyTemplate.WAIT_ROTATE_ARGUMENTS), // kcCActorBase::ProcessAction, Seems unused.
     WAIT_ROTATE_XYZ((byte) 0x1A, "WaitForFullRotation", null, true, kcActionEmptyTemplate::new), // kcCActorBase::ProcessAction, Seems unused.
     WAIT_ANIMATION((byte) 0x1B, "WaitForAnimation", null, true, kcActionEmptyTemplate::new), // kcCActorBase::ProcessAction
-    LOOP((byte) 0x1D, "Loop", null, true, kcActionLazyTemplate.LOOP_ARGUMENTS), // kcCActorBase::ProcessAction. Marks the sequence to be restarted a given number of times. This will not cause it to restart during subsequent executions.
+    LOOP((byte) 0x1D, "Loop", null, true, kcActionLoop::new), // kcCActorBase::ProcessAction. Marks the sequence to be restarted a given number of times. This will not cause it to restart during subsequent executions.
     IMPULSE((byte) 0x1E, "ApplyImpulse", kcEntityInheritanceGroup.CHARACTER, true, kcActionImpulse::new), // kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand
     DAMAGE((byte) 0x1F, "Damage", kcEntityInheritanceGroup.ACTOR_BASE, false, kcActionGiveDamage::new), // kcCActorBase::OnCommand/kcCActor::OnCommand. This isn't called directly, but GIVE_DAMAGE is automatically remapped to this command.
     PROMPT((byte) 0x2F, "Prompt", kcEntityInheritanceGroup.ACTOR_BASE, false, kcActionLazyTemplate.PROMPT_ARGUMENTS), // kcCActorBase::OnCommand/kcCActor::OnCommand NOTE: This seems unused, and we don't know for certain the argument is labelled correctly. It is implemented though. This feature can be useful to reduce code duplication however, so it makes sense to use it.
@@ -53,8 +53,8 @@ public enum kcActionID {
     SET_ALARM((byte) 0x32, "SetAlarm", kcEntityInheritanceGroup.ENTITY, true, kcActionSetAlarm::new), // kcCActorBase::ProcessAction, kcCEntity::OnCommand
     TRIGGER_EVENT((byte) 0x33, "TriggerEvent", kcEntityInheritanceGroup.ENTITY, true, kcActionTriggerEvent::new), // kcCActorBase::ProcessAction, kcCEntity::OnCommand
     PLAY_SFX((byte) 0x34, "PlaySound", kcEntityInheritanceGroup.ENTITY, false, kcActionPlaySound::new), // kcCEntity::OnCommand, kcCEntity3D::OnCommand (If kcCEntity3D, then it will be positional audio at the position of the entity, otherwise it will be played directly.)
-    VARIABLE_SET((byte) 0x35, "SetVariable", kcEntityInheritanceGroup.ENTITY, false, kcActionLazyTemplate.VARIABLE_SET_ARGUMENTS), // kcCEntity::OnCommand
-    VARIABLE_ADD((byte) 0x36, "AddToVariable", kcEntityInheritanceGroup.ENTITY, false, kcActionLazyTemplate.VARIABLE_ADD_ARGUMENTS), // kcCEntity::OnCommand
+    VARIABLE_SET((byte) 0x35, "SetVariable", kcEntityInheritanceGroup.ENTITY, false, kcActionChangeVariable::new), // kcCEntity::OnCommand
+    VARIABLE_ADD((byte) 0x36, "AddToVariable", kcEntityInheritanceGroup.ENTITY, false, kcActionChangeVariable::new), // kcCEntity::OnCommand
     NUMBER((byte) 0x37, "SendNumber", kcEntityInheritanceGroup.ENTITY, false, kcActionNumber::new), // kcCEntity::OnCommand
     PARTICLE((byte) 0x38, "SpawnParticleEffect", kcEntityInheritanceGroup.ACTOR_BASE, false, kcActionSpawnParticleEffect::new), // kcCActorBase::OnCommand/kcCActor::OnCommand
     KILL_PARTICLE((byte) 0x39, "KillParticleEffect", kcEntityInheritanceGroup.ACTOR_BASE, false, kcActionEmptyTemplate::new), // kcCActorBase::OnCommand/kcCActor::OnCommand Kills particle effect(s) spawned by the current entity. (The entity which calls SpawnParticleEffect is the entity to kill it too.)

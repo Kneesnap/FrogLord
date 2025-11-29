@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionID;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptValidationData;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
@@ -44,12 +45,12 @@ public class kcScriptCauseWhenItem extends kcScriptCause {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         this.playerShouldHaveItem = arguments.useNext().getAsBoolean();
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         arguments.createNext().setAsBoolean(this.playerShouldHaveItem);
     }
 

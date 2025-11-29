@@ -12,7 +12,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IFileExport;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestImageController;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.DataUtils;
@@ -70,7 +70,7 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
     private static final List<String> PC_IGNORED_IMAGES_WITH_EXTRA_DATA = Arrays.asList("skycloud.img", "stmcloud.img", "ground04.img", "momring.img", "firems01.img");
 
     public GreatQuestImageFile(GreatQuestInstance instance) {
-        super(instance);
+        super(instance, GreatQuestArchiveFileType.IMAGE);
     }
 
     /**
@@ -287,7 +287,7 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
 
     @Override
     public void save(DataWriter writer) {
-        if ((this.fileFormat == GreatQuestImageFileFormat.ENGINE) || getGameInstance().isPC()) { // Based on kcImageSave(_kcImage p, int handle)
+        if (this.fileFormat == GreatQuestImageFileFormat.ENGINE) { // Based on kcImageSave(_kcImage p, int handle)
             writer.writeInt(SIGNATURE);
             int headerSizeAddress = writer.writeNullPointer();
             writer.writeInt(this.image.getWidth()); // width
@@ -445,10 +445,23 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
         this.image = image;
 
         // Automatically update the file format to match the necessary option for the newly applied image format.
-        if (format == kcImageFormat.INDEXED8) {
-            this.fileFormat = GreatQuestImageFileFormat.TGA;
+        GreatQuestImageFileFormat oldFormat = this.fileFormat;
+        GreatQuestImageFileFormat newFormat;
+        if (format == kcImageFormat.A8R8G8B8) {
+            newFormat = GreatQuestImageFileFormat.ENGINE;
         } else {
-            this.fileFormat = GreatQuestImageFileFormat.ENGINE;
+            // Both R8G8B8 and INDEXED8 are stored as .tga.
+            newFormat = GreatQuestImageFileFormat.TGA;
+        }
+
+        // If the format changes, this impacts the file ordering, so re-register the file.
+        if (oldFormat != newFormat) {
+            if (getMainArchive().removeFile(this)) {
+                this.fileFormat = newFormat; // Must change only after removal, but BEFORE adding.
+                getMainArchive().addFile(this);
+            } else {
+                this.fileFormat = newFormat; // Must change only after removal, so this if statement is necessary.
+            }
         }
     }
 
@@ -475,12 +488,11 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Image Dimensions", getWidth() + " x " + getHeight());
         propertyList.add("Image File Format", this.fileFormat.getDisplayName()); // No need to allow for manual changes of this, as importing an image will do everything necessary.
         propertyList.add("Pixel Format", getFormat());
-        return propertyList;
     }
 
     @Override

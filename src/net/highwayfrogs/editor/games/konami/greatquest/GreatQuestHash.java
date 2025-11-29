@@ -6,8 +6,12 @@ import net.highwayfrogs.editor.games.generic.data.IGameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedResource;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.IkcCResourceGenericTypeGroup;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListDataEntry;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.lambda.Consumer5;
@@ -37,7 +41,7 @@ import java.util.function.Consumer;
  */
 @Getter
 public final class GreatQuestHash<TResource extends kcHashedResource> {
-    private int hashNumber;
+    private int hashNumber = -1;
     private String originalString; // The "original" string is the one which created the hash, if known.
 
     // Some hashes need to use zero for their null value instead of -1, due to how they are processed by the game.
@@ -136,8 +140,12 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
     public String getAsGqsString(kcScriptDisplaySettings settings) {
         if (this.originalString != null && this.originalString.length() > 0) {
             return this.originalString;
+        } else if (isHashNull()) {
+            return null;
+        } else if (settings != null) {
+            return settings.getGqsHashDisplay(this.hashNumber);
         } else {
-            return kcScriptDisplaySettings.getGqsSyntaxHashDisplay(settings, this.hashNumber);
+            return "0x" + getHashNumberAsString();
         }
     }
 
@@ -148,7 +156,7 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
         if (this.originalString != null && this.originalString.length() > 0) {
             node.setAsString(this.originalString, true);
         } else {
-            kcScriptDisplaySettings.applyGqsSyntaxHashDisplay(node, settings, this.hashNumber);
+            kcScriptDisplaySettings.applyGqsSyntaxHashDisplay(node, settings, this.hashNumber, getValueRepresentingNull());
         }
     }
 
@@ -162,8 +170,8 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
             setHash(null);
         } else if (input.startsWith("\"") && input.endsWith("\"")) {
             setHash(unescape(input.substring(1, input.length() - 1)));
-        } else if (input.length() == 8 && NumberUtils.isHexInteger("0x" + input)) {
-            setHash(Integer.parseInt(input, 16));
+        } else if (input.length() == 8 && NumberUtils.isHexInteger(input)) {
+            setHash(NumberUtils.parseHexInteger(input));
         } else {
             setHash(input);
         }
@@ -430,8 +438,19 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
         return this.hashNumber == getValueRepresentingNull() || this.hashNumber == 0;
     }
 
-    private int getValueRepresentingNull() {
+    /**
+     * Gets the hash value which represents null for this hash.
+     * @return valueRepresentingNull
+     */
+    public int getValueRepresentingNull() {
         return isNullZero() ? 0 : -1;
+    }
+
+    /**
+     * Test if the hash represents a null value.
+     */
+    public boolean isHashNull() {
+        return this.hashNumber == getValueRepresentingNull();
     }
 
     /**
@@ -485,7 +504,8 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
 
         // Master hashes can't be edited, at least not directly here. (Their names are usually set somewhere else and then applied to here)
         if (isMaster()) {
-            TextField field = grid.addTextField(label, this.getAsGqsString(null));
+            String startText = getAsGqsString(null);
+            TextField field = grid.addTextField(label, startText != null ? startText : "null");
             field.setDisable(true);
             return field;
         }
@@ -493,8 +513,8 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
         return grid.addTextField(label, this.getAsGqsString(null), newTargetEntityText -> {
             int hash;
             boolean allowBadHash;
-            if (NumberUtils.isHexInteger(newTargetEntityText)) {
-                hash = NumberUtils.parseHexInteger(newTargetEntityText);
+            if (NumberUtils.isPrefixedHexInteger(newTargetEntityText)) {
+                hash = NumberUtils.parseIntegerAllowHex(newTargetEntityText);
                 allowBadHash = true;
             } else {
                 hash = GreatQuestUtils.hash(newTargetEntityText);
@@ -512,6 +532,65 @@ public final class GreatQuestHash<TResource extends kcHashedResource> {
                 return false;
             }
         });
+    }
+
+    /**
+     * Adds the hash object to a property list.
+     * @param propertyList the property list to add to
+     * @param name the name of the property to show as
+     * @param chunkedFile the chunked file to resolve assets from
+     * @param resourceClass the type of resource to resolve
+     * @return newEntry
+     */
+    public PropertyListDataEntry<GreatQuestHash<TResource>> addToPropertyList(PropertyListNode propertyList, String name, GreatQuestChunkedFile chunkedFile, Class<TResource> resourceClass) {
+        if (propertyList == null)
+            throw new NullPointerException("propertyList");
+        if (resourceClass != null && !kcCResource.class.isAssignableFrom(resourceClass))
+            throw new IllegalArgumentException("resourceClass " + resourceClass.getSimpleName() + " is not a " + kcCResource.class.getSimpleName() + "!");
+
+        PropertyListDataEntry<GreatQuestHash<TResource>> newEntry = propertyList.add(name, this)
+                .setDataToStringConverter(hash -> hash.getAsGqsString(null));
+
+        // Master hashes can't be edited, at least not directly here. (Their names are usually set somewhere else and then applied to here)
+        if (isMaster() || chunkedFile == null || resourceClass == null)
+            return newEntry;
+
+        return newEntry.setDataFromStringConverter(newText -> {
+            GreatQuestHash<TResource> newHash = new GreatQuestHash<>();
+            GreatQuestUtils.resolveLevelResource(null, new StringNode(newText), resourceClass, chunkedFile, chunkedFile, newHash, false);
+            return newHash;
+        }).setDataValidator(newHash -> newHash.isHashNull() || newHash.getResource() != null)
+                .setDataHandler(newHash -> setResource(newHash.getResource(), false));
+    }
+
+    /**
+     * Adds the hash object to a property list.
+     * @param propertyList the property list to add to
+     * @param name the name of the property to show as
+     * @param chunkedFile the chunked file to resolve assets from
+     * @param resourceType the type of resource to resolve
+     * @return newEntry
+     */
+    @SuppressWarnings("unchecked")
+    public PropertyListDataEntry<GreatQuestHash<TResource>> addToPropertyList(PropertyListNode propertyList, String name, GreatQuestChunkedFile chunkedFile, IkcCResourceGenericTypeGroup resourceType) {
+        if (propertyList == null)
+            throw new NullPointerException("propertyList");
+        if (resourceType == null)
+            throw new NullPointerException("resourceType");
+
+        PropertyListDataEntry<GreatQuestHash<TResource>> newEntry = propertyList.add(name, this)
+                .setDataToStringConverter(hash -> hash.getAsGqsString(null));
+
+        // Master hashes can't be edited, at least not directly here. (Their names are usually set somewhere else and then applied to here)
+        if (isMaster() || chunkedFile == null)
+            return newEntry;
+
+        return newEntry.setDataFromStringConverter(newText -> {
+            GreatQuestHash<TResource> newHash = new GreatQuestHash<>();
+            GreatQuestUtils.resolveLevelResource(null, new StringNode(newText), resourceType, chunkedFile, chunkedFile, (GreatQuestHash<kcCResourceGeneric>) newHash, false);
+            return newHash;
+        }).setDataValidator(newHash -> newHash.isHashNull() || newHash.getResource() != null)
+                .setDataHandler(newHash -> setResource(newHash.getResource(), false));
     }
 
     @Override

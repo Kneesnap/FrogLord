@@ -5,10 +5,10 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
-import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -24,7 +24,7 @@ import java.util.function.Function;
  * Created by Kneesnap on 8/23/2023.
  */
 @Getter
-public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter {
+public abstract class kcBaseDesc extends GameData<GreatQuestInstance> implements IPropertyListCreator {
     private final kcCResource resource;
 
     public kcBaseDesc(kcCResource resource) {

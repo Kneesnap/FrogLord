@@ -4,9 +4,11 @@ import javafx.application.ConditionalFeature;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.HPos;
 import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
@@ -19,9 +21,9 @@ import javafx.scene.shape.CullFace;
 import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import javafx.util.converter.NumberStringConverter;
 import lombok.Getter;
-import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.psx.shading.IPSXShadedMesh;
 import net.highwayfrogs.editor.gui.GameUIController;
@@ -104,6 +106,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
 
     // Managers:
     private MeshUIMarkerManager<TMesh> markerManager;
+    private EventHandler<WindowEvent> oldCloseRequestListener;
     private final List<MeshUIManager<TMesh>> managers = new ArrayList<>();
     private final Map<Class<? extends MeshUIManager<TMesh>>, MeshUIManager<TMesh>> managersByType = new HashMap<>();
     private final List<MeshUISelector<TMesh, ?>> selectors = new ArrayList<>();
@@ -240,6 +243,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
      */
     public void setupController(TMesh dynamicMesh, Stage stageToOverride, Parent loadRoot) {
         this.overwrittenStage = stageToOverride;
+        this.oldCloseRequestListener = stageToOverride.getOnCloseRequest();
         this.mesh = dynamicMesh;
 
         // Setup MeshView
@@ -274,7 +278,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         splitPane.setDividerPositions(.2);
         splitPane.getItems().addAll(loadRoot, borderPane3D);
 
-        // Setup the root node. (This exists so we can also add 2D elements above the 3D space.
+        // Setup the root node. (So we can also add 2D elements above the 3D space.)
         this.root2D = new AnchorPane();
         GameUIController.setAnchorPaneStretch(splitPane);
         this.root2D.getChildren().add(splitPane);
@@ -288,71 +292,13 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
         subScene3D.heightProperty().bind(borderPane3D.heightProperty());
 
         // Associate camera controls with the scene.
-        this.firstPersonCamera.assignSceneControls(stageToOverride, this.meshScene);
+        this.inputManager.assignSceneControls(this.meshScene);
+        this.inputManager.setStage(stageToOverride);
         if (isDefaultCamera())
             this.firstPersonCamera.startThreadProcessing();
 
-        this.inputManager.setFinalKeyHandler((manager, event) -> {
-            if (onKeyPress(event) || event.getEventType() != KeyEvent.KEY_PRESSED)
-                return; // Handled by the other controller.
-
-            if (event.getCode() == KeyCode.ESCAPE) { // Exit the viewer.
-                // Stop camera processing and clear up the render manager
-                this.textureSheetDebugView.imageProperty().unbind();
-                if (isDefaultCamera())
-                    this.firstPersonCamera.stopThreadProcessing();
-                this.firstPersonCamera.removeSceneControls(stageToOverride, this.meshScene);
-                this.renderManager.removeAllDisplayLists();
-                this.transparentRenderManager.removeAllDisplayLists();
-                this.inputManager.shutdown();
-                this.frameTimer.stop();
-
-                // Clear selectors
-                while (!this.selectors.isEmpty())
-                    this.selectors.get(this.selectors.size() - 1).cancel();
-
-                // Call shutdown hook.
-                try {
-                    onShutdown();
-                } catch (Throwable th) {
-                    String errorMessage = "Encountered error in MeshViewController shutdown hook.";
-                    getLogger().throwing("MeshViewController", null, new RuntimeException(errorMessage, th));
-                }
-
-                this.meshTracker.disposeMeshes(); // Prevent memory leaks by ensuring texture sheets remove any listeners from static textures sources (which would then keep the texture sheet in memory).
-                this.root3D.getChildren().clear(); // Clear data just in-case there's a memory leak.
-                FXUtils.setSceneKeepPosition(this.overwrittenStage, this.originalScene);
-            } else if (event.getCode() == KeyCode.F8) { // Print mesh information.
-                getMesh().printDebugMeshInfo();
-            } else if (event.getCode() == KeyCode.F9) { // 3D screenshot.
-                Scene3DUtils.take3DScreenshot(getGameInstance(), getLogger(), this.mesh, this.mesh.getMeshName());
-            } else if (event.getCode() == KeyCode.F10) { // Take screenshot.
-                Scene3DUtils.takeScreenshot(getGameInstance(), this.subScene, getMeshScene(), FileUtils.stripExtension(getMeshDisplayName()), false);
-            } else if (event.getCode() == KeyCode.F12 && getMesh().getTextureAtlas() != null) {
-
-                if (getMesh().getTextureAtlas().getTextureSource().isEnableAwtImage()) {
-                    getLogger().info("Saving main mesh texture sheet to 'texture-sheet-awt.png'...");
-                    try {
-                        ImageIO.write(getMesh().getTextureAtlas().getImage(), "png", new File(FrogLordApplication.getWorkingDirectory(), "texture-sheet-awt.png"));
-                    } catch (IOException ex) {
-                        FXUtils.makeErrorPopUp("Failed to save 'texture-sheet-awt.png'.", ex, true);
-                    }
-                }
-
-                if (getMesh().getTextureAtlas().getTextureSource().isEnableFxImage()) {
-                    getLogger().info("Saving main mesh texture sheet to 'texture-sheet-fx.png'...");
-                    try {
-                        ImageIO.write(SwingFXUtils.fromFXImage(getMesh().getTextureAtlas().getFxImage(), null), "png", new File(FrogLordApplication.getWorkingDirectory(), "texture-sheet-fx.png"));
-                    } catch (IOException ex) {
-                        FXUtils.makeErrorPopUp("Failed to save 'texture-sheet-fx.png'.", ex, true);
-                    }
-                }
-            } else if ((event.isControlDown() && event.getCode() == KeyCode.ENTER)) { // Toggle full-screen.
-                this.overwrittenStage.setFullScreen(!this.overwrittenStage.isFullScreen());
-            } else if (event.getCode() == KeyCode.X) { // Toggle wireframe.
-                this.meshView.setDrawMode(this.meshView.getDrawMode() == DrawMode.FILL ? DrawMode.LINE : DrawMode.FILL);
-            }
-        });
+        this.inputManager.setFinalKeyHandler(this::handleKeyPress);
+        stageToOverride.setOnCloseRequest(this::handleCloseRequest);
 
         // Setup managers.
         this.managers.clear();
@@ -393,6 +339,62 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     }
 
     /**
+     * Handles a close request on the window to ensure the mesh viewer is properly shut down.
+     * This avoids memory leaks for example, with animation timers not getting stopped.
+     * @param event the event to handle
+     */
+    protected void handleCloseRequest(WindowEvent event) {
+        // Run the parent listener.
+        if (this.oldCloseRequestListener != null)
+            this.oldCloseRequestListener.handle(event);
+        if (!event.isConsumed())
+            shutdown();
+    }
+
+    /**
+     * Handles a key press event which was not handled by a listener in the InputManager first.
+     * @param manager the InputManager handling input for the scene
+     * @param event the event which we will handle
+     */
+    protected void handleKeyPress(InputManager manager, KeyEvent event) {
+        if (onKeyPress(event) || event.getEventType() != KeyEvent.KEY_PRESSED)
+            return; // Handled by the other controller.
+
+        if (event.getCode() == KeyCode.ESCAPE) { // Exit the viewer.
+            shutdownMeshViewer();
+        } else if (event.getCode() == KeyCode.F8) { // Print mesh information.
+            getMesh().printDebugMeshInfo();
+        } else if (event.getCode() == KeyCode.F9) { // 3D screenshot.
+            Scene3DUtils.take3DScreenshot(getGameInstance(), getLogger(), this.mesh, this.mesh.getMeshName());
+        } else if (event.getCode() == KeyCode.F10) { // Take screenshot.
+            Scene3DUtils.takeScreenshot(getGameInstance(), this.subScene, FileUtils.stripExtension(getMeshDisplayName()), false);
+        } else if (event.getCode() == KeyCode.F12 && getMesh().getTextureAtlas() != null) {
+
+            if (getMesh().getTextureAtlas().getTextureSource().isEnableAwtImage()) {
+                getLogger().info("Saving main mesh texture sheet to 'texture-sheet-awt.png'...");
+                try {
+                    ImageIO.write(getMesh().getTextureAtlas().getImage(), "png", new File(getGameInstance().getMainGameFolder(), "texture-sheet-awt.png"));
+                } catch (IOException ex) {
+                    FXUtils.makeErrorPopUp("Failed to save 'texture-sheet-awt.png'.", ex, true);
+                }
+            }
+
+            if (getMesh().getTextureAtlas().getTextureSource().isEnableFxImage()) {
+                getLogger().info("Saving main mesh texture sheet to 'texture-sheet-fx.png'...");
+                try {
+                    ImageIO.write(SwingFXUtils.fromFXImage(getMesh().getTextureAtlas().getFxImage(), null), "png", new File(getGameInstance().getMainGameFolder(), "texture-sheet-fx.png"));
+                } catch (IOException ex) {
+                    FXUtils.makeErrorPopUp("Failed to save 'texture-sheet-fx.png'.", ex, true);
+                }
+            }
+        } else if ((event.isControlDown() && event.getCode() == KeyCode.ENTER)) { // Toggle full-screen.
+            this.overwrittenStage.setFullScreen(!this.overwrittenStage.isFullScreen());
+        } else if (event.getCode() == KeyCode.X) { // Toggle wireframe.
+            this.meshView.setDrawMode(this.meshView.getDrawMode() == DrawMode.FILL ? DrawMode.LINE : DrawMode.FILL);
+        }
+    }
+
+    /**
      * Adds two nodes to the view settings grid.
      * @param leftNode the node to place in the left column
      * @param rightNode the node to place in the right column
@@ -410,10 +412,62 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
     }
 
     /**
+     * Adds a node to the view settings grid.
+     * @param node the node to place
+     */
+    protected void addToViewSettingsGrid(Node node, HPos alignment) {
+        RowConstraints example = getViewSettingsPane().getRowConstraints().get(0);
+        getViewSettingsPane().getRowConstraints().add(new RowConstraints(example.getMinHeight(), example.getPrefHeight(), example.getMaxHeight(), example.getVgrow(), example.getValignment(), example.isFillHeight()));
+        GridPane.setHalignment(node, alignment);
+        GridPane.setColumnSpan(node, 2);
+        GridPane.setColumnIndex(node, 0);
+        GridPane.setRowIndex(node, getViewSettingsPane().getRowConstraints().size() - 1);
+        getViewSettingsPane().getChildren().add(node);
+    }
+
+    /**
      * If this is true, it gives a preference to 3D models having transparency over the world.
      */
     protected boolean mapRendersFirst() {
         return false;
+    }
+
+    private void shutdown() {
+        // Stop camera processing and clear up the render manager
+        this.textureSheetDebugView.imageProperty().unbind();
+        if (isDefaultCamera())
+            this.firstPersonCamera.stopThreadProcessing();
+        this.inputManager.removeSceneControls(this.meshScene);
+        this.inputManager.setStage(null);
+        this.renderManager.removeAllDisplayLists();
+        this.transparentRenderManager.removeAllDisplayLists();
+        this.inputManager.shutdown();
+        this.frameTimer.stop();
+
+        // Clear selectors
+        while (!this.selectors.isEmpty())
+            this.selectors.get(this.selectors.size() - 1).cancel();
+
+        // Call shutdown hook.
+        try {
+            onShutdown();
+        } catch (Throwable th) {
+            String errorMessage = "Encountered error in MeshViewController shutdown hook.";
+            getLogger().throwing("MeshViewController", null, new RuntimeException(errorMessage, th));
+        }
+
+        this.meshTracker.disposeMeshes(); // Prevent memory leaks by ensuring texture sheets remove any listeners from static textures sources (which would then keep the texture sheet in memory).
+        this.root3D.getChildren().clear(); // Clear data just in-case there's a memory leak.
+        if (this.overwrittenStage.getOnCloseRequest() != null) // If the request handler has been set to null, respect that, since it's likely to avoid memory leaks.
+            this.overwrittenStage.setOnCloseRequest(this.oldCloseRequestListener); // Restore the previous close listener
+    }
+
+    /**
+     * Shuts down the mesh viewer.
+     */
+    public void shutdownMeshViewer() {
+        shutdown();
+        FXUtils.setSceneKeepPosition(this.overwrittenStage, this.originalScene);
     }
 
     /**
@@ -696,7 +750,7 @@ public abstract class MeshViewController<TMesh extends DynamicMesh> implements I
      */
     public static <TController extends MeshViewController<TDynMesh>, TDynMesh extends DynamicMesh> TController setupMeshViewer(Stage stageToOverride, TController controller, TDynMesh mesh) {
         if (!Platform.isSupported(ConditionalFeature.SCENE3D)) {
-            FXUtils.makePopUp("Your version of JavaFX does not support 3D, so meshes cannot be previewed.", AlertType.WARNING);
+            FXUtils.showPopup(AlertType.WARNING, "3D not supported.", "Your version of JavaFX does not support 3D, so meshes cannot be previewed.");
             return null;
         }
 

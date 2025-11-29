@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.config.exe.psx;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.pc.PCThemeBook;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
@@ -23,7 +24,7 @@ public class PSXThemeBook extends ThemeBook {
     private int multiplayerWadId = -1;
     private int multiplayerVloId = -1;
     private long formLibraryPointer;
-    private int deathHeight;
+    @Setter private int deathHeight; // For Noodle.
 
     public PSXThemeBook(FroggerGameInstance instance) {
         super(instance);

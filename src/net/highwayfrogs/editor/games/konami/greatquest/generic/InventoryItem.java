@@ -25,6 +25,8 @@ public enum InventoryItem {
     SEED, // 17 / 11
     EXTRA_BIN_19, // 18 / 12
     EXTRA_BIN_20, // 19 / 13
+
+    // Start of bitwise items.
     MAP_00, // 20 / 14
     MAP_01, // 21 / 15
     MAP_02, // 22 / 16

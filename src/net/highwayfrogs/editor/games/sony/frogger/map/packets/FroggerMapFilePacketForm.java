@@ -11,7 +11,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerOldMapFor
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.IFroggerFormEntry;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -113,9 +113,8 @@ public class FroggerMapFilePacketForm extends FroggerMapFilePacket {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Form Count", this.oldForms.size() + this.forms.size());
-        return null;
     }
 
     /**

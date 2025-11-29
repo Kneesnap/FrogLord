@@ -44,9 +44,9 @@ public class kcActionTriggerEvent extends kcActionTemplate {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         String eventName = arguments.useNext().getAsString(); // We can't resolve the sequence by the hash of the string normally since these seem to use randomized hash values.
-        if (NumberUtils.isHexInteger(eventName)) {
+        if (NumberUtils.isPrefixedHexInteger(eventName)) {
             this.eventRef.setHash(NumberUtils.parseHexInteger(eventName));
         } else {
             this.eventRef.setHash(eventName);
@@ -54,7 +54,7 @@ public class kcActionTriggerEvent extends kcActionTemplate {
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         this.eventRef.applyGqsString(arguments.createNext(), settings);
     }
 

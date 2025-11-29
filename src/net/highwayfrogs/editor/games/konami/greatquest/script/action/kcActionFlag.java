@@ -45,12 +45,12 @@ public class kcActionFlag extends kcAction {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         this.flagMask = kcEntityInstanceFlag.getValueFromArguments(arguments);
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         kcEntityInstanceFlag.addFlags(this.flagMask, arguments);
     }
 
@@ -64,7 +64,7 @@ public class kcActionFlag extends kcAction {
             for (kcEntityInstanceFlag flag : kcEntityInstanceFlag.values()) {
                 kcEntityInheritanceGroup group = flag.getFlagType().getInheritanceGroup();
                 if ((this.flagMask & flag.getInstanceBitFlagMask()) == flag.getInstanceBitFlagMask() && !group.isApplicable(entityDesc))
-                    printWarning(logger, "the entity flag '" + flag.getDisplayName() + "' requires the entity description '" + entityDesc.getResource().getName() + "' to extend " + group.getDisplayName() + ", but the entity was actually a " + Utils.getSimpleName(entityDesc) + ".");
+                    printWarning(logger, "the entity flag '" + flag.getDisplayName() + "' requires the entity description '" + entityDesc.getResourceName() + "' to extend " + group.getDisplayName() + ", but the entity was actually a " + Utils.getSimpleName(entityDesc) + ".");
             }
         }
 

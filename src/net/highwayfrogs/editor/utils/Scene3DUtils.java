@@ -820,7 +820,7 @@ public class Scene3DUtils {
      * @param subScene   The subScene to take a screenshot of.
      * @param namePrefix The file name prefix to save the image as.
      */
-    public static void takeScreenshot(GameInstance instance, SubScene subScene, Scene scene, String namePrefix, boolean transparentBackground) {
+    public static void takeScreenshot(GameInstance instance, SubScene subScene, String namePrefix, boolean transparentBackground) {
         javafx.scene.paint.Paint subSceneColor = subScene.getFill();
 
         if (transparentBackground)
@@ -861,5 +861,80 @@ public class Scene3DUtils {
                 }
             }
         }
+    }
+
+    /**
+     * Calculates the smallest bounding box capable of holding all vertices in a mesh.
+     * @param mesh the mesh to calculate the bounding box for
+     * @return boundingBox
+     */
+    public static net.highwayfrogs.editor.system.math.Box calculateBoundingBox(DynamicMesh mesh) {
+        if (mesh == null)
+            throw new NullPointerException("mesh");
+
+        net.highwayfrogs.editor.system.math.Box boundingBox = new net.highwayfrogs.editor.system.math.Box();
+        boundingBox.set(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY);
+        if (!calculateBoundingBox(boundingBox, mesh, true))
+            boundingBox.set(0F, 0F, 0F, 0F, 0F, 0F);
+
+        return boundingBox;
+    }
+
+    /**
+     * Calculates the smallest bounding box capable of holding all vertices in a mesh.
+     * @param meshes the meshes to calculate the bounding box for
+     * @return boundingBox
+     */
+    public static net.highwayfrogs.editor.system.math.Box calculateBoundingBox(List<? extends DynamicMesh> meshes) {
+        if (meshes == null)
+            throw new NullPointerException("meshes");
+
+        net.highwayfrogs.editor.system.math.Box boundingBox = new net.highwayfrogs.editor.system.math.Box();
+        boundingBox.set(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY);
+
+        boolean anyVerticesFound = false;
+        for (int i = 0; i < meshes.size(); i++)
+            anyVerticesFound = calculateBoundingBox(boundingBox, meshes.get(i), !anyVerticesFound) || anyVerticesFound;
+
+        if (!anyVerticesFound)
+            boundingBox.set(0F, 0F, 0F, 0F, 0F, 0F);
+
+        return boundingBox;
+    }
+
+    private static boolean calculateBoundingBox(net.highwayfrogs.editor.system.math.Box boundingBox, DynamicMesh mesh, boolean firstPosition) {
+        if (boundingBox == null)
+            throw new NullPointerException("boundingBox");
+        if (mesh == null)
+            throw new NullPointerException("mesh");
+
+        int elementsPerUnit = mesh.getEditableVertices().getElementsPerUnit();
+        if (elementsPerUnit != 3)
+            throw new UnsupportedOperationException("Cannot calculate on a mesh with a non-3 points per vertex value! (Was: " + elementsPerUnit + ")");
+
+        if (mesh.getEditableVertices().size() == 0)
+            return false;
+
+        for (int i = 0; i < mesh.getEditableVertices().size(); i += elementsPerUnit) {
+            float vertexX = mesh.getEditableVertices().get(i);
+            float vertexY = mesh.getEditableVertices().get(i + 1);
+            float vertexZ = mesh.getEditableVertices().get(i + 2);
+            if (vertexX < boundingBox.getMinX() || firstPosition)
+                boundingBox.setMinX(vertexX);
+            if (vertexX > boundingBox.getMaxX() || firstPosition)
+                boundingBox.setMaxX(vertexX);
+            if (vertexY < boundingBox.getMinY() || firstPosition)
+                boundingBox.setMinY(vertexY);
+            if (vertexY > boundingBox.getMaxY() || firstPosition)
+                boundingBox.setMaxY(vertexY);
+            if (vertexZ < boundingBox.getMinZ() || firstPosition)
+                boundingBox.setMinZ(vertexZ);
+            if (vertexZ > boundingBox.getMaxZ() || firstPosition)
+                boundingBox.setMaxZ(vertexZ);
+
+            firstPosition = false;
+        }
+
+        return true;
     }
 }

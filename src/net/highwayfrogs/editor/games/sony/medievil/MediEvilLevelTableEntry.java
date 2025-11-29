@@ -2,15 +2,16 @@ package net.highwayfrogs.editor.games.sony.medievil;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.SCGameRegion;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents an entry in the MediEvil level table.
@@ -71,7 +72,11 @@ public class MediEvilLevelTableEntry extends SCGameData<MediEvilGameInstance> {
      * Gets the .MAP file containing data for this level.
      */
     public MediEvilMapFile getMapFile() {
-        for (WADEntry wadEntry : getWadFile().getFiles())
+        WADFile wadFile = getWadFile();
+        if (wadFile == null)
+            return null;
+
+        for (WADEntry wadEntry : wadFile.getFiles())
             if (wadEntry.getFile() instanceof MediEvilMapFile)
                 return (MediEvilMapFile) wadEntry.getFile();
         return null;
@@ -89,5 +94,28 @@ public class MediEvilLevelTableEntry extends SCGameData<MediEvilGameInstance> {
      */
     public VLOArchive getVloFile() {
         return this.vloResourceId >= 0 ? getGameInstance().getGameFile(this.vloResourceId) : null;
+    }
+
+    /**
+     * Gets the map code associated with this table entry.
+     * @return mapCode
+     */
+    public String getMapCode() {
+        // Search MWI, since this function is used before game files are loaded.
+        MWIResourceEntry wadEntry = this.wadResourceId >= 0 ? getGameInstance().getResourceEntryByID(this.wadResourceId) : null;
+        if (wadEntry != null) {
+            String displayName = wadEntry.getDisplayName();
+            if (displayName != null)
+                return displayName.split("_")[0];
+        }
+
+        wadEntry = this.vloResourceId >= 0 ? getGameInstance().getResourceEntryByID(this.vloResourceId) : null;
+        if (wadEntry != null) {
+            String displayName = wadEntry.getDisplayName();
+            if (displayName != null)
+                return displayName.split("_")[0];
+        }
+
+        return null;
     }
 }

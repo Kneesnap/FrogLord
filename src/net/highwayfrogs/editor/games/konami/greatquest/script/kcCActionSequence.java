@@ -2,17 +2,17 @@ package net.highwayfrogs.editor.games.konami.greatquest.script;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.KCResourceID;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceNamedHash;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.*;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceNamedHash.HashTableEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcActorBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.ILateResourceResolver;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionID;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionSetAnimation;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.system.Config.IllegalConfigSyntaxException;
@@ -97,7 +97,7 @@ import java.util.List;
  * Created by Kneesnap on 3/23/2020.
  */
 
-public class kcCActionSequence extends kcCResource implements kcActionExecutor {
+public class kcCActionSequence extends kcCResource implements kcActionExecutor, ILateResourceResolver {
     @Getter private final List<kcAction> actions = new ArrayList<>();
     private final GreatQuestHash<kcCResourceGeneric> cachedActorBaseDescRef = new GreatQuestHash<>();
 
@@ -120,6 +120,21 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
         super.save(writer);
         for (int i = 0; i < this.actions.size(); i++)
             this.actions.get(i).save(writer);
+    }
+
+    /**
+     * Gets the name of the sequence without the name of the entity.
+     */
+    public String getEntityDescriptionName() {
+        String baseName = getName();
+        if (!baseName.endsWith("]"))
+            throw new IllegalArgumentException("Cannot determine entityDesc name from '" + baseName + "'.");
+
+        int openIndex = baseName.lastIndexOf('[');
+        if (openIndex < 0)
+            throw new IllegalArgumentException("Cannot determine entityDesc name from '" + baseName + "'.");
+
+        return baseName.substring(0, openIndex);
     }
 
     /**
@@ -148,11 +163,11 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
         if (!config.getSectionName().equalsIgnoreCase(getSequenceName()))
             logger.warning("Provided sequence name '%s' did not match the real sequence resource '%s'.", config.getSectionName(), getSequenceName());
 
+        // Read actions.
         this.actions.clear();
-        getSelfHash().setHash(config.getKeyValueNodeOrError(HASH_CONFIG_FIELD).getAsInteger());
         int lineNumber = 0;
         String fileName = config.getRootNode().getSectionName();
-        for (ConfigValueNode line : config.getInternalText()) {
+        for (ConfigValueNode line : config.getTextNodes()) {
             lineNumber++;
             String textLine = line.getAsStringLiteral();
             if (StringUtils.isNullOrWhiteSpace(textLine))
@@ -169,15 +184,52 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
 
             kcAction newAction = actionID.newInstance(this);
             try {
-                newAction.load(arguments, lineNumber, fileName);
+                newAction.load(logger, arguments, lineNumber, fileName);
             } catch (Throwable th) {
                 throw new IllegalConfigSyntaxException("Could not parse the action '" + line + "' when importing sequence " + getName() + ".", th);
             }
 
+            this.actions.add(newAction);
             newAction.printWarnings(logger);
             arguments.warnAboutUnusedArguments(logger);
+        }
+    }
 
-            this.actions.add(newAction);
+    /**
+     * Saves the sequence to a gqs-compliant config node.
+     * @param logger the logger to write messages to
+     * @param settings the settings to save the sequence with
+     * @return configNode
+     */
+    public Config saveToConfigNode(ILogger logger, kcScriptDisplaySettings settings) {
+        Config result = new Config(getSequenceName()); // Use the key name instead of the sequence name, since this is what it is resolved by.
+        ConfigValueNode hashNode = result.getOrCreateKeyValueNode(HASH_CONFIG_FIELD);
+        hashNode.setAsString("0x" + getSelfHash().getHashNumberAsString());
+        hashNode.setComment("This value is (probably) random. It uniquely identifies this sequence, so the same number should not be used for more than one sequence.");
+        writeSequenceToConfig(logger, result, settings);
+        return result;
+    }
+
+    private void writeSequenceToConfig(ILogger logger, Config config, kcScriptDisplaySettings settings) {
+        if (config == null)
+            throw new NullPointerException("config");
+        if (logger == null)
+            logger = getLogger();
+
+        // Write actions.
+        StringBuilder builder = new StringBuilder();
+        OptionalArguments optionalArguments = new OptionalArguments();
+        config.getInternalText().clear();
+        for (int i = 0; i < this.actions.size(); i++) {
+            kcAction action = this.actions.get(i);
+            optionalArguments.createNext().setAsString(action.getActionID().getFrogLordName(), false);
+            action.save(logger, optionalArguments, settings);
+            optionalArguments.toString(builder);
+            String actionText = builder.toString();
+            builder.setLength(0);
+            optionalArguments.clear();
+
+            config.getInternalText().add(new ConfigValueNode(actionText, action.getEndOfLineComment()));
         }
     }
 
@@ -194,42 +246,30 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
         Config result = new Config(entry.getKeyName()); // Use the key name instead of the sequence name, since this is what it is resolved by.
         ConfigValueNode hashNode = result.getOrCreateKeyValueNode(HASH_CONFIG_FIELD);
         hashNode.setAsString("0x" + entry.getValueRef().getHashNumberAsString());
-        hashNode.setComment("This value is (probably) random. It uniquely identifies this sequence, so the same number should not be used more than once.");
+        hashNode.setComment("This value is (probably) random. It uniquely identifies this sequence, so the same number should not be used for more than one sequence.");
 
+        ILogger logger = entry.getParentHashTable().getLogger();
         kcCActionSequence sequence = entry.getSequence();
-        if (sequence == null)
+        if (sequence == null) {
+            // Mark the sequence as not being found.
+            result.getInternalText().add(new ConfigValueNode("", "Could not resolve this action sequence from the hash table."));
             return result;
+        }
 
         String sequenceName = sequence.getSequenceName();
         if (!sequenceName.equalsIgnoreCase(entry.getKeyName()))
-            entry.getParentHashTable().getLogger().warning("The sequence %s did not match the expected %s!", sequenceName, entry.getKeyName());
+            logger.warning("The sequence '%s' was expected to be named '%s'! (Sequence hash table broken?)", sequenceName, entry.getKeyName());
 
-        // Write actions.
-        StringBuilder builder = new StringBuilder();
-        OptionalArguments optionalArguments = new OptionalArguments();
-        for (int i = 0; i < sequence.getActions().size(); i++) {
-            kcAction action = sequence.getActions().get(i);
-            optionalArguments.createNext().setAsString(action.getActionID().getFrogLordName(), false);
-            action.save(optionalArguments, settings);
-            optionalArguments.toString(builder);
-            String actionText = builder.toString();
-            builder.setLength(0);
-            optionalArguments.clear();
-
-            result.getInternalText().add(new ConfigValueNode(actionText, action.getEndOfLineComment()));
-        }
-
+        sequence.writeSequenceToConfig(logger, result, settings);
         return result;
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Actions", this.actions.size());
         for (int i = 0; i < this.actions.size(); i++)
             propertyList.add("Action " + i, this.actions.get(i));
-
-        return propertyList;
     }
 
     @Override
@@ -274,6 +314,23 @@ public class kcCActionSequence extends kcCResource implements kcActionExecutor {
             return entityDesc instanceof kcActorBaseDesc ? (kcActorBaseDesc) entityDesc : null;
         } else {
             return null;
+        }
+    }
+
+    @Override
+    public void resolvePendingResources(ILogger logger) {
+        for (int i = 0; i < this.actions.size(); i++) {
+            kcAction action = this.actions.get(i);
+            if (!(action instanceof kcActionSetAnimation))
+                continue;
+
+            kcActionSetAnimation setAnimation = (kcActionSetAnimation) action;
+            GreatQuestHash<kcCResourceTrack> animationRef = setAnimation.getTrackRef();
+            if (animationRef.getResource() != null)
+                continue;
+
+            if (!GreatQuestUtils.resolveLevelResourceHash(logger, kcCResourceTrack.class, getParentFile(), this, animationRef, animationRef.getHashNumber(), false))
+                logger.warning("Sequence '%s' contains an action '%s' uses an animation which was not made accessible to this level.", getName(), action.getAsGqsStatement());
         }
     }
 }

@@ -10,15 +10,14 @@ import net.highwayfrogs.editor.scripting.functions.*;
 import net.highwayfrogs.editor.scripting.runtime.NoodleObjectInstance;
 import net.highwayfrogs.editor.scripting.runtime.NoodlePrimitive;
 import net.highwayfrogs.editor.scripting.runtime.NoodleRuntimeException;
-import net.highwayfrogs.editor.scripting.runtime.templates.NoodleArrayTemplate;
-import net.highwayfrogs.editor.scripting.runtime.templates.NoodleFileTemplate;
-import net.highwayfrogs.editor.scripting.runtime.templates.NoodleObjectTemplate;
-import net.highwayfrogs.editor.scripting.runtime.templates.NoodleWrapperTemplate;
+import net.highwayfrogs.editor.scripting.runtime.templates.*;
 import net.highwayfrogs.editor.scripting.runtime.templates.utils.NoodleLoggerTemplate;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.math.*;
 import net.highwayfrogs.editor.utils.*;
 import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.*;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
@@ -289,10 +288,12 @@ public class NoodleScriptEngine extends SharedGameObject {
     private void registerFunctions() {
         addGlobalFunction(NDLFunctionGetArgument.INSTANCE);
         addGlobalFunction(NDLFunctionCastToInt.INSTANCE);
+        addGlobalFunction(NDLFunctionError.INSTANCE);
         addGlobalFunction(NDLFunctionLogError.INSTANCE);
         addGlobalFunction(NDLFunctionLogInfo.INSTANCE);
         addGlobalFunction(NDLFunctionLogWarning.INSTANCE);
         addGlobalFunction(NDLFunctionPresetPrompt.INSTANCE);
+        addGlobalFunction(NDLFunctionPromptYesNo.INSTANCE);
         addGlobalFunction(NDLFunctionMakePopup.INSTANCE);
         addGlobalFunction(NDLFunctionReadImage.INSTANCE);
 
@@ -309,6 +310,7 @@ public class NoodleScriptEngine extends SharedGameObject {
         // A bunch of classes which are generally useful, and good to expose to any script.
         // For the interface/abstract classes added here, they are a temporary measure so that isRepresentable() can return true.
         // Consider revisiting them at a later date once the scripting system has been used more.
+        addTemplate(NoodleObjectClass.INSTANCE);
         addTemplate(NoodleArrayTemplate.INSTANCE);
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(String.class));
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(Collection.class));
@@ -328,6 +330,7 @@ public class NoodleScriptEngine extends SharedGameObject {
                 NumberUtils.class, StringUtils.class, TimeUtils.class, Utils.class, ProblemResponse.class);
         addWrapperTemplates(BufferedImage.class, java.awt.Color.class);
         addTemplate(NoodleWrapperTemplate.getCachedTemplate(Config.class));
+        addWrapperTemplates(DataReader.class, DataWriter.class, BitReader.class, BitWriter.class, ArrayReceiver.class, FileReceiver.class, FixedArrayReceiver.class);
 
         // DataReader/DataWriter is considered not very helpful to Noodle, as its data types are somewhat bizarre.
         // Perhaps we should have a way to create them, and pass them to functions, but not necessarily use them.

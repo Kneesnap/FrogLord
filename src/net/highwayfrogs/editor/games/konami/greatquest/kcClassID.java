@@ -8,7 +8,6 @@ import java.util.Map;
 
 /**
  * A registry of different kc classes.
- * TODO: These values seem to differ. The code for the EU PS2 version seems to differ from the PS2 USA Release (which is what the PC version uses.)
  * It seems the way these are created is by doing hash(ignoreCase: true). Example: See GreatQuestUtils.hash("CCharacter", true)
  * Created by Kneesnap on 1/4/2021.
  */

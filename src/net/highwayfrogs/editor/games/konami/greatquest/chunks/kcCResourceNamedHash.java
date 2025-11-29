@@ -11,8 +11,9 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * A recreation of the 'kcCResourceNamedHash' class in Frogger PS2 PAL.
@@ -104,15 +106,13 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Entries", this.entries.size());
         for (int i = 0; i < this.entries.size(); i++) {
             HashTableEntry entry = this.entries.get(i);
             propertyList.add(entry.getKeyName() + " (" + NumberUtils.to0PrefixedHexString(entry.getKeyHash()) + ")", entry.getValueRef().getDisplayString(false));
         }
-
-        return propertyList;
     }
 
     @Override
@@ -148,7 +148,7 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
                 return;
 
             Config scriptCfg = Config.loadConfigFromTextFile(inputFile, false);
-            addSequencesFromConfigNode(scriptCfg, getLogger());
+            addSequencesFromConfigNode(getBaseName(), scriptCfg, getLogger());
             getLogger().info("Imported %d kcCActionSequence definitions from '%s'.", scriptCfg.getChildConfigNodes().size(), inputFile.getName());
         });
     }
@@ -223,36 +223,84 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
     }
 
     /**
+     * Test if a particular action sequence is currently tracked within the table.
+     * @param sequence the sequence to find
+     * @return sequenceFound
+     */
+    public boolean contains(kcCActionSequence sequence) {
+        if (sequence == null)
+            return false;
+
+        for (int i = 0; i < this.entries.size(); i++) {
+            HashTableEntry entry = this.entries.get(i);
+            if (sequence == entry.getSequence() || sequence.getHash() == entry.getValueRef().getHashNumber() || sequence.getSequenceName().equalsIgnoreCase(entry.getKeyName()))
+                return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Loads sequences from a Config node.
      * The provided config node will have its child config nodes read, with their names used as the sequence names.
      * Existing sequences will have their actions replaced/read if present in the provided config node.
      * New sequences will be created as configured.
      * @param config The config to load the script from
      */
-    public void addSequencesFromConfigNode(Config config, ILogger logger) {
+    public void addSequencesFromConfigNode(String entityName, Config config, ILogger logger) {
         if (config == null)
             throw new NullPointerException("config");
 
         // Create a map to quickly lookup entries by their names.
         Map<Integer, HashTableEntry> entryLookupByValueHash = new HashMap<>();
+        Map<String, HashTableEntry> entryLookupByName = new HashMap<>();
         for (int i = 0; i < this.entries.size(); i++) {
             HashTableEntry entry = this.entries.get(i);
             entryLookupByValueHash.put(entry.getValueRef().getHashNumber(), entry);
+            entryLookupByName.put(entry.getKeyName().toLowerCase(), entry);
         }
 
         for (Config sequenceCfg : config.getChildConfigNodes()) {
-            int sequenceHash = sequenceCfg.getKeyValueNodeOrError(kcCActionSequence.HASH_CONFIG_FIELD).getAsInteger();
             String sequenceName = sequenceCfg.getSectionName();
+            String fullSequenceResourceName = entityName + "[" + sequenceName + "]";
+            kcCActionSequence oldActionSequence = getParentFile().getResourceByName(fullSequenceResourceName, kcCActionSequence.class);
+            HashTableEntry nameEntry = entryLookupByName.get(sequenceName.toLowerCase()); // Try to find the old sequence by its name.
+
+            // Apply hash, if present.
+            int sequenceHash;
+            ConfigValueNode hashNode = sequenceCfg.getOptionalKeyValueNode(kcCActionSequence.HASH_CONFIG_FIELD);
+            if (nameEntry != null) { // Takes precedence over the oldActionSequence, because it has been observed that sometimes there are multiple sequences with the same name, but only one is in the table.
+                if (hashNode != null && hashNode.getAsInteger() != nameEntry.getValueRef().getHashNumber()) {
+                    // We cannot change the hash because when we use [CopyResources], we'll get a copy of the resource.
+                    logger.warning("The hash '%s' does not match the hash of the pre-existing action sequence (in the hash table), and has been ignored. (Pre-existing hash: %s)", hashNode.getAsString(), nameEntry.getValueRef().getHashNumberAsString());
+                }
+
+                sequenceHash = nameEntry.getValueRef().getHashNumber();
+            } else if (oldActionSequence != null) {
+                if (hashNode != null && hashNode.getAsInteger() != oldActionSequence.getHash()) {
+                    // We cannot change the hash because when we use [CopyResources], we'll get a copy of the resource.
+                    logger.warning("The hash '%s' does not match the hash of the pre-existing action sequence, and has been ignored. (Pre-existing hash: %s)", hashNode.getAsString(), oldActionSequence.getSelfHash().getHashNumberAsString());
+                }
+
+                sequenceHash = oldActionSequence.getHash();
+            } else if (hashNode != null) { // Apply hash from config.
+                sequenceHash = hashNode.getAsInteger();
+            } else { // Randomly generate a new hash.
+                sequenceHash = 0;
+                while (sequenceHash == 0 || sequenceHash == -1 || getParentFile().getResourceByHash(sequenceHash) != null)
+                    sequenceHash = ThreadLocalRandom.current().nextInt();
+            }
 
             // Lookup by hash lookup and NOT by name lookup.
             // This is to ensure typos (such as seen in Frog[ThroatFloatLan] vs ThroatFloatLand) do not cause any issues.
             // Hashes are how the game looks up chunked resources too, so this enforces consistent behavior.
-            HashTableEntry entry = entryLookupByValueHash.get(sequenceHash);
+            HashTableEntry entry = entryLookupByValueHash.get(sequenceHash); // Try to get the old hash, so we don't make a new entry.
             if (entry == null) {
                 entry = new HashTableEntry(this, sequenceName);
                 entry.getValueRef().setHash(sequenceHash);
                 entry.getValueRef().setResource(getParentFile().getResourceByHash(sequenceHash), true); // Avoid an issue where copying this file from another list will cause the same action sequence to be added twice (which throws an exception)
                 entryLookupByValueHash.put(sequenceHash, entry);
+                entryLookupByName.put(sequenceName.toLowerCase(), entry);
                 this.entries.add(entry);
             }
 
@@ -317,7 +365,7 @@ public class kcCResourceNamedHash extends kcCResource implements IMultiLineInfoW
                 throw new IllegalArgumentException("The kcCResourceNamedHash read an entry for key '" + this.keyName + "' with hash " + NumberUtils.to0PrefixedHexString(originalKeyHash) + ". However, the key actually hashes to " + NumberUtils.to0PrefixedHexString(ourHash) + ".");
 
             // Resolve value.
-            GreatQuestUtils.resolveResourceHash(kcCActionSequence.class, this.parentHashTable, this.valueRef, valueHash, false);
+            GreatQuestUtils.resolveLevelResourceHash(kcCActionSequence.class, this.parentHashTable, this.valueRef, valueHash, false);
         }
 
         @Override

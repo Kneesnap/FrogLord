@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.konami.greatquest;
 import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
 import lombok.SneakyThrows;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.GameConfig;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.generic.IGameType;
@@ -110,14 +111,22 @@ public class GreatQuestGameType implements IGameType {
                 int fileCountB = fileReader.readShort();
 
                 if (FileUtils.isProbablySonyIso(fileReader)) {
-                    FXUtils.makePopUp("That file appears to be a CD image, not data.bin.\ndata.bin can be extracted with software such as ISOBuster.", AlertType.ERROR);
+                    FXUtils.showPopup(AlertType.ERROR, "Invalid .bin file", "That file appears to be a CD image, not data.bin.\ndata.bin can be extracted with software such as ISOBuster.");
                     return false;
                 }
+
+                // Check if the final bytes are a FrogLord signature.
+                fileReader.seek(fileSize - GreatQuestModData.SIGNATURE.length() - Constants.INTEGER_SIZE);
+                byte[] signatureBytes = new byte[GreatQuestModData.SIGNATURE.length()];
+                fileReader.read(signatureBytes);
+                boolean hasFrogLordSignature = DataUtils.testSignature(signatureBytes, GreatQuestModData.SIGNATURE);
+                fileReader.read(signatureBytes, 0, Constants.INTEGER_SIZE);
+                int headerAddress = DataUtils.readIntFromBytes(signatureBytes, 0);
 
                 // Check if the end of the file has something that looks like a null-terminated string in the form that Great Quest does.
                 String lastFilePath = null;
                 if (fileSize > GreatQuestAssetBinFile.NAME_SIZE) {
-                    fileReader.seek(fileSize - GreatQuestAssetBinFile.NAME_SIZE);
+                    fileReader.seek((hasFrogLordSignature ? headerAddress : fileSize) - GreatQuestAssetBinFile.NAME_SIZE);
 
                     int bytesRead;
                     byte[] bytesAtEndOfFile = new byte[GreatQuestAssetBinFile.NAME_SIZE];
@@ -145,7 +154,7 @@ public class GreatQuestGameType implements IGameType {
                 // If this doesn't look like a valid data.bin, alert!
                 // While it's technically possible it could have more than 65535 files, I don't think this is likely to ever happen.
                 if (fileSize < DataSizeUnit.MEGABYTE.getIncrement() * 10 || fileCountA == 0 || fileCountB != 0 || lastFilePath == null) {
-                    FXUtils.makePopUp("That file does not appear to be a valid 'data.bin'.\nPlease review the instructions for obtaining 'data.bin'.", AlertType.ERROR);
+                    FXUtils.showPopup(AlertType.ERROR, "Invalid .bin file", "That file does not appear to be a valid 'data.bin'.\nPlease review the instructions for obtaining 'data.bin'.");
                     return false;
                 }
 
@@ -172,7 +181,7 @@ public class GreatQuestGameType implements IGameType {
 
                     getLogger().info("The file path used to invalidate the data.bin was '%s'.", lastFilePath);
                     getLogger().info("It was tested against '%s'.", greatQuestConfig.getHostRootPath());
-                    FXUtils.makePopUp(errorMessage.toString(), AlertType.ERROR);
+                    FXUtils.showPopup(AlertType.ERROR, "Wrong version for .bin file", errorMessage.toString());
                     return false;
                 }
             }

@@ -64,13 +64,31 @@ public class InputManager {
      * Assign (setup) the control event handlers on the supplied scene object.
      * @param scene The subscene to receive and process the keyboard and mouse events, etc.
      */
-    public void assignSceneControls(Stage stage, Scene scene) {
+    public void assignSceneControls(Scene scene) {
         scene.addEventHandler(KeyEvent.ANY, this.mainKeyEventListener);
         scene.addEventHandler(MouseEvent.ANY, this.mainMouseEventListener);
         scene.addEventHandler(ScrollEvent.ANY, this.mainScrollEventListener);
+    }
 
-        // Reset keys when focus is lost.
-        stage.focusedProperty().addListener(this.stageInputListener);
+    /**
+     * Assign (setup) the control event handlers on the supplied scene object.
+     * @param scene The subscene to receive and process the keyboard and mouse events, etc.
+     */
+    public void assignSceneControls(Node scene) {
+        scene.addEventHandler(KeyEvent.ANY, this.mainKeyEventListener);
+        scene.addEventHandler(MouseEvent.ANY, this.mainMouseEventListener);
+        scene.addEventHandler(ScrollEvent.ANY, this.mainScrollEventListener);
+        scene.focusedProperty().addListener(this.stageInputListener);
+    }
+
+    public void setStage(Stage stage) {
+        if (this.stage == stage)
+            return;
+
+        if (this.stage != null)
+            this.stage.focusedProperty().removeListener(this.stageInputListener);
+
+        resetKeys();
         this.stage = stage;
     }
 
@@ -78,25 +96,29 @@ public class InputManager {
      * Assign (setup) the control event handlers on the supplied scene object.
      * @param scene The subscene to receive and process the keyboard and mouse events, etc.
      */
-    public void removeSceneControls(Stage stage, Scene scene) {
+    public void removeSceneControls(Node scene) {
         scene.removeEventHandler(KeyEvent.ANY, this.mainKeyEventListener);
         scene.removeEventHandler(MouseEvent.ANY, this.mainMouseEventListener);
         scene.removeEventHandler(ScrollEvent.ANY, this.mainScrollEventListener);
+        scene.focusedProperty().removeListener(this.stageInputListener);
+    }
 
-        // Reset keys when focus is lost.
-        stage.focusedProperty().removeListener(this.stageInputListener);
-        resetKeys(); // No longer active, isn't tracking keys.
-        this.stage = null;
+    /**
+     * Assign (setup) the control event handlers on the supplied scene object.
+     * @param scene The subscene to receive and process the keyboard and mouse events, etc.
+     */
+    public void removeSceneControls(Scene scene) {
+        scene.removeEventHandler(KeyEvent.ANY, this.mainKeyEventListener);
+        scene.removeEventHandler(MouseEvent.ANY, this.mainMouseEventListener);
+        scene.removeEventHandler(ScrollEvent.ANY, this.mainScrollEventListener);
     }
 
     /**
      * Shutdown input management
      */
     public void shutdown() {
-        if (this.stage != null) {
-            this.stage.focusedProperty().removeListener(this.stageInputListener);
-            this.stage = null;
-        }
+        if (this.stage != null)
+            setStage(null);
     }
 
     private void onStageFocusChange(ObservableValue<? extends Boolean> observable, boolean wasFocused, boolean nowFocused) {
@@ -316,6 +338,25 @@ public class InputManager {
 
         // Send out mouse event handlers for the specific mouse event.
         List<MouseHandler> mouseHandlers = this.mouseHandlersByType.get(evt.getEventType());
+        if (mouseHandlers != null && mouseHandlers.size() > 0) {
+            for (int i = 0; i < mouseHandlers.size(); i++) {
+                MouseHandler handler = mouseHandlers.get(i);
+
+                try {
+                    handler.accept(this, evt, mouseDeltaX, mouseDeltaY);
+                } catch (Throwable th) {
+                    String errorMessage = "Failed to run MouseHandler " + handler + ".";
+                    getLogger().throwing("InputManager", "processMouseEvents", new RuntimeException(errorMessage, th));
+                }
+
+                // If the event was consumed, abort.
+                if (evt.isConsumed())
+                    return;
+            }
+        }
+
+        // Send out mouse event handlers for any mouse event.
+        mouseHandlers = this.mouseHandlersByType.get(MouseEvent.ANY);
         if (mouseHandlers != null && mouseHandlers.size() > 0) {
             for (int i = 0; i < mouseHandlers.size(); i++) {
                 MouseHandler handler = mouseHandlers.get(i);

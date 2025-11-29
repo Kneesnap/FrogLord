@@ -21,6 +21,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedF
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.KCResourceID;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTableOfContents;
+import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.CollectionEditorComponent;
 import net.highwayfrogs.editor.gui.components.ListViewComponent;
@@ -41,7 +42,7 @@ import java.util.List;
 public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<GreatQuestChunkedFile> {
     private final CollectionEditorComponent<GreatQuestInstance, kcCResource> collectionEditorComponent;
     private final GreatQuestChunkListViewComponent chunkListComponent;
-    private Node tempExtraNode;
+    private GameUIController<?> tempExtraController;
 
     public GreatQuestChunkFileEditor(GreatQuestInstance instance) {
         this(instance, "Chunks");
@@ -76,9 +77,10 @@ public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<
     @Override
     protected void onSelectedFileChange(GreatQuestChunkedFile oldChunkedFile, GreatQuestChunkedFile newChunkedFile) {
         super.onSelectedFileChange(oldChunkedFile, newChunkedFile);
-        if (this.tempExtraNode != null) {
-            getRightSidePanelFreeArea().getChildren().remove(this.tempExtraNode);
-            this.tempExtraNode = null;
+        if (this.tempExtraController != null) {
+            getRightSidePanelFreeArea().getChildren().remove(this.tempExtraController.getRootNode());
+            removeController(this.tempExtraController);
+            this.tempExtraController = null;
         }
 
         this.chunkListComponent.refreshDisplay();
@@ -102,6 +104,7 @@ public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<
         private final ComboBox<kcCResourceTableOfContents> resourceGroupComboBox;
         private final Region emptyRegion = new Region();
         private final CustomMenuItem addNewChunkItem = new CustomMenuItem(new Label("Add New"));
+        private final CustomMenuItem importGqsFileItem = new CustomMenuItem(new Label("Import GQS File"));
 
         public GreatQuestChunkListViewComponent(GreatQuestChunkFileEditor listComponent) {
             super(listComponent.getGameInstance());
@@ -121,17 +124,28 @@ public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<
 
         @Override
         protected void onSelect(kcCResource resource) {
+            updateResourceUI(resource);
+        }
+
+        /**
+         * Updates the resource UI to display the given resource.
+         * @param resource the resource to display
+         */
+        public void updateResourceUI(kcCResource resource) {
             // Update controls based on selection.
             this.listComponent.getCollectionEditorComponent().updateEditorControls();
 
-            if (this.listComponent.tempExtraNode != null) {
-                this.listComponent.getRightSidePanelFreeArea().getChildren().remove(this.listComponent.tempExtraNode);
-                this.listComponent.tempExtraNode = null;
+            if (this.listComponent.tempExtraController != null) {
+                this.listComponent.getRightSidePanelFreeArea().getChildren().remove(this.listComponent.tempExtraController.getRootNode());
+                this.listComponent.removeController(this.listComponent.tempExtraController);
+                this.listComponent.tempExtraController = null;
             }
 
-            this.listComponent.tempExtraNode = resource != null ? resource.createFxPreview() : null;
-            if (this.listComponent.tempExtraNode != null)
-                this.listComponent.getRightSidePanelFreeArea().getChildren().add(this.listComponent.tempExtraNode);
+            this.listComponent.tempExtraController = resource != null ? resource.createExtraUIController() : null;
+            if (this.listComponent.tempExtraController != null) {
+                this.listComponent.getRightSidePanelFreeArea().getChildren().add(this.listComponent.tempExtraController.getRootNode());
+                this.listComponent.addController(this.listComponent.tempExtraController);
+            }
 
             if (resource != null) {
                 this.listComponent.getPropertyListViewer().showProperties(resource.createPropertyList());
@@ -163,10 +177,12 @@ public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<
         }
 
         @Override
-        public void removeViewEntry(@NonNull kcCResource resource) {
+        public void removeViewEntry(@NonNull kcCResource resource, boolean updateUI) {
             getListComponent().getFile().removeResource(resource);
             if (getRootNode().getSelectionModel().getSelectedItem() == resource)
                 getRootNode().getSelectionModel().clearSelection();
+            if (updateUI)
+                refreshDisplay();
         }
 
         private void updateAddMenuEntries(GreatQuestChunkResourceCategory category) {
@@ -203,10 +219,13 @@ public class GreatQuestChunkFileEditor extends GreatQuestFileEditorUIController<
             });
 
             this.addNewChunkItem.setOnAction(event -> {
-                FXUtils.makePopUp("Not supported yet. Chunks can be added by loading .gqs files instead.", AlertType.ERROR); // TODO: IMPLEMENT!
+                FXUtils.showPopup(AlertType.ERROR, "Not supported.", "Chunks can be created by loading .gqs files.");
             });
 
+            this.importGqsFileItem.setOnAction(event -> this.listComponent.getFile().askUserToImportGqsFile());
+
             getListComponent().getCollectionEditorComponent().addMenuItemToAddButtonLogic(this.addNewChunkItem);
+            getListComponent().getCollectionEditorComponent().addMenuItemToAddButtonLogic(this.importGqsFileItem);
         }
 
         private void updateResourceGroupComboBox(GreatQuestChunkedFile newChunkedFile) {

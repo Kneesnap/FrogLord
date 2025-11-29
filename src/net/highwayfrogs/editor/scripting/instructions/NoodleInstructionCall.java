@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.scripting.instructions;
 import lombok.Getter;
 import net.highwayfrogs.editor.scripting.NoodleScript;
 import net.highwayfrogs.editor.scripting.NoodleScriptFunction;
+import net.highwayfrogs.editor.scripting.functions.NDLFunctionError;
 import net.highwayfrogs.editor.scripting.functions.NoodleFunction;
 import net.highwayfrogs.editor.scripting.runtime.NoodlePrimitive;
 import net.highwayfrogs.editor.scripting.runtime.NoodleRuntimeException;
@@ -79,9 +80,14 @@ public class NoodleInstructionCall extends NoodleInstruction {
                 throw new NoodleRuntimeException("Could not resolve a noodle function with the name '%s'.", getFunctionLabel());
             }
         } catch (Throwable ex) {
-            StringBuilder builder = new StringBuilder("Error executing script function: '");
-            writeSignature(builder, arguments);
-            builder.append("'.");
+            StringBuilder builder = new StringBuilder("Error executing script");
+            if (this.function == NDLFunctionError.INSTANCE) { // Error should not include the call information, since its purpose is to throw an error.
+                builder.append(".");
+            } else {
+                builder.append(" function: '");
+                writeSignature(builder, arguments);
+                builder.append("'.");
+            }
 
             throw new NoodleRuntimeException(ex, builder.toString());
         }

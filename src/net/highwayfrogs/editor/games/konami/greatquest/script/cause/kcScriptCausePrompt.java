@@ -1,13 +1,15 @@
 package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Caused by the player responding to a prompt.
@@ -17,7 +19,7 @@ import java.util.List;
  */
 @Getter
 public class kcScriptCausePrompt extends kcScriptCause {
-    private int promptHash;
+    private final GreatQuestHash<?> promptRef = new GreatQuestHash<>();
 
     public kcScriptCausePrompt(kcScript script) {
         super(script, kcScriptCauseType.PROMPT, 1, 1);
@@ -28,23 +30,28 @@ public class kcScriptCausePrompt extends kcScriptCause {
         if (subCauseType != 1)
             throw new RuntimeException("The subCauseType for kcScriptCauseEvent is expected to always be one, but was " + subCauseType + ".");
 
-        this.promptHash = extraValues.get(0);
+        this.promptRef.setHash(extraValues.get(0));
     }
 
     @Override
     public void save(List<Integer> output) {
         output.add(1);
-        output.add(this.promptHash);
+        output.add(this.promptRef.getHashNumber());
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
-        this.promptHash = GreatQuestUtils.getAsHash(arguments.useNext(), 0);
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
+        String promptName = arguments.useNext().getAsString();
+        if (NumberUtils.isPrefixedHexInteger(promptName)) {
+            this.promptRef.setHash(NumberUtils.parseIntegerAllowHex(promptName));
+        } else {
+            this.promptRef.setHash(promptName);
+        }
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
-        kcScriptDisplaySettings.applyGqsSyntaxHashDisplay(arguments.createNext(), settings, this.promptHash);
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
+        this.promptRef.applyGqsString(arguments.createNext(), settings);
     }
 
     @Override
@@ -55,18 +62,18 @@ public class kcScriptCausePrompt extends kcScriptCause {
 
     @Override
     public int hashCode() {
-        return super.hashCode() ^ this.promptHash;
+        return super.hashCode() ^ this.promptRef.hashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
-        return super.equals(obj) && ((kcScriptCausePrompt) obj).getPromptHash() == this.promptHash;
+        return super.equals(obj) && Objects.equals(((kcScriptCausePrompt) obj).getPromptRef(), this.promptRef);
     }
 
     @Override
     public void toString(StringBuilder builder, kcScriptDisplaySettings settings) {
         builder.append("The player responds to the dialog prompt ");
-        builder.append(kcScriptDisplaySettings.getHashDisplay(settings, this.promptHash, true));
+        builder.append(this.promptRef.getDisplayString(false));
         builder.append(". (This feature was not finished, so it will not work properly)");
     }
 }

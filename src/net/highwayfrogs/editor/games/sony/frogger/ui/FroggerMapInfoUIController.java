@@ -12,7 +12,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
@@ -26,7 +25,7 @@ import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerUtils;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCRemapEditor;
 import net.highwayfrogs.editor.gui.InputMenu;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListViewerComponent;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
@@ -88,7 +87,7 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
         // Clear display.
         this.levelPreviewScreenshotView.setImage(null);
         this.levelNameImageView.setImage(null);
-        this.propertyListViewer.showProperties(null);
+        this.propertyListViewer.clear();
         this.remapListLabel.setText("No Texture Remap");
         this.remapList.setDisable(true);
         if (this.remapList.getItems() != null)
@@ -125,12 +124,12 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
 
                 // With shading:
                 mapMesh.setShadingEnabled(true);
-                File file = new File(FrogLordApplication.getWorkingDirectory(), getFile().getFileDisplayName() + "-shaded.png");
+                File file = new File(getGameInstance().getMainGameFolder(), getFile().getFileDisplayName() + "-shaded.png");
                 ImageIO.write(mapMesh.getTextureAtlas().getImage(), "png", file);
 
                 // Without shading:
                 mapMesh.setShadingEnabled(false);
-                file = new File(FrogLordApplication.getWorkingDirectory(), getFile().getFileDisplayName() + "-unshaded.png");
+                file = new File(getGameInstance().getMainGameFolder(), getFile().getFileDisplayName() + "-unshaded.png");
                 ImageIO.write(mapMesh.getTextureAtlas().getImage(), "png", file);
             } catch (IOException e) {
                 handleError(e, true, "Failed to save all images.");
@@ -148,17 +147,17 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
         InputMenu.promptInput(getGameInstance(), "Please enter the grid dimensions for the new map.", "5,5", newText -> {
             String[] split = newText.split(",");
             if (split.length != 2) {
-                FXUtils.makePopUp("'" + newText + "' was invalid.\nPlease enter two numbers separated by a comma.", AlertType.ERROR);
+                FXUtils.showPopup(AlertType.ERROR, "Invalid grid dimensions.", "'" + newText + "' was invalid.\nPlease enter two numbers separated by a comma.");
                 return;
             }
 
             if (!NumberUtils.isInteger(split[0])) {
-                FXUtils.makePopUp("'" + split[0] + "' is not a valid number.", AlertType.ERROR);
+                FXUtils.showPopup(AlertType.ERROR, "Invalid X grid size.", "'" + split[0] + "' is not a valid number.");
                 return;
             }
 
             if (!NumberUtils.isInteger(split[1])) {
-                FXUtils.makePopUp("'" + split[1] + "' is not a valid number.", AlertType.ERROR);
+                FXUtils.showPopup(AlertType.ERROR, "Invalid Z grid size.", "'" + split[1] + "' is not a valid number.");
                 return;
             }
 
@@ -182,7 +181,7 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
     private void loadFromFFS(ActionEvent event) {
         File importFile = FileUtils.askUserToOpenFile(getGameInstance(), FFS_IMPORT_PATH);
         if (importFile != null)
-            FFSUtil.importFFSToMap(getFile(), importFile, ProblemResponse.CREATE_POPUP);
+            FFSUtil.importFFSToMap(getFile().getLogger(), getFile(), importFile);
     }
 
     @FXML

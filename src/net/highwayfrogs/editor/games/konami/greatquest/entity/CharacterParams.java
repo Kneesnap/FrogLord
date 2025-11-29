@@ -9,11 +9,14 @@ import net.highwayfrogs.editor.games.konami.greatquest.entity.kcHealthDesc.kcDam
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 /**
@@ -23,7 +26,7 @@ import net.highwayfrogs.editor.utils.objects.OptionalArguments;
  */
 @Getter
 @Setter
-public class CharacterParams extends kcActorDesc {
+public class CharacterParams extends kcActorDesc implements IPropertyListCreator {
     private CharacterType characterType = CharacterType.NONE;
     private final kcVector4 homePos = new kcVector4(0, 0, 0, 1); // Represents the local offset of the collision proxy (CCharacter::Init).
     private float homeRange = DEFAULT_HOME_RANGE; // 144 out of 148 are set to 30. (With the others being 10, 20, 25, 100), Appears unused
@@ -209,75 +212,75 @@ public class CharacterParams extends kcActorDesc {
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        super.writeMultiLineInfo(builder, padding);
-        builder.append(padding).append("Character Type: ").append(this.characterType).append(Constants.NEWLINE);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
+        propertyList.add("Character Type", this.characterType);
         if (!doesVectorLookLikeOrigin(this.homePos))
-            this.homePos.writePrefixedInfoLine(builder, "Home Location", padding);
+            this.homePos.addToPropertyList(propertyList, "Home Location", 1F);
         if (this.homeRange != DEFAULT_HOME_RANGE)
-            builder.append(padding).append("Home Range: ").append(this.homeRange).append(Constants.NEWLINE);
+            propertyList.addFloat("Home Range", this.homeRange);
         if (isNotDefaultValue(this.visionRange, DEFAULT_VISION_RANGE))
-            builder.append(padding).append("Vision Range: ").append(this.visionRange).append(Constants.NEWLINE);
+            propertyList.addFloat("Vision Range", this.visionRange, newValue -> this.visionRange = newValue);
         if (isNotDefaultValue(this.visionFov, DEFAULT_VISION_FOV))
-            builder.append(padding).append("Vision FOV: ").append(this.visionFov).append(Constants.NEWLINE);
+            propertyList.addFloat("Vision FOV", this.visionFov, newValue -> this.visionFov = newValue);
         if (isNotDefaultValue(this.hearRange, DEFAULT_HEAR_RANGE))
-            builder.append(padding).append("Hear Range: ").append(this.hearRange).append(Constants.NEWLINE);
+            propertyList.addFloat("Hear Range (Unused)", this.hearRange, newValue -> this.hearRange = newValue);
         if (this.huntRange != DEFAULT_HUNT_RANGE)
-            builder.append(padding).append("Hunt Range: ").append(this.huntRange).append(Constants.NEWLINE);
+            propertyList.addFloat("Hunt Range (Unused)", this.huntRange, newValue -> this.huntRange = newValue);
         if (this.defendRange != DEFAULT_DEFEND_RANGE)
-            builder.append(padding).append("Defend Range: ").append(this.defendRange).append(Constants.NEWLINE);
+            propertyList.addFloat("Defend Range (Unused)", this.defendRange, newValue -> this.defendRange = newValue);
         if (this.attackRange != DEFAULT_ATTACK_RANGE)
-            builder.append(padding).append("Attack Range: ").append(this.attackRange).append(Constants.NEWLINE);
-        builder.append(padding).append("Melee Range: ").append(this.meleeRange).append(Constants.NEWLINE);
+            propertyList.addFloat("Attack Range (Unused)", this.attackRange, newValue -> this.attackRange = newValue);
+        propertyList.addFloat("Melee Range", this.meleeRange, newValue -> this.meleeRange = newValue);
         if (this.missileRange != DEFAULT_MISSILE_RANGE)
-            builder.append(padding).append("Missile Range: ").append(this.missileRange).append(Constants.NEWLINE);
+            propertyList.addFloat("Missile Range", this.missileRange, newValue -> this.missileRange = newValue);
         if (this.weaponMask != 0)
-            builder.append(padding).append("Weapon Flags (BitMask): ").append(NumberUtils.toHexString(this.weaponMask)).append(Constants.NEWLINE);
+            propertyList.add("Weapon Flags (BitMask)", NumberUtils.toHexString(this.weaponMask));
         if (this.attackStrength != DEFAULT_ATTACK_STRENGTH || isHealthBug())
-            builder.append(padding).append("Attack Strength: ").append(this.attackStrength).append(Constants.NEWLINE);
-        builder.append(padding).append("Aggression: ").append(this.aggression).append(Constants.NEWLINE);
+            propertyList.addInteger(isHealthBug() ? "Heal Amount" : "Attack Strength", this.attackStrength, newValue -> this.attackStrength = newValue);
+        propertyList.addShort("Aggression", this.aggression, newValue -> this.aggression = newValue);
         if (this.fleePercent != 0)
-            builder.append(padding).append("Flee Percent: ").append(this.fleePercent).append(Constants.NEWLINE);
+            propertyList.addShort("Flee Percent", this.fleePercent, newValue -> this.fleePercent = newValue);
         if (this.guardHome != 0)
-            builder.append(padding).append("Guard Home: ").append(this.guardHome).append(Constants.NEWLINE);
+            propertyList.addShort("Guard Home (Unused)", this.guardHome, newValue -> this.guardHome = newValue);
         if (this.protectLike != 0)
-            builder.append(padding).append("Protect Like: ").append(this.protectLike).append(Constants.NEWLINE);
+            propertyList.addShort("Protect Like (Unused)", this.protectLike, newValue -> this.protectLike = newValue);
         if (this.climbHeight != 0)
-            builder.append(padding).append("Climb Height: ").append(this.climbHeight).append(Constants.NEWLINE);
+            propertyList.addShort("Climb Height (Unused)", this.climbHeight, newValue -> this.climbHeight = newValue);
         if (this.fallHeight != 0)
-            builder.append(padding).append("Fall Height: ").append(this.fallHeight).append(Constants.NEWLINE);
+            propertyList.addShort("Fall Height (Unused)", this.fallHeight, newValue -> this.fallHeight = newValue);
         if (this.monsterGroup != 0)
-            builder.append(padding).append("Monster Group: ").append(this.monsterGroup).append(Constants.NEWLINE);
-        builder.append(padding).append("AI Temp2: ").append(this.AITemp2).append(Constants.NEWLINE);
+            propertyList.addShort("Monster Group", this.monsterGroup, newValue -> this.monsterGroup = newValue);
+        propertyList.addShort("Melee Damage", this.AITemp2, newValue -> this.AITemp2 = newValue);
         if (this.AITemp3 != 0)
-            builder.append(padding).append("AI Temp3: ").append(this.AITemp3).append(Constants.NEWLINE);
+            propertyList.addShort("Range Damage", this.AITemp3, newValue -> this.AITemp3 = newValue);
         if (this.AITemp4 != 0 || this.characterType == CharacterType.FLYER || this.characterType == CharacterType.SWIMMER)
-            builder.append(padding).append("AI Temp4: ").append(this.AITemp4).append(Constants.NEWLINE);
+            propertyList.addShort("Fly/Swim Speed", this.AITemp4, newValue -> this.AITemp4 = newValue);
         if (this.closeDistance != 0)
-            builder.append(padding).append("Close Distance: ").append(this.closeDistance).append(Constants.NEWLINE);
+            propertyList.addInteger("Close Distance (Unused)", this.closeDistance, newValue -> this.closeDistance = newValue);
         if (this.dodgePercent != 0)
-            builder.append(padding).append("Dodge Percent: ").append(this.dodgePercent).append(Constants.NEWLINE);
+            propertyList.addShort("Dodge Percent (Unused)", this.dodgePercent, newValue -> this.dodgePercent = newValue);
         if (this.tauntPercent != 0)
-            builder.append(padding).append("Taunt Percent: ").append(this.tauntPercent).append(Constants.NEWLINE);
-        builder.append(padding).append("Attack Percent: ").append(this.attackGoalPercent).append(Constants.NEWLINE);
+            propertyList.addShort("Taunt Percent", this.tauntPercent, newValue -> this.tauntPercent = newValue);
+        propertyList.addShort("Attack Percent", this.attackGoalPercent, newValue -> this.attackGoalPercent = newValue);
         if (this.wanderGoalPercent != 0)
-            builder.append(padding).append("Wander Percent: ").append(this.wanderGoalPercent).append(Constants.NEWLINE);
+            propertyList.addShort("Wander Percent", this.wanderGoalPercent, newValue -> this.wanderGoalPercent = newValue);
         if (this.sleepGoalPercent != 0)
-            builder.append(padding).append("Sleep Percent: ").append(this.sleepGoalPercent).append(Constants.NEWLINE);
+            propertyList.addShort("Sleep Percent (Unused)", this.sleepGoalPercent, newValue -> this.sleepGoalPercent = newValue);
         if (this.preferRanged)
-            builder.append(padding).append("Prefer Ranged: true").append(Constants.NEWLINE);
+            propertyList.addBoolean("Prefer Ranged", true, newValue -> this.preferRanged = newValue);
         if (this.avoidWater || (this.characterType == CharacterType.FLYER))
-            builder.append(padding).append("Avoid Water: ").append(this.avoidWater).append(Constants.NEWLINE);
+            propertyList.addBoolean("Avoid Water", this.avoidWater, newValue -> this.avoidWater = newValue);
         if (this.recoverySpeed != DEFAULT_RECOVERY_SPEED)
-            builder.append(padding).append("Recovery Speed: ").append(this.recoverySpeed).append(Constants.NEWLINE);
+            propertyList.addShort("Recovery Speed (Unused)", this.recoverySpeed, newValue -> this.recoverySpeed = newValue);
         if (this.meleeAttackSpeed != DEFAULT_MELEE_ATTACK_SPEED)
-            builder.append(padding).append("Melee Attack Speed: ").append(this.meleeAttackSpeed).append(Constants.NEWLINE);
+            propertyList.addShort("Melee Attack Speed", this.meleeAttackSpeed, newValue -> this.meleeAttackSpeed = newValue);
         if (this.rangedAttackSpeed != DEFAULT_RANGED_ATTACK_SPEED)
-            builder.append(padding).append("Ranged Attack Speed: ").append(this.rangedAttackSpeed).append(Constants.NEWLINE);
+            propertyList.addShort("Ranged Attack Speed", this.rangedAttackSpeed, newValue -> this.rangedAttackSpeed = newValue);
         if (this.preferRun || this.characterType == CharacterType.WALKER)
-            builder.append(padding).append("Prefer Run: ").append(this.preferRanged).append(Constants.NEWLINE);
+            propertyList.addBoolean("Prefer Run", this.preferRun, newValue -> this.preferRun = newValue);
         if (this.activationRange != 0F)
-            builder.append(padding).append("Activation Range: ").append(this.activationRange).append(Constants.NEWLINE);
+            propertyList.addFloat("Activation Range (Unused)", this.activationRange, newValue -> this.activationRange = newValue);
     }
 
     private static final String CONFIG_KEY_CHARACTER_TYPE = "characterType";
@@ -333,8 +336,8 @@ public class CharacterParams extends kcActorDesc {
     }
 
     @Override
-    public void fromConfig(Config input) {
-        super.fromConfig(input);
+    public void fromConfig(ILogger logger, Config input) {
+        super.fromConfig(logger, input);
         this.characterType = input.getKeyValueNodeOrError(CONFIG_KEY_CHARACTER_TYPE).getAsEnumOrError(CharacterType.class);
 
         // Parse homePos if feasible.

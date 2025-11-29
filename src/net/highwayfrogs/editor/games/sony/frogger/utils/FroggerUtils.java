@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.games.sony.frogger.utils;
 
-import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
@@ -131,7 +131,7 @@ public class FroggerUtils {
                 continue;
 
             if (foundInstance != null) {
-                FXUtils.makePopUp("There is more than one copy of Frogger open at once,\n so FrogLord is unable to choose which version to convert the map to.", Alert.AlertType.ERROR);
+                FXUtils.showPopup(AlertType.ERROR, "Multiple copies of Frogger are open.", "There is more than one copy of Frogger open at once,\n so FrogLord is unable to choose which version to convert the map to.");
                 return null;
             }
 
@@ -139,7 +139,7 @@ public class FroggerUtils {
         }
 
         if (foundInstance == null) {
-            FXUtils.makePopUp("Please open a copy of Frogger to target.", Alert.AlertType.ERROR);
+            FXUtils.showPopup(AlertType.ERROR, "Frogger is not open.", "Please open a copy of Frogger to target.");
             return null;
         }
 
@@ -194,7 +194,18 @@ public class FroggerUtils {
         }
     }
 
-    private static Font froggerFont;
+    /**
+     * Returns true if the wadEntry is hardcoded/referenced in the game code.
+     * @param wadEntry the wadEntry to test
+     * @return if the entry is hardcoded to be used by the game
+     */
+    public static boolean isHardcodedInGameCode(WADEntry wadEntry) {
+        if (wadEntry == null)
+            return false;
+
+        SCGameFile<?> file = wadEntry.getFile();
+        return file != null && (file.getFileDisplayName().startsWith("DES_FALLING_ROCK") || file.getFileDisplayName().startsWith("JUN_PLINTH"));
+    }
 
     /**
      * Writes Frogger text to the image with the given settings.
@@ -210,6 +221,11 @@ public class FroggerUtils {
             throw new NullPointerException("text");
         if (textColor == null)
             textColor = DEFAULT_TEXT_AWT_COLOR;
+
+        // These must be even on PSX for 4-bit cluts to work correctly.
+        if ((width % 2) > 0)
+            width++;
+
         if (image == null || image.getWidth() != width || image.getHeight() != height)
             image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 
@@ -285,6 +301,8 @@ public class FroggerUtils {
 
         return image;
     }
+
+    private static Font froggerFont;
 
     /**
      * Gets the font used to create text.

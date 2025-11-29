@@ -10,8 +10,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestFileEditorUI
 import net.highwayfrogs.editor.gui.DefaultFileUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -135,7 +135,7 @@ public abstract class GreatQuestGameFile extends GameData<GreatQuestInstance> im
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         String fileName = getFileName();
         if (fileName != null)
             propertyList.add("File Name", fileName);
@@ -143,8 +143,6 @@ public abstract class GreatQuestGameFile extends GameData<GreatQuestInstance> im
         String filePath = getFilePath();
         if (filePath != null)
             propertyList.add("File Path", filePath);
-
-        return propertyList;
     }
 
     /**

@@ -46,8 +46,9 @@ type=...
 defaultFlags=...
 
 # Each entity has a sphere surrounding it, centered at the entity's world position.
-# This sphere is used for fast vicinity checks, usually if two entities are close to each other.
-# NOTE: Waypoint entity descriptions have the option of ignoring this sphere in favor of a bounding box instead.
+# This sphere is used mainly for collision, so the sphere should always contain all parts of the collision proxy.
+# If the sphere is too small, the player might get stuck when touching the entity collision.
+# NOTE: Waypoint descriptions may use a bounding box instead, leaving this data unused.
 boundingSpherePos=0, 0, 0
 boundingSphereRadius=1
 ```
@@ -70,7 +71,7 @@ texture=...
 
 # Valid values are -1, or between (0, 60).
 # Seems to be how long the particle emitter will stay alive for, in seconds.
-lifeTimeEmitter=30.0
+lifeTime=30.0
 
 TODO: A full kcParticleParam needs to be described here too.
 ```
@@ -89,10 +90,10 @@ They can have scripts like any other entity, and can even be used to cull out hi
 # APPLY_WATER_CURRENT: A waypoint whose area is defined by the entity bounding sphere, AND pushes the player in the direction which the UVs are scrolling if the player is swimming and inside the waypoint area.
 waypointType=<BOUNDING_SPHERE|BOUNDING_BOX|APPLY_WATER_CURRENT>
 
-# Names of actual waypoint entity instances.
-# When an entity pathfinds to this entity, their pathfind target will update to the next entity.
-# It seems like for patrolling purposes, there's also a prevWaypoint entity, but this seems to be unused.
-# If you have no entity, set these to either null or 0xFFFFFFFF.
+# Names of actual entity instances. (Optional)
+# When an entity pathfinds to this entity, their pathfind target will update to the nextWaypoint.
+# It seems like for entity pathing purposes there's also a prevWaypoint entity, but this seems to be unused.
+# Note that these do not actually need to be waypoints, the next target will be set to any entity provided regardless of if it is a waypoint.
 prevWaypoint=...
 nextWaypoint=...
 
@@ -141,22 +142,22 @@ Actors are a step-up from actor-base, being able to take damage/have health.
 In the vanilla game, there are no entities which are directly base actor, only inherited types such as `Character`.  
 
 **Properties:**  
-```
+```PowerShell
 <All properties inherited from base actor.>
 
-# The health configuration for the entity.
+# The health configuration for the entity. (Optional)
 # These values are arbitrary, but 100 is the standard amount in the base game.
-# 
 maxHealth=100
 startHealth=100
 
-# A comma-separated list of damage flags which the entity is immune to/will not take damage from.
+# A comma-separated list of damage flags which the entity is immune to/will not take damage from. (Optional)
 # Please refer to the following link for a list of damage flags, but do not include the '--' prefix:
 #  https://github.com/Kneesnap/FrogLord/blob/master/resources/documentation/games/greatquest/scripting.md#takedamage-script-only
 immuneMask=
 
-# How long (in milliseconds) the entity is invincible after taking damage.
-invincibleDurationLimitMs=0
+# How long (in milliseconds) the entity is invincible after taking damage. (Optional)
+# Note that this might actually be ignored by the game.
+invincibleDurationLimitMs=2000
 ```
 
 ### Character
@@ -164,7 +165,7 @@ Characters are capable of using the AI/pathfinding system.
 Pretty much all living/breathing entities are characters.  
 
 **Properties:**
-```
+```PowerShell
 <All properties inherited from actor.>
 
 characterType=<PLAYER|STATIC|WALKER|FLYER|SWIMMER> # Different kinds of characters are available, with different AI settings.
@@ -175,7 +176,7 @@ characterType=<PLAYER|STATIC|WALKER|FLYER|SWIMMER> # Different kinds of characte
 # Please refer to the following link for a list of damage flags, but do not include the '--' prefix:
 #  https://github.com/Kneesnap/FrogLord/blob/master/resources/documentation/games/greatquest/scripting.md#takedamage-script-only
 weaponMask= 
-aggression=0 # This appears to be a counter. 0xFF means ALWAYS aggressive, anything else will assign a timer to this value when damage occurs, then after the timer reaches 0, the entity will no longer be aggressive.
+aggressionTimer=0 # This appears to be a counter. 255 means ALWAYS aggressive (recommended), anything else will assign a timer to this value when damage occurs, then after the timer reaches 0, the entity will no longer be aggressive.
 aiMeleeDamage=10 # How much damage to deal in-case of melee attack.
 attackGoalPercent=100 # The likelihood of an entity attacking its target (while AI is active).
 
@@ -223,7 +224,7 @@ Represents an item only used in one level/situation.
 # Available Types:
 # Items which store a quantity:
 # BONE, SEED,
-# Items which the player either has or doesn't have:
+# Items which are tracked just as "player has" or "player does not have":
 # CLOVER, FAKE_CLOVER, ENGINE_FUEL, TEMPLE_STATUE,
 #  SQUARE_ARTIFACT, CIRCLE_ARTIFACT, TRIANGLE_ARTIFACT, BONE_CRUNCHER_STATUE,
 #  CROWN, RUBY_SHARD, RUBY_SPHERE, RUBY_TEARDROP
@@ -238,7 +239,7 @@ Represents a collectible coin for the player to pickup.
 [[{entity name}}]] # No suffix is included.
 <Inherits all properties from Item>
 
-# The type of coin to add when the player picks up the item.
+# The type of coin to add to the player's inventory when the player picks up the item.
 coinType=<COPPER|SILVER|GOLD>
 ```
 
@@ -250,8 +251,9 @@ Represents a collectible gem for the player to pickup.
 [[{entity name}}]] # No suffix is included.
 <Inherits all properties from Item>
 
-# The type of gem to add when the player picks up the item.
-gemType=<AMETHYST|RUBY|DIAMOND|SAPPHIRE|QUARTZ>
+# The type of gem to add to the player's inventory when the player picks up the item.
+# Unused (broken) option: QUARTZ
+gemType=<AMETHYST|RUBY|DIAMOND|SAPPHIRE>
 ```
 
 ### Honeypot
@@ -266,7 +268,7 @@ Represents one of the various magic stones.
 <Inherits all properties from Item>
 
 # The type of stone to add to the player's inventory when picked up.
-# Unused options include: LIGHT, SLEEP, LIGHTNING, WIND, VORTEX
+# Unused (broken) options include: LIGHT, SLEEP, LIGHTNING, WIND, VORTEX
 stoneType=<FIRE|ICE|SPEED|SHRINK>
 ```
 

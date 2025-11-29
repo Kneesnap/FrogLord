@@ -4,7 +4,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
 import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
@@ -43,6 +42,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
     public static final BrowserFileType MWI_FILE_TYPE = new BrowserFileType("Millennium WAD Index", "MWI");
     private static final SavedFilePath MWI_FILE = new SavedFilePath("mwiFilePath", "Specify the file to save the MWI as...", MWI_FILE_TYPE);
     private static final SavedFilePath MWD_HEADER_FILE = new SavedFilePath("mwdHeaderFilePath", "Specify the file to save the MWD header as...", FileUtils.EXPORT_C_HEADER_FILE_TYPE);
+    private static final SavedFilePath VLO_HEADER_FILE = new SavedFilePath("vloHeaderFilePath", "Specify the file to save the VLO header as...", FileUtils.EXPORT_C_HEADER_FILE_TYPE);
 
     private static final SavedFilePath SAVE_MWD_FILE_PATH = new SavedFilePath("mwd-save-path", "Please select the file to save the MWD file as...", SCGameType.MWD_FILE_TYPE);
     private static final SavedFilePath SAVE_EXE_FILE_PATH = new SavedFilePath("exe-save-path", "Please select the file to save the executable as...", SCGameType.EXECUTABLE_FILE_TYPE);
@@ -81,9 +81,23 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
         addMenuItem(this.menuBarEdit, "Find Unused Textures", () -> SCAnalysisUtils.findUnusedTextures(getGameInstance()));
         if (getGameInstance() instanceof ISCMWDHeaderGenerator) {
             addMenuItem(this.menuBarEdit, "Generate MWD Header File (.H)", () -> {
-                File targetFile = FileUtils.askUserToSaveFile(getGameInstance(), MWD_HEADER_FILE, "export.h", false);
+                String defaultFileName = getGameInstance().getGameType().getMwdHeaderFileName();
+                if (defaultFileName == null)
+                    defaultFileName = "export.h";
+
+                File targetFile = FileUtils.askUserToSaveFile(getGameInstance(), MWD_HEADER_FILE, defaultFileName, false);
                 if (targetFile != null)
                     ((ISCMWDHeaderGenerator) getGameInstance()).generateMwdCHeader(targetFile);
+            });
+
+            addMenuItem(this.menuBarEdit, "Generate VLO Source Files (.C/.H)", () -> {
+                String defaultFileName = getGameInstance().getGameType().getVloHeaderFileName();
+                if (defaultFileName == null)
+                    defaultFileName = "vlo.h";
+
+                File targetFile = FileUtils.askUserToSaveFile(getGameInstance(), VLO_HEADER_FILE, defaultFileName, false);
+                if (targetFile != null)
+                    ((ISCMWDHeaderGenerator) getGameInstance()).generateVloSourceFiles(getGameInstance(), targetFile);
             });
         }
     }
@@ -100,7 +114,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
 
         File baseFolder = getGameInstance().getMainGameFolder();
         if (!baseFolder.canWrite()) {
-            FXUtils.makePopUp("Can't write to the file." + Constants.NEWLINE + "Do you have permission to save in this folder?", AlertType.ERROR);
+            FXUtils.showPopup(AlertType.ERROR, "Can't write to the file.", "Do you have permission to save in this folder?");
             return;
         }
 
@@ -113,7 +127,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
         // This is for the user's own good-- I've seen it too many times.
         // A user either doesn't understand the consequences or doesn't think it's a big deal, until it becomes a problem.
         if (outputMwdFile.equals(getGameInstance().getMwdFile())) {
-            FXUtils.makePopUp("Overwriting loaded game files is not permitted.", AlertType.ERROR);
+            FXUtils.showPopup(AlertType.ERROR, "Safety check failed.", "Overwriting loaded game files is not permitted.");
             return;
         }
 
@@ -124,7 +138,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
         // This is for the user's own good-- I've seen it too many times.
         // A user either doesn't understand the consequences or doesn't think it's a big deal, until it becomes a problem.
         if (outputExeFile.equals(getGameInstance().getExeFile())) {
-            FXUtils.makePopUp("Overwriting loaded game files is not permitted.", AlertType.ERROR);
+            FXUtils.showPopup(AlertType.ERROR, "Safety check failed.", "Overwriting loaded game files is not permitted.");
             return;
         }
 
@@ -198,14 +212,14 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
     private void promptSearchForTexture() {
         InputMenu.promptInput(getGameInstance(), "Please enter the texture id to lookup.", str -> {
             if (!NumberUtils.isInteger(str)) {
-                FXUtils.makePopUp("'" + str + "' is not a valid number.", AlertType.WARNING);
+                FXUtils.showPopup(AlertType.WARNING, "Invalid Texture ID", "'" + str + "' is not a valid number.");
                 return;
             }
 
             int texId = Integer.parseInt(str);
             List<GameImage> images = getArchive().getImagesByTextureId(texId);
             if (images.isEmpty()) {
-                FXUtils.makePopUp("Could not find an image with the id " + texId + ".", AlertType.WARNING);
+                FXUtils.showPopup(AlertType.WARNING, "Couldn't find image.", "Could not find an image with the id " + texId + ".");
                 return;
             }
 

@@ -6,12 +6,14 @@ import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector3;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
+import net.highwayfrogs.editor.utils.logging.InstanceLogger.AppendInfoLoggerWrapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +33,7 @@ import java.util.function.BiFunction;
  */
 @Getter
 public class kcOctTree extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter, IPropertyListCreator {
+    private final ILogger logger;
     private final kcOctTreeType treeType;
     private int treeDepth; // maxDimensionE, seems unused by the raw game, but maxDimension = (1 << this).
     private int smallestNodeDepth; // This is the maximum depth for any particular node.
@@ -44,11 +47,15 @@ public class kcOctTree extends GameData<GreatQuestInstance> implements IMultiLin
     public static final short FLAG_IS_LEAF = (short) Constants.BIT_FLAG_15; // 0x8000
     public static final short NULL_LEAF_ID = FLAG_IS_LEAF; // 0x8000, 0x8001 is the first real leaf.
 
-    public kcOctTree(GreatQuestInstance instance, kcOctTreeType treeType, int treeDepth, int smallestNodeDepth) {
+    public static final int CONSTANT_LEAF_COUNT = 16384; // 0x4000 (I kinda wonder if this might be getTreeSize() instead. I seem to recall this being assumed to be constant though.)
+    public static final int CONSTANT_QUAD_BRANCH_COUNT = 12288; // 0x3000
+
+    public kcOctTree(ILogger parentLogger, GreatQuestInstance instance, kcOctTreeType treeType, int treeDepth, int smallestNodeDepth) {
         super(instance);
         this.treeType = treeType;
         this.treeDepth = treeDepth;
         this.smallestNodeDepth = smallestNodeDepth;
+        this.logger = new AppendInfoLoggerWrapper(parentLogger, treeType.name(), AppendInfoLoggerWrapper.TEMPLATE_COMMA_SEPARATOR);
     }
 
     @Override
@@ -184,14 +191,13 @@ public class kcOctTree extends GameData<GreatQuestInstance> implements IMultiLin
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList.add("Offset", this.offset);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        this.offset.addToPropertyList(propertyList, "Offset");
         propertyList.add("Octree Depth", this.treeDepth);
         propertyList.add("Smallest Node Depth", this.smallestNodeDepth);
         propertyList.add("Branches", this.branches.size());
         propertyList.add("Leaves", this.leaves.size());
         propertyList.add("Quad Branches", this.quadBranches.size());
-        return propertyList;
     }
 
     /**
@@ -384,8 +390,7 @@ public class kcOctTree extends GameData<GreatQuestInstance> implements IMultiLin
     }
 
     /**
-     * Implementation of 'kcOctTreeTraverseWithoutTest'
-     * This function appears broken in the original
+     * Implementation of 'kcOctTreeTraverseWithoutTest' which iterates through all child branches/leaves, regardless of (without testing) if they pass the search test.
      * @param traversal the context to traverse with
      * @param branchId the id of the branch to traverse from
      */

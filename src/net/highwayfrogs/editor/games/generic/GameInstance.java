@@ -18,6 +18,7 @@ import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.MainGameInstanceLogger;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -87,6 +88,7 @@ public abstract class GameInstance implements IGameInstance {
             Stage stage = GameUIController.openWindow(this.mainMenuController, "FrogLord " + Constants.VERSION + " -- " + this.gameType.getDisplayName() + " " + versionName, false);
             stage.setResizable(true);
 
+            // The window hide hook handles the close hook for the main menu.
             // For some reason, JavaFX fails to properly shut down when all windows are closed, despite Platform.isImplicitExit() being true.
             // So, this is our hack for now (or indefinitely), until it's the right time to dig into JavaFX to figure out why.
             stage.setOnCloseRequest(event -> {
@@ -106,6 +108,10 @@ public abstract class GameInstance implements IGameInstance {
                         System.exit(0);
                     });
                 }
+
+                // If the stage is kept in memory by JavaFX, then this lambda function will keep the old game instance in memory, thus creating a sizable memory leak.
+                // Clearing the close request will fix such a memory leak.
+                ((Stage) event.getSource()).setOnCloseRequest(null);
             });
         }
 
@@ -123,7 +129,7 @@ public abstract class GameInstance implements IGameInstance {
     public Stage getMainStage() {
         Stage stage = this.mainMenuController != null ? this.mainMenuController.getStage() : null;
         if (stage == null) {
-            FXUtils.makePopUp("There was no stage available to override.", AlertType.ERROR);
+            FXUtils.showPopup(AlertType.ERROR, "There was no stage available.", "");
             return null;
         }
 
@@ -187,7 +193,12 @@ public abstract class GameInstance implements IGameInstance {
             throw new IllegalStateException("Cannot load the game configuration '" + gameVersionConfigName + "' because it has already been loaded.");
 
         // Load config.
-        net.highwayfrogs.editor.file.config.Config gameConfig = new net.highwayfrogs.editor.file.config.Config(this.gameType.getEmbeddedResourceStream("versions/" + gameVersionConfigName + ".cfg"));
+        String configPath = "versions/" + gameVersionConfigName + ".cfg";
+        InputStream configStream = this.gameType.getEmbeddedResourceStream(configPath);
+        if (configStream == null)
+            throw new IllegalStateException("Could not load game config '" + this.gameType.getEmbeddedResourcePath(configPath) + "'.");
+
+        net.highwayfrogs.editor.file.config.Config gameConfig = new net.highwayfrogs.editor.file.config.Config(configStream);
         loadGameConfig(gameVersionConfigName, gameConfig, instanceConfig);
     }
 
@@ -230,6 +241,7 @@ public abstract class GameInstance implements IGameInstance {
      * @param messageTemplate the message format string template to log
      * @param arguments the arguments to log with
      */
+    @Deprecated
     public void showWarning(ILogger logger, String messageTemplate, Object... arguments) {
         boolean showLoggerInfo = true;
         if (logger == null) {
@@ -243,6 +255,28 @@ public abstract class GameInstance implements IGameInstance {
         String formattedMessage = StringUtils.formatStringSafely(messageTemplate, arguments);
 
         logger.warning(formattedMessage);
-        FXUtils.makePopUp((showLoggerInfo ? "[" + logger.getName() + "]:\n" : "") + formattedMessage, AlertType.WARNING);
+        FXUtils.showPopup(AlertType.WARNING, "Attention!", (showLoggerInfo ? "[" + logger.getName() + "]:\n" : "") + formattedMessage);
+    }
+
+    /**
+     * Shows a warning to the user in the form of a popup, while also logging it to the provided logger.
+     * @param logger the logger to log the message to
+     * @param messageTemplate the message format string template to log
+     * @param arguments the arguments to log with
+     */
+    public void showWarning(ILogger logger, String headerText, String messageTemplate, Object... arguments) {
+        boolean showLoggerInfo = true;
+        if (logger == null) {
+            showLoggerInfo = false;
+            logger = getLogger();
+        }
+
+        if (messageTemplate == null)
+            throw new NullPointerException("messageTemplate");
+
+        String formattedMessage = StringUtils.formatStringSafely(messageTemplate, arguments);
+
+        logger.warning(formattedMessage);
+        FXUtils.showPopup(AlertType.WARNING, headerText, (showLoggerInfo ? "[" + logger.getName() + "]:\n" : "") + formattedMessage);
     }
 }

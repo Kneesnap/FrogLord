@@ -6,7 +6,6 @@ import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.PerspectiveCamera;
-import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
@@ -14,7 +13,6 @@ import javafx.scene.transform.Affine;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
-import javafx.stage.Stage;
 import javafx.util.Callback;
 import lombok.Getter;
 import lombok.Setter;
@@ -115,7 +113,11 @@ public class FirstPersonCamera extends Parent {
 
         // Ensure the camera is set up with default values and kick-off the camera update thread
         setupAndInitialiseCamera();
-        setupCameraUpdateThread();
+    }
+
+    private void verifyHasInputManager() {
+        if (this.inputManager == null)
+            throw new UnsupportedOperationException("The camera has no InputManager, so no input-based camera logic can be used!");
     }
 
     /**
@@ -123,14 +125,18 @@ public class FirstPersonCamera extends Parent {
      */
     private void setupAndInitialiseCamera() {
         this.rootGrp.getChildren().add(getCamera());
-        this.inputManager.setFinalMouseHandler(this::updateCameraViewFromMouseMovement);
-        this.inputManager.setFinalScrollHandler(this::updateCameraFovFromScroll);
+        if (this.inputManager != null) {
+            this.inputManager.setFinalMouseHandler(this::updateCameraViewFromMouseMovement);
+            this.inputManager.setFinalScrollHandler(this::updateCameraFovFromScroll);
+            setupCameraUpdateThread();
+        }
     }
 
     /**
      * Set up the camera update thread that will be responsible for handling the camera updates.
      */
     private void setupCameraUpdateThread() {
+        verifyHasInputManager();
         this.camUpdateThread = new AnimationTimer() {
             @Override
             public void handle(long timestamp) {
@@ -143,6 +149,7 @@ public class FirstPersonCamera extends Parent {
      * Start processing user controls for the camera.
      */
     public void startThreadProcessing() {
+        verifyHasInputManager();
         if (this.camUpdateThread != null) {
             this.lastFrameUpdate = 0;
             this.camUpdateThread.start();
@@ -186,6 +193,8 @@ public class FirstPersonCamera extends Parent {
      * Update camera movement based on user inputs.
      */
     private void updateCameraControls() {
+        verifyHasInputManager();
+
         // Check for forwards or backwards camera movement (along 'view' vector)
         boolean camMoveForward = this.inputManager.isKeyPressed(KeyCode.W);
         boolean camMoveBackward = this.inputManager.isKeyPressed(KeyCode.S);
@@ -209,22 +218,6 @@ public class FirstPersonCamera extends Parent {
             strafeCameraLeft();
         if (camStrafeRight && !camStrafeLeft)
             strafeCameraRight();
-    }
-
-    /**
-     * Assign (setup) the control event handlers on the supplied scene object.
-     * @param scene The subscene to receive and process the keyboard and mouse events, etc.
-     */
-    public void assignSceneControls(Stage stage, Scene scene) {
-        this.inputManager.assignSceneControls(stage, scene);
-    }
-
-    /**
-     * Assign (setup) the control event handlers on the supplied scene object.
-     * @param scene The subscene to receive and process the keyboard and mouse events, etc.
-     */
-    public void removeSceneControls(Stage stage, Scene scene) {
-        this.inputManager.removeSceneControls(stage, scene);
     }
 
     /**
@@ -366,7 +359,7 @@ public class FirstPersonCamera extends Parent {
         // Calculate the camera's reference frame in terms of look, right and up vectors
         Point3D deltaPos = target.subtract(getPos()); // (eye - target) = right-handed matrix... Don't we need to convert this to a left-handed matrix?
         Point3D zVec = deltaPos.normalize();
-        Point3D xVec = new Point3D(0, 1, 0).normalize().crossProduct(zVec).normalize();
+        Point3D xVec = new Point3D(0, 1, 0).crossProduct(zVec).normalize();
         Point3D yVec = zVec.crossProduct(xVec).normalize();
 
         // Update the affine transformation to point the camera towards the target point
@@ -480,8 +473,8 @@ public class FirstPersonCamera extends Parent {
      * Utility function affording the user different levels of speed control through multipliers.
      */
     public double getSpeedModifier(double defaultValue) {
-        boolean isControlDown = this.inputManager.isKeyPressed(KeyCode.CONTROL);
-        boolean isAltDown = this.inputManager.isKeyPressed(KeyCode.ALT);
+        boolean isControlDown = this.inputManager != null && this.inputManager.isKeyPressed(KeyCode.CONTROL);
+        boolean isAltDown = this.inputManager != null && this.inputManager.isKeyPressed(KeyCode.ALT);
         return getSpeedModifier(isAltDown, isControlDown, defaultValue);
     }
 

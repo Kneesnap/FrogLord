@@ -6,12 +6,14 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.data.GameData;
 import net.highwayfrogs.editor.games.konami.IConfigData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
-import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.ProxyReact;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 /**
  * Represents the 'kcProjectileParams' struct.
@@ -19,8 +21,8 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
  */
 @Getter
 @Setter
-public class kcProjectileParams extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter, IConfigData {
-    private ProxyReact proxyReact = ProxyReact.NOTIFY;
+public class kcProjectileParams extends GameData<GreatQuestInstance> implements IPropertyListCreator, IConfigData {
+    private ProxyReact proxyReact = ProxyReact.PENETRATE;
     private float sensorRadius;
     private int group; // Bone ID? Not sure.
     private int focus;
@@ -70,16 +72,18 @@ public class kcProjectileParams extends GameData<GreatQuestInstance> implements 
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        builder.append(padding).append("Flags: ").append(NumberUtils.toHexString(this.flags)).append(Constants.NEWLINE);
-        builder.append(padding).append("Hit Strength: ").append(this.hitStrength)
-                .append(", Damage Flags: ").append(NumberUtils.toHexString(this.damageFlags)).append(Constants.NEWLINE);
-        builder.append(padding).append("Collision Proxy Reaction: ").append(this.proxyReact).append(Constants.NEWLINE);
-        builder.append(padding).append("Sensor Radius: ").append(this.sensorRadius).append(Constants.NEWLINE);
-        builder.append(padding).append("Group: ").append(this.group).append(", Focus: ").append(this.focus).append(Constants.NEWLINE);
-        builder.append(padding).append("Mass: ").append(this.mass).append(", Gravity: ").append(this.gravity).append(Constants.NEWLINE);
-        builder.append(padding).append("Retain Bounce: ").append(this.retainBounce)
-                .append(", Retain Slide: ").append(this.retainSlide).append(Constants.NEWLINE);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        propertyList.add("Flags", NumberUtils.toHexString(this.flags));
+        propertyList.addInteger("Hit Strength", this.hitStrength, newValue -> this.hitStrength = newValue);
+        propertyList.add("Damage Flags", NumberUtils.toHexString(this.damageFlags));
+        propertyList.addEnum("Collision Proxy Reaction", this.proxyReact, ProxyReact.class, newValue -> this.proxyReact = newValue, false);
+        propertyList.addFloat("Sensor Radius", this.sensorRadius, newValue -> this.sensorRadius = newValue);
+        propertyList.addInteger("Group", this.group, newValue -> this.group = newValue);
+        propertyList.addInteger("Focus", this.focus, newValue -> this.focus = newValue);
+        propertyList.addFloat("Mass", this.mass, newValue -> this.mass = newValue);
+        propertyList.addFloat("Gravity", this.gravity, newValue -> this.gravity = newValue);
+        propertyList.addFloat("Retain Bounce", this.retainBounce, newValue -> this.retainBounce = newValue);
+        propertyList.addFloat("Retain Slide", this.retainSlide, newValue -> this.retainSlide = newValue);
     }
 
     /**
@@ -95,7 +99,7 @@ public class kcProjectileParams extends GameData<GreatQuestInstance> implements 
     }
 
     @Override
-    public void fromConfig(Config input) {
+    public void fromConfig(ILogger logger, Config input) {
         this.proxyReact = input.getKeyValueNodeOrError(CONFIG_KEY_PROXY_REACT).getAsEnumOrError(ProxyReact.class);
         this.sensorRadius = input.getKeyValueNodeOrError(CONFIG_KEY_SENSOR_RADIUS).getAsFloat();
         this.group = input.getKeyValueNodeOrError(CONFIG_KEY_GROUP).getAsInteger();

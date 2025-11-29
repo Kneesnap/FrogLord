@@ -5,16 +5,19 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.IConfigData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcIGenericResourceData;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 /**
@@ -30,7 +33,7 @@ public abstract class kcProxyDesc extends kcBaseDesc implements kcIGenericResour
     private final GreatQuestHash<kcCResourceGeneric> parentHash; // The hash of this object's parent.
     private final kcProxyDescType descriptionType; // The hash of this object's parent.
     @NonNull private ProxyReact reaction = ProxyReact.SLIDE; // There is only one occurrence of any ProxyReact assigned to a kcProxyDesc which is not SLIDE. The other options are implemented (or at least I know NOTIFY/PENETRATE is), and probably would work. Default is set in CItem::Init
-    private int collisionGroup; // This value is applied to the entity's kcCProxy. If either ((this->collideWith & other.collisionGroup) || (this.collisionGroup & other.collideWith)) have bits (unless it's an octree search), it will perform collision checks.
+    private int collisionGroup; // This value is applied to the entity's kcCProxy. If either ((this->collideWith & other.collisionGroup) || (other.collideWith & this.collisionGroup)) have bits (unless it's an octree search), it will perform collision checks.
     private int collideWith; // This value is applied to the entity's kcCProxy.
 
     // NOTE: collisionGroup and collideWith are the same fundamental data type I believe.
@@ -39,6 +42,7 @@ public abstract class kcProxyDesc extends kcBaseDesc implements kcIGenericResour
     // sLinkProxy (OctTree handler for ResolveCollision/ResolveCollisionIterate) ensures that the entity testing collision's collideWith has at least one masked bit with the collisionGroup of the oct tree entity.
 
     public static final int CLASS_ID = GreatQuestUtils.hash("kcCProxy");
+    public static final String NAME_SUFFIX = "ProxyDesc"; // This is applied to all kcProxyTriMeshDescs.
 
     public kcProxyDesc(kcCResourceGeneric resource, kcProxyDescType descriptionType) {
         super(resource);
@@ -79,11 +83,11 @@ public abstract class kcProxyDesc extends kcBaseDesc implements kcIGenericResour
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         // No need to display the hash, if we need to know that we can look at the resource containing this data.
-        builder.append(padding).append("Reaction: ").append(this.reaction).append(Constants.NEWLINE);
-        builder.append(padding).append("Collision Group: ").append(kcCollisionGroup.getAsString(this.collisionGroup)).append(Constants.NEWLINE);
-        builder.append(padding).append("Collide With: ").append(kcCollisionGroup.getAsString(this.collideWith)).append(Constants.NEWLINE);
+        propertyList.addEnum("Reaction", this.reaction, ProxyReact.class, newValue -> this.reaction = newValue, false);
+        propertyList.add("Collision Group", kcCollisionGroup.getAsString(this.collisionGroup));
+        propertyList.add("Collide With", kcCollisionGroup.getAsString(this.collideWith));
     }
 
     @Override
@@ -97,24 +101,24 @@ public abstract class kcProxyDesc extends kcBaseDesc implements kcIGenericResour
     private static final String CONFIG_KEY_COLLIDE_WITH = "collideWith";
 
     @Override
-    public void fromConfig(Config input) {
+    public void fromConfig(ILogger logger, Config input) {
         kcProxyDescType descType = input.getKeyValueNodeOrError(CONFIG_KEY_DESC_TYPE).getAsEnumOrError(kcProxyDescType.class);
         if (descType != getDescriptionType())
-            throw new RuntimeException("The proxy description reported itself as " + descType + ", which is incompatible with " + getDescriptionType() + ".");
+            throw new RuntimeException("The proxy description type was configured to be a(n) " + descType + ", but '" + getResourceName() + "' already exists as a(n) " + getDescriptionType() + " description instead.");
 
         this.reaction = input.getKeyValueNodeOrError(CONFIG_KEY_REACTION).getAsEnumOrError(ProxyReact.class);
         if (this.reaction == ProxyReact.HALT)
-            getLogger().warning("ProxyReact.HALT is not enabled for proxy descriptions, and will be changed to SLIDE.");
+            logger.warning("ProxyReact.HALT is not enabled for proxy descriptions, and will be changed to SLIDE.");
 
         String collisionGroupStr = input.getOrDefaultKeyValueNode(CONFIG_KEY_COLLISION_GROUP).getAsString(kcCollisionGroup.NO_COLLISION_GROUP);
         OptionalArguments collisionGroupArgs = OptionalArguments.parseCommaSeparatedNamedArguments(collisionGroupStr);
         this.collisionGroup = kcCollisionGroup.getValueFromArguments(collisionGroupArgs);
-        collisionGroupArgs.warnAboutUnusedArguments(getLogger());
+        collisionGroupArgs.warnAboutUnusedArguments(logger);
 
         String collideWithStr = input.getOrDefaultKeyValueNode(CONFIG_KEY_COLLIDE_WITH).getAsString(kcCollisionGroup.NO_COLLISION_GROUP);
         OptionalArguments collideWithArgs = OptionalArguments.parseCommaSeparatedNamedArguments(collideWithStr);
         this.collideWith = kcCollisionGroup.getValueFromArguments(collideWithArgs);
-        collideWithArgs.warnAboutUnusedArguments(getLogger());
+        collideWithArgs.warnAboutUnusedArguments(logger);
     }
 
     @Override
@@ -132,6 +136,12 @@ public abstract class kcProxyDesc extends kcBaseDesc implements kcIGenericResour
      * I'm not sure in what scenario this would ever be desirable, so it will not be implemented as user-editable.
      */
     public abstract boolean isStatic();
+
+    /**
+     * Gets the minimum radius of a sphere required to hold this proxy.
+     * @param spherePos the position of the center of the sphere in entity local space
+     */
+    public abstract float getMinimumSphereRadius(Vector3f spherePos);
 
     @Getter
     @RequiredArgsConstructor

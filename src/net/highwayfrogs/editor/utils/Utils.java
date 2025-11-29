@@ -1,5 +1,6 @@
 package net.highwayfrogs.editor.utils;
 
+import javafx.scene.control.Alert.AlertType;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.utils.logging.ILogger;
@@ -11,8 +12,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.ToIntBiFunction;
 import java.util.function.ToIntFunction;
 import java.util.function.ToLongBiFunction;
@@ -362,8 +363,16 @@ public class Utils {
         if (logger != null) {
             if (formattedMessage != null)
                 logger.severe(formattedMessage);
-            if (th != null)
+
+            if (th != null) {
+                // Trace display for UI console.
+                logger.severe("Trace:");
+                for (String errorMessage : getErrorMessages(th))
+                    logger.severe(" - %s", errorMessage);
+
+                // Show exception stack trace. (Only put in log file and debug console, not displayed in UI console)
                 logger.throwing(callingClass != null ? callingClass.getSimpleName() : null, callingMethodName, th);
+            }
         } else {
             System.err.println(formattedMessage);
             if (th != null)
@@ -371,8 +380,13 @@ public class Utils {
         }
 
         // Create popup window.
-        if (showWindow)
-            FXUtils.makeErrorPopUp(formattedMessage, formattedMessage != null ? null : th, false);
+        if (showWindow) {
+            if (formattedMessage != null) {
+                FXUtils.showPopup(AlertType.ERROR, "An error occurred.", formattedMessage + "\n\nTrace:\n - " + String.join("\n - ", getErrorMessages(th)));
+            } else {
+                FXUtils.makeErrorPopUp(null, th, false);
+            }
+        }
     }
 
     /**

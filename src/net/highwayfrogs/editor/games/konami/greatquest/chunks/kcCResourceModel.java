@@ -8,8 +8,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFi
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModel;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
-import net.highwayfrogs.editor.gui.InputMenu;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.GameUIController;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -34,9 +34,20 @@ public class kcCResourceModel extends kcCResource {
         super.load(reader);
         this.fullPath = reader.readNullTerminatedFixedSizeString(FULL_PATH_SIZE); // Don't read with the padding byte, as the padding bytes are only valid when the buffer is initially created, if the is shrunk (Such as GOOBER.VTX in 00.dat), after the null byte, the old bytes will still be there.
 
+        // Validate file name.
+        String fileName = GreatQuestUtils.getFileNameFromPath(this.fullPath);
+        if (!fileName.equalsIgnoreCase(getName()) && !kcCResource.DEFAULT_RESOURCE_NAME.equalsIgnoreCase(getName()))
+            getLogger().warning("The file name was expected to match the resource name ('%s'), but it determined to actually be '%s' instead.", getName(), fileName);
+
+        // Apply original string just in-case any of these are 'unnamed'. (Happens occasionally)
+        int testHash = GreatQuestUtils.hash(fileName);
+        if (testHash == getHash())
+            getSelfHash().setOriginalString(fileName);
+
+        // Apply the file name found here to the corresponding global file.
         GreatQuestAssetBinFile mainArchive = getMainArchive();
         if (mainArchive != null)
-            mainArchive.applyFileName(this.fullPath, false);
+            mainArchive.applyFilePath(this.fullPath, false);
 
         applyCollisionMeshName();
     }
@@ -68,11 +79,19 @@ public class kcCResourceModel extends kcCResource {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
-        propertyList.add("File Path", this.fullPath,
-                () -> InputMenu.promptInputBlocking(getGameInstance(), "Please enter the new path.", this.fullPath, newPath -> setFullPath(newPath, true)));
-        return propertyList;
+    public void addToPropertyList(PropertyListNode propertyList) {
+        propertyList.add("IMPORTANT", "This is not an actual 3D model!\nInstead, this is the file path to a 3D model.");
+        propertyList.add("", "");
+
+        super.addToPropertyList(propertyList);
+        propertyList.addString("File Path", this.fullPath)
+                .setDataHandler(newPath -> setFullPath(newPath, true));
+    }
+
+    @Override
+    public GameUIController<?> createExtraUIController() {
+        kcModelWrapper modelWrapper = getModelWrapper();
+        return modelWrapper != null ? modelWrapper.createEmbeddedModelViewer() : super.createExtraUIController();
     }
 
     /**
@@ -119,12 +138,13 @@ public class kcCResourceModel extends kcCResource {
 
         setName(GreatQuestUtils.getFileNameFromPath(newPath));
         this.fullPath = newPath;
+        refreshUI();
     }
 
     private void applyCollisionMeshName() {
         // If we resolve the model successfully, our goal is to generate the name of any corresponding collision mesh.
         String collisionMeshName = getAsCollisionTriMeshFileName(getFileName());
-        kcCResource triMesh = getParentFile().getResourceByHash(GreatQuestUtils.hash(collisionMeshName));
+        kcCResourceTriMesh triMesh = getParentFile().getResourceByName(collisionMeshName, kcCResourceTriMesh.class);
         if (triMesh != null && StringUtils.isNullOrEmpty(triMesh.getSelfHash().getOriginalString()))
             triMesh.getSelfHash().setOriginalString(collisionMeshName);
     }

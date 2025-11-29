@@ -1,6 +1,8 @@
 package net.highwayfrogs.editor.games.shared.basic.file;
 
 import javafx.fxml.FXMLLoader;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
@@ -9,9 +11,12 @@ import net.highwayfrogs.editor.games.shared.basic.file.definition.IGameFileDefin
 import net.highwayfrogs.editor.games.shared.basic.ui.BasicFileEditorUIController;
 import net.highwayfrogs.editor.gui.DefaultFileUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.DataSizeUnit;
 import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
+import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
@@ -26,6 +31,9 @@ import java.io.File;
 public abstract class BasicGameFile<TGameInstance extends BasicGameInstance> extends GameData<TGameInstance> implements IBasicGameFile {
     private final IGameFileDefinition fileDefinition;
     @Setter private byte[] rawData;
+
+    private static final SavedFilePath CHUNK_FILE_PATH = new SavedFilePath("rawFileDataPath", "Please select the file to export the raw data as.", BrowserFileType.ALL_FILES);
+
 
     @SuppressWarnings("unchecked")
     public BasicGameFile(IGameFileDefinition fileDefinition) {
@@ -87,11 +95,22 @@ public abstract class BasicGameFile<TGameInstance extends BasicGameInstance> ext
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void setupRightClickMenuItems(ContextMenu contextMenu) {
+        MenuItem exportChunkItem = new MenuItem("Export Raw Data");
+        contextMenu.getItems().add(exportChunkItem);
+        exportChunkItem.setOnAction(event -> tryExport());
+    }
+
+    private void tryExport() {
+        File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), CHUNK_FILE_PATH, getFileDefinition().getFileName(), true);
+        if (outputFile != null && this.rawData != null)
+            FileUtils.writeBytesToFile(getLogger(), outputFile, this.rawData, true);
+    }
+
+    @Override
+    public void addToPropertyList(PropertyListNode propertyList) {
         if (this.rawData != null)
             propertyList.add("Loaded File Size", DataSizeUnit.formatSize(this.rawData.length) + " (" + this.rawData.length + " bytes)");
-
-        return propertyList;
     }
 
     /**
@@ -106,7 +125,7 @@ public abstract class BasicGameFile<TGameInstance extends BasicGameInstance> ext
      * The default behavior is to do nothing.
      */
     public void handleDoubleClick() {
-        // Do nothing by default.
+        tryExport();
     }
 
     /**

@@ -5,13 +5,18 @@ import lombok.NonNull;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTriMesh;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTriMesh.kcCTriMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
+import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector4;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.lambda.Consumer5;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.Arrays;
 import java.util.List;
@@ -25,7 +30,6 @@ public class kcProxyTriMeshDesc extends kcProxyDesc {
     @Getter private final GreatQuestHash<kcCResourceTriMesh> meshRef; // '.CTM' collision mesh. This is handled by kcCActorBase::CreateCollisionProxy()
     private final Consumer5<GreatQuestHash<kcCResourceTriMesh>, String, String, Integer, Integer> nameChangeListener = this::onMeshNameChange;
 
-    public static final String NAME_SUFFIX = "ProxyDesc"; // This is applied to all kcProxyTriMeshDescs.
     private static final List<String> RECOGNIZED_INVALID_NAMES = Arrays.asList("Fairy Key A", "Fairy Key B", "Fairy Key C", "clover-2");
 
     public kcProxyTriMeshDesc(@NonNull kcCResourceGeneric resource) {
@@ -45,7 +49,7 @@ public class kcProxyTriMeshDesc extends kcProxyDesc {
         int meshHash = reader.readInt();
 
         // If we resolve the tri mesh successfully, our goal is to generate the collision mesh name.
-        if (GreatQuestUtils.resolveResourceHash(kcCResourceTriMesh.class, this, this.meshRef, meshHash, true)) {
+        if (GreatQuestUtils.resolveLevelResourceHash(kcCResourceTriMesh.class, this, this.meshRef, meshHash, true)) {
             String modelName = getParentHash().getOriginalString();
             if (!modelName.endsWith(NAME_SUFFIX))
                 throw new IllegalStateException("The kcProxyTriMeshDesc name was '" + modelName + "', but it was expected to end with '" + NAME_SUFFIX + "'.");
@@ -74,18 +78,17 @@ public class kcProxyTriMeshDesc extends kcProxyDesc {
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        super.writeMultiLineInfo(builder, padding);
-        writeAssetLine(builder, padding, "Collision Mesh", this.meshRef);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
+        this.meshRef.addToPropertyList(propertyList, "Collision Mesh", getParentFile(), kcCResourceTriMesh.class);
     }
 
     private static final String CONFIG_KEY_COLLISION = "collisionMesh";
 
     @Override
-    public void fromConfig(Config input) {
-        super.fromConfig(input);
-        int meshHash = GreatQuestUtils.getAsHash(input.getKeyValueNodeOrError(CONFIG_KEY_COLLISION), -1, this.meshRef);
-        GreatQuestUtils.resolveResourceHash(kcCResourceTriMesh.class, getParentFile(), this, this.meshRef, meshHash, true);
+    public void fromConfig(ILogger logger, Config input) {
+        super.fromConfig(logger, input);
+        GreatQuestUtils.resolveLevelResource(logger, input.getKeyValueNodeOrError(CONFIG_KEY_COLLISION), kcCResourceTriMesh.class, getParentFile(), this, this.meshRef, true);
     }
 
     @Override
@@ -100,6 +103,29 @@ public class kcProxyTriMeshDesc extends kcProxyDesc {
         // but it is unclear when this would ever be desired.
         // The game never uses it either, so this keeps it disabled.
         return false;
+    }
+
+    @Override
+    public float getMinimumSphereRadius(Vector3f spherePos) {
+        kcCResourceTriMesh triMeshResource = this.meshRef.getResource();
+        kcCTriMesh triMesh = triMeshResource != null ? triMeshResource.getTriMesh() : null;
+        if (triMesh == null || triMesh.getVertices().isEmpty())
+            return 0;
+        if (spherePos == null)
+            spherePos = Vector3f.ZERO;
+
+        double largestDistanceSq = Double.NEGATIVE_INFINITY;
+        for (int i = 0; i < triMesh.getVertices().size(); i++) {
+            kcVector4 vertex = triMesh.getVertices().get(i);
+            float xDiff = (vertex.getX() - spherePos.getX());
+            float yDiff = (vertex.getY() - spherePos.getY());
+            float zDiff = (vertex.getZ() - spherePos.getZ());
+            double tempDistanceSq = ((double) xDiff * xDiff) + ((double) yDiff * yDiff) + ((double) zDiff * zDiff);
+            if (tempDistanceSq > largestDistanceSq)
+                largestDistanceSq = tempDistanceSq;
+        }
+
+        return (float) Math.sqrt(largestDistanceSq);
     }
 
     // When the reference to kcCResourceTriMesh changes, update the name listeners.

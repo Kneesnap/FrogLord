@@ -8,22 +8,27 @@ import net.highwayfrogs.editor.games.konami.IConfigData;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
-import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.CharacterParams.CharacterType;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericTypeGroup;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.GreatQuestEntityManager;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.entity.GreatQuestMapEditorEntityDisplay;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.BasicWrappedLogger;
+import net.highwayfrogs.editor.utils.objects.StringNode;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -33,17 +38,18 @@ import java.util.Map;
  * Created by Kneesnap on 8/24/2023.
  */
 @Getter
-@Setter
-public class kcEntityInst extends GameData<GreatQuestInstance> implements IMultiLineInfoWriter, IConfigData {
+public class kcEntityInst extends GameData<GreatQuestInstance> implements IConfigData, IPropertyListCreator {
     private final kcCResourceEntityInst resource;
     private final GreatQuestHash<kcCResourceGeneric> descriptionRef; // Resolved by kcCGameSystem::CreateInstance(), kcCGameSystem::CreateInstance(), kcCEntity::Reset, kcCEntity::Init
-    private int priority = 1; // Usually 1, but sometimes two. This is used by kcCEntityMsgStore::RouteMessage() for placement in a priority queue. Basically, it allows overriding the order messages are processed/stored as.
-    private int scriptIndex = -1;
+    @Setter private int scriptIndex = -1;
     private final GreatQuestHash<kcCResourceEntityInst> targetEntityRef; // Observed both in raw data, but also kcCEntity::OnCommand[action=9], kcCEntity::ResetInt.
 
     public static final int SIZE_IN_BYTES = 28;
     public static final String PLAYER_ENTITY_NAME = "FrogInst001";
     public static final int PLAYER_ENTITY_HASH = GreatQuestUtils.hash(PLAYER_ENTITY_NAME);
+    public static final int DEFAULT_PRIORITY = 1;
+    public static final int PLAYER_PRIORITY = 2;
+    private static final StringNode DEFAULT_TARGET_ENTITY_NODE = new StringNode(PLAYER_ENTITY_NAME);
 
     public kcEntityInst(kcCResourceEntityInst resource) {
         super(resource.getGameInstance());
@@ -53,17 +59,28 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
     }
 
     @Override
+    public ILogger getLogger() {
+        return this.resource != null ? this.resource.getLogger() : super.getLogger();
+    }
+
+    @Override
     public void load(DataReader reader) {
         reader.skipInt(); // Size in bytes.
         int descriptionHash = reader.readInt();
         reader.skipInt(); // Runtime pointer to description.
-        this.priority = reader.readInt();
+        int readPriority = reader.readInt();
         reader.skipBytesRequireEmpty(Constants.INTEGER_SIZE); // group. Seems to always be zero. Used by kcCGameSystem::Insert(kcCGameSystem*, kcCEntity*)
         this.scriptIndex = reader.readInt();
         int targetEntityHash = reader.readInt();
 
-        GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, this.resource, this.descriptionRef, descriptionHash, this.resource == null || !this.resource.doesNameMatch("DummyParticleInst001", "clover-2ProxyDesc", "ConeTreeM-1Inst004", "Sbpile2Inst001")); // There are a handful of cases where this doesn't resolve, but in almost all situations it does resolve. Not sure how entities work when it doesn't resolve though.
-        GreatQuestUtils.resolveResourceHash(kcCResourceEntityInst.class, this.resource, this.targetEntityRef, targetEntityHash, true);
+        if (this.resource != null)
+            GreatQuestUtils.resolveLevelResourceHash(kcCResourceGenericTypeGroup.ENTITY_DESCRIPTION, this.resource.getParentFile(), this.resource, this.descriptionRef, descriptionHash, !this.resource.doesNameMatch("DummyParticleInst001", "clover-2ProxyDesc", "ConeTreeM-1Inst004", "Sbpile2Inst001")); // There are a handful of cases where this doesn't resolve, but in almost all situations it does resolve. Not sure how entities work when it doesn't resolve though.
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceEntityInst.class, this.resource, this.targetEntityRef, targetEntityHash, showTargetEntityWarning(targetEntityHash));
+
+        // Test after resolving entity reference.
+        int expectedPriority = calculatePriority();
+        if (readPriority != expectedPriority)
+            getLogger().warning("The entity's priority value was expected to be %d, but was actually read from the data to be %d!", expectedPriority, readPriority);
     }
 
     @Override
@@ -80,10 +97,27 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
     public void saveData(DataWriter writer) {
         writer.writeInt(this.descriptionRef.getHashNumber());
         writer.writeInt(0); // Runtime pointer to description.
-        writer.writeInt(this.priority);
+        writer.writeInt(calculatePriority());
         writer.writeInt(0); // group. Seems to always be zero.
         writer.writeInt(this.scriptIndex);
         writer.writeInt(this.targetEntityRef.getHashNumber());
+    }
+
+    /**
+     * Returns a value representing what FrogLord expects the entity priority to be.
+     * For scripts, entities with larger priorities have their effects processed after all other entities, and only call their update function afterward too.
+     * @return expectedEntityPriority
+     */
+    public int calculatePriority() {
+        kcEntity3DDesc entityDescription = getDescription();
+
+        // CCharacter::Init calls CFrogCtl::Init if the character type is PLAYER.
+        // CFrogCtl::Init calls CFrogCtl::Reset, which forces the player's priority value to be 2.
+        // This means the game always expects the player's priority value to be two, thus causing the player to be updated after all other entities.
+        if (entityDescription instanceof CharacterParams && ((CharacterParams) entityDescription).getCharacterType() == CharacterType.PLAYER)
+            return PLAYER_PRIORITY;
+
+        return DEFAULT_PRIORITY;
     }
 
     /**
@@ -104,7 +138,6 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
 
         // Add basic entity data.
         this.targetEntityRef.addEditorUI(grid, chunkedFile, "Target Entity", kcCResourceEntityInst.class);
-        grid.addSignedIntegerField("Priority", this.priority, newValue -> this.priority = newValue);
         grid.addSignedIntegerField("Script Index", this.scriptIndex, newValue -> this.scriptIndex = newValue).setDisable(true);
 
         // Add script data, if it exists.
@@ -127,25 +160,14 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
         kcEntity3DDesc entityDescription = getDescription();
         if (entityDescription != null) {
             grid.addSeparator();
-            String name = entityDescription.getResource() != null ? entityDescription.getResource().getName() : null;
+            String name = entityDescription.getResource() != null ? entityDescription.getResourceName() : null;
             grid.addBoldLabel("Description" + (name != null ? " '" + name + "'" : "") + " (" + Utils.getSimpleName(entityDescription) + "):");
 
             StringBuilder builder = new StringBuilder();
-            entityDescription.writeMultiLineInfo(builder);
+            entityDescription.createPropertyList().toStringChildEntries(builder, " ", 0);
             for (String str : builder.toString().split(Constants.NEWLINE))
                 grid.addNormalLabel(str);
         }
-    }
-
-    /**
-     * Loads script functions from the config to this entity, creating a new script if necessary.
-     * @param scriptList The script list to resolve/create scripts with.
-     * @param config The config to load script functions from
-     * @param sourceName The source name (usually a file name) representing where the scripts came from.
-     * @param clearExistingFunctions if true, any existing functions will be wiped.
-     */
-    public void addScriptFunctions(kcScriptList scriptList, Config config, String sourceName, boolean clearExistingFunctions) {
-        addScriptFunctions(null, scriptList, config, sourceName, clearExistingFunctions);
     }
 
     /**
@@ -155,8 +177,9 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
      * @param config The config to load script functions from
      * @param sourceName The source name (usually a file name) representing where the scripts came from.
      * @param clearExistingFunctions if true, any existing functions will be wiped.
+     * @param sharedScript Iff true, the script will be applied to more than one entity.
      */
-    public void addScriptFunctions(ILogger logger, kcScriptList scriptList, Config config, String sourceName, boolean clearExistingFunctions) {
+    public void addScriptFunctions(ILogger logger, kcScriptList scriptList, Config config, String sourceName, boolean clearExistingFunctions, boolean sharedScript) {
         if (scriptList == null)
             throw new NullPointerException("scriptList");
         if (config == null)
@@ -183,7 +206,7 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
         if (clearExistingFunctions)
             script.getFunctions().clear();
 
-        script.addFunctionsFromConfigNode(logger, config, sourceName);
+        script.addFunctionsFromConfigNode(logger, config, sourceName, sharedScript);
     }
 
     /**
@@ -207,6 +230,14 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
     }
 
     /**
+     * Decrease the index of the script by one.
+     * Used when a script previously in the list is removed, and indices need to be updated to reflect that change.
+     */
+    public void decrementScriptIndex() {
+        this.scriptIndex--;
+    }
+
+    /**
      * Sets up the main information to be edited.
      * @param grid the grid to create the UI inside
      */
@@ -215,23 +246,19 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        GreatQuestChunkedFile chunkedFile = this.resource != null ? this.resource.getParentFile() : null;
-
-        GreatQuestChunkedFile.writeAssetLine(chunkedFile, builder, padding, "Description", this.descriptionRef);
-        builder.append(padding).append("Priority: ").append(this.priority).append(Constants.NEWLINE);
-        builder.append(padding).append("Script Index: ").append(this.scriptIndex).append(Constants.NEWLINE);
-        GreatQuestChunkedFile.writeAssetLine(chunkedFile, builder, padding, "Target Entity", this.targetEntityRef);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        GreatQuestChunkedFile parentFile = getResource() != null ? getResource().getParentFile() : null;
+        this.descriptionRef.addToPropertyList(propertyList, "Entity Description", parentFile, kcCResourceGenericTypeGroup.ENTITY_DESCRIPTION);
+        propertyList.add("Script ID", this.scriptIndex != -1 ? this.scriptIndex : "None");
+        this.targetEntityRef.addToPropertyList(propertyList, "Target Entity", parentFile, kcCResourceEntityInst.class);
     }
 
     private static final String CONFIG_KEY_ENTITY_DESC = "description";
-    private static final String CONFIG_KEY_PRIORITY = "priority";
     private static final String CONFIG_KEY_TARGET_ENTITY = "targetEntity";
     public static final String CONFIG_SECTION_SCRIPT = "Script";
 
-
     @Override
-    public void fromConfig(Config input) {
+    public void fromConfig(ILogger logger, Config input) {
         if (this.resource == null)
             throw new NullPointerException("this.resource");
 
@@ -239,30 +266,14 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
         if (chunkedFile == null)
             throw new NullPointerException("chunkedFile");
 
-        int entityDescHash = GreatQuestUtils.getAsHash(input.getKeyValueNodeOrError(CONFIG_KEY_ENTITY_DESC), -1, this.descriptionRef);
-        GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, chunkedFile, this.resource, this.descriptionRef, entityDescHash, true);
+        ConfigValueNode entityDescNode = input.getKeyValueNodeOrError(CONFIG_KEY_ENTITY_DESC);
+        GreatQuestUtils.resolveLevelResource(logger, entityDescNode, kcCResourceGenericTypeGroup.ENTITY_DESCRIPTION, chunkedFile, this.resource, this.descriptionRef, true);
 
-        this.priority = input.getOrDefaultKeyValueNode(CONFIG_KEY_PRIORITY).getAsInteger(1);
+        StringNode targetEntityNode = input.getOptionalKeyValueNode(CONFIG_KEY_TARGET_ENTITY);
+        if (targetEntityNode == null) // Default to FrogInst001 if not specified.
+            targetEntityNode = DEFAULT_TARGET_ENTITY_NODE;
 
-        int targetEntityHash = GreatQuestUtils.getAsHash(input.getKeyValueNodeOrError(CONFIG_KEY_TARGET_ENTITY), -1, this.targetEntityRef);
-        GreatQuestUtils.resolveResourceHash(kcCResourceEntityInst.class, chunkedFile, this.resource, this.targetEntityRef, targetEntityHash, true);
-    }
-
-    /**
-     * Loads from the config, and loads the script now.
-     * @param input the input config to read from
-     */
-    public final void fromConfigIncludeScripts(Config input) {
-        GreatQuestChunkedFile chunkedFile = this.resource.getParentFile();
-        if (chunkedFile == null)
-            throw new NullPointerException("chunkedFile");
-
-        fromConfig(input);
-
-        // Read scripts.
-        Config scriptCfg = input.getChildConfigByName(CONFIG_SECTION_SCRIPT);
-        if (scriptCfg != null)
-            addScriptFunctions(chunkedFile.getScriptList(), scriptCfg, scriptCfg.getRootNode().getSectionName(), true);
+        GreatQuestUtils.resolveLevelResource(logger, targetEntityNode, kcCResourceEntityInst.class, chunkedFile, this.resource, this.targetEntityRef, true);
     }
 
     @Override
@@ -296,13 +307,11 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
                 .setComment("The name of the description (template) describing what kind of entity this is.")
                 .setAsString(this.descriptionRef.getAsGqsString(settings));
 
-        output.getOrCreateKeyValueNode(CONFIG_KEY_PRIORITY)
-                .setComment("Controls the priority in which actions from different entities are handled. 1 is fine in most cases.")
-                .setAsInteger(this.priority);
-
-        output.getOrCreateKeyValueNode(CONFIG_KEY_TARGET_ENTITY)
-                .setComment("The entity to target. If unsure, use " + PLAYER_ENTITY_NAME + ".")
-                .setAsString(this.targetEntityRef.getAsGqsString(settings));
+        if (this.targetEntityRef.getHashNumber() != PLAYER_ENTITY_HASH) {
+            output.getOrCreateKeyValueNode(CONFIG_KEY_TARGET_ENTITY)
+                    .setComment("The entity to move towards or attack, or for use with AI.")
+                    .setAsString(this.targetEntityRef.getAsGqsString(settings));
+        }
 
         Config oldScript = output.getChildConfigByName(CONFIG_SECTION_SCRIPT);
         if (oldScript != null)
@@ -310,9 +319,13 @@ public class kcEntityInst extends GameData<GreatQuestInstance> implements IMulti
 
         kcScript script = getScript(scriptList);
         if (script != null) {
-            Config scriptData = script.toConfigNode(settings);
+            Config scriptData = script.toConfigNode(getLogger(), settings);
             scriptData.setSectionName(CONFIG_SECTION_SCRIPT);
             output.addChildConfig(scriptData);
         }
+    }
+
+    private boolean showTargetEntityWarning(int hash) {
+        return (!"FrogInst001".equals(this.resource.getName()) || hash != 0xAF201672); // BarrelInst001.
     }
 }

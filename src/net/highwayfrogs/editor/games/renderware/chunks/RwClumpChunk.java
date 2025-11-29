@@ -16,7 +16,7 @@ import net.highwayfrogs.editor.games.renderware.struct.RwStruct;
 import net.highwayfrogs.editor.games.renderware.struct.RwStructType;
 import net.highwayfrogs.editor.games.renderware.struct.types.RwStructInt32;
 import net.highwayfrogs.editor.gui.GameUIController;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -105,14 +105,13 @@ public class RwClumpChunk extends RwStreamChunk {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Atomics", this.atomics.size());
         propertyList.add("Lights", this.lights.size());
         propertyList.add("Cameras", this.cameras.size());
         propertyList.add("Frames", this.frameList.getFrames().size());
         propertyList.add("Geometries", this.geometryList.getGeometries().size());
-        return propertyList;
     }
 
     @Override
@@ -167,12 +166,11 @@ public class RwClumpChunk extends RwStreamChunk {
         }
 
         @Override
-        public PropertyList addToPropertyList(PropertyList propertyList) {
-            propertyList = super.addToPropertyList(propertyList);
+        public void addToPropertyList(PropertyListNode propertyList) {
+            super.addToPropertyList(propertyList);
             propertyList.add("Atomic Count", this.atomicCount);
             propertyList.add("Light Count", this.lightCount);
             propertyList.add("Camera Count", this.cameraCount);
-            return propertyList;
         }
 
         @Override

@@ -109,6 +109,6 @@ public enum kcEntityInheritanceGroup {
             return;
 
         if (!isApplicable(entityDesc))
-            action.printWarning(logger, "'" + relevantData + "' requires the entity description '" + entityDesc.getResource().getName() + "' to extend " + this.displayName + ", but the entity was actually a " + Utils.getSimpleName(entityDesc) + ".");
+            action.printWarning(logger, "'" + relevantData + "' requires the entity description '" + entityDesc.getResourceName() + "' to extend " + this.displayName + ", but the entity was actually a " + Utils.getSimpleName(entityDesc) + ".");
     }
 }

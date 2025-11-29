@@ -3,9 +3,11 @@ package net.highwayfrogs.editor.system.math;
 import javafx.geometry.Point3D;
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListDataEntry;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 
 /**
  * Represents a vector with three 32 bit floating point values.
@@ -312,6 +314,22 @@ public class Vector3f implements IBinarySerializable {
     @Override
     public int hashCode() {
         return Float.hashCode(this.x) * 397 * Float.hashCode(this.y) ^ Float.hashCode(this.z);
+    }
+
+    /**
+     * Adds the vector to the property list.
+     * @param propertyList the property list to add to
+     * @param name the name to put the vector into the property list with
+     */
+    public PropertyListDataEntry<Vector3f> addToPropertyList(PropertyListNode propertyList, String name) {
+        return propertyList.add(name, this)
+                .setDataToStringConverter(Vector3f::toParseableString)
+                .setDataFromStringConverter(newText -> {
+                    Vector3f newVector = new Vector3f();
+                    newVector.parse(newText);
+                    return newVector;
+                })
+                .setDataHandler(this::setXYZ);
     }
 
     /**

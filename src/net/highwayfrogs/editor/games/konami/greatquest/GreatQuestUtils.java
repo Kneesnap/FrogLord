@@ -14,16 +14,19 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcBaseDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.IkcCResourceGenericTypeGroup;
+import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
+import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.utils.*;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.StringNode;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.*;
-import java.util.function.Function;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
@@ -54,19 +57,34 @@ public class GreatQuestUtils {
             "KeyPikupParticleParam", "UniqueItemParticleParam", "ModeAfterMovie", "MovieContinueGame",
             "FrogSpawnParticleParam", "CoinPickupParticleParam", "_kcEnvironment", "null"));
 
-    // These are entities which are registered by the game itself, but are not registered to the static entity lookup map kcCEntity::mpInstanceMap.
-    private static final List<String> UNMAPPED_SYSTEM_ENTITIES = Collections.singletonList(
-            "ParticleMgr" // 0x2F5AFD67, kcCParticleMgr, Added by CGreatQuest::Init()
+    // These are entities which are possible to search by hash, because they are registered in kcCEntity::mpInstanceMap.
+    // A search of the game files shows that these entities are never referenced by any scripts.
+    // But that doesn't mean we couldn't theoretically use them if we'd like.
+    private static final List<String> SYSTEM_ENTITIES = Arrays.asList(
+            "ParticleMgr", // 0x2F5AFD67, kcCParticleMgr, Added by CGreatQuest::Init()
+            // Idea: Hide/show all particles at will?
+            "ScriptCamera", // 0x725CE60F, kcCCameraPivot, Added by EvLevelBegin(), kcCCameraPivot::chDefaultHandle (This is the camera which gets switched to when ActivateCamera is called)
+            "FollowCamera", // 0x815DBBEB, kcCCameraFollow, Added by EvLevelBegin(), kcCCameraFollow::chDefaultHandle (Set the camera target?. Already doable with SetCameraTarget) This camera is pushed onto the stack when the level begins, and is the main camera.
+            // Idea: We could theoretically lock the camera in place relative to the player. Might be good for some fixed camera angles, like that one time in Joy Castle.
+            "WaypointMgr", // 0x69F9EA6C, kcCWaypointMgr, Added by kcCGameSystem::Init()
+            // Idea: Temporarily prevent waypoint pathfinding and waypoint status ticking.
+            "kcGlobalDialog", // 0x72FA6003, kcCDialog, Added by EvLevelBegin()
+            // Idea: Prevent the user from progressing a dialog box.
+            // Idea: This could (in theory) be used to slow down dialog speed, by using an alarm to delay showing the next text character a bit.
+            "CameraStack", // 0x2464F220, kcCCameraStack, Added by EvLevelBegin()
+            "kcCScriptMgr" // 0x44EDFE47, kcCScriptMgr, Added by kcCScriptMgr::Init()
+            // Other ways of spawning entities:
+            //  - kcCEmitter (kcEmitterDesc) can spawn entities of name format("%s%d", emitterName, entitiesSpawnedByEmitter++). This is unused in the vanilla game. kcCEmitter::Spawn
+            //  - CLauncher::Launch/CLauncher::LaunchMissile can spawn entities of name format("%s_dynamic%5d", entityName, rand() % 100000). kcCGameSystem::FindUnmappedEntityName generates the names.
+            //  - SpawnObject is called as part of an entity's death sequence (CCharacter::Update), and seems to be used to spawn in the coins on death. format("%s_%03d", typeName, staticNumberOfObjectsSpawnedThisWay++) Available type names are defined in __sinit_CCharacter.cpp (eg: "Copper Coin")
     );
 
-    // These are entities which are possible to search by hash, because they are registered in kcCEntity::mpInstanceMap.
-    private static final List<String> MAPPED_SYSTEM_ENTITIES = Arrays.asList(
-            "ScriptCamera", // 0x725CE60F, kcCCameraPivot, Added by EvLevelBegin(), kcCCameraPivot::chDefaultHandle
-            "FollowCamera", // 0x815DBBEB, kcCCameraFollow, Added by EvLevelBegin(), kcCCameraFollow::chDefaultHandle
-            "WaypointMgr", // 0x69F9EA6C, kcCParticleMgr, Added by kcCGameSystem::Init()
-            "kcGlobalDialog", // 0x72FA6003, kcCDialog, Added by EvLevelBegin()
-            "CameraStack" // 0x2464F220, kcCCameraStack, Added by EvLevelBegin()
-    );
+    public static final Map<Integer, String> SYSTEM_ENTITIES_BY_HASH = new HashMap<>();
+
+    static {
+        for (String entityName : SYSTEM_ENTITIES)
+            SYSTEM_ENTITIES_BY_HASH.put(GreatQuestUtils.hash(entityName), entityName);
+    }
 
     // These are all event names seen in PS2 PAL in RegisterEvents(), kcRegisterEvents(), InitMode(), modeMovieInit(), and InitMovie().
     // All usages of kcCEventMgr::Trigger(),  were checked to ensure none are missing too.
@@ -183,7 +201,7 @@ public class GreatQuestUtils {
      * Adds hardcoded file paths by their hashes to the map provided.
      * @param nameMap The map to update.
      */
-    public static void addHardcodedFileNameHashesToMap(Map<Integer, String> nameMap) {
+    public static void addHardcodedFilePathHashesToMap(Map<Integer, String> nameMap) {
         loadFileList();
         nameMap.putAll(FILENAMES_BY_HASH);
     }
@@ -476,8 +494,8 @@ public class GreatQuestUtils {
      * @return if the resource was successfully resolved
      * @param <TResource> the type of resource to resolve
      */
-    public static <TResource extends kcHashedResource> boolean resolveResourceHash(Class<TResource> resourceClass, kcCResource resource, GreatQuestHash<TResource> hashObj, int hash, boolean warnIfNotFound) {
-        return resolveResourceHash(resourceClass, resource.getParentFile(), resource, hashObj, hash, warnIfNotFound);
+    public static <TResource extends kcHashedResource> boolean resolveLevelResourceHash(Class<TResource> resourceClass, kcCResource resource, GreatQuestHash<TResource> hashObj, int hash, boolean warnIfNotFound) {
+        return resolveLevelResourceHash(resource.getLogger(), resourceClass, resource.getParentFile(), resource, hashObj, hash, warnIfNotFound);
     }
 
     /**
@@ -489,8 +507,8 @@ public class GreatQuestUtils {
      * @return if the resource was successfully resolved
      * @param <TResource> the type of resource to resolve
      */
-    public static <TResource extends kcHashedResource> boolean resolveResourceHash(Class<TResource> resourceClass, kcBaseDesc gameObj, GreatQuestHash<TResource> hashObj, int hash, boolean warnIfNotFound) {
-        return resolveResourceHash(resourceClass, gameObj.getParentFile(), gameObj, hashObj, hash, warnIfNotFound);
+    public static <TResource extends kcHashedResource> boolean resolveLevelResourceHash(Class<TResource> resourceClass, kcBaseDesc gameObj, GreatQuestHash<TResource> hashObj, int hash, boolean warnIfNotFound) {
+        return resolveLevelResourceHash(gameObj.getLogger(), resourceClass, gameObj.getParentFile(), gameObj, hashObj, hash, warnIfNotFound);
     }
 
     /**
@@ -504,13 +522,15 @@ public class GreatQuestUtils {
      * @return if the resource was successfully resolved
      * @param <TResource> the type of resource to resolve
      */
-    public static <TResource extends kcHashedResource> boolean resolveResourceHash(Class<TResource> resourceClass, GreatQuestChunkedFile parentFile, IGameObject gameObj, GreatQuestHash<TResource> hashObj, int hash, boolean warnIfNotFound) {
+    public static <TResource extends kcHashedResource> boolean resolveLevelResourceHash(ILogger logger, Class<TResource> resourceClass, GreatQuestChunkedFile parentFile, IGameObject gameObj, GreatQuestHash<TResource> hashObj, int hash, boolean warnIfNotFound) {
         if (resourceClass == null)
             throw new NullPointerException("resourceClass");
         if (gameObj == null)
             throw new NullPointerException("gameObj");
         if (hashObj == null)
             throw new NullPointerException("hashObj");
+        if (logger == null)
+            logger = gameObj.getLogger();
 
         // Apply the hash.
         hashObj.setHash(hash);
@@ -519,21 +539,130 @@ public class GreatQuestUtils {
         kcCResource resource = GreatQuestUtils.findLevelResourceByHash(parentFile, hash);
         if (resource != null) {
             if (!resourceClass.isInstance(resource))
-                throw new ClassCastException("Resolved hash " + hashObj.getHashNumberAsString() + " to a " + Utils.getSimpleName(resource) + " named '" + resource.getName() + "', but a " + resourceClass.getName() + " was expected instead!");
+                throw new ClassCastException("Tried to use the resource '" + resource.getCollectionViewDisplayName() + "' as a " + resourceClass.getSimpleName() + ", but it was actually a " + Utils.getSimpleName(resource) + "!");
 
             TResource castedResource = resourceClass.cast(resource);
             hashObj.setResource(castedResource, true);
             return true;
         } else {
             if (warnIfNotFound && hash != 0 && hash != -1)
-                gameObj.getLogger().warning("Failed to resolve %s by its %s hash: %s.", resourceClass.getSimpleName(), Utils.getSimpleName(gameObj), hashObj.getHashNumberAsString());
+                logger.warning("Could not find a resource by the hash: %s. (Used by: %s, Resource Type: %s).", hashObj.getHashNumberAsString(), Utils.getSimpleName(gameObj), resourceClass.getSimpleName());
             return false;
         }
     }
 
     /**
-     * Find a resource by its hash
-     * @param parentFile the parent file. searched first
+     * Resolves a resource hash to a particular asset.
+     * @param resourceType the desired resource type
+     * @param parentFile the file to find assets within
+     * @param gameObj the game object resolving the hash.
+     * @param hashObj the hash object to save results within
+     * @param hash the numerical hash to resolve.
+     * @param warnIfNotFound if true and the resource is not found, a warning will be written.
+     * @return if the resource was successfully resolved
+     */
+    public static boolean resolveLevelResourceHash(IkcCResourceGenericTypeGroup resourceType, GreatQuestChunkedFile parentFile, IGameObject gameObj, GreatQuestHash<kcCResourceGeneric> hashObj, int hash, boolean warnIfNotFound) {
+        return resolveLevelResourceHash(gameObj.getLogger(), resourceType, parentFile, gameObj, hashObj, hash, warnIfNotFound);
+    }
+
+    /**
+     * Resolves a resource hash to a particular asset.
+     * @param resourceType the desired resource type
+     * @param parentFile the file to find assets within
+     * @param gameObj the game object resolving the hash.
+     * @param hashObj the hash object to save results within
+     * @param hash the numerical hash to resolve.
+     * @param warnIfNotFound if true and the resource is not found, a warning will be written.
+     * @return if the resource was successfully resolved
+     */
+    public static boolean resolveLevelResourceHash(ILogger logger, IkcCResourceGenericTypeGroup resourceType, GreatQuestChunkedFile parentFile, IGameObject gameObj, GreatQuestHash<kcCResourceGeneric> hashObj, int hash, boolean warnIfNotFound) {
+        if (resourceType == null)
+            throw new NullPointerException("resourceType");
+        if (logger == null)
+            logger = gameObj.getLogger();
+
+        if (!resolveLevelResourceHash(logger, kcCResourceGeneric.class, parentFile, gameObj, hashObj, hash, warnIfNotFound))
+            return false;
+
+        kcCResourceGeneric resource = hashObj.getResource();
+        if (resource.getResourceType() != null && !resourceType.contains(resource.getResourceType()))
+            throw new ClassCastException("Tried to use the resource '" + resource.getCollectionViewDisplayName() + "' as a(n) " + resourceType + ", but it was actually a(n) " + resource.getResourceType() + "!");
+
+        return true;
+    }
+
+    /**
+     * Resolves a resource hash to a particular asset.
+     * @param node the config node to resolve the resource from
+     * @param resourceClass the desired resource class
+     * @param parentFile the file to find assets within
+     * @param gameObj the game object resolving the hash.
+     * @param hashObj the hash object to save results within
+     * @param warnIfNotFound if true and the resource is not found, a warning will be written.
+     * @return if the resource was successfully resolved
+     * @param <TResource> the type of resource to resolve
+     */
+    public static <TResource extends kcHashedResource> boolean resolveLevelResource(ILogger logger, StringNode node, Class<TResource> resourceClass, GreatQuestChunkedFile parentFile, IGameObject gameObj, GreatQuestHash<TResource> hashObj, boolean warnIfNotFound) {
+        if (resourceClass == null)
+            throw new NullPointerException("resourceClass");
+        if (gameObj == null)
+            throw new NullPointerException("gameObj");
+        if (hashObj == null)
+            throw new NullPointerException("hashObj");
+        if (logger == null)
+            logger = gameObj.getLogger();
+
+        // Handle null.
+        int nullHashValue = hashObj.getValueRepresentingNull();
+        String nodeString = node != null ? node.getAsString() : null;
+        if (nodeString == null) {
+            hashObj.setHash(nullHashValue);
+            return false;
+        }
+
+        // Resolve the resource.
+        int nodeHash = getAsHash(nodeString, nullHashValue, hashObj);
+        kcCResource resource = findLevelResourceByName(parentFile, nodeString, kcCResource.class); // We want to give our own message, so we'll accept any kind of resource.
+        if (resource == null) {
+            if (warnIfNotFound && nodeHash != nullHashValue)
+                logger.warning("Could not find the resource '%s'. (Used by: %s, Resource Type: %s).", nodeString, Utils.getSimpleName(gameObj), resourceClass.getSimpleName());
+            return false;
+        }
+
+        if (!resourceClass.isInstance(resource))
+            throw new ClassCastException("Tried to use the resource '" + resource.getCollectionViewDisplayName() + "' as a " + resourceClass.getSimpleName() + ", but it was actually a " + Utils.getSimpleName(resource) + "!");
+
+        TResource castedResource = resourceClass.cast(resource);
+        hashObj.setResource(castedResource, true);
+        return true;
+    }
+
+    /**
+     * Resolves a resource hash to a particular asset.
+     * @param node the config node to resolve the resource from
+     * @param resourceType the desired resource type
+     * @param parentFile the file to find assets within
+     * @param gameObj the game object resolving the hash.
+     * @param hashObj the hash object to save results within
+     * @param warnIfNotFound if true and the resource is not found, a warning will be written.
+     * @return if the resource was successfully resolved
+     */
+    public static boolean resolveLevelResource(ILogger logger, StringNode node, IkcCResourceGenericTypeGroup resourceType, GreatQuestChunkedFile parentFile, IGameObject gameObj, GreatQuestHash<kcCResourceGeneric> hashObj, boolean warnIfNotFound) {
+        if (resourceType == null)
+            throw new NullPointerException("resourceType");
+        if (!resolveLevelResource(logger, node, kcCResourceGeneric.class, parentFile, gameObj, hashObj, warnIfNotFound))
+            return false;
+
+        kcCResourceGeneric resource = hashObj.getResource();
+        if (resource.getResourceType() != null && !resourceType.contains(resource.getResourceType()))
+            throw new ClassCastException("Tried to use the resource '" + resource.getCollectionViewDisplayName() + "' as a(n) " + resourceType + ", but it was actually a(n) " + resource.getResourceType() + "!");
+
+        return true;
+    }
+
+    /**
+     * Find a resource by its hash across all chunked files in the game.
+     * @param parentFile the parent file, searched first.
      * @param mainInstance the main game instance, all chunked files are searched if not found
      * @param resourceHash the resource hash to lookup
      * @return resourceOrNull
@@ -589,32 +718,31 @@ public class GreatQuestUtils {
     }
 
     /**
-     * Find a generic resource by its hash
-     * @param parentFile the parent file. searched first
-     * @param mainInstance the main game instance, all chunked files are searched if not found
-     * @param resourceHash the resource hash to lookup
-     * @param transformer the transformer to get the real resource from the generic one
-     * @return genericResourceOrNull
+     * Find a resource available to the given level by the resource name.
+     * @param parentFile the parent file, searched first. If not found, other chunked files loaded will be searched.
+     * @param resourceName the name of the resource to lookup
+     * @param resourceClass the type of resource to resolve
+     * @return resourceOrNull
      * @param <TResult> the type of result to return
      */
-    public static <TResult> TResult findGenericResourceByHash(GreatQuestChunkedFile parentFile, GreatQuestInstance mainInstance, int resourceHash, Function<kcCResourceGeneric, TResult> transformer) {
-        kcCResourceGeneric genericResult = parentFile != null ? parentFile.getResourceByHash(resourceHash) : null;
-        if (genericResult != null) {
-            TResult transformedResult = transformer.apply(genericResult);
-            if (transformedResult != null)
-                return transformedResult;
-        }
+    public static <TResult extends kcCResource> TResult findLevelResourceByName(GreatQuestChunkedFile parentFile, String resourceName, Class<TResult> resourceClass) {
+        if (parentFile == null)
+            throw new NullPointerException("parentFile");
+
+        TResult foundResult = parentFile.getResourceByName(resourceName, resourceClass);
+        if (foundResult != null)
+            return foundResult;
 
         // Global search.
+        GreatQuestInstance mainInstance = parentFile.getGameInstance();
         for (GreatQuestArchiveFile file : mainInstance.getMainArchive().getFiles()) {
-            if (!(file instanceof GreatQuestChunkedFile) || (parentFile == file))
+            if (!(file instanceof GreatQuestChunkedFile) || (parentFile == file) || !"00.dat".equalsIgnoreCase(file.getFileName()))
                 continue;
 
             GreatQuestChunkedFile chunkedFile = (GreatQuestChunkedFile) file;
-            genericResult = chunkedFile.getResourceByHash(resourceHash);
-            TResult transformedResult = genericResult != null ? transformer.apply(genericResult) : null;
-            if (transformedResult != null)
-                return transformedResult;
+            foundResult = chunkedFile.getResourceByName(resourceName, resourceClass);
+            if (foundResult != null)
+                return foundResult;
         }
 
         return null;
@@ -658,8 +786,59 @@ public class GreatQuestUtils {
         }
 
         return result != null ? result : source;
-
     }
+
+    /**
+     * Some A8R8G8B8 images (such as Pike.tga for C075.vtx on PC) are A8R8G8B8, and have empty alpha values.
+     * The actual game seems to ignore the alpha channel if alpha-blend is not enabled, causing those models to render as if they had full alpha.
+     * Unfortunately, FrogLord doesn't have the ability to replicate this behavior, so we must create a modified image
+     * @param material the material to
+     * @return newImage
+     */
+    public static boolean needsHardcodedAlphaFix(kcMaterial material, kcModelWrapper model) {
+        if (material == null || model == null)
+            return false;
+
+        return (model.getGameInstance().isPC() && "Pike.tga".equals(material.getTextureFileName()) && "C075.vtx".equalsIgnoreCase(model.getFileName()));
+    }
+
+    /**
+     * Some A8R8G8B8 images (such as Pike.tga for C075.vtx on PC) are A8R8G8B8, and have empty alpha values.
+     * The actual game seems to ignore the alpha channel if alpha-blend is not enabled, causing those models to render as if they had full alpha.
+     * Unfortunately, FrogLord doesn't have the ability to replicate this behavior, so we must create a modified image.
+     * @param source the image to apply
+     * @return newImage
+     */
+    public static BufferedImage forceFullAlpha(BufferedImage source) {
+        if (source == null)
+            return null;
+
+        // If the image is BYTE_INDEXED, create the array directly.
+        if (source.getType() != BufferedImage.TYPE_INT_ARGB)
+            return source;
+
+        BufferedImage result = null;
+        int[] readBuffer = ImageWorkHorse.getPixelIntegerArray(source);
+        int[] writeBuffer = null;
+
+        for (int i = 0; i < readBuffer.length; i++) {
+            int argbColor = readBuffer[i];
+            int alpha = argbColor >>> 24;
+            if (alpha == 255)
+                continue;
+
+            // Create result.
+            if (result == null) {
+                result = ImageWorkHorse.copyImage(source);
+                writeBuffer = ImageWorkHorse.getPixelIntegerArray(result);
+            }
+
+            writeBuffer[i] = argbColor | 0xFF000000;
+        }
+
+        return result != null ? result : source;
+    }
+
 
     /**
      * Skip bytes, requiring the bytes skipped be 0 or the alternate value.
@@ -814,33 +993,6 @@ public class GreatQuestUtils {
     }
 
     /**
-     * Interprets the given node as a hash
-     * @param node the node to interpret
-     * @param nullValue the value to return if a null or empty string is provided
-     * @return hashValue
-     */
-    public static int getAsHash(StringNode node, int nullValue) {
-        return node != null && node.getAsString() != null ? getAsHash(node.getAsString(), nullValue, null) : nullValue;
-    }
-
-    /**
-     * Interprets the given node as a hash
-     * @param node the node to interpret
-     * @param nullValue the value to return if a null or empty string is provided
-     * @return hashValue
-     */
-    public static int getAsHash(StringNode node, int nullValue, GreatQuestHash<?> hashObj) {
-        String originalString;
-        if (node != null && (originalString = node.getAsString()) != null) {
-            return getAsHash(originalString, nullValue, hashObj);
-        } else {
-            if (hashObj != null)
-                hashObj.setHash(nullValue);
-            return nullValue;
-        }
-    }
-
-    /**
      * Interprets the given string as a hash
      * @param input the string to interpret
      * @param nullValue the value to return if a null or empty string is provided
@@ -852,8 +1004,8 @@ public class GreatQuestUtils {
             if (hashObj != null)
                 hashObj.setHash(nullValue);
             return nullValue;
-        } else if (NumberUtils.isHexInteger(input)) {
-            int hash = NumberUtils.parseHexInteger(input);
+        } else if (NumberUtils.isPrefixedHexInteger(input)) {
+            int hash = NumberUtils.parseIntegerAllowHex(input);
             if (hashObj != null)
                 hashObj.setHash(hash);
             return hash;
@@ -867,8 +1019,7 @@ public class GreatQuestUtils {
 
     static {
         ALL_HARDCODED_STRINGS_TO_HASH.addAll(GENERAL_HASHED_STRINGS);
-        ALL_HARDCODED_STRINGS_TO_HASH.addAll(UNMAPPED_SYSTEM_ENTITIES);
-        ALL_HARDCODED_STRINGS_TO_HASH.addAll(MAPPED_SYSTEM_ENTITIES);
+        ALL_HARDCODED_STRINGS_TO_HASH.addAll(SYSTEM_ENTITIES);
         ALL_HARDCODED_STRINGS_TO_HASH.addAll(EVENT_NAMES);
         ALL_HARDCODED_STRINGS_TO_HASH.addAll(EVENT_PUBLIC_INFO_NAMES);
         ALL_HARDCODED_STRINGS_TO_HASH.addAll(CLASS_NAMES);

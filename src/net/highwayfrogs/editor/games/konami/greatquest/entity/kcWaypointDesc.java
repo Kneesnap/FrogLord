@@ -5,18 +5,22 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.ILateResourceResolver;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcVector3;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 /**
  * Represents the kcWaypointDesc struct.
@@ -25,7 +29,7 @@ import net.highwayfrogs.editor.utils.NumberUtils;
  */
 @Getter
 @Setter
-public class kcWaypointDesc extends kcEntity3DDesc {
+public class kcWaypointDesc extends kcEntity3DDesc implements ILateResourceResolver {
     private final GreatQuestHash<kcCResourceGeneric> parentHash;
     @NonNull private kcWaypointType type = kcWaypointType.BOUNDING_SPHERE;
     private final GreatQuestHash<kcCResourceEntityInst> previousWaypointEntityRef; // NOTE: -1 when not found, kcCWaypoint::RenderDebug, kcCWaypoint::__ct, MonsterClass::Do_Guard
@@ -61,8 +65,8 @@ public class kcWaypointDesc extends kcEntity3DDesc {
         reader.skipBytesRequireEmpty(PADDING_VALUES * Constants.INTEGER_SIZE);
 
         // Resolve entities. Keep in mind that there are a good number of entities which were removed/no longer resolve.
-        GreatQuestUtils.resolveResourceHash(kcCResourceEntityInst.class, this, this.previousWaypointEntityRef, prevEntityHash, false);
-        GreatQuestUtils.resolveResourceHash(kcCResourceEntityInst.class, this, this.nextWaypointEntityRef, nextEntityHash, false);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceEntityInst.class, this, this.previousWaypointEntityRef, prevEntityHash, false);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceEntityInst.class, this, this.nextWaypointEntityRef, nextEntityHash, false);
         if (waypointFlags != 0)
             throw new RuntimeException("Found a kcWaypointDesc which had non-zero waypointFlags! (Had: " + NumberUtils.toHexString(waypointFlags) + ")");
         if (colorAlpha != 0)
@@ -84,15 +88,15 @@ public class kcWaypointDesc extends kcEntity3DDesc {
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        super.writeMultiLineInfo(builder, padding);
-        builder.append(padding).append("Type: ").append(this.type).append(Constants.NEWLINE);
-        writeAssetLine(builder, padding, "Previous", this.previousWaypointEntityRef);
-        writeAssetLine(builder, padding, "Next", this.nextWaypointEntityRef);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
+        propertyList.addEnum("Type", this.type, kcWaypointType.class, newType -> this.type = newType, false);
+        this.previousWaypointEntityRef.addToPropertyList(propertyList, "Previous Target", getParentFile(), kcCResourceEntityInst.class);
+        this.nextWaypointEntityRef.addToPropertyList(propertyList, "Next Target", getParentFile(), kcCResourceEntityInst.class);
         if (this.type == kcWaypointType.BOUNDING_BOX || this.boundingBoxDimensions.getX() != 0 || this.boundingBoxDimensions.getY() != 0 || this.boundingBoxDimensions.getZ() != 0)
-            this.boundingBoxDimensions.writePrefixedInfoLine(builder, "Bounding Box Dimensions", padding);
+            this.boundingBoxDimensions.addToPropertyList(propertyList, "Bounding Box Dimensions");
         if (this.type == kcWaypointType.APPLY_WATER_CURRENT || this.strength != 0)
-            builder.append(padding).append("Strength: ").append(this.strength).append(Constants.NEWLINE);
+            propertyList.addFloat("Water Strength", this.strength, newValue -> this.strength = newValue);
     }
 
     private static final String CONFIG_KEY_TYPE = "waypointType";
@@ -102,11 +106,11 @@ public class kcWaypointDesc extends kcEntity3DDesc {
     private static final String CONFIG_KEY_STRENGTH = "strength";
 
     @Override
-    public void fromConfig(Config input) {
-        super.fromConfig(input);
+    public void fromConfig(ILogger logger, Config input) {
+        super.fromConfig(logger, input);
         this.type = input.getKeyValueNodeOrError(CONFIG_KEY_TYPE).getAsEnumOrError(kcWaypointType.class);
-        resolve(input.getKeyValueNodeOrError(CONFIG_KEY_PREV_WAYPOINT), kcCResourceEntityInst.class, this.previousWaypointEntityRef);
-        resolve(input.getKeyValueNodeOrError(CONFIG_KEY_NEXT_WAYPOINT), kcCResourceEntityInst.class, this.nextWaypointEntityRef);
+        setEntityRefWithoutResolve(this.previousWaypointEntityRef, input.getOptionalKeyValueNode(CONFIG_KEY_PREV_WAYPOINT));
+        setEntityRefWithoutResolve(this.nextWaypointEntityRef, input.getOptionalKeyValueNode(CONFIG_KEY_NEXT_WAYPOINT));
 
         // Read the bounding box data.
         ConfigValueNode boundingBoxNode = (this.type == kcWaypointType.BOUNDING_BOX)
@@ -127,12 +131,31 @@ public class kcWaypointDesc extends kcEntity3DDesc {
     public void toConfig(Config output, kcScriptDisplaySettings settings) {
         super.toConfig(output, settings);
         output.getOrCreateKeyValueNode(CONFIG_KEY_TYPE).setAsEnum(this.type);
-        output.getOrCreateKeyValueNode(CONFIG_KEY_PREV_WAYPOINT).setAsString(this.previousWaypointEntityRef.getAsGqsString(settings));
-        output.getOrCreateKeyValueNode(CONFIG_KEY_NEXT_WAYPOINT).setAsString(this.nextWaypointEntityRef.getAsGqsString(settings));
+        if (!this.previousWaypointEntityRef.isHashNull())
+            output.getOrCreateKeyValueNode(CONFIG_KEY_PREV_WAYPOINT).setAsString(this.previousWaypointEntityRef.getAsGqsString(settings));
+        if (!this.nextWaypointEntityRef.isHashNull())
+            output.getOrCreateKeyValueNode(CONFIG_KEY_NEXT_WAYPOINT).setAsString(this.nextWaypointEntityRef.getAsGqsString(settings));
         if (this.type == kcWaypointType.BOUNDING_BOX || this.boundingBoxDimensions.getX() != 0 || this.boundingBoxDimensions.getY() != 0 || this.boundingBoxDimensions.getZ() != 0)
             output.getOrCreateKeyValueNode(CONFIG_KEY_BOUNDING_BOX_DIMENSIONS).setAsString(this.boundingBoxDimensions.toParseableString());
         if (this.type == kcWaypointType.APPLY_WATER_CURRENT || this.strength != 0)
             output.getOrCreateKeyValueNode(CONFIG_KEY_STRENGTH).setAsFloat(this.strength);
+    }
+
+    private static void setEntityRefWithoutResolve(GreatQuestHash<kcCResourceEntityInst> hashObj, ConfigValueNode node) {
+        String value = node != null ? node.getAsString(null) : null;
+        if (!StringUtils.isNullOrWhiteSpace(value)) {
+            hashObj.setHash(value);
+        } else if (hashObj.getResource() != null) {
+            hashObj.setResource(null, false);
+        }
+    }
+
+    @Override
+    public void resolvePendingResources(ILogger logger) {
+        if (this.previousWaypointEntityRef.getOriginalString() != null && this.previousWaypointEntityRef.getResource() == null)
+            resolveResource(logger, kcCResourceEntityInst.class, this.previousWaypointEntityRef, true);
+        if (this.nextWaypointEntityRef.getOriginalString() != null && this.nextWaypointEntityRef.getResource() == null)
+            resolveResource(logger, kcCResourceEntityInst.class, this.nextWaypointEntityRef, true);
     }
 
     @Override

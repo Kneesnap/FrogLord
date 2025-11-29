@@ -21,6 +21,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestActionSequencePlayback.SequenceStatus;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshCollection.MeshViewCollection;
+import net.highwayfrogs.editor.system.math.Vector3f;
+import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.fx.wrapper.LazyFXListCell;
 
@@ -39,8 +41,13 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
     private CheckBox forceRepeatCheckBox;
     private final MeshView skeletonMeshView = new MeshView();
 
-    private static final double DEFAULT_FAR_CLIP = 50;
-    private static final double DEFAULT_NEAR_CLIP = 0.1;
+    public static final double DEFAULT_FAR_CLIP = 1000;
+    public static final double DEFAULT_NEAR_CLIP = 0.1;
+    public static final Vector3f DEFAULT_CAMERA_OFFSET = new Vector3f(0, 1, 3);
+    public static final float DEFAULT_CAMERA_PITCH = 180;;
+    public static final float DEFAULT_CAMERA_YAW = 0;
+    public static final double DEFAULT_ZOOM_FACTOR = 0.05;
+
     private static final double DEFAULT_MOVEMENT_SPEED = 3;
 
     private static final PhongMaterial VERTEX_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.YELLOW);
@@ -56,6 +63,15 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
 
         this.sequencePlayback = new GreatQuestActionSequencePlayback(getMesh());
 
+        if (getMesh().getSkeleton() == null) {
+            Label animLabel1 = new Label("To view animations, open an entity");
+            Label animLabel2 = new Label(" description instead of a .VTX file.");
+            animLabel1.setUnderline(true);
+            animLabel2.setUnderline(true);
+            addToViewSettingsGrid(animLabel1, HPos.LEFT);
+            addToViewSettingsGrid(animLabel2, HPos.LEFT);
+        }
+
         // Setup skeleton view toggle.
         this.showSkeletonCheckBox = new CheckBox("Show Skeleton");
         this.showSkeletonCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> this.skeletonMeshView.setVisible(newValue));
@@ -66,7 +82,8 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
         // Setup animation UI.
         this.animationComboBox = new ComboBox<>(getMesh().getAvailableAnimations());
         this.animationComboBox.setButtonCell(new LazyFXListCell<>(kcCResourceTrack::getName, "No Animation"));
-        this.animationComboBox.setCellFactory(listView -> new LazyFXListCell<>(kcCResourceTrack::getName, "No Animation"));
+        this.animationComboBox.setCellFactory(listView -> new LazyFXListCell<>(kcCResourceTrack::getName, "No Animation")
+                .setWithoutIndexStyleHandler(animation -> (animation == null || getMesh().getSourceAnimations().contains(animation)) ? null : FXUtils.STYLE_LIST_CELL_RED_BACKGROUND));
         GridPane.setHgrow(this.animationComboBox, Priority.ALWAYS);
         if (getMesh().getAvailableAnimations().size() > 0) {
             this.animationComboBox.getSelectionModel().selectFirst();
@@ -77,7 +94,7 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
                         this.actionSequenceComboBox.setValue(null);
                     }
 
-                    getMesh().setActiveAnimation(newValue, this.forceRepeatCheckBox.isSelected());
+                    getMesh().setActiveAnimation(newValue, this.forceRepeatCheckBox.isSelected(), false, false);
                 }
             });
         } else {
@@ -89,7 +106,8 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
         // Setup sequence UI.
         this.actionSequenceComboBox = new ComboBox<>(getMesh().getAvailableSequences());
         this.actionSequenceComboBox.setButtonCell(new LazyFXListCell<>(kcCActionSequence::getName, "No Sequence"));
-        this.actionSequenceComboBox.setCellFactory(listView -> new LazyFXListCell<>(kcCActionSequence::getName, "No Sequence"));
+        this.actionSequenceComboBox.setCellFactory(listView -> new LazyFXListCell<>(kcCActionSequence::getName, "No Sequence")
+                .setWithoutIndexStyleHandler(sequence -> sequence == null || (getMesh().getActionSequenceTable() != null && getMesh().getActionSequenceTable().contains(sequence)) ? null : FXUtils.STYLE_LIST_CELL_RED_BACKGROUND));
         GridPane.setHgrow(this.actionSequenceComboBox, Priority.ALWAYS);
         if (getMesh().getAvailableSequences().size() > 0) {
             this.actionSequenceComboBox.getSelectionModel().selectFirst();
@@ -180,8 +198,8 @@ public class GreatQuestModelViewController extends MeshViewController<GreatQuest
     @Override
     protected void setDefaultCameraPosition() {
         getFirstPersonCamera().setInvertY(true);
-        getFirstPersonCamera().setPos(0, 1, 3);
-        getFirstPersonCamera().setPitchAndYaw(180, 0);
+        getFirstPersonCamera().setPos(DEFAULT_CAMERA_OFFSET.getX(), DEFAULT_CAMERA_OFFSET.getY(), DEFAULT_CAMERA_OFFSET.getZ());
+        getFirstPersonCamera().setPitchAndYaw(DEFAULT_CAMERA_PITCH, DEFAULT_CAMERA_YAW);
     }
 
     @Override

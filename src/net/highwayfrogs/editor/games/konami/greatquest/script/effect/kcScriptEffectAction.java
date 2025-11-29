@@ -4,9 +4,11 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcActionExecutor;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptEffectType;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
@@ -36,9 +38,19 @@ public abstract class kcScriptEffectAction extends kcScriptEffect implements kcA
 
         super.printLoadWarnings(arguments, logger);
     }
+
+    @Override
+    protected String getCodeLocation() {
+        kcAction action = getAction();
+        if (action != null && (action.getUserLineNumber() > 0 || !StringUtils.isNullOrWhiteSpace(action.getUserImportSource())))
+            return kcScript.getCodeLocation(action.getUserLineNumber(), action.getUserImportSource(), true);
+
+        return super.getCodeLocation();
+    }
+
     @Override
     public boolean isActionApplicableToTarget() {
-        kcCResourceEntityInst entity = getTargetEntityRef().getResource();
+        kcCResourceEntityInst entity = getTargetEntity(false);
         kcAction action = getAction();
         return action != null && entity != null && action.getActionID().getActionTargetType() != null
                 && action.getActionID().getActionTargetType().isApplicable(entity.getInstance());
@@ -55,7 +67,16 @@ public abstract class kcScriptEffectAction extends kcScriptEffect implements kcA
 
     @Override
     public String getEndOfLineComment() {
+        String parentComment = super.getEndOfLineComment();
+
         kcAction action = getAction();
-        return action != null ? action.getEndOfLineComment() : null;
+        String actionComment = action != null ? action.getEndOfLineComment() : null;
+        if (actionComment == null) {
+            return parentComment;
+        } else if (parentComment != null) {
+            return actionComment + " " + parentComment;
+        } else {
+            return actionComment;
+        }
     }
 }

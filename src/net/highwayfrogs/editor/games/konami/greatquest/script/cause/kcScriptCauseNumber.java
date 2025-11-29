@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionNum
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptValidationData;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.util.List;
@@ -43,13 +44,13 @@ public class kcScriptCauseNumber extends kcScriptCause {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         this.operation = arguments.useNext().getAsEnumOrError(kcScriptCauseNumberOperation.class);
         this.value = arguments.useNext().getAsInteger();
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         arguments.createNext().setAsEnum(this.operation);
         arguments.createNext().setAsInteger(this.value);
     }
@@ -75,15 +76,15 @@ public class kcScriptCauseNumber extends kcScriptCause {
     @Override
     public void printAdvancedWarnings(kcScriptValidationData data) {
         super.printAdvancedWarnings(data);
-        if (!data.anyActionsMatch(kcActionID.NUMBER, this::doesActionMatch))
+        if (!data.anyActionsMatch(kcActionID.NUMBER, this::doesActionMatch) && !isUnusedCauseAllowed())
             printWarning(data.getLogger(), data.getEntityName() + " does not have a " + kcActionID.NUMBER.getFrogLordName() + " effect capable of causing it.");
         // We have confirmed that an entity terminating is still capable of calling SendNumber, and triggering its own script listeners, even if kcScriptCause.isEntityTerminated is true.
     }
 
     private boolean doesActionMatch(kcActionNumber action) {
-        if (action.getOperation() == NumberOperation.ENTITY_VARIABLE) {
+        if (action.getOperation() == NumberOperation.VARIABLE) {
             return true; // We don't know what this could be, so we'll assume it matches.
-        } else if (action.getOperation() == NumberOperation.LITERAL_NUMBER) {
+        } else if (action.getOperation() == NumberOperation.LITERAL) {
             return doesValueMatch(action.getNumber());
         } else if (action.getOperation() == NumberOperation.RANDOM) {
             return couldRandomValueMatch(action.getNumber());

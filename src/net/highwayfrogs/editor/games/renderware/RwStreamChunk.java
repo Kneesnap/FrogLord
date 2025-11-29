@@ -15,7 +15,7 @@ import net.highwayfrogs.editor.games.renderware.struct.RwStruct;
 import net.highwayfrogs.editor.games.renderware.ui.IRwStreamChunkUIEntry;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.*;
 import net.highwayfrogs.editor.utils.data.reader.ArraySource;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -518,13 +518,11 @@ public abstract class RwStreamChunk extends SharedGameData implements IRwStreamC
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Type ID", NumberUtils.toHexString(this.chunkType.getTypeId()) + " (" + Utils.getSimpleName(this) + ")");
         propertyList.add("RenderWare Version", RwVersion.getDebugString(this.version));
         if (this.rawReadData != null)
             propertyList.add("Size (In Bytes)", this.rawReadData.length + " (" + DataSizeUnit.formatSize(this.rawReadData.length) + ")");
-
-        return propertyList;
     }
 
     public enum ChunkReadResult {

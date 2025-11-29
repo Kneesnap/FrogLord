@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.file.config.exe.pc;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXThemeBook;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
@@ -27,7 +28,7 @@ public class PCThemeBook extends ThemeBook {
     private int highMultiplayerWadId;
     private int highMultiplayerVloId;
     private long formLibraryPointer;
-    private int deathHeight; // Frog drowns under this height.
+    @Setter private int deathHeight; // Frog drowns under this height. (Setter for Noodle)
 
     public PCThemeBook(FroggerGameInstance instance) {
         super(instance);

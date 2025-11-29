@@ -16,6 +16,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.Great
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager.entity.GreatQuestMapEditorEntityDisplay;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.InputMenu;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.system.math.Vector3f;
@@ -24,9 +25,11 @@ import net.highwayfrogs.editor.utils.MathUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 import java.text.DecimalFormat;
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -37,16 +40,25 @@ import java.util.function.Consumer;
  */
 @Getter
 public class kcEntity3DInst extends kcEntityInst {
-    @Setter private int flags;
-    private kcAxisType billboardAxis = kcAxisType.Y;
-    private final kcVector4 position = new kcVector4(0, 0, 0, 1);
-    private final kcVector4 rotation = new kcVector4(0, 0, 0, 1);
-    private final kcVector4 scale = new kcVector4(1, 1, 1, 1);
-    private final int[] reservedValues = new int[7];
-    private final int[] padding = new int[32];
+    @Setter private int flags = DEFAULT_FLAGS;
+    private kcAxisType billboardAxis = DEFAULT_BILLBOARD_AXIS;
+    private final kcVector4 position = DEFAULT_POSITION.clone();
+    private final kcVector4 rotation = DEFAULT_ROTATION.clone();
+    private final kcVector4 scale = DEFAULT_SCALE.clone(); // This is fully unused by the game in all tested versions.
+    private final int[] reservedValues = new int[RESERVE_VALUE_COUNT];
+    private final int[] padding = new int[PADDING_VALUE_COUNT];
 
     public static final int SIZE_IN_BYTES = 240;
+    public static final int SIZE_IN_BYTES_WITHOUT_PADDING = 180;
+    private static final int RESERVE_VALUE_COUNT = 7;
+    private static final int PADDING_VALUE_COUNT = 32;
+    public static final int ACTUAL_PADDING_BYTE_SIZE = (RESERVE_VALUE_COUNT + PADDING_VALUE_COUNT) * Constants.INTEGER_SIZE;
     private static final UUID GIZMO_ID = UUID.randomUUID();
+    private static final kcAxisType DEFAULT_BILLBOARD_AXIS = kcAxisType.Y;
+    private static final kcVector4 DEFAULT_POSITION = new kcVector4(0, 0, 0, 1);
+    private static final kcVector4 DEFAULT_ROTATION = new kcVector4(0, 0, 0, 1);
+    private static final kcVector4 DEFAULT_SCALE = new kcVector4(1, 1, 1, 1);
+    private static final int DEFAULT_FLAGS = 0;
 
     public kcEntity3DInst(kcCResourceEntityInst entity) {
         super(entity);
@@ -60,10 +72,21 @@ public class kcEntity3DInst extends kcEntityInst {
         this.position.load(reader);
         this.rotation.load(reader);
         this.scale.load(reader);
-        for (int i = 0; i < this.reservedValues.length; i++)
-            this.reservedValues[i] = reader.readInt();
-        for (int i = 0; i < this.padding.length; i++)
-            this.padding[i] = reader.readInt();
+        if (reader.getRemaining() == ACTUAL_PADDING_BYTE_SIZE) {
+            for (int i = 0; i < this.reservedValues.length; i++)
+                this.reservedValues[i] = reader.readInt();
+            for (int i = 0; i < this.padding.length; i++)
+                this.padding[i] = reader.readInt();
+        } else {
+            // A handful of coins & gems found in the PC version's extra Dark Trail level seem to be semi-broken.
+            // The data reports the wrong byte-size, and is missing the padding fields but not the reserved fields.
+            reader.skipBytes(reader.getRemaining()); // Seems to be garbage. (Part of another entity instance?)
+            Arrays.fill(this.reservedValues, 0);
+            Arrays.fill(this.padding, 0);
+        }
+
+        if (!DEFAULT_SCALE.equals(this.scale))
+            getLogger().warning("The entity's scale was not the default scale! %s (This is thought to be unsupported by the game!)", this.scale);
     }
 
     @Override
@@ -95,12 +118,14 @@ public class kcEntity3DInst extends kcEntityInst {
         });
 
         // Scale Editor
-        grid.addScaleEditor(manager.getController(), GIZMO_ID, "Scale", this.position.getX(), this.position.getY(), this.position.getZ(), this.scale.getX(), this.scale.getY(), this.scale.getZ(), .02, (meshView, oldX, oldY, oldZ, newX, newY, newZ) -> {
-            this.scale.setX((float) newX);
-            this.scale.setY((float) newY);
-            this.scale.setZ((float) newZ);
-            entityDisplay.setScale(newX, newY, newZ);
-        });
+        if (!DEFAULT_SCALE.equals(this.scale)) {
+            grid.addScaleEditor(manager.getController(), GIZMO_ID, "Scale", this.position.getX(), this.position.getY(), this.position.getZ(), this.scale.getX(), this.scale.getY(), this.scale.getZ(), .02, (meshView, oldX, oldY, oldZ, newX, newY, newZ) -> {
+                this.scale.setX((float) newX);
+                this.scale.setY((float) newY);
+                this.scale.setZ((float) newZ);
+                entityDisplay.setScale(newX, newY, newZ);
+            });
+        }
 
         // Rotation
         addRotationSlider(getGameInstance(), grid, entityDisplay, "Rotation X", this.rotation.getX(), this.rotation::setX);
@@ -129,13 +154,13 @@ public class kcEntity3DInst extends kcEntityInst {
                 double startRotation = slider.getValue();
                 InputMenu.promptInputBlocking(instance, "Please enter the new " + labelText + ".", ROTATION_ANGLE_FORMATTER.format(startRotation), newAngleText -> {
                     if (!NumberUtils.isNumber(newAngleText)) {
-                        FXUtils.makePopUp("The value '" + newAngleText + "' cannot be interpreted as a number!", AlertType.WARNING);
+                        FXUtils.showPopup(AlertType.WARNING, "Invalid number.", "The value '" + newAngleText + "' cannot be interpreted as a number!");
                         return;
                     }
 
                     float newAngle = Float.parseFloat(newAngleText);
                     if (!Float.isFinite(newAngle)) {
-                        FXUtils.makePopUp("The value '" + newAngleText + "' cannot be used as an angle!", AlertType.WARNING);
+                        FXUtils.showPopup(AlertType.WARNING, "Invalid angle.", "The value '" + newAngleText + "' cannot be used as an angle!");
                         return;
                     }
 
@@ -202,13 +227,14 @@ public class kcEntity3DInst extends kcEntityInst {
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        super.writeMultiLineInfo(builder, padding);
-        builder.append(padding).append("Flags: ").append(kcEntityInstanceFlag.getAsOptionalArguments(this.flags).getNamedArgumentsAsCommaSeparatedString()).append(Constants.NEWLINE);
-        builder.append(padding).append("Billboard Axis: ").append(this.billboardAxis).append(Constants.NEWLINE);
-        this.position.writePrefixedInfoLine(builder, "Position", padding);
-        this.rotation.writePrefixedInfoLine(builder, "Rotation", padding);
-        this.scale.writePrefixedInfoLine(builder, "Scale", padding);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
+        this.position.addToPropertyList(propertyList, "Position", 1F);
+        propertyList.add("Rotation", getRotationAnglesInDegrees(null).toParseableString());
+        if (!DEFAULT_SCALE.equals(this.scale))
+            this.scale.addToPropertyList(propertyList, "Scale", 1F);
+        propertyList.add("Flags", kcEntityInstanceFlag.getAsOptionalArguments(this.flags).getNamedArgumentsAsCommaSeparatedString());
+        propertyList.addEnum("Billboard Axis", this.billboardAxis, kcAxisType.class, this::setBillboardAxis, false);
     }
 
     private static final String CONFIG_KEY_FLAGS = "flags";
@@ -218,20 +244,37 @@ public class kcEntity3DInst extends kcEntityInst {
     private static final String CONFIG_KEY_SCALE = "scale";
 
     @Override
-    public void fromConfig(Config input) {
-        super.fromConfig(input);
+    public void fromConfig(ILogger logger, Config input) {
+        super.fromConfig(logger, input);
 
         ConfigValueNode flagNode = input.getOptionalKeyValueNode(CONFIG_KEY_FLAGS);
-        OptionalArguments flagArguments = flagNode != null ? OptionalArguments.parseCommaSeparatedNamedArguments(flagNode.getAsString()) : new OptionalArguments();
-        this.flags = kcEntityInstanceFlag.getValueFromArguments(flagArguments);
-        flagArguments.warnAboutUnusedArguments(getResource().getLogger());
+        if (flagNode != null) {
+            OptionalArguments flagArguments = OptionalArguments.parseCommaSeparatedNamedArguments(flagNode.getAsString());
+            this.flags = kcEntityInstanceFlag.getValueFromArguments(flagArguments);
+            flagArguments.warnAboutUnusedArguments(getLogger());
+        } else {
+            kcEntity3DDesc description = getDescription();
+            this.flags = description != null ? description.getDefaultFlags() : DEFAULT_FLAGS;
+        }
 
-        Vector3f degrees = new Vector3f();
-        this.billboardAxis = input.getOrDefaultKeyValueNode(CONFIG_KEY_BILLBOARD_AXIS).getAsEnum(kcAxisType.Y);
+        this.billboardAxis = input.getOrDefaultKeyValueNode(CONFIG_KEY_BILLBOARD_AXIS).getAsEnum(DEFAULT_BILLBOARD_AXIS);
         this.position.parse(input.getKeyValueNodeOrError(CONFIG_KEY_POSITION).getAsString(), 1F);
-        degrees.parse(input.getKeyValueNodeOrError(CONFIG_KEY_ROTATION).getAsString());
-        this.scale.parse(input.getKeyValueNodeOrError(CONFIG_KEY_SCALE).getAsString(), 1F);
-        setRotationAnglesInDegrees(degrees);
+
+        ConfigValueNode rotationNode = input.getOptionalKeyValueNode(CONFIG_KEY_ROTATION);
+        if (rotationNode != null) {
+            Vector3f degrees = new Vector3f();
+            degrees.parse(rotationNode.getAsString());
+            setRotationAnglesInDegrees(degrees);
+        } else {
+            this.rotation.setXYZW(DEFAULT_ROTATION);
+        }
+
+        ConfigValueNode scaleNode = input.getOptionalKeyValueNode(CONFIG_KEY_SCALE);
+        if (scaleNode != null) {
+            this.scale.parse(scaleNode.getAsString(), 1F);
+        } else {
+            this.scale.setXYZW(DEFAULT_SCALE);
+        }
     }
 
     @Override
@@ -242,9 +285,12 @@ public class kcEntity3DInst extends kcEntityInst {
                 .setComment("For a full list of flags, refer to the GQS scripting documentation.")
                 .setAsString(kcEntityInstanceFlag.getAsOptionalArguments(this.flags).getNamedArgumentsAsCommaSeparatedString());
 
-        output.getOrCreateKeyValueNode(CONFIG_KEY_BILLBOARD_AXIS).setAsEnum(this.billboardAxis);
+        if (this.billboardAxis != DEFAULT_BILLBOARD_AXIS)
+            output.getOrCreateKeyValueNode(CONFIG_KEY_BILLBOARD_AXIS).setAsEnum(this.billboardAxis);
         output.getOrCreateKeyValueNode(CONFIG_KEY_POSITION).setAsString(this.position.toParseableString(1F));
-        output.getOrCreateKeyValueNode(CONFIG_KEY_ROTATION).setAsString(getRotationAnglesInDegrees(null).toParseableString());
-        output.getOrCreateKeyValueNode(CONFIG_KEY_SCALE).setAsString(this.scale.toParseableString(1F));
+        if (!DEFAULT_ROTATION.equals(this.rotation))
+            output.getOrCreateKeyValueNode(CONFIG_KEY_ROTATION).setAsString(getRotationAnglesInDegrees(null).toParseableString());
+        if (!DEFAULT_SCALE.equals(this.scale))
+            output.getOrCreateKeyValueNode(CONFIG_KEY_SCALE).setAsString(this.scale.toParseableString(1F));
     }
 }

@@ -2,14 +2,13 @@ package net.highwayfrogs.editor.games.konami.greatquest.entity;
 
 import lombok.Getter;
 import lombok.NonNull;
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceAnimSet;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.kcClassID;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -43,7 +42,7 @@ public class kcAnimSetDesc extends kcBaseDesc implements IPropertyListCreator {
         for (int i = 0; i < animationCount; i++) {
             int hash = reader.readInt();
             GreatQuestHash<kcCResourceTrack> animation = new GreatQuestHash<>(hash);
-            GreatQuestUtils.resolveResourceHash(kcCResourceTrack.class, this, animation, hash, false); // It is common for these to not resolve, so don't warn about it.
+            GreatQuestUtils.resolveLevelResourceHash(kcCResourceTrack.class, this, animation, hash, false); // It is common for these to not resolve, so don't warn about it.
             this.animationRefs.add(animation);
         }
     }
@@ -57,13 +56,10 @@ public class kcAnimSetDesc extends kcBaseDesc implements IPropertyListCreator {
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        for (int i = 0; i < this.animationRefs.size(); i++) {
-            builder.append(padding).append("-");
-            writeAssetLine(builder, padding, "kcAnimSetDesc Entry", this.animationRefs.get(i));
-        }
-
-        builder.append(Constants.NEWLINE);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        propertyList.add("Animation References", this.animationRefs.size());
+        for (int i = 0; i < this.animationRefs.size(); i++)
+            propertyList.add("Animation Ref " + i, this.animationRefs.get(i).getDisplayString(false));
     }
 
     @Override
@@ -145,13 +141,5 @@ public class kcAnimSetDesc extends kcBaseDesc implements IPropertyListCreator {
         }
 
         return false;
-    }
-
-    @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList.add("Animation References", this.animationRefs.size());
-        for (int i = 0; i < this.animationRefs.size(); i++)
-            propertyList.add("Animation Ref " + i, this.animationRefs.get(i).getDisplayString(false));
-        return propertyList;
     }
 }

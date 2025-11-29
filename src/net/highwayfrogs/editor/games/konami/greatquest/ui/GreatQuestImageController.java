@@ -75,7 +75,7 @@ public class GreatQuestImageController extends GreatQuestFileEditorUIController<
 
         getFile().setImage(loadedImage);
         updateImage();
-        getPropertyListViewer().showProperties(image.createPropertyList()); // Update the property list, which may have changed.
+        getPropertyListViewer().showProperties(image); // Update the property list, which may have changed.
     }
 
     /**

@@ -4,19 +4,14 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
-import lombok.SneakyThrows;
+import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
-import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
-import net.highwayfrogs.editor.games.konami.greatquest.IFileExport;
-import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
+import net.highwayfrogs.editor.games.konami.greatquest.*;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceNamedHash.HashTableEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
-import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DInst;
-import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityDescType;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFileType;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestGameFile;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
@@ -25,13 +20,12 @@ import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.map.kcEnvironment;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc;
-import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDescType;
-import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptList;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestChunkFileEditor;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestMainMenuUIController;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.GreatQuestMapMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.GreatQuestMapMeshController;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
@@ -49,13 +43,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
  * Handles the Frogger TGQ TOC files. (They are maps, but may also have other data(?))
  * These files may appear sorted, but in PS2 PAL there's a little more to it. "\GameData\Level00Global\Text\globaltext.dat", "\GameData\Level07TreeKnowledge\Level\PS2_Level07.dat", etc, show that there may be more to it.
- * TODO: Over time we should start removing a lot of the export functionality in this class, as it will have been replaced.
  * Created by Kneesnap on 8/25/2019.
  */
 public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFileExport {
@@ -65,15 +57,15 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     private final List<kcCResourceTableOfContents> immutableTableOfContents = Collections.unmodifiableList(this.tableOfContents);
 
     private static final String RESOURCE_PATH_NAME = "chunkedResourceImportExportPath";
-    public static final SavedFilePath RESOURCE_IMPORT_PATH = new SavedFilePath(RESOURCE_PATH_NAME, "Please select the folder with the assets to import");
     public static final SavedFilePath RESOURCE_EXPORT_PATH = new SavedFilePath(RESOURCE_PATH_NAME, "Please select the folder to export assets to");
+    private static final SavedFilePath GQS_IMPORT_PATH = new SavedFilePath("gqsScriptFilePath", "Select the script group to import", kcScript.GQS_GROUP_FILE_TYPE);
 
     public static final Comparator<kcCResource> RESOURCE_ORDERING = Comparator
             .comparingInt((kcCResource resource) -> resource.getChunkType().ordinal()) // Sort by resource type.
             .thenComparing(kcCResource::getName, String.CASE_INSENSITIVE_ORDER); // Sort by name (case-insensitive, alphabetically)
 
     public GreatQuestChunkedFile(GreatQuestInstance instance) {
-        super(instance);
+        super(instance, GreatQuestArchiveFileType.CHUNKED_FILE);
     }
 
     @Override
@@ -173,11 +165,11 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
         for (int i = 0; i < this.chunks.size(); i++) {
             kcCResource resource = this.chunks.get(i);
             if (!chunksFromGroups.remove(resource))
-                getGameInstance().showWarning(getLogger(), "%s was supposed to be written/saved, but wasn't registered to any of the chunk groups!", resource);
+                getGameInstance().showWarning(getLogger(), "Invalid resources.", "%s was supposed to be written/saved, but wasn't registered to any of the chunk groups!", resource);
         }
 
         if (chunksFromGroups.size() > 0)
-            getGameInstance().showWarning(getLogger(), "Found %d resource chunk(s) which are registered to the ");
+            getGameInstance().showWarning(getLogger(), "Invalid resources.", "Found %d resource chunk(s) which are registered in the file, but weren't saved!");
 
         // Write each group.
         for (int i = 0; i < this.tableOfContents.size(); i++) {
@@ -270,27 +262,26 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
     @Override
     public void exportToFolder(File folder) throws IOException {
-        saveMapObj(folder); // TODO: Here's the slowdown.
-        exportChunksToDirectory(folder);
+        saveMapObj(folder);
 
         kcScriptList scriptList = getScriptList();
         kcScriptDisplaySettings settings = createScriptDisplaySettings();
-        saveActionSequences(new File(folder, "sequences.txt"), settings);
-        saveScripts(new File(folder, "scripts.txt"), settings);
+        saveActionSequences(new File(folder, "sequences.gqs"), settings);
+        saveScripts(new File(folder, "scripts_debug.txt"), settings); // The scripts are saved in gqs form as part of the entities, this file right here is just for debugging.
 
-        saveGenericText(new File(folder, "strings.txt"));
-        saveAnimationSets(new File(folder, "animation-sets.txt"));
-        saveAnimationSkeletons(new File(folder, "animation-skeletons.txt"));
-        saveAnimationTracks(new File(folder, "animation-tracks.txt"));
-        exportEntities(new File(folder, "entities"), scriptList, settings);
-        exportEntityDescriptions(new File(folder, "entity-descriptions"));
-        exportCollisionProxies(new File(folder, "proxy-descriptions.txt"));
-        saveGenericEmitterInfo(new File(folder, "emitters.txt"));
-        saveGenericLauncherInfo(new File(folder, "launchers.txt"));
-        saveGenericResourcePaths(new File(folder, "resource-paths.txt"));
-        saveGenericModelDescriptions(new File(folder, "model-descriptions.txt"));
-        saveOctTreeSceneManager(new File(folder, "oct-tree-scene-manager.txt"));
-        saveNamedResourceHashes(new File(folder, "named-hashes.txt"));
+        exportEntities(new File(folder, "entities.gqs"), scriptList, settings);
+        exportEntityDescriptions(new File(folder, "entity_descriptions.gqs"));
+        exportCollisionProxies(new File(folder, "proxy_descriptions.gqs"));
+
+        saveDialog(new File(folder, "dialog.gqs"));
+        saveAnimationSets(new File(folder, "animation_sets.txt"));
+        saveAnimationSkeletons(new File(folder, "animation_skeletons.txt"));
+        saveAnimationTracks(new File(folder, "animation_tracks.txt"));
+        saveLauncherParams(new File(folder, "launchers.gqs"));
+        saveGenericResourcePaths(new File(folder, "resource_paths.txt"));
+        saveGenericModelDescriptions(new File(folder, "model_descriptions.txt"));
+        saveOctTreeSceneManager(new File(folder, "oct_tree_scene_manager.txt"));
+        saveNamedResourceHashes(new File(folder, "named_hashes.txt"));
         saveInfo(new File(folder, "info.txt"));
 
         // Save hashes to file.
@@ -334,51 +325,6 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     }
 
     /**
-     * Creates a .obj file in the given folder of the map 3D model.
-     * @param folder The folder to save in.
-     */
-    public void saveMapObj(File folder) {
-        kcCResOctTreeSceneMgr mainModel = null;
-        for (kcCResource testChunk : this.chunks)
-            if (testChunk instanceof kcCResOctTreeSceneMgr)
-                mainModel = (kcCResOctTreeSceneMgr) testChunk;
-
-        if (mainModel != null) {
-            try {
-                mainModel.exportAsObj(folder, FileUtils.stripExtension(getExportName()));
-            } catch (IOException ex) {
-                throw new RuntimeException("Failed to export map to .obj", ex);
-            }
-        }
-    }
-
-    /**
-     * Saves all the action sequences to a file.
-     * @param file     The file to save to.
-     * @param settings The settings to decompile the action sequences with.
-     */
-    public void saveActionSequences(File file, kcScriptDisplaySettings settings) {
-        StringBuilder sequenceBuilder = new StringBuilder();
-        for (kcCResource testChunk : this.chunks) {
-            if (testChunk instanceof kcCActionSequence) {
-                kcCActionSequence sequence = (kcCActionSequence) testChunk;
-
-                sequenceBuilder.append(sequence.getName()).append(":\n");
-                for (kcAction command : sequence.getActions()) {
-                    sequenceBuilder.append(" - ");
-                    command.toString(sequenceBuilder, settings);
-                    sequenceBuilder.append('\n');
-                }
-
-                sequenceBuilder.append('\n');
-            }
-        }
-
-        // Save sequences to folder.
-        saveExport(file, sequenceBuilder);
-    }
-
-    /**
      * Gets a resource by its hash.
      * @param hash        The hash to lookup.
      * @param <TResource> The type of resource to return.
@@ -399,17 +345,99 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     }
 
     /**
+     * Gets a resource by its name.
+     * @param name        The name of the resource to lookup.
+     * @param <TResource> The type of resource to return.
+     * @return The resource found with the hash, or null.
+     */
+    @SuppressWarnings("unchecked")
+    public <TResource extends kcCResource> TResource getResourceByName(String name, Class<TResource> resourceClass) {
+        int hash = NumberUtils.isPrefixedHexInteger(name) ? NumberUtils.parseIntegerAllowHex(name) : GreatQuestUtils.hash(name);
+        if (hash == 0 || hash == -1)
+            return null; // TOC chunks conflict since they don't have a hash / aren't loaded.
+
+        // Search for action sequences by name.
+        if (!StringUtils.isNullOrWhiteSpace(name) && (kcCActionSequence.class.equals(resourceClass) || ((resourceClass == null || resourceClass.isAssignableFrom(kcCActionSequence.class) && name.endsWith("]") && name.indexOf("[") > 0)))) { // Likely an action sequence, so search by name.
+            for (int i = 0; i < this.chunks.size(); i++) {
+                kcCResource resource = this.chunks.get(i);
+                if (!name.equals(resource.getName()))
+                    continue;
+
+                if (resourceClass != null && !resourceClass.isInstance(resource))
+                    throw new RuntimeException("Expected a resource named '" + name + "' to be a(n) " + resourceClass.getSimpleName() + ", but it was actually found to be a(n) " + Utils.getSimpleName(resource) + ".");
+
+                return (TResource) resource;
+            }
+        }
+
+        for (int i = 0; i < this.chunks.size(); i++) {
+            kcCResource resource = this.chunks.get(i);
+            if (resource.getHash() != hash)
+                continue;
+
+            if (resourceClass != null && !resourceClass.isInstance(resource))
+                throw new RuntimeException("Expected a resource named '" + name + "' to be a(n) " + resourceClass.getSimpleName() + ", but it was actually found to be a(n) " + Utils.getSimpleName(resource) + ".");
+
+            return (TResource) resource;
+        }
+
+        return null;
+    }
+
+    /**
+     * Gets a resource by its name.
+     * @param name        The name of the resource to lookup.
+     * @param genericType The type of generic resource to return.
+     * @return The resource found with the hash, or null.
+     */
+    public kcCResourceGeneric getGenericResourceByName(String name, @NonNull kcCResourceGenericType genericType) {
+        kcCResourceGeneric resourceGeneric = getResourceByName(name, kcCResourceGeneric.class);
+        if (resourceGeneric == null)
+            return null;
+
+        if (resourceGeneric.getResourceType() != genericType)
+            throw new RuntimeException("Expected a resource named '" + name + "' to be a(n) " + genericType + ", but it was actually found to be a(n) " + resourceGeneric.getResourceType() + ".");
+
+        return resourceGeneric;
+    }
+
+    /**
      * Gets the scene manager for this map, if it exists.
      */
     public kcEnvironment getEnvironment() {
-        return getResourceByHash(kcEnvironment.LEVEL_RESOURCE_HASH);
+        return getResourceByName(kcEnvironment.RESOURCE_NAME, kcEnvironment.class);
     }
 
     /**
      * Gets the scene manager for this map, if it exists.
      */
     public kcCResOctTreeSceneMgr getSceneManager() {
-        return getResourceByHash(kcCResOctTreeSceneMgr.LEVEL_RESOURCE_HASH);
+        return getResourceByName(kcCResOctTreeSceneMgr.RESOURCE_NAME, kcCResOctTreeSceneMgr.class);
+    }
+
+    /**
+     * Gets the level ID representing this level as a string, if possible to determine.
+     * Examples: "01", "11A", etc.
+     */
+    public String getLevelID() {
+        String filePath = getFilePath();
+        if (filePath == null)
+            return null;
+
+        int highSplitIndex = filePath.length();
+        boolean currentlyBuildingNumber = false;
+        for (int i = filePath.length() - 1; i >= 0; i--) {
+            char tempChar = filePath.charAt(i);
+            if (Character.isDigit(tempChar)) {
+                currentlyBuildingNumber = true;
+            } else if (currentlyBuildingNumber) {
+                return filePath.substring(i + 1, highSplitIndex);
+            } else if (tempChar == '.' || tempChar == '_' || tempChar == '\\' || tempChar == '/') {
+                highSplitIndex = i;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -417,34 +445,13 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
      * @return soundBankFile
      */
     public SBRFile getSoundBankFile() {
-        String filePath = getFilePath();
-        if (filePath == null)
+        String levelId = getLevelID();
+        if (levelId == null)
             return null;
 
-        // Extract numeric level ID from the file path.
-        StringBuilder builder = new StringBuilder();
-        boolean currentlyBuildingNumber = false;
-        for (int i = 0; i < filePath.length(); i++) {
-            char tempChar = filePath.charAt(i);
-            if (Character.isDigit(tempChar)) {
-                if (currentlyBuildingNumber) {
-                    builder.append(tempChar);
-                } else {
-                    currentlyBuildingNumber = true;
-                    builder.setLength(0);
-                    builder.append(tempChar);
-                }
-            } else {
-                currentlyBuildingNumber = false;
-            }
-        }
-
-        if (builder.length() == 0)
-            return null;
-
-        String filePrefix = builder.append('.').toString();
+        String fileName = levelId + ".sbr";
         for (GreatQuestGameFile file : getGameInstance().getLooseFiles())
-            if (file instanceof SBRFile && file.getFileName().startsWith(filePrefix))
+            if (file instanceof SBRFile && fileName.equalsIgnoreCase(file.getFileName()))
                 return (SBRFile) file;
 
         return null;
@@ -593,114 +600,10 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     }
 
     /**
-     * Import entities from a folder.
-     * @param folder The folder to import entity data from
-     */
-    public void importEntities(File folder) {
-        if (folder == null)
-            throw new NullPointerException("folder");
-
-        List<Config> importConfigs = new ArrayList<>();
-        for (File file : FileUtils.listFiles(folder)) {
-            if (!file.isFile() || !file.getName().endsWith(Config.DEFAULT_EXTENSION))
-                continue;
-
-            Config entityCfg = Config.loadConfigFromTextFile(file, false);
-            importConfigs.add(entityCfg);
-
-            // Entities can reference each other, so it is important to create new instances for each entity before loading individual entity data.
-            String entityName = entityCfg.getSectionName();
-            kcCResourceEntityInst entityInst = getResourceByHash(GreatQuestUtils.hash(entityName));
-            if (entityInst == null) {
-                entityInst = new kcCResourceEntityInst(this);
-                entityInst.setName(entityName, true);
-                entityInst.setInstance(new kcEntity3DInst(entityInst));
-                addResource(entityInst);
-            }
-        }
-
-        for (Config entityCfg : importConfigs) {
-            String entityName = entityCfg.getSectionName();
-            kcCResourceEntityInst entityInst = getResourceByHash(GreatQuestUtils.hash(entityName));
-            if (entityInst == null) // Should not happen.
-                throw new RuntimeException("Could not find entity '" + entityName + "'.");
-
-            if (entityInst.getInstance() == null)
-                entityInst.setInstance(new kcEntity3DInst(entityInst));
-
-            entityInst.getInstance().fromConfigIncludeScripts(entityCfg);
-        }
-
-        getLogger().info("Imported %d entity instance(s).", importConfigs.size());
-    }
-
-    /**
-     * Export entities to a folder.
-     * @param folder The folder to export entity data to
-     */
-    public void exportEntities(File folder, kcScriptList scriptList, kcScriptDisplaySettings settings) {
-        if (folder == null)
-            throw new NullPointerException("folder");
-
-        int entityCount = 0;
-        for (kcCResource testChunk : this.chunks) {
-            if (!(testChunk instanceof kcCResourceEntityInst))
-                continue;
-
-            kcCResourceEntityInst entity = (kcCResourceEntityInst) testChunk;
-            if (entity.getInstance() == null) {
-                getLogger().warning("Skipping '%s', as the entity instance was null.", entity.getName());
-                continue;
-            }
-
-            FileUtils.makeDirectory(folder);
-
-            Config newEntityCfg = new Config(entity.getName());
-            entity.getInstance().toConfig(newEntityCfg, scriptList, settings);
-            newEntityCfg.saveTextFile(new File(folder, entity.getName() + "." + Config.DEFAULT_EXTENSION));
-            entityCount++;
-        }
-
-        getLogger().info("Exported %d entity instance(s).", entityCount);
-    }
-
-    /**
-     * Saves all the scripts to a file.
-     * @param file     The file to save to.
-     * @param settings The settings to print the scripts with.
-     */
-    public void saveScripts(File file, kcScriptDisplaySettings settings) {
-        File scriptFolder = new File(file.getParentFile(), "scripts/");
-
-        StringBuilder scriptBuilder = new StringBuilder();
-        for (kcCResource testChunk : this.chunks) {
-            if (testChunk instanceof kcScriptList) {
-                kcScriptList scriptList = (kcScriptList) testChunk;
-                scriptBuilder.append("// Script List: '").append(scriptList.getName()).append("'\n");
-                scriptList.toString(this, scriptBuilder, settings);
-                scriptBuilder.append('\n');
-
-                if (scriptList.getScripts().isEmpty())
-                    continue;
-
-                FileUtils.makeDirectory(scriptFolder);
-                for (int i = 0; i < scriptList.getScripts().size(); i++) {
-                    kcScript script = scriptList.getScripts().get(i);
-                    Config rootNode = script.toConfigNode(settings);
-                    rootNode.saveTextFile(new File(scriptFolder, rootNode.getSectionName() + "." + kcScript.EXTENSION));
-                }
-            }
-        }
-
-        // Save scripts to folder.
-        saveExport(file, scriptBuilder);
-    }
-
-    /**
      * Gets the script list in this chunked file, if there is one.
      */
     public kcScriptList getScriptList() {
-        kcScriptList scriptList = getResourceByHash(kcScriptList.GLOBAL_SCRIPT_NAME_HASH);
+        kcScriptList scriptList = getResourceByName(kcScriptList.GLOBAL_SCRIPT_NAME, kcScriptList.class);
         if (scriptList != null)
             return scriptList;
 
@@ -716,11 +619,113 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     }
 
     /**
+     * Creates a .obj file in the given folder of the map 3D model.
+     * @param folder The folder to save in.
+     */
+    public void saveMapObj(File folder) {
+        kcCResOctTreeSceneMgr mainModel = null;
+        for (kcCResource testChunk : this.chunks)
+            if (testChunk instanceof kcCResOctTreeSceneMgr)
+                mainModel = (kcCResOctTreeSceneMgr) testChunk;
+
+        if (mainModel != null) {
+            try {
+                mainModel.exportAsObj(folder, FileUtils.stripExtension(getExportName()));
+            } catch (IOException ex) {
+                throw new RuntimeException("Failed to export map to .obj", ex);
+            }
+        }
+    }
+
+    /**
+     * Saves all the action sequences to a file.
+     * @param file     The file to save to.
+     * @param settings The settings to decompile the action sequences with.
+     */
+    public void saveActionSequences(File file, kcScriptDisplaySettings settings) {
+        Config gqsRoot = new Config(file.getName());
+        Config sequenceCfg = new Config(GreatQuestAssetUtils.CONFIG_SECTION_ACTION_SEQUENCES);
+        gqsRoot.addChildConfig(sequenceCfg);
+        int exportCount = 0;
+        for (kcCResource testChunk : this.chunks) {
+            if (!(testChunk instanceof kcCActionSequence))
+                continue;
+
+            kcCActionSequence sequence = (kcCActionSequence) testChunk;
+            Config entityCfg = sequenceCfg.getOrCreateChildConfigByName(sequence.getEntityDescriptionName());
+            entityCfg.addChildConfig(sequence.saveToConfigNode(getLogger(), settings));
+            exportCount++;
+        }
+
+        if (exportCount > 0) {
+            gqsRoot.saveTextFile(file);
+            getLogger().info("Exported %d action sequence(s).", exportCount);
+        }
+    }
+
+    /**
+     * Export entities to a folder.
+     * @param outputFile The file to export entity data to
+     */
+    public void exportEntities(File outputFile, kcScriptList scriptList, kcScriptDisplaySettings settings) {
+        if (outputFile == null)
+            throw new NullPointerException("outputFile");
+
+        int entityCount = 0;
+        Config gqsRoot = new Config(outputFile.getName());
+        Config entityCfg = new Config(GreatQuestAssetUtils.CONFIG_SECTION_ENTITIES);
+        gqsRoot.addChildConfig(entityCfg);
+        for (kcCResource testChunk : this.chunks) {
+            if (!(testChunk instanceof kcCResourceEntityInst))
+                continue;
+
+            kcCResourceEntityInst entity = (kcCResourceEntityInst) testChunk;
+            if (entity.getInstance() == null) {
+                getLogger().warning("Skipping '%s', as the entity instance was null.", entity.getName());
+                continue;
+            }
+
+            Config newEntityCfg = new Config(entity.getName());
+            entity.getInstance().toConfig(newEntityCfg, scriptList, settings);
+            entityCfg.addChildConfig(newEntityCfg);
+            entityCount++;
+        }
+
+        if (entityCount > 0) {
+            gqsRoot.saveTextFile(outputFile);
+            getLogger().info("Exported %d entity instance(s).", entityCount);
+        }
+    }
+
+    /**
+     * Saves all the scripts to a file.
+     * @param file     The file to save to.
+     * @param settings The settings to print the scripts with.
+     */
+    public void saveScripts(File file, kcScriptDisplaySettings settings) {
+        StringBuilder scriptBuilder = new StringBuilder();
+        for (kcCResource testChunk : this.chunks) {
+            if (testChunk instanceof kcScriptList) {
+                kcScriptList scriptList = (kcScriptList) testChunk;
+                scriptBuilder.append("// Script List: '").append(scriptList.getName()).append("'\n");
+                scriptList.toString(this, scriptBuilder, settings);
+                scriptBuilder.append('\n');
+            }
+        }
+
+        // Save scripts to folder.
+        saveExport(file, scriptBuilder);
+    }
+
+    /**
      * Saves text strings found in generic chunks to a text file.
      * @param file The file to save the info to.
      */
-    public void saveGenericText(File file) {
-        StringBuilder builder = new StringBuilder();
+    public void saveDialog(File file) {
+        Config gqsRoot = new Config(file.getName());
+        Config dialogCfg = new Config(GreatQuestAssetUtils.CONFIG_SECTION_DIALOG);
+        gqsRoot.addChildConfig(dialogCfg);
+
         for (kcCResource chunk : this.chunks) {
             if (!(chunk instanceof kcCResourceGeneric))
                 continue;
@@ -729,70 +734,22 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             if (generic.getResourceType() != kcCResourceGenericType.STRING_RESOURCE)
                 continue;
 
-            builder.append(generic.getHashAsHexString())
-                    .append("/'").append(generic.getName()).append("': ")
-                    .append(generic.getAsString()).append(Constants.NEWLINE);
+            dialogCfg.getOrCreateKeyValueNode(generic.getName()).setAsString(generic.getAsString());
         }
 
-        saveExport(file, builder);
-    }
-
-    private void writeData(StringBuilder builder, kcCResource resource, IMultiLineInfoWriter data) {
-        builder.append(data != null ? data.getClass().getSimpleName() : "Unknown Format")
-                .append(' ').append(resource.getName()).append('[')
-                .append(resource.getHashAsHexString()).append("]:").append(Constants.NEWLINE);
-
-        if (data == null) {
-            builder.append(" This data is in an unknown (potentially outdated) format.")
-                    .append(Constants.NEWLINE).append(Constants.NEWLINE);
-            builder.append(" Resource: '").append(resource.getName()).append("' in ").append(getDebugName()).append(Constants.NEWLINE);
-            return;
-        }
-
-        data.writeMultiLineInfo(builder, " ");
+        if (dialogCfg.getKeyValuePairs().size() > 0)
+            gqsRoot.saveTextFile(file);
     }
 
     /**
-     * Import entities from a folder.
-     * @param folder The folder to import entity data from
+     * Saves entity descriptions found in generic chunks to a gqs file.
+     * @param outputFile The file to save the descriptions to.
      */
-    public void importEntityDescriptions(File folder) {
-        if (folder == null)
-            throw new NullPointerException("folder");
-
-        int importCount = 0;
-        for (File file : FileUtils.listFiles(folder)) {
-            if (!file.isFile() || !file.getName().endsWith(Config.DEFAULT_EXTENSION))
-                continue;
-
-            Config entityDescCfg = Config.loadConfigFromTextFile(file, false);
-            kcEntityDescType descType = entityDescCfg.getKeyValueNodeOrError(kcEntity3DDesc.CONFIG_KEY_DESC_TYPE).getAsEnumOrError(kcEntityDescType.class);
-
-            String entityDescName = entityDescCfg.getSectionName();
-            kcCResourceGeneric generic = getResourceByHash(GreatQuestUtils.hash(entityDescName));
-            if (generic == null) {
-                generic = new kcCResourceGeneric(this);
-                generic.setName(entityDescName, true);
-                addResource(generic);
-            }
-
-            kcEntity3DDesc entityDesc = generic.getAsEntityDescription();
-            if (entityDesc == null)
-                generic.setResourceData(entityDesc = descType.createNewInstance(generic));
-
-            entityDesc.fromConfig(entityDescCfg);
-            importCount++;
-        }
-
-        getLogger().info("Imported %d entity description(s).", importCount);
-    }
-
-    /**
-     * Saves entity descriptions found in generic chunks to text files.
-     * @param folder The folder to save the descriptions to.
-     */
-    public void exportEntityDescriptions(File folder) {
+    public void exportEntityDescriptions(File outputFile) {
         int exportCount = 0;
+        Config gqsRoot = new Config(outputFile.getName());
+        Config entityDescriptionCfg = new Config(GreatQuestAssetUtils.CONFIG_SECTION_ENTITY_DESCRIPTIONS);
+        gqsRoot.addChildConfig(entityDescriptionCfg);
         for (kcCResource chunk : this.chunks) {
             if (!(chunk instanceof kcCResourceGeneric))
                 continue;
@@ -800,59 +757,28 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             kcCResourceGeneric generic = (kcCResourceGeneric) chunk;
             kcEntity3DDesc entityDesc = generic.getAsEntityDescription();
             if (entityDesc != null) {
-                Config outputCfg = new Config(generic.getName());
-                entityDesc.toConfig(outputCfg);
-                FileUtils.makeDirectory(folder);
-                outputCfg.saveTextFile(new File(folder, generic.getName() + "." + Config.DEFAULT_EXTENSION));
+                Config entityDescCfg = new Config(generic.getName());
+                entityDesc.toConfig(entityDescCfg);
+                entityDescriptionCfg.addChildConfig(entityDescCfg);
                 exportCount++;
             }
         }
 
-        getLogger().info("Exported %d entity description(s).", exportCount);
-    }
-
-    /**
-     * Import collision proxies from a folder.
-     * @param folder The folder to import proxy data from
-     */
-    public void importCollisionProxies(File folder) {
-        if (folder == null)
-            throw new NullPointerException("folder");
-
-        int importCount = 0;
-        for (File file : FileUtils.listFiles(folder)) {
-            if (!file.isFile() || !file.getName().endsWith(Config.DEFAULT_EXTENSION))
-                continue;
-
-            Config proxyDescCfg = Config.loadConfigFromTextFile(file, false);
-            kcProxyDescType descType = proxyDescCfg.getKeyValueNodeOrError(kcProxyDesc.CONFIG_KEY_DESC_TYPE).getAsEnumOrError(kcProxyDescType.class);
-
-            String proxyDescName = proxyDescCfg.getSectionName();
-            kcCResourceGeneric generic = getResourceByHash(GreatQuestUtils.hash(proxyDescName));
-            if (generic == null) {
-                generic = new kcCResourceGeneric(this);
-                generic.setName(proxyDescName, true);
-                addResource(generic);
-            }
-
-            kcProxyDesc proxyDesc = generic.getAsProxyDescription();
-            if (proxyDesc == null)
-                generic.setResourceData(proxyDesc = descType.createNewInstance(generic));
-
-            proxyDesc.fromConfig(proxyDescCfg);
-            importCount++;
+        if (exportCount > 0) {
+            gqsRoot.saveTextFile(outputFile);
+            getLogger().info("Exported %d entity description(s).", exportCount);
         }
-
-        getLogger().info("Imported %d collision proxies.", importCount);
     }
-
 
     /**
      * Saves collision proxies found in generic chunks to text files.
-     * @param folder The folder to save the descriptions to.
+     * @param outputFile The folder to save the descriptions to.
      */
-    public void exportCollisionProxies(File folder) {
+    public void exportCollisionProxies(File outputFile) {
         int exportCount = 0;
+        Config gqsRoot = new Config(outputFile.getName());
+        Config collisionProxiesCfg = new Config(GreatQuestAssetUtils.CONFIG_SECTION_COLLISION_PROXIES);
+        gqsRoot.addChildConfig(collisionProxiesCfg);
         for (kcCResource chunk : this.chunks) {
             if (!(chunk instanceof kcCResourceGeneric))
                 continue;
@@ -860,23 +786,27 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             kcCResourceGeneric generic = (kcCResourceGeneric) chunk;
             kcProxyDesc proxyDesc = generic.getAsProxyDescription();
             if (proxyDesc != null) {
-                Config outputCfg = new Config(generic.getName());
-                proxyDesc.toConfig(outputCfg);
-                FileUtils.makeDirectory(folder);
-                outputCfg.saveTextFile(new File(folder, generic.getName() + "." + Config.DEFAULT_EXTENSION));
+                Config proxyDescCfg = new Config(generic.getName());
+                proxyDesc.toConfig(proxyDescCfg);
+                collisionProxiesCfg.addChildConfig(proxyDescCfg);
                 exportCount++;
             }
         }
 
-        getLogger().info("Exported %d collision proxies.", exportCount);
+        if (exportCount > 0) {
+            gqsRoot.saveTextFile(outputFile);
+            getLogger().info("Exported %d collision proxies.", exportCount);
+        }
     }
 
     /**
      * Saves launcher information found in generic chunks to a text file.
      * @param file The file to save the info to.
      */
-    public void saveGenericLauncherInfo(File file) {
-        StringBuilder builder = new StringBuilder();
+    public void saveLauncherParams(File file) {
+        Config gqsRoot = new Config(file.getName());
+        Config launcherCfg = new Config(GreatQuestAssetUtils.CONFIG_SECTION_LAUNCHERS);
+        gqsRoot.addChildConfig(launcherCfg);
         for (kcCResource chunk : this.chunks) {
             if (!(chunk instanceof kcCResourceGeneric))
                 continue;
@@ -885,32 +815,13 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             if (generic.getResourceType() != kcCResourceGenericType.LAUNCHER_DESCRIPTION)
                 continue;
 
-            writeData(builder, chunk, generic.getAsLauncherParams());
-            builder.append(Constants.NEWLINE);
+            Config launcherParamCfg = new Config(generic.getName());
+            generic.getAsLauncherParams().toConfig(launcherParamCfg);
+            launcherCfg.addChildConfig(launcherParamCfg);
         }
 
-        saveExport(file, builder);
-    }
-
-    /**
-     * Saves emitter information found in generic chunks to a text file.
-     * @param file The file to save the info to.
-     */
-    public void saveGenericEmitterInfo(File file) {
-        StringBuilder builder = new StringBuilder();
-        for (kcCResource chunk : this.chunks) {
-            if (!(chunk instanceof kcCResourceGeneric))
-                continue;
-
-            kcCResourceGeneric generic = (kcCResourceGeneric) chunk;
-            if (generic.getResourceType() != kcCResourceGenericType.EMITTER_DESCRIPTION)
-                continue;
-
-            writeData(builder, chunk, generic.getAsEmitterDescription());
-            builder.append(Constants.NEWLINE);
-        }
-
-        saveExport(file, builder);
+        if (launcherCfg.getChildConfigNodes().size() > 0)
+            gqsRoot.saveTextFile(file);
     }
 
     /**
@@ -926,7 +837,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
             kcCResourceAnimSet animSet = (kcCResourceAnimSet) chunk;
             builder.append(chunk.getName()).append('[').append(chunk.getHashAsHexString())
                     .append("]: ").append(Constants.NEWLINE);
-            animSet.getAnimSetDesc().writeMultiLineInfo(builder, " ");
+            animSet.getAnimSetDesc().createPropertyList().toStringChildEntries(builder, " ", 1);
         }
 
         saveExport(file, builder);
@@ -1007,7 +918,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
 
             kcModelDesc modelDesc = generic.getAsModelDescription();
             builder.append(chunk.getName()).append('[').append(chunk.getHashAsHexString()).append("], ");
-            modelDesc.writeInfo(builder);
+            modelDesc.createPropertyList().toStringChildEntries(builder, " ", 0);
             builder.append(Constants.NEWLINE);
         }
 
@@ -1066,7 +977,7 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
                     continue;
 
                 builder.append(Constants.NEWLINE);
-                ((kcEnvironment) chunk).writePrefixedMultiLineInfo(builder, "kcEnvironment", "", " ");
+                chunk.createPropertyList().toString(builder, " ", 0);
             }
 
             builder.append(Constants.NEWLINE);
@@ -1126,98 +1037,17 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     }
 
     /**
-     * Exports this file and all of its chunks to the directory.
-     * This makes debugging easier.
-     * @param directory The folder to export chunks to.
-     */
-    @SneakyThrows
-    public void exportChunksToDirectory(File directory) {
-        Map<String, Integer> countMap = new HashMap<>();
-        for (kcCResource chunk : this.chunks) {
-            String signature = StringUtils.stripAlphanumeric(chunk.getChunkIdentifier());
-            int count = countMap.getOrDefault(signature, 0) + 1;
-            countMap.put(signature, count);
-
-            // Check there is data.
-            String fileName = NumberUtils.padNumberString(count, 3);
-            if (chunk.getRawData() == null) {
-                getLogger().warning("Skipping chunk with null data: '%s-%s'.", signature, fileName);
-                continue;
-            }
-
-            // Create sub-directory.
-            File subDirectory = new File(directory, signature);
-            FileUtils.makeDirectory(subDirectory);
-
-            // Save file contents.
-            File outputFile = new File(subDirectory, fileName);
-            if (!outputFile.exists())
-                Files.write(outputFile.toPath(), chunk.getRawData());
-        }
-    }
-
-    /**
-     * Write the asset name to the builder to a single line.
-     * @param file The chunked file to search for assets from.
-     * @param builder The builder to write to.
-     * @param padding The line padding data.
-     * @param prefix The prefix to write.
-     * @param hashObj The hash to lookup.
-     */
-    public static StringBuilder writeAssetLine(GreatQuestChunkedFile file, StringBuilder builder, String padding, String prefix, GreatQuestHash<?> hashObj) {
-        return writeAssetInfo(file, builder, padding, prefix, hashObj != null ? hashObj.getHashNumber() : 0, kcCResource::getName).append(Constants.NEWLINE);
-    }
-
-    /**
-     * Write asset information to the builder. The information written is specified via the function.
-     * If the asset isn't found, the hash is written instead.
-     * @param file         The chunked file to search for assets from.
-     * @param builder      The builder to write to.
-     * @param padding      The line padding data.
-     * @param prefix       The prefix to write.
-     * @param resourceHash The hash value to lookup.
-     * @param getter       The function to turn the resource into a string.
-     * @param <TResource>  The resource type to lookup.
-     */
-    public static <TResource extends kcCResource> StringBuilder writeAssetInfo(GreatQuestChunkedFile file, StringBuilder builder, String padding, String prefix, int resourceHash, Function<TResource, String> getter) {
-        builder.append(padding).append(prefix).append(": ");
-
-        TResource resource = GreatQuestUtils.findResourceByHashGlobal(file, file != null ? file.getGameInstance() : null, resourceHash);
-        if (resource != null) {
-            builder.append(getter.apply(resource));
-        } else if (resourceHash != 0 && resourceHash != -1) {
-            builder.append(NumberUtils.to0PrefixedHexString(resourceHash));
-        } else {
-            builder.append("None");
-        }
-
-        return builder;
-    }
-
-    /**
      * Write the asset name to the UI.
      * @param file The chunked file to search for assets from.
      * @param label The label to write.
      * @param hashObj The hash to lookup.
      */
-    public static Label writeAssetLine(GUIEditorGrid grid, GreatQuestChunkedFile file, String label, GreatQuestHash<?> hashObj) {
-        return writeAssetInfo(grid, file, label, hashObj != null ? hashObj.getHashNumber() : 0, kcCResource::getName);
-    }
-
-    /**
-     * Write asset information to the UI. The information written is specified via the function.
-     * If the asset isn't found, the hash is written instead.
-     * @param file         The chunked file to search for assets from.
-     * @param label        The label to write.
-     * @param resourceHash The hash value to lookup.
-     * @param getter       The function to turn the resource into a string.
-     * @param <TResource>  The resource type to lookup.
-     */
-    public static <TResource extends kcCResource> Label writeAssetInfo(GUIEditorGrid grid, GreatQuestChunkedFile file, String label, int resourceHash, Function<TResource, String> getter) {
+    public static Label writeAssetLine(GUIEditorGrid grid, GreatQuestChunkedFile file, String label, GreatQuestHash<? extends kcCResource> hashObj) {
         String resourceName = null;
-        TResource resource = GreatQuestUtils.findResourceByHashGlobal(file, file != null ? file.getGameInstance() : null, resourceHash);
+        kcCResource resource = hashObj != null ? hashObj.getResource() : null;
+        int resourceHash = hashObj != null ? hashObj.getHashNumber() : 0;
         if (resource != null)
-            resourceName = getter.apply(resource);
+            resourceName = resource.getName();
 
         return grid.addLabel(label + ":", (resourceName != null ? resourceName : "Not Found") + " (" + NumberUtils.to0PrefixedHexString(resourceHash) + ")");
     }
@@ -1226,57 +1056,45 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
     public void setupRightClickMenuItems(ContextMenu contextMenu) {
         super.setupRightClickMenuItems(contextMenu);
 
-        boolean hasWorld = getSceneManager() != null;
+        MenuItem exportEntitiesItem = new MenuItem("Export Level Data");
+        contextMenu.getItems().add(exportEntitiesItem);
+        exportEntitiesItem.setOnAction(event -> {
+            File outputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), RESOURCE_EXPORT_PATH);
+            if (outputFolder == null)
+                return;
 
-        if (hasWorld) {
-            MenuItem exportEntitiesItem = new MenuItem("Export Entities");
-            contextMenu.getItems().add(exportEntitiesItem);
-            exportEntitiesItem.setOnAction(event -> {
-                File outputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), RESOURCE_EXPORT_PATH);
-                if (outputFolder != null)
-                    exportEntities(outputFolder, getScriptList(), createScriptDisplaySettings());
-            });
+            try {
+                exportToFolder(outputFolder);
+            } catch (IOException ex) {
+                Utils.handleError(getLogger(), ex, true, "Failed to export level data for '%s'.", getDebugName());
+            }
+        });
 
-            MenuItem importEntitiesItem = new MenuItem("Import Entities");
-            contextMenu.getItems().add(importEntitiesItem);
-            importEntitiesItem.setOnAction(event -> {
-                File inputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), RESOURCE_IMPORT_PATH);
-                if (inputFolder != null)
-                    importEntities(inputFolder);
-            });
+        // Import GQS file.
+        MenuItem importGqsItem = new MenuItem("Import GQS File");
+        contextMenu.getItems().add(importGqsItem);
+        importGqsItem.setOnAction(event -> askUserToImportGqsFile());
+    }
+
+    /**
+     * Ask the user to import a .gqs file.
+     */
+    public void askUserToImportGqsFile() {
+        File gqsGroupFile = FileUtils.askUserToOpenFile(getGameInstance(), GQS_IMPORT_PATH);
+        if (gqsGroupFile == null)
+            return;
+
+        getLogger().info("Importing GQS file '%s'.", gqsGroupFile.getName());
+        Config scriptGroupCfg = Config.loadConfigFromTextFile(gqsGroupFile, false);
+        File workingDirectory = gqsGroupFile.getParentFile();
+
+        try {
+            GreatQuestAssetUtils.applyGqsScriptGroup(workingDirectory, this, scriptGroupCfg);
+            getLogger().info("Finished importing the gqs.");
+            updateListUI();
+        } catch (Throwable th) {
+            Utils.handleError(getLogger(), th, true, "An error occurred while importing the gqs file '%s'.", gqsGroupFile.getName());
         }
-
-        MenuItem exportEntityDescriptionsItem = new MenuItem("Export Entity Descriptions");
-        contextMenu.getItems().add(exportEntityDescriptionsItem);
-        exportEntityDescriptionsItem.setOnAction(event -> {
-            File outputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), RESOURCE_EXPORT_PATH);
-            if (outputFolder != null)
-                exportEntityDescriptions(outputFolder);
-        });
-
-        MenuItem importEntityDescriptionsItem = new MenuItem("Import Entity Descriptions");
-        contextMenu.getItems().add(importEntityDescriptionsItem);
-        importEntityDescriptionsItem.setOnAction(event -> {
-            File inputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), RESOURCE_IMPORT_PATH);
-            if (inputFolder != null)
-                importEntityDescriptions(inputFolder);
-        });
-
-        MenuItem exportProxyDescriptionsItem = new MenuItem("Export Collision Proxies");
-        contextMenu.getItems().add(exportProxyDescriptionsItem);
-        exportProxyDescriptionsItem.setOnAction(event -> {
-            File outputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), RESOURCE_EXPORT_PATH);
-            if (outputFolder != null)
-                exportCollisionProxies(outputFolder);
-        });
-
-        MenuItem importProxyDescriptionsItem = new MenuItem("Import Collision Proxies");
-        contextMenu.getItems().add(importProxyDescriptionsItem);
-        importProxyDescriptionsItem.setOnAction(event -> {
-            File inputFolder = FileUtils.askUserToSelectFolder(getGameInstance(), RESOURCE_IMPORT_PATH);
-            if (inputFolder != null)
-                importCollisionProxies(inputFolder);
-        });
     }
 
     /**
@@ -1288,17 +1106,28 @@ public class GreatQuestChunkedFile extends GreatQuestArchiveFile implements IFil
      */
     public kcCResource createResource(KCResourceID readType, byte[] rawBytes, String identifier) {
         kcCResource newChunk;
-        if (readType == KCResourceID.RAW && DataUtils.testSignature(rawBytes, kcEnvironment.ENVIRONMENT_NAME)) {
+        if (readType == KCResourceID.RAW && DataUtils.testSignature(rawBytes, kcEnvironment.RESOURCE_NAME)) {
             newChunk = new kcEnvironment(this);
         } else if (readType == KCResourceID.RAW && DataUtils.testSignature(rawBytes, kcScriptList.GLOBAL_SCRIPT_NAME)) {
             newChunk = new kcScriptList(this);
         } else if (readType != null && readType.getMaker() != null) {
             newChunk = readType.getMaker().apply(this);
         } else {
-            newChunk = new GreatQuestDummyFileChunk(this, identifier);
+            newChunk = new kcCResourceDummy(this, identifier);
             getLogger().warning("Reading unsupported chunk with identifier '%s'.", identifier);
         }
 
         return newChunk;
+    }
+
+    /**
+     * Updates the resource list UI, if currently displayed.
+     */
+    public void updateListUI() {
+        // Update UI to reflect new name.
+        GreatQuestMainMenuUIController mainMenu = getGameInstance().getMainMenuController();
+        GameUIController<?> currentEditor = mainMenu != null ? mainMenu.getCurrentEditor() : null;
+        if (currentEditor instanceof GreatQuestChunkFileEditor && ((GreatQuestChunkFileEditor) currentEditor).getFile() == this)
+            ((GreatQuestChunkFileEditor) currentEditor).getChunkListComponent().refreshDisplay();
     }
 }

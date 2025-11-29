@@ -2,9 +2,11 @@ package net.highwayfrogs.editor.system.math;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListDataEntry;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
-import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 
 /**
  * Represents a vector with four 32 bit floating point values.
@@ -211,6 +213,19 @@ public class Vector4f implements IBinarySerializable {
     }
 
     /**
+     * Gets this as a Vector3f (dropping the w value)
+     * @param output the output storage.
+     * @return outputVector
+     */
+    public Vector3f getXYZ(Vector3f output) {
+        if (output == null)
+            output = new Vector3f();
+
+        output.setXYZ(this.x, this.y, this.z);
+        return output;
+    }
+
+    /**
      * Sets the x, y, z, and w scalar components of the vector.
      * @param x The new x value
      * @param y The new y value
@@ -291,6 +306,32 @@ public class Vector4f implements IBinarySerializable {
     @Override
     public int hashCode() {
         return Float.hashCode(this.x) ^ Float.hashCode(this.y) ^ Float.hashCode(this.z) ^ Float.hashCode(this.w);
+    }
+
+    /**
+     * Adds the vector to the property list.
+     * @param propertyList the property list to add to
+     * @param name the name to put the vector into the property list with
+     */
+    public PropertyListDataEntry<Vector4f> addToPropertyList(PropertyListNode propertyList, String name) {
+        return addToPropertyList(propertyList, name, Float.NaN);
+    }
+
+    /**
+     * Adds the vector to the property list.
+     * @param propertyList the property list to add to
+     * @param name the name to put the vector into the property list with
+     * @param skippedW the W value to skip.
+     */
+    public PropertyListDataEntry<Vector4f> addToPropertyList(PropertyListNode propertyList, String name, float skippedW) {
+        return propertyList.add(name, this)
+                .setDataToStringConverter(vector -> vector.toParseableString(skippedW))
+                .setDataFromStringConverter(newText -> {
+                    Vector4f newVector = new Vector4f();
+                    newVector.parse(newText, skippedW);
+                    return newVector;
+                })
+                .setDataHandler(this::setXYZW);
     }
 
     /**

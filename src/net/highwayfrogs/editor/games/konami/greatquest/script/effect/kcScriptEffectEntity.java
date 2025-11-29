@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWri
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptEffectType;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
 /**
@@ -65,15 +66,15 @@ public class kcScriptEffectEntity extends kcScriptEffectAction {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments, int lineNumber, String fileName) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments, int lineNumber, String fileName) {
         if (getAction().getActionID() == kcActionID.ACTIVATE_SPECIAL)
-            getAction().load(arguments, lineNumber, fileName);
+            getAction().load(logger, arguments, lineNumber, fileName);
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         if (getAction().getActionID() == kcActionID.ACTIVATE_SPECIAL)
-            getAction().save(arguments, settings);
+            getAction().save(logger, arguments, settings);
     }
 
     /**

@@ -6,7 +6,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTrack;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcAction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionLazyTemplate;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionSetAnimation;
-import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionSetAnimation.kcAnimationMode;
+import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionSetAnimation.kcAnimationModeFlag;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcCActionSequence;
 
 /**
@@ -98,11 +98,19 @@ public class GreatQuestActionSequencePlayback {
         kcAction action = this.activeSequence.getActions().get(this.actionIndex++);
         switch (action.getActionID()) {
             case SET_ANIMATION: // 3249
-                kcCResourceTrack animation = ((kcActionSetAnimation) action).getTrackRef().getResource();
-                boolean repeat = ((kcActionSetAnimation) action).getMode() == kcAnimationMode.REPEAT;
+                kcActionSetAnimation setAnimation = (kcActionSetAnimation) action;
+                kcCResourceTrack animation = setAnimation.getTrackRef().getResource();
+                boolean repeat = setAnimation.hasFlag(kcAnimationModeFlag.REPEAT);
+                boolean reverse = setAnimation.hasFlag(kcAnimationModeFlag.REVERSE);
+                boolean reverseOnCompletion = setAnimation.hasFlag(kcAnimationModeFlag.REVERSE_ON_COMPLETE);
                 float startTime = ((kcActionSetAnimation) action).getStartTime();
-                this.modelMesh.setActiveAnimation(animation, repeat);
-                this.modelMesh.setAnimationTick(startTime * GreatQuestModelMesh.TICKS_PER_SECOND);
+                this.modelMesh.setActiveAnimation(animation, repeat, reverse, reverseOnCompletion);
+
+                float startTick = startTime * GreatQuestModelMesh.TICKS_PER_SECOND;
+                if (reverse && animation != null)
+                    startTick = animation.getMaxTick() - startTick;
+
+                this.modelMesh.setAnimationTick(startTick);
                 break;
             case WAIT_ANIMATION: // 559
                 this.status = SequenceStatus.WAIT_FOR_ANIMATION;

@@ -38,7 +38,7 @@
                                     </children>
                                 </HBox>
                                 <TreeView fx:id="treeView" prefHeight="265.0" prefWidth="200.0" VBox.vgrow="ALWAYS" showRoot="false" />
-                                <HBox fx:id="extraOptionsBox" alignment="CENTER" prefHeight="30.0" prefWidth="300.0" spacing="2.0" VBox.vgrow="SOMETIMES"/>
+                                <HBox fx:id="extraOptionsBox" alignment="CENTER" prefHeight="30.0" spacing="2.0" VBox.vgrow="SOMETIMES"/>
                             </children>
                         </VBox>
                     </children>
@@ -46,7 +46,7 @@
                 <Separator maxWidth="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefWidth="0.0"
                            HBox.hgrow="NEVER"/>
                 <VBox fx:id="rightSidePanelFreeArea" prefHeight="305.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
-                      AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
+                      AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" HBox.hgrow="ALWAYS"/>
             </children>
         </HBox>
     </children>

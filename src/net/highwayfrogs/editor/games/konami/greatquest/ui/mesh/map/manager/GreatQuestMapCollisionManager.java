@@ -4,9 +4,11 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.CullFace;
+import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.Mesh;
 import javafx.scene.shape.MeshView;
 import lombok.Getter;
+import net.highwayfrogs.editor.file.map.view.RawColorTextureSource;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
@@ -23,12 +25,14 @@ import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshUnmanagedNode;
+import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.gui.texture.atlas.AtlasTexture;
 import net.highwayfrogs.editor.gui.texture.atlas.SequentialTextureAtlas;
 import net.highwayfrogs.editor.gui.texture.atlas.TextureAtlas;
 import net.highwayfrogs.editor.system.math.Vector2f;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,7 +40,6 @@ import java.util.List;
 
 /**
  * Manages map collision displays in 3D space.
- * TODO: I think we should switch to using flat colored textures for collision (Perhaps with outlines?), BUT, using lighting to highlight geometry. (Parallel light approximation / real directional light in later FX)
  * Created by Kneesnap on 4/17/2024.
  */
 public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCResourceTriMesh, MeshView> {
@@ -74,17 +77,26 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
         });
     }
 
-
     @Override
     public void setupMainGridEditor(UISidePanel sidePanel) {
         super.setupMainGridEditor(sidePanel);
 
         MeshView meshView = new MeshView();
+        MeshView meshViewOutline = new MeshView();
         this.mapCollisionMesh = new GreatQuestMapCollisionMesh(this, getMap().getSceneManager().getCollisionMeshes(), "Map Collision");
         this.mapCollisionMesh.addView(meshView, getController().getMeshTracker());
+        this.mapCollisionMesh.addView(meshViewOutline, getController().getMeshTracker());
         setupMeshView(meshView);
+        setupMeshView(meshViewOutline);
         meshView.setVisible(false);
-        getMainGrid().addCheckBox("Show Map Collision", false, meshView::setVisible);
+        meshViewOutline.setVisible(false);
+        meshViewOutline.setDrawMode(DrawMode.LINE);
+        meshViewOutline.setMaterial(Scene3DUtils.makeUnlitSharpMaterial(javafx.scene.paint.Color.BLACK));
+
+        getMainGrid().addCheckBox("Show Map Collision", false, visible -> {
+            meshView.setVisible(visible);
+            meshViewOutline.setVisible(visible);
+        });
         getMainGrid().addCheckBox("Show Slippy Polygons", this.highlightSlippyPolygons, this::setHighlightSlippyPolygons);
     }
 
@@ -212,12 +224,12 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
             this.manager = manager;
             this.triMeshes = triMeshes;
             getTextureAtlas().startBulkOperations();
-            this.defaultTexture = getTextureAtlas().addTexture(UnknownTextureSource.GREEN_INSTANCE);
-            this.climbableTexture = getTextureAtlas().addTexture(UnknownTextureSource.BROWN_INSTANCE);
-            this.cameraRaycastSkipTexture = getTextureAtlas().addTexture(UnknownTextureSource.GRAY_INSTANCE);
-            this.cameraWireframeRenderDebugTexture = getTextureAtlas().addTexture(UnknownTextureSource.RED_INSTANCE);
-            this.slippyTexture = getTextureAtlas().addTexture(UnknownTextureSource.CYAN_INSTANCE);
-            this.selectedTexture = getTextureAtlas().addTexture(UnknownTextureSource.YELLOW_INSTANCE);
+            this.defaultTexture = getTextureAtlas().addTexture(createImageSource(Color.GREEN));
+            this.climbableTexture = getTextureAtlas().addTexture(createImageSource(new Color(0x6E260E)));
+            this.cameraRaycastSkipTexture = getTextureAtlas().addTexture(createImageSource(Color.GRAY));
+            this.cameraWireframeRenderDebugTexture = getTextureAtlas().addTexture(createImageSource(Color.RED));
+            this.slippyTexture = getTextureAtlas().addTexture(createImageSource(Color.CYAN));
+            this.selectedTexture = getTextureAtlas().addTexture(createImageSource(Color.YELLOW));
             getTextureAtlas().setFallbackTexture(UnknownTextureSource.MAGENTA_INSTANCE);
             getTextureAtlas().endBulkOperations();
 
@@ -271,6 +283,10 @@ public class GreatQuestMapCollisionManager extends GreatQuestMapListManager<kcCR
                 this.highlightedMaterial = Scene3DUtils.createHighlightMaterial(getMaterial());
 
             return this.highlightedMaterial;
+        }
+
+        private static ITextureSource createImageSource(Color color) {
+            return new RawColorTextureSource(color);
         }
     }
 

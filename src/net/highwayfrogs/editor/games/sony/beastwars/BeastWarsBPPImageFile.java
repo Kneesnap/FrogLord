@@ -11,7 +11,7 @@ import net.highwayfrogs.editor.games.sony.beastwars.ui.BeastWarsBppFileUIControl
 import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapPolygon;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -106,12 +106,11 @@ public class BeastWarsBPPImageFile extends SCGameFile<BeastWarsInstance> {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("BPP (Bits Per Pixel)", BITS_PER_PIXEL);
         propertyList.add("Width", this.image.getWidth());
         propertyList.add("Height", this.image.getHeight());
-        return propertyList;
     }
 
     /**

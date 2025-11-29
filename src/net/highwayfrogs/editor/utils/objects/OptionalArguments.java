@@ -334,6 +334,21 @@ public class OptionalArguments {
      * @return argumentMap
      */
     public static OptionalArguments parse(String input) {
+        return parse(input, false);
+    }
+
+    /**
+     * Parses an optional argument input string formatted in the form of "stuff --flag1 --flag2 test flag value".
+     * Results:
+     * Arguments[0] = "stuff"
+     * Map["flag0"] = null
+     * Map["flag1"] = ""
+     * Map["flag2"] = "test flag value"
+     * @param input the string to parse
+     * @param treatCommaAsEndOfValue If true, commas will indicate the end of a value node (Multiple users have accidentally used commas in .gqs files)
+     * @return argumentMap
+     */
+    public static OptionalArguments parse(String input, boolean treatCommaAsEndOfValue) {
         if (input == null)
             throw new NullPointerException("input");
 
@@ -362,7 +377,7 @@ public class OptionalArguments {
                 if (argName.isEmpty())
                     throw new RuntimeException("Cannot parse the next argument from '" + reader.getPreviouslyReadPartOfString() + "'.");
 
-                StringNode newValue = parseValue(reader, builder, true);
+                StringNode newValue = parseValue(reader, builder, true, true);
                 StringNode existingValue = optionalArguments.put(argName, newValue);
                 if (existingValue != null)
                     throw new RuntimeException("Optional argument '--" + argName + "' had already been specified!");
@@ -370,19 +385,24 @@ public class OptionalArguments {
                 optionalArgumentsOrder.add(argName);
             } else if (noMoreOrderedArguments) {
                 reader.setIndex(reader.getIndex() - 1);
-                throw new RuntimeException("Unexpected value '" + parseValue(reader, builder, false) + "' in '" + reader.getPreviouslyReadPartOfString() + "'.");
+                throw new RuntimeException("Unexpected value '" + parseValue(reader, builder, false, true) + "' in '" + reader.getPreviouslyReadPartOfString() + "'.");
             } else {
                 reader.setIndex(reader.getIndex() - 1);
-                orderedArguments.add(parseValue(reader, builder, false));
+                orderedArguments.add(parseValue(reader, builder, false, treatCommaAsEndOfValue));
             }
         }
 
         return new OptionalArguments(orderedArguments, optionalArguments, optionalArgumentsOrder);
     }
 
-    private static StringNode parseValue(SequentialStringReader reader, StringBuilder result, boolean includeWhitespace) {
+    private static StringNode parseValue(SequentialStringReader reader, StringBuilder result, boolean includeWhitespace, boolean treatCommaAsEndOfValue) {
         StringNode newNode = new StringNode();
-        newNode.parseStringLiteral(reader, result, includeWhitespace);
+        newNode.parseStringLiteral(reader, result, includeWhitespace, treatCommaAsEndOfValue);
+
+        String literal = newNode.getAsStringLiteral();
+        if (literal != null && literal.endsWith(",")) // This can happen if treatCommaAsEndOfValue is false, but it still isn't valid.
+            throw new RuntimeException("Unexpected comma ends '" + newNode.getAsString() + "' in '" + reader.getPreviouslyReadPartOfString() + "'.");
+
         result.setLength(0);
         return newNode;
     }

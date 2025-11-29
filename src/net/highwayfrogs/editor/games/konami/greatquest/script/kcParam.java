@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.generic.InventoryItem;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcRotationAxis;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionAISetGoal.kcAISystemGoalType;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionActivateSpecial.kcSpecialActivationMask;
+import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionNumber;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionNumber.NumberOperation;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionPlaySound;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionSetAnimation;
@@ -21,6 +22,7 @@ import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.StringNode;
 
 import java.util.Arrays;
@@ -185,6 +187,7 @@ public class kcParam {
             case FLOAT:
             case ANGLE:
             case TIMESTAMP_TICK:
+            case DOUBLE_TIMESTAMP_TICK:
                 if (!Float.isFinite(floatValue))
                     return floatValue + " cannot be represented as a floating point value.";
                 break;
@@ -220,7 +223,7 @@ public class kcParam {
                 break;
             case VARIABLE_ID:
                 int variableId = getAsInteger();
-                if (variableId < 0 || variableId >= 8)
+                if (variableId < 0 || variableId >= kcActionNumber.ENTITY_VARIABLE_SLOTS)
                     return variableId + " is not a valid variable ID.";
 
                 break;
@@ -232,7 +235,7 @@ public class kcParam {
                     if (bone == null)
                         return intValue + " is not a valid bone tag for the skeleton '" + skeleton.getName() + "'.";
                 } else if (intValue != 0) {
-                    return intValue + " is not a valid bone tag when the entity (" + (actorDesc != null ? actorDesc.getResource().getName() : "null") + ") has no skeleton!";
+                    return intValue + " is not a valid bone tag when the entity (" + (actorDesc != null ? actorDesc.getResourceName() : "null") + ") has no skeleton!";
                 }
 
                 break;
@@ -248,13 +251,13 @@ public class kcParam {
      * @param node The node to load the value from.
      * @param paramType The parameter type to resolve the value as.
      */
-    public void fromConfigNode(kcActionExecutor executor, GreatQuestInstance instance, StringNode node, kcParamType paramType) {
+    public void fromConfigNode(ILogger logger, kcActionExecutor executor, GreatQuestInstance instance, StringNode node, kcParamType paramType) {
         switch (paramType) {
             case HEX_INTEGER:
             case HASH:
             case HASH_NULL_IS_ZERO:
-                if (!node.isNull() && NumberUtils.isHexInteger(node.getAsString())) {
-                    setValue(NumberUtils.parseHexInteger(node.getAsString()));
+                if (!node.isNull() && NumberUtils.isPrefixedHexInteger(node.getAsString())) {
+                    setValue(NumberUtils.parseIntegerAllowHex(node.getAsString()));
                 } else if (paramType == kcParamType.HASH_NULL_IS_ZERO) {
                     setValue(node.isNull() ? 0 : GreatQuestUtils.hash(node.getAsString()));
                 } else {
@@ -264,6 +267,13 @@ public class kcParam {
                 break;
             case UNSIGNED_INT:
                 setValue(node.getAsUnsignedInteger());
+                break;
+            case INT16:
+                int value32 = node.getAsInteger();
+                if (value32 < Short.MIN_VALUE || value32 > Short.MAX_VALUE)
+                    throw new RuntimeException("The value " + value32 + " is invalid, it must be between " + Short.MIN_VALUE + " and " + Short.MAX_VALUE + ".");
+
+                setValue(value32);
                 break;
             case INT:
             case ALARM_ID:
@@ -317,6 +327,9 @@ public class kcParam {
             case TIMESTAMP_TICK:
                 setValue(Math.round(node.getAsFloat() * GreatQuestModelMesh.TICKS_PER_SECOND));
                 break;
+            case DOUBLE_TIMESTAMP_TICK:
+                setValue(Math.round(2 * node.getAsFloat() * GreatQuestModelMesh.TICKS_PER_SECOND));
+                break;
             case ANGLE:
                 setValue((float) Math.toRadians(node.getAsFloat()));
                 break;
@@ -333,11 +346,14 @@ public class kcParam {
 
                     if (bone != null) {
                         setValue(bone.getTag());
-                    } else if (NumberUtils.isHexInteger(boneName)) {
+                    } else if (NumberUtils.isPrefixedHexInteger(boneName)) {
                         setValue(node.getAsInteger());
                     } else {
                         int newHash = GreatQuestUtils.hash(boneName);
-                        skeleton.getLogger().warning("Could not resolve a bone named '%s', storing its hash so it can still be identified as %08X.", boneName, newHash);
+                        if (logger == null)
+                            logger = skeleton.getLogger();
+
+                        logger.warning("Could not resolve a bone named '%s', storing its hash so it can still be identified as %08X.", boneName, newHash);
                         setValue(newHash);
                     }
                 } else {
@@ -362,12 +378,13 @@ public class kcParam {
                 break;
             case HASH:
             case HASH_NULL_IS_ZERO:
-                kcScriptDisplaySettings.applyGqsSyntaxHashDisplay(node, settings, getAsInteger());
+                kcScriptDisplaySettings.applyGqsSyntaxHashDisplay(node, settings, getAsInteger(), (paramType == kcParamType.HASH_NULL_IS_ZERO) ? 0 : -1);
                 break;
             case UNSIGNED_INT:
                 node.setAsUnsignedInteger(getAsInteger());
                 break;
             case INT:
+            case INT16:
             case ALARM_ID:
             case VARIABLE_ID:
                 node.setAsInteger(getAsInteger());
@@ -418,6 +435,9 @@ public class kcParam {
                 break;
             case TIMESTAMP_TICK:
                 node.setAsFloat((float) getAsInteger() / GreatQuestModelMesh.TICKS_PER_SECOND);
+                break;
+            case DOUBLE_TIMESTAMP_TICK:
+                node.setAsFloat((getAsInteger() * .5F) / GreatQuestModelMesh.TICKS_PER_SECOND);
                 break;
             case ANGLE:
                 node.setAsFloat(getAsAngleInDegrees());

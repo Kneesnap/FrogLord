@@ -2,11 +2,9 @@ package net.highwayfrogs.editor.utils.data.writer;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.system.ByteArrayWrapper;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * An in-memory data receiver.
@@ -14,45 +12,40 @@ import java.util.List;
  */
 @Getter
 public class ArrayReceiver implements DataReceiver {
-    private final List<Byte> bytes;
+    private final ByteArrayWrapper byteBuffer;
     private int index;
 
     public ArrayReceiver() {
-        this.bytes = new ArrayList<>();
+        this.byteBuffer = new ByteArrayWrapper();
     }
 
     public ArrayReceiver(int startingSize) {
-        this.bytes = new ArrayList<>(startingSize);
+        this.byteBuffer = new ByteArrayWrapper(startingSize, true);
     }
 
     @Override
     public void writeByte(byte value)  {
-        while (this.index > bytes.size()) // Add data up to the index.
-            bytes.add(Constants.NULL_BYTE);
+        while (this.index > this.byteBuffer.size()) // Add data up to the index.
+            this.byteBuffer.add(Constants.NULL_BYTE);
 
-        if (bytes.size() > this.index) { // Writing over existing bytes.
-            bytes.set(this.index, value);
+        if (this.byteBuffer.size() > this.index) { // Writing over existing bytes.
+            this.byteBuffer.set(this.index, value);
         } else { // Index matches exactly. Append at end.
-            bytes.add(value);
+            this.byteBuffer.add(value);
         }
 
         this.index++; // Increment index.
     }
 
     @Override
-    public void writeBytes(byte[] values) {
-        for (byte value : values)
-            writeByte(value);
+    public void writeBytes(byte[] values) throws IOException {
+        writeBytes(values, 0, values.length);
     }
 
     @Override
     public void writeBytes(byte[] values, int offset, int amount) throws IOException {
-        amount = Math.max(0, Math.min(amount, values.length - offset - 1));
-        if (amount == 0)
-            return;
-
-        for (int i = 0; i < amount; i++)
-            writeByte(values[offset + i]);
+        this.byteBuffer.set(this.index, values, offset, amount);
+        this.index += amount;
     }
 
     @Override
@@ -65,6 +58,6 @@ public class ArrayReceiver implements DataReceiver {
      * @return array
      */
     public byte[] toArray() {
-        return Utils.toArray(bytes);
+        return this.byteBuffer.toNewArray();
     }
 }

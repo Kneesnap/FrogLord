@@ -9,7 +9,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathInfo;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -126,9 +126,8 @@ public class FroggerMapFilePacketPath extends FroggerMapFilePacket {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Path Count", this.paths.size());
-        return propertyList;
     }
 
     /**

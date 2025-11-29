@@ -3,8 +3,6 @@ package net.highwayfrogs.editor.games.renderware.chunks;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.image.Image;
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
@@ -14,8 +12,10 @@ import net.highwayfrogs.editor.games.renderware.chunks.RwImageChunk.RwImageViewU
 import net.highwayfrogs.editor.games.renderware.ui.IRwStreamChunkUIEntry;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -151,7 +151,7 @@ public class RwPlatformIndependentTextureDictionaryChunk extends RwStreamChunk {
          * Adds properties to the property list.
          * @param propertyList the PropertyList to populate
          */
-        default PropertyList addToPropertyList(PropertyList propertyList) {
+        default void addToPropertyList(PropertyListNode propertyList) {
             String name = getName();
             if (name != null && name.length() > 0)
                 propertyList.add("Name", name);
@@ -162,7 +162,6 @@ public class RwPlatformIndependentTextureDictionaryChunk extends RwStreamChunk {
 
             propertyList.add("Mip-Map Images", getMipMapImages().size());
             propertyList.add("Flags", NumberUtils.toHexString(getFlags()));
-            return propertyList;
         }
 
         /**

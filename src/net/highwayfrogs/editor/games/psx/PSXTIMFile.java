@@ -8,8 +8,11 @@ import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.TIMController;
+import net.highwayfrogs.editor.gui.DefaultFileUIController.IExtraUISupplier;
+import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.FXNodeWrapperComponent;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
@@ -31,7 +34,7 @@ import java.util.Map;
  * Created by Kneesnap on 9/10/2023.
  */
 @Getter
-public class PSXTIMFile extends SCSharedGameFile {
+public class PSXTIMFile extends SCSharedGameFile implements IExtraUISupplier {
     private int flags;
     private int clutX;
     private int clutY;
@@ -391,8 +394,13 @@ public class PSXTIMFile extends SCSharedGameFile {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public GameUIController<?> createExtraUIController() {
+        return FXNodeWrapperComponent.createImageView(getGameInstance(), toBufferedImage(false));
+    }
+
+    @Override
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Flags", NumberUtils.toHexString(this.flags));
         propertyList.add("Palette Count", this.palettes != null ? this.palettes.length : 0);
         propertyList.add("Image Dimensions", getImageWidth() + "x" + getImageHeight());
@@ -401,8 +409,6 @@ public class PSXTIMFile extends SCSharedGameFile {
             propertyList.add("CLUT Dimensions", getClutWidth() + "x" + getClutHeight());
             propertyList.add("CLUT Position", "X: " + this.clutX + ", Y: " + this.clutY);
         }
-
-        return propertyList;
     }
 
     @Override

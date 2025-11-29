@@ -32,7 +32,8 @@ TODO: Include some information on how to manage scripts with Noodle later.
 The following sections document each of the available GQS config sections which are available, how they work, and how to configure them.  
 
 ### Quick Sections Reference
-- `[Models]`             – Adds 3D models and descriptions to chunked file
+- `[Models]`             – Configures 3D models and descriptions
+- `[Textures]`           – Configures textures and descriptions
 - `[SoundEffects]`       – Adds references to streamed sound effects in `.SCK`
 - `[CopyResources]`      – Copies resources from one `.dat` to another
 - `[DeleteResources]`    – Deletes chunks from current level
@@ -46,24 +47,60 @@ The following sections document each of the available GQS config sections which 
 - `[Scripts]`            – Adds scripts to existing entities
 
 ### [Models]
-Adds all included 3D model files as `Model References` to the chunked file.
-If `--CreateModelDesc <modelDescName>` is included (which in most circumstances it should be), a corresponding `Model Description` will also be created.  
+Including 3D model requires three separate pieces.  
+1) Importing the .VTX file into the `data.bin` file. (Skip if the .VTX is already part of the game.)  
+2) Creating a "model reference". (This is done by adding the file name under `[Models]`)
+3) Creating a "model description" (Use `--CreateModelDesc <modelDescName>`, skip for WATER and DOME meshes.)
 
 Example:  
 ```PowerShell
 [Models]
+# These models already exist within the game, so they only need to follow steps 2 and 3.
 \GameSource\Level00Global\Characters\C036\C036.VTX --CreateModelDesc "GeneralModelDesc" # The Magical General
 \GameSource\Level00Global\Characters\C058\C058.vtx --CreateModelDesc "Princess JoyModelDesc" # Princess Joy
-\GameSource\Level18JoyTowers\Props\MomRing\MOM_RING.VTX --CreateModelDesc "MomRingModelDesc" # MomRing
-\GameSource\Level00Global\Characters\C054\C054.VTX --CreateModelDesc "HollyModelDesc" # Holly
-\GameSource\Level00Global\Characters\C062\C062.VTX --CreateModelDesc "PhroiModelDesc" # Phroi
-\GameSource\Level17JoyCastle\Level\17DOME.VTX # Sky Box (No need for --CreateModelDesc because Sky boxes aren't entities)
+
+# Sky Box
+# There's no need to include --CreateModelDesc, because Sky domes are not entities.
+# Therefore, only step 2 needs to be followed.
+\GameSource\Level17JoyCastle\Level\17DOME.VTX
 ```
 
+### [Textures]
+Configuring textures can be broken down into two steps.  
+1) Creating a "texture reference" by putting the desired image file path into the `[Textures]` section.  
+2) Importing the image into `data.bin` by using `--Import <filePath>`. (Optional.)  
+
+Example:
+```PowerShell
+[Textures]
+# Creates a texture reference (resource chunk named 'bee.img') in the level chunked file.
+# This will ensure the image is loaded while on the loading screen, but will keep the original image unmodified.
+\GameSource\Level02BogTown\Level\bee.img
+
+# Replaces an existing image (catwlk01.img) with a new one.
+\GameSource\Level02BogTown\Level\catwlk01.img --Import "../images/phroi_cult_poster.png"
+
+# Creates a new image (phroi_cult.img), based on the same image path as above.
+\GameSource\Level02BogTown\Level\phroi_cult.img --Import "../images/phroi_cult_poster.png"
+```
+
+#### Texture Options
+**--Import <filePath>:**  
+Example: `--Import "../images/phroi_cult_poster.png"`  
+Creates or replaces the image in `data.bin` with the image found at the given path (relative to the .gqs file.)  
+Most common image formats (`.bmp`, `.png`, `.gif`, `.jpg`, etc.) should be supported, but different computers may have different formats available.  
+
+**--Resize \<width>x\<height>:**  
+Example: `--Resize 128x128`  
+Resizes the image to the newly given width/height using nearest neighbor scaling (to keep existing palette).  
+
+**--Delete:**  
+Deletes the image from `data.bin`, and the texture reference in the level.  
+
 ### [SoundEffects]
-Makes streamed sound effects (the ones found in the global .SCK file) accessible to the level the .gqs file is applied to.  
-In more technical terms, it creates a new `Entry` (as opposed to a new `Wave`) in the .SBR file for the active level.  
-Currently this does not import any new sound effects, only creates sound effects for sounds already in the `.SCK` file.  
+Allows importing/configuring sound files.  
+Each line starts with the sound identifier (path).  
+This will allow such a sound effect to be used in the current level.
 
 Example:
 ```PowerShell
@@ -73,6 +110,95 @@ characters/Phroi/lvl04_sick_response
 characters/Phroi/lvl08_dialog_07
 characters/Phroi/lvl10_dialog_04
 ```
+
+Then, the following flags can be included to configure the sound.  
+All the following flags are considered optional, but not including `--Music`, `--VoiceClip`, or `--Repeat` will clear those properties if they were previously present.  
+
+**--Music:**  
+Marks the sound as being music.  
+Not sure what this is actually used for.  
+
+> [!NOTE]  
+> Always include `--Priority 200` with `--Music` to ensure the game properly identifies the sound as music.  
+
+**--VoiceClip:**  
+Marks the sound as a voice clip.  
+Not sure what this is actually used for.  
+
+**--Repeat:**  
+Marks the sound as repeating when it ends.  
+This must be used with a `--Priority` of 200 or higher (in the case of a streamed sound), or it will not repeat.  
+<!-- kcCSoundEffectStream::Play is why it won't repeat. -->  
+
+**--Priority \<newPriority\>:**  
+Higher priority sounds will stop/replace lower priority sounds.  
+Having a priority of 200 means the (streamed) sound will not be stopped when dialog is advanced.  
+Valid Range: `0-255`  (100 is the default priority.)  
+
+<details>
+  <summary>Detailed information for programmers.</summary>
+
+When either `kcCAudioManager::PlaySfx` or `kcCAudioManager::OpenSfx` play a streamed sound effect, they will either update the globally tracked "music handle" or "voice handle".  
+The music handle is unused, but the voice handle is stopped whenever a dialog box is advanced. (By `kcCDialog::Update`)  
+So, if a sound should not be stopped when dialog is advanced, use `--Priority 200`.  
+A priority of 200 will cause the "music handle" to be set instead of the "voice handle".  
+</details>
+
+**--Volume \<newVolume\>:**  
+Choose the volume at which the sound is played back at.  
+Valid Range: `0-127` (127 is the default volume)  
+
+**--Pan \<newPan\>:**  
+Sets the audio pan of the sound. (How strongly to play the sound in each ear.)  
+Valid Range: `0-127` (64 is the default pan)  
+Only usable on streamed sounds (not embedded).  
+
+**--Pitch \<newPitch\>:**  
+Sets the pitch which the sound is played back with.  
+Valid Range: `0-127` (0 is the default pitch)  
+Only usable on streamed sounds (not embedded).  
+
+**--SampleRate \<newSampleRate\>:**  
+Re-encode the sound with the new sample-rate.  
+Common Values: `11025, 22050, 24000, 48000`  
+
+**--BitDepth \<newBitDepth\>:**  
+Re-encode the sound with the new bit-depth.  
+Valid Values: `8, 16, 24, 32`
+
+> [!WARNING]  
+> PlayStation 2 builds of the game only support 16-bit embedded sounds, while `--BitDepth` can still be used, the audio file will then be converted to 16-bit.  
+
+**--ChannelCount \<newChannelCount\>:**  
+Re-encode the sound with the new number of channels.  
+Valid Values: `1, 2`  
+
+> [!WARNING]  
+> PlayStation 2 builds of the game only support mono embedded sounds, while `--Channel` can still be used, the audio file will then be converted to mono.  
+
+**--Embedded:**  
+Embeds the sound into the per-level .SBR file.  
+
+> [!NOTE]  
+> It is possible to play many (up to 64) embedded sounds at the same time, without interrupting the streamed audio.  
+> This is the main benefit compared to streamed audio, which can only play two at a time (and one of those slots is taken up by music!).  
+
+> [!WARNING]  
+> If the .SBR file reaches/exceeds 1MB, the game will crash when loaded!  
+> Use streamed audio when possible, and lower the quality of embedded audio.
+
+**--Stream:**  
+Moves the sound from the per-level .SBR file to the `SNDCHUNK.SCK` file.  
+
+> [!NOTE]  
+> All sounds except short sound effects should be streamed audio because of the 1MB limit on .SBR files.  
+> Unfortunately, there is a downside, which is that only two streamed sounds can be played at the same time.  
+> Because music is always playing, that means only one streamed sound file can be played at a time.  
+> Usually, new sound effects will stop the previous sound effect and play over them.
+
+**--Import \<relativeFilePath\>:**  
+Imports a .wav file from a file path relative to the .gqs file.  
+If neither `--Stream` or `--Embedded` are included, the sound will either use the pre-existing sound type, or create a new streamed sound.  
 
 ### [CopyResources]
 Copies resource chunks from one chunked file to the chunked file which the .gqs file is applied to.  
@@ -172,22 +298,71 @@ WEDDING_FROGGER_002="Frogger: Well, ok, I'll try!"
 ```
 
 ### [Collision]
-Allows creating/updating `Collision Proxy Descriptions`.
+Collision happens through what are called "collision proxies", which are stand-ins for objects (terrain, entities, etc.)  
+These proxies are 3D shapes which aren't shown in-game, but can be previewed using FrogLord.  
+There are two kinds of proxies, "capsules" and "triangle meshes".
 
-Example:
+
+**Capsules (kcCProxyCapsule):**  
+A "proxy capsule" is a pill-shaped area (a cylinder with a round top/bottom). These are very easy to create, and fast for the game engine to use, but not very precise.  
+
+**Example:**  
 ```PowerShell
 [Collision]
-[[HollyProxyDesc]]
-type=CAPSULE
-reaction=SLIDE
-collisionGroups=NonHostileEntities
-collideWith=TriangleMeshes, Player, NonHostileEntities, HostileEntities, Terrain
-radius=0.35
-height=0.7
-offset=0.2
+[[HollyProxyDesc]] # The name of the collision proxy is 'HollyProxyDesc'.
+type=CAPSULE # This is a capsule.
+reaction=SLIDE # Colliding entities should slide off. Other reactions are: PENETRATE (let the user through), and HALT (stop all movement).
+collisionGroups=NonHostileEntities # This collision proxy belongs to the NonHostileEntities collision group.
+collideWith=TriangleMeshes, Player, NonHostileEntities, HostileEntities, Terrain # These groups can collide with this collision proxy.
+radius=0.35 # The radius of the cylinder/hemisphere/pill shapes.
+height=0.7 # The height between the top and bottom hemispheres.
+offset=0.2 # How far up from the entity's Y position should the pill be offset to.
 ```
 
+<details>
+  <summary>Click here to see an example collision proxy.</summary>
+
+![Example of capsule proxy](./images/example-collision-proxy-capsule.png)
+</details>
+
+**Triangle Meshes (kcCProxyTriMesh):**  
+A "triangle mesh" is a just a normal 3D model, but without any textures.
+These are more flexible than capsules but do not perform very well.  
+Note that these cannot have animations like the models which get displayed in-game can.
+
+TODO: Creating through configurations.
 TODO: Flesh out the instructions for creating collision proxies.
+
+#### There's more to collision though!  
+Before the proxy will be tested, there is a sphere on every actor description.    
+This sphere is a very fast collision test which gets checked BEFORE the proxies are tested.  
+This is because spheres are extremely fast/quick/easy to check, so the sphere can eliminate some of the more heavy collision checks.  
+So, make sure the entity description's collision sphere is large enough to hold the full collision shape!  
+To check this, open the map 3D preview in FrogLord, and check that the blue collision sphere fully contains the green collision proxy.
+
+#### Collision Groups  
+The game groups together certain similar entities so that collision which should be skipped can be skipped quickly.  
+For example, enemies don't need to collide with coins/gems/etc, but they do need to collide with the player.  
+So each entity description has a "collisionGroup" field to indicate what group(s) it is part of, as well as a "collideWith" field to indicate which collision groups the entity should collide with.  
+The following are the collision groups which can be used:
+```properties
+TriangleMeshes # 00
+Player # 01
+NonHostileEntities # 02
+HostileEntities # 03
+PlayerKicks # 04 (The player's feet while they are kicking)
+PlayerPunches # 05 (The player's hands while they are punching)
+Flyers # 11
+Swimmers # 12
+Sensors # 14 (Attack / Bump Sensors)
+Items # 15
+Terrain # 16
+Climbable # 31, Seems to be set on climbable models such as ladders and vines.
+# There are a ton more possible collision groups than the ones listed above, but most are unused.
+# Thus, they are free to be used for whatever kind of purpose the mod-creator likes.
+# To specify one of the unused collision groups, use the following:
+UnnamedGroupXX # Where XX is a number between 0 and 31 and is not one of the numbers listed above. For example: UnnamedGroup17
+```
 
 ### [Launchers]
 This section can be used to create/update projectile launchers.
@@ -252,7 +427,7 @@ scale=1.0, 1.0, 1.0
 [[[Script]]] # An optional tag to add scripts.
 [[[[Function]]]]
 cause=OnWaypoint ENTITY_ENTERS "FrogInst001"
-SendNumber ENTITY_VARIABLE 0 # Only handle the first time that the Frog enters the waypoint.
+SendNumber VARIABLE 0 # Only handle the first time that the Frog enters the waypoint.
 
 [[[[Function]]]] # Handle wedding waypoint trigger.
 cause=OnReceiveNumber EQUAL_TO 0

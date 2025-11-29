@@ -5,17 +5,21 @@ package net.highwayfrogs.editor.system;
  * Created by Kneesnap on 11/6/2018.
  */
 public class ByteArrayWrapper {
+    private final boolean allowGrowth;
     private byte[] array;
     private int length;
-    private int growthFactor;
 
-    public ByteArrayWrapper(int initialSize) {
-        this(initialSize, 0);
+    public ByteArrayWrapper() {
+        this(0, true);
     }
 
-    public ByteArrayWrapper(int initialSize, int growthFactor) {
+    public ByteArrayWrapper(int initialSize) {
+        this(initialSize, false);
+    }
+
+    public ByteArrayWrapper(int initialSize, boolean allowGrowth) {
         this.array = new byte[initialSize];
-        this.growthFactor = growthFactor;
+        this.allowGrowth = allowGrowth;
     }
 
     /**
@@ -24,7 +28,7 @@ public class ByteArrayWrapper {
      * @return array
      */
     public byte[] toArray(byte[] copyArray, int destIndex) {
-        System.arraycopy(this.array, 0, copyArray, destIndex, Math.min(copyArray.length - destIndex, arraySize()));
+        System.arraycopy(this.array, 0, copyArray, destIndex, Math.min(copyArray.length - destIndex, this.array.length));
         return copyArray;
     }
 
@@ -45,14 +49,52 @@ public class ByteArrayWrapper {
     }
 
     /**
+     * Sets a byte value at an array index
+     * @param index the index into the array
+     * @param value the value to apply
+     */
+    public void set(int index, byte value) {
+        if (index < 0 || index >= this.length)
+            throw new IndexOutOfBoundsException("Array Length: " + this.length + ", Index: " + index);
+
+        this.array[index] = value;
+    }
+
+    /**
+     * Copies values from a byte array.
+     * @param source the source array to copy bytes from
+     * @param sourceOffset the offset into the source array to copy from
+     * @param amount the amount of bytes to copy
+     */
+    public void set(int index, byte[] source, int sourceOffset, int amount) {
+        if (amount == 0)
+            return;
+
+        ensureCapacity(amount);
+        System.arraycopy(source, sourceOffset, this.array, index, amount);
+        if (index + amount > this.length)
+            this.length = index + amount;
+    }
+
+    /**
      * Add a byte to this array.
      * @param value The value to add.
      */
     public void add(byte value) {
-        if (this.growthFactor > 0 && this.length >= arraySize()) // We've reached the end of our array, it needs to expand.
-            resize(arraySize() + this.growthFactor);
-
+        ensureCapacity(1);
         this.array[this.length++] = value;
+    }
+
+    private void ensureCapacity(int amount) {
+        if (!this.allowGrowth)
+            return;
+
+        int newSize = this.array.length;
+        while (this.length + amount > newSize)
+            newSize = newSize > 0 ? newSize * 2 : 1;
+
+        if (newSize > this.array.length)
+            resize(newSize);
     }
 
     /**
@@ -60,16 +102,6 @@ public class ByteArrayWrapper {
      */
     public void clear() {
         this.length = 0;
-    }
-
-    /**
-     * Clear the contents of this array and expand it.
-     * @param newSize The size to expand to. (Silently does nothing if it's larger than the current size)
-     */
-    public void clearExpand(int newSize) {
-        clear();
-        if (newSize > arraySize())
-            resize(newSize);
     }
 
     /**
@@ -87,13 +119,5 @@ public class ByteArrayWrapper {
      */
     public int size() {
         return this.length;
-    }
-
-    /**
-     * Gets the size of the underlying array.
-     * @return arraySize
-     */
-    public int arraySize() {
-        return this.array.length;
     }
 }

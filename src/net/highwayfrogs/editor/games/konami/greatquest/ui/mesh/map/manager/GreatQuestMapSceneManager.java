@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map.manager;
 
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Slider;
+import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
@@ -153,12 +154,20 @@ public class GreatQuestMapSceneManager extends GreatQuestMapListManager<kcOctLea
         float size = leaf.getCubeDimensions(tree);
         Vector3f position = leaf.getWorldCenterPosition(tree, this.tempPosition);
         Box newPreview = new Box(size, size, size);
-        newPreview.setMouseTransparent(true);
         newPreview.setMaterial(leaf.isEnabled() ? BOUNDING_NORMAL_MATERIAL : BOUNDING_FLAGGED_MATERIAL);
         Scene3DUtils.setNodePosition(newPreview, position.getX(), position.getY(), position.getZ());
         newPreview.getTransforms().add(this.boxScale);
         getController().getMainLight().getScope().add(newPreview);
         this.previewDisplayList.add(newPreview);
+
+        newPreview.setMouseTransparent(false);
+        newPreview.setOnMouseClicked(event -> {
+            event.consume();
+            getValueSelectionBox().getSelectionModel().select(leaf);
+            if (getController().getInputManager().isKeyPressed(KeyCode.CONTROL))
+                getValueDisplaySetting().getSelectionModel().select(ListDisplayType.SELECTED);
+        });
+
         return newPreview;
     }
 

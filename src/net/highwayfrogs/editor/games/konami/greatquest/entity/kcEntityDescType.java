@@ -25,7 +25,7 @@ public enum kcEntityDescType {
     UNIQUE_ITEM(kcClassID.UNIQUE_ITEM, "CUniqueItemDesc", CUniqueItemDesc::new),
     ACTOR_BASE(kcClassID.ACTOR_BASE, "kcActorBaseDesc", kcActorBaseDesc::new),
     ACTOR(kcClassID.ACTOR, "kcActorDesc", kcActorDesc::new),
-    PARTICLE_EMITTER(kcClassID.PARTICLE_EMITTER, "kcParticleEmitterParam", kcParticleEmitterParam::new),
+    PARTICLE_EMITTER(kcClassID.PARTICLE_EMITTER, "kcParticleEmitterParam", kcParticleEmitterParam::new), // NOTE: This cannot be used in kcCResourceEntityInst, see kcCResourceEntityInst::Prepare() to see that it will not work.
     WAYPOINT(kcClassID.WAYPOINT, "kcWaypointDesc", kcWaypointDesc::new);
 
     @Getter private final kcClassID classId;

@@ -13,13 +13,15 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEnti
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormGrid;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.IFroggerFormEntry;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
+import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerUtils;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
 import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -201,9 +203,8 @@ public class FroggerMapFilePacketEntity extends FroggerMapFilePacket {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Entity Count", this.entities.size());
-        return propertyList;
     }
 
     /**
@@ -322,7 +323,7 @@ public class FroggerMapFilePacketEntity extends FroggerMapFilePacket {
             String warningMessage = warningBuilder.toString();
             getLogger().warning("Unable to fully validate the level WAD file.%n%s", warningMessage);
             if (showPopup)
-                FXUtils.makePopUp(warningMessage, AlertType.ERROR);
+                FXUtils.showPopup(AlertType.ERROR, "Found a problem with a WAD file.", warningMessage);
         }
 
         // Remove unused entries.
@@ -332,8 +333,22 @@ public class FroggerMapFilePacketEntity extends FroggerMapFilePacket {
                 continue;
 
             SCGameFile<?> file = testWadEntry.getFile();
+
+            // Test hardcoded files.
+            if (FroggerUtils.isHardcodedInGameCode(testWadEntry)) {
+                if (!(file instanceof MRModel) || ((MRModel) file).isDummy()) {
+                    String message = StringUtils.formatStringSafely("The file '%s' is missing from %s. This may cause the game to CRASH.", file.getFileDisplayName(), levelWad.getFileDisplayName());
+                    getLogger().warning(message);
+                    if (showPopup)
+                        FXUtils.showPopup(AlertType.ERROR, "Found a problem with a WAD file.", message);
+                }
+
+                continue; // Hardcoded files should not be dummied out.
+            }
+
             if (!(file instanceof MRModel) || ((MRModel) file).isDummy())
                 continue;
+
 
             levelWad.getLogger().info("Cleared file '%s' which went unused by '%s'.", file.getFileDisplayName(), map.getFileDisplayName());
             ((MRModel) file).setDummy();

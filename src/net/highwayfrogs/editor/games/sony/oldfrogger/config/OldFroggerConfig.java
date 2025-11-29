@@ -41,9 +41,9 @@ public class OldFroggerConfig extends SCGameConfig {
         String remapTableStr = config.getString("remapTable", null);
         if (remapTableStr != null) {
             String[] split = remapTableStr.split("@");
-            if (split.length == 2 && NumberUtils.isInteger(split[0]) && NumberUtils.isHexInteger(split[1])) {
+            if (split.length == 2 && NumberUtils.isInteger(split[0]) && NumberUtils.isPrefixedHexInteger(split[1])) {
                 this.remapTableCount = Integer.parseInt(split[0]);
-                this.remapTableAddress = NumberUtils.parseHexInteger(split[1]);
+                this.remapTableAddress = NumberUtils.parseIntegerAllowHex(split[1]);
             } else {
                 getLogger().warning("Invalid remapTable data specified '%s'.", remapTableStr);
             }
@@ -54,9 +54,9 @@ public class OldFroggerConfig extends SCGameConfig {
         String levelTableStr = config.getString("levelTable", null);
         if (levelTableStr != null) {
             String[] split = levelTableStr.split("@");
-            if (split.length == 2 && NumberUtils.isInteger(split[0]) && NumberUtils.isHexInteger(split[1])) {
+            if (split.length == 2 && NumberUtils.isInteger(split[0]) && NumberUtils.isPrefixedHexInteger(split[1])) {
                 this.levelTableCount = Integer.parseInt(split[0]);
-                this.levelTableAddress = NumberUtils.parseHexInteger(split[1]);
+                this.levelTableAddress = NumberUtils.parseIntegerAllowHex(split[1]);
             } else {
                 getLogger().warning("Invalid levelTable data specified '%s'", levelTableStr);
             }

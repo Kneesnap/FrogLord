@@ -2,16 +2,16 @@ package net.highwayfrogs.editor.games.renderware.chunks;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.*;
 import net.highwayfrogs.editor.games.renderware.struct.RwStruct;
 import net.highwayfrogs.editor.games.renderware.struct.RwStructType;
 import net.highwayfrogs.editor.games.renderware.struct.types.*;
 import net.highwayfrogs.editor.games.renderware.struct.types.RpTriangle.IRwGeometryMesh;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -172,14 +172,13 @@ public class RwGeometryChunk extends RwStreamChunk implements IRwGeometryMesh {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Format Flags", NumberUtils.toHexString(this.formatFlags));
         propertyList.add("Vertex Count", this.vertexCount);
         propertyList.add("Triangle Count", this.triangles.size());
         propertyList.add("Morph Target Set Count", this.morphTargets.size());
         propertyList.add("# of TexCoord sets", this.texCoordSets.size());
-        return propertyList;
     }
 
     /**
@@ -278,13 +277,12 @@ public class RwGeometryChunk extends RwStreamChunk implements IRwGeometryMesh {
         }
 
         @Override
-        public PropertyList addToPropertyList(PropertyList propertyList) {
-            propertyList = super.addToPropertyList(propertyList);
+        public void addToPropertyList(PropertyListNode propertyList) {
+            super.addToPropertyList(propertyList);
             propertyList.add("Format Flags", NumberUtils.toHexString(this.formatFlags));
             propertyList.add("Triangle Count", this.triangleCount);
             propertyList.add("Vertex Count", this.vertexCount);
             propertyList.add("Morph Target Count", this.morphTargetCount);
-            return propertyList;
         }
 
         @Override
@@ -365,12 +363,11 @@ public class RwGeometryChunk extends RwStreamChunk implements IRwGeometryMesh {
         }
 
         @Override
-        public PropertyList addToPropertyList(PropertyList propertyList) {
-            propertyList = super.addToPropertyList(propertyList);
-            propertyList.add("Bounding Sphere", this.boundingSphere);
+        public void addToPropertyList(PropertyListNode propertyList) {
+            super.addToPropertyList(propertyList);
+            propertyList.addProperties("Bounding Sphere", this.boundingSphere);
             propertyList.add("Points Present", this.pointsPresent);
             propertyList.add("Normals Present", this.normalsPresent);
-            return propertyList;
         }
 
         @Override

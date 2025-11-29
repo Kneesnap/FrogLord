@@ -58,3 +58,4 @@ Yes! Pull requests are welcome.
  - yohoat (FrogLord Logo)
  - archᵗʰ (BW/M1 FrogLord Logos & Beast Wars game info help)
  - StarmanUltra (Frogger font recreation)
+ - [jPSXdec](https://github.com/m35/jpsxdec) (By Michael Sabin, used for image/video processing.)

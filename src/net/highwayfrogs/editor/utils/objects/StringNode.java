@@ -128,11 +128,69 @@ public class StringNode {
     }
 
     /**
+     * Gets the node value as a boolean, or return a default value if no value is present.
+     * @return boolValue
+     * @throws IllegalConfigSyntaxException Thrown if the node data is not a valid boolean.
+     */
+    public boolean getAsBoolean(boolean defaultValue) {
+        if (StringUtils.isNullOrWhiteSpace(this.value))
+            return defaultValue;
+
+        if ("true".equalsIgnoreCase(this.value)
+                || "yes".equalsIgnoreCase(this.value)
+                || "1".equalsIgnoreCase(this.value))
+            return true;
+
+        if ("false".equalsIgnoreCase(this.value)
+                || "no".equalsIgnoreCase(this.value)
+                || "0".equalsIgnoreCase(this.value))
+            return false;
+
+        throw new IllegalConfigSyntaxException("Don't know how to interpret '" + this.value + "' as a boolean." + getExtraDebugErrorInfo());
+    }
+
+    /**
      * Sets the node value to a boolean.
      * @param newValue The new value.
      */
     public void setAsBoolean(boolean newValue) {
         this.value = newValue ? "true" : "false";
+        this.surroundByQuotes = false;
+    }
+
+    /**
+     * Gets the node value as a short.
+     * @return shortValue
+     * @throws IllegalConfigSyntaxException Thrown if the value is not formatted as either a short or a hex short.
+     */
+    public short getAsShort() {
+        int value = getAsInteger();
+        if (value < Short.MIN_VALUE || value > 0xFFFF)
+            throw new IllegalConfigSyntaxException("Value '" + this.value + "' cannot be represented as a 16-bit short number." + getExtraDebugErrorInfo());
+
+        return (short) value;
+    }
+
+    /**
+     * Gets the node value as a short.
+     * @param fallback the number to return if there is no value.
+     * @return shortValue
+     * @throws IllegalConfigSyntaxException Thrown if the value is not formatted as either a short or a hex short.
+     */
+    public short getAsShort(short fallback) {
+        int value = getAsInteger(fallback);
+        if (value < Short.MIN_VALUE || value > 0xFFFF)
+            throw new IllegalConfigSyntaxException("Value '" + this.value + "' cannot be represented as a 16-bit short number." + getExtraDebugErrorInfo());
+
+        return (short) value;
+    }
+
+    /**
+     * Sets the node value to a short.
+     * @param newValue The new value.
+     */
+    public void setAsShort(short newValue) {
+        this.value = Short.toString(newValue);
         this.surroundByQuotes = false;
     }
 
@@ -144,7 +202,7 @@ public class StringNode {
     public int getAsInteger() {
         if (!StringUtils.isNullOrWhiteSpace(this.value)) {
             try {
-                return NumberUtils.isHexInteger(this.value) ? NumberUtils.parseHexInteger(this.value) : Integer.parseInt(this.value);
+                return NumberUtils.parseIntegerAllowHex(this.value);
             } catch (NumberFormatException nfe) {
                 throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid integer." + getExtraDebugErrorInfo(), nfe);
             }
@@ -162,7 +220,7 @@ public class StringNode {
     public int getAsInteger(int fallback) {
         if (!StringUtils.isNullOrWhiteSpace(this.value)) {
             try {
-                return NumberUtils.isHexInteger(this.value) ? NumberUtils.parseHexInteger(this.value) : Integer.parseInt(this.value);
+                return NumberUtils.parseIntegerAllowHex(this.value);
             } catch (NumberFormatException nfe) {
                 throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid integer." + getExtraDebugErrorInfo(), nfe);
             }
@@ -188,7 +246,7 @@ public class StringNode {
     public int getAsUnsignedInteger() {
         if (!StringUtils.isNullOrWhiteSpace(this.value)) {
             try {
-                return NumberUtils.isHexInteger(this.value) ? NumberUtils.parseHexInteger(this.value) : (int) Long.parseLong(this.value);
+                return NumberUtils.isPrefixedHexInteger(this.value) ? NumberUtils.parseIntegerAllowHex(this.value) : (int) Long.parseLong(this.value);
             } catch (NumberFormatException nfe) {
                 throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid integer.", nfe);
             }
@@ -206,7 +264,7 @@ public class StringNode {
     public int getAsUnsignedInteger(int fallback) {
         if (!StringUtils.isNullOrWhiteSpace(this.value)) {
             try {
-                return NumberUtils.isHexInteger(this.value) ? NumberUtils.parseHexInteger(this.value) : (int) Long.parseLong(this.value);
+                return NumberUtils.isPrefixedHexInteger(this.value) ? NumberUtils.parseIntegerAllowHex(this.value) : (int) Long.parseLong(this.value);
             } catch (NumberFormatException nfe) {
                 throw new IllegalConfigSyntaxException("Value '" + this.value + "' is not a valid integer." + getExtraDebugErrorInfo(), nfe);
             }
@@ -327,9 +385,13 @@ public class StringNode {
         }
 
         try {
-            return Enum.valueOf(enumClass, this.value);
+            return Enum.valueOf(enumClass, this.value.toUpperCase());
         } catch (Exception e) {
-            throw new IllegalConfigSyntaxException("The value '" + this.value + "' could not be interpreted as an enum value from " + enumClass.getSimpleName() + "." + getExtraDebugErrorInfo(), e);
+            try {
+                return Enum.valueOf(enumClass, this.value);
+            } catch (Exception e2) {
+                throw new IllegalConfigSyntaxException("The value '" + this.value + "' could not be interpreted as an enum value from " + enumClass.getSimpleName() + "." + getExtraDebugErrorInfo(), e2);
+            }
         }
     }
 
@@ -341,7 +403,7 @@ public class StringNode {
     public <TEnum extends Enum<TEnum>> TEnum getAsEnumOrError(Class<TEnum> enumClass) {
         TEnum value = getAsEnum(enumClass);
         if (value == null)
-            throw new IllegalConfigSyntaxException("The value '" + this.value + "' could not be interpretted as an enum value from " + enumClass.getSimpleName() + "." + getExtraDebugErrorInfo());
+            throw new IllegalConfigSyntaxException("The value '" + this.value + "' could not be interpreted as an enum value from " + enumClass.getSimpleName() + "." + getExtraDebugErrorInfo());
 
         return value;
     }
@@ -392,7 +454,7 @@ public class StringNode {
      * @param input the string to parse
      */
     public void parseStringLiteral(String input) {
-        parseStringLiteral(new SequentialStringReader(input), new StringBuilder(), true);
+        parseStringLiteral(new SequentialStringReader(input), new StringBuilder(), true, false);
     }
 
     /**
@@ -407,8 +469,9 @@ public class StringNode {
      * @param reader the reader to read from
      * @param result the result buffer to store temporary stuff within
      * @param includeWhitespace if whitespace should be included
+     * @param treatCommaAsEndOfValue if a comma outside a quoted string should be treated as the end of the value
      */
-    public void parseStringLiteral(SequentialStringReader reader, StringBuilder result, boolean includeWhitespace) {
+    public void parseStringLiteral(SequentialStringReader reader, StringBuilder result, boolean includeWhitespace, boolean treatCommaAsEndOfValue) {
         result.setLength(0);
 
         boolean isEscape = false;
@@ -449,7 +512,7 @@ public class StringNode {
             } else if (includeWhitespace && Character.isWhitespace(lastChar) && tempChar == '-' && reader.hasNext() && reader.peek() == '-') {
                 reader.setIndex(reader.getIndex() - 1);
                 break;
-            } else if (Character.isWhitespace(tempChar)) {
+            } else if (Character.isWhitespace(tempChar) || (treatCommaAsEndOfValue && tempChar == ',' && result.length() > 0)) {
                 if (result.length() > 0) // If there's whitespace and this is at the start, just skip it.
                     break;
             } else {

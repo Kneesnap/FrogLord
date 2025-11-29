@@ -10,15 +10,18 @@ import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedF
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntity3DDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.script.action.kcActionID;
+import net.highwayfrogs.editor.games.konami.greatquest.script.cause.kcScriptCause;
 import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffectCamera.kcCameraEffect;
 import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffectEntity.kcEntityEffect;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcInterimScriptEffect;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcActionExecutor;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript.kcScriptFunction;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptEffectType;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 import net.highwayfrogs.editor.utils.objects.StringNode;
@@ -34,6 +37,7 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
     private final GreatQuestHash<kcCResourceEntityInst> targetEntityRef;
 
     public static final String ARGUMENT_ENTITY_RUNNER = "AsEntity";
+    public static final String ARGUMENT_EXTERNAL_ENTITY = "ExternalEntity";
 
     public kcScriptEffect(@NonNull kcScriptFunction parentFunction, kcScriptEffectType effectType) {
         super(parentFunction.getGameInstance());
@@ -46,6 +50,24 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
     }
 
     /**
+     * Gets the target entity, resolving it if the current instance is out of date.
+     * @return targetEntity
+     */
+    public kcCResourceEntityInst getTargetEntity(boolean resolveIfMissing) {
+        kcCResourceEntityInst entity = this.targetEntityRef.getResource();
+        if (entity != null)
+            return entity;
+
+        if (resolveIfMissing) {
+            GreatQuestChunkedFile chunkedFile = this.parentFunction.getChunkedFile();
+            if (GreatQuestUtils.resolveLevelResourceHash(chunkedFile.getLogger(), kcCResourceEntityInst.class, chunkedFile, this, this.targetEntityRef, this.targetEntityRef.getHashNumber(), false))
+                return this.targetEntityRef.getResource();
+        }
+
+        return null;
+    }
+
+    /**
      * Gets the chunked file which contains the script tree containing this script effect.
      */
     public GreatQuestChunkedFile getChunkedFile() {
@@ -54,9 +76,9 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
 
     @Override
     public String getName() {
-        kcCResourceEntityInst entityInst = getTargetEntityRef().getResource();
+        kcCResourceEntityInst entityInst = getTargetEntity(false);
         if (entityInst == null)
-            entityInst = getParentFunction().getScript().getEntity();
+            entityInst = this.parentFunction.getScript().getEntity();
 
         return entityInst != null ? entityInst.getName() : null;
     }
@@ -90,37 +112,48 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
 
     /**
      * Loads the action arguments from the arguments provided.
+     * @param logger the logger to write information and warnings to
      * @param arguments the arguments to load from
      */
-    protected abstract void loadArguments(OptionalArguments arguments, int lineNumber, String fileName);
+    protected abstract void loadArguments(ILogger logger, OptionalArguments arguments, int lineNumber, String fileName);
 
     /**
      * Save the arguments of the action to the object.
+     * @param logger the logger to write information to
      * @param arguments The object to store the action arguments within
-     * @param settings settings to use to save the arguments as strings
+     * @param settings  settings to use to save the arguments as strings
      */
-    protected abstract void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings);
+    protected abstract void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings);
 
     /**
      * Gets the comment (if any) which should be included at the end of the effect line.
      * @return eolComment
      */
-    public abstract String getEndOfLineComment();
+    public String getEndOfLineComment() {
+        GreatQuestChunkedFile chunkedFile = getChunkedFile();
+        if (getTargetEntity(false) == null && !(chunkedFile.getResourceByHash(this.targetEntityRef.getHashNumber()) instanceof kcCResourceEntityInst))
+            return "The target entity was not found.";
+
+        return null;
+    }
 
     /**
      * Resolves the target entity hash.
      * @param hash the hash of the target entity
      */
-    public boolean setTargetEntityHash(int hash) {
+    public boolean setTargetEntityHash(ILogger logger, int hash) {
         GreatQuestChunkedFile chunkedFile = getParentFunction().getScript().getScriptList().getParentFile();
-        return GreatQuestUtils.resolveResourceHash(kcCResourceEntityInst.class, chunkedFile, this, this.targetEntityRef, hash, false);
+        return GreatQuestUtils.resolveLevelResourceHash(logger, kcCResourceEntityInst.class, chunkedFile, this, this.targetEntityRef, hash, false);
     }
 
     /**
      * Loads the action arguments from the arguments provided.
      * @param arguments the arguments to load from
+     * @param lineNumber the line number which the line of text came from
+     * @param fileName the name of the file which the script effect is parsed from
+     * @param sharedEffect true iff the effect is applied to more than one entity
      */
-    public final void loadEffect(ILogger logger, OptionalArguments arguments, int lineNumber, String fileName) {
+    public final void loadEffect(ILogger logger, OptionalArguments arguments, int lineNumber, String fileName, boolean sharedEffect) {
         // Apply the target entity override before loading the arguments to ensure that the action can access the entity while loading. (Happens for kcActionSetSequence, and anything else which wants to get the actor desc)
         StringNode overrideTargetEntity = arguments.use(ARGUMENT_ENTITY_RUNNER);
 
@@ -128,17 +161,17 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
         boolean resolvedOverrideEntity = false;
         kcCResourceEntityInst scriptOwner = getParentFunction().getScript().getEntity();
         this.targetEntityRef.setResource(scriptOwner, false);
-        if (overrideTargetEntity != null && setTargetEntityHash(GreatQuestUtils.getAsHash(overrideTargetEntity, 0, this.targetEntityRef)))
+        if (overrideTargetEntity != null && GreatQuestUtils.resolveLevelResource(logger, overrideTargetEntity, kcCResourceEntityInst.class, getChunkedFile(), this, this.targetEntityRef, false))
             resolvedOverrideEntity = true;
 
-        loadArguments(arguments, lineNumber, fileName);
+        loadArguments(logger, arguments, lineNumber, fileName);
 
         // Warn about target entity.
-        if (resolvedOverrideEntity && scriptOwner == this.targetEntityRef.getResource()) {
+        if (!sharedEffect && resolvedOverrideEntity && scriptOwner == this.targetEntityRef.getResource()) {
             kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
             OptionalArguments savedEffect = saveEffect(settings);
             kcScriptDisplaySettings.applyGqsSyntaxHashDisplay(savedEffect.getOrCreate(ARGUMENT_ENTITY_RUNNER), settings, this.targetEntityRef);
-            logger.warning("The effect '%s' should not include --%s because it already runs as that entity.", savedEffect, ARGUMENT_ENTITY_RUNNER);
+            logger.warning("The effect '%s'%s should not include --%s because it already runs as that entity.", savedEffect, getCodeLocation(), ARGUMENT_ENTITY_RUNNER);
         }
 
         // Print warnings.
@@ -146,20 +179,34 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
     }
 
     /**
+     * Gets the location where the effect can be found.
+     */
+    protected String getCodeLocation() {
+        kcScriptCause cause = this.parentFunction != null ? this.parentFunction.getCause() : null;
+        if (cause != null && (cause.getUserLineNumber() > 0 || !StringUtils.isNullOrWhiteSpace(cause.getUserImportSource())))
+            return kcScript.getCodeLocation(cause.getUserLineNumber(), cause.getUserImportSource(), false);
+
+        return "";
+    }
+
+    /**
      * Print warnings on the load of the effect.
      * @param arguments the arguments after the load occurred.
      */
     protected void printLoadWarnings(OptionalArguments arguments, ILogger logger) {
+        kcCResourceEntityInst targetEntity = getTargetEntity(false);
+        boolean externalEntityTarget = arguments.useFlag(ARGUMENT_EXTERNAL_ENTITY);
         arguments.warnAboutUnusedArguments(logger);
-        if (getTargetEntityRef().getResource() == null) {
+        if (targetEntity == null) {
             kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
-            logger.warning("The effect '%s' targets an entity which was not found.", saveEffect(settings));
-        } else if (getTargetEntityRef().getResource().getInstance() == null || getTargetEntityRef().getResource().getInstance().getDescription() == null) {
+            if (!externalEntityTarget)
+                logger.warning("The effect '%s'%s targets an entity which was not found.", saveEffect(settings), getCodeLocation());
+        } else if (targetEntity.getInstance() == null || targetEntity.getInstance().getDescription() == null) {
             kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
-            logger.warning("The effect '%s' targets an entity (%s) who did not have an entity description!", saveEffect(settings), getTargetEntityRef().getAsString());
+            logger.warning("The effect '%s'%s targets an entity (%s) who did not have an entity description!", saveEffect(settings), getCodeLocation(), this.targetEntityRef.getAsString());
         } else if (!isActionApplicableToTarget()) {
             kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
-            logger.warning("The effect '%s' targets an entity (%s) which is unable to execute the effect.", saveEffect(settings), this.targetEntityRef.getAsGqsString(settings));
+            logger.warning("The effect '%s'%s targets an entity (%s) which is unable to execute the effect.", saveEffect(settings), getCodeLocation(), this.targetEntityRef.getAsGqsString(settings));
         }
     }
 
@@ -169,7 +216,7 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
      */
     public final OptionalArguments saveEffect(kcScriptDisplaySettings settings) {
         OptionalArguments optionalArguments = new OptionalArguments();
-        this.saveEffect(optionalArguments, settings);
+        this.saveEffect(settings.getLogger(), optionalArguments, settings);
         return optionalArguments;
     }
 
@@ -178,13 +225,15 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
      * @param arguments The object to store the effect statement within
      * @param settings settings to use to save the arguments as strings
      */
-    public final void saveEffect(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    public final void saveEffect(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
+        if (logger == null)
+            throw new NullPointerException("logger");
         if (arguments == null)
             throw new NullPointerException("arguments");
 
         arguments.clear();
         arguments.createNext().setAsString(getEffectCommandName(), false);
-        saveArguments(arguments, settings);
+        saveArguments(logger, arguments, settings);
 
         // Include the target entity hash if it's not implied.
         if (this.targetEntityRef.getResource() == null || getParentFunction().getScript().getEntity() != this.targetEntityRef.getResource())
@@ -220,10 +269,15 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
     /**
      * Attempts to parse a script effect from a line of text in the FrogLord TGQ script syntax.
      * Throws an exception if it cannot be parsed.
+     * @param logger the logger to write any information to
+     * @param function the function to parse the script effect for
      * @param line The line of text to parse
+     * @param lineNumber the line number which the line of text came from
+     * @param fileName the name of the file which the script effect is parsed from
+     * @param sharedScript true iff the script is applied to more than one entity.
      * @return the parsed script effect
      */
-    public static kcScriptEffect parseScriptEffect(ILogger logger, kcScriptFunction function, String line, int lineNumber, String fileName) {
+    public static kcScriptEffect parseScriptEffect(ILogger logger, kcScriptFunction function, String line, int lineNumber, String fileName, boolean sharedScript) {
         if (function == null)
             throw new NullPointerException("function");
         if (line == null)
@@ -238,7 +292,7 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
             if (newEffect == null)
                 throw new RuntimeException("The command name '" + commandName + "' is incorrect, make sure it has been spelled correctly.");
 
-            newEffect.loadEffect(logger, arguments, lineNumber, fileName);
+            newEffect.loadEffect(logger, arguments, lineNumber, fileName, sharedScript);
             return newEffect;
         } catch (Throwable th) {
             throw new RuntimeException("Failed to parse '" + line + "' in '" + fileName + "' on line " + lineNumber + " as a script effect.", th);

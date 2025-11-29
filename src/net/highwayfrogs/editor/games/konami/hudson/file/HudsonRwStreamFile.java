@@ -7,7 +7,7 @@ import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.games.renderware.ui.RenderWareStreamEditorUIController;
 import net.highwayfrogs.editor.games.shared.basic.file.definition.IGameFileDefinition;
 import net.highwayfrogs.editor.gui.GameUIController;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -40,14 +40,12 @@ public class HudsonRwStreamFile extends HudsonGameFile {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Chunks", this.rwStreamFile.getChunks().size());
 
         for (int i = 0; i < this.rwStreamFile.getChunks().size(); i++)
             propertyList.add("Chunk " + i, this.rwStreamFile.getChunks().get(i).getChunkDescriptor());
-
-        return propertyList;
     }
 
     @Override

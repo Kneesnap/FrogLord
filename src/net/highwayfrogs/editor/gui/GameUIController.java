@@ -68,6 +68,7 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
             return; // Already registered.
 
         this.childControllers.add(childController);
+        childController.onAddToParent();
         if (this.sceneActive)
             childController.onSceneAdd(getScene());
     }
@@ -80,6 +81,7 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
         if (!this.childControllers.remove(childController))
             return false; // Wasn't.
 
+        childController.onRemoveFromParent();
         if (this.sceneActive)
             childController.onSceneRemove(getScene());
 
@@ -227,9 +229,25 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
         if (this.sceneActive)
             throw new IllegalStateException("Called onSceneAdd() while there was already a scene active.");
 
-        this.sceneActive = true;
         for (int i = 0; i < this.childControllers.size(); i++)
             this.childControllers.get(i).onSceneAdd(newScene);
+
+        // this must happen AFTER the scene adding occurs. This is because onSceneAdd() may end up calling addController(), and if we allow sceneActive here, onSceneAdd will run twice.
+        this.sceneActive = true;
+    }
+
+    /**
+     * Called when the node is added to a parent controller (or to a scene if there is no parent controller), regardless of a scene is active.
+     */
+    protected void onAddToParent() {
+        // Do nothing.
+    }
+
+    /**
+     * Called when the node is removed from a parent controller (or to a scene if there is no parent controller), regardless of if a scene is active.
+     */
+    protected void onRemoveFromParent() {
+        // Do nothing.
     }
 
     /**
@@ -315,6 +333,7 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
         newStage.setResizable(false);
 
         try {
+            controller.onAddToParent();
             controller.onSceneAdd(newScene);
         } catch (Throwable th) {
             Utils.handleError(controller.getLogger(), th, true, "Failed to setup the UI controller %s for the scene.", Utils.getSimpleName(controller));
@@ -335,6 +354,7 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
             // After the window is shut, run the shutdown hook.
             try {
                 controller.onSceneRemove(newScene);
+                controller.onRemoveFromParent();
             } catch (Throwable th) {
                 Utils.handleError(controller.getLogger(), th, true, "Failed to cleanup the UI controller %s for the scene.", Utils.getSimpleName(controller));
             }
@@ -344,7 +364,8 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
             // When the window is hidden (with the possibility of opening later), run the removal hook.
             newStage.setOnHiding(event -> {
                 try {
-                    controller.onSceneRemove(newScene);
+                    if (controller.getScene() == newStage.getScene())  // If the scene differs (such as for a mesh viewer), the main controller isn't actually getting added.
+                        controller.onSceneRemove(newStage.getScene());
                 } catch (Throwable th) {
                     Utils.handleError(controller.getLogger(), th, true, "Failed to cleanup the UI controller %s for the scene.", Utils.getSimpleName(controller));
                 }
@@ -353,7 +374,8 @@ public abstract class GameUIController<TGameInstance extends GameInstance> exten
             // If the window is re-opened after it is show, run the scene add hook again.
             newStage.setOnShowing(event -> {
                 try {
-                    controller.onSceneAdd(newScene);
+                    if (controller.getScene() == newStage.getScene()) // If the scene differs (such as for a mesh viewer), the main controller isn't actually getting added.
+                        controller.onSceneAdd(newStage.getScene());
                 } catch (Throwable th) {
                     Utils.handleError(controller.getLogger(), th, true, "Failed to setup the UI controller %s for the scene.", Utils.getSimpleName(controller));
                 }

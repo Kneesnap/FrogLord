@@ -319,6 +319,26 @@ public class ImageWorkHorse {
     }
 
     /**
+     * Gets the short array containing raw pixel data for the image.
+     * This can be edited directly, and yields the most performant editing results.
+     * @param awtImage the image to edit directly
+     * @return integerArray
+     */
+    public static short[] getPixelShortArray(BufferedImage awtImage) {
+        if (awtImage == null)
+            return null;
+
+        DataBuffer buffer = awtImage.getRaster().getDataBuffer();
+        if (buffer instanceof DataBufferShort) {
+            return ((DataBufferShort) buffer).getData();
+        } else if (buffer instanceof DataBufferUShort) {
+            return ((DataBufferUShort) buffer).getData();
+        } else {
+            throw new IllegalArgumentException("The provided image is of type " + awtImage.getType() + ", and its backing buffer is " + Utils.getSimpleName(buffer) + ", not DataBufferShort.");
+        }
+    }
+
+    /**
      * Gets the integer array containing raw pixel data for the image. It is only guaranteed to be valid for reading.
      * @param awtImage the image to edit directly
      * @return integerArray

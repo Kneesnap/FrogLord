@@ -14,13 +14,14 @@ import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerU
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.List;
 import java.util.logging.Level;
@@ -122,7 +123,7 @@ public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
         // Firstly, generate map groups.
         // This ensures both group & polygon data is valid/up-to-date, and won't crash the game.
         // The polygon packet relies on this running before its saveBodyFirstPass() is called.
-        generateMapGroups(ProblemResponse.CREATE_POPUP, false);
+        generateMapGroups(null, ProblemResponse.CREATE_POPUP, false);
 
         // Warn if about to save a map which will have rendering issues in-game.
         if (this.groupZCount > MAX_SAFE_GROUP_Z_COUNT)
@@ -181,7 +182,7 @@ public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
         newGroupChunk.groupZCount = this.groupZCount;
         newGroupChunk.groupXSize = this.groupXSize;
         newGroupChunk.groupZSize = this.groupZSize;
-        newGroupChunk.generateMapGroups(ProblemResponse.THROW_EXCEPTION, false);
+        newGroupChunk.generateMapGroups(null, ProblemResponse.THROW_EXCEPTION, false);
     }
 
     /**
@@ -203,10 +204,9 @@ public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Map Group Dimensions", this.groupXCount + " x " + this.groupZCount + " (" + getGroupCount() + " groups)");
         propertyList.add("Map Group Square Size", getGroupXSizeAsFloat() + " x " + getGroupZSizeAsFloat());
-        return propertyList;
     }
 
     /**
@@ -426,9 +426,11 @@ public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
     /**
      * Generate the map groups to save for a particular level.
      */
-    public FroggerMapGroup[][] generateMapGroups(ProblemResponse response, boolean resetGroupBoundaries) {
+    public FroggerMapGroup[][] generateMapGroups(ILogger logger, ProblemResponse response, boolean resetGroupBoundaries) {
         if (!useFrogLordGroupAlgorithm())
             return this.mapGroups; // Too early.
+        if (logger == null)
+            logger = getLogger();
 
         this.invisibleMapGroup.clear();
 
@@ -465,7 +467,7 @@ public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
 
         // Seen in PSX Build 02 (SKY5.MAP).
         if (failureCount > 0)
-            Utils.handleProblem(response, getLogger(), Level.WARNING, "Failed to add %d polygon(s) to the map render groups. (There are too many polygons in the area!)", failureCount);
+            Utils.handleProblem(response, logger, Level.WARNING, "Failed to add %d polygon(s) to the map render groups. (There are too many polygons in the area!)", failureCount);
 
         return this.mapGroups;
     }
@@ -543,7 +545,7 @@ public class FroggerMapFilePacketGroup extends FroggerMapFilePacket {
 
     private void handleGroupChange(FroggerUIMapGeneralManager manager) {
         // Update the map groups, but also ensure the value just supplied by the user isn't blatantly going to crash the game.
-        generateMapGroups(ProblemResponse.CREATE_POPUP, false);
+        generateMapGroups(manager != null ? manager.getLogger() : null, ProblemResponse.CREATE_POPUP, false);
         if (manager != null) {
             manager.updateMapGroupUI();
             manager.updateMapGroup3DView();

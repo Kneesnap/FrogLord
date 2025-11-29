@@ -229,8 +229,10 @@ public class SCImageTableGenerator {
                 return (this.symbol != null && (this.symbol.getType() == SCBssSymbolType.PSYQ || this.symbol.getType() == SCBssSymbolType.GAME_LIB))
                         || (nextSymbol.getSymbol() != null && nextSymbol.getSymbol().getType() == SCBssSymbolType.GAME);
             } else if (instance.isPC()) {
+                // TODO: If this occurs, I believe it can mean there's an image with a duplicated name.
                 if (this.image == null || nextImage == null)
-                    throw new IllegalStateException("The PC versions were not expected to have non-image symbols in the image bss chunk!");
+                    return false; // TODO: !!!
+///                    throw new IllegalStateException("The PC versions were not expected to have non-image symbols in the image bss chunk! [" + this.name + ", " + this.textLine + ", " + this.hash + "] -> ID: " + (this.image != null ? this.image.getTextureId() : -1));
 
                 return nextImage.getTextureId() > this.image.getTextureId();
             } else {

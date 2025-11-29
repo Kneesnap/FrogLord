@@ -215,15 +215,21 @@ public class MWDFile extends SCSharedGameData {
      */
     @SuppressWarnings("unchecked")
     public <T extends SCGameFile<?>> T replaceFile(String importedFileName, byte[] fileBytes, MWIResourceEntry entry, SCGameFile<?> oldFile, boolean updateUI) {
-        T newFile;
+        if (entry == null)
+            throw new NullPointerException("srcEntry");
+        if (oldFile == null)
+            throw new NullPointerException("oldFile");
 
+        // Create the new file object which will replace the old one.
+        T newFile;
         if (oldFile instanceof MRModel) {
             MRModel oldModel = (MRModel) oldFile;
             MRModel newModel = new MRModel(getGameInstance(), oldModel.getCompleteCounterpart());
             newModel.setVloFile(oldModel.getVloFile());
+            newModel.setRawFileData(fileBytes);
             newFile = (T) newModel;
         } else {
-            newFile = this.loadFile(fileBytes, entry);
+            newFile = this.createFile(fileBytes, entry);
         }
 
         // Replace file.
@@ -308,23 +314,28 @@ public class MWDFile extends SCSharedGameData {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    private <T extends SCGameFile<?>> T createFile(byte[] fileBytes, MWIResourceEntry entry) {
+        // Turn the byte data into the appropriate game-file.
+        SCGameFile<?> file = getGameInstance().createFile(entry, fileBytes);
+        if (file == null)
+            file = new DummyFile(getGameInstance(), fileBytes.length);
+
+        file.setRawFileData(fileBytes);
+        return (T) file;
+    }
+
     /**
      * Create a GameFile instance.
      * @param fileBytes The data to read
      * @param entry     The file entry being loaded.
      * @return loadedFile
      */
-    @SuppressWarnings("unchecked")
     public <T extends SCGameFile<?>> T loadFile(byte[] fileBytes, MWIResourceEntry entry) {
-        // Turn the byte data into the appropriate game-file.
-        SCGameFile<?> file = getGameInstance().createFile(entry, fileBytes);
-        if (file == null)
-            file = new DummyFile(getGameInstance(), fileBytes.length);
-
+        T file = createFile(fileBytes, entry);
         getGameInstance().getFileObjectsByFileEntries().put(entry, file);
         file.setFileDefinition(entry);
-        file.setRawFileData(fileBytes);
-        return (T) file;
+        return file;
     }
 
     @Override

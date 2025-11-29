@@ -1,0 +1,107 @@
+package net.highwayfrogs.editor.games.konami.greatquest.chunks;
+
+import javafx.scene.Node;
+import javafx.scene.image.ImageView;
+import lombok.Getter;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestImageFile;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
+import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+
+/**
+ * Represents a texture reference.
+ * Created by Kneesnap on 8/25/2019.
+ */
+@Getter
+public class kcCResourceTexture extends kcCResource {
+    private String fullPath = "";
+
+    private static final int PATH_SIZE = 260;
+
+    public kcCResourceTexture(GreatQuestChunkedFile parentFile) {
+        super(parentFile, KCResourceID.TEXTURE);
+    }
+
+    @Override
+    public void load(DataReader reader) {
+        super.load(reader);
+        this.fullPath = reader.readNullTerminatedFixedSizeString(PATH_SIZE); // Don't read with the padding byte, as the padding bytes are only valid when the buffer is initially created, if the is shrunk (Such as shadow.img in 00.dat), after the null byte, the old bytes will still be there.
+
+        // Validate file name.
+        String fileName = GreatQuestUtils.getFileNameFromPath(this.fullPath);
+        if (!fileName.equalsIgnoreCase(getName()))
+            getLogger().warning("The file name was expected to match the resource name ('%s'), but it determined to actually be '%s' instead.", getName(), fileName);
+
+        // Apply the file name.
+        GreatQuestAssetBinFile mainArchive = getMainArchive();
+        if (mainArchive != null)
+            mainArchive.applyFilePath(this.fullPath, false);
+    }
+
+    @Override
+    public void save(DataWriter writer) {
+        super.save(writer);
+        writer.writeNullTerminatedFixedSizeString(this.fullPath, PATH_SIZE, GreatQuestInstance.PADDING_BYTE_CD);
+    }
+
+    @Override
+    public Node createFxPreview() {
+        GreatQuestImageFile imageFile = getReferencedImage();
+        if (imageFile == null)
+            return null;
+
+        return new ImageView(FXUtils.toFXImage(imageFile.getImage(), false));
+    }
+
+    @Override
+    public void addToPropertyList(PropertyListNode propertyList) {
+        propertyList.add("IMPORTANT", "This is not an actual image!\nInstead, this is a file path to an image.");
+        propertyList.add("", "");
+
+        // Add other stuff.
+        super.addToPropertyList(propertyList);
+        propertyList.addString("File Path", this.fullPath)
+                .setDataHandler(newPath -> setFullPath(newPath, true));
+    }
+
+    /**
+     * Gets the images referenced by this chunk.
+     */
+    public GreatQuestImageFile getReferencedImage() {
+        GreatQuestArchiveFile texRefFile = getGameInstance().getMainArchive().getFileByPath(getParentFile(), this.fullPath);
+        if (texRefFile != null && !(texRefFile instanceof GreatQuestImageFile)) {
+            getLogger().warning("%s pointed to path '%s', which yielded a(n) %s instead of an image???", Utils.getSimpleName(this), this.fullPath, Utils.getSimpleName(texRefFile));
+            return null;
+        }
+
+        return (GreatQuestImageFile) texRefFile;
+    }
+
+    /**
+     * Sets the file path of the asset referenced here.
+     * @param newPath the file path to apply
+     * @param throwIfPathCannotBeResolved if the file path cannot be resolved to a valid asset and this is true, an exception will be thrown.
+     */
+    public void setFullPath(String newPath, boolean throwIfPathCannotBeResolved) {
+        if (newPath == null)
+            throw new NullPointerException("newPath");
+        if (newPath.length() >= PATH_SIZE)
+            throw new IllegalArgumentException("The provided path is too large! (Provided: " + newPath.length() + ", Maximum: " + (PATH_SIZE - 1) + ")");
+
+        if (throwIfPathCannotBeResolved) {
+            GreatQuestArchiveFile texRefFile = getGameInstance().getMainArchive().getFileByPath(getParentFile(), newPath);
+            if (!(texRefFile instanceof GreatQuestImageFile))
+                throw new IllegalArgumentException("The file path could not be resolved to an image! (" + newPath + ")");
+        }
+
+        setName(GreatQuestUtils.getFileNameFromPath(newPath));
+        this.fullPath = newPath;
+        refreshUI();
+    }
+}

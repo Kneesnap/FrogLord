@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.konami.greatquest.file;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.ui.GreatQuestFileEditorUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.utils.StringUtils;
@@ -18,8 +19,8 @@ public class GreatQuestDummyArchiveFile extends GreatQuestArchiveFile {
     private byte[] data;
     private final int length;
 
-    public GreatQuestDummyArchiveFile(GreatQuestInstance instance, int length) {
-        super(instance);
+    public GreatQuestDummyArchiveFile(GreatQuestInstance instance, GreatQuestArchiveFileType fileType, int length) {
+        super(instance, fileType);
         this.length = length;
     }
 
@@ -56,6 +57,6 @@ public class GreatQuestDummyArchiveFile extends GreatQuestArchiveFile {
 
     @Override
     public GameUIController<?> makeEditorUI() {
-        return null;
+        return loadEditor(getGameInstance(), new GreatQuestFileEditorUIController<>(getGameInstance(), "Unsupported File", ImageResource.QUESTION_MARK_16), this);
     }
 }

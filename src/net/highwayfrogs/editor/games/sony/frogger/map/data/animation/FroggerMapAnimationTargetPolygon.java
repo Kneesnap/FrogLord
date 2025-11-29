@@ -69,7 +69,7 @@ public class FroggerMapAnimationTargetPolygon extends SCGameData<FroggerGameInst
     public void setPolygon(FroggerMapPolygon polygon) {
         if (this.polygon == polygon)
             return; // No change.
-        if (polygon.getMapFile() != null && this.animation.getMapFile() != null && polygon.getMapFile() != this.animation.getMapFile())
+        if (polygon != null && polygon.getMapFile() != null && this.animation.getMapFile() != null && polygon.getMapFile() != this.animation.getMapFile())
             throw new IllegalArgumentException("The provided polygon was for '" + polygon.getMapFile().getFileDisplayName() + "', so it cannot be added to an animation for '" + this.animation.getMapFile() + "'.");
 
         FroggerMapPolygon oldPolygon = this.polygon;

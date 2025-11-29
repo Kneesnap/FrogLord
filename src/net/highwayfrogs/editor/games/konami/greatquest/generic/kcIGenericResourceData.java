@@ -12,6 +12,14 @@ import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneri
  */
 public interface kcIGenericResourceData extends IGameData {
     /**
+     * Gets the name of the resource without throwing an NPE.
+     */
+    default String getResourceName() {
+        kcCResourceGeneric resource = getResource();
+        return resource != null ? resource.getName() : "<NULL RESOURCE>";
+    }
+
+    /**
      * Gets the generic resource which holds this data.
      * @return resource
      */

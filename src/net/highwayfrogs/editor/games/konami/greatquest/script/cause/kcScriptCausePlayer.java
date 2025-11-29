@@ -2,9 +2,11 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.cause;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceEntityInst;
+import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityFlag.kcEntityInstanceFlag;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInst;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScript;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptValidationData;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
 
@@ -33,12 +35,12 @@ public class kcScriptCausePlayer extends kcScriptCause {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         this.action = arguments.useNext().getAsEnumOrError(kcScriptCauseEntityAction.class);
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         arguments.createNext().setAsEnum(this.action);
     }
 
@@ -52,6 +54,17 @@ public class kcScriptCausePlayer extends kcScriptCause {
         if (!this.action.isImplementedForPlayer())
             printWarning(logger, "uses action " + this.action + ", which is not supported by the Player cause type.");
         this.action.getEntityGroup().logEntityTypeWarnings(logger, this, this.action.name());
+    }
+
+    @Override
+    public void printAdvancedWarnings(kcScriptValidationData data) {
+        super.printAdvancedWarnings(data);
+
+        // OnPlayer INTERACT -> Warn if PlayerCanInteract is never set.
+        if (this.action == kcScriptCauseEntityAction.INTERACT) {
+            if (!data.doesEntityEverHaveFlagSet(kcEntityInstanceFlag.INTERACT_ENABLED))
+                printWarning(data.getLogger(), data.getEntityName() + " never has the --" + kcEntityInstanceFlag.INTERACT_ENABLED.getDisplayName() + " flag set.");
+        }
     }
 
     @Override

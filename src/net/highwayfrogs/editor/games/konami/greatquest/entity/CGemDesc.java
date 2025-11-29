@@ -5,9 +5,11 @@ import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 /**
  * Represents the 'CGemDesc' struct.
@@ -38,14 +40,14 @@ public class CGemDesc extends CItemDesc {
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        super.writeMultiLineInfo(builder, padding);
-        builder.append(padding).append("Gem Type: ").append(this.type).append(Constants.NEWLINE);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
+        propertyList.addEnum("Gem Type", this.type, GemType.class, newValue -> this.type = newValue, false);
     }
 
     @Override
-    public void fromConfig(Config input) {
-        super.fromConfig(input);
+    public void fromConfig(ILogger logger, Config input) {
+        super.fromConfig(logger, input);
         this.type = input.getKeyValueNodeOrError("gemType").getAsEnum(GemType.class);
     }
 

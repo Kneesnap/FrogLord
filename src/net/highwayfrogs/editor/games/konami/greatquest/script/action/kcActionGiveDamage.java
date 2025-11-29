@@ -40,13 +40,13 @@ public class kcActionGiveDamage extends kcActionTemplate {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         getAttackStrength().setValue(arguments.useNext().getAsInteger());
         getWeaponMask().setValue(kcDamageType.getValueFromArguments(arguments));
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         arguments.createNext().setAsInteger(getAttackStrength().getAsInteger());
         kcDamageType.addFlags(getWeaponMask().getAsInteger(), arguments);
     }
@@ -68,7 +68,7 @@ public class kcActionGiveDamage extends kcActionTemplate {
                 int immuneMask = ((kcActorDesc) actorDesc).getHealth().getImmuneMask();
                 int overlappingMask = (weaponMask & immuneMask);
                 if (overlappingMask != 0)
-                    printWarning(logger, "the target (" + actorDesc.getResource().getName() + ") is immune to the damage flags: " + kcDamageType.getFlagsAsString(overlappingMask));
+                    printWarning(logger, "the target (" + actorDesc.getResourceName() + ") is immune to the damage flags: " + kcDamageType.getFlagsAsString(overlappingMask));
             }
         }
     }

@@ -85,7 +85,7 @@ public abstract class HudsonGameInstance extends BasicGameInstance {
         try {
             newGameFile.load(fileReader);
         } catch (Exception ex) {
-            Utils.handleError(getLogger(), ex, true, "Failed to load '%s'. (Reader Index: %s)", newGameFile.getDisplayName(), NumberUtils.toHexString(fileReader.getIndex()));
+            Utils.handleError(getLogger(), ex, false, "Failed to load '%s'. (Reader Index: %s)", newGameFile.getFullDisplayName(), NumberUtils.toHexString(fileReader.getIndex()));
 
             // Setup dummy instead.
             newGameFile = new HudsonDummyFile(fileDefinition);
@@ -112,7 +112,7 @@ public abstract class HudsonGameInstance extends BasicGameInstance {
      */
     public boolean saveGameFile(DataWriter writer, HudsonGameFile gameFile, HFSHeaderFileEntry fileEntry, ProgressBarComponent progressBar) {
         if (progressBar != null)
-            progressBar.setStatusMessage("Writing '" + gameFile.getDisplayName() + "'...");
+            progressBar.setStatusMessage("Writing '" + gameFile.getFullDisplayName() + "'...");
 
         ArrayReceiver fileByteArray = new ArrayReceiver();
         DataWriter fileWriter = new DataWriter(fileByteArray);
@@ -120,7 +120,7 @@ public abstract class HudsonGameInstance extends BasicGameInstance {
         try {
             gameFile.save(fileWriter);
         } catch (Throwable th) {
-            Utils.handleError(getLogger(), th, true, "Failed to save file '%s' to HFS.", gameFile.getDisplayName());
+            Utils.handleError(getLogger(), th, true, "Failed to save file '%s' to HFS.", gameFile.getFullDisplayName());
             return false;
         }
 

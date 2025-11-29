@@ -12,17 +12,22 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedRe
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityFlag.kcEntityInstanceFlag;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.IkcCResourceGenericTypeGroup;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcIGenericResourceData;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcSphere;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
+import net.highwayfrogs.editor.utils.objects.StringNode;
 
 import java.io.File;
 
@@ -48,18 +53,18 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
     //  - MonsterClass::Do_Guard (Seems to be unused code that wasn't optimized out. Not sure)
     //  - There are more, but I didn't think it was worth investigating.
     //  - But perhaps most interestingly, CCharacter::LookAtTarget. When the target entity's skeleton has 0 has no head target (eg: no bone named 'Bip01 Head' or 'Bip02 Head'), the target position will be the bounding sphere position.
-    private final kcSphere boundingSphere = new kcSphere(0, 0, 0, 1F); // Positioned relative to entity position. (Not on any bone)
+    private final kcSphere boundingSphere = DEFAULT_BOUNDING_SPHERE.clone(); // Positioned relative to entity position. (Not on any bone)
     private static final int PADDING_VALUES = 3;
     private static final int PADDING_VALUES_3D = 4;
     private static final int CLASS_ID = GreatQuestUtils.hash("kcCEntity3D");
     private static final String ENTITY_DESC_FILE_PATH_KEY = "entityDescCfgFilePath";
     private static final SavedFilePath ENTITY_DESC_EXPORT_PATH = new SavedFilePath(ENTITY_DESC_FILE_PATH_KEY, "Select the directory to export the entity description to", Config.DEFAULT_FILE_TYPE);
     private static final SavedFilePath ENTITY_DESC_IMPORT_PATH = new SavedFilePath(ENTITY_DESC_FILE_PATH_KEY, "Select the directory to import entity description from", Config.DEFAULT_FILE_TYPE);
+    private static final kcSphere DEFAULT_BOUNDING_SPHERE = new kcSphere(0, 0, 0, 1F);
 
     protected kcEntity3DDesc(@NonNull kcCResourceGeneric resource, @NonNull kcEntityDescType descriptionType) {
         super(resource);
         this.entityDescriptionType = descriptionType;
-        this.boundingSphere.setRadius(1F); // Default radius is 1.
     }
 
     @Override
@@ -88,9 +93,9 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        builder.append(padding).append("Flags: ").append(kcEntityInstanceFlag.getAsOptionalArguments(this.defaultFlags).getNamedArgumentsAsCommaSeparatedString()).append(Constants.NEWLINE);
-        this.boundingSphere.writePrefixedMultiLineInfo(builder, "Bounding Sphere", padding);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        propertyList.add("Flags", kcEntityInstanceFlag.getAsOptionalArguments(this.defaultFlags).getNamedArgumentsAsCommaSeparatedString());
+        this.boundingSphere.addToPropertyList(propertyList, "Bounding Sphere");
     }
 
     @Override
@@ -111,10 +116,10 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
         MenuItem exportEntityItem = new MenuItem("Export Entity Description");
         contextMenu.getItems().add(exportEntityItem);
         exportEntityItem.setOnAction(event -> {
-            File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), ENTITY_DESC_EXPORT_PATH, getResource().getName() + "." + Config.DEFAULT_EXTENSION, true);
+            File outputFile = FileUtils.askUserToSaveFile(getGameInstance(), ENTITY_DESC_EXPORT_PATH, getResourceName() + "." + Config.DEFAULT_EXTENSION, true);
             if (outputFile != null) {
                 toConfig().saveTextFile(outputFile);
-                getLogger().info("Saved '%s' as '%s'.", getResource().getName(), outputFile.getName());
+                getLogger().info("Saved '%s' as '%s'.", getResourceName(), outputFile.getName());
             }
         });
 
@@ -126,8 +131,8 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
                 return;
 
             Config entityCfg = Config.loadConfigFromTextFile(inputFile, false);
-            this.fromConfig(entityCfg);
-            getLogger().info("Loaded '%s' from '%s'.", getResource().getName(), inputFile.getName());
+            this.fromConfig(getLogger(), entityCfg);
+            getLogger().info("Loaded '%s' from '%s'.", getResourceName(), inputFile.getName());
         });
     }
 
@@ -139,20 +144,31 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
     public static final String CONFIG_KEY_DESC_TYPE = "type";
     private static final String CONFIG_KEY_FLAGS = "defaultFlags";
     private static final String CONFIG_KEY_BOUNDING_SPHERE_POS = "boundingSpherePos";
-    private static final String CONFIG_KEY_BOUNDING_SPHERE_RADIUS = "boundingSphereRadius";
+    protected static final String CONFIG_KEY_BOUNDING_SPHERE_RADIUS = "boundingSphereRadius";
 
     @Override
-    public void fromConfig(Config input) {
+    public void fromConfig(ILogger logger, Config input) {
         kcEntityDescType descType = input.getKeyValueNodeOrError(CONFIG_KEY_DESC_TYPE).getAsEnumOrError(kcEntityDescType.class);
         if (descType != getEntityDescriptionType())
-            throw new RuntimeException("The entity description reported itself as " + descType + ", which is incompatible with " + getEntityDescriptionType() + ".");
+            throw new RuntimeException("The entity description type was configured to be a(n) " + descType + ", but '" + getResourceName() + "' already exists as a(n) " + getEntityDescriptionType() + " description instead.");
 
         OptionalArguments arguments = OptionalArguments.parseCommaSeparatedNamedArguments(input.getKeyValueNodeOrError(CONFIG_KEY_FLAGS).getAsString());
         this.defaultFlags = kcEntityInstanceFlag.getValueFromArguments(arguments);
-        arguments.warnAboutUnusedArguments(getResource().getLogger());
+        arguments.warnAboutUnusedArguments(logger);
 
-        this.boundingSphere.getPosition().parse(input.getKeyValueNodeOrError(CONFIG_KEY_BOUNDING_SPHERE_POS).getAsString());
-        this.boundingSphere.setRadius(input.getKeyValueNodeOrError(CONFIG_KEY_BOUNDING_SPHERE_RADIUS).getAsFloat());
+        ConfigValueNode boundingSpherePosNode = input.getOptionalKeyValueNode(CONFIG_KEY_BOUNDING_SPHERE_POS);
+        if (boundingSpherePosNode != null) {
+            this.boundingSphere.getPosition().parse(boundingSpherePosNode.getAsString());
+        } else {
+            this.boundingSphere.getPosition().setXYZ(DEFAULT_BOUNDING_SPHERE.getPosition());
+        }
+
+        ConfigValueNode boundingSphereRadiusNode = input.getOptionalKeyValueNode(CONFIG_KEY_BOUNDING_SPHERE_RADIUS);
+        if (boundingSphereRadiusNode != null) {
+            this.boundingSphere.setRadius(boundingSphereRadiusNode.getAsFloat());
+        } else {
+            this.boundingSphere.setRadius(DEFAULT_BOUNDING_SPHERE.getRadius());
+        }
     }
 
     /**
@@ -162,9 +178,45 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
      * @param hashObj the hash object to apply the result to
      * @param <TResource> the type of resource to resolve
      */
-    protected <TResource extends kcHashedResource> void resolve(ConfigValueNode node, Class<TResource> resourceClass, GreatQuestHash<TResource> hashObj) {
-        int nodeHash = GreatQuestUtils.getAsHash(node, hashObj.isNullZero() ? 0 : -1, hashObj);
-        GreatQuestUtils.resolveResourceHash(resourceClass, getParentFile(), getResource(), hashObj, nodeHash, true);
+    protected <TResource extends kcHashedResource> void resolveResource(ILogger logger, StringNode node, Class<TResource> resourceClass, GreatQuestHash<TResource> hashObj) {
+        GreatQuestUtils.resolveLevelResource(logger, node, resourceClass, getParentFile(), getResource(), hashObj, true);
+    }
+
+    /**
+     * Resolves a resource from a config node.
+     * @param node the node to resolve the resource from
+     * @param resourceType the type of resource to resolve
+     * @param hashObj the hash object to apply the result to
+     */
+    protected void resolveResource(ILogger logger, StringNode node, IkcCResourceGenericTypeGroup resourceType, GreatQuestHash<kcCResourceGeneric> hashObj) {
+        GreatQuestUtils.resolveLevelResource(logger, node, resourceType, getParentFile(), getResource(), hashObj, true);
+    }
+
+    /**
+     * Resolves a resource from a config node.
+     * @param resourceClass the type of resource to resolve
+     * @param hashObj the hash object to apply the result to
+     * @param <TResource> the type of resource to resolve
+     */
+    protected <TResource extends kcHashedResource> boolean resolveResource(ILogger logger, Class<TResource> resourceClass, GreatQuestHash<TResource> hashObj, boolean warnIfNotFound) {
+        if (!StringUtils.isNullOrWhiteSpace(hashObj.getOriginalString())) {
+            return GreatQuestUtils.resolveLevelResource(logger, new StringNode(hashObj.getOriginalString()), resourceClass, getParentFile(), getResource(), hashObj, warnIfNotFound);
+        } else {
+            return GreatQuestUtils.resolveLevelResourceHash(logger, resourceClass, getParentFile(), getResource(), hashObj, hashObj.getHashNumber(), warnIfNotFound);
+        }
+    }
+
+    /**
+     * Resolves a resource from a config node.
+     * @param resourceType the type of resource to resolve
+     * @param hashObj the hash object to apply the result to
+     */
+    protected boolean resolveResource(ILogger logger, IkcCResourceGenericTypeGroup resourceType, GreatQuestHash<kcCResourceGeneric> hashObj, boolean warnIfNotFound) {
+        if (!StringUtils.isNullOrWhiteSpace(hashObj.getOriginalString())) {
+            return GreatQuestUtils.resolveLevelResource(logger, new StringNode(hashObj.getOriginalString()), resourceType, getParentFile(), getResource(), hashObj, warnIfNotFound);
+        } else {
+            return GreatQuestUtils.resolveLevelResourceHash(logger, resourceType, getParentFile(), getResource(), hashObj, hashObj.getHashNumber(), warnIfNotFound);
+        }
     }
 
     /**
@@ -176,7 +228,9 @@ public abstract class kcEntity3DDesc extends kcBaseDesc implements kcIGenericRes
         output.getOrCreateKeyValueNode(CONFIG_KEY_DESC_TYPE).setAsEnum(getEntityDescriptionType());
         output.getOrCreateKeyValueNode(CONFIG_KEY_FLAGS).setAsString(kcEntityInstanceFlag.getAsOptionalArguments(this.defaultFlags).getNamedArgumentsAsCommaSeparatedString());
 
-        output.getOrCreateKeyValueNode(CONFIG_KEY_BOUNDING_SPHERE_POS).setAsString(this.boundingSphere.getPosition().toParseableString());
-        output.getOrCreateKeyValueNode(CONFIG_KEY_BOUNDING_SPHERE_RADIUS).setAsFloat(this.boundingSphere.getRadius());
+        if (!DEFAULT_BOUNDING_SPHERE.getPosition().equals(this.boundingSphere.getPosition()))
+            output.getOrCreateKeyValueNode(CONFIG_KEY_BOUNDING_SPHERE_POS).setAsString(this.boundingSphere.getPosition().toParseableString());
+        if (DEFAULT_BOUNDING_SPHERE.getRadius() != this.boundingSphere.getRadius())
+            output.getOrCreateKeyValueNode(CONFIG_KEY_BOUNDING_SPHERE_RADIUS).setAsFloat(this.boundingSphere.getRadius());
     }
 }

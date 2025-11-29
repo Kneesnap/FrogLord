@@ -17,8 +17,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyCapsuleDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyTriMeshDesc;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -123,13 +123,11 @@ public class kcCResourceGeneric extends kcCResource {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Generic Resource Type", getResourceType() + " (" + Utils.getSimpleName(this.resourceData) + ")");
         if (this.resourceData instanceof IPropertyListCreator)
-            propertyList = ((IPropertyListCreator) this.resourceData).addToPropertyList(propertyList);
-
-        return propertyList;
+            ((IPropertyListCreator) this.resourceData).addToPropertyList(propertyList);
     }
 
     @Override
@@ -258,6 +256,8 @@ public class kcCResourceGeneric extends kcCResource {
                 return getAsProxyCapsuleDescription();
             case PROXY_TRI_MESH_DESCRIPTION:
                 return getAsProxyTriMeshDescription();
+            case EMITTER_DESCRIPTION:
+                return getAsEmitterDescription();
             default:
                 return null;
         }
@@ -312,7 +312,7 @@ public class kcCResourceGeneric extends kcCResource {
 
         kcCResourceGenericType genericType = getResourceType();
         if (genericType != desiredType)
-            throw new RuntimeException("Expected the generic resource type to be " + desiredType + ", but was " + genericType + " instead.");
+            throw new RuntimeException("Expected the generic resource type of resource '" + getName() + "' to be " + desiredType + ", but was " + genericType + " instead.");
 
         return (T) this.resourceData;
     }
@@ -389,8 +389,25 @@ public class kcCResourceGeneric extends kcCResource {
         }
     }
 
+    /**
+     * Represents one or more generic resource types.
+     */
+    public interface IkcCResourceGenericTypeGroup {
+        /**
+         * Obtains the name of the group.
+         */
+        String name();
+
+        /**
+         * Tests if the group contains the given type.
+         * @param otherType the type to test
+         * @return containsType
+         */
+        boolean contains(kcCResourceGenericType otherType);
+    }
+
     @Getter
-    public enum kcCResourceGenericType {
+    public enum kcCResourceGenericType implements IkcCResourceGenericTypeGroup {
         ACTOR_BASE_DESCRIPTION(ImageResource.GHIDRA_ICON_MONKEY_16, "Actor Entity Data", "ActorBaseDesc", 0x46E460D7), // Real Struct: kcActorBaseDesc
         EMITTER_DESCRIPTION(ImageResource.GHIDRA_ICON_MONKEY_16, "Emitter Entity Data", "EmitterDesc", 0x3224F1ED), // Real Struct: kcEmitterDesc
         ITEM_DESCRIPTION(ImageResource.GHIDRA_ICON_MONKEY_16, "Item Entity Data", "ItemDesc", 0xE23B225D), // Real Struct: CUniqueItemDesc
@@ -438,6 +455,41 @@ public class kcCResourceGeneric extends kcCResource {
             if (!allowNull)
                 throw new RuntimeException("Couldn't determine the generic type from tag " + NumberUtils.to0PrefixedHexString(tag) + ".");
             return null;
+        }
+
+        @Override
+        public boolean contains(kcCResourceGenericType otherType) {
+            return otherType == this;
+        }
+    }
+
+    /**
+     * Represents common groups of generic resource types.
+     */
+    public enum kcCResourceGenericTypeGroup implements IkcCResourceGenericTypeGroup {
+        ENTITY_DESCRIPTION(kcCResourceGenericType.ACTOR_BASE_DESCRIPTION, kcCResourceGenericType.ITEM_DESCRIPTION,
+                kcCResourceGenericType.PROP_DESCRIPTION, kcCResourceGenericType.PARTICLE_EMITTER_PARAM,
+                kcCResourceGenericType.WAYPOINT_DESCRIPTION),
+
+        // kcCActorBase::CreateCollisionProxy() may look like it doesn't support kcCResourceGenericType.EMITTER_DESCRIPTION,
+        // But actually, it HALF does. This is because its classID is never changed from kcCProxyCapsule, even though it's kcCEmitter.
+        // It will use the kcCEmitter as if it is a capsule.
+        // Because the kcCEntity::Update method is not called on a kcCProxy entity, the correct way to use a kcCEmitter is actually as an ENTITY DESCRIPTION.
+        // Technically, it seems possible to spawn any collision proxy in as an entity directly, but I'm not sure why anyone would ever want that...
+        // I tried to get the emitter description working in-game, both as an entity description and as a collision proxy. The collision proxy crashed, the entity description did nothing.
+        // It is assumed that this feature was incomplete/does not work, even though the code for it looks like it should work.
+        PROXY_DESCRIPTION(kcCResourceGenericType.PROXY_CAPSULE_DESCRIPTION, kcCResourceGenericType.PROXY_TRI_MESH_DESCRIPTION,
+                kcCResourceGenericType.EMITTER_DESCRIPTION);
+
+        private final kcCResourceGenericType[] resourceTypes;
+
+        kcCResourceGenericTypeGroup(kcCResourceGenericType... resourceTypes) {
+            this.resourceTypes = resourceTypes;
+        }
+
+        @Override
+        public boolean contains(kcCResourceGenericType otherType) {
+            return Utils.contains(this.resourceTypes, otherType);
         }
     }
 }

@@ -84,7 +84,7 @@ public abstract class kcActionTemplate extends kcAction {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         kcParam[] params = this.arguments.toArray(new kcParam[0]);
         kcArgument[] argumentTemplates = getArgumentTemplate(params);
 
@@ -103,7 +103,7 @@ public abstract class kcActionTemplate extends kcAction {
             // Load the argument.
             StringNode node = arguments.useNext();
             kcArgument argumentTemplate = argumentTemplates[i]; // NOTE: WE DO NOT CACHE THIS ARRAY, since the template can change as we load values.
-            this.arguments.get(i).fromConfigNode(getExecutor(), getGameInstance(), node, argumentTemplate.getType());
+            this.arguments.get(i).fromConfigNode(logger, getExecutor(), getGameInstance(), node, argumentTemplate.getType());
 
             // React to any changes caused by loading the argument.
             argumentTemplates = getArgumentTemplate(params); //  his is because it can change based on the arguments as we load them.
@@ -112,7 +112,7 @@ public abstract class kcActionTemplate extends kcAction {
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         kcParam[] params = this.arguments.toArray(new kcParam[0]);
         kcArgument[] argumentTemplates = getArgumentTemplate(params);
         int argumentCount = getGqsArgumentCount(argumentTemplates);

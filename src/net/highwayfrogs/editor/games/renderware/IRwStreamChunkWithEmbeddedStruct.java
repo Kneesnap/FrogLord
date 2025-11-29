@@ -4,7 +4,7 @@ import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.generic.data.IGameObject;
 import net.highwayfrogs.editor.games.renderware.struct.types.RwStructParentData;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;

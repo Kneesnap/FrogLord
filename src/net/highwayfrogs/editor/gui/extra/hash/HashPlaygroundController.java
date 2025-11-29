@@ -15,14 +15,13 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.utils.SCImageTableGenerator;
+import net.highwayfrogs.editor.games.sony.shared.utils.SCMsvcHashReverser.MsvcHashTarget;
 import net.highwayfrogs.editor.gui.GameUIController;
+import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.extra.hash.HashRange.HashRangeType;
-import net.highwayfrogs.editor.utils.FXUtils;
-import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.*;
 import net.highwayfrogs.editor.utils.FileUtils.BrowserFileType;
 import net.highwayfrogs.editor.utils.FileUtils.SavedFilePath;
-import net.highwayfrogs.editor.utils.NumberUtils;
-import net.highwayfrogs.editor.utils.StringUtils;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -54,6 +53,8 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
     @FXML private ListView<String> stringsListView;
     @Getter private HashRange psyqTargetHashRange;
     @Getter private HashRange msvcTargetHashRange;
+    private String lastHashTargetString = "suffix:?:?";
+    private MsvcHashTarget[] hashTargets;
 
     private static final BrowserFileType TABLE_EXPORT_FILE_TYPE = new BrowserFileType("Exported BSS Table", "c");
     private static final SavedFilePath TABLE_EXPORT_FILE_PATH = new SavedFilePath("bssTableExport", "Please select the file to save the BSS table export as...", TABLE_EXPORT_FILE_TYPE);
@@ -78,8 +79,9 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
         if (dictionaryFile.exists() && dictionaryFile.isFile()) {
             this.dictionaryGenerator.loadDictionaryFromFile(getLogger(), dictionaryFile);
         } else {
-            FXUtils.makePopUp("Could not file 'dictionary.txt'. No dictionary will be used for autocompletes.\n"
-                    + "Any text file with one word per line can be used as dictionary.txt.", AlertType.ERROR);
+            FXUtils.showPopup(AlertType.WARNING, "Could not file 'dictionary.txt'.",
+                    "No dictionary will be used for autocompletes.\n"
+                    + "Any text file with one word per line can be used as dictionary.txt.");
         }
 
         this.characterGenerator.onSetup(this);
@@ -147,6 +149,22 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
     }
 
     @FXML
+    private void askUserForNewTemplate(ActionEvent event) {
+        String newHashTargetString = InputMenu.promptInput(getGameInstance(), "", this.lastHashTargetString);
+
+        try {
+            if (StringUtils.isNullOrWhiteSpace(newHashTargetString)) {
+                this.hashTargets = null;
+            } else {
+                this.hashTargets = MsvcHashTarget.parseHashTargets(newHashTargetString);
+                this.lastHashTargetString = newHashTargetString;
+            }
+        } catch (Throwable th) {
+            Utils.handleError(getLogger(), th, true, "Failed to process hash targets from '%s'.", newHashTargetString);
+        }
+    }
+
+    @FXML
     private void generateStrings(ActionEvent evt) {
         String searchQuery = this.searchFilterField.getText();
         int maxWordSize = getMaxWordLength();
@@ -165,9 +183,33 @@ public class HashPlaygroundController extends GameUIController<SCGameInstance> {
         if (newStrings == null || newStrings.isEmpty())
             return;
 
+        String prefix = getPrefix();
         for (int i = 0; i < newStrings.size(); i++) {
             String word = newStrings.get(i);
-            if (seenAlready.add(word) && (searchQuery == null || searchQuery.isEmpty() || word.contains(searchQuery)) && (maxWordSize <= 0 || word.length() <= maxWordSize))
+            if (maxWordSize > 0 && word.length() > maxWordSize)
+                continue; // Word too long.
+
+            if (searchQuery != null && !searchQuery.isEmpty() && !word.contains(searchQuery))
+                continue; // Ensure matches search query.
+
+            // Ensure word matches hashes.
+            boolean matchedHashes = true;
+            if (this.hashTargets != null) {
+                String hashPrefix = prefix + word;
+                for (int j = 0; j < this.hashTargets.length; j++) {
+                    MsvcHashTarget hashTarget = this.hashTargets[j];
+                    String hashStr = hashPrefix + hashTarget.getSuffix();
+                    int psyqHash = FroggerHashUtil.getPsyQLinkerHash(hashStr);
+                    int msvcHash = FroggerHashUtil.getMsvcC1HashTableKey(hashStr);
+
+                    if (!hashTarget.getPsyqRange().isInRange(psyqHash) || !hashTarget.getMsvcRange().isInRange(msvcHash)) {
+                        matchedHashes = false;
+                        break;
+                    }
+                }
+            }
+
+            if (matchedHashes && seenAlready.add(word))
                 results.add(word);
         }
     }

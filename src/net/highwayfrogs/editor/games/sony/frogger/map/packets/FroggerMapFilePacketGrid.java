@@ -12,7 +12,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -277,7 +277,7 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
+    public void addToPropertyList(PropertyListNode propertyList) {
         propertyList.add("Collision Grid Dimensions", this.gridXCount + " x " + this.gridZCount + " (" + (this.gridXCount * this.gridZCount) + " groups)");
         propertyList.add("Collision Grid Square Size", getGridXSizeAsFloat() + " x " + getGridZSizeAsFloat());
 
@@ -295,8 +295,6 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
 
             propertyList.add("Grid Square Count", squareCount);
         }
-
-        return propertyList;
     }
 
     /**
@@ -337,7 +335,7 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
      * @return gridX
      */
     public int getGridXFromWorldX(int worldX) {
-        return (worldX - getBaseGridX()) >> 8;
+        return (worldX - getBaseGridX()) / GRID_STACK_WORLD_LENGTH;
     }
 
     /**
@@ -355,7 +353,7 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
      * @return gridZ
      */
     public int getGridZFromWorldZ(int worldZ) {
-        return (worldZ - getBaseGridZ()) >> 8;
+        return (worldZ - getBaseGridZ()) / GRID_STACK_WORLD_LENGTH;
     }
 
     /**
@@ -373,7 +371,7 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
      * @return worldX
      */
     public int getWorldXFromGridX(int gridX, boolean useMiddle) {
-        return getBaseGridX() + (gridX << 8) + (useMiddle ? 0x80 : 0);
+        return getBaseGridX() + (gridX * GRID_STACK_WORLD_LENGTH) + (useMiddle ? 0x80 : 0);
     }
 
     /**
@@ -382,7 +380,7 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
      * @return worldZ
      */
     public int getWorldZFromGridZ(int gridZ, boolean useMiddle) {
-        return getBaseGridZ() + (gridZ << 8) + (useMiddle ? 0x80 : 0);
+        return getBaseGridZ() + (gridZ * GRID_STACK_WORLD_LENGTH) + (useMiddle ? 0x80 : 0);
     }
 
     /**
@@ -526,10 +524,13 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
 
         // If we've found an area the grid must cover, resize the grid to cover at least that area.
         if (maxWorldGridX > minWorldGridX && maxWorldGridZ > minWorldGridZ) {
-            int newXCount = 3 + ((DataUtils.floatToFixedPointShort4Bit(maxWorldGridX) - DataUtils.floatToFixedPointShort4Bit(minWorldGridX))
-                    / FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH);
-            int newZCount = 3 + ((DataUtils.floatToFixedPointShort4Bit(maxWorldGridZ) - DataUtils.floatToFixedPointShort4Bit(minWorldGridZ))
-                    / FroggerMapFilePacketGrid.GRID_STACK_WORLD_LENGTH);
+            int minWorldGridXCount = (-(DataUtils.floatToFixedPointShort4Bit(minWorldGridX) - GRID_STACK_WORLD_LENGTH + 1) / GRID_STACK_WORLD_LENGTH) * 2;
+            int maxWorldGridXCount = ((DataUtils.floatToFixedPointShort4Bit(maxWorldGridX) + GRID_STACK_WORLD_LENGTH - 1) / GRID_STACK_WORLD_LENGTH) * 2;
+            int minWorldGridZCount = (-(DataUtils.floatToFixedPointShort4Bit(minWorldGridZ) - GRID_STACK_WORLD_LENGTH + 1) / GRID_STACK_WORLD_LENGTH) * 2;
+            int maxWorldGridZCount = ((DataUtils.floatToFixedPointShort4Bit(maxWorldGridZ) + GRID_STACK_WORLD_LENGTH - 1) / GRID_STACK_WORLD_LENGTH) * 2;
+
+            int newXCount = Math.max(minWorldGridXCount, maxWorldGridXCount);
+            int newZCount = Math.max(minWorldGridZCount, maxWorldGridZCount);
 
             // Grids can't have an odd number of squares, but that will be automatically adjusted.
             resizeGrid(Math.max(this.gridXCount, newXCount), Math.max(this.gridZCount, newZCount), polygonsWithGridFlags);

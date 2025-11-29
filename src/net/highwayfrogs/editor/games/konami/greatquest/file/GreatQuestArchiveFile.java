@@ -10,8 +10,8 @@ import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IFileExport;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.DataSizeUnit;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
@@ -31,16 +31,17 @@ import java.util.concurrent.ThreadLocalRandom;
  * Created by Kneesnap on 8/17/2019.
  */
 public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implements ICollectionViewEntry, IPropertyListCreator, kcHashedResource {
+    @Getter private final GreatQuestArchiveFileType fileType;
     @Getter private final GreatQuestHash<GreatQuestArchiveFile> selfHash;
     @Getter private byte[] rawData;
     @Getter private String fileName;
     @Getter private String filePath;
-    @Getter private boolean collision; // This is true iff there are multiple files that share the hash.
     @Getter @Setter private boolean compressed;
     private ILogger cachedLogger;
 
-    public GreatQuestArchiveFile(GreatQuestInstance instance) {
+    public GreatQuestArchiveFile(GreatQuestInstance instance, GreatQuestArchiveFileType fileType) {
         super(instance);
+        this.fileType = fileType;
         this.selfHash = new GreatQuestHash<>(this);
     }
 
@@ -90,7 +91,7 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
     /**
      * Gets the main archive.
      */
-    private GreatQuestAssetBinFile getMainArchive() {
+    public GreatQuestAssetBinFile getMainArchive() {
         return getGameInstance().getMainArchive();
     }
 
@@ -100,29 +101,40 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
 
         propertyList.add("Name Hash", NumberUtils.to0PrefixedHexString(getHash()));
-        propertyList.add("Name Collision", this.collision);
+        propertyList.add("Name Collision", hasCollision());
         propertyList.add("Compression Enabled", this.compressed);
         if (this.rawData != null)
             propertyList.add("Loaded File Size", DataSizeUnit.formatSize(this.rawData.length));
-
-        return propertyList;
     }
 
     /**
      * Initialize the information about this file.
-     * @param realName   This file's raw name. Can be null.
-     * @param compressed Whether this file is compressed.
+     * @param filePath This file's raw name. Can be null.
+     * @param rawBytes The raw unprocessed bytes containing the file data.
      */
-    public void init(String realName, boolean compressed, int hash, byte[] rawBytes, boolean collision) {
-        setFilePath(realName);
+    public void init(String filePath, byte[] rawBytes) {
+        init(filePath, this.fileType.isCompressedByDefault(getGameInstance()), GreatQuestUtils.hashFilePath(filePath), rawBytes);
+    }
+
+    /**
+     * Initialize the information about this file.
+     * @param filePath   This file's raw name. Can be null.
+     * @param compressed Whether this file is compressed.
+     * @param hash       The hash of the file path.
+     * @param rawBytes   The raw unprocessed bytes containing the file data.
+     */
+    public void init(String filePath, boolean compressed, int hash, byte[] rawBytes) {
+        if (isRegistered())
+            throw new IllegalStateException("Cannot re-init file '" + this.filePath + "'/" + getSelfHash().getHashNumberAsString() + " to '" + filePath + "'/" + NumberUtils.to0PrefixedHexString(hash) + " while the file is registered.");
+
+        setFilePath(filePath);
         this.compressed = compressed;
         this.selfHash.setHash(hash);
         this.rawData = rawBytes;
-        this.collision = collision;
     }
 
     /**
@@ -154,16 +166,12 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
         }
 
         // If we already have a path, we shouldn't be replacing it, and we should warn if the path differs.
-        if (this.filePath != null && !this.filePath.isEmpty() && !this.filePath.equalsIgnoreCase(filePath)) {
-            getLogger().warning("Attempted to replace file name '%s' with '%s'. Not sure how to handle.", this.filePath, filePath);
-            return;
-        }
+        if (this.filePath != null && !this.filePath.isEmpty() && !this.filePath.equalsIgnoreCase(filePath) && isRegistered())
+            throw new IllegalStateException("Cannot change file-path of '" + this.filePath + "' to '" + filePath + "' while the file is registered.");
 
         // Apply data.
         this.filePath = filePath;
-        this.fileName = filePath;
-        if (filePath != null && filePath.contains("\\")) // Remove path.
-            this.fileName = filePath.substring(filePath.lastIndexOf("\\") + 1);
+        this.fileName = getFileNameFromPath(filePath);
     }
 
     /**
@@ -228,6 +236,20 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
     }
 
     /**
+     * Returns true iff this file's hash collides with another file's hash.
+     */
+    public boolean hasCollision() {
+        return getMainArchive().hasCollision(this);
+    }
+
+    /**
+     * Returns true iff the file is currently registered in the .bin file.
+     */
+    public boolean isRegistered() {
+        return getMainArchive().isRegistered(this);
+    }
+
+    /**
      * Exports the file to a folder.
      * @param baseFolder The base folder that game assets are saved to.
      */
@@ -247,5 +269,18 @@ public abstract class GreatQuestArchiveFile extends GreatQuestGameFile implement
                 throw new RuntimeException("Failed to export file '" + getDebugName() + "' to usable format.", ex);
             }
         }
+    }
+
+    /**
+     * Gets the file name from the file path.
+     * @param filePath the file path to condense into a file name
+     * @return fileName
+     */
+    public static String getFileNameFromPath(String filePath) {
+        if (filePath == null)
+            return null;
+
+        int backSlashIndex = filePath.lastIndexOf('\\');
+        return backSlashIndex >= 0 ? filePath.substring(backSlashIndex + 1) : filePath;
     }
 }

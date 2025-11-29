@@ -13,4 +13,6 @@ public class GridUINode {
     // TODO: Allow setting a tooltip for the whole thing.
     // TODO: Do we need some kind of param value for the parent? Yeah.
     // TODO: Should resize with the grid.
+
+    // TODO: Consider making this as compatible with the PropertyList system as possible.
 }

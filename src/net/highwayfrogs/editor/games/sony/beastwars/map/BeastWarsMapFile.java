@@ -16,7 +16,7 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.utils.DynamicMeshObjExporter;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -411,8 +411,8 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Map Dimensions", this.heightMapXLength + "x" + this.heightMapZLength);
         propertyList.add("World Height Scale", this.worldHeightScale);
         propertyList.add("Unknown Values: ", this.unknownInfoValue1 + ", " + this.unknownInfoValue2);
@@ -443,7 +443,6 @@ public class BeastWarsMapFile extends SCGameFile<BeastWarsInstance> {
         propertyList.add("Splines", this.splines.size());
         propertyList.add("Objects", this.objects.size());
         propertyList.add("Lights", lightCount);
-        return propertyList;
     }
 
     @Override

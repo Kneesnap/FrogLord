@@ -15,9 +15,7 @@ import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.LazyInstanceLogger;
 
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This represents a triangle mesh which has functionality to dynamically create, update, and change mesh data efficiently.
@@ -35,6 +33,7 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
     @Getter private final List<DynamicMeshNode> nodes = new ArrayList<>();
     @Getter private final List<DynamicMeshDataEntry> dataEntries = new ArrayList<>();
     @Getter private final List<MeshView> meshViews = new ArrayList<>(); // Tracks all views which are viewing this mesh.
+    private final Map<MeshView, MeshTracker> meshViewTrackers = new HashMap<>();
     @Getter private Image materialFxImage;
     @Getter private PhongMaterial material;
     private ILogger cachedLogger;
@@ -297,11 +296,16 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
     public boolean addView(MeshView view, MeshTracker meshTracker) {
         if (view == null)
             throw new NullPointerException("view");
-        if (meshTracker != null)
-            meshTracker.trackMesh(this);
 
         if (this.meshViews.contains(view))
             return false; // Already registered.
+
+        // Update mesh tracking.
+        MeshTracker oldMeshTracker = this.meshViewTrackers.put(view, meshTracker);
+        if (oldMeshTracker != null && oldMeshTracker != meshTracker)
+            oldMeshTracker.stopTrackingMesh(this);
+        if (meshTracker != null && oldMeshTracker != meshTracker)
+            meshTracker.trackMesh(this);
 
         // Register the texture.
         if (this.meshViews.isEmpty() && this.textureAtlas != null)
@@ -321,6 +325,10 @@ public class DynamicMesh extends TriangleMesh implements IDynamicMeshHelper {
     public boolean removeView(MeshView view) {
         if (view == null)
             throw new NullPointerException("view");
+
+        MeshTracker meshTracker = this.meshViewTrackers.remove(view);
+        if (meshTracker != null)
+            meshTracker.stopTrackingMesh(this);
 
         if (!this.meshViews.remove(view))
             return false; // Not registered.

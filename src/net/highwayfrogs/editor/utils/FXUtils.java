@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.utils;
 
 import com.sun.javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXMLLoader;
@@ -21,6 +22,7 @@ import javafx.scene.shape.Sphere;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.stage.PopupWindow.AnchorLocation;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Duration;
@@ -53,6 +55,7 @@ public class FXUtils {
     private static final Map<BufferedImage, TextureCache> imageCacheMap = new HashMap<>();
     private static final long IMAGE_CACHE_EXPIRE = TimeUnit.MINUTES.toMillis(5);
     private static final Map<String, FXMLLoader> CACHED_RESOURCE_PATH_FXML_LOADERS = new HashMap<>();
+    public static final String STYLE_LIST_CELL_RED_BACKGROUND = "-fx-control-inner-background: red ;";
 
     /**
      * Make a combo box scroll to the value it has selected.
@@ -144,7 +147,7 @@ public class FXUtils {
         }
         fileChooser.getExtensionFilters().add(new ExtensionFilter(typeInfo, allExtensions));
 
-        fileChooser.setInitialDirectory(FileUtils.getValidFolder(FrogLordApplication.getWorkingDirectory()));
+        fileChooser.setInitialDirectory(FileUtils.getValidFolder(getGameDirectory(instance)));
 
         File selectedFile = fileChooser.showOpenDialog(instance != null ? instance.getMainStage() : null);
         if (selectedFile != null)
@@ -193,7 +196,7 @@ public class FXUtils {
             }
         }
 
-        fileChooser.setInitialDirectory(FileUtils.getValidFolder(FrogLordApplication.getWorkingDirectory()));
+        fileChooser.setInitialDirectory(FileUtils.getValidFolder(getGameDirectory(instance)));
         if (suggestName != null) {
             String initialName = suggestName;
             if (extension != null && !extension.equals("*") && !initialName.endsWith("." + extension))
@@ -209,6 +212,10 @@ public class FXUtils {
         return selectedFile;
     }
 
+    private static File getGameDirectory(GameInstance instance) {
+        return instance != null ? instance.getMainGameFolder() : FrogLordApplication.getWorkingDirectory();
+    }
+
     /**
      * Prompt the user to select a directory.
      * TODO: Replace with FileUtils.askUserToSelectFolder()
@@ -220,7 +227,7 @@ public class FXUtils {
     public static File promptChooseDirectory(GameInstance instance, String title, boolean saveDirectory) {
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle(title);
-        chooser.setInitialDirectory(FileUtils.getValidFolder(FrogLordApplication.getWorkingDirectory()));
+        chooser.setInitialDirectory(FileUtils.getValidFolder(getGameDirectory(instance)));
 
         File selectedFolder = chooser.showDialog(instance != null ? instance.getMainStage() : null);
         if (selectedFolder != null && saveDirectory)
@@ -315,6 +322,13 @@ public class FXUtils {
         Scene oldScene = stage.getScene();
 
         Window oldWindow = oldScene.getWindow();
+
+        // Preserve non-maximized window size.
+        boolean wasMaximized = stage.isMaximized();
+        if (wasMaximized)
+            stage.setMaximized(false);
+
+        // Preserve window size.
         double width = oldWindow.getWidth();
         double height = oldWindow.getHeight();
         double x = oldWindow.getX();
@@ -328,10 +342,15 @@ public class FXUtils {
 
         // Maintain the position the viewer Scene was at when it was closed.
         Window newWindow = newScene.getWindow();
+        Stage newStage = newWindow instanceof Stage ? (Stage) newWindow : null;
         newWindow.setX(x);
         newWindow.setY(y);
         newWindow.setWidth(width);
         newWindow.setHeight(height);
+
+        // Restore maximization state.
+        if (newStage != null && wasMaximized && !newStage.isMaximized())
+            Platform.runLater(() -> newStage.setMaximized(true)); // Doesn't work without a delay.
 
         return oldScene;
     }
@@ -670,5 +689,53 @@ public class FXUtils {
 
     static {
         setupCacheTimerTask();
+    }
+
+    /**
+     * Snaps the tooltip to the top right of the window.
+     * @param stage the stage to snap to
+     * @param tooltip the tooltip to snap
+     */
+    public static void snapTooltipToTopRight(Stage stage, Tooltip tooltip) {
+        if (stage == null)
+            throw new NullPointerException("stage");
+        if (tooltip == null)
+            throw new NullPointerException("tooltip");
+
+        ChangeListener<Number> xChangeListener = (observable, oldValue, newValue) -> tooltip.setAnchorX(newValue.doubleValue() + stage.getWidth() - (stage.isMaximized() ? tooltip.getWidth() * .1 : 0));
+        ChangeListener<Number> yChangeListener = (observable, oldValue, newValue) -> tooltip.setAnchorY(newValue.doubleValue() + stage.getHeight() - stage.getScene().getHeight());
+        ChangeListener<Number> widthChangeListener = (observable, oldValue, newValue) -> tooltip.setAnchorX(stage.getX() + newValue.doubleValue() - (stage.isMaximized() ? tooltip.getWidth() * .1 : 0));
+        ChangeListener<Number> heightChangeListener = (observable, oldValue, newValue) -> tooltip.setAnchorY(stage.getY() + newValue.doubleValue() - stage.getScene().getHeight());
+        ChangeListener<? super Scene> sceneListener = (observable, oldScene, newScene) -> {
+            if (oldScene != newScene)
+                tooltip.hide();
+        };
+
+        tooltip.textProperty().addListener((observable, oldText, newText) -> {
+            tooltip.setAnchorX(stage.getX() + stage.getWidth() - (stage.isMaximized() ? tooltip.getWidth() * .1 : 0));
+            tooltip.setAnchorY(stage.getY() + stage.getHeight() - stage.getScene().getHeight());
+        });
+
+        tooltip.setHideOnEscape(false);
+        tooltip.setAnchorLocation(AnchorLocation.WINDOW_TOP_RIGHT);
+        tooltip.setOnShown(event -> {
+            stage.xProperty().addListener(xChangeListener);
+            stage.yProperty().addListener(yChangeListener);
+            stage.widthProperty().addListener(widthChangeListener);
+            stage.heightProperty().addListener(heightChangeListener);
+            stage.sceneProperty().addListener(sceneListener);
+            tooltip.setAnchorX(stage.getX() + stage.getWidth() - (stage.isMaximized() ? tooltip.getWidth() * .1 : 0));
+            tooltip.setAnchorY(stage.getY() + stage.getHeight() - stage.getScene().getHeight());
+        });
+
+        tooltip.setOnHidden(event -> {
+            stage.xProperty().removeListener(xChangeListener);
+            stage.yProperty().removeListener(yChangeListener);
+            stage.widthProperty().removeListener(widthChangeListener);
+            stage.heightProperty().removeListener(heightChangeListener);
+            stage.sceneProperty().removeListener(sceneListener);
+        });
+
+        tooltip.show(stage);
     }
 }

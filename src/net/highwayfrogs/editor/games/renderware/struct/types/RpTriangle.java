@@ -2,8 +2,6 @@ package net.highwayfrogs.editor.games.renderware.struct.types;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.generic.data.IGameObject;
 import net.highwayfrogs.editor.games.psx.CVector;
@@ -17,8 +15,10 @@ import net.highwayfrogs.editor.games.renderware.chunks.RwTextureChunk;
 import net.highwayfrogs.editor.games.renderware.struct.RwStruct;
 import net.highwayfrogs.editor.games.renderware.struct.RwStructType;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.gui.mesh.PSXShadedDynamicMesh;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.Arrays;
 import java.util.List;
@@ -89,11 +89,10 @@ public class RpTriangle extends RwStruct {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Vertex Indices", Arrays.toString(this.vertexIndices));
         propertyList.add("Material Index", this.materialIndex);
-        return propertyList;
     }
 
     @Override

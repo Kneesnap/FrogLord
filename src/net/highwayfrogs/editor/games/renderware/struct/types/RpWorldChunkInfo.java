@@ -1,8 +1,6 @@
 package net.highwayfrogs.editor.games.renderware.struct.types;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.RwUtils;
 import net.highwayfrogs.editor.games.renderware.RwVersion;
@@ -12,8 +10,10 @@ import net.highwayfrogs.editor.games.renderware.chunks.RwWorldChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.sector.RwAtomicSectorChunk;
 import net.highwayfrogs.editor.games.renderware.struct.RwStruct;
 import net.highwayfrogs.editor.games.renderware.struct.RwStructType;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Implemented from 'babinworld.h'
@@ -81,19 +81,17 @@ public class RpWorldChunkInfo extends RwStruct {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Root Is World Sector", this.rootIsWorldSector);
-        propertyList.add("Inv World Origin", this.invWorldOrigin);
+        propertyList.addProperties("Inv World Origin", this.invWorldOrigin);
         propertyList.add("Triangles", this.numTriangles);
         propertyList.add("Vertices", this.numVertices);
         propertyList.add("Plane Sectors", this.numPlaneSectors);
         propertyList.add("Collision Sector Size", this.colSectorSize);
         propertyList.add("World Format Flags", NumberUtils.toHexString(this.formatFlags));
         if (this.boundingBox != null)
-            propertyList.add("Bounding Box", this.boundingBox);
-
-        return propertyList;
+            propertyList.addProperties("Bounding Box", this.boundingBox);
     }
 
     public void applyDataFromWorld(RwWorldChunk worldChunk) {

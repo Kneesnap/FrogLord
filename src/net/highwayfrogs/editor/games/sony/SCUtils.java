@@ -1,12 +1,12 @@
 package net.highwayfrogs.editor.games.sony;
 
-import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.games.psx.PSXBitstreamImage;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.model.actionset.PTActionSetFile;
@@ -16,6 +16,7 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.MRAnimatedMof;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRStaticMof;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankBody;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankHeader;
@@ -34,8 +35,6 @@ import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.StringUtils;
 
 import java.io.File;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
@@ -91,13 +90,14 @@ public class SCUtils {
                 if (DataUtils.testSignature(fileData, MRModel.DUMMY_DATA) || DataUtils.testSignature(fileData, MRStaticMof.SIGNATURE) || MRAnimatedMof.testSignature(fileData))
                     return makeModel(resourceEntry);
             }
-        } else {
-            if (resourceEntry.hasExtension("vlo"))
-                return new VLOArchive(resourceEntry.getGameInstance());
-            if (resourceEntry.hasExtension("xmr") || resourceEntry.hasExtension("xar") || resourceEntry.hasExtension("xmu"))
-                return makeModel(resourceEntry);
         }
 
+        if (resourceEntry.hasExtension("bs"))
+            return new PSXBitstreamImage(resourceEntry.getGameInstance());
+        if (resourceEntry.hasExtension("vlo"))
+            return new VLOArchive(resourceEntry.getGameInstance());
+        if (resourceEntry.hasExtension("xmr") || resourceEntry.hasExtension("xar") || resourceEntry.hasExtension("xmu"))
+            return makeModel(resourceEntry);
         if (resourceEntry.hasExtension("vh") || resourceEntry.hasExtension("vb"))
             return makeSound(resourceEntry, fileData, null);
 
@@ -372,9 +372,10 @@ public class SCUtils {
      * Find images shared between the two versions which are a perfect match, and generate an image naming config based on it.
      * @param nameSourceInst the game instance containing the image names
      * @param copyDestInst the game instance to transfer the image names to
+     * @param includeMissingTexturesAsComments if true, missing textures will be included as comments
      * @return sharedImageConfig
      */
-    public static String generateImageNameConfigForMatchingTextures(SCGameInstance nameSourceInst, SCGameInstance copyDestInst) {
+    public static String generateImageNameConfigForMatchingTextures(SCGameInstance nameSourceInst, SCGameInstance copyDestInst, boolean includeMissingTexturesAsComments) {
         if (nameSourceInst == null)
             throw new NullPointerException("nameSourceInst");
         if (copyDestInst == null)
@@ -411,7 +412,7 @@ public class SCUtils {
                     continue;
 
                 for (GameImage testImage : list)
-                    if (ImageWorkHorse.doImagesMatch(image.toBufferedImage(), testImage.toBufferedImage()) && !matchingImages.contains(testImage))
+                    if (!matchingImages.contains(testImage) && ImageWorkHorse.doImagesMatch(image.toBufferedImage(), testImage.toBufferedImage()))
                         matchingImages.add(testImage);
             }
         }
@@ -424,7 +425,8 @@ public class SCUtils {
         for (Entry<Short, List<GameImage>> entry : entryList) {
             List<GameImage> images = entry.getValue();
             if (images == null || images.size() <= 1) {
-                builder.append("#").append(entry.getKey()).append("=?").append(Constants.NEWLINE);
+                if (includeMissingTexturesAsComments)
+                    builder.append("#").append(entry.getKey()).append("=?").append(Constants.NEWLINE);
                 continue;
             }
 
@@ -436,6 +438,9 @@ public class SCUtils {
             GameImage firstImage = images.stream().filter(testImage -> testImage.getOriginalName() != null).findFirst().orElse(images.get(0));
             String name = firstImage.getOriginalName();
             if (name == null) {
+                if (!includeMissingTexturesAsComments && images.stream().allMatch(image -> image.getOriginalName() == null))
+                    continue;
+
                 name = SCUtils.C_UNNAMED_IMAGE_PREFIX + firstImage.getTextureId();
                 generatedNames++;
                 builder.append("#");
@@ -464,75 +469,70 @@ public class SCUtils {
     }
 
     /**
-     * Generates the .H file used in conjuntion with the .MWI/.MWD.
-     * @param instance the instance to generate the header for
-     * @param resourceDirectory the resource directory
-     * @param file the file to save the mwd header as
-     * @param fileTypePrefix the file type prefix
-     * @param fileTypes the file types to define
+     * Loads all .BS images in a given WAD file with the provided width/height.
+     * @param instance the game instance to load the files from
+     * @param wadFileName the name of the wad file to search
+     * @param width the width of the images
+     * @param height the height of the images
+     * @param warnIfNotFound if true and the wad file is not found, display a warning
      */
-    public static void generateMwdCHeader(@NonNull SCGameInstance instance, @NonNull String resourceDirectory, @NonNull File file, @NonNull String fileTypePrefix, String... fileTypes) {
-        String fileName = file.getName().toUpperCase();
-        String ifdefName = "__" + fileName.replace('.', '_');
+    public static void loadBsImagesByName(SCGameInstance instance, String wadFileName, int width, int height, boolean warnIfNotFound) {
+        if (instance == null)
+            throw new NullPointerException("instance");
+        if (StringUtils.isNullOrWhiteSpace(wadFileName))
+            throw new NullPointerException("wadFileName");
 
-        DateFormat dateFormat = new SimpleDateFormat("EEEE, MMMM d yyyy 'at' kk:mm:ss");
-
-        StringBuilder builder = new StringBuilder();
-        builder.append("//").append(Constants.NEWLINE)
-                .append("//\t").append(fileName).append(Constants.NEWLINE)
-                .append("//").append(Constants.NEWLINE)
-                .append("//\t").append("Generated by FrogLord ").append(Constants.VERSION).append(" on ").append(dateFormat.format(Calendar.getInstance().getTime())).append(Constants.NEWLINE)
-                .append("//").append(Constants.NEWLINE)
-                .append(Constants.NEWLINE)
-                .append("#ifndef\t").append(ifdefName).append(Constants.NEWLINE)
-                .append("#define\t").append(ifdefName).append(Constants.NEWLINE)
-                .append(Constants.NEWLINE)
-                .append("#define\tRES_").append(FileUtils.stripExtension(fileName)).append("_DIRECTORY\t\"").append(resourceDirectory).append("\"").append(Constants.NEWLINE)
-                .append(Constants.NEWLINE)
-                .append(Constants.NEWLINE);
-
-        // Determine longest file names.
-        final String resourcePrefix = "RES_";
-        int maxLength = "RES_NUMBER_OF_RESOURCES".length();
-        for (MWIResourceEntry entry : instance.getArchiveIndex().getEntries()) {
-            int testLength = resourcePrefix.length() + entry.getDisplayName().length();
-            if (testLength > maxLength)
-                maxLength = testLength;
+        WADFile wadFile = instance.getMainArchive().getFileByName(wadFileName);
+        if (wadFile == null) {
+            if (warnIfNotFound)
+                instance.getLogger().warning("Could not find file named '%s', skipping .BS image resolution.", wadFileName);
+            return;
         }
 
-        // Write file types.
-        for (int i = 0; i < fileTypes.length; i++) {
-            String suffix = fileTypes[i];
-            if (!StringUtils.isNullOrEmpty(suffix))
-                writeDefineSymbol(builder, fileTypePrefix + "_FTYPE_" + suffix, maxLength, "(" + i + ")");
-        }
-
-        builder.append(Constants.NEWLINE)
-                .append(Constants.NEWLINE);
-
-        // Write file names.
-        for (MWIResourceEntry entry : instance.getArchiveIndex().getEntries()) {
-            String entryName = resourcePrefix + entry.getDisplayName().replace(".", "_");
-            writeDefineSymbol(builder, entryName, maxLength, "(" + entry.getResourceId() + ")");
-        }
-
-        builder.append(Constants.NEWLINE);
-        writeDefineSymbol(builder, "RES_NUMBER_OF_RESOURCES", maxLength, "(" + instance.getArchiveIndex().getEntries().size() + ")");
-        builder.append(Constants.NEWLINE)
-                .append(Constants.NEWLINE)
-                .append("#endif\t//").append(ifdefName).append(Constants.NEWLINE);
-
-        // Write to file.
-        FileUtils.writeStringToFile(instance.getLogger(), file, builder.toString(), true);
+        loadBsImages(wadFile, width, height);
     }
 
-    private static void writeDefineSymbol(StringBuilder builder, String symbolName, int maxLength, String value) {
-        builder.append("#define\t").append(symbolName);
+    /**
+     * Loads all .BS images found within the given wad file.
+     * @param wadFile the wad file to load files from
+     * @param width the width of the images
+     * @param height the height of the images.
+     */
+    public static void loadBsImages(WADFile wadFile, int width, int height) {
+        if (wadFile == null)
+            throw new NullPointerException("wadFile");
+        if (width <= 0)
+            throw new IllegalArgumentException("Invalid width: " + width);
+        if (height <= 0)
+            throw new IllegalArgumentException("Invalid height: " + height);
 
-        int paddedChars = maxLength - symbolName.length();
-        for (int i = 0; i < paddedChars; i++)
-            builder.append(' ');
+        for (WADEntry wadEntry : wadFile.getFiles()) {
+            SCGameFile<?> gameFile = wadEntry.getFile();
+            if (gameFile instanceof PSXBitstreamImage)
+                ((PSXBitstreamImage) gameFile).getImage(width, height);
+        }
+    }
 
-        builder.append('\t').append(value).append(Constants.NEWLINE);
+    /**
+     * Copies a WAD file entry from one wad file to another.
+     * @param source The source .WAD file to copy wad entries from
+     * @param target the target .WAD file to set up (the per-level wad file)
+     * @param wadEntryIndex the index of the wad file entry to copy.
+     */
+    @SuppressWarnings("unused") // Used by Noodle scripts.
+    public static void copyWadEntry(WADFile source, WADFile target, int wadEntryIndex) {
+        if (source == null)
+            throw new NullPointerException("source");
+        if (target == null)
+            throw new NullPointerException("target");
+        if (source.getFiles().size() != target.getFiles().size())
+            throw new IllegalArgumentException("File '" + source.getFileDisplayName() + "' has " + source.getFiles().size() + " entries, while" + target.getFileDisplayName() + " has " + target.getFiles().size() + " entries. (They are not compatible with each other.)");
+        if (wadEntryIndex < 0 || wadEntryIndex >= source.getFiles().size())
+            throw new IllegalArgumentException("The wadEntryIndex: " + wadEntryIndex + " is not valid for " + source.getFileDisplayName() + "! (" + source.getFiles().size() + " entries)");
+
+        WADEntry srcEntry = source.getFiles().get(wadEntryIndex);
+        WADEntry dstEntry = target.getFiles().get(wadEntryIndex);
+        byte[] rawData = srcEntry.getFile().writeDataToByteArray();
+        SCGameFile<?> newFile = source.getArchive().replaceFile(srcEntry.getDisplayName(), rawData, dstEntry.getFileEntry(), dstEntry.getFile(), false);
     }
 }

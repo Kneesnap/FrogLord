@@ -30,18 +30,34 @@ public class NumberUtils {
      * @param str The string to test.
      * @return isHexInteger
      */
+    public static boolean isPrefixedHexInteger(String str) {
+        return str != null && str.startsWith("0x") && isHexInteger(str);
+    }
+
+    /**
+     * Test if a string is a hex number.
+     * @param str The string to test.
+     * @return isHexInteger
+     */
     public static boolean isHexInteger(String str) {
-        if (str == null || !str.startsWith("0x"))
+        if (str == null || str.isEmpty())
             return false;
 
-        for (int i = 2; i < str.length(); i++) {
-            char temp = str.charAt(i);
-            boolean isHex = (temp >= '0' && temp <= '9') || (temp >= 'a' && temp <= 'f') || (temp >= 'A' && temp <= 'F');
-            if (!isHex)
+        int startIndex = str.startsWith("0x") ? "0x".length() : 0;
+        for (int i = startIndex; i < str.length(); i++)
+            if (!isHexDigit(str.charAt(i)))
                 return false;
-        }
 
         return true;
+    }
+
+    /**
+     * Tests if the given character is a valid hexadecimal digit.
+     * @param input the character to test
+     * @return true iff the character is a hexadecimal digit
+     */
+    public static boolean isHexDigit(char input) {
+        return (input >= '0' && input <= '9') || (input >= 'a' && input <= 'f') || (input >= 'A' && input <= 'F');
     }
 
     /**
@@ -49,9 +65,26 @@ public class NumberUtils {
      * @param str The string to parse.
      * @return parsedNumber
      */
-    public static int parseHexInteger(String str) {
+    public static int parseIntegerAllowHex(String str) {
         // We need to use Long.parseLong() since Integer.parseInt() will not accept values larger than 0x80000000.
-        return str.startsWith("0x") ? (int) Long.parseLong(str.substring(2), 16) : Integer.parseInt(str);
+        return str.startsWith("0x") ? parseHexInteger(str) : Integer.parseInt(str);
+    }
+
+    /**
+     * Parse a hex integer string into a 32 bit signed integer, which may optionally be prefixed with "0x".
+     * @param input The string to parse.
+     * @return parsedNumber
+     */
+    public static int parseHexInteger(String input) {
+        if (input.startsWith("0x"))
+            input = input.substring(2);
+
+        // We need to use Long.parseLong() since Integer.parseInt() will not accept values larger than 0x80000000.
+        long value = Long.parseLong(input, 16);
+        if (value > 0xFFFFFFFFL || value < -0xFFFFFFFFL)
+            throw new ArithmeticException("The value: " + value + " (" + Long.toHexString(value) + ") cannot be represented as a 32-bit integer. (Too large/small!)");
+
+        return (int) value;
     }
 
     /**

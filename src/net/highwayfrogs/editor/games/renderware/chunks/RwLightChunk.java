@@ -1,14 +1,14 @@
 package net.highwayfrogs.editor.games.renderware.chunks;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.renderware.IRwStreamChunkWithEmbeddedStruct;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
 import net.highwayfrogs.editor.games.renderware.RwStreamFile;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Implements lighting data types as seen in balight.h
@@ -61,14 +61,13 @@ public class RwLightChunk extends RwStreamChunk implements IRwStreamChunkWithEmb
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Radius", this.radius);
         propertyList.add("Red", this.red);
         propertyList.add("Green", this.green);
         propertyList.add("Blue", this.blue);
         propertyList.add("-cosAngle", this.minusCosAngle);
         propertyList.add("Type & Flags", NumberUtils.toHexString(this.typeAndFlags));
-        return propertyList;
     }
 }

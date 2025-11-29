@@ -36,12 +36,12 @@ public class kcScriptCauseActor extends kcScriptCause {
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
         this.action = arguments.useNext().getAsEnumOrError(kcScriptCauseEntityAction.class);
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         arguments.createNext().setAsEnum(this.action);
     }
 

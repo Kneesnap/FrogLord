@@ -71,6 +71,21 @@ public class MessageTrackingLogger extends WrappedLogger {
     }
 
     /**
+     * Returns true iff there is at least one warning or error message tracked.
+     */
+    public boolean hasErrorsOrWarnings() {
+        return getMessageCount(Level.SEVERE) > 0 || getMessageCount(Level.WARNING) > 0;
+    }
+
+    /**
+     * Shows a popup reporting the successful import of the provided string, or problems.
+     * @param importName the name of something which got imported.
+     */
+    public void showImportPopup(String importName) {
+        showPopup("successfully", "Imported '%s' [problem=with ][summary].", importName);
+    }
+
+    /**
      * Shows a popup of varying severity based on the severity of logged messages.
      * Template allows the following substitutes:
      *  [error=text displayed only when there is at least one error]
@@ -120,7 +135,6 @@ public class MessageTrackingLogger extends WrappedLogger {
                 builder.append(warningCount).append(warningCount != 1 ? " warnings" : " warning");
             }
 
-            builder.append('.');
             alertType = errorCount > 0 ? AlertType.ERROR : AlertType.WARNING;
             summaryText = builder.toString();
             // TODO: Consider showing the messages in the popup too.

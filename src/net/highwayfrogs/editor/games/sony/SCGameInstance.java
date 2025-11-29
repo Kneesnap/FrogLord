@@ -2,11 +2,11 @@ package net.highwayfrogs.editor.games.sony;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.shared.basic.GameBuildInfo;
+import net.highwayfrogs.editor.games.sony.SCGameConfig.SCImageList;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
@@ -25,6 +25,7 @@ import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewCom
 import net.highwayfrogs.editor.games.sony.shared.ui.SCMainMenuUIController;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
+import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.ArraySource;
@@ -120,13 +121,17 @@ public abstract class SCGameInstance extends GameInstance {
         if (!this.getVersionConfig().isMwdLooseFiles() && (mwdFile == null || !mwdFile.exists() || !mwdFile.isFile()))
             throw new RuntimeException("The MWD file '" + mwdFile + "' does not exist.");
 
-        this.archiveIndex = this.readMWI();
+        // Read executable config.
+        DataReader exeReader = getExecutableReader();
+        Config executableConfig = FileUtils.loadConfigDataFromExecutable(exeReader, getExeFile().getName());
+        readExecutableData(exeReader, executableConfig);
+
         this.mainArchive = this.readMWD(progressBar);
         resolveModelVloFiles();
     }
 
     @Override
-    protected void onConfigLoad(Config configObj) {
+    protected void onConfigLoad(net.highwayfrogs.editor.file.config.Config configObj) {
         super.onConfigLoad(configObj);
 
         DataReader exeReader = getExecutableReader();
@@ -135,6 +140,15 @@ public abstract class SCGameInstance extends GameInstance {
         // Read data. (Should occur after we know the executable header info)
         this.readOverlayTable(exeReader);
         this.readBmpPointerData(exeReader);
+    }
+
+    /**
+     * Read potentially modifiable data from the executable to the instance object.
+     * @param reader The reader to read the data from.
+     * @param executableConfig The config containing data about the modded game configuration. (Null if the game has not been modded)
+     */
+    protected void readExecutableData(DataReader reader, Config executableConfig) {
+        this.archiveIndex = this.readMWI();
     }
 
     @Override
@@ -167,7 +181,7 @@ public abstract class SCGameInstance extends GameInstance {
         engine.addWrapperTemplates(SCGameData.class, SCGameFile.class, SCGameInstance.class, SCGameObject.class, SCGameConfig.class);
         engine.addWrapperTemplates(SCMath.class, SCUtils.class, MWDFile.class, MWIResourceEntry.class, TextureRemapArray.class, SCChunkedFile.class, SCByteTextureUV.class, LinkedTextureRemap.class);
         engine.addWrapperTemplates(VLOArchive.class, GameImage.class, MRModel.class, MRStaticMof.class, MRAnimatedMof.class, WADFile.class, WADEntry.class,
-                MRModelUtils.class);
+                MRModelUtils.class, SCImageList.class);
     }
 
     @Override
@@ -210,6 +224,16 @@ public abstract class SCGameInstance extends GameInstance {
      * @param wadIndex   The index to use for file access.
      */
     protected abstract void setupTextureRemaps(DataReader exeReader, MillenniumWadIndex wadIndex);
+
+    /**
+     * Gets the texture ID by its name, if known.
+     * @param name the name of the texture to resolve
+     * @return textureId, if known
+     */
+    @SuppressWarnings("unused") // Used by Noodle.
+    public Short getTextureIdByName(String name) {
+        return getVersionConfig().getImageList().getTextureIDFromName(name);
+    }
 
     /**
      * Resolves the .VLO files used by each model in the game.
@@ -369,12 +393,20 @@ public abstract class SCGameInstance extends GameInstance {
 
         // Check there aren't any gaps in data.
         nextTextureRemap = this.textureRemaps.size() > index + 1 ? this.textureRemaps.get(index + 1) : null;
-        int extraBytes = nextTextureRemap != null ? nextTextureRemap.getReaderIndex() - reader.getIndex() : 0;
-        if (extraBytes != 0)
-            getLogger().warning( "%s has %d unread bytes between it and %s.", textureRemap, extraBytes, nextTextureRemap);
+        int extraBytesStart = reader.getIndex();
+        int extraBytes = nextTextureRemap != null ? nextTextureRemap.getReaderIndex() - extraBytesStart : 0;
 
         // Return, but only after calling hook.
         reader.jumpReturn();
+
+        // Handle extra bytes.
+        if (extraBytes != 0) {
+            getLogger().warning("%s has %d unread bytes between it and %s.", textureRemap, extraBytes, nextTextureRemap);
+            if (extraBytes > Constants.INTEGER_SIZE) {
+                TextureRemapArray newTextureRemap = new TextureRemapArray(this, "txl_unknown", extraBytesStart + getRamOffset());
+                this.textureRemaps.add(index + 1, newTextureRemap);
+            }
+        }
     }
 
     /**
@@ -774,10 +806,17 @@ public abstract class SCGameInstance extends GameInstance {
         return mwdFile;
     }
 
-    private byte[] writeConfigToExecutable(byte[] executableBytes) {
-        net.highwayfrogs.editor.system.Config rootConfig = new net.highwayfrogs.editor.system.Config(null);
+    /**
+     * Creates the executable config stored in the executable after writing it.
+     */
+    public Config createExecutableConfig() {
+        Config rootConfig = new Config(null);
         rootConfig.addChildConfig(new GameBuildInfo<>(this).toConfig());
-        return FileUtils.saveConfigDataToExecutable(this, executableBytes, rootConfig);
+        return rootConfig;
+    }
+
+    private byte[] writeConfigToExecutable(byte[] executableBytes) {
+        return FileUtils.saveConfigDataToExecutable(this, executableBytes, createExecutableConfig());
     }
 
     /**

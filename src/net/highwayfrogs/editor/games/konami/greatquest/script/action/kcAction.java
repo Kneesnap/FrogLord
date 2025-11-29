@@ -2,9 +2,14 @@ package net.highwayfrogs.editor.games.konami.greatquest.script.action;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.games.generic.data.GameData;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedResource;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.entity.kcEntityInheritanceGroup;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.IkcCResourceGenericTypeGroup;
 import net.highwayfrogs.editor.games.konami.greatquest.script.effect.kcScriptEffectActor;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
@@ -13,6 +18,7 @@ import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
+import net.highwayfrogs.editor.utils.objects.StringNode;
 
 /**
  * Represents an action.
@@ -117,7 +123,7 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
         OptionalArguments arguments = new OptionalArguments();
         arguments.createNext().setAsString(this.actionID.getFrogLordName(), false);
         GreatQuestChunkedFile chunkedFile = getChunkedFile();
-        this.save(arguments, chunkedFile != null ? chunkedFile.createScriptDisplaySettings() : null);
+        this.save(null, arguments, chunkedFile != null ? chunkedFile.createScriptDisplaySettings() : null);
         return arguments.toString();
     }
 
@@ -125,7 +131,10 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
      * Loads this kcAction data from an OptionalArguments object.
      * @param arguments The arguments to load the data from
      */
-    public final void load(OptionalArguments arguments, int lineNumber, String fileName) {
+    public final void load(ILogger logger, OptionalArguments arguments, int lineNumber, String fileName) {
+        if (logger == null)
+            logger = getLogger();
+
         kcArgument[] argumentTemplates = getArgumentTemplate(null);
         int expectedArgumentCount = getGqsArgumentCount(argumentTemplates);
         if (expectedArgumentCount > arguments.getRemainingArgumentCount())
@@ -134,7 +143,7 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
         this.loadedFromGame = false; // User-supplied.
         this.userLineNumber = lineNumber;
         this.userImportSource = fileName;
-        loadArguments(arguments);
+        loadArguments(logger, arguments);
     }
 
     /**
@@ -142,13 +151,16 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
      * @param arguments The arguments to save the data to
      * @param settings The context settings necessary for turning a script into text.
      */
-    public final void save(OptionalArguments arguments, kcScriptDisplaySettings settings) {
+    public final void save(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
         int startArgumentCount = arguments.getOrderedArgumentCount();
-        saveArguments(arguments, settings);
+        if (logger == null)
+            logger = getLogger();
+
+        saveArguments(logger, arguments, settings);
 
         // If there were unhandled arguments, warn about it.
         if (this.unhandledArguments != null && this.unhandledArguments.length > 0)
-            getLogger().warning("There were unhandled arguments present for '%s'.", arguments);
+            logger.warning("There were unhandled arguments present for '%s'.", arguments);
 
         // Ensure it looks ok.
         kcArgument[] argumentTemplates = getArgumentTemplate(null);
@@ -169,14 +181,14 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
      * Loads the action arguments from the arguments provided.
      * @param arguments the arguments to load from
      */
-    protected abstract void loadArguments(OptionalArguments arguments);
+    protected abstract void loadArguments(ILogger logger, OptionalArguments arguments);
 
     /**
      * Save the arguments of the action to the object.
      * @param arguments The object to store the action arguments within
      * @param settings settings to use to save the arguments as strings
      */
-    protected abstract void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings);
+    protected abstract void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings);
 
     /**
      * Get the kcParam arguments to this action as an array.
@@ -257,6 +269,29 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
     }
 
     /**
+     * Resolves a resource from a config node.
+     * @param node the node to resolve the resource from
+     * @param resourceClass the type of resource to resolve
+     * @param hashObj the hash object to apply the result to
+     * @param <TResource> the type of resource to resolve
+     */
+    protected <TResource extends kcHashedResource> void resolveResource(ILogger logger, StringNode node, Class<TResource> resourceClass, GreatQuestHash<TResource> hashObj) {
+        GreatQuestChunkedFile chunkedFile = getExecutor().getChunkedFile();
+        GreatQuestUtils.resolveLevelResource(logger, node, resourceClass, chunkedFile, this, hashObj, true);
+    }
+
+    /**
+     * Resolves a resource from a config node.
+     * @param node the node to resolve the resource from
+     * @param resourceType the type of resource to resolve
+     * @param hashObj the hash object to apply the result to
+     */
+    protected void resolveResource(ILogger logger, StringNode node, IkcCResourceGenericTypeGroup resourceType, GreatQuestHash<kcCResourceGeneric> hashObj) {
+        GreatQuestChunkedFile chunkedFile = getExecutor().getChunkedFile();
+        GreatQuestUtils.resolveLevelResource(logger, node, resourceType, chunkedFile, this, hashObj, true);
+    }
+
+    /**
      * Writes the kcAction with its parameters to a StringBuilder.
      * @param builder    The builder to write to.
      * @param parameters The parameters to the action.
@@ -315,7 +350,6 @@ public abstract class kcAction extends GameData<GreatQuestInstance> {
             builder.append(kcScriptDisplaySettings.getHashDisplay(settings, parameters[i].getAsInteger(), false));
         }
     }
-
 
     /**
      * Read a kcAction from the DataReader.

@@ -22,6 +22,7 @@ import net.highwayfrogs.editor.scripting.tracking.NoodleCodeSource;
 import net.highwayfrogs.editor.scripting.tracking.NoodleFileCodeSource;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -904,7 +905,7 @@ public class NoodleCompiler {
      * @param context The context to build from.
      * @param flags The flags to build with.
      */
-    @SuppressWarnings({"UnnecessaryLocalVariable", "SwitchStatementWithTooFewBranches"})
+    @SuppressWarnings({"UnnecessaryLocalVariable"})
     public static void buildExpression(NoodleCompileContext context, int flags) {
         NoodleToken tk = context.getCurrentTokenIncrement();
 
@@ -1476,6 +1477,28 @@ public class NoodleCompiler {
                         out.add(new NoodleTokenOperator(NoodleTokenType.OPERATOR, codeLoc, NoodleOperator.LXOR));
                     }
                     break;
+                case '0': // Could be the beginning of '0xABCD' or '0b1111', etc, or it could be a number.
+                    if (scriptText.charAt(pos - 1) == 'x') {
+                        while (pos++ <= len) {
+                            char tempChar = scriptText.charAt(pos - 1);
+                            if (!NumberUtils.isHexDigit(tempChar))
+                                break;
+                        }
+
+                        String numberText = scriptText.substring(start + 1, pos - 1);
+                        NoodlePrimitive primitive;
+                        long parsedValue = numberText.length() > 0 ? Long.parseLong(numberText, 16) : 0;
+                        if ((int) parsedValue == parsedValue) {
+                            primitive = new NoodlePrimitive((int) parsedValue);
+                        } else {
+                            primitive = new NoodlePrimitive(parsedValue);
+                        }
+
+                        out.add(new NoodleTokenPrimitive(NoodleTokenType.PRIMITIVE, codeLoc, primitive));
+                        break;
+                    }
+
+                    // If not handled, continue to default case is intentional.
                 default:
                     if (Character.isDigit(currentChar) || currentChar == '.') {
                         boolean preDot = true;

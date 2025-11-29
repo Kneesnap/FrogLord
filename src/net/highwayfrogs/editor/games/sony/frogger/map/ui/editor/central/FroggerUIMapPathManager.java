@@ -53,6 +53,7 @@ import java.util.function.Consumer;
  * Allows editing Frogger map paths.
  * TODO: Allow calculating position and rotation independently, more closely to how the old Frogger system does it? Not sure.
  * TODO: Consider the value of a path editor editable in 3D space/based on gizmos?
+ * TODO: A button that counts the entities on the path and separates them evenly. Or something makes doing that easier. Lots of math manually placing these atm
  * Created by Kneesnap on 6/2/2024.
  */
 public class FroggerUIMapPathManager extends FroggerCentralMapListManager<FroggerPath, FroggerPathPreview> {

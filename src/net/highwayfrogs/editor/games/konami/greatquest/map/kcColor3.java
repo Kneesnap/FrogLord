@@ -6,7 +6,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListDataEntry;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.ColorUtils;
+import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -68,7 +71,6 @@ public class kcColor3 implements IInfoWriter, IBinarySerializable {
      * @return this
      */
     public kcColor3 fromRGB(int rgbColor) {
-        // TODO: We should allow a color object, with direct float access, maybe. Just thinking about what the new UI system could look like.
         this.red = ColorUtils.getRedInt(rgbColor) / 255F;
         this.green = ColorUtils.getGreenInt(rgbColor) / 255F;
         this.blue = ColorUtils.getBlueInt(rgbColor) / 255F;
@@ -84,5 +86,17 @@ public class kcColor3 implements IInfoWriter, IBinarySerializable {
                 .append(",green=").append(DISPLAY_FORMAT.format(this.green))
                 .append(",blue=").append(DISPLAY_FORMAT.format(this.blue))
                 .append(']');
+    }
+
+    /**
+     * Adds the color to the property list.
+     * @param propertyList the property list to add to
+     * @param name the name of the color property
+     */
+    public PropertyListDataEntry<kcColor3> addToPropertyList(PropertyListNode propertyList, String name) {
+        return propertyList.add(name, this)
+                .setDataToStringConverter(color -> NumberUtils.to0PrefixedHexString(color.toColor().getRGB()))
+                .setDataFromStringConverter(value -> new kcColor3().fromRGB(NumberUtils.parseHexInteger(value)))
+                .setDataHandler(newColor -> this.fromRGB(newColor.toColor().getRGB()));
     }
 }

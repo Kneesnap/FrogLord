@@ -1,19 +1,24 @@
 package net.highwayfrogs.editor.games.konami.greatquest.model;
 
+import javafx.scene.AmbientLight;
 import javafx.scene.image.Image;
+import javafx.scene.paint.Color;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.IFileExport;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
+import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFileType;
 import net.highwayfrogs.editor.games.konami.greatquest.loading.kcLoadContext;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelInfoController;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelMesh;
 import net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model.GreatQuestModelViewController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.IPropertyListCreator;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.mesh.Embedded3DViewComponent;
+import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -30,13 +35,12 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
     private final kcModel model;
 
     public static final String SIGNATURE_STR = "6YTV";
-
     public kcModelWrapper(GreatQuestInstance instance) {
         this(instance, new kcModel(instance));
     }
 
     public kcModelWrapper(GreatQuestInstance instance, kcModel model) {
-        super(instance);
+        super(instance, GreatQuestArchiveFileType.MODEL);
         this.model = model;
     }
 
@@ -45,10 +49,14 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
         reader.verifyString(SIGNATURE_STR);
         int size = reader.readInt();
 
-        if (size != reader.getRemaining()) // TODO: This being 4 too low indicates it's using the old (broken) format.
-            getLogger().warning("The model '%s' was supposed to have %d bytes, but actually has %d byte(s).", getDebugName(), size, reader.getRemaining());
+        boolean oldPs2Format = false;
+        int bytesRemaining = reader.getRemaining();
+        if (size != bytesRemaining) { // It seems the older exports incorrectly calculate export size.
+            oldPs2Format = true;
+            //getLogger().warning("The model '%s' was supposed to have %d bytes, but actually has %d byte(s).", getDebugName(), size, bytesRemaining);
+        }
 
-        this.model.load(reader);
+        this.model.load(reader, oldPs2Format);
         if (reader.hasMore())
             getLogger().warning("The model '%s' has %d unread byte(s).", getDebugName(), reader.getRemaining());
     }
@@ -110,12 +118,10 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         if (this.model != null)
             this.model.addToPropertyList(propertyList);
-
-        return propertyList;
     }
 
     /**
@@ -123,5 +129,30 @@ public class kcModelWrapper extends GreatQuestArchiveFile implements IFileExport
      */
     public void openMeshViewer() {
         MeshViewController.setupMeshViewer(getGameInstance(), new GreatQuestModelViewController(getGameInstance()), new GreatQuestModelMesh(this));
+    }
+
+    /**
+     * Gets or creates a preview image for the 3D model
+     * @return previewImage
+     */
+    public Embedded3DViewComponent<?> createEmbeddedModelViewer() {
+        GreatQuestModelMesh modelMesh = new GreatQuestModelMesh(this);
+        Embedded3DViewComponent<?> component = new Embedded3DViewComponent<>(getGameInstance());
+        component.addMeshCollection(modelMesh.getActualMesh(), (index, mesh, meshView) -> {
+            if (mesh != null && mesh.isSkeletonAxisRotationApplied())
+                GreatQuestUtils.setEntityRotation(meshView, 0, 0, 0, true);
+        });
+        component.getCamera().setFarClip(GreatQuestModelViewController.DEFAULT_FAR_CLIP);
+        component.getCamera().setNearClip(GreatQuestModelViewController.DEFAULT_NEAR_CLIP);
+        component.getCamera().setTranslateX(GreatQuestModelViewController.DEFAULT_CAMERA_OFFSET.getX());
+        component.getCamera().setTranslateY(-GreatQuestModelViewController.DEFAULT_CAMERA_OFFSET.getY() + .25);
+        component.getCamera().setTranslateZ(-GreatQuestModelViewController.DEFAULT_CAMERA_OFFSET.getZ());
+        component.getRotationCamera().getRotationX().setAngle(GreatQuestModelViewController.DEFAULT_CAMERA_PITCH);
+        component.getRotationCamera().getRotationY().setAngle(GreatQuestModelViewController.DEFAULT_CAMERA_YAW);
+        component.getRotationCamera().setMovementFactor(GreatQuestModelViewController.DEFAULT_ZOOM_FACTOR);
+        component.getRoot3D().getChildren().add(new AmbientLight(Color.WHITE)); // Fullbright.
+        component.getRootNode().setHeight(400);
+
+        return component;
     }
 }

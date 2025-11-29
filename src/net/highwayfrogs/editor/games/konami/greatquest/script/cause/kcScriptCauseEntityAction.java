@@ -16,9 +16,9 @@ public enum kcScriptCauseEntityAction {
     BUMPS(2, "When another entity/player collides/bumps into the script entity", true, true, kcEntityInheritanceGroup.PROP_OR_CHARACTER), // Target Triggers: CProp::TriggerHitCallback, CCharacter::BumpCallback
     TARGET_FOR_ATTACK(5, "When the player targets the script entity for an attack", true, false, kcEntityInheritanceGroup.ACTOR_BASE), // Target Triggers: CFrogCtl::Spit, CFrogCtl::OnBeginMissile, CFrogCtl::OnBeginMagicStone, and, CFrogCtl::OnBeginMelee
     PICKUP_ITEM(7, "When the player picks up the script entity", true, false, kcEntityInheritanceGroup.ITEM), // Target Trigger: CCharacter::PickupCallback
-    HEAL(8, "When the script entity heals", false, true, kcEntityInheritanceGroup.ACTOR), // Target Trigger: kcCActor::OnDamage
+    HEAL(8, "When the script entity heals", false, true, kcEntityInheritanceGroup.ACTOR), // Target Trigger: kcCActor::OnDamage. This looks like it's when any damage happens, but if you take a closer look, there's a check that says prevHealth < currHealth. We might patch this.
     UNKNOWN_9(9, "Never", false, false, kcEntityInheritanceGroup.ENTITY), // Bog Town - Plays Random Frogger Hurt Noise
-    DEATH(10, "When the script entity dies", false, true, kcEntityInheritanceGroup.ACTOR), // Target Trigger: kcCActor::OnDamage, NOTE: If the --PreventDeath flag is set, it looks like this trigger can still occur, as it's only the animation which doesn't occur, the health still reaches 0.
+    DEATH(10, "When the script entity dies", false, true, kcEntityInheritanceGroup.ACTOR), // Target Trigger: kcCActor::OnDamage, NOTE: If the --PreventDeath flag is set, it looks like this trigger can still occur, as it's only the animation which doesn't occur, the health still reaches 0. Remove --CanTakeDamage to prevent this.
     UNKNOWN_13(13, "Never", false, false, kcEntityInheritanceGroup.ENTITY); // Rolling Rapids Creek - Starts unused copy of tutorial sequence from after opening the locked door.
 
     private final int value;

@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
+import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.proxy.kcProxyDesc.kcCollisionGroup;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamReader;
 import net.highwayfrogs.editor.games.konami.greatquest.script.interim.kcParamWriter;
@@ -28,6 +29,7 @@ public class kcActionAttachSensor extends kcAction {
     private static final kcArgument[] ATTACH_PARTICLE = kcArgument.make(kcParamType.ATTACH_ID, "type", kcParamType.BONE_TAG, "boneId", kcParamType.HASH, "hEffect");
     private static final kcArgument[] ATTACH_LAUNCHER = kcArgument.make(kcParamType.ATTACH_ID, "type", kcParamType.BONE_TAG, "boneId", kcParamType.HASH, "hLaunchData");
     private static final kcArgument[] ATTACH_ATTACK_OR_BUMP = kcArgument.make(kcParamType.ATTACH_ID, "type", kcParamType.BONE_TAG, "boneId", kcParamType.FLOAT, "radius", kcParamType.UNSIGNED_INT, "collideWith");
+    private static final kcArgument[] ATTACH_SENSOR = kcArgument.make(kcParamType.BONE_TAG, "boneId", kcParamType.FLOAT, "radius", kcParamType.UNSIGNED_INT, "collideWith");
 
     public kcActionAttachSensor(kcActionExecutor executor, kcActionID action) {
         super(executor, action);
@@ -46,7 +48,7 @@ public class kcActionAttachSensor extends kcAction {
         } else if (firstArg == kcAttachID.LAUNCHER.ordinal()) {
             return ATTACH_LAUNCHER;
         } else if (firstArg == kcAttachID.ATTACK_SENSOR.ordinal() || firstArg == kcAttachID.BUMP_SENSOR.ordinal()) {
-            return ATTACH_ATTACK_OR_BUMP;
+            return (getActionID() == kcActionID.ATTACH_SENSOR) ? ATTACH_SENSOR : ATTACH_ATTACK_OR_BUMP;
         } else {
             return BASE_ARGUMENTS;
         }
@@ -58,10 +60,10 @@ public class kcActionAttachSensor extends kcAction {
         this.boneId.setValue(reader.next());
         switch (this.attachID) {
             case PARTICLE_EMITTER:
-                setParticleEmitterHash(reader.next().getAsInteger());
+                setParticleEmitterHash(getLogger(), reader.next().getAsInteger());
                 break;
             case LAUNCHER:
-                setLauncherDataHash(reader.next().getAsInteger());
+                setLauncherDataHash(getLogger(), reader.next().getAsInteger());
                 break;
             case ATTACK_SENSOR:
             case BUMP_SENSOR:
@@ -97,21 +99,19 @@ public class kcActionAttachSensor extends kcAction {
     @Override
     public int getGqsArgumentCount(kcArgument[] argumentTemplates) {
         int argumentCount = super.getGqsArgumentCount(argumentTemplates);
-        return (argumentTemplates == ATTACH_ATTACK_OR_BUMP) ? argumentCount - 1 : argumentCount;
+        return (argumentTemplates == ATTACH_ATTACK_OR_BUMP || argumentTemplates == ATTACH_SENSOR) ? argumentCount - 1 : argumentCount;
     }
 
     @Override
-    protected void loadArguments(OptionalArguments arguments) {
-        this.attachID = arguments.useNext().getAsEnum(kcAttachID.class);
-        this.boneId.fromConfigNode(getExecutor(), getGameInstance(), arguments.useNext(), kcParamType.BONE_TAG);
+    protected void loadArguments(ILogger logger, OptionalArguments arguments) {
+        this.attachID = getActionID() == kcActionID.ATTACH_SENSOR ? kcAttachID.ATTACK_SENSOR : arguments.useNext().getAsEnum(kcAttachID.class);
+        this.boneId.fromConfigNode(logger, getExecutor(), getGameInstance(), arguments.useNext(), kcParamType.BONE_TAG);
         switch (this.attachID) {
             case PARTICLE_EMITTER:
-                int emitterHash = GreatQuestUtils.getAsHash(arguments.useNext(), -1, this.particleEmitterRef);
-                setParticleEmitterHash(emitterHash);
+                resolveResource(logger, arguments.useNext(), kcCResourceGenericType.PARTICLE_EMITTER_PARAM, this.particleEmitterRef);
                 break;
             case LAUNCHER:
-                int launcherHash = GreatQuestUtils.getAsHash(arguments.useNext(), -1, this.launchDataRef);
-                setLauncherDataHash(launcherHash);
+                resolveResource(logger, arguments.useNext(), kcCResourceGenericType.LAUNCHER_DESCRIPTION, this.launchDataRef);
                 break;
             case ATTACK_SENSOR:
             case BUMP_SENSOR:
@@ -124,8 +124,9 @@ public class kcActionAttachSensor extends kcAction {
     }
 
     @Override
-    protected void saveArguments(OptionalArguments arguments, kcScriptDisplaySettings settings) {
-        arguments.createNext().setAsEnum(this.attachID);
+    protected void saveArguments(ILogger logger, OptionalArguments arguments, kcScriptDisplaySettings settings) {
+        if (getActionID() != kcActionID.ATTACH_SENSOR)
+            arguments.createNext().setAsEnum(this.attachID);
         this.boneId.toConfigNode(getExecutor(), settings, arguments.createNext(), kcParamType.BONE_TAG);
         switch (this.attachID) {
             case PARTICLE_EMITTER:
@@ -156,11 +157,11 @@ public class kcActionAttachSensor extends kcAction {
         }
     }
 
-    private void setParticleEmitterHash(int particleEmitterHash) {
-        GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, getChunkedFile(), this, this.particleEmitterRef, particleEmitterHash, true);
+    private void setParticleEmitterHash(ILogger logger, int particleEmitterHash) {
+        GreatQuestUtils.resolveLevelResourceHash(logger, kcCResourceGenericType.PARTICLE_EMITTER_PARAM, getChunkedFile(), this, this.particleEmitterRef, particleEmitterHash, true);
     }
 
-    private void setLauncherDataHash(int launcherDataHash) {
-        GreatQuestUtils.resolveResourceHash(kcCResourceGeneric.class, getChunkedFile(), this, this.launchDataRef, launcherDataHash, true);
+    private void setLauncherDataHash(ILogger logger, int launcherDataHash) {
+        GreatQuestUtils.resolveLevelResourceHash(logger, kcCResourceGenericType.LAUNCHER_DESCRIPTION, getChunkedFile(), this, this.launchDataRef, launcherDataHash, true);
     }
 }

@@ -54,7 +54,7 @@ public class CItemDesc extends kcActorBaseDesc {
     static {
         ITEM_CAPSULE_DESCRIPTION = new kcProxyCapsuleDesc(null);
         // Seen in CItem::Init
-        ITEM_CAPSULE_DESCRIPTION.setReaction(ProxyReact.NOTIFY);
+        ITEM_CAPSULE_DESCRIPTION.setReaction(ProxyReact.PENETRATE);
         ITEM_CAPSULE_DESCRIPTION.setCollisionGroup(kcCollisionGroup.ITEM.getBitMask());
         ITEM_CAPSULE_DESCRIPTION.setCollideWith(kcCollisionGroup.PLAYER.getBitMask());
         ITEM_CAPSULE_DESCRIPTION.setRadius(.35F);

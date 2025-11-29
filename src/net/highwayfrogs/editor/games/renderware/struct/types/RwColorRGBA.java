@@ -3,14 +3,14 @@ package net.highwayfrogs.editor.games.renderware.struct.types;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.struct.RwStruct;
 import net.highwayfrogs.editor.games.renderware.struct.RwStructType;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.DataUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents RwRGBA defined in bacolor.h
@@ -47,13 +47,12 @@ public class RwColorRGBA extends RwStruct {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Red", Integer.toHexString(getRed() & 0xFF).toUpperCase());
         propertyList.add("Green", Integer.toHexString(getGreen() & 0xFF).toUpperCase());
         propertyList.add("Blue", Integer.toHexString(getBlue() & 0xFF).toUpperCase());
         propertyList.add("Alpha", Integer.toHexString(getAlpha() & 0xFF).toUpperCase());
-        return propertyList;
     }
 
     @Override

@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.sony.beastwars.map;
 
 import javafx.scene.control.Alert.AlertType;
-import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsTexFile;
 import net.highwayfrogs.editor.games.sony.beastwars.map.data.BeastWarsMapCollprim;
@@ -32,7 +31,7 @@ public class BeastWarsMapObjConverter {
      */
     public static void exportMapToObj(BeastWarsMapFile map) {
         String strippedName = FileUtils.stripExtension(map.getFileDisplayName());
-        exportMapToObj(new File(FrogLordApplication.getWorkingDirectory(), strippedName), strippedName, map);
+        exportMapToObj(new File(map.getGameInstance().getMainGameFolder(), strippedName), strippedName, map);
     }
 
     /**

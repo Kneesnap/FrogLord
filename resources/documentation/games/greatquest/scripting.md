@@ -102,7 +102,7 @@ In The Great Quest, it would look like:
 cause=OnPlayer INTERACT
 # The following effect will make FFM send the number currently in entity variable slot zero to herself.
 # Therefore, if the number in slot 0 is zero, then FFM will 
-SendNumber ENTITY_VARIABLE 0
+SendNumber VARIABLE 0
 
 # This function will run ONLY when FFM receives the number zero.
 [[[[Function]]]]
@@ -120,7 +120,7 @@ Each entity has 8 variable slots available, and are zero-indexed. In other words
 Any whole number can be put in each slot, despite there being only 8 slots per entity.
 
 **What is this used for?**  
-If you want to have different behavior from the same cause, use `SendNumber ENTITY_VARIABLE #`.  
+If you want to have different behavior from the same cause, use `SendNumber VARIABLE #`.  
 That `#` character should actually be a number, which refers to a variable slot. Whatever number is found within that slot will be sent.  
 Then, the entity which receives the number (the entity who sent it) checks its functions.  
 If it finds a cause `cause=OnReceiveNumber EQUAL_TO <the number sent>`, that function will run.  
@@ -152,7 +152,7 @@ cause=... # This function's cause doesn't matter for the purpose of this example
 # This will send a number cause with the number that is currently in Variable #0.
 # By having two separate functions which listen for different numbers, we can control which function runs based on the variable.
 # This can be used to recreate the conceptual behavior of "If X, do Y, otherwise, do Z.".
-SendNumber ENTITY_VARIABLE 0 
+SendNumber VARIABLE 0 
 ```
 
 ### Action Sequences
@@ -296,11 +296,17 @@ OnEntity ENTERS_TARGET_WAYPOINT_AREA # Executes when the script owner enters the
 OnEntity LEAVES_TARGET_WAYPOINT_AREA # Executes when the script owner leaves the area of its target waypoint.
 ```
 
+> [!WARNING]  
+> If the entity (player or non-player) dies, they will NOT trigger this cause.  
+
 ### OnWaypoint
 **Summary:** Executes when an entity enters/leaves the script owner (who must be a waypoint)'s area.  
 **Supported Entity Types:** Waypoints  
 <!---**Ghidra Reference (Ignore):** `sSendWaypointStatus`-->
 **Usage:** `OnWaypoint <ENTITY_ENTERS|ENTITY_LEAVES> <entityName>`
+
+> [!WARNING]  
+> If the entity (player or non-player) dies, they will NOT trigger this cause.  
 
 ## Available Effects
 The following documentation explains all script effects/actions found within the game, and how they work.
@@ -318,13 +324,13 @@ Not used in the vanilla game.
 **Usage:** `Do not use.`  
 Not used in the vanilla game.
 
-### SetActive (Script Only)
+### Entity.Activate/Entity.Deactivate (Script Only)
 **Summary:** Set whether the script owner is active. (An inactive entity will be invisible and lack collision)  
 **Supported Entity Types:** All  
 <!---**Ghidra Reference (Ignore):** `kcCEntity::OnCommand -> kcCEntity::ActivateAndUnhide`-->
 **Usage:** `Entity.Activate` and `Entity.Deactivate`  
 **Alias:** `SetActive <true|false>` (DOES NOT WORK)  
-Waypoints are capable of activating invisible parts of the map when this is used. 
+Waypoints may re-activate activate invisible entities and invisible parts of the map (covered by the waypoint's area) when `Entity.Activate` is used.  
 
 ### SetEnable (Unsupported)
 **Summary:** Does nothing.  
@@ -407,10 +413,27 @@ For example, most enemies have `"FrogInst001"` as their target, so they attack F
 Others, such as Fairy Frogmother face the player by setting their target as `FrogInst001`.
 
 > [!IMPORTANT]
-> If the `--DisableAI` flag is set, the entity will not pathfind UNLESS the target is a waypoint.
+> If the `--DisableAI` flag is set, the entity will not pathfind UNLESS the target is a waypoint.  
+> The entity description must have `attackGoalPercent` set to a non-zero number for this to happen, and have a valid walk/run sequence configured.  
 
-> [!CAUTION]
-> If the entity has the `--FaceTargetEntity` flag set, it may not be able to move vertically (up/down).
+> [!CAUTION]  
+> If the entity has the `--FaceTargetEntity` flag set, it may not be able to move vertically (up/down).  
+> The entity's head may also look in a strange/unexpected direction when this occurs.  
+
+> [!NOTE]  
+> **Pathfind Troubleshooting:**  
+> 1. If the entity is not moving...
+> - 1a) Check the entity is a character. Other kinds of entities such as props or items will not pathfind.
+> - 1b) If the entity is frozen in-place, was the entity deactivated? (Try `Entity.Activate`, adding `--ForceStayActive`, etc.)
+> - 1c) Does the entity description have the `attackGoalPercent` property set to 100? The "attack goal" is what causes pathfinding.
+> - 1d) Is the `--DisableAI` flag set? This will prevent pathfinding, UNLESS the target is a waypoint entity.
+> - 1e) Does the entity have an action sequence setup correctly to animate walking/flying/etc? (Eg: `NrmWalk01`). It's actually the movement as part of the animation which causes an entity to move in the world. 
+> - 1f) Check the entity's bounding sphere, and the waypoint's size. They might be too large, and the entity arrives too early.
+> 2. If the entity walks to the target, but does not stop walking...  
+> - 2a) Set the entity's sequence to a new non-walking animation. The walking animation will continue to move them if it is still active.  
+> - 2b) Use `SetTarget null` or add `--DisableAI` to ensure the entity's AI doesn't try to re-activate.  
+> 3. If the entity is moving seemingly randomly, and not towards a goal...  
+> - This is the "wandering" behavior, and is what an entity will do by default. Make sure `attackGoalPercent` is set in the entity description so they will "attack" instead of wandering.  
 
 ### SetAnimationSpeed (Both)
 **Summary:** Sets the animation speed for the script owner.  
@@ -419,6 +442,10 @@ Others, such as Fairy Frogmother face the player by setting their target as `Fro
 **Usage:** `SetAnimationSpeed <speed>`  
 Speed is a decimal number, likely multiplicative, so 1.0 would be 1x speed, 2.5 is 2.5x speed, etc.  
 Not used in the vanilla game.
+
+> [!WARNING]  
+> The game may crash if `SetAnimationSpeed` is used before `SetAnimation.  
+> Instead, use `SetAnimationSpeed` immediately after `SetAnimation` to avoid crashing the game.  
 
 ### SetAxisPosition (Script Only)
 **Summary:** Sets the script owner's positional coordinate on the given axis.  
@@ -434,16 +461,23 @@ See `SetPosition` for any limitations.
 **Supported Entity Types:** All 3D Entities  
 <!---**Ghidra Reference (Ignore):** `kcCEntity3D::OnCommand`-->
 **Usage:** `SetPosition <x> <y> <z>`  
-**Warning:**  
-```
-This command does not work properly when used on the player if collision sits between the player and the new position.
-If collision is disabled for the player, the teleport will work up until the moment collision is re-enabled, when the player will be snapped back.
 
-It is recommended to fade the screen out, and perform a series of teleports (With at least one frame of delay between each) to get the player to the destination without going through any collision.
-The other alternative is to set the player's respawn point and kill the player which is faster for testing, but not great for player experience.
-
-Further research/debugging is necessary to determine what causes this issue.
-```
+> [!WARNING]  
+> This command is much more difficult to use than it sounds.
+> This was most likely an oversight/bug on the original developer's part.  
+> The game's collision system prevents character entities (including the player) from moving through solid collision, including from `SetPosition`.  
+> If the `--EnableCollision` is removed before the teleport, everything works!  
+> But the instant collision is re-enabled, the entity will snap back to their previous position as if they had never left.  
+> 
+> **Workarounds (Select the best one for the situation):**  
+> - If you do not need collision, remove the `--EnableCollision` flag.  
+> - If the entity is the player, setting the player's checkpoint position, fading the screen out then killing them before fading back in will bypass any collision checks. Replace the regular death sounds with empty SFX, and add random death noises only when the player isn't getting teleported via scripts.  
+> - Have two separate instances of the same entity type, and switch between them. Eg: Fade the screen out, terminate the first entity instance, and unhide the second.  
+> - Fade the screen out, and teleport the entity through a series of pre-selected positions (ideally up in the sky) which ensure the player never hits any collision.  
+> - Patch the game executable to fix this bug. (Hasn't been done yet.)  
+>
+> Further research/debugging is necessary to determine what causes this issue. <!-- TODO: Do this research -->  
+> This issue does not seem to impact non-character entities, although this might just be due to them not having `collideWith=Terrain`.  
 
 ### AddToAxisPosition (Script Only)
 **Summary:** Offsets the script owner's current position by the given value on the specified axis.  
@@ -507,16 +541,19 @@ Not used in the vanilla game.
 **Usage:** `LookAtTargetEntity`  
 Not used in the vanilla game.
 
+> [!NOTE]  
+> When used in an entity script (as opposed to an action sequence), this is only capable of rotating on the Y axis.
+
 ### SetAnimation (Both)
 **Summary:** Changes the animation currently performed.  
 **Supported Entity Types:** Base Actors  
 <!---**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction, kcCActorBase::OnCommand/kcCActor::OnCommand`-->
-**Usage:** `SetAnimation <animationFileName> <transitionTime> [--Repeat] [--FirstAnimationInSequence] [--StartTime <startTimeInSeconds>]`  
-The `transitionTime` argument is how long it takes to switch (blend?) from the current animation to the new one. 0 would be instant.  
+**Usage:** `SetAnimation <animationFileName> <transitionTime> [--Repeat] [--Reverse] [--ReverseOnComplete] [--StartTime <startTimeInSeconds>]`  
+The `transitionTime` argument is how long (in seconds) it takes to switch (blend?) from the current animation to the new one. 0 would be instant.  
 While this effect appears to work outside an action sequence, the game scripts always use `SetSequence` instead of directly calling `SetAnimation`.  
-In other words, this command should mainly be called from action sequences, and not scripts.  
-Scripts should instead use `SetSequence` to apply the sequence which then in-turn calls `SetAnimation`.  
-It has been done this way so that the AI system can also activate sequences without causing major visual issues depending on what the script is doing.  
+This is likely to allow the AI system choose sequences without fighting against what the script is doing.  
+Action sequences also have more animation features like `WaitForAnimation`.  
+As such, it is usually recommended to use `SetAnimation` in action sequences instead of scripts.  
 
 ### SetSequence (Script Only)
 **Summary:** Sets the script owner's active action sequence.  
@@ -534,6 +571,11 @@ It has been done this way so that the AI system can also activate sequences with
 # This seems to combine the current animation with any new ones
 # Eg: Only the bones which aren't animated on the existing sequence will be animated from the new one.
 ```
+
+> [!NOTE]  
+> By default, all entities use the `NrmIdle01` sequence.  
+> But on the PC version, entities T-Pose until the player gets near them.  
+> This can be fixed by adding `Entity.Activate` or `Entity.EnableUpdates` in `cause=OnLevel BEGIN`.  
 
 ### Wait (Action Sequence Only)
 **Summary:** Wait a given amount of time before continuing the action sequence.  
@@ -558,10 +600,22 @@ Not used in the vanilla game.
 <!---**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction`-->
 **Usage:** `WaitForAnimation`  
 
+> [!WARNING]  
+> When `SetAnimation` is called with a NON-ZERO transition time, WaitForAnimation may instantly continue without waiting.  
+> The reason for this is currently unknown.  
+
 ### Loop (Action Sequence Only)
 **Summary:** The action sequence will restart the number of times specified.  
 <!---**Ghidra Reference (Ignore):** `kcCActorBase::ProcessAction`-->
 **Usage:** `Loop <numberOfTimesToLoop>`  
+
+> [!NOTE]  
+> In order to loop as many times as possible, use `Loop MAX`.  
+
+> [!WARNING]  
+> The first action in an action sequence will be skipped when looping.  
+> This MIGHT not be a bug, because the `"Gavin[Sit]"` sequence in Bog Town uses this feature to let Gavin sit down once, then loop through the rest once sitting.  
+> <!-- This is because kcCActorBase::UpdateBehavior sets mCurAction to be zero, and it gets incremented right before ProcessAction() gets called, so the first action to be called is action 1. -->
 
 ### ApplyImpulse (Both)
 **Summary:** Applies a physics-based motion "impulse" (instantaneous force) to the script owner.  
@@ -619,6 +673,17 @@ The timer will start counting down from the number of seconds given.
 Once the timer reaches 0, it will send `OnAlarm` with the alarm ID provided.  
 The main purpose of this feature is to run script effects after a delay.  
 
+> [!NOTE]  
+> In order to repeat for as long as possible, use `--Repeat MAX`.  
+> After approximately 5.2 days of uptime, the game's i32 tick counter will overflow, (usually) causing all active alarms to break. <!-- `kcCGameSystem::mTicksSinceStartup` -->  
+> Using `--Repeat MAX` will ensure the alarms last until this 5.2 day limit.  
+> New alarms can still be registered and appear to work correctly.  
+
+> [!NOTE]  
+> An alarm duration of zero (Eg: `SetAlarm <alarmId> 0`) will cause the alarm to finish immediately after all scripts are processed.  
+> In practice, this means the cause will run on the very next game frame.  
+> To make an alarm run every single game frame, use `SetAlarm <alarmId> 0 --Repeat MAX`.  
+
 ### TriggerEvent (Both)
 **Summary:** Triggers a named event.  
 **Supported Entity Types:** All  
@@ -630,7 +695,7 @@ The main purpose of this feature is to run script effects after a delay.
 "LevelCompleted" # Destroys all active cameras, and sets a flag for completing the level. Triggered by in-game scripts.
 "BeginScreenFade" # Causes the screen to fade to black. Called by a lot of things.
 "EndScreenFade" # Unfades/unhides the contents of the screen. Called by a lot of things.
-"LockPlayerControl" # Disables controller/keyboard input from influencing the player character. NOTE: This will be automatically be enabled when a dialog box opens, and disabled when closed, so using dialog will unlock player control. Exclusively called from scripts. 
+"LockPlayerControl" # Disables controller/keyboard input from influencing the player character. NOTE: This will be automatically be enabled when a dialog box opens, and disabled when closed, so using dialog will unlock player control. Exclusively called from scripts.
 "UnlockPlayerControl" # Re-enables controller/keyboard input for the player character. Exclusively called from scripts.
 "ShakeCameraRand" # Shakes the camera randomly. Exclusively used by scripts. NOTE: If this does nothing, ActivateCamera/DeactivateCamera should be used immediately before/after this event is triggered.
 "PlayMidMovie01" # Plays the FMV "OMOVIES/MDRAGONF.PSS"/"mid_catdragon_fire.fpc" (This file does not exist in the vanilla game.) Description: "Play Dragon Fire Movie"
@@ -693,6 +758,9 @@ Valid variable IDs are between 0 and 7.
 The provided value must be a whole number.  
 The only way to use a variable is with the `SendNumber` effect.  
 
+> [!NOTE]  
+> Variables can only represent whole numbers, between `-32768` and `32767`.  
+
 ### AddToVariable (Script Only)
 **Summary:** Adds a value to one of the script owner's entity variables by its ID.  
 **Supported Entity Types:** All  
@@ -703,24 +771,27 @@ Valid variable IDs are between 0 and 7.
 The provided value must be a whole number.  
 The only way to use a variable is with the `SendNumber` effect.
 
+> [!NOTE]  
+> Variables can only represent whole numbers, between `-32768` and `32767`.  
+
 ### SendNumber (Script Only)
 **Summary:** Sends a number, which will cause the `OnReceiveNumber` script cause.  
 **Supported Entity Types:** All  
 <!---**Ghidra Reference (Ignore):** `kcCEntity::OnCommand`-->
-**Usage:** `SendNumber <LITERAL_NUMBER|ENTITY_VARIABLE|RANDOM> <number>`  
+**Usage:** `SendNumber <LITERAL|VARIABLE|RANDOM> <number>`  
 Think of `SendNumber` like a postal service, but a crappy one which only delivers a piece of paper containing a single number written on it.  
 Each entity can use the `SendNumber` postal service to send one number to themselves or to other entities.  
 Then, the entity who receives the number from the postal service will execute its functions caused by `OnReceiveNumber`, if the number they got from the postal service matches the cause.
 
 ```properties
-LITERAL_NUMBER # The number sent with the postal service is the argument named <number> in the above example.
-ENTITY_VARIABLE # The number sent with the postal service is the value in the provided entity variable slot.
+LITERAL # The number sent with the postal service is the argument named <number> in the above example.
+VARIABLE # The number sent with the postal service is the value in the provided entity variable slot.
 RANDOM # The number sent with the postal service is a random number between 0 and provided number.
 # When using RANDOM, the number provided is exclusive, so for 'SendNumber RANDOM 5' the random numbers generated are between 0 and 4.
 ```
 
 If the `--AsEntity` flag is included, the number will be sent to the `--AsEntity` target instead of the script owner.  
-When sending an `ENTITY_VARIABLE` the number sent will be the value of the variable obtained from the script owner, instead of from the `--AsEntity` target.  
+When sending a `VARIABLE`, the number sent will be the value of the variable obtained from the script owner, instead of from the `--AsEntity` target.  
 
 ### SpawnParticleEffect (Script Only)
 **Summary:** Sets up a particle emitter for the script owner.  
@@ -757,6 +828,10 @@ Using the `--AsEntity` flag will change both the sender and the receiver, unlike
 **Usage:** `SetPlayerHasItem <inventoryItem> <true|false>`  
 Click [here](../../../../src/net/highwayfrogs/editor/games/konami/greatquest/generic/InventoryItem.java) to see a list of InventoryItem values.
 
+> [!NOTE]  
+> `STONE_FIRE`, `STONE_ICE`, `STONE_SPEED`, `STATUE`, and `CROWN` are tracked between levels/in the save file.  
+> This can be expanded by changing the hardcoded list of inventory items named `CarryOverItems` in the executable, or by patching `CInventory::Reset` to not reset these items.  
+
 ### TakeDamage (Script Only)
 **Summary:** The script owner takes damage (loses health).  
 **Supported Entity Types:** Base Actors  
@@ -785,8 +860,8 @@ A negative number will heal the entity.
 <!---**Ghidra Reference (Ignore):** `CCharacter::OnCommand`-->
 **Usage:** `SetSavePoint <savePointId> <x> <y> <z>`  
 The player's respawn position will be set to the new coordinates.  
-Also, the game will find an entity named `"Save pointInstXXX"` where `XXX` is the `savePointId`.  
-If such an entity is found, particles will be played at the position of that entity.  
+Also, the game will search for an entity named `"Save pointInstXXX"` where `XXX` is the `savePointId`.  
+This entity is optional to create, but if it is created, checkpoint particles will be displayed at that entity's position.  
 
 ### SetUpdatesEnabled (Script Only)
 **Summary:** Sets whether updates are enabled for the script owner.  
@@ -795,12 +870,15 @@ If such an entity is found, particles will be played at the position of that ent
 **Usage:** `Entity.EnableUpdates` and `Entity.DisableUpdates`  
 **Alias:** `SetUpdatesEnabled <true|false>` (DOES NOT WORK)  
 See the documentation for "entity updates" below for an explanation.  
+Note that this will not prevent the game from activating/deactivating entity updates based on if it is on-screen or not.  
 
 ### SetAIGoal (Script Only)
 **Summary:** Sets the script owner's AI goal.  
 **Supported Entity Types:** CCharacter  
 <!---**Ghidra Reference (Ignore):** `CCharacter::OnCommand`-->
 **Usage:** `SetAIGoal <FIND|FLEE|WANDER|GUARD|DEAD|SLEEP>`  
+This command is not very useful, especially considering the entity may choose a different AI goal at any time.  
+
 ```properties
 # Notable Goal Types:
 FIND # Attempts to run towards the target, and attack if possible. Will attempt to wander sometimes if it gets stuck.
@@ -810,6 +888,10 @@ GUARD # Seems to try to walk along a waypoint path back and forth until it has a
 DEAD # Applies the entity death animation.
 SLEEP # Applies the entity sleep animation.
 ```
+
+> [!NOTE]
+> `SetAIGoal SCRIPT` can be seen in certain levels such as The Dark Trail Ruins.  
+> This has not been proven to actually do anything, and so far there is no explanation for why this is present.  
 
 ### AttachSensor / Attach (Script Only)
 **Summary:** Attaches a sensor to the script owner.  
@@ -848,7 +930,7 @@ Attach PARTICLE_EMITTER <boneNameOrId> <particleEmitterParamName>
 <!---**Ghidra Reference (Ignore):** `CCharacter::OnCommand`-->
 **Usage:** `Detach PARTICLE_EMITTER <boneNameOrId>`
 
-### SetWorldActive
+### Entity.ActivateSpecial
 **Summary:** Set whether entities/terrain are enabled in the world area covered by the waypoint.  
 **Supported Entity Types:** Waypoint  
 <!---**Ghidra Reference (Ignore):** `kcCEntity::OnCommand`-->
@@ -875,6 +957,10 @@ BOTH # Controls both entity visibility and terrain visibility.
 **Usage:** `ActivateCamera <transitionInSeconds>`  
 `transitionInSeconds` is a decimal number indicating how long it will take (in seconds) to switch to the new camera.
 
+> [!WARNING]
+> When activating a second camera, remember to use `DeactivateCamera 0` immediately before activating a new camera.  
+> Otherwise, the camera may behave in unexpected ways.  
+
 ### DeactivateCamera (Script Only)
 **Summary:** Deactivates the current camera, reverting to the previous camera.  
 **Supported Entity Types:** All  
@@ -889,7 +975,7 @@ BOTH # Controls both entity visibility and terrain visibility.
 **Usage:** `SetCameraTarget <entityName>`
 
 ### SetCameraPivot (Script Only)
-**Summary:** Set the rotational pivot entity for the current camera.
+**Summary:** Set the rotational pivot entity for the current camera.  
 **Supported Entity Types:** All  
 <!---**Ghidra Reference (Ignore):** `kcCScriptMgr::FireCameraEffect -> kcCCameraStack::OnSetPivot`-->
 **Usage:** `SetCameraPivot <entityName>`  
@@ -905,15 +991,15 @@ The value is a decimal number.
 
 ```properties
 # kcCameraPivotParam Values:
-PIVOT_DISTANCE # How much distance to put between the camera and the pivot entity.
+PIVOT_DISTANCE # How much distance to put between the camera and the pivot entity. On the follow camera, this is the "follow distance"
 TARGET_OFFSET_X # An offset to the position the camera looks at (the target entity).
 TARGET_OFFSET_Y # An offset to the position the camera looks at (the target entity).
 TARGET_OFFSET_Z # An offset to the position the camera looks at (the target entity).
 PIVOT_OFFSET_X # An offset to the pivot position (the pivot entity).
-PIVOT_OFFSET_Y # An offset to the pivot position (the pivot entity).
+PIVOT_OFFSET_Y # An offset to the pivot position (the pivot entity). On the follow camera, this is the "follow vertex offset"
 PIVOT_OFFSET_Z # An offset to the pivot position (the pivot entity).
 TRANSITION_DURATION # How long the camera transition should take.
-CAMERA_BASE_FLAGS # The flags to apply to the camera entity. (Currently undocumented/unknown)
+LOCK_PIVOT_Y # The camera will have its pivot Y locked to the target Y. Seems to only ever be used by accident, as its only usage is in The Tree of Knowledge, and the camera cuts off the top of Mr. D because of this param getting set.
 ```
 
 ## Extra Documentation
@@ -986,39 +1072,11 @@ When a waypoint entity is activated/deactivated, all entities & terrain buffers 
 Waypoints do not appear to automatically activate/deactivate based on player position like the rest, presumably because they are not rendered.  
 NOTE: Bounding boxes must ALSO have bounding spheres set which cover the same area too, otherwise the game will skip certain parts of the world. (`sTestWaypointIntersection`)
 
-## Entity Descriptions
-TODO: Document Entity descriptions.
-
-## Collision
-Collision happens through what are called "collision proxies", which are stand-ins for objects (terrain, entities, etc.)
-These proxies are 3D shapes which aren't shown in-game, but can be previewed using FrogLord.  
-There are two kinds of proxies, "capsules" and "triangle meshes".
-
-**Capsules (kcCProxyCapsule):**  
-A "proxy capsule" is a pill-shaped area (a cylinder with a round top/bottom). These are very fast but not very flexible.
-
-TODO: Creating through configurations.
-TODO: Example image?
-
-**Triangle Meshes (kcCProxyTriMesh):**  
-A "triangle mesh" is a just a normal 3D model, but without any textures.
-These are more flexible than capsules but do not perform very well.  
-Note that these cannot have animations like the models which get displayed in-game can.  
-
-TODO: Creating through configurations.
-TODO: Example image?
-
-### There's more to collision though!
-Before the proxy will be tested, there is a sphere on every actor description.  
-This sphere is a very fast collision test which gets checked BEFORE the proxies are tested.  
-This is because spheres are extremely fast/quick/easy to check, so the sphere can eliminate some of the more heavy collision checks.  
-
-
 ### Waypoint Collision
 Waypoints are special, as they do not have collision proxy data.  
 They can either have a `BOUNDING_BOX` or a `SPHERE` shape.
 If a sphere is chosen, the entity sphere described before is used.  
-If a bounding box is selected, the sphere appears to be completely ignored, and the box dimensions are found in the waypoint description data instead of a collision proxy.  
+If a bounding box is selected, the sphere is completely ignored, and the box dimensions are configured in the waypoint description data (instead of a collision proxy).  
 
 ### Items
 Items are also special, because their collision proxy data is hardcoded. (Applied by `CItem::Init`.)  
@@ -1047,3 +1105,90 @@ Climbable # 31, Seems to be set on climbable models such as ladders and vines.
 # To specify one of the unused collision groups, use the following:
 UnnamedGroupXX # Where XX is a number between 0 and 31 and is not one of the numbers listed above. For example: UnnamedGroup17
 ```
+
+### Common Problems (Troubleshooting)
+
+#### When using multiple .gqs files, there are warnings about using an entity defined in another .gqs file.  
+Use `--ExternalEntity` on a script command/effect to indicate that the entity is defined somewhere else, and no warning should be shown if the entity is not found.  
+
+### Technical Details
+The following detail specifics about how the scripting system works at a more technical level.  
+In most cases, understanding these will not be necessary.  
+
+#### When specifically do script functions and their effects run, and in what order?  
+**Ordering Notes:**  
+- If a script command causes another function (Eg: SendNumber causing OnReceiveNumber), the first function will still run all of its commands before the second one runs.
+- The function for a cause will run on the next game tick AFTER the cause is sent, UNLESS it is caused by the script itself (eg: OnReceiveNumber triggered by using SendNumber).
+- Script effects/commands in a function do not run in the order written. Instead, effects/commands execute on a per-entity basis. The last effect/command's execution entity will be the first entity to run ALL of its effects.
+- FrogLord manages the functions so that within each entity, effects/commands will run in the order which they are written in a .gqs file (when possible).
+
+> [!NOTE]  
+> Some day, it might be worthwhile sometime to patch the `kcCScriptMgr::Fire*Effect` methods to call kcCEntity::OnCommand directly instead of submitting to a queue.  
+> This queue system is poor, because it has growth of O(n^2) (where n is the size of the queue, aka the number of commands/effects to run this tick).  
+> This is because the `kcCPriQueue::Pop` method iterates through the entire queue before popping a value.  
+> This would not only be more efficient, but also result in significantly more deterministic behavior for when effects run.  
+
+<details>
+  <summary>Implementation details</summary>
+
+All entity scripts run when the function's script cause happens (eg: `OnDamage MELEE` happens when the actor takes melee damage).  
+To broadcast a script cause, a message must be sent to the `kcCScriptMgr` entity using `kcCMsgPool::SendMsg` in the `kcCEntity::mpMsgStore`, containing information such as what type of cause happened (`OnDamage`), and supplementary information such as the type of damage (`MELEE`.)  
+In practice, this is just a LIFO priority queue which tracks which entities should be processed in what order.
+
+At the very start of the next render update (frame), one of the very first things to happens is that the game will process the message queue (`kcCEntity::ProcessQueuedMessages`).  
+The message queue prioritizes lower priority messages first.  
+For instance, all priority 1 messages will be processed in FIFO order before the first priority 2 message is processed.  
+
+When an entity is processed, ALL of its messages will be processed in order, until the entity's mailbox is empty.  
+This means the scripts will run together at the time of the first message received by that entity.  
+Processing the message means running the `kcCEntity::OnCommand` function for the entity receiving the message/command.  
+
+Since we're processing script causes right now for the `kcCScriptMgr` entity, this will run `kcCScriptMgr::OnCommand`.  
+This function checks the target entity's script for a function with a matching cause to run.  
+If one is found, the function's effects/commands will be added to the queue.  
+
+Because the `kcScriptMgr` has a priority of zero, in the vanilla game it will queue up all script functions before the first script command actually runs.  
+All remaining script effects will run now as part of the same process of reading messages from the queue.  
+
+Do note that both the message queue and the entity mailbox queue are LIFO order, so FrogLord must reverse the order of script instructions to ensure they run in a semi-intuitive order.  
+
+**Exceptions:**
+- Player entities (FrogInst001) always have priority 2, and everything else has priority 1. Therefore, player entity functions will always run last.
+- Camera commands are not submitted to the queue for execution, and will run before any other effect, because they will run while the `kcScriptMgr` entity is generating messages for each command/effect, instead of as part of the message queue.
+
+That's a lot, but the big takeaway is that a function in gqs written as
+```PowerShell
+[[[[Function]]]]
+cause=OnReceiveNumber EQUAL_TO 0
+Entity.Activate
+Entity.Activate --AsEntity "Geeky BillInst003"
+SetSequence "NrmWalk01"
+SetSavePoint 002 -42.0 2.1 6.0 --AsEntity "FrogInst001"
+TakeDamage 100 --Melee --AsEntity "FrogInst001"
+SetAlarm 0 6
+```
+
+Would run in the order:  
+```PowerShell
+SetAlarm 0 6
+SetSequence "NrmWalk01"
+Entity.Activate
+
+Entity.Activate --AsEntity "Geeky BillInst003"
+
+TakeDamage 100 --Melee --AsEntity "FrogInst001"
+SetSavePoint 002 -42.0 2.1 6.0 --AsEntity "FrogInst001"
+```
+
+FrogLord does some of its own behind-the-scenes reordering to make it a little bit more intuitive however, so it would actually run as:
+```PowerShell
+Entity.Activate
+SetSequence "NrmWalk01"
+SetAlarm 0 6 # Frogger takes 6 seconds to respawn.
+
+Entity.Activate --AsEntity "Geeky BillInst003"
+
+SetSavePoint 002 -42.0 2.1 6.0 --AsEntity "FrogInst001"
+TakeDamage 100 --Melee --AsEntity "FrogInst001"
+```
+</details>

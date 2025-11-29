@@ -1,8 +1,11 @@
 package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model;
 
+import lombok.NonNull;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceSkeleton;
 import net.highwayfrogs.editor.games.konami.greatquest.math.kcMatrix;
-import net.highwayfrogs.editor.games.konami.greatquest.model.*;
+import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelNode;
+import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelPrim;
+import net.highwayfrogs.editor.games.konami.greatquest.model.kcVertex;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshAdapterNode;
 import net.highwayfrogs.editor.system.math.Matrix4x4f;
 import net.highwayfrogs.editor.system.math.Vector3f;
@@ -14,12 +17,14 @@ import java.util.List;
  * Created by Kneesnap on 4/15/2024.
  */
 public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcModelPrim> {
+    @NonNull private final List<kcModelPrim> modelPrims;
     private final Vector3f tempVertex = new Vector3f();
     private final Vector3f tempWeighedVertex = new Vector3f();
     private final Vector3f tempTransformedVertex = new Vector3f();
 
-    public GreatQuestModelMaterialMeshNode(GreatQuestModelMaterialMesh mesh) {
+    public GreatQuestModelMaterialMeshNode(GreatQuestModelMaterialMesh mesh, List<kcModelPrim> modelPrims) {
         super(mesh);
+        this.modelPrims = modelPrims;
     }
 
     @Override
@@ -39,13 +44,8 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
         super.onAddedToMesh();
 
         // Setup vertex buffers matching this material.
-        List<kcMaterial> materials = getModel().getMaterials();
-        for (kcModelPrim modelPrim : getModel().getPrimitives()) {
-            int materialId = modelPrim.getMaterialId();
-            kcMaterial material = materialId >= 0 && materials.size() > materialId ? materials.get(materialId) : null;
-            if (material == getMesh().getGameMaterial())
-                this.add(modelPrim);
-        }
+        for (int i = 0; i < this.modelPrims.size(); i++)
+            this.add(this.modelPrims.get(i));
     }
 
     @Override
@@ -114,14 +114,6 @@ public class GreatQuestModelMaterialMeshNode extends DynamicMeshAdapterNode<kcMo
         kcVertex vertex = entry.getDataSource().getVertices().get(localTexCoordIndex);
         entry.writeTexCoordValue(localTexCoordIndex, vertex.getU0(), -vertex.getV0());
     }
-
-    /**
-     * Gets the map file which mesh data comes from.
-     */
-    public kcModel getModel() {
-        return getMesh().getModel();
-    }
-
 
     private Vector3f calculateVertexPos(kcModelPrim modelPrim, int localVertexIndex) {
         kcVertex vertex = modelPrim.getVertices().get(localVertexIndex);

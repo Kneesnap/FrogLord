@@ -3,15 +3,13 @@ package net.highwayfrogs.editor.games.konami.greatquest.map;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
-import net.highwayfrogs.editor.games.konami.greatquest.IInfoWriter.IMultiLineInfoWriter;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.KCResourceID;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -23,7 +21,7 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
  */
 @Getter
 @Setter
-public class kcEnvironment extends kcCResource implements IMultiLineInfoWriter {
+public class kcEnvironment extends kcCResource {
     private boolean lightingEnabled;
     private int ambientLightPackedColor; // uint
     private final kcLight[] directionalLights = new kcLight[3];
@@ -31,8 +29,7 @@ public class kcEnvironment extends kcCResource implements IMultiLineInfoWriter {
     private final kcFogParams fog = new kcFogParams();
     private final kcPerspective perspective = new kcPerspective();
 
-    public static final String ENVIRONMENT_NAME = "_kcEnvironment";
-    public static final int LEVEL_RESOURCE_HASH = GreatQuestUtils.hash(ENVIRONMENT_NAME);
+    public static final String RESOURCE_NAME = "_kcEnvironment";
 
     public kcEnvironment(GreatQuestChunkedFile parentFile) {
         super(parentFile, KCResourceID.RAW);
@@ -96,44 +93,21 @@ public class kcEnvironment extends kcCResource implements IMultiLineInfoWriter {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
-        // TODO: Nested properties of "Perspective": this.perspective.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
+        propertyList.addProperties("Perspective", this.perspective);
 
-        propertyList.add("Fog Enabled", this.fogEnabled);
-        // TODO: Nested properties of "Fog": this.fog.addToPropertyList(propertyList);
+        propertyList.addBoolean("Fog Enabled", this.fogEnabled, newValue -> this.fogEnabled = newValue);
+        propertyList.addProperties("Fog", this.fog);
 
-        propertyList.add("Lighting Enabled", this.lightingEnabled);
-        propertyList.add("Ambient Light Color", NumberUtils.to0PrefixedHexString(this.ambientLightPackedColor));
-
-        for (int i = 0; i < this.directionalLights.length; i++) {
-            if (this.directionalLights[i] == null)
-                continue;
-
-            // TODO: Nested properties of "Directional Light #" + (i + 1): this.this.directionalLights[i].addToPropertyList(propertyList);
-        }
-
-        return propertyList;
-    }
-
-    @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        String newPadding = padding + " ";
-
-        this.perspective.writePrefixedMultiLineInfo(builder, "Perspective", padding, newPadding);
-
-        builder.append(padding).append("Fog Enabled: ").append(this.fogEnabled).append(Constants.NEWLINE);
-        this.fog.writePrefixedMultiLineInfo(builder, "Fog", padding, newPadding);
-
-        builder.append(padding).append("Lighting Enabled: ").append(this.lightingEnabled).append(Constants.NEWLINE);
-        builder.append(padding).append("Ambient Light Color: ").append(NumberUtils.to0PrefixedHexString(this.ambientLightPackedColor)).append(Constants.NEWLINE);
+        propertyList.addBoolean("Lighting Enabled", this.lightingEnabled, newValue -> this.lightingEnabled = newValue);
+        propertyList.addInteger("Ambient Light Color", this.ambientLightPackedColor)
+                .setDataToStringConverter(NumberUtils::to0PrefixedHexString)
+                .setDataFromStringConverter(NumberUtils::parseHexInteger);
 
         for (int i = 0; i < this.directionalLights.length; i++) {
-            if (this.directionalLights[i] == null)
-                continue;
-
-            builder.append(padding).append("Directional Light #").append(i + 1).append(':').append(Constants.NEWLINE);
-            this.directionalLights[i].writeMultiLineInfo(builder, newPadding);
+            if (this.directionalLights[i] != null)
+                propertyList.addProperties("Directional Light #" + (i + 1), this.directionalLights[i]);
         }
     }
 

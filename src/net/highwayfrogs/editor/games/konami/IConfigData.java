@@ -1,6 +1,7 @@
 package net.highwayfrogs.editor.games.konami;
 
 import net.highwayfrogs.editor.system.Config;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 /**
  * Indicates an object is able to load/store its data as a Config.
@@ -10,9 +11,10 @@ public interface IConfigData {
 
     /**
      * Load instance data from a Config object.
-     * @param input the config to load data from
+     * @param logger the logger to write any messages to
+     * @param input  the config to load data from
      */
-    void fromConfig(Config input);
+    void fromConfig(ILogger logger, Config input);
 
     /**
      * Saves instance data to a Config object.

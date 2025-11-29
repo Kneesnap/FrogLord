@@ -52,13 +52,7 @@ public class Config implements IBinarySerializable {
     private final Map<String, ConfigValueNode> keyValuePairs = new HashMap<>();
     private final List<String> orderedKeyValuePairs = new ArrayList<>();
     private final Map<String, List<Config>> childConfigsByName = new HashMap<>();
-    private static final ConfigValueNode EMPTY_DEFAULT_NODE = new ConfigValueNode(null);
-    public static final char COMMENT_CHARACTER = '#';
-    public static final String COMMENT_CHARACTER_STRING = String.valueOf(COMMENT_CHARACTER); // "#"
-    public static final String ESCAPED_COMMENT_CHAR = COMMENT_CHARACTER_STRING + COMMENT_CHARACTER; // "##"
-
-    public static final String DEFAULT_EXTENSION = "cfg";
-    public static final BrowserFileType DEFAULT_FILE_TYPE = new BrowserFileType("FrogLord Config", DEFAULT_EXTENSION);
+    private int accessTracker;
 
     /**
      * The name of this section. Should NOT contain '[' or ']'.
@@ -94,101 +88,24 @@ public class Config implements IBinarySerializable {
     private final List<Config> internalChildConfigs = new ArrayList<>();
 
     /**
-     * Get the child config nodes attached to this node.
-     */
-    public List<Config> getChildConfigNodes() {
-        return Collections.unmodifiableList(this.internalChildConfigs);
-    }
-
-    /**
-     * Returns the key value pairs.
-     * To modify the contents of this, use the functions for doing so. Iterating through this will only give properties for this config, not any parent configs.
-     * @return immutableKeyValuePairs
-     */
-    public Map<String, ConfigValueNode> getKeyValuePairs() {
-        return Collections.unmodifiableMap(this.keyValuePairs);
-    }
-
-    /**
      * Gets the internal text tracking, which can be safely modified.
      * This gives the text specific to THIS config, and ONLY this config.
      */
-    @Getter
+    @Getter // Right now this should only be used for changing the text. Reading the text should be done elsewhere.
     private final List<ConfigValueNode> internalText = new ArrayList<>();
+    private final List<ConfigValueNode> immutableTextNodes = Collections.unmodifiableList(this.internalText);
 
-    public void setSectionName(String newSectionName) {
-        if (newSectionName == null)
-            throw new NullPointerException("newSectionName");
-        if (newSectionName.equalsIgnoreCase(this.sectionName))
-            return;
+    private static final ConfigValueNode EMPTY_DEFAULT_NODE = new ConfigValueNode(null);
 
-        // Remove from parent tracking.
-        if (this.parentConfig != null) {
-            List<Config> configs = this.parentConfig.childConfigsByName.get(this.sectionName);
-            if (configs.remove(this) && configs.isEmpty())
-                this.parentConfig.childConfigsByName.remove(this.sectionName, configs);
-        }
+    private static final int TRACKED_ACCESS_SECTION = Constants.BIT_FLAG_0;
+    private static final int TRACKED_ACCESS_TEXT = Constants.BIT_FLAG_1;
 
-        this.sectionName = newSectionName;
+    public static final char COMMENT_CHARACTER = '#';
+    public static final String COMMENT_CHARACTER_STRING = String.valueOf(COMMENT_CHARACTER); // "#"
+    public static final String ESCAPED_COMMENT_CHAR = COMMENT_CHARACTER_STRING + COMMENT_CHARACTER; // "##"
 
-        // Add to parent tracking.
-        if (this.parentConfig != null) {
-            List<Config> configsByName = this.parentConfig.childConfigsByName.computeIfAbsent(this.sectionName, key -> new ArrayList<>());
-            int foundIndex = Collections.binarySearch(configsByName, this, Comparator.comparingInt(this.parentConfig.internalChildConfigs::lastIndexOf));
-            if (foundIndex < 0)
-                configsByName.add(-(foundIndex + 1), this);
-        }
-    }
-
-    /**
-     * Gets the individual lines of text from a list of config value nodes.
-     * @return textStringList
-     */
-    public List<String> getTextWithoutComments() {
-        List<String> textList = new ArrayList<>(this.internalText.size());
-        for (int i = 0; i < this.internalText.size(); i++) {
-            ConfigValueNode node = this.internalText.get(i);
-            String text = node.getAsStringLiteral();
-            if (!StringUtils.isNullOrWhiteSpace(text))
-                textList.add(text);
-        }
-
-        return textList;
-    }
-
-    /**
-     * Gets the individual lines of text (with their comments) from a list of config value nodes.
-     * @return textStringList
-     */
-    public List<String> getTextWithComments() {
-        List<String> textList = new ArrayList<>(this.internalText.size());
-        for (int i = 0; i < this.internalText.size(); i++) {
-            ConfigValueNode node = this.internalText.get(i);
-            String text = node.getTextWithComments();
-            if (text != null)
-                textList.add(text);
-        }
-
-        return textList;
-    }
-
-    /**
-     * Is this Config a root config? (A root config is the configuration which parents any child configs. There is no parent to the root config.)
-     */
-    public boolean isRootNode() {
-        return this.parentConfig == null;
-    }
-
-    /**
-     * Gets the config root node.
-     */
-    public Config getRootNode() {
-        Config temp = this;
-        while (temp.getParentConfig() != null)
-            temp = temp.getParentConfig();
-
-        return temp;
-    }
+    public static final String DEFAULT_EXTENSION = "cfg";
+    public static final BrowserFileType DEFAULT_FILE_TYPE = new BrowserFileType("FrogLord Config", DEFAULT_EXTENSION);
 
     private static final byte BINARY_FORMAT_VERSION = 0;
 
@@ -255,6 +172,119 @@ public class Config implements IBinarySerializable {
     @Override
     public void save(DataWriter writer) {
         saveToWriter(writer, new ConfigSettings());
+    }
+
+    /**
+     * Get the child config nodes attached to this node.
+     */
+    public List<Config> getChildConfigNodes() {
+        for (int i = 0; i < this.internalChildConfigs.size(); i++)
+            this.internalChildConfigs.get(i).accessTracker |= TRACKED_ACCESS_SECTION;
+
+        return Collections.unmodifiableList(this.internalChildConfigs);
+    }
+
+    /**
+     * Gets the text nodes as an ordered list.
+     */
+    public List<ConfigValueNode> getTextNodes() {
+        this.accessTracker |= TRACKED_ACCESS_TEXT;
+        return this.immutableTextNodes;
+    }
+
+    /**
+     * Returns the key value pairs.
+     * To modify the contents of this, use the functions for doing so. Iterating through this will only give properties for this config, not any parent configs.
+     * @return immutableKeyValuePairs
+     */
+    public Map<String, ConfigValueNode> getKeyValuePairs() {
+        for (ConfigValueNode valueNode : this.keyValuePairs.values())
+            if (valueNode != null)
+                valueNode.setAccessOccurred(true);
+
+        return Collections.unmodifiableMap(this.keyValuePairs);
+    }
+
+    /**
+     * Sets the name of this config section.
+     * @param newSectionName the new name to apply
+     */
+    public void setSectionName(String newSectionName) {
+        if (newSectionName == null)
+            throw new NullPointerException("newSectionName");
+        if (newSectionName.equalsIgnoreCase(this.sectionName))
+            return;
+
+        // Remove from parent tracking.
+        if (this.parentConfig != null) {
+            List<Config> configs = this.parentConfig.childConfigsByName.get(this.sectionName);
+            if (configs.remove(this) && configs.isEmpty())
+                this.parentConfig.childConfigsByName.remove(this.sectionName, configs);
+        }
+
+        this.sectionName = newSectionName;
+
+        // Add to parent tracking.
+        if (this.parentConfig != null) {
+            List<Config> configsByName = this.parentConfig.childConfigsByName.computeIfAbsent(this.sectionName, key -> new ArrayList<>());
+            int foundIndex = Collections.binarySearch(configsByName, this, Comparator.comparingInt(this.parentConfig.internalChildConfigs::lastIndexOf));
+            if (foundIndex < 0)
+                configsByName.add(-(foundIndex + 1), this);
+        }
+    }
+
+    /**
+     * Gets the individual lines of text from a list of config value nodes.
+     * @return textStringList
+     */
+    public List<String> getTextWithoutComments() {
+        this.accessTracker |= TRACKED_ACCESS_TEXT;
+
+        List<String> textList = new ArrayList<>(this.internalText.size());
+        for (int i = 0; i < this.internalText.size(); i++) {
+            ConfigValueNode node = this.internalText.get(i);
+            String text = node.getAsStringLiteral();
+            if (!StringUtils.isNullOrWhiteSpace(text))
+                textList.add(text);
+        }
+
+        return textList;
+    }
+
+    /**
+     * Gets the individual lines of text (with their comments) from a list of config value nodes.
+     * @return textStringList
+     */
+    public List<String> getTextWithComments() {
+        this.accessTracker |= TRACKED_ACCESS_TEXT;
+
+        List<String> textList = new ArrayList<>(this.internalText.size());
+        for (int i = 0; i < this.internalText.size(); i++) {
+            ConfigValueNode node = this.internalText.get(i);
+            String text = node.getTextWithComments();
+            if (text != null)
+                textList.add(text);
+        }
+
+        return textList;
+    }
+
+    /**
+     * Is this Config a root config? (A root config is the configuration which parents any child configs. There is no parent to the root config.)
+     */
+    public boolean isRootNode() {
+        return this.parentConfig == null;
+    }
+
+    /**
+     * Gets the config root node.
+     */
+    public Config getRootNode() {
+        Config temp = this;
+        while (temp.getParentConfig() != null)
+            temp = temp.getParentConfig();
+
+        return temp;
     }
 
     /**
@@ -370,8 +400,11 @@ public class Config implements IBinarySerializable {
             return this.removeKeyValueNode(keyName);
         }
 
+        node.setAccessOccurred(true);
+
         ConfigValueNode existingNode = this.keyValuePairs.get(keyName);
         if (existingNode != null) { // Get existing node.
+            existingNode.setAccessOccurred(true);
             existingNode.setAsString(node.getAsString(), node.isSurroundByQuotes());
             if (!StringUtils.isNullOrWhiteSpace(node.getComment()) && StringUtils.isNullOrWhiteSpace(existingNode.getComment()))
                 existingNode.setComment(node.getComment());
@@ -398,6 +431,8 @@ public class Config implements IBinarySerializable {
         ConfigValueNode newNode = new ConfigValueNode("$NO_VALUE_WAS_SET$");
         if (this.keyValuePairs.put(keyName, newNode) == null)
             this.orderedKeyValuePairs.add(keyName);
+
+        newNode.setAccessOccurred(true);
         return newNode;
     }
 
@@ -421,6 +456,7 @@ public class Config implements IBinarySerializable {
             throw new IllegalStateException("'" + keyName + "' was expected to be attached to '" + this.sectionName + "'"
                     + (this.originalLineNumber >= 0 ? " near line " + this.originalLineNumber + ", but it was not found." : "."));
 
+        valueNode.setAccessOccurred(true);
         return valueNode;
     }
 
@@ -430,7 +466,10 @@ public class Config implements IBinarySerializable {
      * @return valueNode
      */
     public ConfigValueNode getOptionalKeyValueNode(String keyName) {
-        return this.keyValuePairs.get(keyName);
+        ConfigValueNode valueNode = this.keyValuePairs.get(keyName);
+        if (valueNode != null)
+            valueNode.setAccessOccurred(true);
+        return valueNode;
     }
 
     /**
@@ -440,7 +479,11 @@ public class Config implements IBinarySerializable {
      */
     public ConfigValueNode getOrDefaultKeyValueNode(String keyName) {
         ConfigValueNode valueNode = this.keyValuePairs.get(keyName);
-        return valueNode != null ? valueNode : EMPTY_DEFAULT_NODE;
+        if (valueNode == null)
+            return EMPTY_DEFAULT_NODE;
+
+        valueNode.setAccessOccurred(true);
+        return valueNode;
     }
 
     /**
@@ -451,7 +494,21 @@ public class Config implements IBinarySerializable {
      */
     public Config getChildConfigByName(String name) {
         List<Config> childConfigs = this.childConfigsByName.get(name);
-        return childConfigs != null ? childConfigs.get(0) : null;
+
+        Config resultCfg;
+        if (childConfigs != null && !childConfigs.isEmpty()) {
+            if (childConfigs.size() != 1)
+                throw new IllegalConfigSyntaxException("There was expected to be only one config section named '" + name + "', but there were actually " + childConfigs.size() + "!");
+
+            resultCfg = childConfigs.get(0);
+        } else {
+            resultCfg = null;
+        }
+
+        if (resultCfg != null)
+            resultCfg.accessTracker |= TRACKED_ACCESS_SECTION;
+
+        return resultCfg;
     }
 
     /**
@@ -462,13 +519,21 @@ public class Config implements IBinarySerializable {
      */
     public Config getOrCreateChildConfigByName(String name) {
         List<Config> childConfigs = this.childConfigsByName.computeIfAbsent(name, key -> new ArrayList<>());
+
+        Config resultCfg;
         if (childConfigs.isEmpty()) {
             Config newConfig = new Config(name);
             addChildConfig(newConfig);
-            return newConfig;
+            resultCfg = newConfig;
         } else {
-            return childConfigs.get(0);
+            if (childConfigs.size() != 1)
+                throw new IllegalConfigSyntaxException("There was expected to be only one config section named '" + name + "', but there were actually " + childConfigs.size() + "!");
+
+            resultCfg = childConfigs.get(0);
         }
+
+        resultCfg.accessTracker |= TRACKED_ACCESS_SECTION;
+        return resultCfg;
     }
 
     /**
@@ -478,16 +543,11 @@ public class Config implements IBinarySerializable {
      */
     public List<Config> getAllChildConfigsByName(String name) {
         List<Config> childConfigs = this.childConfigsByName.get(name);
-        return childConfigs != null ? Collections.unmodifiableList(childConfigs) : Collections.emptyList();
-    }
+        if (childConfigs != null)
+            for (int i = 0; i < childConfigs.size(); i++)
+                childConfigs.get(i).accessTracker |= TRACKED_ACCESS_SECTION;
 
-    /**
-     * Creates a dictionary of child configs based on their name.
-     * If there are duplicate names, the first section with the name will be used.
-     * @return childConfigDictionary
-     */
-    public Map<String, List<Config>> getChildConfigDictionary() {
-        return Collections.unmodifiableMap(this.childConfigsByName);
+        return childConfigs != null ? Collections.unmodifiableList(childConfigs) : Collections.emptyList();
     }
 
     /**
@@ -534,8 +594,8 @@ public class Config implements IBinarySerializable {
             builder.append(line.getTextWithComments()).append(Constants.NEWLINE);
         }
 
-        // Empty line between sections.
-        if (builder.length() > builderStartLength)
+        // Empty line between sections. (Unless there's already some there.)
+        if (builder.length() > builderStartLength && (this.internalText.isEmpty() || !StringUtils.isNullOrWhiteSpace(this.internalText.get(this.internalText.size() - 1).getTextWithComments())))
             builder.append(Constants.NEWLINE);
 
         // Write child sections in order.
@@ -548,6 +608,64 @@ public class Config implements IBinarySerializable {
                 writeSectionHeader(builder, sectionStart, sectionEnd, child);
                 child.toString(builder, newSectionStart, newSectionEnd);
             }
+        }
+    }
+
+    /**
+     * Find all occurrences of unused config data, and warn about them.
+     * @param logger the logger to write the warnings to
+     */
+    public void recursivelyWarnAboutUnusedData(ILogger logger) {
+        if (logger == null)
+            throw new NullPointerException("logger");
+
+        // 1) Fields
+        for (int i = 0; i < this.orderedKeyValuePairs.size(); i++) {
+            String keyName = this.orderedKeyValuePairs.get(i);
+            ConfigValueNode node = this.keyValuePairs.get(keyName);
+            if (node == null) {
+                logger.warning("Found a null property named '%s'. (Shouldn't happen)", keyName);
+                continue;
+            }
+
+            if (!node.isAccessOccurred())
+                logger.warning("Found an unused property named '%s'. (%s)", keyName, node.getExtraDebugErrorInfo());
+        }
+
+        // 2) Text
+        if ((this.accessTracker & TRACKED_ACCESS_TEXT) != TRACKED_ACCESS_TEXT) {
+            boolean hasAnyText = false;
+            ConfigValueNode firstValidTextNode = null;
+            for (int i = 0; i < this.internalText.size(); i++) {
+                ConfigValueNode node = this.internalText.get(i);
+                if (firstValidTextNode == null && node != null && node.getOriginalLineNumber() > 0)
+                    firstValidTextNode = node;
+
+                if (node != null && !StringUtils.isNullOrWhiteSpace(node.getAsString())) {
+                    hasAnyText = true;
+                    break;
+                }
+            }
+
+            if (hasAnyText) {
+                logger.warning("The config section '%s' in %s%s had text which was never used by FrogLord.%s",
+                        this.sectionName, getRootNode().getSectionName(),
+                        (this.originalLineNumber > 0 ? " on line " + this.originalLineNumber : ""),
+                        (firstValidTextNode != null ? " (Text starts on line " + firstValidTextNode.getOriginalLineNumber() + ".)" : ""));
+            }
+        }
+
+        // 3) Child nodes.
+        for (int i = 0; i < this.internalChildConfigs.size(); i++) {
+            Config childCfg = this.internalChildConfigs.get(i);
+            if ((childCfg.accessTracker & TRACKED_ACCESS_SECTION) != TRACKED_ACCESS_SECTION) {
+                logger.warning("The config section '%s' in %s%s was not used by FrogLord. This could be the result of a typo, wrong number of brackets, wrong part of file, etc.",
+                        childCfg.getSectionName(), getRootNode().getSectionName(),
+                        (childCfg.getOriginalLineNumber() > 0 ? " on line " + childCfg.getOriginalLineNumber() : ""));
+                continue;
+            }
+
+            childCfg.recursivelyWarnAboutUnusedData(logger);
         }
     }
 
@@ -736,6 +854,7 @@ public class Config implements IBinarySerializable {
         }
     }
 
+    @SuppressWarnings("ExtractMethodRecommender")
     private static Config loadConfigFromString(BadStringReader stringReader, int layer, String fileName, String sectionName, String sectionComment) {
         Config config = new Config(sectionName);
         config.setOriginalLineNumber(stringReader.getLineNumber() - 1);
@@ -791,7 +910,7 @@ public class Config implements IBinarySerializable {
 
                 // Verify layer.
                 if (leftLayer != rightLayer)
-                    throw new IllegalConfigSyntaxException("This section had a different number of square brackets on the left-side vs the right-side! (Line " + lineNumber + ": '" + sectionLine + "', Left: " + leftLayer + ", Right: " + rightLayer + ")");
+                    throw new IllegalConfigSyntaxException("The section had a different number of square brackets on the left-side vs the right-side! (Line " + lineNumber + ": '" + sectionLine + "', Left: " + leftLayer + ", Right: " + rightLayer + ")");
 
                 int sectionLayer = leftLayer;
                 if (sectionLayer > layer + 1)
@@ -842,7 +961,7 @@ public class Config implements IBinarySerializable {
                 commentText = StringUtils.trimStart(rawCommentText);
                 String rawText = text.substring(0, commentAt);
                 text = StringUtils.trimEnd(rawText);
-                commentSeparator = rawText.substring(text.length()) + COMMENT_CHARACTER + rawCommentText.substring(0, rawText.length() - text.length());
+                commentSeparator = rawText.substring(text.length()) + COMMENT_CHARACTER + rawCommentText.substring(0, rawCommentText.length() - commentText.length());
             }
 
             // Determine if this is a key-value pair.
@@ -869,14 +988,14 @@ public class Config implements IBinarySerializable {
                 if ((oldNode = config.keyValuePairs.putIfAbsent(key, newNode = new ConfigValueNode(value, commentText, commentSeparator))) == null) {
                     config.orderedKeyValuePairs.add(key);
                 } else {
-                    throw new IllegalConfigSyntaxException("The KeyValuePair on line #" + lineNumber + " conflicts the one defined on line #" + oldNode.getOriginalLineNumber() + "."
+                    throw new IllegalConfigSyntaxException("The property name '" + key + "'on line #" + lineNumber + " was previously set on line #" + oldNode.getOriginalLineNumber() + "."
                             + "\nLine #" + oldNode.getOriginalLineNumber() + ": " + escapeKey(key) + "=" + oldNode.getAsStringLiteral()
                             + "\nLine #" + lineNumber + ": " + escapeKey(key) + "=" + escapeValue(value));
                 }
             } else { // It's raw text.
                 newNode = new ConfigValueNode(text, commentText, commentSeparator);
                 newNode.setAsString(text); // Ensure it is not escaped, as escaped text isn't supported here.
-                config.getInternalText().add(newNode);
+                config.internalText.add(newNode);
             }
 
             // Setup the new node.
@@ -927,6 +1046,13 @@ public class Config implements IBinarySerializable {
         @Getter
         @Setter(AccessLevel.PRIVATE)
         private String originalFileName;
+
+        /**
+         * Used to mark if this value has been accessed or not. (Finding unused fields)
+         */
+        @Getter(AccessLevel.PRIVATE)
+        @Setter(AccessLevel.PRIVATE)
+        private boolean accessOccurred;
 
         public static final String DEFAULT_COMMENT_SEPARATOR = " " + COMMENT_CHARACTER + " ";
 
@@ -996,6 +1122,7 @@ public class Config implements IBinarySerializable {
             ConfigValueNode newNode = new ConfigValueNode(getAsStringLiteral(), this.comment, this.commentSeparator);
             newNode.originalLineNumber = this.originalLineNumber;
             newNode.originalFileName = this.originalFileName;
+            newNode.accessOccurred = this.accessOccurred;
             return newNode;
         }
 
@@ -1029,12 +1156,26 @@ public class Config implements IBinarySerializable {
 
         @Override
         protected String getExtraDebugErrorInfo() {
+            String baseExtraInfo = super.getExtraDebugErrorInfo();
             if (this.originalLineNumber <= 0 && StringUtils.isNullOrWhiteSpace(this.originalFileName))
-                return super.getExtraDebugErrorInfo();
+                return baseExtraInfo;
 
-            return super.getExtraDebugErrorInfo()
-                    + (!StringUtils.isNullOrWhiteSpace(this.originalFileName) ? " File: " + this.originalFileName : "")
-                    + (this.originalLineNumber > 0 ? " Line: " + this.originalLineNumber : "");
+            StringBuilder builder = new StringBuilder(baseExtraInfo);
+            if (!StringUtils.isNullOrWhiteSpace(baseExtraInfo))
+                builder.append(" ");
+
+            boolean writeFileName = !StringUtils.isNullOrWhiteSpace(this.originalFileName);
+            if (writeFileName)
+                builder.append("File: ").append(this.originalFileName);
+
+            boolean writeLineNumber = (this.originalLineNumber > 0);
+            if (writeLineNumber) {
+                if (writeFileName)
+                    builder.append(" ");
+                builder.append("Line: ").append(this.originalLineNumber);
+            }
+
+            return builder.toString();
         }
     }
 

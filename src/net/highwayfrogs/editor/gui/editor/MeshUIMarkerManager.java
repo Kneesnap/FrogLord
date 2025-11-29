@@ -104,6 +104,7 @@ public class MeshUIMarkerManager<TMesh extends DynamicMesh> extends MeshUIManage
 
     private MeshView onGizmoRemove(MeshView meshView) {
         if (meshView != null) {
+            DynamicMesh.tryRemoveMesh(meshView);
             this.gizmoMeshViews.remove(meshView); // Remove gizmo.
             getController().getMainLight().getScope().remove(meshView);
         }

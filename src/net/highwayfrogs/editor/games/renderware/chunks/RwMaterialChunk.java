@@ -1,8 +1,6 @@
 package net.highwayfrogs.editor.games.renderware.chunks;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
@@ -10,8 +8,10 @@ import net.highwayfrogs.editor.games.renderware.RwStreamFile;
 import net.highwayfrogs.editor.games.renderware.RwUtils;
 import net.highwayfrogs.editor.games.renderware.struct.RwStruct;
 import net.highwayfrogs.editor.games.renderware.struct.RwStructType;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents an RwMaterial.
@@ -79,8 +79,8 @@ public class RwMaterialChunk extends RwStreamChunk {
         }
 
         @Override
-        public PropertyList addToPropertyList(PropertyList propertyList) {
-            propertyList = super.addToPropertyList(propertyList);
+        public void addToPropertyList(PropertyListNode propertyList) {
+            super.addToPropertyList(propertyList);
             if (this.flags != 0)
                 propertyList.add("Flags", NumberUtils.toHexString(this.flags));
             propertyList.add("Color", this.color);
@@ -88,7 +88,6 @@ public class RwMaterialChunk extends RwStreamChunk {
                 propertyList.add("Unused (Garbage?)", this.unused);
             propertyList.add("Textured", this.textured);
             propertyList.add("Surface Properties", this.surfaceProperties);
-            return propertyList;
         }
     }
 

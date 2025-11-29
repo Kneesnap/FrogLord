@@ -173,10 +173,13 @@ public class kcScript extends GameObject<GreatQuestInstance> {
      * @param settings The settings to save the script with
      * @return configNode
      */
-    public Config toConfigNode(kcScriptDisplaySettings settings) {
+    public Config toConfigNode(ILogger logger, kcScriptDisplaySettings settings) {
+        if (logger == null)
+            throw new NullPointerException("logger");
+
         Config result = new Config(this.entity != null ? this.entity.getName() : "Unused_" + this.scriptList.getScripts().indexOf(this));
         for (int i = 0; i < this.functions.size(); i++)
-            result.addChildConfig(this.functions.get(i).toConfigNode(settings));
+            result.addChildConfig(this.functions.get(i).toConfigNode(logger, settings));
 
         return result;
     }
@@ -185,8 +188,9 @@ public class kcScript extends GameObject<GreatQuestInstance> {
      * Adds all function definitions found in a Config node.
      * @param baseConfigNode The config node to add functions from
      * @param sourceName The source name (usually a file name) representing where the scripts came from.
+     * @param sharedScript Iff the script data currently being loaded will be shared to other entities.
      */
-    public void addFunctionsFromConfigNode(ILogger logger, Config baseConfigNode, String sourceName) {
+    public void addFunctionsFromConfigNode(ILogger logger, Config baseConfigNode, String sourceName, boolean sharedScript) {
         if (logger == null)
             throw new NullPointerException("logger");
         if (baseConfigNode == null)
@@ -204,7 +208,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
 
             // Load the script function.
             try {
-                newFunction.loadFromConfigNode(nestedFunction, logger);
+                newFunction.loadFromConfigNode(nestedFunction, logger, sharedScript);
             } catch (Throwable th) {
                 // We must print exception causes, because if we don't, they won't be visible to the user.
                 String entityName = getEntity() != null ? "'" + getEntity().getName() + "'" : "null";
@@ -234,7 +238,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
 
                 if (functionToReplace != null) {
                     newFunction = functionToReplace;
-                    functionToReplace.loadFromConfigNode(nestedFunction, logger);
+                    functionToReplace.loadFromConfigNode(nestedFunction, logger, sharedScript);
                 } else {
                     // Add the new function.
                     this.functions.add(newFunction);
@@ -268,6 +272,29 @@ public class kcScript extends GameObject<GreatQuestInstance> {
         }
 
         return functionToReplace;
+    }
+
+    /**
+     * Gets the code location as a string.
+     * @param lineNumber the line number
+     * @param source the source string
+     * @param exact true if the line number is exact
+     * @return codeLocationStr
+     */
+    public static String getCodeLocation(int lineNumber, String source, boolean exact) {
+        StringBuilder builder = new StringBuilder();
+        if (lineNumber > 0)
+            builder.append(exact ? " on" : " near").append(" line ").append(lineNumber);
+        if (!StringUtils.isNullOrWhiteSpace(source)) {
+            builder.append(" in ");
+            if (source.contains(" "))
+                builder.append("'");
+            builder.append(source);
+            if (source.contains(" "))
+                builder.append("'");
+        }
+
+        return builder.toString();
     }
 
     /**
@@ -309,6 +336,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
             // Read effects.
             List<kcScriptEffect> effects = new ArrayList<>();
             kcScriptFunction newFunction = new kcScriptFunction(newScript, cause, effects);
+            cause.setParentFunction(newFunction);
 
             // Find effect.
             int startingEffectIndex = interim.getEffectByOffset(effectOffset);
@@ -318,6 +346,9 @@ public class kcScript extends GameObject<GreatQuestInstance> {
             // Read effects.
             for (int j = 0; j < effectCount; j++)
                 effects.add(interim.getEffects().get(startingEffectIndex + j).toScriptEffect(newFunction));
+
+            // Modify the effect order to show in an order more closely resembling the order which the game will run the effects.
+            kcScriptListInterim.reverseExecutionOrder(effects);
 
             totalEffects += effects.size();
             functions.add(newFunction);
@@ -415,7 +446,7 @@ public class kcScript extends GameObject<GreatQuestInstance> {
          * @param settings The settings to save the script with
          * @return configNode
          */
-        public Config toConfigNode(kcScriptDisplaySettings settings) {
+        public Config toConfigNode(ILogger logger, kcScriptDisplaySettings settings) {
             OptionalArguments tempArguments = new OptionalArguments();
             StringBuilder builder = new StringBuilder();
 
@@ -425,13 +456,19 @@ public class kcScript extends GameObject<GreatQuestInstance> {
 
             // Set cause.
             this.cause.save(tempArguments, settings);
-            result.getOrCreateKeyValueNode(CONFIG_FIELD_SCRIPT_CAUSE).setAsString(tempArguments.toString());
+            ConfigValueNode causeNode = result.getOrCreateKeyValueNode(CONFIG_FIELD_SCRIPT_CAUSE);
+            causeNode.setAsString(tempArguments.toString());
+
+            // Set cause comment.
+            String causeComment = this.cause.getEndOfLineComment();
+            if (causeComment != null)
+                causeNode.setComment(causeComment);
 
             // Add script effects.
             tempArguments.clear();
             for (int i = 0; i < this.effects.size(); i++) {
                 kcScriptEffect effect = this.effects.get(i);
-                effect.saveEffect(tempArguments, settings);
+                effect.saveEffect(logger, tempArguments, settings);
                 tempArguments.toString(builder);
                 result.getInternalText().add(new ConfigValueNode(builder.toString(), effect.getEndOfLineComment()));
                 builder.setLength(0);
@@ -443,24 +480,35 @@ public class kcScript extends GameObject<GreatQuestInstance> {
         /**
          * Loads this function loaded from a Config node.
          * @param config The config containing the function definition
+         * @param sharedScript Iff the script data currently being loaded will be shared to other entities.
          */
-        public void loadFromConfigNode(Config config, ILogger logger) {
+        public void loadFromConfigNode(Config config, ILogger logger, boolean sharedScript) {
             if (config == null)
                 throw new NullPointerException("config");
 
             // Set cause.
             String rawScriptCause = config.getKeyValueNodeOrError(CONFIG_FIELD_SCRIPT_CAUSE).getAsString();
-            this.cause = kcScriptCause.parseScriptCause(this.script, rawScriptCause, config.getOriginalLineNumber(), config.getRootNode().getSectionName());
+            this.cause = kcScriptCause.parseScriptCause(logger, this, rawScriptCause, config.getOriginalLineNumber(), config.getRootNode().getSectionName());
 
             // Add script effects.
             this.effects.clear();
 
             String fileName = config.getRootNode().getSectionName();
-            for (int i = 0; i < config.getInternalText().size(); i++) {
-                ConfigValueNode node = config.getInternalText().get(i);
+            List<ConfigValueNode> textNodes = config.getTextNodes();
+            for (int i = 0; i < textNodes.size(); i++) {
+                ConfigValueNode node = textNodes.get(i);
                 String textLine = node != null ? node.getAsStringLiteral() : null;
-                if (!StringUtils.isNullOrWhiteSpace(textLine))
-                    this.effects.add(kcScriptEffect.parseScriptEffect(logger, this, textLine, config.getOriginalLineNumber() + i, fileName));
+                if (StringUtils.isNullOrWhiteSpace(textLine))
+                    continue;
+
+                int lineNumber = config.getOriginalLineNumber() + i;
+                try {
+                    this.effects.add(kcScriptEffect.parseScriptEffect(logger, this, textLine, lineNumber, fileName, sharedScript));
+                } catch (Throwable th) {
+                    // We must print exception causes, because if we don't, they won't be visible to the user.
+                    String entityName = this.script.getEntity() != null ? "'" + this.script.getEntity().getName() + "'" : "null";
+                    Utils.handleError(logger, th, false, "Failed to load script effect for entity '%s' from %s on line %d.\n%s", entityName, config.getRootNode().getSectionName(), lineNumber, Utils.getOrderedErrorMessagesString(th));
+                }
             }
         }
 

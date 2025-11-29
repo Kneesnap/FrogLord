@@ -7,26 +7,29 @@ import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
-import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkTextureReference;
+import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTexture;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcBlend;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric;
 import net.highwayfrogs.editor.games.konami.greatquest.generic.kcCResourceGeneric.kcCResourceGenericType;
 import net.highwayfrogs.editor.games.konami.greatquest.script.kcScriptDisplaySettings;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 /**
  * Represents the 'kcParticleEmitterParam' struct.
  * Loaded from kcParticleEmitterParam::Init.
+ * NOTE: This cannot be used in kcCResourceEntityInst, see kcCResourceEntityInst::Prepare() to see that it will not work.
  * Created by Kneesnap on 8/22/2023.
  */
 @Setter
 public class kcParticleEmitterParam extends kcEntity3DDesc {
     @Getter private kcBlend srcBlend = kcBlend.ONE; // ZERO actually means ONE.
     @Getter private kcBlend dstBlend = kcBlend.ONE; // ZERO actually means ONE.
-    @Getter private final GreatQuestHash<GreatQuestChunkTextureReference> textureRef; // Resolved by kcCParticleEmitter::Init. CFrogCtl::__ct() shows how parent hash can be set to -1. However, some hashes already exist which are not -1.
+    @Getter private final GreatQuestHash<kcCResourceTexture> textureRef; // Resolved by kcCParticleEmitter::Init. CFrogCtl::__ct() shows how parent hash can be set to -1. However, some hashes already exist which are not -1.
     @Getter private final GreatQuestHash<kcCResourceGeneric> parentHash; // This is -1 sometimes. The conditions for it being -1 seem unclear, but it looks like potentially it's older data OR data shared between levels though it's hard to say for sure. CFrogCtl::__ct() shows how parent hash can be set to -1. However, some hashes already exist which are not -1.
     @Getter private final kcParticleParam particleParam = new kcParticleParam();
     @Getter private float lifeTimeEmitter = -1F; // Valid Values: [-1, 0) union (0, 60) (Seen in kcCParticleEmitter::SetParticleDefaults) If the value is not in the specified range, the kcParticleParam value will be used instead.
@@ -58,7 +61,7 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
         GreatQuestUtils.skipPaddingRequireEmptyOrByte(reader, PADDING_VALUES * Constants.INTEGER_SIZE, GreatQuestInstance.PADDING_BYTE_DEFAULT);
 
         // Resolve hashes.
-        GreatQuestUtils.resolveResourceHash(GreatQuestChunkTextureReference.class, this, this.textureRef, textureReferenceHash, true);
+        GreatQuestUtils.resolveLevelResourceHash(kcCResourceTexture.class, this, this.textureRef, textureReferenceHash, true);
         if (hThis != this.parentHash.getHashNumber() && hThis != -1)
             throw new RuntimeException("The kcParticleEmitterParam reported the parent chunk as " + NumberUtils.to0PrefixedHexString(hThis) + ", but it was expected to be " + this.parentHash.getHashNumberAsString() + ".");
     }
@@ -78,33 +81,33 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
     }
 
     @Override
-    public void writeMultiLineInfo(StringBuilder builder, String padding) {
-        super.writeMultiLineInfo(builder, padding);
-        builder.append(padding).append("Src Blend: ").append(this.srcBlend).append(Constants.NEWLINE);
-        builder.append(padding).append("Dest Blend: ").append(this.dstBlend).append(Constants.NEWLINE);
-        writeAssetLine(builder, padding, "Texture", this.textureRef);
-        writeAssetLine(builder, padding, "Self Hash", this.parentHash);
-        this.particleParam.writePrefixedMultiLineInfo(builder, "Particle Params", padding);
-        builder.append(padding).append("Emitter Life Time (Garbage?): ").append(this.lifeTimeEmitter).append(Constants.NEWLINE);
-        builder.append(padding).append("Max Particle: ").append(getMaxParticle()).append(Constants.NEWLINE);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
+        propertyList.addEnum("Src Blend", this.srcBlend, kcBlend.class, newValue -> this.srcBlend = newValue, false);
+        propertyList.addEnum("Dest Blend", this.dstBlend, kcBlend.class, newValue -> this.dstBlend = newValue, false);
+        this.textureRef.addToPropertyList(propertyList, "Texture", getParentFile(), kcCResourceTexture.class);
+        propertyList.addProperties("Particle Params", this.particleParam);
+        propertyList.addFloat("Emitter Life Time", this.lifeTimeEmitter, kcParticleEmitterParam::isValidUserSuppliedEmitterValue,
+                newValue -> this.lifeTimeEmitter = newValue);
+        propertyList.add("Max Particle", getMaxParticle());
     }
 
     private static final String CONFIG_KEY_SOURCE_BLEND = "srcBlend";
     private static final String CONFIG_KEY_DESTINATION_BLEND = "dstBlend";
     private static final String CONFIG_KEY_TEXTURE = "texture";
-    private static final String CONFIG_KEY_LIFETIME_EMITTER = "lifeTimeEmitter";
+    private static final String CONFIG_KEY_LIFETIME = "lifeTime";
 
     @Override
-    public void fromConfig(Config input) {
-        super.fromConfig(input);
+    public void fromConfig(ILogger logger, Config input) {
+        super.fromConfig(logger, input);
         this.srcBlend = input.getOrDefaultKeyValueNode(CONFIG_KEY_SOURCE_BLEND).getAsEnum(kcBlend.ONE);
         this.dstBlend = input.getOrDefaultKeyValueNode(CONFIG_KEY_DESTINATION_BLEND).getAsEnum(kcBlend.ONE);
-        this.lifeTimeEmitter = input.getOrDefaultKeyValueNode(CONFIG_KEY_LIFETIME_EMITTER).getAsFloat(-1);
-        this.resolve(input.getOptionalKeyValueNode(CONFIG_KEY_TEXTURE), GreatQuestChunkTextureReference.class, this.textureRef);
-        if (this.lifeTimeEmitter < -1 || this.lifeTimeEmitter >= 60) // Allow zero as the indicator to use from the kcParticleParam struct instead.
-            throw new RuntimeException("The lifeTimeEmitter value (" + this.lifeTimeEmitter + ") was not in the expected range!");
+        this.lifeTimeEmitter = input.getOrDefaultKeyValueNode(CONFIG_KEY_LIFETIME).getAsFloat(-1);
+        this.resolveResource(logger, input.getOptionalKeyValueNode(CONFIG_KEY_TEXTURE), kcCResourceTexture.class, this.textureRef);
+        if (!isValidUserSuppliedEmitterValue(this.lifeTimeEmitter)) // Allow zero as the indicator to use from the kcParticleParam struct instead.
+            throw new RuntimeException("The " + CONFIG_KEY_LIFETIME + " value (" + this.lifeTimeEmitter + ") was not in the expected range of [-1, 60)!");
 
-        this.particleParam.fromConfig(input);
+        this.particleParam.fromConfig(logger, input);
     }
 
     @Override
@@ -113,7 +116,7 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
         output.getOrCreateKeyValueNode(CONFIG_KEY_SOURCE_BLEND).setAsEnum(this.srcBlend);
         output.getOrCreateKeyValueNode(CONFIG_KEY_DESTINATION_BLEND).setAsEnum(this.dstBlend);
         output.getOrCreateKeyValueNode(CONFIG_KEY_TEXTURE).setAsString(this.textureRef.getAsGqsString(settings));
-        output.getOrCreateKeyValueNode(CONFIG_KEY_LIFETIME_EMITTER).setAsFloat(this.lifeTimeEmitter);
+        output.getOrCreateKeyValueNode(CONFIG_KEY_LIFETIME).setAsFloat(this.lifeTimeEmitter);
         this.particleParam.toConfig(output);
     }
 
@@ -134,5 +137,9 @@ public class kcParticleEmitterParam extends kcEntity3DDesc {
         } else {
             return DEFAULT_MAX_PARTICLE;
         }
+    }
+
+    private static boolean isValidUserSuppliedEmitterValue(float testValue) {
+        return Float.isFinite(testValue) && (testValue >= -1F && testValue < 60);
     }
 }

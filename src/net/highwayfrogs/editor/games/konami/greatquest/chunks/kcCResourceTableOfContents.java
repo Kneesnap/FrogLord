@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.games.konami.greatquest.chunks;
 
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.system.IntList;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -109,10 +109,9 @@ public class kcCResourceTableOfContents extends kcCResource {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Hashes", this.hashes.size());
-        return propertyList;
     }
 
     /**
@@ -173,7 +172,9 @@ public class kcCResourceTableOfContents extends kcCResource {
 
             kcCResource collidingChunk = collisionMap.put(chunk.getHash(), chunk);
             if (collidingChunk != null)
-                throw new IllegalStateException("Cannot save chunk " + chunk + " (" + chunk.getHashAsHexString() + "/" + chunk.getName() + ") as it shares the same ID as " + collidingChunk + " (" + collidingChunk.getName() + ")");
+                throw new IllegalStateException("Found multiple resources (" + chunk.getHashAsHexString() + "/" + chunk.getCollectionViewDisplayName()
+                        + ") and (" + collidingChunk.getHashAsHexString() + "/" + collidingChunk.getCollectionViewDisplayName()
+                        + ") which share the same hash.");
 
             this.hashes.add(chunk.getHash());
         }

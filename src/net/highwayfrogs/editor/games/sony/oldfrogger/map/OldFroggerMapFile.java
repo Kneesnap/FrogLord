@@ -19,7 +19,7 @@ import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.PacketSizeType;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 
 import java.util.List;
@@ -95,8 +95,8 @@ public class OldFroggerMapFile extends SCChunkedFile<OldFroggerGameInstance> imp
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("File Version", getMapConfig().getVersion());
         propertyList.add("Comment", this.headerPacket.getComment());
         propertyList.add("Default Reaction", this.levelSpecificDataPacket.getDefaultReactionType());
@@ -117,8 +117,6 @@ public class OldFroggerMapFile extends SCChunkedFile<OldFroggerGameInstance> imp
             propertyList.add("Camera Height Grid Square Size", this.cameraHeightFieldPacket.getSquareXSizeAsFloat() + " x " + this.cameraHeightFieldPacket.getSquareZSizeAsFloat());
             propertyList.add("Camera Height Grid Start Pos", this.cameraHeightFieldPacket.getStartXAsFloat() + ", " + this.cameraHeightFieldPacket.getStartZAsFloat());
         }
-
-        return propertyList;
     }
 
     /**

@@ -9,7 +9,7 @@ import net.highwayfrogs.editor.games.konami.rescue.FroggerRescueInstance;
 import net.highwayfrogs.editor.games.renderware.RwUtils;
 import net.highwayfrogs.editor.games.shared.basic.file.definition.IGameFileDefinition;
 import net.highwayfrogs.editor.gui.ImageResource;
-import net.highwayfrogs.editor.gui.components.PropertyListViewerComponent.PropertyList;
+import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -92,10 +92,9 @@ public class FroggerRescueSoundBank extends HudsonGameFile {
     }
 
     @Override
-    public PropertyList addToPropertyList(PropertyList propertyList) {
-        propertyList = super.addToPropertyList(propertyList);
+    public void addToPropertyList(PropertyListNode propertyList) {
+        super.addToPropertyList(propertyList);
         propertyList.add("Entry Count", this.entries.size());
-        return propertyList;
     }
 
     @Override

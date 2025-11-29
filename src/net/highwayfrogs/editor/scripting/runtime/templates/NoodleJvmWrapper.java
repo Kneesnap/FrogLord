@@ -6,8 +6,8 @@ import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
 import net.highwayfrogs.editor.scripting.runtime.NoodlePrimitive;
 import net.highwayfrogs.editor.scripting.runtime.NoodleRuntimeException;
 import net.highwayfrogs.editor.scripting.runtime.NoodleThread;
-import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleStaticTemplateFunction;
-import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleTemplateConstructor;
+import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleConstructor;
+import net.highwayfrogs.editor.scripting.runtime.templates.functions.NoodleStaticFunction;
 import net.highwayfrogs.editor.utils.Utils;
 
 import java.lang.reflect.*;
@@ -524,7 +524,7 @@ public class NoodleJvmWrapper<TWrappedType> {
         }
     }
 
-    private static class NoodleJvmStaticFunction<TObject> extends NoodleStaticTemplateFunction<TObject> {
+    private static class NoodleJvmStaticFunction<TObject> extends NoodleStaticFunction<TObject> {
         private final NoodleJvmWrapper<TObject> jvmWrapper;
 
         public NoodleJvmStaticFunction(NoodleJvmWrapper<TObject> jvmWrapper, String methodName, int argumentCount) {
@@ -538,7 +538,7 @@ public class NoodleJvmWrapper<TWrappedType> {
         }
     }
 
-    private static class NoodleJvmConstructor<TObject> extends NoodleTemplateConstructor<TObject> {
+    private static class NoodleJvmConstructor<TObject> extends NoodleConstructor<TObject> {
         private final NoodleJvmWrapper<TObject> jvmWrapper;
 
         public NoodleJvmConstructor(NoodleJvmWrapper<TObject> jvmWrapper, int argumentCount) {
