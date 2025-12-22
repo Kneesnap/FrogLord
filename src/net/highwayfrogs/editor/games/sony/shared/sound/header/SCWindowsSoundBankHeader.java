@@ -2,8 +2,6 @@ package net.highwayfrogs.editor.games.sony.shared.sound.header;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.shared.sound.EditableAudioFormat;
 import net.highwayfrogs.editor.games.shared.sound.ISoundSample;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
@@ -15,6 +13,8 @@ import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankHeaderEnt
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCWindowsSoundBankHeader.SCWindowsSoundBankHeaderEntry;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import javax.sound.sampled.AudioFormat.Encoding;
 
@@ -94,8 +94,8 @@ public class SCWindowsSoundBankHeader<TBodyEntry extends SCSplitSoundBankBodyEnt
         @Override
         public void save(DataWriter writer) {
             writer.writeInt(this.audioPresent ? HAS_AUDIO : 0);
-            writer.writeInt(this.dataStartOffset);
-            writer.writeInt(this.dataSize);
+            writer.writeInt(this.dataStartOffset); // Updated by the body. (Which must save first)
+            writer.writeInt(this.dataSize); // Updated by the body. (Which must save first)
             if (!isOldFormat()) {
                 writer.writeInt(UNKNOWN_VALUE);
                 writer.writeInt(UNKNOWN_VALUE);

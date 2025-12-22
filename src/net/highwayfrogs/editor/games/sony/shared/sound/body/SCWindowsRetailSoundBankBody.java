@@ -2,15 +2,15 @@ package net.highwayfrogs.editor.games.sony.shared.sound.body;
 
 import javafx.scene.control.Alert.AlertType;
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankBodyEntry;
 import net.highwayfrogs.editor.games.sony.shared.sound.body.SCWindowsRetailSoundBankBody.SCWindowsSoundBodyEntry;
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCWindowsSoundBankHeader.SCWindowsSoundBankHeaderEntry;
 import net.highwayfrogs.editor.utils.AudioUtils;
 import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -58,6 +58,8 @@ public class SCWindowsRetailSoundBankBody extends SCWindowsSoundBankBody<SCWindo
 
         @Override
         public void save(DataWriter writer) {
+            getHeaderEntry().setDataStartOffset(writer.getIndex());
+            getHeaderEntry().setDataSize(this.rawAudioData.length);
             writer.writeBytes(this.rawAudioData);
         }
 
