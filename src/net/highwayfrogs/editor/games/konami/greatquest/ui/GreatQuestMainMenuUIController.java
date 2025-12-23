@@ -5,6 +5,8 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestGameType;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
+import net.highwayfrogs.editor.games.konami.greatquest.audio.SoundChunkFile;
+import net.highwayfrogs.editor.games.konami.greatquest.audio.SoundChunkFile.SoundChunkEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestArchiveFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestAssetBinFile;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestGameFile;
@@ -43,6 +45,8 @@ public class GreatQuestMainMenuUIController extends MainMenuController<GreatQues
 
             File exportDir = new File(exportFolder, "Export");
             FileUtils.makeDirectory(exportDir);
+
+            exportSounds(exportDir);
 
             try {
                 GreatQuestAssetBinFile.exportFileList(exportDir, getMainArchive());
@@ -119,5 +123,22 @@ public class GreatQuestMainMenuUIController extends MainMenuController<GreatQues
             return;
 
         showEditor(file != null ? file.makeEditorUI() : null);
+    }
+
+    private void exportSounds(File exportDir) {
+        File soundDir = new File(exportDir, "Sounds/");
+        FileUtils.makeDirectory(soundDir);
+        for (GreatQuestGameFile gameFile : getGameInstance().getAllFiles()) {
+            if (gameFile instanceof SoundChunkFile) {
+                for (SoundChunkEntry entry : ((SoundChunkFile) gameFile).getEntries()) {
+                    String fullPath = getGameInstance().getFullSoundPath(entry.getId());
+                    File soundPath = new File(soundDir, fullPath + ".wav");
+                    FileUtils.makeDirectory(soundPath.getParentFile());
+
+                    if (!soundPath.exists())
+                        entry.saveAsWavFile(soundPath);
+                }
+            }
+        }
     }
 }
