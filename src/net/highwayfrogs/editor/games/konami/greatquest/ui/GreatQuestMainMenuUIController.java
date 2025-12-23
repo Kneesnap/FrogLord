@@ -135,8 +135,14 @@ public class GreatQuestMainMenuUIController extends MainMenuController<GreatQues
                     File soundPath = new File(soundDir, fullPath + ".wav");
                     FileUtils.makeDirectory(soundPath.getParentFile());
 
-                    if (!soundPath.exists())
+                    if (!soundPath.exists()) {
+                        // Pad files.
+                        /*WavFile cloneWavFile = DataUtils.cloneSerializableObject(entry.getWavFile(), new WavFile());
+                        cloneWavFile.padToAtLeast(5);
+                        cloneWavFile.writeDataToFile(getLogger(), soundPath, true);*/
+
                         entry.saveAsWavFile(soundPath);
+                    }
                 }
             }
         }
