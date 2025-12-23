@@ -773,6 +773,12 @@ public class SBRFile extends GreatQuestLooseGameFile implements IBasicSoundList 
                 int adpcmDataLength = reader.readInt();
                 this.ADPCMData = reader.readBytes(adpcmDataLength);
                 clearCachedClip();
+
+                // If the file is missing the 'cbSize' struct, add it with a default value of zero.
+                // The game (and FrogLord) expects this field to exist, even for PCM wav files.
+                if (this.waveFormatEx.length == WavFile.DEFAULT_HEADER_SIZE - Constants.SHORT_SIZE)
+                    this.waveFormatEx = Arrays.copyOf(this.waveFormatEx, WavFile.DEFAULT_HEADER_SIZE);
+
             } catch (Throwable th) {
                 throw new RuntimeException("Invalid wav file '" + fileName + "'.", th);
             }
