@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.sony.frogger.data.demo;
 
 import lombok.Getter;
 import lombok.NonNull;
-import net.highwayfrogs.editor.file.DemoFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapLevelID;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -23,7 +22,7 @@ public class FroggerPCDemoTableEntry extends FroggerDemoTableEntry {
     }
 
     @Override
-    public void setup(@NonNull FroggerMapLevelID level, @NonNull DemoFile demoFile, FroggerMapLevelID unlockLevel) {
+    public void setup(@NonNull FroggerMapLevelID level, @NonNull FroggerDemoFile demoFile, FroggerMapLevelID unlockLevel) {
         super.setup(level, demoFile, unlockLevel);
         this.lowPolyDemoResourceId = demoFile.getFileResourceId();
     }

@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.games.sony.frogger.data.demo;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.DemoFile;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapLevelID;
@@ -74,7 +73,7 @@ public class FroggerDemoTableEntry extends SCGameData<FroggerGameInstance> {
      * @param demoFile the demo file to use for this level
      * @param unlockLevel which level must be unlocked for the demo to be usable.
      */
-    public void setup(@NonNull FroggerMapLevelID level, @NonNull DemoFile demoFile, FroggerMapLevelID unlockLevel) {
+    public void setup(@NonNull FroggerMapLevelID level, @NonNull FroggerDemoFile demoFile, FroggerMapLevelID unlockLevel) {
         this.level = level;
         this.demoResourceId = demoFile.getFileResourceId();
         this.unlockLevel = unlockLevel != null ? unlockLevel : level;

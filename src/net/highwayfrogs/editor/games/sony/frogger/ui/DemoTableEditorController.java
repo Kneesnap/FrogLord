@@ -7,8 +7,8 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ChoiceBox;
 import javafx.stage.Stage;
-import net.highwayfrogs.editor.file.DemoFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.data.demo.FroggerDemoFile;
 import net.highwayfrogs.editor.games.sony.frogger.data.demo.FroggerDemoTableEntry;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapLevelID;
 import net.highwayfrogs.editor.gui.GameUIController;
@@ -26,7 +26,7 @@ public class DemoTableEditorController extends GameUIController<FroggerGameInsta
     private FroggerDemoTableEntry selectedEntry;
     @FXML private ChoiceBox<FroggerDemoTableEntry> demoSelector;
     @FXML private ChoiceBox<FroggerMapLevelID> levelSelector;
-    @FXML private ChoiceBox<DemoFile> fileSelector;
+    @FXML private ChoiceBox<FroggerDemoFile> fileSelector;
     @FXML private ChoiceBox<FroggerMapLevelID> unlockSelector;
 
     public DemoTableEditorController(FroggerGameInstance instance) {
@@ -45,7 +45,7 @@ public class DemoTableEditorController extends GameUIController<FroggerGameInsta
         this.demoSelector.setConverter(new AbstractIndexStringConverter<>(demoEntries, (index, entry) -> "#" + (index + 1) + ", " + (entry.isSkipped() ? "SKIPPED" : FileUtils.stripExtension(getGameInstance().getResourceEntryByID(entry.getDemoResourceId()).getDisplayName()))));
         this.demoSelector.valueProperty().addListener(((observable, oldValue, newValue) -> selectEntry(newValue)));
 
-        List<DemoFile> demoFiles = getGameInstance().getMainArchive().getAllFiles(DemoFile.class);
+        List<FroggerDemoFile> demoFiles = getGameInstance().getMainArchive().getAllFiles(FroggerDemoFile.class);
         levelSelector.setItems(FXCollections.observableArrayList(FroggerMapLevelID.values()));
         fileSelector.setItems(FXCollections.observableArrayList(demoFiles));
         unlockSelector.setItems(FXCollections.observableArrayList(FroggerMapLevelID.values()));

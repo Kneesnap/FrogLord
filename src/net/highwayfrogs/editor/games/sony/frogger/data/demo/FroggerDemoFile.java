@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file;
+package net.highwayfrogs.editor.games.sony.frogger.data.demo;
 
 import javafx.scene.image.Image;
 import lombok.AllArgsConstructor;
@@ -17,21 +17,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents a frogger key-map sequence that plays if you idle on the main menu for too long.
- * Created by Kneesnap on 8/14/2018.
+ * Represents a recorded sequence of player inputs. Used to show a "demo" of a level if the player idles on the main menu for long enough.
+ * Created by Kneesnap on 1/6/2026.
  */
 @Getter
 @Setter
-public class DemoFile extends SCGameFile<FroggerGameInstance> {
-    private DemoFrame[] frames = new DemoFrame[MAX_DEMO_FRAMES];
+public class FroggerDemoFile extends SCGameFile<FroggerGameInstance> {
+    private final DemoFrame[] frames = new DemoFrame[MAX_DEMO_FRAMES];
     private int frameCount;
-    private int startX;
-    private int startZ;
+    private int gridStartX;
+    private int gridStartZ;
 
+    // This is the number of frames which the original demo recorder allocates space for.
+    // Even though the struct DEMO_DATA does have a fixed-size buffer for these frames, the game code is happy to read for as long as frameCount is set to.
+    // So in theory, we can make a demo as large as what could fit in memory if we wanted to.
     private static final int MAX_DEMO_FRAMES = 30 * 60;
-    private static final int FILE_SIZE = MAX_DEMO_FRAMES + (3 * Constants.INTEGER_SIZE);
+    private static final int FILE_SIZE_IN_BYTES = MAX_DEMO_FRAMES + (3 * Constants.INTEGER_SIZE);
 
-    public DemoFile(FroggerGameInstance instance) {
+    public FroggerDemoFile(FroggerGameInstance instance) {
         super(instance);
     }
 
@@ -43,19 +46,19 @@ public class DemoFile extends SCGameFile<FroggerGameInstance> {
     @Override
     public void load(DataReader reader) {
         this.frameCount = reader.readInt();
-        this.startX = reader.readInt();
-        this.startZ = reader.readInt();
+        this.gridStartX = reader.readInt();
+        this.gridStartZ = reader.readInt();
         for (int i = 0; i < MAX_DEMO_FRAMES && reader.hasMore(); i++)
             this.frames[i] = new DemoFrame(reader.readByte());
     }
 
     @Override
     public void save(DataWriter writer) {
-        writer.writeInt(this.frameCount);
-        writer.writeInt(this.startX);
-        writer.writeInt(this.startZ);
-        for (DemoFrame frame : this.frames)
-            writer.writeByte(frame.toByte());
+        writer.writeInt(Math.min(this.frameCount, this.frames.length));
+        writer.writeInt(this.gridStartX);
+        writer.writeInt(this.gridStartZ);
+        for (int i = 0; i < this.frames.length; i++)
+            writer.writeByte(this.frames[i].toByte());
     }
 
     @Override
@@ -70,7 +73,9 @@ public class DemoFile extends SCGameFile<FroggerGameInstance> {
 
     @AllArgsConstructor
     public static final class DemoFrame {
-        private byte frameByte;
+        private byte frameByte = DEFAULT_FRAME_BYTE;
+
+        private static final byte DEFAULT_FRAME_BYTE = (byte) 0x00;
 
         /**
          * Set the action state.

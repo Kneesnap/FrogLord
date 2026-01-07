@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.DemoFile;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.config.TargetPlatform;
@@ -24,6 +23,7 @@ import net.highwayfrogs.editor.file.config.exe.psx.PSXThemeBook;
 import net.highwayfrogs.editor.file.config.script.FroggerScript;
 import net.highwayfrogs.editor.games.psx.image.PsxVramScreenSize;
 import net.highwayfrogs.editor.games.sony.*;
+import net.highwayfrogs.editor.games.sony.frogger.data.demo.FroggerDemoFile;
 import net.highwayfrogs.editor.games.sony.frogger.data.demo.FroggerDemoTable;
 import net.highwayfrogs.editor.games.sony.frogger.data.demo.FroggerDemoTableEntry;
 import net.highwayfrogs.editor.games.sony.frogger.data.demo.FroggerPCDemoTableEntry;
@@ -124,7 +124,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         } else if (resourceEntry.getTypeId() == FILE_TYPE_PAL || resourceEntry.hasExtension("pal")) {
             return new FroggerPaletteFile(this);
         } else if (resourceEntry.getTypeId() == FILE_TYPE_DEMO_DATA || resourceEntry.hasExtension("dat")) {
-            return new DemoFile(this);
+            return new FroggerDemoFile(this);
         } else if (resourceEntry.getTypeId() == FILE_TYPE_SOUND) {
             return SCUtils.makeSound(resourceEntry, fileData, null);
         } else if (resourceEntry.getTypeId() == FILE_TYPE_MOF || resourceEntry.getTypeId() == FILE_TYPE_MAPMOF) {

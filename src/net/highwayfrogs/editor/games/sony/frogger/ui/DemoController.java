@@ -8,10 +8,10 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
-import net.highwayfrogs.editor.file.DemoFile;
-import net.highwayfrogs.editor.file.DemoFile.DemoAction;
-import net.highwayfrogs.editor.file.DemoFile.DemoFrame;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.data.demo.FroggerDemoFile;
+import net.highwayfrogs.editor.games.sony.frogger.data.demo.FroggerDemoFile.DemoAction;
+import net.highwayfrogs.editor.games.sony.frogger.data.demo.FroggerDemoFile.DemoFrame;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 import net.highwayfrogs.editor.utils.FXUtils;
@@ -27,7 +27,7 @@ import java.util.Map.Entry;
  * This is functional, but not great. The best option would be hooking into Frogger's process and reading input as it happened, so instead of doing things blind, you can edit stuff.
  * Created by Kneesnap on 3/3/2019.
  */
-public class DemoController extends SCFileEditorUIController<FroggerGameInstance, DemoFile> {
+public class DemoController extends SCFileEditorUIController<FroggerGameInstance, FroggerDemoFile> {
     @FXML private ListView<DemoFrame> entryList;
     @FXML private ChoiceBox<DemoAction> basicSelector;
     @FXML private VBox actionBox;
@@ -42,24 +42,24 @@ public class DemoController extends SCFileEditorUIController<FroggerGameInstance
     }
 
     @Override
-    public void setTargetFile(DemoFile file) {
+    public void setTargetFile(FroggerDemoFile file) {
         super.setTargetFile(file);
 
-        xField.setText(String.valueOf(file.getStartX()));
+        xField.setText(String.valueOf(file.getGridStartX()));
         FXUtils.setHandleKeyPress(xField, newText -> {
             if (!NumberUtils.isInteger(newText))
                 return false;
 
-            getFile().setStartX(Integer.parseInt(newText));
+            getFile().setGridStartX(Integer.parseInt(newText));
             return true;
         }, null);
 
-        zField.setText(String.valueOf(file.getStartZ()));
+        zField.setText(String.valueOf(file.getGridStartZ()));
         FXUtils.setHandleKeyPress(zField, newText -> {
             if (!NumberUtils.isInteger(newText))
                 return false;
 
-            getFile().setStartZ(Integer.parseInt(newText));
+            getFile().setGridStartZ(Integer.parseInt(newText));
             return true;
         }, null);
 
