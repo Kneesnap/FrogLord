@@ -2,14 +2,14 @@ package net.highwayfrogs.editor.games.sony.shared.sound.header;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankBody;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankHeader;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankHeaderEntry;
 import net.highwayfrogs.editor.games.sony.shared.sound.body.SCPlayStationSoundBankBody.SCPlayStationVabSound;
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCPlayStationMinimalSoundBankHeader.SCPlayStationMinimalSoundBankHeaderEntry;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents a minimal header seen in later Sony Cambridge games.
@@ -23,11 +23,11 @@ public class SCPlayStationMinimalSoundBankHeader extends SCSplitSoundBankHeader<
     @Override
     public boolean load(DataReader reader, SCSplitSoundBankBody<SCPlayStationMinimalSoundBankHeaderEntry, SCPlayStationVabSound> other) {
         int entryCount = reader.readInt();
-        getEntries().clear();
+        this.entries.clear();
         for (int i = 0; i < entryCount; i++) {
             SCPlayStationMinimalSoundBankHeaderEntry headerEntry = new SCPlayStationMinimalSoundBankHeaderEntry(this, i);
             headerEntry.load(reader);
-            getEntries().add(headerEntry);
+            this.entries.add(headerEntry);
         }
 
         return true;
@@ -35,9 +35,9 @@ public class SCPlayStationMinimalSoundBankHeader extends SCSplitSoundBankHeader<
 
     @Override
     public void save(DataWriter writer, SCSplitSoundBankBody<SCPlayStationMinimalSoundBankHeaderEntry, SCPlayStationVabSound> other) {
-        writer.writeInt(getEntries().size());
-        for (int i = 0; i < getEntries().size(); i++)
-            getEntries().get(i).save(writer);
+        writer.writeInt(this.entries.size());
+        for (int i = 0; i < this.entries.size(); i++)
+            this.entries.get(i).save(writer);
     }
 
     @Getter

@@ -14,7 +14,7 @@ import java.util.List;
 @Getter
 public abstract class SCSplitSoundBankBody<THeaderEntry extends SCSplitSoundBankHeaderEntry, TBodyEntry extends SCSplitSoundBankBodyEntry> extends CoupledDataEntry<SCSplitSoundBankHeader<THeaderEntry, TBodyEntry>> {
     private final String fileName;
-    private final List<TBodyEntry> entries = new ArrayList<>();
+    protected final List<TBodyEntry> entries = new ArrayList<>();
 
     public SCSplitSoundBankBody(SCGameInstance instance, String fileName) {
         super(instance);

@@ -33,11 +33,11 @@ public class SCWindowsSoundBankHeader<TBodyEntry extends SCSplitSoundBankBodyEnt
     @Override
     public boolean load(DataReader reader, SCSplitSoundBankBody<SCWindowsSoundBankHeaderEntry, TBodyEntry> other) {
         int numEntries = reader.readInt();
-        getEntries().clear();
+        this.entries.clear();
         for (int i = 0; i < numEntries; i++) {
             SCWindowsSoundBankHeaderEntry entry = new SCWindowsSoundBankHeaderEntry(this, i);
             entry.load(reader);
-            getEntries().add(entry);
+            this.entries.add(entry);
         }
 
         return true;
@@ -45,11 +45,11 @@ public class SCWindowsSoundBankHeader<TBodyEntry extends SCSplitSoundBankBodyEnt
 
     @Override
     public void save(DataWriter writer, SCSplitSoundBankBody<SCWindowsSoundBankHeaderEntry, TBodyEntry> other) {
-        writer.writeInt(getEntries().size());
+        writer.writeInt(this.entries.size());
 
         int offset = 0;
-        for (int i = 0; i < getEntries().size(); i++) {
-            SCWindowsSoundBankHeaderEntry entry = getEntries().get(i);
+        for (int i = 0; i < this.entries.size(); i++) {
+            SCWindowsSoundBankHeaderEntry entry = this.entries.get(i);
             entry.setDataStartOffset(offset);
             entry.save(writer);
             if (entry.isAudioPresent())

@@ -27,11 +27,11 @@ public abstract class SCWindowsSoundBankBody<TBodyEntry extends SCSplitSoundBank
         if (other == null || other.getEntries().isEmpty())
             return false; // Can't read any data without the header.
 
-        getEntries().clear();
+        this.entries.clear();
         for (int id = 0; id < other.getEntries().size(); id++) {
             SCWindowsSoundBankHeaderEntry headerEntry = other.getEntries().get(id);
             if (!headerEntry.isAudioPresent()) { // If we don't have the audio for this entry...
-                if (getEntries().isEmpty()) {
+                if (this.entries.isEmpty()) {
                     continue; // and we haven't loaded any entries yet, keep going.
                 } else {
                     break; // and we've already loaded at least one entry, we're done reading entries.
@@ -43,7 +43,7 @@ public abstract class SCWindowsSoundBankBody<TBodyEntry extends SCSplitSoundBank
             loadedEntry.load(reader);
             reader.jumpReturn();
 
-            getEntries().add(loadedEntry);
+            this.entries.add(loadedEntry);
         }
 
         return true;
@@ -55,9 +55,9 @@ public abstract class SCWindowsSoundBankBody<TBodyEntry extends SCSplitSoundBank
             throw new IllegalArgumentException("other was expected to be SCWindowsSoundBankHeader, but was " + Utils.getSimpleName(other) + ".");
 
         SCWindowsSoundBankHeader<TBodyEntry> typedHeader = (SCWindowsSoundBankHeader<TBodyEntry>) other;
-        for (int i = 0; i < getEntries().size(); i++) {
+        for (int i = 0; i < this.entries.size(); i++) {
             SCWindowsSoundBankHeaderEntry headerEntry = typedHeader.getEntries().get(i);
-            TBodyEntry bodyEntry = getEntries().get(i);
+            TBodyEntry bodyEntry = this.entries.get(i);
 
             headerEntry.setDataStartOffset(writer.getIndex());
             bodyEntry.save(writer);

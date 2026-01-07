@@ -42,7 +42,7 @@ public class SCPlayStationSoundBankBody extends SCSplitSoundBankBody<SCPlayStati
         if (addresses == null)
             return false; // Can't read yet since the header hasn't read its own data yet.
 
-        getEntries().clear();
+        this.entries.clear();
         for (int i = 0; i < addresses.length; i++) {
             int audioSize = i >= addresses.length - 1 || addresses[i + 1] == 0 ? reader.getRemaining() : addresses[i + 1]; // Where the reading ends.
             if (!reader.hasMore())
@@ -50,7 +50,7 @@ public class SCPlayStationSoundBankBody extends SCSplitSoundBankBody<SCPlayStati
 
             SCPlayStationVabSound newSound = new SCPlayStationVabSound(this, typedHeader, i, audioSize);
             newSound.load(reader);
-            getEntries().add(newSound);
+            this.entries.add(newSound);
         }
 
         return true;
@@ -59,8 +59,8 @@ public class SCPlayStationSoundBankBody extends SCSplitSoundBankBody<SCPlayStati
     @Override
     public void save(DataWriter writer, SCSplitSoundBankHeader<SCPlayStationVabHeaderEntry, SCPlayStationVabSound> other) {
         int dataStartIndex = writer.getIndex();
-        for (int i = 0; i < getEntries().size(); i++)
-            getEntries().get(i).save(writer);
+        for (int i = 0; i < this.entries.size(); i++)
+            this.entries.get(i).save(writer);
 
         // Apply to the header.
         if (other instanceof SCPlayStationVabSoundBankHeader)

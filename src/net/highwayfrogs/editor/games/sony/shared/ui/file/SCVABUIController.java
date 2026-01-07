@@ -56,7 +56,7 @@ public class SCVABUIController extends SCFileEditorUIController<SCGameInstance, 
 
             String errorMessage = this.selectedSound.getAudioFormat().setSampleRate(newValue.intValue()); // Apply the new sample rate.
             if (errorMessage != null) {
-                FXUtils.makePopUp(errorMessage, AlertType.ERROR);
+                FXUtils.showPopup(AlertType.ERROR, "An error occurred changing the sample rate.", errorMessage);
                 return;
             }
 
@@ -155,13 +155,13 @@ public class SCVABUIController extends SCFileEditorUIController<SCGameInstance, 
         try {
             newRate = Integer.parseInt(text);
         } catch (NumberFormatException nfx) {
-            FXUtils.makePopUp("Improperly formatted number: '" + text + "'.", AlertType.ERROR);
+            FXUtils.showPopup(AlertType.ERROR, "Invalid number.", "Improperly formatted number: '" + text + "'.");
             return;
         }
 
         String errorMessage = this.selectedSound.getAudioFormat().setSampleRate(newRate); // Apply the new sample rate.
         if (errorMessage != null) {
-            FXUtils.makePopUp(errorMessage, AlertType.ERROR);
+            FXUtils.showPopup(AlertType.ERROR, "Failed to adjust sample rate.", errorMessage);
             return;
         }
 

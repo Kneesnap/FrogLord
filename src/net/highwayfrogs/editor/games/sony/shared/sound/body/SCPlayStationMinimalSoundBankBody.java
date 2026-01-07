@@ -1,13 +1,13 @@
 package net.highwayfrogs.editor.games.sony.shared.sound.body;
 
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankBody;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankHeader;
 import net.highwayfrogs.editor.games.sony.shared.sound.body.SCPlayStationSoundBankBody.SCPlayStationVabSound;
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCPlayStationMinimalSoundBankHeader;
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCPlayStationMinimalSoundBankHeader.SCPlayStationMinimalSoundBankHeaderEntry;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Contains VAG data, compatible with the minimal header.
@@ -23,7 +23,7 @@ public class SCPlayStationMinimalSoundBankBody  extends SCSplitSoundBankBody<SCP
         if (!(other instanceof SCPlayStationMinimalSoundBankHeader) || other.getEntries().isEmpty())
             return false; // Can't read without header.
 
-        getEntries().clear();
+        this.entries.clear();
         for (int i = 0; i < other.getEntries().size(); i++) {
             int audioSize = i >= other.getEntries().size() - 1 ? reader.getRemaining() : other.getEntries().get(i + 1).getDataStartAddress(); // Where the reading ends.
             if (audioSize == 0)
@@ -31,7 +31,7 @@ public class SCPlayStationMinimalSoundBankBody  extends SCSplitSoundBankBody<SCP
 
             SCPlayStationVabSound newSound = new SCPlayStationVabSound(this, other.getEntries().get(i), i, audioSize);
             newSound.load(reader);
-            getEntries().add(newSound);
+            this.entries.add(newSound);
         }
 
         return true;
@@ -39,7 +39,7 @@ public class SCPlayStationMinimalSoundBankBody  extends SCSplitSoundBankBody<SCP
 
     @Override
     public void save(DataWriter writer, SCSplitSoundBankHeader<SCPlayStationMinimalSoundBankHeaderEntry, SCPlayStationVabSound> other) {
-        for (int i = 0; i < getEntries().size(); i++)
-            getEntries().get(i).save(writer);
+        for (int i = 0; i < this.entries.size(); i++)
+            this.entries.get(i).save(writer);
     }
 }
