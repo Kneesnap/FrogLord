@@ -328,7 +328,7 @@ public class SoundChunkFile extends GreatQuestGameFile implements IBasicSoundLis
     public static class SoundChunkEntry extends GameObject<GreatQuestInstance> implements IBasicSound {
         @Getter @NonNull private final SoundChunkFile soundChunkFile;
         @Getter private int id;
-        private final WavFile wavFile = new WavFile();
+        @Getter private final WavFile wavFile = new WavFile();
         private Clip cachedClip;
 
         public SoundChunkEntry(SoundChunkFile soundChunkFile) {

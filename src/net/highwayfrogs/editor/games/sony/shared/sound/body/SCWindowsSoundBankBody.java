@@ -1,14 +1,16 @@
 package net.highwayfrogs.editor.games.sony.shared.sound.body;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.shared.sound.ISoundSample;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankBody;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankBodyEntry;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankHeader;
+import net.highwayfrogs.editor.games.sony.shared.sound.header.SCWindowsSoundBankHeader;
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCWindowsSoundBankHeader.SCWindowsSoundBankHeaderEntry;
+import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents the audio body as implemented for Windows.
@@ -48,9 +50,19 @@ public abstract class SCWindowsSoundBankBody<TBodyEntry extends SCSplitSoundBank
     }
 
     @Override
-    public void save(DataWriter writer, SCSplitSoundBankHeader<SCWindowsSoundBankHeaderEntry, TBodyEntry> header) {
-        for (int i = 0; i < getEntries().size(); i++)
-            getEntries().get(i).save(writer);
+    public void save(DataWriter writer, SCSplitSoundBankHeader<SCWindowsSoundBankHeaderEntry, TBodyEntry> other) {
+        if (!(other instanceof SCWindowsSoundBankHeader<?>))
+            throw new IllegalArgumentException("other was expected to be SCWindowsSoundBankHeader, but was " + Utils.getSimpleName(other) + ".");
+
+        SCWindowsSoundBankHeader<TBodyEntry> typedHeader = (SCWindowsSoundBankHeader<TBodyEntry>) other;
+        for (int i = 0; i < getEntries().size(); i++) {
+            SCWindowsSoundBankHeaderEntry headerEntry = typedHeader.getEntries().get(i);
+            TBodyEntry bodyEntry = getEntries().get(i);
+
+            headerEntry.setDataStartOffset(writer.getIndex());
+            bodyEntry.save(writer);
+            headerEntry.setDataStartOffset(writer.getIndex() - headerEntry.getDataStartOffset());
+        }
     }
 
     /**

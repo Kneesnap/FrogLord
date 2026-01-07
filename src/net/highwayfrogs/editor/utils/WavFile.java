@@ -173,7 +173,7 @@ public class WavFile implements IBinarySerializable, IPropertyListCreator {
     @SuppressWarnings({"LombokGetterMayBeUsed", "RedundantSuppression"})
     public int getAverageBytesPerSecond() {
         if (this.formatTag == WAVE_FORMAT_PCM || this.formatTag == WAVE_FORMAT_IEEE_FLOAT) {
-            return ((this.channelCount * this.sampleRate * this.bitDepth) / 8); // This value doesn't appear to be used in most cases.
+            return ((this.channelCount * this.sampleRate * this.bitDepth) / Constants.BITS_PER_BYTE); // This value doesn't appear to be used in most cases.
         } else {
             return this.averageBytesPerSecond;
         }
@@ -184,7 +184,7 @@ public class WavFile implements IBinarySerializable, IPropertyListCreator {
      */
     public short getBlockAlign() {
         if (this.formatTag == WAVE_FORMAT_PCM || this.formatTag == WAVE_FORMAT_IEEE_FLOAT) {
-            return (short) ((this.channelCount * this.bitDepth) / 8);
+            return (short) ((this.channelCount * this.bitDepth) / Constants.BITS_PER_BYTE);
         } else {
             return this.blockAlign;
         }
@@ -285,6 +285,22 @@ public class WavFile implements IBinarySerializable, IPropertyListCreator {
 
         this.rawAudioData = AudioUtils.getRawAudioDataConvertedFromWavFile(newFormat, writeDataToByteArray());
         applyAudioFormat(newFormat);
+    }
+
+    /**
+     * This ensures the wav file is at least a given number of seconds long.
+     * This was just made to allow using voice clips with ElevenLabs, which has a 5 second minimum clip length.
+     * @param seconds the minimum number of seconds the audio should be
+     */
+    public void padToAtLeast(double seconds) {
+        int bytesPerSecond = (this.channelCount * this.sampleRate * this.bitDepth);
+        int totalBytes = (int) ((seconds * bytesPerSecond) / Constants.BITS_PER_BYTE);
+        if (this.rawAudioData.length >= totalBytes)
+            return;
+
+        byte[] newAudioData = new byte[totalBytes];
+        System.arraycopy(this.rawAudioData, 0, newAudioData, 0, this.rawAudioData.length);
+        this.rawAudioData = newAudioData;
     }
 
     /**

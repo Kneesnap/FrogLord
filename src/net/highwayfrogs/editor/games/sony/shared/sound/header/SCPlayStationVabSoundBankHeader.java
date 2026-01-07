@@ -2,8 +2,6 @@ package net.highwayfrogs.editor.games.sony.shared.sound.header;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankBody;
@@ -11,6 +9,8 @@ import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankHeader;
 import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitSoundBankHeaderEntry;
 import net.highwayfrogs.editor.games.sony.shared.sound.body.SCPlayStationSoundBankBody.SCPlayStationVabSound;
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCPlayStationVabSoundBankHeader.SCPlayStationVabHeaderEntry;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents the PSX sound bank header file format. (VAB Header)
@@ -33,7 +33,7 @@ public class SCPlayStationVabSoundBankHeader extends SCSplitSoundBankHeader<SCPl
     private long reserved1;
     private final VABProgram[] programs = new VABProgram[128];
     private VABTone[] tones;
-    private int[] loadedSampleAddresses;
+    private final int[] loadedSampleAddresses = new int[256];
     @Setter private int savedBodyTotalSize;
 
     private static final int TONES_PER_PROGRAM = 16;
@@ -80,7 +80,6 @@ public class SCPlayStationVabSoundBankHeader extends SCSplitSoundBankHeader<SCPl
         }
 
         // Read Samples.
-        this.loadedSampleAddresses = new int[256];
         for (int i = 0; i < this.loadedSampleAddresses.length; i++)
             this.loadedSampleAddresses[i] = (reader.readUnsignedShortAsInt() << 3);
 
@@ -114,7 +113,7 @@ public class SCPlayStationVabSoundBankHeader extends SCSplitSoundBankHeader<SCPl
 
         // Write Sample Addresses.
         for (int i = 0; i < this.loadedSampleAddresses.length; i++)
-            writer.writeUnsignedShort(this.loadedSampleAddresses[i] >> 3);
+            writer.writeUnsignedShort(this.loadedSampleAddresses[i] >>> 3);
 
         // Write the final size.
         int headerSize = writer.getIndex();

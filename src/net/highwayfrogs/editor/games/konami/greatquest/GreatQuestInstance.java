@@ -58,6 +58,8 @@ import java.util.Map.Entry;
 /**
  * Represents an instance of 'Frogger: The Great Quest'.
  * TODO:
+ *  -> Reset maps on gqs import to initial state.
+ *  -> Allow changing size/shape of bounding boxes / collision shapes in the 3D editor.
  *  -> Determine how PS2 vs PC support will work.
  *   -> Only after this is done can we settle on how importing GQS files for different versions will work.
  *   -> We'll probably want a C-like preprocessor.

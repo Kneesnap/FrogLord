@@ -34,6 +34,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapLevelID;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerFlyScoreType;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketEntity;
+import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGeneral;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketHeader;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerUtils;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerVersionComparison;
@@ -250,7 +251,8 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
                 LevelInfo.class, FroggerMapLevelID.class, FroggerMapWorldID.class, PCMapBook.class, FroggerMapTheme.class,
                 PSXMapBook.class, MapBook.class, ThemeBook.class, PCThemeBook.class, PSXThemeBook.class,
                 FroggerUtils.class, FroggerMapFilePacketEntity.class, MusicTrack.class,
-                FroggerDemoTable.class, FroggerPCDemoTableEntry.class, FroggerDemoTableEntry.class);
+                FroggerDemoTable.class, FroggerPCDemoTableEntry.class, FroggerDemoTableEntry.class,
+                FroggerMapFilePacketGeneral.class);
     }
 
     @Override
