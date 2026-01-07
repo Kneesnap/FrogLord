@@ -1,26 +1,28 @@
-package net.highwayfrogs.editor.file.config;
+package net.highwayfrogs.editor.games.sony.shared.utils;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.games.generic.IGameType;
 
 import java.util.*;
 import java.util.function.BiFunction;
 
 /**
- * Holds a bunch of names,
+ * Holds a bunch of names, used for assigning names to assets in various Sony Cambridge games.
+ * This class is fairly low quality, but works well.
  * Created by Kneesnap on 2/24/2019.
  */
-public class NameBank {
+public class SCNameBank {
     @Getter private final Config config;
     @Getter private final List<String> names = new ArrayList<>();
-    private final Map<String, NameBank> subBanks = new HashMap<>();
-    private BiFunction<NameBank, Integer, String> unknownMaker;
+    private final Map<String, SCNameBank> subBanks = new HashMap<>();
+    private BiFunction<SCNameBank, Integer, String> unknownMaker;
     private int spoofSize;
 
-    public static final NameBank EMPTY_BANK = new NameBank(null, new ArrayList<>(), null);
-    private static final NameBank EMPTY_MODIFIABLE_BANK = new NameBank(null, new ArrayList<>(), null);
+    public static final SCNameBank EMPTY_BANK = new SCNameBank(null, new ArrayList<>(), null);
+    private static final SCNameBank EMPTY_MODIFIABLE_BANK = new SCNameBank(null, new ArrayList<>(), null);
 
-    private NameBank(Config config, Collection<String> loadValues, BiFunction<NameBank, Integer, String> unknownMaker) {
+    private SCNameBank(Config config, Collection<String> loadValues, BiFunction<SCNameBank, Integer, String> unknownMaker) {
         this.config = config;
         this.unknownMaker = unknownMaker;
         this.names.addAll(loadValues);
@@ -36,7 +38,7 @@ public class NameBank {
             throw new NullPointerException("name");
 
         if (useSubBankLocalIds && this.subBanks.size() > 0) {
-            for (NameBank nameBank : this.subBanks.values()) {
+            for (SCNameBank nameBank : this.subBanks.values()) {
                 int testIndex = nameBank.getIndexForName(name, true);
                 if (testIndex >= 0)
                     return testIndex;
@@ -96,7 +98,7 @@ public class NameBank {
      * @param bankName The name of the bank.
      * @return childBank
      */
-    public NameBank getChildBank(String bankName) {
+    public SCNameBank getChildBank(String bankName) {
         return subBanks.get(bankName);
     }
 
@@ -109,7 +111,7 @@ public class NameBank {
         if (subBanks.containsKey(newName))
             return; // Already linked.
 
-        NameBank linkBank = getChildBank(oldName);
+        SCNameBank linkBank = getChildBank(oldName);
         if (linkBank != null)
             subBanks.put(newName, linkBank);
     }
@@ -133,13 +135,13 @@ public class NameBank {
      * @param unknownMaker What to return when an id wasn't found. Null is allowed.
      * @return newBank
      */
-    public static NameBank readBank(IGameType gameType, String folder, String configName, boolean addChildrenToMainBank, BiFunction<NameBank, Integer, String> unknownMaker) {
+    public static SCNameBank readBank(IGameType gameType, String folder, String configName, boolean addChildrenToMainBank, BiFunction<SCNameBank, Integer, String> unknownMaker) {
         Config config = new Config(gameType.getEmbeddedResourceStream( folder + "/" + configName + ".cfg"));
-        NameBank bank = new NameBank(config, config.getText(), unknownMaker);
+        SCNameBank bank = new SCNameBank(config, config.getText(), unknownMaker);
 
         for (Config childConfig : config.getOrderedChildren()) {
             List<String> childData = childConfig.getText();
-            bank.subBanks.put(childConfig.getName(), new NameBank(childConfig, childData, unknownMaker));
+            bank.subBanks.put(childConfig.getName(), new SCNameBank(childConfig, childData, unknownMaker));
             if (addChildrenToMainBank)
                 bank.names.addAll(childData);
         }

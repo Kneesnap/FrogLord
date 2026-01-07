@@ -2,12 +2,12 @@ package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.map;
 
 import javafx.scene.paint.Color;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResOctTreeSceneMgr.kcVtxBufFileStruct;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestImageFile;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
+import net.highwayfrogs.editor.gui.texture.basic.UnknownTextureSource;
 import net.highwayfrogs.editor.utils.ColorUtils;
 
 /**

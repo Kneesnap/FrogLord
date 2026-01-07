@@ -3,13 +3,13 @@ package net.highwayfrogs.editor.games.sony.frogger.map.packets;
 import javafx.scene.control.Alert.AlertType;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.config.exe.MapBook;
-import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
-import net.highwayfrogs.editor.file.config.exe.general.FormEntry.FormLibFlag;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.data.map.FroggerMapBook;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormEntry;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormEntry.FroggerFormLibFlag;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormGrid;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.IFroggerFormEntry;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
@@ -274,7 +274,7 @@ public class FroggerMapFilePacketEntity extends FroggerMapFilePacket {
             return;
 
         FroggerMapFile map = getParentFile();
-        MapBook mapBook = getGameInstance().getMapBook(map.getMapLevelID());
+        FroggerMapBook mapBook = getGameInstance().getMapBook(map.getMapLevelID());
         if (mapBook == null) {
             if (getParentFile().isIsland() || getParentFile().isQB())
                 return; // These maps don't have mapBook entries.
@@ -298,14 +298,14 @@ public class FroggerMapFilePacketEntity extends FroggerMapFilePacket {
         for (int i = 0; i < this.entities.size(); i++) {
             FroggerMapEntity entity = this.entities.get(i);
             IFroggerFormEntry rawFormEntry = entity.getFormEntry();
-            if (!(rawFormEntry instanceof FormEntry)) {
+            if (!(rawFormEntry instanceof FroggerFormEntry)) {
                 warningBuilder.append("- ").append(entity.getLoggerInfo()).append(" has an unsupported form entry!").append(Constants.NEWLINE);
                 showWarning = true;
                 continue;
             }
 
-            FormEntry formEntry = (FormEntry) rawFormEntry;
-            if (formEntry.testFlag(FormLibFlag.NO_MODEL))
+            FroggerFormEntry formEntry = (FroggerFormEntry) rawFormEntry;
+            if (formEntry.testFlag(FroggerFormLibFlag.NO_MODEL))
                 continue; // The NO_MODEL flags means the wadFile will not be resolved, and thus we should skip it.
 
             // Attempt to resolve the wadEntry.

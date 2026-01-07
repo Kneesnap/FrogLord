@@ -3,8 +3,8 @@ package net.highwayfrogs.editor.games.sony;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.games.generic.GameConfig;
+import net.highwayfrogs.editor.games.sony.shared.utils.SCNameBank;
 import net.highwayfrogs.editor.utils.StringUtils;
 
 import java.util.*;
@@ -26,8 +26,8 @@ public class SCGameConfig extends GameConfig {
     private int bmpPointerAddress;
     private boolean mwdLooseFiles;
     private SCGameRegion region;
-    private NameBank soundBank;
-    private NameBank animationBank;
+    private SCNameBank soundBank;
+    private SCNameBank animationBank;
     private final Map<String, int[]> hiddenPartIds = new HashMap<>();
     private final Map<String, String> mofRenderOverrides = new HashMap<>();
     private final Map<String, String> mofParentOverrides = new HashMap<>();

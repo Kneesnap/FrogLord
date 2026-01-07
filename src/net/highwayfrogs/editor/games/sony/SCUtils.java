@@ -6,6 +6,7 @@ import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.psx.PSXBitstreamImage;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.model.actionset.PTActionSetFile;
 import net.highwayfrogs.editor.games.sony.shared.model.skeleton.PTSkeletonFile;
 import net.highwayfrogs.editor.games.sony.shared.model.staticmesh.PTStaticFile;
@@ -49,6 +50,9 @@ public class SCUtils {
     public static final String UNNAMED_IMAGE_PREFIX = "img";
     public static final String C_UNNAMED_IMAGE_PREFIX = IMAGE_C_PREFIX + UNNAMED_IMAGE_PREFIX;
     public static final String C_IMAGE_TYPE_PREFIX = "MR_TEXTURE  ";
+
+    private static final int MR_TEXTURE_UV_COUNT = 4;
+    public static final int MR_TEXTURE_SIZE_IN_BYTES = (3 * Constants.SHORT_SIZE) + (2 * Constants.BYTE_SIZE) + (MR_TEXTURE_UV_COUNT * SCByteTextureUV.BYTE_SIZE);
 
     /**
      * Creates a game file from formats seen between different games.

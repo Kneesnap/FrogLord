@@ -13,9 +13,9 @@ import javafx.scene.shape.TriangleMesh;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Transform;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.config.exe.PickupData;
-import net.highwayfrogs.editor.file.config.exe.PickupData.PickupAnimationFrame;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.data.FroggerPickupData;
+import net.highwayfrogs.editor.games.sony.frogger.data.FroggerPickupData.PickupAnimationFrame;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerFlyScoreType;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
@@ -347,7 +347,7 @@ public class FroggerUIMapEntityManager extends FroggerCentralMapListManager<Frog
 
         // Attempt to use a fly sprite.
         FroggerGameInstance config = getMap().getGameInstance();
-        PickupData pickupData = config.getPickupData(entity.getFlyScoreType());
+        FroggerPickupData pickupData = config.getPickupData(entity.getFlyScoreType());
         if (pickupData != null && pickupData.getFrames().size() > 0) {
             PickupAnimationFrame pickupAnimationFrame = pickupData.getFrames().get(Math.max(0, this.pickupAnimationFrameCounter) % pickupData.getFrames().size());
             if (pickupAnimationFrame != null && pickupAnimationFrame.applyToMeshView(entityMeshView, isEntityHighlighted)) {

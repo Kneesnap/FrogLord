@@ -6,33 +6,31 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.file.config.NameBank;
-import net.highwayfrogs.editor.file.config.TargetPlatform;
-import net.highwayfrogs.editor.file.config.data.FroggerMapWorldID;
-import net.highwayfrogs.editor.file.config.data.MusicTrack;
-import net.highwayfrogs.editor.file.config.exe.LevelInfo;
-import net.highwayfrogs.editor.file.config.exe.MapBook;
-import net.highwayfrogs.editor.file.config.exe.PickupData;
-import net.highwayfrogs.editor.file.config.exe.PickupData.PickupAnimationFrame;
-import net.highwayfrogs.editor.file.config.exe.ThemeBook;
-import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
-import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
-import net.highwayfrogs.editor.file.config.exe.pc.PCThemeBook;
-import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
-import net.highwayfrogs.editor.file.config.exe.psx.PSXThemeBook;
 import net.highwayfrogs.editor.file.config.script.FroggerScript;
 import net.highwayfrogs.editor.games.psx.image.PsxVramScreenSize;
 import net.highwayfrogs.editor.games.sony.*;
+import net.highwayfrogs.editor.games.sony.frogger.data.FroggerLevelSelectEntry;
+import net.highwayfrogs.editor.games.sony.frogger.data.FroggerLevelSelectWorldID;
+import net.highwayfrogs.editor.games.sony.frogger.data.FroggerMusicTrack;
+import net.highwayfrogs.editor.games.sony.frogger.data.FroggerPickupData;
+import net.highwayfrogs.editor.games.sony.frogger.data.FroggerPickupData.PickupAnimationFrame;
 import net.highwayfrogs.editor.games.sony.frogger.data.demo.FroggerDemoFile;
 import net.highwayfrogs.editor.games.sony.frogger.data.demo.FroggerDemoTable;
 import net.highwayfrogs.editor.games.sony.frogger.data.demo.FroggerDemoTableEntry;
 import net.highwayfrogs.editor.games.sony.frogger.data.demo.FroggerPCDemoTableEntry;
+import net.highwayfrogs.editor.games.sony.frogger.data.map.FroggerMapBook;
+import net.highwayfrogs.editor.games.sony.frogger.data.map.FroggerMapBookPC;
+import net.highwayfrogs.editor.games.sony.frogger.data.map.FroggerMapBookPSX;
+import net.highwayfrogs.editor.games.sony.frogger.data.theme.FroggerThemeBook;
+import net.highwayfrogs.editor.games.sony.frogger.data.theme.FroggerThemeBookPC;
+import net.highwayfrogs.editor.games.sony.frogger.data.theme.FroggerThemeBookPSX;
 import net.highwayfrogs.editor.games.sony.frogger.file.FroggerPaletteFile;
 import net.highwayfrogs.editor.games.sony.frogger.file.FroggerSkyLand;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapLevelID;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerFlyScoreType;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormEntry;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketEntity;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketGeneral;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketHeader;
@@ -49,6 +47,7 @@ import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewCom
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.LazySCGameFileListGroup;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
 import net.highwayfrogs.editor.games.sony.shared.utils.SCAnalysisUtils.SCTextureUsage;
+import net.highwayfrogs.editor.games.sony.shared.utils.SCNameBank;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
@@ -70,18 +69,18 @@ import java.util.*;
  */
 @Getter
 public class FroggerGameInstance extends SCGameInstance implements ISCTextureUser, ISCMWDHeaderGenerator {
-    private final List<MapBook> mapLibrary = new ArrayList<>();
-    private final List<MusicTrack> musicTracks = new ArrayList<>();
-    private final List<LevelInfo> arcadeLevelInfo = new ArrayList<>();
-    private final List<LevelInfo> raceLevelInfo = new ArrayList<>();
-    private final List<LevelInfo> allLevelInfo = new ArrayList<>();
-    private final Map<FroggerMapLevelID, LevelInfo> levelInfoMap = new HashMap<>();
-    private final List<FormEntry> fullFormBook = new ArrayList<>();
+    private final List<FroggerMapBook> mapLibrary = new ArrayList<>();
+    private final List<FroggerMusicTrack> musicTracks = new ArrayList<>();
+    private final List<FroggerLevelSelectEntry> arcadeLevelSelectEntries = new ArrayList<>();
+    private final List<FroggerLevelSelectEntry> raceLevelSelectEntries = new ArrayList<>();
+    private final List<FroggerLevelSelectEntry> allLevelSelectEntries = new ArrayList<>();
+    private final Map<FroggerMapLevelID, FroggerLevelSelectEntry> levelInfoMap = new HashMap<>();
+    private final List<FroggerFormEntry> fullFormBook = new ArrayList<>();
     private final List<FroggerScript> scripts = new ArrayList<>();
     private final Map<FroggerMapLevelID, Image> levelImageMap = new HashMap<>();
-    private final Map<FroggerMapTheme, FormEntry[]> allowedForms = new HashMap<>();
-    private final ThemeBook[] themeLibrary = new ThemeBook[FroggerMapTheme.values().length];
-    private final PickupData[] pickupData = new PickupData[FroggerFlyScoreType.values().length];
+    private final Map<FroggerMapTheme, FroggerFormEntry[]> allowedForms = new HashMap<>();
+    private final FroggerThemeBook[] themeLibrary = new FroggerThemeBook[FroggerMapTheme.values().length];
+    private final FroggerPickupData[] pickupData = new FroggerPickupData[FroggerFlyScoreType.values().length];
     private final TextureRemapArray skyLandTextureRemap;
     private final FroggerDemoTable demoTable;
 
@@ -139,7 +138,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         WADFile wadFile = model.getParentWadFile();
         if (wadFile != null) {
             FroggerMapTheme theme = FroggerUtils.getFroggerMapTheme(wadFile);
-            ThemeBook themeBook = getThemeBook(theme);
+            FroggerThemeBook themeBook = getThemeBook(theme);
             if (themeBook != null) {
                 VloFile themeVlo = themeBook.getVLO(FroggerUtils.isMultiplayerFile(wadFile, theme), FroggerUtils.isLowPolyMode(wadFile));
                 if (themeVlo != null)
@@ -248,9 +247,9 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
     protected void setupScriptEngine(NoodleScriptEngine engine) {
         super.setupScriptEngine(engine);
         engine.addWrapperTemplates(FroggerGameInstance.class, FroggerConfig.class, FroggerTextureRemap.class, FroggerMapFile.class,
-                LevelInfo.class, FroggerMapLevelID.class, FroggerMapWorldID.class, PCMapBook.class, FroggerMapTheme.class,
-                PSXMapBook.class, MapBook.class, ThemeBook.class, PCThemeBook.class, PSXThemeBook.class,
-                FroggerUtils.class, FroggerMapFilePacketEntity.class, MusicTrack.class,
+                FroggerLevelSelectEntry.class, FroggerMapLevelID.class, FroggerLevelSelectWorldID.class, FroggerMapBookPC.class, FroggerMapTheme.class,
+                FroggerMapBookPSX.class, FroggerMapBook.class, FroggerThemeBook.class, FroggerThemeBookPC.class, FroggerThemeBookPSX.class,
+                FroggerUtils.class, FroggerMapFilePacketEntity.class, FroggerMusicTrack.class,
                 FroggerDemoTable.class, FroggerPCDemoTableEntry.class, FroggerDemoTableEntry.class,
                 FroggerMapFilePacketGeneral.class);
     }
@@ -270,19 +269,19 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         Set<SCTextureUsage> textures = new HashSet<>();
 
         final String levelSelectName = "Level Select";
-        for (int i = 0; i < this.allLevelInfo.size(); i++) {
-            LevelInfo levelInfo = this.allLevelInfo.get(i);
-            tryAddTexture(textures, levelInfo.getWorldLevelStackColoredImage(), levelSelectName);
-            tryAddTexture(textures, levelInfo.getUnusedWorldVisitedImage(), levelSelectName);
-            tryAddTexture(textures, levelInfo.getWorldNotTriedImage(), levelSelectName);
-            tryAddTexture(textures, levelInfo.getLevelPreviewScreenshotImage(), levelSelectName);
-            tryAddTexture(textures, levelInfo.getLevelNameImage(), levelSelectName);
-            tryAddTexture(textures, levelInfo.getIngameLevelNameImage(), levelSelectName);
+        for (int i = 0; i < this.allLevelSelectEntries.size(); i++) {
+            FroggerLevelSelectEntry levelSelectEntry = this.allLevelSelectEntries.get(i);
+            tryAddTexture(textures, levelSelectEntry.getWorldLevelStackColoredImage(), levelSelectName);
+            tryAddTexture(textures, levelSelectEntry.getUnusedWorldVisitedImage(), levelSelectName);
+            tryAddTexture(textures, levelSelectEntry.getWorldNotTriedImage(), levelSelectName);
+            tryAddTexture(textures, levelSelectEntry.getLevelPreviewScreenshotImage(), levelSelectName);
+            tryAddTexture(textures, levelSelectEntry.getLevelNameImage(), levelSelectName);
+            tryAddTexture(textures, levelSelectEntry.getIngameLevelNameImage(), levelSelectName);
         }
 
         // Add pickup data.
         for (int i = 0; i < this.pickupData.length; i++) {
-            PickupData pickupData = this.pickupData[i];
+            FroggerPickupData pickupData = this.pickupData[i];
             if (pickupData == null)
                 continue;
 
@@ -290,7 +289,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
                 PickupAnimationFrame pickupFrame = pickupData.getFrames().get(j);
                 VloImage image = pickupFrame.getImage();
                 if (image != null)
-                    textures.add(new SCTextureUsage(this, image.getTextureId(), "PickupData"));
+                    textures.add(new SCTextureUsage(this, image.getTextureId(), "FroggerPickupData"));
             }
         }
 
@@ -325,7 +324,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
      * @param theme The theme to get the book for.
      * @return themeBook
      */
-    public ThemeBook getThemeBook(FroggerMapTheme theme) {
+    public FroggerThemeBook getThemeBook(FroggerMapTheme theme) {
         return theme != null ? this.themeLibrary[theme.ordinal()] : null;
     }
 
@@ -334,7 +333,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
      * @param level The level to get the book for.
      * @return mapBook
      */
-    public MapBook getMapBook(FroggerMapLevelID level) {
+    public FroggerMapBook getMapBook(FroggerMapLevelID level) {
         return this.mapLibrary.size() > 0 && this.mapLibrary.size() > level.ordinal() ? this.mapLibrary.get(level.ordinal()) : null;
     }
 
@@ -371,16 +370,16 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
      * @param formBookId The form id in question. Normally passed to ENTITY_GET_FORM_BOOK as en_form_book_id.
      * @return formBook
      */
-    public FormEntry getMapFormEntry(FroggerMapTheme mapTheme, int formBookId) {
-        if ((formBookId & FormEntry.FLAG_GENERAL) == FormEntry.FLAG_GENERAL)
+    public FroggerFormEntry getMapFormEntry(FroggerMapTheme mapTheme, int formBookId) {
+        if ((formBookId & FroggerFormEntry.FLAG_GENERAL) == FroggerFormEntry.FLAG_GENERAL)
             mapTheme = FroggerMapTheme.GENERAL;
 
-        ThemeBook themeBook = getThemeBook(mapTheme);
+        FroggerThemeBook themeBook = getThemeBook(mapTheme);
         if (themeBook == null)
             return null;
 
-        int formIndex = formBookId & (FormEntry.FLAG_GENERAL - 1);
-        List<FormEntry> formBook = themeBook.getFormBook();
+        int formIndex = formBookId & (FroggerFormEntry.FLAG_GENERAL - 1);
+        List<FroggerFormEntry> formBook = themeBook.getFormBook();
         return formBook != null && formBook.size() > formIndex ? formBook.get(formIndex) : null;
     }
 
@@ -389,16 +388,16 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
      * @param level The level to get the track for.
      * @return music.
      */
-    public MusicTrack getMusic(FroggerMapLevelID level) {
+    public FroggerMusicTrack getMusic(FroggerMapLevelID level) {
         return this.musicTracks.size() > level.ordinal() ? this.musicTracks.get(level.ordinal()) : null;
     }
 
     /**
-     * Gets the LevelInfo for a given MapLevel. Returns null if not found.
+     * Gets the FroggerLevelSelectEntry for a given MapLevel. Returns null if not found.
      * @param level The level to get the info for.
      * @return levelInfo
      */
-    public LevelInfo getLevel(FroggerMapLevelID level) {
+    public FroggerLevelSelectEntry getLevel(FroggerMapLevelID level) {
         return this.levelInfoMap.get(level);
     }
 
@@ -407,20 +406,20 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
      * @param theme The theme to get forms for.
      * @return allowedForms
      */
-    public FormEntry[] getAllowedForms(FroggerMapTheme theme) {
+    public FroggerFormEntry[] getAllowedForms(FroggerMapTheme theme) {
         return allowedForms.computeIfAbsent(theme, safeTheme -> {
-            ThemeBook themeBook = this.themeLibrary[FroggerMapTheme.GENERAL.ordinal()];
+            FroggerThemeBook themeBook = this.themeLibrary[FroggerMapTheme.GENERAL.ordinal()];
             if (themeBook == null)
-                return new FormEntry[0];
+                return new FroggerFormEntry[0];
 
-            List<FormEntry> formType = new ArrayList<>(themeBook.getFormBook());
+            List<FroggerFormEntry> formType = new ArrayList<>(themeBook.getFormBook());
             if (safeTheme != null && safeTheme != FroggerMapTheme.GENERAL) {
-                ThemeBook mapBook = this.themeLibrary[safeTheme.ordinal()];
+                FroggerThemeBook mapBook = this.themeLibrary[safeTheme.ordinal()];
                 if (mapBook != null)
                     formType.addAll(mapBook.getFormBook());
             }
 
-            return formType.toArray(new FormEntry[0]);
+            return formType.toArray(new FroggerFormEntry[0]);
         });
     }
 
@@ -429,7 +428,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
      * @param flyScoreType the fly score type to get the pickup data for
      * @return pickupData, or null if it couldn't be found
      */
-    public PickupData getPickupData(FroggerFlyScoreType flyScoreType) {
+    public FroggerPickupData getPickupData(FroggerFlyScoreType flyScoreType) {
         return flyScoreType != null ? this.pickupData[flyScoreType.ordinal()] : null;
     }
 
@@ -483,7 +482,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         for (int i = 0; i < this.pickupData.length; i++) {
             long tempPointer = reader.readUnsignedIntAsLong();
             reader.jumpTemp((int) (tempPointer - getRamOffset()));
-            PickupData pickupData = new PickupData(this, FroggerFlyScoreType.values()[i]);
+            FroggerPickupData pickupData = new FroggerPickupData(this, FroggerFlyScoreType.values()[i]);
             pickupData.load(reader);
             this.pickupData[i] = pickupData;
             reader.jumpReturn();
@@ -496,7 +495,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
 
         reader.setIndex(this.getVersionConfig().getThemeBookAddress());
         for (int i = 0; i < this.themeLibrary.length; i++) {
-            ThemeBook book = TargetPlatform.makeNewThemeBook(this);
+            FroggerThemeBook book = FroggerThemeBook.makeNewThemeBook(this);
             book.setTheme(FroggerMapTheme.values()[i]);
             book.load(reader);
             this.themeLibrary[i] = book;
@@ -519,7 +518,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
             return;
 
         exeWriter.setIndex(this.getVersionConfig().getThemeBookAddress());
-        for (ThemeBook book : this.themeLibrary)
+        for (FroggerThemeBook book : this.themeLibrary)
             book.save(exeWriter);
     }
 
@@ -528,15 +527,15 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         for (int i = 1; i < FroggerMapTheme.values().length; i++) {
             FroggerMapTheme currentTheme = FroggerMapTheme.values()[i];
 
-            ThemeBook lastBook = getThemeBook(lastTheme);
-            ThemeBook currentBook = getThemeBook(currentTheme);
+            FroggerThemeBook lastBook = getThemeBook(lastTheme);
+            FroggerThemeBook currentBook = getThemeBook(currentTheme);
             if (currentBook == null || currentBook.getFormLibraryPointer() == 0 || lastBook == null || lastBook.getFormLibraryPointer() == 0)
                 continue;
 
             // Determine number of form entries and compare with name bank.
-            NameBank formBank = this.getVersionConfig().getFormBank().getChildBank(lastTheme.name());
+            SCNameBank formBank = this.getVersionConfig().getFormBank().getChildBank(lastTheme.name());
             int nameCount = formBank != null ? formBank.size() : 0;
-            int byteSize = this.getVersionConfig().isAtOrBeforeBuild4() ? FormEntry.OLD_BYTE_SIZE : FormEntry.BYTE_SIZE;
+            int byteSize = this.getVersionConfig().isAtOrBeforeBuild4() ? FroggerFormEntry.OLD_BYTE_SIZE : FroggerFormEntry.BYTE_SIZE;
             int entryCount = (int) (currentBook.getFormLibraryPointer() - lastBook.getFormLibraryPointer()) / byteSize;
             if (entryCount != nameCount)
                 getLogger().warning("%s has %d configured form names but %d calculated form entries in the form library.", lastTheme, nameCount, entryCount);
@@ -547,7 +546,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         }
 
         // Load the last theme, which we use the number of names for to determine size.
-        ThemeBook lastBook = getThemeBook(lastTheme);
+        FroggerThemeBook lastBook = getThemeBook(lastTheme);
         if (lastBook != null && lastBook.getFormLibraryPointer() != 0) {
             int nameCount = this.getVersionConfig().getFormBank().getChildBank(lastTheme.name()).size();
             lastBook.loadFormLibrary(this, nameCount);
@@ -562,7 +561,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         int themeAddress = this.getVersionConfig().isSonyPresentation() ? Integer.MAX_VALUE : this.getVersionConfig().getThemeBookAddress();
         if (themeAddress >= 0) {
             while (themeAddress > reader.getIndex()) {
-                MapBook book = TargetPlatform.makeNewMapBook(this);
+                FroggerMapBook book = FroggerMapBook.makeNewMapBook(this);
                 book.load(reader);
                 this.mapLibrary.add(book);
                 Constants.logExeInfo(book);
@@ -579,7 +578,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         for (String key : mapBookRestore.keySet()) {
             FroggerMapLevelID level = FroggerMapLevelID.getByName(key);
             Utils.verify(level != null, "Unknown level: '%s'", key);
-            MapBook mapBook = getMapBook(level);
+            FroggerMapBook mapBook = getMapBook(level);
             Utils.verify(mapBook != null, "Cannot modify %s, its level doesn't exist.", key);
             mapBook.handleCorrection(mapBookRestore.getString(key));
         }
@@ -655,8 +654,8 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
 
         byte readByte;
         reader.setIndex(this.getVersionConfig().getMusicAddress());
-        while ((readByte = reader.readByte()) != MusicTrack.TERMINATOR)
-            this.musicTracks.add(MusicTrack.getTrackById(this, readByte));
+        while ((readByte = reader.readByte()) != FroggerMusicTrack.TERMINATOR)
+            this.musicTracks.add(FroggerMusicTrack.getTrackById(this, readByte));
     }
 
     private void writeMusicData(DataWriter exeWriter) {
@@ -665,7 +664,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
 
         exeWriter.setIndex(this.getVersionConfig().getMusicAddress());
         this.musicTracks.forEach(track -> exeWriter.writeByte(track.getTrack(this)));
-        exeWriter.writeByte(MusicTrack.TERMINATOR);
+        exeWriter.writeByte(FroggerMusicTrack.TERMINATOR);
     }
 
     private void readLevelData(DataReader reader) {
@@ -673,25 +672,25 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
             return; // No level select is present.
 
         reader.setIndex(this.getVersionConfig().getArcadeLevelAddress());
-        LevelInfo level = null;
+        FroggerLevelSelectEntry level = null;
         while (level == null || !level.isTerminator()) {
-            level = new LevelInfo(this);
+            level = new FroggerLevelSelectEntry(this);
             level.load(reader);
-            this.arcadeLevelInfo.add(level);
+            this.arcadeLevelSelectEntries.add(level);
             Constants.logExeInfo(level);
         }
 
         level = null;
         while (level == null || !level.isTerminator()) {
-            level = new LevelInfo(this);
+            level = new FroggerLevelSelectEntry(this);
             level.load(reader);
-            this.raceLevelInfo.add(level);
+            this.raceLevelSelectEntries.add(level);
             Constants.logExeInfo(level);
         }
 
-        this.allLevelInfo.addAll(this.arcadeLevelInfo);
-        this.allLevelInfo.addAll(this.raceLevelInfo);
-        for (LevelInfo info : this.allLevelInfo)
+        this.allLevelSelectEntries.addAll(this.arcadeLevelSelectEntries);
+        this.allLevelSelectEntries.addAll(this.raceLevelSelectEntries);
+        for (FroggerLevelSelectEntry info : this.allLevelSelectEntries)
             this.levelInfoMap.put(info.getLevel(), info);
     }
 
@@ -700,7 +699,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
             return; // No level select is present.
 
         exeWriter.setIndex(this.getVersionConfig().getArcadeLevelAddress());
-        this.arcadeLevelInfo.forEach(level -> level.save(exeWriter));
-        this.raceLevelInfo.forEach(level -> level.save(exeWriter));
+        this.arcadeLevelSelectEntries.forEach(level -> level.save(exeWriter));
+        this.raceLevelSelectEntries.forEach(level -> level.save(exeWriter));
     }
 }

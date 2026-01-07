@@ -17,7 +17,6 @@ import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Translate;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
@@ -40,6 +39,7 @@ import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode.OverlayTarget;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
+import net.highwayfrogs.editor.gui.texture.basic.OutlineColorTextureSource;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 
@@ -68,7 +68,7 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
     private OverlayTarget highlightedPolygonTarget;
     private MeshView hoverView; // Anything we're hovering over which should allow selection instead of the cursor.
 
-    public static final CursorVertexColor GREEN_COLOR = new CursorVertexColor(java.awt.Color.GREEN, java.awt.Color.BLACK);
+    public static final OutlineColorTextureSource GREEN_COLOR = new OutlineColorTextureSource(java.awt.Color.GREEN, java.awt.Color.BLACK);
 
     public FroggerUIGeometryManager(FroggerMapMeshController controller) {
         super(controller);

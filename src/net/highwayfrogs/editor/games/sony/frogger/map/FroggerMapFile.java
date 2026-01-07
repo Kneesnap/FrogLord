@@ -6,13 +6,12 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.config.FroggerMapConfig;
-import net.highwayfrogs.editor.file.config.exe.LevelInfo;
-import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.data.FroggerLevelSelectEntry;
+import net.highwayfrogs.editor.games.sony.frogger.data.theme.FroggerThemeBook;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.FroggerMapLight;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquare;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquareReaction;
@@ -138,7 +137,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> implement
         // Find level image, or create it if it's not found.
         Image levelImage = getGameInstance().getLevelImageMap().get(level);
         if (levelImage == null && getGameInstance().getLevelInfoMap().size() > 0) {
-            LevelInfo info = getGameInstance().getLevelInfoMap().get(level);
+            FroggerLevelSelectEntry info = getGameInstance().getLevelInfoMap().get(level);
             if (info != null) {
                 VloImage levelTextureImage = info.getLevelPreviewScreenshotImage();
                 if (levelTextureImage != null)
@@ -220,7 +219,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> implement
         if (this.cachedVloFile != null)
             return this.cachedVloFile;
 
-        ThemeBook themeBook = getGameInstance().getThemeBook(this.generalPacket.getMapTheme());
+        FroggerThemeBook themeBook = getGameInstance().getThemeBook(this.generalPacket.getMapTheme());
         return this.cachedVloFile = (themeBook != null ? themeBook.getVLO(this) : null);
     }
 

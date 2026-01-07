@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file.config.exe;
+package net.highwayfrogs.editor.games.sony.frogger.data;
 
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
@@ -6,12 +6,11 @@ import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 
 /**
- * A struct found in the frogger exe.
- * TODO: Rewrite this at some point.
+ * A struct hardcoded into the Frogger exe, representing game resources.
  * Created by Kneesnap on 1/27/2019.
  */
-public abstract class ExeStruct extends SCGameData<FroggerGameInstance> {
-    public ExeStruct(FroggerGameInstance instance) {
+public abstract class FroggerHardcodedResourceEntry extends SCGameData<FroggerGameInstance> {
+    public FroggerHardcodedResourceEntry(FroggerGameInstance instance) {
         super(instance);
     }
 

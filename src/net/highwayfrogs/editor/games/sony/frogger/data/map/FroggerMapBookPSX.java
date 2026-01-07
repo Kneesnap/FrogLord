@@ -1,12 +1,11 @@
-package net.highwayfrogs.editor.file.config.exe.psx;
+package net.highwayfrogs.editor.games.sony.frogger.data.map;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.config.exe.MapBook;
-import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerTextureRemap;
+import net.highwayfrogs.editor.games.sony.frogger.data.theme.FroggerThemeBookPSX;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.utils.NumberUtils;
@@ -16,11 +15,11 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import java.util.function.Function;
 
 /**
- * A PSX MapBook implementation.
+ * A PSX FroggerMapBook implementation.
  * Created by Kneesnap on 1/27/2019.
  */
 
-public class PSXMapBook extends MapBook {
+public class FroggerMapBookPSX extends FroggerMapBook {
     @Getter @Setter private int mapId;
     @Getter @Setter private boolean useCaveLights;
     @Getter @Setter private long environmentTexturePointer = -1;
@@ -28,7 +27,7 @@ public class PSXMapBook extends MapBook {
     @Getter @Setter private FroggerTextureRemap textureRemap;
     private long tempRemapPointer;
 
-    public PSXMapBook(FroggerGameInstance instance) {
+    public FroggerMapBookPSX(FroggerGameInstance instance) {
         super(instance);
     }
 
@@ -58,7 +57,7 @@ public class PSXMapBook extends MapBook {
 
     @Override
     public void addTextureRemaps(FroggerGameInstance instance) {
-        FroggerTextureRemap remap = addRemap(instance, this.mapId, this.tempRemapPointer, false);
+        FroggerTextureRemap remap = addRemap(instance, this.mapId, this.tempRemapPointer);
         if (remap != null) {
             this.textureRemap = remap;
             this.tempRemapPointer = -1;
@@ -77,7 +76,7 @@ public class PSXMapBook extends MapBook {
     }
 
     @Override
-    public <T> T execute(Function<PCMapBook, T> pcHandler, Function<PSXMapBook, T> psxHandler) {
+    public <T> T execute(Function<FroggerMapBookPC, T> pcHandler, Function<FroggerMapBookPSX, T> psxHandler) {
         return psxHandler.apply(this);
     }
 
@@ -105,7 +104,7 @@ public class PSXMapBook extends MapBook {
 
         // When the map reports a particular theme, I think it's reliable.
         if (map != null && map.getMapTheme() != null && !map.isMultiplayer()) {
-            PSXThemeBook themeBook = ((PSXThemeBook) getGameInstance().getThemeBook(map.getMapTheme()));
+            FroggerThemeBookPSX themeBook = ((FroggerThemeBookPSX) getGameInstance().getThemeBook(map.getMapTheme()));
             if (themeBook != null && themeBook.getWadId() != wadId)
                 return getGameInstance().getGameFile(themeBook.getWadId());
         }

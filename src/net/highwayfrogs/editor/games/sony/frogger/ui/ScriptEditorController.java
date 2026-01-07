@@ -17,13 +17,13 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.config.script.FroggerScript;
 import net.highwayfrogs.editor.file.config.script.ScriptCommand;
 import net.highwayfrogs.editor.file.config.script.ScriptCommandType;
 import net.highwayfrogs.editor.file.config.script.format.BankFormatter;
 import net.highwayfrogs.editor.file.config.script.format.ScriptFormatter;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormEntry;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.FXUtils;
@@ -92,7 +92,7 @@ public class ScriptEditorController extends GameUIController<FroggerGameInstance
 
         // Find usages in form library.
         boolean foundAny = false;
-        for (FormEntry entry : getGameInstance().getFullFormBook()) {
+        for (FroggerFormEntry entry : getGameInstance().getFullFormBook()) {
             if (entry.getScriptId() != id)
                 continue;
 

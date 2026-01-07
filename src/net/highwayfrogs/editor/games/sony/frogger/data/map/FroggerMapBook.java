@@ -1,9 +1,8 @@
-package net.highwayfrogs.editor.file.config.exe;
+package net.highwayfrogs.editor.games.sony.frogger.data.map;
 
-import net.highwayfrogs.editor.file.config.exe.pc.PCMapBook;
-import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerTextureRemap;
+import net.highwayfrogs.editor.games.sony.frogger.data.FroggerHardcodedResourceEntry;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
@@ -13,11 +12,12 @@ import java.util.Locale;
 import java.util.function.Function;
 
 /**
- * A general mapbook struct.
+ * Represents the MAP_BOOK struct.
+ * This struct is implemented differently in different versions of the game, so this class represents the base implementation/functionality.
  * Created by Kneesnap on 1/27/2019.
  */
-public abstract class MapBook extends ExeStruct {
-    public MapBook(FroggerGameInstance instance) {
+public abstract class FroggerMapBook extends FroggerHardcodedResourceEntry {
+    public FroggerMapBook(FroggerGameInstance instance) {
         super(instance);
     }
 
@@ -33,12 +33,12 @@ public abstract class MapBook extends ExeStruct {
     public abstract boolean isDummy();
 
     /**
-     * Execute something depending on which MapBook type this is.
+     * Execute something depending on which FroggerMapBook type this is.
      * @param pcHandler  The PC handler.
      * @param psxHandler The psx handler.
      * @return result
      */
-    public abstract <T> T execute(Function<PCMapBook, T> pcHandler, Function<PSXMapBook, T> psxHandler);
+    public abstract <T> T execute(Function<FroggerMapBookPC, T> pcHandler, Function<FroggerMapBookPSX, T> psxHandler);
 
     /**
      * Gets the wad file for a given map.
@@ -59,9 +59,8 @@ public abstract class MapBook extends ExeStruct {
      * @param instance      The game instance to add the remap to.
      * @param mapResourceId The id of the map file.
      * @param remapPointer  The runtime pointer address to the remap.
-     * @param lowPoly       If win95 low poly mode is enabled.
      */
-    protected static FroggerTextureRemap addRemap(FroggerGameInstance instance, int mapResourceId, long remapPointer, boolean lowPoly) {
+    protected static FroggerTextureRemap addRemap(FroggerGameInstance instance, int mapResourceId, long remapPointer) {
         if (mapResourceId <= 0 || remapPointer <= 0)
             return null; // Invalid.
 
@@ -78,10 +77,23 @@ public abstract class MapBook extends ExeStruct {
     }
 
     /**
-     * Tests if the MapBook has per-level wad files.
+     * Tests if the FroggerMapBook has per-level wad files.
      * PSX Build 6 is the first build seen to have per-level wad files.
      */
     public boolean hasPerLevelWadFiles() {
         return !getGameInstance().getVersionConfig().isAtOrBeforeBuild4();
+    }
+
+    /**
+     * Create a new FroggerMapBook from a frogger instance.
+     * @param instance The instance to use to determine the theme book type to create.
+     * @return mapBook
+     */
+    public static FroggerMapBook makeNewMapBook(FroggerGameInstance instance) {
+        if (instance.getVersionConfig().isAtLeastRetailWindows()) {
+            return new FroggerMapBookPC(instance);
+        } else {
+            return new FroggerMapBookPSX(instance);
+        }
     }
 }

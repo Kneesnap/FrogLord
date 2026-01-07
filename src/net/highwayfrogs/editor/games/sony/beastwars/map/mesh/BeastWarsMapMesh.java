@@ -1,8 +1,6 @@
 package net.highwayfrogs.editor.games.sony.beastwars.map.mesh;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
-import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadedTextureManager.PSXMeshShadedTextureManager;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsTexFile;
@@ -10,6 +8,8 @@ import net.highwayfrogs.editor.games.sony.beastwars.map.BeastWarsMapFile;
 import net.highwayfrogs.editor.games.sony.beastwars.map.mesh.BeastWarsMapMesh.BeastWarsShadedTextureManager;
 import net.highwayfrogs.editor.gui.mesh.PSXShadedDynamicMesh;
 import net.highwayfrogs.editor.gui.texture.atlas.SequentialTextureAtlas;
+import net.highwayfrogs.editor.gui.texture.basic.OutlineColorTextureSource;
+import net.highwayfrogs.editor.gui.texture.basic.UnknownTextureSource;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -25,12 +25,12 @@ public class BeastWarsMapMesh extends PSXShadedDynamicMesh<BeastWarsMapVertex, B
     private final BeastWarsMapFile map;
     private final BeastWarsMapMeshNode mainNode;
 
-    public static final CursorVertexColor CURSOR_COLOR = new CursorVertexColor(Color.ORANGE, Color.BLACK);
-    public static final CursorVertexColor REMOVE_FACE_COLOR = new CursorVertexColor(Color.RED, Color.BLACK);
-    public static final CursorVertexColor GRAY_COLOR = new CursorVertexColor(Color.GRAY, Color.BLACK);
-    public static final CursorVertexColor YELLOW_COLOR = new CursorVertexColor(Color.YELLOW, Color.BLACK);
-    public static final CursorVertexColor GREEN_COLOR = new CursorVertexColor(Color.GREEN, Color.BLACK);
-    public static final CursorVertexColor PINK_COLOR = new CursorVertexColor(Color.PINK, Color.BLACK);
+    public static final OutlineColorTextureSource CURSOR_COLOR = new OutlineColorTextureSource(Color.ORANGE, Color.BLACK);
+    public static final OutlineColorTextureSource REMOVE_FACE_COLOR = new OutlineColorTextureSource(Color.RED, Color.BLACK);
+    public static final OutlineColorTextureSource GRAY_COLOR = new OutlineColorTextureSource(Color.GRAY, Color.BLACK);
+    public static final OutlineColorTextureSource YELLOW_COLOR = new OutlineColorTextureSource(Color.YELLOW, Color.BLACK);
+    public static final OutlineColorTextureSource GREEN_COLOR = new OutlineColorTextureSource(Color.GREEN, Color.BLACK);
+    public static final OutlineColorTextureSource PINK_COLOR = new OutlineColorTextureSource(Color.PINK, Color.BLACK);
 
     public BeastWarsMapMesh(BeastWarsMapFile mapFile) {
         super(new SequentialTextureAtlas(64, 64, true), DynamicMeshTextureQuality.UNLIT_SHARP, mapFile.shouldMapViewerEnableShadingByDefault(), mapFile.getFileDisplayName());

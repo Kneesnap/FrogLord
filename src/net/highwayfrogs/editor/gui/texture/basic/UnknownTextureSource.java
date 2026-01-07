@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file.map.view;
+package net.highwayfrogs.editor.gui.texture.basic;
 
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 
@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Represents a texture which was not found.
+ * Represents a texture which was not found. (Styled after Minecraft & Source Engine)
  * Created by Kneesnap on 3/2/2020.
  */
 public class UnknownTextureSource implements ITextureSource {
@@ -49,7 +49,7 @@ public class UnknownTextureSource implements ITextureSource {
         if (this.cachedImage != null)
             return this.cachedImage;
 
-        this.cachedImage = new BufferedImage(CursorVertexColor.VERTEX_COLOR_IMAGE_SIZE, CursorVertexColor.VERTEX_COLOR_IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB);
+        this.cachedImage = new BufferedImage(OutlineColorTextureSource.VERTEX_COLOR_IMAGE_SIZE, OutlineColorTextureSource.VERTEX_COLOR_IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB);
         Graphics graphics = this.cachedImage.createGraphics();
         int xSize = (this.cachedImage.getWidth() / 2);
         int ySize = (this.cachedImage.getHeight() / 2);
@@ -68,12 +68,12 @@ public class UnknownTextureSource implements ITextureSource {
 
     @Override
     public int getWidth() {
-        return CursorVertexColor.VERTEX_COLOR_IMAGE_SIZE;
+        return OutlineColorTextureSource.VERTEX_COLOR_IMAGE_SIZE;
     }
 
     @Override
     public int getHeight() {
-        return CursorVertexColor.VERTEX_COLOR_IMAGE_SIZE;
+        return OutlineColorTextureSource.VERTEX_COLOR_IMAGE_SIZE;
     }
 
     @Override

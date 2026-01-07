@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
+import net.highwayfrogs.editor.games.psx.PSXMatrix;
 import net.highwayfrogs.editor.games.sony.SCMath;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathResult;

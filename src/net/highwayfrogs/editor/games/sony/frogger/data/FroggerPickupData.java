@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file.config.exe;
+package net.highwayfrogs.editor.games.sony.frogger.data;
 
 import javafx.scene.image.Image;
 import javafx.scene.paint.PhongMaterial;
@@ -24,17 +24,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents pickup data.
+ * Represents pickup data. (Definitions of fly/bug sprite textures/sizes)
  * Created by Kneesnap on 3/26/2019.
  */
 @Getter
-public class PickupData extends SCGameData<FroggerGameInstance> {
+public class FroggerPickupData extends SCGameData<FroggerGameInstance> {
     private final FroggerFlyScoreType flyScoreType;
     private int sphereGlowColor = 0x7F7F7F; // BGR 24 bit color.
     private int spriteSize = 1 << 16; // Fixed point multiple. (1 << 16 === 0x10000 == 1.0F). Applies to both X and Y.
     private final List<PickupAnimationFrame> frames = new ArrayList<>();
 
-    public PickupData(FroggerGameInstance instance, FroggerFlyScoreType flyScoreType) {
+    public FroggerPickupData(FroggerGameInstance instance, FroggerFlyScoreType flyScoreType) {
         super(instance);
         this.flyScoreType = flyScoreType;
     }
@@ -98,7 +98,7 @@ public class PickupData extends SCGameData<FroggerGameInstance> {
      * Represents an animated frame of a pickup.
      */
     public static class PickupAnimationFrame extends SCGameObject<FroggerGameInstance> {
-        private final PickupData pickupData;
+        private final FroggerPickupData pickupData;
         private final long texturePointer;
         private boolean resolvedTextures;
         private VloImage resolvedImage;
@@ -112,7 +112,7 @@ public class PickupData extends SCGameData<FroggerGameInstance> {
         public static final float ENTITY_FLY_SPRITE_SCALE_SIZE = 4F * ENTITY_FLY_SPRITE_SIZE; // Chosen by experimenting until I found one I was happy with.
         public static final TriangleMesh ENTITY_FLY_SPRITE_MESH = Scene3DUtils.createSpriteMesh(ENTITY_FLY_SPRITE_SIZE);
 
-        public PickupAnimationFrame(PickupData pickupData, long texturePointer) {
+        public PickupAnimationFrame(FroggerPickupData pickupData, long texturePointer) {
             super(pickupData.getGameInstance());
             this.pickupData = pickupData;
             this.texturePointer = texturePointer;

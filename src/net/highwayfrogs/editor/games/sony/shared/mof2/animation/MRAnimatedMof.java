@@ -6,7 +6,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
+import net.highwayfrogs.editor.games.psx.PSXMatrix;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.mof2.MRBaseModelData;

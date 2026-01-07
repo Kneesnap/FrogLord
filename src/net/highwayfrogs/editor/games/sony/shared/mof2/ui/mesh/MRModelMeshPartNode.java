@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
+import net.highwayfrogs.editor.games.psx.PSXMatrix;
 import net.highwayfrogs.editor.games.sony.shared.mesh.SCPolygonAdapterNode;
 import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.MRAnimatedMof;

@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file.map.view;
+package net.highwayfrogs.editor.gui.texture.basic;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
@@ -10,17 +10,17 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * The texture for the cursor.
+ * Generates a texture which is a full color, but has an outline around the edge of the texture.
  * Created by Kneesnap on 12/4/2018.
  */
 @Getter
-public class CursorVertexColor implements ITextureSource {
+public class OutlineColorTextureSource implements ITextureSource {
     private final Color bodyColor;
     private final Color outlineColor;
 
     public static final int VERTEX_COLOR_IMAGE_SIZE = 12;
 
-    public CursorVertexColor(Color bodyColor, Color outlineColor) {
+    public OutlineColorTextureSource(Color bodyColor, Color outlineColor) {
         this.bodyColor = bodyColor;
         this.outlineColor = outlineColor;
     }

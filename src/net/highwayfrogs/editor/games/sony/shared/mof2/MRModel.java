@@ -8,7 +8,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
@@ -29,6 +28,7 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.utils.MRMofAndMisfitModelC
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.utils.DynamicMeshObjExporter;
+import net.highwayfrogs.editor.games.sony.shared.utils.SCNameBank;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.gui.DefaultFileUIController.IExtraUISupplier;
 import net.highwayfrogs.editor.gui.GameUIController;
@@ -422,12 +422,12 @@ public class MRModel extends SCSharedGameFile implements ISCTextureUser, IExtraU
         if (animationNameId < 0)
             return null;
 
-        NameBank bank = getGameInstance().getVersionConfig().getAnimationBank();
+        SCNameBank bank = getGameInstance().getVersionConfig().getAnimationBank();
         if (bank == null)
             return null;
 
         String bankName = SCUtils.stripWin95(FileUtils.stripExtension(getFileDisplayName()));
-        NameBank childBank = bank.getChildBank(bankName);
+        SCNameBank childBank = bank.getChildBank(bankName);
         return childBank != null ? childBank.getName(animationNameId) : null;
     }
 

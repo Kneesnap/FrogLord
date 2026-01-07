@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file.config.data;
+package net.highwayfrogs.editor.games.sony.frogger.data;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
@@ -8,7 +8,7 @@ import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
  * Created by Kneesnap on 1/29/2019.
  */
 @Getter
-public enum MusicTrack {
+public enum FroggerMusicTrack {
     CAVE1(2, 2, 2),
     CAVE2(3, 5, 3),
     DESERT1(4, 9, 4),
@@ -36,7 +36,7 @@ public enum MusicTrack {
 
     public static final byte TERMINATOR = (byte) -1;
 
-    MusicTrack(int pcTrack, int psxTrack, int prototypeTrack) {
+    FroggerMusicTrack(int pcTrack, int psxTrack, int prototypeTrack) {
         this.pcTrack = (byte) pcTrack;
         this.psxTrack = (byte) psxTrack;
         this.prototypeTrack = (byte) prototypeTrack;
@@ -67,8 +67,8 @@ public enum MusicTrack {
      * @param id       The id to get.
      * @return track
      */
-    public static MusicTrack getTrackById(FroggerGameInstance instance, byte id) {
-        for (MusicTrack test : values())
+    public static FroggerMusicTrack getTrackById(FroggerGameInstance instance, byte id) {
+        for (FroggerMusicTrack test : values())
             if (test.getTrack(instance) == id)
                 return test;
         throw new RuntimeException("Cannot get track id " + id + " from " + instance.getVersionConfig().getInternalName() + ".");

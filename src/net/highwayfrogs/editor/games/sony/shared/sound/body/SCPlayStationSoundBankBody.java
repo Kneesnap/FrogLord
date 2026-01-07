@@ -1,9 +1,6 @@
 package net.highwayfrogs.editor.games.sony.shared.sound.body;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.config.NameBank;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.psx.sound.VAGUtil;
 import net.highwayfrogs.editor.games.shared.sound.EditableAudioFormat;
 import net.highwayfrogs.editor.games.shared.sound.ISoundSample;
@@ -16,8 +13,11 @@ import net.highwayfrogs.editor.games.sony.shared.sound.body.SCPlayStationSoundBa
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCPlayStationMinimalSoundBankHeader.SCPlayStationMinimalSoundBankHeaderEntry;
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCPlayStationVabSoundBankHeader;
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCPlayStationVabSoundBankHeader.SCPlayStationVabHeaderEntry;
+import net.highwayfrogs.editor.games.sony.shared.utils.SCNameBank;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.io.File;
 import java.io.IOException;
@@ -137,7 +137,7 @@ public class SCPlayStationSoundBankBody extends SCSplitSoundBankBody<SCPlayStati
             // Generate name.
             SCGameConfig config = body.getGameInstance().getVersionConfig();
             String bankName = FileUtils.stripExtension(body.getFileName());
-            NameBank bank = config.getSoundBank().getChildBank(bankName);
+            SCNameBank bank = config.getSoundBank().getChildBank(bankName);
             if (bank != null) {
                 String soundName = bank.getName(internalTrackId);
                 return config.getSoundBank().getNames().indexOf(soundName);

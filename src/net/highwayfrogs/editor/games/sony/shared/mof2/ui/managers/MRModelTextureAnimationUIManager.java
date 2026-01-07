@@ -14,7 +14,6 @@ import javafx.scene.layout.HBox;
 import javafx.util.Duration;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTextureAnimation;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTextureAnimationEntry;
@@ -31,6 +30,7 @@ import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.BasicListMeshUIManager;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
+import net.highwayfrogs.editor.gui.texture.basic.OutlineColorTextureSource;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 
@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MRModelTextureAnimationUIManager extends BasicListMeshUIManager<MRModelMesh, MRMofTextureAnimation, MRModelTextureAnimationPreview> {
     private final List<MRMofTextureAnimation> cachedTextureAnimations = new ArrayList<>();
 
-    public static final CursorVertexColor ANIMATION_COLOR = new CursorVertexColor(java.awt.Color.MAGENTA, java.awt.Color.BLACK);
+    public static final OutlineColorTextureSource ANIMATION_COLOR = new OutlineColorTextureSource(java.awt.Color.MAGENTA, java.awt.Color.BLACK);
     public static final int PREVIEW_SETTINGS = VloImage.DEFAULT_IMAGE_STRIPPED_VIEW_SETTINGS;
 
     public MRModelTextureAnimationUIManager(MRModelMeshController controller) {

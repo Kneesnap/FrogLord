@@ -7,10 +7,10 @@ import javafx.scene.Node;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.config.data.FroggerMapWorldID;
-import net.highwayfrogs.editor.file.config.data.MusicTrack;
-import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.data.FroggerLevelSelectEntry;
+import net.highwayfrogs.editor.games.sony.frogger.data.FroggerLevelSelectWorldID;
+import net.highwayfrogs.editor.games.sony.frogger.data.FroggerMusicTrack;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapLevelID;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.gui.GameUIController;
@@ -30,12 +30,12 @@ public class LevelInfoController extends GameUIController<FroggerGameInstance> {
     @FXML private ComboBox<FroggerMapLevelID> levelSelector;
     @FXML private ComboBox<FroggerMapLevelID> mapFileSelector;
     @FXML private ComboBox<FroggerMapTheme> themeSelector;
-    @FXML private ComboBox<FroggerMapWorldID> worldSelector;
-    @FXML private ComboBox<MusicTrack> musicSelector;
+    @FXML private ComboBox<FroggerLevelSelectWorldID> worldSelector;
+    @FXML private ComboBox<FroggerMusicTrack> musicSelector;
     @FXML private TextField stackPosField;
     @FXML private TextField localLevelField;
     @FXML private TextField worldLevelField;
-    private LevelInfo selectedLevel;
+    private FroggerLevelSelectEntry selectedLevel;
 
     private List<Node> disableFields;
 
@@ -48,15 +48,15 @@ public class LevelInfoController extends GameUIController<FroggerGameInstance> {
         this.disableFields = Arrays.asList(themeSelector, worldSelector, musicSelector, stackPosField, localLevelField, worldLevelField, mapFileSelector);
 
         List<FroggerMapLevelID> levelInfo = new ArrayList<>();
-        for (LevelInfo info : getGameInstance().getAllLevelInfo())
+        for (FroggerLevelSelectEntry info : getGameInstance().getAllLevelSelectEntries())
             if (info.getLevel() != null)
                 levelInfo.add(info.getLevel());
 
         levelSelector.setItems(FXCollections.observableArrayList(levelInfo));
         mapFileSelector.setItems(FXCollections.observableArrayList(FroggerMapLevelID.values()));
         themeSelector.setItems(FXCollections.observableArrayList(FroggerMapTheme.values()));
-        worldSelector.setItems(FXCollections.observableArrayList(FroggerMapWorldID.values()));
-        musicSelector.setItems(FXCollections.observableArrayList(MusicTrack.values()));
+        worldSelector.setItems(FXCollections.observableArrayList(FroggerLevelSelectWorldID.values()));
+        musicSelector.setItems(FXCollections.observableArrayList(FroggerMusicTrack.values()));
 
         // Handlers:
         levelSelector.valueProperty().addListener((listener, oldVal, newVal) -> setLevel(newVal));
@@ -89,7 +89,7 @@ public class LevelInfoController extends GameUIController<FroggerGameInstance> {
         themeSelector.getSelectionModel().select(getSelectedLevel().getTheme());
         worldSelector.getSelectionModel().select(getSelectedLevel().getWorld());
 
-        MusicTrack selectedTrack = getGameInstance().getMusic(newLevel);
+        FroggerMusicTrack selectedTrack = getGameInstance().getMusic(newLevel);
         if (selectedTrack != null) {
             musicSelector.getSelectionModel().select(selectedTrack); // Select the current track.
         } else {

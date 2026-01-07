@@ -1,9 +1,7 @@
 package net.highwayfrogs.editor.games.sony.shared.model.staticmesh;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.games.psx.PSXMatrix;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.collprim.CollprimShapeAdapter;
 import net.highwayfrogs.editor.games.sony.shared.collprim.ICollprim;
@@ -12,6 +10,8 @@ import net.highwayfrogs.editor.games.sony.shared.collprim.PTCollprim;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MeshUIManager;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
  * Represents a collprim with a static pointer.

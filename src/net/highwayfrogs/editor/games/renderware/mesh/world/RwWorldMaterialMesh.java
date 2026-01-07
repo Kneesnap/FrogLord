@@ -1,13 +1,13 @@
 package net.highwayfrogs.editor.games.renderware.mesh.world;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.renderware.chunks.RwImageChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwMaterialChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwTextureChunk;
 import net.highwayfrogs.editor.games.renderware.chunks.RwWorldChunk;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode;
+import net.highwayfrogs.editor.gui.texture.basic.UnknownTextureSource;
 
 /**
  * RenderWare relies upon the textures repeating in texture coordinate space.

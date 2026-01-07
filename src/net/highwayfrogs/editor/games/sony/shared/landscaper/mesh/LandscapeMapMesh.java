@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.sony.shared.landscaper.mesh;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadedTextureManager.PSXMeshShadedTextureManager;
 import net.highwayfrogs.editor.games.sony.shared.landscaper.Landscape;
@@ -13,6 +12,7 @@ import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode;
 import net.highwayfrogs.editor.gui.mesh.PSXShadedDynamicMesh;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.gui.texture.atlas.TreeTextureAtlas;
+import net.highwayfrogs.editor.gui.texture.basic.UnknownTextureSource;
 
 import java.util.Collection;
 

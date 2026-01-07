@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -18,7 +18,7 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class IVector extends GameObject implements Vector {
+public class IVector implements IBinarySerializable, Vector {
     private int x;
     private int y;
     private int z;

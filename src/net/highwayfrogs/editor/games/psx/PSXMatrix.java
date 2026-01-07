@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file.standard.psx;
+package net.highwayfrogs.editor.games.psx;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,7 +14,7 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import java.util.Arrays;
 
 /**
- * Represents a MR_MAT struct, which is based on the PSX "MATRIX" struct in libgte.h.
+ * Represents a PSX "MATRIX" struct in libgte.h, and by extension, the MR_MAT struct for Sony Cambridge games.
  * Created by Kneesnap on 8/24/2018.
  */
 @Getter

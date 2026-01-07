@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.games.sony.shared.vlo2;
 
-import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
+import net.highwayfrogs.editor.games.psx.PSXClutColor;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameObject.SCSharedGameObject;
 

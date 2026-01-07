@@ -3,11 +3,11 @@ package net.highwayfrogs.editor.file.config.script.format;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.control.ComboBox;
-import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.config.script.ScriptCommand;
 import net.highwayfrogs.editor.file.config.script.ScriptParseException;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.ui.ScriptEditorController;
+import net.highwayfrogs.editor.games.sony.shared.utils.SCNameBank;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -23,12 +23,12 @@ public class SoundNameFormatter extends ScriptFormatter {
 
     @Override
     public String numberToString(FroggerGameInstance instance, int number) {
-        NameBank bank = getBank(instance);
+        SCNameBank bank = getBank(instance);
         if (bank == null)
             return super.numberToString(instance, number);
 
         if (instance.isPSX() && instance.getVersionConfig().getBuild() == 71) { // PSX builds do lookup differently.
-            NameBank childBank = bank.getChildBank("GENERIC");
+            SCNameBank childBank = bank.getChildBank("GENERIC");
             if (childBank != null && number >= childBank.size() + 5)
                 number -= 5; // The PSX version has a few duplicate entries which are here to
             // TODO: In the future, we should have a separate configuration for this (Or improve the existing config file to allow entries with this kind of info), and read the sound table from ingame, so we have the actual sample rates.
@@ -42,13 +42,13 @@ public class SoundNameFormatter extends ScriptFormatter {
         if (NumberUtils.isInteger(str))
             return super.stringToNumber(instance, str);
 
-        NameBank bank = getBank(instance);
+        SCNameBank bank = getBank(instance);
         int index = bank != null ? bank.getNames().indexOf(str) : -1;
         if (index == -1)
             throw new ScriptParseException("Could not find sound named '" + str + "'.");
 
         if (instance.isPSX() && instance.getVersionConfig().getBuild() == 71) { // PSX builds do lookup differently.
-            NameBank childBank = bank.getChildBank("GENERIC");
+            SCNameBank childBank = bank.getChildBank("GENERIC");
             if (childBank != null && index >= childBank.size() + 5)
                 index += 5; // The PSX version has a few duplicate entries which are here to
             // TODO: In the future, we should have a separate configuration for this (Or improve the existing config file to allow entries with this kind of info), and read the sound table from ingame, so we have the actual sample rates.
@@ -73,7 +73,7 @@ public class SoundNameFormatter extends ScriptFormatter {
         return comboBox;
     }
 
-    private NameBank getBank(FroggerGameInstance instance) {
+    private SCNameBank getBank(FroggerGameInstance instance) {
         return instance.getVersionConfig().getSoundBank();
     }
 }

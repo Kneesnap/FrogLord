@@ -1,12 +1,12 @@
 package net.highwayfrogs.editor.games.sony.shared;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameObject.SCSharedGameObject;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.SelectionMenu;
+import net.highwayfrogs.editor.gui.texture.basic.UnknownTextureSource;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 

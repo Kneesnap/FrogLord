@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file.standard.psx;
+package net.highwayfrogs.editor.games.psx;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -6,7 +6,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
-import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.image.PsxAbrTransparency;
 import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.DataUtils;

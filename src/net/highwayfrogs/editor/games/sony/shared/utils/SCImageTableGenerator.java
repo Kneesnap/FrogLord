@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.sony.shared.utils;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.standard.MRTexture;
 import net.highwayfrogs.editor.games.sony.SCGameConfig.SCBssSymbol;
 import net.highwayfrogs.editor.games.sony.SCGameConfig.SCBssSymbolType;
 import net.highwayfrogs.editor.games.sony.SCGameConfig.SCImageList;
@@ -16,9 +15,11 @@ import net.highwayfrogs.editor.utils.StringUtils;
 import java.util.*;
 
 /**
- * Created by Kneesnap on 12/07/2025.
+ * Generates an image table for Sony Cambridge games, used for finding original texture file names.
+ * Created by Kneesnap on 7/12/2025.
  */
 public class SCImageTableGenerator {
+
     /**
      * Saves an image ordering table for hash testing
      * @param instance the game instance to export the image ordering table from
@@ -143,7 +144,7 @@ public class SCImageTableGenerator {
             symbols.add(new OutputSymbol(image, null, imageName, lineBuilder.toString(), hash));
 
             // Prepare for next iteration.
-            lastAddress = currAddress + MRTexture.SIZE_IN_BYTES;
+            lastAddress = currAddress + SCUtils.MR_TEXTURE_SIZE_IN_BYTES;
         }
 
         // Write results.

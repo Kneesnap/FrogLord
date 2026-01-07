@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
@@ -14,10 +13,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEn
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.FroggerEntityDataPathInfo;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data.IFroggerFlySpriteData;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.script.FroggerEntityScriptData;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormGrid;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerOldMapForm;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerOldMapFormData;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.form.IFroggerFormEntry;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.form.*;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathInfo;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketEntity;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketForm;
@@ -157,7 +153,7 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
         if (this.mapFile.getMapConfig().isOldFormFormat()) {
             writer.writeNull(2 * Constants.POINTER_SIZE); // Skip runtime pointers.
         } else {
-            writer.writeUnsignedShort(((FormEntry) this.formEntry).getMapFormId());
+            writer.writeUnsignedShort(((FroggerFormEntry) this.formEntry).getMapFormId());
             writer.writeShort(this.flags);
             writer.writeNull(RUNTIME_POINTERS * Constants.POINTER_SIZE);
         }
@@ -220,10 +216,10 @@ public class FroggerMapEntity extends SCGameData<FroggerGameInstance> {
         // Get a list of valid forms for the level.
         IFroggerFormEntry[] formEntries = getGameInstance().getAllowedForms(this.mapFile.getMapTheme());
         if (!Utils.contains(formEntries, this.formEntry)) // This wasn't found in this
-            formEntries = getGameInstance().getFullFormBook().toArray(new FormEntry[0]);
+            formEntries = getGameInstance().getFullFormBook().toArray(new FroggerFormEntry[0]);
 
         editor.addBoldLabel("General Information:");
-        if (this.formEntry instanceof FormEntry) {
+        if (this.formEntry instanceof FroggerFormEntry) {
             editor.addLabel("Entity Type", getTypeName());
 
             editor.addEnumSelector("Form Type", this.formEntry, formEntries, false, newEntry -> {

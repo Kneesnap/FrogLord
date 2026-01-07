@@ -4,12 +4,7 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.FrogLordApplication;
-import net.highwayfrogs.editor.file.GameObject;
-import net.highwayfrogs.editor.utils.data.reader.ArraySource;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.utils.data.reader.FileSource;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
-import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.konami.beyond.FroggerBeyondUtil;
 import net.highwayfrogs.editor.games.konami.beyond.FroggerBeyondUtil.FroggerBeyondPlatform;
 import net.highwayfrogs.editor.games.konami.hudson.PRS1Unpacker;
@@ -17,6 +12,11 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.DummyFile;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.ArraySource;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.reader.FileSource;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -301,10 +301,11 @@ public class XboxShadowFileMain {
      * Represents the HFS file format.
      * This is an old version of the FrogLord HFS representation, as it was written for this file.
      * We'll eventually go through and rewrite this file to support newer representations later.
+     * TODO: This should probably use the new Frogger Ancient Shadow HFS implementation instead.
      * Created by Kneesnap on 6/7/2020.
      */
     @Getter
-    private static class HFSFile extends GameObject {
+    private static class HFSFile implements IBinarySerializable {
         private final List<List<DummyFile>> hfsFiles = new ArrayList<>();
         private static final String MAGIC = "hfs\n";
 

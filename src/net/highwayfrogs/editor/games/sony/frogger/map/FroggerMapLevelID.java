@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * Represents the game's map enum.
+ * Represents the game's map enum. Recreation of LEVEL_##### enum in LIBRARY.H
  * Created by Kneesnap on 1/28/2019.
  */
 @Getter

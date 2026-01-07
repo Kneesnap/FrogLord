@@ -6,7 +6,6 @@ import javafx.scene.shape.Box;
 import javafx.scene.shape.DrawMode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.shared.mof2.hilite.MRMofHilite;
 import net.highwayfrogs.editor.games.sony.shared.mof2.hilite.MRMofHilite.HiliteAttachType;
@@ -20,6 +19,7 @@ import net.highwayfrogs.editor.gui.editor.BasicListMeshUIManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
+import net.highwayfrogs.editor.gui.texture.basic.OutlineColorTextureSource;
 import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 
@@ -34,7 +34,7 @@ public class MRModelHiliteUIManager extends BasicListMeshUIManager<MRModelMesh, 
     private final DisplayList hiliteDisplayList;
     private final List<MRMofHilite> cachedHilites = new ArrayList<>();
 
-    public static final CursorVertexColor HILITE_COLOR = new CursorVertexColor(ColorUtils.toAWTColor(Color.PURPLE), java.awt.Color.BLACK);
+    public static final OutlineColorTextureSource HILITE_COLOR = new OutlineColorTextureSource(ColorUtils.toAWTColor(Color.PURPLE), java.awt.Color.BLACK);
     private static final PhongMaterial HILITE_MATERIAL = Scene3DUtils.makeUnlitSharpMaterial(Color.PURPLE);
 
     public MRModelHiliteUIManager(MRModelMeshController controller) {

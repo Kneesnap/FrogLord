@@ -4,8 +4,6 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.MeshView;
 import lombok.Getter;
 import lombok.NonNull;
-import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
-import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadedTextureManager.PSXMeshShadedTextureManager;
 import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
@@ -28,6 +26,8 @@ import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode;
 import net.highwayfrogs.editor.gui.mesh.MeshTracker;
 import net.highwayfrogs.editor.gui.mesh.PSXShadedDynamicMesh;
 import net.highwayfrogs.editor.gui.texture.atlas.TreeTextureAtlas;
+import net.highwayfrogs.editor.gui.texture.basic.OutlineColorTextureSource;
+import net.highwayfrogs.editor.gui.texture.basic.UnknownTextureSource;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 import java.awt.*;
@@ -52,8 +52,8 @@ public class MRModelMesh extends PSXShadedDynamicMesh<MRMofPolygon, MRMofShadedT
     private PhongMaterial litMaterial;
     private PhongMaterial litHighlightedMaterial;
 
-    public static final CursorVertexColor GREEN_COLOR = new CursorVertexColor(Color.GREEN, Color.BLACK);
-    public static final CursorVertexColor BLUE_COLOR = new CursorVertexColor(Color.BLUE, Color.BLACK);
+    public static final OutlineColorTextureSource GREEN_COLOR = new OutlineColorTextureSource(Color.GREEN, Color.BLACK);
+    public static final OutlineColorTextureSource BLUE_COLOR = new OutlineColorTextureSource(Color.BLUE, Color.BLACK);
 
     public MRModelMesh(MRModel model) {
         super(new TreeTextureAtlas(16, 16, true), DynamicMeshTextureQuality.UNLIT_SHARP, true, model.getFileDisplayName());

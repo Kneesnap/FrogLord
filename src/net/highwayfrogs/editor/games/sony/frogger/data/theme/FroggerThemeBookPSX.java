@@ -1,9 +1,7 @@
-package net.highwayfrogs.editor.file.config.exe.psx;
+package net.highwayfrogs.editor.games.sony.frogger.data.theme;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.config.exe.ThemeBook;
-import net.highwayfrogs.editor.file.config.exe.pc.PCThemeBook;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
@@ -14,11 +12,11 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import java.util.function.Function;
 
 /**
- * PSX implementation of ThemeBook.
+ * PSX implementation of FroggerThemeBook.
  * Created by Kneesnap on 1/27/2019.
  */
 @Getter
-public class PSXThemeBook extends ThemeBook {
+public class FroggerThemeBookPSX extends FroggerThemeBook {
     private int wadId;
     private int vloId;
     private int multiplayerWadId = -1;
@@ -26,7 +24,7 @@ public class PSXThemeBook extends ThemeBook {
     private long formLibraryPointer;
     @Setter private int deathHeight; // For Noodle.
 
-    public PSXThemeBook(FroggerGameInstance instance) {
+    public FroggerThemeBookPSX(FroggerGameInstance instance) {
         super(instance);
     }
 
@@ -60,7 +58,7 @@ public class PSXThemeBook extends ThemeBook {
     @Override
     public VloFile getVLO(boolean isMultiplayer, boolean isLowPolyMode) {
         if (isLowPolyMode)
-            throw new UnsupportedOperationException("PSXThemeBook doesn't understand what isLowPolygonMode=true means.");
+            throw new UnsupportedOperationException("FroggerThemeBookPSX doesn't understand what isLowPolygonMode=true means.");
 
         return isValid() ? getGameInstance().getGameFile(isMultiplayer ? getMultiplayerVloId() : getVloId()) : null;
     }
@@ -68,7 +66,7 @@ public class PSXThemeBook extends ThemeBook {
     @Override
     public WADFile getWAD(boolean isMultiplayer, boolean isLowPolyMode) {
         if (isLowPolyMode)
-            throw new UnsupportedOperationException("PSXThemeBook doesn't understand what isLowPolygonMode=true means.");
+            throw new UnsupportedOperationException("FroggerThemeBookPSX doesn't understand what isLowPolygonMode=true means.");
 
         return isValid() ? getGameInstance().getGameFile(isMultiplayer ? getMultiplayerWadId() : getWadId()) : null;
     }
@@ -79,7 +77,7 @@ public class PSXThemeBook extends ThemeBook {
     }
 
     @Override
-    public <T> T execute(Function<PCThemeBook, T> pcHandler, Function<PSXThemeBook, T> psxHandler) {
+    public <T> T execute(Function<FroggerThemeBookPC, T> pcHandler, Function<FroggerThemeBookPSX, T> psxHandler) {
         return psxHandler.apply(this);
     }
 

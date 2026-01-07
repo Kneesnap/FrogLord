@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * Registry of different map themes.
+ * Registry of different map themes. Recreation of `THEME_xyz` enums on gamesys.H
  * Created by Kneesnap on 8/24/2018.
  */
 @Getter

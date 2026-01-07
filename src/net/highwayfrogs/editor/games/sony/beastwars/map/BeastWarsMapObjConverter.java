@@ -1,11 +1,11 @@
 package net.highwayfrogs.editor.games.sony.beastwars.map;
 
 import javafx.scene.control.Alert.AlertType;
-import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsTexFile;
 import net.highwayfrogs.editor.games.sony.beastwars.map.data.BeastWarsMapCollprim;
 import net.highwayfrogs.editor.games.sony.beastwars.map.data.MapTextureInfoEntry;
 import net.highwayfrogs.editor.games.sony.shared.collprim.MRCollprim.CollprimType;
+import net.highwayfrogs.editor.gui.texture.basic.UnknownTextureSource;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;

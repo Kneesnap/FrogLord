@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.games.sony.shared.model.meshview;
 
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
+import net.highwayfrogs.editor.games.psx.PSXMatrix;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.shared.model.PTModel;
 import net.highwayfrogs.editor.games.sony.shared.model.PTTransformInstanceData;

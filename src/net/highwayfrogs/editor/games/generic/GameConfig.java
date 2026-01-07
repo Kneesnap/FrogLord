@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.games.generic;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.file.config.NameBank;
+import net.highwayfrogs.editor.games.sony.shared.utils.SCNameBank;
 import net.highwayfrogs.editor.utils.TimeUtils;
 import net.highwayfrogs.editor.utils.logging.ClassNameLogger;
 import net.highwayfrogs.editor.utils.logging.ILogger;
@@ -63,16 +63,16 @@ public class GameConfig {
         this.buildTime = config.has(CFG_BUILD_TIME) ? TimeUtils.parseAmbiguousTimestamp(config.getString(CFG_BUILD_TIME)) : null;
     }
 
-    protected NameBank loadBank(Config config, String configKey, String defaultBank, String bankName, String unknownName, boolean addChildrenToMainBank) {
+    protected SCNameBank loadBank(Config config, String configKey, String defaultBank, String bankName, String unknownName, boolean addChildrenToMainBank) {
         return loadBank(config, configKey, defaultBank, bankName, addChildrenToMainBank, (bank, index) -> "Unknown " + unknownName + " [" + index + "]");
     }
 
-    protected NameBank loadBank(Config config, String configKey, String defaultBank, String bankName, boolean addChildrenToMainBank, BiFunction<NameBank, Integer, String> nameHandler) {
+    protected SCNameBank loadBank(Config config, String configKey, String defaultBank, String bankName, boolean addChildrenToMainBank, BiFunction<SCNameBank, Integer, String> nameHandler) {
         String animBankName = config.getString(configKey, defaultBank);
         if (animBankName == null)
-            return NameBank.EMPTY_BANK;
+            return SCNameBank.EMPTY_BANK;
 
-        return NameBank.readBank(this.gameType, bankName, animBankName, addChildrenToMainBank, nameHandler);
+        return SCNameBank.readBank(this.gameType, bankName, animBankName, addChildrenToMainBank, nameHandler);
     }
 
     /**

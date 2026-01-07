@@ -8,8 +8,6 @@ import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.Mesh;
 import javafx.scene.shape.MeshView;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.view.RawColorTextureSource;
-import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResource;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.kcCResourceTriMesh;
@@ -29,6 +27,8 @@ import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.gui.texture.atlas.AtlasTexture;
 import net.highwayfrogs.editor.gui.texture.atlas.SequentialTextureAtlas;
 import net.highwayfrogs.editor.gui.texture.atlas.TextureAtlas;
+import net.highwayfrogs.editor.gui.texture.basic.RawColorTextureSource;
+import net.highwayfrogs.editor.gui.texture.basic.UnknownTextureSource;
 import net.highwayfrogs.editor.system.math.Vector2f;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 

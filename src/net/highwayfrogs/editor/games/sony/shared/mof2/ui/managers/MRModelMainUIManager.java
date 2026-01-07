@@ -14,7 +14,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
@@ -32,6 +31,7 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRStaticMof;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.MRModelMeshController;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.mesh.MRModelAnimationPlayer;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.mesh.MRModelMesh;
+import net.highwayfrogs.editor.games.sony.shared.utils.SCNameBank;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.gui.editor.DisplayList;
@@ -443,12 +443,12 @@ public class MRModelMainUIManager extends MeshUIManager<MRModelMesh> {
                 return staticMof != null && staticMof.getTextureAnimationCount() > 0 ? "Texture Animation" : "No Animation";
             }
 
-            NameBank bank = getGameInstance().getVersionConfig().getAnimationBank();
+            SCNameBank bank = getGameInstance().getVersionConfig().getAnimationBank();
             if (bank == null)
                 return (animationId != 0) ? "Animation " + animationId : "Default Animation";
 
             String bankName = SCUtils.stripWin95(FileUtils.stripExtension(getController().getModel().getFileDisplayName()));
-            NameBank childBank = bank.getChildBank(bankName);
+            SCNameBank childBank = bank.getChildBank(bankName);
             return childBank != null ? childBank.getName(animationId) : bank.getEmptyChildNameFor(animationId, getAnimationListCount());
         }
 

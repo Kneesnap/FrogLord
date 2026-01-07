@@ -1,13 +1,12 @@
-package net.highwayfrogs.editor.file.config.exe;
+package net.highwayfrogs.editor.games.sony.frogger.data.theme;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
-import net.highwayfrogs.editor.file.config.exe.pc.PCThemeBook;
-import net.highwayfrogs.editor.file.config.exe.psx.PSXThemeBook;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.data.FroggerHardcodedResourceEntry;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -15,19 +14,19 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * Represents a platform-independent ThemeBook.
+ * Represents the THEME_BOOK struct from Frogger.
+ * This struct is implemented differently depending on the game version, so this is the abstract base class.
  * Created by Kneesnap on 1/27/2019.
  */
 @Getter
-public abstract class ThemeBook extends ExeStruct {
+public abstract class FroggerThemeBook extends FroggerHardcodedResourceEntry {
     @Setter private transient FroggerMapTheme theme;
-    private final List<FormEntry> formBook = new ArrayList<>();
+    private final List<FroggerFormEntry> formBook = new ArrayList<>();
 
-    public ThemeBook(FroggerGameInstance instance) {
+    public FroggerThemeBook(FroggerGameInstance instance) {
         super(instance);
     }
 
@@ -43,7 +42,7 @@ public abstract class ThemeBook extends ExeStruct {
 
         int localFormId = 0;
         for (int i = 0; i < toRead; i++) {
-            FormEntry formEntry = new FormEntry(instance, getTheme(), localFormId++, globalFormId++);
+            FroggerFormEntry formEntry = new FroggerFormEntry(instance, getTheme(), localFormId++, globalFormId++);
             formEntry.load(reader);
             this.formBook.add(formEntry);
         }
@@ -57,7 +56,7 @@ public abstract class ThemeBook extends ExeStruct {
      * @return formLibraryPointer
      */
     public long getFormLibraryPointer() {
-        return execute(PCThemeBook::getFormLibraryPointer, PSXThemeBook::getFormLibraryPointer);
+        return execute(FroggerThemeBookPC::getFormLibraryPointer, FroggerThemeBookPSX::getFormLibraryPointer);
     }
 
     /**
@@ -101,54 +100,33 @@ public abstract class ThemeBook extends ExeStruct {
     public abstract boolean isValid();
 
     /**
-     * Execute something depending on which MapBook type this is.
+     * Execute something depending on which FroggerMapBook type this is.
      * @param pcHandler  The PC handler.
      * @param psxHandler The psx handler.
      * @return result
      */
-    public abstract <T> T execute(Function<PCThemeBook, T> pcHandler, Function<PSXThemeBook, T> psxHandler);
-
-    /**
-     * Execute something depending on which MapBook type this is.
-     * @param pcHandler  The PC handler.
-     * @param psxHandler The psx handler.
-     */
-    public void execute(Consumer<PCThemeBook> pcHandler, Consumer<PSXThemeBook> psxHandler) {
-        execute(pc -> {
-            pcHandler.accept(pc);
-            return null;
-        }, psx -> {
-            psxHandler.accept(psx);
-            return null;
-        });
-    }
-
-    /**
-     * Perform some logic on all vlos.
-     * @param handler The logic to perform.
-     */
-    public void forEachVLO(Consumer<VloFile> handler) {
-        execute(pc -> {
-            if (pc.getHighVloId() != 0)
-                handler.accept(getGameInstance().getGameFile(pc.getHighVloId()));
-            if (pc.getLowVloId() != 0)
-                handler.accept(getGameInstance().getGameFile(pc.getLowVloId()));
-            if (pc.getHighMultiplayerVloId() != 0)
-                handler.accept(getGameInstance().getGameFile(pc.getHighMultiplayerVloId()));
-            if (pc.getLowMultiplayerVloId() != 0)
-                handler.accept(getGameInstance().getGameFile(pc.getLowMultiplayerVloId()));
-        }, psx -> {
-            if (psx.getVloId() != 0)
-                handler.accept(getGameInstance().getGameFile(psx.getVloId()));
-            if (psx.getMultiplayerVloId() != 0)
-                handler.accept(getGameInstance().getGameFile(psx.getMultiplayerVloId()));
-        });
-    }
+    public abstract <T> T execute(Function<FroggerThemeBookPC, T> pcHandler, Function<FroggerThemeBookPSX, T> psxHandler);
 
     @Override
     public void save(DataWriter writer) {
         writer.jumpTemp((int) (getFormLibraryPointer() - getGameInstance().getRamOffset()));
-        getFormBook().forEach(entry -> entry.save(writer));
+        List<FroggerFormEntry> formEntries = getFormBook();
+        for (int i = 0; i < formEntries.size(); i++)
+            formEntries.get(i).save(writer);
+
         writer.jumpReturn();
+    }
+
+    /**
+     * Create a new FroggerThemeBook from a frogger instance.
+     * @param instance The instance to use to determine the theme book type to create.
+     * @return mapBook
+     */
+    public static FroggerThemeBook makeNewThemeBook(FroggerGameInstance instance) {
+        if (instance.getVersionConfig().isAtLeastRetailWindows()) {
+            return new FroggerThemeBookPC(instance);
+        } else {
+            return new FroggerThemeBookPSX(instance);
+        }
     }
 }

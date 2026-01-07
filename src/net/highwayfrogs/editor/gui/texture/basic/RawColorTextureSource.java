@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file.map.view;
+package net.highwayfrogs.editor.gui.texture.basic;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;

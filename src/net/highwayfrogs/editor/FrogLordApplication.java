@@ -42,7 +42,6 @@ import java.util.logging.*;
  *  -> Animations probably should be viewable independently of each other? Not sure. But can they compound? Not sure.
  *  -> Are there any xars with flipbook animations for example? Stuff we've taken for granted should be challenged.
  *  -> Add TRUE interpolation support. Eg: Don't just add MediEvil interpolation, add an option to smooth animations.
- * TODO: Is it finally time to delete the GameObject abstract class?
  */
 public class FrogLordApplication extends Application {
     @Getter private static Config mainConfig;

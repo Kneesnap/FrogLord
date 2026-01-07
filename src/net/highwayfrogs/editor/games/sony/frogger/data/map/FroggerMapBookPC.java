@@ -1,8 +1,6 @@
-package net.highwayfrogs.editor.file.config.exe.pc;
+package net.highwayfrogs.editor.games.sony.frogger.data.map;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.config.exe.MapBook;
-import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
@@ -15,11 +13,11 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import java.util.function.Function;
 
 /**
- * PC MapBook implementation.
+ * PC FroggerMapBook implementation.
  * Created by Kneesnap on 1/27/2019.
  */
 @Getter
-public class PCMapBook extends MapBook {
+public class FroggerMapBookPC extends FroggerMapBook {
     private int highMapId; // If both map ids are zero, it means this is a dummied out map entry. (For instance VOL5, SWPM, ARN1, etc)
     private int lowMapId;
     private long highRemapPointer;
@@ -30,7 +28,7 @@ public class PCMapBook extends MapBook {
     private int lowWadId;
     private int paletteId;
 
-    public PCMapBook(FroggerGameInstance instance) {
+    public FroggerMapBookPC(FroggerGameInstance instance) {
         super(instance);
     }
 
@@ -62,8 +60,8 @@ public class PCMapBook extends MapBook {
 
     @Override
     public void addTextureRemaps(FroggerGameInstance instance) {
-        addRemap(instance, this.highMapId, this.highRemapPointer, false);
-        addRemap(instance, this.lowMapId, this.lowRemapPointer, true);
+        addRemap(instance, this.highMapId, this.highRemapPointer);
+        addRemap(instance, this.lowMapId, this.lowRemapPointer);
     }
 
     /**
@@ -96,7 +94,7 @@ public class PCMapBook extends MapBook {
     }
 
     @Override
-    public <T> T execute(Function<PCMapBook, T> pcHandler, Function<PSXMapBook, T> psxHandler) {
+    public <T> T execute(Function<FroggerMapBookPC, T> pcHandler, Function<FroggerMapBookPSX, T> psxHandler) {
         return pcHandler.apply(this);
     }
 

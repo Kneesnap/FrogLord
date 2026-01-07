@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.games.sony.shared.mof2.utils;
 
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
+import net.highwayfrogs.editor.games.psx.PSXMatrix;
 import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.MRAnimatedMof;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.MRAnimatedMofModel;

@@ -1,6 +1,7 @@
-package net.highwayfrogs.editor.file.config;
+package net.highwayfrogs.editor.games.sony.frogger.map;
 
 import lombok.Getter;
+import net.highwayfrogs.editor.file.config.Config;
 
 import java.util.HashSet;
 import java.util.Set;

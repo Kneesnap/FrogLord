@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.konami.greatquest.ui.mesh.model;
 
 import javafx.scene.paint.PhongMaterial;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestUtils;
 import net.highwayfrogs.editor.games.konami.greatquest.file.GreatQuestImageFile;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcMaterial;
@@ -11,6 +10,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelPrim;
 import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.fxobject.BoxMeshNode;
+import net.highwayfrogs.editor.gui.texture.basic.UnknownTextureSource;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 import java.awt.image.BufferedImage;

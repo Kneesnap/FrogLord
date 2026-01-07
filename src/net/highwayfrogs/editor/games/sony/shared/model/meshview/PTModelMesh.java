@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.sony.shared.model.meshview;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.sony.shared.model.PTModel;
 import net.highwayfrogs.editor.games.sony.shared.model.primitive.IPTPrimitive;
 import net.highwayfrogs.editor.games.sony.shared.model.primitive.PTPolygon;
@@ -11,6 +10,7 @@ import net.highwayfrogs.editor.games.sony.shared.model.staticmesh.PTStaticPartCe
 import net.highwayfrogs.editor.gui.mesh.PSXShadedDynamicMesh;
 import net.highwayfrogs.editor.gui.texture.atlas.AtlasTexture;
 import net.highwayfrogs.editor.gui.texture.atlas.TreeTextureAtlas;
+import net.highwayfrogs.editor.gui.texture.basic.UnknownTextureSource;
 
 import java.util.ArrayList;
 import java.util.Collection;

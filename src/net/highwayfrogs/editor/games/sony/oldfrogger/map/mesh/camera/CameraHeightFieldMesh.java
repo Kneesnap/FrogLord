@@ -1,14 +1,14 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh.camera;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.view.ColorBlendTextureSource;
-import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
-import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.ui.OldFroggerCameraHeightFieldManager;
 import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.texture.atlas.AtlasTexture;
 import net.highwayfrogs.editor.gui.texture.atlas.SequentialTextureAtlas;
+import net.highwayfrogs.editor.gui.texture.basic.ColorBlendTextureSource;
+import net.highwayfrogs.editor.gui.texture.basic.OutlineColorTextureSource;
+import net.highwayfrogs.editor.gui.texture.basic.UnknownTextureSource;
 
 import java.awt.*;
 
@@ -24,8 +24,8 @@ public class CameraHeightFieldMesh extends DynamicMesh {
     private final ColorBlendTextureSource selectedTextureBlending;
     private final AtlasTexture selectedTexture;
 
-    public static final CursorVertexColor SELECTED_COLOR = new CursorVertexColor(Color.YELLOW, Color.BLACK);
-    public static final CursorVertexColor UNSELECTED_COLOR = new CursorVertexColor(Color.RED, Color.BLACK);
+    public static final OutlineColorTextureSource SELECTED_COLOR = new OutlineColorTextureSource(Color.YELLOW, Color.BLACK);
+    public static final OutlineColorTextureSource UNSELECTED_COLOR = new OutlineColorTextureSource(Color.RED, Color.BLACK);
 
     public CameraHeightFieldMesh(OldFroggerCameraHeightFieldManager manager) {
         super(new SequentialTextureAtlas(32, 32, false), DynamicMeshTextureQuality.LIT_BLURRY);

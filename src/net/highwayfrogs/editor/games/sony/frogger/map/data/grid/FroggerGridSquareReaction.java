@@ -2,8 +2,8 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.grid;
 
 import javafx.scene.control.Tooltip;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.view.RawColorTextureSource;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.baked.FroggerUIGridManager;
+import net.highwayfrogs.editor.gui.texture.basic.RawColorTextureSource;
 import net.highwayfrogs.editor.utils.FXUtils;
 
 import java.util.Arrays;

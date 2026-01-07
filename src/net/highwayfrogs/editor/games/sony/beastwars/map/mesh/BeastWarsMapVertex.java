@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.sony.beastwars.map.mesh;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
@@ -14,6 +13,7 @@ import net.highwayfrogs.editor.games.sony.beastwars.map.BeastWarsMapFile;
 import net.highwayfrogs.editor.games.sony.beastwars.map.data.MapTextureInfoEntry;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
+import net.highwayfrogs.editor.gui.texture.basic.UnknownTextureSource;
 import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;

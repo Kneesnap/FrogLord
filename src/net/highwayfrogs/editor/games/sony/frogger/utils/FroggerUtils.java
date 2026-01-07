@@ -2,11 +2,11 @@ package net.highwayfrogs.editor.games.sony.frogger.utils;
 
 import javafx.scene.control.Alert.AlertType;
 import net.highwayfrogs.editor.FrogLordApplication;
-import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.data.theme.FroggerThemeBook;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
@@ -67,8 +67,8 @@ public class FroggerUtils {
         if (!wadFile.getGameInstance().isFrogger())
             return null;
 
-        ThemeBook themeBook = null;
-        for (ThemeBook book : ((FroggerGameInstance) wadFile.getGameInstance()).getThemeLibrary()) {
+        FroggerThemeBook themeBook = null;
+        for (FroggerThemeBook book : ((FroggerGameInstance) wadFile.getGameInstance()).getThemeLibrary()) {
             if (book != null && book.isEntry(wadFile)) {
                 themeBook = book;
                 if (themeBook.getTheme() != null)

@@ -7,11 +7,11 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.config.exe.general.FormDeathType;
-import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
-import net.highwayfrogs.editor.file.config.exe.general.FormEntry.FormLibFlag;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormDeathType;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormEntry;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormEntry.FroggerFormLibFlag;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.utils.FXUtils;
@@ -27,9 +27,9 @@ import java.util.List;
  */
 @Getter
 public class FormEntryController extends GameUIController<FroggerGameInstance> {
-    @FXML private ComboBox<FormEntry> formSelector;
+    @FXML private ComboBox<FroggerFormEntry> formSelector;
     @FXML private ComboBox<Integer> entitySelector;
-    @FXML private ComboBox<FormDeathType> deathSelector;
+    @FXML private ComboBox<FroggerFormDeathType> deathSelector;
     @FXML private TextField wadIndexField;
     @FXML private TextField scriptIdField;
     @FXML private GridPane flagGrid;
@@ -39,10 +39,10 @@ public class FormEntryController extends GameUIController<FroggerGameInstance> {
     @FXML private Button editButton;
     @FXML private ComboBox<Integer> scriptSelector;
     @FXML private Label scriptIdLabel;
-    private FormEntry selectedEntry;
+    private FroggerFormEntry selectedEntry;
 
     private List<Node> disableNodes;
-    private final CheckBox[] flagToggleMap = new CheckBox[FormLibFlag.values().length];
+    private final CheckBox[] flagToggleMap = new CheckBox[FroggerFormLibFlag.values().length];
 
     private FormEntryController(FroggerGameInstance instance) {
         super(instance);
@@ -66,10 +66,10 @@ public class FormEntryController extends GameUIController<FroggerGameInstance> {
 
         // Setup:
         formSelector.setItems(FXCollections.observableArrayList(getGameInstance().getFullFormBook()));
-        formSelector.setConverter(new AbstractStringConverter<>(FormEntry::getFormTypeName));
+        formSelector.setConverter(new AbstractStringConverter<>(FroggerFormEntry::getFormTypeName));
         entitySelector.setItems(FXCollections.observableArrayList(Utils.getIntegerList(getConfig().getEntityBank().size())));
         entitySelector.setConverter(new AbstractStringConverter<>(getConfig().getEntityBank()::getName));
-        deathSelector.setItems(FXCollections.observableArrayList(FormDeathType.values()));
+        deathSelector.setItems(FXCollections.observableArrayList(FroggerFormDeathType.values()));
         scriptSelector.setItems(FXCollections.observableArrayList(Utils.getIntegerList(getGameInstance().getScripts().size())));
         scriptSelector.setConverter(new AbstractStringConverter<>(getConfig().getScriptBank()::getName));
 
@@ -82,8 +82,8 @@ public class FormEntryController extends GameUIController<FroggerGameInstance> {
         FXUtils.setHandleTestKeyPress(scriptIdField, NumberUtils::isInteger, newValue -> getSelectedEntry().setScriptId(Integer.parseInt(newValue)));
         editButton.setOnAction(evt -> ScriptEditorController.openEditor(getGameInstance(), getGameInstance().getScripts().get(this.scriptSelector.getValue())));
 
-        for (int i = 0; i < FormLibFlag.values().length; i++) {
-            FormLibFlag lib = FormLibFlag.values()[i];
+        for (int i = 0; i < FroggerFormLibFlag.values().length; i++) {
+            FroggerFormLibFlag lib = FroggerFormLibFlag.values()[i];
             int row = (i / 2);
             int column = (i % 2);
 
@@ -98,7 +98,7 @@ public class FormEntryController extends GameUIController<FroggerGameInstance> {
         formSelector.getSelectionModel().select(0);
     }
 
-    private void setEntry(FormEntry newEntry) {
+    private void setEntry(FroggerFormEntry newEntry) {
         this.selectedEntry = newEntry;
 
         boolean hasLevelInfo = (this.selectedEntry != null);
@@ -119,7 +119,7 @@ public class FormEntryController extends GameUIController<FroggerGameInstance> {
         localLabel.setText("Local ID: " + newEntry.getLocalFormId());
         globalLabel.setText("Global ID: " + newEntry.getGlobalFormId());
 
-        for (FormLibFlag flag : FormLibFlag.values())
+        for (FroggerFormLibFlag flag : FroggerFormLibFlag.values())
             flagToggleMap[flag.ordinal()].setSelected(newEntry.testFlag(flag));
     }
 

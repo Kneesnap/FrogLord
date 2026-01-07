@@ -7,7 +7,6 @@ import javafx.scene.shape.MeshView;
 import javafx.scene.shape.Sphere;
 import javafx.scene.transform.Translate;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.view.RawColorTextureSource;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
@@ -18,6 +17,7 @@ import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode.OverlayTarget;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo;
 import net.highwayfrogs.editor.gui.mesh.fxobject.TranslationGizmo.IPositionChangeListener;
+import net.highwayfrogs.editor.gui.texture.basic.RawColorTextureSource;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 
 import java.util.Arrays;

@@ -1,9 +1,7 @@
-package net.highwayfrogs.editor.file.config.exe.pc;
+package net.highwayfrogs.editor.games.sony.frogger.data.theme;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.config.exe.ThemeBook;
-import net.highwayfrogs.editor.file.config.exe.psx.PSXThemeBook;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
@@ -14,11 +12,11 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import java.util.function.Function;
 
 /**
- * A PC ThemeBook implementation.
+ * A PC FroggerThemeBook implementation.
  * Created by Kneesnap on 1/27/2019.
  */
 @Getter
-public class PCThemeBook extends ThemeBook {
+public class FroggerThemeBookPC extends FroggerThemeBook {
     private int lowWadId;
     private int lowVloId;
     private int highWadId;
@@ -30,7 +28,7 @@ public class PCThemeBook extends ThemeBook {
     private long formLibraryPointer;
     @Setter private int deathHeight; // Frog drowns under this height. (Setter for Noodle)
 
-    public PCThemeBook(FroggerGameInstance instance) {
+    public FroggerThemeBookPC(FroggerGameInstance instance) {
         super(instance);
     }
 
@@ -115,7 +113,7 @@ public class PCThemeBook extends ThemeBook {
     }
 
     @Override
-    public <T> T execute(Function<PCThemeBook, T> pcHandler, Function<PSXThemeBook, T> psxHandler) {
+    public <T> T execute(Function<FroggerThemeBookPC, T> pcHandler, Function<FroggerThemeBookPSX, T> psxHandler) {
         return pcHandler.apply(this);
     }
 }

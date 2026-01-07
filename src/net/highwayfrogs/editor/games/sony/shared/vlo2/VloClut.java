@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.games.sony.shared.vlo2;
 
 import lombok.Getter;
 import lombok.NonNull;
-import net.highwayfrogs.editor.file.standard.psx.PSXClutColor;
+import net.highwayfrogs.editor.games.psx.PSXClutColor;
 import net.highwayfrogs.editor.games.psx.image.PsxVram;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;

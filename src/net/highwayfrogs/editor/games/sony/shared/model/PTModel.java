@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.games.sony.shared.model;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
+import net.highwayfrogs.editor.games.psx.PSXMatrix;
 import net.highwayfrogs.editor.games.sony.SCGameObject.SCSharedGameObject;
 import net.highwayfrogs.editor.games.sony.shared.collprim.PTCollprim;
 import net.highwayfrogs.editor.games.sony.shared.model.actionset.PTActionSetFile;

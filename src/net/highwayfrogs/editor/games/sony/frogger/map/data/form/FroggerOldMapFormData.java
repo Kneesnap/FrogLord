@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.form;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.GameObject;
+import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -16,7 +16,7 @@ import java.util.List;
  */
 @Setter
 @Getter
-public class FroggerOldMapFormData extends GameObject {
+public class FroggerOldMapFormData implements IBinarySerializable {
     private short xMin;
     private short yMin;
     private short zMin;
@@ -66,7 +66,7 @@ public class FroggerOldMapFormData extends GameObject {
 
     @Getter
     @Setter
-    public static class FroggerOldMapFormPlateau extends GameObject {
+    public static class FroggerOldMapFormPlateau implements IBinarySerializable {
         private short xMin;
         private short zMin;
         private short xMax;

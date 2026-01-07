@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.games.sony.shared.mof2.animation.transform;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
+import net.highwayfrogs.editor.games.psx.PSXMatrix;
 import net.highwayfrogs.editor.utils.lambda.Function3;
 
 import java.util.function.Supplier;

@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.renderware.mesh.world;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadedTextureManager.PSXMeshShadedTextureManager;
 import net.highwayfrogs.editor.games.renderware.chunks.RwWorldChunk;
@@ -10,6 +9,7 @@ import net.highwayfrogs.editor.games.renderware.mesh.world.RwWorldMesh.RwShadedT
 import net.highwayfrogs.editor.games.renderware.struct.types.RpTriangle;
 import net.highwayfrogs.editor.gui.mesh.PSXShadedDynamicMesh;
 import net.highwayfrogs.editor.gui.texture.atlas.TreeTextureAtlas;
+import net.highwayfrogs.editor.gui.texture.basic.UnknownTextureSource;
 
 import java.util.ArrayList;
 import java.util.Collection;

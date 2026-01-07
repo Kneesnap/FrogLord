@@ -1,20 +1,18 @@
-package net.highwayfrogs.editor.file.config.exe.general;
+package net.highwayfrogs.editor.games.sony.frogger.map.data.form;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.file.config.exe.MapBook;
-import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.data.map.FroggerMapBook;
+import net.highwayfrogs.editor.games.sony.frogger.data.theme.FroggerThemeBook;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerMapEntity;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormGrid;
-import net.highwayfrogs.editor.games.sony.frogger.map.data.form.IFroggerFormEntry;
 import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
@@ -27,14 +25,14 @@ import net.highwayfrogs.editor.utils.data.writer.DataWriter;
  */
 @Getter
 @Setter
-public class FormEntry extends SCGameData<FroggerGameInstance> implements IFroggerFormEntry {
+public class FroggerFormEntry extends SCGameData<FroggerGameInstance> implements IFroggerFormEntry {
     private int entityType; // Index into global entity book.
     private int id; // Index into theme wad.
     private int scriptId;
     private int flags;
     private long collisionReactFunction; // Form collision callback.
     private int radiusSquared; // Squared radius of bounding box. Only set by GEN_BONUS_FLY_GRE when not running.
-    private FormDeathType deathType;
+    private FroggerFormDeathType deathType;
     private long bonusCallbackFunction; // Eaten.
 
     private transient final FroggerMapTheme theme;
@@ -47,7 +45,7 @@ public class FormEntry extends SCGameData<FroggerGameInstance> implements IFrogg
     public static final int BYTE_SIZE = (8 * Constants.INTEGER_SIZE);
     public static final int OLD_BYTE_SIZE = (7 * Constants.INTEGER_SIZE);
 
-    public FormEntry(FroggerGameInstance instance, FroggerMapTheme theme, int formId, int globalFormId) {
+    public FroggerFormEntry(FroggerGameInstance instance, FroggerMapTheme theme, int formId, int globalFormId) {
         super(instance);
         this.theme = theme;
         this.localFormId = formId;
@@ -71,7 +69,7 @@ public class FormEntry extends SCGameData<FroggerGameInstance> implements IFrogg
         this.collisionReactFunction = reader.readUnsignedIntAsLong();
         this.radiusSquared = reader.readInt();
         int deathTypeId = reader.readInt();
-        this.deathType = deathTypeId >= 0 && deathTypeId < FormDeathType.values().length ? FormDeathType.values()[deathTypeId] : null;
+        this.deathType = deathTypeId >= 0 && deathTypeId < FroggerFormDeathType.values().length ? FroggerFormDeathType.values()[deathTypeId] : null;
         if (!getConfig().isAtOrBeforeBuild4())
             this.bonusCallbackFunction = reader.readUnsignedIntAsLong();
     }
@@ -143,7 +141,7 @@ public class FormEntry extends SCGameData<FroggerGameInstance> implements IFrogg
      * @param flag The flag to test.
      * @return hasFlag
      */
-    public boolean testFlag(FormLibFlag flag) {
+    public boolean testFlag(FroggerFormLibFlag flag) {
         return (this.flags & flag.getFlag()) == flag.getFlag();
     }
 
@@ -152,7 +150,7 @@ public class FormEntry extends SCGameData<FroggerGameInstance> implements IFrogg
      * @param flag     The flag type.
      * @param newState The new state of the flag.
      */
-    public void setFlag(FormLibFlag flag, boolean newState) {
+    public void setFlag(FroggerFormLibFlag flag, boolean newState) {
         boolean oldState = testFlag(flag);
         if (oldState == newState)
             return; // Prevents the ^ operation from breaking the value.
@@ -169,7 +167,7 @@ public class FormEntry extends SCGameData<FroggerGameInstance> implements IFrogg
 
         // The game will not use the map book if general is the theme.
         if (!isGeneralTheme && mapFile.getIndexEntry() != null) { // There is an MWI entry, so try to do what the game does.
-            for (MapBook mapBook : getGameInstance().getMapLibrary()) {
+            for (FroggerMapBook mapBook : getGameInstance().getMapLibrary()) {
                 if (mapBook != null && mapBook.isEntry(mapFile)) {
                     WADFile wadFile;
                     if (checkThemeBooks) {
@@ -203,7 +201,7 @@ public class FormEntry extends SCGameData<FroggerGameInstance> implements IFrogg
 
         // If the theme is GENERAL, the game will use the general theme book.
         // But, we also are using this as a fallback option for if there's no way to find the map book.
-        ThemeBook themeBook = getGameInstance().getThemeBook(getTheme());
+        FroggerThemeBook themeBook = getGameInstance().getThemeBook(getTheme());
         wadFile = themeBook != null ? themeBook.getWAD(mapFile) : null;
         if (wadFile != null)
             return wadFile;
@@ -223,13 +221,13 @@ public class FormEntry extends SCGameData<FroggerGameInstance> implements IFrogg
      * Gets the MOF for this particular form.
      */
     public WADEntry getModel(FroggerMapFile mapFile, boolean tryImportIfMissing) {
-        if (testFlag(FormLibFlag.NO_MODEL))
+        if (testFlag(FroggerFormLibFlag.NO_MODEL))
             return null;
 
         // Attempt to resolve GENERAL models first.
         int wadIndex = getWadIndex();
         if (this.theme == FroggerMapTheme.GENERAL || this.id >= PROJECT_MAX_THEME_MOFS) {
-            ThemeBook themeBook = getGameInstance().getThemeBook(FroggerMapTheme.GENERAL);
+            FroggerThemeBook themeBook = getGameInstance().getThemeBook(FroggerMapTheme.GENERAL);
             WADFile wadFile = themeBook != null ? themeBook.getWAD(mapFile) : null;
             if (wadFile != null)
                 return wadFile.getFiles().get(wadIndex);
@@ -268,7 +266,7 @@ public class FormEntry extends SCGameData<FroggerGameInstance> implements IFrogg
 
     @Getter
     @AllArgsConstructor
-    public enum FormLibFlag {
+    public enum FroggerFormLibFlag {
         NO_MODEL(Constants.BIT_FLAG_0, "No Model"), // Is a sprite, not subject to collprim collision.
         NO_ROTATION_SNAPPING(Constants.BIT_FLAG_1, "No Snapping"), // Frog rotation is not snapped when landing on this form. (Ie: Lily pads.)
         NO_ENTITY_ANGLE(Constants.BIT_FLAG_2, "No Angle"), // No entity angle is calculated. (IE: Lily pads.)

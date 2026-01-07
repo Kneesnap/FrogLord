@@ -14,7 +14,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.map.view.RawColorTextureSource;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
@@ -38,6 +37,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.baked.grid.Frogg
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
+import net.highwayfrogs.editor.gui.texture.basic.RawColorTextureSource;
 import net.highwayfrogs.editor.system.AbstractAttachmentCell;
 import net.highwayfrogs.editor.system.AbstractIndexStringConverter;
 import net.highwayfrogs.editor.system.AbstractStringConverter;

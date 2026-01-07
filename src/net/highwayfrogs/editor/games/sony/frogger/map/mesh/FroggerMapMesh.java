@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.mesh;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadedTextureManager.PSXMeshShadedTextureManager;
 import net.highwayfrogs.editor.games.sony.frogger.file.FroggerSkyLand.SkyLandTile;
@@ -17,6 +16,7 @@ import net.highwayfrogs.editor.gui.editor.BakedLandscapeUIManager;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshOverlayNode;
 import net.highwayfrogs.editor.gui.mesh.PSXShadedDynamicMesh;
 import net.highwayfrogs.editor.gui.texture.atlas.TreeTextureAtlas;
+import net.highwayfrogs.editor.gui.texture.basic.UnknownTextureSource;
 
 import java.util.Collection;
 import java.util.Map;

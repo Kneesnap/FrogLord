@@ -12,8 +12,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.data.FroggerLevelSelectEntry;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapLevelID;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
@@ -103,7 +103,7 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
         // Apply level name & screenshot to UI, if found.
         FroggerMapLevelID level = mapFile.getMapLevelID();
         if (level != null && !mapFile.getGameInstance().getLevelInfoMap().isEmpty()) {
-            LevelInfo info = mapFile.getGameInstance().getLevelInfoMap().get(level);
+            FroggerLevelSelectEntry info = mapFile.getGameInstance().getLevelInfoMap().get(level);
             if (info != null) {
                 VloImage gamePreviewImage = info.getLevelPreviewScreenshotImage();
                 if (gamePreviewImage != null)

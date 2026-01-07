@@ -2,9 +2,9 @@ package net.highwayfrogs.editor.games.sony.frogger;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.file.config.FroggerMapConfig;
-import net.highwayfrogs.editor.file.config.NameBank;
 import net.highwayfrogs.editor.games.sony.SCGameConfig;
+import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapConfig;
+import net.highwayfrogs.editor.games.sony.shared.utils.SCNameBank;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,10 +23,10 @@ public class FroggerConfig extends SCGameConfig {
     private int pickupDataAddress;
     private int scriptArrayAddress;
     private int skyLandTextureAddress;
-    private NameBank formBank;
-    private NameBank entityBank;
-    private NameBank scriptBank; // Name of scripts.
-    private NameBank scriptCallbackBank; // Name of scripts.
+    private SCNameBank formBank;
+    private SCNameBank entityBank;
+    private SCNameBank scriptBank; // Name of scripts.
+    private SCNameBank scriptCallbackBank; // Name of scripts.
     private final Map<String, FroggerMapConfig> mapConfigs = new HashMap<>();
     private final FroggerMapConfig defaultMapConfig = new FroggerMapConfig();
 
