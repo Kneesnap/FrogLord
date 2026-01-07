@@ -65,8 +65,8 @@ public abstract class CoupledDataEntry<TPeer extends CoupledDataEntry<?>> extend
      * @param newParent the new coupled data parent.
      */
     protected void onParentChange(CoupledDataParent newParent) {
-        if (newParent != null)
-            loadIfPossible(null);
+        /*if (newParent != null) // Breaks loading VAB files in Frogger (and probably more)
+            loadIfPossible(null);*/
     }
 
     private void loadIfPossible(DataReader reader) {
