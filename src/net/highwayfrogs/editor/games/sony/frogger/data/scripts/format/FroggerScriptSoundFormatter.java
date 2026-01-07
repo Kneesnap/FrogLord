@@ -28,13 +28,7 @@ public class FroggerScriptSoundFormatter extends FroggerScriptFormatter {
         if (bank == null)
             return super.numberToString(instance, number);
 
-        if (instance.isPSX() && instance.getVersionConfig().getBuild() == 71) { // PSX builds do lookup differently.
-            SCNameBank childBank = bank.getChildBank("GENERIC");
-            if (childBank != null && number >= childBank.size() + 5)
-                number -= 5; // The PSX version has a few duplicate entries which are here to
-            // TODO: In the future, we should have a separate configuration for this (Or improve the existing config file to allow entries with this kind of info), and read the sound table from ingame, so we have the actual sample rates.
-        }
-
+        number -= getNameIndexOffset(instance, bank, number);
         return bank.hasName(number) ? bank.getName(number) : super.numberToString(instance, number);
     }
 
@@ -48,15 +42,42 @@ public class FroggerScriptSoundFormatter extends FroggerScriptFormatter {
         if (index == -1)
             throw new FroggerScriptParseException("Could not find sound named '" + str + "'.");
 
-        if (instance.isPSX() && instance.getVersionConfig().getBuild() == 71) { // PSX builds do lookup differently.
-            SCNameBank childBank = bank.getChildBank("GENERIC");
-            if (childBank != null && index >= childBank.size() + 5)
-                index += 5; // The PSX version has a few duplicate entries which are here to
-            // TODO: In the future, we should have a separate configuration for this (Or improve the existing config file to allow entries with this kind of info), and read the sound table from ingame, so we have the actual sample rates.
+        index += getNameIndexOffset(instance, bank, index);
+        return index;
+    }
+
+    private int getNameIndexOffset(FroggerGameInstance instance, SCNameBank bank, int sfxId) {
+        // The PSX version has a few extra entries in the sound table which re-use existing waves in the .VB/.VH files.
+        // These impact the IDs of names which come later because they offset the SFX IDs as they are used by scripts.
+        // Sound banks however, do not have this issue.
+        if (instance.isPSX()) {
+            // TODO: Builds PSX Build 49 and earlier seem to have some offsets I've not accounted for.
+            //  - To have multiple offsets, sum multiple function calls together.
+            return getBankOffset(bank, sfxId, "GENERIC", 5);
         }
 
+        // PC Builds validated to use offset of zero:
+        //  - Build 4 (September 3, 1997)
+        //  - Retail PC
 
-        return index;
+        return 0;
+    }
+
+    private int getBankOffset(SCNameBank bank, int sfxId, String bankName, int offsetAmount) {
+        // Resolve PSX offset.
+        SCNameBank childBank = bank.getChildBank(bankName);
+        if (childBank == null)
+            throw new FroggerScriptParseException("The SFX ID (" + sfxId + ") was skipped for scripting because the sound bank name '" + bankName + "' could not be resolved.");
+
+        if (sfxId >= childBank.size()) {
+            if (sfxId >= childBank.size() + offsetAmount)
+                return offsetAmount;
+
+            // The SFX ID appears to correspond to the specific part of the sound bank which is skipped! Uh oh!
+            throw new FroggerScriptParseException("Cannot obtain name for SFX ID (" + sfxId + "), because this portion of the SFX namespace is (intentionally) not configured!!");
+        }
+
+        return 0;
     }
 
     @Override
