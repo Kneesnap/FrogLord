@@ -1,19 +1,19 @@
-package net.highwayfrogs.editor.file.config.script.format;
+package net.highwayfrogs.editor.games.sony.frogger.data.scripts.format;
 
 import javafx.scene.Node;
 import javafx.scene.control.TextField;
-import net.highwayfrogs.editor.file.config.script.ScriptCommand;
-import net.highwayfrogs.editor.file.config.script.ScriptParseException;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.data.scripts.FroggerScriptCommand;
+import net.highwayfrogs.editor.games.sony.frogger.data.scripts.FroggerScriptParseException;
 import net.highwayfrogs.editor.games.sony.frogger.ui.ScriptEditorController;
 import net.highwayfrogs.editor.utils.FXUtils;
 
 /**
- * The base script formatter.
+ * The base Frogger entity script formatter.
  * Created by Kneesnap on 8/1/2019.
  */
-public class ScriptFormatter {
-    public static final ScriptFormatter INSTANCE = new ScriptFormatter();
+public class FroggerScriptFormatter {
+    public static final FroggerScriptFormatter INSTANCE = new FroggerScriptFormatter();
 
     /**
      * Convert a number into the option to display.
@@ -43,14 +43,14 @@ public class ScriptFormatter {
      * @param index   The argument index.
      * @return editorNode
      */
-    public Node makeEditor(FroggerGameInstance instance, ScriptEditorController controller, ScriptCommand command, int index) {
+    public Node makeEditor(FroggerGameInstance instance, ScriptEditorController controller, FroggerScriptCommand command, int index) {
         TextField field = new TextField(numberToString(instance, command.getArguments()[index]));
         FXUtils.setHandleKeyPress(field, newValue -> {
             try {
                 command.getArguments()[index] = stringToNumber(instance, newValue);
                 controller.updateCodeDisplay();
                 return true;
-            } catch (ScriptParseException spe) {
+            } catch (FroggerScriptParseException spe) {
                 FXUtils.makeErrorPopUp(null, spe, false);
                 return false;
             }

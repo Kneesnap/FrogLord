@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.file.config.script;
+package net.highwayfrogs.editor.games.sony.frogger.data.scripts;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
@@ -12,11 +12,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A frogger script.
+ * Represents a Frogger entity script.
+ * These scripts are hardcoded into the game executable, meaning in order to edit them, we cannot exceed their original size.
  * Created by Kneesnap on 8/1/2019.
  */
 public class FroggerScript extends SCGameData<FroggerGameInstance> {
-    @Getter private final List<ScriptCommand> commands = new ArrayList<>();
+    @Getter private final List<FroggerScriptCommand> commands = new ArrayList<>();
     private int maxSize;
     public static final FroggerScript EMPTY_SCRIPT = new FroggerScript(null);
 
@@ -31,17 +32,19 @@ public class FroggerScript extends SCGameData<FroggerGameInstance> {
 
     @Override
     public void load(DataReader reader) {
-        ScriptCommand lastCommand = null;
+        FroggerScriptCommand lastCommand = null;
         while (lastCommand == null || !lastCommand.getCommandType().isFinalCommand()) {
             reader.jumpTemp(reader.getIndex());
             int scriptCommandId = reader.readInt();
             reader.jumpReturn();
-            if (scriptCommandId < 0 || scriptCommandId >= ScriptCommandType.values().length) {
-                System.out.println("Reached unexpected end of script in '" + getName() + "'.");
+
+            // Unexpected end of script!
+            if (scriptCommandId < 0 || scriptCommandId >= FroggerScriptCommandType.values().length) {
+                getLogger().severe("Reached unexpected end of script in '%s' at %08X.", getName(), reader.getIndex());
                 break;
             }
 
-            lastCommand = new ScriptCommand(getGameInstance());
+            lastCommand = new FroggerScriptCommand(getGameInstance());
             lastCommand.load(reader);
             getCommands().add(lastCommand);
         }
@@ -51,14 +54,17 @@ public class FroggerScript extends SCGameData<FroggerGameInstance> {
 
     @Override
     public void save(DataWriter writer) {
-        for (ScriptCommand command : getCommands())
-            command.save(writer);
+        if (isTooLarge())
+            throw new IllegalStateException("The script is too large to be saved back to the game! It will cause memory corruption!");
+
+        for (int i = 0; i < this.commands.size(); i++)
+            this.commands.get(i).save(writer);
     }
 
     @Override
     public String toString() {
         StringBuilder scriptBuilder = new StringBuilder();
-        for (ScriptCommand command : getCommands())
+        for (FroggerScriptCommand command : getCommands())
             scriptBuilder.append(command.toString()).append(Constants.NEWLINE);
         return scriptBuilder.toString();
     }

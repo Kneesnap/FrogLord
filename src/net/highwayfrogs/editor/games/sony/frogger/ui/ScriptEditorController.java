@@ -17,12 +17,12 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.config.script.FroggerScript;
-import net.highwayfrogs.editor.file.config.script.ScriptCommand;
-import net.highwayfrogs.editor.file.config.script.ScriptCommandType;
-import net.highwayfrogs.editor.file.config.script.format.BankFormatter;
-import net.highwayfrogs.editor.file.config.script.format.ScriptFormatter;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.data.scripts.FroggerScript;
+import net.highwayfrogs.editor.games.sony.frogger.data.scripts.FroggerScriptCommand;
+import net.highwayfrogs.editor.games.sony.frogger.data.scripts.FroggerScriptCommandType;
+import net.highwayfrogs.editor.games.sony.frogger.data.scripts.format.FroggerScriptFormatter;
+import net.highwayfrogs.editor.games.sony.frogger.data.scripts.format.FroggerScriptNameBankFormatter;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormEntry;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
@@ -110,10 +110,10 @@ public class ScriptEditorController extends GameUIController<FroggerGameInstance
         // Find usages in other scripts.
         foundAny = false;
         for (FroggerScript otherScript : getGameInstance().getScripts()) {
-            for (ScriptCommand command : otherScript.getCommands()) {
+            for (FroggerScriptCommand command : otherScript.getCommands()) {
                 for (int i = 0; i < command.getCommandType().getFormatters().length; i++) {
-                    ScriptFormatter formatter = command.getCommandType().getFormatters()[i];
-                    if (formatter == BankFormatter.SCRIPT_INSTANCE && id == command.getArguments()[i]) {
+                    FroggerScriptFormatter formatter = command.getCommandType().getFormatters()[i];
+                    if (formatter == FroggerScriptNameBankFormatter.SCRIPT_INSTANCE && id == command.getArguments()[i]) {
                         if (foundAny)
                             results.append(", ");
                         results.append(otherScript.getName());
@@ -146,7 +146,7 @@ public class ScriptEditorController extends GameUIController<FroggerGameInstance
 
         // Update editors.
         double cmdSize = 0;
-        for (ScriptCommand command : currentScript.getCommands()) {
+        for (FroggerScriptCommand command : currentScript.getCommands()) {
             GridPane pane = new GridPane();
             pane.setMinHeight(10);
             pane.setPrefHeight(30);
@@ -161,8 +161,8 @@ public class ScriptEditorController extends GameUIController<FroggerGameInstance
                 Node node;
 
                 if (i == 0) {
-                    ComboBox<ScriptCommandType> typeChoiceBox = new ComboBox<>();
-                    typeChoiceBox.setItems(FXCollections.observableArrayList(ScriptCommandType.values()));
+                    ComboBox<FroggerScriptCommandType> typeChoiceBox = new ComboBox<>();
+                    typeChoiceBox.setItems(FXCollections.observableArrayList(FroggerScriptCommandType.values()));
                     typeChoiceBox.getSelectionModel().select(command.getCommandType());
                     typeChoiceBox.setValue(command.getCommandType());
                     node = typeChoiceBox;
@@ -184,7 +184,7 @@ public class ScriptEditorController extends GameUIController<FroggerGameInstance
 
         // Update text view.
         double textSize = 0;
-        for (ScriptCommand command : currentScript.getCommands()) {
+        for (FroggerScriptCommand command : currentScript.getCommands()) {
             Text commandTypeText = new Text(command.getCommandType().name());
             commandTypeText.setStyle(COMMAND_TYPE_STYLE);
             commandTypeText.setFont(DISPLAY_FONT);
@@ -192,7 +192,7 @@ public class ScriptEditorController extends GameUIController<FroggerGameInstance
 
             for (int i = 0; i < command.getArguments().length; i++) {
                 codeArea.getChildren().add(new Text(" "));
-                ScriptFormatter formatter = command.getCommandType().getFormatters()[i];
+                FroggerScriptFormatter formatter = command.getCommandType().getFormatters()[i];
                 Text toAdd = new Text(formatter.numberToString(getGameInstance(), command.getArguments()[i]));
                 toAdd.setStyle(formatter.getTextStyle());
                 toAdd.setFont(DISPLAY_FONT);

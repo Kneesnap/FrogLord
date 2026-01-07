@@ -1,13 +1,13 @@
-package net.highwayfrogs.editor.file.config.script.format;
+package net.highwayfrogs.editor.games.sony.frogger.data.scripts.format;
 
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.control.ComboBox;
-import lombok.AllArgsConstructor;
-import net.highwayfrogs.editor.file.config.script.ScriptCommand;
-import net.highwayfrogs.editor.file.config.script.ScriptParseException;
+import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.frogger.data.scripts.FroggerScriptCommand;
+import net.highwayfrogs.editor.games.sony.frogger.data.scripts.FroggerScriptParseException;
 import net.highwayfrogs.editor.games.sony.frogger.ui.ScriptEditorController;
 import net.highwayfrogs.editor.games.sony.shared.utils.SCNameBank;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
@@ -20,11 +20,11 @@ import java.util.function.Function;
  * Formats bank names.
  * Created by Kneesnap on 8/1/2019.
  */
-@AllArgsConstructor
-public class BankFormatter extends ScriptFormatter {
+@RequiredArgsConstructor
+public class FroggerScriptNameBankFormatter extends FroggerScriptFormatter {
     private final Function<FroggerConfig, SCNameBank> getter;
-    public static final BankFormatter SCRIPT_INSTANCE = new BankFormatter(FroggerConfig::getScriptBank);
-    public static final BankFormatter SCRIPT_CALLBACK_INSTANCE = new BankFormatter(FroggerConfig::getScriptCallbackBank);
+    public static final FroggerScriptNameBankFormatter SCRIPT_INSTANCE = new FroggerScriptNameBankFormatter(FroggerConfig::getScriptBank);
+    public static final FroggerScriptNameBankFormatter SCRIPT_CALLBACK_INSTANCE = new FroggerScriptNameBankFormatter(FroggerConfig::getScriptCallbackBank);
 
     @Override
     public String numberToString(FroggerGameInstance instance, int number) {
@@ -40,12 +40,12 @@ public class BankFormatter extends ScriptFormatter {
         SCNameBank bank = getBank(instance);
         int index = bank != null ? bank.getNames().indexOf(str) : -1;
         if (index == -1)
-            throw new ScriptParseException("Could not find bank entry named '" + str + "'.");
+            throw new FroggerScriptParseException("Could not find bank entry named '" + str + "'.");
         return index;
     }
 
     @Override
-    public Node makeEditor(FroggerGameInstance instance, ScriptEditorController controller, ScriptCommand command, int index) {
+    public Node makeEditor(FroggerGameInstance instance, ScriptEditorController controller, FroggerScriptCommand command, int index) {
         ComboBox<Integer> comboBox = new ComboBox<>();
         comboBox.setConverter(new AbstractStringConverter<>(getBank(instance)::getName));
         comboBox.setItems(FXCollections.observableArrayList(Utils.getIntegerList(getBank(instance).size())));
@@ -60,6 +60,6 @@ public class BankFormatter extends ScriptFormatter {
     }
 
     private SCNameBank getBank(FroggerGameInstance instance) {
-        return getter.apply(instance.getVersionConfig());
+        return this.getter.apply(instance.getVersionConfig());
     }
 }

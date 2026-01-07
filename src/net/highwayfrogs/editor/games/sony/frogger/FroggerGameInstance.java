@@ -6,7 +6,6 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.file.config.script.FroggerScript;
 import net.highwayfrogs.editor.games.psx.image.PsxVramScreenSize;
 import net.highwayfrogs.editor.games.sony.*;
 import net.highwayfrogs.editor.games.sony.frogger.data.FroggerLevelSelectEntry;
@@ -21,6 +20,7 @@ import net.highwayfrogs.editor.games.sony.frogger.data.demo.FroggerPCDemoTableEn
 import net.highwayfrogs.editor.games.sony.frogger.data.map.FroggerMapBook;
 import net.highwayfrogs.editor.games.sony.frogger.data.map.FroggerMapBookPC;
 import net.highwayfrogs.editor.games.sony.frogger.data.map.FroggerMapBookPSX;
+import net.highwayfrogs.editor.games.sony.frogger.data.scripts.FroggerScript;
 import net.highwayfrogs.editor.games.sony.frogger.data.theme.FroggerThemeBook;
 import net.highwayfrogs.editor.games.sony.frogger.data.theme.FroggerThemeBookPC;
 import net.highwayfrogs.editor.games.sony.frogger.data.theme.FroggerThemeBookPSX;
