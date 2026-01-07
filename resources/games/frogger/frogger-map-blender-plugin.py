@@ -50,7 +50,7 @@ from bpy_extras.io_utils import ImportHelper, ExportHelper
 LEVEL_MESH_NAME = "LevelMesh"
 LEVEL_OBJECT_NAME = "LevelObject"
 UNTEXTURED_MATERIAL_NAME = "NoTexture"
-CURRENT_FFS_VERSION = 1
+CURRENT_FFS_VERSION = 2
 
 UV_LAYER_NAME = "Texture Uvs"
 VERTEX_COLOR_LAYER_NAME = "Vertex Colors"
@@ -205,6 +205,20 @@ def get_frogger_texture_id(material):
 
     return FROGGER_UNKNOWN_TEXTURE_ID
 
+def get_frogger_texture_name(material):
+    if material is None:
+        return None
+
+    material_texture_name = material.frogger_data.texture_name
+    if material_texture_name is not None and len(material_texture_name) > 0:
+        return material_texture_name
+
+    if material.name is None or len(material.name) == 0:
+        return None
+
+    name_match = re.fullmatch(r'[0-9A-Za-z_]+', material.name)
+    return material.name if name_match is not None else None
+
 def swap_blender_order(array):
     # Swaps between <Frogger Polygon Data Order> <-> <Blender Data Order>
     if len(array) == 4:
@@ -337,6 +351,7 @@ def load_ffs_file(operator, context, filepath):
     pending_face_data = []
     extra_face_data = []
     material_id_remaps = {}
+    material_index_remaps = {}
     downsized_face_count = 0
     for command, args, line_text, line_number in commands:
         arg_index = 0
@@ -352,10 +367,23 @@ def load_ffs_file(operator, context, filepath):
         elif command == "texture": # texture textureId
             texture_id = int(args[arg_index])
             material_name = "Tex%d" % texture_id
+            texture_file_name = "%d.png" % texture_id
+
+            # Load texture name.
+            texture_name = None
+            if len(args) > arg_index + 1:
+                texture_name = args[arg_index + 1]
+                material_name = texture_name
+                texture_file_name = "%s.png" % texture_name
+
+            # Track material mappings.
             material_id_remaps[texture_id] = len(obj.data.materials)
+            material_index_remaps[len(material_index_remaps)] = len(obj.data.materials)
+
             material = bpy.data.materials[material_name] if material_name in bpy.data.materials else bpy.data.materials.new(name=material_name)
             material.frogger_data.texture_id = texture_id
-            create_shaded_material(material, folder, "%d.png" % texture_id)
+            material.frogger_data.texture_file_name = texture_name
+            create_shaded_material(material, folder, texture_file_name)
             obj.data.materials.append(material)
         elif command == "polygon": # polygon polygon_args...
             polygon_type = args[arg_index].lower()
@@ -403,7 +431,10 @@ def load_ffs_file(operator, context, filepath):
             # Read textured polygon data, maybe.
             arg_index += 2
             if has_texture:
-                material_index = material_id_remaps[int(args[arg_index])]
+                if ffs_version >= 2: # version 2+ uses local indices into the texture list.
+                    material_index = material_index_remaps[int(args[arg_index])]
+                else: # version 1 used texture ids here.
+                    material_index = material_id_remaps[int(args[arg_index])]
                 texture_flags = int(args[arg_index + 1])
                 arg_index += 2
 
@@ -589,10 +620,16 @@ def save_ffs_file(operator, context, filepath):
 
     # Write textures.
     seen_materials = set()
+    material_index_remaps = {}
     for material in mesh.materials:
         material_id = get_frogger_texture_id(material)
+        texture_name = get_frogger_texture_name(material)
         if material_id >= 0 and not material_id in seen_materials:
-            writer.write("texture %d\n" % (material_id))
+            if texture_name is not None:
+                writer.write("texture %d %s\n" % (material_id, texture_name))
+            else:
+                writer.write("texture %d\n" % (material_id))
+            material_index_remaps[material_id] = len(material_index_remaps)
             seen_materials.add(material_id)
     if len(seen_materials) > 0:
         writer.write('\n')
@@ -662,7 +699,7 @@ def save_ffs_file(operator, context, filepath):
         # Write optional texture data.
         if is_textured:
             texture_flags = bm.faces[polygon_index][texture_flag_layer]
-            writer.write(" %d %d" % (material_texture_id, texture_flags or 0))
+            writer.write(" %d %d" % (material_index_remaps[material_texture_id], texture_flags or 0))
 
         # Write Vertices:
         for vertex_id in vertices:
@@ -746,7 +783,8 @@ class FroggerSceneData(bpy.types.PropertyGroup):
     game_version: bpy.props.StringProperty(name="Frogger Version")
 
 class FroggerMaterialData(bpy.types.PropertyGroup):
-    texture_id: bpy.props.IntProperty(name="Texture ID", default=FROGGER_UNKNOWN_TEXTURE_ID)
+    texture_id: bpy.props.IntProperty(name="Texture ID", description="The internal texture ID used by the version of Frogger the texture came from.", default=FROGGER_UNKNOWN_TEXTURE_ID)
+    texture_name: bpy.props.StringProperty(name="Texture Name", description="The name of the texture, if known. Used to allow importing back into FrogLord.", default='')
 
 def register():
     bpy.utils.register_class(FroggerSceneData)

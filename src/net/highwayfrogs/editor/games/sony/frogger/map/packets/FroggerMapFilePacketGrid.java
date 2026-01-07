@@ -18,6 +18,7 @@ import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -701,6 +702,24 @@ public class FroggerMapFilePacketGrid extends FroggerMapFilePacket {
             FroggerGridSquare newGridSquare = new FroggerGridSquare(gridStack, polygon);
             gridStack.getGridSquares().add(i, newGridSquare);
             return newGridSquare;
+        }
+    }
+
+    /**
+     * Print warnings about large grid stacks.
+     * @param logger the logger to print the warnings to
+     */
+    public void warnAboutLargeGridStacks(ILogger logger) {
+        if (logger == null)
+            logger = getLogger();
+
+        final int polygonLimit = 12;
+        for (int z = 0; z < this.gridStacks.length; z++) {
+            for (int x = 0; x < this.gridStacks[z].length; x++) {
+                FroggerGridStack gridStack = this.gridStacks[z][x];
+                if (gridStack.getGridSquares().size() >= polygonLimit)
+                    logger.warning("FroggerGridStack[x=%d,z=%d] had %d polygons! This most likely means there is unintended geometry marked as part of the grid!", x, z, gridStack.getGridSquares().size());
+            }
         }
     }
 }

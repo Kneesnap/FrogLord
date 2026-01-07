@@ -63,8 +63,6 @@ import java.util.logging.Level;
  *  in order to minimize the risk of FrogLord breaking existing textures while also keeping texture editing as simple as possible for a FrogLord user.
  * <p/>
  * TODO Remaining Tasks before feature complete:
- *  1) Add named texture support to .ffs
- *   -> Also, add warnings for very high layer counts, as they are probably done by accident, and indicate potential accidentally included polygons, or accidental grid polys.
  *  2) MediEvilMapPolygon flag todos, and VLO flags.
  *  3) PC paddingX
  *  4) Fix HitX for MediEvil prototypes.
@@ -74,6 +72,10 @@ import java.util.logging.Level;
  *    -> How to change padding?
  *    -> The text generation util should integrate with this new stuff.
  *    -> Name tracking.
+ *    -> Update the import all/export all feature to be on right-click of the VLO itself
+ *     -> It should also use image file names.
+ *      -> For images with unrecognized non-numeric names, add them to the VLO.
+ *      -> For images numeric names, add them with that as their texture ID, replacing any existing image with that texture ID.
  *  6) Store custom file names in the .VLO file itself.
  *  7) Review to-do comments in VLOController.java
  *  8) Review to-do comments in this file.

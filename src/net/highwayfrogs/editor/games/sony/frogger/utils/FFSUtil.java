@@ -3,8 +3,10 @@ package net.highwayfrogs.editor.games.sony.frogger.utils;
 import lombok.Getter;
 import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.generic.GameConfig;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
+import net.highwayfrogs.editor.games.sony.SCGameConfig;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
@@ -23,6 +25,7 @@ import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 import net.highwayfrogs.editor.utils.commandparser.*;
@@ -64,7 +67,7 @@ public class FFSUtil {
     private static final int FFS_EXPORT_FILTER = VloImage.DEFAULT_IMAGE_NO_PADDING_EXPORT_SETTINGS;
 
     // Increment this with any major change to the format.
-    public static final int CURRENT_FORMAT_VERSION = 1;
+    public static final int CURRENT_FORMAT_VERSION = 2;
 
     /**
      * Save map data to a .ffs file for editing in Blender.
@@ -102,15 +105,28 @@ public class FFSUtil {
         for (int i = 0; i < textureRemap.getTextureIds().size(); i++) {
             VloImage image = textureRemap.resolveTexture(i, mapVlo);
             if (image == null) {
+                if (textureRemap.getRemappedTextureId(i) == -1)
+                    continue;
+
                 Utils.handleProblem(response, map.getLogger(), Level.SEVERE, "Could not resolve texture remap index %d to a valid image!", i);
                 return;
             }
 
+            // Write texture command.
             builder.append(FfsCommandType.TEXTURE.getLabel())
-                    .append(' ').append(image.getTextureId())
-                    .append(Constants.NEWLINE);
+                    .append(' ').append(image.getTextureId());
 
-            File imageFileOutput = new File(outputDir, image.getTextureId() + ".png");
+            String fileName = image.getOriginalName();
+            if (StringUtils.isNullOrWhiteSpace(fileName)) {
+                fileName = String.valueOf(image.getTextureId());
+            } else {
+                // Write the image file name to the command.
+                builder.append(" ").append(fileName);
+            }
+
+            builder.append(Constants.NEWLINE);
+
+            File imageFileOutput = new File(outputDir, fileName + ".png");
             try {
                 ImageIO.write(image.toBufferedImage(FFS_EXPORT_FILTER), "png", imageFileOutput);
             } catch (IOException ex) {
@@ -156,7 +172,7 @@ public class FFSUtil {
 
             // Write Texture ID
             if (polygon.getPolygonType().isTextured())
-                builder.append(' ').append(textureRemap.getRemappedTextureId(polygon.getTextureId()))
+                builder.append(' ').append(polygon.getTextureId()) // Use the non-remapped texture ID.
                         .append(' ').append(polygon.getFlags());
 
             // Write vertices.
@@ -280,6 +296,7 @@ public class FFSUtil {
 
         // 5) Generate the new collision grid.
         map.getGridPacket().generateGrid(context.getNewPolygonGridSquareFlags());
+        map.getGridPacket().warnAboutLargeGridStacks(context.getLogger());
 
         // 6) Generate map groups for the new level data.
         map.getGroupPacket().generateMapGroups(trackedLogger, ProblemResponse.CREATE_POPUP, true);
@@ -335,7 +352,36 @@ public class FFSUtil {
 
     private static void commandTexture(FfsLoadContext context, OptionalArguments args) {
         // The remap is updated when the command is run because polygon commands rely on the remap having been updated first.
-        context.getMapFile().getTextureRemap().getTextureIds().add(args.useNext().getAsShort());
+        short loadedTextureId = args.useNext().getAsShort(); // NOTE: This may be for a different version, and thus invalid!
+        String textureFileName = args.hasNext() ? args.useNext().getAsString() : null;
+
+        SCGameInstance instance = context.getMapFile().getGameInstance();
+        List<Short> textureIds = context.getMapFile().getTextureRemap().getTextureIds();
+
+        // If a texture name is present, it should be the be-all-end-all for identifying the texture, because names work across versions, support custom (new) textures cleanly, and are feasible to change by the user if not.
+        if (!StringUtils.isNullOrWhiteSpace(textureFileName)) {
+            Short textureIdByName = instance.getTextureIdByName(textureFileName);
+            if (textureIdByName == null) {
+                context.getLogger().severe("No texture could be found which was named '%s'! (Was it imported first?)", textureFileName);
+                textureIds.add((short) -1);
+                return;
+            }
+
+            textureIds.add(textureIdByName);
+            return;
+        }
+
+        // Ensure texture ID is applicable to this version of the game.
+        SCGameConfig ffsGameCfg = context.getFroggerConfig();
+        SCGameConfig realGameCfg = instance.getVersionConfig();
+        if (ffsGameCfg != realGameCfg) {
+            context.getLogger().severe("Cannot resolve texture ID %d because the file uses IDs from version '%s', but the game version currently loaded is '%s'!",
+                    loadedTextureId, ffsGameCfg != null ? ffsGameCfg.getInternalName() : null, realGameCfg.getInternalName());
+            textureIds.add((short) -1);
+            return;
+        }
+
+        textureIds.add(loadedTextureId);
     }
 
     private static void commandPolygon(FfsLoadContext context, OptionalArguments args) throws CommandListException {
@@ -357,7 +403,11 @@ public class FFSUtil {
             int textureFlags = args.useNext().getAsInteger();
 
             TextureRemapArray remap = context.getMapFile().getTextureRemap();
-            newPolygon.setTextureId((short) remap.getRemapIndex(textureId)); // -1 if not found.
+            if (context.getFfsVersion() > 1) { // Version 2 uses the index into the remap.
+                newPolygon.setTextureId(textureId);
+            } else {
+                newPolygon.setTextureId((short) remap.getRemapIndex(textureId)); // -1 if not found.
+            }
             newPolygon.setFlags(textureFlags);
         }
 
