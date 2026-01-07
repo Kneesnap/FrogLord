@@ -5,7 +5,6 @@ import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
-import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
@@ -14,6 +13,7 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.FXUtils;
+import net.highwayfrogs.editor.utils.image.ImageUtils;
 
 import java.awt.image.BufferedImage;
 import java.util.function.Consumer;
@@ -126,7 +126,7 @@ public abstract class PSXShadingEditor<TShadeTarget> {
             if (newShadedImage == null) // If this isn't displayed, it's not possible to assign new textures to untextured polygons.
                 newShadedImage = UnknownTextureSource.MAGENTA_INSTANCE.makeImage();
 
-            this.previewImageView.setImage(FXUtils.toFXImage(ImageWorkHorse.resizeImage(newShadedImage, (int) this.previewImageView.getFitWidth(), (int) this.previewImageView.getFitHeight(), true), false));
+            this.previewImageView.setImage(FXUtils.toFXImage(ImageUtils.resizeImage(newShadedImage, (int) this.previewImageView.getFitWidth(), (int) this.previewImageView.getFitHeight(), true), false));
         } else {
             this.previewImageView.setImage(null);
         }

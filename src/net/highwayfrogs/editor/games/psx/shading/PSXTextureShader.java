@@ -4,12 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.fx.wrapper.FXIntArray;
+import net.highwayfrogs.editor.utils.image.ImageUtils;
 import net.highwayfrogs.editor.utils.objects.IndexBitArray;
 
 import java.awt.*;
@@ -98,8 +98,8 @@ public class PSXTextureShader {
      * @param colors The colors to apply to the image. (8 bits, 0 - 255)
      * @return gouraudShadedImage
      */
-    public static BufferedImage makeGouraudShadedImage(int width, int height, CVector[] colors) {
-        return makeGouraudShadedImage(null, width, height, colors);
+    public static BufferedImage makeGouraudShadedImage(int width, int height, CVector[] colors, boolean semiTransparent) {
+        return makeGouraudShadedImage(null, width, height, colors, semiTransparent);
     }
 
     /**
@@ -110,7 +110,7 @@ public class PSXTextureShader {
      * @param colors The colors to apply to the image. (8 bits, 0 - 255)
      * @return gouraudShadedImage
      */
-    public static BufferedImage makeGouraudShadedImage(BufferedImage targetImage, int width, int height, CVector[] colors) {
+    public static BufferedImage makeGouraudShadedImage(BufferedImage targetImage, int width, int height, CVector[] colors, boolean semiTransparent) {
         if (targetImage == null)
             targetImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 
@@ -151,6 +151,16 @@ public class PSXTextureShader {
             shadeTriangle(instance, null, targetImage, triangleColors, coordinates);
         } else {
             throw new RuntimeException("Can't create gouraud shaded image with " + colors.length + " colors.");
+        }
+
+        // Apply semi transparency.
+        if (semiTransparent) {
+            int[] pixelBuffer = ImageUtils.getWritablePixelIntegerArray(targetImage);
+            for (int i = 0; i < pixelBuffer.length; i++) {
+                int color = pixelBuffer[i];
+                if (ColorUtils.getAlphaInt(color) > 0)
+                    pixelBuffer[i] = ColorUtils.setAlpha(color, (byte) 127);
+            }
         }
 
         expandShading(targetImage, instance, DEFAULT_SHADING_EXPANSION_LAYERS);
@@ -307,7 +317,7 @@ public class PSXTextureShader {
         IndexBitArray seenPixelPos = instance.getPixelPosSeen();
         IndexBitArray firstLayerPixelShadePositions = instance.getFirstLayerPixelShadePositions();
         FXIntArray pixelPosBuffer = instance.getPixelPosBuffer();
-        int[] rawTargetImage = ImageWorkHorse.getPixelIntegerArray(targetImage);
+        int[] rawTargetImage = ImageUtils.getWritablePixelIntegerArray(targetImage);
         int maxRenderedTriangleY = Math.min(maxTriangleY, targetImage.getHeight() - 1);
         for (int y = Math.max(0, minTriangleY); y <= maxRenderedTriangleY; y++) {
             // Calculate the left scanline boundary.
@@ -440,7 +450,7 @@ public class PSXTextureShader {
         IndexBitArray seenPixelPos = instance.getPixelPosSeen();
 
         // 2) Calculate the colors for the pixel positions in the buffer.
-        int[] rawTargetImage = ImageWorkHorse.getPixelIntegerArray(targetImage);
+        int[] rawTargetImage = ImageUtils.getWritablePixelIntegerArray(targetImage);
         for (int i = 0; i < pixelPosBuffer.size(); i += 2) {
             int pixelPos = pixelPosBuffer.get(i);
             if (!seenPixelPos.setBit(pixelPos, true)) {
@@ -666,8 +676,8 @@ public class PSXTextureShader {
             throw new NullPointerException("targetImage");
 
         // This has been optimized for performance, since it has been deemed performance critical code.
-        int[] rawSourceImage = ImageWorkHorse.getReadOnlyPixelIntegerArray(sourceImage);
-        int[] rawTargetImage = ImageWorkHorse.getPixelIntegerArray(targetImage);
+        int[] rawSourceImage = ImageUtils.getReadOnlyPixelIntegerArray(sourceImage);
+        int[] rawTargetImage = ImageUtils.getWritablePixelIntegerArray(targetImage);
         int pixelCount = targetImage.getWidth() * targetImage.getHeight();
         for (int i = 0; i < pixelCount; i++)
             shadeRawPixel(rawSourceImage, rawTargetImage, i, rawTargetImage[i], modulated);
@@ -680,8 +690,8 @@ public class PSXTextureShader {
      * @param color  The color to apply to the image. (8 bits, 0 - 255)
      * @return flatShadedImage
      */
-    public static BufferedImage makeFlatShadedImage(int width, int height, CVector color) {
-        return makeFlatShadedImage(null, width, height, color);
+    public static BufferedImage makeFlatShadedImage(int width, int height, CVector color, boolean semiTransparent) {
+        return makeFlatShadedImage(null, width, height, color, semiTransparent);
     }
 
     /**
@@ -692,12 +702,13 @@ public class PSXTextureShader {
      * @param color  The color to apply to the image. (8 bits, 0 - 255)
      * @return flatShadedImage
      */
-    public static BufferedImage makeFlatShadedImage(BufferedImage targetImage, int width, int height, CVector color) {
+    public static BufferedImage makeFlatShadedImage(BufferedImage targetImage, int width, int height, CVector color, boolean semiTransparent) {
         if (targetImage == null)
             targetImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 
         Graphics2D graphics = targetImage.createGraphics();
-        graphics.setColor(color.toColor());
+        Color awtColor = color.toColor(semiTransparent ? (byte) 0x7F : (byte) 0xFF);
+        graphics.setColor(awtColor);
         graphics.fillRect(0, 0, targetImage.getWidth(), targetImage.getHeight());
         graphics.dispose();
 
@@ -729,8 +740,8 @@ public class PSXTextureShader {
 
         if (targetImage == null)
             targetImage = new BufferedImage(originalTexture.getWidth(), originalTexture.getHeight(), BufferedImage.TYPE_INT_ARGB);
-        int[] rawSourceImage = ImageWorkHorse.getReadOnlyPixelIntegerArray(originalTexture);
-        int[] rawTargetImage = ImageWorkHorse.getPixelIntegerArray(targetImage);
+        int[] rawSourceImage = ImageUtils.getReadOnlyPixelIntegerArray(originalTexture);
+        int[] rawTargetImage = ImageUtils.getWritablePixelIntegerArray(targetImage);
         int pixelCount = targetImage.getWidth() * targetImage.getHeight();
         for (int i = 0; i < pixelCount; i++)
             shadeRawPixel(rawSourceImage, rawTargetImage, i, colorArgb, enableModulation);

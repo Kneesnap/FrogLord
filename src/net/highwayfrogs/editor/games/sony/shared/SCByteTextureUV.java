@@ -5,8 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.system.math.Vector2f;
 import net.highwayfrogs.editor.utils.DataUtils;
@@ -73,7 +73,7 @@ public class SCByteTextureUV implements IBinarySerializable {
      * @param u the float value to apply
      * @param v the float value to apply
      */
-    public void setSnappedFloatUV(GameImage image, float u, float v) {
+    public void setSnappedFloatUV(VloImage image, float u, float v) {
         setSnappedFloatU(image, u);
         setSnappedFloatV(image, v);
     }
@@ -92,11 +92,11 @@ public class SCByteTextureUV implements IBinarySerializable {
      * In other words, this should yield a more accurate UV value than getFloatV() in most situations.
      * @return floatU
      */
-    public float getSnappedFloatU(GameImage image) {
+    public float getSnappedFloatU(VloImage image) {
         if (image == null)
             return getFloatU();
 
-        return getSnappedFloat(this.u, image.getIngameWidth());
+        return getSnappedFloat(this.u, image.getUnpaddedWidth());
     }
 
     /**
@@ -114,9 +114,9 @@ public class SCByteTextureUV implements IBinarySerializable {
      * @param image the image to use to snap the value
      * @param newU the float value to apply
      */
-    public void setSnappedFloatU(GameImage image, float newU) {
+    public void setSnappedFloatU(VloImage image, float newU) {
         if (image != null) {
-            this.u = calculateByteForSnappedFloat(newU, image.getIngameWidth());
+            this.u = calculateByteForSnappedFloat(newU, image.getUnpaddedWidth());
         } else {
             setFloatU(newU);
         }
@@ -136,11 +136,11 @@ public class SCByteTextureUV implements IBinarySerializable {
      * In other words, this should yield a more accurate UV value than getFloatV() in most situations.
      * @return floatV
      */
-    public float getSnappedFloatV(GameImage image) {
+    public float getSnappedFloatV(VloImage image) {
         if (image == null)
             return getFloatV();
 
-        return getSnappedFloat(this.v, image.getIngameHeight());
+        return getSnappedFloat(this.v, image.getUnpaddedHeight());
     }
 
     /**
@@ -158,9 +158,9 @@ public class SCByteTextureUV implements IBinarySerializable {
      * @param image the image to use to snap the value
      * @param newV the float value to apply
      */
-    public void setSnappedFloatV(GameImage image, float newV) {
+    public void setSnappedFloatV(VloImage image, float newV) {
         if (image != null) {
-            this.v = calculateByteForSnappedFloat(newV, image.getIngameHeight());
+            this.v = calculateByteForSnappedFloat(newV, image.getUnpaddedHeight());
         } else {
             setFloatV(newV);
         }
@@ -182,7 +182,7 @@ public class SCByteTextureUV implements IBinarySerializable {
      * @param instance The vector to save float values to.
      * @return floatVector
      */
-    public Vector2f toSnappedVector(GameImage image, Vector2f instance) {
+    public Vector2f toSnappedVector(VloImage image, Vector2f instance) {
         if (image == null)
             return toVector(instance);
 

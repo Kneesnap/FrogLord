@@ -4,8 +4,6 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.input.PickResult;
 import javafx.scene.shape.MeshView;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
@@ -14,6 +12,8 @@ import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMesh;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapPolygon;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.gui.InputManager.MouseTracker;
 import net.highwayfrogs.editor.gui.editor.BakedLandscapeUIManager;
@@ -168,7 +168,7 @@ public class MediEvilLandscapeUIManager extends BakedLandscapeUIManager<MediEvil
             }
 
             // Resolve VLO.
-            VLOArchive vloArchive = oldTextureSource instanceof GameImage ? ((GameImage) oldTextureSource).getParent() : null;
+            VloFile vloArchive = oldTextureSource instanceof VloImage ? ((VloImage) oldTextureSource).getParent() : null;
             if (vloArchive == null)
                 vloArchive = levelTableEntry.getVloFile();
             if (getEditTarget() == null)

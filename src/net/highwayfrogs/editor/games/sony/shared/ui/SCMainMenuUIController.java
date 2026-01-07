@@ -4,10 +4,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
-import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
-import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameConfig;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
@@ -16,6 +12,8 @@ import net.highwayfrogs.editor.games.sony.shared.ISCMWDHeaderGenerator;
 import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.VLOController;
 import net.highwayfrogs.editor.games.sony.shared.utils.SCAnalysisUtils;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.MainMenuController;
@@ -200,33 +198,39 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
         if (targetFolder == null)
             return;
 
-        ImageFilterSettings exportSettings = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(false).setAllowTransparency(true);
-        List<VLOArchive> allVlos = getArchive().getAllFiles(VLOArchive.class);
-        for (VLOArchive saveVLO : allVlos) {
+        List<VloFile> allVlos = getArchive().getAllFiles(VloFile.class);
+        for (VloFile saveVLO : allVlos) {
             File vloFolder = new File(targetFolder, FileUtils.stripExtension(saveVLO.getFileDisplayName()));
             FileUtils.makeDirectory(vloFolder);
-            saveVLO.exportAllImages(vloFolder, exportSettings);
+            saveVLO.exportAllImages(vloFolder, VloImage.DEFAULT_IMAGE_NO_PADDING_EXPORT_SETTINGS);
         }
     }
 
     private void promptSearchForTexture() {
-        InputMenu.promptInput(getGameInstance(), "Please enter the texture id to lookup.", str -> {
-            if (!NumberUtils.isInteger(str)) {
-                FXUtils.showPopup(AlertType.WARNING, "Invalid Texture ID", "'" + str + "' is not a valid number.");
-                return;
+        InputMenu.promptInput(getGameInstance(), "Please enter the texture id/name to lookup.", str -> {
+            int textureId;
+            Short resolvedTextureIdByName = getGameInstance().getTextureIdByName(str);
+            if (resolvedTextureIdByName != null && resolvedTextureIdByName >= 0) {
+                textureId = resolvedTextureIdByName;
+            } else {
+                if (!NumberUtils.isInteger(str)) {
+                    FXUtils.showPopup(AlertType.WARNING, "Invalid Texture ID", "'" + str + "' is not a valid number or texture name.");
+                    return;
+                }
+
+                textureId = Integer.parseInt(str);
             }
 
-            int texId = Integer.parseInt(str);
-            List<GameImage> images = getArchive().getImagesByTextureId(texId);
+            List<VloImage> images = getArchive().getImagesByTextureId(textureId);
             if (images.isEmpty()) {
-                FXUtils.showPopup(AlertType.WARNING, "Couldn't find image.", "Could not find an image with the id " + texId + ".");
+                FXUtils.showPopup(AlertType.WARNING, "Couldn't find image.", "Could not find an image with the id " + textureId + ".");
                 return;
             }
 
-            for (GameImage image : images)
-                getLogger().info("Found %d as texture #%d in %s.", texId, image.getLocalImageID(), FileUtils.stripExtension(image.getParent().getFileDisplayName()));
+            for (VloImage image : images)
+                getLogger().info("Found %d as texture #%d in %s.", textureId, image.getLocalImageID(), FileUtils.stripExtension(image.getParent().getFileDisplayName()));
 
-            GameImage image = images.get(0);
+            VloImage image = images.get(0);
             VLOController controller = image.getParent().makeEditorUI();
             showEditor(controller);
             controller.selectImage(image, true);

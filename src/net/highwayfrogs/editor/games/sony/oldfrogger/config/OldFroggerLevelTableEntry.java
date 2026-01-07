@@ -1,13 +1,13 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.config;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.OldFroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -87,20 +87,20 @@ public class OldFroggerLevelTableEntry extends SCGameData<OldFroggerGameInstance
      * Get the VLO archive containing images for this level.
      * @return The main VLO Archive, if one exists.
      */
-    public VLOArchive getMainVLOArchive() {
+    public VloFile getMainVloFile() {
         // PSX has ULR, PC does not.
         WADFile ulrFile = getUlrFile();
         if (ulrFile != null)
             for (WADEntry wadEntry : ulrFile.getFiles())
-                if (wadEntry.getFile() instanceof VLOArchive)
-                    return (VLOArchive) wadEntry.getFile();
+                if (wadEntry.getFile() instanceof VloFile)
+                    return (VloFile) wadEntry.getFile();
 
         // PC has WAD.
         WADFile wadFile = getWadFile();
         if (wadFile != null)
             for (WADEntry wadEntry : wadFile.getFiles())
-                if (wadEntry.getFile() instanceof VLOArchive)
-                    return (VLOArchive) wadEntry.getFile();
+                if (wadEntry.getFile() instanceof VloFile)
+                    return (VloFile) wadEntry.getFile();
 
         return null;
     }

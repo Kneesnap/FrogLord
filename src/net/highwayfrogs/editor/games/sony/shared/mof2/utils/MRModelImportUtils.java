@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.sony.shared.mof2.utils;
 
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTextureAnimation;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTextureAnimationPolygonTarget;
 import net.highwayfrogs.editor.games.sony.shared.mof2.collision.MRMofCollprim;
@@ -9,6 +8,7 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.hilite.MRMofHilite;
 import net.highwayfrogs.editor.games.sony.shared.mof2.hilite.MRMofHilite.HiliteAttachType;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPart;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPolygon;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.util.*;
@@ -93,7 +93,7 @@ public class MRModelImportUtils {
         }
 
         // Copy texture animation targets, when they are possible to resolve.
-        Map<GameImage, MRMofTextureAnimation> animationsByImage = new HashMap<>();
+        Map<VloImage, MRMofTextureAnimation> animationsByImage = new HashMap<>();
         List<MRMofTextureAnimationPolygonTarget> missedAnimationTargets = new ArrayList<>();
         for (MRMofTextureAnimationPolygonTarget animationTarget : oldPart.getTextureAnimationPolygonTargets()) {
             MRMofTextureAnimation newAnimation = oldToNewAnimations.get(animationTarget.getAnimation());
@@ -101,7 +101,7 @@ public class MRModelImportUtils {
                 continue;
 
             MRMofPolygon oldPolygon = animationTarget.getPolygon();
-            GameImage defaultTexture = oldPolygon != null ? oldPolygon.getDefaultTexture() : null;
+            VloImage defaultTexture = oldPolygon != null ? oldPolygon.getDefaultTexture() : null;
             MRMofTextureAnimation temp;
             if (defaultTexture != null && ((temp = animationsByImage.putIfAbsent(defaultTexture, animationTarget.getAnimation())) != null && temp != animationTarget.getAnimation()))
                 missedAnimationTargets.add(animationTarget);

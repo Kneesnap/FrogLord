@@ -15,10 +15,6 @@ import javafx.util.Duration;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.file.map.view.CursorVertexColor;
-import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
-import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTextureAnimation;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTextureAnimationEntry;
@@ -30,6 +26,8 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.ui.MRModelMeshController;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.managers.MRModelTextureAnimationUIManager.MRModelTextureAnimationPreview;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.mesh.MRModelMesh;
 import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.editor.BasicListMeshUIManager;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshDataEntry;
@@ -49,7 +47,7 @@ public class MRModelTextureAnimationUIManager extends BasicListMeshUIManager<MRM
     private final List<MRMofTextureAnimation> cachedTextureAnimations = new ArrayList<>();
 
     public static final CursorVertexColor ANIMATION_COLOR = new CursorVertexColor(java.awt.Color.MAGENTA, java.awt.Color.BLACK);
-    public static final ImageFilterSettings PREVIEW_SETTINGS = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(true);
+    public static final int PREVIEW_SETTINGS = VloImage.DEFAULT_IMAGE_STRIPPED_VIEW_SETTINGS;
 
     public MRModelTextureAnimationUIManager(MRModelMeshController controller) {
         super(controller);
@@ -151,14 +149,14 @@ public class MRModelTextureAnimationUIManager extends BasicListMeshUIManager<MRM
         for (int i = 0; i < textureAnimation.getEntries().size(); i++) {
             final int tempIndex = i;
             MRMofTextureAnimationEntry entry = textureAnimation.getEntries().get(i);
-            GameImage image = getGameInstance().getMainArchive().getImageByTextureId(entry.getGlobalImageId());
-            Image scaledImage = FXUtils.toFXImage(image.toBufferedImage(VLOArchive.ICON_EXPORT), true);
+            VloImage image = getGameInstance().getMainArchive().getImageByTextureId(entry.getGlobalImageId());
+            Image scaledImage = FXUtils.toFXImage(image.toBufferedImage(VloFile.ICON_EXPORT), true);
             ImageView view = new ImageView(scaledImage);
             view.setFitWidth(20);
             view.setFitHeight(20);
 
             view.setOnMouseClicked(evt -> {
-                VLOArchive vlo = getMesh().getModel().getVloFile();
+                VloFile vlo = getMesh().getModel().getVloFile();
                 if (vlo == null) {
                     FXUtils.makePopUp("There is no VLO file associated with this model.\nSo, FrogLord doesn't know what textures it should let you pick from.", AlertType.WARNING);
                     return;
@@ -203,7 +201,7 @@ public class MRModelTextureAnimationUIManager extends BasicListMeshUIManager<MRM
         }
 
         toDisable.add(grid.addButton("Add Texture", () -> {
-            VLOArchive vlo = getMesh().getModel().getVloFile();
+            VloFile vlo = getMesh().getModel().getVloFile();
             if (vlo == null) {
                 FXUtils.makePopUp("There is no VLO file associated with this model.\nSo, FrogLord doesn't know what textures it should let you pick from.", AlertType.WARNING);
                 return;
@@ -269,7 +267,7 @@ public class MRModelTextureAnimationUIManager extends BasicListMeshUIManager<MRM
             return null;
 
         MRMofTextureAnimationEntry entry = textureAnimation.getEntries().get(0);
-        GameImage gameImage = getGameInstance().getMainArchive().getImageByTextureId(entry.getGlobalImageId());
+        VloImage gameImage = getGameInstance().getMainArchive().getImageByTextureId(entry.getGlobalImageId());
         return gameImage != null ? FXUtils.toFXImage(gameImage.toBufferedImage(), true) : null;
     }
 

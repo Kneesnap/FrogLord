@@ -1,10 +1,10 @@
 package net.highwayfrogs.editor.file.map.view;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.system.math.Vector2f;
 import net.highwayfrogs.editor.utils.ColorUtils;
+import net.highwayfrogs.editor.utils.image.ImageUtils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -48,7 +48,7 @@ public class RawColorTextureSource implements ITextureSource {
     @Override
     public BufferedImage makeImage() {
         BufferedImage image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-        int[] writeBuffer = ImageWorkHorse.getPixelIntegerArray(image);
+        int[] writeBuffer = ImageUtils.getWritablePixelIntegerArray(image);
         Arrays.fill(writeBuffer, this.argbColor);
 
         return image;

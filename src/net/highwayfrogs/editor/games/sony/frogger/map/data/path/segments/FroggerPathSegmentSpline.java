@@ -4,7 +4,6 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.ImageView;
 import net.highwayfrogs.editor.file.standard.IVector;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathResult;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathSegmentType;
@@ -16,6 +15,7 @@ import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.image.ImageUtils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -276,7 +276,7 @@ public class FroggerPathSegmentSpline extends FroggerPathSegment {
         graphics.dispose();
 
         int smoothTIndex = this.smoothT.length - 1;
-        int[] pixelArray = ImageWorkHorse.getPixelIntegerArray(image);
+        int[] pixelArray = ImageUtils.getWritablePixelIntegerArray(image);
         for (int i = 0; i < getLength(); i++) {
             boolean isSmoothTSwitch = false;
             if (smoothTIndex > 0 && (i << 5) > (this.smoothT[smoothTIndex - 1] >> MRSplineMatrix.SPLINE_WORLD_SHIFT)) {

@@ -16,10 +16,10 @@ import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
 import lombok.AllArgsConstructor;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
-import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.utils.FXUtils;
 
 import java.util.ArrayList;
@@ -73,7 +73,7 @@ public class SelectionMenu {
                 if (levelInfo.getTheme() != theme)
                     continue;
 
-                GameImage image = levelInfo.getWorldLevelStackColoredImage();
+                VloImage image = levelInfo.getWorldLevelStackColoredImage();
                 return image != null ? image.toFXImage() : null; // There are many reasons why we might not find the image, including there might not be one, or this is the PS1 version which has these images in wads.
             }
 

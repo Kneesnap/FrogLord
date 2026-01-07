@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.games.sony.shared.map;
 
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 
 /**
  * Represents a level table entry for a late Sony Cambridge game.
@@ -16,5 +16,5 @@ public interface ISCLevelTableEntry {
     /**
      * Gets the VLO file containing textures loaded for the level.
      */
-    VLOArchive getVloFile();
+    VloFile getVloFile();
 }

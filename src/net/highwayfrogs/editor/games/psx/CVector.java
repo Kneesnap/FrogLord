@@ -13,7 +13,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.psx.shading.PSXTextureShader;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
@@ -23,6 +22,7 @@ import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.image.ImageUtils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -289,7 +289,7 @@ public class CVector implements IBinarySerializable {
         Label blueLabel = labelFont("Blue (" + getBlueShort() + ")", useFont);
 
         // Downscale the texture, so it's a lot faster to update the color.
-        final BufferedImage scaledTexture = texture != null ? ImageWorkHorse.resizeImage(texture, 45, 45, false) : null;
+        final BufferedImage scaledTexture = texture != null ? ImageUtils.resizeImage(texture, 45, 45, false) : null;
 
         Slider redSlider = new Slider(0D, 255D, getRedShort());
         redSlider.setBlockIncrement(1);
@@ -357,7 +357,7 @@ public class CVector implements IBinarySerializable {
                 // Flat texture shading always use modulation unless we're mimicking gouraud shading where all the colors are the same.
                 newImage = PSXTextureShader.makeTexturedFlatShadedImage(scaledTexture, this, true);
             } else {
-                newImage = PSXTextureShader.makeFlatShadedImage(45, 45, this);
+                newImage = PSXTextureShader.makeFlatShadedImage(45, 45, this, false);
             }
             preview.setImage(FXUtils.toFXImage(newImage, false));
         };

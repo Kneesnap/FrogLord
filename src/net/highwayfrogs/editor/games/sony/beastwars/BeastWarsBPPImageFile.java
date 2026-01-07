@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.games.sony.beastwars;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.NonNull;
-import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
@@ -15,6 +14,8 @@ import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.image.ImageUtils;
+import net.highwayfrogs.editor.utils.image.quantization.octree.OctreeQuantizer;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
@@ -123,8 +124,9 @@ public class BeastWarsBPPImageFile extends SCGameFile<BeastWarsInstance> {
         if (newImage.getWidth() == 0 || newImage.getHeight() == 0)
             throw new IllegalArgumentException("Cannot accept newImage with a width/height of zero!");
 
-        BufferedImage indexedImage = ImageWorkHorse.tryConvertTo8BitIndexedBufferedImage(newImage);
-        if (indexedImage == null)
+        newImage = OctreeQuantizer.quantizeImage(newImage, 256); // Quantize down to 256 colors.
+        BufferedImage indexedImage = ImageUtils.tryConvertTo8BitIndexedBufferedImage(newImage);
+        if (indexedImage == null) // This should not happen after quantization occurs.
             throw new IllegalArgumentException("Could not convert the newImage to an 8-bit indexed color mode! Reduce the number of unique colors in the image and try again!");
 
         this.image = newImage;

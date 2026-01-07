@@ -1,7 +1,6 @@
 package net.highwayfrogs.editor.games.sony.medievil2;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
@@ -9,6 +8,7 @@ import net.highwayfrogs.editor.games.sony.medievil2.map.MediEvil2Map;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -38,7 +38,7 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
 
     // Cached data.
     private WADFile cachedWadFile;
-    private VLOArchive cachedVloFile;
+    private VloFile cachedVloFile;
     private PSXTIMFile cachedTimFile;
 
     private static final int SIZE_IN_BYTES = 0x6C;
@@ -149,7 +149,7 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
     /**
      * Gets the .VLO file associated with this entry, if it exists.
      */
-    public VLOArchive getVloFile() {
+    public VloFile getVloFile() {
         if (this.cachedVloFile != null && this.cachedVloFile.getFileResourceId() == this.vloResourceId)
             return this.cachedVloFile;
 
@@ -191,7 +191,7 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
 
         // Cached data.
         private MediEvil2Map cachedMapFile;
-        private VLOArchive cachedVloFile;
+        private VloFile cachedVloFile;
 
         private static final int SIZE_IN_BYTES = 0x44; // (68)
 
@@ -231,7 +231,7 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
         }
 
         @Override
-        public VLOArchive getVloFile() {
+        public VloFile getVloFile() {
             if (this.cachedVloFile != null && this.cachedVloFile.getFileResourceId() == this.vloResourceId)
                 return this.cachedVloFile;
 

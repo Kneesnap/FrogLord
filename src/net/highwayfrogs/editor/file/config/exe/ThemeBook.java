@@ -5,11 +5,11 @@ import lombok.Setter;
 import net.highwayfrogs.editor.file.config.exe.general.FormEntry;
 import net.highwayfrogs.editor.file.config.exe.pc.PCThemeBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXThemeBook;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -65,7 +65,7 @@ public abstract class ThemeBook extends ExeStruct {
      * @param file The map file to get the vlo from.
      * @return vloArchive
      */
-    public VLOArchive getVLO(FroggerMapFile file) {
+    public VloFile getVLO(FroggerMapFile file) {
         return getVLO(file != null && file.isMultiplayer(), file != null && file.isLowPolyMode());
     }
 
@@ -75,7 +75,7 @@ public abstract class ThemeBook extends ExeStruct {
      * @param isLowPolyMode whether the VLO used for low-poly mode is returned
      * @return vloArchive
      */
-    public abstract VLOArchive getVLO(boolean isMultiplayer, boolean isLowPolyMode);
+    public abstract VloFile getVLO(boolean isMultiplayer, boolean isLowPolyMode);
 
     /**
      * Get the wad of this book.
@@ -127,7 +127,7 @@ public abstract class ThemeBook extends ExeStruct {
      * Perform some logic on all vlos.
      * @param handler The logic to perform.
      */
-    public void forEachVLO(Consumer<VLOArchive> handler) {
+    public void forEachVLO(Consumer<VloFile> handler) {
         execute(pc -> {
             if (pc.getHighVloId() != 0)
                 handler.accept(getGameInstance().getGameFile(pc.getHighVloId()));

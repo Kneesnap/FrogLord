@@ -22,8 +22,7 @@ import net.highwayfrogs.editor.file.config.exe.pc.PCThemeBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXMapBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXThemeBook;
 import net.highwayfrogs.editor.file.config.script.FroggerScript;
-import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.games.psx.image.PsxVramScreenSize;
 import net.highwayfrogs.editor.games.sony.*;
 import net.highwayfrogs.editor.games.sony.frogger.data.demo.FroggerDemoTable;
 import net.highwayfrogs.editor.games.sony.frogger.data.demo.FroggerDemoTableEntry;
@@ -49,6 +48,8 @@ import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewCom
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.LazySCGameFileListGroup;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
 import net.highwayfrogs.editor.games.sony.shared.utils.SCAnalysisUtils.SCTextureUsage;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
 import net.highwayfrogs.editor.utils.DataUtils;
@@ -133,13 +134,13 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
     }
 
     @Override
-    protected VLOArchive resolveMainVlo(MRModel model) {
+    protected VloFile resolveMainVlo(MRModel model) {
         WADFile wadFile = model.getParentWadFile();
         if (wadFile != null) {
             FroggerMapTheme theme = FroggerUtils.getFroggerMapTheme(wadFile);
             ThemeBook themeBook = getThemeBook(theme);
             if (themeBook != null) {
-                VLOArchive themeVlo = themeBook.getVLO(FroggerUtils.isMultiplayerFile(wadFile, theme), FroggerUtils.isLowPolyMode(wadFile));
+                VloFile themeVlo = themeBook.getVLO(FroggerUtils.isMultiplayerFile(wadFile, theme), FroggerUtils.isLowPolyMode(wadFile));
                 if (themeVlo != null)
                     return themeVlo;
             }
@@ -153,7 +154,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
                 searchFileName = "OPT_VRAM.VLO";
             }
 
-            VLOArchive foundVlo = getMainArchive().getFileByName(searchFileName);
+            VloFile foundVlo = getMainArchive().getFileByName(searchFileName);
             if (foundVlo != null)
                 return foundVlo;
         }
@@ -236,6 +237,13 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
     }
 
     @Override
+    protected void setupFrameBuffers() {
+        // Tested on many different versions, this seems consistent.
+        this.primaryFrameBuffer = new PsxVramScreenSize(0, 0, 368, getDefaultFrameBufferHeight());
+        this.secondaryFrameBuffer = this.primaryFrameBuffer.cloneBelow();
+    }
+
+    @Override
     protected void setupScriptEngine(NoodleScriptEngine engine) {
         super.setupScriptEngine(engine);
         engine.addWrapperTemplates(FroggerGameInstance.class, FroggerConfig.class, FroggerTextureRemap.class, FroggerMapFile.class,
@@ -278,7 +286,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
 
             for (int j = 0; j < pickupData.getFrames().size(); j++) {
                 PickupAnimationFrame pickupFrame = pickupData.getFrames().get(j);
-                GameImage image = pickupFrame.getImage();
+                VloImage image = pickupFrame.getImage();
                 if (image != null)
                     textures.add(new SCTextureUsage(this, image.getTextureId(), "PickupData"));
             }
@@ -290,7 +298,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         return textures;
     }
 
-    private void tryAddTexture(Set<SCTextureUsage> textures, GameImage image, String name) {
+    private void tryAddTexture(Set<SCTextureUsage> textures, VloImage image, String name) {
         if (image == null)
             return;
 

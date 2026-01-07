@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.sony.medievil;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.SCGameRegion;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
@@ -10,6 +9,7 @@ import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -92,7 +92,7 @@ public class MediEvilLevelTableEntry extends SCGameData<MediEvilGameInstance> {
     /**
      * Gets the .VLO file used by this level.
      */
-    public VLOArchive getVloFile() {
+    public VloFile getVloFile() {
         return this.vloResourceId >= 0 ? getGameInstance().getGameFile(this.vloResourceId) : null;
     }
 

@@ -20,6 +20,7 @@ import net.highwayfrogs.editor.utils.data.reader.ArraySource;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.image.ImageUtils;
 
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
@@ -49,10 +50,6 @@ public class PSXTIMFile extends SCSharedGameFile implements IExtraUISupplier {
     private static final byte[] SIGNATURE_BYTES = {0x10, 0x00, 0x00, 0x00};
     private static final int HEADER_SIZE = 12; // 12 bytes.
     private static final int MAX_IMAGE_DIMENSION = 1024;
-    private static final int TEXTURE_PAGE_BPP4_WIDTH = 256;
-    private static final int TEXTURE_PAGE_BPP8_WIDTH = 128;
-    private static final int TEXTURE_PAGE_BPP16_WIDTH = 64;
-    private static final int TEXTURE_PAGE_HEIGHT = 256;
 
     private static final int FLAG_HAS_CLUT = Constants.BIT_FLAG_3; // 0b1000
 
@@ -74,7 +71,7 @@ public class PSXTIMFile extends SCSharedGameFile implements IExtraUISupplier {
             this.clutY = reader.readUnsignedShortAsInt();
             int clutWidth = reader.readUnsignedShortAsInt();
             int clutHeight = reader.readUnsignedShortAsInt();
-            if (clutSize < HEADER_SIZE + (clutHeight * clutWidth) * PSXClutColor.BYTE_SIZE) // 2 bytes per pixel.
+            if (clutSize < HEADER_SIZE + (clutHeight * clutWidth) * PSXClutColor.SIZE_IN_BYTES) // 2 bytes per pixel.
                 throw new RuntimeException("Invalid CLUT Size Read [Size: " + clutSize + ", Width: " + clutWidth + ", Height: " + clutHeight + "]");
 
             // Noted in PSXPrev/TIMParser/ReadTim and jpsxdec/CreateTim that some files can claim an unpaletted p-mode but still use a palette.
@@ -124,7 +121,7 @@ public class PSXTIMFile extends SCSharedGameFile implements IExtraUISupplier {
             return null; // Not a clut format
 
         // HMD: Support models with invalid image data, but valid model data.
-        int clutDataSize = (clutHeight * clutWidth * PSXClutColor.BYTE_SIZE);
+        int clutDataSize = (clutHeight * clutWidth * PSXClutColor.SIZE_IN_BYTES);
         if (clutDataSize > reader.getRemaining())
             return null;
 
@@ -141,7 +138,7 @@ public class PSXTIMFile extends SCSharedGameFile implements IExtraUISupplier {
             throw new RuntimeException("Palette size mismatch! Read Width: " + clutWidth + ", Expected: " + bppType.getPaletteSize() + ", " + bppType);
 
         // HMD: Support models with invalid image data, but valid model data.
-        int clutDataSize = (clutWidth * PSXClutColor.BYTE_SIZE);
+        int clutDataSize = (clutWidth * PSXClutColor.SIZE_IN_BYTES);
         if (clutDataSize > reader.getRemaining())
             return null;
 
@@ -216,8 +213,8 @@ public class PSXTIMFile extends SCSharedGameFile implements IExtraUISupplier {
                 int first = (value & 0x0F);
                 int second = value >> 4;
 
-                image.setRGB(x++, y, palette[first].toFullARGB(enableTransparency));
-                image.setRGB(x, y, palette[second].toFullARGB(enableTransparency));
+                image.setRGB(x++, y, palette[first].toARGB(enableTransparency, null));
+                image.setRGB(x, y, palette[second].toARGB(enableTransparency, null));
             }
         }
     }
@@ -225,13 +222,13 @@ public class PSXTIMFile extends SCSharedGameFile implements IExtraUISupplier {
     private static void read8BppTexture(DataReader reader, BufferedImage image, boolean enableTransparency, PSXClutColor[] palette) {
         for (int y = 0; y < image.getHeight(); y++)
             for (int x = 0; x < image.getWidth(); x++)
-                image.setRGB(x, y, palette[reader.readUnsignedByteAsShort()].toFullARGB(enableTransparency));
+                image.setRGB(x, y, palette[reader.readUnsignedByteAsShort()].toARGB(enableTransparency, null));
     }
 
     private static void read16BppTexture(DataReader reader, BufferedImage image, boolean enableTransparency) {
-        for (int y = 0; y < image.getHeight(); y++)
-            for (int x = 0; x < image.getWidth(); x++)
-                image.setRGB(x, y, PSXClutColor.readARGBColorFromShort(reader.readShort(), enableTransparency));
+        int[] pixelArray = ImageUtils.getWritablePixelIntegerArray(image);
+        for (int i = 0; i < pixelArray.length; i++)
+            pixelArray[i] = PSXClutColor.readARGBColorFromShort(reader.readShort(), enableTransparency, null);
     }
 
     private static void read24BppTexture(DataReader reader, BufferedImage image) {

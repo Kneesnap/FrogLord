@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.games.sony.frogger.utils;
 import javafx.scene.control.Alert.AlertType;
 import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
-import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameType;
@@ -19,6 +18,7 @@ import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.image.ImageUtils;
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
@@ -275,7 +275,7 @@ public class FroggerUtils {
             }
 
             // Snap pixel values to the palette.
-            int[] rawPixelData = ImageWorkHorse.getPixelIntegerArray(image);
+            int[] rawPixelData = ImageUtils.getWritablePixelIntegerArray(image);
             float averageMultiple = 1 / 3F;
             for (int i = 0; i < rawPixelData.length; i++) {
                 int rgb = rawPixelData[i];
@@ -288,7 +288,7 @@ public class FroggerUtils {
             }
         } else {
             // Ensure transparency.
-            int[] rawPixelData = ImageWorkHorse.getPixelIntegerArray(image);
+            int[] rawPixelData = ImageUtils.getWritablePixelIntegerArray(image);
             for (int i = 0; i < rawPixelData.length; i++) {
                 if ((rawPixelData[i] & 0xFFFFFF) == 0) {
                     rawPixelData[i] &= 0x00FFFFFF;

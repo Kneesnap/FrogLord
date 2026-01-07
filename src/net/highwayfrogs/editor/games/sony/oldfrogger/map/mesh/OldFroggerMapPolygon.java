@@ -3,7 +3,6 @@ package net.highwayfrogs.editor.games.sony.oldfrogger.map.mesh;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
@@ -14,6 +13,7 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.config.OldFroggerLevelTable
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -88,7 +88,7 @@ public class OldFroggerMapPolygon extends SCGameData<OldFroggerGameInstance> {
      * @param levelTableEntry The level table entry to lookup data from.
      * @return texture
      */
-    public GameImage getTexture(OldFroggerLevelTableEntry levelTableEntry) {
+    public VloImage getTexture(OldFroggerLevelTableEntry levelTableEntry) {
         if (!this.polygonType.isTextured() || this.textureId < 0)
             return null; // Untextured or invalid texture ID.
 
@@ -96,7 +96,7 @@ public class OldFroggerMapPolygon extends SCGameData<OldFroggerGameInstance> {
             return null; // Don't have the ability to look anything up.
 
         TextureRemapArray textureRemap = levelTableEntry.getTextureRemap();
-        return textureRemap != null ? textureRemap.resolveTexture((int) this.textureId, levelTableEntry.getMainVLOArchive()) : null;
+        return textureRemap != null ? textureRemap.resolveTexture((int) this.textureId, levelTableEntry.getMainVloFile()) : null;
     }
 
     /**
@@ -180,8 +180,8 @@ public class OldFroggerMapPolygon extends SCGameData<OldFroggerGameInstance> {
                 this.colors[i].fromRGB(0);
 
         // Load texture.
-        if (shadeTexture.getTextureSource() instanceof GameImage) {
-            GameImage gameImage = (GameImage) shadeTexture.getTextureSource();
+        if (shadeTexture.getTextureSource() instanceof VloImage) {
+            VloImage gameImage = (VloImage) shadeTexture.getTextureSource();
             OldFroggerLevelTableEntry levelTableEntry = mapFile.getLevelTableEntry();
             int remapIndex = levelTableEntry.getTextureRemap().getRemapIndex(gameImage.getTextureId());
             if (remapIndex >= 0)

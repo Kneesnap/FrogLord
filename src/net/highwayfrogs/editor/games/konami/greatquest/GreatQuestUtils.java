@@ -6,7 +6,6 @@ import javafx.scene.transform.Transform;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.generic.data.IGameObject;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestHash.kcHashedResource;
 import net.highwayfrogs.editor.games.konami.greatquest.chunks.GreatQuestChunkedFile;
@@ -20,6 +19,7 @@ import net.highwayfrogs.editor.games.konami.greatquest.model.kcModelWrapper;
 import net.highwayfrogs.editor.utils.*;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.image.ImageUtils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.StringNode;
 
@@ -769,7 +769,7 @@ public class GreatQuestUtils {
 
                 // Create result.
                 if (result == null)
-                    result = ImageWorkHorse.copyImage(source);
+                    result = ImageUtils.copyImage(source);
 
                 // Calculate color.
                 int fixedColor;
@@ -818,7 +818,7 @@ public class GreatQuestUtils {
             return source;
 
         BufferedImage result = null;
-        int[] readBuffer = ImageWorkHorse.getPixelIntegerArray(source);
+        int[] readBuffer = ImageUtils.getReadOnlyPixelIntegerArray(source);
         int[] writeBuffer = null;
 
         for (int i = 0; i < readBuffer.length; i++) {
@@ -829,8 +829,8 @@ public class GreatQuestUtils {
 
             // Create result.
             if (result == null) {
-                result = ImageWorkHorse.copyImage(source);
-                writeBuffer = ImageWorkHorse.getPixelIntegerArray(result);
+                result = ImageUtils.copyImage(source);
+                writeBuffer = ImageUtils.getWritablePixelIntegerArray(result);
             }
 
             writeBuffer[i] = argbColor | 0xFF000000;

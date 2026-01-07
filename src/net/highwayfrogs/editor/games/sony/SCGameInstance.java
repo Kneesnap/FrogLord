@@ -2,9 +2,8 @@ package net.highwayfrogs.editor.games.sony;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.games.psx.image.PsxVramScreenSize;
 import net.highwayfrogs.editor.games.shared.basic.GameBuildInfo;
 import net.highwayfrogs.editor.games.sony.SCGameConfig.SCImageList;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
@@ -23,6 +22,8 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.overlay.SCOverlayTable;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCMainMenuUIController;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
 import net.highwayfrogs.editor.system.Config;
@@ -55,6 +56,9 @@ public abstract class SCGameInstance extends GameInstance {
     @Getter private File mwdFile;
     @Getter private File exeFile;
     @Getter private long ramOffset;
+    @Getter private boolean previouslySavedByFrogLord;
+    @Getter protected PsxVramScreenSize primaryFrameBuffer;
+    @Getter protected PsxVramScreenSize secondaryFrameBuffer;
 
     // Instance data read from game files:
     private boolean loadingAllRemaps;
@@ -127,6 +131,9 @@ public abstract class SCGameInstance extends GameInstance {
         readExecutableData(exeReader, executableConfig);
 
         this.mainArchive = this.readMWD(progressBar);
+        if (isPSX())
+            setupFrameBuffers();
+
         resolveModelVloFiles();
     }
 
@@ -149,6 +156,7 @@ public abstract class SCGameInstance extends GameInstance {
      */
     protected void readExecutableData(DataReader reader, Config executableConfig) {
         this.archiveIndex = this.readMWI();
+        this.previouslySavedByFrogLord = (executableConfig != null);
     }
 
     @Override
@@ -180,7 +188,7 @@ public abstract class SCGameInstance extends GameInstance {
         super.setupScriptEngine(engine);
         engine.addWrapperTemplates(SCGameData.class, SCGameFile.class, SCGameInstance.class, SCGameObject.class, SCGameConfig.class);
         engine.addWrapperTemplates(SCMath.class, SCUtils.class, MWDFile.class, MWIResourceEntry.class, TextureRemapArray.class, SCChunkedFile.class, SCByteTextureUV.class, LinkedTextureRemap.class);
-        engine.addWrapperTemplates(VLOArchive.class, GameImage.class, MRModel.class, MRStaticMof.class, MRAnimatedMof.class, WADFile.class, WADEntry.class,
+        engine.addWrapperTemplates(VloFile.class, VloImage.class, MRModel.class, MRStaticMof.class, MRAnimatedMof.class, WADFile.class, WADEntry.class,
                 MRModelUtils.class, SCImageList.class);
     }
 
@@ -244,7 +252,7 @@ public abstract class SCGameInstance extends GameInstance {
             if (model.getVloFile() != null)
                 continue;
 
-            VLOArchive mainVlo = resolveMainVlo(model);
+            VloFile mainVlo = resolveMainVlo(model);
             if (mainVlo != null) {
                 model.setVloFile(mainVlo);
             } else {
@@ -261,7 +269,7 @@ public abstract class SCGameInstance extends GameInstance {
      * @param model the model to resolve
      * @return modelVlo
      */
-    protected VLOArchive resolveMainVlo(MRModel model) {
+    protected VloFile resolveMainVlo(MRModel model) {
         // Attempt to resolve a VLO with the same name as the .WAD file which holds the file.
         WADFile wadFile = model.getParentWadFile();
         if (wadFile != null) {
@@ -470,6 +478,19 @@ public abstract class SCGameInstance extends GameInstance {
     public abstract void setupFileGroups(SCGameFileGroupedListViewComponent<? extends SCGameInstance> fileListView);
 
     /**
+     * Called to configure the framebuffer definitions.
+     */
+    protected abstract void setupFrameBuffers();
+
+    /**
+     * Gets the default frame buffer height
+     * This behavior seems consistent across games, so it exists as a method.
+     */
+    protected int getDefaultFrameBufferHeight() {
+        return (getVersionConfig().getRegion() == SCGameRegion.EUROPE) ? 256 : 240; // Frogger gamesys.H
+    }
+
+    /**
      * Get the MWIResourceEntry for a given resource id.
      * @param resourceId The resource id.
      * @return fileEntry
@@ -567,7 +588,7 @@ public abstract class SCGameInstance extends GameInstance {
      * @param pointer The pointer get the image for.
      * @return matchingImage - May be null.
      */
-    public GameImage getImageFromPointer(long pointer) {
+    public VloImage getImageFromPointer(long pointer) {
         if (this.mainArchive == null)
             throw new RuntimeException("The MWD was not loaded, so we cannot yet search.");
 
@@ -715,8 +736,8 @@ public abstract class SCGameInstance extends GameInstance {
             return;
 
         short highestTextureId = -1;
-        for (VLOArchive vloArchive : mwdFile.getAllFiles(VLOArchive.class))
-            for (GameImage image : vloArchive.getImages())
+        for (VloFile vloArchive : mwdFile.getAllFiles(VloFile.class))
+            for (VloImage image : vloArchive.getImages())
                 if (image.getTextureId() > highestTextureId)
                     highestTextureId = image.getTextureId();
 

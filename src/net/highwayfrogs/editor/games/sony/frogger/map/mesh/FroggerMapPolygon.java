@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadedTextureManager;
@@ -15,6 +14,7 @@ import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapAnimation;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.system.math.Vector3f;
 import net.highwayfrogs.editor.utils.DataUtils;
@@ -256,7 +256,7 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
     /**
      * Gets the active texture on this polygon.
      */
-    public GameImage getTexture() {
+    public VloImage getTexture() {
         if (!this.polygonType.isTextured() || this.textureId < 0)
             return null;
 
@@ -284,7 +284,7 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
      * Test if the image is semi-transparent.
      */
     public boolean isSemiTransparent() {
-        // The texture transparency flag is not used here.
+        // The VLO texture transparency flag is not used here.
         return testFlag(FLAG_SEMI_TRANSPARENT);
     }
 
@@ -292,8 +292,8 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
      * Tests if this polygon is fully opaque, all pixels having maximum alpha/opacity.
      */
     public boolean isFullyOpaque() {
-        GameImage image = getTexture();
-        if (image != null && image.testFlag(GameImage.FLAG_BLACK_IS_TRANSPARENT))
+        VloImage image = getTexture();
+        if (image != null && image.testFlag(VloImage.FLAG_BLACK_IS_TRANSPARENT))
             return false;
 
         return !isSemiTransparent();
@@ -310,7 +310,7 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
             return 0F;
 
         int xOffset = animation.getOffsetX(frame);
-        GameImage image = animation.getTextureAtFrame(frame);
+        VloImage image = animation.getTextureAtFrame(frame);
         if (image == null)
             image = getTexture();
         if (image == null)
@@ -318,7 +318,7 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
 
         // The UV offset is counted in pixels, not uv units.
         // So we convert them to uv units.
-        return ((float) xOffset / image.getIngameWidth());
+        return ((float) xOffset / image.getUnpaddedWidth());
     }
 
     /**
@@ -332,7 +332,7 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
             return 0F;
 
         int yOffset = animation.getOffsetY(frame);
-        GameImage image = animation.getTextureAtFrame(frame);
+        VloImage image = animation.getTextureAtFrame(frame);
         if (image == null)
             image = getTexture();
         if (image == null)
@@ -340,7 +340,7 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
 
         // The UV offset is counted in pixels, not uv units.
         // So we convert them to uv units.
-        return ((float) yOffset / image.getIngameHeight());
+        return ((float) yOffset / image.getUnpaddedHeight());
     }
 
     /**
@@ -361,7 +361,7 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
         // Determine the texture.
         ITextureSource textureSource = getTexture();
         if (animation != null) {
-            GameImage animatedImage = animation.getTextureAtFrame(frame);
+            VloImage animatedImage = animation.getTextureAtFrame(frame);
             if (animatedImage != null)
                 textureSource = animatedImage;
         }
@@ -426,8 +426,8 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
         }
 
         // Load texture.
-        if (shadeTexture.getTextureSource() instanceof GameImage) {
-            GameImage gameImage = (GameImage) shadeTexture.getTextureSource();
+        if (shadeTexture.getTextureSource() instanceof VloImage) {
+            VloImage gameImage = (VloImage) shadeTexture.getTextureSource();
             TextureRemapArray textureRemap = this.mapFile.getTextureRemap();
             if (textureRemap != null) {
                 int remapIndex = textureRemap.getRemapIndex(gameImage.getTextureId());

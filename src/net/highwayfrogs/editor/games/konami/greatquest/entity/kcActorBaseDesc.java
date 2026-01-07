@@ -61,7 +61,7 @@ public class kcActorBaseDesc extends kcEntity3DDesc implements ILateResourceReso
         this.modelDescRef = new GreatQuestHash<>(); // kcCActorBase::__ct, kcCActorBase::Init()
         this.hierarchyRef = new GreatQuestHash<>(); // kcCActorBase::Init()
         this.animSetRef = new GreatQuestHash<>(); // kcCActorBase::__ct
-        this.proxyDescRef = new GreatQuestHash<>(); // kcCActorBase::Init()
+        this.proxyDescRef = new GreatQuestHash<>(); // kcCActorBase::Init() TODO: This being null CAN cause crashes, but not always? The circumstances of this crash are unclear.
         this.animationSequencesRef = new GreatQuestHash<>(); // kcCActorBase::__ct
         GreatQuestUtils.applySelfNameSuffixAndToFutureNameChanges(resource, NAME_SUFFIX);
         applyNameToDescriptions();

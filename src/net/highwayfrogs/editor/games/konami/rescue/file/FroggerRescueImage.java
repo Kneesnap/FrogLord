@@ -4,7 +4,6 @@ import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.games.konami.hudson.HudsonGameFile;
 import net.highwayfrogs.editor.games.konami.rescue.file.ui.FroggerRescueImageUIController;
@@ -19,6 +18,7 @@ import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.image.ImageUtils;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.IndexColorModel;
@@ -466,13 +466,13 @@ public class FroggerRescueImage extends HudsonGameFile {
             switch (format) {
                 case ARGB8888:
                     // ARGB8888 -> ABGR8888
-                    int[] rawPixelBufferArgb = ImageWorkHorse.getPixelIntegerArray(newImage);
+                    int[] rawPixelBufferArgb = ImageUtils.getWritablePixelIntegerArray(newImage);
                     for (; index < this.imageData.length; index += Constants.INTEGER_SIZE)
                         rawPixelBufferArgb[index / Constants.INTEGER_SIZE] = ColorUtils.swapRedBlue(DataUtils.readIntFromBytes(this.imageData, index)); // Faster version of this.image.setRGB(x, height - y - 1,  ...)
                     break;
                 case ABGR1555:
                     // ABGR1555 -> ARGB1555.
-                    short[] rawPixelBufferRgb = ImageWorkHorse.getPixelShortArray(newImage);
+                    short[] rawPixelBufferRgb = ImageUtils.getPixelShortArray(newImage);
                     for (int y = 0; y < this.height; y++)
                         for (int x = 0; x < this.width; x++, index += Constants.SHORT_SIZE)
                             rawPixelBufferRgb[(y * this.width) + x] = swapShort(getShort(this.imageData, index)); // Faster version of this.image.setRGB(x, height - y - 1, ...)

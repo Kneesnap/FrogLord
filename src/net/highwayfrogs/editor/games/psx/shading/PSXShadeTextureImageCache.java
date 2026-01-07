@@ -3,9 +3,10 @@ package net.highwayfrogs.editor.games.psx.shading;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
+import net.highwayfrogs.editor.utils.image.ImageUtils;
 
 import java.awt.image.BufferedImage;
 import java.lang.ref.WeakReference;
@@ -34,6 +35,9 @@ public class PSXShadeTextureImageCache {
     private final Map<ITextureSource, PSXShadeTextureSourceCacheEntry> unscaledEntriesByTextureSource = new ConcurrentHashMap<>(); // Consider switching this to an IdentityHashMap with a read-write lock, OR Collections.synchronizedMap(IdentityHashMap), because there's a concern about ITextureSources implementing their own equals/hashCode and breaking compatibility.
     private final List<PSXShadedImageCacheEntry> entryExpirationQueue = new ArrayList<>();
     private final BinarySearchIntListHolder<BinarySearchIntListHolder<BinarySearchIntList<PSXShadedImageCacheEntry>>> cachedTargetImages = new BinarySearchIntListHolder<>(null, -1);
+
+    private static final int TEXTURE_TRANSPARENCY_ENABLED = VloImage.IMAGE_3D_EXPORT_SETTINGS;
+    private static final int TEXTURE_TRANSPARENCY_DISABLED = VloImage.DEFAULT_IMAGE_EXPORT_SETTINGS;
 
     /**
      * Removes expired entries from existence.
@@ -195,14 +199,23 @@ public class PSXShadeTextureImageCache {
      */
     public static BufferedImage getTextureSourceImage(PSXShadeTextureDefinition shadeTextureDefinition) {
         ITextureSource textureSource = shadeTextureDefinition.getTextureSource();
-        BufferedImage mainImage = textureSource != null ? textureSource.makeImage() : null;
+
+        BufferedImage mainImage;
+        if (textureSource instanceof VloImage) {
+            VloImage vloSource = (VloImage) textureSource;
+            mainImage = vloSource.toBufferedImage(shadeTextureDefinition.isSemiTransparentMode() ? TEXTURE_TRANSPARENCY_ENABLED : TEXTURE_TRANSPARENCY_DISABLED);
+        } else if (textureSource != null) {
+            mainImage = textureSource.makeImage();
+        } else {
+            mainImage = null;
+        }
 
         // Make it larger to ensure the shading is large enough to appear correctly.
         if (mainImage != null) {
             int textureScaleX = shadeTextureDefinition.getTextureScaleX();
             int textureScaleY = shadeTextureDefinition.getTextureScaleY();
             if (textureScaleX != 1 || textureScaleY != 1)
-                mainImage = ImageWorkHorse.resizeImage(mainImage, mainImage.getWidth() * textureScaleX, mainImage.getHeight() * textureScaleY, true);
+                mainImage = ImageUtils.resizeImage(mainImage, mainImage.getWidth() * textureScaleX, mainImage.getHeight() * textureScaleY, true);
         }
 
         return mainImage;
@@ -278,7 +291,7 @@ public class PSXShadeTextureImageCache {
             try {
                 this.imageListLock.writeLock().lock();
                 this.mainImageLastUpdatedFrom = new WeakReference<>(newImage);
-                this.mainImage = ImageWorkHorse.copyImage(newImage, this.mainImage);
+                this.mainImage = ImageUtils.copyImage(newImage, this.mainImage);
             } finally {
                 this.imageListLock.writeLock().unlock();
             }

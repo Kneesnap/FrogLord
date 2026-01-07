@@ -3,12 +3,12 @@ package net.highwayfrogs.editor.games.sony.shared.utils;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.standard.MRTexture;
-import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.games.sony.SCGameConfig.SCBssSymbol;
 import net.highwayfrogs.editor.games.sony.SCGameConfig.SCBssSymbolType;
 import net.highwayfrogs.editor.games.sony.SCGameConfig.SCImageList;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCUtils;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.extra.hash.FroggerHashUtil;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.StringUtils;
@@ -30,12 +30,12 @@ public class SCImageTableGenerator {
         if (symbolMap == null)
             symbolMap = Collections.emptyMap();
 
-        List<GameImage> bssOrderedImages = SCUtils.getImagesInBssOrder(instance);
+        List<VloImage> bssOrderedImages = SCUtils.getImagesInBssOrder(instance);
 
         // Determine the longest name.
         int maxNameLength = 0;
         for (int i = 0; i < bssOrderedImages.size(); i++) {
-            GameImage image = bssOrderedImages.get(i);
+            VloImage image = bssOrderedImages.get(i);
             String imageName = image.getOriginalName();
 
             int tempNameLength;
@@ -70,7 +70,7 @@ public class SCImageTableGenerator {
         int targetCommentPosition = SCUtils.C_IMAGE_TYPE_PREFIX.length() + maxNameLength + 1;
         List<OutputSymbol> symbols = new ArrayList<>();
         for (int i = 0; i < bssOrderedImages.size(); i++) {
-            GameImage image = bssOrderedImages.get(i);
+            VloImage image = bssOrderedImages.get(i);
             long currAddress = instance.getBmpTexturePointers().get(image.getTextureId());
 
             if (i > 0 && (int) lastAddress != (int) currAddress) { // There's a gap.
@@ -217,14 +217,14 @@ public class SCImageTableGenerator {
     @Getter
     @AllArgsConstructor
     private static class OutputSymbol {
-        private final GameImage image;
+        private final VloImage image;
         private final SCBssSymbol symbol;
         private final String name;
         private final String textLine;
         private int hash; // the hash known for the symbol, if there is one.
 
         public boolean shouldIncreaseHash(SCGameInstance instance, OutputSymbol nextSymbol) {
-            GameImage nextImage = nextSymbol.getImage();
+            VloImage nextImage = nextSymbol.getImage();
             if (instance.isPSX()) {
                 return (this.symbol != null && (this.symbol.getType() == SCBssSymbolType.PSYQ || this.symbol.getType() == SCBssSymbolType.GAME_LIB))
                         || (nextSymbol.getSymbol() != null && nextSymbol.getSymbol().getType() == SCBssSymbolType.GAME);
@@ -255,7 +255,7 @@ public class SCImageTableGenerator {
         }
     }
 
-    private static int[] getHashesPerImage(SCGameInstance instance, List<GameImage> orderedImages) {
+    private static int[] getHashesPerImage(SCGameInstance instance, List<VloImage> orderedImages) {
         int maxTextureId = -1;
         for (int i = 0; i < orderedImages.size(); i++) {
             int textureId = orderedImages.get(i).getTextureId() & 0xFFFF;
@@ -265,12 +265,12 @@ public class SCImageTableGenerator {
 
         // Create results, and apply per-image.
         String lastName = null;
-        GameImage lastImage = null;
+        VloImage lastImage = null;
         int lastHash = -1;
         int[] results = new int[maxTextureId + 1];
         Arrays.fill(results, -1);
         for (int i = 0; i < orderedImages.size(); i++) {
-            GameImage image = orderedImages.get(i);
+            VloImage image = orderedImages.get(i);
             String originalName = image.getOriginalName();
             if (originalName == null)
                 continue;
@@ -304,7 +304,7 @@ public class SCImageTableGenerator {
         lastHash = -1;
         int lastIndex = -1;
         for (int i = 0; i < orderedImages.size(); i++) {
-            GameImage image = orderedImages.get(i);
+            VloImage image = orderedImages.get(i);
             String name = image.getOriginalName();
             int hash = results[image.getTextureId() & 0xFFFF];
             if (name == null || hash < 0)

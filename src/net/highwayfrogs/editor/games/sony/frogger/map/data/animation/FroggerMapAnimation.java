@@ -9,9 +9,6 @@ import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
-import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
@@ -19,6 +16,9 @@ import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapMesh;
 import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.baked.FroggerUIMapAnimationManager;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.utils.SCImageUtils;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.FXUtils;
@@ -245,7 +245,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
      * @param frame the frame to get the game image from
      * @return textureAtFrame, if there is one
      */
-    public GameImage getTextureAtFrame(int frame) {
+    public VloImage getTextureAtFrame(int frame) {
         if (frame < 0 || !this.type.hasTextureAnimation() || this.textureIds.isEmpty() || this.framesPerTexture <= 0)
             return null;
 
@@ -255,15 +255,15 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
         return getImageByLocalID(localTextureId);
     }
 
-    private GameImage getImageByLocalID(short localTextureId) {
+    private VloImage getImageByLocalID(short localTextureId) {
         TextureRemapArray remap = this.mapFile.getTextureRemap();
         Short remappedTextureId = remap != null ? remap.getRemappedTextureId(localTextureId) : null;
         if (remappedTextureId == null)
             return null;
 
         // Find image by the ID.
-        VLOArchive vlo = this.mapFile.getVloFile();
-        GameImage gameImage = vlo != null ? vlo.getImageByTextureId(remappedTextureId) : null;
+        VloFile vlo = this.mapFile.getVloFile();
+        VloImage gameImage = vlo != null ? vlo.getImageByTextureId(remappedTextureId) : null;
         if (gameImage == null) // If it wasn't found in the
             gameImage = getArchive().getImageByTextureId(remappedTextureId);
 
@@ -307,7 +307,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
             throw new IllegalArgumentException("Shading cannot be enabled when no polygon is provided, since the polygon is where the shading data is obtained from.");
 
         // Find the base image used to preview.
-        GameImage gameImage = null;
+        VloImage gameImage = null;
         if (this.type.hasTextureAnimation() && this.textureIds.size() > 0 && this.framesPerTexture > 0) {
             TextureRemapArray remap = this.mapFile.getTextureRemap();
 
@@ -318,7 +318,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
 
             // Find image by the ID.
             if (remappedTextureId != null) {
-                VLOArchive vlo = this.mapFile.getVloFile();
+                VloFile vlo = this.mapFile.getVloFile();
                 textureSource = gameImage = vlo != null ? vlo.getImageByTextureId(remappedTextureId) : null;
                 if (textureSource == null) // If it wasn't found in the
                     textureSource = gameImage = getArchive().getImageByTextureId(remappedTextureId);
@@ -379,7 +379,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
         if (shadingEnabled)
             resultImage = polygon.createPolygonShadeDefinition(null, true, null, -1).makeImage(resultImage, null);
 
-        return gameImage != null && resultImage != null ? ImageWorkHorse.trimEdges(gameImage, resultImage) : resultImage;
+        return gameImage != null && resultImage != null ? SCImageUtils.trimEdges(gameImage, resultImage) : resultImage;
     }
 
     /**
@@ -422,7 +422,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
         }
 
         // Find the base image used to preview.
-        VLOArchive vlo = this.mapFile.getVloFile();
+        VloFile vlo = this.mapFile.getVloFile();
         TextureRemapArray remap = this.mapFile.getTextureRemap();
 
         // Setup editor.
@@ -431,9 +431,9 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
             for (int i = 0; i < this.textureIds.size(); i++) {
                 final int tempIndex = i;
                 short textureId = this.textureIds.get(i);
-                GameImage image = getImageByLocalID(textureId);
+                VloImage image = getImageByLocalID(textureId);
 
-                Image scaledImage = FXUtils.toFXImage(image != null ? image.toBufferedImage(VLOArchive.ICON_EXPORT) : UnknownTextureSource.MAGENTA_INSTANCE.makeImage(), false);
+                Image scaledImage = FXUtils.toFXImage(image != null ? image.toBufferedImage(VloFile.ICON_EXPORT) : UnknownTextureSource.MAGENTA_INSTANCE.makeImage(), false);
                 ImageView view = editor.setupNode(new ImageView(scaledImage));
                 view.setFitWidth(20);
                 view.setFitHeight(20);
@@ -446,7 +446,7 @@ public class FroggerMapAnimation extends SCGameData<FroggerGameInstance> {
                     }
 
                     this.textureIds.set(tempIndex, (short) newIndex);
-                    view.setImage(FXUtils.toFXImage(newImage.toBufferedImage(VLOArchive.ICON_EXPORT), false)); // Update the texture displayed in the UI.
+                    view.setImage(FXUtils.toFXImage(newImage.toBufferedImage(VloFile.ICON_EXPORT), false)); // Update the texture displayed in the UI.
                     manager.updatePreviewImage(); // Update the animation preview.
                     if (tempIndex == 0) // Refresh the texture displayed in the animation list.
                         manager.refreshList();

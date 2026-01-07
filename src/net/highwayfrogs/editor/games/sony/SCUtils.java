@@ -2,9 +2,6 @@ package net.highwayfrogs.editor.games.sony;
 
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.FrogLordApplication;
-import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.psx.PSXBitstreamImage;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
@@ -29,10 +26,13 @@ import net.highwayfrogs.editor.games.sony.shared.sound.body.SCWindowsRetailSound
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCPlayStationMinimalSoundBankHeader;
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCPlayStationVabSoundBankHeader;
 import net.highwayfrogs.editor.games.sony.shared.sound.header.SCWindowsSoundBankHeader;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.texture.atlas.TextureAtlas;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.StringUtils;
+import net.highwayfrogs.editor.utils.image.ImageUtils;
 
 import java.io.File;
 import java.util.*;
@@ -61,10 +61,10 @@ public class SCUtils {
         String vloSignature;
         switch (instance.getPlatform()) {
             case WINDOWS:
-                vloSignature = VLOArchive.PC_SIGNATURE;
+                vloSignature = VloFile.PC_SIGNATURE;
                 break;
             case PLAYSTATION:
-                vloSignature = VLOArchive.PSX_SIGNATURE;
+                vloSignature = VloFile.PSX_SIGNATURE;
                 break;
             default:
                 throw new RuntimeException("Unsupported target platform: " + instance.getPlatform());
@@ -73,7 +73,7 @@ public class SCUtils {
         // If there's file-data, it's the best indicator so let's use it first and foremost.
         if (fileData != null) {
             if (DataUtils.testSignature(fileData, vloSignature))
-                return new VLOArchive(resourceEntry.getGameInstance());
+                return new VloFile(resourceEntry.getGameInstance());
 
             if (instance.isPSX() && DataUtils.testSignature(fileData, SCPlayStationVabSoundBankHeader.PSX_SIGNATURE))
                 return makeSound(resourceEntry, fileData, SCForcedLoadSoundFileType.HEADER);
@@ -95,7 +95,7 @@ public class SCUtils {
         if (resourceEntry.hasExtension("bs"))
             return new PSXBitstreamImage(resourceEntry.getGameInstance());
         if (resourceEntry.hasExtension("vlo"))
-            return new VLOArchive(resourceEntry.getGameInstance());
+            return new VloFile(resourceEntry.getGameInstance());
         if (resourceEntry.hasExtension("xmr") || resourceEntry.hasExtension("xar") || resourceEntry.hasExtension("xmu"))
             return makeModel(resourceEntry);
         if (resourceEntry.hasExtension("vh") || resourceEntry.hasExtension("vb"))
@@ -241,7 +241,7 @@ public class SCUtils {
      * @param vloArchive The VLO to add textures from.
      */
     @SuppressWarnings("unused")
-    public static void addAtlasTextures(TextureAtlas atlas, VLOArchive vloArchive) {
+    public static void addAtlasTextures(TextureAtlas atlas, VloFile vloArchive) {
         if (vloArchive == null)
             return;
 
@@ -294,18 +294,18 @@ public class SCUtils {
      * @param instance the game instance to get images from
      * @return bssOrderImages
      */
-    public static List<GameImage> getImagesInBssOrder(SCGameInstance instance) {
+    public static List<VloImage> getImagesInBssOrder(SCGameInstance instance) {
         if (instance == null)
             throw new NullPointerException("instance");
 
-        List<GameImage> allImages = new ArrayList<>();
-        for (VLOArchive archive : instance.getMainArchive().getAllFiles(VLOArchive.class))
+        List<VloImage> allImages = new ArrayList<>();
+        for (VloFile archive : instance.getMainArchive().getAllFiles(VloFile.class))
             allImages.addAll(archive.getImages());
 
         // Remove images which aren't in the bmp texture pointer list.
-        Iterator<GameImage> iterator = allImages.iterator();
+        Iterator<VloImage> iterator = allImages.iterator();
         while (iterator.hasNext()) {
-            GameImage image = iterator.next();
+            VloImage image = iterator.next();
             int textureId = image.getTextureId() & 0xFFFF;
             Long bmpTexturePointer = instance.getBmpTexturePointers().size() > textureId ? instance.getBmpTexturePointers().get(textureId) : null;
             if (bmpTexturePointer == null || bmpTexturePointer == 0)
@@ -318,7 +318,7 @@ public class SCUtils {
         // Remove images with duplicate image IDs.
         short lastTextureId = -1;
         for (int i = 0; i < allImages.size(); i++) {
-            GameImage image = allImages.get(i);
+            VloImage image = allImages.get(i);
             if (image.getTextureId() == lastTextureId) {
                 allImages.remove(i--);
                 continue;
@@ -381,49 +381,49 @@ public class SCUtils {
         if (copyDestInst == null)
             throw new NullPointerException("copyDestInst");
 
-        Map<Integer, List<GameImage>> imageMappings = new HashMap<>();
-        for (VLOArchive vloFile : nameSourceInst.getMainArchive().getAllFiles(VLOArchive.class)) {
-            for (GameImage image : vloFile.getImages()) {
-                int hash = Arrays.hashCode(image.getImageBytes());
-                List<GameImage> list = imageMappings.computeIfAbsent(hash, key -> new ArrayList<>());
+        Map<Integer, List<VloImage>> imageMappings = new HashMap<>();
+        for (VloFile vloFile : nameSourceInst.getMainArchive().getAllFiles(VloFile.class)) {
+            for (VloImage image : vloFile.getImages()) {
+                int hash = Arrays.hashCode(image.getPixelBuffer());
+                List<VloImage> list = imageMappings.computeIfAbsent(hash, key -> new ArrayList<>());
                 if (list.stream().noneMatch(testImage -> testImage.getTextureId() == image.getTextureId()))
                     list.add(image);
             }
         }
 
         // Map images.
-        Map<Short, List<GameImage>> resultingMappings = new HashMap<>();
-        for (VLOArchive vloFile : copyDestInst.getMainArchive().getAllFiles(VLOArchive.class)) {
-            for (GameImage image : vloFile.getImages()) {
+        Map<Short, List<VloImage>> resultingMappings = new HashMap<>();
+        for (VloFile vloFile : copyDestInst.getMainArchive().getAllFiles(VloFile.class)) {
+            for (VloImage image : vloFile.getImages()) {
                 if (image.getOriginalName() != null) { // Keep previous name.
                     resultingMappings.putIfAbsent(image.getTextureId(), new ArrayList<>(Arrays.asList(image, image)));
                     continue;
                 }
 
-                List<GameImage> matchingImages = resultingMappings.get(image.getTextureId());
+                List<VloImage> matchingImages = resultingMappings.get(image.getTextureId());
                 if (matchingImages == null) {
                     resultingMappings.putIfAbsent(image.getTextureId(), matchingImages = new ArrayList<>());
                     matchingImages.add(image);
                 }
 
-                int hash = Arrays.hashCode(image.getImageBytes());
-                List<GameImage> list = imageMappings.get(hash);
+                int hash = Arrays.hashCode(image.getPixelBuffer());
+                List<VloImage> list = imageMappings.get(hash);
                 if (list == null)
                     continue;
 
-                for (GameImage testImage : list)
-                    if (!matchingImages.contains(testImage) && ImageWorkHorse.doImagesMatch(image.toBufferedImage(), testImage.toBufferedImage()))
+                for (VloImage testImage : list)
+                    if (!matchingImages.contains(testImage) && ImageUtils.doImagesMatch(image.toBufferedImage(), testImage.toBufferedImage()))
                         matchingImages.add(testImage);
             }
         }
 
         // Generate config.
         int generatedNames = 0, knownNames = 0;
-        List<Entry<Short, List<GameImage>>> entryList = new ArrayList<>(resultingMappings.entrySet());
+        List<Entry<Short, List<VloImage>>> entryList = new ArrayList<>(resultingMappings.entrySet());
         entryList.sort(Comparator.comparingInt(Entry::getKey));
         StringBuilder builder = new StringBuilder();
-        for (Entry<Short, List<GameImage>> entry : entryList) {
-            List<GameImage> images = entry.getValue();
+        for (Entry<Short, List<VloImage>> entry : entryList) {
+            List<VloImage> images = entry.getValue();
             if (images == null || images.size() <= 1) {
                 if (includeMissingTexturesAsComments)
                     builder.append("#").append(entry.getKey()).append("=?").append(Constants.NEWLINE);
@@ -431,11 +431,11 @@ public class SCUtils {
             }
 
             // If possible, pick it from the known VLO.
-            GameImage destImage = images.remove(0);
+            VloImage destImage = images.remove(0);
             if (images.stream().anyMatch(testImage -> testImage.getParent().getFileDisplayName().equals(destImage.getParent().getFileDisplayName())))
                 images.removeIf(testImage -> !testImage.getParent().getFileDisplayName().equals(destImage.getParent().getFileDisplayName()));
 
-            GameImage firstImage = images.stream().filter(testImage -> testImage.getOriginalName() != null).findFirst().orElse(images.get(0));
+            VloImage firstImage = images.stream().filter(testImage -> testImage.getOriginalName() != null).findFirst().orElse(images.get(0));
             String name = firstImage.getOriginalName();
             if (name == null) {
                 if (!includeMissingTexturesAsComments && images.stream().allMatch(image -> image.getOriginalName() == null))
@@ -452,7 +452,7 @@ public class SCUtils {
             if (images.remove(firstImage) && images.size() > 0) {
                 builder.append(" # ");
                 for (int i = 0; i < images.size(); i++) {
-                    GameImage image = images.get(i);
+                    VloImage image = images.get(i);
                     String tempName = image.getOriginalName();
                     if (i > 0)
                         builder.append(", ");

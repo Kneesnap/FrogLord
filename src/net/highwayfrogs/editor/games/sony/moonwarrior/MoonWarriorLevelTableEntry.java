@@ -1,9 +1,9 @@
 package net.highwayfrogs.editor.games.sony.moonwarrior;
 
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray.VLODirectTextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.map.ISCLevelTableEntry;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 
 /**
  * Represents a level table entry for Moon Warrior.
@@ -12,7 +12,7 @@ import net.highwayfrogs.editor.games.sony.shared.map.ISCLevelTableEntry;
 public class MoonWarriorLevelTableEntry implements ISCLevelTableEntry {
     private final MoonWarriorMap mapFile; // I don't see any level table in the executable.
     private TextureRemapArray textureRemap;
-    private VLOArchive vloArchive;
+    private VloFile vloArchive;
 
     public MoonWarriorLevelTableEntry(MoonWarriorMap mapFile) {
         this.mapFile = mapFile;
@@ -23,7 +23,7 @@ public class MoonWarriorLevelTableEntry implements ISCLevelTableEntry {
         if (this.textureRemap != null)
             return this.textureRemap;
 
-        VLOArchive vloFile = getVloFile();
+        VloFile vloFile = getVloFile();
         if (vloFile == null)
             return null;
 
@@ -31,7 +31,7 @@ public class MoonWarriorLevelTableEntry implements ISCLevelTableEntry {
     }
 
     @Override
-    public VLOArchive getVloFile() {
+    public VloFile getVloFile() {
         if (this.vloArchive != null)
             return this.vloArchive;
 

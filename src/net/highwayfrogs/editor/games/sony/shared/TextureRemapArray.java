@@ -2,10 +2,10 @@ package net.highwayfrogs.editor.games.sony.shared;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
-import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameObject.SCSharedGameObject;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
@@ -82,14 +82,14 @@ public class TextureRemapArray extends SCSharedGameObject {
      * @param vloArchive If provided, the texture will first attempt to be resolved here before resolving elsewhere.
      * @return gameImageOrNull
      */
-    public GameImage resolveTexture(int localTextureId, VLOArchive vloArchive) {
+    public VloImage resolveTexture(int localTextureId, VloFile vloArchive) {
         Short globalTextureId = getRemappedTextureId(localTextureId);
         if (globalTextureId == null)
             return null;
 
         // First try the one the user supplied.
         if (vloArchive != null) {
-            GameImage gameImage = vloArchive.getImageByTextureId(globalTextureId, false);
+            VloImage gameImage = vloArchive.getImageByTextureId(globalTextureId, false);
             if (gameImage != null)
                 return gameImage;
         }
@@ -103,8 +103,8 @@ public class TextureRemapArray extends SCSharedGameObject {
      * @param vloArchive the vlo archive to prefer to lookup textures from
      * @return textures
      */
-    public List<GameImage> getTextures(VLOArchive vloArchive) {
-        List<GameImage> images = new ArrayList<>();
+    public List<VloImage> getTextures(VloFile vloArchive) {
+        List<VloImage> images = new ArrayList<>();
         for (int i = 0; i < this.textureIds.size(); i++)
             images.add(resolveTexture(i, vloArchive));
 
@@ -117,8 +117,8 @@ public class TextureRemapArray extends SCSharedGameObject {
      * @param allowNull if null is allowed to be selected.
      * @param handler the handler to handle the user's selection.
      */
-    public void askUserToSelectImage(VLOArchive vloArchive, boolean allowNull, Consumer<GameImage> handler) {
-        List<GameImage> images = getTextures(vloArchive);
+    public void askUserToSelectImage(VloFile vloArchive, boolean allowNull, Consumer<VloImage> handler) {
+        List<VloImage> images = getTextures(vloArchive);
         if (images.isEmpty() && !allowNull)
             return; // Nothing to select from.
 
@@ -131,7 +131,7 @@ public class TextureRemapArray extends SCSharedGameObject {
 
             String originalName = image.getOriginalName();
             return "#" + image.getLocalImageID() +  " (" + (originalName != null ? originalName + ", " : "") + image.getTextureId() + ")";
-        }, image -> image != null ? image.toFXImage(VLOArchive.ICON_EXPORT) : FXUtils.toFXImage(UnknownTextureSource.MAGENTA_INSTANCE.makeImage(), true));
+        }, image -> image != null ? image.toFXImage(VloFile.ICON_EXPORT) : FXUtils.toFXImage(UnknownTextureSource.MAGENTA_INSTANCE.makeImage(), true));
     }
 
     /**
@@ -180,9 +180,9 @@ public class TextureRemapArray extends SCSharedGameObject {
      * Creates a remap based on the contents of a VLO archive.
      */
     public static class VLODirectTextureRemapArray extends TextureRemapArray {
-        private final VLOArchive vloArchive;
+        private final VloFile vloArchive;
 
-        public VLODirectTextureRemapArray(SCGameInstance instance, VLOArchive vloArchive) {
+        public VLODirectTextureRemapArray(SCGameInstance instance, VloFile vloArchive) {
             super(instance);
             this.vloArchive = vloArchive;
             updateRemapArray();
@@ -200,7 +200,7 @@ public class TextureRemapArray extends SCSharedGameObject {
 
             // Apply texture ids.
             for (int i = 0; i < this.vloArchive.getImages().size(); i++) {
-                GameImage image = this.vloArchive.getImages().get(i);
+                VloImage image = this.vloArchive.getImages().get(i);
                 if (i >= values.size()) {
                     values.add(image.getTextureId());
                 } else if (image.getTextureId() != values.get(i)) { // Avoid autoboxing a new short if it matches to begin with.

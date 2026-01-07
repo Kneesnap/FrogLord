@@ -148,7 +148,7 @@ public class FroggerDemoTable extends SCGameData<FroggerGameInstance> {
         if (this.lowPolygonEntries) {
             List<FroggerDemoTableEntry> lowPolyTableEntries = readRawTable(getGameInstance(), reader, false);
             newTableEntries = readRawTable(getGameInstance(), reader, true).toArray(EMPTY_ARRAY);
-            if (newTableEntries.length != lowPolyTableEntries.size())
+            if (newTableEntries.length != lowPolyTableEntries.size()) // TODO: pc-demo-powerplay problem.
                 throw new IllegalStateException("The first demoTable @ " + NumberUtils.to0PrefixedHexString(this.executableAddress) + " had " + lowPolyTableEntries.size() + " entries, but the second one had " + newTableEntries.length + " entries. (These were expected to match)");
 
             for (int i = 0; i < newTableEntries.length; i++) {

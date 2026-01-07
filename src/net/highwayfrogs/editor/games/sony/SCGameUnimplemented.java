@@ -1,9 +1,9 @@
 package net.highwayfrogs.editor.games.sony;
 
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 
 /**
  * Represents a game which support hasn't been added for yet.
@@ -27,5 +27,10 @@ public class SCGameUnimplemented extends SCGameInstance {
     @Override
     public void setupFileGroups(SCGameFileGroupedListViewComponent<? extends SCGameInstance> fileListView) {
         // Nothing.
+    }
+
+    @Override
+    protected void setupFrameBuffers() {
+        // No frame buffers are known for this game.
     }
 }

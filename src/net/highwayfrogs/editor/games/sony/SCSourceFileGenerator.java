@@ -2,11 +2,11 @@ package net.highwayfrogs.editor.games.sony;
 
 import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameConfig.SCImageList;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.objects.IndexBitArray;
@@ -124,13 +124,13 @@ public class SCSourceFileGenerator {
                 .append(Constants.NEWLINE);
 
         // Get image mappings.
-        List<GameImage> imagesById = new ArrayList<>();
-        for (VLOArchive vloArchive : instance.getMainArchive().getAllFiles(VLOArchive.class)) {
-            for (GameImage image : vloArchive.getImages()) {
+        List<VloImage> imagesById = new ArrayList<>();
+        for (VloFile vloArchive : instance.getMainArchive().getAllFiles(VloFile.class)) {
+            for (VloImage image : vloArchive.getImages()) {
                 while (image.getTextureId() >= imagesById.size())
                     imagesById.add(null);
 
-                if (image.testFlag(GameImage.FLAG_REFERENCED_BY_NAME))
+                if (image.testFlag(VloImage.FLAG_REFERENCED_BY_NAME))
                     imagesById.set(image.getTextureId(), image);
             }
         }
@@ -139,7 +139,7 @@ public class SCSourceFileGenerator {
         builder.append("MR_TEXTURE*\tbmp_pointers[] = {").append(Constants.NEWLINE).append('\t');
         int lastLineStart = builder.length();
         for (int i = 0; i < imagesById.size(); i++) {
-            GameImage image = imagesById.get(i);
+            VloImage image = imagesById.get(i);
 
             int charCount = builder.length() - lastLineStart;
             if (charCount >= 120) {
@@ -200,9 +200,9 @@ public class SCSourceFileGenerator {
         }
 
         // Write image definitions.
-        List<GameImage> staticTextures = getStaticTextures(instance);
+        List<VloImage> staticTextures = getStaticTextures(instance);
         for (int i = 0; i < staticTextures.size(); i++) {
-            GameImage image = staticTextures.get(i);
+            VloImage image = staticTextures.get(i);
             builder.append("MR_TEXTURE\t")
                     .append(SCUtils.IMAGE_C_PREFIX)
                     .append(getImageName(image))
@@ -239,8 +239,8 @@ public class SCSourceFileGenerator {
 
         // Calculate and write the texture count.
         int textureCount = instance.getBmpTexturePointers().size();
-        for (VLOArchive vloArchive : instance.getMainArchive().getAllFiles(VLOArchive.class))
-            for (GameImage image : vloArchive.getImages())
+        for (VloFile vloArchive : instance.getMainArchive().getAllFiles(VloFile.class))
+            for (VloImage image : vloArchive.getImages())
                 if (image.getTextureId() >= textureCount)
                     textureCount = image.getTextureId() + 1;
 
@@ -297,10 +297,10 @@ public class SCSourceFileGenerator {
             builder.append(Constants.NEWLINE);
 
         // Write texture definitions.
-        List<GameImage> images = getStaticTextures(instance);
+        List<VloImage> images = getStaticTextures(instance);
 
         for (int i = 0; i < images.size(); i++) {
-            GameImage image = images.get(i);
+            VloImage image = images.get(i);
 
             String imageName = getImageName(image);
             builder.append("extern\tMR_TEXTURE\t")
@@ -318,26 +318,26 @@ public class SCSourceFileGenerator {
         FileUtils.writeStringToFile(instance.getLogger(), file, builder.toString(), true);
     }
 
-    private static List<GameImage> getStaticTextures(SCGameInstance instance) {
+    private static List<VloImage> getStaticTextures(SCGameInstance instance) {
         IndexBitArray texturesSeen = new IndexBitArray();
-        List<GameImage> images = new ArrayList<>();
+        List<VloImage> images = new ArrayList<>();
 
-        for (VLOArchive vloArchive : instance.getMainArchive().getAllFiles(VLOArchive.class)) {
+        for (VloFile vloArchive : instance.getMainArchive().getAllFiles(VloFile.class)) {
             for (int i = 0; i < vloArchive.getImages().size(); i++) {
-                GameImage image = vloArchive.getImages().get(i);
-                if (image.testFlag(GameImage.FLAG_REFERENCED_BY_NAME) && !texturesSeen.getBit(image.getTextureId())) {
+                VloImage image = vloArchive.getImages().get(i);
+                if (image.testFlag(VloImage.FLAG_REFERENCED_BY_NAME) && !texturesSeen.getBit(image.getTextureId())) {
                     texturesSeen.setBit(image.getTextureId(), true);
                     images.add(image);
                 }
             }
         }
 
-        images.sort(Comparator.comparingInt(GameImage::getTextureId));
+        images.sort(Comparator.comparingInt(VloImage::getTextureId));
 
         return images;
     }
 
-    private static String getImageName(GameImage image) {
+    private static String getImageName(VloImage image) {
         if (image == null)
             throw new NullPointerException("image");
 

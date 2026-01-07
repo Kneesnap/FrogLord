@@ -6,7 +6,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
-import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.generic.GamePlatform;
 import net.highwayfrogs.editor.games.konami.greatquest.GreatQuestInstance;
 import net.highwayfrogs.editor.games.konami.greatquest.IFileExport;
@@ -22,6 +21,7 @@ import net.highwayfrogs.editor.utils.data.reader.ArraySource;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.image.ImageUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -259,13 +259,13 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
 
         switch (format) {
             case A8R8G8B8:
-                int[] rawPixelBufferArgb = ImageWorkHorse.getPixelIntegerArray(this.image);
+                int[] rawPixelBufferArgb = ImageUtils.getWritablePixelIntegerArray(this.image);
                 for (int y = 0; y < height; y++)
                     for (int x = 0; x < width; x++)
                         rawPixelBufferArgb[((height - y - 1) * width) + x] = reader.hasMore() ? reader.readInt() : 0; // Faster version of this.image.setRGB(x, height - y - 1,  ...)
                 break;
             case R8G8B8:
-                int[] rawPixelBufferRgb = ImageWorkHorse.getPixelIntegerArray(this.image);
+                int[] rawPixelBufferRgb = ImageUtils.getWritablePixelIntegerArray(this.image);
                 for (int y = 0; y < height; y++) {
                     for (int x = 0; x < width; x++) {
                         byte red = reader.readByte();
@@ -382,13 +382,13 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
         int height = this.image.getHeight();
         switch (format) {
             case A8R8G8B8:
-                int[] rawImageDataArgb = ImageWorkHorse.getReadOnlyPixelIntegerArray(this.image);
+                int[] rawImageDataArgb = ImageUtils.getReadOnlyPixelIntegerArray(this.image);
                 for (int y = 0; y < height; y++)
                     for (int x = 0; x < width; x++)
                         writer.writeInt(rawImageDataArgb[((height - y - 1) * width) + x]); // Faster version of this.image.getRGB(x, height - y - 1)
                 break;
             case R8G8B8:
-                int[] rawImageDataRgb = ImageWorkHorse.getReadOnlyPixelIntegerArray(this.image);
+                int[] rawImageDataRgb = ImageUtils.getReadOnlyPixelIntegerArray(this.image);
                 for (int y = 0; y < height; y++) {
                     for (int x = 0; x < width; x++) {
                         int rgb = rawImageDataRgb[((height - y - 1) * width) + x]; // Faster version of this.image.getRGB(x, height - y - 1);
@@ -430,12 +430,13 @@ public class GreatQuestImageFile extends GreatQuestArchiveFile implements IFileE
             throw new NullPointerException("image");
 
         BufferedImage tempImage;
-        if (getGameInstance().isPS2() && (tempImage = ImageWorkHorse.tryConvertTo8BitIndexedBufferedImage(image)) != null) {
+        if (getGameInstance().isPS2() && (tempImage = ImageUtils.tryConvertTo8BitIndexedBufferedImage(image)) != null) {
+            // TODO: Allow quantization if the user wishes.
             image = tempImage;
-        } else if (getGameInstance().isPS2() && (tempImage = ImageWorkHorse.tryConvertToRgbImage(image)) != null) {
+        } else if (getGameInstance().isPS2() && (tempImage = ImageUtils.tryConvertToRgb888Image(image)) != null) {
             image = tempImage;
         } else {
-            image = ImageWorkHorse.convertBufferedImageToFormat(image, BufferedImage.TYPE_INT_ARGB);
+            image = ImageUtils.convertBufferedImageToFormat(image, BufferedImage.TYPE_INT_ARGB);
         }
 
         kcImageFormat format = kcImageFormat.getFormatFromBufferedImage(image);

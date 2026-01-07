@@ -3,8 +3,6 @@ package net.highwayfrogs.editor.games.sony.shared.mof2.mesh;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.psx.shading.PSXTextureShader;
@@ -16,6 +14,8 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTex
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTextureAnimationEntry;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.mesh.MRModelMesh;
 import net.highwayfrogs.editor.games.sony.shared.mof2.ui.mesh.MRModelMesh.MRMofShadedTextureManager;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -162,7 +162,7 @@ public class MRMofPolygon extends SCGameData<SCGameInstance> {
             if (this.textureId < 0) {
                 getLogger().severe("A textured MRMofPolygon had an invalid texture ID! (%d) This polygon will not render correctly in-game and may even cause crashes!", this.textureId);
             } else {
-                GameImage image = getDefaultTexture();
+                VloImage image = getDefaultTexture();
                 if (image == null)
                     getLogger().severe("A textured MRMofPolygon had an unresolvable texture ID! (%d) This polygon will not render correctly in-game and may even cause crashes!", this.textureId);
             }
@@ -208,14 +208,14 @@ public class MRMofPolygon extends SCGameData<SCGameInstance> {
     /**
      * Gets the active texture on this polygon if no texture animation is applied.
      */
-    public GameImage getDefaultTexture() {
+    public VloImage getDefaultTexture() {
         return getTexture(null, 0);
     }
 
     /**
      * Gets the active texture on this polygon.
      */
-    public GameImage getTexture(MRMofTextureAnimation animation, int animationTick) {
+    public VloImage getTexture(MRMofTextureAnimation animation, int animationTick) {
         if (!this.polygonType.isTextured())
             return null;
 
@@ -227,9 +227,9 @@ public class MRMofPolygon extends SCGameData<SCGameInstance> {
         }
 
         // If the mof has a VLO associated, first try getting the image from that VLO.
-        VLOArchive vlo;
+        VloFile vlo;
         if (this.mofPart != null && (vlo = this.mofPart.getParentMof().getModel().getVloFile()) != null) {
-            GameImage image = vlo.getImageByTextureId(globalTextureId, false);
+            VloImage image = vlo.getImageByTextureId(globalTextureId, false);
             if (image != null)
                 return image;
         }
@@ -261,8 +261,8 @@ public class MRMofPolygon extends SCGameData<SCGameInstance> {
         if (getGameInstance().isFrogger() && !((FroggerGameInstance) getGameInstance()).getVersionConfig().isAtOrBeforeBuild8())
             return false;
 
-        GameImage image = getDefaultTexture();
-        return image != null && image.testFlag(GameImage.FLAG_TRANSLUCENT);
+        VloImage image = getDefaultTexture();
+        return image != null && image.testFlag(VloImage.FLAG_TRANSLUCENT);
     }
 
     /**

@@ -1,10 +1,10 @@
 package net.highwayfrogs.editor.gui.texture;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.system.QuadConsumer;
 import net.highwayfrogs.editor.system.math.Vector2f;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.image.ImageUtils;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -103,7 +103,7 @@ public abstract class Texture {
             this.update();
 
         if (this.cachedImage != null && this.cachedImageWithoutPadding == null)
-            this.cachedImageWithoutPadding = ImageWorkHorse.trimEdges(this.cachedImage, getUpPadding(), getDownPadding(), getLeftPadding(), getRightPadding());
+            this.cachedImageWithoutPadding = ImageUtils.trimEdges(this.cachedImage, getUpPadding(), getDownPadding(), getLeftPadding(), getRightPadding());
 
         return this.cachedImageWithoutPadding;
     }

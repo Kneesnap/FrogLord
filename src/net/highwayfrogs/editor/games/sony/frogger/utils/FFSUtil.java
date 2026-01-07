@@ -4,10 +4,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
-import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.generic.GameConfig;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
@@ -24,6 +20,8 @@ import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePack
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketVertex;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
@@ -63,9 +61,7 @@ import java.util.logging.Level;
 public class FFSUtil {
     public static final String BLENDER_ADDON_FILE_NAME = "frogger-map-blender-plugin.py";
 
-    private static final ImageFilterSettings FFS_EXPORT_FILTER = new ImageFilterSettings(ImageState.EXPORT)
-            .setAllowTransparency(true)
-            .setTrimEdges(true);
+    private static final int FFS_EXPORT_FILTER = VloImage.DEFAULT_IMAGE_NO_PADDING_EXPORT_SETTINGS;
 
     // Increment this with any major change to the format.
     public static final int CURRENT_FORMAT_VERSION = 1;
@@ -102,9 +98,9 @@ public class FFSUtil {
         builder.append(FfsCommandType.GAME_VERSION.getLabel()).append(' ').append(map.getGameInstance().getVersionConfig().getInternalName()).append("\n\n");
 
         // Export textures.
-        VLOArchive mapVlo = map.getVloFile();
+        VloFile mapVlo = map.getVloFile();
         for (int i = 0; i < textureRemap.getTextureIds().size(); i++) {
-            GameImage image = textureRemap.resolveTexture(i, mapVlo);
+            VloImage image = textureRemap.resolveTexture(i, mapVlo);
             if (image == null) {
                 Utils.handleProblem(response, map.getLogger(), Level.SEVERE, "Could not resolve texture remap index %d to a valid image!", i);
                 return;

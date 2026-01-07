@@ -51,7 +51,7 @@ public class OldFroggerMapController extends SCFileEditorUIController<OldFrogger
         this.propertyListViewer.showProperties(map);
 
         if (this.remapEditor == null && this.remapList != null && this.remapListLabel != null)
-            this.remapEditor = new SCRemapEditor<>(this.remapListLabel, this.remapList, this::getFile, mapFile -> mapFile.getLevelTableEntry().getMainVLOArchive(), mapFile -> mapFile.getLevelTableEntry().getTextureRemap());
+            this.remapEditor = new SCRemapEditor<>(this.remapListLabel, this.remapList, this::getFile, mapFile -> mapFile.getLevelTableEntry().getMainVloFile(), mapFile -> mapFile.getLevelTableEntry().getTextureRemap());
 
         if (this.remapEditor != null)
             this.remapEditor.setupEditor(map.getLevelTableEntry() != null ? map : null);

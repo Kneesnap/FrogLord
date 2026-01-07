@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.games.sony.beastwars;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.games.psx.image.PsxVramScreenSize;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
@@ -14,6 +14,7 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -73,14 +74,14 @@ public class BeastWarsInstance extends SCGameInstance {
     }
 
     @Override
-    protected VLOArchive resolveMainVlo(MRModel model) {
+    protected VloFile resolveMainVlo(MRModel model) {
         WADFile wadFile = model.getParentWadFile();
         if (wadFile != null) {
             String searchFileName = FileUtils.stripExtension(wadFile.getFileDisplayName()) + ".VLO";
             if (searchFileName.startsWith("MD"))
                 searchFileName = "MS" + searchFileName.substring(2);
 
-            VLOArchive foundVlo = getMainArchive().getFileByName(searchFileName);
+            VloFile foundVlo = getMainArchive().getFileByName(searchFileName);
             if (foundVlo != null)
                 return foundVlo;
         }
@@ -101,6 +102,13 @@ public class BeastWarsInstance extends SCGameInstance {
         fileListView.addGroup(new SCGameFileListTypeIdGroup("Map Texture", FILE_TYPE_TEX));
         fileListView.addGroup(new SCGameFileListTypeIdGroup("TIM [PSX Image]", FILE_TYPE_TIM));
         fileListView.addGroup(new SCGameFileListTypeIdGroup("PLT [Palette]", FILE_TYPE_PLT));
+    }
+
+    @Override
+    protected void setupFrameBuffers() {
+        // Tested: NTSC Prototype, Retail NTSC, Retail PAL
+        this.primaryFrameBuffer = new PsxVramScreenSize(0, 0, 368, getDefaultFrameBufferHeight());
+        this.secondaryFrameBuffer = this.primaryFrameBuffer.cloneBelow();
     }
 
     private void readModelRemaps(DataReader reader) {

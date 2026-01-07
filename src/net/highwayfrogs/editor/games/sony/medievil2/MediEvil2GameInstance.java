@@ -2,8 +2,8 @@ package net.highwayfrogs.editor.games.sony.medievil2;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
+import net.highwayfrogs.editor.games.psx.image.PsxVramScreenSize;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
@@ -21,6 +21,7 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.LazySCGameFileListGroup;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -103,6 +104,13 @@ public class MediEvil2GameInstance extends SCGameInstance {
         fileListView.addGroup(new LazySCGameFileListGroup("Model Files", (file, index) -> index.getTypeId() == FILE_TYPE_ANIM || index.getTypeId() == FILE_TYPE_SKEL || index.getTypeId() == FILE_TYPE_STAT));
         fileListView.addGroup(new LazySCGameFileListGroup("PSX TIM Images", (file, index) -> file instanceof PSXTIMFile));
         fileListView.addGroup(new LazySCGameFileListGroup("SFX Banks", (file, index) -> index.getTypeId() == FILE_TYPE_VH || index.getTypeId() == FILE_TYPE_VB || index.getTypeId() == FILE_TYPE_VB_ALTERNATE));
+    }
+
+    @Override
+    protected void setupFrameBuffers() {
+        // Tested PSX Build 0.19, PSX Build 0.51 NTSC
+        this.primaryFrameBuffer = new PsxVramScreenSize(0, 0, 512, getDefaultFrameBufferHeight());
+        this.secondaryFrameBuffer = this.primaryFrameBuffer.add(0, 256); // Always at y: 256 regardless of primary height.
     }
 
     private void readLevelTable(DataReader reader) {

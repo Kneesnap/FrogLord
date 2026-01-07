@@ -6,20 +6,18 @@ import javafx.scene.shape.MeshView;
 import javafx.scene.shape.TriangleMesh;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
-import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
-import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.SCGameObject;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerFlyScoreType;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Scene3DUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.image.ImageUtils;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -103,13 +101,13 @@ public class PickupData extends SCGameData<FroggerGameInstance> {
         private final PickupData pickupData;
         private final long texturePointer;
         private boolean resolvedTextures;
-        private GameImage resolvedImage;
+        private VloImage resolvedImage;
         private BufferedImage awtPreviewImage;
         private Image fxPreviewImage;
         private PhongMaterial highlightedMaterial;
         private PhongMaterial normalMaterial;
 
-        private static final ImageFilterSettings FLY_SPRITE_IMAGE_OPTIONS = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(true).setAllowTransparency(true);
+        private static final int FLY_SPRITE_IMAGE_OPTIONS = VloImage.DEFAULT_IMAGE_NO_PADDING_EXPORT_SETTINGS;
         public static final float ENTITY_FLY_SPRITE_SIZE = 4F;
         public static final float ENTITY_FLY_SPRITE_SCALE_SIZE = 4F * ENTITY_FLY_SPRITE_SIZE; // Chosen by experimenting until I found one I was happy with.
         public static final TriangleMesh ENTITY_FLY_SPRITE_MESH = Scene3DUtils.createSpriteMesh(ENTITY_FLY_SPRITE_SIZE);
@@ -138,7 +136,7 @@ public class PickupData extends SCGameData<FroggerGameInstance> {
             // Scale the image to avoid transparency problems at the edges.
             int newWidth = (int) (this.awtPreviewImage.getWidth() * ENTITY_FLY_SPRITE_SCALE_SIZE);
             int newHeight = (int) (this.awtPreviewImage.getHeight() * ENTITY_FLY_SPRITE_SCALE_SIZE);
-            BufferedImage scaledPreviewImage = ImageWorkHorse.resizeImage(this.awtPreviewImage, newWidth, newHeight, true);
+            BufferedImage scaledPreviewImage = ImageUtils.resizeImage(this.awtPreviewImage, newWidth, newHeight, true);
             this.fxPreviewImage = FXUtils.toFXImage(scaledPreviewImage, false);
         }
 
@@ -182,14 +180,14 @@ public class PickupData extends SCGameData<FroggerGameInstance> {
             // Properly size via scaling.
             float scaleSize = this.pickupData.getSpriteSizeAsFloat();
             double flySpriteSizeSq = (ENTITY_FLY_SPRITE_SIZE * ENTITY_FLY_SPRITE_SIZE);
-            Scene3DUtils.setNodeScale(meshView, (double) (scaleSize * this.resolvedImage.getIngameWidth()) / flySpriteSizeSq, (double) (scaleSize * this.resolvedImage.getIngameHeight()) / flySpriteSizeSq, 1D);
+            Scene3DUtils.setNodeScale(meshView, (double) (scaleSize * this.resolvedImage.getUnpaddedWidth()) / flySpriteSizeSq, (double) (scaleSize * this.resolvedImage.getUnpaddedHeight()) / flySpriteSizeSq, 1D);
             return true;
         }
 
         /**
          * Gets the image used for this frame, if there is one.
          */
-        public GameImage getImage() {
+        public VloImage getImage() {
             tryResolveTextures();
             return this.resolvedImage;
         }

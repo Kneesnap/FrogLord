@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
@@ -14,6 +13,7 @@ import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -48,6 +48,8 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
     private static final int FLAG_QUAD = Constants.BIT_FLAG_0;
     private static final int FLAG_TEXTURED = Constants.BIT_FLAG_1;
     public static final int FLAG_SEMI_TRANSPARENT = Constants.BIT_FLAG_9;
+    // TODO: sorting flags? If both sort flags are set, it forces average sort. Treat it as an enum because of this. If neither are set, it will use sorting behavior from the texture.
+    // TODO: Need to warn for unused flags.
     private static final CVector UNSHADED_COLOR = CVector.makeColorFromRGB(0x80808080);
 
     public MediEvilMapPolygon(MediEvilGameInstance instance) {
@@ -124,19 +126,23 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
      * If the polygon renders as partially transparent, this will return true.
      */
     public boolean isSemiTransparent(MediEvilLevelTableEntry levelTableEntry) {
-        GameImage image = getTexture(levelTableEntry);
-        if (image != null && image.testFlag(GameImage.FLAG_TRANSLUCENT))
-            return true; // For proof of the necessity of checking this flag, see how GY1.MAP's river looks when this is removed.
+        VloImage image = getTexture(levelTableEntry);
+
+        // For proof of the necessity of checking this flag, see how GY1.MAP's river looks when this is removed.
+        // Or, check xProcessPSXGPacket() in the map load stuff, which will apply the flag to the polygon at runtime if the flag is set in the VLO.
+        if (image != null && image.testFlag(VloImage.FLAG_TRANSLUCENT))
+            return true;
 
         return (this.flags & FLAG_SEMI_TRANSPARENT) == FLAG_SEMI_TRANSPARENT;
     }
 
     /**
      * If the polygon renders as fully opaque, this will return true.
+     * Note that this is different from isSemiTransparent() == false, because this will return false if there is a pixel which is FULLY transparent.
      */
     public boolean isFullyOpaque(MediEvilLevelTableEntry levelTableEntry) {
-        GameImage image = getTexture(levelTableEntry);
-        if (image != null && (image.testFlag(GameImage.FLAG_TRANSLUCENT) || image.testFlag(GameImage.FLAG_BLACK_IS_TRANSPARENT)))
+        VloImage image = getTexture(levelTableEntry);
+        if (image != null && (image.testFlag(VloImage.FLAG_TRANSLUCENT) || image.testFlag(VloImage.FLAG_BLACK_IS_TRANSPARENT)))
             return false;
 
         return (this.flags & FLAG_SEMI_TRANSPARENT) != FLAG_SEMI_TRANSPARENT;
@@ -190,7 +196,7 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
      * @param levelTableEntry The level table entry to lookup data from.
      * @return texture
      */
-    public GameImage getTexture(MediEvilLevelTableEntry levelTableEntry) {
+    public VloImage getTexture(MediEvilLevelTableEntry levelTableEntry) {
         if (!getPolygonType().isTextured() || this.textureId < 0)
             return null; // Untextured or invalid texture ID.
 
@@ -290,8 +296,8 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
         }
 
         // Load texture.
-        if (shadeTexture.getTextureSource() instanceof GameImage) {
-            GameImage gameImage = (GameImage) shadeTexture.getTextureSource();
+        if (shadeTexture.getTextureSource() instanceof VloImage) {
+            VloImage gameImage = (VloImage) shadeTexture.getTextureSource();
             MediEvilLevelTableEntry levelTableEntry = mapFile.getLevelTableEntry();
             int remapIndex = levelTableEntry.getRemap().getRemapIndex(gameImage.getTextureId());
             if (remapIndex >= 0)

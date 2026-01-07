@@ -2,10 +2,6 @@ package net.highwayfrogs.editor.games.sony.shared.mwd;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
-import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.shared.basic.GameBuildInfo;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
@@ -16,6 +12,8 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.pp20.PP20Unpacker;
 import net.highwayfrogs.editor.games.sony.shared.pp20.PP20Unpacker.UnpackResult;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCMainMenuUIController;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.FileUtils;
@@ -35,7 +33,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Millennium WAD File Format
@@ -52,7 +49,7 @@ public class MWDFile extends SCSharedGameData {
     public static final int BUILD_NOTES_SIZE = Constants.CD_SECTOR_SIZE - BUILD_NOTES_START_OFFSET;
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("EEEE, d MMMM yyyy");
     private static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm:ss");
-    public static final ImageFilterSettings VLO_ICON_SETTING = new ImageFilterSettings(ImageState.EXPORT);
+    public static final int VLO_ICON_SETTING = VloImage.DEFAULT_IMAGE_STRIPPED_VIEW_SETTINGS;
 
     public MWDFile(SCGameInstance instance) {
         super(instance);
@@ -383,24 +380,12 @@ public class MWDFile extends SCSharedGameData {
     }
 
     /**
-     * Grabs the first VLO we can find.
-     */
-    public VLOArchive findFirstVLO() {
-        List<VLOArchive> allVLOs = getFiles().stream()
-                .filter(VLOArchive.class::isInstance)
-                .map(VLOArchive.class::cast)
-                .collect(Collectors.toList());
-
-        return allVLOs.size() > 0 ? allVLOs.get(0) : null;
-    }
-
-    /**
      * Get the VLO for a given map theme.
      * @param handler The handler for when the VLO is determined.
      * @param allowNull Are null VLOs allowed?
      */
-    public void promptVLOSelection(Consumer<VLOArchive> handler, boolean allowNull) {
-        List<VLOArchive> allVLOs = getAllFiles(VLOArchive.class);
+    public void promptVLOSelection(Consumer<VloFile> handler, boolean allowNull) {
+        List<VloFile> allVLOs = getAllFiles(VloFile.class);
 
         if (allowNull)
             allVLOs.add(0, null);
@@ -546,9 +531,9 @@ public class MWDFile extends SCSharedGameData {
      * @param textureId The texture ID to get.
      * @return gameImage
      */
-    public GameImage getImageByTextureId(int textureId) {
-        for (VLOArchive vlo : getAllFiles(VLOArchive.class))
-            for (GameImage testImage : vlo.getImages())
+    public VloImage getImageByTextureId(int textureId) {
+        for (VloFile vlo : getAllFiles(VloFile.class))
+            for (VloImage testImage : vlo.getImages())
                 if (testImage.getTextureId() == textureId)
                     return testImage;
 
@@ -560,11 +545,11 @@ public class MWDFile extends SCSharedGameData {
      * @param textureId The texture ID to get.
      * @return gameImage
      */
-    public List<GameImage> getImagesByTextureId(int textureId) {
-        List<GameImage> results = new ArrayList<>();
+    public List<VloImage> getImagesByTextureId(int textureId) {
+        List<VloImage> results = new ArrayList<>();
 
-        for (VLOArchive vlo : getAllFiles(VLOArchive.class))
-            for (GameImage testImage : vlo.getImages())
+        for (VloFile vlo : getAllFiles(VloFile.class))
+            for (VloImage testImage : vlo.getImages())
                 if (testImage.getTextureId() == textureId)
                     results.add(testImage);
 

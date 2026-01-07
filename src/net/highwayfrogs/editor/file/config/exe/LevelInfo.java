@@ -3,11 +3,11 @@ package net.highwayfrogs.editor.file.config.exe;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.config.data.FroggerMapWorldID;
-import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapLevelID;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -122,42 +122,42 @@ public class LevelInfo extends ExeStruct {
     /**
      * Resolves the image displayed on the level stack for the given world once unlocked.
      */
-    public GameImage getWorldLevelStackColoredImage() {
+    public VloImage getWorldLevelStackColoredImage() {
         return getGameInstance().getImageFromPointer(this.worldImageSelectablePointer);
     }
 
     /**
      * Resolves an image never displayed on the level stack, which theoretically would have displayed once "visited".
      */
-    public GameImage getUnusedWorldVisitedImage() {
+    public VloImage getUnusedWorldVisitedImage() {
         return getGameInstance().getImageFromPointer(this.worldImageVisitedPointer);
     }
 
     /**
      * Resolves the image displayed on the level stack for the given world prior to unlock.
      */
-    public GameImage getWorldNotTriedImage() {
+    public VloImage getWorldNotTriedImage() {
         return getGameInstance().getImageFromPointer(this.worldImageNotTriedPointer);
     }
 
     /**
      * Resolves the preview image screenshot displayed on the level stack.
      */
-    public GameImage getLevelPreviewScreenshotImage() {
+    public VloImage getLevelPreviewScreenshotImage() {
         return getGameInstance().getImageFromPointer(this.levelTexturePointer);
     }
 
     /**
      * Resolves the level name image displayed on the level stack.
      */
-    public GameImage getLevelNameImage() {
+    public VloImage getLevelNameImage() {
         return getGameInstance().getImageFromPointer(this.levelNameTexturePointer);
     }
 
     /**
      * Resolves the level name image displayed upon completing a level in-game.
      */
-    public GameImage getIngameLevelNameImage() {
+    public VloImage getIngameLevelNameImage() {
         return getGameInstance().getImageFromPointer(this.levelNameTextureInGamePointer);
     }
 }

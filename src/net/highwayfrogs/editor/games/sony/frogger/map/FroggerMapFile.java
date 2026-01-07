@@ -10,8 +10,6 @@ import net.highwayfrogs.editor.file.config.FroggerMapConfig;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
@@ -34,6 +32,8 @@ import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket.Pack
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.misc.MRLightType;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.SelectionMenu;
@@ -100,7 +100,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> implement
     @Getter private final FroggerMapFilePacketGrid gridPacket;
     @Getter private final FroggerMapFilePacketAnimation animationPacket;
     private transient FroggerMapConfig cachedMapConfig;
-    private transient VLOArchive cachedVloFile;
+    private transient VloFile cachedVloFile;
     private transient LinkedTextureRemap<FroggerMapFile> cachedTextureRemap;
 
     public FroggerMapFile(FroggerGameInstance instance, MWIResourceEntry resourceEntry) {
@@ -140,7 +140,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> implement
         if (levelImage == null && getGameInstance().getLevelInfoMap().size() > 0) {
             LevelInfo info = getGameInstance().getLevelInfoMap().get(level);
             if (info != null) {
-                GameImage levelTextureImage = info.getLevelPreviewScreenshotImage();
+                VloImage levelTextureImage = info.getLevelPreviewScreenshotImage();
                 if (levelTextureImage != null)
                     getGameInstance().getLevelImageMap().put(level, levelImage = FXUtils.toFXImage(Utils.resizeImage(levelTextureImage.toBufferedImage(), 32, 32), false));
             }
@@ -216,7 +216,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> implement
      * Gets the VLO file which is loaded at the same time as the map.
      * @return vloFile, if any
      */
-    public VLOArchive getVloFile() {
+    public VloFile getVloFile() {
         if (this.cachedVloFile != null)
             return this.cachedVloFile;
 

@@ -2,16 +2,16 @@ package net.highwayfrogs.editor.games.sony.shared.model.primitive;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
-import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.model.meshview.PTModelMesh;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.Arrays;
 
@@ -245,7 +245,7 @@ public class PTPolygon extends SCGameData<SCGameInstance> implements IPTPrimitiv
      * Gets the texture held by this polygon.
      * @return texture
      */
-    public GameImage getTexture() {
+    public VloImage getTexture() {
         return getGameInstance().getMainArchive().getImageByTextureId(this.imageId);
     }
 
@@ -300,8 +300,8 @@ public class PTPolygon extends SCGameData<SCGameInstance> implements IPTPrimitiv
                 this.colors[i].copyFrom(shadeTexture.getColors()[i]);
 
         // Load texture.
-        if (shadeTexture.getTextureSource() instanceof GameImage) {
-            GameImage gameImage = (GameImage) shadeTexture.getTextureSource();
+        if (shadeTexture.getTextureSource() instanceof VloImage) {
+            VloImage gameImage = (VloImage) shadeTexture.getTextureSource();
             this.imageId = gameImage.getTextureId();
         }
     }

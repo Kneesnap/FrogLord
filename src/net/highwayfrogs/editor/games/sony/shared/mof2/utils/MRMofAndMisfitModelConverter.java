@@ -4,10 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.standard.SVector;
 import net.highwayfrogs.editor.file.standard.psx.PSXMatrix;
-import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
-import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
@@ -17,6 +13,8 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.animation.flipbook.MRMofFl
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.transform.MRAnimatedMofTransform;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.transform.MRAnimatedMofTransformType;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.*;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.system.IntList;
 import net.highwayfrogs.editor.system.mm3d.MisfitModel3DObject;
 import net.highwayfrogs.editor.system.mm3d.blocks.*;
@@ -45,9 +43,7 @@ public class MRMofAndMisfitModelConverter {
     private static final String MATERIAL_NAME_PREFIX = "tex";
     private static final String METADATA_KEY_TRANSFORM_TYPE = "transformType";
     private static final String METADATA_KEY_MODEL_INDEX = "localMofModelIndex";
-    private static final ImageFilterSettings MOF_EXPORT_FILTER = new ImageFilterSettings(ImageState.EXPORT)
-            .setAllowTransparency(true)
-            .setTrimEdges(true);
+    private static final int MOF_EXPORT_FILTER = VloImage.DEFAULT_IMAGE_NO_PADDING_EXPORT_SETTINGS;
 
     /**
      * Convert a MOF to a MisfitModel3D.
@@ -178,7 +174,7 @@ public class MRMofAndMisfitModelConverter {
                 MRMofMMMaterialData data;
                 if (polygon.getPolygonType().isTextured()) {
                     data = dataMap.computeIfAbsent(new ColorKey(polygon.getTextureId(), polygon.getColor()), key -> {
-                        GameImage image = polygon.getDefaultTexture();
+                        VloImage image = polygon.getDefaultTexture();
                         int localId = image.getLocalImageID();
                         int texId = image.getTextureId();
 
@@ -264,7 +260,7 @@ public class MRMofAndMisfitModelConverter {
      */
     private static int addMofPolygon(MisfitModel3DObject output, int partVertexStartAt, MRMofPolygon polygon) {
         int newFaceIndex = output.getTriangleFaces().size();
-        GameImage image = polygon.getDefaultTexture();
+        VloImage image = polygon.getDefaultTexture();
         short flags = polygon.getMofPart().isHiddenByConfiguration() ? MMTriangleFaceBlock.FLAG_HIDDEN : 0;
         if (polygon.getVertexCount() == 4) {
             output.getTriangleFaces().addTriangle(partVertexStartAt + polygon.getVertices()[2],
@@ -323,7 +319,7 @@ public class MRMofAndMisfitModelConverter {
         }
     }
 
-    private static MMTextureCoordinatesBlock addTriangleUvs(MisfitModel3DObject output, int faceIndex, MRMofPolygon polygon, GameImage image, int uvIndex0, int uvIndex1, int uvIndex2) {
+    private static MMTextureCoordinatesBlock addTriangleUvs(MisfitModel3DObject output, int faceIndex, MRMofPolygon polygon, VloImage image, int uvIndex0, int uvIndex1, int uvIndex2) {
         if (!polygon.getPolygonType().isTextured())
             return null;
 
@@ -372,7 +368,7 @@ public class MRMofAndMisfitModelConverter {
     @Getter
     @AllArgsConstructor
     private static final class MRMofMMMaterialData {
-        private final GameImage image;
+        private final VloImage image;
         private final long externalTextureIndex;
         private final MMTriangleGroupsBlock group;
         private final MMMaterialsBlock material;
@@ -562,8 +558,8 @@ public class MRMofAndMisfitModelConverter {
 
         // Figure out which textures are allowed. (All of them) Maybe later we can put extra restrictions to figure out which ones are loaded when the model is loaded.
         Set<Short> allowedTextureIds = new HashSet<>();
-        for (VLOArchive vloArchive : staticMof.getArchive().getAllFiles(VLOArchive.class))
-            for (GameImage gameImage : vloArchive.getImages())
+        for (VloFile vloArchive : staticMof.getArchive().getAllFiles(VloFile.class))
+            for (VloImage gameImage : vloArchive.getImages())
                 allowedTextureIds.add(gameImage.getTextureId());
 
         // Convert each joint to a new MRMofPart.

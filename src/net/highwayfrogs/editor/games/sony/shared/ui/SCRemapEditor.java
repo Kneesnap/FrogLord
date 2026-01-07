@@ -7,11 +7,11 @@ import javafx.scene.control.ListView;
 import javafx.scene.input.MouseButton;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.fx.wrapper.LazyFXListCell;
 
@@ -25,7 +25,7 @@ public class SCRemapEditor<TFile extends SCGameFile<?>> {
     @NonNull private final Label remapListLabel;
     @NonNull private final ListView<Short> remapList;
     @NonNull private final Supplier<TFile> fileSupplier;
-    @NonNull private final Function<TFile, VLOArchive> vloGetter;
+    @NonNull private final Function<TFile, VloFile> vloGetter;
     @NonNull private final Function<TFile, TextureRemapArray> remapGetter;
 
     /**
@@ -48,11 +48,11 @@ public class SCRemapEditor<TFile extends SCGameFile<?>> {
             this.remapList.setItems(FXCollections.observableArrayList(textureRemapIdList));
             this.remapList.getSelectionModel().selectFirst();
             this.remapList.setCellFactory(param -> new LazyFXListCell<>((textureId, index) -> {
-                GameImage image = resolveGameImage(textureId);
+                VloImage image = resolveGameImage(textureId);
                 String originalName = image != null ? image.getOriginalName() : null;
                 return index + ": " + (originalName != null ? originalName + " (" + textureId + ")" : "Texture " + textureId);
             }, (textureId, index) -> {
-                GameImage image = resolveGameImage(textureId);
+                VloImage image = resolveGameImage(textureId);
                 return image != null ? image.toFXImage(MWDFile.VLO_ICON_SETTING) : null;
             }));
 
@@ -66,7 +66,7 @@ public class SCRemapEditor<TFile extends SCGameFile<?>> {
         }
     }
 
-    private GameImage resolveGameImage(Short textureId) {
+    private VloImage resolveGameImage(Short textureId) {
         if (textureId == null)
             return null;
 
@@ -74,8 +74,8 @@ public class SCRemapEditor<TFile extends SCGameFile<?>> {
         if (file == null)
             return null;
 
-        VLOArchive vloArchive = this.vloGetter.apply(file);
-        GameImage temp = vloArchive != null ? vloArchive.getImageByTextureId(textureId, false) : null;
+        VloFile vloArchive = this.vloGetter.apply(file);
+        VloImage temp = vloArchive != null ? vloArchive.getImageByTextureId(textureId, false) : null;
         if (temp != null)
             return temp;
 
@@ -97,7 +97,7 @@ public class SCRemapEditor<TFile extends SCGameFile<?>> {
             return;
 
         // Ensure we've got the VLO to find textures from.
-        VLOArchive vloFile = this.vloGetter.apply(file);
+        VloFile vloFile = this.vloGetter.apply(file);
         if (vloFile == null) {
             FXUtils.makePopUp("Cannot edit remaps for a map which has no associated VLO!", AlertType.WARNING);
             return;

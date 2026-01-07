@@ -25,6 +25,16 @@ public class ColorUtils {
     }
 
     /**
+     * Sets the alpha value in an ARGB8888 value.
+     * @param argb The int value to update.
+     * @param alpha the color value to apply.
+     * @return newArgb
+     */
+    public static int setAlpha(int argb, byte alpha) {
+        return ((argb & 0x00FFFFFF) | (alpha << 24));
+    }
+
+    /**
      * Get the alpha value from an ARGB8888 value.
      * @param argb The int value to get the color from.
      * @return colorValue

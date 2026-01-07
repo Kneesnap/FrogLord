@@ -1,7 +1,6 @@
-package net.highwayfrogs.editor.file.vlo;
+package net.highwayfrogs.editor.utils.image;
 
 import javafx.scene.image.PixelFormat;
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.system.IntList;
 import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -13,25 +12,10 @@ import java.nio.IntBuffer;
 import java.util.Arrays;
 
 /**
- * Apply image filters.
- * Created by Kneesnap on 12/1/2018.
+ * Contains static utilities for working with images.
+ * Created by Kneesnap on 01/01/2026.
  */
-public class ImageWorkHorse {
-    /**
-     * Trim the padding off of this image.
-     * @param gameImage The GameImage to get trimming data from.
-     * @param image     The image to trim.
-     * @return trimmedImage
-     */
-    public static BufferedImage trimEdges(GameImage gameImage, BufferedImage image) {
-        BufferedImage trimImage = new BufferedImage(gameImage.getIngameWidth(), gameImage.getIngameHeight(), image.getType());
-        Graphics2D graphics = trimImage.createGraphics();
-        graphics.drawImage(image, -gameImage.getLeftPadding(), -gameImage.getUpPadding(), gameImage.getFullWidth(), gameImage.getFullHeight(), null);
-        graphics.dispose();
-
-        return trimImage;
-    }
-
+public class ImageUtils {
     /**
      * Trim the padding off of this image.
      * @param image     The image to trim.
@@ -74,24 +58,6 @@ public class ImageWorkHorse {
     }
 
     /**
-     * Scale an image by its width.
-     * @param image       The image to scale.
-     * @param scaleFactor The factor to scale the image horizontally by.
-     * @return scaledImage
-     */
-    public static BufferedImage scaleWidth(BufferedImage image, double scaleFactor) {
-        int newWidth = (int) (image.getWidth() * scaleFactor);
-        if (newWidth == image.getWidth())
-            return image; // There would be no change.
-
-        BufferedImage scaleImage = new BufferedImage(newWidth, image.getHeight(), image.getType());
-        Graphics2D graphics = scaleImage.createGraphics();
-        graphics.drawImage(image, 0, 0, newWidth, image.getHeight(), null);
-        graphics.dispose();
-        return scaleImage;
-    }
-
-    /**
      * Resize an image to a new width / height.
      * @param image           The image to scale.
      * @param newWidth        The new image width.
@@ -112,49 +78,6 @@ public class ImageWorkHorse {
     }
 
     /**
-     * Resize an image to a new width / height.
-     * @param image           The image to scale.
-     * @param sideLength      The image size to rescale to.
-     * @param nearestNeighbor Whether nearest neighbor interpolation should be used.
-     * @return scaledImage
-     */
-    public static BufferedImage scaleForDisplay(BufferedImage image, int sideLength, boolean nearestNeighbor) {
-        if (sideLength == image.getWidth() || sideLength == image.getHeight())
-            return image; // There would be no change.
-
-        double scaleFactor;
-        if (image.getWidth() > image.getHeight()) {
-            scaleFactor = (double) sideLength / image.getWidth();
-        } else {
-            scaleFactor = (double) sideLength / image.getHeight();
-        }
-
-        int newWidth = (int) Math.round(scaleFactor * image.getWidth());
-        int newHeight = (int) Math.round(scaleFactor * image.getHeight());
-
-        BufferedImage scaleImage = new BufferedImage(newWidth, newHeight, image.getType());
-        Graphics2D graphics = scaleImage.createGraphics();
-        graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, nearestNeighbor ? RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR : RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-        graphics.drawImage(image, 0, 0, newWidth, newHeight, null);
-        graphics.dispose();
-        return scaleImage;
-    }
-
-    /**
-     * Flip an image vertically.
-     * @param image The image to flip.
-     * @return flippedImage
-     */
-    public static BufferedImage flipVertically(BufferedImage image) {
-        BufferedImage trimImage = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
-        Graphics2D graphics = trimImage.createGraphics();
-        graphics.drawImage(image, 0, image.getHeight(), image.getWidth(), -image.getHeight(), null);
-        graphics.dispose();
-
-        return trimImage;
-    }
-
-    /**
      * Apply a filter to an image.
      * @param image  The image to work on.
      * @param filter The filter to apply.
@@ -170,28 +93,6 @@ public class ImageWorkHorse {
         graphics.dispose();
 
         return newImage;
-    }
-
-    // Black -> Transparency
-    public static class TransparencyFilter extends RGBImageFilter {
-        public static TransparencyFilter INSTANCE = new TransparencyFilter();
-
-        @Override
-        public int filterRGB(int x, int y, int argb) {
-            int colorWOAlpha = argb & 0x00FFFFFF;
-            return colorWOAlpha == 0x000000 ? colorWOAlpha : argb;
-        }
-    }
-
-    // Transparency -> Black
-    public static class BlackFilter extends RGBImageFilter {
-        public static BlackFilter INSTANCE = new BlackFilter();
-
-        @Override
-        public int filterRGB(int x, int y, int rgb) {
-            int alpha = rgb >>> (3 * Constants.BITS_PER_BYTE);
-            return alpha == 0 ? 0xFF000000 : rgb;
-        }
     }
 
     /**
@@ -226,6 +127,7 @@ public class ImageWorkHorse {
      * @param x the x coordinate to place the texture in the target at.
      * @param y the y coordinate to place the texture in the target at.
      */
+    @SuppressWarnings("unused")
     public static void drawImageFast(BufferedImage sourceImage, BufferedImage targetImage, Graphics targetGraphics, int x, int y) {
         if (sourceImage.getType() != targetImage.getType()) {
             if (targetGraphics != null) {
@@ -237,7 +139,7 @@ public class ImageWorkHorse {
             }
         } else {
             int[] rawSourceImage = getReadOnlyPixelIntegerArray(sourceImage);
-            int[] rawTargetImage = getPixelIntegerArray(targetImage);
+            int[] rawTargetImage = getWritablePixelIntegerArray(targetImage);
 
             int sourceImageWidth = sourceImage.getWidth();
             int targetImageWidth = targetImage.getWidth();
@@ -307,7 +209,7 @@ public class ImageWorkHorse {
      * @param awtImage the image to edit directly
      * @return integerArray
      */
-    public static int[] getPixelIntegerArray(BufferedImage awtImage) {
+    public static int[] getWritablePixelIntegerArray(BufferedImage awtImage) {
         if (awtImage == null)
             return null;
 
@@ -367,7 +269,7 @@ public class ImageWorkHorse {
         if (!(buffer instanceof DataBufferInt))
             awtImage = convertBufferedImageToFormat(awtImage, BufferedImage.TYPE_INT_ARGB);
 
-        return getPixelIntegerArray(awtImage);
+        return getWritablePixelIntegerArray(awtImage);
     }
 
     /**
@@ -415,7 +317,7 @@ public class ImageWorkHorse {
      * @param sourceImage The image to convert
      * @return convertedImage
      */
-    public static BufferedImage tryConvertToRgbImage(BufferedImage sourceImage) {
+    public static BufferedImage tryConvertToRgb888Image(BufferedImage sourceImage) {
         if (sourceImage == null)
             throw new NullPointerException("sourceBufferedImage");
 
@@ -442,21 +344,36 @@ public class ImageWorkHorse {
      * @return convertedImage
      */
     public static BufferedImage tryConvertTo8BitIndexedBufferedImage(BufferedImage sourceImage) {
+        return tryConvertTo8BitIndexedBufferedImage(sourceImage, 256);
+    }
+
+    private static final int MAX_COLORS_BYTE_INDEXED = 256;
+
+    /**
+     * Converts to a byte-indexed image with a maximum of 256 colors, if possible. Otherwise, null will be returned.
+     * @param sourceImage The image to convert
+     * @return convertedImage
+     */
+    public static BufferedImage tryConvertTo8BitIndexedBufferedImage(BufferedImage sourceImage, int maxColorCount) {
         if (sourceImage == null)
             throw new NullPointerException("sourceBufferedImage");
-
-        if (sourceImage.getType() == BufferedImage.TYPE_BYTE_INDEXED)
+        if (maxColorCount <= 0 || maxColorCount > MAX_COLORS_BYTE_INDEXED)
+            throw new IllegalArgumentException("Invalid maxColorCount: " + maxColorCount);
+        if (sourceImage.getType() == BufferedImage.TYPE_BYTE_INDEXED && ((IndexColorModel) sourceImage.getColorModel()).getMapSize() <= maxColorCount)
             return sourceImage;
 
-        final int maxColorCount = 256;
-
         // With this constructor, we create an indexed buffered image with the same dimension and with a default 256 color model
-        IntList colors = new IntList(maxColorCount);
-        colors.add(0);
+        IntList colors = new IntList(MAX_COLORS_BYTE_INDEXED); // Must be the max color byte size to avoid index error.
         int[] imagePixels = sourceImage.getRGB(0, 0, sourceImage.getWidth(), sourceImage.getHeight(), null, 0, sourceImage.getWidth());
+        boolean transparentColorAdded = false;
         for (int i = 0; i < imagePixels.length; i++) {
             int rgb = imagePixels[i];
-            if (rgb != 0 && ColorUtils.getAlpha(rgb) == 0) {
+            if (ColorUtils.getAlpha(rgb) == 0) {
+                if (!transparentColorAdded) {
+                    transparentColorAdded = true;
+                    colors.add(0, 0); // Transparent color is always at index 0.
+                }
+
                 imagePixels[i] = 0; // All transparent pixels should share the same color as to allow for maximum color re-use.
                 continue;
             }
@@ -472,41 +389,10 @@ public class ImageWorkHorse {
         }
 
         // Create the new image.
-        IndexColorModel colorPalette = new IndexColorModel(8, 256, colors.getInternalArray(), 0, true, 0, DataBuffer.TYPE_BYTE);
+        IndexColorModel colorPalette = new IndexColorModel(8, MAX_COLORS_BYTE_INDEXED, colors.getInternalArray(), 0, true, 0, DataBuffer.TYPE_BYTE);
         BufferedImage newImage = new BufferedImage(sourceImage.getWidth(), sourceImage.getHeight(), BufferedImage.TYPE_BYTE_INDEXED, colorPalette);
         newImage.setRGB(0, 0, sourceImage.getWidth(), sourceImage.getHeight(), imagePixels, 0, sourceImage.getWidth());
         return newImage;
-    }
-
-    /**
-     * Converts an image to a byte-indexed image.
-     * Copied from <a href="https://stackoverflow.com/questions/22613520/how-to-convert-bufferedimage-to-indexed-type-and-then-extract-the-argb-color-pal"/>
-     * @param sourceBufferedImage The image to convert
-     * @return convertedImage
-     */
-    public static BufferedImage rgbaToIndexedBufferedImage(BufferedImage sourceBufferedImage) {
-        // With this constructor, we create an indexed buffered image with the same dimension and with a default 256 color model
-        BufferedImage indexedImage = new BufferedImage(sourceBufferedImage.getWidth(), sourceBufferedImage.getHeight(), BufferedImage.TYPE_BYTE_INDEXED);
-
-
-        ColorModel cm = indexedImage.getColorModel();
-        IndexColorModel icm = (IndexColorModel) cm;
-
-        int size = icm.getMapSize();
-
-        byte[] reds = new byte[size];
-        byte[] greens = new byte[size];
-        byte[] blues = new byte[size];
-        icm.getReds(reds);
-        icm.getGreens(greens);
-        icm.getBlues(blues);
-
-        WritableRaster raster = indexedImage.getRaster();
-        int pixel = raster.getSample(0, 0, 0);
-        IndexColorModel icm2 = new IndexColorModel(8, size, reds, greens, blues, pixel);
-        indexedImage = new BufferedImage(icm2, raster, sourceBufferedImage.isAlphaPremultiplied(), null);
-        indexedImage.getGraphics().drawImage(sourceBufferedImage, 0, 0, null);
-        return indexedImage;
     }
 
     /**
@@ -542,5 +428,25 @@ public class ImageWorkHorse {
                     return false;
 
         return true;
+    }
+
+    /**
+     * Creates an AWT image from the pixel buffer array
+     * @param width the width of the image
+     * @param height the height of the image
+     * @param type the type of image
+     * @param pixelBuffer the pixel buffer to load pixel data from
+     * @return loadedImage
+     */
+    public static BufferedImage createImageFromArray(int width, int height, int type, int[] pixelBuffer) {
+        if (pixelBuffer == null)
+            throw new NullPointerException("pixelBuffer");
+        if ((width * height) != pixelBuffer.length)
+            throw new IllegalArgumentException("Dimensions mismatch! (Width: " + width + ", Height: " + height + ") should be usable with a buffer of " + (width * height) + " elements, but the pixelBuffer actually had " + pixelBuffer.length + " element(s).");
+
+        BufferedImage image = new BufferedImage(width, height, type);
+        int[] writeBuffer = getWritablePixelIntegerArray(image);
+        System.arraycopy(pixelBuffer, 0, writeBuffer, 0, writeBuffer.length);
+        return image;
     }
 }

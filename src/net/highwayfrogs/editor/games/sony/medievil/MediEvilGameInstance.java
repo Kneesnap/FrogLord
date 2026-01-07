@@ -3,8 +3,8 @@ package net.highwayfrogs.editor.games.sony.medievil;
 import lombok.Getter;
 import lombok.NonNull;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
+import net.highwayfrogs.editor.games.psx.image.PsxVramScreenSize;
 import net.highwayfrogs.editor.games.sony.*;
 import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
 import net.highwayfrogs.editor.games.sony.medievil.entity.MediEvilEntityTable;
@@ -21,6 +21,7 @@ import net.highwayfrogs.editor.games.sony.shared.sound.SCSplitVHFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.LazySCGameFileListGroup;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -83,7 +84,7 @@ public class MediEvilGameInstance extends SCGameInstance implements ISCMWDHeader
             if (levelTableEntry == null)
                 continue;
 
-            VLOArchive mainVloFile = levelTableEntry.getVloFile();
+            VloFile mainVloFile = levelTableEntry.getVloFile();
             if (mainVloFile == null)
                 continue;
 
@@ -96,7 +97,7 @@ public class MediEvilGameInstance extends SCGameInstance implements ISCMWDHeader
     }
 
     @Override
-    protected VLOArchive resolveMainVlo(MRModel model) {
+    protected VloFile resolveMainVlo(MRModel model) {
         // Set VLO archive to the map VLO if currently unset.
         WADFile wadFile = model.getParentWadFile();
         if (wadFile != null) {
@@ -114,7 +115,7 @@ public class MediEvilGameInstance extends SCGameInstance implements ISCMWDHeader
                 searchFileName = searchFileName.replace("_MEM", "_VRAM");
             }
 
-            VLOArchive foundVlo = getMainArchive().getFileByName(searchFileName);
+            VloFile foundVlo = getMainArchive().getFileByName(searchFileName);
             if (foundVlo != null)
                 return foundVlo;
         }
@@ -196,6 +197,13 @@ public class MediEvilGameInstance extends SCGameInstance implements ISCMWDHeader
         fileListView.addGroup(new LazySCGameFileListGroup("VAB Sound", (file, index) -> file instanceof SCSplitVBFile || file instanceof SCSplitVHFile));
         fileListView.addGroup(new SCGameFileListTypeIdGroup("QTR [Quad Tree]", FILE_TYPE_QTR));
         fileListView.addGroup(new SCGameFileListTypeIdGroup("PGD [Collision Grid]", FILE_TYPE_PGD));
+    }
+
+    @Override
+    protected void setupFrameBuffers() {
+        // Tested in ECTS Alpha, Build 0.28 PAL, Build 0.31, and Reviewable Version.
+        this.primaryFrameBuffer = new PsxVramScreenSize(0, 0, 512, getDefaultFrameBufferHeight());
+        this.secondaryFrameBuffer = this.primaryFrameBuffer.cloneBelow();
     }
 
     /**

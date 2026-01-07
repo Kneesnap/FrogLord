@@ -1,6 +1,5 @@
 package net.highwayfrogs.editor.games.konami.greatquest;
 
-import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxEntry;
 import net.highwayfrogs.editor.games.konami.greatquest.audio.SBRFile.SfxEntryStreamAttributes;
@@ -25,6 +24,7 @@ import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.image.ImageUtils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.MessageTrackingLogger;
 import net.highwayfrogs.editor.utils.objects.OptionalArguments;
@@ -434,7 +434,7 @@ public class GreatQuestAssetUtils {
                 if (newWidth <= 0 || newHeight <= 0) {
                     logger.severe("Skipping texture resize of '%s'%s because '%s' was not formatted properly!", localChunkName, getCodeLocation(textureCfg, node), rawDimensions);
                 } else if (newWidth != gqImageFile.getWidth() || newHeight != gqImageFile.getHeight()) {
-                    gqImageFile.setImage(ImageWorkHorse.resizeImage(gqImageFile.getImage(), newWidth, newHeight, true));
+                    gqImageFile.setImage(ImageUtils.resizeImage(gqImageFile.getImage(), newWidth, newHeight, true));
                 }
             }
 

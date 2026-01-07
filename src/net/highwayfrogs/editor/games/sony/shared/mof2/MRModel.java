@@ -9,7 +9,6 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.NameBank;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
@@ -30,6 +29,7 @@ import net.highwayfrogs.editor.games.sony.shared.mof2.utils.MRMofAndMisfitModelC
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.utils.DynamicMeshObjExporter;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.gui.DefaultFileUIController.IExtraUISupplier;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
@@ -74,7 +74,7 @@ public class MRModel extends SCSharedGameFile implements ISCTextureUser, IExtraU
     @Setter private boolean incomplete;
     private MRModel completeCounterpart;
 
-    @Setter private transient VLOArchive vloFile;
+    @Setter private transient VloFile vloFile;
 
     public static final int FLAG_ANIMATION_FILE = Constants.BIT_FLAG_3; // This is an animation MOF file.
 

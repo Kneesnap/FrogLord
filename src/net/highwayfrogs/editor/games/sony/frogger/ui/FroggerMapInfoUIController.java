@@ -13,7 +13,6 @@ import javafx.scene.layout.Priority;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.file.config.exe.LevelInfo;
-import net.highwayfrogs.editor.file.vlo.GameImage;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapLevelID;
@@ -24,6 +23,7 @@ import net.highwayfrogs.editor.games.sony.frogger.utils.FFSUtil;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerUtils;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCRemapEditor;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.components.propertylist.PropertyListViewerComponent;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
@@ -105,12 +105,12 @@ public class FroggerMapInfoUIController extends SCFileEditorUIController<Frogger
         if (level != null && !mapFile.getGameInstance().getLevelInfoMap().isEmpty()) {
             LevelInfo info = mapFile.getGameInstance().getLevelInfoMap().get(level);
             if (info != null) {
-                GameImage gamePreviewImage = info.getLevelPreviewScreenshotImage();
+                VloImage gamePreviewImage = info.getLevelPreviewScreenshotImage();
                 if (gamePreviewImage != null)
-                    this.levelPreviewScreenshotView.setImage(gamePreviewImage.toFXImage());
-                GameImage gameNameImage = info.getLevelNameImage();
+                    this.levelPreviewScreenshotView.setImage(gamePreviewImage.toFXImage(VloImage.DEFAULT_IMAGE_NO_PADDING_EXPORT_SETTINGS));
+                VloImage gameNameImage = info.getLevelNameImage();
                 if (gameNameImage != null)
-                    this.levelNameImageView.setImage(gameNameImage.toFXImage());
+                    this.levelNameImageView.setImage(gameNameImage.toFXImage(VloImage.DEFAULT_IMAGE_STRIPPED_VIEW_SETTINGS));
             }
         }
 

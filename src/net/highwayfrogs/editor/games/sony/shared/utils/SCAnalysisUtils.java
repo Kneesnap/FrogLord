@@ -2,12 +2,12 @@ package net.highwayfrogs.editor.games.sony.shared.utils;
 
 import lombok.Data;
 import lombok.NonNull;
-import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCUtils;
 import net.highwayfrogs.editor.games.sony.shared.ISCTextureUser;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.IndexBitArray;
 
@@ -55,10 +55,10 @@ public class SCAnalysisUtils {
             addTexturesToBitArray(usedTextures, textureUser);
 
         ILogger logger = instance.getLogger();
-        for (VLOArchive vloArchive : instance.getMainArchive().getAllFiles(VLOArchive.class)) {
+        for (VloFile vloArchive : instance.getMainArchive().getAllFiles(VloFile.class)) {
             int unusedTextures = 0;
             for (int i = 0; i < vloArchive.getImages().size(); i++) {
-                GameImage image = vloArchive.getImages().get(i);
+                VloImage image = vloArchive.getImages().get(i);
                 if (usedTextures.getBit(image.getTextureId()))
                     continue;
 

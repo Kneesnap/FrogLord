@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.games.sony.oldfrogger;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.games.psx.image.PsxVramScreenSize;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
@@ -21,6 +21,7 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -136,7 +137,7 @@ public class OldFroggerGameInstance extends SCGameInstance {
             if (levelTableEntry == null)
                 continue;
 
-            VLOArchive mainVloArchive = levelTableEntry.getMainVLOArchive();
+            VloFile mainVloArchive = levelTableEntry.getMainVloFile();
             if (mainVloArchive == null)
                 continue;
 
@@ -155,6 +156,12 @@ public class OldFroggerGameInstance extends SCGameInstance {
     public void setupFileGroups(SCGameFileGroupedListViewComponent<? extends SCGameInstance> fileListView) {
         fileListView.addGroup(new SCGameFileListTypeIdGroup("MAP [Game Maps]", FILE_TYPE_MAP));
         fileListView.addGroup(new SCGameFileListTypeIdGroup("LAN [Language]", FILE_TYPE_LANGUAGE));
+    }
+
+    @Override
+    protected void setupFrameBuffers() {
+        this.primaryFrameBuffer = new PsxVramScreenSize(0, 0, 320, getDefaultFrameBufferHeight());
+        this.secondaryFrameBuffer = this.primaryFrameBuffer.cloneBelow();
     }
 
     @Override

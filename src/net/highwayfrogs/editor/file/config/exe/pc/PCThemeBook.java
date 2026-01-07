@@ -4,10 +4,10 @@ import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.file.config.exe.ThemeBook;
 import net.highwayfrogs.editor.file.config.exe.psx.PSXThemeBook;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
@@ -64,7 +64,7 @@ public class PCThemeBook extends ThemeBook {
     }
 
     @Override
-    public VLOArchive getVLO(boolean isMultiplayer, boolean isLowPolyMode) {
+    public VloFile getVLO(boolean isMultiplayer, boolean isLowPolyMode) {
         if (!isValid())
             return null;
 

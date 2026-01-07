@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.psx.shading;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
@@ -10,6 +9,7 @@ import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.gui.texture.Texture;
 import net.highwayfrogs.editor.system.math.Vector2f;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.image.ImageUtils;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -283,7 +283,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
 
     private static BufferedImage clearImage(BufferedImage image) {
         // Prevents images from looking "deep fried"
-        int[] array = ImageWorkHorse.getPixelIntegerArray(image);
+        int[] array = ImageUtils.getWritablePixelIntegerArray(image);
         if (array != null)
             Arrays.fill(array, 0);
 
@@ -312,38 +312,23 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
         switch (this.polygonType) {
             case POLY_F3:
             case POLY_F4:
-                return applyImagePostFx(PSXTextureShader.makeFlatShadedImage(targetImage, getWidth(), getHeight(), this.colors[0]));
+                return PSXTextureShader.makeFlatShadedImage(targetImage, getWidth(), getHeight(), this.colors[0], this.semiTransparentMode);
             case POLY_FT3:
             case POLY_FT4:
-                return applyImagePostFx(PSXTextureShader.makeTexturedFlatShadedImage(sourceImage, targetImage, this.colors[0], true));
+                return PSXTextureShader.makeTexturedFlatShadedImage(sourceImage, targetImage, this.colors[0], true);
             case POLY_G3:
             case POLY_G4:
-                return applyImagePostFx(PSXTextureShader.makeGouraudShadedImage(targetImage, getWidth(), getHeight(), this.colors));
+                return PSXTextureShader.makeGouraudShadedImage(targetImage, getWidth(), getHeight(), this.colors, this.semiTransparentMode);
             case POLY_GT3:
             case POLY_GT4:
                 if (doAllColorsMatch()) {
-                    return applyImagePostFx(PSXTextureShader.makeTexturedFlatShadedImage(sourceImage, targetImage, this.colors[0], this.enableModulation));
+                    return PSXTextureShader.makeTexturedFlatShadedImage(sourceImage, targetImage, this.colors[0], this.enableModulation);
                 } else {
-                    return applyImagePostFx(PSXTextureShader.makeTexturedGouraudShadedImage(sourceImage, targetImage, this.textureSource, this.colors, this.textureUVs, this.textureScaleX, this.textureScaleY, this.debugDrawCornerMarkers, this.enableModulation));
+                    return PSXTextureShader.makeTexturedGouraudShadedImage(sourceImage, targetImage, this.textureSource, this.colors, this.textureUVs, this.textureScaleX, this.textureScaleY, this.debugDrawCornerMarkers, this.enableModulation);
                 }
             default:
                 throw new UnsupportedOperationException("The polygon type " + this.polygonType + " is not supported.");
         }
-    }
-
-    private BufferedImage applyImagePostFx(BufferedImage image) {
-        if (this.semiTransparentMode) {
-            // Reduce opacity / alpha.
-            for (int y = 0; y < image.getHeight(); y++) {
-                for (int x = 0; x < image.getWidth(); x++) {
-                    int rgb = image.getRGB(x, y);
-                    if ((rgb & 0xFF000000L) > 0)
-                        image.setRGB(x, y, (rgb & 0x00FFFFFF) | 0x80000000);
-                }
-            }
-        }
-
-        return image;
     }
 
     @Override

@@ -5,7 +5,6 @@ import javafx.scene.image.WritableImage;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.psx.shading.IPSXShadedMesh;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadedTextureManager.PSXMeshShadedTextureManager;
@@ -13,6 +12,7 @@ import net.highwayfrogs.editor.gui.mesh.DynamicMesh;
 import net.highwayfrogs.editor.gui.mesh.DynamicMeshNode;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.image.ImageUtils;
 import net.highwayfrogs.editor.utils.objects.SortedList;
 
 import java.awt.*;
@@ -356,7 +356,7 @@ public class AtlasBuilderTextureSource implements ITextureSource {
             // The FX image is NOT safe to write async, so it is written here (on the main thread).
             if (this.atlasBuilder.isEnableFxImage()) {
                 BufferedImage awtImage = texture.getImage(); // Gets the cached image.
-                ImageWorkHorse.writeBufferedImageToFxImage(awtImage, this.atlasBuilder.cachedFxImage, texture.getX() + texture.getLeftPaddingEmpty(), texture.getY() + texture.getUpPaddingEmpty());
+                ImageUtils.writeBufferedImageToFxImage(awtImage, this.atlasBuilder.cachedFxImage, texture.getX() + texture.getLeftPaddingEmpty(), texture.getY() + texture.getUpPaddingEmpty());
                 texture.onTextureWrittenToAtlas();
             }
 

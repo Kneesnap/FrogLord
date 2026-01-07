@@ -39,9 +39,14 @@ public class FroggerEntityDataCrack extends FroggerEntityDataMatrix {
     @Override
     public void setupEditor(GUIEditorGrid editor) {
         super.setupEditor(editor);
-        TextField textField = editor.addUnsignedFixedShort("Unused Fall Delay (secs)", this.fallDelay, newFallDelay -> this.fallDelay = newFallDelay, getGameInstance().getFPS());
-        textField.setTooltip(FXUtils.createTooltip("How long to wait before beginning to fall, in seconds.\nThis value seems to be unused."));
-        textField.setDisable(true); // Unused value.
+        if (getParentEntity() != null && "VOL_FALLING_PLATFORM".equals(getParentEntity().getTypeName())) {
+            TextField textField = editor.addUnsignedFixedShort("Fall Delay (secs)", this.fallDelay, newFallDelay -> this.fallDelay = newFallDelay, getGameInstance().getFPS());
+            textField.setTooltip(FXUtils.createTooltip("How long to wait before beginning to fall, in seconds."));
+        } else {
+            TextField textField = editor.addUnsignedFixedShort("Unused Fall Delay (secs)", this.fallDelay, newFallDelay -> this.fallDelay = newFallDelay, getGameInstance().getFPS());
+            textField.setTooltip(FXUtils.createTooltip("How long to wait before beginning to fall, in seconds.\nThis value seems to be unused."));
+            textField.setDisable(true); // Unused value.
+        }
 
         // This has been tested/verified behavior.
         editor.addUnsignedShortField("Hops Before Break", this.hopsBeforeBreak, newHopsBeforeBreak -> this.hopsBeforeBreak = newHopsBeforeBreak)

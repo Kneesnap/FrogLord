@@ -18,9 +18,13 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
+import net.highwayfrogs.editor.games.psx.image.PsxVram;
+import net.highwayfrogs.editor.games.psx.image.PsxVramScreenSize;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.shared.utils.SCImageUtils;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloClut;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.system.AbstractStringConverter;
 import net.highwayfrogs.editor.system.Tuple2;
@@ -56,27 +60,31 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
     private BufferedImage fullImage;
     private BufferedImage[] splitImages;
     private final HashSet<Short> changedPages = new HashSet<>(); // A set of pages which need updating.
-    private final ImageView[] splitImageViews = new ImageView[GameImage.TOTAL_PAGES]; // A set of pages which need updating.
-    private final HBox[] splitHBoxes = new HBox[splitImageViews.length];
+    private final ImageView[] splitImageViews; // A set of pages which need updating.
+    private final HBox[] splitHBoxes;
     private boolean[][] overlapGrid; // Used to test if textures overlap.
     private int selectedPage;
 
     // Configuration:
-    private final VLOArchive vloArchive;
+    private final VloFile vloArchive;
     private final VLOController controller;
-    private GameImage selectedImage;
-    private final Map<GameImage, Tuple2<Short, Short>> originalState = new HashMap<>();
+    private VloImage selectedImage;
+    private final Map<VloImage, Tuple2<Short, Short>> originalState = new HashMap<>();
+
+    public static final int VRAM_EXPORT = VloImage.DEFAULT_IMAGE_NOT_TRANSPARENT_EXPORT_SETTINGS;
 
     public VRAMPageController(VLOController controller) {
         super(controller.getGameInstance());
         this.vloArchive = controller.getFile();
         this.controller = controller;
+        this.splitImageViews = new ImageView[controller.getFile().isPsxMode() ? PsxVram.PSX_VRAM_TOTAL_PAGES : VloImage.PC_VRAM_TOTAL_PAGES];
+        this.splitHBoxes = new HBox[this.splitImageViews.length];
     }
 
     @Override
     protected void onControllerLoad(Node rootNode) {
         // Choose visibility of UI based on
-        this.overlapGrid = new boolean[isPsxMode() ? GameImage.PSX_FULL_PAGE_WIDTH : GameImage.PC_PAGE_WIDTH][isPsxMode() ? GameImage.PSX_PAGE_HEIGHT : GameImage.PC_PAGE_HEIGHT];
+        this.overlapGrid = new boolean[isPsxMode() ? PsxVram.PSX_VRAM_MAX_EXPANDED_POSITION_X : VloImage.PC_VRAM_PAGE_WIDTH][isPsxMode() ? PsxVram.PSX_VRAM_PAGE_HEIGHT : VloImage.PC_VRAM_PAGE_HEIGHT];
         setupImages();
 
         if (isPsxMode()) {
@@ -109,7 +117,7 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
             pcPageSelection.setConverter(new AbstractStringConverter<>(findPage -> {
                 int total = 0;
                 for (int i = 0; i < vloArchive.getImages().size(); i++)
-                    if (vloArchive.getImages().get(i).getMultiplierPage() == findPage)
+                    if (vloArchive.getImages().get(i).getPage() == findPage)
                         total++;
 
                 return "Texture Page #" + findPage + " [" + total + " textures]";
@@ -130,9 +138,9 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
                 return;
 
             double scale = imageView.getFitWidth() / (double) this.splitImages[this.selectedPage].getWidth();
-            int realX = isPsxMode() ? ((this.selectedPage % GameImage.PSX_X_PAGES) * GameImage.PSX_PAGE_WIDTH) + (int) ((evt.getX() / scale) / (GameImage.PSX_FULL_PAGE_WIDTH / GameImage.PSX_PAGE_WIDTH)) : (int) evt.getX();
-            int realY = isPsxMode() ? ((this.selectedPage / GameImage.PSX_X_PAGES) * GameImage.PSX_PAGE_HEIGHT) + (int) evt.getY() : ((this.selectedPage * GameImage.PC_PAGE_HEIGHT) + (int) evt.getY());
-            GameImage newImage = vloArchive.getImage(realX, realY);
+            int realX = isPsxMode() ? ((((this.selectedPage % PsxVram.PSX_VRAM_PAGE_COUNT_X) * PsxVram.PSX_VRAM_PAGE_EXPANDED_WIDTH) + (int) (evt.getX() / scale))) : (int) evt.getX();
+            int realY = isPsxMode() ? ((this.selectedPage / PsxVram.PSX_VRAM_PAGE_COUNT_X) * PsxVram.PSX_VRAM_PAGE_HEIGHT) + (int) evt.getY() : ((this.selectedPage * VloImage.PC_VRAM_PAGE_HEIGHT) + (int) evt.getY());
+            VloImage newImage = getImage(this.vloArchive, realX, realY);
 
             if (newImage == this.selectedImage) {
                 this.imageView.requestFocus(); // Allow arrow keys to be listened for, instead of moving cursor.
@@ -146,13 +154,50 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
                 this.imageView.requestFocus(); // Allow arrow keys to be listened for, instead of moving cursor.
             }
 
+            if (this.selectedImage == newImage)
+                return;
+
+            // Update image selection.
+            Graphics2D graphics = this.fullImage.createGraphics();
+            try {
+                if (this.selectedImage != null) {
+                    writeVramImage(graphics, this.selectedImage, false);
+                    markPagesChanged(this.selectedImage);
+                }
+
+                if (newImage != null) {
+                    writeVramImage(graphics, newImage, true);
+                    markPagesChanged(newImage);
+                }
+            } finally {
+                graphics.dispose();
+            }
+
             this.selectedImage = newImage;
+            updateImage();
             updateDisplay();
         });
 
         FXUtils.setHandleTestKeyPress(this.xField, NumberUtils::isSignedShort, newX -> setPosition(Integer.parseInt(newX), this.selectedImage.getVramY(), false));
         FXUtils.setHandleTestKeyPress(this.yField, NumberUtils::isSignedShort, newY -> setPosition(this.selectedImage.getVramX(), Integer.parseInt(newY), false));
         updateAll();
+    }
+
+    private static VloImage getImage(VloFile file, double x, double y) {
+        for (VloImage image : file.getImages()) {
+            int width = image.getPaddedWidth();
+            if (file.isPsxMode())
+                width *= getWidthDrawMultiplier(image);
+
+            int startX = image.getExpandedVramX();
+            int endX = startX + width;
+            int startY = image.getVramY();
+            int endY = startY + image.getPaddedHeight();
+            if (x >= startX && x < endX && y >= startY && y < endY)
+                return image;
+        }
+
+        return null;
     }
 
     @Override
@@ -213,14 +258,13 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
         if (this.selectedImage == null)
             return;
 
-        short finalX = (short) Math.min(Math.max(0, x), (this.fullImage.getWidth() - this.selectedImage.getFullWidth()));
-        short finalY = (short) Math.min(Math.max(0, y), this.fullImage.getHeight() - this.selectedImage.getFullHeight());
+        short finalX = (short) Math.min(Math.max(0, x), (this.fullImage.getWidth() - this.selectedImage.getPaddedWidth()));
+        short finalY = (short) Math.min(Math.max(0, y), this.fullImage.getHeight() - this.selectedImage.getPaddedHeight());
         updateTextFields |= ((short) x != finalX) || ((short) y != finalY);
         if (finalX == this.selectedImage.getVramX() && finalY == this.selectedImage.getVramY())
             return; // No change!
 
-        this.changedPages.add(this.selectedImage.getMultiplierPage()); // Mark the source page for updating.
-        this.changedPages.add(this.selectedImage.getEndPage()); // Make sure if the image is split among two texture pages they both get updated.
+        markPagesChanged(this.selectedImage);
         saveOriginalPosition();
 
         this.selectedImage.setVramX(finalX);
@@ -231,13 +275,30 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
         if (updateTextFields)
             yField.setText(String.valueOf(this.selectedImage.getVramY()));
 
-        this.changedPages.add(this.selectedImage.getMultiplierPage()); // Mark the destination page for updating.
-        this.changedPages.add(this.selectedImage.getEndPage()); // Make sure if the image is split among two texture pages they both get updated.
+        markPagesChanged(this.selectedImage);
         updateAll();
     }
 
+    private void markPagesChanged(VloImage image) {
+        short startPage = image.getPage();
+        short endPage = image.getEndPage();
+
+        if (this.vloArchive.isPsxMode()) {
+            int startPageX = startPage % PsxVram.PSX_VRAM_PAGE_COUNT_X;
+            int startPageY = startPage / PsxVram.PSX_VRAM_PAGE_COUNT_X;
+            int endPageX = endPage % PsxVram.PSX_VRAM_PAGE_COUNT_X;
+            int endPageY = endPage / PsxVram.PSX_VRAM_PAGE_COUNT_X;
+
+            for (int y = startPageY; y <= endPageY; y++)
+                for (int x = startPageX; x <= endPageX; x++)
+                    this.changedPages.add((short) ((y * PsxVram.PSX_VRAM_PAGE_COUNT_X) + x));
+        } else {
+            for (int i = startPage; i <= endPage; i++)
+                this.changedPages.add((short) i);
+        }
+    }
+
     private void updateImage() {
-        this.fullImage = vloArchive.makeVRAMImage(this.fullImage); // Update main image. (Before updating pages.)
         for (Short updatePage : this.changedPages) // Update changed pages.
             updateSplitImage(updatePage);
         this.changedPages.clear();
@@ -250,7 +311,7 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
 
     @SneakyThrows
     private void setupImages() {
-        this.fullImage = vloArchive.makeVRAMImage(this.fullImage); // Main image. (Must run first so split images have something to grab from.)
+        updateFullImage(); // Main image. (Must run first so split images have something to grab from.)
 
         // Setup image views.
         if (isPsxMode())
@@ -258,19 +319,23 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
                 this.splitImageViews[i] = new ImageView();
 
         // Setup images. (After views)
-        int totalPages = GameImage.TOTAL_PAGES;
+        int totalPages = this.controller.getFile().isPsxMode() ? PsxVram.PSX_VRAM_TOTAL_PAGES : VloImage.PC_VRAM_TOTAL_PAGES;
         this.splitImages = new BufferedImage[totalPages];
         for (int i = 0; i < this.splitImages.length; i++) {
-            this.splitImages[i] = new BufferedImage(isPsxMode() ? GameImage.PSX_FULL_PAGE_WIDTH : GameImage.PC_PAGE_WIDTH, isPsxMode() ? GameImage.PSX_PAGE_HEIGHT : GameImage.PC_PAGE_HEIGHT, this.fullImage.getType());
+            this.splitImages[i] = new BufferedImage(isPsxMode() ? PsxVram.PSX_VRAM_PAGE_EXPANDED_WIDTH : VloImage.PC_VRAM_PAGE_WIDTH, isPsxMode() ? PsxVram.PSX_VRAM_PAGE_HEIGHT : VloImage.PC_VRAM_PAGE_HEIGHT, this.fullImage.getType());
             updateSplitImage(i);
         }
     }
 
+    private void updateFullImage() {
+        this.fullImage = makeVRAMImage(this.vloArchive, this.fullImage, this.selectedImage);
+    }
+
     private void updateSplitImage(int splitIndex) {
-        int startX = (isPsxMode() ? ((splitIndex % GameImage.PSX_X_PAGES) * GameImage.PSX_FULL_PAGE_WIDTH) : 0);
-        int startY = (isPsxMode() ? ((splitIndex / GameImage.PSX_X_PAGES) * GameImage.PSX_PAGE_HEIGHT) : (splitIndex * GameImage.PC_PAGE_HEIGHT));
-        int width = (isPsxMode() ? GameImage.PSX_FULL_PAGE_WIDTH : GameImage.PC_PAGE_WIDTH);
-        int height = (isPsxMode() ? GameImage.PSX_PAGE_HEIGHT : GameImage.PC_PAGE_HEIGHT);
+        int startX = (isPsxMode() ? ((splitIndex % PsxVram.PSX_VRAM_PAGE_COUNT_X) * PsxVram.PSX_VRAM_PAGE_EXPANDED_WIDTH) : 0);
+        int startY = (isPsxMode() ? ((splitIndex / PsxVram.PSX_VRAM_PAGE_COUNT_X) * PsxVram.PSX_VRAM_PAGE_HEIGHT) : (splitIndex * VloImage.PC_VRAM_PAGE_HEIGHT));
+        int width = (isPsxMode() ? PsxVram.PSX_VRAM_PAGE_EXPANDED_WIDTH : VloImage.PC_VRAM_PAGE_WIDTH);
+        int height = (isPsxMode() ? PsxVram.PSX_VRAM_PAGE_HEIGHT : VloImage.PC_VRAM_PAGE_HEIGHT);
 
         // Draw over image.
         BufferedImage image = this.splitImages[splitIndex];
@@ -287,6 +352,7 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
     }
 
     private void updateAll() {
+        updateFullImage(); // Update main image. (Before updating pages.)
         updateImage();
         updateDisplay();
     }
@@ -314,10 +380,10 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
 
         // Keep within one page test.
         boolean multiPageTest = false;
-        for (GameImage image : vloArchive.getImages()) {
-            if (image.getMultiplierPage() != image.getEndPage()) {
+        for (VloImage image : vloArchive.getImages()) {
+            if (image.getPage() != image.getEndPage()) {
                 // TODO: It seems this may not actually cause issues. Perhaps it's a problem if it goes between 3+ pages? Not sure.
-                warning.append("WARNING: Texture exceeds size of page ").append(image.getMultiplierPage()).append(".").append(Constants.NEWLINE);
+                warning.append("WARNING: Texture exceeds size of page ").append(image.getPage()).append(".").append(Constants.NEWLINE);
                 multiPageTest = true;
                 break;
             }
@@ -335,14 +401,14 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
                 for (int y = 0; y < overlapGrid.length; y++)
                     Arrays.fill(overlapGrid[y], false);
 
-                for (GameImage image : vloArchive.getImages()) {
-                    if (image.getMultiplierPage() != i)
+                for (VloImage image : vloArchive.getImages()) {
+                    if (image.getPage() != i)
                         continue; // If an image's texture page is not the page we're currently looking for overlaps on, we should skip the image.
 
-                    int baseX = (image.getVramX() % (vloArchive.isPsxMode() ? GameImage.PSX_PAGE_WIDTH * image.getWidthMultiplier() : GameImage.PC_PAGE_WIDTH));
-                    int baseY = (image.getVramY() % (vloArchive.isPsxMode() ? GameImage.PSX_PAGE_HEIGHT : GameImage.PC_PAGE_HEIGHT));
-                    for (int y = 0; y < image.getFullHeight(); y++) {
-                        for (int x = 0; x < image.getFullWidth(); x++) {
+                    int baseX = (image.getVramX() % (vloArchive.isPsxMode() ? PsxVram.PSX_VRAM_PAGE_UNIT_WIDTH * image.getWidthMultiplier() : VloImage.PC_VRAM_PAGE_WIDTH));
+                    int baseY = (image.getVramY() % (vloArchive.isPsxMode() ? PsxVram.PSX_VRAM_PAGE_HEIGHT : VloImage.PC_VRAM_PAGE_HEIGHT));
+                    for (int y = 0; y < image.getPaddedHeight(); y++) {
+                        for (int x = 0; x < image.getPaddedWidth(); x++) {
                             int gridX = baseX + x;
                             int gridY = baseY + y;
 
@@ -353,7 +419,7 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
 
                             //getLogger().info("X: "+ (baseX + x) + ", Y: " + (baseY + y) + ", " + overlapGrid[baseY + y][baseX + x]);
                             if (overlapGrid[gridY][gridX]) {
-                                warning.append("WARNING: Texture overlap on page ").append(image.getMultiplierPage()).append(" (").append(gridX).append(" ").append(gridY).append(").").append(Constants.NEWLINE);
+                                warning.append("WARNING: Texture overlap on page ").append(image.getPage()).append(" (").append(gridX).append(" ").append(gridY).append(").").append(Constants.NEWLINE);
                                 break loopEnd;
                             }
 
@@ -382,8 +448,8 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
     }
 
     private void cancel() {
-        for (Entry<GameImage, Tuple2<Short, Short>> entry : originalState.entrySet()) {
-            GameImage image = entry.getKey();
+        for (Entry<VloImage, Tuple2<Short, Short>> entry : originalState.entrySet()) {
+            VloImage image = entry.getKey();
             Tuple2<Short, Short> tuple = entry.getValue();
             image.setVramX(tuple.getA());
             image.setVramY(tuple.getB());
@@ -412,6 +478,84 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
         boolean isPsx = controller.getFile().isPsxMode();
         String templateName = "edit-file-vlo-vram-" + (isPsx ? "psx" : "pc");
         String windowTitle = (isPsx ? "PS1" : "PC") + " VRAM Editor";
-        FXUtils.createWindowFromFXMLTemplate(templateName, new VRAMPageController(controller), windowTitle, true);
+        FXUtils.createWindowFromFXMLTemplate(templateName, new VRAMPageController(controller), windowTitle, false);
+    }
+
+    /**
+     * Create a BufferedImage which effectively mirrors how Frogger will layout a VLO in memory.
+     * One pixel maps to one nibble of VRAM data. (One four-bit clut pixel, or 1/4th of a 16-bit pixel)
+     * On the PS1, multiple pixels can be stored in a single byte, so there is a loss of quality.
+     * @param vloFile The vlo file to write images from
+     * @param resultImage The image to write the data onto. If the image is not the right dimensions, it will make a new image and use that one.
+     * @return resultImage
+     */
+    public static BufferedImage makeVRAMImage(VloFile vloFile, BufferedImage resultImage, VloImage selectedImage) {
+        boolean psxMode = vloFile.isPsxMode();
+        int vramWidth = psxMode ? PsxVram.PSX_VRAM_MAX_EXPANDED_POSITION_X : VloImage.PC_VRAM_MAX_POSITION_X;
+        int vramHeight = psxMode ? PsxVram.PSX_VRAM_MAX_POSITION_Y : VloImage.PC_VRAM_MAX_POSITION_Y;
+        if (resultImage == null || (vramWidth != resultImage.getWidth() || vramHeight != resultImage.getHeight()))
+            resultImage = new BufferedImage(vramWidth, vramHeight, BufferedImage.TYPE_INT_ARGB);
+
+        // Draw on image.
+        Graphics2D graphics = resultImage.createGraphics();
+
+        // Fill background.
+        graphics.setColor(Constants.COLOR_TURQUOISE);
+        graphics.fillRect(0, 0, resultImage.getWidth(), resultImage.getHeight());
+
+        if (vloFile.isPsxMode()) {
+            // Draw screen-buffer as a different color.
+            drawVramSquare(graphics, vloFile.getGameInstance().getPrimaryFrameBuffer(), Constants.COLOR_DEEP_GREEN);
+            drawVramSquare(graphics, vloFile.getGameInstance().getSecondaryFrameBuffer(), Constants.COLOR_DARK_YELLOW);
+
+            // Draw cluts.
+            for (VloClut clut : vloFile.getClutList().getCluts())
+                graphics.drawImage(clut.makeImage(), null, clut.getX() * PsxVram.PSX_VRAM_MAX_PIXELS_PER_UNIT, clut.getY());
+        }
+
+        // Draw images.
+        for (VloImage vloImage : vloFile.getImages()) {
+            writeVramImage(graphics, vloImage, vloImage == selectedImage);
+        }
+
+        graphics.dispose(); // Cleanup.
+        return resultImage;
+    }
+
+    private static void drawVramSquare(Graphics2D graphics, PsxVramScreenSize size, java.awt.Color color) {
+        if (size == null)
+            return;
+
+        graphics.setColor(color); // Next frame.
+        graphics.fillRect(size.getX(), size.getY(), size.getWidth() * PsxVram.PSX_VRAM_MAX_PIXELS_PER_UNIT, size.getHeight());
+    }
+
+    private static int getWidthDrawMultiplier(VloImage vloImage) {
+        if (!vloImage.getParent().isPsxMode())
+            return 1;
+
+        return PsxVram.PSX_VRAM_MAX_PIXELS_PER_UNIT / vloImage.getWidthMultiplier();
+    }
+
+    private static void writeVramImage(Graphics2D graphics, VloImage vloImage, boolean selected) {
+        BufferedImage awtImage = vloImage.toBufferedImage(VRAM_EXPORT);
+
+        // Vram scaling.
+        awtImage = SCImageUtils.scaleWidth(awtImage, getWidthDrawMultiplier(vloImage));
+
+        // Draw image.
+        int x = vloImage.getExpandedVramX();
+        int y = vloImage.getVramY();
+        graphics.drawImage(awtImage, null, x, y);
+
+        if (selected) {
+            graphics.setColor(java.awt.Color.RED);
+            int endX = x + awtImage.getWidth() - 1, endY = y + awtImage.getHeight() - 1;
+
+            graphics.drawLine(x, y, endX, y);
+            graphics.drawLine(x, y + 1, x, endY - 1);
+            graphics.drawLine(x, endY, endX, endY);
+            graphics.drawLine(endX, y + 1, endX, endY - 1);
+        }
     }
 }

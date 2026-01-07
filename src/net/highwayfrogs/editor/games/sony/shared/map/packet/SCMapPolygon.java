@@ -2,10 +2,7 @@ package net.highwayfrogs.editor.games.sony.shared.map.packet;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.psx.CVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
@@ -17,10 +14,13 @@ import net.highwayfrogs.editor.games.sony.shared.map.ISCLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
 import net.highwayfrogs.editor.games.sony.shared.map.mesh.SCMapMesh;
 import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapPolygonPacket.SCMapPolygonUV;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import java.util.Arrays;
 
@@ -189,8 +189,8 @@ public class SCMapPolygon extends SCGameData<SCGameInstance> {
      * If the polygon renders as partially transparent, this will return true.
      */
     public boolean isSemiTransparent(ISCLevelTableEntry levelTableEntry) {
-        GameImage image = getTexture(levelTableEntry);
-        if (image != null && (image.testFlag(GameImage.FLAG_TRANSLUCENT) && !getGameInstance().isMediEvil2()))
+        VloImage image = getTexture(levelTableEntry);
+        if (image != null && (image.testFlag(VloImage.FLAG_TRANSLUCENT) && !getGameInstance().isMediEvil2()))
             return true; // TODO: Investigate changes to images potentially.
 
         return (this.flags & FLAG_SEMI_TRANSPARENT) == FLAG_SEMI_TRANSPARENT;
@@ -200,8 +200,8 @@ public class SCMapPolygon extends SCGameData<SCGameInstance> {
      * If the polygon renders as fully opaque, this will return true.
      */
     public boolean isFullyOpaque(ISCLevelTableEntry levelTableEntry) {
-        GameImage image = getTexture(levelTableEntry);
-        if (image != null && image.testFlag(GameImage.FLAG_BLACK_IS_TRANSPARENT))
+        VloImage image = getTexture(levelTableEntry);
+        if (image != null && image.testFlag(VloImage.FLAG_BLACK_IS_TRANSPARENT))
             return false;
 
         return !isSemiTransparent(levelTableEntry);
@@ -259,7 +259,7 @@ public class SCMapPolygon extends SCGameData<SCGameInstance> {
      * @param levelTableEntry The level table entry to lookup data from.
      * @return texture
      */
-    public GameImage getTexture(ISCLevelTableEntry levelTableEntry) {
+    public VloImage getTexture(ISCLevelTableEntry levelTableEntry) {
         if (!getPolygonType().isTextured() || this.textureId == TEXTURE_ID_NO_TEXTURE)
             return null; // Untextured or invalid texture ID.
 
@@ -340,8 +340,8 @@ public class SCMapPolygon extends SCGameData<SCGameInstance> {
         }
 
         // Load texture.
-        if (shadeTexture.getTextureSource() instanceof GameImage) {
-            GameImage gameImage = (GameImage) shadeTexture.getTextureSource();
+        if (shadeTexture.getTextureSource() instanceof VloImage) {
+            VloImage gameImage = (VloImage) shadeTexture.getTextureSource();
             ISCLevelTableEntry levelTableEntry = mapFile.getLevelTableEntry();
             if (levelTableEntry != null) {
                 TextureRemapArray remapArray = levelTableEntry.getRemap();

@@ -5,17 +5,15 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.ImageFilterSettings;
-import net.highwayfrogs.editor.file.vlo.ImageFilterSettings.ImageState;
-import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.ui.SkyLandController;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.image.ImageUtils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -103,21 +101,20 @@ public class FroggerSkyLand extends SCGameFile<FroggerGameInstance> {
         int width = -1;
         int height = -1;
         BufferedImage[][] images = new BufferedImage[textures.length][];
-        ImageFilterSettings settings = new ImageFilterSettings(ImageState.EXPORT).setTrimEdges(true).setAllowTransparency(false);
         for (int i = 0; i < textures.length; i++) {
-            GameImage image = getArchive().getImageByTextureId(textures[i]);
+            VloImage image = getArchive().getImageByTextureId(textures[i]);
             if (image == null)
                 throw new RuntimeException("Failed to get image by texture id " + textures[i] + ".");
-            BufferedImage base = image.toBufferedImage(settings);
+            BufferedImage base = image.toBufferedImage(VloImage.DEFAULT_IMAGE_STRIPPED_VIEW_SETTINGS);
 
             BufferedImage[] rotatedImages = new BufferedImage[SkyLandRotation.values().length];
             images[i] = rotatedImages;
             for (int j = 0; j < SkyLandRotation.values().length; j++)
-                rotatedImages[j] = ImageWorkHorse.rotateImage(base, SkyLandRotation.values()[j].getAngle());
+                rotatedImages[j] = ImageUtils.rotateImage(base, SkyLandRotation.values()[j].getAngle());
 
             if (width == -1 && height == -1) {
-                width = image.getIngameWidth();
-                height = image.getIngameHeight();
+                width = image.getUnpaddedWidth();
+                height = image.getUnpaddedHeight();
             }
         }
 

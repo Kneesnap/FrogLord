@@ -9,7 +9,6 @@ import javafx.scene.layout.VBox;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
-import net.highwayfrogs.editor.file.vlo.ImageWorkHorse;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunk;
 import net.highwayfrogs.editor.games.renderware.RwStreamChunkType;
@@ -25,6 +24,7 @@ import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
+import net.highwayfrogs.editor.utils.image.ImageUtils;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
@@ -285,7 +285,7 @@ public class RwImageChunk extends RwStreamChunk implements ITextureSource {
 
         // Ensure supported type.
         if (newImage.getType() != BufferedImage.TYPE_BYTE_INDEXED)
-            newImage = ImageWorkHorse.convertBufferedImageToFormat(newImage, BufferedImage.TYPE_INT_ARGB);
+            newImage = ImageUtils.convertBufferedImageToFormat(newImage, BufferedImage.TYPE_INT_ARGB);
 
         // TODO: Consider trying to create the smallest palette for the image.
 

@@ -60,12 +60,12 @@ public class IntList {
     }
 
     private void resize(int newSize) {
-        this.array = Arrays.copyOf(array, newSize);
+        this.array = Arrays.copyOf(this.array, Math.max(1, newSize));
     }
 
     public int remove(int index) {
         int val = get(index);
-        System.arraycopy(array, index + 1, array, index, array.length - (index + 1));
+        System.arraycopy(this.array, index + 1, this.array, index, this.array.length - (index + 1));
         this.size--;
         return val;
     }

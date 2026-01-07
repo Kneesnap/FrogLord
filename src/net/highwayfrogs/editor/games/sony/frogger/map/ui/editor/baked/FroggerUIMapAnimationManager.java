@@ -8,8 +8,6 @@ import javafx.scene.image.ImageView;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.map.view.RawColorTextureSource;
 import net.highwayfrogs.editor.file.map.view.UnknownTextureSource;
-import net.highwayfrogs.editor.file.vlo.GameImage;
-import net.highwayfrogs.editor.file.vlo.VLOArchive;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapAnimation;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapAnimationTargetPolygon;
@@ -18,6 +16,8 @@ import net.highwayfrogs.editor.games.sony.frogger.map.mesh.FroggerMapPolygon;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.baked.FroggerBakedUIManager.FroggerBakedMapListManager;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.editor.MeshViewController;
 import net.highwayfrogs.editor.gui.editor.MeshViewFrameTimer.MeshViewFixedFrameRateTimerTask;
 import net.highwayfrogs.editor.gui.editor.UISidePanel;
@@ -108,10 +108,10 @@ public class FroggerUIMapAnimationManager extends FroggerBakedMapListManager<Fro
         // Find remapped texture.
         Short realTextureId = remap.getRemappedTextureId(textureId);
         if (realTextureId != null) {
-            VLOArchive vloFile = getMap().getVloFile();
-            GameImage gameImage = vloFile != null ? vloFile.getImageByTextureId(realTextureId) : null;
+            VloFile vloFile = getMap().getVloFile();
+            VloImage gameImage = vloFile != null ? vloFile.getImageByTextureId(realTextureId) : null;
             if (gameImage != null)
-                return gameImage.toFXImage(MWDFile.VLO_ICON_SETTING.setTrimEdges(true));
+                return gameImage.toFXImage(MWDFile.VLO_ICON_SETTING);
         }
 
         // The texture couldn't be found.

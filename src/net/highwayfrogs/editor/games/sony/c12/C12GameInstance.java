@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.sony.c12;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
+import net.highwayfrogs.editor.games.psx.image.PsxVramScreenSize;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
@@ -76,5 +77,12 @@ public class C12GameInstance extends SCGameInstance {
         fileListView.addGroup(new LazySCGameFileListGroup("Model Files", (file, index) -> index.getTypeId() == FILE_TYPE_ANIM || index.getTypeId() == FILE_TYPE_SKEL || index.getTypeId() == FILE_TYPE_STAT));
         fileListView.addGroup(new LazySCGameFileListGroup("PSX TIM Images", (file, index) -> file instanceof PSXTIMFile));
         fileListView.addGroup(new LazySCGameFileListGroup("SFX Banks", (file, index) -> index.getTypeId() == FILE_TYPE_VH || index.getTypeId() == FILE_TYPE_VB || index.getTypeId() == FILE_TYPE_VB_ALTERNATE));
+    }
+
+    @Override
+    protected void setupFrameBuffers() {
+        // NTSC is probably 512x236, not 512x240. But w/e, it's fine for now.
+        this.primaryFrameBuffer = new PsxVramScreenSize(0, 0, 512, getDefaultFrameBufferHeight());
+        this.secondaryFrameBuffer = this.primaryFrameBuffer.add(0, 256); // Y: 256 regardless of height of parent.
     }
 }

@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.games.sony.moonwarrior;
 
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
+import net.highwayfrogs.editor.games.psx.image.PsxVramScreenSize;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
@@ -10,6 +10,7 @@ import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.LazySCGameFileListGroup;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewComponent.SCGameFileListTypeIdGroup;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 
 /**
  * Implements basic
@@ -44,5 +45,13 @@ public class MoonWarriorInstance extends SCGameInstance {
         fileListView.addGroup(new SCGameFileListTypeIdGroup("Map", FILE_TYPE_MAP));
         fileListView.addGroup(new SCGameFileListTypeIdGroup("Txt", FILE_TYPE_TXT));
         fileListView.addGroup(new LazySCGameFileListGroup("Sound", (file, index) -> index.getTypeId() == FILE_TYPE_MAP_VB || index.getTypeId() == FILE_TYPE_MAP_VH));
+    }
+
+    @Override
+    protected void setupFrameBuffers() {
+        // Tested in ECTS Alpha, Build 0.05a
+        this.primaryFrameBuffer = new PsxVramScreenSize(0, 0, 512, getDefaultFrameBufferHeight());
+        this.secondaryFrameBuffer = this.primaryFrameBuffer.add(0, 256); // Regardless of the actual screen height, the second framebuffer seems to be placed at y=256.
+
     }
 }
