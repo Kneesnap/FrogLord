@@ -2,9 +2,9 @@ package net.highwayfrogs.editor.games.sony.shared.model;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.standard.IVector;
-import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.games.psx.PSXMatrix;
+import net.highwayfrogs.editor.games.psx.math.vector.IVector;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
+import net.highwayfrogs.editor.games.psx.math.PSXMatrix;
 import net.highwayfrogs.editor.games.sony.SCGameObject.SCSharedGameObject;
 import net.highwayfrogs.editor.games.sony.shared.math.PTQuaternionTranslation;
 import net.highwayfrogs.editor.games.sony.shared.model.skeleton.PTSkeletonBone;

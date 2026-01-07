@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.games.sony.shared.model;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.sony.SCGameObject.SCSharedGameObject;
 import net.highwayfrogs.editor.games.sony.shared.model.staticmesh.PTStaticPart;
 import net.highwayfrogs.editor.games.sony.shared.model.staticmesh.PTStaticPartCel;

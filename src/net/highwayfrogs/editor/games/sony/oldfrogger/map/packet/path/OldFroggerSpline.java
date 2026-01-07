@@ -2,8 +2,8 @@ package net.highwayfrogs.editor.games.sony.oldfrogger.map.packet.path;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.standard.IVector;
-import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.psx.math.vector.IVector;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.spline.MRSplineHermite;

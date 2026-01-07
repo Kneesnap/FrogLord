@@ -1,8 +1,8 @@
 package net.highwayfrogs.editor.games.sony.beastwars.map.data;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.games.psx.CVector;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
+import net.highwayfrogs.editor.games.psx.math.vector.CVector;
 import net.highwayfrogs.editor.games.sony.SCGameData;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsInstance;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;

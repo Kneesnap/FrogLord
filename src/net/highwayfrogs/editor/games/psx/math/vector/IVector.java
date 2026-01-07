@@ -1,17 +1,19 @@
-package net.highwayfrogs.editor.file.standard;
+package net.highwayfrogs.editor.games.psx.math.vector;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
 import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 /**
- * Vector comprised of integers.
+ * Represents the "VECTOR" struct defined in 'libgte.h' of the PSX PsyQ SDK.
+ * Because a class named "Vector" would be easy to accidentally use in the wrong place, the name "IVector" has been chosen to make it clear this is an integer vector.
  * Created by Kneesnap on 8/24/2018.
  */
 @Setter

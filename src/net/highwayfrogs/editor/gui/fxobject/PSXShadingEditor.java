@@ -4,7 +4,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import lombok.Getter;
-import net.highwayfrogs.editor.games.psx.CVector;
+import net.highwayfrogs.editor.games.psx.math.vector.CVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;

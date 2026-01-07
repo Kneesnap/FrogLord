@@ -2,9 +2,9 @@ package net.highwayfrogs.editor.games.sony.shared.mof2.utils;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.games.psx.CVector;
-import net.highwayfrogs.editor.games.psx.PSXMatrix;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
+import net.highwayfrogs.editor.games.psx.math.vector.CVector;
+import net.highwayfrogs.editor.games.psx.math.PSXMatrix;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.mof2.MRModel;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.*;

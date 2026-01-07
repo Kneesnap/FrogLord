@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.games.psx.shading;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.highwayfrogs.editor.games.psx.CVector;
+import net.highwayfrogs.editor.games.psx.math.vector.CVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;

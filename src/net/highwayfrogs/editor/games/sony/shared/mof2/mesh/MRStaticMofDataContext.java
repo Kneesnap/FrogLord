@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.games.sony.shared.mof2.mesh;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.utils.objects.ReferencableBuffer;
 import net.highwayfrogs.editor.utils.objects.ReferencableBuffer.LazyReferencableBuffer;
 

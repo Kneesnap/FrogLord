@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.games.sony.shared.mof2.animation.transform;
 
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
-import net.highwayfrogs.editor.games.psx.PSXMatrix;
+import net.highwayfrogs.editor.games.psx.math.PSXMatrix;
 
 /**
  * Represents a basic mof transform data holder.

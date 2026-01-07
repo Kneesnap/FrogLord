@@ -2,8 +2,8 @@ package net.highwayfrogs.editor.games.sony.frogger.map.data.path.segments;
 
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.ImageView;
-import net.highwayfrogs.editor.file.standard.IVector;
-import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.psx.math.vector.IVector;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPath;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathResult;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.path.FroggerPathSegmentType;

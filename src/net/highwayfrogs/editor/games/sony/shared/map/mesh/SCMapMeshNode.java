@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.games.sony.shared.map.mesh;
 
-import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.map.ISCLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;

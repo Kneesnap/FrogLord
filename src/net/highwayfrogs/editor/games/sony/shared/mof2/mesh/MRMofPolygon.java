@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.games.sony.shared.mof2.mesh;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.games.psx.CVector;
+import net.highwayfrogs.editor.games.psx.math.vector.CVector;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.psx.shading.PSXTextureShader;
 import net.highwayfrogs.editor.games.sony.SCGameData;

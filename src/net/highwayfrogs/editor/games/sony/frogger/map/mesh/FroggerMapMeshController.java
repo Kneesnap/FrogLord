@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.games.sony.frogger.map.mesh;
 import javafx.scene.SubScene;
 import javafx.scene.shape.MeshView;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;

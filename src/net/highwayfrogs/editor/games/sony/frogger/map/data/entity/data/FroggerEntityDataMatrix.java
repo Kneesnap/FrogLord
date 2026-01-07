@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.data.entity.data;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.games.psx.PSXMatrix;
+import net.highwayfrogs.editor.games.psx.math.PSXMatrix;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.ui.editor.central.FroggerUIMapEntityManager;
 import net.highwayfrogs.editor.gui.GUIEditorGrid;

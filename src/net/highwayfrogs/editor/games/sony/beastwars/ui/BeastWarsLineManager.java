@@ -5,7 +5,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Cylinder;
 import javafx.scene.shape.Shape3D;
-import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.sony.beastwars.map.data.BeastWarsMapLine;
 import net.highwayfrogs.editor.games.sony.beastwars.map.mesh.BeastWarsMapMesh;
 import net.highwayfrogs.editor.games.sony.beastwars.ui.BeastWarsMapUIManager.BeastWarsMapListManager;

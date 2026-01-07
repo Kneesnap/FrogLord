@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.games.sony.medievil.map.packet;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapPolygon;
 import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;

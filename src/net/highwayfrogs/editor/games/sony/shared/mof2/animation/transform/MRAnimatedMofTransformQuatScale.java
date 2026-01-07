@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.games.sony.shared.mof2.animation.transform;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.games.psx.PSXMatrix;
+import net.highwayfrogs.editor.games.psx.math.PSXMatrix;
 import net.highwayfrogs.editor.games.sony.SCMath;
 import net.highwayfrogs.editor.utils.MathUtils;
 import net.highwayfrogs.editor.utils.Utils;

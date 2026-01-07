@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.games.sony.shared.model.staticmesh;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.games.psx.PSXMatrix;
+import net.highwayfrogs.editor.games.psx.math.PSXMatrix;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.collprim.CollprimShapeAdapter;
 import net.highwayfrogs.editor.games.sony.shared.collprim.ICollprim;

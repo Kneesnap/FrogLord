@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.games.sony;
 
-import net.highwayfrogs.editor.file.standard.IVector;
+import net.highwayfrogs.editor.games.psx.math.vector.IVector;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.data.reader.ArraySource;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;

@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.games.sony.frogger.utils;
 import lombok.Getter;
 import lombok.NonNull;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.generic.GameConfig;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;

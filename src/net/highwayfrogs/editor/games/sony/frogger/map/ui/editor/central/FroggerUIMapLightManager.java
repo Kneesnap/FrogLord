@@ -9,7 +9,7 @@ import javafx.scene.shape.Cylinder;
 import javafx.scene.shape.MeshView;
 import javafx.scene.shape.TriangleMesh;
 import lombok.Getter;
-import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.FroggerMapLight;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridSquare;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.grid.FroggerGridStack;

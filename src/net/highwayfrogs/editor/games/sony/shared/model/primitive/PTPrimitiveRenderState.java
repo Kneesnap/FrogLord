@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.games.sony.shared.model.primitive;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 
 import java.util.Arrays;
 

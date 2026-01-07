@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.games.sony.frogger.map.mesh;
 
-import net.highwayfrogs.editor.file.standard.SVector;
-import net.highwayfrogs.editor.games.psx.CVector;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
+import net.highwayfrogs.editor.games.psx.math.vector.CVector;
 import net.highwayfrogs.editor.games.psx.shading.PSXTextureShader;
 import net.highwayfrogs.editor.games.sony.frogger.file.FroggerSkyLand;
 import net.highwayfrogs.editor.games.sony.frogger.file.FroggerSkyLand.SkyLandTile;

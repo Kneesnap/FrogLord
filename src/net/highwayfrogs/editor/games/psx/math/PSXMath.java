@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.games.psx;
+package net.highwayfrogs.editor.games.psx.math;
 
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.utils.data.reader.ArraySource;

@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.games.sony.shared.mof2.collision;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
-import net.highwayfrogs.editor.games.psx.PSXMatrix;
+import net.highwayfrogs.editor.games.psx.math.PSXMatrix;
 import net.highwayfrogs.editor.games.sony.shared.collprim.CollprimShapeAdapter;
 import net.highwayfrogs.editor.games.sony.shared.collprim.ICollprimEditorUI;
 import net.highwayfrogs.editor.games.sony.shared.collprim.MRCollprim;

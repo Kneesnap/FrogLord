@@ -6,7 +6,7 @@ import javafx.scene.shape.Box;
 import javafx.scene.shape.DrawMode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.sony.shared.mof2.hilite.MRMofHilite;
 import net.highwayfrogs.editor.games.sony.shared.mof2.hilite.MRMofHilite.HiliteAttachType;
 import net.highwayfrogs.editor.games.sony.shared.mof2.mesh.MRMofPart;

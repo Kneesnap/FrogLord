@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.games.sony.medievil.map.mesh;
 
-import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.shared.mesh.SCPolygonAdapterNode;

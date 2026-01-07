@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.file.standard;
 
 /**
  * Represents a general vector.
+ * TODO: Try to delete this interface once once the GUIEditorGrid rewrite happens.
  * Created by Kneesnap on 2/21/2019.
  */
 public interface Vector {

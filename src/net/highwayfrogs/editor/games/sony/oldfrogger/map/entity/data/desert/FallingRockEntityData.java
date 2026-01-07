@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.desert;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.OldFroggerMapEntity;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.OldFroggerDifficultyWrapper.OldFroggerDifficultyData;
 import net.highwayfrogs.editor.games.sony.oldfrogger.map.entity.data.desert.FallingRockEntityData.FallingRockDifficultyData;

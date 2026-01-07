@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.games.sony.shared.mof2.utils;
 
-import net.highwayfrogs.editor.file.standard.SVector;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTextureAnimation;
 import net.highwayfrogs.editor.games.sony.shared.mof2.animation.texture.MRMofTextureAnimationPolygonTarget;
 import net.highwayfrogs.editor.games.sony.shared.mof2.collision.MRMofCollprim;

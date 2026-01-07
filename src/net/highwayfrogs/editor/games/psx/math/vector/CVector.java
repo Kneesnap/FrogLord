@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.games.psx;
+package net.highwayfrogs.editor.games.psx.math.vector;
 
 import javafx.geometry.Pos;
 import javafx.scene.control.Alert.AlertType;

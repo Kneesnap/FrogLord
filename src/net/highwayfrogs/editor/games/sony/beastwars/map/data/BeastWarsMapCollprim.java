@@ -1,7 +1,7 @@
 package net.highwayfrogs.editor.games.sony.beastwars.map.data;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.games.psx.PSXMatrix;
+import net.highwayfrogs.editor.games.psx.math.PSXMatrix;
 import net.highwayfrogs.editor.games.sony.beastwars.BeastWarsInstance;
 import net.highwayfrogs.editor.games.sony.beastwars.map.BeastWarsMapFile;
 import net.highwayfrogs.editor.games.sony.shared.collprim.CollprimShapeAdapter;

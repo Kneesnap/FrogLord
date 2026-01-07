@@ -1,10 +1,11 @@
-package net.highwayfrogs.editor.file.standard;
+package net.highwayfrogs.editor.games.psx.math.vector;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.file.standard.Vector;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.games.generic.data.IBinarySerializable;
@@ -12,9 +13,7 @@ import net.highwayfrogs.editor.utils.DataUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
 
 /**
- * Vector comprised of shorts.
- * TODO: Rename to FixedPt16Vector3
- * TODO: Interoperability with Vector3f, via IVector3 class?
+ * Represents the PSX "SVECTOR" struct, defined in 'libgte.h' of the PSX PsyQ SDK.
  * Created by Kneesnap on 8/22/2018.
  */
 @Getter
@@ -72,8 +71,6 @@ public class SVector implements IBinarySerializable, Vector {
     public void loadWithPadding(DataReader reader) {
         this.load(reader);
         this.padding = reader.readShort();
-        /*if (this.padding != 0 && !(getGameInstance() instanceof MediEvilGameInstance)) // MediEvil uses this for vertex shading.
-            getLogger().logWarning("There is non-zero padding data in the SVector. [Padding: " + this.padding + "]");*/ // TODO: Activate once this becomes an SCGameObject.
     }
 
     @Override
