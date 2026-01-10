@@ -35,6 +35,7 @@ import net.highwayfrogs.editor.utils.data.reader.FileSource;
 import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.data.writer.FixedArrayReceiver;
+import net.highwayfrogs.editor.utils.objects.IndexBitArray;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -59,6 +60,7 @@ public abstract class SCGameInstance extends GameInstance {
     @Getter private boolean previouslySavedByFrogLord;
     @Getter protected PsxVramScreenSize primaryFrameBuffer;
     @Getter protected PsxVramScreenSize secondaryFrameBuffer;
+    @Getter private final IndexBitArray texturesFoundInRemap = new IndexBitArray();
 
     // Instance data read from game files:
     private boolean loadingAllRemaps;
@@ -291,6 +293,7 @@ public abstract class SCGameInstance extends GameInstance {
         // Add & load all texture remaps.
         try {
             this.loadingAllRemaps = true;
+            this.texturesFoundInRemap.clear();
             setupTextureRemaps(getExecutableReader(), getArchiveIndex());
 
             // Read remap data.
@@ -468,7 +471,8 @@ public abstract class SCGameInstance extends GameInstance {
      * @param reader The reader it was read from.
      */
     protected void onRemapRead(TextureRemapArray remap, DataReader reader) {
-
+        for (int i = 0; i < remap.getTextureIds().size(); i++)
+            this.texturesFoundInRemap.setBit(remap.getRemappedTextureId(i), true);
     }
 
     /**

@@ -66,7 +66,6 @@ import java.util.logging.Level;
  *  in order to minimize the risk of FrogLord breaking existing textures while also keeping texture editing as simple as possible for a FrogLord user.
  * <p/>
  * TODO Remaining Tasks before feature complete:
- *  3) PC paddingX
  *  4) Fix HitX for MediEvil prototypes.
  *  5) Later, create the VRAM texture placement system.
  *   -> Easy image management. (VloFile.addImage(String name, BufferedImage, ClutMode, abr, int padding)
@@ -205,7 +204,11 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
 
         int paddingX = this.paddedWidth - this.unpaddedWidth;
         int paddingY = this.paddedHeight - this.unpaddedHeight;
-        this.paddingEnabled = (paddingY > 0); // If y padding is enabled, then x padding is likely to be enabled.
+        if (isPsxMode()) {
+            this.paddingEnabled = (paddingY > 0); // If y padding is enabled, then x padding is likely to be enabled.
+        } else {
+            this.paddingEnabled = (paddingX > 4);
+        }
         if (paddingX != paddingY && getGameInstance().isPC()) // This is never known to happen.
             getLogger().warning("Padding XY mismatch! [%d vs %d]", paddingX, paddingY);
 
@@ -851,14 +854,13 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         // Validated perfect match against:
         //  - Frogger PC Milestone 3
         //  - Frogger PC Alpha (One failure)
-        //  - Frogger PC July TODO: VERIFY (One failure, opt_ripple0)
-        //  - Frogger PC September TODO: VERIFY (49 failures, wanted 2 but got 4)
-        //  - TODO: Frogger PC v1.0 (Retail)
-        //  - TODO: Frogger PC v3.0e (Retail)
-        //  - TODO: Beast Wars PC Retail (15 cases where 2 was expected and 4 was returned)
+        //  - Frogger PC July (One failure, opt_ripple0)
+        //  - Frogger PC September (49 failures, wanted 2 but got 4)
+        //  - Frogger PC v1.0
+        //  - Frogger PC v3.0e
+        //  - Beast Wars PC Retail (15 cases where 2 was expected and 4 was returned)
         if (getGameInstance().isPC()) {
             if (getGameInstance().getGameType().isAtLeast(SCGameType.FROGGER)) {
-                // TODO: Finish
                 if (getGameInstance().isFrogger()) {
                     if (this.unpaddedWidth > MAX_IMAGE_DIMENSION - 2)
                         return 0; // No padding for these images.
@@ -869,15 +871,45 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
                         if (this.unpaddedWidth > MAX_IMAGE_DIMENSION - 8)
                             return 4; // No padding for these images.
 
-                        // TODO: Can we find solid padding behavior based on the game type?
-                        // TODO: Big terrain -> 8
-                        // TODO: Big model -> 4
-                        // TODO: Level name -> 2
-                        // TODO: Big > small in case of multiple?
-                        //  -> Does transparent padding have anything to do with this?
+                        // NOTE:
+                        // This mostly seems to be the case:
+                        //  - In texture remap? Use 8.
+                        //  - Text 2D sprite? Use 2.
+                        //  - Otherwise, use 4.
+                        //  - While this pattern seems to mostly be true, it is not ACTUALLY consistent.
+                        // It's just a general guideline. As such, we
 
-                        // TODO: Otherwise, perhaps we should return -1 to indicate we can't calculate it and that we should use the previous value.
-                        return this.paddingEnabled ? 8 : 4;
+                        String name = getOriginalName();
+                        if (this.parent.getFileDisplayName().startsWith("FIX")) {
+                            if (name != null && name.startsWith("frog_shadow")) {
+                                return 8;
+                            } else if (name != null && name.startsWith("opt") && name.endsWith("_sec")) {
+                                return 2;
+                            } else {
+                                return -1;
+                            }
+                        } else if (this.parent.getFileDisplayName().equals("OPT_VRAM.VLO")) {
+                            if (name != null && name.startsWith("opt_log_")) {
+                                return 8;
+                            } else {
+                                // NOTE: 1UP, 2UP, 3UP, 4UP, etc should be 2x2, but we don't have names yet.
+                                return 4;
+                            }
+                        } else if (this.parent.getFileDisplayName().startsWith("LS_ALL") && name != null && name.startsWith("opt") && name.endsWith("_sec")) {
+                            return 2;
+                        } else if (getGameInstance().getTexturesFoundInRemap().getBit(this.textureId)) {
+                            return this.paddingEnabled ? 8 : 4;
+                        } else if (name != null && (name.endsWith("pic") || name.endsWith("name"))) {
+                            return name.endsWith("mname") || "org3name".equals(name) ? 4 : 2;
+                        } else if ("gen_frogstrip".equals(name)) {
+                            return 8;
+                        } else if (this.parent.getFileDisplayName().startsWith("OPT")) {
+                            return -1; // Not sure how to distinguish 2x2 from 4x4.
+                        } else {
+                            return 4;
+                        }
+
+                        // It was also valid to return -1 here.
                     } else {
 
                         // Fixes Windows Build 1 (PC July).
@@ -888,9 +920,6 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
                         return this.paddingEnabled ? 4 : 0; // This is just PSX * 2?
                     }
                 }
-
-                if (this.paddingEnabled && padX == 0 && this.bitDepth == PsxImageBitDepth.SBGR1555)
-                    return 2; // TODO: TOSS?
 
                 return this.paddingEnabled ? 4 : 0; // This is just PSX * 2?
             } else { // Pre-recode Frogger PC.
@@ -961,7 +990,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         //  - C-12 Final Resistance PSX Build 0.03a
         //  - C-12 Final Resistance PSX Beta Candidate 3
 
-        // Validated mostly matching against: TODO: If we can match these, this function is a perfect match. (Perhaps try comparing to the calculatePaddingX function)
+        // Validated mostly matching against:
         //  - MediEvil Rolling Demo (August 1997) (24 failures, expecting value: 1)
         //  - MediEvil ECTS (September 1997) (23 failures, expecting value: 1)
         //  - MediEvil NTSC (Retail) (19 failures, expecting value: 1)
@@ -1627,6 +1656,20 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         return fullHeight != ingameHeight && fullHeight != ingameHeight + 1;
     }
 
+    /**
+     * Gets the internally tracked unpadded width, excluding things which impact rendering such as getUnpaddedWidth().
+     */
+    public int getInternalUnpaddedWidth() {
+        return this.unpaddedWidth;
+    }
+
+    /**
+     * Gets the internally tracked unpadded height, excluding things which impact rendering such as getUnpaddedHeight().
+     */
+    public int getInternalUnpaddedHeight() {
+        return this.unpaddedHeight;
+    }
+
     @Override
     public int getLeftPadding() {
         if (isPsxMode())
@@ -1686,21 +1729,21 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
     //  - Beast Wars NTSC Prototype
     //  - Beast Wars NTSC Release
     //  - Beast Wars PAL Release
-    //  - Beast Wars PC Retail TODO: VALIDATE
+    //  - Beast Wars PC Retail
     //  - MoonWarrior
     //  - C-12 Final Resistance 0.03a (E3 Build)
     //  - C-12 Final Resistance (Beta Candidate 3)
-    //  - C-12 Final Resistance (Retail NTSC) TODO: VALIDATE
+    //  - C-12 Final Resistance (Retail NTSC)
 
     // Game versions which are not perfectly matched.
     //  - MediEvil ECTS (107 pixel failures in 2934/2@GENTITLP.VLO and 2938/2@GENTITLN.VLO)
     //    -> Some padding pixels seem to be part of the image, like HitX/HitY.
     //  - MediEvil 0.31 (124 pixel failures in gargoyle_eye/149@FIXEDVRM.VLO, logop/2@GENTITLP.VLO, and, logon/2@GENTITLN.VLO)
     //  - MediEvil Reviewable Version (124 pixel failures)
-    //  - MediEvil NTSC Release TODO: VALIDATE
+    //  - MediEvil NTSC Release (124 pixel failures in gargoyle_eye/153@FIXEDVRM.VLO, logop/2@GENTITLP.VLO, and, logon/2@GENTITLN.VLO)
     //  - MediEvil II 0.19 (105 pixel failures in 13/116@FILE_0002 and 27/149@FILE_0002)
     //  - MediEvil II 0.51 (105 pixel failures in 36/103@File 10 and 50/131@File 10)
-    //  - MediEvil II USA Retail 1.1Q TODO: VALIDATE
+    //  - MediEvil II USA Retail 1.1Q (105 pixel failures in 36/103@File 10 and 50/131@File 10)
     private int getPaddingColor(int[] paddedImagePixels, int index, int paddedWidth, int padMinX, int padMaxX, int padMinY, int padMaxY, int paddingX, int paddingY, int emptyRightPaddingX, int firstClutColor) {
         // MediEvil II has some weird images which are mostly padding, and have a texture with crudely drawn letters: "PG".
         // At the time of writing, I have no idea what this is for, but we'll leave it alone for now.

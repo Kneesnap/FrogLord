@@ -40,10 +40,7 @@ import net.highwayfrogs.editor.utils.fx.wrapper.LazyFXListCell;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.WeakHashMap;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -111,10 +108,12 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
                     return;
                 }
 
+                Set<String> locations = new HashSet<>();
                 StringBuilder builder = new StringBuilder("Texture Usages (").append(textureUsages.size()).append("):\n");
                 for (int i = 0; i < textureUsages.size(); i++) {
                     SCTextureUsage usage = textureUsages.get(i);
-                    builder.append(" - ").append(usage.getLocationDescription()).append('\n');
+                    if (locations.add(usage.getLocationDescription()))
+                        builder.append(" - ").append(usage.getLocationDescription()).append('\n');
                 }
 
                 FXUtils.showPopup(AlertType.INFORMATION, "Texture Usage Finder:", builder.toString());
@@ -491,8 +490,8 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
     public void updateImageInfo() {
         int paddedWidth = this.selectedImage.getPaddedWidth();
         int paddedHeight = this.selectedImage.getPaddedHeight();
-        int unpaddedWidth = this.selectedImage.getUnpaddedWidth();
-        int unpaddedHeight = this.selectedImage.getUnpaddedHeight();
+        int unpaddedWidth = this.selectedImage.getInternalUnpaddedWidth();
+        int unpaddedHeight = this.selectedImage.getInternalUnpaddedHeight();
         this.ingameDimensionLabel.setText("Size: " + unpaddedWidth + "x" + unpaddedHeight);
         this.dimensionLabel.setText("Padding: " + (paddedWidth - unpaddedWidth) + "x" + (paddedHeight - unpaddedHeight));
         this.idLabel.setText(this.selectedImage.getBitDepth().getDisplayName() + ", VRAM X: " + this.selectedImage.getVramX() + ", Y: " + this.selectedImage.getVramY() + ", Page: " + this.selectedImage.getPage());

@@ -289,7 +289,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
                 PickupAnimationFrame pickupFrame = pickupData.getFrames().get(j);
                 VloImage image = pickupFrame.getImage();
                 if (image != null)
-                    textures.add(new SCTextureUsage(this, image.getTextureId(), "FroggerPickupData"));
+                    textures.add(new SCTextureUsage(this, image.getTextureId(), "FroggerPickupData[" + pickupData.getFlyScoreType() + "]"));
             }
         }
 
