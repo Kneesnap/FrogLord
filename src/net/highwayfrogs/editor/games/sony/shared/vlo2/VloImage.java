@@ -100,7 +100,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
     @Getter private PsxImageBitDepth bitDepth; // This is consistent across versions on PC, and does seem to indicate image quality. I do not think it is used for anything important.
     @NonNull @Getter private PsxAbrTransparency abr = PsxAbrTransparency.DEFAULT; // ABR. Always observed to be DEFAULT on PC.
     @Getter private VloClut clut;
-    @Getter private boolean paddingTransparent; // TODO: Add a UI check box to toggle this. Disable it if BLACK_IS_TRANSPARENT is not set.
+    @Getter private boolean paddingTransparent;
     private boolean paddingEnabled = true;
     private boolean stpNonBlackBitFlipped; // Pre-MediEvil II: Used to calculate the CLUT STP bit state.
     private boolean stpBlackBitFlipped; // Pre-MediEvil II: Used to calculate the CLUT STP bit state
