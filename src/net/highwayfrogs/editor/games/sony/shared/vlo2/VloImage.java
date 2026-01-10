@@ -66,7 +66,6 @@ import java.util.logging.Level;
  *  in order to minimize the risk of FrogLord breaking existing textures while also keeping texture editing as simple as possible for a FrogLord user.
  * <p/>
  * TODO Remaining Tasks before feature complete:
- *  4) Fix HitX for MediEvil prototypes.
  *  5) Later, create the VRAM texture placement system.
  *   -> Easy image management. (VloFile.addImage(String name, BufferedImage, ClutMode, abr, int padding)
  *    -> -1 will calculate padding.
@@ -757,8 +756,8 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
 
         // Validated perfect match against:
         //  - Frogger PSX Milestone 3 (Pre-Recode)
-        //  - MediEvil Rolling Demo TODO: One failure
-        //  - MediEvil ECTS TODO: One failure
+        //  - MediEvil Rolling Demo
+        //  - MediEvil ECTS
         //  - Frogger PSX Build 71 (Retail NTSC)
         //  - Beast Wars PSX NTSC
         //  - Beast Wars PSX PAL
@@ -782,15 +781,15 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
 
         // This was probably to ensure pixel padding works right or something.
         // But when PT Toolkit rolled around (or sometime after Med1 but before MoonWarrior), I think they realized that this is pointless since any pixels here would be padding/not part of the image.
-        if (endU == 0xFF && this.unpaddedWidth + 1 != this.paddedWidth && !getGameInstance().getGameType().isAtLeast(SCGameType.MOONWARRIOR))
-            endU++;
+        if (endU == 0xFF && (this.unpaddedWidth + 1 != this.paddedWidth || getGameInstance().isMediEvil()) && !getGameInstance().getGameType().isAtLeast(SCGameType.MOONWARRIOR))
+            endU++; //
 
         // C-12 has a handful of images which look like they should be HitX, but aren't.
         // The common thread between them is that their width is a multiple of 64, but I suspect this just isn't a large enough sample size to say definitively this is why.
         if (getGameInstance().getGameType().isAtLeast(SCGameType.C12) && (this.unpaddedWidth % 64) == 0)
             return false;
 
-        return (endU & 0xFF) != endU; // TODO: Why does this return a wrong value in MediEvil once?
+        return (endU & 0xFF) != endU;
     }
 
     /**
