@@ -3,8 +3,8 @@ package net.highwayfrogs.editor.games.sony.medievil.map.mesh;
 import lombok.Getter;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.psx.math.vector.CVector;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.SCGameData;
@@ -47,9 +47,17 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
 
     private static final int FLAG_QUAD = Constants.BIT_FLAG_0;
     private static final int FLAG_TEXTURED = Constants.BIT_FLAG_1;
-    public static final int FLAG_SEMI_TRANSPARENT = Constants.BIT_FLAG_9;
-    // TODO: sorting flags? If both sort flags are set, it forces average sort. Treat it as an enum because of this. If neither are set, it will use sorting behavior from the texture.
-    // TODO: Need to warn for unused flags.
+    // Flag 2 is if it has been rendered. (Runtime only)
+    private static final int FLAG_SORT_MASK = Constants.BIT_FLAG_4 | Constants.BIT_FLAG_3;
+    private static final int FLAG_SORT_MASK_SHIFT = 3;
+    public static final int FLAG_TRIANGLE_A_DOWN = Constants.BIT_FLAG_5;
+    public static final int FLAG_TRIANGLE_B_DOWN = Constants.BIT_FLAG_6; // Seems unused (?) Is it kept in-sync with the previous flag?
+    private static final int FLAG_SEMI_TRANSPARENT = Constants.BIT_FLAG_9; // Seems to be runtime only, so don't include it.
+    public static final int FLAG_SPECIAL = Constants.BIT_FLAG_10; // TODO: What is this for? Is it runtime only?
+
+    private static final int VALIDATION_FLAGS = FLAG_QUAD | FLAG_TEXTURED | FLAG_SORT_MASK
+            | FLAG_TRIANGLE_A_DOWN | FLAG_TRIANGLE_B_DOWN | FLAG_SPECIAL;
+
     private static final CVector UNSHADED_COLOR = CVector.makeColorFromRGB(0x80808080);
 
     public MediEvilMapPolygon(MediEvilGameInstance instance) {
@@ -67,6 +75,8 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
         this.flags = reader.readUnsignedShortAsInt();
         for (int i = 0; i < this.textureUvs.length; i++)
             this.textureUvs[i].load(reader);
+
+        warnAboutInvalidBitFlags(this.flags, VALIDATION_FLAGS);
     }
 
     @Override
@@ -113,6 +123,26 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
         } else {
             this.flags &= ~flagMask;
         }
+    }
+
+    /**
+     * Gets the polygon sort mode configured for this polygon.
+     * Note that the sorting behavior can be overridden by the texture VloImage flags.
+     */
+    public MediEvilMapPolygonSortMode getSortMode() {
+        return MediEvilMapPolygonSortMode.values()[(this.flags & FLAG_SORT_MASK) >>> FLAG_SORT_MASK_SHIFT];
+    }
+
+    /**
+     * Gets the polygon sort mode configured for this polygon.
+     * Note that the sorting behavior can be overridden by the texture VloImage flags.
+     */
+    public void setSortMode(MediEvilMapPolygonSortMode newSortMode) {
+        if (newSortMode == null)
+            throw new NullPointerException("newSortMode");
+
+        this.flags &= ~FLAG_SORT_MASK;
+        this.flags |= newSortMode.ordinal() << FLAG_SORT_MASK_SHIFT;
     }
 
     /**

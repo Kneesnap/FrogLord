@@ -1,19 +1,23 @@
 package net.highwayfrogs.editor.games.sony.medievil.map.ui;
 
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.input.PickResult;
 import javafx.scene.shape.MeshView;
-import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.psx.math.vector.CVector;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.medievil.MediEvilLevelTableEntry;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapMesh;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapPolygon;
+import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapPolygonSortMode;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
+import net.highwayfrogs.editor.gui.GUIEditorGrid;
 import net.highwayfrogs.editor.gui.InputManager;
 import net.highwayfrogs.editor.gui.InputManager.MouseTracker;
 import net.highwayfrogs.editor.gui.editor.BakedLandscapeUIManager;
@@ -113,6 +117,11 @@ public class MediEvilLandscapeUIManager extends BakedLandscapeUIManager<MediEvil
     }
 
     public static class MediEvilPolygonShadingEditor extends BakedLandscapePolygonShadingEditor<MediEvilMapPolygon> {
+        private ComboBox<MediEvilMapPolygonSortMode> polygonSortModeSelector;
+        private CheckBox polygonIsTriangleADownCheckBox;
+        private CheckBox polygonIsTriangleBDownCheckBox;
+        private CheckBox polygonIsSpecialCheckBox;
+
         public MediEvilPolygonShadingEditor(MediEvilLandscapeUIManager manager) {
             super(manager);
         }
@@ -120,6 +129,68 @@ public class MediEvilLandscapeUIManager extends BakedLandscapeUIManager<MediEvil
         @Override
         public MediEvilLandscapeUIManager getManager() {
             return (MediEvilLandscapeUIManager) super.getManager();
+        }
+
+        @Override
+        public void setupStaticUI(GUIEditorGrid grid) {
+            super.setupStaticUI(grid);
+            // Polygon type information.
+            this.polygonSortModeSelector = grid.addEnumSelector("Sort Mode", MediEvilMapPolygonSortMode.SORT_BY_AVERAGE_Z_ALLOW_OVERRIDE, MediEvilMapPolygonSortMode.values(), false, null);
+            this.polygonIsTriangleADownCheckBox = grid.addCheckBox("Triangle A Faces Down", false, null);
+            this.polygonIsTriangleBDownCheckBox = grid.addCheckBox("Triangle B Faces Down", false, null);
+            this.polygonIsSpecialCheckBox = grid.addCheckBox("Special", false, null);
+            this.polygonSortModeSelector.setDisable(true);
+            this.polygonIsTriangleADownCheckBox.setDisable(true);
+            this.polygonIsTriangleBDownCheckBox.setDisable(true);
+            this.polygonIsSpecialCheckBox.setDisable(true);
+
+            this.polygonSortModeSelector.setTooltip(FXUtils.createTooltip("The polygon may have this overridden by its texture's sort mode."));
+            this.polygonIsSpecialCheckBox.setTooltip(FXUtils.createTooltip("The purpose of this flag is currently unknown."));
+
+            this.polygonSortModeSelector.valueProperty().addListener((observable, oldValue, newValue) -> {
+                if (!this.polygonSortModeSelector.isDisabled() && getEditTarget() != null && newValue != null)
+                    getEditTarget().setSortMode(newValue);
+            });
+
+            this.polygonIsTriangleADownCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
+                if (!this.polygonIsTriangleADownCheckBox.isDisabled() && getEditTarget() != null)
+                    getEditTarget().setFlagMask(MediEvilMapPolygon.FLAG_TRIANGLE_A_DOWN, newValue);
+            });
+
+            this.polygonIsTriangleBDownCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
+                if (!this.polygonIsTriangleBDownCheckBox.isDisabled() && getEditTarget() != null)
+                    getEditTarget().setFlagMask(MediEvilMapPolygon.FLAG_TRIANGLE_B_DOWN, newValue);
+            });
+
+            this.polygonIsSpecialCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
+                if (!this.polygonIsSpecialCheckBox.isDisabled() && getEditTarget() != null)
+                    getEditTarget().setFlagMask(MediEvilMapPolygon.FLAG_SPECIAL, newValue);
+            });
+        }
+
+        @Override
+        public void updateUI() {
+            if (isStaticUISetup()) {
+                MediEvilMapPolygon polygon = getEditTarget();
+                this.polygonSortModeSelector.setDisable(true);
+                this.polygonIsTriangleADownCheckBox.setDisable(true);
+                this.polygonIsTriangleBDownCheckBox.setDisable(true);
+                this.polygonIsSpecialCheckBox.setDisable(true);
+
+                this.polygonSortModeSelector.getSelectionModel().select(polygon != null ? polygon.getSortMode() : MediEvilMapPolygonSortMode.SORT_BY_AVERAGE_Z_ALLOW_OVERRIDE);
+                this.polygonIsTriangleADownCheckBox.setSelected(polygon != null && polygon.isFlagMaskSet(MediEvilMapPolygon.FLAG_TRIANGLE_A_DOWN));
+                this.polygonIsTriangleBDownCheckBox.setSelected(polygon != null && polygon.isFlagMaskSet(MediEvilMapPolygon.FLAG_TRIANGLE_B_DOWN));
+                this.polygonIsSpecialCheckBox.setSelected(polygon != null && polygon.isFlagMaskSet(MediEvilMapPolygon.FLAG_SPECIAL));
+
+                // These behavior patterns are untested/might not be consistent with the game.
+                boolean isQuad = polygon != null && polygon.getPolygonType().isQuad();
+                this.polygonSortModeSelector.setDisable(polygon == null);
+                this.polygonIsTriangleADownCheckBox.setDisable(polygon == null);
+                this.polygonIsTriangleBDownCheckBox.setDisable(!isQuad);
+                this.polygonIsSpecialCheckBox.setDisable(polygon == null);
+            }
+
+            super.updateUI();
         }
 
         @Override
@@ -157,13 +228,13 @@ public class MediEvilLandscapeUIManager extends BakedLandscapeUIManager<MediEvil
         protected void selectNewTexture(ITextureSource oldTextureSource) {
             MediEvilLevelTableEntry levelTableEntry = getManager().getMap().getLevelTableEntry();
             if (levelTableEntry == null) {
-                FXUtils.makePopUp("There is no level table entry to lookup the remap from.", AlertType.ERROR);
+                FXUtils.showPopup(AlertType.ERROR, "No level table entry found.", "There is no level table entry to lookup the remap from.");
                 return;
             }
 
             TextureRemapArray remapArray = levelTableEntry.getRemap();
             if (remapArray == null) {
-                FXUtils.makePopUp("There is no texture remap available to assign textures from.", AlertType.ERROR);
+                FXUtils.showPopup(AlertType.ERROR, "Could not find texture remap.", "There is no texture remap available to assign textures from.");
                 return;
             }
 

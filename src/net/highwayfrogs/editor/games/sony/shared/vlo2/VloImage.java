@@ -13,6 +13,9 @@ import net.highwayfrogs.editor.games.psx.image.PsxVram;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
+import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapPolygonSortMode;
+import net.highwayfrogs.editor.games.sony.medievil.map.misc.MediEvilMapFrictionLevel;
+import net.highwayfrogs.editor.games.sony.medievil.map.misc.MediEvilMapInteractionType;
 import net.highwayfrogs.editor.gui.components.CollectionViewComponent.ICollectionViewEntry;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.ColorUtils;
@@ -63,7 +66,6 @@ import java.util.logging.Level;
  *  in order to minimize the risk of FrogLord breaking existing textures while also keeping texture editing as simple as possible for a FrogLord user.
  * <p/>
  * TODO Remaining Tasks before feature complete:
- *  2) MediEvilMapPolygon flag todos, and VLO flags.
  *  3) PC paddingX
  *  4) Fix HitX for MediEvil prototypes.
  *  5) Later, create the VRAM texture placement system.
@@ -76,8 +78,8 @@ import java.util.logging.Level;
  *     -> It should also use image file names.
  *      -> For images with unrecognized non-numeric names, add them to the VLO.
  *      -> For images numeric names, add them with that as their texture ID, replacing any existing image with that texture ID.
+ *    -> The "Clone Image" button should be removed to "Copy image to other VLO file.", and moved to right-click menu.
  *  6) Store custom file names in the .VLO file itself.
- *  7) Review to-do comments in VLOController.java
  *  8) Review to-do comments in this file.
  *  9) Text generation
  *   -> Integrate with new system to become seamless
@@ -129,10 +131,17 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
     public static final int FLAG_2D_SPRITE = Constants.BIT_FLAG_15; // Indicates that an animation list should be used when the image is used to create a sprite. I dunno, it seems like every single texture in frogger has this flag set. (Though this is not confirmed, let alone confirmed for all versions)
     private static final int VALIDATION_FLAGS = FLAG_2D_SPRITE | FLAG_BLACK_IS_TRANSPARENT | FLAG_REFERENCED_BY_NAME | FLAG_HIT_Y | FLAG_HIT_X | FLAG_TRANSLUCENT;
 
-    private static final int FLAG_MEDIEVIL_ZSORT_FAR = Constants.BIT_FLAG_8; // If both zsort flags are set, it forces average sort. Treat it as an enum because of this.
-    private static final int FLAG_MEDIEVIL_ZSORT_NEAR = Constants.BIT_FLAG_9;
+    // PT Toolkit Era: (C-12, ??, ??)
+    public static final int PT_FLAG_PARTLY_TRANSPARENT = Constants.BIT_FLAG_6; // Used in C-12 & MediEvil II.
+    private static final int PT_VALIDATION_FLAGS = VALIDATION_FLAGS | PT_FLAG_PARTLY_TRANSPARENT;
+
+    private static final int FLAG_MEDIEVIL_SORT_MASK = Constants.BIT_FLAG_9 | Constants.BIT_FLAG_8;
+    private static final int FLAG_MEDIEVIL_SORT_SHIFT = 8;
     private static final int FLAG_MEDIEVIL_FRICTION_MASK = Constants.BIT_FLAG_11 | Constants.BIT_FLAG_10; // Controls how much friction this surface has for entities walking upon it.
+    private static final int FLAG_MEDIEVIL_FRICTION_SHIFT = 10;
     private static final int FLAG_MEDIEVIL_INTERACTION_MASK = Constants.BIT_FLAG_14 | Constants.BIT_FLAG_13 | Constants.BIT_FLAG_12; // This is an enum value for the surface type. 0 - NONE, 1 - WATER, 2 - MUD, 3 - DEADLY MUD, 4 - NOT GROUND, 5 - CORN, 6 - SPECIAL1 (unknown), 7 - SPECIAL2
+    private static final int FLAG_MEDIEVIL_INTERACTION_SHIFT = 12;
+    private static final int MEDIEVIL_VALIDATION_FLAGS = VALIDATION_FLAGS | FLAG_MEDIEVIL_SORT_MASK | FLAG_MEDIEVIL_FRICTION_MASK | FLAG_MEDIEVIL_INTERACTION_MASK;
 
     // 0 -> Used for a pixel which is expected to respect the automatically generated STP value.
     // 127 -> The STP bit is flipped from the default state for this pixel specifically.
@@ -181,8 +190,13 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
             this.clutId = reader.readShort(); // Provably unused. Probably garbage data.
         }
 
-        if (getGameInstance().getGameType().isAtOrBefore(SCGameType.FROGGER)) // TODO: I think MediEvil might actually have some extra flags. We might want to rewrite the flags to be enums, and the enums can indicate which game(s) they apply to.
+        if (isPtToolkitFlags()) {
+            warnAboutInvalidBitFlags(this.flags & 0xFFFF, PT_VALIDATION_FLAGS, toString());
+        } else if (isMediEvilFlags()) {
+            warnAboutInvalidBitFlags(this.flags & 0xFFFF, MEDIEVIL_VALIDATION_FLAGS, toString());
+        } else {
             warnAboutInvalidBitFlags(this.flags & 0xFFFF, VALIDATION_FLAGS, toString());
+        }
 
         short readU = reader.readUnsignedByteAsShort();
         short readV = reader.readUnsignedByteAsShort();
@@ -234,6 +248,22 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
                     this.unpaddedWidth, this.unpaddedHeight, this.paddedWidth, this.paddedHeight, getFlags(),
                     (this.paddedWidth - this.unpaddedWidth), (this.paddedHeight - this.unpaddedHeight));
     }
+
+    /**
+     * Returns true iff the bit flags enabled for this image are PT_TOOLKIT era flags.
+     */
+    public boolean isPtToolkitFlags() {
+        return getGameInstance().getGameType().isAtLeast(SCGameType.MEDIEVIL2);
+    }
+
+    /**
+     * Returns true iff the bit flags enabled for this image are MediEvil 1 flags.
+     */
+    public boolean isMediEvilFlags() {
+        return getGameInstance().isMediEvil();
+    }
+
+
 
     private static short getUnpaddedSize(byte value) {
         return (short) (value == 0 ? 256 : (value & 0xFF));
@@ -405,7 +435,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
     }
 
     private enum PaddingOperation {
-        VALIDATE, APPLY;
+        VALIDATE, APPLY
     }
 
     // NOTE: unpaddedHeight and paddedHeight should be up to date when calling this function.
@@ -698,7 +728,15 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         return !testFlag(FLAG_BLACK_IS_TRANSPARENT) ^ this.stpBlackBitFlipped;
     }
 
-    private boolean calculateHitX() { // TODO: Relies on valid padding.
+    /**
+     * Calculates whether the HIT_X flag should be set if the image were to be saved now.
+     * Validated to have near perfectly consistent behavior with all known original VLO files.
+     * Relies upon up-to-date:
+     *  - Padding dimensions
+     *  - Vram X position
+     *  - bitDepth
+     */
+    public boolean calculateHitX() {
         // The purpose of HIT_X is to prevent overflow of u8 values, so that textures render correctly.
 
         // Validated perfect match against:
@@ -752,7 +790,14 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         return (endU & 0xFF) != endU; // TODO: Why does this return a wrong value in MediEvil once?
     }
 
-    private boolean calculateHitY() {
+    /**
+     * Calculates whether the HIT_Y flag should be set if the image were to be saved now.
+     * Validated to have perfectly consistent behavior with all known original VLO files.
+     * Relies upon up-to-date:
+     *  - Padding dimensions
+     *  - Vram Y position
+     */
+    public boolean calculateHitY() {
         // In C-12, it doesn't seem like HIT_Y can be triggered for some reason.
         // Tested:
         //  - C-12 Final Resistance (E3 Build)
@@ -829,6 +874,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
                         // TODO: Big model -> 4
                         // TODO: Level name -> 2
                         // TODO: Big > small in case of multiple?
+                        //  -> Does transparent padding have anything to do with this?
 
                         // TODO: Otherwise, perhaps we should return -1 to indicate we can't calculate it and that we should use the previous value.
                         return this.paddingEnabled ? 8 : 4;
@@ -1513,7 +1559,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
      * @return fxImage
      */
     public Image toFXImage() {
-        return FXUtils.toFXImage(toBufferedImage(), false);
+        return toFXImage(DEFAULT_IMAGE_EXPORT_SETTINGS);
     }
 
     /**
@@ -1688,5 +1734,89 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
             return getGameInstance().isPC() ? PADDING_TRANSPARENT_PIXEL_PC : PADDING_TRANSPARENT_PIXEL_PSX;
 
         return paddedImagePixels[(padPixelY * paddedWidth) + padPixelX];
+    }
+
+    //////////////////////////////////////////////////////////////
+    //  ---                MEDIEVIL DATA                      ----
+    //////////////////////////////////////////////////////////////
+
+    /**
+     * Gets the MediEvil polygon sort mode assigned to this texture.
+     * Throws an exception if the VLO is loaded from a game other than MediEvil.
+     */
+    public MediEvilMapPolygonSortMode getMediEvilPolygonSortMode() {
+        if (!isMediEvilFlags())
+            throw new UnsupportedOperationException("Cannot get the MediEvilMapPolygonSortMode for a non-MediEvil image!");
+
+        return MediEvilMapPolygonSortMode.values()[(this.flags & FLAG_MEDIEVIL_SORT_MASK) >>> FLAG_MEDIEVIL_SORT_SHIFT];
+    }
+
+    /**
+     * Sets the MediEvil polygon sort mode assigned to this texture
+     * Throws an exception if the VLO is loaded from a game other than MediEvil.
+     * @param sortMode sortMode
+     */
+    public void setMediEvilPolygonSortMode(MediEvilMapPolygonSortMode sortMode) {
+        if (!isMediEvilFlags())
+            throw new UnsupportedOperationException("Cannot set the MediEvilMapPolygonSortMode for a non-MediEvil image!");
+        if (sortMode == null)
+            throw new NullPointerException("sortMode");
+
+        this.flags &= ~FLAG_MEDIEVIL_SORT_MASK;
+        this.flags |= (short) (sortMode.ordinal() << FLAG_MEDIEVIL_SORT_SHIFT);
+    }
+
+    /**
+     * Gets the MediEvil friction level assigned to this texture.
+     * Throws an exception if the VLO is loaded from a game other than MediEvil.
+     * @return the friction level to apply when walking on a polygon using this texture
+     */
+    public MediEvilMapFrictionLevel getMediEvilFrictionLevel() {
+        if (!isMediEvilFlags())
+            throw new UnsupportedOperationException("Cannot get the friction level for a non-MediEvil image!");
+
+        return MediEvilMapFrictionLevel.values()[(this.flags & FLAG_MEDIEVIL_FRICTION_MASK) >>> FLAG_MEDIEVIL_FRICTION_SHIFT];
+    }
+
+    /**
+     * Sets the MediEvil friction level assigned to this texture.
+     * Throws an exception if the VLO is loaded from a game other than MediEvil.
+     * @param frictionLevel the friction level to apply when walking on a polygon using this texture
+     */
+    public void setMediEvilFrictionLevel(MediEvilMapFrictionLevel frictionLevel) {
+        if (!isMediEvilFlags())
+            throw new UnsupportedOperationException("Cannot set the friction level for a non-MediEvil image!");
+        if (frictionLevel == null)
+            throw new NullPointerException("frictionLevel");
+
+        this.flags &= ~FLAG_MEDIEVIL_FRICTION_MASK;
+        this.flags |= (short) (frictionLevel.ordinal() << FLAG_MEDIEVIL_FRICTION_SHIFT);
+    }
+
+    /**
+     * Gets the MediEvil polygon interaction type assigned to this texture.
+     * Throws an exception if the VLO is loaded from a game other than MediEvil.
+     * @return the interaction type to apply when walking on a polygon using this texture
+     */
+    public MediEvilMapInteractionType getMediEvilInteractionType() {
+        if (!isMediEvilFlags())
+            throw new UnsupportedOperationException("Cannot get the MediEvilMapInteractionType for a non-MediEvil image!");
+
+        return MediEvilMapInteractionType.values()[(this.flags & FLAG_MEDIEVIL_INTERACTION_MASK) >>> FLAG_MEDIEVIL_INTERACTION_SHIFT];
+    }
+
+    /**
+     * Sets the MediEvil polygon interaction type assigned to this texture
+     * Throws an exception if the VLO is loaded from a game other than MediEvil.
+     * @param interactionType the interaction type to apply when walking on a polygon using this texture
+     */
+    public void setMediEvilInteractionType(MediEvilMapInteractionType interactionType) {
+        if (!isMediEvilFlags())
+            throw new UnsupportedOperationException("Cannot set the MediEvilMapInteractionType for a non-MediEvil image!");
+        if (interactionType == null)
+            throw new NullPointerException("interactionType");
+
+        this.flags &= ~FLAG_MEDIEVIL_INTERACTION_MASK;
+        this.flags |= (short) (interactionType.ordinal() << FLAG_MEDIEVIL_INTERACTION_SHIFT);
     }
 }

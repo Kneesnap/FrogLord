@@ -9,8 +9,10 @@ import java.util.function.BiFunction;
 
 /**
  * A StringConverter which gives the index too.
+ * @deprecated Use {@code FXUtils.applyComboBoxDisplaySettings} with {@code LazyFXListCell} instead.
  * Created by Kneesnap on 1/26/2019.
  */
+@Deprecated
 public class AbstractIndexStringConverter<T> extends StringConverter<T> {
     private final List<T> list;
     private final BiFunction<Integer, T, String> function;

@@ -51,13 +51,12 @@
                </children>
             </AnchorPane>
             <Separator maxWidth="-Infinity" minWidth="-Infinity" orientation="VERTICAL" prefWidth="0.0" HBox.hgrow="NEVER" />
-          <AnchorPane HBox.hgrow="ALWAYS">
+          <AnchorPane HBox.hgrow="ALWAYS" fx:id="rightSidePane">
                <children>
                    <Button layoutX="4.0" layoutY="4.0" mnemonicParsing="false" onAction="#openVramEditor" prefHeight="25.0" prefWidth="72.0" text="VRAM" AnchorPane.leftAnchor="4.0" AnchorPane.topAnchor="4.0" />
-                   <Label fx:id="abrLabel" layoutX="4.0" layoutY="29.0" prefHeight="25.0" prefWidth="31.0" text="ABR:" AnchorPane.leftAnchor="4.0" AnchorPane.topAnchor="29.0" />
-                   <ChoiceBox fx:id="abrChoiceBox" layoutX="34.0" layoutY="29.0" prefHeight="25.0" prefWidth="72.0" AnchorPane.leftAnchor="34.0" AnchorPane.topAnchor="29.0" />
-                   <VBox fx:id="flagBox" centerShape="false" layoutX="4.0" layoutY="64.0" prefHeight="180.0" prefWidth="98.0" AnchorPane.leftAnchor="4.0" />
-                    <ImageView fx:id="imageView" fitHeight="256.0" fitWidth="256.0" pickOnBounds="true" preserveRatio="true" x="344.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                   <VBox fx:id="flagBox" centerShape="false" layoutX="4.0" layoutY="29.0" prefHeight="197.0" prefWidth="98.0" AnchorPane.leftAnchor="4.0" />
+                   <ImageView fx:id="imageView" fitHeight="256.0" fitWidth="256.0" pickOnBounds="true" preserveRatio="true" x="344.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                   <Label layoutX="4.0" layoutY="266.0" underline="true" text="Preview Settings:" AnchorPane.bottomAnchor="66.0" AnchorPane.leftAnchor="4.0" />
                    <CheckBox fx:id="transparencyCheckBox" layoutX="4.0" layoutY="266.0" mnemonicParsing="false" onAction="#onImageToggle" selected="true" text="Transparency" AnchorPane.bottomAnchor="48.0" AnchorPane.leftAnchor="4.0" />
                    <CheckBox fx:id="paddingCheckBox" layoutX="6.0" layoutY="255.0" mnemonicParsing="false" onAction="#onImageToggle" selected="true" text="Show Padding" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="4.0" />
                    <ChoiceBox fx:id="sizeChoiceBox" layoutX="4.0" layoutY="248.0" onAction="#onImageToggle" prefWidth="100.0" AnchorPane.bottomAnchor="4.0" AnchorPane.leftAnchor="4.0" />

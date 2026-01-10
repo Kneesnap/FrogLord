@@ -4,17 +4,24 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.SneakyThrows;
+import javafx.scene.text.TextAlignment;
+import lombok.*;
+import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.psx.image.PsxAbrTransparency;
 import net.highwayfrogs.editor.games.psx.image.PsxVram;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapPolygonSortMode;
+import net.highwayfrogs.editor.games.sony.medievil.map.misc.MediEvilMapFrictionLevel;
+import net.highwayfrogs.editor.games.sony.medievil.map.misc.MediEvilMapInteractionType;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.ui.SCFileEditorUIController;
 import net.highwayfrogs.editor.games.sony.shared.utils.SCAnalysisUtils;
@@ -33,19 +40,23 @@ import net.highwayfrogs.editor.utils.fx.wrapper.LazyFXListCell;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.WeakHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * Controls the VLO edit screen.
  * Created by Kneesnap on 9/18/2018.
  */
 public class VLOController extends SCFileEditorUIController<SCGameInstance, VloFile> {
+    private final List<ImageBasedFXNode<?>> imageBasedNodes = new ArrayList<>();
     @FXML private CheckBox paddingCheckBox;
-    @FXML private ChoiceBox<PsxAbrTransparency> abrChoiceBox;
     @FXML private CheckBox transparencyCheckBox;
     @FXML private ChoiceBox<ImageControllerViewSetting> sizeChoiceBox;
     @FXML private ImageView imageView;
@@ -55,9 +66,9 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
     @FXML private Label idLabel;
     @FXML private VBox flagBox;
     @FXML private Button backButton;
+    @FXML private AnchorPane rightSidePane;
 
     @Getter private VloImage selectedImage;
-    private final Map<Integer, CheckBox> flagCheckBoxMap = new HashMap<>(); // TODO: Something broke here, the flag names aren't long enough
     private int imageFilterSettings = VloImage.DEFAULT_IMAGE_STRIPPED_VIEW_SETTINGS;
 
     private static final int IMAGE_EXPORT_SETTINGS = VloImage.DEFAULT_IMAGE_NO_PADDING_EXPORT_SETTINGS;
@@ -82,13 +93,7 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
     public void setTargetFile(VloFile vlo) {
         super.setTargetFile(vlo);
 
-        this.abrChoiceBox.setDisable(vlo == null || !vlo.isPsxMode());
-        this.abrChoiceBox.valueProperty().addListener((observable, oldValue, newValue) -> {
-            if (this.selectedImage != null && oldValue != newValue && newValue != null && this.selectedImage.getAbr() != newValue && !this.abrChoiceBox.isDisable())
-                this.selectedImage.setAbr(newValue);
-        });
-
-        this.imageList.setItems(FXCollections.observableArrayList(vlo.getImages()));
+        this.imageList.setItems(FXCollections.observableArrayList(vlo != null ? vlo.getImages() : Collections.emptyList()));
         this.imageList.setCellFactory(param -> new LazyFXListCell<VloImage>((image, index) -> {
             if (image == null)
                 return null;
@@ -124,27 +129,47 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
     protected void onControllerLoad(Node rootNode) {
         super.onControllerLoad(rootNode);
 
-        this.abrChoiceBox.setItems(FXCollections.observableArrayList(PsxAbrTransparency.values()));
-        this.abrChoiceBox.setConverter(new AbstractStringConverter<>(PsxAbrTransparency::getDisplayName));
-        this.abrChoiceBox.setValue(PsxAbrTransparency.DEFAULT);
+        // Ensure the flag stuff on the left has enough room to display.
+        this.flagBox.setPrefWidth(this.rightSidePane.getWidth() - this.imageView.getFitWidth() - 4);
+        this.rightSidePane.widthProperty().addListener((observable, oldWidth, newWidth)
+                -> this.flagBox.setPrefWidth(newWidth.doubleValue() - this.imageView.getFitWidth() - 4));
+        this.imageView.fitWidthProperty().addListener((observable, oldWidth, newWidth)
+                -> this.flagBox.setPrefWidth(this.rightSidePane.getWidth() - newWidth.doubleValue() - 4));
 
         this.sizeChoiceBox.setItems(FXCollections.observableArrayList(ImageControllerViewSetting.values()));
         this.sizeChoiceBox.setConverter(new AbstractStringConverter<>(ImageControllerViewSetting::getDescription));
         this.sizeChoiceBox.setValue(ImageControllerViewSetting.SCALED_NEAREST_NEIGHBOR);
 
+        addSelectionBox("ABR:", PsxAbrTransparency.values(),
+                VloImage::getAbr, VloImage::setAbr, vloImage -> vloImage.getParent().isPsxMode(),
+                () -> new LazyFXListCell<>(PsxAbrTransparency::getDisplayName, "None (Error)"));
+
+        addLabel("Flags:", true, true, null);
         addFlag("Translucent", VloImage.FLAG_TRANSLUCENT, "Marks the entire texture as partially transparent.\nOnly applicable when drawn as a sprite or part of a MOF.\nDoes not impact per-game rendering such as map rendering, SKY_LAND, etc.");
-        //addFlag("Rotated", VloImage.FLAG_ROTATED, "This flag is unused, and does not appear to be set.");
-        // TODO: !
-        //addFlag("Hit X", VloImage.FLAG_HIT_X, "Treats the last column of pixels on the image as padding.");
-        //addFlag("Hit Y", VloImage.FLAG_HIT_Y, "Treats the last row of pixels on the image as padding.");
+        addCalculatedFlag("Hit X", "Treats the last column of pixels on the image as padding.", null, VloImage::calculateHitX);
+        addCalculatedFlag("Hit Y", "Treats the last row of pixels on the image as padding.", null, VloImage::calculateHitY);
         addFlag("Name Reference", VloImage.FLAG_REFERENCED_BY_NAME, "If this checkbox is selected, there is assumed to be hardcoded space available in the executable for this texture.\nOtherwise, the texture data will be allocated at runtime.");
         addFlag("Black is Transparent", VloImage.FLAG_BLACK_IS_TRANSPARENT, "Indicates the black (color=000000) pixels in the image should be treated as fully transparent.");
         addFlag("2D Sprite", VloImage.FLAG_2D_SPRITE, "Indicates this texture can be drawn as a sprite.\nA sprite is either as a 3D billboard image like the Frogger score insects, or 2D UI).\nSprites can also be used as 3D textures, so there's no downside to selecting this flag.\nFailing to enable this flag when the game uses it as a sprite will cause crashes.");
-        this.updateFlags();
+        addFlag("Partly Transparent", VloImage.PT_FLAG_PARTLY_TRANSPARENT, "The purpose of this flag is currently unknown.", VloImage::isPtToolkitFlags);
+        addCheckBox("Transparent Padding", "Generated padding is transparent.\nThis flag has been calculated by FrogLord, and may not match the original Vorg config file.",
+                VloImage::isPaddingTransparent, VloImage::setPaddingTransparent, null);
+
+        // MediEvil Settings
+        addLabel("MediEvil Settings:", true, true, VloImage::isMediEvilFlags);
+        addSelectionBox("Sort Mode:", MediEvilMapPolygonSortMode.values(),
+                VloImage::getMediEvilPolygonSortMode, VloImage::setMediEvilPolygonSortMode, VloImage::isMediEvilFlags,
+                () -> new LazyFXListCell<>(MediEvilMapPolygonSortMode::getDisplayName, "None (Error)"));
+        addSelectionBox("Friction Level:", MediEvilMapFrictionLevel.values(),
+                VloImage::getMediEvilFrictionLevel, VloImage::setMediEvilFrictionLevel, VloImage::isMediEvilFlags,
+                () -> new LazyFXListCell<>(MediEvilMapFrictionLevel::getDisplayName, "None (Error)"));
+        addSelectionBox("Interaction:", MediEvilMapInteractionType.values(),
+                VloImage::getMediEvilInteractionType, VloImage::setMediEvilInteractionType, VloImage::isMediEvilFlags,
+                () -> new LazyFXListCell<>(MediEvilMapInteractionType::getDisplayName, "None (Error)"));
 
         Button cloneButton = new Button("Clone Image");
         cloneButton.setOnAction(evt -> getFile().getArchive().promptVLOSelection(this::promptCloneVlo, false));
-        flagBox.getChildren().add(cloneButton);
+        addOptionalUINode(cloneButton, null);
     }
 
     private void promptCloneVlo(VloFile cloneFrom) {
@@ -161,25 +186,236 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
         }, true);
     }
 
+    private Label addLabel(String labelText, boolean underline, boolean bold, Predicate<VloImage> visibilityTest) {
+        Label label = new Label(labelText);
+        label.setUnderline(underline);
+        if (bold)
+            label.setFont(Constants.SYSTEM_BOLD_FONT);
+        addOptionalUINode(label, visibilityTest, null);
+        return label;
+    }
+
     private CheckBox addFlag(String display, int flag, String toolTipText) {
+        return addFlag(display, flag, toolTipText, null);
+    }
+
+    private CheckBox addFlag(String display, int flag, String toolTipText, Predicate<VloImage> visibilityTest) {
         CheckBox checkbox = new CheckBox(display);
 
         checkbox.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            if (checkbox.isDisabled())
+                return;
+
             this.selectedImage.setFlag(flag, newValue); // Clears cache when necessary.
             this.updateDisplay();
         });
 
         checkbox.setTooltip(FXUtils.createTooltip(toolTipText));
+        addOptionalUINode(checkbox, visibilityTest, (image, checkBox) -> {
+            if (image == null)
+                return;
 
-        flagBox.getChildren().add(checkbox);
-        flagCheckBoxMap.put(flag, checkbox);
+            checkBox.setDisable(true);
+            try {
+                checkBox.setSelected(image.testFlag(flag));
+            } finally {
+                checkBox.setDisable(false);
+            }
+        });
         return checkbox;
     }
 
-    private void updateFlags() {
-        if (this.selectedImage != null)
-            for (Entry<Integer, CheckBox> entry : flagCheckBoxMap.entrySet())
-                entry.getValue().setSelected(this.selectedImage.testFlag(entry.getKey()));
+    private CheckBox addCalculatedFlag(String display, String toolTipText, Predicate<VloImage> visibilityTest, Predicate<VloImage> flagCalculator) {
+        CheckBox checkbox = new CheckBox(display);
+        checkbox.setDisable(true);
+        checkbox.setTooltip(FXUtils.createTooltip(toolTipText));
+
+        addOptionalUINode(checkbox, visibilityTest, (newImage, node) ->
+            node.setSelected(newImage != null && (visibilityTest == null || visibilityTest.test(newImage)) && flagCalculator.test(newImage)));
+        return checkbox;
+    }
+
+    private <T> ComboBox<T> addSelectionBox(String label, T[] values, Function<VloImage, T> getter, BiConsumer<VloImage, T> setter, Predicate<VloImage> visibilityTest, Supplier<ListCell<T>> cellSupplier) {
+        ComboBox<T> box = new ComboBox<>(FXCollections.observableArrayList(values));
+        box.setPrefHeight(25);
+        if (cellSupplier != null)
+            FXUtils.applyComboBoxDisplaySettings(box, cellSupplier);
+
+        if ((this.selectedImage != null) && (visibilityTest == null || visibilityTest.test(this.selectedImage))) {
+            T currentValue = this.selectedImage != null ? getter.apply(this.selectedImage) : null;
+            box.valueProperty().setValue(currentValue); // Set the selected value.
+            box.getSelectionModel().select(currentValue); // Automatically scroll to selected value.
+        }
+
+        AtomicBoolean firstOpen = new AtomicBoolean(true);
+        box.addEventFilter(ComboBox.ON_SHOWN, event -> { // Show the selected value when the dropdown is opened.
+            if (firstOpen.getAndSet(false))
+                FXUtils.comboBoxScrollToValue(box);
+        });
+
+        if (setter != null) {
+            box.valueProperty().addListener((listener, oldVal, newVal) -> {
+                if (!box.isDisable() && !box.isDisabled() && this.selectedImage != null && (visibilityTest == null || visibilityTest.test(this.selectedImage)))
+                    setter.accept(this.selectedImage, newVal);
+            });
+        }
+
+        addOptionalUINode(label, box, visibilityTest, (image, node) -> {
+            box.setDisable(true);
+
+            try {
+                node.setValue(image != null ? getter.apply(image) : null);
+            } finally {
+                box.setDisable(false);
+            }
+        });
+        return box;
+    }
+
+    private CheckBox addCheckBox(String label, String toolTipText, Predicate<VloImage> getter, BiConsumer<VloImage, Boolean> setter, Predicate<VloImage> visibilityTest) {
+        CheckBox checkbox = new CheckBox(label);
+
+        checkbox.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            if (this.selectedImage == null || checkbox.isDisable())
+                return;
+
+            setter.accept(this.selectedImage, newValue); // Clears cache when necessary.
+            this.updateDisplay();
+        });
+
+        checkbox.setTooltip(FXUtils.createTooltip(toolTipText));
+        addOptionalUINode(checkbox, visibilityTest, (image, checkBox) -> {
+            if (image == null)
+                return;
+
+            checkBox.setDisable(true);
+            try {
+                checkBox.setSelected(getter.test(image));
+            } finally {
+                checkBox.setDisable(false);
+            }
+        });
+        return checkbox;
+    }
+
+    private <TNode extends Node> void addOptionalUINode(TNode node, BiConsumer<VloImage, TNode> handler) {
+        ImageBasedFXNode<TNode> wrapper = new ImageBasedFXNode<>(node, (image, safeWrapper) -> {
+            if (updateVisibility(image, safeWrapper, null) && handler != null)
+                handler.accept(image, safeWrapper.node);
+        });
+
+        this.imageBasedNodes.add(wrapper);
+        if (handler != null)
+            handler.accept(this.selectedImage, node);
+    }
+
+    private <TNode extends Node> void addOptionalUINode(TNode node, Predicate<VloImage> visibilityTest, BiConsumer<VloImage, TNode> handler) {
+        if (visibilityTest == null) {
+            addOptionalUINode(node, handler);
+            return;
+        }
+
+        ImageBasedFXNode<TNode> wrapper = new ImageBasedFXNode<>(node, (image, safeWrapper) ->
+                updateHook(image, safeWrapper, visibilityTest, handler));
+
+        this.imageBasedNodes.add(wrapper);
+        updateHook(this.selectedImage, wrapper, visibilityTest, handler);
+    }
+
+    private static <TNode extends Node> BiConsumer<VloImage, ImageBasedFXNode<TNode>> wrapHandler(BiConsumer<VloImage, TNode> handler) {
+        return handler != null ? (image, wrapper) -> handler.accept(image, wrapper.node) : null;
+    }
+
+    private <TNode extends Node> boolean updateVisibility(VloImage image, ImageBasedFXNode<TNode> nodeWrapper, Predicate<VloImage> visibilityTest) {
+        boolean visible = image != null && (visibilityTest == null || visibilityTest.test(image));
+        TNode node = nodeWrapper.node;
+        if (visible && !this.flagBox.getChildren().contains(node)) {
+            insertNode(nodeWrapper);
+        } else if (!visible) {
+            this.flagBox.getChildren().remove(node);
+        }
+
+        return visible;
+    }
+
+    private <TNode extends Node> void insertNode(ImageBasedFXNode<TNode> nodeWrapper) {
+        int nodeIndex = this.imageBasedNodes.indexOf(nodeWrapper);
+        if (nodeIndex < 0)
+            throw new IllegalArgumentException("nodeWrapper is not registered as part of imageBasedNodes!");
+
+        // Maintains the imageBasedNodes order.
+        int lastWrapperNodeIndex = -1;
+        int lastInsertionIndex = -1;
+        for (int i = 0; i < this.flagBox.getChildren().size(); i++) {
+            Node fxNode = this.flagBox.getChildren().get(i);
+
+            // Find current node in imageBasedNodes list.
+            int currWrapperNodeIndex = lastWrapperNodeIndex + 1;
+            for (; currWrapperNodeIndex < this.imageBasedNodes.size(); currWrapperNodeIndex++)
+                if (this.imageBasedNodes.get(currWrapperNodeIndex).node == fxNode)
+                    break;
+
+            if (currWrapperNodeIndex >= this.imageBasedNodes.size()) {
+                lastInsertionIndex++;
+                continue; // The fxNode has no imagedBasedNode registration, so skip it.
+            }
+
+            lastWrapperNodeIndex = currWrapperNodeIndex;
+            lastInsertionIndex = i;
+
+            // The last one we found was
+            if (lastWrapperNodeIndex >= nodeIndex) {
+                lastInsertionIndex--;
+                break;
+            }
+        }
+
+        int insertionIndex = lastInsertionIndex + 1;
+        if (insertionIndex < 0)
+            throw new IllegalStateException("Could not find insertionIndex for node: " + nodeWrapper.node + "/" + nodeWrapper.nodeUpdater);
+
+        this.flagBox.getChildren().add(insertionIndex, nodeWrapper.node);
+    }
+
+    private <TNode extends Node> void updateHook(VloImage image, ImageBasedFXNode<TNode> nodeWrapper, Predicate<VloImage> visibilityTest, BiConsumer<VloImage, TNode> handler) {
+        if (updateVisibility(image, nodeWrapper, visibilityTest) && handler != null)
+            handler.accept(image, nodeWrapper.node);
+    }
+
+    private <TNode extends Node> void addOptionalUINode(String label, TNode node, Predicate<VloImage> visibilityTest, BiConsumer<VloImage, TNode> handler) {
+        HBox box = new HBox();
+        box.setSpacing(5);
+
+        Label fxLabel = new Label(label);
+        HBox.setHgrow(fxLabel, Priority.SOMETIMES);
+        fxLabel.setAlignment(Pos.CENTER_LEFT);
+        fxLabel.setTextAlignment(TextAlignment.LEFT);
+        fxLabel.setPrefHeight(25);
+        box.getChildren().add(fxLabel);
+
+        HBox.setHgrow(node, Priority.SOMETIMES);
+        box.getChildren().add(node);
+
+        // Synchronize hbox width to vbox width.
+        box.setPrefWidth(this.flagBox.getWidth());
+        this.flagBox.widthProperty().addListener((observable, oldWidth, newWidth)
+                -> box.setPrefWidth(newWidth.doubleValue()));
+
+        ImageBasedFXNode<HBox> wrapper = new ImageBasedFXNode<>(box, (image, safeWrapper) ->
+            registerAndUpdate(node, visibilityTest, image, handler, safeWrapper));
+
+        this.imageBasedNodes.add(wrapper);
+        registerAndUpdate(node, visibilityTest, this.selectedImage, handler, wrapper);
+    }
+
+    private <TNode extends Node> void registerAndUpdate(TNode node, Predicate<VloImage> visibilityTest, VloImage image, BiConsumer<VloImage, TNode> updateHandler, ImageBasedFXNode<HBox> nodeWrapper) {
+        if (updateVisibility(image, nodeWrapper, visibilityTest) && updateHandler != null)
+            updateHandler.accept(image, node);
+    }
+
+    private void updateOptionalUI(VloImage image) {
+        for (int i = 0; i < this.imageBasedNodes.size(); i++)
+            this.imageBasedNodes.get(i).updateNode(image);
     }
 
     @FXML
@@ -257,13 +493,9 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
         int paddedHeight = this.selectedImage.getPaddedHeight();
         int unpaddedWidth = this.selectedImage.getUnpaddedWidth();
         int unpaddedHeight = this.selectedImage.getUnpaddedHeight();
-        this.abrChoiceBox.setValue(this.selectedImage.getAbr());
         this.ingameDimensionLabel.setText("Size: " + unpaddedWidth + "x" + unpaddedHeight);
         this.dimensionLabel.setText("Padding: " + (paddedWidth - unpaddedWidth) + "x" + (paddedHeight - unpaddedHeight));
-
-        // TODO: Show clut XY here?
-        // TODO: Split into more lines.
-        this.idLabel.setText("Mode: " + this.selectedImage.getBitDepth().getDisplayName() + ", VRAM X: " + this.selectedImage.getVramX() + ", Y: " + this.selectedImage.getVramY() + ", Page: " + this.selectedImage.getPage());
+        this.idLabel.setText(this.selectedImage.getBitDepth().getDisplayName() + ", VRAM X: " + this.selectedImage.getVramX() + ", Y: " + this.selectedImage.getVramY() + ", Page: " + this.selectedImage.getPage());
     }
 
     /**
@@ -275,7 +507,7 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
             return;
 
         this.selectedImage = image;
-        this.updateFlags();
+        updateOptionalUI(image);
         this.updateDisplay();
 
         if (forceSelect) {
@@ -340,5 +572,21 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
         SCALED_NEAREST_NEIGHBOR("Scaled (Sharp)");
 
         private final String description;
+    }
+
+    @RequiredArgsConstructor
+    private static class ImageBasedFXNode<TNode extends Node> {
+        @NonNull private final TNode node;
+        private final BiConsumer<VloImage, ImageBasedFXNode<TNode>> nodeUpdater;
+
+
+        /**
+         * Updates the node.
+         * @param image the image to update with
+         */
+        public void updateNode(VloImage image) {
+            if (this.nodeUpdater != null)
+                this.nodeUpdater.accept(image, this);
+        }
     }
 }

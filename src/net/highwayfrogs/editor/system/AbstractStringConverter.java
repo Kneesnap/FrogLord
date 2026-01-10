@@ -8,8 +8,10 @@ import java.util.function.Function;
 
 /**
  * A StringConverter.
+ * @deprecated Use {@code LazyFXListCell} instead with {@code FXUtils.applyComboBoxDisplaySettings}.
  * Created by Kneesnap on 1/26/2019.
  */
+@Deprecated
 @RequiredArgsConstructor
 public class AbstractStringConverter<T> extends StringConverter<T> {
     private final Function<T, String> function;
