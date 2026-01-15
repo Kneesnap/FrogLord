@@ -2,8 +2,8 @@ package net.highwayfrogs.editor.games.sony.shared.map.packet;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
-import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.psx.math.vector.CVector;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.SCGameData;
@@ -201,7 +201,7 @@ public class SCMapPolygon extends SCGameData<SCGameInstance> {
      */
     public boolean isFullyOpaque(ISCLevelTableEntry levelTableEntry) {
         VloImage image = getTexture(levelTableEntry);
-        if (image != null && image.testFlag(VloImage.FLAG_BLACK_IS_TRANSPARENT))
+        if (image != null && image.hasAnyTransparentPixels(null))
             return false;
 
         return !isSemiTransparent(levelTableEntry);

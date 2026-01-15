@@ -481,7 +481,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
 
         // If transparent padding was enabled, mark the image as having transparency.
         if (this.paddingTransparent && operation == PaddingOperation.APPLY)
-            setFlag(FLAG_BLACK_IS_TRANSPARENT, true);
+            setFlag(FLAG_BLACK_IS_TRANSPARENT, !this.stpBlackBitFlipped);
     }
 
     private boolean isPaddingPixel(int pixelIndex) {
@@ -1338,7 +1338,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
             // This flag behavior has not been proven perfectly consistent with the original game files.
             // But, this flag is believed to never be accessed by any of the games/MR API.
             // Out of lazyness, I'll just assume this is how it is supposed to work and revisit this if problems arise.
-            setFlag(FLAG_BLACK_IS_TRANSPARENT, anyTransparentPixels);
+            setFlag(FLAG_BLACK_IS_TRANSPARENT, anyTransparentPixels ^ this.stpBlackBitFlipped);
         } else { // PC texture.
             boolean enableTransparency = false;
 
@@ -1351,7 +1351,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
             }
 
             // Apply to image.
-            setFlag(FLAG_BLACK_IS_TRANSPARENT, enableTransparency);
+            setFlag(FLAG_BLACK_IS_TRANSPARENT, enableTransparency ^ this.stpBlackBitFlipped);
             for (int i = 0; i < this.pixelBuffer.length; i++) {
                 int color = this.pixelBuffer[i];
                 if (ColorUtils.getAlphaInt(color) <= 127) {
@@ -1634,7 +1634,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
 
     @Override
     public boolean hasAnyTransparentPixels(BufferedImage image) {
-        return testFlag(FLAG_BLACK_IS_TRANSPARENT);
+        return testFlag(FLAG_BLACK_IS_TRANSPARENT) ^ this.stpBlackBitFlipped;
     }
 
     @Override
