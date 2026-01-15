@@ -186,9 +186,9 @@ public class PSXShadeTextureImageCache {
 
         ITextureSource textureSource = shadeTextureDefinition.getTextureSource(); // If it were null, it'd have been handled already in getCacheEntry(), so it's not null.
         if (shadeTextureDefinition.isSourceImageScaled()) {
-            return this.scaledEntriesByTextureSource.computeIfAbsent(textureSource, key -> new PSXShadeTextureSourceCacheEntry(this, textureSource, getTextureSourceImage(shadeTextureDefinition)));
+            return this.scaledEntriesByTextureSource.computeIfAbsent(textureSource, key -> new PSXShadeTextureSourceCacheEntry(this, key, getTextureSourceImage(shadeTextureDefinition, true)));
         } else {
-            return this.unscaledEntriesByTextureSource.computeIfAbsent(textureSource, key -> new PSXShadeTextureSourceCacheEntry(this, textureSource, textureSource.makeImage()));
+            return this.unscaledEntriesByTextureSource.computeIfAbsent(textureSource, key -> new PSXShadeTextureSourceCacheEntry(this, key, getTextureSourceImage(shadeTextureDefinition, false)));
         }
     }
 
@@ -197,7 +197,7 @@ public class PSXShadeTextureImageCache {
      * @param shadeTextureDefinition the shade texture definition to get the source image from
      * @return sourceImage
      */
-    public static BufferedImage getTextureSourceImage(PSXShadeTextureDefinition shadeTextureDefinition) {
+    public static BufferedImage getTextureSourceImage(PSXShadeTextureDefinition shadeTextureDefinition, boolean scaleImage) {
         ITextureSource textureSource = shadeTextureDefinition.getTextureSource();
 
         BufferedImage mainImage;
@@ -211,7 +211,7 @@ public class PSXShadeTextureImageCache {
         }
 
         // Make it larger to ensure the shading is large enough to appear correctly.
-        if (mainImage != null) {
+        if (mainImage != null && scaleImage) {
             int textureScaleX = shadeTextureDefinition.getTextureScaleX();
             int textureScaleY = shadeTextureDefinition.getTextureScaleY();
             if (textureScaleX != 1 || textureScaleY != 1)
