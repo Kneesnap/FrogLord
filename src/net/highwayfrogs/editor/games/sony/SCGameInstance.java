@@ -240,8 +240,7 @@ public abstract class SCGameInstance extends GameInstance {
      * @param name the name of the texture to resolve
      * @return textureId, if known
      */
-    @SuppressWarnings("unused") // Used by Noodle.
-    public Short getTextureIdByName(String name) {
+    public Short getTextureIdByOriginalName(String name) {
         return getVersionConfig().getImageList().getTextureIDFromName(name);
     }
 

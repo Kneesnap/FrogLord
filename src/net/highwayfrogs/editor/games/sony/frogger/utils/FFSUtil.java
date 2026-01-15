@@ -116,8 +116,8 @@ public class FFSUtil {
             builder.append(FfsCommandType.TEXTURE.getLabel())
                     .append(' ').append(image.getTextureId());
 
-            String fileName = image.getOriginalName();
-            if (StringUtils.isNullOrWhiteSpace(fileName)) {
+            String fileName = image.getName();
+            if (fileName == null) {
                 fileName = String.valueOf(image.getTextureId());
             } else {
                 // Write the image file name to the command.
@@ -360,14 +360,22 @@ public class FFSUtil {
 
         // If a texture name is present, it should be the be-all-end-all for identifying the texture, because names work across versions, support custom (new) textures cleanly, and are feasible to change by the user if not.
         if (!StringUtils.isNullOrWhiteSpace(textureFileName)) {
-            Short textureIdByName = instance.getTextureIdByName(textureFileName);
-            if (textureIdByName == null) {
-                context.getLogger().severe("No texture could be found which was named '%s'! (Was it imported first?)", textureFileName);
-                textureIds.add((short) -1);
+            VloFile mapVlo = context.getMapFile().getVloFile();
+            VloImage imageByName = mapVlo != null ? mapVlo.getImageByName(textureFileName) : null;
+            if (imageByName != null) {
+                textureIds.add(imageByName.getTextureId());
                 return;
             }
 
-            textureIds.add(textureIdByName);
+            // If the image wasn't found in the vlo, try original names.
+            Short textureIdByName = instance.getTextureIdByOriginalName(textureFileName);
+            if (textureIdByName != null) {
+                textureIds.add(textureIdByName);
+                return;
+            }
+
+            context.getLogger().severe("No texture could be found which was named '%s'! (Was it imported first?)", textureFileName);
+            textureIds.add((short) -1);
             return;
         }
 

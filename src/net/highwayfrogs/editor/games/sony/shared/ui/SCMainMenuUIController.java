@@ -209,7 +209,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
     private void promptSearchForTexture() {
         InputMenu.promptInput(getGameInstance(), "Please enter the texture id/name to lookup.", str -> {
             int textureId;
-            Short resolvedTextureIdByName = getGameInstance().getTextureIdByName(str);
+            Short resolvedTextureIdByName = getGameInstance().getTextureIdByOriginalName(str);
             if (resolvedTextureIdByName != null && resolvedTextureIdByName >= 0) {
                 textureId = resolvedTextureIdByName;
             } else {

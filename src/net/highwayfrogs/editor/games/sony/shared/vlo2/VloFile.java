@@ -9,6 +9,9 @@ import net.highwayfrogs.editor.games.sony.shared.ui.file.VLOController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
+import net.highwayfrogs.editor.system.IntList;
+import net.highwayfrogs.editor.utils.FileUtils;
+import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -19,6 +22,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -36,6 +40,7 @@ public class VloFile extends SCSharedGameFile {
     private static final int SIGNATURE_LENGTH = 4;
 
     public static final int ICON_EXPORT = VloImage.DEFAULT_IMAGE_NO_PADDING_EXPORT_SETTINGS;
+    private static final short CUSTOM_DATA_VERSION = 0;
 
     public VloFile(SCGameInstance instance) {
         super(instance);
@@ -112,6 +117,25 @@ public class VloFile extends SCSharedGameFile {
             requireReaderIndex(reader, clutColorsStartAddress, "Expected CLUT color data");
         if (clutColorsEndAddress >= 0)
             reader.setIndex(clutColorsEndAddress);
+
+        // FrogLord custom data (Texture names!)
+        if (reader.hasMore())
+            readCustomFrogLordData(reader);
+    }
+
+    private void readCustomFrogLordData(DataReader reader) {
+        reader.verifyString(FileUtils.FROGLORD_EXECUTABLE_SIGNATURE);
+        int version = reader.readUnsignedByte();
+        if (version > CUSTOM_DATA_VERSION)
+            getLogger().warning("Unsupported FrogLord texture data version %d found! (Supported Version: %d)", version, CUSTOM_DATA_VERSION);
+
+        int textureNameCount = reader.readUnsignedShortAsInt();
+        for (int i = 0; i < textureNameCount; i++) {
+            int index = reader.readUnsignedShortAsInt();
+            int length = reader.readUnsignedByte();
+            String name = reader.readTerminatedString(length);
+            this.images.get(index).setCustomName(name);
+        }
     }
 
     @Override
@@ -157,6 +181,36 @@ public class VloFile extends SCSharedGameFile {
             List<VloClut> cluts = this.clutList.getCluts();
             for (int i = 0; i < cluts.size(); i++)
                 cluts.get(i).writeColors(writer);
+        }
+
+        writeCustomFrogLordDataIfNecessary(writer);
+    }
+
+    private void writeCustomFrogLordDataIfNecessary(DataWriter writer) {
+        IntList imagesWithCustomNames = new IntList();
+        for (int i = 0; i < this.images.size(); i++) {
+            VloImage image = this.images.get(i);
+            String name = image.getName();
+            String originalName = image.getOriginalName();
+            if (!Objects.equals(name, originalName))
+                imagesWithCustomNames.add(i);
+        }
+
+        if (imagesWithCustomNames.isEmpty())
+            return; // No need to write custom data.
+
+        writer.writeStringBytes(FileUtils.FROGLORD_EXECUTABLE_SIGNATURE);
+        writer.writeUnsignedByte(CUSTOM_DATA_VERSION);
+
+        // Write texture names.
+        writer.writeUnsignedShort(imagesWithCustomNames.size());
+        for (int i = 0; i < imagesWithCustomNames.size(); i++) {
+            int index = imagesWithCustomNames.get(i);
+            VloImage image = this.images.get(index);
+            String imageName = image.getName();
+            writer.writeUnsignedShort(index);
+            writer.writeUnsignedByte((short) imageName.length());
+            writer.writeStringBytes(imageName);
         }
     }
 
@@ -248,5 +302,23 @@ public class VloFile extends SCSharedGameFile {
         SelectionMenu.promptSelection(getGameInstance(), "Select an image.", handler, allImages,
                 image -> image != null ? "#" + image.getLocalImageID() + " (" + image.getTextureId() + ")" : "No Image",
                 image -> image.toFXImage(ICON_EXPORT));
+    }
+
+    /**
+     * Finds an image with the given name
+     * @param name the name of the image to find
+     * @return image
+     */
+    public VloImage getImageByName(String name) {
+        if (StringUtils.isNullOrEmpty(name))
+            return null;
+
+        for (int i = 0; i < this.images.size(); i++) {
+            VloImage image = this.images.get(i);
+            if (name.equals(image.getName()))
+                return image;
+        }
+
+        return null;
     }
 }

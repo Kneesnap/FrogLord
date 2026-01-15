@@ -67,7 +67,7 @@ public class SCAnalysisUtils {
                     logger.info("Unused Images in %s:", vloArchive.getFileDisplayName());
                 }
 
-                String imageName = image.getOriginalName();
+                String imageName = image.getName();
                 if (imageName == null)
                     imageName = SCUtils.C_UNNAMED_IMAGE_PREFIX + image.getTextureId();
 

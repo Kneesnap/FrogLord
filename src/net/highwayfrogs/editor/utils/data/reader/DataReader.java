@@ -123,6 +123,7 @@ public class DataReader {
 
     /**
      * Reads a single short as an unsigned short, and returns it as a int. Since the java byte is -65534 to 65535, this allows us to read a short as the appropriate value.
+     * TODO: Sometime, rename this method (And other methods) to readUnsignedShort() (Drop the asInt()).
      * @return unsignedShortInt.
      */
     public int readUnsignedShortAsInt() {
@@ -181,6 +182,7 @@ public class DataReader {
 
     /**
      * Read a string of a pre-specified length.
+     * TODO: Rename to readString()
      * @param length The length of the string.
      * @return readStr
      */
@@ -190,6 +192,7 @@ public class DataReader {
 
     /**
      * Read a string of a pre-specified length.
+     * TODO: Rename to readString()
      * @param length The length of the string.
      * @return readStr
      */

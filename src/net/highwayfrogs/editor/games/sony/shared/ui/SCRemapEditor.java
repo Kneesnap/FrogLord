@@ -49,8 +49,8 @@ public class SCRemapEditor<TFile extends SCGameFile<?>> {
             this.remapList.getSelectionModel().selectFirst();
             this.remapList.setCellFactory(param -> new LazyFXListCell<>((textureId, index) -> {
                 VloImage image = resolveGameImage(textureId);
-                String originalName = image != null ? image.getOriginalName() : null;
-                return index + ": " + (originalName != null ? originalName + " (" + textureId + ")" : "Texture " + textureId);
+                String name = image != null ? image.getName() : null;
+                return index + ": " + (name != null ? name + " (" + textureId + ")" : "Texture " + textureId);
             }, (textureId, index) -> {
                 VloImage image = resolveGameImage(textureId);
                 return image != null ? image.toFXImage(MWDFile.VLO_ICON_SETTING) : null;

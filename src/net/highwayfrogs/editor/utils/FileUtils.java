@@ -962,8 +962,8 @@ public class FileUtils {
         return false;
     }
 
-    private static final String FROGLORD_EXECUTABLE_SIGNATURE = "FROGLORD";
-    private static final byte[] FROGLORD_EXECUTABLE_SIGNATURE_BYTES = FROGLORD_EXECUTABLE_SIGNATURE.getBytes(StandardCharsets.US_ASCII);
+    public static final String FROGLORD_EXECUTABLE_SIGNATURE = "FROGLORD";
+    public static final byte[] FROGLORD_EXECUTABLE_SIGNATURE_BYTES = FROGLORD_EXECUTABLE_SIGNATURE.getBytes(StandardCharsets.US_ASCII);
     private static final String PSX_EXECUTABLE_SIGNATURE = "PS-X EXE";
     private static final short PSX_EXE_HEADER_VERSION = 0; // Only increment this with a breaking change.
     private static final int PSX_BASIC_HEADER_SIZE = FROGLORD_EXECUTABLE_SIGNATURE_BYTES.length + 1;

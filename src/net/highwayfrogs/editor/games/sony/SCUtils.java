@@ -399,7 +399,7 @@ public class SCUtils {
         Map<Short, List<VloImage>> resultingMappings = new HashMap<>();
         for (VloFile vloFile : copyDestInst.getMainArchive().getAllFiles(VloFile.class)) {
             for (VloImage image : vloFile.getImages()) {
-                if (image.getOriginalName() != null) { // Keep previous name.
+                if (image.getName() != null) { // Keep previous name.
                     resultingMappings.putIfAbsent(image.getTextureId(), new ArrayList<>(Arrays.asList(image, image)));
                     continue;
                 }
@@ -439,10 +439,10 @@ public class SCUtils {
             if (images.stream().anyMatch(testImage -> testImage.getParent().getFileDisplayName().equals(destImage.getParent().getFileDisplayName())))
                 images.removeIf(testImage -> !testImage.getParent().getFileDisplayName().equals(destImage.getParent().getFileDisplayName()));
 
-            VloImage firstImage = images.stream().filter(testImage -> testImage.getOriginalName() != null).findFirst().orElse(images.get(0));
-            String name = firstImage.getOriginalName();
+            VloImage firstImage = images.stream().filter(testImage -> testImage.getName() != null).findFirst().orElse(images.get(0));
+            String name = firstImage.getName();
             if (name == null) {
-                if (!includeMissingTexturesAsComments && images.stream().allMatch(image -> image.getOriginalName() == null))
+                if (!includeMissingTexturesAsComments && images.stream().allMatch(image -> image.getName() == null))
                     continue;
 
                 name = SCUtils.C_UNNAMED_IMAGE_PREFIX + firstImage.getTextureId();
@@ -457,7 +457,7 @@ public class SCUtils {
                 builder.append(" # ");
                 for (int i = 0; i < images.size(); i++) {
                     VloImage image = images.get(i);
-                    String tempName = image.getOriginalName();
+                    String tempName = image.getName();
                     if (i > 0)
                         builder.append(", ");
                     builder.append(tempName != null ? tempName : SCUtils.C_UNNAMED_IMAGE_PREFIX + firstImage.getTextureId());

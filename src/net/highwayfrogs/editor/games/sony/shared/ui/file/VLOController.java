@@ -95,7 +95,7 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
             if (image == null)
                 return null;
 
-            String imageName = image.getOriginalName();
+            String imageName = image.getName();
             return index + ": " + (imageName != null ? imageName : "") + " [" + image.getPaddedWidth() + ", " + image.getPaddedHeight() + "] (ID: " + image.getTextureId() + ")";
         }).setWithoutIndexContextMenuHandler((contextMenu, image) -> {
             MenuItem findTextureUsages = new MenuItem("Find Usages");
@@ -420,9 +420,9 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
     @FXML
     @SneakyThrows
     private void exportImage(ActionEvent event) {
-        String originalName = this.selectedImage.getOriginalName();
+        String name = this.selectedImage.getName();
         BufferedImage image = this.selectedImage.toBufferedImage(IMAGE_EXPORT_SETTINGS);
-        FileUtils.askUserToSaveImageFile(getLogger(), getGameInstance(), image, originalName != null ? originalName : String.valueOf(this.selectedImage.getTextureId()));
+        FileUtils.askUserToSaveImageFile(getLogger(), getGameInstance(), image, name != null ? name : String.valueOf(this.selectedImage.getTextureId()));
     }
 
     @FXML

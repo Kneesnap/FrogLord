@@ -129,8 +129,8 @@ public class TextureRemapArray extends SCSharedGameObject {
             if (image == null)
                 return "No Image";
 
-            String originalName = image.getOriginalName();
-            return "#" + image.getLocalImageID() +  " (" + (originalName != null ? originalName + ", " : "") + image.getTextureId() + ")";
+            String name = image.getName();
+            return "#" + image.getLocalImageID() +  " (" + (name != null ? name + ", " : "") + image.getTextureId() + ")";
         }, image -> image != null ? image.toFXImage(VloFile.ICON_EXPORT) : FXUtils.toFXImage(UnknownTextureSource.MAGENTA_INSTANCE.makeImage(), true));
     }
 

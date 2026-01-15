@@ -71,13 +71,11 @@ import java.util.logging.Level;
  *    -> -1 will calculate padding.
  *    -> How to change padding?
  *    -> The text generation util should integrate with this new stuff.
- *    -> Name tracking.
  *    -> Update the import all/export all feature to be on right-click of the VLO itself
  *     -> It should also use image file names.
  *      -> For images with unrecognized non-numeric names, add them to the VLO.
  *      -> For images numeric names, add them with that as their texture ID, replacing any existing image with that texture ID.
  *    -> The "Clone Image" button should be removed to "Copy image to other VLO file.", and moved to right-click menu.
- *  6) Store custom file names in the .VLO file itself.
  *  8) Review to-do comments in this file.
  *  9) Text generation
  *   -> Integrate with new system to become seamless
@@ -103,7 +101,8 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
     @Getter private boolean paddingTransparent;
     private boolean paddingEnabled = true;
     private boolean stpNonBlackBitFlipped; // Pre-MediEvil II: Used to calculate the CLUT STP bit state.
-    private boolean stpBlackBitFlipped; // Pre-MediEvil II: Used to calculate the CLUT STP bit state
+    private boolean stpBlackBitFlipped; // Pre-MediEvil II: Used to calculate the CLUT STP bit state.
+    private String customName; // The custom name applied by FrogLord. (This may override the original name)
 
     // Temporary data.
     private final transient BufferedImage[] cachedImages = new BufferedImage[IMAGE_EXPORT_CACHE_SIZE];
@@ -414,7 +413,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
 
     @Override
     public String getCollectionViewDisplayName() {
-        String originalName = getOriginalName();
+        String originalName = getName();
         return getLocalImageID() + ": " + (originalName != null ? originalName : "")
                 + " (ID: " + this.textureId + ")";
     }
@@ -666,8 +665,8 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
 
     @Override
     public ILogger getLogger() {
-        String loggerInfo = getOriginalName();
-        if (StringUtils.isNullOrWhiteSpace(loggerInfo))
+        String loggerInfo = getName();
+        if (loggerInfo == null)
             loggerInfo = Integer.toString(getTextureId());
 
         int localImageId = getLocalImageID();
@@ -680,8 +679,8 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
 
     @Override
     public String toString() {
-        String originalName = getOriginalName();
-        return "VloImage{" + (originalName != null ? originalName + "," : "")
+        String name = getName();
+        return "VloImage{" + (name != null ? name + "," : "")
                 + "id=" + this.textureId
                 + (this.parent != null ? "@" + this.parent.getFileDisplayName() : "") + "}";
     }
@@ -878,7 +877,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
                         //  - While this pattern seems to mostly be true, it is not ACTUALLY consistent.
                         // It's just a general guideline. As such, we
 
-                        String name = getOriginalName();
+                        String name = getName();
                         if (this.parent.getFileDisplayName().startsWith("FIX")) {
                             if (name != null && name.startsWith("frog_shadow")) {
                                 return 8;
@@ -1029,9 +1028,9 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
      */
     public String getIdentifier() {
         StringBuilder builder = new StringBuilder("VloImage{");
-        String originalName = getOriginalName();
-        if (originalName != null)
-            builder.append("'").append(originalName).append("'/");
+        String name = getName();
+        if (name != null)
+            builder.append("'").append(name).append("'/");
         builder.append(getTextureId());
         return builder.append("}").toString();
     }
@@ -1600,7 +1599,21 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
     }
 
     /**
-     * Gets the name configured as the original name for this image.
+     * Gets the name configured for this image.
+     */
+    public String getName() {
+        if (!StringUtils.isNullOrWhiteSpace(this.customName))
+            return this.customName;
+
+        String originalName = getOriginalName();
+        if (!StringUtils.isNullOrWhiteSpace(originalName))
+            return originalName;
+
+        return null;
+    }
+
+    /**
+     * Gets the name configured as found in the original game, or null, if unconfigured
      */
     public String getOriginalName() {
         return getConfig().getImageList().getImageNameFromID(this.textureId);
@@ -1860,5 +1873,53 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
 
         this.flags &= ~FLAG_MEDIEVIL_INTERACTION_MASK;
         this.flags |= (short) (interactionType.ordinal() << FLAG_MEDIEVIL_INTERACTION_SHIFT);
+    }
+
+    /**
+     * Applies a custom name to this image.
+     * @param customName the custom name to apply to the image
+     */
+    public void setCustomName(String customName) {
+        if (customName == null) {
+            this.customName = null;
+            return; // Allow setting custom name to null.
+        }
+
+        if (!isValidTextureName(customName))
+            throw new IllegalArgumentException("Invalid name: '" + customName + "'");
+        if (this.customName != null && this.customName.equals(customName))
+            return; // No change.
+
+        String originalName = getOriginalName();
+        if (originalName != null && originalName.equals(customName)) {
+            this.customName = null; // Set customName to null, so we'll use the originalName.
+            return;
+        }
+
+        VloImage otherImage;
+        if (this.parent != null && (otherImage = this.parent.getImageByName(customName)) != null)
+            throw new IllegalArgumentException("Found other image named '" + customName + "', at localIndex: " + otherImage.getLocalImageID() + ", ID: " + otherImage.getTextureId() + ".");
+
+        this.customName = customName;
+    }
+
+    /**
+     * Check if the provided string is valid to use as a texture name.
+     * @param textureName the name to test
+     * @return true iff the texture name is valid to use as a texture name
+     */
+    public static boolean isValidTextureName(String textureName) {
+        if (textureName == null || textureName.isEmpty() || textureName.length() >= 256)
+            return false;
+
+        for (int i = 0; i < textureName.length(); i++) {
+            char temp = textureName.charAt(i);
+            if ((temp >= '0' && temp <= '9' && i > 0) || (temp >= 'A' && temp <= 'Z') || (temp >= 'a' && temp <= 'z') || temp == '_')
+                continue;
+
+            return false;
+        }
+
+        return true;
     }
 }
