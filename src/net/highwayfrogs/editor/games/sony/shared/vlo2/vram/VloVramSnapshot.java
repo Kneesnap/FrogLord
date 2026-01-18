@@ -126,7 +126,7 @@ public class VloVramSnapshot extends SCSharedGameObject {
         if (this.node == null)
             throw new NullPointerException("node");
 
-        // If this is the tree root, add primary framebuffers.
+        // If this is the tree root, add primary frame-buffers.
         boolean psxMode = getGameInstance().isPSX();
         if (this.node instanceof VloTree) {
             if (getGameInstance().getPrimaryFrameBuffer() != null)
@@ -197,7 +197,7 @@ public class VloVramSnapshot extends SCSharedGameObject {
 
 
     /**
-     * Adds an predefined entry to the vram snapshot.
+     * Adds a predefined entry to the vram snapshot.
      * @param entry the entry to add
      */
     public void addEntry(VloVramEntry entry) {
@@ -241,26 +241,26 @@ public class VloVramSnapshot extends SCSharedGameObject {
         for (int y = 0; y < pageHeight; y++)
             for (int page = 0; page < pageCount; page++)
                 if ((usablePages & (1 << page)) != 0 && addEntryHorizontal(entry, y, page, usablePages))
-                    return addImageClut(image, addedCluts, page, usablePages, extraPages);
+                    return addImageClut(image, addedCluts, usablePages, extraPages);
 
         // If it failed previously, it's time to try the extra pages.
         for (int y = 0; y < pageHeight; y++)
             for (int page = 0; page < pageCount; page++)
                 if ((extraPages & (1 << page)) != 0 && addEntryHorizontal(entry, y, page, extraPages))
-                    return addImageClut(image, addedCluts, page, usablePages, extraPages);
+                    return addImageClut(image, addedCluts, usablePages, extraPages);
 
         return false;
     }
 
-    private boolean addImageClut(VloImage image, Set<VloClut> addedCluts, int page, int usablePages, int extraPages) {
+    private boolean addImageClut(VloImage image, Set<VloClut> addedCluts, int usablePages, int extraPages) {
         VloClut clut = image.getClut();
-        if (clut == null || tryAddClut(clut, addedCluts, page, usablePages, extraPages))
+        if (clut == null || tryAddClut(clut, addedCluts, usablePages, extraPages))
             return true; // No clut, everything is good.
 
         throw new RuntimeException("There was not enough VRAM space to add " + image + "'s CLUT!");
     }
 
-    private boolean tryAddClut(VloClut clut, Set<VloClut> addedCluts, int imagePage, int usablePages, int extraPages) {
+    private boolean tryAddClut(VloClut clut, Set<VloClut> addedCluts, int usablePages, int extraPages) {
         if (!addedCluts.add(clut))
             return true; // Clut has already been added.
 
