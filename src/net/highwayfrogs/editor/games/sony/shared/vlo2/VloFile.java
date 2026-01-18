@@ -3,6 +3,8 @@ package net.highwayfrogs.editor.games.sony.shared.vlo2;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.psx.image.PsxAbrTransparency;
+import net.highwayfrogs.editor.games.psx.image.PsxImageBitDepth;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.VLOController;
@@ -13,10 +15,12 @@ import net.highwayfrogs.editor.system.IntList;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 
 import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,6 +38,7 @@ public class VloFile extends SCSharedGameFile {
     private final List<VloImage> immutableImages = Collections.unmodifiableList(this.images);
     @Getter private final VloClutList clutList;
     @Getter private boolean psxMode;
+    @Getter boolean vramDirty;
 
     public static final String PC_SIGNATURE = "2GRP";
     public static final String PSX_SIGNATURE = "2GRV";
@@ -317,6 +322,65 @@ public class VloFile extends SCSharedGameFile {
             VloImage image = this.images.get(i);
             if (name.equals(image.getName()))
                 return image;
+        }
+
+        return null;
+    }
+
+    /**
+     * Mark the vlo file as being up-to-date / not needing any changes.
+     * Only the vram position updater should call this.
+     */
+    public void markClean() {
+        this.vramDirty = false;
+    }
+
+    /**
+     * Adds a new image to the VLO file
+     * @param name the name of the image to add
+     * @param image the image to import
+     * @param padding the padding pixels to apply. A negative number will be auto-generated.
+     * @param bitDepth the image bit-depth to apply
+     * @param abr the ABR value to apply, ignored on PC.
+     * @return newVloImage
+     */
+    public VloImage addImage(String name, BufferedImage image, int padding, PsxImageBitDepth bitDepth, PsxAbrTransparency abr) {
+        if (StringUtils.isNullOrWhiteSpace(name))
+            throw new IllegalArgumentException("The provided image name was null/empty!");
+        if (!VloImage.isValidTextureName(name))
+            throw new IllegalArgumentException("Invalid texture name: '" + name + "', try something else.");
+        if (image == null)
+            throw new NullPointerException("image");
+        if (padding > 16)
+            throw new IllegalArgumentException("Unexpectedly large padding: " + padding);
+        VloImage existingImage = getImageByName(name);
+        if (existingImage != null)
+            throw new IllegalArgumentException("Cannot add image named '" + name +"' because an image with that name already exists! (Local ID: " + existingImage.getLocalImageID() + ")");
+
+        // Default params
+        if (bitDepth == null)
+            bitDepth = PsxImageBitDepth.CLUT4;
+
+        // TODO: We need two modes, one where we add new texture IDs (For recompilation), and another where we try to re-use existing slots and crap.
+
+        // TODO: Find a texture ID, and ensure it is not currently in use in ALL VLOs which might be loaded at this time.
+        //  -> If name is in the original texture list, perhaps use that texture ID.
+        //   -> IF that texture ID is already in use, boot that texture to a new texture. (Does this mean we need to update remaps???)
+
+        VloImage newImage = new VloImage(this);
+        // TODO: Set Texture ID
+        newImage.setCustomName(name);
+        newImage.replaceImage(image, bitDepth, padding, padding, ProblemResponse.THROW_EXCEPTION);
+        if (abr != null && this.psxMode)
+            newImage.setAbr(abr);
+
+        this.images.add(newImage); // TODO: Proper ordering?
+
+        try {
+            // TODO: Add to VloTree.
+        } catch (Throwable th) {
+            // If we failed to add to the VloTree, TODO: consider trying to rebuild the parent before continuing.
+            this.vramDirty = true;
         }
 
         return null;

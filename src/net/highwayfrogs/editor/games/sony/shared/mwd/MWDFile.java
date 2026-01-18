@@ -346,6 +346,15 @@ public class MWDFile extends SCSharedGameData {
      * @param progressBar the progress bar to update, if exists
      */
     public void save(DataWriter writer, ProgressBarComponent progressBar) {
+        try {
+            if (getGameInstance().getVloTree() != null) {
+                progressBar.update(0, 1, "Placing textures into VRAM...");
+                getGameInstance().getVloTree().recursivelyBuildDirtyVloFiles();
+            }
+        } catch (Throwable th) {
+            Utils.handleError(getLogger(), th, true, "Failed to place game textures (.VLO files) into VRAM!");
+        }
+
         if (progressBar != null)
             progressBar.setTotalProgress(this.files.size());
 

@@ -1,22 +1,23 @@
 package net.highwayfrogs.editor.games.psx.image;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import net.highwayfrogs.editor.utils.NumberUtils;
 import net.highwayfrogs.editor.utils.StringUtils;
 
 /**
- * Represents a framebuffer window in psx VRAM.
+ * Represents a portion of space (such as a framebuffer) in psx VRAM.
  * As a string, this is represented by "{width}x{height}@{x},{y}"
+ * The coordinates in this are by default stored in expanded form
  * Created by Kneesnap on 02/01/2026.
  */
 @Getter
-@AllArgsConstructor
-public class PsxVramScreenSize {
-    private int x;
-    private int y;
-    private int width;
-    private int height;
+@RequiredArgsConstructor
+public class PsxVramBox {
+    private final int x;
+    private final int y;
+    private final int width;
+    private final int height;
 
     private static final String FORMAT_STR = "{width}x{height}@{x},{y}";
 
@@ -31,19 +32,24 @@ public class PsxVramScreenSize {
      * @param y the y offset
      * @return clonedSize
      */
-    public PsxVramScreenSize add(int x, int y) {
-        return new PsxVramScreenSize(this.x + x, this.y + y, this.width, this.height);
+    public PsxVramBox add(int x, int y) {
+        return new PsxVramBox(this.x + x, this.y + y, this.width, this.height);
     }
 
     /**
      * Create a clone of this screen size, but below the current area.
      * @return newArea
      */
-    public PsxVramScreenSize cloneBelow() {
+    public PsxVramBox cloneBelow() {
         return add(0, this.height);
     }
 
-    public static PsxVramScreenSize parse(String input) {
+    /**
+     * Parse the vram box from a string.
+     * @param input the input string to parse
+     * @return vramBox
+     */
+    public static PsxVramBox parse(String input) {
         if (StringUtils.isNullOrWhiteSpace(input))
             throw new NullPointerException("input");
 
@@ -61,6 +67,6 @@ public class PsxVramScreenSize {
         int y = Integer.parseInt(positionSplit[1]);
         int width = Integer.parseInt(dimensionSplit[0]);
         int height = Integer.parseInt(dimensionSplit[1]);
-        return new PsxVramScreenSize(x, y, width, height);
+        return new PsxVramBox(x, y, width, height);
     }
 }

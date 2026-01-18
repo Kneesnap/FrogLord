@@ -66,20 +66,41 @@ import java.util.logging.Level;
  *  in order to minimize the risk of FrogLord breaking existing textures while also keeping texture editing as simple as possible for a FrogLord user.
  * <p/>
  * TODO Remaining Tasks before feature complete:
- *  5) Later, create the VRAM texture placement system.
+ *  1) Create the VRAM texture placement system.
+ *   -> Figure out sorting order for texture insertion.
+ *   -> Load vram when VLO is imported.
+ *   -> Allow specifying 'clutPages' on a VloTreeNode, which allows
+ *    -> Does this choose a list of all nodes which can be used for cluts, or is it instead a "prefer these pages for cluts" field?
+ *    -> We should probably make it so cluts do not get placed in the top row of pages.
+ *   -> Allow choosing the VLO fill mode on a per-node basis. Allow using FILL_PAGE, SPREAD. (Is it possible this is just based on top/bottom behavior?)
+ *   -> Test PC.
+ *   -> Go over all games and setup working configs.
  *   -> Easy image management. (VloFile.addImage(String name, BufferedImage, ClutMode, abr, int padding)
- *    -> -1 will calculate padding.
- *    -> How to change padding?
- *    -> The text generation util should integrate with this new stuff.
- *    -> Update the import all/export all feature to be on right-click of the VLO itself
- *     -> It should also use image file names.
- *      -> For images with unrecognized non-numeric names, add them to the VLO.
- *      -> For images numeric names, add them with that as their texture ID, replacing any existing image with that texture ID.
- *    -> The "Clone Image" button should be removed to "Copy image to other VLO file.", and moved to right-click menu.
- *  8) Review to-do comments in this file.
- *  9) Text generation
+ *  2) Rewrite the VLO file UI
+ *   -> The "Clone Image" button should be removed to "Copy image to other VLO file.", and moved to right-click menu.
+ *   -> Update the import all/export all feature to be on right-click of the VLO itself
+ *    -> It should also use image file names.
+ *     -> For images with unrecognized non-numeric names, add them to the VLO.
+ *     -> For images numeric names, add them with that as their texture ID, replacing any existing image with that texture ID.
+ *  3) Review to-do comments in this file.
+ *  4) Text generation
  *   -> Integrate with new system to become seamless
  *   -> Remove usage of SCImageUtils.TransparencyFilter, and then delete that class,
+ *  5) Frogger semi-transparent flags don't seem to render correctly in-editor.
+ *  6) VramController might need to have its warnings gutted.
+ *  7) MoonWarrior map viewing is cooked, possibly from image caching.
+ *  8) Scrolling through the Beast Wars wad list with arrow keys is painfully slow, profile it. (This may just be due to the number of froglord windows I have open)
+ *    -> Scrolling through VLOs has the same issue. Can we get a faster "convert to FX image"?
+ *  9) Rewrite VRAM Viewer
+ *   -> Allow displaying parent node textures.
+ *   -> Highlight which pages the VLO can write to.
+ *   -> Highlight pages used by parent/child vlo files as red.
+ *   -> Add text for each reserved page.
+ *   -> Add a button to allow refreshing the Vram viewer now, maybe.
+ *   -> Clean out various warnings.
+ *   -> Allow selecting other entries. (Cluts, entries, etc)
+ *    -> Show information like which images the clut is used by, what cluts an image use, etc.
+ *  10) Look at the issue we have with game-specific loggers, and how it causes UI synchronization lag.
  * Created by Kneesnap on 8/30/2018.
  */
 public class VloImage extends SCSharedGameData implements Cloneable, ITextureSource, ICollectionViewEntry {
@@ -95,7 +116,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
     private short unpaddedWidth; // Contains the width of the original image, without padding. Overridden getter is getUnpaddedWidth(), getUnpaddedHeight(), which will return padding as seen by the game, instead of the padding to the underlying image.
     private short unpaddedHeight; // Contains the height of the original image, without padding.
     @Getter private int[] pixelBuffer;
-    @Getter private PsxImageBitDepth bitDepth; // This is consistent across versions on PC, and does seem to indicate image quality. I do not think it is used for anything important.
+    @NonNull @Getter private PsxImageBitDepth bitDepth = PsxImageBitDepth.CLUT4; // This is consistent across versions on PC, and does seem to indicate image quality. I do not think it is used for anything important.
     @NonNull @Getter private PsxAbrTransparency abr = PsxAbrTransparency.DEFAULT; // ABR. Always observed to be DEFAULT on PC.
     @Getter private VloClut clut;
     @Getter private boolean paddingTransparent;
@@ -612,8 +633,10 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
             setClut(foundClut);
         } else {
             VloClut newClut = this.clut; // Use previous clut if possible
-            if (newClut == null || newClut.getImages().size() > 1 || clutWidth > newClut.getWidth() || clutHeight > newClut.getHeight())
+            if (newClut == null || newClut.getImages().size() > 1 || clutWidth > newClut.getWidth() || clutHeight > newClut.getHeight()) {
                 newClut = new VloClut(this.parent); // TODO: This fails right now due to not being able to get a valid clut position.
+                // TODO: Try to add to tree.
+            }
             newClut.loadColors(clutWidth, clutHeight, newColors);
             setClut(newClut); // Registering the clut should generate its position.
         }
@@ -1012,7 +1035,10 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         return this.parent != null ? this.parent.isPsxMode() : getGameInstance().isPSX();
     }
 
-    private short getUnitWidth() {
+    /**
+     * Gets the padded width of the image, in vram width units.
+     */
+    public short getUnitWidth() {
         return (short) (this.paddedWidth / getWidthMultiplier());
     }
 
@@ -1042,8 +1068,8 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
      * @param newVramX the new vramX value to apply
      */
     public void setVramX(int newVramX) {
-        final int maxX = isPsxMode() ? PsxVram.PSX_VRAM_MAX_POSITION_X : PC_VRAM_MAX_POSITION_X;
-        if (newVramX < 0 || newVramX + this.paddedWidth > maxX)
+        final int maxX = VloUtils.getVramUnitMaxPositionX(isPsxMode());
+        if (newVramX < 0 || newVramX + getUnitWidth() > maxX)
             throw new IllegalArgumentException("The provided x coordinate would result in the image being placed at least partially outside of VRAM! (newVramX: " + newVramX + ", paddedWidth: " + this.paddedWidth  + ")");
 
         this.vramX = (short) newVramX;
@@ -1054,7 +1080,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
      * @param newVramY the new vramY value to apply
      */
     public void setVramY(int newVramY) {
-        final int maxY = isPsxMode() ? PsxVram.PSX_VRAM_MAX_POSITION_Y : PC_VRAM_MAX_POSITION_Y;
+        final int maxY = VloUtils.getVramMaxPositionY(isPsxMode());
         if (newVramY < 0 || newVramY + this.paddedHeight > maxY)
             throw new IllegalArgumentException("The provided y coordinate would result in the image being placed at least partially outside of VRAM! (newVramY: " + newVramY + ", paddedHeight: " + this.paddedHeight + ")");
 
@@ -1092,7 +1118,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
      * @return page
      */
     public short getPage() {
-        return getPage(this.vramX, this.vramY);
+        return VloUtils.getPageFromVramPos(getGameInstance(), this.vramX, this.vramY);
     }
 
     /**
@@ -1100,18 +1126,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
      * @return endPage
      */
     public short getEndPage() {
-        return getPage(this.vramX + ((this.paddedWidth - 1) / getWidthMultiplier()), this.vramY + this.paddedHeight - 1);
-    }
-
-    private short getPage(int vramX, int vramY) {
-        if (isPsxMode()) {
-            return (short) (((vramY / PsxVram.PSX_VRAM_PAGE_HEIGHT) * PsxVram.PSX_VRAM_PAGE_COUNT_X) + (vramX / PsxVram.PSX_VRAM_PAGE_UNIT_WIDTH));
-        } else if (getGameInstance().getGameType().isAtLeast(SCGameType.FROGGER)) {
-            return (short) (vramY / VloImage.PC_VRAM_PAGE_HEIGHT);
-        } else {
-            // Old Frogger PC Milestone 3 does this.
-            return (short) (vramX / VloImage.PC_VRAM_PAGE_WIDTH);
-        }
+        return VloUtils.getPageFromVramPos(getGameInstance(), this.vramX + ((this.paddedWidth - 1) / getWidthMultiplier()), this.vramY + this.paddedHeight - 1);
     }
 
     /**
@@ -1136,7 +1151,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
      * @return uValue
      */
     public short getU() {
-        int pageVramX = (this.vramX % (isPsxMode() ? PsxVram.PSX_VRAM_PAGE_UNIT_WIDTH : VloImage.PC_VRAM_PAGE_WIDTH)) * getWidthMultiplier();
+        int pageVramX = (this.vramX % VloUtils.getUnitPageWidth(isPsxMode())) * getWidthMultiplier();
         return (short) (pageVramX + getLeftPadding());
     }
 
@@ -1145,7 +1160,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
      * @return vValue
      */
     public short getV() {
-        int pageVramY = (this.vramY % (isPsxMode() ? PsxVram.PSX_VRAM_PAGE_HEIGHT : VloImage.PC_VRAM_PAGE_HEIGHT));
+        int pageVramY = (this.vramY % VloUtils.getPageHeight(isPsxMode()));
         return (short) (pageVramY + getUpPadding());
     }
 
@@ -1205,7 +1220,8 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
     }
 
     private void markNeedsVramRefresh() {
-        // TODO: Implement in future.
+        if (this.parent != null)
+            this.parent.vramDirty = true;
     }
 
     /**
@@ -1246,9 +1262,6 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         int oldPaddedWidth = this.paddedWidth;
         int oldPaddedHeight = this.paddedHeight;
 
-        // We can only parse TYPE_INT_ARGB, so if it's not that, we must convert the image to that, so it can be parsed properly.
-        image = ImageUtils.convertBufferedImageToFormat(image, BufferedImage.TYPE_INT_ARGB);
-
         // Now that the dimensions are finalized, grant easy access to them.
         int newInputImageWidth = image.getWidth();
         int newInputImageHeight = image.getHeight();
@@ -1265,16 +1278,21 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
             return;
         }
 
+        // We can only parse TYPE_INT_ARGB, so if it's not that, we must convert the image to that, so it can be parsed properly.
+        image = ImageUtils.convertBufferedImageToFormat(image, BufferedImage.TYPE_INT_ARGB);
+
         // Get current padding, without PSX alignment.
+        boolean hadPreviousImage = (this.pixelBuffer != null);
         int oldPaddingXAlignment = calculatePsxAlignmentPaddingX();
-        int oldPaddingX = this.paddedWidth - this.unpaddedWidth - oldPaddingXAlignment;
-        int oldPaddingY = this.paddedHeight - this.unpaddedHeight - oldPaddingXAlignment;
+        int oldPaddingX = hadPreviousImage ? this.paddedWidth - this.unpaddedWidth - oldPaddingXAlignment : 0;
+        int oldPaddingY = hadPreviousImage ? this.paddedHeight - this.unpaddedHeight - oldPaddingXAlignment : 0;
 
         // Calculate padding changes.
         // Padding calculation needs: bitDepth, unpaddedWidth
-        if (isPsxMode() && (this.bitDepth != bitDepth)) {
+        if (this.bitDepth != bitDepth) {
             this.bitDepth = bitDepth;
-            markNeedsVramRefresh();
+            if (isPsxMode())
+                markNeedsVramRefresh();
         }
 
         // Apply new dimensions.
@@ -1283,16 +1301,20 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         int newPaddingXAlignment = calculatePsxAlignmentPaddingX(); // Requires: unpaddedWidth, bitDepth
 
         // Calculate the new Y padding.
-        // Happens before X so we can calculate paddingEnabled before calculatePaddingX() is potentially called.
+        // Happens before X, so we can calculate paddingEnabled before calculatePaddingX() is potentially called.
         int newPaddingY;
         if (paddingY >= 0) {
             newPaddingY = paddingY;
-            this.paddingEnabled = (paddingY > 0);
         } else {
             newPaddingY = calculatePaddingY();
-            if (newPaddingY < 0)
+            if (hadPreviousImage && newPaddingY < 0) {
                 newPaddingY = newPaddingXAlignment + oldPaddingY;
+            } else if (!hadPreviousImage) {
+                newPaddingY = 2;
+            }
         }
+
+        this.paddingEnabled = (newPaddingY > 0);
 
         // Calculate the new X padding.
         int newPaddingX;
@@ -1300,7 +1322,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
             newPaddingX = paddingX;
         } else {
             newPaddingX = calculatePaddingX();
-            if (newPaddingX < 0)
+            if (hadPreviousImage && newPaddingX < 0)
                 newPaddingX = newPaddingXAlignment + oldPaddingX;
         }
 
@@ -1396,12 +1418,13 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         // Generate clut for newly imported image.
         // Generate the clut only after padding and quantization.
         regenerateClut(this.parent.getClutList(), null, true);
+        invalidateCache();
 
         // Handle dimension change...
-        if (this.paddedWidth != oldPaddedWidth || this.paddedHeight != oldPaddedHeight)
+        if (this.paddedWidth != oldPaddedWidth || this.paddedHeight != oldPaddedHeight) {
             markNeedsVramRefresh();
-
-        invalidateCache();
+            // TODO: Change sorting order of VloFile's image to account for this image potentially having changed positions. (Only if it is currently registered)
+        }
     }
 
     /**

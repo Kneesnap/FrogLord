@@ -29,12 +29,12 @@ public class VloClut extends SCSharedGameData implements ITextureSource {
     private final List<VloImage> images = new ArrayList<>();
     private final List<VloImage> immutableImages = Collections.unmodifiableList(this.images);
     @Getter boolean registered;
-    @Getter private short x = -1;
+    @Getter private short x = -1; // Always in unit form, since the clut colors are always 16 bits each.
     @Getter private short y = -1;
     private PSXClutColor[][] colors;
     transient int tempColorsPointer = -1;
 
-    private static final int X_POSITION_MODULO = 16;
+    public static final int X_POSITION_MODULO = 16;
 
     public static final int CLUT4_COLOR_COUNT = 16;
     public static final int CLUT8_COLOR_COUNT = 256;
@@ -312,7 +312,7 @@ public class VloClut extends SCSharedGameData implements ITextureSource {
                 && ((otherClut.y < (this.y + getHeight())) && ((otherClut.y + otherClut.getHeight()) > this.y));
     }
 
-    @Override
+    @Override // Width is always in unit form, since the clut colors are always 16 bits each.
     public int getWidth() {
         return this.colors != null && this.colors.length > 0 ? this.colors[0].length : 0;
     }

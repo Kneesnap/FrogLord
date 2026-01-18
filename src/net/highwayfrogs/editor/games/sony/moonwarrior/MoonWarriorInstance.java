@@ -1,6 +1,6 @@
 package net.highwayfrogs.editor.games.sony.moonwarrior;
 
-import net.highwayfrogs.editor.games.psx.image.PsxVramScreenSize;
+import net.highwayfrogs.editor.games.psx.image.PsxVramBox;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
@@ -50,7 +50,7 @@ public class MoonWarriorInstance extends SCGameInstance {
     @Override
     protected void setupFrameBuffers() {
         // Tested in ECTS Alpha, Build 0.05a
-        this.primaryFrameBuffer = new PsxVramScreenSize(0, 0, 512, getDefaultFrameBufferHeight());
+        this.primaryFrameBuffer = new PsxVramBox(0, 0, 512, getDefaultFrameBufferHeight());
         this.secondaryFrameBuffer = this.primaryFrameBuffer.add(0, 256); // Regardless of the actual screen height, the second framebuffer seems to be placed at y=256.
 
     }

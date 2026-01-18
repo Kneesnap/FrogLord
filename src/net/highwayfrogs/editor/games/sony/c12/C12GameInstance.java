@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.games.sony.c12;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
-import net.highwayfrogs.editor.games.psx.image.PsxVramScreenSize;
+import net.highwayfrogs.editor.games.psx.image.PsxVramBox;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
@@ -82,7 +82,7 @@ public class C12GameInstance extends SCGameInstance {
     @Override
     protected void setupFrameBuffers() {
         // NTSC is probably 512x236, not 512x240. But w/e, it's fine for now.
-        this.primaryFrameBuffer = new PsxVramScreenSize(0, 0, 512, getDefaultFrameBufferHeight());
+        this.primaryFrameBuffer = new PsxVramBox(0, 0, 512, getDefaultFrameBufferHeight());
         this.secondaryFrameBuffer = this.primaryFrameBuffer.add(0, 256); // Y: 256 regardless of height of parent.
     }
 }

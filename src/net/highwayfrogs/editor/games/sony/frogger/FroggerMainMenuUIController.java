@@ -20,7 +20,6 @@ public class FroggerMainMenuUIController extends SCMainMenuUIController<FroggerG
     protected void onControllerLoad(Node rootNode) {
         super.onControllerLoad(rootNode);
 
-        addMenuItem(this.menuBarEdit, "Generate Header Files", () -> getGameInstance().exportCode(getGameInstance().getMainGameFolder()));
         addMenuItem(this.menuBarEdit, "Edit Level Info", () -> LevelInfoController.openEditor(getGameInstance()));
         addMenuItem(this.menuBarEdit, "Edit Form Library", () -> FormEntryController.openEditor(getGameInstance()));
         addMenuItem(this.menuBarEdit, "Edit Scripts", () -> ScriptEditorController.openEditor(getGameInstance()));

@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
-import net.highwayfrogs.editor.games.psx.image.PsxVramScreenSize;
+import net.highwayfrogs.editor.games.psx.image.PsxVramBox;
 import net.highwayfrogs.editor.games.sony.*;
 import net.highwayfrogs.editor.games.sony.medievil.config.MediEvilConfig;
 import net.highwayfrogs.editor.games.sony.medievil.entity.MediEvilEntityTable;
@@ -202,7 +202,7 @@ public class MediEvilGameInstance extends SCGameInstance implements ISCMWDHeader
     @Override
     protected void setupFrameBuffers() {
         // Tested in ECTS Alpha, Build 0.28 PAL, Build 0.31, and Reviewable Version.
-        this.primaryFrameBuffer = new PsxVramScreenSize(0, 0, 512, getDefaultFrameBufferHeight());
+        this.primaryFrameBuffer = new PsxVramBox(0, 0, 512, getDefaultFrameBufferHeight());
         this.secondaryFrameBuffer = this.primaryFrameBuffer.cloneBelow();
     }
 

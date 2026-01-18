@@ -28,6 +28,7 @@ public class SCGameConfig extends GameConfig {
     private SCGameRegion region;
     private SCNameBank soundBank;
     private SCNameBank animationBank;
+    private net.highwayfrogs.editor.system.Config vloTreeConfig;
     private final Map<String, int[]> hiddenPartIds = new HashMap<>();
     private final Map<String, String> mofRenderOverrides = new HashMap<>();
     private final Map<String, String> mofParentOverrides = new HashMap<>();
@@ -38,6 +39,7 @@ public class SCGameConfig extends GameConfig {
     private static final String CFG_FILE_NAMES = "Files";
     private static final String CFG_CHILD_IMAGE_NAMES = "ImageNames";
     private static final String CFG_CHILD_BSS_SYMBOLS = "BssSymbols";
+    private static final String CONFIG_KEY_VLO_TREE = "vloTree";
     private static final long[] EMPTY_LONG_ARRAY = new long[0];
 
     public SCGameConfig(String internalName) {
@@ -56,6 +58,7 @@ public class SCGameConfig extends GameConfig {
         readMofOverrides(config);
         readMofParentOverrides(config);
         readConfiguredImageNames(config);
+        readVloTreeConfig(config);
     }
 
     private void loadBanks(Config config) {
@@ -155,6 +158,16 @@ public class SCGameConfig extends GameConfig {
         } else {
             this.imageList.loadList(null);
         }
+    }
+
+    private void readVloTreeConfig(Config config) {
+        String vloTreeCfgName = config.getString(CONFIG_KEY_VLO_TREE, null);
+        if (StringUtils.isNullOrWhiteSpace(vloTreeCfgName)) {
+            this.vloTreeConfig = null;
+            return;
+        }
+
+        this.vloTreeConfig = net.highwayfrogs.editor.system.Config.loadTextConfigFromInputStream(getGameType().getEmbeddedResourceStream("vlo/" + vloTreeCfgName + ".cfg"), vloTreeCfgName);
     }
 
     public enum SCBssSymbolType {

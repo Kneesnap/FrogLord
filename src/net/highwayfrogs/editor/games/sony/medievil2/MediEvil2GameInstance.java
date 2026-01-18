@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.games.sony.medievil2;
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.Config;
 import net.highwayfrogs.editor.games.psx.PSXTIMFile;
-import net.highwayfrogs.editor.games.psx.image.PsxVramScreenSize;
+import net.highwayfrogs.editor.games.psx.image.PsxVramBox;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
@@ -109,7 +109,7 @@ public class MediEvil2GameInstance extends SCGameInstance {
     @Override
     protected void setupFrameBuffers() {
         // Tested PSX Build 0.19, PSX Build 0.51 NTSC
-        this.primaryFrameBuffer = new PsxVramScreenSize(0, 0, 512, getDefaultFrameBufferHeight());
+        this.primaryFrameBuffer = new PsxVramBox(0, 0, 512, getDefaultFrameBufferHeight());
         this.secondaryFrameBuffer = this.primaryFrameBuffer.add(0, 256); // Always at y: 256 regardless of primary height.
     }
 

@@ -460,7 +460,7 @@ public class StringNode {
     /**
      * Returns extra info for debugging, such as line numbers.
      */
-    protected String getExtraDebugErrorInfo() {
+    public String getExtraDebugErrorInfo() {
         return "";
     }
 

@@ -23,17 +23,15 @@ public class SequentialTextureAtlas extends BasicTextureAtlas<AtlasTexture> {
     }
 
     private void makeCache(int width, int height) {
-        this._cachedTextureStartXPositions = new int[height * 2];
-        this._cachedTextureLocations = new AtlasTexture[height * 2][];
-        for (int i = 0; i < this._cachedTextureLocations.length; i++)
-            this._cachedTextureLocations[i] = new AtlasTexture[width * 2];
+        this._cachedTextureStartXPositions = new int[height];
+        this._cachedTextureLocations = new AtlasTexture[height][width];
     }
 
     private void clearCacheAndVerifyItIsLargeEnough() {
         int oldAtlasWidth = this._cachedTextureLocations[0].length;
         int oldAtlasHeight = this._cachedTextureLocations.length;
         if (getAtlasWidth() > oldAtlasWidth || getAtlasHeight() > oldAtlasHeight) {
-            this.makeCache(getAtlasWidth(), getAtlasHeight());
+            this.makeCache(getAtlasWidth() * 2, getAtlasHeight() * 2);
         } else {
             Arrays.fill(this._cachedTextureStartXPositions, 0);
             for (int i = 0; i < this._cachedTextureLocations.length; i++)

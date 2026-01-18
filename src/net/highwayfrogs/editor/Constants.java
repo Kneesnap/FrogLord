@@ -87,6 +87,7 @@ public class Constants {
 
     public static final boolean LOG_EXE_INFO = false;
 
+    public static final Color COLOR_LIGHT_TURQUOISE = new Color(0, 128, 255);
     public static final Color COLOR_TURQUOISE = new Color(0, 128, 128);
     public static final Color COLOR_DEEP_GREEN = new Color(0, 128, 0);
     public static final Color COLOR_DARK_YELLOW = new Color(128, 128, 0);

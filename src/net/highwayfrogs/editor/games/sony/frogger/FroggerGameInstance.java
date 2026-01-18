@@ -3,10 +3,9 @@ package net.highwayfrogs.editor.games.sony.frogger;
 import javafx.scene.image.Image;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.SneakyThrows;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.games.psx.image.PsxVramScreenSize;
+import net.highwayfrogs.editor.games.psx.image.PsxVramBox;
 import net.highwayfrogs.editor.games.sony.*;
 import net.highwayfrogs.editor.games.sony.frogger.data.FroggerLevelSelectEntry;
 import net.highwayfrogs.editor.games.sony.frogger.data.FroggerLevelSelectWorldID;
@@ -57,7 +56,6 @@ import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
-import net.highwayfrogs.editor.utils.data.writer.FileReceiver;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 
 import java.io.File;
@@ -239,7 +237,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
     @Override
     protected void setupFrameBuffers() {
         // Tested on many different versions, this seems consistent.
-        this.primaryFrameBuffer = new PsxVramScreenSize(0, 0, 368, getDefaultFrameBufferHeight());
+        this.primaryFrameBuffer = new PsxVramBox(0, 0, 368, getDefaultFrameBufferHeight());
         this.secondaryFrameBuffer = this.primaryFrameBuffer.cloneBelow();
     }
 
@@ -335,27 +333,6 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
      */
     public FroggerMapBook getMapBook(FroggerMapLevelID level) {
         return this.mapLibrary.size() > 0 && this.mapLibrary.size() > level.ordinal() ? this.mapLibrary.get(level.ordinal()) : null;
-    }
-
-    /**
-     * Export code to a folder.
-     */
-    @SneakyThrows
-    public void exportCode(File folder) {
-        if (isPC()) {
-            getLogger().warning("Cannot generate headers for PC builds yet.");
-            return;
-        }
-
-        // Save MWI.
-        DataWriter writer = new DataWriter(new FileReceiver(new File(folder, "FROGPSX.MWI")));
-        getArchiveIndex().save(writer);
-        writer.closeReceiver();
-
-        generateMwdCHeader(new File(folder, "frogpsx.h"));
-        generateVloSourceFiles(this, new File(folder, "frogvram.h"));
-
-        getLogger().info("Generated source files.");
     }
 
     @Override

@@ -2,7 +2,7 @@ package net.highwayfrogs.editor.games.sony.beastwars;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.file.config.Config;
-import net.highwayfrogs.editor.games.psx.image.PsxVramScreenSize;
+import net.highwayfrogs.editor.games.psx.image.PsxVramBox;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
@@ -107,7 +107,7 @@ public class BeastWarsInstance extends SCGameInstance {
     @Override
     protected void setupFrameBuffers() {
         // Tested: NTSC Prototype, Retail NTSC, Retail PAL
-        this.primaryFrameBuffer = new PsxVramScreenSize(0, 0, 368, getDefaultFrameBufferHeight());
+        this.primaryFrameBuffer = new PsxVramBox(0, 0, 320, getDefaultFrameBufferHeight());
         this.secondaryFrameBuffer = this.primaryFrameBuffer.cloneBelow();
     }
 

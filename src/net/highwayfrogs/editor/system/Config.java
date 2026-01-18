@@ -1155,7 +1155,7 @@ public class Config implements IBinarySerializable {
         }
 
         @Override
-        protected String getExtraDebugErrorInfo() {
+        public String getExtraDebugErrorInfo() {
             String baseExtraInfo = super.getExtraDebugErrorInfo();
             if (this.originalLineNumber <= 0 && StringUtils.isNullOrWhiteSpace(this.originalFileName))
                 return baseExtraInfo;

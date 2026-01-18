@@ -3,7 +3,7 @@ package net.highwayfrogs.editor.games.sony;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.GameInstance;
-import net.highwayfrogs.editor.games.psx.image.PsxVramScreenSize;
+import net.highwayfrogs.editor.games.psx.image.PsxVramBox;
 import net.highwayfrogs.editor.games.shared.basic.GameBuildInfo;
 import net.highwayfrogs.editor.games.sony.SCGameConfig.SCImageList;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
@@ -24,6 +24,7 @@ import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewCom
 import net.highwayfrogs.editor.games.sony.shared.ui.SCMainMenuUIController;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.vram.VloTree;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
 import net.highwayfrogs.editor.system.Config;
@@ -58,9 +59,10 @@ public abstract class SCGameInstance extends GameInstance {
     @Getter private File exeFile;
     @Getter private long ramOffset;
     @Getter private boolean previouslySavedByFrogLord;
-    @Getter protected PsxVramScreenSize primaryFrameBuffer;
-    @Getter protected PsxVramScreenSize secondaryFrameBuffer;
+    @Getter protected PsxVramBox primaryFrameBuffer;
+    @Getter protected PsxVramBox secondaryFrameBuffer;
     @Getter private final IndexBitArray texturesFoundInRemap = new IndexBitArray();
+    @Getter private VloTree vloTree; // This CANNOT be stored in the SCGameConfig, because it references MWIResourceEntries, which are only valid for an individual game instance.
 
     // Instance data read from game files:
     private boolean loadingAllRemaps;
@@ -133,9 +135,6 @@ public abstract class SCGameInstance extends GameInstance {
         readExecutableData(exeReader, executableConfig);
 
         this.mainArchive = this.readMWD(progressBar);
-        if (isPSX())
-            setupFrameBuffers();
-
         resolveModelVloFiles();
     }
 
@@ -210,6 +209,7 @@ public abstract class SCGameInstance extends GameInstance {
      */
     protected void onMWILoad(MillenniumWadIndex wadIndex) {
         readTextureRemaps();
+        readVloTree();
     }
 
     /**
@@ -218,6 +218,13 @@ public abstract class SCGameInstance extends GameInstance {
      */
     protected void onMWDLoad(MWDFile mwdFile) {
         validateBmpPointerData(mwdFile);
+        if (isPSX()) // Do this before vlo setup.
+            setupFrameBuffers();
+
+        if (this.vloTree != null) {
+            this.vloTree.warnAboutUnusedVloFilesAndImages(getLogger());
+            this.vloTree.loadFromGameDataRecursive();
+        }
     }
 
     /**
@@ -306,6 +313,18 @@ public abstract class SCGameInstance extends GameInstance {
         } finally {
             // Mark it as okay to update individual remaps when they are added now.
             this.loadingAllRemaps = false;
+        }
+    }
+
+    private void readVloTree() {
+        this.vloTree = null;
+        if (getVersionConfig().getVloTreeConfig() == null)
+            return;
+
+        try {
+            this.vloTree = VloTree.readVloTree(getLogger(), this, getVersionConfig().getVloTreeConfig());
+        } catch (Throwable th) {
+            Utils.handleError(getLogger(), th, true);
         }
     }
 
