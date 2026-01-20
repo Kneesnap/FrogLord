@@ -181,16 +181,10 @@ public class VloVramSnapshot extends SCSharedGameObject {
         }
 
         // Add images by recalculating positions.
-        if (getGameInstance().isPSX()) {
-            Set<VloClut> addedCluts = new HashSet<>();
-            for (int i = 0; i < images.size(); i++)
-                if (!tryAddTexturePsx(images.get(i), addedCluts, node.getUsablePages(), node.getExtraPages()))
-                    throw new RuntimeException("There was not space in VRAM to fit " + images.get(i) + ".");
-        } else {
-            for (int i = 0; i < images.size(); i++)
-                if (!tryAddTexturePC(images.get(i), node.getUsablePages(), node.getExtraPages()))
-                    throw new RuntimeException("There was not enough space in VRAM to fit " + images.get(i) + ".");
-        }
+        Set<VloClut> addedCluts = new HashSet<>();
+        for (int i = 0; i < images.size(); i++)
+            if (!tryAddTexture(images.get(i), this.node.getFillMethod(), addedCluts, node.getUsablePages(), node.getExtraPages()))
+                throw new RuntimeException("There was not enough space in VRAM to fit " + images.get(i) + ".");
 
         vloFile.markClean();
     }
@@ -208,60 +202,57 @@ public class VloVramSnapshot extends SCSharedGameObject {
         applyEntryToCache(entry, true);
     }
 
-    private boolean tryAddTexturePC(VloImage image, int usablePages, int extraPages) {
+    private boolean tryAddTexture(VloImage image, VloTreeNodeFillMethod fillMethod, Set<VloClut> addedCluts, int usablePages, int extraPages) {
         VloVramEntryImage entry = new VloVramEntryImage(image);
 
         boolean psxMode = getGameInstance().isPSX();
         int pageHeight = VloUtils.getPageHeight(psxMode);
         int pageCount = VloUtils.getPageCount(psxMode);
 
-        // Try adding to the usable pages.
-        for (int page = 0; page < pageCount; page++)
-            for (int y = 0; y < pageHeight; y++)
-                if ((usablePages & (1 << page)) != 0 && addEntryHorizontal(entry, y, page, usablePages))
-                    return true;
 
-        // If it failed previously, it's time to try the extra pages.
-        for (int page = 0; page < pageCount; page++)
-            for (int y = 0; y < pageHeight; y++)
-                if ((extraPages & (1 << page)) != 0 && addEntryHorizontal(entry, y, page, extraPages))
-                    return true;
-
-        return false;
-    }
-
-    private boolean tryAddTexturePsx(VloImage image, Set<VloClut> addedCluts, int usablePages, int extraPages) {
-        VloVramEntryImage entry = new VloVramEntryImage(image);
-
-        boolean psxMode = getGameInstance().isPSX();
-        int pageHeight = VloUtils.getPageHeight(psxMode);
-        int pageCount = VloUtils.getPageCount(psxMode);
-
-        // Try adding to the usable pages.
-        for (int y = 0; y < pageHeight; y++)
+        if (fillMethod == VloTreeNodeFillMethod.FILL_PAGE) {
+            // Try adding to the usable pages.
             for (int page = 0; page < pageCount; page++)
-                if ((usablePages & (1 << page)) != 0 && addEntryHorizontal(entry, y, page, usablePages))
-                    return addImageClut(image, addedCluts, usablePages, extraPages);
+                if ((usablePages & (1 << page)) != 0)
+                    for (int y = 0; y < pageHeight; y++)
+                        if (addEntryHorizontal(entry, y, page, usablePages))
+                            return addImageClut(image, addedCluts, usablePages, extraPages);
 
-        // If it failed previously, it's time to try the extra pages.
-        for (int y = 0; y < pageHeight; y++)
+            // If it failed previously, it's time to try the extra pages.
             for (int page = 0; page < pageCount; page++)
-                if ((extraPages & (1 << page)) != 0 && addEntryHorizontal(entry, y, page, extraPages))
-                    return addImageClut(image, addedCluts, usablePages, extraPages);
+                if ((extraPages & (1 << page)) != 0)
+                    for (int y = 0; y < pageHeight; y++)
+                        if (addEntryHorizontal(entry, y, page, extraPages))
+                            return addImageClut(image, addedCluts, usablePages, extraPages);
+        } else if (fillMethod == VloTreeNodeFillMethod.SPREAD) {
+            // Try adding to the usable pages.
+            for (int y = 0; y < pageHeight; y++)
+                for (int page = 0; page < pageCount; page++)
+                    if ((usablePages & (1 << page)) != 0 && addEntryHorizontal(entry, y, page, usablePages))
+                        return addImageClut(image, addedCluts, usablePages, extraPages);
+
+            // If it failed previously, it's time to try the extra pages.
+            for (int y = 0; y < pageHeight; y++)
+                for (int page = 0; page < pageCount; page++)
+                    if ((extraPages & (1 << page)) != 0 && addEntryHorizontal(entry, y, page, extraPages))
+                        return addImageClut(image, addedCluts, usablePages, extraPages);
+        } else {
+            throw new UnsupportedOperationException("Unsupported fillMethod: " + fillMethod);
+        }
 
         return false;
     }
 
     private boolean addImageClut(VloImage image, Set<VloClut> addedCluts, int usablePages, int extraPages) {
         VloClut clut = image.getClut();
-        if (clut == null || tryAddClut(clut, addedCluts, usablePages, extraPages))
+        if (tryAddClut(clut, addedCluts, usablePages, extraPages))
             return true; // No clut, everything is good.
 
         throw new RuntimeException("There was not enough VRAM space to add " + image + "'s CLUT!");
     }
 
     private boolean tryAddClut(VloClut clut, Set<VloClut> addedCluts, int usablePages, int extraPages) {
-        if (!addedCluts.add(clut))
+        if (clut == null || addedCluts == null || !addedCluts.add(clut))
             return true; // Clut has already been added.
 
         VloVramEntryClut entry = new VloVramEntryClut(clut);

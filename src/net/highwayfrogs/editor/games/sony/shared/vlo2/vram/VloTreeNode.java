@@ -27,6 +27,7 @@ public class VloTreeNode {
     @Getter private final VloTreeNode parent;
     @Getter private final String name;
     @Getter private final VloVramSnapshot snapshot; // This snapshot contains a hodgepodge of different VLO textures which overlap with each other.
+    @NonNull @Getter private final VloTreeNodeFillMethod fillMethod;
     private final List<MWIResourceEntry> vloFileEntries = new ArrayList<>(); // Must use MWIResourceEntry so if a new VloFile is imported, the Vlo files can still be resolved.
     private final List<VloTreeNode> children = new ArrayList<>();
     private final List<VloTreeNode> immutableChildren = Collections.unmodifiableList(this.children);
@@ -38,11 +39,13 @@ public class VloTreeNode {
     public static final String CONFIG_KEY_PAGES = "pages";
     public static final String CONFIG_KEY_RESERVED_PAGES = "reservedPages";
     public static final String CONFIG_KEY_EXTRA_PAGES = "extraPages";
+    public static final String CONFIG_KEY_INSERTION_STRATEGY = "insertionStrategy";
 
-    protected VloTreeNode(SCGameInstance instance, VloTreeNode parent, String name, int pages, int reservedPages, int extraPages) {
+    protected VloTreeNode(SCGameInstance instance, VloTreeNode parent, String name, VloTreeNodeFillMethod fillMethod, int pages, int reservedPages, int extraPages) {
         this.instance = instance;
         this.parent = parent;
         this.name = name;
+        this.fillMethod = fillMethod;
         this.snapshot = new VloVramSnapshot(instance, this);
         this.usablePages = pages;
         this.reservedPages = reservedPages;
@@ -202,6 +205,7 @@ public class VloTreeNode {
         int pages = getPageBitFlags(vloEntries.isEmpty() ? config.getOptionalKeyValueNode(CONFIG_KEY_PAGES) : config.getKeyValueNodeOrError(CONFIG_KEY_PAGES));
         int reservedPages = getPageBitFlags(config.getOptionalKeyValueNode(CONFIG_KEY_RESERVED_PAGES));
         int extraPages = getPageBitFlags(config.getOptionalKeyValueNode(CONFIG_KEY_EXTRA_PAGES));
+        VloTreeNodeFillMethod fillMethod = config.getOrDefaultKeyValueNode(CONFIG_KEY_INSERTION_STRATEGY).getAsEnum(VloTreeNodeFillMethod.FILL_PAGE);
 
         // Create node.
         VloTreeNode newNode;
@@ -209,12 +213,12 @@ public class VloTreeNode {
             if (parent == null)
                 throw new IllegalArgumentException("parent cannot be null if tree is non-null!");
 
-            newNode = new VloTreeNode(instance, parent, config.getSectionName(), pages, reservedPages, extraPages);
+            newNode = new VloTreeNode(instance, parent, config.getSectionName(), fillMethod, pages, reservedPages, extraPages);
         } else {
             if (parent != null)
                 throw new IllegalArgumentException("parent cannot be non-null if tree is null!");
 
-            newNode = tree = new VloTree(instance, config.getSectionName(), pages, reservedPages, extraPages);
+            newNode = tree = new VloTree(instance, config.getSectionName(), fillMethod, pages, reservedPages, extraPages);
         }
 
         // Read vlo files.

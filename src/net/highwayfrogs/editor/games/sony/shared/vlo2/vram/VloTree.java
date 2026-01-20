@@ -24,8 +24,8 @@ public final class VloTree extends VloTreeNode {
     final Map<MWIResourceEntry, VloTreeNode> nodesByResourceEntry = new HashMap<>(); // Do not use the VloFile directly as the key, just in-case it gets imported.
     final Map<MWIResourceEntry, VloVramSnapshot> snapshotsByResourceEntry = new HashMap<>(); // Do not use the VloFile directly as the key, just in-case it gets imported.
 
-    VloTree(SCGameInstance instance, String name, int pages, int reservedPages, int extraPages) {
-        super(instance, null, name, pages, reservedPages, extraPages);
+    VloTree(SCGameInstance instance, String name, VloTreeNodeFillMethod fillMethod, int pages, int reservedPages, int extraPages) {
+        super(instance, null, name, fillMethod, pages, reservedPages, extraPages);
     }
 
     /**
