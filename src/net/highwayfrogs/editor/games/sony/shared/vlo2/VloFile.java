@@ -5,9 +5,12 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.psx.image.PsxAbrTransparency;
 import net.highwayfrogs.editor.games.psx.image.PsxImageBitDepth;
+import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.VLOController;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.vram.VloTree;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.vram.VloTreeNode;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
@@ -217,6 +220,16 @@ public class VloFile extends SCSharedGameFile {
             writer.writeUnsignedByte((short) imageName.length());
             writer.writeStringBytes(imageName);
         }
+    }
+
+    @Override
+    public void onImport(SCGameFile<?> oldFile, String oldFileName, String importedFileName) {
+        super.onImport(oldFile, oldFileName, importedFileName);
+
+        VloTree tree = getGameInstance().getVloTree();
+        VloTreeNode node = tree != null ? tree.getNode(this) : null;
+        if (node != null)
+            node.loadFromGameDataRecursive();
     }
 
     /**

@@ -68,10 +68,9 @@ import java.util.logging.Level;
  * TODO Remaining Tasks before feature complete:
  *  1) Create the VRAM texture placement system.
  *   -> Figure out sorting order for texture insertion.
- *   -> Load vram when VLO is imported.
  *   -> Allow specifying 'clutPages' on a VloTreeNode, which allows
  *    -> Does this choose a list of all nodes which can be used for cluts, or is it instead a "prefer these pages for cluts" field?
- *    -> We should probably make it so cluts do not get placed in the top row of pages.
+ *    -> We should probably make it so cluts do not get placed in the top row of pages. (This behavior is seen in Beast Wars, Moon Warrior, and probably more)
  *   -> Allow choosing the VLO fill mode on a per-node basis. Allow using FILL_PAGE, SPREAD. (Is it possible this is just based on top/bottom behavior?)
  *   -> Test PC.
  *   -> Go over all games and setup working configs.
