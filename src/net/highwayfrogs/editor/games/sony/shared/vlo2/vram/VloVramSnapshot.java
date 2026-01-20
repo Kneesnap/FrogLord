@@ -166,11 +166,10 @@ public class VloVramSnapshot extends SCSharedGameObject {
             throw new IllegalArgumentException("The vloFile " + vloFile.getFileDisplayName() + " did not have a VloTreeNode associated with it.");
 
         // Add images without recalculating positions.
-        List<VloImage> images = vloFile.getImages();
-
+        List<VloImage> originalImages = vloFile.getImages();
         if (!recalculatePositions) {
-            for (int i = 0; i < images.size(); i++)
-                addEntry(new VloVramEntryImage(images.get(i)));
+            for (int i = 0; i < originalImages.size(); i++)
+                addEntry(new VloVramEntryImage(originalImages.get(i)));
 
             if (vloFile.isPsxMode()) {
                 List<VloClut> cluts = vloFile.getClutList().getCluts();
@@ -182,10 +181,12 @@ public class VloVramSnapshot extends SCSharedGameObject {
         }
 
         // Add images by recalculating positions.
+        List<VloImage> sortedImages = new ArrayList<>(originalImages);
+        sortedImages.sort(Comparator.comparingInt((VloImage image) -> image.getPaddedWidth() * image.getPaddedWidth()).reversed());
         Set<VloClut> addedCluts = new HashSet<>();
-        for (int i = 0; i < images.size(); i++)
-            if (!tryAddTexture(images.get(i), this.node.getFillMethod(), addedCluts, node.getUsablePages(), node.getExtraPages()))
-                throw new RuntimeException("There was not enough space in VRAM to fit " + images.get(i) + ".");
+        for (int i = 0; i < sortedImages.size(); i++)
+            if (!tryAddTexture(sortedImages.get(i), this.node.getFillMethod(), addedCluts, node.getUsablePages(), node.getExtraPages()))
+                throw new RuntimeException("There was not enough space in VRAM to fit " + sortedImages.get(i) + ".");
 
         vloFile.markClean();
     }

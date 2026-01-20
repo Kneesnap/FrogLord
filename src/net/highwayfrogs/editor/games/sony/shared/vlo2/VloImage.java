@@ -67,7 +67,6 @@ import java.util.logging.Level;
  * <p/>
  * TODO Remaining Tasks before feature complete:
  *  1) Create the VRAM texture placement system.
- *   -> Figure out sorting order for texture insertion.
  *   -> Allow specifying 'clutPages' on a VloTreeNode, which allows
  *    -> Does this choose a list of all nodes which can be used for cluts, or is it instead a "prefer these pages for cluts" field?
  *   -> Test PC.
