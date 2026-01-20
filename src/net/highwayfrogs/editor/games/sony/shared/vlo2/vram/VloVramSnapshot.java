@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.sony.shared.vlo2.vram;
 
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.psx.image.PsxVram;
 import net.highwayfrogs.editor.games.psx.image.PsxVramBox;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameObject.SCSharedGameObject;
@@ -262,16 +263,26 @@ public class VloVramSnapshot extends SCSharedGameObject {
         // Or more specifically, Beast Wars NTSC. Other games were not referenced or checked,
         // Cluts are added to the bottom right-most page, right-to-left.
 
+        // Cluts should only be on the bottom row of pages, if possible.
+        int minClutPage = 0;
+        for (int i = PsxVram.PSX_VRAM_PAGE_COUNT_X; i < PsxVram.PSX_VRAM_TOTAL_PAGES; i++) {
+            if ((usablePages & (1 << i)) != 0) {
+                minClutPage = PsxVram.PSX_VRAM_PAGE_COUNT_X;
+                break;
+            }
+        }
+
         // Next, try adding the CLUT to ANY usable page which has room, right to left.
+
         int pageCount = VloUtils.getPageCount(true);
         for (int y = pageHeight - 1; y >= 0; y--)
-            for (int page = pageCount - 1; page >= 0; page--)
+            for (int page = pageCount - 1; page >= minClutPage; page--)
                 if ((usablePages & (1 << page)) != 0 && addEntryHorizontal(entry, y, page, usablePages))
                     return true;
 
         // Lastly, try adding to extra pages.
         for (int y = pageHeight - 1; y >= 0; y--)
-            for (int page = pageCount - 1; page >= 0; page--)
+            for (int page = pageCount - 1; page >= minClutPage; page--)
                 if ((extraPages & (1 << page)) != 0 && addEntryHorizontal(entry, y, page, usablePages))
                     return true;
 
