@@ -9,6 +9,7 @@ import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.VLOController;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.vram.VloTextureIdTracker;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.vram.VloTree;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.vram.VloTreeNode;
 import net.highwayfrogs.editor.gui.ImageResource;
@@ -228,8 +229,10 @@ public class VloFile extends SCSharedGameFile {
 
         VloTree tree = getGameInstance().getVloTree();
         VloTreeNode node = tree != null ? tree.getNode(this) : null;
-        if (node != null)
-            node.loadFromGameDataRecursive();
+        if (node != null) {
+            node.loadFromGameDataRecursive(null);
+            tree.calculateFreeTextureIds();
+        }
     }
 
     /**
@@ -370,18 +373,36 @@ public class VloFile extends SCSharedGameFile {
         if (existingImage != null)
             throw new IllegalArgumentException("Cannot add image named '" + name +"' because an image with that name already exists! (Local ID: " + existingImage.getLocalImageID() + ")");
 
+        // Get tree.
+        VloTree tree = getGameInstance().getVloTree();
+        VloTextureIdTracker tracker = tree != null ? tree.getVloTextureIdTracker(this) : null;
+        if (tracker == null)
+            throw new IllegalStateException("Images cannot be added to " + getFileDisplayName() + ", because its VloTreeNode has not been configured by FrogLord developers yet.");
+
         // Default params
         if (bitDepth == null)
             bitDepth = PsxImageBitDepth.CLUT4;
 
         // TODO: We need two modes, one where we add new texture IDs (For recompilation), and another where we try to re-use existing slots and crap.
 
-        // TODO: Find a texture ID, and ensure it is not currently in use in ALL VLOs which might be loaded at this time.
-        //  -> If name is in the original texture list, perhaps use that texture ID.
-        //   -> IF that texture ID is already in use, boot that texture to a new texture. (Does this mean we need to update remaps???)
+        // Select a texture ID for the image.
+        // If the texture ID is known based on the name, this may involve reclaiming the texture ID from another image.
+        short textureId;
+        Short originalTextureId = getGameInstance().getTextureIdByOriginalName(name);
+        if (originalTextureId != null) {
+            textureId = originalTextureId;
+
+            VloImage conflictImage = getImageByTextureId(textureId, false);
+            if (conflictImage != null) { // Another image was previously using this texture ID, so change it to another ID. (We tested earlier that it's using another texture name, so it's a different texture)
+                conflictImage.setTextureId(tracker.useFreeTextureId());
+                // TODO: Get remaps for vlo, and then fix the remap.
+            }
+        } else {
+            textureId = tracker.useFreeTextureId();
+        }
 
         VloImage newImage = new VloImage(this);
-        // TODO: Set Texture ID
+        newImage.setTextureId(textureId);
         newImage.setCustomName(name);
         newImage.replaceImage(image, bitDepth, padding, padding, ProblemResponse.THROW_EXCEPTION);
         if (abr != null && this.psxMode)
@@ -398,4 +419,7 @@ public class VloFile extends SCSharedGameFile {
 
         return null;
     }
+
+    // TODO: removeImage()
+    //  -> Call VloTextureIdTracker.freeTextureId()
 }

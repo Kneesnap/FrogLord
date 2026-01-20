@@ -63,6 +63,7 @@ public abstract class SCGameInstance extends GameInstance {
     @Getter protected PsxVramBox secondaryFrameBuffer;
     @Getter private final IndexBitArray texturesFoundInRemap = new IndexBitArray();
     @Getter private VloTree vloTree; // This CANNOT be stored in the SCGameConfig, because it references MWIResourceEntries, which are only valid for an individual game instance.
+    @Getter private int maximumTextureId = -1;
 
     // Instance data read from game files:
     private boolean loadingAllRemaps;
@@ -215,15 +216,17 @@ public abstract class SCGameInstance extends GameInstance {
     /**
      * Called when a MWD file finishes loading using this configuration.
      * @param mwdFile The mwd file which loaded.
+     * @param progressBar The progress bar to display
      */
-    protected void onMWDLoad(MWDFile mwdFile) {
+    protected void onMWDLoad(MWDFile mwdFile, ProgressBarComponent progressBar) {
         validateBmpPointerData(mwdFile);
         if (isPSX()) // Do this before vlo setup.
             setupFrameBuffers();
 
         if (this.vloTree != null) {
             this.vloTree.warnAboutUnusedVloFilesAndImages(getLogger());
-            this.vloTree.loadFromGameDataRecursive();
+            this.vloTree.loadFromGameDataRecursive(progressBar);
+            this.vloTree.calculateFreeTextureIds();
         }
     }
 
@@ -754,19 +757,16 @@ public abstract class SCGameInstance extends GameInstance {
     }
 
     private void validateBmpPointerData(MWDFile mwdFile) {
-        if (this.bmpTexturePointers.isEmpty())
-            return;
-
-        short highestTextureId = -1;
+        this.maximumTextureId = -1;
         for (VloFile vloArchive : mwdFile.getAllFiles(VloFile.class))
             for (VloImage image : vloArchive.getImages())
-                if (image.getTextureId() > highestTextureId)
-                    highestTextureId = image.getTextureId();
+                if (image.getTextureId() > this.maximumTextureId)
+                    this.maximumTextureId = image.getTextureId();
 
         // Another option for this is that texture remap tables appear to occur immediately after the texture array.
         // In the interest of cross-game compatibility, it was easier to do it this way.
-        if (highestTextureId >= 0 && highestTextureId + 1 != this.bmpTexturePointers.size())
-            getLogger().warning("We found pointers to %d textures, but only the highest texture ID we saw suggests there should have been %d.", this.bmpTexturePointers.size(), highestTextureId + 1);
+        if (!this.bmpTexturePointers.isEmpty() && this.maximumTextureId >= 0 && this.maximumTextureId + 1 != this.bmpTexturePointers.size())
+            getLogger().warning("We found pointers to %d textures, but only the highest texture ID we saw suggests there should have been %d.", this.bmpTexturePointers.size(), this.maximumTextureId + 1);
     }
 
     private void writeBmpPointerData(DataWriter exeWriter) {
@@ -845,7 +845,7 @@ public abstract class SCGameInstance extends GameInstance {
             mwdFile.loadMwdFile(new DataReader(fileSource), progressBar);
         }
 
-        this.onMWDLoad(mwdFile);
+        this.onMWDLoad(mwdFile, progressBar);
         return mwdFile;
     }
 

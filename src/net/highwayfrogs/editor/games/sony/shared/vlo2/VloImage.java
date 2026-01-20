@@ -67,9 +67,8 @@ import java.util.logging.Level;
  * <p/>
  * TODO Remaining Tasks before feature complete:
  *  1) Create the VRAM texture placement system.
- *   -> Allow specifying 'clutPages' on a VloTreeNode, which allows
- *    -> Does this choose a list of all nodes which can be used for cluts, or is it instead a "prefer these pages for cluts" field?
  *   -> Test PC.
+ *   -> Beast Wars texture insertion broke. How/why?
  *   -> Go over all games and setup working configs.
  *   -> Easy image management. (VloFile.addImage(String name, BufferedImage, ClutMode, abr, int padding)
  *  2) Rewrite the VLO file UI

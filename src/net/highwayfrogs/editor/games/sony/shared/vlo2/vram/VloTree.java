@@ -11,6 +11,7 @@ import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.CountMap;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,8 +22,7 @@ import java.util.Map;
  */
 @Getter
 public final class VloTree extends VloTreeNode {
-    final Map<MWIResourceEntry, VloTreeNode> nodesByResourceEntry = new HashMap<>(); // Do not use the VloFile directly as the key, just in-case it gets imported.
-    final Map<MWIResourceEntry, VloVramSnapshot> snapshotsByResourceEntry = new HashMap<>(); // Do not use the VloFile directly as the key, just in-case it gets imported.
+    final Map<MWIResourceEntry, VloFileTreeData> vloFileDataByResourceEntry = new HashMap<>(); // Do not use the VloFile directly as the key, just in-case it gets imported.
 
     VloTree(SCGameInstance instance, String name, VloTreeNodeFillMethod fillMethod, int pages, int reservedPages, int extraPages) {
         super(instance, null, name, fillMethod, pages, reservedPages, extraPages);
@@ -54,12 +54,12 @@ public final class VloTree extends VloTreeNode {
      * @param vloFile the vlo file to get the node for
      * @return vloTreeNode, or null if none exist
      */
-    public VloTreeNode getNode(VloFile vloFile) {
+    public VloFileTreeData getVloFileData(VloFile vloFile) {
         if (vloFile == null)
             return null;
 
         MWIResourceEntry entry = vloFile.getIndexEntry();
-        return entry != null ? this.nodesByResourceEntry.get(entry) : null;
+        return entry != null ? this.vloFileDataByResourceEntry.get(entry) : null;
     }
 
     /**
@@ -67,12 +67,75 @@ public final class VloTree extends VloTreeNode {
      * @param vloFile the vlo file to get the node for
      * @return vloTreeNode, or null if none exist
      */
-    public VloVramSnapshot getVramSnapshot(VloFile vloFile) {
-        if (vloFile == null)
-            return null;
+    public VloTreeNode getNode(VloFile vloFile) {
+        VloFileTreeData data = getVloFileData(vloFile);
+        return data != null ? data.getNode() : null;
+    }
 
-        MWIResourceEntry entry = vloFile.getIndexEntry();
-        return entry != null ? this.snapshotsByResourceEntry.get(entry) : null;
+    /**
+     * Get the Vram snapshot for positioning textures in the provided VLO file.
+     * @param vloFile the vlo file to get the node for
+     * @return vramSnapshot, or null if none exist
+     */
+    public VloVramSnapshot getVramSnapshot(VloFile vloFile) {
+        VloFileTreeData data = getVloFileData(vloFile);
+        return data != null ? data.getSnapshot() : null;
+    }
+
+    /**
+     * Get the texture ID tracker responsible for managing available texture IDs in the Vlo file.
+     * @param vloFile the vlo file to get the node for
+     * @return textureTracker, or null if none exists
+     */
+    public VloTextureIdTracker getVloTextureIdTracker(VloFile vloFile) {
+        VloFileTreeData data = getVloFileData(vloFile);
+        return data != null ? data.getTextureIdTracker() : null;
+    }
+
+    /**
+     * Resets the texture ID trackers.
+     */
+    private void resetTextureIdTrackers() {
+        int maxTextureId = this.instance.getMaximumTextureId();
+        if (maxTextureId < 0)
+            throw new IllegalStateException("Cannot resetTextureIdTrackers before the maximum texture ID has been determined.");
+
+        List<VloTreeNode> queue = new ArrayList<>();
+        queue.add(this);
+        while (queue.size() > 0) {
+            VloTreeNode node = queue.remove(queue.size() - 1);
+            queue.addAll(node.getChildren());
+
+            // Reset the trackers.
+            node.getTextureIdTracker().reset(maxTextureId + 1);
+            List<VloFileTreeData> fileTreeDataEntries = node.getVloFileDataEntries();
+            for (int i = 0; i < fileTreeDataEntries.size(); i++)
+                fileTreeDataEntries.get(i).getTextureIdTracker().reset(maxTextureId + 1);
+        }
+    }
+
+    /**
+     * Calculates which texture IDs are available for different VLO files, from the current VLO files.
+     */
+    public void calculateFreeTextureIds() {
+        resetTextureIdTrackers();
+
+        List<VloTreeNode> queue = new ArrayList<>();
+        queue.add(this);
+        for (int i = 0; i < queue.size(); i++) {
+            VloTreeNode node = queue.get(i);
+            queue.addAll(node.getChildren());
+
+            // Restrict all texture IDs in all Vlos.
+            List<VloFileTreeData> fileTreeDataEntries = node.getVloFileDataEntries();
+            for (int j = 0; j < fileTreeDataEntries.size(); j++) {
+                VloFileTreeData fileTreeData = fileTreeDataEntries.get(j);
+                VloFile vloFile = fileTreeData.getVloFile();
+                List<VloImage> images = vloFile.getImages();
+                for (int k = 0; k < images.size(); k++)
+                    fileTreeData.getTextureIdTracker().restrictTextureId(images.get(k).getTextureId());
+            }
+        }
     }
 
     /**

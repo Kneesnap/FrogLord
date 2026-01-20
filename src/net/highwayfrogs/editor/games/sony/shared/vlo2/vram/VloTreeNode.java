@@ -2,14 +2,12 @@ package net.highwayfrogs.editor.games.sony.shared.vlo2.vram;
 
 import lombok.Getter;
 import lombok.NonNull;
-import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
-import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
+import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.system.Config.ConfigValueNode;
 import net.highwayfrogs.editor.utils.StringUtils;
-import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.CountMap;
 import net.highwayfrogs.editor.utils.objects.StringNode;
@@ -28,7 +26,9 @@ public class VloTreeNode {
     @Getter private final String name;
     @Getter private final VloVramSnapshot snapshot; // This snapshot contains a hodgepodge of different VLO textures which overlap with each other.
     @NonNull @Getter private final VloTreeNodeFillMethod fillMethod;
-    private final List<MWIResourceEntry> vloFileEntries = new ArrayList<>(); // Must use MWIResourceEntry so if a new VloFile is imported, the Vlo files can still be resolved.
+    @Getter private final VloTextureIdTracker textureIdTracker;
+    private final List<VloFileTreeData> vloFiles = new ArrayList<>();
+    private final List<VloFileTreeData> immutableVloFiles = Collections.unmodifiableList(this.vloFiles);
     private final List<VloTreeNode> children = new ArrayList<>();
     private final List<VloTreeNode> immutableChildren = Collections.unmodifiableList(this.children);
     @Getter private final int extraPages;
@@ -50,6 +50,7 @@ public class VloTreeNode {
         this.usablePages = pages;
         this.reservedPages = reservedPages;
         this.extraPages = extraPages;
+        this.textureIdTracker = new VloTextureIdTracker(this, parent != null ? parent.textureIdTracker : null, null);
     }
 
     /**
@@ -68,22 +69,11 @@ public class VloTreeNode {
     }
 
     /**
-     * Get the vlo files represented by this node.
-     * Each of these VLO files should be possible to load in place of each other, so overlap between these .VLO files are allowed.
-     * @return vloFiles
+     * Gets a list of each of the VLO files usable by this node, and their corresponding data.
+     * @return vloFileEntries
      */
-    public List<VloFile> getVloFiles() {
-        List<VloFile> vloFiles = new ArrayList<>();
-        for (int i = 0; i < this.vloFileEntries.size(); i++) {
-            MWIResourceEntry vloFileEntry = this.vloFileEntries.get(i);
-            SCGameFile<?> gameFile = vloFileEntry.getGameFile();
-            if (!(gameFile instanceof VloFile))
-                throw new IllegalStateException("File '" + vloFileEntry.getDisplayName() + "' is not a VloFile! (Was: " + Utils.getSimpleName(gameFile) + ")");
-
-            vloFiles.add((VloFile) gameFile);
-        }
-
-        return vloFiles;
+    public List<VloFileTreeData> getVloFileDataEntries() {
+        return this.immutableVloFiles;
     }
 
     /**
@@ -117,45 +107,60 @@ public class VloTreeNode {
 
     /**
      * Rebuild the vram positions of all Vlo files marked as dirty, and recursively any which depend on the rebuilt Vlo files.
+     * @param progressBar an optional progressBar component to show the status of
      */
-    public void recursivelyBuildDirtyVloFiles() {
-        List<VloFile> vloFiles = getVloFiles();
-        boolean anyVlosDirty = false;
-        for (int i = 0; i < vloFiles.size(); i++) {
-            VloFile vloFile = vloFiles.get(i);
-            if (vloFile.isVramDirty()) {
-                anyVlosDirty = true;
-                break;
+    public void recursivelyBuildDirtyVloFiles(ProgressBarComponent progressBar) {
+        List<VloTreeNode> queue = new ArrayList<>();
+        List<VloTreeNode> dirtyQueue = new ArrayList<>();
+        queue.add(this);
+        for (int i = 0; i < queue.size(); i++) {
+            VloTreeNode node = queue.get(i);
+
+            boolean anyVlosDirty = false;
+            for (int j = 0; j < node.vloFiles.size(); j++) {
+                VloFileTreeData vloFileData = node.vloFiles.get(j);
+                if (vloFileData.getVloFile().isVramDirty()) {
+                    anyVlosDirty = true;
+                    break;
+                }
+            }
+
+            if (anyVlosDirty) {
+                addChildNodesToQueue(dirtyQueue, node);
+            } else {
+                queue.addAll(node.getChildren());
             }
         }
 
         // If any vlos are dirty, this node and all its children should be recursively rebuilt.
-        if (anyVlosDirty) {
-            rebuildRecursive();
-            return;
-        }
-
-        // Recursively run for children.
-        for (int i = 0; i < this.children.size(); i++)
-            this.children.get(i).recursivelyBuildDirtyVloFiles();
+        recursivelyBuildTree(dirtyQueue, progressBar, true);
     }
 
     /**
      * Builds the node recursively from the pre-existing game data.
+     * @param progressBar the progress bar to display load status with (Optional)
      */
-    public void loadFromGameDataRecursive() {
-        recursivelyBuildTree(true);
+    public void loadFromGameDataRecursive(ProgressBarComponent progressBar) {
+        recursivelyBuildTree(progressBar, true);
     }
 
     /**
      * Rebuilds the texture positions for vlo files in this node.
      * Recursively rebuilds any child nodes to respond to the change.
+     * @param progressBar the progress bar to display rebuild status with (Optional)
      */
-    public void rebuildRecursive() {
-        recursivelyBuildTree(false);
+    public void rebuildRecursive(ProgressBarComponent progressBar) {
+        recursivelyBuildTree(progressBar, false);
     }
 
-    private void recursivelyBuildTree(boolean loadFromGameData) {
+    private void recursivelyBuildTree(ProgressBarComponent progressBar, boolean loadFromGameData) {
+        // Get a queue of all the nodes.
+        List<VloTreeNode> queue = new ArrayList<>();
+        addChildNodesToQueue(queue, this);
+        recursivelyBuildTree(queue, progressBar, loadFromGameData);
+    }
+
+    private void buildNode(boolean loadFromGameData) {
         // Copy the dirty snapshot from the parent to ensure we don't place textures somewhere already used.
         if (this.parent != null && this.parent.snapshot != null) {
             this.parent.snapshot.copyTo(this.snapshot);
@@ -167,28 +172,41 @@ public class VloTreeNode {
         this.snapshot.addNodeData();
 
         // Vlo files need to have snapshots created.
-        List<VloFile> vloFiles = getVloFiles();
-        if (!vloFiles.isEmpty()) {
+        if (!this.vloFiles.isEmpty()) {
             // Setup clean snapshot copy.
             VloVramSnapshot cleanSnapshot = new VloVramSnapshot(this.snapshot.getGameInstance(), null);
             this.snapshot.copyTo(cleanSnapshot);
 
             // Add vlo files.
             VloTree tree = getTree();
-            for (int i = 0; i < vloFiles.size(); i++) {
-                VloFile vloFile = vloFiles.get(i);
-                VloVramSnapshot snapshot = tree.getVramSnapshot(vloFile);
-                if (snapshot != null) {
-                    cleanSnapshot.copyTo(snapshot);
-                    snapshot.addVlo(tree, vloFile, !loadFromGameData);
-                }
+            for (int i = 0; i < this.vloFiles.size(); i++) {
+                VloFileTreeData vloFileData = this.vloFiles.get(i);
+                cleanSnapshot.copyTo(vloFileData.getSnapshot());
+                vloFileData.getSnapshot().addVlo(tree, vloFileData.getVloFile(), !loadFromGameData);
             }
         }
 
-        // Rebuild child nodes.
-        // This must happen after VLOs are setup, so these will have access to the dirty snapshot.
-        for (int i = 0; i < this.children.size(); i++)
-            this.children.get(i).recursivelyBuildTree(loadFromGameData);
+        // Building child nodes must only occur AFTER Vlos are setup, so they will have access to the dirty snapshot.
+        // This is expected to be managed by the calling function.
+    }
+
+    private static void addChildNodesToQueue(List<VloTreeNode> queue, VloTreeNode node) {
+        int startIndex = queue.size();
+        queue.add(node);
+        for (int i = startIndex; i < queue.size(); i++)
+            queue.addAll(queue.get(i).getChildren());
+    }
+
+    private static void recursivelyBuildTree(List<VloTreeNode> queue, ProgressBarComponent progressBar, boolean loadFromGameData) {
+        if (progressBar != null)
+            progressBar.update(0, queue.size(), "Vlo Texture Placement");
+
+        // Builds the nodes in queue order. (NOTE: Respect the queue order/ensure parents are built before child nodes)
+        for (int i = 0; i < queue.size(); i++) {
+            queue.get(i).buildNode(loadFromGameData);
+            if (progressBar != null)
+                progressBar.addCompletedProgress(1);
+        }
     }
 
     /**
@@ -224,9 +242,9 @@ public class VloTreeNode {
         // Read vlo files.
         for (int i = 0; i < vloEntries.size(); i++) {
             MWIResourceEntry vloFileEntry = vloEntries.get(i);
-            newNode.vloFileEntries.add(vloFileEntry);
-            tree.nodesByResourceEntry.put(vloFileEntry, newNode);
-            tree.snapshotsByResourceEntry.put(vloFileEntry, new VloVramSnapshot(instance, newNode));
+            VloFileTreeData data = new VloFileTreeData(newNode, vloFileEntry);
+            newNode.vloFiles.add(data);
+            tree.vloFileDataByResourceEntry.put(vloFileEntry, data);
         }
 
         // Read child nodes.
