@@ -184,7 +184,7 @@ public class VloVramSnapshot extends SCSharedGameObject {
 
         // Add images by recalculating positions.
         List<VloImage> sortedImages = new ArrayList<>(originalImages);
-        sortedImages.sort(Comparator.comparingInt((VloImage image) -> image.getPaddedWidth() * image.getPaddedWidth()).reversed());
+        sortedImages.sort(Comparator.comparingInt((VloImage image) -> image.getPaddedWidth() * image.getPaddedHeight()).reversed());
         Set<VloClut> addedCluts = new HashSet<>();
 
         // Add images.
@@ -220,30 +220,31 @@ public class VloVramSnapshot extends SCSharedGameObject {
         int pageHeight = VloUtils.getPageHeight(psxMode);
         int pageCount = VloUtils.getPageCount(psxMode);
 
+        int clutPages = this.node.getClutPages();
         if (fillMethod == VloTreeNodeFillMethod.FILL_PAGE || (fillMethod == VloTreeNodeFillMethod.AUTOMATIC && !psxMode)) {
             for (int page = 0; page < pageCount; page++)
                 if ((currentPages & (1 << page)) != 0)
                     for (int y = 0; y < pageHeight; y++)
                         if (addEntryHorizontal(entry, y, page, currentPages))
-                            return addImageClut(entry.getImage(), addedCluts, usablePages, extraPages);
+                            return addImageClut(entry.getImage(), addedCluts, clutPages, usablePages, extraPages);
         } else if (fillMethod == VloTreeNodeFillMethod.SPREAD || (fillMethod == VloTreeNodeFillMethod.AUTOMATIC && (currentPages & PSX_VRAM_BOTTOM_PAGE_BIT_MASK) == 0)) {
             for (int y = 0; y < pageHeight; y++)
                 for (int page = 0; page < pageCount; page++)
                     if ((currentPages & (1 << page)) != 0 && addEntryHorizontal(entry, y, page, currentPages))
-                        return addImageClut(entry.getImage(), addedCluts, usablePages, extraPages);
+                        return addImageClut(entry.getImage(), addedCluts, clutPages, usablePages, extraPages);
         } else if (fillMethod == VloTreeNodeFillMethod.AUTOMATIC) { // psxMode is true.
             // The top row of pages do not include cluts, so we can use fill page logic.
             for (int page = 0; page < PsxVram.PSX_VRAM_PAGE_COUNT_X; page++)
                 if ((currentPages & (1 << page)) != 0)
                     for (int y = 0; y < pageHeight; y++)
                         if (addEntryHorizontal(entry, y, page, currentPages))
-                            return addImageClut(entry.getImage(), addedCluts, usablePages, extraPages);
+                            return addImageClut(entry.getImage(), addedCluts, clutPages, usablePages, extraPages);
 
             // The bottom row of pages contains cluts, so use spread logic.
             for (int y = 0; y < pageHeight; y++)
                 for (int page = PsxVram.PSX_VRAM_PAGE_COUNT_X; page < pageCount; page++)
                     if ((currentPages & (1 << page)) != 0 && addEntryHorizontal(entry, y, page, currentPages))
-                        return addImageClut(entry.getImage(), addedCluts, usablePages, extraPages);
+                        return addImageClut(entry.getImage(), addedCluts, clutPages, usablePages, extraPages);
         } else {
             throw new UnsupportedOperationException("Unsupported fillMethod: " + fillMethod);
         }
@@ -251,15 +252,15 @@ public class VloVramSnapshot extends SCSharedGameObject {
         return false;
     }
 
-    private boolean addImageClut(VloImage image, Set<VloClut> addedCluts, int usablePages, int extraPages) {
+    private boolean addImageClut(VloImage image, Set<VloClut> addedCluts, int clutPages, int usablePages, int extraPages) {
         VloClut clut = image.getClut();
-        if (tryAddClut(clut, addedCluts, usablePages, extraPages))
+        if (tryAddClut(clut, addedCluts, clutPages, usablePages, extraPages))
             return true; // No clut, everything is good.
 
         throw new RuntimeException("There was not enough VRAM space to add " + image + "'s CLUT!");
     }
 
-    private boolean tryAddClut(VloClut clut, Set<VloClut> addedCluts, int usablePages, int extraPages) {
+    private boolean tryAddClut(VloClut clut, Set<VloClut> addedCluts, int clutPages, int usablePages, int extraPages) {
         if (clut == null || addedCluts == null || !addedCluts.add(clut))
             return true; // Clut has already been added.
 
@@ -270,23 +271,25 @@ public class VloVramSnapshot extends SCSharedGameObject {
         // Or more specifically, Beast Wars NTSC. Other games were not referenced or checked,
         // Cluts are added to the bottom right-most page, right-to-left.
 
-        // Cluts should only be on the bottom row of pages, if possible.
-        int minClutPage = (usablePages & PSX_VRAM_BOTTOM_PAGE_BIT_MASK) != 0 ? PsxVram.PSX_VRAM_PAGE_COUNT_X : 0;
-
         // Next, try adding the CLUT to ANY usable page which has room, right to left.
         int pageCount = VloUtils.getPageCount(true);
+        int passClutPages = clutPages != 0 ? clutPages : usablePages;
+        return tryAddClut(entry, passClutPages, clutPages, pageHeight, pageCount)
+                || tryAddClut(entry, passClutPages, usablePages, pageHeight, pageCount)
+                || tryAddClut(entry, 0, extraPages, pageHeight, pageCount);
+    }
+
+    private boolean tryAddClut(VloVramEntryClut entry, int clutPages, int currentPages, int pageHeight, int pageCount) {
+        if (currentPages == 0)
+            return false;
+
+        // Cluts should only be on the bottom row of pages, if possible.
+        int minClutPage = (clutPages & PSX_VRAM_BOTTOM_PAGE_BIT_MASK) != 0 ? PsxVram.PSX_VRAM_PAGE_COUNT_X : 0;
         for (int y = pageHeight - 1; y >= 0; y--)
             for (int page = pageCount - 1; page >= minClutPage; page--)
-                if ((usablePages & (1 << page)) != 0 && addEntryHorizontal(entry, y, page, usablePages))
+                if ((currentPages & (1 << page)) != 0 && addEntryHorizontal(entry, y, page, currentPages))
                     return true;
 
-        // Lastly, try adding to extra pages.
-        for (int y = pageHeight - 1; y >= 0; y--)
-            for (int page = pageCount - 1; page >= minClutPage; page--)
-                if ((extraPages & (1 << page)) != 0 && addEntryHorizontal(entry, y, page, usablePages))
-                    return true;
-
-        // Could not add the CLUT.
         return false;
     }
 
@@ -324,7 +327,7 @@ public class VloVramSnapshot extends SCSharedGameObject {
                 int endPageGridX = VloUtils.getPageGridX(psxMode, endPage);
                 int endPageGridY = VloUtils.getPageGridY(psxMode, endPage);
                 if (endPageGridX > startPageGridX && entryWidth < pageWidth)
-                    return false;
+                    return false; // If this check is removed on PSX, texture overflow will occur and the game will render the part of the texture page which does not have the texture.
                 if (endPageGridY > startPageGridY && entryHeight < pageHeight)
                     return false;
             }

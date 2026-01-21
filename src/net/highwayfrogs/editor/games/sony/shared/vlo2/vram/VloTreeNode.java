@@ -34,14 +34,18 @@ public class VloTreeNode {
     @Getter private final int extraPages;
     @Getter private final int reservedPages;
     @Getter private final int usablePages;
+    @Getter private final int originalPages;
+    @Getter private final int clutPages;
 
     public static final int MAX_PAGE = 32;
     public static final String CONFIG_KEY_PAGES = "pages";
     public static final String CONFIG_KEY_RESERVED_PAGES = "reservedPages";
     public static final String CONFIG_KEY_EXTRA_PAGES = "extraPages";
+    public static final String CONFIG_KEY_ORIGINAL_PAGES = "originalPages";
+    public static final String CONFIG_KEY_CLUT_PAGES = "clutPages";
     public static final String CONFIG_KEY_INSERTION_STRATEGY = "insertionStrategy";
 
-    protected VloTreeNode(SCGameInstance instance, VloTreeNode parent, String name, VloTreeNodeFillMethod fillMethod, int pages, int reservedPages, int extraPages) {
+    protected VloTreeNode(SCGameInstance instance, VloTreeNode parent, String name, VloTreeNodeFillMethod fillMethod, int pages, int reservedPages, int extraPages, int originalPages, int clutPages) {
         this.instance = instance;
         this.parent = parent;
         this.name = name;
@@ -50,6 +54,8 @@ public class VloTreeNode {
         this.usablePages = pages;
         this.reservedPages = reservedPages;
         this.extraPages = extraPages;
+        this.originalPages = originalPages;
+        this.clutPages = clutPages;
         this.textureIdTracker = new VloTextureIdTracker(this, parent != null ? parent.textureIdTracker : null, null);
     }
 
@@ -83,16 +89,6 @@ public class VloTreeNode {
      */
     public List<VloTreeNode> getChildren() {
         return this.immutableChildren;
-    }
-
-    /**
-     * Test if the provided page ID is used by the VLOs.
-     * NOTE: This will NOT include if parent nodes use the page.
-     * @param page the page ID to test
-     * @return true iff the page is used by the vlo files.
-     */
-    public boolean isPageUsable(int page) {
-        return isValidPageId(page) && (this.usablePages & (1 << page)) != 0;
     }
 
     /**
@@ -223,6 +219,8 @@ public class VloTreeNode {
         int pages = getPageBitFlags(vloEntries.isEmpty() ? config.getOptionalKeyValueNode(CONFIG_KEY_PAGES) : config.getKeyValueNodeOrError(CONFIG_KEY_PAGES));
         int reservedPages = getPageBitFlags(config.getOptionalKeyValueNode(CONFIG_KEY_RESERVED_PAGES));
         int extraPages = getPageBitFlags(config.getOptionalKeyValueNode(CONFIG_KEY_EXTRA_PAGES));
+        int originalPages = getPageBitFlags(config.getOptionalKeyValueNode(CONFIG_KEY_ORIGINAL_PAGES));
+        int clutPages = getPageBitFlags(config.getOptionalKeyValueNode(CONFIG_KEY_CLUT_PAGES));
         VloTreeNodeFillMethod fillMethod = config.getOrDefaultKeyValueNode(CONFIG_KEY_INSERTION_STRATEGY).getAsEnum(VloTreeNodeFillMethod.AUTOMATIC);
 
         // Create node.
@@ -231,12 +229,12 @@ public class VloTreeNode {
             if (parent == null)
                 throw new IllegalArgumentException("parent cannot be null if tree is non-null!");
 
-            newNode = new VloTreeNode(instance, parent, config.getSectionName(), fillMethod, pages, reservedPages, extraPages);
+            newNode = new VloTreeNode(instance, parent, config.getSectionName(), fillMethod, pages, reservedPages, extraPages, originalPages, clutPages);
         } else {
             if (parent != null)
                 throw new IllegalArgumentException("parent cannot be non-null if tree is null!");
 
-            newNode = tree = new VloTree(instance, config.getSectionName(), fillMethod, pages, reservedPages, extraPages);
+            newNode = tree = new VloTree(instance, config.getSectionName(), fillMethod, pages, reservedPages, extraPages, originalPages, clutPages);
         }
 
         // Read vlo files.

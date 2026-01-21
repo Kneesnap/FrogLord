@@ -24,8 +24,8 @@ import java.util.Map;
 public final class VloTree extends VloTreeNode {
     final Map<MWIResourceEntry, VloFileTreeData> vloFileDataByResourceEntry = new HashMap<>(); // Do not use the VloFile directly as the key, just in-case it gets imported.
 
-    VloTree(SCGameInstance instance, String name, VloTreeNodeFillMethod fillMethod, int pages, int reservedPages, int extraPages) {
-        super(instance, null, name, fillMethod, pages, reservedPages, extraPages);
+    VloTree(SCGameInstance instance, String name, VloTreeNodeFillMethod fillMethod, int pages, int reservedPages, int extraPages, int originalPages, int clutPages) {
+        super(instance, null, name, fillMethod, pages, reservedPages, extraPages, originalPages, clutPages);
     }
 
     /**
@@ -201,9 +201,9 @@ public final class VloTree extends VloTreeNode {
         }
 
         // Figure out which pages are allowed.
-        int testPages = node.getUsablePages();
+        int testPages = node.getOriginalPages() != 0 ? node.getOriginalPages() : (node.getUsablePages() | node.getClutPages());
         if (vloFile.getGameInstance().isPreviouslySavedByFrogLord())
-            testPages |= node.getExtraPages();
+            testPages = node.getUsablePages() | node.getExtraPages() | node.getClutPages();
 
         // Test the pages seen.
         int leftOverPages = usedPages & ~testPages;
