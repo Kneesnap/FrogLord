@@ -5,5 +5,5 @@ package net.highwayfrogs.editor.games.sony.shared.vlo2.vram;
  * Created by Kneesnap on 1/19/2026.
  */
 public enum VloTreeNodeFillMethod {
-    FILL_PAGE, SPREAD
+    FILL_PAGE, SPREAD, AUTOMATIC,
 }

@@ -68,7 +68,6 @@ import java.util.logging.Level;
  * TODO Remaining Tasks before feature complete:
  *  1) Create the VRAM texture placement system.
  *   -> Test PC.
- *   -> Beast Wars texture insertion broke. How/why?
  *   -> Go over all games and setup working configs.
  *   -> Easy image management. (VloFile.addImage(String name, BufferedImage, ClutMode, abr, int padding)
  *  2) Rewrite the VLO file UI

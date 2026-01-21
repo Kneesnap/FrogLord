@@ -223,7 +223,7 @@ public class VloTreeNode {
         int pages = getPageBitFlags(vloEntries.isEmpty() ? config.getOptionalKeyValueNode(CONFIG_KEY_PAGES) : config.getKeyValueNodeOrError(CONFIG_KEY_PAGES));
         int reservedPages = getPageBitFlags(config.getOptionalKeyValueNode(CONFIG_KEY_RESERVED_PAGES));
         int extraPages = getPageBitFlags(config.getOptionalKeyValueNode(CONFIG_KEY_EXTRA_PAGES));
-        VloTreeNodeFillMethod fillMethod = config.getOrDefaultKeyValueNode(CONFIG_KEY_INSERTION_STRATEGY).getAsEnum(VloTreeNodeFillMethod.FILL_PAGE);
+        VloTreeNodeFillMethod fillMethod = config.getOrDefaultKeyValueNode(CONFIG_KEY_INSERTION_STRATEGY).getAsEnum(VloTreeNodeFillMethod.AUTOMATIC);
 
         // Create node.
         VloTreeNode newNode;
