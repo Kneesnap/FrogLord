@@ -200,7 +200,7 @@ public abstract class kcScriptEffect extends GameObject<GreatQuestInstance> impl
         if (targetEntity == null) {
             kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
             if (!externalEntityTarget)
-                logger.warning("The effect '%s'%s targets an entity which was not found.", saveEffect(settings), getCodeLocation());
+                logger.warning("The effect '%s'%s targets an entity which was not found. (If the entity is defined in another gqs file, add --%s to hide this warning)", saveEffect(settings), getCodeLocation(), ARGUMENT_EXTERNAL_ENTITY);
         } else if (targetEntity.getInstance() == null || targetEntity.getInstance().getDescription() == null) {
             kcScriptDisplaySettings settings = getChunkedFile() != null ? getChunkedFile().createScriptDisplaySettings() : null;
             logger.warning("The effect '%s'%s targets an entity (%s) who did not have an entity description!", saveEffect(settings), getCodeLocation(), this.targetEntityRef.getAsString());

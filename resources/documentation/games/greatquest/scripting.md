@@ -420,6 +420,11 @@ Others, such as Fairy Frogmother face the player by setting their target as `Fro
 > If the entity has the `--FaceTargetEntity` flag set, it may not be able to move vertically (up/down).  
 > The entity's head may also look in a strange/unexpected direction when this occurs.  
 
+> [!CAUTION]  
+> `FrogInst001` (the player) does not seem to be capable of pathfinding in the traditional sense.  
+> One solution is to create entities using the Frogger 3D model, and using camera trickery to hide the real player.  
+> Another solution is to manually force `FrogInst001` into walk/run sequences, ensuring it is facing the target location.  
+
 > [!NOTE]  
 > **Pathfind Troubleshooting:**  
 > 1. If the entity is not moving...

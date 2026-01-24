@@ -37,12 +37,6 @@ FrogLord has a drop-down menu to show both "Entries" and "Waves".
 
 Entries can also reference sounds found in the .SCK file (see below for more info).
 
-**How can I export/change sounds in FrogLord?**  
-TODO: Explain
-
-**How can I export/change sounds in a mod I plan to share?**  
-TODO: This feature is still in progress. Check back later!
-
 **PC Version Limitation:**  
 FrogLord is unable to play original sound effects from the PC version .SBR files due to using an unsupported audio format.  
 This limitation does not apply to the PS2 version, nor will it necessarily apply to many of the sounds imported for mods.  

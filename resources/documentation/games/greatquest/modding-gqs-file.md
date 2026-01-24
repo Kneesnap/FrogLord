@@ -1,31 +1,26 @@
-# Great Quest Chunk Data Set (.GQS Files)
+# Great Quest Script (.GQS Files)
 Chunked files in Frogger: The Great Quest contain all the various data chunks loaded for a scene at any given time (such as level or menu screen).  
+Note that these files are not the same thing as a **kcScript**, even though **kcScripts** can be included in `.gqs` files.  
 GQS files are a special FrogLord format which detail the changes applied to a chunked file in order to install the mod.
 
 ## Before Starting
 In order to understand how `.gqs` configuration files work, make sure to read about [FrogLord configuration files](../../froglord/config-files.md).  
 
-### Hashes
-When making GQS files, we try to use text-based names whenever possible.  
-But they're actually a lie. The game internally tracks resources and data by IDs, called hashes.  
-These hashes look like this: `0x1234ABCD`, and on their own look like gibberish.  
-Hashes should only be used when there is no corresponding text available (or in the case of Action Sequences).  
-FrogLord shows the hash values for each file and chunk resource when selected.  
-
 ## Getting Started
-The recommended editor to use for `.gqs` files is [Notepad++](https://notepad-plus-plus.org/downloads/), but other text editors will work, even Visual Studio Code.  
-While using Notepad++, it is recommended to set the syntax highlighting to either `Shell` or `PowerShell` with the `Language > ...` menu, to color the scripts.
+The recommended editor to use for `.gqs` files is [Visual Studio Code](https://code.visualstudio.com/download), however any text editor such as [Notepad++](https://notepad-plus-plus.org/downloads/) will work as well.  
+While using Visual Studio Code, it is recommended to set the syntax highlighting to either `Shell` with the `Configure File Association for 'gqs'` option when clicking on the file type in the bottom-right hand corner of the UI.  
+While using Notepad++, it is recommended to set the syntax highlighting to either `Shell` or `PowerShell` with the `Language > ...` menu, to color the scripts.  
 
 ## Applying GQS Files Manually
 In FrogLord:
-1. Locate the level you want to modify.
-2. Right-click the level's `scriptdata` chunk.
-3. Choose "Import GQS Script Group" and select the desired `.qgs` file.
+1. Locate the level you want to modify in the file viewer on the left-side of FrogLord.
+2. Right-click the level.
+3. Choose "Import GQS" and select the desired `.gqs` file.
 4. Check for warnings shown by FrogLord.
 FrogLord will import the GQS file. If FrogLord reports any warnings, make sure to read them, as they often indicate real issues.  
 The original game can often trip these warning messages, so if a warning is from the original game, it may be okay to ignore.  
 
-## How to use GQS Script Groups in Noodle?
+## How to use GQS files in Noodle?
 TODO: Include some information on how to manage scripts with Noodle later.
 
 ## GQS Sections
@@ -45,6 +40,7 @@ The following sections document each of the available GQS config sections which 
 - `[EntityDescriptions]` – Creates/updates entity templates (Actor, Prop, Item, etc.)
 - `[Entities]`           – Creates/updates Entity Instances
 - `[Scripts]`            – Adds scripts to existing entities
+- `[Include]`            – Loads other gqs files
 
 ### [Models]
 Including 3D model requires three separate pieces.  
@@ -212,11 +208,11 @@ C054.bhe
 C054-1AnimSet
 Holly{seqs}
 C054NrmIdle01.bae
-0xBA0EB676 # Holly[NrmIdle01] Idle pose <--- This line contains an example of a raw hash.
+Holly[NrmIdle01] # Idle pose
 C054FlyIdle01.bae
-0xA4B8D667 # Holly[FlyIdle01] Flying idle pose <--- This line contains an example of a raw hash.
+0xA4B8D667 # Holly[FlyIdle01] Flying idle pose <--- This line contains an example of a raw hash. See the bottom of this document for more information.
 C054NrmReac01.bae
-0xC20C9145 # Holly[NrmReac01] Flinch and cover face <--- This line contains an example of a raw hash.
+Holly[NrmReac01] # Flinch and cover
 ```
 
 ### [DeleteResources]
@@ -259,7 +255,6 @@ Example:
 [Sequences]
 [[Frog]] # The Action Sequence name prefix.
 [[[WaveAtGeneral]]] # The name of the action sequence. (FrogLord will create one named 'Frog[WaveAtGeneral]' when combining the name prefix)
-hash=0x91A48D4F # This value is random. It uniquely identifies this sequence, so the same number should not be used more than once. Put down a new hash number for every unique action sequence.
 # Beyond this line is the action sequence script. See the scripting documentation for more information.
 SetAnimation "C001NRMCONV10.BAE" 0.1 --FirstInSequence
 WaitForAnimation
@@ -457,3 +452,24 @@ SetSavePoint 100 -1.5 1.5 -15
 DeactivateCamera 0.0
 SetAlarm 0 1.0
 ```
+
+### [Include]
+Allows including other `.gqs` files.
+
+Example:
+```PowerShell
+[Include]
+../../shared/scripts/frogger-hurt-noises.gqs
+part1.gqs
+part1-mosquitos.gqs
+game1-frogger2.gqs
+part2.gqs
+game2-cooking.gqs
+part3c.gqs
+```
+
+## Hashes
+If you ever run across a funny looking number which looks like `0x1234ABCD`.  
+Frogger: The Great Quest internally tracks resources and data by numeric IDs, called hashes.  
+When making GQS files, FrogLord tries its best to hide these, so you will never need to see them.  
+However, it's not always possible. Wherever you use the name of an asset in a `.gqs` file, it is also possible to use a hash instead.  

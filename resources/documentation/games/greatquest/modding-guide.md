@@ -29,7 +29,7 @@ Text written here or on subsequent lines is treated as a description of the mod.
 
 **script.ndl**  
 Create a file named `script.ndl`, and leave it empty for now.
-This is a [Noodle](scripting.md) script which will instruct FrogLord on which files to import/apply changes from.  
+This is a [Noodle](../../froglord/noodle-scripting.md) script which will instruct FrogLord on which files to import/apply changes from.  
 This will be the most complex part of making mods, so it is strongly recommended to refer to other mods such as [this one](https://github.com/Kneesnap/frogger-tgq-project-puck/blob/main/script.ndl), or asking for help in the [Highway Frogs discord server](https://discord.gg/XZH9Wa5rMV).  
 These scripts can be run in FrogLord with `Edit > Run Noodle Script`.  
 
@@ -64,16 +64,14 @@ level17/   ← Level Data for "Joy Castle"
 level18/   ← Level Data for "The Towers of Joy Castle"
 
 Standard level folder layout:
-  sfx/                 ← Contains the sound effects (as .wav files)
-  entity-descriptions/ ← Contains descriptions of entities
   entities/            ← Contains entity definitions and scripts (isolated relative to individual entities)
+  images/              ← Contains custom textures to import
   scripts/             ← Contains files that define scripts which may target multiple entities, but overall are related. (This is just an organization tactic.)
+  sounds/              ← Contains the sound effects (as .wav files)
   script.ndl           ← The script to apply the changes for this particular level
  
 TODO: 3D Models, 3D Model Animations, 3D Model Skeletons, 3D Model Collision
 TODO: Map Terrain, Map Terrain Collision, etc
-TODO: Textures
-TODO: More probably.
 ```
 
 ### Overall Mod Folder Structure
@@ -83,8 +81,7 @@ TODO: More probably.
 │   ├── main.cfg                  ← Mod description (name, UUID, author, etc.)
 │   ├── script.ndl                ← Script for applying mod to FrogLord
 │   ├── level01/                  ← Level-specific data (e.g. Rolling Rapids Creek)
-│   │   ├── sfx/
-│   │   ├── entity-descriptions/
+│   │   ├── sounds/
 │   │   ├── entities/
 │   │   ├── scripts/
 │   │   ├── script.ndl            ← Level-specific Noodle script

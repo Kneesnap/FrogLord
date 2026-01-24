@@ -17,7 +17,7 @@ Before getting started, you'll need a legally obtained copy of Frogger: The Grea
 
 **PC Version (Recommended for testing, Discouraged for sharing mods):**  
 The PC version has issues that make it undesirable for modding such as:
-- Requiring a frame-limiter to function. (Asks more from players)
+- Requiring a frame-limiter to not crash.
 - Frequent crashes even with a frame-limiter
 - No Vertex Coloring
 - Entities visibly T-Posing
@@ -72,7 +72,7 @@ Congrats! Any changes you were to make right now could be saved to `data.bin` us
 > [!CAUTION]
 > **Even though FrogLord CAN open modified data.bin files, this is STRONGLY discouraged. Any mods created this way will have important downsides:**
 - No way of undoing changes once they are done, meaning accidentally deleting data or breaking the game means the mod is gone forever.
-- The mod will only be compatible with the version of the game you modded. (Eg: No ability to make a mod support both PC + PS2 simultaneously.)
+- No ability to make a mod support both PC + PS2 simultaneously.
 - The mod will be very difficult to work on with multiple people at the same time.
 - It would be impossible for multiple mods to be installed together.
 - Massive file-sizes when shared (even via delta-patching).
