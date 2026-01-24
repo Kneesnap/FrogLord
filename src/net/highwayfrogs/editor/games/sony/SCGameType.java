@@ -71,7 +71,7 @@ public enum SCGameType implements IGameType {
 
     public static final BrowserFileType MWD_FILE_TYPE = new BrowserFileType("Millennium WAD", "MWD");
     public static final BrowserFileType EXECUTABLE_FILE_TYPE = new BrowserFileType("Game Executable",
-            "EXE", "SLUS_*.*", "SLES_*.*", "SLPS_*.*", "SLED_*.*", "SCES_*.*", "SCUS_*.*", "dat");
+            "EXE", "SLUS_*.*", "SLES_*.*", "SLPS_*.*", "SLPM_*.*", "SLED_*.*", "SCES_*.*", "SCUS_*.*", "dat");
 
     SCGameType(String displayName, Supplier<SCGameInstance> instanceMaker, Function<String, SCGameConfig> configMaker, boolean showSaveWarning) {
         this.displayName = displayName;

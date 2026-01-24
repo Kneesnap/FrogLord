@@ -167,10 +167,10 @@ public final class VloTree extends VloTreeNode {
     }
 
     private static void warnForOutOfBoundsImages(ILogger logger, VloFile vloFile, VloTreeNode node) {
-        int usedPages = 0;
         boolean psxMode = vloFile.isPsxMode();
 
         // Check images for pages used.
+        int imagePages = 0;
         List<VloImage> images = vloFile.getImages();
         for (int j = 0; j < images.size(); j++) {
             VloImage image = images.get(j);
@@ -182,10 +182,11 @@ public final class VloTree extends VloTreeNode {
             int endPageGridY = VloUtils.getPageGridY(psxMode, endPage);
             for (int y = startPageGridY; y <= endPageGridY; y++)
                 for (int x = startPageGridX; x <= endPageGridX; x++)
-                    usedPages |= (1 << VloUtils.getPageFromGridPos(psxMode, x, y));
+                    imagePages |= (1 << VloUtils.getPageFromGridPos(psxMode, x, y));
         }
 
         // Check CLUTs for pages used.
+        int clutPages = 0;
         List<VloClut> cluts = vloFile.getClutList().getCluts();
         for (int j = 0; j < cluts.size(); j++) {
             VloClut clut = cluts.get(j);
@@ -197,30 +198,42 @@ public final class VloTree extends VloTreeNode {
             int endPageGridY = VloUtils.getPageGridY(psxMode, endPage);
             for (int y = startPageGridY; y <= endPageGridY; y++)
                 for (int x = startPageGridX; x <= endPageGridX; x++)
-                    usedPages |= (1 << VloUtils.getPageFromGridPos(psxMode, x, y));
+                    clutPages |= (1 << VloUtils.getPageFromGridPos(psxMode, x, y));
         }
 
         // Figure out which pages are allowed.
-        int testPages = node.getOriginalPages() != 0 ? node.getOriginalPages() : (node.getUsablePages() | node.getClutPages());
-        if (vloFile.getGameInstance().isPreviouslySavedByFrogLord())
-            testPages = node.getUsablePages() | node.getExtraPages() | node.getClutPages();
+        int clutPagesFromImagePages = (node.getUsablePages() & VloVramSnapshot.PSX_VRAM_BOTTOM_PAGE_BIT_MASK);
+        if (clutPagesFromImagePages == 0)
+            clutPagesFromImagePages = node.getUsablePages();
 
-        // Test the pages seen.
-        int leftOverPages = usedPages & ~testPages;
-        if (leftOverPages == 0)
-            return;
-
-        // Build message.
-        StringBuilder pages = new StringBuilder();
-        for (int i = 0; i < VloTreeNode.MAX_PAGE; i++) {
-            if ((leftOverPages & (1 << i)) == 0)
-                continue;
-
-            if (pages.length() > 0)
-                pages.append(", ");
-            pages.append(i);
+        int testImagePages = node.getOriginalPages() != 0 ? node.getOriginalPages() : node.getUsablePages();
+        int testClutPages = node.getClutPages() != 0 ? node.getClutPages() : clutPagesFromImagePages;
+        if (vloFile.getGameInstance().isPreviouslySavedByFrogLord()) {
+            testImagePages |= node.getExtraPages();
+            testClutPages |= node.getExtraPages();
         }
 
-        logger.warning("File '%s' was not expected to use page(s) %s!", vloFile.getFileDisplayName(), pages);
+        // Test the pages seen.
+        int leftOverImagePages = imagePages & ~testImagePages;
+        if (leftOverImagePages != 0)
+            logger.warning("File '%s' was not expected to use image page(s) %s!", vloFile.getFileDisplayName(), getPages(leftOverImagePages));
+
+        int leftOverClutPages = clutPages & ~testClutPages;
+        if (leftOverClutPages != 0)
+            logger.warning("File '%s' was not expected to use CLUT page(s) %s!", vloFile.getFileDisplayName(), getPages(leftOverClutPages));
+    }
+
+    private static String getPages(int pages) {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < VloTreeNode.MAX_PAGE; i++) {
+            if ((pages & (1 << i)) == 0)
+                continue;
+
+            if (builder.length() > 0)
+                builder.append(", ");
+            builder.append(i);
+        }
+
+        return builder.toString();
     }
 }

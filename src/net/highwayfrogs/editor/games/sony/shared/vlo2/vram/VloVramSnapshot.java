@@ -28,7 +28,7 @@ public class VloVramSnapshot extends SCSharedGameObject {
     private final int[][] cachedTextureStartXPositions;
     private final List<VloVramEntry> entries = new ArrayList<>();
 
-    private static final int PSX_VRAM_BOTTOM_PAGE_BIT_MASK = 0xFFFF0000; // Bits 16-31 represent pages on the bottom of Vram on PSX, which is where Cluts are preferred to be placed.
+    public static final int PSX_VRAM_BOTTOM_PAGE_BIT_MASK = 0xFFFF0000; // Bits 16-31 represent pages on the bottom of Vram on PSX, which is where Cluts are preferred to be placed.
 
     public VloVramSnapshot(SCGameInstance instance, VloTreeNode node) {
         super(instance);
@@ -274,7 +274,7 @@ public class VloVramSnapshot extends SCSharedGameObject {
         // Next, try adding the CLUT to ANY usable page which has room, right to left.
         int pageCount = VloUtils.getPageCount(true);
         int passClutPages = clutPages != 0 ? clutPages : usablePages;
-        return tryAddClut(entry, passClutPages, clutPages, pageHeight, pageCount)
+        return tryAddClut(entry, 0, clutPages, pageHeight, pageCount)
                 || tryAddClut(entry, passClutPages, usablePages, pageHeight, pageCount)
                 || tryAddClut(entry, 0, extraPages, pageHeight, pageCount);
     }

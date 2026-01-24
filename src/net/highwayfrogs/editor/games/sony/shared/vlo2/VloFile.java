@@ -395,7 +395,7 @@ public class VloFile extends SCSharedGameFile {
             VloImage conflictImage = getImageByTextureId(textureId, false);
             if (conflictImage != null) { // Another image was previously using this texture ID, so change it to another ID. (We tested earlier that it's using another texture name, so it's a different texture)
                 conflictImage.setTextureId(tracker.useFreeTextureId());
-                // TODO: Get remaps for vlo, and then fix the remap.
+                // TODO: Get remaps for vlo, and then fix the remap. (Have an interface for the remap objects to implement to get the vlo, also to do the behavior needed here) See: FroggerTextureRemap, since it has .MAP access.
             }
         } else {
             textureId = tracker.useFreeTextureId();
