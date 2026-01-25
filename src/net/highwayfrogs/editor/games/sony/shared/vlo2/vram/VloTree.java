@@ -20,12 +20,14 @@ import java.util.Map;
  * Represents a tree used to ensure textures .
  * Created by Kneesnap on 1/15/2026.
  */
-@Getter
 public final class VloTree extends VloTreeNode {
+    @Getter private final int transparentPages;
     final Map<MWIResourceEntry, VloFileTreeData> vloFileDataByResourceEntry = new HashMap<>(); // Do not use the VloFile directly as the key, just in-case it gets imported.
+    final Map<String, VloTreeNode> generatedNodesByName = new HashMap<>();
 
-    VloTree(SCGameInstance instance, String name, VloTreeNodeFillMethod fillMethod, int pages, int reservedPages, int extraPages, int originalPages, int clutPages) {
-        super(instance, null, name, fillMethod, pages, reservedPages, extraPages, originalPages, clutPages);
+    VloTree(SCGameInstance instance, String name, VloTreeNodeFillMethod fillMethod, int pages, int reservedPages, int extraPages, int originalPages, int clutPages, List<String> includedNodeNames, int transparentPages) {
+        super(instance, null, name, fillMethod, pages, reservedPages, extraPages, originalPages, clutPages, includedNodeNames);
+        this.transparentPages = transparentPages;
     }
 
     /**
@@ -37,6 +39,7 @@ public final class VloTree extends VloTreeNode {
             logger = this.instance.getLogger();
 
         // Warn about unused Vlos.
+        int transparentPages = 0;
         List<VloFile> allVloFiles = this.instance.getMainArchive().getAllFiles(VloFile.class);
         for (int i = 0; i < allVloFiles.size(); i++) {
             VloFile vloFile = allVloFiles.get(i);
@@ -44,9 +47,13 @@ public final class VloTree extends VloTreeNode {
             if (node == null)
                 logger.severe("VloTree did not use the VLO file '%s', so that file may experience problems with modification.", vloFile.getFileDisplayName());
 
+            transparentPages = updateTransparentPages(vloFile, transparentPages);
             if (node != null)
                 warnForOutOfBoundsImages(logger, vloFile, node);
         }
+
+        if (this.transparentPages == 0 && transparentPages != 0)
+            logger.info("Transparent Pages: %s", getPages(transparentPages));
     }
 
     /**
@@ -166,7 +173,32 @@ public final class VloTree extends VloTreeNode {
         return tree;
     }
 
-    private static void warnForOutOfBoundsImages(ILogger logger, VloFile vloFile, VloTreeNode node) {
+    private static int updateTransparentPages(VloFile vloFile, int transparentPages) {
+        if (vloFile.isPsxMode())
+            return transparentPages;
+
+        // Check images for pages used.
+        List<VloImage> images = vloFile.getImages();
+        for (int j = 0; j < images.size(); j++) {
+            VloImage image = images.get(j);
+            if (!image.testFlag(VloImage.FLAG_BLACK_IS_TRANSPARENT))
+                continue;
+
+            int startPage = image.getPage();
+            int endPage = image.getEndPage();
+            int startPageGridX = VloUtils.getPageGridX(false, startPage);
+            int startPageGridY = VloUtils.getPageGridY(false, startPage);
+            int endPageGridX = VloUtils.getPageGridX(false, endPage);
+            int endPageGridY = VloUtils.getPageGridY(false, endPage);
+            for (int y = startPageGridY; y <= endPageGridY; y++)
+                for (int x = startPageGridX; x <= endPageGridX; x++)
+                    transparentPages |= (1 << VloUtils.getPageFromGridPos(false, x, y));
+        }
+
+        return transparentPages;
+    }
+
+        private static void warnForOutOfBoundsImages(ILogger logger, VloFile vloFile, VloTreeNode node) {
         boolean psxMode = vloFile.isPsxMode();
 
         // Check images for pages used.

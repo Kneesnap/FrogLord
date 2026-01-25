@@ -27,7 +27,7 @@
                    AnchorPane.rightAnchor="196.0"/>
         <Label fx:id="textLabel" layoutX="344.0" layoutY="281.0" prefWidth="256.0" text="Placeholder text goes here."
                AnchorPane.topAnchor="264.0" AnchorPane.leftAnchor="265.0" AnchorPane.rightAnchor="0.0"/>
-        <GridPane fx:id="psxGridPane" hgap="2" vgap="2" AnchorPane.leftAnchor="2.0" AnchorPane.rightAnchor="2.0"
+        <GridPane fx:id="pagePane" hgap="2" vgap="2" AnchorPane.leftAnchor="2.0" AnchorPane.rightAnchor="2.0"
                   AnchorPane.topAnchor="2.0">
             <columnConstraints>
                 <ColumnConstraints hgrow="SOMETIMES" maxWidth="64" minWidth="32.0" prefWidth="32.0"/>

@@ -140,7 +140,7 @@ public class VloUtils {
      * @return pageGridY
      */
     public static int getPageGridY(boolean psxMode, int page) {
-        return psxMode ? (page / PsxVram.PSX_VRAM_PAGE_COUNT_X) : (page / VloImage.PC_VRAM_PAGE_HEIGHT);
+        return psxMode ? (page / PsxVram.PSX_VRAM_PAGE_COUNT_X) : page;
     }
 
     /**

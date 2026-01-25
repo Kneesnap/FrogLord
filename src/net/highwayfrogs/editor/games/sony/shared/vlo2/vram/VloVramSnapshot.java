@@ -17,7 +17,9 @@ import java.util.List;
 import java.util.*;
 
 /**
- * A snapshot of Vram.
+ * A snapshot of Vram texture/entries and their positions.
+ * The behavior seen here is not perfectly consistent with the original Vorg program, it packs textures more efficiently.
+ * Unfortunately, many of the questionable design choices of Vorg must be maintained for engine compatibility.
  * Created by Kneesnap on 1/15/2026.
  */
 public class VloVramSnapshot extends SCSharedGameObject {
@@ -223,14 +225,14 @@ public class VloVramSnapshot extends SCSharedGameObject {
         int clutPages = this.node.getClutPages();
         if (fillMethod == VloTreeNodeFillMethod.FILL_PAGE || (fillMethod == VloTreeNodeFillMethod.AUTOMATIC && !psxMode)) {
             for (int page = 0; page < pageCount; page++)
-                if ((currentPages & (1 << page)) != 0)
+                if ((currentPages & (1 << page)) != 0 && isPageTransparencyValid(psxMode, entry, page))
                     for (int y = 0; y < pageHeight; y++)
                         if (addEntryHorizontal(entry, y, page, currentPages))
                             return addImageClut(entry.getImage(), addedCluts, clutPages, usablePages, extraPages);
         } else if (fillMethod == VloTreeNodeFillMethod.SPREAD || (fillMethod == VloTreeNodeFillMethod.AUTOMATIC && (currentPages & PSX_VRAM_BOTTOM_PAGE_BIT_MASK) == 0)) {
             for (int y = 0; y < pageHeight; y++)
                 for (int page = 0; page < pageCount; page++)
-                    if ((currentPages & (1 << page)) != 0 && addEntryHorizontal(entry, y, page, currentPages))
+                    if ((currentPages & (1 << page)) != 0 && isPageTransparencyValid(psxMode, entry, page) && addEntryHorizontal(entry, y, page, currentPages))
                         return addImageClut(entry.getImage(), addedCluts, clutPages, usablePages, extraPages);
         } else if (fillMethod == VloTreeNodeFillMethod.AUTOMATIC) { // psxMode is true.
             // The top row of pages do not include cluts, so we can use fill page logic.
@@ -327,9 +329,9 @@ public class VloVramSnapshot extends SCSharedGameObject {
                 VloImage image = ((VloVramEntryImage) entry).getImage();
                 int endPageGridX = VloUtils.getPageGridX(psxMode, endPage);
                 int endPageGridY = VloUtils.getPageGridY(psxMode, endPage);
-                if (endPageGridX > startPageGridX && entryWidth < ((pageWidth * image.getWidthMultiplier()) / PsxVram.PSX_VRAM_MAX_PIXELS_PER_UNIT))
+                if (endPageGridX > startPageGridX && (!psxMode || entryWidth < ((pageWidth * image.getWidthMultiplier()) / PsxVram.PSX_VRAM_MAX_PIXELS_PER_UNIT)))
                     return false; // If this check is removed on PSX, texture overflow will occur and the game will render the part of the texture page which does not have the texture.
-                if (endPageGridY > startPageGridY && entryHeight < pageHeight)
+                if (endPageGridY > startPageGridY && (!psxMode || entryHeight < pageHeight))
                     return false;
             }
 
@@ -383,7 +385,7 @@ public class VloVramSnapshot extends SCSharedGameObject {
                 for (int testPageY = startPageGridY; testPageY <= endPageGridY; testPageY++) {
                     for (int testPageX = startPageGridX; testPageX <= endPageGridX; testPageX++) {
                         int testPage = VloUtils.getPageFromGridPos(psxMode, testPageX, testPageY);
-                        if ((usablePages & (1 << testPage)) == 0)
+                        if ((usablePages & (1 << testPage)) == 0 || !isPageTransparencyValid(psxMode, entry, testPage))
                             return false; // The texture bleeds into a non-usable page. It's not possible for the entry to fit in this line.
                     }
                 }
@@ -406,7 +408,7 @@ public class VloVramSnapshot extends SCSharedGameObject {
         return (modulo != 0) ? (x + (VloClut.X_POSITION_MODULO - modulo)) : x;
     }
 
-    private void applyEntryToCache(VloVramEntry entry, boolean addToParent) {
+    void applyEntryToCache(VloVramEntry entry, boolean addToParent) {
         int entryX = entry.getX();
         int entryY = entry.getY();
 
@@ -448,5 +450,14 @@ public class VloVramSnapshot extends SCSharedGameObject {
 
             cachedStartXPositions[localY] = Math.min(furthestX - pageStartX, pageWidth);
         }
+    }
+
+    private boolean isPageTransparencyValid(boolean psxMode, VloVramEntry entry, int page) {
+        if (psxMode || !(entry instanceof VloVramEntryImage))
+            return true;
+
+        VloImage image = ((VloVramEntryImage) entry).getImage();
+        boolean blackIsTransparent = image.testFlag(VloImage.FLAG_BLACK_IS_TRANSPARENT); // This controls which part of VRAM this gets placed in.
+        return blackIsTransparent == ((this.node.getTree().getTransparentPages() & (1 << page)) != 0);
     }
 }

@@ -140,7 +140,7 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
         this.sizeChoiceBox.setValue(ImageControllerViewSetting.SCALED_NEAREST_NEIGHBOR);
 
         addSelectionBox("ABR:", PsxAbrTransparency.values(),
-                VloImage::getAbr, VloImage::setAbr, vloImage -> vloImage.getParent().isPsxMode(),
+                VloImage::getAbr, VloImage::setAbr, null,
                 () -> new LazyFXListCell<>(PsxAbrTransparency::getDisplayName, "None (Error)"));
 
         addLabel("Flags:", true, true, null);
@@ -148,7 +148,7 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
         addCalculatedFlag("Hit X", "Treats the last column of pixels on the image as padding.", null, VloImage::calculateHitX);
         addCalculatedFlag("Hit Y", "Treats the last row of pixels on the image as padding.", null, VloImage::calculateHitY);
         addFlag("Name Reference", VloImage.FLAG_REFERENCED_BY_NAME, "If this checkbox is selected, there is assumed to be hardcoded space available in the executable for this texture.\nOtherwise, the texture data will be allocated at runtime.");
-        addFlag("Black is Transparent", VloImage.FLAG_BLACK_IS_TRANSPARENT, "Indicates the black (color=000000) pixels in the image should be treated as fully transparent.");
+        addFlag("Black is Transparent", VloImage.FLAG_BLACK_IS_TRANSPARENT, "Indicates the black (color=000000) pixels in the image should be treated as fully transparent.\nOn PC game builds, this also controls which VRAM pages the texture may be placed in.");
         addFlag("2D Sprite", VloImage.FLAG_2D_SPRITE, "Indicates this texture can be drawn as a sprite.\nA sprite is either as a 3D billboard image like the Frogger score insects, or 2D UI).\nSprites can also be used as 3D textures, so there's no downside to selecting this flag.\nFailing to enable this flag when the game uses it as a sprite will cause crashes.");
         addFlag("Partly Transparent", VloImage.PT_FLAG_PARTLY_TRANSPARENT, "The purpose of this flag is currently unknown.", VloImage::isPtToolkitFlags);
         addCheckBox("Transparent Padding", "Generated padding is transparent.\nThis flag has been calculated by FrogLord, and may not match the original Vorg config file.",
@@ -494,7 +494,8 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
         int unpaddedHeight = this.selectedImage.getInternalUnpaddedHeight();
         this.ingameDimensionLabel.setText("Size: " + unpaddedWidth + "x" + unpaddedHeight);
         this.dimensionLabel.setText("Padding: " + (paddedWidth - unpaddedWidth) + "x" + (paddedHeight - unpaddedHeight));
-        this.idLabel.setText(this.selectedImage.getBitDepth().getDisplayName() + ", VRAM X: " + this.selectedImage.getVramX() + ", Y: " + this.selectedImage.getVramY() + ", Page: " + this.selectedImage.getPage());
+        this.idLabel.setText((getFile().isPsxMode() ? this.selectedImage.getBitDepth().getDisplayName() + ", " : "")
+                + "VRAM X: " + this.selectedImage.getVramX() + ", Y: " + this.selectedImage.getVramY() + ", Page: " + this.selectedImage.getPage());
     }
 
     /**
