@@ -254,8 +254,8 @@ public enum SCGameType implements IGameType {
 
         public SCGameConfigUI(GameConfigController controller) {
             super(controller, SCGameConfig.class);
-            this.mwdFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, CONFIG_MWD_PATH, "Millennium WAD (.MWD)", "Please select a Millennium WAD", MWD_FILE_TYPE, this::validateSelectedMwdFile);
             this.exeFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, CONFIG_EXE_PATH, "Game Executable (.EXE, SLUS, etc.)", "Please select the main executable", EXECUTABLE_FILE_TYPE, this::validateSelectedExecutable);
+            this.mwdFileBrowseComponent = new GameConfigFileOpenBrowseComponent(this, CONFIG_MWD_PATH, "Millennium WAD (.MWD)", "Please select a Millennium WAD", MWD_FILE_TYPE, this::validateSelectedMwdFile);
         }
 
         private boolean shouldEnableMwdFileBrowser() {
@@ -281,8 +281,8 @@ public enum SCGameType implements IGameType {
         @Override
         protected void onControllerLoad(Node rootNode) {
             super.onControllerLoad(rootNode);
+            addController(this.exeFileBrowseComponent); // This one should show first since if the user chooses it first, it will ensure they use the right game version.
             addController(this.mwdFileBrowseComponent);
-            addController(this.exeFileBrowseComponent);
         }
 
         @SneakyThrows
