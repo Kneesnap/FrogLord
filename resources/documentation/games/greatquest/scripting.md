@@ -101,7 +101,7 @@ In The Great Quest, it would look like:
 [[[[Function]]]]
 cause=OnPlayer INTERACT
 # The following effect will make FFM send the number currently in entity variable slot zero to herself.
-# Therefore, if the number in slot 0 is zero, then FFM will 
+# Therefore, if the number in slot 0 is zero, then FFM will show the dialog "Hello, Frogger!"
 SendNumber VARIABLE 0
 
 # This function will run ONLY when FFM receives the number zero.
@@ -119,13 +119,13 @@ This was possible because of how the example used "entity variables".
 Each entity has 8 variable slots available, and are zero-indexed. In other words, the first slot is called 'slot 0', the second slot is called 'slot 1', up until reaching 'slot 7'.
 Any whole number can be put in each slot, despite there being only 8 slots per entity.
 
-**What is this used for?**  
+**What can variables be used for?**  
 If you want to have different behavior from the same cause, use `SendNumber VARIABLE #`.  
 That `#` character should actually be a number, which refers to a variable slot. Whatever number is found within that slot will be sent.  
 Then, the entity which receives the number (the entity who sent it) checks its functions.  
 If it finds a cause `cause=OnReceiveNumber EQUAL_TO <the number sent>`, that function will run.  
-This allows 
 
+In regular programming, this feature roughly translates to an `if` statement.
 
 **Alternative explanation.**  
 Variables are extremely powerful when used with the `SendNumber` command.  
@@ -450,7 +450,7 @@ Speed is a decimal number, likely multiplicative, so 1.0 would be 1x speed, 2.5 
 Not used in the vanilla game.
 
 > [!WARNING]  
-> The game may crash if `SetAnimationSpeed` is used before `SetAnimation.  
+> The game may crash if `SetAnimationSpeed` is used before `SetAnimation`.  
 > Instead, use `SetAnimationSpeed` immediately after `SetAnimation` to avoid crashing the game.  
 
 ### SetAxisPosition (Script Only)
