@@ -3,6 +3,8 @@ package net.highwayfrogs.editor.games.sony.shared.vlo2;
 import net.highwayfrogs.editor.games.psx.PSXClutColor;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameObject.SCSharedGameObject;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.vram.VloTree;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.vram.VloVramSnapshot;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,15 +48,25 @@ public class VloClutList extends SCSharedGameObject {
         if (clut.isRegistered())
             return false;
 
-        if (clut.getX() < 0 && clut.getY() < 0) {
-            // TODO: Registering a clut with x/y -1 should generate a position.
+        // Try to generate the clut position if it is currently invalid.
+        boolean allowInvalidPosition = false;
+        if (clut.getX() < 0 && clut.getY() < 0) { // If this happens, we should add it to update later.
+            VloTree tree = getGameInstance().getVloTree();
+            VloVramSnapshot snapshot = tree != null ? tree.getVramSnapshot(clut.getVloFile()) : null;
+            if (snapshot != null) {
+                allowInvalidPosition = true; // Allow invalid positions because they'll be cleaned up later.
+                if (!snapshot.tryAddClut(clut))
+                    clut.getVloFile().markDirty();
+            }
         }
 
-        // Ensure no overlap.
-        for (int i = 0; i < this.cluts.size(); i++) {
-            VloClut otherClut = this.cluts.get(i);
-            if (otherClut.overlaps(clut))
-                throw new IllegalArgumentException(otherClut + " overlaps with the argument " + clut + ".");
+        if (!allowInvalidPosition) {
+            // Ensure no overlap.
+            for (int i = 0; i < this.cluts.size(); i++) {
+                VloClut otherClut = this.cluts.get(i);
+                if (otherClut.overlaps(clut))
+                    throw new IllegalArgumentException(otherClut + " overlaps with the argument " + clut + ".");
+            }
         }
 
         clut.registered = true;

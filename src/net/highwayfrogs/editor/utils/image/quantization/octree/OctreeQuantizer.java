@@ -9,9 +9,10 @@ public class OctreeQuantizer {
      * Quantize the image to use only up to the given number of colors.
      * This is a good algorithm to use if the image has alpha.
      * @param argbPixels the input pixels to quantize. This array will be modified directly.
-     * @param maxColors the maximum number of images to
+     * @param maxColors the maximum number of images unique colors
+     * @param mergeAlpha if merging colors of different alpha values is permitted
      */
-    public static void quantizeImage(int[] argbPixels, int maxColors) {
+    public static void quantizeImage(int[] argbPixels, int maxColors, boolean mergeAlpha) {
         if (argbPixels == null)
             throw new NullPointerException("argbPixels");
         if (maxColors <= 0)
@@ -34,7 +35,7 @@ public class OctreeQuantizer {
             return;
 
         // Reduce down to the desired color maximum.
-        ot.reduce(maxColors);
+        ot.reduce(maxColors, mergeAlpha);
 
         // Apply quantized colors to the image.
         for (int i = 0; i < argbPixels.length; i++) {
@@ -57,10 +58,11 @@ public class OctreeQuantizer {
      * Quantize the image to use only up to the given number of colors.
      * This is a good algorithm to use if the image has alpha.
      * @param input the input image to quantize. Sometimes, this image will be modified directly.
-     * @param maxColors the maximum number of images to
+     * @param maxColors the maximum number of unique colors
+     * @param mergeAlpha if merging colors of different alpha values is permitted
      * @return quantizedImage in ARGB8888 format.
      */
-    public static BufferedImage quantizeImage(BufferedImage input, int maxColors) {
+    public static BufferedImage quantizeImage(BufferedImage input, int maxColors, boolean mergeAlpha) {
         if (input == null)
             throw new NullPointerException("input");
         if (maxColors <= 0)
@@ -68,7 +70,7 @@ public class OctreeQuantizer {
 
         BufferedImage output = ImageUtils.convertBufferedImageToFormat(input, BufferedImage.TYPE_INT_ARGB);
         int[] pixels = ImageUtils.getWritablePixelIntegerArray(output);
-        quantizeImage(pixels, maxColors);
+        quantizeImage(pixels, maxColors, mergeAlpha);
         return output;
     }
 }

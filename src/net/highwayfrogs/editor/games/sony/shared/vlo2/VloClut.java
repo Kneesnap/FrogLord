@@ -66,9 +66,11 @@ public class VloClut extends SCSharedGameData implements ITextureSource {
         if (image.getParent() != this.vloFile)
             throw new IllegalArgumentException("Cannot add " + image + ", because it is registered to the wrong parent VloFile.");
 
-        this.images.add(image);
         if (this.images.size() == 1 && !this.registered)
             this.vloFile.getClutList().addClut(this);
+
+        // Run afterwards, since there might be an error in addClut().
+        this.images.add(image);
     }
 
     /**

@@ -67,7 +67,6 @@ import java.util.logging.Level;
  * <p/>
  * TODO Remaining Tasks before feature complete:
  *  1) Create the VRAM texture placement system.
- *   -> Go over all games and setup working configs.
  *   -> Easy image management. (VloFile.addImage(String name, BufferedImage, ClutMode, abr, int padding)
  *  2) Rewrite the VLO file UI
  *   -> The "Clone Image" button should be removed to "Copy image to other VLO file.", and moved to right-click menu.
@@ -94,6 +93,7 @@ import java.util.logging.Level;
  *   -> Allow selecting other entries. (Cluts, entries, etc)
  *    -> Show information like which images the clut is used by, what cluts an image use, etc.
  *  10) Look at the issue we have with game-specific loggers, and how it causes UI synchronization lag.
+ *  11) Replacing images in the UI like level names and level screenshots should update the UI.
  * Created by Kneesnap on 8/30/2018.
  */
 public class VloImage extends SCSharedGameData implements Cloneable, ITextureSource, ICollectionViewEntry {
@@ -115,7 +115,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
     @Getter private VloClut clut;
     @Getter private boolean paddingTransparent;
     private boolean paddingEnabled = true;
-    private boolean stpNonBlackBitFlipped; // Pre-MediEvil II: Used to calculate the CLUT STP bit state.
+    private boolean stpNonBlackBitFlipped; // Pre-MediEvil II: Used to calculate the CLUT STP bit state. TODO: Look at how this works with anyFullyBlackPixelsPresent. (Also consider this value might need some fixing on PSX)
     private boolean stpBlackBitFlipped; // Pre-MediEvil II: Used to calculate the CLUT STP bit state.
     private String customName; // The custom name applied by FrogLord. (This may override the original name)
 
@@ -356,11 +356,11 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
             }
         }
 
-        int firstClutColor = this.clut != null ? loadClutColor(this.clut.getColor(0)) : getDefaultFirstClutColor();
+        int firstClutColor = this.clut != null ? loadClutColor(this.clut.getColor(0)) : getTransparentPaddingPixel();
         generatePadding(this.pixelBuffer, PaddingOperation.VALIDATE, firstClutColor);
     }
 
-    private int getDefaultFirstClutColor() {
+    private int getTransparentPaddingPixel() {
         return isPsxMode() ? PADDING_TRANSPARENT_PIXEL_PSX : PADDING_TRANSPARENT_PIXEL_PC;
     }
 
@@ -452,8 +452,10 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
     @Override
     public void setupRightClickMenuItems(ContextMenu contextMenu) {
         // TODO: Implement Import.
+        //  -> "Replace Image": Imports with the image's existing settings.
+        //  -> on the image list add icon, -> "Import Images" -> Show a menu where you can pick individual images or full directories. Perhaps allow selecting multiple at once.
         // TODO: Implement Export.
-        // TODO: Implement Change Bit Depth (Have window previewing the images using the previous padding window template)
+        // TODO: Implement Change Bit Depth (Have window previewing the images using the previous padding window template) (PSX Only)
     }
 
     private enum PaddingOperation {
@@ -486,8 +488,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
                     firstPixelMismatch = true;
 
                     // Try to enable transparency if that helps.
-                    int testPaddingPixel = getGameInstance().isPC() ? PADDING_TRANSPARENT_PIXEL_PC : PADDING_TRANSPARENT_PIXEL_PSX;
-                    if (this.pixelBuffer[i] != testPaddingPixel) {
+                    if (this.pixelBuffer[i] != getTransparentPaddingPixel()) {
                         this.paddingTransparent = false;
                         i--;
                         continue;
@@ -601,12 +602,21 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
             return; // No need to refresh a clut.
         }
 
-        if (tempColor == null)
-            tempColor = new PSXClutColor();
-
+        // Determine clut dimensions.
         int clutWidth = getPaletteWidth(this.bitDepth);
         int clutHeight = 1;
         // TODO: Moon Warrior palette stuff.
+
+        // Quantize down to the desired image bit depth.
+        // This method should only be called after padding has been generated/applied.
+        // Padding is capable of adding new colors, so we must quantize only after padding.
+        // Colors of different alpha must not be merged together as it would break STP bits.
+        if (clutWidth > 0)
+            OctreeQuantizer.quantizeImage(this.pixelBuffer, clutWidth, false);
+            //this.pixelBuffer = MedianCutQuantizer.quantizeARGB8888Buffer(this.pixelBuffer, colorCount);
+
+        if (tempColor == null)
+            tempColor = new PSXClutColor();
 
         // Find unique clut colors.
         List<PSXClutColor> newColors = new ArrayList<>();
@@ -636,10 +646,8 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
             setClut(foundClut);
         } else {
             VloClut newClut = this.clut; // Use previous clut if possible
-            if (newClut == null || newClut.getImages().size() > 1 || clutWidth > newClut.getWidth() || clutHeight > newClut.getHeight()) {
-                newClut = new VloClut(this.parent); // TODO: This fails right now due to not being able to get a valid clut position.
-                // TODO: Try to add to tree.
-            }
+            if (newClut == null || newClut.getImages().size() > 1 || clutWidth > newClut.getWidth() || clutHeight > newClut.getHeight())
+                newClut = new VloClut(this.parent);
             newClut.loadColors(clutWidth, clutHeight, newColors);
             setClut(newClut); // Registering the clut should generate its position.
         }
@@ -903,7 +911,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
                         //  - While this pattern seems to mostly be true, it is not ACTUALLY consistent.
                         // It's just a general guideline. As such, we
 
-                        String name = getName();
+                        String name = getName(); // TODO: Consider using this code here instead as a way to calculate which enum/category a particular image is, and store that. Would make importing textures and whatnot easier.
                         if (this.parent.getFileDisplayName().startsWith("FIX")) {
                             if (name != null && name.startsWith("frog_shadow")) {
                                 return 8;
@@ -1204,7 +1212,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         if (clut != null)
             clut.addImage(this);
 
-        this.clutId = clut != null ? clut.getClutID() : 0;
+        this.clutId = clut != null && clut.getX() != -1 && clut.getY() != -1 ? clut.getClutID() : 0;
         this.clut = clut;
     }
 
@@ -1232,7 +1240,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
 
     private void markNeedsVramRefresh() {
         if (this.parent != null)
-            this.parent.vramDirty = true;
+            this.parent.markDirty();
     }
 
     /**
@@ -1264,7 +1272,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
      * @param paddingY the padding height to apply to the image. If a negative value is provided, padding height will be automatically calculated.
      * @param response Controls how this function responds to a problem, if one occurs.
      */
-    public void replaceImage(BufferedImage image, PsxImageBitDepth bitDepth, int paddingX, int paddingY, ProblemResponse response) {
+    public void replaceImage(BufferedImage image, PsxImageBitDepth bitDepth, int paddingX, int paddingY, ProblemResponse response) { // TODO: Consider using an enum category to track padding behavior.
         if (image == null)
             throw new NullPointerException("image");
         if (bitDepth == null)
@@ -1318,9 +1326,10 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         } else {
             newPaddingY = calculatePaddingY();
             if (hadPreviousImage && newPaddingY < 0) {
+                // TODO: I don't think this is correct, consider PSX.
                 newPaddingY = newPaddingXAlignment + oldPaddingY;
             } else if (!hadPreviousImage) {
-                newPaddingY = 2;
+                newPaddingY = 2; // TODO: PC vs PSX
             }
         }
 
@@ -1396,7 +1405,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
                     this.pixelBuffer[i] = 0xFF000000; // Set pixel to transparent. (Black is transparent)
                     this.anyFullyBlackPixelsPresent = true;
                 } else if ((color & PSXClutColor.ARGB8888_TO5BIT_COLOR_MASK) == 0 && enableTransparency) { // Color is black.
-                    this.pixelBuffer[i] = 0xFF080808; // Set pixel to as close to black as possible without being transparent.
+                    this.pixelBuffer[i] = 0xFF080000; // Set pixel to as close to black as possible without being transparent. (This value seems to have been used by Vorg in the place of true black when BLACK_IS_TRANSPARENT is set.)
                 } else {
                     this.pixelBuffer[i] |= 0xFF000000; // Ensure correct alpha.
                 }
@@ -1424,23 +1433,16 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
             generatePadding(this.pixelBuffer, PaddingOperation.APPLY, firstClutColor);
         }
 
-
-        // Quantize down to the desired image bit depth.
-        // Do this after padding is generated to ensure the correct number of colors are created.
-        int colorCount = isPsxMode() ? getPaletteWidth(bitDepth) : -1;
-        if (colorCount > 0)
-            OctreeQuantizer.quantizeImage(this.pixelBuffer, colorCount);
-        // ;image = MedianCutQuantizer.quantizeImageToARGB8888Image(image, colorCount);
-
-        // Generate clut for newly imported image.
-        // Generate the clut only after padding and quantization.
+        // Generate clut for newly imported image. (Must occur after padding is generated)
         regenerateClut(this.parent.getClutList(), null, true);
         invalidateCache();
 
         // Handle dimension change...
-        if (this.paddedWidth != oldPaddedWidth || this.paddedHeight != oldPaddedHeight) {
+        if (!hadPreviousImage || this.paddedWidth != oldPaddedWidth || this.paddedHeight != oldPaddedHeight) {
             markNeedsVramRefresh();
             // TODO: Change sorting order of VloFile's image to account for this image potentially having changed positions. (Only if it is currently registered)
+            //  -> We likely cannot perfectly replicate the original ordering, but perhaps we can get close in some situations.
+            //  -> Now that we understand how vram placement works roughly, going over this again may give some additional insight I could have before.
         }
     }
 
@@ -1828,7 +1830,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         }
 
         if (pixelIsPadding && this.paddingTransparent)
-            return getGameInstance().isPC() ? PADDING_TRANSPARENT_PIXEL_PC : PADDING_TRANSPARENT_PIXEL_PSX;
+            return getTransparentPaddingPixel();
 
         return paddedImagePixels[(padPixelY * paddedWidth) + padPixelX];
     }

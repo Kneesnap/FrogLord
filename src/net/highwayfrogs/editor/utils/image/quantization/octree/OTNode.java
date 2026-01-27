@@ -1,75 +1,64 @@
 package net.highwayfrogs.editor.utils.image.quantization.octree;
 
 class OTNode {
+    public final Octree tree;
     public final OTNode parent;
     public final int level;
-    public final Octree oTree;
     public OTNode[] children;
     public int red;
     public int green;
     public int blue;
     public int alpha;
     public int count;
-    public int index = -1; // Index into the allLeaves list.
 
     private static final int CHILD_COUNT = 16;
+    static final int ALPHA_INDEX_BIT = 0x08;
 
-    public OTNode(OTNode parent, int level, Octree outer) {
+    public OTNode(Octree tree, OTNode parent, int level) {
         this.red = 0;
         this.green = 0;
         this.blue = 0;
         this.alpha = 0;
         this.parent = parent;
         this.level = level;
-        this.oTree = outer;
+        this.tree = tree;
     }
 
-    public void insert(int a, int r, int g, int b, int level, Octree outer) {
-        if (level < oTree.maxLevel) {
-            int index = computeIndex(a, r, g, b, level);
+    public void insert(int a, int r, int g, int b) {
+        if (this.level < this.tree.maxLevel) {
+            int index = computeIndex(a, r, g, b);
             if (this.children == null)
                 this.children = new OTNode[CHILD_COUNT];
             if (this.children[index] == null)
-                this.children[index] = new OTNode(this, level + 1, outer);
+                this.children[index] = new OTNode(this.tree, this, this.level + 1);
 
-            this.children[index].insert(a, r, g, b, level + 1, outer);
+            this.children[index].insert(a, r, g, b);
         } else {
-            if (this.count == 0) {
-                this.index = this.oTree.allLeaves.size();
-                this.oTree.allLeaves.add(this);
-            }
-            this.red += r;
-            this.green += g;
-            this.blue += b;
-            this.alpha += a;
-            this.count += 1;
+            addColor(r, g, b, a, 1);
         }
     }
 
-    public int computeIndex(int a, int r, int g, int b, int level) {
-        int nShift = 8 - level; // 8 bits per byte.
-        int aBits = (a >> (nShift - 3)) & 0x08;
+    public int computeIndex(int a, int r, int g, int b) {
+        int nShift = 8 - this.level - 1; // 8 bits per byte, but we only want to shift a max of 7, min of 1.
+        int aBits = (a >> (nShift - 3)) & 0x08; // The same bit is tested across each component, despite the difference in shift amount. (We subtract so that building the index is easier, not to test a different bit)
         int rBits = (r >> (nShift - 2)) & 0x04;
         int gBits = (g >> (nShift - 1)) & 0x02;
         int bBits = (b >> nShift) & 0x01;
         return aBits | rBits | gBits | bBits;
     }
 
-    public OTNode find(int a, int r, int g, int b, int level) {
-        if (level < this.oTree.maxLevel) {
-            int index = computeIndex(a, r, g, b, level);
-            if (this.children != null && this.children[index] != null) {
-                return this.children[index].find(a, r, g, b, level + 1);
-            } else if (this.count > 0) {
-                return this;
-            } else {
+    public OTNode find(int a, int r, int g, int b) {
+        if (this.level >= this.tree.maxLevel || this.count > 0)
+            return this; // This is a leaf.
+
+        int index = computeIndex(a, r, g, b);
+        if (this.children != null && this.children[index] != null) {
+            return this.children[index].find(a, r, g, b);
+        } else {
                 /*System.err.printf(
                         "No leaf node to represent RGB(%d, %d, %d)%n",
                         r, g, b);*/
-                return null;
-            }
-        } else {
-            return this;
+            return null;
         }
     }
 
@@ -82,33 +71,35 @@ class OTNode {
         if (this.children == null)
             return;
 
-        for (OTNode child : this.children) {
-            if (child != null) {
-                if (child.count > 0) {
-                    OTNode removedChild = this.oTree.allLeaves.remove(child.index); // Remove the child.
-                    if (removedChild != child)
-                        throw new RuntimeException("Removed the wrong child node! (Expected node to be at index " + child.index + ", but got a different node that thought it was at index " + removedChild.index + " instead!)");
+        for (int i = 0; i < CHILD_COUNT; i++) {
+            OTNode child = this.children[i];
+            if (child == null)
+                continue;
 
-                    // Update indices for all remaining leaves.
-                    for (int i = child.index; i < this.oTree.allLeaves.size(); i++)
-                        this.oTree.allLeaves.get(i).index--;
-
-                    child.index = -1;
-                } else {
-                    throw new RuntimeException("Recursively merging non-leaf");
-                    //child.merge(); // Previously, System.exit(0) was here instead of an exception.
-                }
-
-                this.count += child.count;
-                this.red += child.red;
-                this.green += child.green;
-                this.blue += child.blue;
-                this.alpha += child.alpha;
+            if (child.count <= 0) {
+                //child.merge(); // Previously, System.exit(0) was here instead of an exception.
+                throw new RuntimeException("Recursively merging non-leaf.");
             }
-        }
 
-        for (int i = 0; i < CHILD_COUNT; i++)
+            // Remove the child.
+            if (!this.tree.allLeaves.remove(child))
+                throw new RuntimeException("Failed to remove the child node!");
+
+            // Add the colors from the child node to this node.
+            addColor(child.red, child.green, child.blue, child.alpha, child.count);
             this.children[i] = null;
+        }
+    }
+
+    private void addColor(int r, int g, int b, int a, int colorCount) {
+        if (this.count == 0)
+            this.tree.allLeaves.add(this);
+
+        this.red += r;
+        this.green += g;
+        this.blue += b;
+        this.alpha += a;
+        this.count += colorCount;
     }
 
     static int makeARGB(int alpha, int red, int green, int blue) {

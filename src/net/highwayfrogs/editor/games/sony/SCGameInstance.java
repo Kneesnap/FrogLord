@@ -3,6 +3,8 @@ package net.highwayfrogs.editor.games.sony;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.generic.GameInstance;
+import net.highwayfrogs.editor.games.psx.image.PsxAbrTransparency;
+import net.highwayfrogs.editor.games.psx.image.PsxImageBitDepth;
 import net.highwayfrogs.editor.games.psx.image.PsxVramBox;
 import net.highwayfrogs.editor.games.shared.basic.GameBuildInfo;
 import net.highwayfrogs.editor.games.sony.SCGameConfig.SCImageList;
@@ -190,7 +192,8 @@ public abstract class SCGameInstance extends GameInstance {
         super.setupScriptEngine(engine);
         engine.addWrapperTemplates(SCGameData.class, SCGameFile.class, SCGameInstance.class, SCGameObject.class, SCGameConfig.class);
         engine.addWrapperTemplates(SCMath.class, SCUtils.class, MWDFile.class, MWIResourceEntry.class, TextureRemapArray.class, SCChunkedFile.class, SCByteTextureUV.class, LinkedTextureRemap.class);
-        engine.addWrapperTemplates(VloFile.class, VloImage.class, MRModel.class, MRStaticMof.class, MRAnimatedMof.class, WADFile.class, WADEntry.class,
+        engine.addWrapperTemplates(VloFile.class, VloImage.class, PsxImageBitDepth.class, PsxAbrTransparency.class,
+                MRModel.class, MRStaticMof.class, MRAnimatedMof.class, WADFile.class, WADEntry.class,
                 MRModelUtils.class, SCImageList.class);
     }
 

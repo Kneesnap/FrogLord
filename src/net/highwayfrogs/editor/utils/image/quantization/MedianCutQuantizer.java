@@ -62,16 +62,15 @@ public class MedianCutQuantizer {
         return averageColors(colorSet);
     }
 
-    public int[] quantizeImage(int[] origPixels) {
+    public int[] quantizeImage(int[] pixelBuffer) {
         if (this.imageColors.length <= this.maxColors)
-            return origPixels; // Image is already quantized.
+            return pixelBuffer; // Image is already quantized.
 
-        int[] quantPixels = origPixels.clone();
-        for (int i = 0; i < origPixels.length; i++) {
-            ColorNode color = findClosestColor(origPixels[i]);
-            quantPixels[i] = color.argb;
+        for (int i = 0; i < pixelBuffer.length; i++) {
+            ColorNode color = findClosestColor(pixelBuffer[i]);
+            pixelBuffer[i] = color.argb;
         }
-        return quantPixels;
+        return pixelBuffer;
     }
 
     public BufferedImage quantizeToByteIndexedImage(int width, int height, int[] originalPixels) {
@@ -473,14 +472,37 @@ public class MedianCutQuantizer {
             throw new IllegalArgumentException("Invalid maxColors: " + maxColors);
 
         // Ensure input image is in the accepted format.
-        if (input.getType() != BufferedImage.TYPE_INT_ARGB && input.getType() != BufferedImage.TYPE_4BYTE_ABGR_PRE)
+        if (input.getType() != BufferedImage.TYPE_INT_ARGB)
             input = ImageUtils.convertBufferedImageToFormat(input, BufferedImage.TYPE_INT_ARGB);
 
-        int[] originalPixels = ImageUtils.getReadOnlyPixelIntegerArray(input);
+        int[] originalPixels = ImageUtils.getReadOnlyPixelIntegerArray(input).clone();
 
         // Colors are made unique in the ColorHistogram constructor
         MedianCutQuantizer quantizer2 = new MedianCutQuantizer(originalPixels, maxColors);
         return quantizer2.quantizeImage(originalPixels);
+    }
+
+    /**
+     * Quantize an pixel buffer to the maximum number of colors given, in-place.
+     * To avoid modifying the input buffer, call .clone() on the input buffer before passing it.
+     * NOTE: This ideally functions similarly to the following API call:
+     * <a href="https://learn.microsoft.com/en-us/windows/win32/api/wincodec/nf-wincodec-iwicpalette-initializefrombitmap"/>
+     * Most likely, this is what Vorg used for Frogger way back in the day. Instead of creating a palette themselves, why not just use the Windows API?
+     * Paint.NET uses this API call, and Paint.NET's palette exports for the "Median Cut" algorithm look shockingly similar to the original game files.
+     * Given Vorg ran on Windows, it doesn't seem very unreasonable to assume this was the same API call that Vorg used.
+     * @param pixelBuffer the input pixel buffer to quantize
+     * @param maxColors the maximum number of colors in the resulting palette. Cannot exceed 256 due to Java's BufferedImage limitations.
+     * @return pixelBuffer
+     */
+    public static int[] quantizeARGB8888Buffer(int[] pixelBuffer, int maxColors) {
+        if (pixelBuffer == null)
+            throw new NullPointerException("pixelBuffer");
+        if (maxColors <= 0 || maxColors > 256) // Limit of 256 here since that's the limit of what BufferedImage can support.
+            throw new IllegalArgumentException("Invalid maxColors: " + maxColors);
+
+        // Colors are made unique in the ColorHistogram constructor
+        MedianCutQuantizer quantizer2 = new MedianCutQuantizer(pixelBuffer, maxColors);
+        return quantizer2.quantizeImage(pixelBuffer);
     }
 
     /**
@@ -509,7 +531,7 @@ public class MedianCutQuantizer {
             return result;
 
         // Ensure input image is in the accepted format.
-        if (input.getType() != BufferedImage.TYPE_INT_ARGB && input.getType() != BufferedImage.TYPE_4BYTE_ABGR_PRE && input.getType() != BufferedImage.TYPE_INT_RGB)
+        if (input.getType() != BufferedImage.TYPE_INT_ARGB && input.getType() != BufferedImage.TYPE_INT_RGB)
             input = ImageUtils.convertBufferedImageToFormat(input, BufferedImage.TYPE_INT_ARGB);
 
         int[] originalPixels = ImageUtils.getReadOnlyPixelIntegerArray(input);

@@ -211,6 +211,34 @@ public class VloVramSnapshot extends SCSharedGameObject {
         applyEntryToCache(entry, true);
     }
 
+    /**
+     * Tries to add the clut.
+     * @param clut the clut to add
+     * @return wasAddedSuccessfully
+     */
+    public boolean tryAddClut(VloClut clut) {
+        return clut != null && tryAddClut(clut, null, this.node.getClutPages(), this.node.getUsablePages(), this.node.getExtraPages());
+    }
+
+    /**
+     * Tries to image.
+     * @param image the image to add
+     * @return wasAddedSuccessfully
+     */
+    public boolean tryAddImage(VloImage image, boolean addClut) {
+        if (image == null)
+            throw new NullPointerException("image");
+
+        VloClut clut = image.getClut();
+        Set<VloClut> addedCluts = null;
+        if (clut != null && !addClut) {
+            addedCluts = new HashSet<>();
+            addedCluts.add(clut);
+        }
+
+        return tryAddTexture(image, this.node.getFillMethod(), addedCluts, this.node.getUsablePages(), this.node.getExtraPages());
+    }
+
     private boolean tryAddTexture(VloImage image, VloTreeNodeFillMethod fillMethod, Set<VloClut> addedCluts, int usablePages, int extraPages) {
         VloVramEntryImage entry = new VloVramEntryImage(image);
         return tryAddTexture(entry, fillMethod, addedCluts, usablePages, usablePages, extraPages)
@@ -263,7 +291,7 @@ public class VloVramSnapshot extends SCSharedGameObject {
     }
 
     private boolean tryAddClut(VloClut clut, Set<VloClut> addedCluts, int clutPages, int usablePages, int extraPages) {
-        if (clut == null || addedCluts == null || !addedCluts.add(clut))
+        if (clut == null || (addedCluts != null && !addedCluts.add(clut)))
             return true; // Clut has already been added.
 
         VloVramEntryClut entry = new VloVramEntryClut(clut);

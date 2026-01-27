@@ -12,6 +12,7 @@ import net.highwayfrogs.editor.games.sony.shared.ui.file.VLOController;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.vram.VloTextureIdTracker;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.vram.VloTree;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.vram.VloTreeNode;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.vram.VloVramSnapshot;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.SelectionMenu;
 import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
@@ -42,7 +43,7 @@ public class VloFile extends SCSharedGameFile {
     private final List<VloImage> immutableImages = Collections.unmodifiableList(this.images);
     @Getter private final VloClutList clutList;
     @Getter private boolean psxMode;
-    @Getter boolean vramDirty;
+    @Getter private boolean vramDirty;
 
     public static final String PC_SIGNATURE = "2GRP";
     public static final String PSX_SIGNATURE = "2GRV";
@@ -352,6 +353,18 @@ public class VloFile extends SCSharedGameFile {
     }
 
     /**
+     * Mark the vlo file as being dirty / needing a rebuild.
+     * Only the vram position updater should call this.
+     */
+    public void markDirty() {
+        if (this.vramDirty)
+            return;
+
+        this.vramDirty = true;
+        // TODO: Mark nodes using this as dirty too.
+    }
+
+    /**
      * Adds a new image to the VLO file
      * @param name the name of the image to add
      * @param image the image to import
@@ -368,7 +381,9 @@ public class VloFile extends SCSharedGameFile {
         if (image == null)
             throw new NullPointerException("image");
         if (padding > 16)
-            throw new IllegalArgumentException("Unexpectedly large padding: " + padding);
+            throw new IllegalArgumentException("Invalid padding: " + padding);
+
+        // Find image.
         VloImage existingImage = getImageByName(name);
         if (existingImage != null)
             throw new IllegalArgumentException("Cannot add image named '" + name +"' because an image with that name already exists! (Local ID: " + existingImage.getLocalImageID() + ")");
@@ -376,14 +391,9 @@ public class VloFile extends SCSharedGameFile {
         // Get tree.
         VloTree tree = getGameInstance().getVloTree();
         VloTextureIdTracker tracker = tree != null ? tree.getVloTextureIdTracker(this) : null;
-        if (tracker == null)
+        VloVramSnapshot snapshot = tree != null ? tree.getVramSnapshot(this) : null;
+        if (tracker == null || snapshot == null)
             throw new IllegalStateException("Images cannot be added to " + getFileDisplayName() + ", because its VloTreeNode has not been configured by FrogLord developers yet.");
-
-        // Default params
-        if (bitDepth == null)
-            bitDepth = PsxImageBitDepth.CLUT4;
-
-        // TODO: We need two modes, one where we add new texture IDs (For recompilation), and another where we try to re-use existing slots and crap.
 
         // Select a texture ID for the image.
         // If the texture ID is known based on the name, this may involve reclaiming the texture ID from another image.
@@ -395,7 +405,9 @@ public class VloFile extends SCSharedGameFile {
             VloImage conflictImage = getImageByTextureId(textureId, false);
             if (conflictImage != null) { // Another image was previously using this texture ID, so change it to another ID. (We tested earlier that it's using another texture name, so it's a different texture)
                 conflictImage.setTextureId(tracker.useFreeTextureId());
+                // TODO: Update getGameInstance().getTexturesFoundInRemap()
                 // TODO: Get remaps for vlo, and then fix the remap. (Have an interface for the remap objects to implement to get the vlo, also to do the behavior needed here) See: FroggerTextureRemap, since it has .MAP access.
+                // TODO: Mofs.
             }
         } else {
             textureId = tracker.useFreeTextureId();
@@ -408,16 +420,38 @@ public class VloFile extends SCSharedGameFile {
         if (abr != null && this.psxMode)
             newImage.setAbr(abr);
 
-        this.images.add(newImage); // TODO: Proper ordering?
+        this.images.add(newImage);
 
-        try {
-            // TODO: Add to VloTree.
-        } catch (Throwable th) {
-            // If we failed to add to the VloTree, TODO: consider trying to rebuild the parent before continuing.
-            this.vramDirty = true;
+        // Try to add to the VloTree.
+        if (!snapshot.tryAddImage(newImage, false))
+            markDirty(); // TODO: If we don't mark anything else dirty, we won't get enough free space potentially.
+
+        return newImage;
+    }
+
+    /**
+     * Adds an image if none exist with the name.
+     * If an image is found, replace it with the new image data.
+     * @param name the image name
+     * @param image the image to import
+     * @param padding the padding to apply. -1 will use existing or calculate new padding.
+     * @param bitDepth the image bit-depth, null will use the default
+     * @return image
+     */
+    public VloImage addOrReplaceImage(String name, BufferedImage image, int padding, PsxImageBitDepth bitDepth) {
+        if (!VloImage.isValidTextureName(name))
+            throw new IllegalArgumentException("Bad name: " + name);
+        if (image == null)
+            throw new NullPointerException("image");
+
+        VloImage vloImage = getImageByName(name);
+        if (vloImage != null) {
+            vloImage.replaceImage(image, bitDepth, padding, padding, ProblemResponse.THROW_EXCEPTION);
+        } else {
+            vloImage = addImage(name, image, padding, bitDepth, PsxAbrTransparency.DEFAULT);
         }
 
-        return null;
+        return vloImage;
     }
 
     // TODO: removeImage()

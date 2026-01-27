@@ -124,7 +124,7 @@ public class BeastWarsBPPImageFile extends SCGameFile<BeastWarsInstance> {
         if (newImage.getWidth() == 0 || newImage.getHeight() == 0)
             throw new IllegalArgumentException("Cannot accept newImage with a width/height of zero!");
 
-        newImage = OctreeQuantizer.quantizeImage(newImage, 256); // Quantize down to 256 colors.
+        newImage = OctreeQuantizer.quantizeImage(newImage, 256, true); // Quantize down to 256 colors. Alpha is completely ignored, so it's okay to merge.
         BufferedImage indexedImage = ImageUtils.tryConvertTo8BitIndexedBufferedImage(newImage);
         if (indexedImage == null) // This should not happen after quantization occurs.
             throw new IllegalArgumentException("Could not convert the newImage to an 8-bit indexed color mode! Reduce the number of unique colors in the image and try again!");
