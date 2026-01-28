@@ -368,20 +368,20 @@ public class VloFile extends SCSharedGameFile {
      * Adds a new image to the VLO file
      * @param name the name of the image to add
      * @param image the image to import
-     * @param padding the padding pixels to apply. A negative number will be auto-generated.
+     * @param padding the padding behavior to apply. If null is provided, VloPadding.NONE will be used.
      * @param bitDepth the image bit-depth to apply
      * @param abr the ABR value to apply, ignored on PC.
      * @return newVloImage
      */
-    public VloImage addImage(String name, BufferedImage image, int padding, PsxImageBitDepth bitDepth, PsxAbrTransparency abr) {
+    public VloImage addImage(String name, BufferedImage image, VloPadding padding, PsxImageBitDepth bitDepth, PsxAbrTransparency abr) {
         if (StringUtils.isNullOrWhiteSpace(name))
             throw new IllegalArgumentException("The provided image name was null/empty!");
         if (!VloImage.isValidTextureName(name))
             throw new IllegalArgumentException("Invalid texture name: '" + name + "', try something else.");
         if (image == null)
             throw new NullPointerException("image");
-        if (padding > 16)
-            throw new IllegalArgumentException("Invalid padding: " + padding);
+        if (padding == null)
+            padding = VloPadding.NONE;
 
         // Find image.
         VloImage existingImage = getImageByName(name);
@@ -416,7 +416,7 @@ public class VloFile extends SCSharedGameFile {
         VloImage newImage = new VloImage(this);
         newImage.setTextureId(textureId);
         newImage.setCustomName(name);
-        newImage.replaceImage(image, bitDepth, padding, padding, ProblemResponse.THROW_EXCEPTION);
+        newImage.replaceImage(image, bitDepth, padding.getPaddingAmount(this), ProblemResponse.THROW_EXCEPTION);
         if (abr != null && this.psxMode)
             newImage.setAbr(abr);
 
@@ -434,19 +434,22 @@ public class VloFile extends SCSharedGameFile {
      * If an image is found, replace it with the new image data.
      * @param name the image name
      * @param image the image to import
-     * @param padding the padding to apply. -1 will use existing or calculate new padding.
      * @param bitDepth the image bit-depth, null will use the default
+     * @param padding the padding apply. If null is provided, VloPadding.NONE will be used instead.
      * @return image
      */
-    public VloImage addOrReplaceImage(String name, BufferedImage image, int padding, PsxImageBitDepth bitDepth) {
+    public VloImage addOrReplaceImage(String name, BufferedImage image, PsxImageBitDepth bitDepth, VloPadding padding) {
         if (!VloImage.isValidTextureName(name))
             throw new IllegalArgumentException("Bad name: " + name);
         if (image == null)
             throw new NullPointerException("image");
+        if (padding == null)
+            padding = VloPadding.NONE;
 
         VloImage vloImage = getImageByName(name);
         if (vloImage != null) {
-            vloImage.replaceImage(image, bitDepth, padding, padding, ProblemResponse.THROW_EXCEPTION);
+            int paddingAmount = padding.getPaddingAmount(this);
+            vloImage.replaceImage(image, bitDepth, paddingAmount, ProblemResponse.THROW_EXCEPTION);
         } else {
             vloImage = addImage(name, image, padding, bitDepth, PsxAbrTransparency.DEFAULT);
         }

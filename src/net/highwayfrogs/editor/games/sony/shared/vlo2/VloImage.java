@@ -12,7 +12,6 @@ import net.highwayfrogs.editor.games.psx.image.PsxImageBitDepth;
 import net.highwayfrogs.editor.games.psx.image.PsxVram;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
 import net.highwayfrogs.editor.games.sony.SCGameType;
-import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapPolygonSortMode;
 import net.highwayfrogs.editor.games.sony.medievil.map.misc.MediEvilMapFrictionLevel;
 import net.highwayfrogs.editor.games.sony.medievil.map.misc.MediEvilMapInteractionType;
@@ -114,7 +113,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
     @NonNull @Getter private PsxAbrTransparency abr = PsxAbrTransparency.DEFAULT; // ABR.
     @Getter private VloClut clut;
     @Getter private boolean paddingTransparent;
-    private boolean paddingEnabled = true;
+    private int paddingAmount;
     private boolean stpNonBlackBitFlipped; // Pre-MediEvil II: Used to calculate the CLUT STP bit state. TODO: Look at how this works with anyFullyBlackPixelsPresent. (Also consider this value might need some fixing on PSX)
     private boolean stpBlackBitFlipped; // Pre-MediEvil II: Used to calculate the CLUT STP bit state.
     private String customName; // The custom name applied by FrogLord. (This may override the original name)
@@ -198,7 +197,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
             this.clutId = reader.readShort(); // Provably unused. Probably garbage data.
         }
 
-        // Can do this before texturePage is set, but after clutMode is set.
+        // Can do this before texturePage is set, but after bitDepth is set.
         this.paddedWidth = (short) (this.paddedWidth * getWidthMultiplier());
 
         // Validate page short.
@@ -220,11 +219,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
 
         int paddingX = this.paddedWidth - this.unpaddedWidth;
         int paddingY = this.paddedHeight - this.unpaddedHeight;
-        if (isPsxMode()) {
-            this.paddingEnabled = (paddingY > 0); // If y padding is enabled, then x padding is likely to be enabled.
-        } else {
-            this.paddingEnabled = (paddingX > 4);
-        }
+        this.paddingAmount = paddingY;
         if (paddingX != paddingY && getGameInstance().isPC()) // This is never known to happen.
             getLogger().warning("Padding XY mismatch! [%d vs %d]", paddingX, paddingY);
 
@@ -232,26 +227,26 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         // This means we want to roughly approximate their padding.
         // This is definitely not perfect, but it's good enough.
         if (isPsxMode()) {
+            if (this.paddedHeight > VloImage.MAX_IMAGE_DIMENSION && this.unpaddedHeight == VloImage.MAX_IMAGE_DIMENSION) {
+                this.unpaddedHeight = (short) (this.paddedHeight - Math.max(0, calculatePaddingY()));
+                this.paddingAmount = paddingY = this.paddedHeight - this.unpaddedHeight; // Update to reflect new changes.
+            }
+
             if (this.paddedWidth > VloImage.MAX_IMAGE_DIMENSION && this.unpaddedWidth == VloImage.MAX_IMAGE_DIMENSION) {
                 this.unpaddedWidth = (short) (this.paddedWidth - Math.max(0, calculatePaddingX()));
                 paddingX = this.paddedWidth - this.unpaddedWidth; // Update to reflect new changes.
             }
-
-            if (this.paddedHeight > VloImage.MAX_IMAGE_DIMENSION && this.unpaddedHeight == VloImage.MAX_IMAGE_DIMENSION) {
-                this.unpaddedHeight = (short) (this.paddedHeight - Math.max(0, calculatePaddingY()));
-                paddingY = this.paddedHeight - this.unpaddedHeight; // Update to reflect new changes.
-                this.paddingEnabled = (paddingY > 0); // If y padding is enabled, then x padding is likely to be enabled.
-            }
         }
+
 
         // Validate calculated data.
         int testPadX = calculatePaddingX();
         if (paddingX != testPadX && testPadX != -1)
-            getLogger().warning("Calculated paddingX did not match expected paddingX! Calculated: %d, Expected: %d [%d, %d|%d, UV: %d, %d] [%s]", testPadX, paddingX, this.unpaddedWidth, getExpandedVramX(), this.vramX, getU(), getV(), getFlagDisplay());
+            getLogger().warning("Calculated paddingX (%d) did not match the expected paddingX (%d)! [%d, %d|%d, UV: %d, %d] [%s]", testPadX, paddingX, this.unpaddedWidth, getExpandedVramX(), this.vramX, getU(), getV(), getFlagDisplay());
 
         int testPadY = calculatePaddingY();
         if (paddingY != testPadY && testPadY != -1)
-            getLogger().warning("Calculated paddingY did not match expected paddingY! Calculated: %d, Expected: %d [%dx%d, %dx%d, (VRAM: %d/%d, %d), UV: %d, %d] [%s]", testPadY, paddingY, this.unpaddedWidth, this.unpaddedHeight, this.paddedWidth, this.paddedHeight, getExpandedVramX(), this.vramX, this.vramY, getU(), getV(), getFlagDisplay());
+            getLogger().warning("Calculated paddingY (%d) did not match the expected paddingY (%d)! [%dx%d, %dx%d, (VRAM: %d/%d, %d), UV: %d, %d] [%s]", testPadY, paddingY, this.unpaddedWidth, this.unpaddedHeight, this.paddedWidth, this.paddedHeight, getExpandedVramX(), this.vramX, this.vramY, getU(), getV(), getFlagDisplay());
 
         boolean hitXTest = calculateHitX();
         if (testFlag(FLAG_HIT_X) != hitXTest)
@@ -472,7 +467,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         // Determine padding right boundary (which part uses clut color 0)
         int paddingX = (this.paddedWidth - this.unpaddedWidth);
         int paddingY = (this.paddedHeight - this.unpaddedHeight);
-        int emptyRightPaddingX = Math.max(0, paddingX - paddingY);
+        int emptyRightPaddingX = Math.max(0, paddingX - paddingY); // paddingY = paddingX - alignmentPaddingX, so this calculates the alignmentPadding.
 
         // Set to false so the padding transparency can be determined.
         if (operation == PaddingOperation.VALIDATE)
@@ -482,16 +477,20 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         boolean firstPixelMismatch = false;
         for (int i = 0; i < pixelBuffer.length; i++) {
             int paddedColor = getPaddingColor(pixelBuffer, i, this.paddedWidth, padMinX, padMaxX, padMinY, padMaxY, paddingX, paddingY, emptyRightPaddingX, firstClutColor);
-            // boolean pixelIsClutZero = (i % this.paddedWidth) < (this.paddedWidth - emptyRightPaddingX); // true iff the pixel is
             if (operation == PaddingOperation.VALIDATE && paddedColor != pixelBuffer[i]) {
                 if (!firstPixelMismatch) {
                     firstPixelMismatch = true;
 
-                    // Try to enable transparency if that helps.
-                    if (this.pixelBuffer[i] != getTransparentPaddingPixel()) {
+                    // Start over with transparency disabled.
+                    if (pixelBuffer[i] != getTransparentPaddingPixel()) {
                         this.paddingTransparent = false;
-                        i--;
+                        i = -1;
                         continue;
+
+                        // TODO: The problem here seems to be something similar to HitX causing a last row of pixels to be cut off?
+                        //  -> NO! I FIGURED IT OUT!! These textures are LARGER THAN WIDTH=256!!!!
+                        //  -> It's our width calculation which is failing to properly find the real width/height.
+                        //  -> Do we manage to save files like this properly?
                     }
                 }
 
@@ -869,132 +868,20 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         return (((this.vramY + this.unpaddedHeight) % PC_VRAM_PAGE_HEIGHT) == 0);
     }
 
-    // Calculates the padding used to align the image to PSX Vram specifications.
-    // Returns zero on PC, or if no padding is necessary.
-    // Requires: unpaddedWidth, bitDepth
-    private int calculatePsxAlignmentPaddingX() {
-        return getModuloReversed(this.unpaddedWidth, getWidthMultiplier());
+    // Attempts to calculate the padding for the image.
+    // Needs updated: bitDepth, unpaddedWidth, paddingAmount
+    private int calculatePaddingX() {
+        return calculatePaddingX(isPsxMode(), this.unpaddedWidth, this.paddingAmount, getWidthMultiplier());
     }
 
     // Attempts to calculate the padding for the image.
-    // Needs updated: clutMode, unpaddedWidth, paddingEnabled
-    // Note that it appears on PC, padding may have been configured manually.
-    private int calculatePaddingX() {
-        // Note that padding configuration appears consistent between versions.
-        int padX = calculatePsxAlignmentPaddingX();
+    private static int calculatePaddingX(boolean psxMode, int unpaddedWidth, int paddingAmount, int widthMultiplier) {
+        // Note that padding configuration appears consistent between versions, suggesting it was configured manually.
+        //int paddingY = calculatePaddingY();
 
-        // Validated perfect match against:
-        //  - Frogger PC Milestone 3
-        //  - Frogger PC Alpha (One failure)
-        //  - Frogger PC July (One failure, opt_ripple0)
-        //  - Frogger PC September (49 failures, wanted 2 but got 4)
-        //  - Frogger PC v1.0
-        //  - Frogger PC v3.0e
-        //  - Beast Wars PC Retail (15 cases where 2 was expected and 4 was returned)
-        if (getGameInstance().isPC()) {
-            if (getGameInstance().getGameType().isAtLeast(SCGameType.FROGGER)) {
-                if (getGameInstance().isFrogger()) {
-                    if (this.unpaddedWidth > MAX_IMAGE_DIMENSION - 2)
-                        return 0; // No padding for these images.
-
-                    if (((FroggerGameInstance) getGameInstance()).getVersionConfig().isAtLeastRetailWindows()) {
-                        if (this.unpaddedWidth > MAX_IMAGE_DIMENSION - 4)
-                            return 2; // No padding for these images.
-                        if (this.unpaddedWidth > MAX_IMAGE_DIMENSION - 8)
-                            return 4; // No padding for these images.
-
-                        // NOTE:
-                        // This mostly seems to be the case:
-                        //  - In texture remap? Use 8.
-                        //  - Text 2D sprite? Use 2.
-                        //  - Otherwise, use 4.
-                        //  - While this pattern seems to mostly be true, it is not ACTUALLY consistent.
-                        // It's just a general guideline. As such, we
-
-                        String name = getName(); // TODO: Consider using this code here instead as a way to calculate which enum/category a particular image is, and store that. Would make importing textures and whatnot easier.
-                        if (this.parent.getFileDisplayName().startsWith("FIX")) {
-                            if (name != null && name.startsWith("frog_shadow")) {
-                                return 8;
-                            } else if (name != null && name.startsWith("opt") && name.endsWith("_sec")) {
-                                return 2;
-                            } else {
-                                return -1;
-                            }
-                        } else if (this.parent.getFileDisplayName().equals("OPT_VRAM.VLO")) {
-                            if (name != null && name.startsWith("opt_log_")) {
-                                return 8;
-                            } else {
-                                // NOTE: 1UP, 2UP, 3UP, 4UP, etc should be 2x2, but we don't have names yet.
-                                return 4;
-                            }
-                        } else if (this.parent.getFileDisplayName().startsWith("LS_ALL") && name != null && name.startsWith("opt") && name.endsWith("_sec")) {
-                            return 2;
-                        } else if (getGameInstance().getTexturesFoundInRemap().getBit(this.textureId)) {
-                            return this.paddingEnabled ? 8 : 4;
-                        } else if (name != null && (name.endsWith("pic") || name.endsWith("name"))) {
-                            return name.endsWith("mname") || "org3name".equals(name) ? 4 : 2;
-                        } else if ("gen_frogstrip".equals(name)) {
-                            return 8;
-                        } else if (this.parent.getFileDisplayName().startsWith("OPT")) {
-                            return -1; // Not sure how to distinguish 2x2 from 4x4.
-                        } else {
-                            return 4;
-                        }
-
-                        // It was also valid to return -1 here.
-                    } else {
-
-                        // Fixes Windows Build 1 (PC July).
-                        if (this.unpaddedWidth >= MAX_IMAGE_DIMENSION - 4 && this.paddingEnabled)
-                            return 2; // No padding for these images.
-
-                        // Frogger PC Alpha (Okay all but once)
-                        return this.paddingEnabled ? 4 : 0; // This is just PSX * 2?
-                    }
-                }
-
-                return this.paddingEnabled ? 4 : 0; // This is just PSX * 2?
-            } else { // Pre-recode Frogger PC.
-                return this.paddingEnabled ? 2 : 0;
-            }
-        }
-
-        // Validated perfect match against:
-        //  - Frogger PSX Milestone 3 (Pre-Recode)
-        //  - Frogger PSX Sony Demo
-        //  - Frogger PSX Alpha
-        //  - Frogger PSX Build 02
-        //  - Frogger PSX Build 11
-        //  - Frogger PSX Build 20 (NTSC)
-        //  - Frogger PSX Build 71 (NTSC Retail)
-        //  - Frogger PSX Build 75 (PAL Retail)
-        //  - MoonWarrior 0.05a
-        //  - MediEvil II 0.19
-        //  - MediEvil II USA Retail 1.1Q
-        //  - C-12 Final Resistance PSX Build 0.03a
-        //  - C-12 Final Resistance PSX Beta Candidate 3
-
-        // Calculated mostly perfect against:
-        //  - MediEvil Rolling Demo (2 failures, expecting value: 1)
-        //  - MediEvil ECTS (September 1997) (2 failures, expecting value: 1)
-        //  - MediEvil NTSC (Retail) (4 failures, expecting value: 1)
-        //  - Beast Wars PSX NTSC (Retail) (1 failure, expecting value: 1)
-        //  - Beast Wars PSX PAL (Retail) (1 failure, expecting value: 1)
-        //  - C-12 Final Resistance PSX Master (8 failures, expecting value: 1)
-        //  - There is one exception which is that if the image is larger than width=256, the padding may be incorrect.
-        //  - This is a limitation of us not actually knowing what the original image width/height was.
-        // The following check seems equivalent to if ((padX <= 1 && shouldUvOriginStartAtOne())), but it's usable without having calculated paddingY.
-        if ((padX <= 1 && this.paddingEnabled)) // "is Y padding enabled?, and the alignment padding won't cover it"
-            padX += (this.bitDepth == PsxImageBitDepth.CLUT4) ? 4 : 2;
-
-        return padX;
-    }
-
-    // Needs updated: clutMode, unpaddedWidth, paddingEnabled
-    private int calculatePaddingY() {
         // On PC, it looks like padX might always = padY.
         // I suspect this is because PC doesn't have any of the restrictions/considerations that PSX VRAM has.
-        // And since padding on PC seems to be about polygon edges (which is impacted by both vertical and horizontal padding the same), it makes sense why padX might match padY.
+        // And since padding on PC seems to be about polygon edges (which is impacted by both vertical and horizontal padding the same) instead of VRAM alignment, it makes sense why padX might match padY.
         //  - Frogger PC Milestone 3
         //  - Frogger PC Alpha
         //  - Frogger PC July
@@ -1004,8 +891,8 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         //  - Beast Wars PC Retail
         // NOTE: If calculatePaddingX() is incorrect, the result of this function will be incorrect too.
         // But, this indicates a problem with calculatePaddingX(), not this function.
-        if (getGameInstance().isPC())
-            return calculatePaddingX();
+        if (!psxMode)
+            return paddingAmount;
 
         // Validated perfect match against:
         //  - Frogger PSX Milestone 3 (Pre-Recode)
@@ -1013,28 +900,31 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         //  - Frogger PSX Alpha
         //  - Frogger PSX Build 02
         //  - Frogger PSX Build 11
-        //  - Frogger PSX Build 17
-        //  - Frogger PSX Build 18 -> This version marks a change in paddingY behavior.
         //  - Frogger PSX Build 20 (NTSC)
+        //  - Frogger PSX Build 49
         //  - Frogger PSX Build 71 (NTSC Retail)
         //  - Frogger PSX Build 75 (PAL Retail)
+        //  - MediEvil Rolling Demo
+        //  - MediEvil ECTS (September 1997)
+        //  - Beast Wars PSX NTSC (Retail)
+        //  - Beast Wars PSX PAL (Retail)
+        //  - MediEvil NTSC (Retail)
         //  - MoonWarrior 0.05a
+        //  - MediEvil II 0.19 TODO: FAIL (Large padding)
+        //  - MediEvil II USA Retail 1.1Q TODO: FAIL (Large padding)
         //  - C-12 Final Resistance PSX Build 0.03a
         //  - C-12 Final Resistance PSX Beta Candidate 3
+        //  - C-12 Final Resistance PSX Master
 
-        // Validated mostly matching against:
-        //  - MediEvil Rolling Demo (August 1997) (24 failures, expecting value: 1)
-        //  - MediEvil ECTS (September 1997) (23 failures, expecting value: 1)
-        //  - MediEvil NTSC (Retail) (19 failures, expecting value: 1)
-        //  - Beast Wars PSX NTSC (Retail) (28 failures, expecting value: 1)
-        //  - Beast Wars PSX PAL (Retail) (14 failures, expecting value: 1)
-        //  - MediEvil II 0.19 (3 failures, expecting value: 1)
-        //  - MediEvil II USA Retail 1.1Q (3 failures, expecting value: 1)
-        //  - C-12 Final Resistance PSX Master (18 failures, expecting value: 1)
-        if (this.paddingEnabled)
-            return 2; // It's always even so there's room on the left AND right.
+        // Calculated mostly perfect against:
+        //  - There is one exception which is that if the image is larger than width=256, the padding may be incorrect. TODO: Address this.
+        //  - This is a limitation of us not actually knowing what the original image width/height was.
+        // The following check seems equivalent to if ((padX <= 1 && shouldUvOriginStartAtOne())), but it's usable without having calculated paddingY. TODO: Remove comment?
+        return paddingAmount + getModuloReversed(unpaddedWidth + paddingAmount, widthMultiplier);
+    }
 
-        return 0;
+    private int calculatePaddingY() {
+        return this.paddingAmount;
     }
 
     private static int getModuloReversed(int value, int modulo) {
@@ -1261,18 +1151,17 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
      * @param response Controls how this function responds to a problem, if one occurs.
      */
     public void replaceImage(BufferedImage image, PsxImageBitDepth bitDepth, ProblemResponse response) {
-        replaceImage(image, bitDepth, -1, -1, response);
+        replaceImage(image, bitDepth, -1, response);
     }
 
     /**
      * Replace this texture with a new one.
      * @param image The new image to use.
      * @param bitDepth the bit-depth to import the image as. On PC, this value is ignored. A null value indicates that the pre-existing bit depth should be used.
-     * @param paddingX the padding width to apply to the image. If a negative value is provided, padding width will be automatically calculated.
-     * @param paddingY the padding height to apply to the image. If a negative value is provided, padding height will be automatically calculated.
+     * @param padding the padding amount to apply to the image. If a negative value is provided, the previous padding value will be used.
      * @param response Controls how this function responds to a problem, if one occurs.
      */
-    public void replaceImage(BufferedImage image, PsxImageBitDepth bitDepth, int paddingX, int paddingY, ProblemResponse response) { // TODO: Consider using an enum category to track padding behavior.
+    public void replaceImage(BufferedImage image, PsxImageBitDepth bitDepth, int padding, ProblemResponse response) {
         if (image == null)
             throw new NullPointerException("image");
         if (bitDepth == null)
@@ -1302,9 +1191,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
 
         // Get current padding, without PSX alignment.
         boolean hadPreviousImage = (this.pixelBuffer != null);
-        int oldPaddingXAlignment = calculatePsxAlignmentPaddingX();
-        int oldPaddingX = hadPreviousImage ? this.paddedWidth - this.unpaddedWidth - oldPaddingXAlignment : 0;
-        int oldPaddingY = hadPreviousImage ? this.paddedHeight - this.unpaddedHeight - oldPaddingXAlignment : 0;
+        int oldPadding = this.paddingAmount;
 
         // Calculate padding changes.
         // Padding calculation needs: bitDepth, unpaddedWidth
@@ -1316,38 +1203,11 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         // Apply new dimensions.
         this.unpaddedWidth = (short) newInputImageWidth;
         this.unpaddedHeight = (short) newInputImageHeight;
-        int newPaddingXAlignment = calculatePsxAlignmentPaddingX(); // Requires: unpaddedWidth, bitDepth
-
-        // Calculate the new Y padding.
-        // Happens before X, so we can calculate paddingEnabled before calculatePaddingX() is potentially called.
-        int newPaddingY;
-        if (paddingY >= 0) {
-            newPaddingY = paddingY;
-        } else {
-            newPaddingY = calculatePaddingY();
-            if (hadPreviousImage && newPaddingY < 0) {
-                // TODO: I don't think this is correct, consider PSX.
-                newPaddingY = newPaddingXAlignment + oldPaddingY;
-            } else if (!hadPreviousImage) {
-                newPaddingY = 2; // TODO: PC vs PSX
-            }
-        }
-
-        this.paddingEnabled = (newPaddingY > 0);
-
-        // Calculate the new X padding.
-        int newPaddingX;
-        if (paddingX >= 0) {
-            newPaddingX = paddingX;
-        } else {
-            newPaddingX = calculatePaddingX();
-            if (hadPreviousImage && newPaddingX < 0)
-                newPaddingX = newPaddingXAlignment + oldPaddingX;
-        }
+        int newPadding = padding >= 0 ? padding : oldPadding;
 
         // Configure new padding.
-        this.paddedWidth = (short) (this.unpaddedWidth + newPaddingX);
-        this.paddedHeight = (short) (this.unpaddedHeight + newPaddingY);
+        this.paddedWidth = (short) (this.unpaddedWidth + calculatePaddingX(isPsxMode(), this.unpaddedWidth, newPadding, getWidthMultiplier()));
+        this.paddedHeight = (short) (this.unpaddedHeight + newPadding);
 
         // Apply the image to this class.
         int[] newInputImageBuffer = ImageUtils.getReadOnlyPixelIntegerArray(image);
@@ -1809,7 +1669,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
 
         int padPixelX = index % paddedWidth;
         if (padPixelX >= paddedWidth - emptyRightPaddingX)
-            return firstClutColor; // Some of the right-most clut pixels use clut color zero.
+            return firstClutColor; // The pixels created by alignment padding (some of the right-most clut pixels) use clut color zero.
 
         boolean pixelIsPadding = false;
         if (padPixelX < padMinX) {
