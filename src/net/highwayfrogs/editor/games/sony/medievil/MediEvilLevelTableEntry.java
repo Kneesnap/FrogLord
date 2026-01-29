@@ -97,6 +97,13 @@ public class MediEvilLevelTableEntry extends SCGameData<MediEvilGameInstance> {
     }
 
     /**
+     * Gets the .VLO file used by this level.
+     */
+    public MWIResourceEntry getVloMwiEntry() {
+        return this.vloResourceId >= 0 ? getGameInstance().getResourceEntryByID(this.vloResourceId) : null;
+    }
+
+    /**
      * Gets the map code associated with this table entry.
      * @return mapCode
      */

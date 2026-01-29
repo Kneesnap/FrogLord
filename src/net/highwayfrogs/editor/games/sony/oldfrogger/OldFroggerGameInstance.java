@@ -112,7 +112,7 @@ public class OldFroggerGameInstance extends SCGameInstance {
                 continue;
             }
 
-            VloFile vloFile = null;
+            MWIResourceEntry vloFileEntry = null;
             String remapNameSuffix;
             if (i >= mapFileEntries.size()) {
                 remapNameSuffix = "unknown" + (++unknownMapCount);
@@ -124,15 +124,13 @@ public class OldFroggerGameInstance extends SCGameInstance {
                 if (mapFile != null) {
                     OldFroggerLevelTableEntry levelTableEntry = mapFile.getLevelTableEntry();
                     if (levelTableEntry != null)
-                        vloFile = levelTableEntry.getMainVloFile();
+                        vloFileEntry = levelTableEntry.getMainVloMwiEntry();
                 }
             }
 
             // Create new remap.
             remap = new TextureRemapArray(this, "txl_" + remapNameSuffix, remapPointer);
-            if (vloFile != null)
-                remap.setVloFileDefinition(vloFile.getIndexEntry());
-
+            remap.setVloFileDefinition(vloFileEntry);
             this.textureRemapsByLevelId.add(remap);
             remapsByPointer.put(remapPointer, remap);
             addRemap(remap);

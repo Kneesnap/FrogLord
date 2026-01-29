@@ -41,6 +41,7 @@ import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
 import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.objects.IndexBitArray;
 
 import java.util.ArrayList;
@@ -121,6 +122,16 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> implement
     }
 
     @Override
+    public void load(DataReader reader) {
+        super.load(reader);
+
+        TextureRemapArray remap = getTextureRemap();
+        VloFile vloFile = getVloFile();
+        if (remap != null && vloFile != null)
+            remap.setVloFileDefinition(vloFile.getIndexEntry());
+    }
+
+    @Override
     protected PacketSizeType getPacketSizeForUnknownChunk(String identifier) {
         return PacketSizeType.NO_SIZE;
     }
@@ -175,7 +186,7 @@ public class FroggerMapFile extends SCChunkedFile<FroggerGameInstance> implement
         SelectionMenu.promptSelection(getGameInstance(), "Select the map file to replace.", targetMap -> {
             FroggerMapFile newMapFile = new FroggerMapFile(targetMap.getGameInstance(), targetMap.getIndexEntry());
             if (!copyAndConvertData(newMapFile)) {
-                FXUtils.makePopUp("Failed to convert map file data.", AlertType.WARNING);
+                FXUtils.showPopup(AlertType.WARNING, "Map data conversion failure.", "Failed to convert map file data.");
                 return;
             }
 

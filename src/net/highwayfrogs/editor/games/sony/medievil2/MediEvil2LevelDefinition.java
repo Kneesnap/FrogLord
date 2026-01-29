@@ -225,9 +225,8 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
                 String mapName = (mapFile != null ? FileUtils.stripExtension(mapFile.getFileDisplayName()).toLowerCase() : "map" + this.mapResourceId);
                 if (this.textureRemapPointer > 0) {
                     this.textureRemap = new TextureRemapArray(getGameInstance(), "txl_" + mapName, this.textureRemapPointer);
-                    VloFile vloFile = getVloFile();
-                    if (vloFile != null)
-                        this.textureRemap.setVloFileDefinition(vloFile.getIndexEntry());
+                    if (this.vloResourceId > 0)
+                        this.textureRemap.setVloFileDefinition(getGameInstance().getResourceEntryByID(this.vloResourceId));
                 }
             }
 

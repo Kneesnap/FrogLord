@@ -7,6 +7,8 @@ import net.highwayfrogs.editor.games.sony.oldfrogger.map.OldFroggerMapFile;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MillenniumWadIndex;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -101,6 +103,39 @@ public class OldFroggerLevelTableEntry extends SCGameData<OldFroggerGameInstance
             for (WADEntry wadEntry : wadFile.getFiles())
                 if (wadEntry.getFile() instanceof VloFile)
                     return (VloFile) wadEntry.getFile();
+
+        return null;
+    }
+
+    /**
+     * Resolves the MWIResourceEntry for the VLO file
+     */
+    public MWIResourceEntry getMainVloMwiEntry() {
+        MillenniumWadIndex mwi = getGameInstance().getArchiveIndex();
+        if (mwi == null)
+            return null;
+
+        // PSX has ULR, PC does not.
+        if (this.ulrResourceId >= 0) {
+            for (int i = this.ulrResourceId + 1; i < mwi.getEntries().size(); i++) {
+                MWIResourceEntry entry = mwi.getResourceEntryByID(i);
+                if (!entry.testFlag(MWIResourceEntry.FLAG_GROUP_ACCESS))
+                    break; // Exited the WAD file.
+                if (entry.hasExtension("VLO"))
+                    return entry;
+            }
+        }
+
+        // PC has WAD.
+        if (this.wadResourceId >= 0) {
+            for (int i = this.wadResourceId + 1; i < mwi.getEntries().size(); i++) {
+                MWIResourceEntry entry = mwi.getResourceEntryByID(i);
+                if (!entry.testFlag(MWIResourceEntry.FLAG_GROUP_ACCESS))
+                    break; // Exited the WAD file.
+                if (entry.hasExtension("VLO"))
+                    return entry;
+            }
+        }
 
         return null;
     }
