@@ -11,10 +11,7 @@ import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.objects.CountMap;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Represents a tree used to ensure textures .
@@ -23,11 +20,20 @@ import java.util.Map;
 public final class VloTree extends VloTreeNode {
     @Getter private final int transparentPages;
     final Map<MWIResourceEntry, VloFileTreeData> vloFileDataByResourceEntry = new HashMap<>(); // Do not use the VloFile directly as the key, just in-case it gets imported.
-    final Map<String, VloTreeNode> generatedNodesByName = new HashMap<>();
+    final Map<String, VloTreeNode> nodesByName = new HashMap<>();
+    final Set<VloTreeNode> generatedNodes = new HashSet<>();
+    @Getter private boolean rebuildQueued;
 
-    VloTree(SCGameInstance instance, String name, VloTreeNodeFillMethod fillMethod, int pages, int reservedPages, int extraPages, int originalPages, int clutPages, List<String> includedNodeNames, int transparentPages) {
-        super(instance, null, name, fillMethod, pages, reservedPages, extraPages, originalPages, clutPages, includedNodeNames);
+    VloTree(SCGameInstance instance, String name, VloTreeNodeFillMethod fillMethod, int pages, int reservedPages, int extraPages, int originalPages, int clutPages, int transparentPages) {
+        super(instance, null, name, fillMethod, pages, reservedPages, extraPages, originalPages, clutPages, Collections.emptyList());
         this.transparentPages = transparentPages;
+    }
+
+    /**
+     * Mark the tree as needing a full rebuild.
+     */
+    public void markForRebuild() {
+        this.rebuildQueued = true;
     }
 
     /**

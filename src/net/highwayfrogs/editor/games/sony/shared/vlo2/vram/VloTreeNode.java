@@ -31,11 +31,12 @@ public class VloTreeNode {
     @Getter private final VloVramSnapshot snapshot; // This snapshot contains a hodgepodge of different VLO textures which overlap with each other.
     @NonNull @Getter private final VloTreeNodeFillMethod fillMethod;
     @Getter private final VloTextureIdTracker textureIdTracker;
-    @Getter private final List<String> includedNodeNames;
     private final List<VloFileTreeData> vloFiles = new ArrayList<>();
     private final List<VloFileTreeData> immutableVloFiles = Collections.unmodifiableList(this.vloFiles);
     private final List<VloTreeNode> children = new ArrayList<>();
     private final List<VloTreeNode> immutableChildren = Collections.unmodifiableList(this.children);
+    private final List<VloTreeNode> includedNodes;
+    private final List<VloTreeNode> dependantNodes = new ArrayList<>(); // Nodes which implicitly must be updated when this one is updated, other than child nodes. This is primarily for the "include=" feature, and is not commonly used.
     @Getter private final int extraPages;
     @Getter private final int reservedPages;
     @Getter private final int usablePages;
@@ -52,12 +53,12 @@ public class VloTreeNode {
     public static final String CONFIG_KEY_INSERTION_STRATEGY = "insertionStrategy";
     public static final String CONFIG_KEY_TRANSPARENT_PAGES = "pagesWhereBlackIsTransparent";
 
-    protected VloTreeNode(SCGameInstance instance, VloTreeNode parent, String name, VloTreeNodeFillMethod fillMethod, int pages, int reservedPages, int extraPages, int originalPages, int clutPages, List<String> includedNodeNames) {
+    protected VloTreeNode(SCGameInstance instance, VloTreeNode parent, String name, VloTreeNodeFillMethod fillMethod, int pages, int reservedPages, int extraPages, int originalPages, int clutPages, List<VloTreeNode> includedNodes) {
         this.instance = instance;
         this.parent = parent;
         this.name = name;
         this.fillMethod = fillMethod;
-        this.includedNodeNames = includedNodeNames;
+        this.includedNodes = includedNodes != null && !includedNodes.isEmpty() ? new ArrayList<>(includedNodes) : Collections.emptyList();
         this.snapshot = new VloVramSnapshot(instance, this);
         this.usablePages = pages;
         this.reservedPages = reservedPages;
@@ -120,7 +121,7 @@ public class VloTreeNode {
         for (int i = 0; i < queue.size(); i++) {
             VloTreeNode node = queue.get(i);
 
-            boolean anyVlosDirty = false;
+            boolean anyVlosDirty = (node instanceof VloTree) && ((VloTree) node).isRebuildQueued();
             for (int j = 0; j < node.vloFiles.size(); j++) {
                 VloFileTreeData vloFileData = node.vloFiles.get(j);
                 if (vloFileData.getVloFile().isVramDirty()) {
@@ -130,6 +131,7 @@ public class VloTreeNode {
             }
 
             if (anyVlosDirty) {
+                node.recursivelyMarkDependantNodesDirty(); // Dependant nodes must by definition not yet be processed in the queue.
                 dirtyQueue.add(node);
                 addChildNodesToQueue(dirtyQueue, node);
             } else {
@@ -176,12 +178,11 @@ public class VloTreeNode {
 
         // Include other nodes. (This is rare)
         VloTree tree = getTree();
-        if (!this.includedNodeNames.isEmpty()) {
-            for (int i = 0; i < this.includedNodeNames.size(); i++) {
-                String nodeName = this.includedNodeNames.get(i);
-                VloTreeNode node = tree.generatedNodesByName.get(nodeName);
-                if (node == null)
-                    throw new IllegalArgumentException("There was no node named '" + nodeName + "' available for use by '" + this.name + "'.");
+        if (!this.includedNodes.isEmpty()) {
+            for (int i = 0; i < this.includedNodes.size(); i++) {
+                VloTreeNode node = this.includedNodes.get(i);
+                if (!tree.generatedNodes.contains(node))
+                    throw new IllegalArgumentException("The node named '" + node.getName() + "' had not been generated yet, so it cannot be included by '" + this.name + "'.");
 
                 // Add data from the target VLO files here.
                 for (int j = 0; j < node.vloFiles.size(); j++) {
@@ -228,26 +229,26 @@ public class VloTreeNode {
         List<VloTreeNode> children = node.getChildren();
         for (int i = 0; i < children.size(); i++) {
             VloTreeNode childNode = children.get(i);
-            if (childNode.includedNodeNames.isEmpty())
+            if (childNode.includedNodes.isEmpty())
                 queue.add(childNode);
         }
 
         for (int i = 0; i < children.size(); i++) {
             VloTreeNode childNode = children.get(i);
-            if (childNode.includedNodeNames.isEmpty())
+            if (childNode.includedNodes.isEmpty())
                 addChildNodesToQueue(queue, childNode);
         }
 
         // Ensure nodes which include others are added last.
         for (int i = 0; i < children.size(); i++) {
             VloTreeNode childNode = children.get(i);
-            if (!childNode.includedNodeNames.isEmpty())
+            if (!childNode.includedNodes.isEmpty())
                 queue.add(childNode);
         }
 
         for (int i = 0; i < children.size(); i++) {
             VloTreeNode childNode = children.get(i);
-            if (!childNode.includedNodeNames.isEmpty())
+            if (!childNode.includedNodes.isEmpty())
                 addChildNodesToQueue(queue, childNode);
         }
     }
@@ -256,20 +257,20 @@ public class VloTreeNode {
         if (progressBar != null)
             progressBar.update(0, queue.size(), "Vlo Texture Placement");
 
-        // Remove nodes from the map of built nodes.
+        // Remove nodes from the map of generated nodes.
         for (int i = 0; i < queue.size(); i++) {
             VloTreeNode node = queue.get(i);
             if (tree == null)
                 tree = node.getTree();
 
-            tree.generatedNodesByName.remove(node.getName(), node);
+            tree.generatedNodes.remove(node);
         }
 
         // Builds the nodes in queue order. (NOTE: Respect the queue order/ensure parents are built before child nodes)
         for (int i = 0; i < queue.size(); i++) {
             VloTreeNode node = queue.get(i);
             node.buildNode(loadFromGameData);
-            tree.generatedNodesByName.putIfAbsent(node.getName(), node); // Do this upon completion, so no child node can reference this by name.
+            tree.generatedNodes.add(node); // Do this upon completion, so no child node can reference this by name.
             if (progressBar != null)
                 progressBar.addCompletedProgress(1);
         }
@@ -293,25 +294,32 @@ public class VloTreeNode {
         int clutPages = getPageBitFlags(config.getOptionalKeyValueNode(CONFIG_KEY_CLUT_PAGES));
         VloTreeNodeFillMethod fillMethod = config.getOrDefaultKeyValueNode(CONFIG_KEY_INSERTION_STRATEGY).getAsEnum(VloTreeNodeFillMethod.AUTOMATIC);
 
-        List<String> includedNodeNames = Collections.emptyList();
-        ConfigValueNode includeNode = config.getOptionalKeyValueNode(CONFIG_KEY_INCLUDE);
-        if (includeNode != null)
-            includedNodeNames = Arrays.asList(includeNode.getAsString().split("(\\s*),(\\s*)"));
-
         // Create node.
         VloTreeNode newNode;
+        List<VloTreeNode> includedNodes = null;
         if (tree != null) {
             if (parent == null)
                 throw new IllegalArgumentException("parent cannot be null if tree is non-null!");
 
-            newNode = new VloTreeNode(instance, parent, config.getSectionName(), fillMethod, pages, reservedPages, extraPages, originalPages, clutPages, includedNodeNames);
+            includedNodes = resolveNodeList(logger, tree, config.getOptionalKeyValueNode(CONFIG_KEY_INCLUDE));
+            newNode = new VloTreeNode(instance, parent, config.getSectionName(), fillMethod, pages, reservedPages, extraPages, originalPages, clutPages, includedNodes);
+
+            // Store by name.
+            VloTreeNode oldNodeWithName = tree.nodesByName.putIfAbsent(newNode.getName(), newNode);
+            if (oldNodeWithName != null)
+                logger.warning("Multiple nodes named '%s' were configured in the VloTree! This may break certain vlo features.", newNode.getName());
         } else {
             if (parent != null)
                 throw new IllegalArgumentException("parent cannot be non-null if tree is null!");
 
             int transparentPages = instance.isPC() ? getPageBitFlags(config.getOptionalKeyValueNode(CONFIG_KEY_TRANSPARENT_PAGES)) : 0;
-            newNode = tree = new VloTree(instance, config.getSectionName(), fillMethod, pages, reservedPages, extraPages, originalPages, clutPages, includedNodeNames, transparentPages);
+            newNode = tree = new VloTree(instance, config.getSectionName(), fillMethod, pages, reservedPages, extraPages, originalPages, clutPages, transparentPages);
         }
+
+        // Setup dependant nodes.
+        if (includedNodes != null)
+            for (int i = 0; i < includedNodes.size(); i++)
+                includedNodes.get(i).dependantNodes.add(newNode);
 
         // Read vlo files.
         for (int i = 0; i < vloEntries.size(); i++) {
@@ -329,6 +337,31 @@ public class VloTreeNode {
         }
 
         return newNode;
+    }
+
+    private static List<VloTreeNode> resolveNodeList(ILogger logger, VloTree vloTree, StringNode node) {
+        if (node == null || vloTree == null)
+            return Collections.emptyList();
+
+        // Load included node names.
+        List<String> nodeNames = Arrays.asList(node.getAsString().split("(\\s*),(\\s*)"));
+        if (nodeNames.isEmpty())
+            return Collections.emptyList();
+
+        List<VloTreeNode> nodes = new ArrayList<>();
+        for (int i = 0; i < nodeNames.size(); i++) {
+            String nodeName = nodeNames.get(i);
+            VloTreeNode foundNode = vloTree.nodesByName.get(nodeName);
+            if (foundNode == null) {
+                logger.warning("No VloTreeNode could be found named '%s', has it been defined yet?", nodeName);
+                continue;
+            }
+
+            if (!nodes.contains(foundNode))
+                nodes.add(foundNode);
+        }
+
+        return nodes;
     }
 
     private static int getDefaultPages(SCGameInstance instance, Config config, List<MWIResourceEntry> vloEntries) {
@@ -426,5 +459,22 @@ public class VloTreeNode {
             throw new IllegalArgumentException("Invalid page number: " + parsedValue + ". " + node.getExtraDebugErrorInfo());
 
         return parsedValue;
+    }
+
+    /**
+     * Recursively marks all dependant nodes as dirty/needing vram refresh.
+     */
+    private void recursivelyMarkDependantNodesDirty() {
+        for (int i = 0; i < this.dependantNodes.size(); i++) {
+            VloTreeNode node = this.dependantNodes.get(i);
+            for (int j = 0; j < node.vloFiles.size(); j++) {
+                VloFile vloFile = node.vloFiles.get(j).getVloFile();
+                if (vloFile != null)
+                    vloFile.markDirty();
+            }
+
+            if (!node.dependantNodes.isEmpty())
+                node.recursivelyMarkDependantNodesDirty();
+        }
     }
 }

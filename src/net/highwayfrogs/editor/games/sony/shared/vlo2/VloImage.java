@@ -65,8 +65,6 @@ import java.util.logging.Level;
  *  in order to minimize the risk of FrogLord breaking existing textures while also keeping texture editing as simple as possible for a FrogLord user.
  * <p/>
  * TODO Remaining Tasks before feature complete:
- *  1) Create the VRAM texture placement system.
- *   -> Easy image management. (VloFile.addImage(String name, BufferedImage, ClutMode, abr, int padding)
  *  2) Rewrite the VLO file UI
  *   -> The "Clone Image" button should be removed to "Copy image to other VLO file.", and moved to right-click menu.
  *   -> Update the import all/export all feature to be on right-click of the VLO itself

@@ -55,8 +55,9 @@ public class VloClutList extends SCSharedGameObject {
             VloVramSnapshot snapshot = tree != null ? tree.getVramSnapshot(clut.getVloFile()) : null;
             if (snapshot != null) {
                 allowInvalidPosition = true; // Allow invalid positions because they'll be cleaned up later.
+                clut.getVloFile().markDirty();
                 if (!snapshot.tryAddClut(clut))
-                    clut.getVloFile().markDirty();
+                    tree.markForRebuild();
             }
         }
 

@@ -357,11 +357,7 @@ public class VloFile extends SCSharedGameFile {
      * Only the vram position updater should call this.
      */
     public void markDirty() {
-        if (this.vramDirty)
-            return;
-
         this.vramDirty = true;
-        // TODO: Mark nodes using this as dirty too.
     }
 
     /**
@@ -420,8 +416,9 @@ public class VloFile extends SCSharedGameFile {
         this.images.add(newImage);
 
         // Try to add to the VloTree.
+        markDirty();
         if (!snapshot.tryAddImage(newImage, false))
-            markDirty(); // TODO: If we don't mark anything else dirty, we won't get enough free space potentially.
+            tree.markForRebuild();
 
         return newImage;
     }
