@@ -76,6 +76,7 @@ import java.util.logging.Level;
  *   -> Integrate with new system to become seamless
  *   -> Remove usage of SCImageUtils.TransparencyFilter, and then delete that class,
  *  5) Frogger semi-transparent flags don't seem to render correctly in-editor.
+ *    -> Perhaps we should consider the shading restrictions of the PC version as well, the ones that MasterWario noticed.
  *  6) VramController might need to have its warnings gutted.
  *  7) MoonWarrior map viewing is cooked, possibly from image caching.
  *  8) Scrolling through the Beast Wars wad list with arrow keys is painfully slow, profile it. (This may just be due to the number of froglord windows I have open)
@@ -484,15 +485,15 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
                         this.paddingTransparent = false;
                         i = -1;
                         continue;
-
-                        // TODO: The problem here seems to be something similar to HitX causing a last row of pixels to be cut off?
-                        //  -> NO! I FIGURED IT OUT!! These textures are LARGER THAN WIDTH=256!!!!
-                        //  -> It's our width calculation which is failing to properly find the real width/height.
-                        //  -> Do we manage to save files like this properly?
                     }
                 }
 
-                getLogger().warning("Pixel[%d,%d] padding was expected to be %08X, but was calculated to be %08X. (PadX: %d, PadY: %d, Stripped PadX: %d, CLUT Index: %d)", i % this.paddedWidth, i / this.paddedWidth, this.pixelBuffer[i], paddedColor, paddingX, paddingY, emptyRightPaddingX, this.clut != null ? this.clut.getColorIndex(getClutColor(new PSXClutColor(), i), false) : Integer.MAX_VALUE);
+                // This warning will be hit by images which have width > 256.
+                // These images are not valid, never rendered/used, and do not report accurate original dimensions to FrogLord, due to being represented in an 8-bit number.
+                // We try our best to validate these images, but ultimately, they are difficult to work with due to the lack of accurate information.
+                // As such, we ignore padding failures on these images specifically, because these warnings are not helpful / do not actually indicate the algorithm is inaccurate.
+                if (this.paddedWidth <= MAX_IMAGE_DIMENSION)
+                    getLogger().warning("Pixel[%d,%d] padding was expected to be %08X, but was calculated to be %08X. (PadX: %d, PadY: %d, Stripped PadX: %d, CLUT Index: %d)", i % this.paddedWidth, i / this.paddedWidth, this.pixelBuffer[i], paddedColor, paddingX, paddingY, emptyRightPaddingX, this.clut != null ? this.clut.getColorIndex(getClutColor(new PSXClutColor(), i), false) : Integer.MAX_VALUE);
             } else if (operation == PaddingOperation.APPLY) {
                 if ((paddedColor & PSXClutColor.ARGB8888_TO5BIT_COLOR_MASK) == 0)
                     this.anyFullyBlackPixelsPresent = true;
@@ -908,15 +909,17 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         //  - Beast Wars PSX PAL (Retail)
         //  - MediEvil NTSC (Retail)
         //  - MoonWarrior 0.05a
-        //  - MediEvil II 0.19 TODO: FAIL (Large padding)
-        //  - MediEvil II USA Retail 1.1Q TODO: FAIL (Large padding)
+        //  - MediEvil II 0.19 (This has failures, BUT they are due to width>256 erasing the true image dimensions, not because of an issue with the logic here.)
+        //  - MediEvil II USA Retail 1.1Q (This has failures, BUT they are due to width>256 erasing the true image dimensions, not because of an issue with the logic here.)
         //  - C-12 Final Resistance PSX Build 0.03a
         //  - C-12 Final Resistance PSX Beta Candidate 3
         //  - C-12 Final Resistance PSX Master
 
         // Calculated mostly perfect against:
-        //  - There is one exception which is that if the image is larger than width=256, the padding may be incorrect. TODO: Address this.
+        //  - There is one exception which is that if the image is larger than width=256, the padding may be incorrect.
         //  - This is a limitation of us not actually knowing what the original image width/height was.
+        //  - Images of this size have never been observed to actually be used/displayed by a game, it does not seem like they are valid.
+        //  - Despite this, they still are observed/seen in some VLO files.
         return paddingAmount + getModuloReversed(unpaddedWidth + paddingAmount, widthMultiplier);
     }
 
@@ -1632,7 +1635,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         }
     }
 
-    // This function has been tested perfectly matching against:
+    // The upcoming function has been tested perfectly matching against:
     //  - Old Frogger PC Milestone 3
     //  - Old Frogger PSX Milestone 3
     //  - Frogger PSX Sony Demo
@@ -1643,6 +1646,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
     //  - Frogger PSX Build 20 NTSC
     //  - Frogger PSX Build 49
     //  - Frogger PC Prototype (September 1997)
+    //  - MediEvil ECTS (Ignoring failures for width>256 images, as explained elsewhere)
     //  - Frogger PSX Build 71 (Retail NTSC)
     //  - Frogger PC v3.0e (Retail)
     //  - Beast Wars NTSC Prototype
@@ -1654,15 +1658,15 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
     //  - C-12 Final Resistance (Beta Candidate 3)
     //  - C-12 Final Resistance (Retail NTSC)
 
-    // Game versions which are not perfectly matched.
-    //  - MediEvil ECTS (107 pixel failures in 2934/2@GENTITLP.VLO and 2938/2@GENTITLN.VLO)
-    //    -> Some padding pixels seem to be part of the image, like HitX/HitY.
-    //  - MediEvil 0.31 (124 pixel failures in gargoyle_eye/149@FIXEDVRM.VLO, logop/2@GENTITLP.VLO, and, logon/2@GENTITLN.VLO)
-    //  - MediEvil Reviewable Version (124 pixel failures)
-    //  - MediEvil NTSC Release (124 pixel failures in gargoyle_eye/153@FIXEDVRM.VLO, logop/2@GENTITLP.VLO, and, logon/2@GENTITLN.VLO)
-    //  - MediEvil II 0.19 (105 pixel failures in 13/116@FILE_0002 and 27/149@FILE_0002)
-    //  - MediEvil II 0.51 (105 pixel failures in 36/103@File 10 and 50/131@File 10)
-    //  - MediEvil II USA Retail 1.1Q (105 pixel failures in 36/103@File 10 and 50/131@File 10)
+    // In rare cases, it seems some images will use fully white alignment padding. All of the following mismatches seem to be this situation.
+    // What causes this is not currently understood.
+    // Game versions which are not perfectly matched:
+    //  - MediEvil 0.31 (17 pixel failures in gargoyle_eye/149@FIXEDVRM.VLO)
+    //  - MediEvil Reviewable Version (17 pixel failures in gargoyle_eye/153@FIXEDVRM.VLO)
+    //  - MediEvil NTSC Release (17 pixel failures in gargoyle_eye/153@FIXEDVRM.VLO)
+    //  - MediEvil II 0.19 (74 pixel failures in 13/116@FILE_0002 and 27/149@FILE_0002)
+    //  - MediEvil II 0.51 (74 pixel failures in 36/103@File 10 and 50/131@File 10)
+    //  - MediEvil II USA Retail 1.1Q (74 pixel failures in 36/103@File 10 and 50/131@File 10)
     private int getPaddingColor(int[] paddedImagePixels, int index, int paddedWidth, int padMinX, int padMaxX, int padMinY, int padMaxY, int paddingX, int paddingY, int emptyRightPaddingX, int firstClutColor) {
         // MediEvil II has some weird images which are mostly padding, and have a texture with crudely drawn letters: "PG".
         // At the time of writing, I have no idea what this is for, but we'll leave it alone for now.
