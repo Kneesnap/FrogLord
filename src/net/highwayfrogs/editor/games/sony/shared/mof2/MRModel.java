@@ -524,4 +524,39 @@ public class MRModel extends SCSharedGameFile implements ISCTextureUser, IExtraU
 
         return component;
     }
+
+    /**
+     * Change all usages of a particular texture ID to a new texture ID.
+     * @param oldTextureId the texture ID to change
+     * @param newTextureId the new texture ID to apply
+     */
+    public void replaceTextureIdUsages(short oldTextureId, short newTextureId) {
+        List<MRStaticMof> staticMofs = getStaticMofs();
+        for (int i = 0; i < staticMofs.size(); i++) {
+            MRStaticMof staticMof = staticMofs.get(i);
+            for (int j = 0; j < staticMof.getParts().size(); j++) {
+                MRMofPart mofPart = staticMof.getParts().get(j);
+
+                // Replace texture IDs in texture animations.
+                List<MRMofTextureAnimation> textureAnimations = mofPart.getTextureAnimations();
+                for (int k = 0; k < textureAnimations.size(); k++) {
+                    MRMofTextureAnimation textureAnimation = textureAnimations.get(k);
+                    List<MRMofTextureAnimationEntry> animationEntries = textureAnimation.getEntries();
+                    for (int l = 0; l < animationEntries.size(); l++) {
+                        MRMofTextureAnimationEntry animationEntry = animationEntries.get(l);
+                        if (animationEntry.getGlobalImageId() == oldTextureId)
+                            animationEntry.setGlobalImageId(newTextureId);
+                    }
+                }
+
+                // Replace texture IDs directly on the polygons.
+                List<MRMofPolygon> mofPolygons = mofPart.getOrderedPolygons();
+                for (int k = 0; k < mofPolygons.size(); k++) {
+                    MRMofPolygon mofPolygon = mofPolygons.get(k);
+                    if (mofPolygon.getTextureId() == oldTextureId)
+                        mofPolygon.setTextureId(newTextureId);
+                }
+            }
+        }
+    }
 }

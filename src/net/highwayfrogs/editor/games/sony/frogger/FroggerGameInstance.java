@@ -28,6 +28,7 @@ import net.highwayfrogs.editor.games.sony.frogger.file.FroggerSkyLand;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapLevelID;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapTheme;
+import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapAnimation;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.entity.FroggerFlyScoreType;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.form.FroggerFormEntry;
 import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePacketEntity;
@@ -165,6 +166,7 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         // Add sky land.
         if (this.getVersionConfig().getSkyLandTextureAddress() > 0) {
             this.skyLandTextureRemap.setFileOffset(this.getVersionConfig().getSkyLandTextureAddress());
+            this.skyLandTextureRemap.setVloFileDefinition(wadIndex.getResourceEntryByName("THEME_SKY.VLO"));
             addRemap(this.skyLandTextureRemap);
         }
 
@@ -219,6 +221,32 @@ public class FroggerGameInstance extends SCGameInstance implements ISCTextureUse
         // The Sony Presentation Build (April '97) has extremely low texture IDs, low enough to be mistaken for a pointer.
         // The simplest solution for now is just to use the above check to end the remap, which is confirmed to work.
         return !this.getVersionConfig().isSonyPresentation() && super.isEndOfRemap(current, next, reader, value);
+    }
+
+    @Override
+    public void onVloTextureIdChange(VloImage image, short oldTextureId, short newTextureId) {
+        super.onVloTextureIdChange(image, oldTextureId, newTextureId);
+
+        VloFile vloFile = image.getParent();
+        if (vloFile == null)
+            return;
+
+        // Replace map animation texture ID references.
+        List<FroggerMapFile> mapFiles = getMainArchive().getAllFiles(FroggerMapFile.class);
+        for (int i = 0; i < mapFiles.size(); i++) {
+            FroggerMapFile mapFile = mapFiles.get(i);
+            if (mapFile.getVloFile() != vloFile)
+                continue; // Skip maps which don't use the vlo file.
+
+            List<FroggerMapAnimation> mapAnimations = mapFile.getAnimationPacket().getAnimations();
+            for (int j = 0; j < mapAnimations.size(); j++) {
+                FroggerMapAnimation animation = mapAnimations.get(j);
+                List<Short> textureIds = animation.getTextureIds();
+                for (int k = 0; k < textureIds.size(); k++)
+                    if (textureIds.get(k) == oldTextureId)
+                        textureIds.set(k, newTextureId);
+            }
+        }
     }
 
     @Override

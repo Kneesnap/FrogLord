@@ -500,6 +500,40 @@ public abstract class SCGameInstance extends GameInstance {
     }
 
     /**
+     * Called to handle a VloImage having its texture ID change.
+     * This should update all occurrences of that image/texture ID to use the new texture ID.
+     * @param image the image which changed.
+     * @param oldTextureId the previous texture ID
+     * @param newTextureId the new texture ID
+     */
+    public void onVloTextureIdChange(VloImage image, short oldTextureId, short newTextureId) {
+        if (image == null)
+            throw new NullPointerException("image");
+
+        // Point remap texture IDs to the new texture ID.
+        VloFile vloFile = image.getParent();
+        if (vloFile != null) {
+            for (int i = 0; i < this.textureRemaps.size(); i++) {
+                TextureRemapArray textureRemap = textureRemaps.get(i);
+                if (textureRemap.getVloFileDefinition() != vloFile.getIndexEntry())
+                    continue; // Other VLO.
+
+                for (int j = 0; j < textureRemap.getTextureIdSlotsAvailable(); j++)
+                    if (textureRemap.getTextureIds().get(j) == oldTextureId)
+                        textureRemap.setRemappedTextureId(j, newTextureId);
+            }
+        }
+
+        // Update mof file texture IDs.
+        List<MRModel> models = getMainArchive().getAllFiles(MRModel.class);
+        for (int i = 0; i < models.size(); i++) {
+            MRModel model = models.get(i);
+            if (model.getVloFile() == vloFile)
+                model.replaceTextureIdUsages(oldTextureId, newTextureId);
+        }
+    }
+
+    /**
      * Populate the file groups for the main menu file list.
      * @param fileListView The file list view to register files for.
      */

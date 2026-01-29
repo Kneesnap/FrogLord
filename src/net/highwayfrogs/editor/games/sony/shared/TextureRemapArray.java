@@ -1,8 +1,10 @@
 package net.highwayfrogs.editor.games.sony.shared;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameObject.SCSharedGameObject;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.SelectionMenu;
@@ -24,6 +26,7 @@ public class TextureRemapArray extends SCSharedGameObject {
     private String name;
     private final List<Short> textureIds = new ArrayList<>();
     private int textureIdSlotsAvailable = -1;
+    @Setter private MWIResourceEntry vloFileDefinition; // Safer than directly storing the VloFile reference, which might be overwritten.
 
     public TextureRemapArray(SCGameInstance instance) {
         super(instance);
@@ -41,6 +44,14 @@ public class TextureRemapArray extends SCSharedGameObject {
         super(instance);
         this.loadAddress = loadAddress;
         this.name = name;
+    }
+
+    /**
+     * Gets the Vlo file which holds the textures relevant to this remap array, if the vlo file is known
+     * @return vloFile
+     */
+    public VloFile getVloFile() {
+        return this.vloFileDefinition != null ? (VloFile) this.vloFileDefinition.getGameFile() : null;
     }
 
     /**
@@ -180,11 +191,9 @@ public class TextureRemapArray extends SCSharedGameObject {
      * Creates a remap based on the contents of a VLO archive.
      */
     public static class VLODirectTextureRemapArray extends TextureRemapArray {
-        private final VloFile vloArchive;
-
         public VLODirectTextureRemapArray(SCGameInstance instance, VloFile vloArchive) {
             super(instance);
-            this.vloArchive = vloArchive;
+            setVloFileDefinition(vloArchive.getIndexEntry());
             updateRemapArray();
         }
 
@@ -193,14 +202,17 @@ public class TextureRemapArray extends SCSharedGameObject {
          */
         public void updateRemapArray() {
             List<Short> values = getTextureIds();
+            VloFile vloFile = getVloFile();
+            if (vloFile == null)
+                throw new IllegalStateException("The VloFile could not be resolved.");
 
             // Remove now unused texture slots.
-            while (values.size() > this.vloArchive.getImages().size())
+            while (values.size() > vloFile.getImages().size())
                 values.remove(values.size() - 1);
 
             // Apply texture ids.
-            for (int i = 0; i < this.vloArchive.getImages().size(); i++) {
-                VloImage image = this.vloArchive.getImages().get(i);
+            for (int i = 0; i < vloFile.getImages().size(); i++) {
+                VloImage image = vloFile.getImages().get(i);
                 if (i >= values.size()) {
                     values.add(image.getTextureId());
                 } else if (image.getTextureId() != values.get(i)) { // Avoid autoboxing a new short if it matches to begin with.

@@ -112,15 +112,27 @@ public class OldFroggerGameInstance extends SCGameInstance {
                 continue;
             }
 
+            VloFile vloFile = null;
             String remapNameSuffix;
             if (i >= mapFileEntries.size()) {
                 remapNameSuffix = "unknown" + (++unknownMapCount);
             } else {
-                remapNameSuffix = FileUtils.stripExtension(mapFileEntries.get(i).getDisplayName()).toLowerCase(Locale.ROOT);
+                MWIResourceEntry mapMwiEntry = mapFileEntries.get(i);
+                remapNameSuffix = FileUtils.stripExtension(mapMwiEntry.getDisplayName()).toLowerCase(Locale.ROOT);
+
+                OldFroggerMapFile mapFile = (OldFroggerMapFile) mapMwiEntry.getGameFile();
+                if (mapFile != null) {
+                    OldFroggerLevelTableEntry levelTableEntry = mapFile.getLevelTableEntry();
+                    if (levelTableEntry != null)
+                        vloFile = levelTableEntry.getMainVloFile();
+                }
             }
 
             // Create new remap.
             remap = new TextureRemapArray(this, "txl_" + remapNameSuffix, remapPointer);
+            if (vloFile != null)
+                remap.setVloFileDefinition(vloFile.getIndexEntry());
+
             this.textureRemapsByLevelId.add(remap);
             remapsByPointer.put(remapPointer, remap);
             addRemap(remap);

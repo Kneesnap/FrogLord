@@ -402,13 +402,10 @@ public class VloFile extends SCSharedGameFile {
         if (originalTextureId != null) {
             textureId = originalTextureId;
 
+            // If another texture is already using the image ID associated with this texture's name, reclaim the texture ID and force that texture to use another ID.
             VloImage conflictImage = getImageByTextureId(textureId, false);
-            if (conflictImage != null) { // Another image was previously using this texture ID, so change it to another ID. (We tested earlier that it's using another texture name, so it's a different texture)
+            if (conflictImage != null)
                 conflictImage.setTextureId(tracker.useFreeTextureId());
-                // TODO: Update getGameInstance().getTexturesFoundInRemap()
-                // TODO: Get remaps for vlo, and then fix the remap. (Have an interface for the remap objects to implement to get the vlo, also to do the behavior needed here) See: FroggerTextureRemap, since it has .MAP access.
-                // TODO: Mofs.
-            }
         } else {
             textureId = tracker.useFreeTextureId();
         }
@@ -457,6 +454,34 @@ public class VloFile extends SCSharedGameFile {
         return vloImage;
     }
 
-    // TODO: removeImage()
-    //  -> Call VloTextureIdTracker.freeTextureId()
+    /**
+     * Removes an image from this VloFile.
+     * @param image the image to remove
+     * @return if the image was successfully removed
+     */
+    public boolean removeImage(VloImage image) {
+        if (!this.images.remove(image))
+            return false;
+
+        // Stop tracking the image in its clut.
+        // This image object will not be re-added (instead, a new image object would be created), so this seems safe.
+        VloClut clut = image.getClut();
+        if (clut != null)
+            clut.removeImage(image);
+
+        // Change all usages of the texture.
+        // This might be a good idea, but I'm not entirely sure in practice if this is preferable to keeping the usages.
+        //getGameInstance().onVloTextureIdChange(image, image.getTextureId(), (short) -1);
+
+        // Free the texture ID for use by the VLO file again.
+        // This should happen last, after all other responses to the texture ID have occurred.
+        VloTree vloTree = getGameInstance().getVloTree();
+        if (vloTree != null) {
+            VloTextureIdTracker textureIdTracker = vloTree.getVloTextureIdTracker(this);
+            if (textureIdTracker != null)
+                textureIdTracker.freeTextureId(image.getTextureId());
+        }
+
+        return true;
+    }
 }

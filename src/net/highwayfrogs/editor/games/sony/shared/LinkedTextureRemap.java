@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.utils.Utils;
 
 /**
@@ -31,6 +32,22 @@ public class LinkedTextureRemap<TFile extends SCGameFile<?>> extends TextureRema
         super(instance, name, loadAddress);
         this.resourceEntry = resourceEntry;
         this.fileClass = fileClass;
+
+        TFile file = getFile();
+        if (file != null) {
+            VloFile vloFile = resolveVloFile(file);
+            if (vloFile != null)
+                setVloFileDefinition(vloFile.getIndexEntry());
+        }
+    }
+
+    /**
+     * Gets the vlo file holding textures for this remap.
+     * @param file the file to resolve for
+     * @return vloFile, if known/exists
+     */
+    protected VloFile resolveVloFile(TFile file) {
+        return null;
     }
 
     /**

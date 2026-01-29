@@ -175,7 +175,11 @@ public class MediEvilGameInstance extends SCGameInstance implements ISCMWDHeader
             }
 
             // Create new remap.
+            VloFile vloFile = entry.getVloFile();
             TextureRemapArray remap = new TextureRemapArray(this, "txl_" + mapCode + "_data", entry.getTextureRemapPointer());
+            if (vloFile != null)
+                remap.setVloFileDefinition(vloFile.getIndexEntry());
+
             entry.setRemap(remap);
             addRemap(remap);
         }

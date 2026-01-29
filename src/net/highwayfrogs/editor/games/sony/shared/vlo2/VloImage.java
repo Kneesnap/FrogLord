@@ -996,7 +996,10 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         if (textureId < 0 || textureId >= getGameInstance().getBmpTexturePointers().size())
             throw new IllegalArgumentException("The provided textureId is not a valid texture ID for this game. (ID: " + textureId + ")");
 
+        short oldTextureId = this.textureId;
         this.textureId = textureId;
+        if (oldTextureId >= 0 && oldTextureId != textureId && this.parent != null && this.parent.getImages().contains(this))
+            getGameInstance().onVloTextureIdChange(this, oldTextureId, textureId);
     }
 
     /**

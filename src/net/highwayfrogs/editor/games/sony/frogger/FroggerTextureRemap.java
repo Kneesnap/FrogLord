@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.shared.LinkedTextureRemap;
 import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 
 /**
  * Represents a texture remap for a Frogger map.
@@ -25,6 +26,11 @@ public class FroggerTextureRemap extends LinkedTextureRemap<FroggerMapFile> {
 
     public FroggerTextureRemap(FroggerGameInstance instance, MWIResourceEntry resourceEntry, String name, long loadAddress) {
         super(instance, resourceEntry, FroggerMapFile.class, name, loadAddress);
+    }
+
+    @Override
+    protected VloFile resolveVloFile(FroggerMapFile mapFile) {
+        return mapFile.getVloFile();
     }
 
     @Override
