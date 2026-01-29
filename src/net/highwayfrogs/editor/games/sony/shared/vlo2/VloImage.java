@@ -44,7 +44,7 @@ import java.util.logging.Level;
  * In mid-1996 when the MR API was created, the original VLO format was rewritten to become VLO2 (the format supported by this file).
  * The program which could create these .VLO files was named "Vorg", likely for "Visual organizer" or "VRAM organizer".
  * While the VLO2 file format would be used from 1996-2001, Vorg was rewritten twice (once for PC support in 1997, and later for Med2/C-12 at an unknown time).
- * And even between rewrites, it seems like Vorg had different versions or per-game tweaks made for each game during the existance of Vorg.
+ * And even between rewrites, it seems like Vorg had different versions or per-game tweaks made for each game during the existence of Vorg.
  * Despite the differences between games, the file format itself remained consistent.
  * <p/>
  * Because the file format remained consistent from 1996-2001 (the core era of Millennium's games which FrogLord intends to support),
@@ -301,11 +301,11 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         setClut(null);
         this.anyFullyBlackPixelsPresent = false;
         if (isPsxMode()) {
-            if (this.bitDepth == PsxImageBitDepth.SBGR1555) { // Used in PS1 demo. Example: Frogger's eye, VOL@35 (The fireball texture)
+            if (this.bitDepth == PsxImageBitDepth.SBGR1555) { // Used heavily in pre-recode Frogger, and occasionally seen in other places. (Example: Frogger USA Demo, Frogger Sony Presentation, etc.)
                 PSXClutColor tempColor = new PSXClutColor();
                 for (int i = 0; i < pixelCount; i++)
                     this.pixelBuffer[i] = loadClutColor(tempColor.fromShort(reader.readShort()));
-            } else if (this.bitDepth == PsxImageBitDepth.CLUT8) { // Used in PS1 release. Example: STARTNTSC.VLO
+            } else if (this.bitDepth == PsxImageBitDepth.CLUT8) { // Used in Frogger PSX Retail NTSC, such as in STARTNTSC.VLO or the level select vlo files.
                 loadClut(clutList);
                 for (int i = 0; i < pixelCount; i++)
                     this.pixelBuffer[i] = loadPaletteColor(this.clut, reader.readByte() & 0xFF);
@@ -455,7 +455,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         VALIDATE, APPLY
     }
 
-    // NOTE: unpaddedHeight and paddedHeight should be up to date when calling this function.
+    // NOTE: unpaddedHeight and paddedHeight should be up-to-date when calling this function.
     private void generatePadding(int[] pixelBuffer, PaddingOperation operation, int firstClutColor) {
         int padMinX = getLeftPadding();
         int padMaxX = Math.max(padMinX, padMinX + this.unpaddedWidth - 1); // DO NOT USE getRightPadding()! That includes the hitX calculation, which should NOT impact padding.
@@ -1241,7 +1241,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
 
             // This flag behavior has not been proven perfectly consistent with the original game files.
             // But, this flag is believed to never be accessed by any of the games/MR API.
-            // Out of lazyness, I'll just assume this is how it is supposed to work and revisit this if problems arise.
+            // Out of laziness, I'll just assume this is how it is supposed to work and revisit this if problems arise.
             setFlag(FLAG_BLACK_IS_TRANSPARENT, anyTransparentPixels ^ this.stpBlackBitFlipped);
         } else { // PC texture.
             boolean enableTransparency = false;
@@ -1520,7 +1520,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
     }
 
     /**
-     * Gets the name configured as found in the original game, or null, if unconfigured
+     * Gets the name configured as found in the original game, or null if not configured.
      */
     public String getOriginalName() {
         return getConfig().getImageList().getImageNameFromID(this.textureId);
