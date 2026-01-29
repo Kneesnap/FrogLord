@@ -185,8 +185,12 @@ public class VloVramSnapshot extends SCSharedGameObject {
         }
 
         // Add images by recalculating positions.
-        List<VloImage> sortedImages = new ArrayList<>(originalImages);
-        sortedImages.sort(Comparator.comparingInt((VloImage image) -> image.getPaddedWidth() * image.getPaddedHeight()).reversed());
+        List<VloImage> sortedImages = originalImages;
+        if (!vloFile.isSortingOrderKnown()) {
+            sortedImages = new ArrayList<>(originalImages);
+            sortedImages.sort(Comparator.comparingInt((VloImage image) -> image.getPaddedWidth() * image.getPaddedHeight()).reversed());
+        }
+
         Set<VloClut> addedCluts = new HashSet<>();
 
         // Add images.

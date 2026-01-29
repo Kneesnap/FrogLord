@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.games.psx.image.PsxImageBitDepth;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.shared.ui.file.VLOController;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.vram.VloTextureIdTracker;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.vram.VloTree;
@@ -28,10 +29,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -39,7 +37,7 @@ import java.util.function.Consumer;
  * Created by Kneesnap on 11/25/2025.
  */
 public class VloFile extends SCSharedGameFile {
-    private final List<VloImage> images = new ArrayList<>();
+    private final List<VloImage> images = new ArrayList<>(); // These images appear ordered in the order which they appear to have been inserted into VRAM.
     private final List<VloImage> immutableImages = Collections.unmodifiableList(this.images);
     @Getter private final VloClutList clutList;
     @Getter private boolean psxMode;
@@ -51,6 +49,24 @@ public class VloFile extends SCSharedGameFile {
 
     public static final int ICON_EXPORT = VloImage.DEFAULT_IMAGE_NO_PADDING_EXPORT_SETTINGS;
     private static final short CUSTOM_DATA_VERSION = 0;
+
+    // This comparator is an attempt to mimic the sorting order for the images list.
+    // This images list is also the order which textures appear to have been added into VRAM with.
+    // Tiebreaker logic seems arbitrary. In some places it really looks like it's texture ID based, but then in those same files we'll also see places where it's clearly not.
+    // The other obvious idea is texture name, but that's not entirely right either... The texture name ordering just isn't consistent enough.
+    // I suspect there was no explicit sorting tiebreaker, and this may have been something arbitrary like the order of images in the texture list Vorg would read or something.
+    // NOTE: This sorting order works with:
+    //  - Old Frogger (PSX, PC)
+    //  - Frogger (PSX, PC)
+    //  - Beast Wars (PSX, PC)
+    //  - MediEvil (PSX)
+    // It has been confirmed NOT to work with:
+    //  - MoonWarrior
+    //  - MediEvil II
+    //  - C-12 Final Resistance
+    public static Comparator<VloImage> IMAGE_SORTING_ORDER = Comparator
+            .comparingInt((VloImage image) -> image.getUnitWidth() * image.getPaddedHeight()).reversed();
+
 
     public VloFile(SCGameInstance instance) {
         super(instance);
@@ -103,10 +119,15 @@ public class VloFile extends SCSharedGameFile {
         // Load image data.
         this.images.clear();
         requireReaderIndex(reader, textureOffset, "Expected VLO texture data");
+        VloImage lastImage = null;
         for (int i = 0; i < imageCount; i++) {
             VloImage image = new VloImage(this);
             image.load(reader);
             this.images.add(image);
+
+            if (lastImage != null && isSortingOrderKnown() && IMAGE_SORTING_ORDER.compare(lastImage, image) > 0)
+                getLogger().warning("%s is out of order with %s.", image, lastImage);
+            lastImage = image;
         }
 
         // Skip CLUT data.
@@ -413,7 +434,7 @@ public class VloFile extends SCSharedGameFile {
         if (abr != null && this.psxMode)
             newImage.setAbr(abr);
 
-        this.images.add(newImage);
+        addImageToList(newImage);
 
         // Try to add to the VloTree.
         markDirty();
@@ -457,7 +478,7 @@ public class VloFile extends SCSharedGameFile {
      * @return if the image was successfully removed
      */
     public boolean removeImage(VloImage image) {
-        if (!this.images.remove(image))
+        if (!removeImageFromList(image))
             return false;
 
         // Stop tracking the image in its clut.
@@ -480,5 +501,38 @@ public class VloFile extends SCSharedGameFile {
         }
 
         return true;
+    }
+
+    /**
+     * Returns true if FrogLord knows how to sort the VloFile to mimic the original sorting order.
+     */
+    public boolean isSortingOrderKnown() {
+        return !getGameInstance().getGameType().isAtLeast(SCGameType.MOONWARRIOR);
+    }
+
+    int addImageToList(VloImage image) {
+        if (!isSortingOrderKnown()) {
+            int index = this.images.size();
+            this.images.add(image);
+            return index;
+        }
+
+        int searchIndex = Collections.binarySearch(this.images, image, IMAGE_SORTING_ORDER);
+        int insertionIndex;
+        if (searchIndex >= 0) {
+            insertionIndex = searchIndex;
+            while (this.images.size() > insertionIndex && IMAGE_SORTING_ORDER.compare(image, this.images.get(insertionIndex)) == 0)
+                insertionIndex++; // Insert at the end of matching images.
+        } else {
+            // No matching entry was found, but we were given the insertion index.
+            insertionIndex = -(searchIndex + 1);
+        }
+
+        this.images.add(insertionIndex, image);
+        return insertionIndex;
+    }
+
+    boolean removeImageFromList(VloImage image) {
+        return this.images.remove(image);
     }
 }

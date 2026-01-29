@@ -917,7 +917,6 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         // Calculated mostly perfect against:
         //  - There is one exception which is that if the image is larger than width=256, the padding may be incorrect. TODO: Address this.
         //  - This is a limitation of us not actually knowing what the original image width/height was.
-        // The following check seems equivalent to if ((padX <= 1 && shouldUvOriginStartAtOne())), but it's usable without having calculated paddingY. TODO: Remove comment?
         return paddingAmount + getModuloReversed(unpaddedWidth + paddingAmount, widthMultiplier);
     }
 
@@ -1276,23 +1275,8 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         // Generate padding.
         // Image must be applied before this point, and clut must be generated.
         // This should be done before image quantization.
-        if (this.unpaddedWidth != this.paddedWidth || this.unpaddedHeight != this.paddedHeight) {
-            int firstClutColor = PADDING_TRANSPARENT_PIXEL_PC;
-            if (isPsxMode()) {
-                if (this.paddingTransparent) {
-                    firstClutColor = PADDING_TRANSPARENT_PIXEL_PSX;
-                } else {
-                    firstClutColor = 0xFFFFFFFF;
-                    for (int i = 0; i < this.pixelBuffer.length; i++) {
-                        int color = this.pixelBuffer[i];
-                        if ((color & 0xFFFFFFFFL) < (firstClutColor & 0xFFFFFFFFL))
-                            firstClutColor = color;
-                    }
-                }
-            }
-
-            generatePadding(this.pixelBuffer, PaddingOperation.APPLY, firstClutColor);
-        }
+        if (this.unpaddedWidth != this.paddedWidth || this.unpaddedHeight != this.paddedHeight)
+            generatePadding(this.pixelBuffer, PaddingOperation.APPLY, getFirstClutColor());
 
         // Generate clut for newly imported image. (Must occur after padding is generated)
         regenerateClut(this.parent.getClutList(), null, true);
@@ -1301,10 +1285,28 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         // Handle dimension change...
         if (!hadPreviousImage || this.paddedWidth != oldPaddedWidth || this.paddedHeight != oldPaddedHeight) {
             markNeedsVramRefresh();
-            // TODO: Change sorting order of VloFile's image to account for this image potentially having changed positions. (Only if it is currently registered)
-            //  -> We likely cannot perfectly replicate the original ordering, but perhaps we can get close in some situations.
-            //  -> Now that we understand how vram placement works roughly, going over this again may give some additional insight I could have before.
+
+            // Change where in VloFile.images the image is placed, since this is based on the position.
+            if (this.parent.isSortingOrderKnown() && this.parent.removeImageFromList(this))
+                this.parent.addImageToList(this);
         }
+    }
+
+    private int getFirstClutColor() {
+        int firstClutColor = PADDING_TRANSPARENT_PIXEL_PC;
+        if (isPsxMode()) {
+            if (this.paddingTransparent) {
+                firstClutColor = PADDING_TRANSPARENT_PIXEL_PSX;
+            } else {
+                firstClutColor = 0xFFFFFFFF;
+                for (int i = 0; i < this.pixelBuffer.length; i++) {
+                    int color = this.pixelBuffer[i];
+                    if ((color & 0xFFFFFFFFL) < (firstClutColor & 0xFFFFFFFFL))
+                        firstClutColor = color;
+                }
+            }
+        }
+        return firstClutColor;
     }
 
     /**
