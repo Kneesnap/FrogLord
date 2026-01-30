@@ -39,7 +39,7 @@ public class SCMapMesh extends PSXShadedDynamicMesh<SCMapPolygon, SCShadedTextur
     public static final OutlineColorTextureSource GREEN_COLOR = new OutlineColorTextureSource(Color.GREEN, Color.BLACK);
 
     public SCMapMesh(SCMapFile<?> mapFile) {
-        super(new TreeTextureAtlas(64, 64, true), DynamicMeshTextureQuality.UNLIT_SHARP, false, mapFile.getFileDisplayName());
+        super(new TreeTextureAtlas(64, 64, true), DynamicMeshTextureQuality.UNLIT_SHARP, true, mapFile.getFileDisplayName());
         this.map = mapFile;
 
         // Add textures.

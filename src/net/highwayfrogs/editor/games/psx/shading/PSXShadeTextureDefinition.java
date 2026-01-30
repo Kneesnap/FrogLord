@@ -264,7 +264,7 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
      */
     public BufferedImage getSourceImage() {
         PSXShadeTextureImageCache imageCache = this.shadedTextureManager != null ? this.shadedTextureManager.getImageCache() : null;
-        return imageCache != null ? imageCache.getSourceImage(this) : PSXShadeTextureImageCache.getTextureSourceImage(this, true);
+        return imageCache != null ? imageCache.getSourceImage(this) : PSXShadeTextureImageCache.getTextureSourceImage(this, true, true);
     }
 
     /**

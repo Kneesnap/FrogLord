@@ -10,6 +10,7 @@ import javafx.scene.shape.MeshView;
 import lombok.Getter;
 import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
+import net.highwayfrogs.editor.games.sony.moonwarrior.MoonWarriorInstance;
 import net.highwayfrogs.editor.games.sony.shared.SCChunkedFile.SCFilePacket;
 import net.highwayfrogs.editor.games.sony.shared.map.SCMapFile;
 import net.highwayfrogs.editor.games.sony.shared.map.packet.SCMapPolygon;
@@ -99,7 +100,7 @@ public class SCMapMeshController<TMapMesh extends SCMapMesh> extends MeshViewCon
     protected void setupManagers() {
         if (isPacketActiveInSelfOrParent(SCMapFile::getEntityPacket))
             addManager(new SCMapEntityManager<>(this));
-        if (getMap().isParentMap())
+        if (!(getGameInstance() instanceof MoonWarriorInstance) && getMap().isParentMap())
             addManager(new SCMapSectionManager<>(this));
         // TODO: Setup managers.
     }

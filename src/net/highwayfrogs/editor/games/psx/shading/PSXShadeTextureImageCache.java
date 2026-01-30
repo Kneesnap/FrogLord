@@ -186,9 +186,9 @@ public class PSXShadeTextureImageCache {
 
         ITextureSource textureSource = shadeTextureDefinition.getTextureSource(); // If it were null, it'd have been handled already in getCacheEntry(), so it's not null.
         if (shadeTextureDefinition.isSourceImageScaled()) {
-            return this.scaledEntriesByTextureSource.computeIfAbsent(textureSource, key -> new PSXShadeTextureSourceCacheEntry(this, key, getTextureSourceImage(shadeTextureDefinition, true)));
+            return this.scaledEntriesByTextureSource.computeIfAbsent(textureSource, key -> new PSXShadeTextureSourceCacheEntry(this, key, getTextureSourceImage(shadeTextureDefinition, true, false)));
         } else {
-            return this.unscaledEntriesByTextureSource.computeIfAbsent(textureSource, key -> new PSXShadeTextureSourceCacheEntry(this, key, getTextureSourceImage(shadeTextureDefinition, false)));
+            return this.unscaledEntriesByTextureSource.computeIfAbsent(textureSource, key -> new PSXShadeTextureSourceCacheEntry(this, key, getTextureSourceImage(shadeTextureDefinition, false, false)));
         }
     }
 
@@ -197,13 +197,15 @@ public class PSXShadeTextureImageCache {
      * @param shadeTextureDefinition the shade texture definition to get the source image from
      * @return sourceImage
      */
-    public static BufferedImage getTextureSourceImage(PSXShadeTextureDefinition shadeTextureDefinition, boolean scaleImage) {
+    public static BufferedImage getTextureSourceImage(PSXShadeTextureDefinition shadeTextureDefinition, boolean scaleImage, boolean readOnly) {
         ITextureSource textureSource = shadeTextureDefinition.getTextureSource();
 
         BufferedImage mainImage;
+        boolean needsClone = false;
         if (textureSource instanceof VloImage) {
             VloImage vloSource = (VloImage) textureSource;
             mainImage = vloSource.toBufferedImage(shadeTextureDefinition.isSemiTransparentMode() ? TEXTURE_TRANSPARENCY_ENABLED : TEXTURE_TRANSPARENCY_DISABLED);
+            needsClone = true;
         } else if (textureSource != null) {
             mainImage = textureSource.makeImage();
         } else {
@@ -214,11 +216,13 @@ public class PSXShadeTextureImageCache {
         if (mainImage != null && scaleImage) {
             int textureScaleX = shadeTextureDefinition.getTextureScaleX();
             int textureScaleY = shadeTextureDefinition.getTextureScaleY();
-            if (textureScaleX != 1 || textureScaleY != 1)
+            if (textureScaleX != 1 || textureScaleY != 1) {
                 mainImage = ImageUtils.resizeImage(mainImage, mainImage.getWidth() * textureScaleX, mainImage.getHeight() * textureScaleY, true);
+                needsClone = false;
+            }
         }
 
-        return mainImage;
+        return (needsClone && !readOnly) ? ImageUtils.copyImage(mainImage) : mainImage;
     }
 
 

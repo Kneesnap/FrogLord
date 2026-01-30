@@ -734,12 +734,13 @@ public class PSXTextureShader {
      * @return flatTextureShadedImage
      */
     public static BufferedImage makeTexturedFlatShadedImage(BufferedImage originalTexture, BufferedImage targetImage, CVector color, boolean enableModulation) {
-        int colorArgb = color.toARGB();
-        if ((colorArgb & 0xFFFFFF) == (UNSHADED_COLOR_ARGB & 0xFFFFFF))
-            return originalTexture;
-
         if (targetImage == null)
             targetImage = new BufferedImage(originalTexture.getWidth(), originalTexture.getHeight(), BufferedImage.TYPE_INT_ARGB);
+
+        int colorArgb = color.toARGB();
+        if ((colorArgb & 0xFFFFFF) == (UNSHADED_COLOR_ARGB & 0xFFFFFF))
+            return ImageUtils.copyImage(originalTexture, targetImage);
+
         int[] rawSourceImage = ImageUtils.getReadOnlyPixelIntegerArray(originalTexture);
         int[] rawTargetImage = ImageUtils.getWritablePixelIntegerArray(targetImage);
         int pixelCount = targetImage.getWidth() * targetImage.getHeight();
