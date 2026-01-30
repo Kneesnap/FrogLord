@@ -26,6 +26,7 @@ import net.highwayfrogs.editor.games.sony.shared.ui.SCGameFileGroupedListViewCom
 import net.highwayfrogs.editor.games.sony.shared.ui.SCMainMenuUIController;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloPadding;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.vram.VloTree;
 import net.highwayfrogs.editor.gui.components.ProgressBarComponent;
 import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
@@ -192,7 +193,7 @@ public abstract class SCGameInstance extends GameInstance {
         super.setupScriptEngine(engine);
         engine.addWrapperTemplates(SCGameData.class, SCGameFile.class, SCGameInstance.class, SCGameObject.class, SCGameConfig.class);
         engine.addWrapperTemplates(SCMath.class, SCUtils.class, MWDFile.class, MWIResourceEntry.class, TextureRemapArray.class, SCChunkedFile.class, SCByteTextureUV.class, LinkedTextureRemap.class);
-        engine.addWrapperTemplates(VloFile.class, VloImage.class, PsxImageBitDepth.class, PsxAbrTransparency.class,
+        engine.addWrapperTemplates(VloFile.class, VloImage.class, VloPadding.class, PsxImageBitDepth.class, PsxAbrTransparency.class,
                 MRModel.class, MRStaticMof.class, MRAnimatedMof.class, WADFile.class, WADEntry.class,
                 MRModelUtils.class, SCImageList.class);
     }
