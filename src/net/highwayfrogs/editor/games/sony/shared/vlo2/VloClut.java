@@ -5,6 +5,7 @@ import lombok.NonNull;
 import net.highwayfrogs.editor.games.psx.PSXClutColor;
 import net.highwayfrogs.editor.games.psx.image.PsxVram;
 import net.highwayfrogs.editor.games.sony.SCGameData.SCSharedGameData;
+import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
@@ -29,6 +30,7 @@ public class VloClut extends SCSharedGameData implements ITextureSource {
     private final List<VloImage> images = new ArrayList<>();
     private final List<VloImage> immutableImages = Collections.unmodifiableList(this.images);
     @Getter boolean registered;
+    @Getter boolean fogEnabled;
     @Getter private short x = -1; // Always in unit form, since the clut colors are always 16 bits each.
     @Getter private short y = -1;
     private PSXClutColor[][] colors;
@@ -43,6 +45,8 @@ public class VloClut extends SCSharedGameData implements ITextureSource {
     public static final int CLUT_SHIFT_X = 4;
     public static final int MAX_CLUT_X = 64 << CLUT_SHIFT_X; // 1024
     public static final int MAX_CLUT_Y = 1024;
+    public static final int CLUT_FOG_HEIGHT = 16;
+    private static final int FOG_COLOR_TARGET_VALUE = 0x88;
 
     public VloClut(@NonNull VloFile vloFile) {
         super(vloFile.getGameInstance());
@@ -87,12 +91,18 @@ public class VloClut extends SCSharedGameData implements ITextureSource {
      * @param width the new width of the clut
      * @param height the new height of the clut
      * @param colors the colors to apply to the clut
+     * @param fogEnabled iff clut fog should be enabled/fog is part of the provided colors
      */
-    public void loadColors(int width, int height, List<PSXClutColor> colors) {
+    public void loadColors(int width, int height, List<PSXClutColor> colors, boolean fogEnabled) {
         if (colors != null && colors.size() != (width * height))
             throw new IllegalArgumentException("Expected " + (width * height) + " colors, but actually got " + colors.size() + ".");
+        if (fogEnabled && height != CLUT_FOG_HEIGHT)
+            throw new IllegalArgumentException("Fog cannot be enabled unless the height is " + CLUT_FOG_HEIGHT + "! (Was: " + height + ")");
+        if (fogEnabled && getGameInstance().getGameType().isBefore(SCGameType.MOONWARRIOR))
+            throw new IllegalArgumentException("Cannot enable fog because is not supported by " + getGameInstance().getGameType().getDisplayName() + ".");
 
         setDimensions(width, height);
+        this.fogEnabled = fogEnabled;
 
         // Loads the colors.
         if (colors != null)
@@ -189,6 +199,22 @@ public class VloClut extends SCSharedGameData implements ITextureSource {
             }
         }
 
+        // Determine if this is a fog-enabled clut.
+        this.fogEnabled = (this.colors.length == CLUT_FOG_HEIGHT);
+        if (this.fogEnabled) {
+            int width = this.colors[0].length;
+            for (int i = 0; i < width; i++) {
+                PSXClutColor color = this.colors[CLUT_FOG_HEIGHT - 1][i];
+                if ((color.getRed() & 0xFF) != FOG_COLOR_TARGET_VALUE
+                        || (color.getGreen() & 0xFF) != FOG_COLOR_TARGET_VALUE
+                        || (color.getBlue() & 0xFF) != FOG_COLOR_TARGET_VALUE) {
+                    this.fogEnabled = false;
+                    break;
+                }
+            }
+        }
+
+        validateClutFogMatchesFrogLordAlgorithm();
         return reader.getIndex();
     }
 
@@ -212,6 +238,42 @@ public class VloClut extends SCSharedGameData implements ITextureSource {
         }
     }
 
+    private void validateClutFogMatchesFrogLordAlgorithm() {
+        if (!this.fogEnabled)
+            return;
+
+        // Versions without clut fog:
+        //  - Anything pre-Moon Warrior.
+        //  - C-12 Final Resistance (All tested builds)
+        if (this.vloFile != null && !this.vloFile.hasClutFogSupport())
+            getLogger().warning("The game/VloFile %s is NOT expected to support clut fog! Why does it appear to be present?", this.vloFile.getFileDisplayName());
+
+        // Validated to not warn against:
+        //  - Moon Warrior
+        //  - MediEvil II Build 0.19
+        //  - MediEvil II Build 1.1Q
+        int width = getWidth();
+        PSXClutColor tempColor = new PSXClutColor();
+        for (int y = 1; y < CLUT_FOG_HEIGHT; y++) {
+            for (int x = 0; x < width; x++) {
+                PSXClutColor startColor = this.colors[0][x];
+                PSXClutColor loadedFogColor = this.colors[y][x];
+                PSXClutColor calculatedFogColor = calculateFogColor(startColor, y, tempColor);
+
+                int diffRed = Math.abs(loadedFogColor.getSmallRed() - calculatedFogColor.getSmallRed());
+                int diffGreen = Math.abs(loadedFogColor.getSmallGreen() - calculatedFogColor.getSmallGreen());
+                int diffBlue = Math.abs(loadedFogColor.getSmallBlue() - calculatedFogColor.getSmallBlue());
+                if (diffRed > 2 || diffGreen > 2 || diffBlue > 2) {
+                    // This check has leeway because the original fog color tables were calculated from colors of higher color accuracy.
+                    // So it is technically not possible to generate exactly the same tables as what were originally found.
+                    // But they're very similar, so it shouldn't even be noticeable.
+                    getLogger().warning("Fog color at (%d, %d) was loaded as %s, but was calculated to be %s instead. (%d, %d, %d)",
+                            x, y, loadedFogColor, calculatedFogColor, diffRed, diffGreen, diffBlue);
+                }
+            }
+        }
+    }
+
     @Override
     public BufferedImage makeImage() {
         final int clutPixelWidth = PsxVram.PSX_VRAM_MAX_PIXELS_PER_UNIT; // Each clut color is 2 bytes, or 1 unit. But we should cover the maximum number of pixels per unit.
@@ -220,7 +282,8 @@ public class VloClut extends SCSharedGameData implements ITextureSource {
         BufferedImage clutImage = new BufferedImage(width * clutPixelWidth, getHeight(), BufferedImage.TYPE_INT_ARGB);
         int[] pixelArray = ImageUtils.getWritablePixelIntegerArray(clutImage);
         for (int i = 0; i < pixelArray.length / clutPixelWidth; i++) {
-            int color = this.colors[i / width][i % width].toARGB(true, null);
+            // enableTransparency false is important to avoid blending with the background color in a PSX Vram display.
+            int color = this.colors[i / width][i % width].toARGB(false, null);
             Arrays.fill(pixelArray, i * clutPixelWidth, ((i + 1) * clutPixelWidth), color);
         }
 
@@ -397,5 +460,48 @@ public class VloClut extends SCSharedGameData implements ITextureSource {
             throw new IllegalArgumentException("clutX value of " + x + " is not divisible by " + (1 << CLUT_SHIFT_X) + "!");
 
         return (short) ((y << 6) | ((x >>> CLUT_SHIFT_X) & 0x3F));
+    }
+
+    /**
+     * Calculates the fog color as seen in cluts starting in Moon Warrior.
+     * NOTE: This method is not able to perfectly match the clut colors seen in original game data.
+     * It is very sliiiightly off (By a single value) if this is used to regenerate cluts from original game data.
+     * This is because they were calculated from more accurate color formats than we have access to.
+     * This restriction only applies to textures loaded from VLO files, when FrogLord imports an external texture, it will use the more accurate color format.
+     * @param input the color to fade
+     * @param fadeProgress how many iterations to fade the color by
+     * @param output the color storage to store the resulting color. If null, a new object will be allocated.
+     * @return fogColor
+     */
+    @SuppressWarnings("ExtractMethodRecommender")
+    public static PSXClutColor calculateFogColor(PSXClutColor input, int fadeProgress, PSXClutColor output) {
+        if (input == null)
+            throw new NullPointerException("input");
+        if (fadeProgress < 0 || fadeProgress >= CLUT_FOG_HEIGHT)
+            throw new IllegalArgumentException("Invalid fadeProgress: " + fadeProgress + ". Valid Range: (0, " + CLUT_FOG_HEIGHT + ")");
+        if (output == null)
+            output = new PSXClutColor();
+
+        int startRed = input.getRed() & 0xFF; // Use getRed() instead of getSmallRed() to allow for more accurate color generation on texture import.
+        int startGreen = input.getGreen() & 0xFF; // The original file data show that accurate color precision must have been used.
+        int startBlue = input.getBlue() & 0xFF; // Because of this, this function cannot byte-match the original color data, even it comes very close.
+
+        // The fade-out is calculated by making all colors linearly shift towards RGB 0x888888 (gray).
+        int fadeRed = fadeColorComponent(startRed, fadeProgress);
+        int fadeGreen = fadeColorComponent(startGreen, fadeProgress);
+        int fadeBlue = fadeColorComponent(startBlue, fadeProgress);
+        int fadeColor = (fadeRed << 16) | (fadeGreen << 8) | fadeBlue;
+        output.fromRGB(fadeColor, input.isStp());
+        return output;
+    }
+
+    private static int fadeColorComponent(int startValue, int progress) {
+        if (startValue > FOG_COLOR_TARGET_VALUE) {
+            return startValue - (((startValue - FOG_COLOR_TARGET_VALUE) * progress) / CLUT_FOG_HEIGHT);
+        } else if (startValue < FOG_COLOR_TARGET_VALUE) {
+            return startValue + (((FOG_COLOR_TARGET_VALUE - startValue) * progress) / CLUT_FOG_HEIGHT);
+        } else {
+            return FOG_COLOR_TARGET_VALUE;
+        }
     }
 }

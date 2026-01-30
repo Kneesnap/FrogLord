@@ -510,6 +510,14 @@ public class VloFile extends SCSharedGameFile {
         return !getGameInstance().getGameType().isAtLeast(SCGameType.MOONWARRIOR);
     }
 
+    /**
+     * Returns true if FrogLord supports clut fog in this file.
+     */
+    public boolean hasClutFogSupport() {
+        SCGameType gameType = getGameInstance().getGameType();
+        return gameType.isAtLeast(SCGameType.MOONWARRIOR) && gameType != SCGameType.C12;
+    }
+
     int addImageToList(VloImage image) {
         if (!isSortingOrderKnown()) {
             int index = this.images.size();

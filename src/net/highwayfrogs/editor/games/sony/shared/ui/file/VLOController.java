@@ -154,6 +154,12 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
         addCheckBox("Transparent Padding", "Generated padding is transparent.\nThis flag has been calculated by FrogLord, and may not match the original Vorg config file.",
                 VloImage::isPaddingTransparent, VloImage::setPaddingTransparent, null);
 
+        // Maybe in the future we will allow the user to control this.
+        // But at the time of writing, this isn't understood enough to allow such a thing.
+        addCalculatedFlag("Enable Fog", "If set, the image will be capable of fading to gray, mimicking fog."
+                + "\nThis is done by generating extra clut rows, progressively closer to the color gray.",
+                image -> image.getParent().hasClutFogSupport(), VloImage::isClutFogEnabled);
+
         // MediEvil Settings
         addLabel("MediEvil Settings:", true, true, VloImage::isMediEvilFlags);
         addSelectionBox("Sort Mode:", MediEvilMapPolygonSortMode.values(),

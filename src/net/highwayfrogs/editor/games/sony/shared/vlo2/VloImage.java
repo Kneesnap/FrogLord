@@ -111,6 +111,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
     @NonNull @Getter private PsxImageBitDepth bitDepth = PsxImageBitDepth.CLUT4; // This is consistent across versions on PC.
     @NonNull @Getter private PsxAbrTransparency abr = PsxAbrTransparency.DEFAULT; // ABR.
     @Getter private VloClut clut;
+    @Getter private boolean clutFogEnabled;
     @Getter private boolean paddingTransparent;
     private int paddingAmount;
     private boolean stpNonBlackBitFlipped; // Pre-MediEvil II: Used to calculate the CLUT STP bit state. TODO: Look at how this works with anyFullyBlackPixelsPresent. (Also consider this value might need some fixing on PSX)
@@ -349,6 +350,8 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
                     this.anyFullyBlackPixelsPresent = true;
             }
         }
+
+        this.clutFogEnabled = this.clut != null && this.clut.isFogEnabled();
 
         int firstClutColor = this.clut != null ? loadClutColor(this.clut.getColor(0)) : getTransparentPaddingPixel();
         generatePadding(this.pixelBuffer, PaddingOperation.VALIDATE, firstClutColor);
@@ -600,15 +603,11 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
             return; // No need to refresh a clut.
         }
 
-        // Determine clut dimensions.
-        int clutWidth = getPaletteWidth(this.bitDepth);
-        int clutHeight = 1;
-        // TODO: Moon Warrior palette stuff.
-
         // Quantize down to the desired image bit depth.
         // This method should only be called after padding has been generated/applied.
         // Padding is capable of adding new colors, so we must quantize only after padding.
         // Colors of different alpha must not be merged together as it would break STP bits.
+        int clutWidth = getPaletteWidth(this.bitDepth);
         if (clutWidth > 0)
             OctreeQuantizer.quantizeImage(this.pixelBuffer, clutWidth, false);
             //this.pixelBuffer = MedianCutQuantizer.quantizeARGB8888Buffer(this.pixelBuffer, colorCount);
@@ -624,11 +623,6 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
                 newColors.add(color.clone());
         }
 
-        // Validate there are not too many colors!
-        int maxColors = (clutWidth * clutHeight);
-        if (newColors.size() > maxColors) // This should not happen, it means an invalid image has been applied.
-            throw new RuntimeException("Tried to save invalid image data (" + this + ") which contained too many colors for its bitDepth (" + this.bitDepth + "). [Max Allowed Colors: " + maxColors + ", Actual Colors: " + newColors.size() + "]");
-
         // Sort colors so we can equality-test clut colors.
         // Do NOT change this sorting order without also fixing replaceImage()'s firstClutColor calculation.
         newColors.sort(Comparator.comparingInt(this::loadClutColor));
@@ -636,17 +630,37 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         // For any unfilled part of the clut, fill it with black.
         PSXClutColor unused = new PSXClutColor();
         unused.setStp(calculateExpectedStpBitForBlack());
-        while (maxColors > newColors.size())
+        while (clutWidth > newColors.size())
             newColors.add(unused.clone());
+
+        // Generate fog.
+        int clutHeight = 1;
+        if (this.clutFogEnabled) {
+            clutHeight = VloClut.CLUT_FOG_HEIGHT;
+
+            // Validate there are not too many colors!
+            if (newColors.size() > clutWidth) // This should not happen, it means an invalid image has been applied.
+                throw new RuntimeException("Tried to save invalid image data (" + this + ") which contained too many colors for its bitDepth (" + this.bitDepth + "). [Max Allowed Colors: " + clutWidth + ", Actual Colors: " + newColors.size() + "]");
+
+            // Generate fog colors.
+            for (int row = 1; row < VloClut.CLUT_FOG_HEIGHT; row++)
+                for (int column = 0; column < clutWidth; column++)
+                    newColors.add(VloClut.calculateFogColor(newColors.get(column), row, null));
+        }
+
+        // Validate there are not too many colors!
+        int maxColors = (clutWidth * clutHeight);
+        if (newColors.size() > maxColors) // This should not happen, it means an invalid image has been applied.
+            throw new RuntimeException("Tried to save invalid image data (" + this + ") which contained too many colors for its bitDepth (" + this.bitDepth + "). [Max Allowed Colors: " + maxColors + ", Actual Colors: " + newColors.size() + "]");
 
         VloClut foundClut = clutList.getClut(newColors);
         if (foundClut != null) {
             setClut(foundClut);
         } else {
             VloClut newClut = this.clut; // Use previous clut if possible
-            if (newClut == null || newClut.getImages().size() > 1 || clutWidth > newClut.getWidth() || clutHeight > newClut.getHeight())
+            if (newClut == null || newClut.getImages().size() > 1 || clutWidth > newClut.getWidth() || clutHeight > newClut.getHeight() || this.clutFogEnabled != newClut.isFogEnabled())
                 newClut = new VloClut(this.parent);
-            newClut.loadColors(clutWidth, clutHeight, newColors);
+            newClut.loadColors(clutWidth, clutHeight, newColors, this.clutFogEnabled);
             setClut(newClut); // Registering the clut should generate its position.
         }
     }
