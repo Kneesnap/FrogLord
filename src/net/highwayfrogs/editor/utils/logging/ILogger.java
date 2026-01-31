@@ -136,10 +136,10 @@ public interface ILogger {
      * @param   thrown  The Throwable that is being thrown.
      */
     default void throwing(String sourceClass, String sourceMethod, Throwable thrown) {
-        if (!isLoggable(Level.FINER))
+        if (!isLoggable(Level.SEVERE))
             return;
 
-        LogRecord lr = createAndSetupLogRecord(Level.FINER, "THROW");
+        LogRecord lr = createAndSetupLogRecord(Level.SEVERE, "THROW");
         lr.setSourceClassName(sourceClass);
         lr.setSourceMethodName(sourceMethod);
         lr.setThrown(thrown);
