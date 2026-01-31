@@ -8,6 +8,7 @@ import net.highwayfrogs.editor.games.sony.medievil2.map.MediEvil2Map;
 import net.highwayfrogs.editor.games.sony.shared.TextureRemapArray;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile;
 import net.highwayfrogs.editor.games.sony.shared.mwd.WADFile.WADEntry;
+import net.highwayfrogs.editor.games.sony.shared.mwd.mwi.MWIResourceEntry;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
@@ -36,10 +37,10 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
     @Getter private String levelRelocName;
     @Getter private final List<MediEvil2LevelSectionDefinition> levelSections = new ArrayList<>();
 
-    // Cached data.
-    private WADFile cachedWadFile;
-    private VloFile cachedVloFile;
-    private PSXTIMFile cachedTimFile;
+    // Cached data. Use MWIResourceEntries so if these files are replaced, their new object instances will be returned.
+    private MWIResourceEntry cachedWadFileEntry;
+    private MWIResourceEntry cachedVloFileEntry;
+    private MWIResourceEntry cachedTimFileEntry;
 
     private static final int SIZE_IN_BYTES = 0x6C;
 
@@ -150,30 +151,39 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
      * Gets the .VLO file associated with this entry, if it exists.
      */
     public VloFile getVloFile() {
-        if (this.cachedVloFile != null && this.cachedVloFile.getFileResourceId() == this.vloResourceId)
-            return this.cachedVloFile;
+        if (this.vloResourceId <= 0)
+            return null;
 
-        return this.vloResourceId > 0 ? this.cachedVloFile = getGameInstance().getGameFile(this.vloResourceId) : null;
+        if (this.cachedVloFileEntry == null || this.cachedVloFileEntry.getResourceId() != this.vloResourceId)
+            this.cachedVloFileEntry = getGameInstance().getResourceEntryByID(this.vloResourceId);
+
+        return this.cachedVloFileEntry != null ? (VloFile) this.cachedVloFileEntry.getGameFile() : null;
     }
 
     /**
      * Gets the .TIM file associated with this entry, if it exists.
      */
     public PSXTIMFile getTimFile() {
-        if (this.cachedTimFile != null && this.cachedTimFile.getFileResourceId() == this.timResourceId)
-            return this.cachedTimFile;
+        if (this.timResourceId <= 0)
+            return null;
 
-        return this.timResourceId > 0 ? this.cachedTimFile = getGameInstance().getGameFile(this.timResourceId) : null;
+        if (this.cachedTimFileEntry == null || this.cachedTimFileEntry.getResourceId() != this.timResourceId)
+            this.cachedTimFileEntry = getGameInstance().getResourceEntryByID(this.timResourceId);
+
+        return this.cachedTimFileEntry != null ? (PSXTIMFile) this.cachedTimFileEntry.getGameFile() : null;
     }
 
     /**
      * Gets the .WAD file associated with this entry, if it exists.
      */
     public WADFile getWadFile() {
-        if (this.cachedWadFile != null && this.cachedWadFile.getFileResourceId() == this.wadResourceId)
-            return this.cachedWadFile;
+        if (this.wadResourceId <= 0)
+            return null;
 
-        return this.wadResourceId > 0 ? this.cachedWadFile = getGameInstance().getGameFile(this.wadResourceId) : null;
+        if (this.cachedWadFileEntry == null || this.cachedWadFileEntry.getResourceId() != this.wadResourceId)
+            this.cachedWadFileEntry = getGameInstance().getResourceEntryByID(this.wadResourceId);
+
+        return this.cachedWadFileEntry != null ? (WADFile) this.cachedWadFileEntry.getGameFile() : null;
     }
 
     /**
@@ -190,8 +200,8 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
         private TextureRemapArray textureRemap;
 
         // Cached data.
-        private MediEvil2Map cachedMapFile;
-        private VloFile cachedVloFile;
+        private MWIResourceEntry cachedMapEntry;
+        private MWIResourceEntry cachedVloEntry; // TODO: Should probably use MWI entries instead.
 
         private static final int SIZE_IN_BYTES = 0x44; // (68)
 
@@ -235,35 +245,41 @@ public class MediEvil2LevelDefinition extends SCGameData<MediEvil2GameInstance> 
 
         @Override
         public VloFile getVloFile() {
-            if (this.cachedVloFile != null && this.cachedVloFile.getFileResourceId() == this.vloResourceId)
-                return this.cachedVloFile;
+            if (this.vloResourceId <= 0)
+                return null;
 
-            return this.vloResourceId > 0 ? this.cachedVloFile = getGameInstance().getGameFile(this.vloResourceId) : null;
+            if (this.cachedVloEntry == null || this.cachedVloEntry.getResourceId() != this.vloResourceId)
+                this.cachedVloEntry = getGameInstance().getResourceEntryByID(this.vloResourceId);
+
+            return this.cachedVloEntry != null ? (VloFile) this.cachedVloEntry.getGameFile() : null;
         }
 
         @Override
         public MediEvil2Map getMapFile() {
-            if (this.cachedMapFile != null && this.cachedMapFile.getFileResourceId() == this.mapResourceId)
-                return this.cachedMapFile;
+            if (this.cachedMapEntry != null && this.cachedMapEntry.getResourceId() == this.mapResourceId)
+                return (MediEvil2Map) this.cachedMapEntry.getGameFile();
 
+            MediEvil2Map mapFile = null;
             SCGameFile<?> gameFile =  this.mapResourceId > 0 ? getGameInstance().getGameFile(this.mapResourceId) : null;
             if (gameFile instanceof MediEvil2Map) {
-                return this.cachedMapFile = (MediEvil2Map) gameFile;
+                mapFile = (MediEvil2Map) gameFile;
             } else if (gameFile instanceof WADFile) {
                 WADFile wadFile = (WADFile) gameFile;
                 for (int i = wadFile.getFiles().size() - 1; i >= 0; i--) {
                     SCGameFile<?> wadEntryFile = wadFile.getFiles().get(i).getFile();
                     if (wadEntryFile instanceof MediEvil2Map)
-                        return this.cachedMapFile = (MediEvil2Map) wadEntryFile;
+                        mapFile = (MediEvil2Map) wadEntryFile;
                 }
 
                 // Didn't find it in the WAD file.
-                return null;
             } else if (gameFile == null) {
                 return null; // No file.
             } else {
                 throw new RuntimeException("Don't know how to interpret " + Utils.getSimpleName(gameFile) + " as a map file.");
             }
+
+            this.cachedMapEntry = mapFile != null ? mapFile.getIndexEntry() : null;
+            return mapFile;
         }
     }
 }

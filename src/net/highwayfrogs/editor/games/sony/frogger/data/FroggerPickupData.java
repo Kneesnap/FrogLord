@@ -100,8 +100,7 @@ public class FroggerPickupData extends SCGameData<FroggerGameInstance> {
     public static class PickupAnimationFrame extends SCGameObject<FroggerGameInstance> {
         private final FroggerPickupData pickupData;
         private final long texturePointer;
-        private boolean resolvedTextures;
-        private VloImage resolvedImage;
+        private VloImage resolvedImage; // TODO: Hm. Test if still valid.
         private BufferedImage awtPreviewImage;
         private Image fxPreviewImage;
         private PhongMaterial highlightedMaterial;
@@ -119,19 +118,26 @@ public class FroggerPickupData extends SCGameData<FroggerGameInstance> {
         }
 
         private void tryResolveTextures() {
-            if (this.resolvedTextures)
+            // Identify the image used for this frame.
+            VloImage image = getGameInstance().getImageFromPointer(this.texturePointer);
+            if  (image == null)
                 return;
 
-            this.resolvedTextures = true;
+            if (image != this.resolvedImage) {
+                this.awtPreviewImage = null;
+                this.fxPreviewImage = null;
+            }
 
-            // Identify the image used for this frame.
-            this.resolvedImage = getGameInstance().getImageFromPointer(this.texturePointer);
-            if (this.resolvedImage == null)
-                return; // This can be null in the EU PS1 demo. (It may not have properly been setup when compiled.)
+            this.resolvedImage = image;
 
             // Create a preview image from the resolved image.
             // This attempts to apply glow effect, transparency, etc.
-            this.awtPreviewImage = this.resolvedImage.toBufferedImage(FLY_SPRITE_IMAGE_OPTIONS);
+            // This is cached.
+            BufferedImage awtPreviewImage = this.resolvedImage.toBufferedImage(FLY_SPRITE_IMAGE_OPTIONS);;
+            if (awtPreviewImage == this.awtPreviewImage)
+                return; // No difference since last time.
+
+            this.awtPreviewImage = awtPreviewImage;
 
             // Scale the image to avoid transparency problems at the edges.
             int newWidth = (int) (this.awtPreviewImage.getWidth() * ENTITY_FLY_SPRITE_SCALE_SIZE);
