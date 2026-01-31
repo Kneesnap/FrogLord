@@ -191,7 +191,7 @@ public class FrogLordApplication extends Application {
         // Setup System.out/System.err console handler.
         ConsoleOutputHandler consoleHandler = new ConsoleOutputHandler();
         consoleHandler.setFormatter(formatter);
-        consoleHandler.setLevel(Level.ALL);
+        consoleHandler.setLevel(Level.CONFIG); // Previously, this was set to all, and had performance impact seen in a profiler due to the amount of messages seen.
         logger.addHandler(consoleHandler);
 
         // Setup UI Handler.

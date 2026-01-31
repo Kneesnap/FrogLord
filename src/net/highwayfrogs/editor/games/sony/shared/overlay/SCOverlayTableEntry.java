@@ -51,7 +51,7 @@ public class SCOverlayTableEntry extends SCSharedGameData {
 
         reader.skipBytesRequireEmpty(EMPTY_BYTES);
         if (this.filePath != null || this.overlayStartPointer != 0)
-            getLogger().fine(" - Overlay Entry '%s', Address: 0x%X", this.filePath, this.overlayStartPointer);
+            getLogger().info(" - Overlay Entry '%s', Address: 0x%X", this.filePath, this.overlayStartPointer);
     }
 
     @Override
