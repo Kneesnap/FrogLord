@@ -448,6 +448,16 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
                 getLogger().warning(" CLUT Color %d: [STP: %b, Full Black: %b], %s", i, color.isStp(), color.isFullBlack(), color);
             }
         }
+
+        // false, false, DEFAULT
+        // true, true, DEFAULT
+        if (foundFirstBlackStpBit && this.expectedStpBlackBitPsx == testFlag(FLAG_BLACK_IS_TRANSPARENT)) // TODO: TOSS or maybe keep as a checkup, idk -> It looks like perhaps it's gifs which this doesn't work with
+            getLogger().info("Expected Black STP: %b, Translucent: %b [%s]", this.expectedStpBlackBitPsx, testFlag(FLAG_BLACK_IS_TRANSPARENT), this.abr);
+
+        // false, true, COMBINE
+        if (foundFirstNonBlackStpBit && this.expectedStpNonBlackBitPsx != testFlag(FLAG_TRANSLUCENT)) // TODO: TOSS or maybe keep as a checkup, idk -> It looks like perhaps it's gifs which this doesn't work with
+            getLogger().info("Expected Non-Black STP: %b, Translucent: %b [%s]", this.expectedStpNonBlackBitPsx, testFlag(FLAG_TRANSLUCENT), this.abr);
+
     }
 
     @Override
@@ -1327,7 +1337,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
             }
 
             // Apply to image.
-            setFlag(FLAG_BLACK_IS_TRANSPARENT, enableTransparency);
+            setFlag(FLAG_BLACK_IS_TRANSPARENT, enableTransparency); // TODO: Hmm.
             for (int i = 0; i < this.pixelBuffer.length; i++) {
                 int color = this.pixelBuffer[i];
                 if (ColorUtils.getAlphaInt(color) <= 127) {
@@ -1475,8 +1485,9 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
             if (enablePsxSemiTransparent || enableTransparency) {
                 for (int i = 0; i < pixelArray.length; i++)
                     pixelArray[i] = savePsxPixelColor(pixelArray[i], enablePsxSemiTransparent);
-            } else if (this.anyNonOpaquePixelsPresent) {
+            } else {
                 // PSX version should use full alpha if transparency is disabled.
+                // Replace all alpha codes with full alpha.
                 for (int i = 0; i < pixelArray.length; i++)
                     pixelArray[i] |= 0xFF000000; // Make the pixel fully opaque.
             }
