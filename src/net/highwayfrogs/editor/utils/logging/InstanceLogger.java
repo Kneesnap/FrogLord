@@ -81,12 +81,12 @@ public abstract class InstanceLogger implements ILogger {
         private final String overrideName;
         private final String overrideInfo;
 
-        public BasicWrappedLogger(Logger logger, String overrideName) {
-            this(logger, overrideName, null);
+        public BasicWrappedLogger(GameInstance gameInstance, Logger logger, String overrideName) {
+            this(gameInstance, logger, overrideName, null);
         }
 
-        public BasicWrappedLogger(Logger logger, String overrideName, String overrideInfo) {
-            super(logger);
+        public BasicWrappedLogger(GameInstance gameInstance, Logger logger, String overrideName, String overrideInfo) {
+            super(gameInstance, logger);
             this.overrideName = overrideName;
             this.overrideInfo = overrideInfo;
         }
@@ -101,12 +101,12 @@ public abstract class InstanceLogger implements ILogger {
             this.overrideInfo = overrideInfo;
         }
 
-        public BasicWrappedLogger(String overrideName) {
-            this(overrideName, null);
+        public BasicWrappedLogger(GameInstance gameInstance, String overrideName) {
+            this(gameInstance, overrideName, null);
         }
 
-        public BasicWrappedLogger(String overrideName, String overrideInfo) {
-            super();
+        public BasicWrappedLogger(GameInstance gameInstance, String overrideName, String overrideInfo) {
+            super(gameInstance);
             this.overrideName = overrideName;
             this.overrideInfo = overrideInfo;
         }
@@ -141,29 +141,34 @@ public abstract class InstanceLogger implements ILogger {
      * The only advantage to using this over BasicWrappedLogger is that it allows for the parent logger to change.
      */
     public static class AppendInfoLoggerWrapper extends BasicWrappedLogger {
+        private final GameInstance gameInstance;
         private final String template;
 
         public static final String TEMPLATE_BAR_SEPARATOR = "{original}|{override}";
         public static final String TEMPLATE_COMMA_SEPARATOR = "{original},{override}";
         public static final String TEMPLATE_OVERRIDE_AT_ORIGINAL = "{override}@{original}";
 
-        public AppendInfoLoggerWrapper(Logger logger, String overrideName, @NonNull String template) {
-            super(logger, overrideName);
+        public AppendInfoLoggerWrapper(GameInstance gameInstance, Logger logger, String overrideName, @NonNull String template) {
+            super(gameInstance, logger, overrideName);
+            this.gameInstance = gameInstance;
             this.template = template;
         }
 
-        public AppendInfoLoggerWrapper(Logger logger, String overrideName, String overrideInfo, @NonNull String template) {
-            super(logger, overrideName, overrideInfo);
+        public AppendInfoLoggerWrapper(GameInstance gameInstance, Logger logger, String overrideName, String overrideInfo, @NonNull String template) {
+            super(gameInstance, logger, overrideName, overrideInfo);
+            this.gameInstance = gameInstance;
             this.template = template;
         }
 
         public AppendInfoLoggerWrapper(ILogger logger, String overrideName, @NonNull String template) {
             super(logger, overrideName);
+            this.gameInstance = logger instanceof IGameInstanceLogger ? ((IGameInstanceLogger) logger).getGameInstance() : null;
             this.template = template;
         }
 
         public AppendInfoLoggerWrapper(ILogger logger, String overrideName, String overrideInfo, @NonNull String template) {
             super(logger, overrideName, overrideInfo);
+            this.gameInstance = logger instanceof IGameInstanceLogger ? ((IGameInstanceLogger) logger).getGameInstance() : null;
             this.template = template;
         }
 
@@ -196,22 +201,33 @@ public abstract class InstanceLogger implements ILogger {
                 return originalInfo;
             }
         }
+
+        @Override
+        public LogRecord createLogRecord(Level level, String message) {
+            return new GameInstanceLogRecord(this.gameInstance, level, message);
+        }
     }
 
     /**
      * Allows wrapping a logger.
      */
-    public static class WrappedLogger extends InstanceLogger {
-        public WrappedLogger(Logger logger) {
+    @Getter
+    public static class WrappedLogger extends InstanceLogger implements IGameInstanceLogger {
+        private final GameInstance gameInstance;
+
+        public WrappedLogger(GameInstance gameInstance, Logger logger) {
             super(logger);
+            this.gameInstance = gameInstance;
         }
 
         public WrappedLogger(ILogger logger) {
             super(logger);
+            this.gameInstance = logger instanceof IGameInstanceLogger ? ((IGameInstanceLogger) logger).getGameInstance() : null;
         }
 
-        public WrappedLogger() {
+        public WrappedLogger(GameInstance gameInstance) {
             super();
+            this.gameInstance = gameInstance;
         }
 
         @Override
@@ -223,6 +239,15 @@ public abstract class InstanceLogger implements ILogger {
                 return wrappedInfo != null ? wrappedInfo : this.wrappedLogger.getName();
             } else {
                 return null;
+            }
+        }
+
+        @Override
+        public LogRecord createLogRecord(Level level, String message) {
+            if (this.gameInstance != null) {
+                return new GameInstanceLogRecord(this.gameInstance, level, message);
+            } else {
+                return super.createLogRecord(level, message);
             }
         }
     }
@@ -278,7 +303,7 @@ public abstract class InstanceLogger implements ILogger {
      * Represents a logger for a particular game instance.
      */
     @Getter
-    public static abstract class GameInstanceLogger extends InstanceLogger {
+    public static abstract class GameInstanceLogger extends InstanceLogger implements IGameInstanceLogger {
         private final GameInstance gameInstance;
 
         private static final Logger NULL_LOGGER = Logger.getLogger("NullGameInstance");
@@ -292,6 +317,13 @@ public abstract class InstanceLogger implements ILogger {
         public LogRecord createLogRecord(Level level, String message) {
             return new GameInstanceLogRecord(this.gameInstance, level, message);
         }
+    }
+
+    /**
+     * Represents an ILogger which has a GameInstance
+     */
+    public interface IGameInstanceLogger {
+        GameInstance getGameInstance();
     }
 
     @Getter

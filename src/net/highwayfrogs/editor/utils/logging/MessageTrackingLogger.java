@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.utils.logging;
 
 
 import javafx.scene.control.Alert.AlertType;
+import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.StringUtils;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.WrappedLogger;
@@ -23,12 +24,12 @@ public class MessageTrackingLogger extends WrappedLogger {
         super(wrappedLogger);
     }
 
-    public MessageTrackingLogger(Logger wrappedLogger) {
-        super(wrappedLogger);
+    public MessageTrackingLogger(GameInstance gameInstance, Logger wrappedLogger) {
+        super(gameInstance, wrappedLogger);
     }
 
-    public MessageTrackingLogger() {
-        super();
+    public MessageTrackingLogger(GameInstance gameInstance) {
+        super(gameInstance);
     }
 
     @Override

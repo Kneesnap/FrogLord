@@ -54,7 +54,7 @@ public class Utils {
         if (instanceLogger != null)
             return instanceLogger;
 
-        return instanceLogger = new WrappedLogger(getLogger());
+        return instanceLogger = new WrappedLogger(null, getLogger());
     }
 
     /**

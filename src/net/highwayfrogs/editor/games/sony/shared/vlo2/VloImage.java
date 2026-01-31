@@ -84,8 +84,7 @@ import java.util.logging.Level;
  *   -> Clean out various warnings.
  *   -> Allow selecting other entries. (Cluts, entries, etc)
  *    -> Show information like which images the clut is used by, what cluts an image use, etc.
- *  4) Look at the issue we have with game-specific loggers, and how it causes UI synchronization lag.
- *  5) Replacing images in the UI like level names and level screenshots should update the UI.
+ *  4) Replacing images in the UI like level names and level screenshots should update the UI.
  * Created by Kneesnap on 8/30/2018.
  */
 public class VloImage extends SCSharedGameData implements Cloneable, ITextureSource, ICollectionViewEntry {
