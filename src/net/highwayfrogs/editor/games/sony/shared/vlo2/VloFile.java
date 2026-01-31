@@ -249,6 +249,21 @@ public class VloFile extends SCSharedGameFile {
     public void onImport(SCGameFile<?> oldFile, String oldFileName, String importedFileName) {
         super.onImport(oldFile, oldFileName, importedFileName);
 
+        // Stop tracking old images.
+        if (oldFile instanceof VloFile) {
+            VloFile oldVlo = (VloFile) oldFile;
+            for (int i = 0; i < oldVlo.images.size(); i++) {
+                VloImage image = oldVlo.images.get(i);
+                getArchive().stopTrackingImageByTextureId(image, image.getTextureId());
+            }
+        }
+
+        // Track texture ids.
+        for (int i = 0; i < this.images.size(); i++) {
+            VloImage image = this.images.get(i);
+            getArchive().startTrackingImageByTextureId(image, image.getTextureId());
+        }
+
         VloTree tree = getGameInstance().getVloTree();
         VloTreeNode node = tree != null ? tree.getNode(this) : null;
         if (node != null) {
@@ -313,9 +328,12 @@ public class VloFile extends SCSharedGameFile {
      * @return gameImage
      */
     public VloImage getImageByTextureId(int textureId, boolean errorIfFail) {
-        for (VloImage testImage : getImages())
+        // Using for-each loop/iterator right here was profiled and created an unreasonable amount of memory allocation due to how frequently this is called.
+        for (int i = 0; i < this.images.size(); i++) {
+            VloImage testImage = this.images.get(i);
             if (testImage.getTextureId() == textureId)
                 return testImage;
+        }
 
         if (errorIfFail)
             throw new RuntimeException("Could not find a texture with the id: " + textureId + ".");
@@ -435,6 +453,7 @@ public class VloFile extends SCSharedGameFile {
             newImage.setAbr(abr);
 
         addImageToList(newImage);
+        getArchive().startTrackingImageByTextureId(newImage, textureId);
 
         // Try to add to the VloTree.
         markDirty();
@@ -480,6 +499,8 @@ public class VloFile extends SCSharedGameFile {
     public boolean removeImage(VloImage image) {
         if (!removeImageFromList(image))
             return false;
+
+        getArchive().stopTrackingImageByTextureId(image, image.getTextureId());
 
         // Stop tracking the image in its clut.
         // This image object will not be re-added (instead, a new image object would be created), so this seems safe.

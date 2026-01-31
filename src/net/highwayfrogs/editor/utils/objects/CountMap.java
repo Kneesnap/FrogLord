@@ -1,8 +1,7 @@
 package net.highwayfrogs.editor.utils.objects;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Represents an integer count map.
@@ -157,5 +156,18 @@ public class CountMap<T> {
         if (counter.decrement())
             this.countMap.remove(key, counter);
         return counter.getCounter();
+    }
+
+    /**
+     * Gets the key with the maximum value, or any of the maximum keys if multiple contain the same amount.
+     * @return maxKey
+     */
+    public T maxKey() {
+        if (this.countMap.isEmpty())
+            return null;
+
+        List<Entry<T, IntegerCounter>> entries = new ArrayList<>(this.countMap.entrySet());
+        entries.sort(Comparator.comparingInt(entry -> entry.getValue().getCounter()));
+        return entries.get(entries.size() - 1).getKey();
     }
 }

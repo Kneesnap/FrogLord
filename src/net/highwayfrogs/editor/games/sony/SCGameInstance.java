@@ -39,6 +39,7 @@ import net.highwayfrogs.editor.utils.data.reader.FileSource;
 import net.highwayfrogs.editor.utils.data.writer.ArrayReceiver;
 import net.highwayfrogs.editor.utils.data.writer.DataWriter;
 import net.highwayfrogs.editor.utils.data.writer.FixedArrayReceiver;
+import net.highwayfrogs.editor.utils.objects.CountMap;
 import net.highwayfrogs.editor.utils.objects.IndexBitArray;
 
 import java.io.File;
@@ -292,7 +293,17 @@ public abstract class SCGameInstance extends GameInstance {
             return getMainArchive().getFileByName(searchFileName);
         }
 
-        return null;
+        // Check which VLO contains the most number of textures found on the model, and use that.
+        List<Short> textureIds = model.getUsedTextureIds();
+        CountMap<VloFile> countMap = new CountMap<>();
+        for (int i = 0; i < textureIds.size(); i++) {
+            short textureId = textureIds.get(i);
+            List<VloImage> images = this.mainArchive.getImagesByTextureId(textureId);
+            for (int j = 0; j < images.size(); j++)
+                countMap.addAndGet(images.get(j).getParent());
+        }
+
+        return countMap.maxKey();
     }
 
     /**
@@ -510,6 +521,12 @@ public abstract class SCGameInstance extends GameInstance {
     public void onVloTextureIdChange(VloImage image, short oldTextureId, short newTextureId) {
         if (image == null)
             throw new NullPointerException("image");
+
+        // Update texture tracking.
+        if (oldTextureId >= 0 && oldTextureId != newTextureId)
+            this.mainArchive.stopTrackingImageByTextureId(image, oldTextureId);
+        if (newTextureId >= 0 && oldTextureId != newTextureId)
+            this.mainArchive.startTrackingImageByTextureId(image, newTextureId);
 
         // Point remap texture IDs to the new texture ID.
         VloFile vloFile = image.getParent();
@@ -800,6 +817,11 @@ public abstract class SCGameInstance extends GameInstance {
             for (VloImage image : vloArchive.getImages())
                 if (image.getTextureId() > this.maximumTextureId)
                     this.maximumTextureId = image.getTextureId();
+
+        // Populate texture lists.
+        for (VloFile vloArchive : mwdFile.getAllFiles(VloFile.class))
+            for (VloImage image : vloArchive.getImages())
+                this.mainArchive.startTrackingImageByTextureId(image, image.getTextureId());
 
         // Another option for this is that texture remap tables appear to occur immediately after the texture array.
         // In the interest of cross-game compatibility, it was easier to do it this way.

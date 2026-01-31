@@ -27,10 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -39,10 +36,10 @@ import java.util.function.Function;
  * Shared between all Millennium games, and contains pretty much all non-sound non-code game assets in their games.
  * Created by Kneesnap on 8/10/2018.
  */
-@Getter
 public class MWDFile extends SCSharedGameData {
-    private String buildNotes;
-    private final List<SCGameFile<?>> files = new ArrayList<>();
+    @Getter private String buildNotes;
+    @Getter private final List<SCGameFile<?>> files = new ArrayList<>();
+    private List<VloImage>[] imagesByTextureId; // TODO: Ensure this is kept up to date.
 
     public static final String FILE_SIGNATURE = "DAWM";
     public static final int BUILD_NOTES_START_OFFSET = 2 * Constants.INTEGER_SIZE;
@@ -539,12 +536,14 @@ public class MWDFile extends SCSharedGameData {
      * @return gameImage
      */
     public VloImage getImageByTextureId(int textureId) {
-        for (VloFile vlo : getAllFiles(VloFile.class))
-            for (VloImage testImage : vlo.getImages())
-                if (testImage.getTextureId() == textureId)
-                    return testImage;
+        if (this.imagesByTextureId == null || textureId < 0 || textureId > getGameInstance().getMaximumTextureId())
+            return null;
 
-        return null;
+        List<VloImage> images = this.imagesByTextureId[textureId];
+        if (images == null || images.isEmpty())
+            return null;
+
+        return images.get(0);
     }
 
     /**
@@ -553,13 +552,51 @@ public class MWDFile extends SCSharedGameData {
      * @return gameImage
      */
     public List<VloImage> getImagesByTextureId(int textureId) {
-        List<VloImage> results = new ArrayList<>();
+        if (this.imagesByTextureId == null || textureId < 0 || textureId > getGameInstance().getMaximumTextureId())
+            return Collections.emptyList();
 
-        for (VloFile vlo : getAllFiles(VloFile.class))
-            for (VloImage testImage : vlo.getImages())
-                if (testImage.getTextureId() == textureId)
-                    results.add(testImage);
+        List<VloImage> images = this.imagesByTextureId[textureId];
+        return images != null ? Collections.unmodifiableList(images) : Collections.emptyList();
+    }
 
-        return results;
+    /**
+     * Stops tracking an image by a particular texture ID.
+     * @param image the image which is currently tracked, but should not be tracked anymore.
+     * @param textureId the textureId to stop tracking for
+     */
+    public void stopTrackingImageByTextureId(VloImage image, short textureId) {
+        if (textureId < 0 || textureId > getGameInstance().getMaximumTextureId())
+            throw new IllegalArgumentException("Invalid textureId: " + textureId);
+        if (this.imagesByTextureId == null)
+            throw new IllegalStateException("Cannot stop tracking images before tracking has begun.");
+
+        List<VloImage> oldImageList = this.imagesByTextureId[textureId];
+        if (oldImageList != null && oldImageList.remove(image) && oldImageList.isEmpty())
+            this.imagesByTextureId[textureId] = null;
+    }
+
+    /**
+     * Stops tracking an image by a particular texture ID.
+     * @param image the image which is currently tracked, but should not be tracked anymore.
+     * @param textureId the textureId to start tracking for
+     */
+    public void startTrackingImageByTextureId(VloImage image, short textureId) {
+        if (textureId < 0 || textureId > getGameInstance().getMaximumTextureId())
+            throw new IllegalArgumentException("Invalid textureId: " + textureId);
+
+        // Setup tracking if not setup yet.
+        if (this.imagesByTextureId == null) {
+            if (getGameInstance().getMaximumTextureId() <= 0)
+                throw new IllegalStateException("Cannot start tracking images before the maximumTextureId is known.");
+
+            //noinspection unchecked
+            this.imagesByTextureId = new List[getGameInstance().getMaximumTextureId() + 1];
+        }
+
+        List<VloImage> newImageList = this.imagesByTextureId[textureId];
+        if (newImageList == null)
+            this.imagesByTextureId[textureId] = newImageList = new ArrayList<>();
+
+        newImageList.add(image);
     }
 }

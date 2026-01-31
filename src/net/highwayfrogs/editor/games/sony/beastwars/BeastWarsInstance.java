@@ -21,6 +21,8 @@ import net.highwayfrogs.editor.utils.data.reader.DataReader;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Represents a loaded instance of the Beast Wars: Transformers game files.
@@ -73,17 +75,51 @@ public class BeastWarsInstance extends SCGameInstance {
         readModelRemaps(exeReader);
     }
 
+    private static final Pattern WAD_PATTERN_RESCUE_LEVEL = Pattern.compile("RM_LEV_(\\d)");
+    private static final Pattern WAD_PATTERN_RESCUE_SHIP = Pattern.compile("RM_SHIP([12])");
+    private static final Pattern WAD_PATTERN_TESTMAP = Pattern.compile("TESTMAP(\\d)");
+    private static final Pattern WAD_PATTERN_MULTIPLAYER_MAP = Pattern.compile("MP(\\d)_MAP");
+    private static final Pattern WAD_PATTERN_MAP_TERRAIN = Pattern.compile("MP(\\d)_([PM])_(01|02|03|IB|OB)");
+    private static final Pattern WAD_PATTERN_TEST_MAP_GAME_MODEL = Pattern.compile("TESTMAP(\\d)_GM");
+    private static final Pattern WAD_PATTERN_MAP_SHARE_GAME_MODEL = Pattern.compile("MS(\\d)_([PM])_GM");
+    private static final Pattern WAD_PATTERN_TEST_MAP_DETAIL = Pattern.compile("MD_TESTMAP(\\d)");
+    private static final Pattern WAD_PATTERN_MPLAYER = Pattern.compile("MPLAYER(\\d)");
+    private static final Pattern WAD_PATTERN_MAP_DETAIL = Pattern.compile("MD(\\d)_([PM])_(01|02|03|IB|OB)");
+
     @Override
     protected VloFile resolveMainVlo(MRModel model) {
         WADFile wadFile = model.getParentWadFile();
         if (wadFile != null) {
-            String searchFileName = FileUtils.stripExtension(wadFile.getFileDisplayName()) + ".VLO";
-            if (searchFileName.startsWith("MD"))
-                searchFileName = "MS" + searchFileName.substring(2);
+            String wadFileName = FileUtils.stripExtension(wadFile.getFileDisplayName());
 
-            VloFile foundVlo = getMainArchive().getFileByName(searchFileName);
-            if (foundVlo != null)
-                return foundVlo;
+            Matcher matcher;
+            String searchFileName = null;
+            if (WAD_PATTERN_RESCUE_LEVEL.matcher(wadFileName).matches()) {
+                searchFileName = wadFileName;
+            } else if ((matcher = WAD_PATTERN_RESCUE_SHIP.matcher(wadFileName)).matches()) {
+                if ("1".equals(matcher.group(1))) {
+                    searchFileName = "RM_PREDSHIP";
+                } else {
+                    searchFileName = "RM_MAXSHIP";
+                }
+            } else if ((matcher = WAD_PATTERN_MULTIPLAYER_MAP.matcher(wadFileName)).matches()
+                    || (matcher = WAD_PATTERN_MPLAYER.matcher(wadFileName)).matches()) {
+                searchFileName = "MPLAYER" + matcher.group(1);
+            } else if ((matcher = WAD_PATTERN_MAP_TERRAIN.matcher(wadFileName)).matches() || (matcher = WAD_PATTERN_MAP_DETAIL.matcher(wadFileName)).matches()) {
+                searchFileName = "MS" + matcher.group(1) + "_" + matcher.group(2) + "_" + matcher.group(3);
+            } else if ((matcher = WAD_PATTERN_TEST_MAP_GAME_MODEL.matcher(wadFileName)).matches()
+                    || (matcher = WAD_PATTERN_TEST_MAP_DETAIL.matcher(wadFileName)).matches()
+                    || (matcher = WAD_PATTERN_TESTMAP.matcher(wadFileName)).matches()) {
+                searchFileName = "TESTMAP" + matcher.group(1);
+            } else if ((matcher = WAD_PATTERN_MAP_SHARE_GAME_MODEL.matcher(wadFileName)).matches()) {
+                searchFileName = "MS" + matcher.group(1) + "_" + matcher.group(2) + "_GM";
+            }
+
+            if (searchFileName != null) {
+                VloFile foundVlo = getMainArchive().getFileByName(searchFileName + ".VLO");
+                if (foundVlo != null)
+                    return foundVlo;
+            }
         }
 
         return super.resolveMainVlo(model);
