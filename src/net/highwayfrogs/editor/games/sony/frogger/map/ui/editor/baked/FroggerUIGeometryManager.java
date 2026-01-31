@@ -17,8 +17,8 @@ import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
 import javafx.scene.transform.Translate;
 import lombok.Getter;
-import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.psx.math.vector.CVector;
+import net.highwayfrogs.editor.games.psx.math.vector.SVector;
 import net.highwayfrogs.editor.games.psx.shading.PSXShadeTextureDefinition;
 import net.highwayfrogs.editor.games.sony.frogger.map.FroggerMapFile;
 import net.highwayfrogs.editor.games.sony.frogger.map.data.animation.FroggerMapAnimation;
@@ -448,8 +448,13 @@ public class FroggerUIGeometryManager extends BakedLandscapeUIManager<FroggerMap
             this.polygonIsMaxOrderTableCheckBox.setDisable(true);
 
             this.polygonIsSemiTransparentCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
-                if (!this.polygonIsSemiTransparentCheckBox.isDisabled() && getEditTarget() != null)
+                if (!this.polygonIsSemiTransparentCheckBox.isDisabled() && getEditTarget() != null) {
                     getEditTarget().setFlagMask(FroggerMapPolygon.FLAG_SEMI_TRANSPARENT, newValue);
+
+                    // Refresh polygon.
+                    if (shouldHandleUIChanges())
+                        getManager().getMesh().getShadedTextureManager().updatePolygon(getEditTarget());
+                }
             });
 
             this.polygonIsEnvironmentMappedCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {

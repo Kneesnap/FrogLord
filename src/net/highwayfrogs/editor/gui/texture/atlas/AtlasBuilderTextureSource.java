@@ -92,6 +92,14 @@ public class AtlasBuilderTextureSource implements ITextureSource {
      * @return newImage
      */
     public BufferedImage makeNewImage() {
+        setupNewCacheImage();
+        writeImageAsyncAndWait(false);
+        updateTextureCoordinates(); // Apply the new texture coordinates to the mesh.
+
+        return this.cachedImage;
+    }
+
+    private void setupNewCacheImage() {
         try {
             this.cachedImage = new BufferedImage(this.atlas.getAtlasWidth(), this.atlas.getAtlasHeight(), BufferedImage.TYPE_INT_ARGB);
         } catch (OutOfMemoryError ex) {
@@ -99,11 +107,6 @@ public class AtlasBuilderTextureSource implements ITextureSource {
         }
 
         this.cachedFxImage = new WritableImage(this.atlas.getAtlasWidth(), this.atlas.getAtlasHeight());
-
-        writeImageAsyncAndWait(false);
-        updateTextureCoordinates(); // Apply the new texture coordinates to the mesh.
-
-        return this.cachedImage;
     }
 
     @Override
@@ -129,6 +132,16 @@ public class AtlasBuilderTextureSource implements ITextureSource {
 
         this.currentlyBuildingTexture = true;
 
+        // This may change the dimensions of the image, requiring a full image rebuild.
+        // If this happens, we must fix it.
+        // At the time of writing, this happens in ORG1.MAP of PSX Build 71 by switching any water tile from semi-transparent to non semi-transparent, and would previously throw an exception.
+        // Reproducing this issue may not be feasible if the texture atlas behavior changes to not make this action overflow.
+        this.atlas.prepareImageGeneration();
+        if (this.cachedImage == null || (this.cachedImage.getWidth() != this.atlas.getAtlasWidth()) || (this.cachedImage.getHeight() != this.atlas.getAtlasHeight())) {
+            writeOnlyChangedImages = false;
+            setupNewCacheImage();
+        }
+
         Graphics2D graphics = null;
         if (this.enableAwtImage) {
             graphics = this.cachedImage.createGraphics();
@@ -139,7 +152,6 @@ public class AtlasBuilderTextureSource implements ITextureSource {
         }
 
         this.writeTaskState.setupNextWrite(writeOnlyChangedImages, graphics);
-        this.atlas.prepareImageGeneration();
 
         // Create and submit tasks.
         this.atlas.pushDisableUpdates();

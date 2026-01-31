@@ -74,9 +74,7 @@ import java.util.logging.Level;
  *  2) Text generation
  *   -> Integrate with new system to become seamless
  *   -> Remove usage of SCImageUtils.TransparencyFilter, and then delete that class,
- *  3) Frogger semi-transparent flags don't seem to render correctly in-editor.
- *    -> Perhaps we should consider the shading restrictions of the PC version as well, the ones that MasterWario noticed.
- *  6) Rewrite VRAM Viewer
+ *  3) Rewrite VRAM Viewer
  *   -> Gut warnings.
  *   -> Allow displaying parent node textures.
  *   -> Highlight which pages the VLO can write to.
@@ -86,8 +84,8 @@ import java.util.logging.Level;
  *   -> Clean out various warnings.
  *   -> Allow selecting other entries. (Cluts, entries, etc)
  *    -> Show information like which images the clut is used by, what cluts an image use, etc.
- *  7) Look at the issue we have with game-specific loggers, and how it causes UI synchronization lag.
- *  8) Replacing images in the UI like level names and level screenshots should update the UI.
+ *  4) Look at the issue we have with game-specific loggers, and how it causes UI synchronization lag.
+ *  5) Replacing images in the UI like level names and level screenshots should update the UI.
  * Created by Kneesnap on 8/30/2018.
  */
 public class VloImage extends SCSharedGameData implements Cloneable, ITextureSource, ICollectionViewEntry {

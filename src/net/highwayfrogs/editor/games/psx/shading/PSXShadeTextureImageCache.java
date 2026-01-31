@@ -32,7 +32,9 @@ public class PSXShadeTextureImageCache {
     private final PSXShadeTextureSourceCacheEntry flatShadingCacheEntry = new PSXShadeTextureSourceCacheEntry(this, null, null);
     private final PSXShadeTextureSourceCacheEntry gouraudShadingCacheEntry = new PSXShadeTextureSourceCacheEntry(this, null, null);
     private final Map<ITextureSource, PSXShadeTextureSourceCacheEntry> scaledEntriesByTextureSource = new ConcurrentHashMap<>(); // Consider switching this to an IdentityHashMap with a read-write lock, OR Collections.synchronizedMap(IdentityHashMap), because there's a concern about ITextureSources implementing their own equals/hashCode and breaking compatibility.
+    private final Map<ITextureSource, PSXShadeTextureSourceCacheEntry> scaledPsxSemiTransparentEntriesByTextureSource = new ConcurrentHashMap<>(); // Consider switching this to an IdentityHashMap with a read-write lock, OR Collections.synchronizedMap(IdentityHashMap), because there's a concern about ITextureSources implementing their own equals/hashCode and breaking compatibility.
     private final Map<ITextureSource, PSXShadeTextureSourceCacheEntry> unscaledEntriesByTextureSource = new ConcurrentHashMap<>(); // Consider switching this to an IdentityHashMap with a read-write lock, OR Collections.synchronizedMap(IdentityHashMap), because there's a concern about ITextureSources implementing their own equals/hashCode and breaking compatibility.
+    private final Map<ITextureSource, PSXShadeTextureSourceCacheEntry> unscaledPsxSemiTransparentEntriesByTextureSource = new ConcurrentHashMap<>(); // Consider switching this to an IdentityHashMap with a read-write lock, OR Collections.synchronizedMap(IdentityHashMap), because there's a concern about ITextureSources implementing their own equals/hashCode and breaking compatibility.
     private final List<PSXShadedImageCacheEntry> entryExpirationQueue = new ArrayList<>();
     private final BinarySearchIntListHolder<BinarySearchIntListHolder<BinarySearchIntList<PSXShadedImageCacheEntry>>> cachedTargetImages = new BinarySearchIntListHolder<>(null, -1);
 
@@ -143,9 +145,17 @@ public class PSXShadeTextureImageCache {
             if (textureSource == null) {
                 return this.unknownTextureShadingCacheEntry;
             } else if (shadeTextureDefinition.isSourceImageScaled()) {
-                return this.scaledEntriesByTextureSource.get(textureSource);
+                if (shadeTextureDefinition.isSemiTransparentMode()) {
+                    return this.scaledPsxSemiTransparentEntriesByTextureSource.get(textureSource);
+                } else {
+                    return this.scaledEntriesByTextureSource.get(textureSource);
+                }
             } else {
-                return this.unscaledEntriesByTextureSource.get(textureSource);
+                if (shadeTextureDefinition.isSemiTransparentMode()) {
+                    return this.unscaledPsxSemiTransparentEntriesByTextureSource.get(textureSource);
+                } else {
+                    return this.unscaledEntriesByTextureSource.get(textureSource);
+                }
             }
         } else if (polygonType.isGouraud()) {
             return this.gouraudShadingCacheEntry;
@@ -185,11 +195,29 @@ public class PSXShadeTextureImageCache {
             return cacheEntry;
 
         ITextureSource textureSource = shadeTextureDefinition.getTextureSource(); // If it were null, it'd have been handled already in getCacheEntry(), so it's not null.
+        boolean scaleImage;
+        Map<ITextureSource, PSXShadeTextureSourceCacheEntry> textureEntryMap;
         if (shadeTextureDefinition.isSourceImageScaled()) {
-            return this.scaledEntriesByTextureSource.computeIfAbsent(textureSource, key -> new PSXShadeTextureSourceCacheEntry(this, key, getTextureSourceImage(shadeTextureDefinition, true, false)));
+            scaleImage = true;
+            if (shadeTextureDefinition.isSemiTransparentMode()) {
+                textureEntryMap = this.scaledPsxSemiTransparentEntriesByTextureSource;
+            } else {
+                textureEntryMap = this.scaledEntriesByTextureSource;
+            }
         } else {
-            return this.unscaledEntriesByTextureSource.computeIfAbsent(textureSource, key -> new PSXShadeTextureSourceCacheEntry(this, key, getTextureSourceImage(shadeTextureDefinition, false, false)));
+            scaleImage = false;
+            if (shadeTextureDefinition.isSemiTransparentMode()) {
+                textureEntryMap = this.unscaledPsxSemiTransparentEntriesByTextureSource;
+            } else {
+                textureEntryMap = this.unscaledEntriesByTextureSource;
+            }
         }
+
+        cacheEntry = textureEntryMap.get(textureSource);
+        if (cacheEntry == null)
+            textureEntryMap.put(textureSource, cacheEntry = new PSXShadeTextureSourceCacheEntry(this, textureSource, getTextureSourceImage(shadeTextureDefinition, scaleImage, false)));
+
+        return cacheEntry;
     }
 
     /**
