@@ -551,7 +551,7 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
         updateFilter();
         BufferedImage awtImage = image.toBufferedImage(this.imageFilterSettings);
         if (this.sizeChoiceBox.getValue() == ImageControllerViewSetting.SCALED_NEAREST_NEIGHBOR)
-            awtImage = SCImageUtils.scaleForDisplay(awtImage, PsxVram.PSX_VRAM_PAGE_EXPANDED_WIDTH, true);
+            awtImage = SCImageUtils.scaleForDisplay(awtImage, PsxVram.PSX_VRAM_PAGE_EXPANDED_WIDTH);
 
         return awtImage;
     }

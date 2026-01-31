@@ -76,8 +76,6 @@ import java.util.logging.Level;
  *   -> Remove usage of SCImageUtils.TransparencyFilter, and then delete that class,
  *  3) Frogger semi-transparent flags don't seem to render correctly in-editor.
  *    -> Perhaps we should consider the shading restrictions of the PC version as well, the ones that MasterWario noticed.
- *  5) Scrolling through the Beast Wars wad list with arrow keys is painfully slow, profile it. (This may just be due to the number of froglord windows I have open)
- *    -> Scrolling through VLOs has the same issue. Can we get a faster "convert to FX image"?
  *  6) Rewrite VRAM Viewer
  *   -> Gut warnings.
  *   -> Allow displaying parent node textures.

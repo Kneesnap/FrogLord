@@ -70,6 +70,25 @@ public class ImageUtils {
             return image; // There would be no change.
 
         BufferedImage scaleImage = new BufferedImage(newWidth, newHeight, image.getType());
+
+        // This implementation is significantly faster than the one below, but only works on integer image types.
+        if (nearestNeighbor && (image.getType() == BufferedImage.TYPE_INT_ARGB || image.getType() == BufferedImage.TYPE_INT_ARGB_PRE || image.getType() == BufferedImage.TYPE_INT_RGB || image.getType() == BufferedImage.TYPE_INT_BGR)) {
+            int[] readPixels = ImageUtils.getReadOnlyPixelIntegerArray(image);
+            int[] writePixels = ImageUtils.getWritablePixelIntegerArray(scaleImage);
+            int oldWidth = image.getWidth();
+            int oldHeight = image.getHeight();
+            for (int y = 0; y < newHeight; y++) {
+                int originalY = Math.round((oldHeight - 1) * (((float) y) / (newHeight - 1)));
+                for (int x = 0; x < newWidth; x++) {
+                    int originalX = Math.round((oldWidth - 1) * (((float) x) / (newWidth - 1)));
+                    writePixels[(y * newWidth) + x] = readPixels[(originalY * oldWidth) + originalX];
+                }
+            }
+
+            return scaleImage;
+        }
+
+        // This is a slow but reliable implementation.
         Graphics2D graphics = scaleImage.createGraphics();
         graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, nearestNeighbor ? RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR : RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         graphics.drawImage(image, 0, 0, newWidth, newHeight, null);

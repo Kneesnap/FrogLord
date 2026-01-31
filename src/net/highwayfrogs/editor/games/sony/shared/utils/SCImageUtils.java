@@ -2,6 +2,7 @@ package net.highwayfrogs.editor.games.sony.shared.utils;
 
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
+import net.highwayfrogs.editor.utils.image.ImageUtils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -29,12 +30,11 @@ public class SCImageUtils {
 
     /**
      * Resize an image to a new width / height.
-     * @param image           The image to scale.
-     * @param sideLength      The image size to rescale to.
-     * @param nearestNeighbor Whether nearest neighbor interpolation should be used.
+     * @param image The image to scale.
+     * @param sideLength The image size to rescale to.
      * @return scaledImage
      */
-    public static BufferedImage scaleForDisplay(BufferedImage image, int sideLength, boolean nearestNeighbor) {
+    public static BufferedImage scaleForDisplay(BufferedImage image, int sideLength) {
         if (sideLength == image.getWidth() || sideLength == image.getHeight())
             return image; // There would be no change.
 
@@ -47,13 +47,7 @@ public class SCImageUtils {
 
         int newWidth = (int) Math.round(scaleFactor * image.getWidth());
         int newHeight = (int) Math.round(scaleFactor * image.getHeight());
-
-        BufferedImage scaleImage = new BufferedImage(newWidth, newHeight, image.getType());
-        Graphics2D graphics = scaleImage.createGraphics();
-        graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, nearestNeighbor ? RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR : RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-        graphics.drawImage(image, 0, 0, newWidth, newHeight, null);
-        graphics.dispose();
-        return scaleImage;
+        return ImageUtils.resizeImage(image, newWidth, newHeight, true);
     }
 
     /**
