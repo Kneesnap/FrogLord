@@ -460,7 +460,7 @@ public class VloFile extends SCSharedGameFile {
         newImage.setFlag(VloImage.FLAG_REFERENCED_BY_NAME, getGameInstance().isTextureReferencedByName(textureId)); // Prevents crashes.
         newImage.setFlag(VloImage.FLAG_2D_SPRITE, true); // There is no downside to this.
         newImage.replaceImage(image, bitDepth, padding.getPaddingAmount(this), translucent, ProblemResponse.THROW_EXCEPTION);
-        if (abr != null && this.psxMode)
+        if (abr != null)
             newImage.setAbr(abr);
 
         addImageToList(newImage);
