@@ -10,6 +10,8 @@ import net.highwayfrogs.editor.games.sony.frogger.map.packets.FroggerMapFilePack
 import net.highwayfrogs.editor.games.sony.shared.mesh.SCPolygonAdapterNode;
 import net.highwayfrogs.editor.system.math.Vector2f;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -20,6 +22,9 @@ import java.util.List;
 public class FroggerMapMeshNode extends SCPolygonAdapterNode<FroggerMapPolygon> {
     private int animationTickCounter = ANIMATIONS_DISABLED;
     private static final int ANIMATIONS_DISABLED = -1;
+
+    private static final Comparator<FroggerMapPolygon> POLYGON_HEIGHT_SORTER = Comparator
+            .comparingInt(FroggerMapPolygon::getAverageVertexY).reversed();
 
     public FroggerMapMeshNode(FroggerMapMesh mesh) {
         super(mesh);
@@ -35,15 +40,39 @@ public class FroggerMapMeshNode extends SCPolygonAdapterNode<FroggerMapPolygon> 
         super.onAddedToMesh();
 
         // Setup polygons.
-        // First, setup the non-transparent polygons.
-        for (FroggerMapPolygon polygon : getMap().getPolygonPacket().getPolygons())
-            if (polygon.isFullyOpaque())
+
+        // First, setup Max OT polygons.
+        List<FroggerMapPolygon> polygons = getMap().getPolygonPacket().getPolygons();
+        for (FroggerMapPolygon polygon : polygons)
+            if (polygon.testFlag(FroggerMapPolygon.FLAG_MAX_ORDER_TABLE))
                 this.add(polygon);
 
-        // Second, add the transparent polygons.
-        for (FroggerMapPolygon polygon : getMap().getPolygonPacket().getPolygons())
-            if (!polygon.isFullyOpaque())
+        // Next, water must be added before opaque polygons, to ensure that ground renders on top of the water.
+        // This is done for consistency with the game.
+        for (FroggerMapPolygon polygon : polygons)
+            if (!polygon.testFlag(FroggerMapPolygon.FLAG_MAX_ORDER_TABLE) && polygon.testFlag(FroggerMapPolygon.FLAG_ENVIRONMENT_MAPPED))
                 this.add(polygon);
+
+        // Next, setup all opaque polygons.
+        // This is done to render transparency properly.
+        List<FroggerMapPolygon> transparentPolygons = new ArrayList<>();
+        for (int i = 0; i < polygons.size(); i++) {
+            FroggerMapPolygon polygon = polygons.get(i);
+            if (!polygon.testFlag(FroggerMapPolygon.FLAG_MAX_ORDER_TABLE) && !polygon.testFlag(FroggerMapPolygon.FLAG_ENVIRONMENT_MAPPED)) {
+                if (polygon.isFullyOpaque()) {
+                    this.add(polygon);
+                } else {
+                    transparentPolygons.add(polygon);
+                }
+            }
+        }
+
+        // Next, add all transparent polygons.
+        // Because the camera is almost always from a top-down view and virtually all transparent textures will have a normal facing upward,
+        //  it makes sense to sort the polygons by height, lowest to highest, as a form of painter's algorithm without knowing the camera position.
+        transparentPolygons.sort(POLYGON_HEIGHT_SORTER);
+        for (int i = 0; i < transparentPolygons.size(); i++)
+            this.add(transparentPolygons.get(i));
     }
 
     @Override

@@ -59,7 +59,9 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
     @Setter private transient boolean skyLand;
 
     public static final int FLAG_SEMI_TRANSPARENT = Constants.BIT_FLAG_0;
+    // One of the main purposes of environment mapping is to ensure that ground will always render on top of water.
     public static final int FLAG_ENVIRONMENT_MAPPED = Constants.BIT_FLAG_1; // Show the solid environment bitmap. (For instance, how water appears as a solid body, or sludge in the sewer levels.)
+    // Ensures that water always renders above this stuff.
     public static final int FLAG_MAX_ORDER_TABLE = Constants.BIT_FLAG_2; // Puts at the back of the order table. Also enables water wibble.
     public static final int FLAG_VALIDATION_MASK = 0b111;
 
@@ -473,6 +475,19 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
         }
 
         return output.setXYZ(x, y, z);
+    }
+
+    /**
+     * Gets the average vertex Y for the polygon.
+     * @return averageVertexY
+     */
+    public int getAverageVertexY() {
+        int sumY = 0;
+        int vertexCount = getVertexCount();
+        for (int i = 0; i < vertexCount; i++)
+            sumY += this.mapFile.getVertexPacket().getVertices().get(this.vertices[i]).getY();
+
+        return sumY / vertexCount;
     }
 
     /**
