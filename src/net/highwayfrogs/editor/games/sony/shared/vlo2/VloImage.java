@@ -1120,6 +1120,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
             return;
 
         this.abr = textureAbr;
+        invalidateCache();
     }
 
     /**
@@ -1326,6 +1327,11 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         // This should be done before the clut is generated.
         this.anyFullyBlackPixelPresentPC = false;
         setFlag(FLAG_TRANSLUCENT, translucent);
+
+        // Ensure ABR looks alright.
+        if (translucent && !isPsxMode() && (this.abr == PsxAbrTransparency.DEFAULT || this.abr == PsxAbrTransparency.SUBTRACT))
+            this.abr = PsxAbrTransparency.COMBINE;
+
         if (isPsxMode()) {
             // On PSX, the BLACK_IS_TRANSPARENT flag is calculable.
             // This can be verified with VloFile.DEBUG_VALIDATE_IMAGE_EXPORT_IMPORT.
