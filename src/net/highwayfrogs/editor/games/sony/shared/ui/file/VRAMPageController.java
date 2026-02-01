@@ -41,6 +41,13 @@ import java.util.Map.Entry;
 
 /**
  * Allows editing the arrangement of a VRAM page.
+ * Ideas for future improvements (may not be worth it):
+ *  -> Allow displaying parent node textures.
+ *  -> Highlight which pages the VLO can write to.
+ *  -> Highlight pages used by parent/child vlo files as red.
+ *  -> Add a button to allow refreshing the Vram viewer now, maybe.
+ *  -> Allow selecting other entries. (Cluts, entries, etc)
+ *   -> Show information like which images the clut is used by, what cluts an image use, etc.
  * Created by Kneesnap on 12/2/2018.
  */
 public class VRAMPageController extends GameUIController<SCGameInstance> {
@@ -377,41 +384,32 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
         }
 
         // Keep within one page test.
-        boolean multiPageTest = false;
         for (VloImage image : this.vloArchive.getImages()) {
-            if (image.getPage() != image.getEndPage()) {
-                // TODO: It seems this may not actually cause issues. Perhaps it's a problem if it goes between 3+ pages? Not sure.
+            if (image.getPage() != image.getEndPage() && (!this.vloArchive.isPsxMode() || ((PsxVram.PSX_VRAM_MAX_PIXELS_PER_UNIT * image.getUnitWidth()) < (PsxVram.PSX_VRAM_PAGE_UNIT_WIDTH * image.getWidthMultiplier())))) {
                 warning.append("WARNING: Texture exceeds size of page ").append(image.getPage()).append(".").append(Constants.NEWLINE);
-                multiPageTest = true;
                 break;
             }
         }
 
 
         // Overlap Test:
-        // I couldn't find an algorithm on Google which could efficiently find if any boxes overlapped in an arbitrary list of boxes. Literally everything was in regard to testing if two boxes overlap. So, I made my own. I'm sure there's a more efficient way of doing this though.
-        // Actually, something called an R-Tree may be a good data structure for this. Unfortunately, it's rather complicated.
-        // https://stackoverflow.com/questions/13910287/data-structure-to-hold-list-of-rectangles
-        if (!multiPageTest) { // If the previous test passes, skip this test, it will error.
-            // Clear grid.
-            for (int y = 0; y < this.overlapGrid.length; y++)
-                Arrays.fill(this.overlapGrid[y], false);
+        for (int y = 0; y < this.overlapGrid.length; y++)
+            Arrays.fill(this.overlapGrid[y], false);
 
-            loopEnd:
-            for (VloImage image : this.vloArchive.getImages()) {
-                int startX = image.getVramX();
-                int startY = image.getVramY();
-                for (int y = 0; y < image.getPaddedHeight(); y++) {
-                    for (int x = 0; x < image.getUnitWidth(); x++) {
-                        int pixelX = startX + x;
-                        int pixelY = startY + y;
-                        if (this.overlapGrid[pixelY][pixelX]) {
-                            warning.append("WARNING: Texture overlap on page ").append(image.getPage()).append(" (").append(pixelX).append(" ").append(pixelY).append(").").append(Constants.NEWLINE);
-                            break loopEnd;
-                        }
-
-                        this.overlapGrid[pixelY][pixelX] = true;
+        loopEnd:
+        for (VloImage image : this.vloArchive.getImages()) {
+            int startX = image.getVramX();
+            int startY = image.getVramY();
+            for (int y = 0; y < image.getPaddedHeight(); y++) {
+                for (int x = 0; x < image.getUnitWidth(); x++) {
+                    int pixelX = startX + x;
+                    int pixelY = startY + y;
+                    if (this.overlapGrid[pixelY][pixelX]) {
+                        warning.append("WARNING: Texture overlap on page ").append(image.getPage()).append(" (").append(pixelX).append(" ").append(pixelY).append(").").append(Constants.NEWLINE);
+                        break loopEnd;
                     }
+
+                    this.overlapGrid[pixelY][pixelX] = true;
                 }
             }
         }

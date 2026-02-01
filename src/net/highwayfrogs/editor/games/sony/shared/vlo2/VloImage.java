@@ -74,18 +74,8 @@ import java.util.logging.Level;
  *  2) Text generation
  *   -> Integrate with new system to become seamless
  *   -> Remove usage of SCImageUtils.TransparencyFilter, and then delete that class,
- *  3) Rewrite VRAM Viewer
- *   -> Gut warnings.
- *   -> Allow displaying parent node textures.
- *   -> Highlight which pages the VLO can write to.
- *   -> Highlight pages used by parent/child vlo files as red.
- *   -> Add text for each reserved page.
- *   -> Add a button to allow refreshing the Vram viewer now, maybe.
- *   -> Clean out various warnings.
- *   -> Allow selecting other entries. (Cluts, entries, etc)
- *    -> Show information like which images the clut is used by, what cluts an image use, etc.
- *  4) Replacing images in the UI like level names and level screenshots should update the UI.
- *  5) Make a method in SCGameInstance for adding/replacing images in ALL files.
+ *  3) Replacing images in the UI like level names and level screenshots should update the UI.
+ *  4) Make a method in SCGameInstance for adding/replacing images in ALL files.
  * Created by Kneesnap on 8/30/2018.
  */
 public class VloImage extends SCSharedGameData implements Cloneable, ITextureSource, ICollectionViewEntry {

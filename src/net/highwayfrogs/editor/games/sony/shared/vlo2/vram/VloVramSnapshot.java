@@ -135,9 +135,9 @@ public class VloVramSnapshot extends SCSharedGameObject {
         boolean psxMode = getGameInstance().isPSX();
         if (this.node instanceof VloTree) {
             if (getGameInstance().getPrimaryFrameBuffer() != null)
-                addEntry(new VloVramEntryReserved(getGameInstance().getPrimaryFrameBuffer(), Constants.COLOR_DEEP_GREEN, psxMode));
+                addEntry(new VloVramEntryReserved(getGameInstance().getPrimaryFrameBuffer(), Constants.COLOR_DEEP_GREEN, psxMode, "Primary Framebuffer"));
             if (getGameInstance().getSecondaryFrameBuffer() != null)
-                addEntry(new VloVramEntryReserved(getGameInstance().getSecondaryFrameBuffer(), Constants.COLOR_DARK_YELLOW, psxMode));
+                addEntry(new VloVramEntryReserved(getGameInstance().getSecondaryFrameBuffer(), Constants.COLOR_DARK_YELLOW, psxMode, "Secondary Framebuffer"));
         }
 
         // Reserve pages.
@@ -149,7 +149,7 @@ public class VloVramSnapshot extends SCSharedGameObject {
                 continue;
 
             PsxVramBox reservedPageArea = new PsxVramBox(VloUtils.getPageUnitStartX(psxMode, i), VloUtils.getPageStartY(psxMode, i), pageWidth, pageHeight);
-            addEntry(new VloVramEntryReserved(reservedPageArea, Constants.COLOR_LIGHT_TURQUOISE, psxMode));
+            addEntry(new VloVramEntryReserved(reservedPageArea, Constants.COLOR_LIGHT_TURQUOISE, psxMode, "Reserved Page"));
         }
     }
 
