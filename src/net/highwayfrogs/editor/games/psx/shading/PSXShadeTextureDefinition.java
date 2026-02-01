@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.highwayfrogs.editor.games.psx.math.vector.CVector;
 import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.sony.shared.SCByteTextureUV;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.texture.ITextureSource;
 import net.highwayfrogs.editor.gui.texture.Texture;
 import net.highwayfrogs.editor.system.math.Vector2f;
@@ -292,7 +293,12 @@ public final class PSXShadeTextureDefinition implements ITextureSource {
 
     @Override
     public boolean hasAnyTransparentPixels(BufferedImage image) {
-        return this.semiTransparentMode || (this.textureSource != null && this.textureSource.hasAnyTransparentPixels(image));
+        if (this.textureSource instanceof VloImage) {
+            VloImage vloImage = (VloImage) this.textureSource;
+            return vloImage.isFullyOpaque(this.semiTransparentMode);
+        } else {
+            return this.semiTransparentMode || (this.textureSource != null && this.textureSource.hasAnyTransparentPixels(image));
+        }
     }
 
     @Override

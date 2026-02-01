@@ -172,10 +172,7 @@ public class MediEvilMapPolygon extends SCGameData<MediEvilGameInstance> {
      */
     public boolean isFullyOpaque(MediEvilLevelTableEntry levelTableEntry) {
         VloImage image = getTexture(levelTableEntry);
-        if (image != null && (image.testFlag(VloImage.FLAG_TRANSLUCENT) || image.hasAnyTransparentPixels(null)))
-            return false;
-
-        return (this.flags & FLAG_SEMI_TRANSPARENT) != FLAG_SEMI_TRANSPARENT;
+        return image == null || image.isFullyOpaque(isSemiTransparent(levelTableEntry));
     }
 
     /**

@@ -67,6 +67,7 @@ public class VloFile extends SCSharedGameFile {
     public static Comparator<VloImage> IMAGE_SORTING_ORDER = Comparator
             .comparingInt((VloImage image) -> image.getUnitWidth() * image.getPaddedHeight()).reversed();
 
+    public static final boolean DEBUG_VALIDATE_IMAGE_EXPORT_IMPORT = false;
 
     public VloFile(SCGameInstance instance) {
         super(instance);
@@ -141,6 +142,10 @@ public class VloFile extends SCSharedGameFile {
             reader.alignRequireEmpty(Constants.INTEGER_SIZE);
             this.images.get(i).readImageData(reader, this.clutList);
         }
+
+        // Validate image data.
+        if (DEBUG_VALIDATE_IMAGE_EXPORT_IMPORT)
+            validateImageData(); // Disabled unless a developer specifically needs to use this.
 
         // Skip CLUT Color Data
         reader.alignRequireEmpty(Constants.INTEGER_SIZE);
@@ -270,6 +275,27 @@ public class VloFile extends SCSharedGameFile {
             node.loadFromGameDataRecursive(null);
             tree.calculateFreeTextureIds();
         }
+    }
+
+    @SuppressWarnings("unused") // This is used to ensure we haven't broken VLO files in some way.
+    private void validateImageData() {
+        int nonMatchingImages = 0;
+        for (int i = 0; i < this.images.size(); i++) {
+            VloImage image = this.images.get(i);
+            if (image.getPaddedWidth() > VloImage.MAX_IMAGE_DIMENSION || image.getPaddedHeight() > VloImage.MAX_IMAGE_DIMENSION)
+                continue; // It's not possible to re-import these images, so skip them.
+
+            int[] startPixelBuffer = image.getPixelBuffer().clone();
+            BufferedImage exportImage = image.toBufferedImage(VloImage.DEFAULT_IMAGE_NO_PADDING_EXPORT_SETTINGS);
+            image.replaceImage(exportImage, ProblemResponse.THROW_EXCEPTION);
+            if (!Arrays.equals(startPixelBuffer, image.getPixelBuffer())) {
+                image.getLogger().warning("Re-import was not a byte-match to its original image data.");
+                nonMatchingImages++;
+            }
+        }
+
+        if (nonMatchingImages > 0)
+            getLogger().warning("Image re-import problems found! (%d/%d images re-imported with problems)", nonMatchingImages, this.images.size());
     }
 
     /**

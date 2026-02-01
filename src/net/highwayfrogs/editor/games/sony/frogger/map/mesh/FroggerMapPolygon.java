@@ -293,10 +293,7 @@ public class FroggerMapPolygon extends SCGameData<FroggerGameInstance> {
      */
     public boolean isFullyOpaque() {
         VloImage image = getTexture();
-        if (image != null && image.hasAnyTransparentPixels(null))
-            return false;
-
-        return !isSemiTransparent();
+        return image == null || image.isFullyOpaque(isSemiTransparent());
     }
 
     /**

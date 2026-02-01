@@ -144,7 +144,7 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
                 () -> new LazyFXListCell<>(PsxAbrTransparency::getDisplayName, "None (Error)"));
 
         addLabel("Flags:", true, true, null);
-        addFlag("Translucent", VloImage.FLAG_TRANSLUCENT, "Marks the entire texture as partially transparent.\nOnly applicable when drawn as a sprite or part of a MOF.\nDoes not impact per-game rendering such as map rendering, SKY_LAND, etc.");
+        addFlag("Translucent", VloImage.FLAG_TRANSLUCENT, "Marks the entire texture as partially transparent.\nOnly applicable when drawn as a sprite or part of a MOF.\nThis setting may be ignored if the polygons using this texture are not also marked as semi-transparent.");
         addCalculatedFlag("Hit X", "Treats the last column of pixels on the image as padding.", null, VloImage::calculateHitX);
         addCalculatedFlag("Hit Y", "Treats the last row of pixels on the image as padding.", null, VloImage::calculateHitY);
         addFlag("Name Reference", VloImage.FLAG_REFERENCED_BY_NAME, "If this checkbox is selected, there is assumed to be hardcoded space available in the executable for this texture.\nOtherwise, the texture data will be allocated at runtime.");

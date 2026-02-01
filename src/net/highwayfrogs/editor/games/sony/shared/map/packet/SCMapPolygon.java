@@ -201,10 +201,7 @@ public class SCMapPolygon extends SCGameData<SCGameInstance> {
      */
     public boolean isFullyOpaque(ISCLevelTableEntry levelTableEntry) {
         VloImage image = getTexture(levelTableEntry);
-        if (image != null && image.hasAnyTransparentPixels(null))
-            return false;
-
-        return !isSemiTransparent(levelTableEntry);
+        return image == null || image.isFullyOpaque(isSemiTransparent(levelTableEntry));
     }
 
     /**
