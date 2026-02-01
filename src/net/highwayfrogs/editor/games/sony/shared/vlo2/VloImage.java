@@ -85,6 +85,7 @@ import java.util.logging.Level;
  *   -> Allow selecting other entries. (Cluts, entries, etc)
  *    -> Show information like which images the clut is used by, what cluts an image use, etc.
  *  4) Replacing images in the UI like level names and level screenshots should update the UI.
+ *  5) Make a method in SCGameInstance for adding/replacing images in ALL files.
  * Created by Kneesnap on 8/30/2018.
  */
 public class VloImage extends SCSharedGameData implements Cloneable, ITextureSource, ICollectionViewEntry {
@@ -108,7 +109,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
     private int paddingAmount;
     private String customName; // The custom name applied by FrogLord. (This may override the original name)
     private boolean anyNonOpaquePixelsPresent;
-    @Getter private boolean anyFullyBlackPixelsPresentPC;
+    @Getter private boolean anyFullyBlackPixelPresentPC;
     private boolean expectedStpNonBlackBitPsx; // Pre-MediEvil II: Used to calculate the CLUT STP bit state.
     private boolean expectedStpBlackBitPsx; // Pre-MediEvil II: Used to calculate the CLUT STP bit state.
 
@@ -158,7 +159,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
     private static final byte IMAGE_ALPHA_REGULAR_STP_BIT_TRANS = 0x00;
     private static final byte IMAGE_ALPHA_INVERTED_STP_BIT = 0x7F;
     private static final byte IMAGE_ALPHA_REGULAR_STP_BIT_OPAQUE = (byte) 0xFF;
-    private static final int COLOR_CLOSEST_TO_BLACK_PC = 0xFF080000;
+    private static final int COLOR_CLOSEST_TO_BLACK_PC = 0xFF080000; // This value seems to have been used by Vorg in the place of true black when BLACK_IS_TRANSPARENT is set.
     private static final int COLOR_FULL_ALPHA = 0xFF000000;
     private static final int COLOR_TRUE_BLACK = 0xFF000000;
 
@@ -301,7 +302,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         this.anyNonOpaquePixelsPresent = false;
         this.expectedStpBlackBitPsx = false; // Updated by loadClut(), okay if bitDepth is 15bit.
         this.expectedStpNonBlackBitPsx = false; // Updated by loadClut(), okay if bitDepth is 15bit.
-        this.anyFullyBlackPixelsPresentPC = false;
+        this.anyFullyBlackPixelPresentPC = false;
         if (isPsxMode()) {
             if (this.bitDepth == PsxImageBitDepth.SBGR1555) { // Used heavily in pre-recode Frogger, and occasionally seen in other places. (Example: Frogger USA Demo, Frogger Sony Presentation, etc.)
                 read15BitImage(reader);
@@ -347,7 +348,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
 
                 this.pixelBuffer[i] = ColorUtils.toARGB(red, green, blue, alpha);
                 if ((this.pixelBuffer[i] & PSXClutColor.ARGB8888_TO5BIT_COLOR_MASK) == 0) {
-                    this.anyFullyBlackPixelsPresentPC = true;
+                    this.anyFullyBlackPixelPresentPC = true;
                     if (!this.anyNonOpaquePixelsPresent && testFlag(FLAG_BLACK_IS_TRANSPARENT))
                         this.anyNonOpaquePixelsPresent = true;
                 }
@@ -599,8 +600,8 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
                     getLogger().warning("Pixel[%d,%d] padding was expected to be %08X, but was calculated to be %08X. (PadX: %d, PadY: %d, Stripped PadX: %d, CLUT Index: %d)", i % this.paddedWidth, i / this.paddedWidth, this.pixelBuffer[i], paddedColor, paddingX, paddingY, emptyRightPaddingX, this.clut != null ? this.clut.getColorIndex(getClutColor(new PSXClutColor(), i), false) : Integer.MAX_VALUE);
             } else if (operation == PaddingOperation.APPLY) {
                 if ((paddedColor & PSXClutColor.ARGB8888_TO5BIT_COLOR_MASK) == 0 && !isPsxMode()) {
-                    if (!this.anyFullyBlackPixelsPresentPC)
-                        this.anyFullyBlackPixelsPresentPC = true;
+                    if (!this.anyFullyBlackPixelPresentPC)
+                        this.anyFullyBlackPixelPresentPC = true;
                     if (!this.anyNonOpaquePixelsPresent && testFlag(FLAG_BLACK_IS_TRANSPARENT))
                         this.anyNonOpaquePixelsPresent = true;
                 }
@@ -1340,7 +1341,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         // Process/fix image alpha/transparency.
         // This should be done before the clut is generated.
         this.anyNonOpaquePixelsPresent = false;
-        this.anyFullyBlackPixelsPresentPC = false;
+        this.anyFullyBlackPixelPresentPC = false;
         if (isPsxMode()) {
             // Collapse alphas down to the allowed values.
             for (int i = 0; i < this.pixelBuffer.length; i++) {
@@ -1376,14 +1377,14 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
                 int color = this.pixelBuffer[i];
                 if (ColorUtils.getAlphaInt(color) <= 127) {
                     this.pixelBuffer[i] = COLOR_TRUE_BLACK; // Set pixel to transparent. (Black is transparent)
-                    this.anyFullyBlackPixelsPresentPC = true;
+                    this.anyFullyBlackPixelPresentPC = true;
                     this.anyNonOpaquePixelsPresent = true;
                 } else if ((color & PSXClutColor.ARGB8888_TO5BIT_COLOR_MASK) == 0 && enableTransparency) { // Color is black.
-                    this.pixelBuffer[i] = COLOR_CLOSEST_TO_BLACK_PC; // Set pixel to as close to black as possible without being transparent. (This value seems to have been used by Vorg in the place of true black when BLACK_IS_TRANSPARENT is set.)
+                    this.pixelBuffer[i] = COLOR_CLOSEST_TO_BLACK_PC; // Set pixel to as close to black as possible without being transparent.
                     // Since this value is not encoded as pure-black, this.anyFullyBlackPixelsPresent should not be updated.
                 } else {
                     if ((color & PSXClutColor.ARGB8888_TO5BIT_COLOR_MASK) == 0)
-                        this.anyFullyBlackPixelsPresentPC = true; // This will be encoded as pure black, so it counts.
+                        this.anyFullyBlackPixelPresentPC = true; // This will be encoded as pure black, so it counts.
 
                     this.pixelBuffer[i] |= COLOR_FULL_ALPHA; // Ensure correct alpha.
                 }
@@ -1530,16 +1531,12 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
                     pixelArray[i] |= COLOR_FULL_ALPHA; // Make the pixel fully opaque.
             }
         } else { // PC
+            // Generate alpha based on ABR.
+            // PC version needs full black to be set to zero.
             // Loaded PC images have 1 possible alpha value, 0xFF, so transparency is handled here, just like in-game.
-            if (enableTransparency && this.anyFullyBlackPixelsPresentPC && testFlag(FLAG_BLACK_IS_TRANSPARENT)) {
-                // PC version needs full black to be set to zero.
+            if (enablePsxSemiTransparent || (enableTransparency && this.anyFullyBlackPixelPresentPC && testFlag(FLAG_BLACK_IS_TRANSPARENT)))
                 for (int i = 0; i < pixelArray.length; i++)
-                    if ((pixelArray[i] & PSXClutColor.ARGB8888_TO5BIT_COLOR_MASK) == 0) // If the image (in 16-bit form) is full-black...
-                        pixelArray[i] &= ~COLOR_FULL_ALPHA; // Make the pixel transparent.
-
-                // TODO: ABR exists on PC, does it actually work?
-                // TODO: Go over things like COLOR_CLOSEST_TO_BLACK needing to be converted back.
-            }
+                    pixelArray[i] = getDisplayPixelColorPC(pixelArray[i], enablePsxSemiTransparent);
         }
 
         // Padding highlight.
@@ -1571,6 +1568,32 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
 
         this.cachedImages[settings] = image; // Cache the image.
         return image;
+    }
+
+    private int getDisplayPixelColorPC(int pixelColor, boolean enablePsxSemiTransparent) {
+        boolean fullBlack = ((pixelColor & PSXClutColor.ARGB8888_TO5BIT_COLOR_MASK) == 0);
+        byte newAlpha = PSXClutColor.getAlpha(fullBlack, !fullBlack, enablePsxSemiTransparent, this.abr);
+
+        if (enablePsxSemiTransparent) {
+            switch (this.abr) {
+                case DEFAULT: // The PC version makes this opaque for some reason.
+                case SUBTRACT: // This just seems unimplemented in the PC version, as it becomes fully opaque.
+                    newAlpha = (byte) 0xFF;
+                    break;
+                case COMBINE: // Use the previously obtained alpha value.
+                    break;
+                case FAINT: // This is a rough estimation of what I see on PC. I didn't bother to figure out exactly how it worked.
+                    newAlpha = (byte) 0xFF;
+                    pixelColor = ColorUtils.toRGB((byte) (ColorUtils.getRedInt(pixelColor) / 2),
+                            (byte) (ColorUtils.getGreenInt(pixelColor) / 2),
+                            (byte) (ColorUtils.getBlueInt(pixelColor) / 2));
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported abr: " + this.abr);
+            }
+        }
+
+        return ColorUtils.setAlpha(pixelColor, newAlpha);
     }
 
     private BufferedImage getPaddedImageTemplate() {
