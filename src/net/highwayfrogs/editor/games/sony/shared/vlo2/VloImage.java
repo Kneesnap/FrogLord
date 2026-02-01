@@ -74,8 +74,6 @@ import java.util.logging.Level;
  *  2) Text generation
  *   -> Integrate with new system to become seamless
  *   -> Remove usage of SCImageUtils.TransparencyFilter, and then delete that class,
- *  3) Replacing images in the UI like level names and level screenshots should update the UI.
- *  4) Make a method in SCGameInstance for adding/replacing images in ALL files.
  * Created by Kneesnap on 8/30/2018.
  */
 public class VloImage extends SCSharedGameData implements Cloneable, ITextureSource, ICollectionViewEntry {

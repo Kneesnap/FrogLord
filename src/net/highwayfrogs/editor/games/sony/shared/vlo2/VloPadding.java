@@ -80,6 +80,6 @@ public enum VloPadding {
         if (paddingArray.length != values().length - 1)
             throw new IllegalArgumentException("paddingArray contained " + paddingArray.length + " values when it was expected to contain " + (values().length - 1) + "!");
 
-        return paddingArray[padding.ordinal() - 2];
+        return paddingArray[padding.ordinal() - 1];
     }
 }

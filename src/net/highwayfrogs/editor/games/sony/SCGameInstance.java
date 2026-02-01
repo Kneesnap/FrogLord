@@ -33,6 +33,7 @@ import net.highwayfrogs.editor.scripting.NoodleScriptEngine;
 import net.highwayfrogs.editor.system.Config;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.Utils.ProblemResponse;
 import net.highwayfrogs.editor.utils.data.reader.ArraySource;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.utils.data.reader.FileSource;
@@ -42,6 +43,7 @@ import net.highwayfrogs.editor.utils.data.writer.FixedArrayReceiver;
 import net.highwayfrogs.editor.utils.objects.CountMap;
 import net.highwayfrogs.editor.utils.objects.IndexBitArray;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -509,6 +511,36 @@ public abstract class SCGameInstance extends GameInstance {
     protected void onRemapRead(TextureRemapArray remap, DataReader reader) {
         for (int i = 0; i < remap.getTextureIds().size(); i++)
             this.texturesFoundInRemap.setBit(remap.getRemappedTextureId(i), true);
+    }
+
+    /**
+     * Replace all VloImage occurrences using the provided name.
+     * @param name the name of the image to replace
+     * @param image the image to import with
+     * @param bitDepth the bit depth to import the image width. Null will re-use the existing bit-depth.
+     * @param padding the padding to apply, null will re-use the existing image padding.
+     * @return vloImages
+     */
+    @SuppressWarnings("unused") // Main use-case is calling from Noodle.
+    public List<VloImage> replaceVloImagesByName(String name, BufferedImage image, PsxImageBitDepth bitDepth, VloPadding padding) {
+        if (!VloImage.isValidTextureName(name))
+            throw new IllegalArgumentException("Invalid texture name: '" + name + "'");
+
+        List<VloFile> vloFiles = this.mainArchive.getAllFiles(VloFile.class);
+        List<VloImage> results = new ArrayList<>();
+        for (int i = 0; i < vloFiles.size(); i++) {
+            VloFile vloFile = vloFiles.get(i);
+            VloImage vloImage = vloFile.getImageByName(name);
+            if (vloImage != null) {
+                vloImage.replaceImage(image, bitDepth, padding != null ? padding.getPaddingAmount(vloFile) : -1, ProblemResponse.THROW_EXCEPTION);
+                results.add(vloImage);
+            }
+        }
+
+        if (results.isEmpty())
+            throw new IllegalStateException("No images named '" + name + "' were found in the entire game.");
+
+        return null;
     }
 
     /**
