@@ -434,7 +434,7 @@ public class VloFile extends SCSharedGameFile {
      * @param abr the ABR value to apply, ignored on PC.
      * @return newVloImage
      */
-    public VloImage addImage(String name, BufferedImage image, VloPadding padding, PsxImageBitDepth bitDepth, PsxAbrTransparency abr) {
+    public VloImage addImage(String name, BufferedImage image, VloPadding padding, PsxImageBitDepth bitDepth, PsxAbrTransparency abr, boolean translucent) {
         if (StringUtils.isNullOrWhiteSpace(name))
             throw new IllegalArgumentException("The provided image name was null/empty!");
         if (!VloImage.isValidTextureName(name))
@@ -474,7 +474,7 @@ public class VloFile extends SCSharedGameFile {
         VloImage newImage = new VloImage(this);
         newImage.setTextureId(textureId);
         newImage.setCustomName(name);
-        newImage.replaceImage(image, bitDepth, padding.getPaddingAmount(this), ProblemResponse.THROW_EXCEPTION);
+        newImage.replaceImage(image, bitDepth, padding.getPaddingAmount(this), translucent, ProblemResponse.THROW_EXCEPTION);
         if (abr != null && this.psxMode)
             newImage.setAbr(abr);
 
@@ -498,7 +498,8 @@ public class VloFile extends SCSharedGameFile {
      * @param padding the padding apply. If null is provided, VloPadding.NONE will be used instead.
      * @return image
      */
-    public VloImage addOrReplaceImage(String name, BufferedImage image, PsxImageBitDepth bitDepth, VloPadding padding) {
+    @SuppressWarnings("unused") // Used by Noodle scripts.
+    public VloImage addOrReplaceImage(String name, BufferedImage image, PsxImageBitDepth bitDepth, VloPadding padding, boolean translucent) {
         if (!VloImage.isValidTextureName(name))
             throw new IllegalArgumentException("Bad name: " + name);
         if (image == null)
@@ -509,9 +510,9 @@ public class VloFile extends SCSharedGameFile {
         VloImage vloImage = getImageByName(name);
         if (vloImage != null) {
             int paddingAmount = padding.getPaddingAmount(this);
-            vloImage.replaceImage(image, bitDepth, paddingAmount, ProblemResponse.THROW_EXCEPTION);
+            vloImage.replaceImage(image, bitDepth, paddingAmount, translucent, ProblemResponse.THROW_EXCEPTION);
         } else {
-            vloImage = addImage(name, image, padding, bitDepth, PsxAbrTransparency.DEFAULT);
+            vloImage = addImage(name, image, padding, bitDepth, PsxAbrTransparency.DEFAULT, translucent);
         }
 
         return vloImage;

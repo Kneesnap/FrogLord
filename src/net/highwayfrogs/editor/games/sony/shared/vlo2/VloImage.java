@@ -1265,18 +1265,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
      * @param image The new image to use.
      */
     public void replaceImage(BufferedImage image, ProblemResponse response) {
-        replaceImage(image, null, response);
-    }
-
-    /**
-     * Replace this texture with a new one.
-     * Padding will be automatically generated.
-     * @param image The new image to use.
-     * @param bitDepth the bit-depth to import the image as. On PC, this value is ignored. A null value indicates that the pre-existing bit depth should be used.
-     * @param response Controls how this function responds to a problem, if one occurs.
-     */
-    public void replaceImage(BufferedImage image, PsxImageBitDepth bitDepth, ProblemResponse response) {
-        replaceImage(image, bitDepth, -1, response);
+        replaceImage(image, null, -1, testFlag(FLAG_TRANSLUCENT), response);
     }
 
     /**
@@ -1284,10 +1273,11 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
      * @param image The new image to use.
      * @param bitDepth the bit-depth to import the image as. On PC, this value is ignored. A null value indicates that the pre-existing bit depth should be used.
      * @param padding the padding amount to apply to the image. If a negative value is provided, the previous padding value will be used.
+     * @param translucent if the translucent flag should be set
      * @param response Controls how this function responds to a problem, if one occurs.
      */
     @SuppressWarnings("ExtractMethodRecommender")
-    public void replaceImage(BufferedImage image, PsxImageBitDepth bitDepth, int padding, ProblemResponse response) {
+    public void replaceImage(BufferedImage image, PsxImageBitDepth bitDepth, int padding, boolean translucent, ProblemResponse response) {
         if (image == null)
             throw new NullPointerException("image");
         if (bitDepth == null)
@@ -1345,6 +1335,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         // Process/fix image alpha/transparency.
         // This should be done before the clut is generated.
         this.anyFullyBlackPixelPresentPC = false;
+        setFlag(FLAG_TRANSLUCENT, translucent);
         if (isPsxMode()) {
             // On PSX, the BLACK_IS_TRANSPARENT flag is calculable.
             // This can be verified with VloFile.DEBUG_VALIDATE_IMAGE_EXPORT_IMPORT.

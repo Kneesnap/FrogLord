@@ -519,10 +519,11 @@ public abstract class SCGameInstance extends GameInstance {
      * @param image the image to import with
      * @param bitDepth the bit depth to import the image width. Null will re-use the existing bit-depth.
      * @param padding the padding to apply, null will re-use the existing image padding.
+     * @param translucent if the texture should be translucent
      * @return vloImages
      */
     @SuppressWarnings("unused") // Main use-case is calling from Noodle.
-    public List<VloImage> replaceVloImagesByName(String name, BufferedImage image, PsxImageBitDepth bitDepth, VloPadding padding) {
+    public List<VloImage> replaceVloImagesByName(String name, BufferedImage image, PsxImageBitDepth bitDepth, VloPadding padding, boolean translucent) {
         if (!VloImage.isValidTextureName(name))
             throw new IllegalArgumentException("Invalid texture name: '" + name + "'");
 
@@ -532,7 +533,7 @@ public abstract class SCGameInstance extends GameInstance {
             VloFile vloFile = vloFiles.get(i);
             VloImage vloImage = vloFile.getImageByName(name);
             if (vloImage != null) {
-                vloImage.replaceImage(image, bitDepth, padding != null ? padding.getPaddingAmount(vloFile) : -1, ProblemResponse.THROW_EXCEPTION);
+                vloImage.replaceImage(image, bitDepth, padding != null ? padding.getPaddingAmount(vloFile) : -1, translucent, ProblemResponse.THROW_EXCEPTION);
                 results.add(vloImage);
             }
         }

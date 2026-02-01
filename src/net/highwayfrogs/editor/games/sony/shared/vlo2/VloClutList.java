@@ -48,6 +48,8 @@ public class VloClutList extends SCSharedGameObject {
         if (clut.isRegistered())
             return false;
 
+        clut.registered = true;
+
         // Try to generate the clut position if it is currently invalid.
         boolean allowInvalidPosition = false;
         if (clut.getX() < 0 && clut.getY() < 0) { // If this happens, we should add it to update later.
@@ -70,7 +72,6 @@ public class VloClutList extends SCSharedGameObject {
             }
         }
 
-        clut.registered = true;
         this.cluts.add(clut);
         return true;
     }
