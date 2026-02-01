@@ -73,6 +73,16 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
         });
 
         addMenuItem(this.menuBarFile, "Export All Textures", this::exportBulkTextures);
+        if (getGameInstance().getVloTree() != null) {
+            addMenuItem(this.menuBarEdit, "Rebuild Vlos", () -> {
+                ProgressBarComponent.openProgressBarWindow(getGameInstance(), "Texture Placement", progressBar -> {
+                    long startTime = System.currentTimeMillis();
+                    getGameInstance().getVloTree().rebuildRecursive(progressBar);
+                    long endTime = System.currentTimeMillis();
+                    getLogger().info("Rebuild took %d ms.", endTime - startTime);
+                });
+            });
+        }
 
         addMenuItem(this.menuBarEdit, "Open Hash Playground", () -> HashPlaygroundController.openEditor(getGameInstance()));
         addMenuItem(this.menuBarEdit, "Find Texture By ID", this::promptSearchForTexture);
