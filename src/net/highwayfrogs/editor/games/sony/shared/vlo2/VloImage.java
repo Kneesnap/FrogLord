@@ -1288,6 +1288,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
      * @param padding the padding amount to apply to the image. If a negative value is provided, the previous padding value will be used.
      * @param response Controls how this function responds to a problem, if one occurs.
      */
+    @SuppressWarnings("ExtractMethodRecommender")
     public void replaceImage(BufferedImage image, PsxImageBitDepth bitDepth, int padding, ProblemResponse response) {
         if (image == null)
             throw new NullPointerException("image");
@@ -1347,7 +1348,21 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         // This should be done before the clut is generated.
         this.anyFullyBlackPixelPresentPC = false;
         if (isPsxMode()) {
+            // On PSX, the BLACK_IS_TRANSPARENT flag is calculable.
+            // This can be verified with VloFile.DEBUG_VALIDATE_IMAGE_EXPORT_IMPORT.
+            boolean blackIsTransparent = false;
+            int padOffset = getLeftPadding() + (getUpPadding() * this.paddedWidth);
+            for (int y = 0; y < this.unpaddedHeight; y++, padOffset += this.paddedWidth) {
+                for (int x = 0; x < this.unpaddedWidth; x++) {
+                    if (ColorUtils.getAlphaInt(this.pixelBuffer[padOffset + x]) <= 85) {
+                        blackIsTransparent = true;
+                        break;
+                    }
+                }
+            }
+
             // Collapse alphas down to the allowed values.
+            setFlag(FLAG_BLACK_IS_TRANSPARENT, blackIsTransparent);
             for (int i = 0; i < this.pixelBuffer.length; i++) {
                 int color = this.pixelBuffer[i];
                 int alpha = ColorUtils.getAlphaInt(color);
@@ -1358,6 +1373,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
                     // NOTE: This is ONLY enabled when !this.expectedStpBlackBitPsx,
                     //  because otherwise it will cause VloFile.DEBUG_VALIDATE_IMAGE_EXPORT_IMPORT to fail.
                     // We do not want a color imported as black to be possible to turn transparent.
+                    // Since BLACK_IS_TRANSPARENT is calculated just above, this is safe.
                     if ((color & PSXClutColor.ARGB8888_TO5BIT_COLOR_MASK) == 0 && !this.expectedStpBlackBitPsx)
                         color = COLOR_CLOSEST_TO_BLACK; // Ensure black color stays as black if transparency is enabled.
 
