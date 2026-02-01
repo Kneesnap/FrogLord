@@ -1377,27 +1377,27 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
                 this.pixelBuffer[i] = ColorUtils.setAlpha(color, (byte) alpha);
             }
         } else { // PC texture.
-            boolean enableTransparency = false;
-
-            // Determine transparency.
-            for (int i = 0; i < this.pixelBuffer.length; i++) {
-                if (ColorUtils.getAlphaInt(this.pixelBuffer[i]) <= 127) {
-                    enableTransparency = true;
-                    break;
+            boolean blackIsTransparent = this.paddingTransparent;
+            int padOffset = getLeftPadding() + (getUpPadding() * this.paddedWidth);
+            for (int y = 0; y < this.unpaddedHeight; y++, padOffset += this.paddedWidth) {
+                for (int x = 0; x < this.unpaddedWidth; x++) {
+                    if (ColorUtils.getAlphaInt(this.pixelBuffer[padOffset + x]) <= 127) {
+                        blackIsTransparent = true;
+                        break;
+                    }
                 }
             }
 
             // Apply to image.
-            if (enableTransparency) // Only set flag true, don't set false, because this flag IS found on images without transparent pixels, for VRAM ordering purposes.
+            if (blackIsTransparent) // Only set flag true, don't set false, because this flag IS found on images without transparent pixels, for VRAM ordering purposes.
                 setFlag(FLAG_BLACK_IS_TRANSPARENT, true);
 
-            boolean transparencyFlag = testFlag(FLAG_BLACK_IS_TRANSPARENT);
             for (int i = 0; i < this.pixelBuffer.length; i++) {
                 int color = this.pixelBuffer[i];
                 if (ColorUtils.getAlphaInt(color) <= 127) {
                     this.pixelBuffer[i] = COLOR_TRUE_BLACK; // Set pixel to transparent. (Black is transparent)
                     this.anyFullyBlackPixelPresentPC = true; // Encoded as pure black.
-                } else if ((color & PSXClutColor.ARGB8888_TO5BIT_COLOR_MASK) == 0 && transparencyFlag) { // Color is black.
+                } else if ((color & PSXClutColor.ARGB8888_TO5BIT_COLOR_MASK) == 0 && blackIsTransparent) { // Color is black.
                     this.pixelBuffer[i] = COLOR_CLOSEST_TO_BLACK; // Set pixel to as close to black as possible without being transparent.
                     // Since this value is not encoded as pure-black, this.anyFullyBlackPixelsPresent should not be updated.
                 } else {
