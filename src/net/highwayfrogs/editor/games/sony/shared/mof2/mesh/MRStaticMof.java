@@ -245,6 +245,20 @@ public class MRStaticMof extends MRBaseModelData {
     }
 
     /**
+     * Replaces vertex colors on this static mof.
+     * @param oldCrgbValue the old CVECTOR CRGB value to replace
+     * @param newCrgbValue the new CVECTOR CRGB value to apply
+     */
+    public void replaceVertexColors(int oldCrgbValue, int newCrgbValue) {
+        List<MRMofPolygon> mofPolygons = getAllPolygons();
+        for (int i = 0; i < mofPolygons.size(); i++) {
+            MRMofPolygon mofPolygon = mofPolygons.get(i);
+            if (mofPolygon.getColor().toCRGB() == oldCrgbValue)
+                mofPolygon.getColor().fromCRGB(newCrgbValue);
+        }
+    }
+
+    /**
      * Returns true iff the active format version supports interpolation flags.
      */
     public static boolean canVersionFormatHaveNullSignature(SCGameInstance gameInstance) {

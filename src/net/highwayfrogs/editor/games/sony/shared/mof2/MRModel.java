@@ -559,4 +559,16 @@ public class MRModel extends SCSharedGameFile implements ISCTextureUser, IExtraU
             }
         }
     }
+
+    /**
+     * Replaces vertex colors on all mofs in this model.
+     * @param oldCrgbValue the old CVECTOR CRGB value to replace
+     * @param newCrgbValue the new CVECTOR CRGB value to apply
+     */
+    @SuppressWarnings("unused") // Primarily used by Noodle scripts.
+    public void replaceVertexColors(int oldCrgbValue, int newCrgbValue) {
+        List<MRStaticMof> staticMofs = getStaticMofs();
+        for (int i = 0; i < staticMofs.size(); i++)
+            staticMofs.get(i).replaceVertexColors(oldCrgbValue, newCrgbValue);
+    }
 }

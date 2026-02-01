@@ -217,6 +217,14 @@ public class CVector implements IBinarySerializable {
     }
 
     /**
+     * Turn this color into a CRGB integer.
+     * @return crgbValue
+     */
+    public int toCRGB() {
+        return ColorUtils.toARGB(this.red, this.green, this.blue, this.code);
+    }
+
+    /**
      * Read color data from an integer value.
      * @param rgbValue The value to read from.
      */
