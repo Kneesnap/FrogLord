@@ -76,6 +76,7 @@ public abstract class SCGameInstance extends GameInstance {
     @Getter private final List<TextureRemapArray> textureRemaps = new ArrayList<>();
     private final Map<MWIResourceEntry, LinkedTextureRemap<?>> linkedTextureMaps = new HashMap<>();
     @Getter private final List<Long> bmpTexturePointers = new ArrayList<>();
+    private IndexBitArray texturesReferencedByName;
 
     private byte[] cachedExecutableBytes;
     private DataReader cachedExecutableReader;
@@ -259,6 +260,15 @@ public abstract class SCGameInstance extends GameInstance {
      */
     public Short getTextureIdByOriginalName(String name) {
         return getVersionConfig().getImageList().getTextureIDFromName(name);
+    }
+
+    /**
+     * Test if the texture ID is set to be referenced by name.
+     * @param textureId the textureId to test
+     * @return textureReferencedByName
+     */
+    public boolean isTextureReferencedByName(short textureId) {
+        return this.texturesReferencedByName != null && this.texturesReferencedByName.getBit(textureId);
     }
 
     /**
@@ -846,10 +856,26 @@ public abstract class SCGameInstance extends GameInstance {
 
     private void validateBmpPointerData(MWDFile mwdFile) {
         this.maximumTextureId = -1;
+        this.texturesReferencedByName = null;
         for (VloFile vloArchive : mwdFile.getAllFiles(VloFile.class))
             for (VloImage image : vloArchive.getImages())
                 if (image.getTextureId() > this.maximumTextureId)
                     this.maximumTextureId = image.getTextureId();
+
+        // Setup textures tracked by name.
+        this.texturesReferencedByName = new IndexBitArray(this.maximumTextureId + 1);
+        if (this.bmpTexturePointers.isEmpty()) {
+            for (VloFile vloArchive : mwdFile.getAllFiles(VloFile.class))
+                for (VloImage image : vloArchive.getImages())
+                    if (image.testFlag(VloImage.FLAG_REFERENCED_BY_NAME))
+                        this.texturesReferencedByName.setBit(image.getTextureId(), true);
+        } else {
+            for (int i = 0; i < Math.min(this.maximumTextureId + 1, this.bmpTexturePointers.size()); i++) {
+                Long texturePointer = this.bmpTexturePointers.get(i);
+                if (texturePointer != null && texturePointer != 0)
+                    this.texturesReferencedByName.setBit(i, true);
+            }
+        }
 
         // Populate texture lists.
         for (VloFile vloArchive : mwdFile.getAllFiles(VloFile.class))
