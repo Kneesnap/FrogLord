@@ -22,18 +22,10 @@ public final class VloTree extends VloTreeNode {
     final Map<MWIResourceEntry, VloFileTreeData> vloFileDataByResourceEntry = new HashMap<>(); // Do not use the VloFile directly as the key, just in-case it gets imported.
     final Map<String, VloTreeNode> nodesByName = new HashMap<>();
     final Set<VloTreeNode> generatedNodes = new HashSet<>();
-    @Getter private boolean rebuildQueued;
 
     VloTree(SCGameInstance instance, String name, VloTreeNodeFillMethod fillMethod, int pages, int reservedPages, int extraPages, int originalPages, int clutPages, int transparentPages) {
         super(instance, null, name, fillMethod, pages, reservedPages, extraPages, originalPages, clutPages, Collections.emptyList());
         this.transparentPages = transparentPages;
-    }
-
-    /**
-     * Mark the tree as needing a full rebuild.
-     */
-    public void markForRebuild() {
-        this.rebuildQueued = true;
     }
 
     /**

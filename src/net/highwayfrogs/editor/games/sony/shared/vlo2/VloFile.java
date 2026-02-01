@@ -41,7 +41,6 @@ public class VloFile extends SCSharedGameFile {
     private final List<VloImage> immutableImages = Collections.unmodifiableList(this.images);
     @Getter private final VloClutList clutList;
     @Getter private boolean psxMode;
-    @Getter private boolean vramDirty;
 
     public static final String PC_SIGNATURE = "2GRP";
     public static final String PSX_SIGNATURE = "2GRV";
@@ -410,22 +409,6 @@ public class VloFile extends SCSharedGameFile {
     }
 
     /**
-     * Mark the vlo file as being up-to-date / not needing any changes.
-     * Only the vram position updater should call this.
-     */
-    public void markClean() {
-        this.vramDirty = false;
-    }
-
-    /**
-     * Mark the vlo file as being dirty / needing a rebuild.
-     * Only the vram position updater should call this.
-     */
-    public void markDirty() {
-        this.vramDirty = true;
-    }
-
-    /**
      * Adds a new image to the VLO file
      * @param name the name of the image to add
      * @param image the image to import
@@ -484,9 +467,7 @@ public class VloFile extends SCSharedGameFile {
         getArchive().startTrackingImageByTextureId(newImage, textureId);
 
         // Try to add to the VloTree.
-        markDirty();
-        if (!snapshot.tryAddImage(newImage, false))
-            tree.markForRebuild();
+        snapshot.tryAddImage(newImage, false);
 
         return newImage;
     }

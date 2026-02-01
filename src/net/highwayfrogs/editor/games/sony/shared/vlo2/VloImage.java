@@ -1247,15 +1247,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
             // This must be called after updating these booleans to keep this.anyFullyTransparentPixelPresentPsx up-to-date.
             if ((flag & (FLAG_BLACK_IS_TRANSPARENT | FLAG_TRANSLUCENT)) != 0)
                 updatePsxPixelInfo();
-        } else {
-            if ((flag & FLAG_BLACK_IS_TRANSPARENT) == FLAG_BLACK_IS_TRANSPARENT)
-                markNeedsVramRefresh(); // The image is on an inappropriate page (on PC) if this value changes.
         }
-    }
-
-    private void markNeedsVramRefresh() {
-        if (this.parent != null)
-            this.parent.markDirty();
     }
 
     /**
@@ -1311,10 +1303,8 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
 
         // Calculate padding changes.
         // Padding calculation needs: bitDepth, unpaddedWidth
-        if (this.bitDepth != bitDepth && isPsxMode()) {
+        if (this.bitDepth != bitDepth && isPsxMode())
             this.bitDepth = bitDepth;
-            markNeedsVramRefresh();
-        }
 
         // Apply new dimensions.
         this.unpaddedWidth = (short) newInputImageWidth;
@@ -1422,8 +1412,6 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
 
         // Handle dimension change...
         if (!hadPreviousImage || this.paddedWidth != oldPaddedWidth || this.paddedHeight != oldPaddedHeight) {
-            markNeedsVramRefresh();
-
             // Change where in VloFile.images the image is placed, since this is based on the position.
             if (this.parent.isSortingOrderKnown() && this.parent.removeImageFromList(this))
                 this.parent.addImageToList(this);

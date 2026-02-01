@@ -36,7 +36,6 @@ public class VloTreeNode {
     private final List<VloTreeNode> children = new ArrayList<>();
     private final List<VloTreeNode> immutableChildren = Collections.unmodifiableList(this.children);
     private final List<VloTreeNode> includedNodes;
-    private final List<VloTreeNode> dependantNodes = new ArrayList<>(); // Nodes which implicitly must be updated when this one is updated, other than child nodes. This is primarily for the "include=" feature, and is not commonly used.
     @Getter private final int extraPages;
     @Getter private final int reservedPages;
     @Getter private final int usablePages;
@@ -108,39 +107,6 @@ public class VloTreeNode {
      */
     public boolean isPageReserved(int page) {
         return isValidPageId(page) && (this.reservedPages & (1 << page)) != 0;
-    }
-
-    /**
-     * Rebuild the vram positions of all Vlo files marked as dirty, and recursively any which depend on the rebuilt Vlo files.
-     * @param progressBar an optional progressBar component to show the status of
-     */
-    public void recursivelyBuildDirtyVloFiles(ProgressBarComponent progressBar) {
-        List<VloTreeNode> queue = new ArrayList<>();
-        List<VloTreeNode> dirtyQueue = new ArrayList<>();
-        queue.add(this);
-        for (int i = 0; i < queue.size(); i++) {
-            VloTreeNode node = queue.get(i);
-
-            boolean anyVlosDirty = (node instanceof VloTree) && ((VloTree) node).isRebuildQueued();
-            for (int j = 0; j < node.vloFiles.size(); j++) {
-                VloFileTreeData vloFileData = node.vloFiles.get(j);
-                if (vloFileData.getVloFile().isVramDirty()) {
-                    anyVlosDirty = true;
-                    break;
-                }
-            }
-
-            if (anyVlosDirty) {
-                node.recursivelyMarkDependantNodesDirty(); // Dependant nodes must by definition not yet be processed in the queue.
-                dirtyQueue.add(node);
-                addChildNodesToQueue(dirtyQueue, node);
-            } else {
-                queue.addAll(node.getChildren());
-            }
-        }
-
-        // If any vlos are dirty, this node and all its children should be recursively rebuilt.
-        recursivelyBuildTree(getTree(), dirtyQueue, progressBar, true);
     }
 
     /**
@@ -296,7 +262,7 @@ public class VloTreeNode {
 
         // Create node.
         VloTreeNode newNode;
-        List<VloTreeNode> includedNodes = null;
+        List<VloTreeNode> includedNodes;
         if (tree != null) {
             if (parent == null)
                 throw new IllegalArgumentException("parent cannot be null if tree is non-null!");
@@ -315,11 +281,6 @@ public class VloTreeNode {
             int transparentPages = instance.isPC() ? getPageBitFlags(config.getOptionalKeyValueNode(CONFIG_KEY_TRANSPARENT_PAGES)) : 0;
             newNode = tree = new VloTree(instance, config.getSectionName(), fillMethod, pages, reservedPages, extraPages, originalPages, clutPages, transparentPages);
         }
-
-        // Setup dependant nodes.
-        if (includedNodes != null)
-            for (int i = 0; i < includedNodes.size(); i++)
-                includedNodes.get(i).dependantNodes.add(newNode);
 
         // Read vlo files.
         for (int i = 0; i < vloEntries.size(); i++) {
@@ -459,22 +420,5 @@ public class VloTreeNode {
             throw new IllegalArgumentException("Invalid page number: " + parsedValue + ". " + node.getExtraDebugErrorInfo());
 
         return parsedValue;
-    }
-
-    /**
-     * Recursively marks all dependant nodes as dirty/needing vram refresh.
-     */
-    private void recursivelyMarkDependantNodesDirty() {
-        for (int i = 0; i < this.dependantNodes.size(); i++) {
-            VloTreeNode node = this.dependantNodes.get(i);
-            for (int j = 0; j < node.vloFiles.size(); j++) {
-                VloFile vloFile = node.vloFiles.get(j).getVloFile();
-                if (vloFile != null)
-                    vloFile.markDirty();
-            }
-
-            if (!node.dependantNodes.isEmpty())
-                node.recursivelyMarkDependantNodesDirty();
-        }
     }
 }

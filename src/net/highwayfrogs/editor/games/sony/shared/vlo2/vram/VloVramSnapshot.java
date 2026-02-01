@@ -198,8 +198,6 @@ public class VloVramSnapshot extends SCSharedGameObject {
         for (int i = 0; i < sortedImages.size(); i++)
             if (!tryAddTexture(sortedImages.get(i), fillMethod, addedCluts, node.getUsablePages(), node.getExtraPages()))
                 throw new RuntimeException("There was not enough space in VRAM to fit " + sortedImages.get(i) + ". (Fill Mode: " + fillMethod + ")");
-
-        vloFile.markClean();
     }
 
 

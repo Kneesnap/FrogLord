@@ -345,7 +345,7 @@ public class MWDFile extends SCSharedGameData {
     public void save(DataWriter writer, ProgressBarComponent progressBar) {
         try {
             if (getGameInstance().getVloTree() != null)
-                getGameInstance().getVloTree().recursivelyBuildDirtyVloFiles(progressBar);
+                getGameInstance().getVloTree().rebuildRecursive(progressBar);
         } catch (Throwable th) {
             Utils.handleError(getLogger(), th, true, "Failed to place game textures (.VLO files) into VRAM!");
         }
