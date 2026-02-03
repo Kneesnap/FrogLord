@@ -11,7 +11,7 @@ import net.highwayfrogs.editor.games.sony.SCGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
-import net.highwayfrogs.editor.games.sony.shared.ui.file.VLOController;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.ui.VloFileUIController;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.vram.VloTextureIdTracker;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.vram.VloTree;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.vram.VloTreeNode;
@@ -334,8 +334,8 @@ public class VloFile extends SCSharedGameFile {
     }
 
     @Override
-    public VLOController makeEditorUI() {
-        return loadEditor(getGameInstance(), "edit-file-vlo", new VLOController(getGameInstance()), this);
+    public VloFileUIController makeEditorUI() {
+        return loadEditor(getGameInstance(), "edit-file-vlo", new VloFileUIController(getGameInstance()), this);
     }
 
     @Override
@@ -397,8 +397,8 @@ public class VloFile extends SCSharedGameFile {
             }
 
             getLogger().info("Imported %d images.", importedFiles);
-            if (getGameInstance().getMainMenuController().getCurrentEditor() instanceof VLOController)
-                ((VLOController) getGameInstance().getMainMenuController().getCurrentEditor()).updateDisplay();
+            if (getGameInstance().getMainMenuController().getCurrentEditor() instanceof VloFileUIController)
+                ((VloFileUIController) getGameInstance().getMainMenuController().getCurrentEditor()).updateDisplay();
         });
     }
 

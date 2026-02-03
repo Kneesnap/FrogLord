@@ -5,7 +5,7 @@ import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.sony.SCGameFile.SCSharedGameFile;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
-import net.highwayfrogs.editor.games.sony.shared.ui.file.VLOController;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.ui.VloFileUIController;
 import net.highwayfrogs.editor.gui.ImageResource;
 import net.highwayfrogs.editor.gui.components.propertylist.PropertyListNode;
 import net.highwayfrogs.editor.utils.data.reader.DataReader;
@@ -73,8 +73,8 @@ public class VloFile extends SCSharedGameFile {
     }
 
     @Override
-    public VLOController makeEditorUI() {
-        return null; // loadEditor(getGameInstance(), "edit-file-vlo", new VLOController(getGameInstance()), this);
+    public VloFileUIController makeEditorUI() {
+        return null; // loadEditor(getGameInstance(), "edit-file-vlo", new VloFileUIController(getGameInstance()), this);
     }
 
     @Override

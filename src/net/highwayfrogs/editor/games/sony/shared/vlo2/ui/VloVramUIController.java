@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.games.sony.shared.ui.file;
+package net.highwayfrogs.editor.games.sony.shared.vlo2.ui;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -50,7 +50,7 @@ import java.util.Map.Entry;
  *   -> Show information like which images the clut is used by, what cluts an image use, etc.
  * Created by Kneesnap on 12/2/2018.
  */
-public class VRAMPageController extends GameUIController<SCGameInstance> {
+public class VloVramUIController extends GameUIController<SCGameInstance> {
     @FXML private ImageView imageView;
     @FXML private GridPane pagePane;
 
@@ -72,7 +72,7 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
 
     // Configuration:
     private final VloFile vloArchive;
-    private final VLOController controller;
+    private final VloFileUIController controller;
     private VloImage selectedImage;
     private final Map<VloImage, Tuple2<Short, Short>> originalState = new HashMap<>();
 
@@ -81,7 +81,7 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
     private static final int PAGE_PREVIEW_HEIGHT = 128;
     public static final int VRAM_EXPORT = VloImage.DEFAULT_IMAGE_NOT_TRANSPARENT_EXPORT_SETTINGS;
 
-    public VRAMPageController(VLOController controller) {
+    public VloVramUIController(VloFileUIController controller) {
         super(controller.getGameInstance());
         this.vloArchive = controller.getFile();
         this.controller = controller;
@@ -463,9 +463,9 @@ public class VRAMPageController extends GameUIController<SCGameInstance> {
      * Open the VRAM editor.
      * @param controller The VLO controller we'll be modifying.
      */
-    public static void openEditor(VLOController controller) {
+    public static void openEditor(VloFileUIController controller) {
         String windowTitle = "VRAM Viewer [" + controller.getFile().getFileDisplayName() + "]";
-        FXUtils.createWindowFromFXMLTemplate("edit-file-vlo-vram", new VRAMPageController(controller), windowTitle, false);
+        FXUtils.createWindowFromFXMLTemplate("edit-file-vlo-vram", new VloVramUIController(controller), windowTitle, false);
     }
 
     /**

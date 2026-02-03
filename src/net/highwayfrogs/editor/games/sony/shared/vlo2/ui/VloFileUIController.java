@@ -1,4 +1,4 @@
-package net.highwayfrogs.editor.games.sony.shared.ui.file;
+package net.highwayfrogs.editor.games.sony.shared.vlo2.ui;
 
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
@@ -58,7 +58,7 @@ import java.util.function.Supplier;
  * Controls the VLO edit screen.
  * Created by Kneesnap on 9/18/2018.
  */
-public class VLOController extends SCFileEditorUIController<SCGameInstance, VloFile> {
+public class VloFileUIController extends SCFileEditorUIController<SCGameInstance, VloFile> {
     @Getter private VloFileEditorComponent editorComponent;
     private final List<ImageBasedFXNode<?>> imageBasedNodes = new ArrayList<>();
     @FXML private CheckBox paddingCheckBox;
@@ -78,7 +78,7 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
 
     private static final int SCALE_DIMENSION = 256;
 
-    public VLOController(SCGameInstance instance) {
+    public VloFileUIController(SCGameInstance instance) {
         super(instance);
     }
 
@@ -389,7 +389,7 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
 
     @FXML
     private void openVramEditor(ActionEvent evt) {
-        VRAMPageController.openEditor(this);
+        VloVramUIController.openEditor(this);
     }
 
     @FXML
@@ -502,11 +502,11 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
     }
 
     private static class VloFileEditorComponent extends CollectionEditorComponent<SCGameInstance, VloImage> {
-        private final VLOController controller;
+        private final VloFileUIController controller;
         private final MenuItem addImageItem = new MenuItem("Add Image");
         private final MenuItem addFroggerTextImageItem = new MenuItem("Add Frogger Text Image");
 
-        public VloFileEditorComponent(SCGameInstance instance, VLOController controller, boolean padCollectionView) {
+        public VloFileEditorComponent(SCGameInstance instance, VloFileUIController controller, boolean padCollectionView) {
             super(instance, new VloFileBasicListViewComponent(instance, controller), padCollectionView);
             this.controller = controller;
         }
@@ -561,9 +561,9 @@ public class VLOController extends SCFileEditorUIController<SCGameInstance, VloF
     }
 
     private static class VloFileBasicListViewComponent extends ListViewComponent<SCGameInstance, VloImage> {
-        private final VLOController controller;
+        private final VloFileUIController controller;
 
-        public VloFileBasicListViewComponent(SCGameInstance instance, VLOController controller) {
+        public VloFileBasicListViewComponent(SCGameInstance instance, VloFileUIController controller) {
             super(instance);
             this.controller = controller;
         }

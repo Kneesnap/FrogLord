@@ -1,8 +1,8 @@
 package net.highwayfrogs.editor.games.sony.shared.vlo2.vram;
 
 import lombok.Getter;
-import net.highwayfrogs.editor.games.sony.shared.ui.file.VRAMPageController;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.ui.VloVramUIController;
 
 import java.awt.*;
 
@@ -37,6 +37,6 @@ public class VloVramEntryImage extends VloVramEntry {
 
     @Override
     public void draw(Graphics2D graphics, boolean selected) {
-        VRAMPageController.writeVramImage(graphics, this.image, selected);
+        VloVramUIController.writeVramImage(graphics, this.image, selected);
     }
 }

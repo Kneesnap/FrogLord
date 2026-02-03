@@ -10,10 +10,10 @@ import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.shared.ISCMWDHeaderGenerator;
 import net.highwayfrogs.editor.games.sony.shared.mwd.MWDFile;
-import net.highwayfrogs.editor.games.sony.shared.ui.file.VLOController;
 import net.highwayfrogs.editor.games.sony.shared.utils.SCAnalysisUtils;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloFile;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
+import net.highwayfrogs.editor.games.sony.shared.vlo2.ui.VloFileUIController;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.gui.InputMenu;
 import net.highwayfrogs.editor.gui.MainMenuController;
@@ -241,7 +241,7 @@ public class SCMainMenuUIController<TGameInstance extends SCGameInstance> extend
                 getLogger().info("Found %d as texture #%d in %s.", textureId, image.getLocalImageID(), FileUtils.stripExtension(image.getParent().getFileDisplayName()));
 
             VloImage image = images.get(0);
-            VLOController controller = image.getParent().makeEditorUI();
+            VloFileUIController controller = image.getParent().makeEditorUI();
             showEditor(controller);
             controller.selectImage(image, true);
         });
