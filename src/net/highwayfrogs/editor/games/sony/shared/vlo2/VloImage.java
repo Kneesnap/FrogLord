@@ -64,10 +64,6 @@ import java.util.logging.Level;
  * But it does aim to mimic the patterns seen in the original .VLO files as closely as possible,
  *  in order to minimize the risk of FrogLord breaking existing textures while also keeping texture editing as simple as possible for a FrogLord user.
  * <p/>
- * TODO Remaining Tasks:
- *  1) Text generation
- *   -> Integrate with new system to become seamless
- *   -> Remove usage of SCImageUtils.TransparencyFilter, and then delete that class,
  * Created by Kneesnap on 8/30/2018.
  */
 public class VloImage extends SCSharedGameData implements Cloneable, ITextureSource, ICollectionViewEntry {
