@@ -180,7 +180,7 @@ public class SCVABUIController extends SCFileEditorUIController<SCGameInstance, 
      * Update the info displayed for the image.
      */
     public void updateSoundInfo() {
-        this.label1.setText("Internal Track ID: " + (this.selectedSoundBodyEntry != null ? this.selectedSoundBodyEntry.getInternalTrackId() : "-1"));
+        this.label1.setText("Global Track ID: " + (this.selectedSoundBodyEntry != null ? this.selectedSoundBodyEntry.getGlobalTrackId() : "-1"));
 
         this.sampleRateField.setDisable(this.selectedSound == null);
         this.sliderSampleRate.setDisable(this.selectedSound == null);

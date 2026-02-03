@@ -28,10 +28,12 @@ public abstract class SCWindowsSoundBankBody<TBodyEntry extends SCSplitSoundBank
             return false; // Can't read any data without the header.
 
         this.entries.clear();
+        int vanillaTrackBase = -1;
         for (int id = 0; id < other.getEntries().size(); id++) {
             SCWindowsSoundBankHeaderEntry headerEntry = other.getEntries().get(id);
             if (!headerEntry.isAudioPresent()) { // If we don't have the audio for this entry...
                 if (this.entries.isEmpty()) {
+                    vanillaTrackBase = id - 1;
                     continue; // and we haven't loaded any entries yet, keep going.
                 } else {
                     break; // and we've already loaded at least one entry, we're done reading entries.
@@ -39,7 +41,7 @@ public abstract class SCWindowsSoundBankBody<TBodyEntry extends SCSplitSoundBank
             }
 
             reader.jumpTemp(headerEntry.getDataStartOffset());
-            TBodyEntry loadedEntry = createNewEntry(headerEntry, id);
+            TBodyEntry loadedEntry = createNewEntry(headerEntry, id - vanillaTrackBase, id);
             loadedEntry.load(reader);
             reader.jumpReturn();
 
@@ -68,8 +70,9 @@ public abstract class SCWindowsSoundBankBody<TBodyEntry extends SCSplitSoundBank
     /**
      * Make the sound this class will use.
      * @param entry The entry for the file.
-     * @param id    The sound id.
+     * @param localTrackId The sound id.
+     * @param globalTrackId The sound id.
      * @return newGameSound
      */
-    public abstract TBodyEntry createNewEntry(SCWindowsSoundBankHeaderEntry entry, int id);
+    public abstract TBodyEntry createNewEntry(SCWindowsSoundBankHeaderEntry entry, int localTrackId, int globalTrackId);
 }

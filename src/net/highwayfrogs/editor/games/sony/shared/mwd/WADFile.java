@@ -132,7 +132,11 @@ public class WADFile extends SCSharedGameFile {
 
             MWIResourceEntry mwiEntry = entry.getFileEntry();
             ArrayReceiver receiver = new ArrayReceiver();
-            entry.getFile().save(new DataWriter(receiver));
+            try {
+                entry.getFile().save(new DataWriter(receiver));
+            } catch (Throwable th) {
+                throw new RuntimeException("Failed to save file '" + entry.getDisplayName() + "'.", th);
+            }
 
             byte[] fileBytes = receiver.toArray();
             PackResult packResult = entry.isCompressed() ? PP20Packer.packData(fileBytes) : null;

@@ -30,10 +30,7 @@ public class MediEvilMapCollprimsPacket extends MediEvilMapPacket implements IPr
         int collprimCount = reader.readUnsignedShortAsInt();
         reader.skipBytesRequireEmpty(Constants.SHORT_SIZE); // Padding
         int collprimListPtr = reader.readInt();
-        if (collprimListPtr != reader.getIndex()) {
-            getLogger().warning("The collprim list pointer was not at the expected position! (Was: 0x%X, Expected: 0x%X", collprimListPtr, reader.getIndex());
-            reader.setIndex(collprimListPtr);
-        }
+        reader.requireIndex(getLogger(), collprimListPtr, "Expected collprim list data");
 
         // Read collprims.
         this.collprims.clear();

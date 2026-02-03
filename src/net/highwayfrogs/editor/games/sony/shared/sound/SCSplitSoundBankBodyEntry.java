@@ -16,18 +16,20 @@ public abstract class SCSplitSoundBankBodyEntry extends SCSharedGameData impleme
     private final SCSplitSoundBankHeader<?, ?> header;
     private final EditableAudioFormat audioFormat;
     private final int internalTrackId;
+    private final int globalTrackId;
 
-    public SCSplitSoundBankBodyEntry(SCSplitSoundBankBody<?, ?> body, SCSplitSoundBankHeaderEntry headerEntry, SCSplitSoundBankHeader<?, ?> header, EditableAudioFormat audioFormat, int internalTrackId) {
+    public SCSplitSoundBankBodyEntry(SCSplitSoundBankBody<?, ?> body, SCSplitSoundBankHeaderEntry headerEntry, SCSplitSoundBankHeader<?, ?> header, EditableAudioFormat audioFormat, int internalTrackId, int globalTrackId) {
         super(body.getGameInstance());
         this.body = body;
         this.headerEntry = headerEntry;
         this.header = header;
         this.audioFormat = audioFormat;
         this.internalTrackId = internalTrackId;
+        this.globalTrackId = globalTrackId;
     }
 
     @Override
     public String getSoundName() {
-        return getConfig().getSoundBank().getName(getInternalTrackId());
+        return getConfig().getSoundBank().getName(getGlobalTrackId());
     }
 }

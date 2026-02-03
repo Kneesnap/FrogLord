@@ -2,7 +2,6 @@ package net.highwayfrogs.editor.games.sony.shared.sound.body;
 
 import javafx.scene.control.Alert.AlertType;
 import lombok.SneakyThrows;
-import net.highwayfrogs.editor.utils.data.reader.DataReader;
 import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.sound.body.SCWindowsPreReleaseSoundBankBody.SCWindowsPreReleaseSoundBodyEntry;
 import net.highwayfrogs.editor.games.sony.shared.sound.body.SCWindowsRetailSoundBankBody.SCWindowsSoundBodyEntry;
@@ -10,6 +9,7 @@ import net.highwayfrogs.editor.games.sony.shared.sound.header.SCWindowsSoundBank
 import net.highwayfrogs.editor.utils.AudioUtils;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.Utils;
+import net.highwayfrogs.editor.utils.data.reader.DataReader;
 
 import javax.sound.sampled.AudioFormat;
 import java.io.File;
@@ -31,15 +31,15 @@ public class SCWindowsPreReleaseSoundBankBody extends SCWindowsSoundBankBody<SCW
     }
 
     @Override
-    public SCWindowsPreReleaseSoundBodyEntry createNewEntry(SCWindowsSoundBankHeaderEntry entry, int id) {
-        return new SCWindowsPreReleaseSoundBodyEntry(this, entry, id);
+    public SCWindowsPreReleaseSoundBodyEntry createNewEntry(SCWindowsSoundBankHeaderEntry entry, int localTrackId, int globalTrackId) {
+        return new SCWindowsPreReleaseSoundBodyEntry(this, entry, localTrackId, globalTrackId);
     }
 
     public static class SCWindowsPreReleaseSoundBodyEntry extends SCWindowsSoundBodyEntry {
         private byte[] cachedRawAudio;
 
-        public SCWindowsPreReleaseSoundBodyEntry(SCWindowsPreReleaseSoundBankBody body, SCWindowsSoundBankHeaderEntry headerEntry, int vanillaTrackId) {
-            super(body, headerEntry, vanillaTrackId);
+        public SCWindowsPreReleaseSoundBodyEntry(SCWindowsPreReleaseSoundBankBody body, SCWindowsSoundBankHeaderEntry headerEntry, int vanillaTrackId, int globalTrackId) {
+            super(body, headerEntry, vanillaTrackId, globalTrackId);
         }
 
         @Override

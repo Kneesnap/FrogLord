@@ -4,9 +4,9 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.highwayfrogs.editor.Constants;
+import net.highwayfrogs.editor.games.psx.math.PSXMatrix;
 import net.highwayfrogs.editor.games.psx.math.vector.IVector;
 import net.highwayfrogs.editor.games.psx.math.vector.SVector;
-import net.highwayfrogs.editor.games.psx.math.PSXMatrix;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerConfig;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.shared.mof2.MRBaseModelData;
@@ -232,10 +232,14 @@ public class MRAnimatedMof extends MRBaseModelData {
         float testY = Float.POSITIVE_INFINITY;
         float testZ = Float.POSITIVE_INFINITY;
 
+        // This limitation is because of ZOMBIE2.XAR in MediEvil 0.31, which has a mismatch of parts, causing an error on save.
+        int partCount = this.staticMofs.stream().mapToInt(staticMof -> staticMof.getParts().size()).min().orElse(0);
+
         // TODO: Revisit this method.
         //  - TODO: Go over bounding boxes across games to see how accurate our generation of them is. Actually, compare with MR_VOID	MRCalculateMOFVertexExtremes() in MR_MOF.C
         for (MRStaticMof staticMof : this.staticMofs) {
-            for (MRMofPart part : staticMof.getParts()) {
+            for (int partIndex = 0; partIndex < partCount; partIndex++) {
+                MRMofPart part = staticMof.getParts().get(partIndex);
                 for (int modelSetIdx = 0; modelSetIdx < this.modelSets.size(); modelSetIdx++) {
                     MRAnimatedMofModelSet modelSet = this.modelSets.get(modelSetIdx);
                     for (int action = 0; action < modelSet.getCelSet().getAnimations().size(); action++) {

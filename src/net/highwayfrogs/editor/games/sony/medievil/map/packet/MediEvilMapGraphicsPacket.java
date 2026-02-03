@@ -3,6 +3,7 @@ package net.highwayfrogs.editor.games.sony.medievil.map.packet;
 import lombok.Getter;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.psx.math.vector.SVector;
+import net.highwayfrogs.editor.games.psx.polygon.PSXPolygonType;
 import net.highwayfrogs.editor.games.sony.medievil.map.MediEvilMapFile;
 import net.highwayfrogs.editor.games.sony.medievil.map.mesh.MediEvilMapPolygon;
 import net.highwayfrogs.editor.gui.components.propertylist.IPropertyListCreator;
@@ -22,6 +23,9 @@ public class MediEvilMapGraphicsPacket extends MediEvilMapPacket implements IPro
     public static final String IDENTIFIER = "GXSP"; // 'PSXG'.
     private final List<MediEvilMapPolygon> polygons = new ArrayList<>();
     private final List<SVector> vertices = new ArrayList<>();
+    private short vertexGridResolution;
+    private short[] vertexGridOffsetTable;
+    private short[] vertexGridLengthTable;
 
     public MediEvilMapGraphicsPacket(MediEvilMapFile parentFile) {
         super(parentFile, IDENTIFIER);
@@ -34,7 +38,7 @@ public class MediEvilMapGraphicsPacket extends MediEvilMapPacket implements IPro
         int gt3PolyCount = reader.readUnsignedShortAsInt();
         int gt4PolyCount = reader.readUnsignedShortAsInt();
         int vertexCount = reader.readUnsignedShortAsInt();
-        short vertexGridSize = reader.readUnsignedByteAsShort(); // Dimensions of vertex grid.
+        this.vertexGridResolution = reader.readUnsignedByteAsShort(); // Dimensions of vertex grid.
         reader.skipBytesRequireEmpty(Constants.BYTE_SIZE);
 
         int polygonListPtr = reader.readInt();
@@ -44,7 +48,7 @@ public class MediEvilMapGraphicsPacket extends MediEvilMapPacket implements IPro
 
         // Read polygons.
         this.polygons.clear();
-        reader.jumpTemp(polygonListPtr);
+        reader.requireIndex(getLogger(), polygonListPtr, "Expected polygon list data");
         int polygonCount = g3PolyCount + g4PolyCount + gt3PolyCount + gt4PolyCount;
         for (int i = 0; i < polygonCount; i++) {
             MediEvilMapPolygon polygon = new MediEvilMapPolygon(getGameInstance());
@@ -52,34 +56,62 @@ public class MediEvilMapGraphicsPacket extends MediEvilMapPacket implements IPro
             this.polygons.add(polygon);
         }
 
-        if (reader.getIndex() != vertexListPtr)
-            getLogger().warning("The polygon data ended at 0x%X, which was not when the vertex data started! (0x%X)", reader.getIndex(), vertexListPtr);
-
-        reader.jumpReturn();
-
         // Read vertices.
         this.vertices.clear();
-        reader.jumpTemp(vertexListPtr);
+        reader.requireIndex(getLogger(), vertexListPtr, "Expected vertex list data");
         for (int i = 0; i < vertexCount; i++) {
             SVector vertex = new SVector();
             vertex.loadWithPadding(reader);
             this.vertices.add(vertex);
         }
-        if (reader.getIndex() != vertexGridOffsetTablePtr)
-            getLogger().warning("The vertex data ended at 0x%X, which was not when the grid offset table started! (0x%X)", reader.getIndex(), vertexGridOffsetTablePtr);
 
         // Read grid offset table.
-        // TODO: !
+        reader.requireIndex(getLogger(), vertexGridOffsetTablePtr, "Expected vertexGridOffsetTable data");
+        this.vertexGridOffsetTable = new short[this.vertexGridResolution * this.vertexGridResolution];
+        for (int i = 0; i < this.vertexGridOffsetTable.length; i++)
+            this.vertexGridOffsetTable[i] = reader.readShort();
 
         // Read grid length table.
-        // TODO: !
-
-        reader.setIndex(endIndex);
+        reader.requireIndex(getLogger(), vertexGridLengthTablePtr, "Expected vertexGridLengthTable data");
+        this.vertexGridLengthTable = new short[this.vertexGridResolution * this.vertexGridResolution];
+        for (int i = 0; i < this.vertexGridLengthTable.length; i++)
+            this.vertexGridLengthTable[i] = reader.readShort();
     }
 
     @Override
     protected void saveBodyFirstPass(DataWriter writer) {
-        // TODO: Implement.
+        writer.writeUnsignedShort((int) this.polygons.stream().filter(polygon -> polygon.getPolygonType() == PSXPolygonType.POLY_G3).count());// g3PolyCount
+        writer.writeUnsignedShort((int) this.polygons.stream().filter(polygon -> polygon.getPolygonType() == PSXPolygonType.POLY_G4).count());// g4PolyCount
+        writer.writeUnsignedShort((int) this.polygons.stream().filter(polygon -> polygon.getPolygonType() == PSXPolygonType.POLY_GT3).count());// gt3PolyCount
+        writer.writeUnsignedShort((int) this.polygons.stream().filter(polygon -> polygon.getPolygonType() == PSXPolygonType.POLY_GT4).count());// gt4PolyCount
+        writer.writeUnsignedShort(this.vertices.size()); // Vertex count.
+        writer.writeUnsignedByte(this.vertexGridResolution); // Dimensions of vertex grid.
+        writer.align(Constants.INTEGER_SIZE);
+
+        int polygonListPtr = writer.writeNullPointer();
+        int vertexListPtr = writer.writeNullPointer();
+        int vertexGridOffsetTablePtr = writer.writeNullPointer();
+        int vertexGridLengthTablePtr = writer.writeNullPointer();
+
+        // Write polygons.
+        writer.writeAddressTo(polygonListPtr);
+        for (int i = 0; i < this.polygons.size(); i++)
+            this.polygons.get(i).save(writer);
+
+        // Write vertices.
+        writer.writeAddressTo(vertexListPtr);
+        for (int i = 0; i < this.vertices.size(); i++)
+            this.vertices.get(i).saveWithPadding(writer);
+
+        // Write grid offset table.
+        writer.writeAddressTo(vertexGridOffsetTablePtr);
+        for (int i = 0; i < this.vertexGridOffsetTable.length; i++)
+            writer.writeShort(this.vertexGridOffsetTable[i]);
+
+        // Write grid length table.
+        writer.writeAddressTo(vertexGridLengthTablePtr);
+        for (int i = 0; i < this.vertexGridLengthTable.length; i++)
+            writer.writeShort(this.vertexGridLengthTable[i]);
     }
 
     @Override

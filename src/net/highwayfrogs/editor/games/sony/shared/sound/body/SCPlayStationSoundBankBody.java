@@ -74,13 +74,13 @@ public class SCPlayStationSoundBankBody extends SCSplitSoundBankBody<SCPlayStati
         private static final int EMPTY_BYTE_PADDING = 16;
 
         public SCPlayStationVabSound(SCSplitSoundBankBody<?, ?> body, SCPlayStationVabSoundBankHeader header, int internalTrackId, int expectedReadLength) {
-            super(body, null, header, new EditableAudioFormat(11025, 16, 1, true, false), makeGlobalId(body, internalTrackId));
+            super(body, null, header, new EditableAudioFormat(11025, 16, 1, true, false), internalTrackId, makeGlobalId(body, internalTrackId));
             this.expectedReadLength = expectedReadLength;
             // TODO: Prevent editing everything except sample rate.
         }
 
         public SCPlayStationVabSound(SCSplitSoundBankBody<?, ?> body, SCPlayStationMinimalSoundBankHeaderEntry headerEntry, int internalTrackId, int expectedReadLength) {
-            super(body, headerEntry, headerEntry.getHeader(), new EditableAudioFormat(11025, 16, 1, true, false), makeGlobalId(body, internalTrackId));
+            super(body, headerEntry, headerEntry.getHeader(), new EditableAudioFormat(11025, 16, 1, true, false), internalTrackId, makeGlobalId(body, internalTrackId));
             this.expectedReadLength = expectedReadLength;
             // TODO: Prevent editing everything except sample rate.
         }

@@ -53,7 +53,7 @@ public enum SCGameType implements IGameType {
     FROGGER("Frogger: He's Back", FroggerGameInstance::new, FroggerConfig::new, false), // April 1997 -> September 1997 (PC: March 1998)
     BEAST_WARS("Beast Wars: Transformers", BeastWarsInstance::new, BeastWarsConfig::new, true), // 1996 -> October 1997 (PC: March 1998)
     //TAX_MAN(null),
-    MEDIEVIL("MediEvil", MediEvilGameInstance::new, MediEvilConfig::new, true), // 1995? -> October 1998
+    MEDIEVIL("MediEvil", MediEvilGameInstance::new, MediEvilConfig::new, false), // 1995? -> October 1998
     //COMMON_TALES(null), // 1999
     MOONWARRIOR("Moon Warrior", MoonWarriorInstance::new, null, true), // 1999
     MEDIEVIL2("MediEvil II", MediEvil2GameInstance::new, MediEvil2Config::new, true), // October 1998 -> March 2000

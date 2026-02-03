@@ -30,20 +30,20 @@ public class SCWindowsRetailSoundBankBody extends SCWindowsSoundBankBody<SCWindo
     }
 
     @Override
-    public SCWindowsSoundBodyEntry createNewEntry(SCWindowsSoundBankHeaderEntry entry, int id) {
-        return new SCWindowsSoundBodyEntry(this, entry, id);
+    public SCWindowsSoundBodyEntry createNewEntry(SCWindowsSoundBankHeaderEntry entry, int localTrackId, int globalTrackId) {
+        return new SCWindowsSoundBodyEntry(this, entry, localTrackId, globalTrackId);
     }
 
     @Getter
     public static class SCWindowsSoundBodyEntry extends SCSplitSoundBankBodyEntry {
         protected byte[] rawAudioData;
 
-        public SCWindowsSoundBodyEntry(SCWindowsRetailSoundBankBody body, SCWindowsSoundBankHeaderEntry headerEntry, int vanillaTrackId) {
-            super(body, headerEntry, headerEntry.getHeader(), headerEntry.getAudioFormat(), vanillaTrackId);
+        public SCWindowsSoundBodyEntry(SCWindowsRetailSoundBankBody body, SCWindowsSoundBankHeaderEntry headerEntry, int vanillaTrackId, int globalTrackId) {
+            super(body, headerEntry, headerEntry.getHeader(), headerEntry.getAudioFormat(), vanillaTrackId, globalTrackId);
         }
 
-        protected SCWindowsSoundBodyEntry(SCWindowsPreReleaseSoundBankBody body, SCWindowsSoundBankHeaderEntry headerEntry, int vanillaTrackId) {
-            super(body, headerEntry, headerEntry.getHeader(), headerEntry.getAudioFormat(), vanillaTrackId);
+        protected SCWindowsSoundBodyEntry(SCWindowsPreReleaseSoundBankBody body, SCWindowsSoundBankHeaderEntry headerEntry, int vanillaTrackId, int globalTrackId) {
+            super(body, headerEntry, headerEntry.getHeader(), headerEntry.getAudioFormat(), vanillaTrackId, globalTrackId);
         }
 
         @Override
@@ -84,7 +84,7 @@ public class SCWindowsRetailSoundBankBody extends SCWindowsSoundBankBody<SCWindo
 
             String errorMessage;
             if ((errorMessage = getAudioFormat().applyAudioFormat(inputStream.getFormat())) != null) {
-                FXUtils.makePopUp(errorMessage, AlertType.ERROR);
+                FXUtils.showPopup(AlertType.ERROR, "Failed to load audio format.", errorMessage);
                 return; // Import failed.
             }
 
