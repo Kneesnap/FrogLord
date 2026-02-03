@@ -32,6 +32,7 @@ import net.highwayfrogs.editor.utils.logging.ILogger;
 import net.highwayfrogs.editor.utils.logging.InstanceLogger.AppendInfoLoggerWrapper;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -564,7 +565,7 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
     public void setupRightClickMenuItems(ContextMenu contextMenu) {
         MenuItem findTextureUsages = new MenuItem("Find Usages");
         contextMenu.getItems().add(findTextureUsages);
-        contextMenu.setOnAction(event -> {
+        findTextureUsages.setOnAction(event -> {
             List<SCTextureUsage>[] allTextureUsages = TEXTURE_USAGES_PER_INSTANCE.computeIfAbsent(getGameInstance(), SCAnalysisUtils::generateTextureUsageMapping);
             List<SCTextureUsage> textureUsages = allTextureUsages != null && allTextureUsages.length > this.textureId ? allTextureUsages[this.textureId] : null;
             if (textureUsages == null || textureUsages.isEmpty()) {
@@ -588,15 +589,19 @@ public class VloImage extends SCSharedGameData implements Cloneable, ITextureSou
         exportItem.setOnAction(event -> {
             String name = getName();
             BufferedImage image = this.toBufferedImage(VloFile.IMAGE_EXPORT_SETTINGS);
-            FileUtils.askUserToSaveImageFile(getLogger(), getGameInstance(), image, name != null ? name : String.valueOf(this.textureId));
+            File resultFile = FileUtils.askUserToSaveImageFile(getLogger(), getGameInstance(), image, name != null ? name : String.valueOf(this.textureId));
+            if (resultFile != null)
+                getLogger().info("Exported image to '%s'.", resultFile.getName());
         });
 
         MenuItem importItem = new MenuItem("Import");
         contextMenu.getItems().add(importItem);
         importItem.setOnAction(event -> {
             BufferedImage loadedImage = FileUtils.askUserToOpenImageFile(getLogger(), getGameInstance());
-            if (loadedImage != null)
+            if (loadedImage != null) {
                 replaceImage(loadedImage, ProblemResponse.CREATE_POPUP);
+                getLogger().info("Imported image from file.");
+            }
         });
     }
 
