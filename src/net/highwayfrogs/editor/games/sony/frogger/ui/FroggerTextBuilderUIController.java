@@ -12,15 +12,12 @@ import javafx.scene.layout.VBox;
 import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.utils.FroggerUtils;
-import net.highwayfrogs.editor.games.sony.shared.utils.SCImageUtils.BlackFilter;
-import net.highwayfrogs.editor.games.sony.shared.utils.SCImageUtils.TransparencyFilter;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.gui.GameUIController;
 import net.highwayfrogs.editor.utils.ColorUtils;
 import net.highwayfrogs.editor.utils.FXUtils;
 import net.highwayfrogs.editor.utils.FileUtils;
 import net.highwayfrogs.editor.utils.NumberUtils;
-import net.highwayfrogs.editor.utils.image.ImageUtils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -76,8 +73,7 @@ public class FroggerTextBuilderUIController extends GameUIController<FroggerGame
 
     @FXML
     private void saveImage(ActionEvent event) {
-        BufferedImage transparentImage = ImageUtils.applyFilter(this.cachedImage, TransparencyFilter.INSTANCE);
-        FileUtils.askUserToSaveImageFile(getLogger(), getGameInstance(), transparentImage, "text-image");
+        FileUtils.askUserToSaveImageFile(getLogger(), getGameInstance(), this.cachedImage, "text-image");
     }
 
     private void updateImage() {
@@ -110,12 +106,11 @@ public class FroggerTextBuilderUIController extends GameUIController<FroggerGame
 
         // Color.
         Color awtColor = ColorUtils.toAWTColor(this.colorPicker.getValue(), (byte) 0xFF);
-        this.cachedImage = FroggerUtils.writeFroggerText(this.cachedImage, imageWidth, imageHeight, this.displayTextField.getText(), fontSize, awtColor, getGameInstance().isPSX());
+        this.cachedImage = FroggerUtils.writeFroggerText(this.cachedImage, imageWidth, imageHeight, this.displayTextField.getText(), fontSize, awtColor, false, getGameInstance().isPSX(), !getGameInstance().isPSX());
         this.imagePreview.setPreserveRatio(false);
         this.imagePreview.setFitWidth(this.cachedImage.getWidth());
         this.imagePreview.setFitHeight(this.cachedImage.getHeight());
-        BufferedImage displayImage = ImageUtils.applyFilter(this.cachedImage, BlackFilter.INSTANCE);
-        this.imagePreview.setImage(FXUtils.toFXImage(displayImage, false));
+        this.imagePreview.setImage(FXUtils.toFXImage(this.cachedImage, false));
     }
 
     /**

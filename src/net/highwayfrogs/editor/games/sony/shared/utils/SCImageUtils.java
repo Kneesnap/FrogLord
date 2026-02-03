@@ -1,12 +1,10 @@
 package net.highwayfrogs.editor.games.sony.shared.utils;
 
-import net.highwayfrogs.editor.Constants;
 import net.highwayfrogs.editor.games.sony.shared.vlo2.VloImage;
 import net.highwayfrogs.editor.utils.image.ImageUtils;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.RGBImageFilter;
 
 /**
  * Contains static utilities for working with images in Sony Cambridge games.
@@ -67,27 +65,5 @@ public class SCImageUtils {
         graphics.drawImage(image, 0, 0, newWidth, image.getHeight(), null);
         graphics.dispose();
         return scaleImage;
-    }
-
-    // Black -> Transparency TODO: Delete these later.
-    public static class TransparencyFilter extends RGBImageFilter {
-        public static TransparencyFilter INSTANCE = new TransparencyFilter();
-
-        @Override
-        public int filterRGB(int x, int y, int argb) {
-            int colorWOAlpha = argb & 0x00FFFFFF;
-            return colorWOAlpha == 0x000000 ? colorWOAlpha : argb;
-        }
-    }
-
-    // Transparency -> Black
-    public static class BlackFilter extends RGBImageFilter {
-        public static BlackFilter INSTANCE = new BlackFilter();
-
-        @Override
-        public int filterRGB(int x, int y, int rgb) {
-            int alpha = rgb >>> (3 * Constants.BITS_PER_BYTE);
-            return alpha == 0 ? 0xFF000000 : rgb;
-        }
     }
 }

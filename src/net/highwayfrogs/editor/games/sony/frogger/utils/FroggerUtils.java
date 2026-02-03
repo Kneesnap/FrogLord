@@ -4,6 +4,7 @@ import javafx.scene.control.Alert.AlertType;
 import net.highwayfrogs.editor.FrogLordApplication;
 import net.highwayfrogs.editor.games.generic.GameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameFile;
+import net.highwayfrogs.editor.games.sony.SCGameInstance;
 import net.highwayfrogs.editor.games.sony.SCGameType;
 import net.highwayfrogs.editor.games.sony.frogger.FroggerGameInstance;
 import net.highwayfrogs.editor.games.sony.frogger.data.theme.FroggerThemeBook;
@@ -209,6 +210,29 @@ public class FroggerUtils {
 
     /**
      * Writes Frogger text to the image with the given settings.
+     * @param instance the game instance to create the image for
+     * @param width the expected width of the image
+     * @param height the expected height of the image
+     * @param text the text to write
+     * @param fontSize the size of the font to use when writing the text.
+     * @return imageWithText
+     */
+    public static BufferedImage createFroggerLevelNameTexture(SCGameInstance instance, int width, int height, String text, float fontSize) {
+        if (!Float.isFinite(fontSize) || fontSize < 1)
+            fontSize = 16;
+
+        // Calling toLowerCase() is important because the font uses lower-case for level-select style text.
+        if (instance.isPSX()) {
+            return writeFroggerText(null, width, height, text.toLowerCase(), fontSize, DEFAULT_TEXT_AWT_COLOR, false, true, false);
+        } else if (instance.isPC()) {
+            return writeFroggerText(null, width, height, text.toLowerCase(), fontSize, Color.WHITE, false, false, true);
+        } else {
+            throw new UnsupportedOperationException("Unsupported platform: " + instance.getPlatform());
+        }
+    }
+
+    /**
+     * Writes Frogger text to the image with the given settings.
      * @param image the image to write the text to
      * @param width the expected width of the image
      * @param height the expected height of the image
@@ -216,15 +240,11 @@ public class FroggerUtils {
      * @param fontSize the size of the font to use when writing the text.
      * @return imageWithText
      */
-    public static BufferedImage writeFroggerText(BufferedImage image, int width, int height, String text, float fontSize, Color textColor, boolean isFourBitMode) {
+    public static BufferedImage writeFroggerText(BufferedImage image, int width, int height, String text, float fontSize, Color textColor, boolean reduceSpacing, boolean antiAlias, boolean outline) {
         if (text == null)
             throw new NullPointerException("text");
         if (textColor == null)
             textColor = DEFAULT_TEXT_AWT_COLOR;
-
-        // These must be even on PSX for 4-bit cluts to work correctly.
-        if ((width % 2) > 0)
-            width++;
 
         if (image == null || image.getWidth() != width || image.getHeight() != height)
             image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -238,64 +258,72 @@ public class FroggerUtils {
         String[] split = text.split("\n");
 
         try {
-            graphics.setColor(Color.BLACK);
+            graphics.setColor(Color.BLACK); // Must make black for anti-aliasing to work right.
             graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
 
             graphics.setFont(font);
             graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR); // May or may not improve the output. Unclear.
-            graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, antiAlias ? RenderingHints.VALUE_TEXT_ANTIALIAS_ON : RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
             graphics.setColor(textColor);
 
-            double y = -4;
+            double y = -1;
             for (int i = 0; i < split.length; i++) {
                 String textLine = split[i];
-                Rectangle2D bounds = font.getStringBounds(textLine, graphics.getFontRenderContext());
-                y += bounds.getHeight();
-                graphics.drawString(textLine, (float) ((image.getWidth() - bounds.getWidth()) * .5), (float) y);
-            }
 
-            graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+                char[] textChars = textLine.toCharArray();
+                double[] charDimensions = new double[textChars.length * 2];
+
+                // Calculate line info.
+                double lineWidth = 0;
+                double lineHeight = 0;
+                for (int j = 0; j < textChars.length; j++) {
+                    Rectangle2D charBounds = font.getStringBounds(textChars, j, j + 1, graphics.getFontRenderContext());
+                    double charWidth = charBounds.getWidth() - (reduceSpacing ? 1 : 0);
+                    double charHeight = charBounds.getHeight();
+
+                    // Update line dimensions.
+                    lineWidth += charWidth;
+                    if (charHeight > lineHeight)
+                        lineHeight = charHeight;
+
+                    // Track dimensions.
+                    charDimensions[(j * 2)] = charWidth;
+                    charDimensions[(j * 2) + 1] = charHeight;
+                }
+
+                // Draw each character.
+                double x = ((image.getWidth() - lineWidth) * .5); // Start position is chosen to center text.
+                for (int j = 0; j < textLine.length(); j++) {
+                    double charWidth = charDimensions[(j * 2)];
+                    double charHeight = charDimensions[(j * 2) + 1];
+                    graphics.setColor(textColor);
+                    graphics.drawChars(textChars, j, 1, (int) x, (int) (y + charHeight));
+                    //graphics.setColor(Color.RED); // Debug bounds.
+                    //graphics.drawRect((int) x, (int) y, (int) (charWidth), (int) (charHeight));
+                    x += charWidth;
+                }
+
+                y += lineHeight;
+            }
         } finally {
             graphics.dispose();
         }
 
-        if (isFourBitMode) {
-            // Create the palette to pull colors from
-            final int colorCount = 16;
-            int[] colorPalette = new int[colorCount];
-            int baseRed = textColor.getRed();
-            int baseGreen = textColor.getGreen();
-            int baseBlue = textColor.getBlue();
-            for (int i = 1; i < colorCount; i++) {
-                double scaleAmount = (double) i / (colorCount - 1);
-                byte red = (byte) (baseRed * scaleAmount);
-                byte green = (byte) (baseGreen * scaleAmount);
-                byte blue = (byte) (baseBlue * scaleAmount);
-                colorPalette[i] = ColorUtils.toARGB(red, green, blue, (byte) 0xFE);
-            }
+        // Apply outline and/or transparent pixels.
+        int blackColor = Color.BLACK.getRGB();
+        int[] rawPixelData = ImageUtils.getWritablePixelIntegerArray(image);
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int index = (y * width) + x;
+                if (rawPixelData[index] != blackColor)
+                    continue;
 
-            // Snap pixel values to the palette.
-            int[] rawPixelData = ImageUtils.getWritablePixelIntegerArray(image);
-            float averageMultiple = 1 / 3F;
-            for (int i = 0; i < rawPixelData.length; i++) {
-                int rgb = rawPixelData[i];
-                float red = (float) ColorUtils.getRedInt(rgb) / textColor.getRed();
-                float green = (float) ColorUtils.getGreenInt(rgb) / textColor.getGreen();
-                float blue = (float) ColorUtils.getBlueInt(rgb) / textColor.getBlue();
-                float averageValue = (red + green + blue) * averageMultiple;
-                int index = Math.min(colorCount - 1, Math.round(averageValue * (colorCount - 1)));
-                rawPixelData[i] = colorPalette[index];
-            }
-        } else {
-            // Ensure transparency.
-            int[] rawPixelData = ImageUtils.getWritablePixelIntegerArray(image);
-            for (int i = 0; i < rawPixelData.length; i++) {
-                if ((rawPixelData[i] & 0xFFFFFF) == 0) {
-                    rawPixelData[i] &= 0x00FFFFFF;
-                } else {
-                    rawPixelData[i] &= ~0x80000000;
-                    rawPixelData[i] |= 0x7F000000;
-                }
+                rawPixelData[index] = 0; // Transparent.
+                if (outline && ((x > 0 && rawPixelData[index - 1] != blackColor && rawPixelData[index - 1] != 0)
+                        || (y > 0 && rawPixelData[index - width] != blackColor && rawPixelData[index - width] != 0)
+                        || (x < width - 1 && rawPixelData[index + 1] != blackColor && rawPixelData[index + 1] != 0))
+                        || (y < height - 1 && rawPixelData[index + width] != blackColor && rawPixelData[index + width] != 0))
+                    rawPixelData[index] = blackColor;
             }
         }
 
@@ -312,8 +340,7 @@ public class FroggerUtils {
         if (froggerFont != null)
             return froggerFont;
 
-        InputStream fontStream = SCGameType.FROGGER.getEmbeddedResourceStream("font-main-text.otf");
-        try {
+        try (InputStream fontStream = SCGameType.FROGGER.getEmbeddedResourceStream("font-main-text.otf")) {
             froggerFont = Font.createFont(Font.TRUETYPE_FONT, fontStream);
         } catch (FontFormatException | IOException ex) {
             Utils.handleError(null, ex, true, "Failed to load Frogger font. Using system default...");

@@ -175,6 +175,11 @@ public class OldFroggerGameInstance extends SCGameInstance {
     }
 
     @Override
+    protected OldFroggerMainMenuUIController makeMainMenuController() {
+        return new OldFroggerMainMenuUIController(this);
+    }
+
+    @Override
     public void onConfigLoad(Config config) {
         super.onConfigLoad(config);
         DataReader exeReader = getExecutableReader();

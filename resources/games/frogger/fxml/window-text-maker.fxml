@@ -19,7 +19,7 @@
             <Label layoutX="118.0" layoutY="295.0" prefHeight="17.0" prefWidth="39.0" text="Height:" />
             <TextField fx:id="heightTextField" alignment="CENTER" layoutX="161.0" layoutY="291.0" prefHeight="25.0" prefWidth="35.0" promptText="14" text="14" />
             <Label layoutX="201.0" layoutY="295.0" prefHeight="17.0" prefWidth="54.0" text="Font Size: " />
-            <TextField fx:id="fontSizeField" alignment="CENTER" layoutX="259.0" layoutY="291.0" prefHeight="25.0" prefWidth="35.0" promptText="15" text="15" />
+            <TextField fx:id="fontSizeField" alignment="CENTER" layoutX="259.0" layoutY="291.0" prefHeight="25.0" prefWidth="35.0" promptText="15" text="16" />
         </HBox>
         <TextArea fx:id="displayTextField" layoutX="34.0" layoutY="318.0" prefHeight="80.0" prefWidth="269.0" promptText="Type the text here to write to the image." text="Example Text" />
     </VBox>
